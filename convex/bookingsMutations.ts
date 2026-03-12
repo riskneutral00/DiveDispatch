@@ -1,5 +1,5 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation } from './_generated/server'
+import { internalMutation, mutation } from './_generated/server'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,6 +76,54 @@ const sessionValidator = v.object({
     ),
   ),
 })
+
+// ─── State Machines ───────────────────────────────────────────────────────────
+
+/**
+ * Booking status transition guard. Returns true if the transition is valid.
+ *
+ * confirm: Draft only (auto-advance to Upcoming)
+ * edit:    Upcoming | Completed (operator edit resets to Draft)
+ * cancel:  Any non-Cancelled status
+ * complete: Upcoming only (auto-complete cron)
+ */
+export function canBookingTransition(
+  currentStatus: 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled',
+  action: 'confirm' | 'edit' | 'cancel' | 'complete',
+): boolean {
+  switch (action) {
+    case 'confirm':
+      return currentStatus === 'Draft'
+    case 'edit':
+      return currentStatus === 'Upcoming' || currentStatus === 'Completed'
+    case 'cancel':
+      return currentStatus !== 'Cancelled'
+    case 'complete':
+      return currentStatus === 'Upcoming'
+    default:
+      return false
+  }
+}
+
+/**
+ * Reservation status transition guard. Returns true if the transition is valid.
+ *
+ * accept: PendingAcceptance only
+ * vacate: PendingAcceptance | Confirmed
+ */
+export function canReservationTransition(
+  currentStatus: 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow',
+  action: 'accept' | 'vacate',
+): boolean {
+  switch (action) {
+    case 'accept':
+      return currentStatus === 'PendingAcceptance'
+    case 'vacate':
+      return currentStatus === 'PendingAcceptance' || currentStatus === 'Confirmed'
+    default:
+      return false
+  }
+}
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -328,7 +376,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   return args.bookingId
 }
 
-// ─── Convex mutation export ───────────────────────────────────────────────────
+// ─── Convex mutation exports ──────────────────────────────────────────────────
 
 export const submitToDraft = mutation({
   args: {
@@ -336,4 +384,208 @@ export const submitToDraft = mutation({
     sessions: v.array(sessionValidator),
   },
   handler: _handler,
+})
+
+/**
+ * Cancels a booking from any non-Cancelled status.
+ * Vacates all active reservations and marks booking Cancelled. Irreversible.
+ */
+export const cancelBooking = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+    if (!canBookingTransition(booking.status, 'cancel')) {
+      throw new ConvexError({
+        code: 'INVALID_STATUS',
+        reason: `Cannot cancel booking in status '${booking.status}'`,
+      })
+    }
+
+    await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
+    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+  },
+})
+
+/**
+ * Resets an Upcoming or Completed booking to Draft for editing.
+ * Vacates all reservations, clears sessions, and marks bookingFormComplete false.
+ */
+export const editBooking = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+    if (!canBookingTransition(booking.status, 'edit')) {
+      throw new ConvexError({
+        code: 'INVALID_STATUS',
+        reason: `Cannot edit booking in status '${booking.status}'`,
+      })
+    }
+
+    await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
+
+    // Clear sessions so operator can re-submit with new session data
+    const sessions = await ctx.db
+      .query('bookingSessions')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const session of sessions) {
+      await ctx.db.delete(session._id)
+    }
+
+    await ctx.db.patch(args.bookingId, {
+      status: 'Draft',
+      bookingFormComplete: false,
+      submittedAt: undefined,
+      expiresAt: undefined,
+    })
+  },
+})
+
+// ─── TTL expiry cron ──────────────────────────────────────────────────────────
+
+/**
+ * Check whether a session's end time has passed in the session's local timezone.
+ * Uses Intl.DateTimeFormat to compare current time against session end date/time.
+ * Exported for unit testing.
+ */
+export function isSessionEnded(date: string, endTime: string, timezone: string): boolean {
+  const now = Date.now()
+
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  const parts = Object.fromEntries(formatter.formatToParts(now).map((p) => [p.type, p.value]))
+  const currentDate = `${parts.year}-${parts.month}-${parts.day}`
+  // hour12: false can emit '24' for midnight in some runtimes
+  const hour = parts.hour === '24' ? '00' : parts.hour
+  const currentTime = `${hour}:${parts.minute}`
+
+  if (currentDate > date) return true
+  if (currentDate === date && currentTime >= endTime) return true
+  return false
+}
+
+/**
+ * Cron: expire Draft bookings whose holdTTL has lapsed.
+ * Runs every 15 minutes. Vacates reservations then hard-deletes the booking.
+ * Batch limit: 100 per run.
+ */
+export const expireHolds = internalMutation({
+  args: {},
+  handler: async (ctx: AnyCtx): Promise<{ expired: number; more: boolean }> => {
+    const now = Date.now()
+
+    const drafts = await ctx.db
+      .query('bookings')
+      .withIndex('by_status', (q: AnyCtx) => q.eq('status', 'Draft'))
+      .collect()
+
+    const expired = drafts.filter(
+      (b: AnyCtx) => b.expiresAt != null && b.expiresAt < now,
+    )
+
+    const batch = expired.slice(0, 100)
+    const more = expired.length > 100
+
+    for (const booking of batch) {
+      await releaseBookingReservations(ctx, booking._id, 'hold_expired')
+
+      const sessions = await ctx.db
+        .query('bookingSessions')
+        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
+        .collect()
+      for (const session of sessions) {
+        await ctx.db.delete(session._id)
+      }
+
+      const links = await ctx.db
+        .query('bookingLinks')
+        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
+        .collect()
+      for (const link of links) {
+        await ctx.db.delete(link._id)
+      }
+
+      await ctx.db.delete(booking._id)
+    }
+
+    return { expired: batch.length, more }
+  },
+})
+
+/**
+ * Cron: auto-complete Upcoming bookings whose last session has ended.
+ * Runs hourly. Uses timezone-aware comparison via Intl.DateTimeFormat.
+ * Batch limit: 100 per run.
+ */
+export const completeBookings = internalMutation({
+  args: {},
+  handler: async (ctx: AnyCtx): Promise<{ completed: number; more: boolean }> => {
+    const upcoming = await ctx.db
+      .query('bookings')
+      .withIndex('by_status', (q: AnyCtx) => q.eq('status', 'Upcoming'))
+      .collect()
+
+    const batch = upcoming.slice(0, 100)
+    const more = upcoming.length > 100
+    let completed = 0
+
+    for (const booking of batch) {
+      const sessions = await ctx.db
+        .query('bookingSessions')
+        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
+        .collect()
+
+      if (sessions.length === 0) continue
+
+      // Last session = max date, then max endTime (both YYYY-MM-DD / HH:MM are lex-sortable)
+      const last = sessions.reduce((latest: AnyCtx, s: AnyCtx) => {
+        if (s.date > latest.date) return s
+        if (s.date === latest.date && s.endTime > latest.endTime) return s
+        return latest
+      })
+
+      if (isSessionEnded(last.date, last.endTime, last.timezone)) {
+        await ctx.db.patch(booking._id, { status: 'Completed' })
+        completed++
+      }
+    }
+
+    return { completed, more }
+  },
 })
