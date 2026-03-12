@@ -2,16 +2,17 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 const isPublicRoute = createRouteMatcher([
+  '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/portal(.*)',   // Customer portal is tokenized, no auth required
   '/api/webhooks(.*)',
 ])
 
+// role-select intentionally excluded: authenticated new users must reach it
 const isAuthRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/role-select(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {

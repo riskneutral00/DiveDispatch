@@ -18,6 +18,5 @@ export function ConvexClerkProvider({ children }: { children: ReactNode }) {
   return React.createElement(ConvexProviderWithClerk as any, {
     client: convex,
     useAuth,
-    children,
-  })
+  }, children)
 }

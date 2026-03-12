@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DiveDispatch",
+    "tagline": "The complete platform for dive operations"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "directory": "Directory",
+    "resources": "Resources",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "selectRole": "Select your role",
+    "roleOrganizer": "I create dive bookings",
+    "roleResource": "I provide dive services"
+  },
+  "booking": {
+    "new": "New Booking",
+    "edit": "Edit Booking",
+    "status": {
+      "draft": "Draft",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "reservation": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "vacated": "Vacated"
+    },
+    "actions": {
+      "confirm": "Confirm",
+      "decline": "Decline",
+      "cancel": "Cancel Booking",
+      "save": "Save",
+      "submit": "Submit"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found"
+  }
+}

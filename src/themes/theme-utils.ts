@@ -1,0 +1,139 @@
+import { ColorPalette, ThemeConfig, ThemeMode } from "./theme-types";
+
+// ── Color contrast ────────────────────────────────────────────────────────────
+
+// Parse hex (#rgb, #rrggbb) or rgb()/rgba() to an RGB triple.
+// Returns null for unparseable strings (oklch, var(), etc.) — callers fall back gracefully.
+function parseToRgb(
+  color: string,
+): { r: number; g: number; b: number } | null {
+  const hex3 = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(color);
+  if (hex3) {
+    return {
+      r: parseInt(hex3[1] + hex3[1], 16),
+      g: parseInt(hex3[2] + hex3[2], 16),
+      b: parseInt(hex3[3] + hex3[3], 16),
+    };
+  }
+
+  const hex6 = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (hex6) {
+    return {
+      r: parseInt(hex6[1], 16),
+      g: parseInt(hex6[2], 16),
+      b: parseInt(hex6[3], 16),
+    };
+  }
+
+  const rgbFn =
+    /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i.exec(color);
+  if (rgbFn) {
+    return {
+      r: parseInt(rgbFn[1], 10),
+      g: parseInt(rgbFn[2], 10),
+      b: parseInt(rgbFn[3], 10),
+    };
+  }
+
+  return null;
+}
+
+// WCAG 2.1 relative luminance
+function relativeLuminance(r: number, g: number, b: number): number {
+  const channel = (v: number): number => {
+    const s = v / 255;
+    return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+// WCAG contrast ratio between two CSS color strings.
+// Returns null when either color cannot be parsed.
+export function contrastRatio(colorA: string, colorB: string): number | null {
+  const a = parseToRgb(colorA);
+  const b = parseToRgb(colorB);
+  if (!a || !b) return null;
+
+  const lumA = relativeLuminance(a.r, a.g, a.b);
+  const lumB = relativeLuminance(b.r, b.g, b.b);
+  const lighter = Math.max(lumA, lumB);
+  const darker = Math.min(lumA, lumB);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+// WCAG AA: 4.5:1 normal text, 3:1 large text / UI components
+export function meetsAA(foreground: string, background: string): boolean {
+  const ratio = contrastRatio(foreground, background);
+  return ratio === null ? true : ratio >= 4.5;
+}
+
+export function meetsAAA(foreground: string, background: string): boolean {
+  const ratio = contrastRatio(foreground, background);
+  return ratio === null ? true : ratio >= 7.0;
+}
+
+// ── CSS variable generation ───────────────────────────────────────────────────
+
+const TRANSITION_SPEED_MAP: Record<string, string> = {
+  fast: "0.15s",
+  normal: "0.3s",
+  slow: "0.5s",
+};
+
+// Maps a ColorPalette to CSS variable names defined in CLAUDE.md.
+export function paletteToVars(palette: ColorPalette): Record<string, string> {
+  return {
+    "--color-primary": palette.primary,
+    "--color-secondary": palette.secondary,
+    "--color-accent": palette.accent,
+    "--color-text-primary": palette.textPrimary,
+    "--color-text-secondary": palette.textSecondary,
+    "--color-text-on-primary": palette.textOnPrimary,
+    "--color-glass-bg": palette.glassBg,
+    "--color-glass-border": palette.glassBorder,
+    "--glass-blur": `${palette.glassBlur}px`,
+    "--color-success": palette.success,
+    "--color-warning": palette.warning,
+    "--color-destructive": palette.destructive,
+    "--color-surface": palette.surface,
+    "--color-surface-elevated": palette.surfaceElevated,
+  };
+}
+
+// Full CSS variable set for a theme + mode (palette + typography + shape + motion).
+export function themeToVars(
+  theme: ThemeConfig,
+  mode: ThemeMode,
+): Record<string, string> {
+  const palette = mode === "dark" ? theme.colors.dark : theme.colors.light;
+  const vars: Record<string, string> = {
+    ...paletteToVars(palette),
+    "--font-heading": theme.typography.fontHeading,
+    "--font-body": theme.typography.fontBody,
+    "--border-radius": theme.shape.borderRadius,
+    "--transition-speed":
+      TRANSITION_SPEED_MAP[theme.motion.transitionSpeed] ?? "0.3s",
+  };
+  if (theme.typography.fontAccent) {
+    vars["--font-accent"] = theme.typography.fontAccent;
+  }
+  return vars;
+}
+
+// ── DOM injection ─────────────────────────────────────────────────────────────
+
+// Sets CSS custom properties directly on document.documentElement.
+export function injectVars(vars: Record<string, string>): void {
+  const root = document.documentElement;
+  for (const [key, value] of Object.entries(vars)) {
+    root.style.setProperty(key, value);
+  }
+}
+
+// Removes CSS custom properties that were previously injected.
+export function clearInjectedVars(vars: Record<string, string>): void {
+  const root = document.documentElement;
+  for (const key of Object.keys(vars)) {
+    root.style.removeProperty(key);
+  }
+}
