@@ -195,6 +195,31 @@ Instructor, DiveMaster, Boat, Equipment, Pool, Compressor
 - Clerk seeding: separate script creates matching Clerk users.
 - Schema changes require full wipe + reseed.
 
+## Obsidian Vault
+
+DiveVault lives at `~/Desktop/DiveVault/`. Obsidian watches that directory — files appear automatically when written.
+
+### When to write to the vault
+
+**Session summaries (`Sessions/YYYY-MM-DD.md`):** At the end of any substantive session (new feature built, architectural decision made, significant debugging). Include: what was built/decided, new patterns established, open questions.
+
+**Reference notes (`DiveDispatch/`):** Update the relevant note when architecture, schema, or conventions change. Notes: Overview.md, Architecture.md, Schema.md, UI System.md, Stakeholders.md.
+
+**Ideas (`Ideas/Parallel Apps.md`):** Append whenever Matt mentions a new app concept. Format:
+```
+## [App Name]
+**Date mentioned:** YYYY-MM-DD
+**Context:** ...
+**Core idea:** ...
+**Potential connection to DiveDispatch:** ...
+```
+
+### When Matt asks about past decisions
+
+Read the relevant vault file (`~/Desktop/DiveVault/DiveDispatch/`) and answer. No MCP. No extra overhead beyond the content of that one file.
+
+---
+
 ## Deferred Scope
 
 These features exist in the schema or specs as placeholders but are NOT scheduled for implementation:

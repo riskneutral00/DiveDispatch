@@ -2,11 +2,16 @@
 
 import { useReducer, useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { WizardProgress } from './wizard-progress'
+import { StepDetails } from './step-details'
+import { StepDivers } from './step-divers'
+import { StepResources } from './step-resources'
+import { StepSessions } from './step-sessions'
+import { StepReview } from './step-review'
 import {
   wizardReducer,
   makeInitialState,
@@ -16,15 +21,6 @@ import {
   WIZARD_STEP_LABELS,
   type WizardStep,
 } from '@/lib/booking/wizard-state'
-
-// ── Step placeholder content ──────────────────────────────────────────────────
-
-const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
-  details: 'Activity type, start/end dates, and portal settings — built in L1-22',
-  divers: 'Add divers with name, nationality, and course selection — built in L1-23',
-  resources: 'Assign instructor, boat, equipment, pool, and compressor — built in L1-24 + L1-25',
-  review: 'Summary of all booking details and final submit — built in L1-26',
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -171,6 +167,65 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
     )
   }
 
+  // Review step renders its own layout (back + submit buttons)
+  if (state.step === 'review') {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1
+            className="text-2xl font-bold mb-1"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          >
+            {isEditMode ? 'Edit Booking' : 'New Booking'}
+          </h1>
+          {state.bookingId && (
+            <p className="text-xs font-mono" style={{ color: 'var(--color-text-secondary)' }}>
+              {state.bookingId}
+            </p>
+          )}
+        </div>
+        <WizardProgress currentStep={state.step} />
+        <div className="mt-6">
+          <GlassCard padding="lg" elevated>
+            <h2
+              className="text-lg font-semibold mb-4"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            >
+              {WIZARD_STEP_LABELS[state.step]}
+            </h2>
+            <StepReview state={state} dispatch={dispatch} />
+          </GlassCard>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Steps 1–4 with shared navigation ──────────────────────────────────────
+
+  function renderStepContent() {
+    switch (state.step) {
+      case 'details':
+        return <StepDetails details={state.details} dispatch={dispatch} />
+      case 'divers':
+        return <StepDivers divers={state.divers} details={state.details} dispatch={dispatch} />
+      case 'resources':
+        return <StepResources resources={state.resources} details={state.details} dispatch={dispatch} />
+      case 'sessions':
+        return (
+          <StepSessions
+            sessions={state.sessions}
+            details={state.details}
+            divers={state.divers}
+            resources={state.resources}
+            dispatch={dispatch}
+          />
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Header */}
@@ -194,23 +249,12 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       {/* Step content */}
       <GlassCard className="mt-6" padding="lg" elevated>
         <h2
-          className="text-lg font-semibold mb-2"
+          className="text-lg font-semibold mb-4"
           style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
         >
           {WIZARD_STEP_LABELS[state.step]}
         </h2>
-
-        <div
-          className="min-h-[240px] flex items-center justify-center rounded-lg border border-dashed"
-          style={{ borderColor: 'var(--color-glass-border)' }}
-        >
-          <p
-            className="text-sm text-center px-4"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-          >
-            {STEP_DESCRIPTIONS[state.step]}
-          </p>
-        </div>
+        {renderStepContent()}
       </GlassCard>
 
       {/* Save error */}
@@ -232,23 +276,16 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
           Back
         </GlassButton>
 
-        {isLastStep ? (
-          <GlassButton variant="primary" disabled={!state.bookingId} size="md">
-            <Send size={16} />
-            Submit — L1-26
-          </GlassButton>
-        ) : (
-          <GlassButton
-            variant="primary"
-            onClick={handleNext}
-            disabled={isSaving}
-            loading={isSaving}
-            size="md"
-          >
-            Next
-            <ChevronRight size={16} />
-          </GlassButton>
-        )}
+        <GlassButton
+          variant="primary"
+          onClick={handleNext}
+          disabled={isSaving}
+          loading={isSaving}
+          size="md"
+        >
+          Next
+          <ChevronRight size={16} />
+        </GlassButton>
       </div>
     </div>
   )

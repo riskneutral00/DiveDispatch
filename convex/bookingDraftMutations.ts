@@ -27,6 +27,10 @@ type OperatorType =
  * Creates a minimal Draft booking shell. Called once when the wizard first opens
  * for a new booking. Returns bookingId for subsequent saveDraftState calls.
  * Fails fast if caller is not an organizer role.
+ *
+ * For Agent callers in independent mode: agent is owner, agentId is set for
+ * dashboard listing via the by_agentId index.
+ * For referral mode use createReferralDraftShell instead.
  */
 export const createDraftShell = mutation({
   args: {},
@@ -45,6 +49,9 @@ export const createDraftShell = mutation({
 
     const today = new Date().toISOString().split('T')[0]
 
+    // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
+    const agentId = user.role === 'Agent' ? (user.slug as string) : undefined
+
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
       ownerType: user.role as OperatorType,
@@ -56,7 +63,68 @@ export const createDraftShell = mutation({
       startDate: today,
       endDate: today,
       divers: [],
+      agentId,
       operatorName: user.businessName,
+      portalContact: true,
+      portalMedical: true,
+      portalWaiver: true,
+      medicalHardBlock: false,
+      bookingFormComplete: false,
+      customerFormComplete: false,
+    })
+
+    return bookingId as string
+  },
+})
+
+/**
+ * Creates a referral Draft booking shell. Agent refers a customer to a DC —
+ * the DC becomes the booking owner and handles the booking from here.
+ * Agent's involvement ends after this call; they can track via by_agentId index.
+ */
+export const createReferralDraftShell = mutation({
+  args: {
+    referralDcSlug: v.string(),
+  },
+  handler: async (ctx: AnyCtx, args: { referralDcSlug: string }): Promise<string> => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (user.role !== 'Agent') throw new ConvexError({ code: 'FORBIDDEN' })
+
+    const dcUser = await ctx.db
+      .query('users')
+      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', args.referralDcSlug))
+      .unique()
+    if (!dcUser) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!OPERATOR_ROLE_SET.has(dcUser.role as string)) {
+      throw new ConvexError({ code: 'FORBIDDEN' })
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const bookingId = await ctx.db.insert('bookings', {
+      ownerId: dcUser.slug as string,
+      ownerType: dcUser.role as OperatorType,
+      status: 'Draft' as const,
+      createdAt: Date.now(),
+      holdTTL: HOLD_TTL_MS,
+      paid: false,
+      activityType: [],
+      startDate: today,
+      endDate: today,
+      divers: [],
+      agentId: user.slug as string,
+      agentIsReferral: true,
+      // operatorName is the DC's business name since they own the booking
+      operatorName: dcUser.businessName as string,
       portalContact: true,
       portalMedical: true,
       portalWaiver: true,

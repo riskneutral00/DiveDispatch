@@ -2,14 +2,15 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 
 // ── Step definition ───────────────────────────────────────────────────────────
 
-export type WizardStep = 'details' | 'divers' | 'resources' | 'review'
+export type WizardStep = 'details' | 'divers' | 'resources' | 'sessions' | 'review'
 
-export const WIZARD_STEPS: readonly WizardStep[] = ['details', 'divers', 'resources', 'review']
+export const WIZARD_STEPS: readonly WizardStep[] = ['details', 'divers', 'resources', 'sessions', 'review']
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   details: 'Details',
   divers: 'Divers',
   resources: 'Resources',
+  sessions: 'Sessions',
   review: 'Review',
 }
 

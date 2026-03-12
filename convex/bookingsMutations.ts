@@ -228,6 +228,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
 
   // 2. Load booking + verify caller owns it
+  // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
   const booking = await ctx.db.get(args.bookingId)
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
   if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
