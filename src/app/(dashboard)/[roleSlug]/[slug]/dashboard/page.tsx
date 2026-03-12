@@ -1,6 +1,10 @@
 import { Anchor } from 'lucide-react'
-import { GlassCard } from '@/components/glass'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
+import { DashboardStats } from '@/components/dashboard/dashboard-stats'
+import { BookingList } from '@/components/dashboard/booking-list'
+import { OpenRequests } from '@/components/dashboard/open-requests'
+import { ConfirmedSchedule } from '@/components/dashboard/confirmed-schedule'
+import { AvailabilityCalendar } from '@/components/dashboard/availability-calendar'
 
 export default async function DashboardPage({
   params,
@@ -11,19 +15,19 @@ export default async function DashboardPage({
   const roleConfig = ROLE_BY_KEY[roleSlug as RoleKey]
 
   const RoleIcon = roleConfig?.icon ?? Anchor
+  const isOrganizer = roleConfig?.isOrganizer ?? false
+  const isResourceOnly = (roleConfig?.isResource ?? false) && !isOrganizer
+  const clerkRole = roleConfig?.clerkRole
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Welcome header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <RoleIcon size={28} style={{ color: 'var(--color-primary)' }} />
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-3 mb-1">
+          <RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />
           <h1
             className="text-2xl font-bold"
-            style={{
-              fontFamily: 'var(--font-heading)',
-              color: 'var(--color-text-primary)',
-            }}
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
           >
             {roleConfig?.label ?? roleSlug} Dashboard
           </h1>
@@ -33,65 +37,76 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      {/* Placeholder cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <GlassCard elevated>
-          <p
-            className="text-xs font-semibold uppercase tracking-wider mb-1"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            {roleConfig?.isOrganizer ? 'Active Bookings' : 'Pending Reservations'}
-          </p>
-          <p
-            className="text-3xl font-bold"
-            style={{ color: 'var(--color-text-primary)' }}
-          >
-            —
-          </p>
-        </GlassCard>
+      {/* Operator dashboard: stats + booking list */}
+      {isOrganizer && clerkRole && (
+        <>
+          <DashboardStats ownerId={slug} ownerType={clerkRole} />
+          <BookingList ownerId={slug} ownerType={clerkRole} />
+        </>
+      )}
 
-        <GlassCard elevated>
-          <p
-            className="text-xs font-semibold uppercase tracking-wider mb-1"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            {roleConfig?.isOrganizer ? 'Upcoming Sessions' : 'Confirmed This Week'}
-          </p>
-          <p
-            className="text-3xl font-bold"
-            style={{ color: 'var(--color-text-primary)' }}
-          >
-            —
-          </p>
-        </GlassCard>
+      {/* Resource dashboard: requests + schedule + availability */}
+      {isResourceOnly && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left column: open requests */}
+          <div className="space-y-4">
+            <div>
+              <h2
+                className="text-base font-semibold mb-3"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+              >
+                Pending Requests
+              </h2>
+              <OpenRequests confirmOnDecline />
+            </div>
 
-        <GlassCard elevated>
-          <p
-            className="text-xs font-semibold uppercase tracking-wider mb-1"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            {roleConfig?.isOrganizer ? 'Resources Confirmed' : 'Availability'}
-          </p>
-          <p
-            className="text-3xl font-bold"
-            style={{ color: 'var(--color-text-primary)' }}
-          >
-            —
-          </p>
-        </GlassCard>
-      </div>
+            <div>
+              <h2
+                className="text-base font-semibold mb-3"
+                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+              >
+                Confirmed Schedule
+              </h2>
+              <ConfirmedSchedule />
+            </div>
+          </div>
 
-      {/* Coming soon notice */}
-      <div className="mt-8">
-        <GlassCard padding="md">
-          <p
-            className="text-sm text-center"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Dashboard widgets are coming soon. Navigation and shell are ready.
-          </p>
-        </GlassCard>
-      </div>
+          {/* Right column: availability calendar */}
+          <div>
+            <h2
+              className="text-base font-semibold mb-3"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            >
+              Availability
+            </h2>
+            <AvailabilityCalendar />
+          </div>
+        </div>
+      )}
+
+      {/* Dual-role: show both operator and resource sections */}
+      {isOrganizer && roleConfig?.isResource && clerkRole && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <div>
+            <h2
+              className="text-base font-semibold mb-3"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            >
+              Incoming Requests
+            </h2>
+            <OpenRequests confirmOnDecline />
+          </div>
+          <div>
+            <h2
+              className="text-base font-semibold mb-3"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            >
+              Availability
+            </h2>
+            <AvailabilityCalendar />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
