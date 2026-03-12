@@ -1,4 +1,4 @@
-# DiveDispatch v1
+# DiveDispatch
 
 Multi-stakeholder booking platform for scuba diving. Operator creates booking; instructors, boats, equipment, pool, compressor operators each confirm their slice. Customers complete a portal via tokenized link.
 
@@ -49,7 +49,7 @@ Any implementation that violates these is wrong:
 
 | From | To | Trigger |
 |------|-----|---------|
-| Draft | Upcoming | Auto: bookingFormComplete && customerFormComplete && !medicalHardBlock |
+| Draft | Upcoming | Auto: bookingFormComplete && customerFormComplete && allInSystemReservationsConfirmed && !medicalHardBlock |
 | Upcoming | Completed | Auto: daily cron after last session ends |
 | Completed | Draft | Edit (resets all reservations to PendingAcceptance) |
 | Completed | Cancelled | Allowed |
@@ -57,6 +57,16 @@ Any implementation that violates these is wrong:
 | Any non-Cancelled | Cancelled | No undo. All reservations → Vacated(booking_cancelled) |
 
 - TTL expiry: booking is DELETED (not cancelled). Reservations vacated first.
+- TTL uses **lazy expiry** (check on read), not a cron. When a booking is read and `status === 'Draft' && expiresAt != null && now > expiresAt` → vacate all reservations, then delete the booking.
+- Once a booking reaches Upcoming, TTL never applies.
+- Stakeholders can decline anytime; they do not need to wait for TTL.
+- Default `holdTTL`: **12 hours (43200000 ms)**. Applied as system default when creating a booking.
+
+### Auto-advance with External Resources
+
+- External resources (listed in `externalStakeholders`) do not create reservations.
+- Auto-advance only checks in-system reservations for completion.
+- A booking with all-external resources advances immediately once the customer portal is complete.
 
 ### Reservation (4 statuses)
 
@@ -73,6 +83,8 @@ Any implementation that violates these is wrong:
 4. No cross-EM fallback, no split-plan holds.
 
 ## UI — Liquid Glass Aesthetic
+
+Use the `/ui-ux-pro-max` skill when building or reviewing UI components. It has Liquid Glass (style #14) and Booking & Appointment industry rules built in. Our docs (CLAUDE.md, LLM_HANDOFF.md Section 12) take precedence on CSS variable naming and theme structure — use the skill as a design advisor, not the authority.
 
 Components use CSS custom properties for ALL visual styling. Never hardcode colors.
 
@@ -106,10 +118,9 @@ Build with `src/components/glass/`:
 
 ## Testing
 
-- Every Convex mutation → `convex-test` integration test (mandatory)
-- Critical user journeys → Playwright E2E
-- Non-obvious business logic → unit test ONLY when genuinely complex
-- TDD: write test first (RED), implement (GREEN), refactor (IMPROVE)
+- **E2E is the primary testing strategy.** Playwright tests covering critical user journeys catch real bugs across the full stack (Clerk auth → Convex mutations → reactive UI → state transitions). Unit/integration tests only catch what you thought to mock.
+- Playwright E2E for: booking creation flow, resource acceptance/decline, customer portal completion, inventory conflict detection, status transitions.
+- Unit tests ONLY when business logic is genuinely complex and non-obvious (e.g., gear sizing lookup, date overlap calculations).
 - Run `npm test` before every commit. Abort if tests fail.
 
 ## Security
@@ -149,3 +160,46 @@ Instructor, DiveMaster, Boat, Equipment, Pool, Compressor
 - Flag contradictions/gaps; defer to Matt for resolution
 - Fix shared components first in bug triage, then propagate
 - Write all rules in positive framing ("do X")
+
+## Error Handling Conventions
+
+- Server: `throw new ConvexError({ code: 'CODE', reason?: string })`
+- Error codes (exhaustive list):
+  - `UNAUTHENTICATED` — no valid Clerk identity
+  - `NOT_FOUND` — entity does not exist
+  - `FORBIDDEN` — caller does not own the resource
+  - `CONFLICT` — availability conflict (unit already held)
+  - `INVALID_STATUS` — transition not allowed from current status
+  - `BLOCKED_DATE` — session date is in owner's blocked dates
+  - `VALIDATION` — Zod validation failure
+  - `TOKEN_EXPIRED` — portal link token is expired or invalid
+  - `BOOKING_CLOSED` — portal submission after booking is no longer Draft
+  - `FORMS_INCOMPLETE` — auto-advance blocked by incomplete forms
+  - `MISSING_INSTRUCTOR` — booking requires instructor but none assigned
+  - `MEDICAL_HARD_BLOCK` — medical questionnaire flagged a condition requiring physician clearance
+- Client: inline error text with `text-destructive` class. No toast library. No snackbars.
+- Zod validation on client → field-level inline errors. ConvexError on server → catch in `useMutation` `onError` + display.
+
+## Real-Time Patterns
+
+- All data fetching uses Convex `useQuery` (reactive subscriptions). No one-shot fetches.
+- Skip pattern: `useQuery(api.x, condition ? args : "skip")`
+- No explicit optimistic updates — Convex auto-revalidates after mutations.
+- Static data (course catalog, role configs, countries) lives in `src/lib/constants/` as TS objects, not queries.
+
+## Seed Data Strategy
+
+- Dev seed: 8 DiveCenters, 1 Agent, 50 Instructors, 3 Boats, 6 Equipment, 4 Pools, 1 Compressor. All Phuket, Thailand.
+- Seed password: `REDACTED`. Email format: `{name}@divedispatch.dev`
+- Commands: `npm run wipe:all` → `npx convex dev --once` → `npm run seed:force:all`
+- Clerk seeding: separate script creates matching Clerk users.
+- Schema changes require full wipe + reseed.
+
+## Deferred Scope
+
+These features exist in the schema or specs as placeholders but are NOT scheduled for implementation:
+- Seating chart (boat) — `fleet[].seatCapacity` field retained, but no UI for seat assignment
+- Boat Master sub-role — schema field retained, no role logic
+- Min-pax auto-cancel logic — `fleet[].minPax` and `fleet[].cutoffHours` fields retained, no cron enforcement
+- Backup boat auto-assignment — no automatic fallback when primary boat declines
+- POST-01 (boat transfer flow) spec exists but is not scheduled

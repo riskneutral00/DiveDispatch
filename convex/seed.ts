@@ -1,0 +1,420 @@
+import { internalAction, internalMutation } from './_generated/server'
+import { internal } from './_generated/api'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole } from './seedData'
+import { ALL_INSTRUCTORS } from './seedInstructorData'
+import {
+  ALL_GEAR_SIZING,
+  SCUBAPRO_WETSUITS,
+  SCUBAPRO_BCDS,
+  AQUALUNG_WETSUITS,
+  AQUALUNG_BCDS,
+  MARES_WETSUITS,
+  MARES_BCDS,
+  GearSizingEntry,
+} from '../src/lib/constants/gear-sizing'
+
+// ── Equipment Inventory Generation ──────────────────────────────────
+
+const FIN_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46']
+const PRESCRIPTION_MASKS: { diopter: number; qty: number }[] = [
+  { diopter: -2.0, qty: 2 },
+  { diopter: -3.0, qty: 2 },
+  { diopter: -4.0, qty: 1 },
+]
+
+type GearTypeValue = 'wetsuit' | 'bcd' | 'fins' | 'mask' | 'regulator'
+
+interface InventoryLine {
+  gearType: GearTypeValue
+  manufacturer?: string
+  size?: string
+  diopter?: number
+  isPrescription?: boolean
+  totalUnits: number
+  displayName: string
+}
+
+function wetsuitSizesFor(manufacturer: string): GearSizingEntry[] {
+  if (manufacturer === 'ScubaPro') return SCUBAPRO_WETSUITS
+  if (manufacturer === 'Aqua Lung') return AQUALUNG_WETSUITS
+  if (manufacturer === 'Mares') return MARES_WETSUITS
+  return []
+}
+
+function bcdSizesFor(manufacturer: string): GearSizingEntry[] {
+  if (manufacturer === 'ScubaPro') return SCUBAPRO_BCDS
+  if (manufacturer === 'Aqua Lung') return AQUALUNG_BCDS
+  if (manufacturer === 'Mares') return MARES_BCDS
+  return []
+}
+
+function buildEquipmentLines(
+  manufacturers: Record<string, string[]>,
+): InventoryLine[] {
+  const lines: InventoryLine[] = []
+
+  for (const [gearType, brands] of Object.entries(manufacturers)) {
+    for (const brand of brands) {
+      const sizes = gearType === 'wetsuit' ? wetsuitSizesFor(brand) : bcdSizesFor(brand)
+      for (const entry of sizes) {
+        lines.push({
+          gearType: gearType as GearTypeValue,
+          manufacturer: brand,
+          size: entry.size,
+          totalUnits: 5,
+          displayName: `${brand} ${gearType === 'wetsuit' ? 'Wetsuit' : 'BCD'} ${entry.size}`,
+        })
+      }
+    }
+  }
+
+  for (const finSize of FIN_SIZES) {
+    lines.push({
+      gearType: 'fins',
+      size: `EU ${finSize}`,
+      totalUnits: 5,
+      displayName: `Fins EU ${finSize}`,
+    })
+  }
+
+  lines.push({
+    gearType: 'mask',
+    isPrescription: false,
+    totalUnits: 15,
+    displayName: 'Mask (Regular)',
+  })
+
+  for (const pm of PRESCRIPTION_MASKS) {
+    lines.push({
+      gearType: 'mask',
+      diopter: pm.diopter,
+      isPrescription: true,
+      totalUnits: pm.qty,
+      displayName: `Mask (Rx ${pm.diopter})`,
+    })
+  }
+
+  lines.push({
+    gearType: 'regulator',
+    totalUnits: 15,
+    displayName: 'Regulator Set',
+  })
+
+  return lines
+}
+
+// ── Seed Orchestrator ───────────────────────────────────────────────
+
+export const seedAll = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.runMutation(internal.seed.seedStakeholders)
+    await ctx.runMutation(internal.seed.seedInstructors)
+    await ctx.runMutation(internal.seed.seedEquipmentInventory)
+    await ctx.runMutation(internal.seed.seedGearSizingLookup)
+    await ctx.runMutation(internal.seed.seedResourceInventory)
+    await ctx.runMutation(internal.seed.seedStakeholderPreferences)
+    await ctx.runMutation(internal.seed.seedDefaultTheme)
+  },
+})
+
+export const wipeAll = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.runMutation(internal.seed.wipeAllTables)
+  },
+})
+
+// ── Wipe ─────────────────────────────────────────────────────────────
+
+const TABLES_TO_WIPE = [
+  'users', 'themes',
+  'bookings', 'bookingSessions', 'customers', 'customerProfiles', 'bookingLinks',
+  'inventoryUnits', 'reservations', 'availabilitySnapshots', 'equipmentInventory',
+  'stakeholderPreferences', 'notifications',
+  'diveCenters', 'instructors', 'boats', 'equipment', 'pools', 'compressors',
+  'equipmentBags', 'gearSizingLookup',
+  'stakeholderHierarchy', 'bans', 'bookingTemplates',
+  'agents', 'diveMasters',
+  'liveaboards', 'cabins', 'tripSchedules',
+  'diveResorts', 'rooms', 'diveHostels', 'diveSites',
+] as const
+
+export const wipeAllTables = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const table of TABLES_TO_WIPE) {
+      const rows = await ctx.db.query(table).collect()
+      for (const row of rows) {
+        await ctx.db.delete(row._id)
+      }
+    }
+  },
+})
+
+// ── Seed Stakeholders (non-instructor) ──────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function insertUser(ctx: { db: { insert: (...args: any[]) => any } }, s: SeedStakeholder) {
+  return ctx.db.insert('users', {
+    tokenIdentifier: `seed|${s.user.slug}`,
+    slug: s.user.slug,
+    email: s.user.email,
+    name: s.user.name,
+    firstName: s.user.firstName,
+    lastName: s.user.lastName,
+    businessName: s.user.businessName,
+    role: s.user.role,
+    additionalRoles: s.user.additionalRoles,
+    isSeeded: true,
+    preferredLocale: s.user.preferredLocale,
+  })
+}
+
+export const seedStakeholders = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query('users').first()
+    if (existing) return 'Already seeded'
+
+    for (const s of ALL_STAKEHOLDERS) {
+      const userId = await insertUser(ctx, s)
+
+      if (s.diveCenter) {
+        await ctx.db.insert('diveCenters', { userId, ...s.diveCenter })
+      }
+      if (s.boat) {
+        await ctx.db.insert('boats', { userId, ...s.boat })
+      }
+      if (s.pool) {
+        await ctx.db.insert('pools', { userId, ...s.pool })
+      }
+      if (s.equipment) {
+        await ctx.db.insert('equipment', { userId, ...s.equipment })
+      }
+      if (s.compressor) {
+        await ctx.db.insert('compressors', { userId, ...s.compressor })
+      }
+      if (s.agent) {
+        await ctx.db.insert('agents', { userId, ...s.agent })
+      }
+    }
+  },
+})
+
+// ── Seed Instructors ────────────────────────────────────────────────
+
+export const seedInstructors = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const s of ALL_INSTRUCTORS) {
+      const userId = await insertUser(ctx, s)
+      if (s.instructor) {
+        await ctx.db.insert('instructors', { userId, ...s.instructor })
+      }
+    }
+  },
+})
+
+// ── Seed Equipment Inventory ────────────────────────────────────────
+
+export const seedEquipmentInventory = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const s of ALL_STAKEHOLDERS) {
+      if (!s.equipment?.manufacturersByGearType) continue
+
+      const emSlug = s.user.slug
+      const lines = buildEquipmentLines(s.equipment.manufacturersByGearType)
+
+      for (const line of lines) {
+        const inventoryUnitId = await ctx.db.insert('inventoryUnits', {
+          resourceType: 'Equipment',
+          resourceId: emSlug,
+          displayName: line.displayName,
+          capacityModel: 'Pooled',
+          totalUnits: line.totalUnits,
+          ownerId: emSlug,
+          ownerType: 'Equipment',
+        })
+
+        await ctx.db.insert('equipmentInventory', {
+          inventoryUnitId,
+          equipmentManagerId: emSlug,
+          gearType: line.gearType,
+          ...(line.manufacturer !== undefined && { manufacturer: line.manufacturer }),
+          ...(line.size !== undefined && { size: line.size }),
+          ...(line.diopter !== undefined && { diopter: line.diopter }),
+          ...(line.isPrescription !== undefined && { isPrescription: line.isPrescription }),
+        })
+      }
+    }
+  },
+})
+
+// ── Seed Gear Sizing Lookup ─────────────────────────────────────────
+
+export const seedGearSizingLookup = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const entry of ALL_GEAR_SIZING) {
+      await ctx.db.insert('gearSizingLookup', {
+        manufacturer: entry.manufacturer,
+        gearType: entry.gearType,
+        size: entry.size,
+        minHeight: entry.minHeight,
+        maxHeight: entry.maxHeight === Infinity ? 999 : entry.maxHeight,
+        minWeight: entry.minWeight,
+        maxWeight: entry.maxWeight === Infinity ? 999 : entry.maxWeight,
+      })
+    }
+  },
+})
+
+// ── GAP-01: Seed Resource Inventory (non-equipment) ─────────────────
+
+export const seedResourceInventory = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Instructors: 1 Exclusive unit per instructor
+    for (const s of ALL_INSTRUCTORS) {
+      await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: s.user.slug,
+        displayName: s.user.name,
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: s.user.slug,
+        ownerType: 'Instructor',
+      })
+    }
+
+    for (const s of ALL_STAKEHOLDERS) {
+      // Boats: 1 Pooled unit per fleet entry
+      if (s.boat) {
+        for (const fleet of s.boat.fleet) {
+          await ctx.db.insert('inventoryUnits', {
+            resourceType: 'Boat',
+            resourceId: s.user.slug,
+            displayName: fleet.boatName,
+            capacityModel: 'Pooled',
+            totalUnits: fleet.maxPax,
+            ownerId: s.user.slug,
+            ownerType: 'Boat',
+          })
+        }
+      }
+
+      // Pools: 1 Pooled unit per pool
+      if (s.pool) {
+        await ctx.db.insert('inventoryUnits', {
+          resourceType: 'Pool',
+          resourceId: s.user.slug,
+          displayName: s.pool.name,
+          capacityModel: 'Pooled',
+          totalUnits: s.pool.maxCapacity,
+          ownerId: s.user.slug,
+          ownerType: 'Pool',
+        })
+      }
+
+      // Compressors: 1 Pooled unit with unlimited capacity
+      if (s.compressor) {
+        await ctx.db.insert('inventoryUnits', {
+          resourceType: 'Compressor',
+          resourceId: s.user.slug,
+          displayName: s.compressor.name,
+          capacityModel: 'Pooled',
+          totalUnits: 999999,
+          ownerId: s.user.slug,
+          ownerType: 'Compressor',
+        })
+      }
+    }
+  },
+})
+
+// ── GAP-03: Seed Stakeholder Preferences ────────────────────────────
+
+export const seedStakeholderPreferences = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const allStakeholders: { slug: string; role: StakeholderRole }[] = [
+      ...ALL_STAKEHOLDERS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
+      ...ALL_INSTRUCTORS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
+    ]
+
+    for (const { slug, role } of allStakeholders) {
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: slug,
+        stakeholderType: role,
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 0,
+        postJobBlockDuration: 0,
+        useNamedUnits: false,
+        commonLanguageCodes: [],
+        confirmOnAccept: false,
+        confirmOnDecline: false,
+      })
+    }
+  },
+})
+
+// ── GAP-25: Seed Default Theme ──────────────────────────────────────
+
+export const seedDefaultTheme = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const themeId = await ctx.db.insert('themes', {
+      name: 'Ocean Blue',
+      slug: 'ocean-blue',
+      config: JSON.stringify({
+        light: {
+          primary: '#0077B6',
+          secondary: '#00B4D8',
+          accent: '#90E0EF',
+          textPrimary: '#1A1A2E',
+          textSecondary: '#4A4A6A',
+          textOnPrimary: '#FFFFFF',
+          glassBg: 'rgba(255, 255, 255, 0.12)',
+          glassBorder: 'rgba(255, 255, 255, 0.2)',
+          glassBlur: '16px',
+          surface: '#F8FAFC',
+          surfaceElevated: '#FFFFFF',
+          success: '#10B981',
+          warning: '#F59E0B',
+          destructive: '#EF4444',
+        },
+        dark: {
+          primary: '#00B4D8',
+          secondary: '#0077B6',
+          accent: '#023E8A',
+          textPrimary: '#E0E7FF',
+          textSecondary: '#94A3B8',
+          textOnPrimary: '#FFFFFF',
+          glassBg: 'rgba(0, 0, 0, 0.3)',
+          glassBorder: 'rgba(255, 255, 255, 0.1)',
+          glassBlur: '20px',
+          surface: '#0F172A',
+          surfaceElevated: '#1E293B',
+          success: '#34D399',
+          warning: '#FBBF24',
+          destructive: '#F87171',
+        },
+        fonts: {
+          heading: 'Inter, system-ui, sans-serif',
+          body: 'Inter, system-ui, sans-serif',
+        },
+        borderRadius: '12px',
+        transitionSpeed: '0.2s',
+      }),
+      isActive: true,
+      createdAt: Date.now(),
+    })
+
+    const allUsers = await ctx.db.query('users').collect()
+    for (const user of allUsers) {
+      await ctx.db.patch(user._id, { selectedThemeId: themeId })
+    }
+  },
+})

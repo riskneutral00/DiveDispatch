@@ -1,0 +1,65 @@
+import { v } from 'convex/values'
+import { mutation, query } from './_generated/server'
+
+// Returns all active themes (for theme picker UI)
+export const listActive = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query('themes')
+      .withIndex('by_isActive', (q) => q.eq('isActive', true))
+      .collect()
+  },
+})
+
+// Returns a theme by slug
+export const bySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('themes')
+      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+      .unique()
+  },
+})
+
+// Returns a theme by ID (used when loading user's selectedThemeId)
+export const byId = query({
+  args: { id: v.id('themes') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id)
+  },
+})
+
+// Admin: creates or updates a theme
+export const upsert = mutation({
+  args: {
+    slug: v.string(),
+    name: v.string(),
+    config: v.string(), // JSON-stringified ThemeConfig
+    isActive: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('themes')
+      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        name: args.name,
+        config: args.config,
+        isActive: args.isActive,
+      })
+      return existing._id
+    }
+
+    return await ctx.db.insert('themes', {
+      slug: args.slug,
+      name: args.name,
+      config: args.config,
+      isActive: args.isActive,
+      createdAt: Date.now(),
+    })
+  },
+})

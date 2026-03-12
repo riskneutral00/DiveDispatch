@@ -3,7 +3,14 @@ import { v } from 'convex/values'
 
 // ── Typed Unions ────────────────────────────────────────────────────
 
-const operatorType = v.union(v.literal('DiveCenter'), v.literal('Agent'))
+const operatorType = v.union(
+  v.literal('DiveCenter'),
+  v.literal('Agent'),
+  v.literal('Liveaboard'),
+  v.literal('DiveResort'),
+  v.literal('DiveHostel'),
+  v.literal('DiveSite'),
+)
 
 const resourceOwnerType = v.union(
   v.literal('Boat'),
@@ -33,6 +40,41 @@ const reservationStatus = v.union(
 )
 
 const capacityModel = v.union(v.literal('Exclusive'), v.literal('Pooled'))
+
+const gearType = v.union(
+  v.literal('wetsuit'),
+  v.literal('bcd'),
+  v.literal('fins'),
+  v.literal('mask'),
+  v.literal('regulator'),
+)
+
+const gender = v.union(v.literal('M'), v.literal('F'), v.literal('Other'))
+
+const shoeSizeUnit = v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))
+
+const boatTypeUnion = v.union(
+  v.literal('day_boat'),
+  v.literal('speedboat'),
+  v.literal('longtail'),
+  v.literal('liveaboard'),
+  v.literal('catamaran'),
+  v.literal('rib'),
+)
+
+const gasMix = v.union(v.literal('air'), v.literal('nitrox'), v.literal('trimix'))
+
+const courseCode = v.union(
+  v.literal('DSD'),
+  v.literal('OW'),
+  v.literal('AOW'),
+  v.literal('RESCUE'),
+  v.literal('DM'),
+  v.literal('FD'),
+  v.literal('OW_AOW'),
+  v.literal('REFRESH'),
+  v.literal('SPECIALTY'),
+)
 
 // PrePayRequired and PostPayAllowed behave identically to Auto until Stripe integration. Schema placeholders retained.
 const acceptanceMode = v.union(
@@ -82,8 +124,8 @@ export default defineSchema({
     lastName: v.string(),
     nickname: v.optional(v.string()),
     businessName: v.string(),
-    role: v.string(),
-    additionalRoles: v.optional(v.array(v.string())),
+    role: stakeholderType,
+    additionalRoles: v.optional(v.array(stakeholderType)),
     isSeeded: v.boolean(),
     blockedDates: v.optional(v.array(v.string())),
     preferredLocale: v.string(),
@@ -116,7 +158,7 @@ export default defineSchema({
     submittedAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
     paid: v.boolean(),
-    activityType: v.array(v.string()),
+    activityType: v.array(courseCode),
     startDate: v.string(),
     endDate: v.string(),
     divers: v.array(
@@ -127,6 +169,7 @@ export default defineSchema({
         startDate: v.string(),
         endDate: v.string(),
         agency: v.optional(v.string()),
+        activityType: v.array(courseCode),
       }),
     ),
     agentIsReferral: v.optional(v.boolean()),
@@ -176,15 +219,17 @@ export default defineSchema({
     diveSlots: v.optional(
       v.array(
         v.object({
-          courseCode: v.string(),
+          courseCode: courseCode,
           diveNumber: v.number(),
           isConfined: v.boolean(),
+          diverIndex: v.number(),
         }),
       ),
     ),
   })
     .index('by_bookingId', ['bookingId'])
-    .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date']),
+    .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date'])
+    .index('by_date', ['date']),
 
   // ── L1: Customer Tables ─────────────────────────────────────────────
 
@@ -199,11 +244,11 @@ export default defineSchema({
     passportNumber: v.string(),
     passportIssuingCountry: v.string(),
     passportExpirationDate: v.string(),
-    gender: v.string(),
+    gender: gender,
     heightCm: v.optional(v.number()),
     weightKg: v.optional(v.number()),
     shoeSize: v.optional(v.number()),
-    shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
+    shoeSizeUnit: v.optional(shoeSizeUnit),
     needsPoweredLenses: v.optional(v.boolean()),
     prescriptionStrength: v.optional(v.string()),
     agency: v.optional(v.string()),
@@ -277,7 +322,8 @@ export default defineSchema({
     ownerType: resourceOwnerType,
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
-    .index('by_resourceType', ['resourceType']),
+    .index('by_resourceType', ['resourceType'])
+    .index('by_resourceId', ['resourceId']),
 
   reservations: defineTable({
     bookingId: v.id('bookings'),
@@ -395,8 +441,9 @@ export default defineSchema({
       v.object({
         boatName: v.string(),
         maxPax: v.number(),
-        minPax: v.number(),
-        boatType: v.string(),
+        minPax: v.optional(v.number()),
+        boatType: boatTypeUnion,
+        seatCapacity: v.optional(v.number()),
         routes: v.optional(
           v.array(
             v.object({
@@ -444,7 +491,7 @@ export default defineSchema({
     country: v.string(),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    gasMixes: v.optional(v.array(v.string())),
+    gasMixes: v.optional(v.array(gasMix)),
     focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
@@ -475,17 +522,30 @@ export default defineSchema({
 
   gearSizingLookup: defineTable({
     manufacturer: v.string(),
-    gearType: v.string(),
+    gearType: gearType,
     size: v.string(),
     minHeight: v.number(),
     maxHeight: v.number(),
     minWeight: v.number(),
     maxWeight: v.number(),
     shoeSize: v.optional(v.number()),
-    shoeSizeUnit: v.optional(v.string()),
+    shoeSizeUnit: v.optional(shoeSizeUnit),
   })
     .index('by_manufacturer_gearType', ['manufacturer', 'gearType'])
     .index('by_gearType', ['gearType']),
+
+  equipmentInventory: defineTable({
+    inventoryUnitId: v.id('inventoryUnits'),
+    equipmentManagerId: v.string(),
+    gearType: gearType,
+    manufacturer: v.optional(v.string()),
+    size: v.optional(v.string()),
+    diopter: v.optional(v.number()),
+    isPrescription: v.optional(v.boolean()),
+  })
+    .index('by_inventoryUnitId', ['inventoryUnitId'])
+    .index('by_equipmentManagerId', ['equipmentManagerId'])
+    .index('by_equipmentManagerId_gearType', ['equipmentManagerId', 'gearType']),
 
   // ── L1: Relationships & Moderation ──────────────────────────────────
 
@@ -514,7 +574,7 @@ export default defineSchema({
     ownerId: v.string(),
     ownerType: operatorType,
     name: v.string(),
-    activityType: v.array(v.string()),
+    activityType: v.array(courseCode),
     instructorId: v.optional(v.string()),
     boatId: v.optional(v.string()),
     equipmentManagerId: v.optional(v.string()),

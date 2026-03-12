@@ -1,20 +1,28 @@
 {
-  "name": "dive-dispatch-v1-tmp",
+  "name": "dive-dispatch",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "npx convex run seed:seedAll",
+    "seed:force": "npx convex run seed:wipeAll && npx convex run seed:seedAll",
+    "seed:clerk": "tsx scripts/seed-clerk.ts",
+    "seed:force:all": "npm run seed:force && tsx scripts/seed-clerk.ts --force",
+    "wipe:all": "npx convex run seed:wipeAll",
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
     "convex": "^1.32.0",
+    "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "next-intl": "^4.8.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -25,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }
