@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as agents from "../agents.js";
 import type * as availability from "../availability.js";
+import type * as devSwitcher from "../devSwitcher.js";
 import type * as boats from "../boats.js";
 import type * as bookingDraftMutations from "../bookingDraftMutations.js";
 import type * as bookingLinks from "../bookingLinks.js";
@@ -20,6 +22,7 @@ import type * as customerProfiles from "../customerProfiles.js";
 import type * as customers from "../customers.js";
 import type * as directory from "../directory.js";
 import type * as diveCenters from "../diveCenters.js";
+import type * as diveMasters from "../diveMasters.js";
 import type * as equipment from "../equipment.js";
 import type * as instructors from "../instructors.js";
 import type * as notifications from "../notifications.js";
@@ -40,8 +43,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agents: typeof agents;
   availability: typeof availability;
   boats: typeof boats;
+  devSwitcher: typeof devSwitcher;
   bookingDraftMutations: typeof bookingDraftMutations;
   bookingLinks: typeof bookingLinks;
   bookings: typeof bookings;
@@ -52,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   directory: typeof directory;
   diveCenters: typeof diveCenters;
+  diveMasters: typeof diveMasters;
   equipment: typeof equipment;
   instructors: typeof instructors;
   notifications: typeof notifications;

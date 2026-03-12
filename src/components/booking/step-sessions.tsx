@@ -8,7 +8,9 @@ import {
   buildScheduledSessions,
   toSessionEntries,
   getDatesInRange,
+  getDeliveryLocation,
   type ScheduledSession,
+  type Venue,
 } from '@/lib/booking/session-builder'
 import type {
   DetailsState,
@@ -49,6 +51,8 @@ function rebuildWithPreservedTimes(
       startTime: match.startTime,
       endTime: match.endTime,
       timezone: match.timezone,
+      // Preserve venue choice for non-confined days when navigating back/forward
+      ...(!s.isConfinedDay ? { deliveryLocation: match.deliveryLocation } : {}),
     }
   })
 }
@@ -81,6 +85,18 @@ export function StepSessions({
     const rebuilt = buildScheduledSessions(details, divers, resources)
     setRichSessions(rebuilt)
     dispatch({ type: 'SET_SESSIONS', payload: toSessionEntries(rebuilt) })
+  }
+
+  function handleVenueChange(globalIndex: number, venue: Venue) {
+    setRichSessions(prev => {
+      const next = prev.map((s, i) =>
+        i === globalIndex
+          ? { ...s, deliveryLocation: getDeliveryLocation(s.isConfinedDay, venue) }
+          : s,
+      )
+      dispatch({ type: 'SET_SESSIONS', payload: toSessionEntries(next) })
+      return next
+    })
   }
 
   function handleUpdate(
@@ -171,6 +187,9 @@ export function StepSessions({
             sessions={daySessions.map(x => x.session)}
             onUpdate={(idxInDay, field, value) =>
               handleUpdate(daySessions[idxInDay].globalIndex, field, value)
+            }
+            onVenueChange={(idxInDay, venue) =>
+              handleVenueChange(daySessions[idxInDay].globalIndex, venue)
             }
           />
         )

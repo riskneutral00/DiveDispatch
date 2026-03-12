@@ -7,6 +7,8 @@ import { getCourseByCode, type CourseCode } from '@/lib/constants/course-catalog
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type Venue = 'Boat' | 'Shore'
+
 export interface DiveSlotDisplay {
   courseCode: CourseCode
   diveNumber: number
@@ -28,6 +30,18 @@ export interface ScheduledSession {
   resourceType: 'boat' | 'pool'
   diveSlots: DiveSlotDisplay[]
   isConfinedDay: boolean
+}
+
+// ── Delivery Location ─────────────────────────────────────────────────────────
+
+// Pure function — auto-sets delivery location based on session type and venue.
+// Confined days are always Pool regardless of venue.
+export function getDeliveryLocation(
+  isConfinedDay: boolean,
+  venue: Venue = 'Boat',
+): 'BoatPier' | 'Pool' | 'Beach' {
+  if (isConfinedDay) return 'Pool'
+  return venue === 'Shore' ? 'Beach' : 'BoatPier'
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -127,7 +141,7 @@ export function buildScheduledSessions(
         endTime: '14:00',
         timezone,
         unitsRequested: Math.max(diverCountForConfined(divers), 1),
-        deliveryLocation: 'Pool',
+        deliveryLocation: getDeliveryLocation(true),
         resourceType: 'pool',
         diveSlots,
         isConfinedDay: true,
@@ -140,7 +154,7 @@ export function buildScheduledSessions(
         endTime: '12:00',
         timezone,
         unitsRequested: Math.max(divers.length, 1),
-        deliveryLocation: 'BoatPier',
+        deliveryLocation: getDeliveryLocation(false, 'Boat'),
         resourceType: 'boat',
         diveSlots,
         isConfinedDay: false,

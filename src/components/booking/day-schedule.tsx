@@ -1,8 +1,9 @@
 'use client'
 
-import { Clock, MapPin, Lock, Waves, Anchor } from 'lucide-react'
+import { Clock, MapPin, Lock, Waves, Anchor, Footprints } from 'lucide-react'
 import { GlassCard, GlassBadge, GlassInput } from '@/components/glass'
-import type { ScheduledSession } from '@/lib/booking/session-builder'
+import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
+import { VenueToggle } from './venue-toggle'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ interface DayScheduleProps {
   dayNumber: number
   sessions: ScheduledSession[]
   onUpdate: (sessionIndex: number, field: 'startTime' | 'endTime' | 'timezone', value: string) => void
+  onVenueChange?: (sessionIndex: number, venue: Venue) => void
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -39,7 +41,7 @@ function formatDisplayDate(dateStr: string): string {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function DaySchedule({ date, dayNumber, sessions, onUpdate }: DayScheduleProps) {
+export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange }: DayScheduleProps) {
   return (
     <div className="mb-5">
       {/* Day header */}
@@ -76,8 +78,10 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate }: DaySchedule
             {/* Location row */}
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                {session.resourceType === 'pool' ? (
+                {session.isConfinedDay ? (
                   <Lock size={14} style={{ color: 'var(--color-secondary)' }} />
+                ) : session.deliveryLocation === 'Beach' ? (
+                  <Footprints size={14} style={{ color: 'var(--color-accent)' }} />
                 ) : (
                   <Anchor size={14} style={{ color: 'var(--color-accent)' }} />
                 )}
@@ -85,7 +89,11 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate }: DaySchedule
                   className="text-xs font-medium"
                   style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
                 >
-                  {session.resourceType === 'pool' ? 'Pool / Confined' : 'Boat / Open Water'}
+                  {session.isConfinedDay
+                    ? 'Pool / Confined'
+                    : session.deliveryLocation === 'Beach'
+                      ? 'Shore / Open Water'
+                      : 'Boat / Open Water'}
                 </span>
                 <span
                   className="flex items-center gap-1 text-xs"
@@ -97,12 +105,20 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate }: DaySchedule
                     : session.deliveryLocation}
                 </span>
               </div>
-              <span
-                className="text-xs"
-                style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-              >
-                {session.unitsRequested} diver{session.unitsRequested !== 1 ? 's' : ''}
-              </span>
+              <div className="flex items-center gap-2">
+                {!session.isConfinedDay && onVenueChange && (
+                  <VenueToggle
+                    value={session.deliveryLocation === 'Beach' ? 'Shore' : 'Boat'}
+                    onChange={v => onVenueChange(idx, v)}
+                  />
+                )}
+                <span
+                  className="text-xs"
+                  style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+                >
+                  {session.unitsRequested} diver{session.unitsRequested !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
 
             {/* Time + timezone inputs */}
