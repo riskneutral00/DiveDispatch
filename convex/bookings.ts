@@ -6,6 +6,77 @@ type AnyCtx = any
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type BookingDetailSession = {
+  _id: string
+  date: string
+  startTime: string
+  endTime: string
+  timezone: string
+  deliveryLocation: string | undefined
+  inventoryUnitId: string
+  inventoryUnitName: string
+}
+
+export type BookingDetailReservation = {
+  _id: string
+  inventoryUnitId: string
+  inventoryUnitName: string
+  resourceType: string
+  status: string
+  confirmedAt: number | undefined
+  vacatedAt: number | undefined
+  vacatedBy: string | undefined
+}
+
+export type BookingDetailCustomerProfile = {
+  _id: string
+  submittedAt: number | undefined
+  waiverSignedAt: number | undefined
+  physicianClearanceRequired: boolean
+  physicianClearedAt: number | undefined
+}
+
+export type BookingDetail = {
+  _id: string
+  ownerId: string
+  ownerType: string
+  status: string
+  activityType: string[]
+  startDate: string
+  endDate: string
+  holdTTL: number
+  expiresAt: number | undefined
+  createdAt: number
+  divers: Array<{
+    name: string
+    abbrev: string
+    flag: { code: string; label: string }
+    startDate: string
+    endDate: string
+    activityType: string[]
+  }>
+  operatorName: string
+  bookingFormComplete: boolean
+  customerFormComplete: boolean
+  medicalHardBlock: boolean
+  portalContact: boolean
+  portalMedical: boolean
+  portalWaiver: boolean
+  instructorId: string | undefined
+  boatId: string | undefined
+  equipmentManagerId: string | undefined
+  poolId: string | undefined
+  compressorId: string | undefined
+  instructorName: string | undefined
+  boatName: string | undefined
+  equipmentManagerName: string | undefined
+  poolName: string | undefined
+  compressorName: string | undefined
+  sessions: BookingDetailSession[]
+  reservations: BookingDetailReservation[]
+  customerProfiles: BookingDetailCustomerProfile[]
+}
+
 export type CalendarBooking = {
   _id: string
   activityType: string[]
@@ -274,6 +345,144 @@ export async function _myDashboard(
   return { bookings: calendarBookings, requests }
 }
 
+/**
+ * Returns a rich joined view of a single booking for the operator detail page.
+ * Auth: caller slug must match booking.ownerId.
+ * Returns null if the booking does not exist.
+ */
+export async function _getBookingDetail(
+  ctx: AnyCtx,
+  args: { bookingId: string },
+): Promise<BookingDetail | null> {
+  const user = await requireAuth(ctx)
+
+  const booking = await ctx.db.get(args.bookingId)
+  if (!booking) return null
+  if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+  // Fetch related rows in parallel
+  const [sessions, reservations, customerProfiles] = await Promise.all([
+    ctx.db
+      .query('bookingSessions')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect(),
+    ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect(),
+    ctx.db
+      .query('customerProfiles')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect(),
+  ])
+
+  // Build a map of inventoryUnit id → record for display names
+  const allIuIds = [
+    ...new Set<string>([
+      ...sessions.map((s: AnyCtx) => s.inventoryUnitId as string),
+      ...reservations.map((r: AnyCtx) => r.inventoryUnitId as string),
+    ]),
+  ]
+  const iuMap = new Map<string, AnyCtx>()
+  await Promise.all(
+    allIuIds.map(async (iuId) => {
+      const iu = await ctx.db.get(iuId)
+      if (iu) iuMap.set(iuId, iu)
+    }),
+  )
+
+  // Resolve human-readable names for assigned resource slugs
+  const resourceSlugs = [
+    booking.instructorId,
+    booking.boatId,
+    booking.equipmentManagerId,
+    booking.poolId,
+    booking.compressorId,
+  ].filter(Boolean) as string[]
+  const nameMap = await buildInstructorNameMap(ctx, resourceSlugs)
+
+  const ext = booking.externalStakeholders as
+    | {
+        instructorName?: string
+        boatName?: string
+        equipmentManagerName?: string
+        poolName?: string
+        compressorName?: string
+      }
+    | undefined
+
+  return {
+    _id: booking._id as string,
+    ownerId: booking.ownerId as string,
+    ownerType: booking.ownerType as string,
+    status: booking.status as string,
+    activityType: booking.activityType as string[],
+    startDate: booking.startDate as string,
+    endDate: booking.endDate as string,
+    holdTTL: booking.holdTTL as number,
+    expiresAt: booking.expiresAt as number | undefined,
+    createdAt: booking.createdAt as number,
+    divers: booking.divers as BookingDetail['divers'],
+    operatorName: booking.operatorName as string,
+    bookingFormComplete: booking.bookingFormComplete as boolean,
+    customerFormComplete: booking.customerFormComplete as boolean,
+    medicalHardBlock: booking.medicalHardBlock as boolean,
+    portalContact: booking.portalContact as boolean,
+    portalMedical: booking.portalMedical as boolean,
+    portalWaiver: booking.portalWaiver as boolean,
+    instructorId: booking.instructorId as string | undefined,
+    boatId: booking.boatId as string | undefined,
+    equipmentManagerId: booking.equipmentManagerId as string | undefined,
+    poolId: booking.poolId as string | undefined,
+    compressorId: booking.compressorId as string | undefined,
+    instructorName: booking.instructorId
+      ? (nameMap.get(booking.instructorId as string) ?? ext?.instructorName)
+      : ext?.instructorName,
+    boatName: booking.boatId
+      ? (nameMap.get(booking.boatId as string) ?? ext?.boatName)
+      : ext?.boatName,
+    equipmentManagerName: booking.equipmentManagerId
+      ? (nameMap.get(booking.equipmentManagerId as string) ?? ext?.equipmentManagerName)
+      : ext?.equipmentManagerName,
+    poolName: booking.poolId
+      ? (nameMap.get(booking.poolId as string) ?? ext?.poolName)
+      : ext?.poolName,
+    compressorName: booking.compressorId
+      ? (nameMap.get(booking.compressorId as string) ?? ext?.compressorName)
+      : ext?.compressorName,
+    sessions: sessions.map((s: AnyCtx) => ({
+      _id: s._id as string,
+      date: s.date as string,
+      startTime: s.startTime as string,
+      endTime: s.endTime as string,
+      timezone: s.timezone as string,
+      deliveryLocation: s.deliveryLocation as string | undefined,
+      inventoryUnitId: s.inventoryUnitId as string,
+      inventoryUnitName:
+        (iuMap.get(s.inventoryUnitId as string)?.displayName as string | undefined) ?? 'Unknown',
+    })),
+    reservations: reservations.map((r: AnyCtx) => ({
+      _id: r._id as string,
+      inventoryUnitId: r.inventoryUnitId as string,
+      inventoryUnitName:
+        (iuMap.get(r.inventoryUnitId as string)?.displayName as string | undefined) ?? 'Unknown',
+      resourceType:
+        (iuMap.get(r.inventoryUnitId as string)?.resourceType as string | undefined) ?? 'Unknown',
+      status: r.status as string,
+      confirmedAt: r.confirmedAt as number | undefined,
+      vacatedAt: r.vacatedAt as number | undefined,
+      vacatedBy: r.vacatedBy as string | undefined,
+    })),
+    customerProfiles: customerProfiles.map((cp: AnyCtx) => ({
+      _id: cp._id as string,
+      submittedAt: cp.submittedAt as number | undefined,
+      waiverSignedAt: cp.waiverSignedAt as number | undefined,
+      physicianClearanceRequired: cp.physicianClearanceRequired as boolean,
+      physicianClearedAt: cp.physicianClearedAt as number | undefined,
+    })),
+  }
+}
+
 // ─── Convex query exports ─────────────────────────────────────────────────────
 
 export const listByOwner = query({
@@ -321,4 +530,9 @@ export const listByResource = query({
 export const myDashboard = query({
   args: {},
   handler: _myDashboard,
+})
+
+export const getBookingDetail = query({
+  args: { bookingId: v.id('bookings') },
+  handler: _getBookingDetail,
 })

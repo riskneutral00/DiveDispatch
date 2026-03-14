@@ -73,11 +73,8 @@ export function DashboardStats({ ownerId, ownerType }: DashboardStatsProps) {
             {label}
           </p>
           <p
-            className="text-2xl font-bold"
-            style={{
-              color: bookings == null ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
-              fontFamily: 'var(--font-heading)',
-            }}
+            className={bookings == null ? 'text-2xl font-bold' : 'stat-value text-2xl font-bold'}
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             {bookings == null ? '—' : value}
           </p>

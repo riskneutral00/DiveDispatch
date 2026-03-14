@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { GlassCard, GlassBadge } from '@/components/glass'
+import { ChevronLeft, ChevronRight, Ban } from 'lucide-react'
+import { GlassCard, GlassBadge, GlassButton } from '@/components/glass'
 import { CalendarGrid } from '@/components/common/calendar-grid'
+import { BlockDateConfirm } from './block-date-confirm'
 import type { ConfirmedScheduleItem } from '../../../convex/resourceQueries'
 import type { OpenRequest } from '../../../convex/resourceQueries'
 
@@ -14,7 +15,7 @@ interface AvailabilityCalendarProps {
   openRequests?: OpenRequest[]
 }
 
-type DayStatus = 'available' | 'pending' | 'confirmed' | 'busy'
+type DayStatus = 'available' | 'pending' | 'confirmed' | 'busy' | 'blocked'
 
 function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -49,11 +50,19 @@ export function AvailabilityCalendar({
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [pendingBlock, setPendingBlock] = useState<{ date: string; mode: 'block' | 'unblock' } | null>(null)
+  const [isToggling, setIsToggling] = useState(false)
 
   const monthDates = buildMonthDates(year, month)
   const unavailableIds = useQuery(api.availability.getUnavailableUnitIdsForDates, {
     dates: monthDates,
   })
+
+  // Current user — used to read blocked dates
+  const currentUser = useQuery(api.users.me)
+  const blockedDateSet = new Set<string>(currentUser?.blockedDates ?? [])
+
+  const toggleBlockedDate = useMutation(api.availability.toggleBlockedDate)
 
   // Build date status from confirmed + pending data
   const confirmedDates = new Set<string>()
@@ -71,6 +80,7 @@ export function AvailabilityCalendar({
   }
 
   function getDayStatus(dateStr: string): DayStatus {
+    if (blockedDateSet.has(dateStr)) return 'blocked'
     if (confirmedDates.has(dateStr)) return 'confirmed'
     if (pendingDates.has(dateStr)) return 'pending'
     return 'available'
@@ -94,6 +104,17 @@ export function AvailabilityCalendar({
   }
 
   const selectedStatus = selectedDate ? getDayStatus(selectedDate) : null
+
+  async function handleConfirmToggle() {
+    if (!pendingBlock) return
+    setIsToggling(true)
+    try {
+      await toggleBlockedDate({ date: pendingBlock.date })
+    } finally {
+      setIsToggling(false)
+      setPendingBlock(null)
+    }
+  }
 
   return (
     <GlassCard padding="md">
@@ -131,29 +152,42 @@ export function AvailabilityCalendar({
           const status = getDayStatus(ds)
           const isToday = ds === toDateStr(today)
           const isSelected = ds === selectedDate
+          const isBlocked = status === 'blocked'
 
           return (
             <button
               onClick={() => setSelectedDate(isSelected ? null : ds)}
-              className="w-full aspect-square flex flex-col items-center justify-center rounded-lg text-xs font-medium transition-all hover:scale-[1.05]"
+              className="w-full aspect-square flex flex-col items-center justify-center rounded-lg text-xs font-medium transition-all hover:scale-[1.05] relative"
               style={{
                 background: isSelected
                   ? 'var(--color-primary)'
-                  : status === 'confirmed'
-                    ? 'color-mix(in srgb, var(--color-success) 25%, transparent)'
-                    : status === 'pending'
-                      ? 'color-mix(in srgb, var(--color-warning) 25%, transparent)'
-                      : isToday
-                        ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)'
-                        : 'transparent',
+                  : isBlocked
+                    ? 'color-mix(in srgb, var(--color-destructive) 20%, transparent)'
+                    : status === 'confirmed'
+                      ? 'color-mix(in srgb, var(--color-success) 25%, transparent)'
+                      : status === 'pending'
+                        ? 'color-mix(in srgb, var(--color-warning) 25%, transparent)'
+                        : isToday
+                          ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)'
+                          : 'transparent',
                 color: isSelected
                   ? 'var(--color-text-on-primary)'
-                  : 'var(--color-text-primary)',
+                  : isBlocked
+                    ? 'var(--color-destructive)'
+                    : 'var(--color-text-primary)',
                 border: isToday && !isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
                 transitionDuration: 'var(--transition-speed)',
+                opacity: isBlocked && !isSelected ? 0.75 : 1,
               }}
             >
               {date.getDate()}
+              {isBlocked && (
+                <Ban
+                  size={8}
+                  className="absolute bottom-0.5 right-0.5"
+                  style={{ color: 'var(--color-destructive)' }}
+                />
+              )}
             </button>
           )
         }}
@@ -173,17 +207,24 @@ export function AvailabilityCalendar({
           <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--color-glass-border)' }} />
           Available
         </div>
+        <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <Ban size={10} style={{ color: 'var(--color-destructive)' }} />
+          Blocked
+        </div>
       </div>
 
       {/* Day detail */}
       {selectedDate && (
         <div
-          className="mt-3 pt-3 space-y-1"
+          className="mt-3 pt-3 space-y-2"
           style={{ borderTop: '1px solid var(--color-glass-border)' }}
         >
           <p className="text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
             {selectedDate}
           </p>
+          {selectedStatus === 'blocked' && (
+            <GlassBadge variant="destructive" size="sm" dot>Blocked</GlassBadge>
+          )}
           {selectedStatus === 'confirmed' && (
             <GlassBadge variant="success" size="sm" dot>Confirmed session</GlassBadge>
           )}
@@ -196,7 +237,37 @@ export function AvailabilityCalendar({
           {unavailableIds === undefined && (
             <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>Loading availability…</p>
           )}
+
+          {/* Block / unblock action — only for resource users who are logged in */}
+          {currentUser && (
+            <div className="pt-1">
+              <GlassButton
+                variant={selectedStatus === 'blocked' ? 'secondary' : 'ghost'}
+                size="sm"
+                type="button"
+                onClick={() =>
+                  setPendingBlock({
+                    date: selectedDate,
+                    mode: selectedStatus === 'blocked' ? 'unblock' : 'block',
+                  })
+                }
+              >
+                {selectedStatus === 'blocked' ? 'Unblock this date' : 'Block this date'}
+              </GlassButton>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Block / unblock confirmation dialog */}
+      {pendingBlock && (
+        <BlockDateConfirm
+          date={pendingBlock.date}
+          mode={pendingBlock.mode}
+          onConfirm={handleConfirmToggle}
+          onCancel={() => setPendingBlock(null)}
+          isPending={isToggling}
+        />
       )}
     </GlassCard>
   )

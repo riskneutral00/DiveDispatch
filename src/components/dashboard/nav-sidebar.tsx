@@ -218,11 +218,17 @@ export function NavSidebar({ roleSlug, slug, onClose }: NavSidebarProps) {
               href={href}
               onClick={onClose}
               className="flex items-center gap-2.5 px-3 py-2 rounded-[calc(var(--border-radius)/2)] text-sm font-medium transition-all"
-              style={{
-                background: isActive ? 'var(--color-primary)' : 'transparent',
-                color: isActive
-                  ? 'var(--color-text-on-primary)'
-                  : 'var(--color-text-secondary)',
+              style={isActive ? {
+                background: 'var(--color-glass-bg-elevated)',
+                backdropFilter: 'blur(var(--glass-blur-elevated))',
+                WebkitBackdropFilter: 'blur(var(--glass-blur-elevated))',
+                border: '1px solid var(--color-glass-border-elevated)',
+                boxShadow: '0 4px 16px var(--color-glass-shadow), inset 0 1px 0 var(--color-glass-specular-subtle)',
+                color: 'var(--color-text-primary)',
+                transitionDuration: 'var(--transition-speed)',
+              } : {
+                background: 'transparent',
+                color: 'var(--color-text-secondary)',
                 transitionDuration: 'var(--transition-speed)',
               }}
               aria-current={isActive ? 'page' : undefined}

@@ -1,8 +1,10 @@
 'use client'
 
 import { Menu, Waves } from 'lucide-react'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { ThemeSwitcher } from './theme-switcher'
 import { NavSidebar } from './nav-sidebar'
 
@@ -14,9 +16,39 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, isLoading } = useCurrentUser()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (isLoading) return
+    if (!user) {
+      router.replace('/role-select')
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading || !user) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: 'var(--body-bg)' }}
+      >
+        <span
+          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"
+          style={{ color: 'var(--color-text-secondary)' }}
+          aria-hidden
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'var(--color-surface)' }}>
+    <div className="min-h-screen">
+      {/* Background stack */}
+      <div className="bg-image" />
+      <div className="bg-overlay" />
+
+      {/* App shell */}
+      <div className="app-shell flex min-h-screen">
       {/* Desktop sidebar — hidden below md */}
       <aside className="hidden md:flex flex-col w-64 flex-shrink-0 h-screen sticky top-0">
         <NavSidebar roleSlug={roleSlug} slug={slug} />
@@ -75,6 +107,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
         {/* Page content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      </div>
       </div>
     </div>
   )

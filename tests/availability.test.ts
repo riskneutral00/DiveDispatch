@@ -10,6 +10,7 @@ vi.mock('../convex/_generated/server', () => ({
 import {
   _getUnavailableUnitIdsForDates,
   _listInventoryByType,
+  _toggleBlockedDate,
 } from '../convex/availability'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -254,5 +255,100 @@ describe('_listInventoryByType', () => {
     expect(item).not.toHaveProperty('bookingId')
     expect(item).not.toHaveProperty('reservedUnits')
     expect(item).not.toHaveProperty('availableUnits')
+  })
+})
+
+// ─── toggleBlockedDate ────────────────────────────────────────────────────────
+
+function makeToggleCtx(user: Record<string, unknown> | null, tokenIdentifier: string | null) {
+  let storedUser = user ? { ...user } : null
+
+  return {
+    auth: {
+      getUserIdentity: async () => (tokenIdentifier ? { tokenIdentifier } : null),
+    },
+    db: {
+      query: vi.fn().mockImplementation(() => {
+        const chain = {
+          withIndex: vi.fn(),
+          unique: vi.fn().mockResolvedValue(storedUser),
+        }
+        chain.withIndex.mockReturnValue(chain)
+        return chain
+      }),
+      patch: vi.fn().mockImplementation((_id: string, fields: Record<string, unknown>) => {
+        if (storedUser) storedUser = { ...storedUser, ...fields }
+        return Promise.resolve()
+      }),
+    },
+    // Expose for assertions
+    getStoredUser: () => storedUser,
+  }
+}
+
+describe('_toggleBlockedDate', () => {
+  it('blocks a date that was not previously blocked', async () => {
+    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: [] }
+    const ctx = makeToggleCtx(user, 'clerk|user1')
+
+    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+    expect(result).toBe(true)
+    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-15'])
+  })
+
+  it('unblocks a date that was previously blocked', async () => {
+    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-15'] }
+    const ctx = makeToggleCtx(user, 'clerk|user1')
+
+    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+    expect(result).toBe(false)
+    expect(ctx.getStoredUser()?.blockedDates).toEqual([])
+  })
+
+  it('is idempotent when blocking an already-blocked date (second call unblocks)', async () => {
+    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-15'] }
+    const ctx = makeToggleCtx(user, 'clerk|user1')
+
+    // First call unblocks
+    await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+    // Second call blocks again
+    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+    expect(result).toBe(true)
+  })
+
+  it('handles undefined blockedDates (first block ever)', async () => {
+    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1' }
+    const ctx = makeToggleCtx(user, 'clerk|user1')
+
+    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+    expect(result).toBe(true)
+    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-15'])
+  })
+
+  it('throws UNAUTHENTICATED when identity is missing', async () => {
+    const ctx = makeToggleCtx(null, null)
+    await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
+      data: { code: 'UNAUTHENTICATED' },
+    })
+  })
+
+  it('throws NOT_FOUND when user record does not exist', async () => {
+    const ctx = makeToggleCtx(null, 'clerk|user1')
+    await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
+      data: { code: 'NOT_FOUND' },
+    })
+  })
+
+  it('preserves other blocked dates when adding a new one', async () => {
+    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-10', '2025-06-20'] }
+    const ctx = makeToggleCtx(user, 'clerk|user1')
+
+    await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-10', '2025-06-20', '2025-06-15'])
   })
 })

@@ -49,14 +49,12 @@ export function GlassInput({
           id={id}
           disabled={disabled}
           className={[
-            "glass w-full text-sm",
-            "focus:outline-none focus:ring-2",
+            "glass glass-field w-full text-sm",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "placeholder:opacity-50",
             leadingIcon ? "pl-9" : "pl-3",
             trailingIcon ? "pr-9" : "pr-3",
             "py-2.5",
-            error ? "ring-2" : "",
             className,
           ]
             .filter(Boolean)
@@ -64,8 +62,10 @@ export function GlassInput({
           style={{
             color: "var(--color-text-primary)",
             caretColor: "var(--color-accent)",
-            outlineColor: error ? "var(--color-destructive)" : "var(--color-accent)",
-            ...(error ? { borderColor: "var(--color-destructive)", boxShadow: `0 0 0 2px var(--color-destructive)` } : {}),
+            ...(error ? {
+              borderColor: "var(--color-destructive)",
+              boxShadow: `0 0 0 3px rgba(239, 68, 68, 0.3)`,
+            } : {}),
           }}
           aria-invalid={!!error}
           aria-describedby={

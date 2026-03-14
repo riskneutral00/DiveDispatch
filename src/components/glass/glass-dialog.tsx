@@ -59,7 +59,7 @@ export function GlassDialog({
       ref={dialogRef}
       onClick={handleClick}
       onCancel={handleCancel}
-      className="fixed inset-0 p-0 bg-transparent backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-none m-0 h-full"
+      className="fixed inset-0 p-0 bg-transparent backdrop:bg-black/50 backdrop:backdrop-blur-md w-full max-w-none m-0 h-full"
       style={{ border: "none" }}
     >
       <div className="flex min-h-full items-center justify-center p-4">

@@ -1,4 +1,4 @@
-// 14 required color properties per theme system design
+// 25 required color properties (14 original + 11 glass/glow/bg additions)
 export interface ColorPalette {
   primary: string;
   secondary: string;
@@ -8,12 +8,24 @@ export interface ColorPalette {
   textOnPrimary: string;
   glassBg: string;
   glassBorder: string;
-  glassBlur: number; // px, 8–20
+  glassBlur: number; // px
   success: string;
   warning: string;
   destructive: string;
   surface: string;
   surfaceElevated: string;
+  // Glass visual parity additions
+  primaryGlow: string;
+  glassBgElevated: string;
+  glassBorderElevated: string;
+  glassBlurElevated: number; // px
+  glassSpecular: string;
+  glassSpecularSubtle: string;
+  glassShadow: string;
+  glassShadowElevated: string;
+  bgImage?: string; // optional — some skins use solid bodyBg only
+  bgOverlay?: string; // optional
+  bodyBg: string;
 }
 
 export interface ThemeConfig {

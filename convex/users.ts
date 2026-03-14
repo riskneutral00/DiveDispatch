@@ -1,5 +1,5 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 
 const stakeholderType = v.union(
   v.literal('DiveCenter'),
@@ -188,5 +188,75 @@ export const byId = query({
   args: { id: v.id('users') },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id)
+  },
+})
+
+// Internal: called by Clerk webhook to create or update a user record.
+// Role defaults to 'DiveCenter' for new users; overwritten when user selects
+// their role in the onboarding UI via setRole/createUser.
+export const upsertFromWebhook = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    email: v.string(),
+    name: v.string(),
+    firstName: v.string(),
+    lastName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) =>
+        q.eq('tokenIdentifier', args.tokenIdentifier),
+      )
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        email: args.email,
+        name: args.name,
+        firstName: args.firstName,
+        lastName: args.lastName,
+      })
+      return existing._id
+    }
+
+    const slug = await generateUniqueSlug(ctx.db, args.name || args.email)
+    return await ctx.db.insert('users', {
+      tokenIdentifier: args.tokenIdentifier,
+      slug,
+      email: args.email,
+      name: args.name,
+      firstName: args.firstName,
+      lastName: args.lastName,
+      businessName: '',
+      role: 'DiveCenter',
+      isSeeded: false,
+      preferredLocale: 'en',
+    })
+  },
+})
+
+// Internal: called by Clerk webhook on user.deleted.
+// Anonymises the record rather than hard-deleting — bookings may reference it.
+export const deleteFromWebhook = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) =>
+        q.eq('tokenIdentifier', args.tokenIdentifier),
+      )
+      .unique()
+
+    if (!user) return
+
+    await ctx.db.patch(user._id, {
+      email: 'deleted@deleted.invalid',
+      name: '',
+      firstName: '',
+      lastName: '',
+    })
   },
 })

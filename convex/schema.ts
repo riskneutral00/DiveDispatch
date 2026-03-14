@@ -268,15 +268,15 @@ export default defineSchema({
 
   customerProfiles: defineTable({
     bookingId: v.id('bookings'),
-    customerId: v.id('customers'),
+    customerId: v.optional(v.id('customers')), // set by savePortalContact
     linkToken: v.string(),
     accommodationName: v.optional(v.string()),
     needsPickup: v.optional(v.boolean()),
     pickupLocation: v.optional(v.string()),
     pickupTime: v.optional(v.string()),
-    medicalSchemaVersion: v.string(),
-    medicalAnswers: v.record(v.string(), v.union(v.boolean(), v.string())),
-    physicianClearanceRequired: v.boolean(),
+    medicalSchemaVersion: v.optional(v.string()), // set by saveMedicalAnswers
+    medicalAnswers: v.optional(v.record(v.string(), v.union(v.boolean(), v.string()))), // set by saveMedicalAnswers
+    physicianClearanceRequired: v.optional(v.boolean()), // set by saveMedicalAnswers
     physicianClearedAt: v.optional(v.number()),
     waiverSignedAt: v.optional(v.number()),
     signatureFileId: v.optional(v.id('_storage')),
@@ -710,5 +710,17 @@ export default defineSchema({
     contactPhone: v.string(),
     focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
+  }).index('by_userId', ['userId']),
+
+  // ── L5: Support ─────────────────────────────────────────────────────────────
+
+  supportRequests: defineTable({
+    userId: v.string(),
+    subject: v.string(),
+    category: v.string(),
+    message: v.string(),
+    screenshotFileId: v.optional(v.id('_storage')),
+    status: v.string(),
+    createdAt: v.number(),
   }).index('by_userId', ['userId']),
 })

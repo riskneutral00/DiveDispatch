@@ -5,6 +5,7 @@ import { BookingList } from '@/components/dashboard/booking-list'
 import { OpenRequests } from '@/components/dashboard/open-requests'
 import { ConfirmedSchedule } from '@/components/dashboard/confirmed-schedule'
 import { AvailabilityCalendar } from '@/components/dashboard/availability-calendar'
+import { ProfileCompletionBanner } from '@/components/dashboard/profile-completion-banner'
 
 export default async function DashboardPage({
   params,
@@ -21,6 +22,7 @@ export default async function DashboardPage({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      <ProfileCompletionBanner roleSlug={roleSlug as RoleKey} slug={slug} />
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-1">

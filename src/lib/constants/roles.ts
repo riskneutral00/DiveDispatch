@@ -53,6 +53,7 @@ export interface RoleConfig {
   isOrganizer: boolean
   isResource: boolean
   tableName: string
+  description: string
 }
 
 export const ROLES: RoleConfig[] = [
@@ -68,6 +69,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     tableName: 'diveCenters',
+    description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
   },
   {
     key: 'agent',
@@ -80,6 +82,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     tableName: 'agents',
+    description: 'Book dives on behalf of customers and earn commission from dive operators.',
   },
   {
     key: 'liveaboard',
@@ -92,6 +95,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: true,
     tableName: 'liveaboards',
+    description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
   },
   {
     key: 'dive-resort',
@@ -104,6 +108,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     tableName: 'diveResorts',
+    description: 'Offer dive packages, courses, and guided dives from a resort base.',
   },
   {
     key: 'dive-hostel',
@@ -116,6 +121,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: false,
     tableName: 'diveHostels',
+    description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
   },
   {
     key: 'dive-site',
@@ -128,6 +134,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: true,
     isResource: true,
     tableName: 'diveSites',
+    description: 'Manage access and dive conditions for a specific underwater site.',
   },
 
   // ── Resources ────────────────────────────────────────────────────
@@ -142,6 +149,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'instructors',
+    description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
   },
   {
     key: 'dive-master',
@@ -154,6 +162,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'diveMasters',
+    description: 'Guide certified divers, assist instructors, and lead fun dives.',
   },
   {
     key: 'boat',
@@ -166,6 +175,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'boats',
+    description: 'Provide vessel transport and surface support for dive operations.',
   },
   {
     key: 'equipment',
@@ -178,6 +188,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'equipment',
+    description: 'Supply rental gear and manage inventory across dive bookings.',
   },
   {
     key: 'pool',
@@ -190,6 +201,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'pools',
+    description: 'Provide confined-water training space for beginner and refresher courses.',
   },
   {
     key: 'compressor',
@@ -202,6 +214,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     tableName: 'compressors',
+    description: 'Supply and track tank fills and gas blending for dive operations.',
   },
 ]
 

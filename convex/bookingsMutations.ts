@@ -179,6 +179,9 @@ export async function releaseBookingReservations(
 /**
  * Advances booking Draft → Upcoming when all conditions are simultaneously satisfied.
  * Silent no-op if any condition is unmet — callers never need to check.
+ *
+ * All-external bookings (zero in-system reservations) satisfy the reservation condition
+ * vacuously — `[].every(fn)` is true — and advance immediately when form conditions are met.
  */
 export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<void> {
   const booking = await ctx.db.get(bookingId)
@@ -193,8 +196,8 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
 
   const active = reservations.filter((r: AnyCtx) => r.status !== 'Vacated')
 
-  // All in-system reservations must exist and be Confirmed
-  if (active.length > 0 && active.every((r: AnyCtx) => r.status === 'Confirmed')) {
+  // All in-system reservations must be Confirmed (vacuously true when all resources are external)
+  if (active.every((r: AnyCtx) => r.status === 'Confirmed')) {
     await ctx.db.patch(bookingId, { status: 'Upcoming' })
   }
 }
@@ -233,7 +236,18 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
   if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
-  // 3. Blocked dates — reject before touching inventory
+  // 3. Identify external resource types — these skip the reservation pipeline entirely.
+  // An external resource has a freeform name but no in-system ID on the booking.
+  // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
+  const ext = booking.externalStakeholders as Record<string, string | undefined> | undefined
+  const externalResourceTypes = new Set<string>()
+  if (!booking.instructorId && ext?.instructorName) externalResourceTypes.add('Instructor')
+  if (!booking.boatId && ext?.boatName) externalResourceTypes.add('Boat')
+  if (!booking.equipmentManagerId && ext?.equipmentManagerName) externalResourceTypes.add('Equipment')
+  if (!booking.poolId && ext?.poolName) externalResourceTypes.add('Pool')
+  if (!booking.compressorId && ext?.compressorName) externalResourceTypes.add('Compressor')
+
+  // 4. Blocked dates — reject before touching inventory
   if (user.blockedDates && user.blockedDates.length > 0) {
     const blocked = new Set<string>(user.blockedDates as string[])
     for (const session of args.sessions) {
@@ -241,7 +255,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     }
   }
 
-  // 4. Edit mode — vacate existing holds and delete old session rows
+  // 5. Edit mode — vacate existing holds and delete old session rows
   const existingReservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
@@ -280,6 +294,9 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   for (const session of args.sessions) {
     const inventoryUnit = await ctx.db.get(session.inventoryUnitId)
     if (!inventoryUnit) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    // External resource — no inventory check or reservation row needed
+    if (externalResourceTypes.has(inventoryUnit.resourceType as string)) continue
 
     // Lazy snapshot: if no snapshot exists, treat totalUnits as fully available
     const snapshot = await ctx.db

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 interface NavItem {
@@ -42,7 +43,7 @@ export function GlassNav({
         {items.map((item) => {
           const isActive = item.key === activeKey;
           return (
-            <a
+            <Link
               key={item.key}
               href={item.href ?? "#"}
               onClick={onItemClick ? (e) => { e.preventDefault(); onItemClick(item); } : undefined}
@@ -54,16 +55,24 @@ export function GlassNav({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={{
-                color: isActive ? "var(--color-text-on-primary)" : "var(--color-text-secondary)",
-                background: isActive ? "var(--color-primary)" : "transparent",
+              style={isActive ? {
+                color: "var(--color-text-primary)",
+                background: "var(--color-glass-bg-elevated)",
+                backdropFilter: "blur(var(--glass-blur-elevated))",
+                WebkitBackdropFilter: "blur(var(--glass-blur-elevated))",
+                borderColor: "var(--color-glass-border-elevated)",
+                boxShadow: "0 4px 16px var(--color-glass-shadow), inset 0 1px 0 var(--color-glass-specular-subtle)",
+                transitionDuration: "var(--transition-speed)",
+              } : {
+                color: "var(--color-text-secondary)",
+                background: "transparent",
                 transitionDuration: "var(--transition-speed)",
               }}
               aria-current={isActive ? "page" : undefined}
             >
               {item.icon && <span className="flex-shrink-0">{item.icon}</span>}
               <span>{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </div>

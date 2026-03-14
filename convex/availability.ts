@@ -1,5 +1,5 @@
-import { v } from 'convex/values'
-import { query } from './_generated/server'
+import { ConvexError, v } from 'convex/values'
+import { mutation, query } from './_generated/server'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyCtx = any
@@ -103,6 +103,47 @@ export const getUnavailableUnitIdsForDates = query({
     const set = await _getUnavailableUnitIdsForDates(ctx, args.dates)
     return Array.from(set)
   },
+})
+
+/**
+ * Toggles a date in the authenticated user's blockedDates array.
+ * Idempotent: blocking an already-blocked date is a no-op (returns false).
+ * Returns true if the date is now blocked, false if it is now unblocked.
+ */
+export async function _toggleBlockedDate(
+  ctx: AnyCtx,
+  args: { date: string },
+): Promise<boolean> {
+  const identity = await ctx.auth.getUserIdentity()
+  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
+      q.eq('tokenIdentifier', identity.tokenIdentifier),
+    )
+    .unique()
+  if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+
+  const current: string[] = (user.blockedDates as string[] | undefined) ?? []
+  const idx = current.indexOf(args.date)
+
+  if (idx >= 0) {
+    // Currently blocked → unblock (remove)
+    const next = [...current]
+    next.splice(idx, 1)
+    await ctx.db.patch(user._id, { blockedDates: next })
+    return false
+  } else {
+    // Not blocked → block (add)
+    await ctx.db.patch(user._id, { blockedDates: [...current, args.date] })
+    return true
+  }
+}
+
+export const toggleBlockedDate = mutation({
+  args: { date: v.string() },
+  handler: _toggleBlockedDate,
 })
 
 /**

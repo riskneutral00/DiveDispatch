@@ -413,6 +413,68 @@ describe('submitToDraft', () => {
     expect(booking?.status).toBe('Upcoming')
   })
 
+  it('12 — all-external booking: no reservations created, advances to Upcoming immediately', async () => {
+    // All resources are external — no sessions passed, booking should advance to Upcoming
+    const bookingId = seedBooking(db, userSlug, {
+      customerFormComplete: true,
+      externalStakeholders: { instructorName: 'Kaptan Ahmet' },
+    })
+    const ctx = makeCtx(db, `clerk|${userSlug}`)
+
+    await _handler(ctx, { bookingId, sessions: [] })
+
+    expect(db.all('reservations')).toHaveLength(0)
+    expect(db.all('availabilitySnapshots')).toHaveLength(0)
+
+    const booking = await db.get(bookingId)
+    expect(booking?.bookingFormComplete).toBe(true)
+    expect(booking?.status).toBe('Upcoming')
+  })
+
+  it('13 — mixed external + in-system: only in-system resource gets reservation', async () => {
+    // Instructor is external, boat is in-system — only boat session should get a reservation
+    const boatUnitId = db.seed('inventoryUnits', {
+      resourceType: 'Boat',
+      resourceId: 'boat-1',
+      displayName: 'Speedboat',
+      capacityModel: 'Pooled',
+      totalUnits: 20,
+      ownerId: 'boat-1',
+      ownerType: 'Boat',
+    })
+    const instructorUnitId = db.seed('inventoryUnits', {
+      resourceType: 'Instructor',
+      resourceId: 'instructor-1',
+      displayName: 'Instructor slot',
+      capacityModel: 'Exclusive',
+      totalUnits: 1,
+      ownerId: 'instructor-1',
+      ownerType: 'Instructor',
+    })
+
+    const bookingId = seedBooking(db, userSlug, {
+      boatId: 'boat-1',
+      externalStakeholders: { instructorName: 'Kaptan Ahmet' },
+    })
+    const ctx = makeCtx(db, `clerk|${userSlug}`)
+
+    await _handler(ctx, {
+      bookingId,
+      sessions: [
+        makeSession(boatUnitId, '2025-06-15', 4),
+        makeSession(instructorUnitId, '2025-06-15', 1), // should be skipped (external)
+      ],
+    })
+
+    const reservations = db.all('reservations')
+    expect(reservations).toHaveLength(1)
+    expect(reservations[0].inventoryUnitId).toBe(boatUnitId)
+
+    const snapshots = db.all('availabilitySnapshots')
+    expect(snapshots).toHaveLength(1)
+    expect(snapshots[0].inventoryUnitId).toBe(boatUnitId)
+  })
+
   it('11 — all-or-nothing: CONFLICT on any session prevents all writes', async () => {
     const bookingId = seedBooking(db, userSlug)
     const goodUnitId = seedInventoryUnit(db, 'Pooled', 10, 'boat-good')
@@ -533,6 +595,23 @@ describe('tryAutoAdvance', () => {
 
     const booking = await db.get(bookingId)
     expect(booking?.status).toBe('Draft')
+  })
+
+  it('advances to Upcoming when zero reservations (all-external booking)', async () => {
+    const db = new MockDb()
+    const bookingId = db.seed('bookings', {
+      status: 'Draft',
+      bookingFormComplete: true,
+      customerFormComplete: true,
+      medicalHardBlock: false,
+    })
+    // No reservations seeded — all resources are external
+
+    const ctx = makeCtx(db, null)
+    await tryAutoAdvance(ctx, bookingId)
+
+    const booking = await db.get(bookingId)
+    expect(booking?.status).toBe('Upcoming')
   })
 
   it('stays Draft when medical hard block is active', async () => {

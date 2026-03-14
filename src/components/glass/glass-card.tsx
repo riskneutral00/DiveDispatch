@@ -28,8 +28,8 @@ export function GlassCard({
     <Tag
       className={[
         elevated ? "glass-elevated" : "glass",
-        "relative overflow-hidden shadow-lg shadow-black/10",
-        hoverable && "hover:scale-[1.01] hover:shadow-xl cursor-pointer",
+        "relative",
+        hoverable && "hover:scale-[1.01] cursor-pointer",
         paddingMap[padding],
         className,
       ]

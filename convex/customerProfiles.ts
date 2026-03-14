@@ -75,14 +75,16 @@ export const saveMedicalAnswers = mutation({
     })
 
     if (hasYes) {
-      // Persist cross-DC visibility flag on the customer record
-      const customer = await ctx.db.get(profile.customerId)
-      if (customer) {
-        const existing = customer.flags ?? []
-        if (!existing.includes('medical_block')) {
-          await ctx.db.patch(profile.customerId, {
-            flags: [...existing, 'medical_block'],
-          })
+      // Persist cross-DC visibility flag on the customer record (if contact step complete)
+      if (profile.customerId) {
+        const customer = await ctx.db.get(profile.customerId)
+        if (customer) {
+          const existing = customer.flags ?? []
+          if (!existing.includes('medical_block')) {
+            await ctx.db.patch(profile.customerId, {
+              flags: [...existing, 'medical_block'],
+            })
+          }
         }
       }
 
@@ -98,6 +100,169 @@ export const saveMedicalAnswers = mutation({
     await tryAutoAdvance(ctx, link.bookingId)
 
     return { medicalHardBlock: hasYes }
+  },
+})
+
+// ─── savePortalWaiver ─────────────────────────────────────────────────────────
+
+/**
+ * Records the customer's signed liability waiver.
+ *
+ * Stores the signature file (from Convex storage) and timestamp, then sets
+ * portalWaiver = true on the booking. Idempotent — re-submitting overwrites.
+ * Auth: token IS the credential (no Clerk auth).
+ */
+export const savePortalWaiver = mutation({
+  args: {
+    token: v.string(),
+    signatureStorageId: v.id('_storage'),
+    guardianSignatureStorageId: v.optional(v.id('_storage')),
+  },
+  handler: async (
+    ctx: AnyCtx,
+    args: { token: string; signatureStorageId: string; guardianSignatureStorageId?: string },
+  ): Promise<void> => {
+    const link = await ctx.db
+      .query('bookingLinks')
+      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
+      .unique()
+
+    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+
+    const booking = await ctx.db.get(link.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
+
+    const profile = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .unique()
+
+    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    const patch: Record<string, unknown> = {
+      waiverSignedAt: Date.now(),
+      signatureFileId: args.signatureStorageId,
+    }
+    if (args.guardianSignatureStorageId) {
+      patch.guardianSignatureFileId = args.guardianSignatureStorageId
+    }
+
+    await ctx.db.patch(profile._id, patch)
+    await ctx.db.patch(link.bookingId, { portalWaiver: true })
+    await tryAutoAdvance(ctx, link.bookingId)
+  },
+})
+
+// ─── savePortalEquipment ──────────────────────────────────────────────────────
+
+/**
+ * Saves the customer's rental equipment preferences and checklist.
+ *
+ * Stores own/rent decisions per gear type. Not a blocking portal step —
+ * submitPortal does not require this to be complete. Idempotent.
+ * Auth: token IS the credential (no Clerk auth).
+ */
+export const savePortalEquipment = mutation({
+  args: {
+    token: v.string(),
+    rentalChecklist: v.object({
+      mask: v.union(v.literal('own'), v.literal('rent')),
+      bcd: v.union(v.literal('own'), v.literal('rent')),
+      wetsuit: v.union(v.literal('own'), v.literal('rent')),
+      fins: v.union(v.literal('own'), v.literal('rent')),
+      regulator: v.union(v.literal('own'), v.literal('rent')),
+      maskPrescription: v.optional(v.string()),
+    }),
+  },
+  handler: async (
+    ctx: AnyCtx,
+    args: {
+      token: string
+      rentalChecklist: {
+        mask: 'own' | 'rent'
+        bcd: 'own' | 'rent'
+        wetsuit: 'own' | 'rent'
+        fins: 'own' | 'rent'
+        regulator: 'own' | 'rent'
+        maskPrescription?: string
+      }
+    },
+  ): Promise<void> => {
+    const link = await ctx.db
+      .query('bookingLinks')
+      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
+      .unique()
+
+    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+
+    const booking = await ctx.db.get(link.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
+
+    const profile = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .unique()
+
+    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    await ctx.db.patch(profile._id, { rentalChecklist: args.rentalChecklist })
+  },
+})
+
+// ─── uploadPhysicianClearance ─────────────────────────────────────────────────
+
+/**
+ * Stores the physician clearance document for a customer with a medical hard block.
+ *
+ * Sets physicianClearanceFileId and physicianClearedAt on the profile.
+ * Notifies the booking owner so they can review and manually clear the block.
+ * Note: uploading the document does NOT clear medicalHardBlock — the operator
+ * must review and clear it manually.
+ * Auth: token IS the credential (no Clerk auth).
+ */
+export const uploadPhysicianClearance = mutation({
+  args: {
+    token: v.string(),
+    physicianClearanceStorageId: v.id('_storage'),
+  },
+  handler: async (
+    ctx: AnyCtx,
+    args: { token: string; physicianClearanceStorageId: string },
+  ): Promise<void> => {
+    const link = await ctx.db
+      .query('bookingLinks')
+      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
+      .unique()
+
+    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
+
+    const booking = await ctx.db.get(link.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
+
+    const profile = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .unique()
+
+    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+
+    await ctx.db.patch(profile._id, {
+      physicianClearanceFileId: args.physicianClearanceStorageId,
+      physicianClearedAt: Date.now(),
+    })
+
+    await notify(ctx, {
+      userId: booking.ownerId,
+      type: 'physician_clearance_submitted',
+      bookingId: link.bookingId,
+      message: `Physician clearance submitted by ${link.customerName}. Review and clear the medical block if approved.`,
+    })
   },
 })
 

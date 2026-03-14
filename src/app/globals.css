@@ -17,6 +17,17 @@
   --color-destructive: var(--color-destructive);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
+  /* Glass visual parity additions */
+  --color-primary-glow: var(--color-primary-glow);
+  --color-glass-bg-elevated: var(--color-glass-bg-elevated);
+  --color-glass-border-elevated: var(--color-glass-border-elevated);
+  --color-glass-specular: var(--color-glass-specular);
+  --color-glass-specular-subtle: var(--color-glass-specular-subtle);
+  --color-glass-shadow: var(--color-glass-shadow);
+  --color-glass-shadow-elevated: var(--color-glass-shadow-elevated);
+  --bg-image: var(--bg-image);
+  --bg-overlay: var(--bg-overlay);
+  --body-bg: var(--body-bg);
 }
 
 /* ── Default theme fallback (light mode) ──────────────────────────────────────
@@ -42,6 +53,18 @@
   --font-body: "Nunito", sans-serif;
   --border-radius: 16px;
   --transition-speed: 0.3s;
+  /* Glass visual parity additions */
+  --color-primary-glow: rgba(2, 132, 199, 0.25);
+  --color-glass-bg-elevated: rgba(255, 255, 255, 0.75);
+  --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
+  --glass-blur-elevated: 24px;
+  --color-glass-specular: rgba(255, 255, 255, 0.7);
+  --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
+  --color-glass-shadow: rgba(0, 0, 0, 0.08);
+  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.12);
+  --bg-image: none;
+  --bg-overlay: none;
+  --body-bg: #f0f9ff;
 }
 
 /* ── Default theme fallback — dark mode (Deep Ocean palette) ──────────────── */
@@ -65,6 +88,18 @@
     --font-body: "Nunito", sans-serif;
     --border-radius: 16px;
     --transition-speed: 0.3s;
+    /* Glass visual parity additions */
+    --color-primary-glow: rgba(13, 115, 119, 0.4);
+    --color-glass-bg-elevated: rgba(255, 255, 255, 0.08);
+    --color-glass-border-elevated: rgba(255, 255, 255, 0.25);
+    --glass-blur-elevated: 24px;
+    --color-glass-specular: rgba(255, 255, 255, 0.4);
+    --color-glass-specular-subtle: rgba(255, 255, 255, 0.1);
+    --color-glass-shadow: rgba(0, 0, 0, 0.2);
+    --color-glass-shadow-elevated: rgba(0, 0, 0, 0.3);
+    --bg-image: none;
+    --bg-overlay: none;
+    --body-bg: #0a2e3d;
   }
 }
 
@@ -72,29 +107,163 @@
    All colors via CSS variables. Never hardcode.
    ──────────────────────────────────────────────────────────────────────────── */
 body {
-  background-color: var(--color-surface);
+  background-color: var(--body-bg);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+}
+
+/* ── Text selection ──────────────────────────────────────────────────────────*/
+::selection {
+  background: var(--color-primary-glow);
+  color: var(--color-text-primary);
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────────*/
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-glass-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-glass-border-elevated);
+}
+
+/* ── Background stack ────────────────────────────────────────────────────────
+   3-layer stack: fixed bg-image → fixed bg-overlay → relative z-2 app content
+   ──────────────────────────────────────────────────────────────────────────── */
+.bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg-image) center / cover no-repeat;
+  background-color: var(--body-bg);
+}
+
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg-overlay);
+  pointer-events: none;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 2;
 }
 
 /* ── Glass utility classes ───────────────────────────────────────────────────
    Shared backdrop-filter composites. Components import these via cn().
    ──────────────────────────────────────────────────────────────────────────── */
 .glass {
+  position: relative;
   background-color: var(--color-glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--color-glass-border);
   border-radius: var(--border-radius);
+  box-shadow:
+    0 8px 32px var(--color-glass-shadow),
+    inset 0 1px 0 var(--color-glass-specular-subtle);
   transition: all var(--transition-speed) ease;
 }
 
+/* Specular top-edge highlight */
+.glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-glass-specular), transparent);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
 .glass-elevated {
-  background-color: var(--color-surface-elevated);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--color-glass-border);
+  position: relative;
+  background-color: var(--color-glass-bg-elevated);
+  backdrop-filter: blur(var(--glass-blur-elevated));
+  -webkit-backdrop-filter: blur(var(--glass-blur-elevated));
+  border: 1px solid var(--color-glass-border-elevated);
   border-radius: var(--border-radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 12px 48px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular-subtle);
   transition: all var(--transition-speed) ease;
+}
+
+.glass-elevated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-glass-specular), transparent);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Glass field (input focus ring) ──────────────────────────────────────────*/
+.glass-field:focus {
+  outline: none;
+  border-color: var(--color-glass-border-elevated);
+  box-shadow:
+    0 0 0 3px var(--color-primary-glow),
+    0 4px 16px var(--color-glass-shadow);
+}
+
+/* ── Button variant hover states ─────────────────────────────────────────────
+   Base variant styles are applied via inline styles on GlassButton.
+   Hover/focus states must be CSS classes due to pseudo-selector requirements.
+   ──────────────────────────────────────────────────────────────────────────── */
+.glass-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.glass-btn-primary:not(:disabled):hover {
+  box-shadow: 0 0 24px var(--color-primary-glow), 0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn-secondary:not(:disabled):hover {
+  background: var(--color-glass-bg-elevated) !important;
+  border-color: var(--color-glass-border-elevated) !important;
+  box-shadow: 0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn-ghost:not(:disabled):hover {
+  background: var(--color-glass-bg) !important;
+  border-color: var(--color-glass-border) !important;
+}
+
+.glass-btn-destructive:not(:disabled):hover {
+  box-shadow: 0 0 24px rgba(248, 113, 113, 0.3), 0 4px 16px var(--color-glass-shadow);
+  transform: translateY(-1px);
+}
+
+.glass-btn:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ── Stat value gradient text ─────────────────────────────────────────────── */
+.stat-value {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

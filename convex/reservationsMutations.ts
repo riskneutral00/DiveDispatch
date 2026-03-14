@@ -206,6 +206,11 @@ export async function _declineHandler(
   const booking = await ctx.db.get(args.bookingId)
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
 
+  // Guard: cannot decline on a finalized booking
+  if (booking.status === 'Completed' || booking.status === 'Cancelled') {
+    throw new ConvexError({ code: 'INVALID_STATUS' })
+  }
+
   // Collect all active reservations for this unit on this booking
   const allBookingReservations = await ctx.db
     .query('reservations')
@@ -250,10 +255,19 @@ export async function _declineHandler(
     }
   }
 
-  // Clear the denormalized booking field so the operator can reassign
+  // Clear the denormalized booking field and cascade status if needed (atomic single patch)
   const fieldToClear = bookingFieldForResourceType(unit.resourceType as ResourceType)
+  const bookingPatch: Record<string, unknown> = {}
   if (fieldToClear) {
-    await ctx.db.patch(args.bookingId, { [fieldToClear]: undefined })
+    bookingPatch[fieldToClear] = undefined
+  }
+  if (booking.status === 'Upcoming') {
+    bookingPatch.status = 'Draft'
+    bookingPatch.bookingFormComplete = false
+    bookingPatch.expiresAt = now + booking.holdTTL
+  }
+  if (Object.keys(bookingPatch).length > 0) {
+    await ctx.db.patch(args.bookingId, bookingPatch)
   }
 
   // Notify the booking owner of the decline

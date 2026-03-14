@@ -80,9 +80,9 @@ const TRANSITION_SPEED_MAP: Record<string, string> = {
   slow: "0.5s",
 };
 
-// Maps a ColorPalette to CSS variable names defined in CLAUDE.md.
+// Maps a ColorPalette to CSS variable names.
 export function paletteToVars(palette: ColorPalette): Record<string, string> {
-  return {
+  const vars: Record<string, string> = {
     "--color-primary": palette.primary,
     "--color-secondary": palette.secondary,
     "--color-accent": palette.accent,
@@ -97,17 +97,31 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-destructive": palette.destructive,
     "--color-surface": palette.surface,
     "--color-surface-elevated": palette.surfaceElevated,
+    // Glass visual parity additions
+    "--color-primary-glow": palette.primaryGlow,
+    "--color-glass-bg-elevated": palette.glassBgElevated,
+    "--color-glass-border-elevated": palette.glassBorderElevated,
+    "--glass-blur-elevated": `${palette.glassBlurElevated}px`,
+    "--color-glass-specular": palette.glassSpecular,
+    "--color-glass-specular-subtle": palette.glassSpecularSubtle,
+    "--color-glass-shadow": palette.glassShadow,
+    "--color-glass-shadow-elevated": palette.glassShadowElevated,
+    "--body-bg": palette.bodyBg,
   };
+  if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
+  if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;
+  return vars;
 }
 
-// Full CSS variable set for a theme + mode (palette + typography + shape + motion).
+// Full CSS variable set for a theme + mode (palette + typography + shape + motion + backgrounds).
 export function themeToVars(
   theme: ThemeConfig,
   mode: ThemeMode,
 ): Record<string, string> {
   const palette = mode === "dark" ? theme.colors.dark : theme.colors.light;
+  const paletteVars = paletteToVars(palette);
   const vars: Record<string, string> = {
-    ...paletteToVars(palette),
+    ...paletteVars,
     "--font-heading": theme.typography.fontHeading,
     "--font-body": theme.typography.fontBody,
     "--border-radius": theme.shape.borderRadius,
@@ -116,6 +130,16 @@ export function themeToVars(
   };
   if (theme.typography.fontAccent) {
     vars["--font-accent"] = theme.typography.fontAccent;
+  }
+  // Background fallbacks from theme.backgrounds (palette-level values take precedence).
+  if (!paletteVars["--bg-image"] && theme.backgrounds.heroImage) {
+    vars["--bg-image"] = theme.backgrounds.heroImage;
+  }
+  if (!paletteVars["--bg-overlay"] && theme.backgrounds.gradientOverlay) {
+    vars["--bg-overlay"] = theme.backgrounds.gradientOverlay;
+  }
+  if (!paletteVars["--body-bg"] && theme.backgrounds.fallbackColor) {
+    vars["--body-bg"] = theme.backgrounds.fallbackColor;
   }
   return vars;
 }
