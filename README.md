@@ -102,7 +102,7 @@ Seed credentials: email format `{name}@divedispatch.dev`, password `REDACTED`.
 ```
 DiveDispatch/
 ├── convex/                   # Convex backend (schema, mutations, queries, seeds)
-├── docs/                     # Domain knowledge (LLM_HANDOFF.md)
+├── docs/                     # Domain knowledge (DOMAIN_KNOWLEDGE.md)
 ├── e2e/                      # Playwright end-to-end tests
 ├── messages/                 # i18n translation files
 ├── public/                   # Static assets

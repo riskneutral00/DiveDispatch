@@ -100,7 +100,7 @@ function makeCtx({
           filter: vi.fn(),
           collect: vi.fn().mockResolvedValue(collectResult),
           unique: vi.fn().mockResolvedValue(uniqueResult),
-          first: vi.fn().mockResolvedValue(collectResult[0] ?? null),
+          first: vi.fn().mockResolvedValue(uniqueResult ?? collectResult[0] ?? null),
         }
         chain.withIndex.mockReturnValue(chain)
         chain.filter.mockReturnValue(chain)

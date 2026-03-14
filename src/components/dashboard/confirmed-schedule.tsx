@@ -1,14 +1,27 @@
 'use client'
 
-import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Calendar, Clock, Users } from 'lucide-react'
 import { GlassCard, GlassBadge } from '@/components/glass'
+import { useStableQuery } from '@/lib/hooks/use-stable-query'
 
 export function ConfirmedSchedule() {
-  const schedule = useQuery(api.resourceQueries.getConfirmedSchedule)
+  const { data: schedule, isLoading, isError } = useStableQuery(
+    api.resourceQueries.getConfirmedSchedule,
+    {},
+  )
 
-  if (schedule === undefined) {
+  if (isError) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          Unable to load schedule.
+        </p>
+      </GlassCard>
+    )
+  }
+
+  if (isLoading || !schedule) {
     return (
       <GlassCard padding="md">
         <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>

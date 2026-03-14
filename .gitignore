@@ -43,3 +43,11 @@ convex/_generated/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code
+.claude/session.md
+.playwright-mcp/
+
+# screenshots
+/*.png
+screenshots/

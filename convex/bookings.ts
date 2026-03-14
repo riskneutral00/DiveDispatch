@@ -112,7 +112,7 @@ async function requireAuth(ctx: AnyCtx): Promise<AnyCtx> {
       q.eq('tokenIdentifier', identity.tokenIdentifier),
     )
     .unique()
-  if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!user) throw new ConvexError({ code: 'USER_NOT_PROVISIONED' })
   return user
 }
 

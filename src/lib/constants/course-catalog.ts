@@ -4,7 +4,7 @@
 // max divers per instructor; Universal courses are agency-agnostic.
 
 export const COURSE_CODES = [
-  'DSD', 'OW', 'AOW', 'RESCUE', 'DM', 'FD', 'OW_AOW', 'REFRESH', 'SPECIALTY',
+  'DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'FD', 'REFRESH', 'SPECIALTY',
 ] as const;
 
 export type CourseCode = (typeof COURSE_CODES)[number];
@@ -76,14 +76,14 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     description: 'Professional-level training to lead and assist dive activities',
   },
   {
-    code: 'OW_AOW',
-    name: 'PADI Open Water + Advanced Combo',
+    code: 'TRY_DIVE',
+    name: 'PADI Try Dive',
     agency: 'PADI',
-    minDays: 4,
+    minDays: 1,
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
-    description: 'Combined Open Water + Advanced Open Water in one continuous program',
+    description: 'Informal DSD alternative for dive centers not following official PADI SOP',
   },
   {
     code: 'SPECIALTY',
@@ -151,14 +151,14 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     description: 'Professional-level training to guide certified divers',
   },
   {
-    code: 'OW_AOW',
-    name: 'SSI Open Water + Advanced Combo',
+    code: 'TRY_DIVE',
+    name: 'SSI Try Dive',
     agency: 'SSI',
-    minDays: 4,
+    minDays: 1,
     requiresConfined: true,
-    maxDiversPerInstructor: 8,
+    maxDiversPerInstructor: 4,
     prerequisites: [],
-    description: 'Combined Open Water + Advanced Adventurer in one continuous program',
+    description: 'Informal introductory dive alternative for dive centers not following official SSI SOP',
   },
   {
     code: 'SPECIALTY',

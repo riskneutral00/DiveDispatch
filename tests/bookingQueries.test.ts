@@ -244,9 +244,9 @@ describe('_listByOwner', () => {
     await expectConvexError(_listByOwner(ctx, { ownerId: 'dc-1', ownerType: 'DiveCenter' }), 'UNAUTHENTICATED')
   })
 
-  it('throws NOT_FOUND when user does not exist', async () => {
+  it('throws USER_NOT_PROVISIONED when user does not exist', async () => {
     const ctx = makeCtx(db, 'clerk|dc-1')
-    await expectConvexError(_listByOwner(ctx, { ownerId: 'dc-1', ownerType: 'DiveCenter' }), 'NOT_FOUND')
+    await expectConvexError(_listByOwner(ctx, { ownerId: 'dc-1', ownerType: 'DiveCenter' }), 'USER_NOT_PROVISIONED')
   })
 
   it('throws FORBIDDEN when caller slug does not match ownerId', async () => {
@@ -345,9 +345,9 @@ describe('_listByStatus', () => {
     await expectConvexError(_listByStatus(ctx, { status: 'Draft' }), 'UNAUTHENTICATED')
   })
 
-  it('throws NOT_FOUND when user does not exist', async () => {
+  it('throws USER_NOT_PROVISIONED when user does not exist', async () => {
     const ctx = makeCtx(db, 'clerk|dc-1')
-    await expectConvexError(_listByStatus(ctx, { status: 'Draft' }), 'NOT_FOUND')
+    await expectConvexError(_listByStatus(ctx, { status: 'Draft' }), 'USER_NOT_PROVISIONED')
   })
 
   it('returns empty array when no bookings match status', async () => {
@@ -419,11 +419,11 @@ describe('_listByResource', () => {
     )
   })
 
-  it('throws NOT_FOUND when user does not exist', async () => {
+  it('throws USER_NOT_PROVISIONED when user does not exist', async () => {
     const ctx = makeCtx(db, 'clerk|instructor-1')
     await expectConvexError(
       _listByResource(ctx, { resourceId: 'instructor-1', resourceType: 'Instructor' }),
-      'NOT_FOUND',
+      'USER_NOT_PROVISIONED',
     )
   })
 
@@ -509,9 +509,9 @@ describe('_myDashboard', () => {
     await expectConvexError(_myDashboard(ctx), 'UNAUTHENTICATED')
   })
 
-  it('throws NOT_FOUND when user does not exist', async () => {
+  it('throws USER_NOT_PROVISIONED when user does not exist', async () => {
     const ctx = makeCtx(db, 'clerk|dc-1')
-    await expectConvexError(_myDashboard(ctx), 'NOT_FOUND')
+    await expectConvexError(_myDashboard(ctx), 'USER_NOT_PROVISIONED')
   })
 
   it('returns empty dashboard for operator with no bookings', async () => {

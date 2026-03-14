@@ -22,7 +22,7 @@ const AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS']
 
 // Activities that require a pre-existing certification → show agency field
 const CERTIFIED_CODES: CourseCode[] = [
-  'FD', 'AOW', 'RESCUE', 'DM', 'SPECIALTY', 'OW_AOW', 'REFRESH',
+  'FD', 'AOW', 'RESCUE', 'DM', 'SPECIALTY', 'REFRESH',
 ]
 
 function shouldShowAgency(activityType: CourseCode[]): boolean {

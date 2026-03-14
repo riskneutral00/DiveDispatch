@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Users, Calendar, ChevronDown } from 'lucide-react'
 import { GlassCard, GlassBadge, GlassButton, GlassDialog } from '@/components/glass'
+import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import { BookingCalendar } from './booking-calendar'
 import type { CalendarBooking } from '../../../convex/bookings'
 import type { ClerkRole } from '@/lib/constants/roles'
@@ -46,14 +46,27 @@ export function BookingList({ ownerId, ownerType }: BookingListProps) {
 
   const isOperator = OPERATOR_TYPES.has(ownerType)
 
-  const bookings = useQuery(
+  const { data: bookings, isLoading, isError } = useStableQuery(
     api.bookings.listByOwner,
     isOperator ? { ownerId, ownerType: ownerType as OperatorType } : 'skip',
   )
 
   if (!isOperator) return null
 
-  if (bookings === undefined) {
+  if (isError) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          Unable to load bookings.{' '}
+          <a href="/role-select" className="underline" style={{ color: 'var(--color-primary)' }}>
+            Set up your account
+          </a>
+        </p>
+      </GlassCard>
+    )
+  }
+
+  if (isLoading || !bookings) {
     return (
       <GlassCard padding="md">
         <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>

@@ -17,12 +17,12 @@ const AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS'] as const
 
 const COURSE_LABELS: Record<string, string> = {
   DSD: 'Discover Scuba Diving',
+  TRY_DIVE: 'Try Dive',
   OW: 'Open Water',
   AOW: 'Advanced Open Water',
   RESCUE: 'Rescue Diver',
   DM: 'Divemaster',
   FD: 'Fun Dive',
-  OW_AOW: 'OW + AOW Combo',
   REFRESH: 'Refresher / ReActivate',
   SPECIALTY: 'Specialty',
 }

@@ -21,7 +21,7 @@ function toSlug(first: string, last: string): string {
 
 function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
   const slug = toSlug(def.firstName, def.lastName)
-  const email = `${slug}@divedispatch.dev`
+  const email = `${slug}+clerk_test@divedispatch.dev`
   const phone = `+66-81-${String(600 + index).padStart(3, '0')}-${String(1000 + index).padStart(4, '0')}`
 
   const user: SeedUser = {

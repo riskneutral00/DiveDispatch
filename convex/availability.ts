@@ -77,7 +77,7 @@ export async function _listInventoryByType(
     const owner = await ctx.db
       .query('users')
       .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', unit.ownerId))
-      .unique()
+      .first()
 
     results.push({
       id: unit._id,

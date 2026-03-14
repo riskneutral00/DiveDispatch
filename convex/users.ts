@@ -57,7 +57,10 @@ export const createUser = mutation({
       )
       .unique()
 
-    if (existing) return existing._id
+    if (existing) {
+      await ctx.db.patch(existing._id, { role: args.role, businessName: args.businessName })
+      return existing._id
+    }
 
     const name = identity.name ?? ''
     const firstName =

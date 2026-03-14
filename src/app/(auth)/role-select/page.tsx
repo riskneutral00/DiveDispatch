@@ -14,7 +14,7 @@ import {
 export default function RoleSelectPage() {
   const { user } = useUser()
   const router = useRouter()
-  const setRole = useMutation(api.users.setRole)
+  const createUser = useMutation(api.users.createUser)
 
   const [selected, setSelected] = useState<RoleConfig | null>(null)
   const [businessName, setBusinessName] = useState('')
@@ -37,7 +37,7 @@ export default function RoleSelectPage() {
         },
       })
 
-      await setRole({
+      await createUser({
         role: selected.clerkRole,
         businessName: businessName.trim(),
       })

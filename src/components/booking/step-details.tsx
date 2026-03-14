@@ -7,7 +7,7 @@ import { COURSE_CATALOG, type CourseCode } from '@/lib/constants/course-catalog'
 import type { DetailsState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
 
-// ── AOW specialty data (per LLM_HANDOFF § 7) ──────────────────────────────────
+// ── AOW specialty data (per DOMAIN_KNOWLEDGE § 4) ─────────────────────────────
 
 const AOW_REQUIRED = ['Navigation', 'Deep'] as const
 const AOW_ELECTIVES = [

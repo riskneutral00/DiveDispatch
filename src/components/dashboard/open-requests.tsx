@@ -1,9 +1,9 @@
 'use client'
 
-import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Clock, Users, Calendar } from 'lucide-react'
 import { GlassCard, GlassBadge } from '@/components/glass'
+import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import { RequestActions } from './request-actions'
 
 interface OpenRequestsProps {
@@ -20,9 +20,22 @@ function timeAgo(ts: number): string {
 }
 
 export function OpenRequests({ confirmOnDecline = false }: OpenRequestsProps) {
-  const requests = useQuery(api.resourceQueries.getOpenRequests)
+  const { data: requests, isLoading, isError } = useStableQuery(
+    api.resourceQueries.getOpenRequests,
+    {},
+  )
 
-  if (requests === undefined) {
+  if (isError) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          Unable to load requests.
+        </p>
+      </GlassCard>
+    )
+  }
+
+  if (isLoading || !requests) {
     return (
       <GlassCard padding="md">
         <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>

@@ -21,12 +21,12 @@ type SessionInput = {
   diveSlots?: Array<{
     courseCode:
       | 'DSD'
+      | 'TRY_DIVE'
       | 'OW'
       | 'AOW'
       | 'RESCUE'
       | 'DM'
       | 'FD'
-      | 'OW_AOW'
       | 'REFRESH'
       | 'SPECIALTY'
     diveNumber: number
@@ -60,12 +60,12 @@ const sessionValidator = v.object({
       v.object({
         courseCode: v.union(
           v.literal('DSD'),
+          v.literal('TRY_DIVE'),
           v.literal('OW'),
           v.literal('AOW'),
           v.literal('RESCUE'),
           v.literal('DM'),
           v.literal('FD'),
-          v.literal('OW_AOW'),
           v.literal('REFRESH'),
           v.literal('SPECIALTY'),
         ),

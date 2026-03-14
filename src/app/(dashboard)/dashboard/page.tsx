@@ -12,7 +12,11 @@ export default function DashboardRedirectPage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (isLoading || !user) return
+    if (isLoading) return
+    if (!user) {
+      router.replace('/role-select')
+      return
+    }
 
     const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
     if (roleConfig) {

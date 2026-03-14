@@ -66,12 +66,12 @@ const gasMix = v.union(v.literal('air'), v.literal('nitrox'), v.literal('trimix'
 
 const courseCode = v.union(
   v.literal('DSD'),
+  v.literal('TRY_DIVE'),
   v.literal('OW'),
   v.literal('AOW'),
   v.literal('RESCUE'),
   v.literal('DM'),
   v.literal('FD'),
-  v.literal('OW_AOW'),
   v.literal('REFRESH'),
   v.literal('SPECIALTY'),
 )

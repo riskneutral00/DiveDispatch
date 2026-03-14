@@ -1,3 +1,4 @@
+import { v } from 'convex/values'
 import { internalAction, internalMutation } from './_generated/server'
 import { internal } from './_generated/api'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole } from './seedData'
@@ -207,6 +208,9 @@ export const seedStakeholders = internalMutation({
 export const seedInstructors = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const existing = await ctx.db.query('users').first()
+    if (existing) return 'Already seeded'
+
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
       if (s.instructor) {
@@ -356,6 +360,25 @@ export const seedStakeholderPreferences = internalMutation({
         confirmOnAccept: false,
         confirmOnDecline: false,
       })
+    }
+  },
+})
+
+// ── L0-09: Patch real Clerk tokenIdentifiers after seed-clerk.ts runs ──
+
+export const patchTokenIdentifiers = internalMutation({
+  args: {
+    patches: v.array(v.object({ email: v.string(), tokenIdentifier: v.string() })),
+  },
+  handler: async (ctx, { patches }) => {
+    for (const { email, tokenIdentifier } of patches) {
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_email', (q) => q.eq('email', email))
+        .unique()
+      if (user) {
+        await ctx.db.patch(user._id, { tokenIdentifier })
+      }
     }
   },
 })

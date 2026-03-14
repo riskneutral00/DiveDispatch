@@ -10,7 +10,6 @@
 
 import type * as agents from "../agents.js";
 import type * as availability from "../availability.js";
-import type * as devSwitcher from "../devSwitcher.js";
 import type * as boats from "../boats.js";
 import type * as bookingDraftMutations from "../bookingDraftMutations.js";
 import type * as bookingLinks from "../bookingLinks.js";
@@ -46,7 +45,6 @@ declare const fullApi: ApiFromModules<{
   agents: typeof agents;
   availability: typeof availability;
   boats: typeof boats;
-  devSwitcher: typeof devSwitcher;
   bookingDraftMutations: typeof bookingDraftMutations;
   bookingLinks: typeof bookingLinks;
   bookings: typeof bookings;

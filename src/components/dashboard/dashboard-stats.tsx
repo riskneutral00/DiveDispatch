@@ -1,8 +1,8 @@
 'use client'
 
-import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass'
+import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import type { ClerkRole } from '@/lib/constants/roles'
 
 interface DashboardStatsProps {
@@ -30,7 +30,7 @@ const OPERATOR_TYPES = new Set<string>([
 export function DashboardStats({ ownerId, ownerType }: DashboardStatsProps) {
   const isOperator = OPERATOR_TYPES.has(ownerType)
 
-  const bookings = useQuery(
+  const { data: bookings, isError } = useStableQuery(
     api.bookings.listByOwner,
     isOperator
       ? { ownerId, ownerType: ownerType as OperatorType }
@@ -38,6 +38,19 @@ export function DashboardStats({ ownerId, ownerType }: DashboardStatsProps) {
   )
 
   if (!isOperator) return null
+
+  if (isError) {
+    return (
+      <GlassCard elevated padding="sm">
+        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+          Unable to load stats.{' '}
+          <a href="/role-select" className="underline" style={{ color: 'var(--color-primary)' }}>
+            Set up your account
+          </a>
+        </p>
+      </GlassCard>
+    )
+  }
 
   const total = bookings?.length ?? 0
   const upcoming = bookings?.filter((b) => b.status === 'Upcoming').length ?? 0

@@ -1,4 +1,4 @@
-// 14 required color properties per Section 12 of LLM_HANDOFF
+// 14 required color properties per theme system design
 export interface ColorPalette {
   primary: string;
   secondary: string;
