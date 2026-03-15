@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Users, Calendar, ChevronDown } from 'lucide-react'
 import { GlassCard, GlassBadge, GlassButton, GlassDialog } from '@/components/glass'
+import { BookingCalendar } from './booking-calendar'
 import type { CalendarBooking } from '../../../convex/bookings'
 
 interface AgentBookingListProps {
@@ -32,7 +33,7 @@ export function AgentBookingList({ agentId }: AgentBookingListProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [modeFilter, setModeFilter] = useState<ModeFilter>('All')
   const [sortKey, setSortKey] = useState<SortKey>('startDate')
-  const [selectedDate] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [detailBooking, setDetailBooking] = useState<CalendarBooking | null>(null)
 
   // Independent bookings — agent is the booking owner.
@@ -68,6 +69,17 @@ export function AgentBookingList({ agentId }: AgentBookingListProps) {
 
   return (
     <div className="space-y-4">
+      {/* Calendar — only for independent/all mode */}
+      {modeFilter !== 'Referral' && (
+        <GlassCard padding="md">
+          <BookingCalendar
+            bookings={allBookings}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+          />
+        </GlassCard>
+      )}
+
       {/* Mode filter */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex gap-1.5">

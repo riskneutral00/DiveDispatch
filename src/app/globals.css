@@ -28,22 +28,6 @@
   --bg-image: var(--bg-image);
   --bg-overlay: var(--bg-overlay);
   --body-bg: var(--body-bg);
-  /* Status colors for booking calendar bars */
-  --color-status-active: var(--color-status-active);
-  --color-status-active-bg: var(--color-status-active-bg);
-  --color-status-active-border: var(--color-status-active-border);
-  --color-status-draft: var(--color-status-draft);
-  --color-status-draft-bg: var(--color-status-draft-bg);
-  --color-status-draft-border: var(--color-status-draft-border);
-  --color-status-upcoming: var(--color-status-upcoming);
-  --color-status-upcoming-bg: var(--color-status-upcoming-bg);
-  --color-status-upcoming-border: var(--color-status-upcoming-border);
-  --color-status-completed: var(--color-status-completed);
-  --color-status-completed-bg: var(--color-status-completed-bg);
-  --color-status-completed-border: var(--color-status-completed-border);
-  --color-status-cancelled: var(--color-status-cancelled);
-  --color-status-cancelled-bg: var(--color-status-cancelled-bg);
-  --color-status-cancelled-border: var(--color-status-cancelled-border);
 }
 
 /* ── Default theme fallback (light mode) ──────────────────────────────────────
@@ -81,22 +65,6 @@
   --bg-image: none;
   --bg-overlay: none;
   --body-bg: #f0f9ff;
-  /* Status colors — booking calendar bars */
-  --color-status-active: #16a34a;
-  --color-status-active-bg: rgba(22, 163, 74, 0.14);
-  --color-status-active-border: rgba(22, 163, 74, 0.5);
-  --color-status-draft: #d97706;
-  --color-status-draft-bg: rgba(217, 119, 6, 0.14);
-  --color-status-draft-border: rgba(217, 119, 6, 0.5);
-  --color-status-upcoming: #2563eb;
-  --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
-  --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
-  --color-status-completed: #64748b;
-  --color-status-completed-bg: rgba(100, 116, 139, 0.1);
-  --color-status-completed-border: rgba(100, 116, 139, 0.4);
-  --color-status-cancelled: #dc2626;
-  --color-status-cancelled-bg: rgba(220, 38, 38, 0.1);
-  --color-status-cancelled-border: rgba(220, 38, 38, 0.4);
 }
 
 /* ── Default theme fallback — dark mode (Deep Ocean palette) ──────────────── */
@@ -132,22 +100,6 @@
     --bg-image: none;
     --bg-overlay: none;
     --body-bg: #0a2e3d;
-    /* Status colors — dark mode */
-    --color-status-active: #4ade80;
-    --color-status-active-bg: rgba(74, 222, 128, 0.14);
-    --color-status-active-border: rgba(74, 222, 128, 0.5);
-    --color-status-draft: #fbbf24;
-    --color-status-draft-bg: rgba(251, 191, 36, 0.14);
-    --color-status-draft-border: rgba(251, 191, 36, 0.5);
-    --color-status-upcoming: #60a5fa;
-    --color-status-upcoming-bg: rgba(96, 165, 250, 0.14);
-    --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
-    --color-status-completed: #94a3b8;
-    --color-status-completed-bg: rgba(148, 163, 184, 0.1);
-    --color-status-completed-border: rgba(148, 163, 184, 0.4);
-    --color-status-cancelled: #f87171;
-    --color-status-cancelled-bg: rgba(248, 113, 113, 0.1);
-    --color-status-cancelled-border: rgba(248, 113, 113, 0.4);
   }
 }
 
