@@ -6,6 +6,7 @@ import { OpenRequests } from '@/components/dashboard/open-requests'
 import { ConfirmedSchedule } from '@/components/dashboard/confirmed-schedule'
 import { AvailabilityCalendar } from '@/components/dashboard/availability-calendar'
 import { ProfileCompletionBanner } from '@/components/dashboard/profile-completion-banner'
+import { DraftList } from '@/components/booking/draft-list'
 
 export default async function DashboardPage({
   params,
@@ -39,10 +40,11 @@ export default async function DashboardPage({
         </p>
       </div>
 
-      {/* Operator dashboard: stats + booking list */}
+      {/* Operator dashboard: stats + in-progress drafts + booking list */}
       {isOrganizer && clerkRole && (
         <>
           <DashboardStats ownerId={slug} ownerType={clerkRole} />
+          <DraftList />
           <BookingList ownerId={slug} ownerType={clerkRole} />
         </>
       )}

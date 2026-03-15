@@ -6,6 +6,7 @@ import { GlassButton } from '../glass/glass-button'
 import { GlassInput } from '../glass/glass-input'
 import { SignaturePad, SignaturePadHandle } from '../common/signature-pad'
 import { ShieldCheck } from 'lucide-react'
+import { calcAgeAtDate } from '@/lib/constants/activity-rules'
 
 // ── Legal text constants ─────────────────────────────────────────────────────
 
@@ -42,18 +43,12 @@ interface StepWaiverProps {
   onBack?: () => void
   /** Disable submission (e.g. parent is submitting) */
   submitting?: boolean
+  /** ISO date string for the first dive session.
+   * Used for accurate under-18 check (age at dive start, not today). */
+  bookingStartDate?: string
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function calculateAge(dateOfBirth: string): number {
-  const today = new Date()
-  const dob = new Date(dateOfBirth)
-  let age = today.getFullYear() - dob.getFullYear()
-  const mDiff = today.getMonth() - dob.getMonth()
-  if (mDiff < 0 || (mDiff === 0 && today.getDate() < dob.getDate())) age--
-  return age
-}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -89,8 +84,10 @@ export function StepWaiver({
   onComplete,
   onBack,
   submitting = false,
+  bookingStartDate,
 }: StepWaiverProps) {
-  const isUnder18 = calculateAge(dateOfBirth) < 18
+  const refDate = bookingStartDate ?? todayISO()
+  const isUnder18 = dateOfBirth ? calcAgeAtDate(dateOfBirth, refDate) < 18 : false
 
   const [acknowledged, setAcknowledged] = useState(false)
   const [hasInsurance, setHasInsurance] = useState<'yes' | 'no' | null>(null)
@@ -109,6 +106,7 @@ export function StepWaiver({
     if (!acknowledged) next.acknowledged = 'You must acknowledge the agreement.'
     if (!hasSig) next.signature = 'Participant signature is required.'
     if (!date) next.date = 'Date is required.'
+    if (hasInsurance === null) next.hasInsurance = 'Please indicate whether you have diver accident insurance.'
     if (hasInsurance === 'yes' && !insurancePolicyNumber.trim()) {
       next.insurancePolicyNumber = 'Policy number is required.'
     }
@@ -251,7 +249,10 @@ export function StepWaiver({
                   name="hasInsurance"
                   value={val}
                   checked={hasInsurance === val}
-                  onChange={() => setHasInsurance(val)}
+                  onChange={() => {
+                    setHasInsurance(val)
+                    setErrors((prev) => { const n = {...prev}; delete n.hasInsurance; return n })
+                  }}
                   className="h-4 w-4 cursor-pointer"
                   style={{ accentColor: 'var(--color-primary)' }}
                 />
@@ -265,11 +266,20 @@ export function StepWaiver({
             ))}
           </div>
 
+          {errors.hasInsurance && (
+            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+              {errors.hasInsurance}
+            </p>
+          )}
+
           {hasInsurance === 'yes' && (
             <GlassInput
               label="Policy Number"
               value={insurancePolicyNumber}
-              onChange={(e) => setInsurancePolicyNumber(e.target.value)}
+              onChange={(e) => {
+                setInsurancePolicyNumber(e.target.value)
+                if (e.target.value.trim()) setErrors((prev) => { const n = {...prev}; delete n.insurancePolicyNumber; return n })
+              }}
               placeholder="e.g. DAN-123456"
               error={errors.insurancePolicyNumber}
             />

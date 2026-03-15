@@ -1,5 +1,6 @@
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
+import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
 
 export default async function BoatSettingsPage({
   params,
@@ -11,6 +12,7 @@ export default async function BoatSettingsPage({
   return (
     <DashboardShell roleSlug="boat" slug={slug}>
       <BoatProfileForm />
+      <PreferencesEditor />
     </DashboardShell>
   )
 }

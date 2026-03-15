@@ -1,5 +1,6 @@
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
+import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
 
 export default async function AgentSettingsPage({
   params,
@@ -11,6 +12,7 @@ export default async function AgentSettingsPage({
   return (
     <DashboardShell roleSlug="agent" slug={slug}>
       <AgentProfileForm />
+      <PreferencesEditor />
     </DashboardShell>
   )
 }

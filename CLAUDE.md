@@ -64,6 +64,12 @@ Convex schema changes require full wipe + reseed. Plan schema carefully upfront.
 
 Never hardcode colors — use Glass components (`src/components/glass/`) or CSS variables.
 
+## Browser / Visual Verification
+
+Always use Playwright (MCP) to open the browser — never `open` or a raw URL. Before navigating, check if the dev server is running on port 3000. If not, start it with `tmux new-session -d -s dev "npm run dev"` and wait for it to be ready before navigating.
+
+**Auth in Playwright:** Always use the sign-in token method — never fill the Clerk form. The form triggers 2FA on new devices (Playwright is always a new device). Use the programmatic token flow from the `clerk-dev` skill instead.
+
 ## Vault-Enriched Specs
 
 When writing an Overstory spec, search the full vault (`Inspirations/`, `PatternLibrary/`, `DiveDispatch/Lessons.md`, `DiveDispatch/Architecture.md`, `Sessions/`) for relevant content. Add observations to Implementation Notes.

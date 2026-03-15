@@ -1,5 +1,6 @@
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
+import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
 import type { RoleKey } from '@/lib/constants/roles'
 
 export default async function PoolSettingsPage({
@@ -25,6 +26,7 @@ export default async function PoolSettingsPage({
         </div>
 
         <PoolProfileForm />
+        <PreferencesEditor />
       </div>
     </DashboardShell>
   )

@@ -22,6 +22,8 @@ interface ResourcePickerProps {
   entries: ResourcePickerEntry[]
   /** Slugs whose inventory units are all fully booked on the booking dates */
   unavailableOwnerSlugs: Set<string>
+  /** Operator's preferred slugs in ranked order — renders a Preferred section */
+  preferredSlugs?: string[]
   selectedSlug: string | undefined
   freeformName: string | undefined
   onSelectSlug: (slug: string | undefined) => void
@@ -36,6 +38,7 @@ export function ResourcePicker({
   label,
   entries,
   unavailableOwnerSlugs,
+  preferredSlugs,
   selectedSlug,
   freeformName,
   onSelectSlug,
@@ -59,8 +62,22 @@ export function ResourcePicker({
   }
 
   const selectedEntry = entries.find((e) => e.slug === selectedSlug)
-  const availableEntries = entries.filter((e) => !unavailableOwnerSlugs.has(e.slug))
-  const unavailableEntries = entries.filter((e) => unavailableOwnerSlugs.has(e.slug))
+
+  // ── Preferred grouping ──────────────────────────────────────────────────
+  const hasPref = (preferredSlugs?.length ?? 0) > 0
+  const prefSet = new Set(preferredSlugs ?? [])
+
+  // Preferred entries in exact preference order (filter to those in entries)
+  const preferredAvailable = (preferredSlugs ?? [])
+    .map((slug) => entries.find((e) => e.slug === slug))
+    .filter((e): e is ResourcePickerEntry => !!e && !unavailableOwnerSlugs.has(e.slug))
+  const preferredUnavailable = (preferredSlugs ?? [])
+    .map((slug) => entries.find((e) => e.slug === slug))
+    .filter((e): e is ResourcePickerEntry => !!e && unavailableOwnerSlugs.has(e.slug))
+
+  // Non-preferred entries (already sorted by step-resources when preferredSlugs is set)
+  const availableEntries = entries.filter((e) => !unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug)))
+  const unavailableEntries = entries.filter((e) => unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug)))
 
   return (
     <div className="flex flex-col gap-2">
@@ -151,32 +168,60 @@ export function ResourcePicker({
                 </div>
               ) : (
                 <>
-                  {availableEntries.map((entry) => (
-                    <PickerRow
-                      key={entry.slug}
-                      entry={entry}
-                      isSelected={selectedSlug === entry.slug}
-                      isUnavailable={false}
-                      onSelect={() => {
-                        onSelectSlug(entry.slug)
-                        setIsOpen(false)
-                      }}
-                    />
-                  ))}
+                  {/* Preferred section */}
+                  {hasPref && (preferredAvailable.length > 0 || preferredUnavailable.length > 0) && (
+                    <>
+                      <SectionHeader label="Preferred" topBorder={false} />
+                      {preferredAvailable.map((entry) => (
+                        <PickerRow
+                          key={entry.slug}
+                          entry={entry}
+                          isSelected={selectedSlug === entry.slug}
+                          isUnavailable={false}
+                          onSelect={() => {
+                            onSelectSlug(entry.slug)
+                            setIsOpen(false)
+                          }}
+                        />
+                      ))}
+                      {preferredUnavailable.map((entry) => (
+                        <PickerRow
+                          key={entry.slug}
+                          entry={entry}
+                          isSelected={false}
+                          isUnavailable={true}
+                          unavailableLabel="Unavailable"
+                          onSelect={() => {}}
+                        />
+                      ))}
+                    </>
+                  )}
 
+                  {/* Other available entries */}
+                  {availableEntries.length > 0 && (
+                    <>
+                      {hasPref && (preferredAvailable.length > 0 || preferredUnavailable.length > 0) && (
+                        <SectionHeader label="Other" topBorder />
+                      )}
+                      {availableEntries.map((entry) => (
+                        <PickerRow
+                          key={entry.slug}
+                          entry={entry}
+                          isSelected={selectedSlug === entry.slug}
+                          isUnavailable={false}
+                          onSelect={() => {
+                            onSelectSlug(entry.slug)
+                            setIsOpen(false)
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* Fully booked non-preferred */}
                   {unavailableEntries.length > 0 && (
                     <>
-                      {availableEntries.length > 0 && (
-                        <div
-                          className="px-3 py-1 text-xs font-semibold uppercase tracking-wider"
-                          style={{
-                            color: 'var(--color-text-secondary)',
-                            borderTop: '1px solid var(--color-glass-border)',
-                          }}
-                        >
-                          Fully booked
-                        </div>
-                      )}
+                      <SectionHeader label="Fully booked" topBorder />
                       {unavailableEntries.map((entry) => (
                         <PickerRow
                           key={entry.slug}
@@ -225,17 +270,35 @@ export function ResourcePicker({
   )
 }
 
+// ── SectionHeader ──────────────────────────────────────────────────────────────
+
+function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean }) {
+  return (
+    <div
+      className="px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+      style={{
+        color: 'var(--color-text-secondary)',
+        borderTop: topBorder ? '1px solid var(--color-glass-border)' : undefined,
+      }}
+    >
+      {label}
+    </div>
+  )
+}
+
 // ── PickerRow ──────────────────────────────────────────────────────────────────
 
 function PickerRow({
   entry,
   isSelected,
   isUnavailable,
+  unavailableLabel = 'Booked',
   onSelect,
 }: {
   entry: ResourcePickerEntry
   isSelected: boolean
   isUnavailable: boolean
+  unavailableLabel?: string
   onSelect: () => void
 }) {
   return (
@@ -268,7 +331,7 @@ function PickerRow({
           )}
           {isUnavailable && (
             <GlassBadge variant="destructive" size="sm">
-              Booked
+              {unavailableLabel}
             </GlassBadge>
           )}
         </div>

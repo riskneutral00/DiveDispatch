@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
+import { getAuthUser } from './lib/auth'
 
 const stakeholderType = v.union(
   v.literal('DiveCenter'),
@@ -17,17 +18,9 @@ const stakeholderType = v.union(
 )
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function generateUniqueSlug(db: any, name: string): Promise<string> {
-  const base = name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 30)
-
-  for (let i = 0; i < 5; i++) {
-    const suffix = Math.random().toString(36).slice(2, 7)
-    const slug = `${base}-${suffix}`
+async function generateUniqueSlug(db: any): Promise<string> {
+  for (let i = 0; i < 10; i++) {
+    const slug = Math.random().toString(36).slice(2, 8)
     const existing = await db
       .query('users')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,8 +28,7 @@ async function generateUniqueSlug(db: any, name: string): Promise<string> {
       .unique()
     if (!existing) return slug
   }
-
-  return `${base}-${Date.now().toString(36)}`
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }
 
 // Auth-aware registration. Called from UI after Clerk sign-up + role selection.
@@ -69,7 +61,7 @@ export const createUser = mutation({
       (identity as Record<string, unknown>).familyName as string ?? ''
     const email = identity.email ?? ''
 
-    const slug = await generateUniqueSlug(ctx.db, name || args.businessName)
+    const slug = await generateUniqueSlug(ctx.db)
     return await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
       slug,
@@ -114,7 +106,7 @@ export const upsertUser = mutation({
       return existing._id
     }
 
-    const slug = await generateUniqueSlug(ctx.db, args.name)
+    const slug = await generateUniqueSlug(ctx.db)
     return await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
       slug,
@@ -160,15 +152,7 @@ export const setRole = mutation({
 export const me = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-
-    return await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    return await getAuthUser(ctx)
   },
 })
 
@@ -220,7 +204,7 @@ export const upsertFromWebhook = internalMutation({
       return existing._id
     }
 
-    const slug = await generateUniqueSlug(ctx.db, args.name || args.email)
+    const slug = await generateUniqueSlug(ctx.db)
     return await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
       slug,

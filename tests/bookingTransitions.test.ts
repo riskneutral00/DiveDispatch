@@ -1,71 +1,62 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ConvexError } from 'convex/values'
-
-// Mock generated Convex server bindings — mutation/internalMutation become
-// pass-through so we can call .handler() directly in tests.
-vi.mock('../convex/_generated/server', () => ({
-  mutation: (config: unknown) => config,
-  internalMutation: (config: unknown) => config,
-}))
-
+import { describe, it, expect } from 'vitest'
+import { convexTest } from 'convex-test'
+import schema from '../convex/schema'
+import { api } from '../convex/_generated/api'
 import {
   canBookingTransition,
   canReservationTransition,
-  cancelBooking,
-  editBooking,
-} from '../convex/bookingsMutations'
+} from '../convex/bookings/_shared'
 
-// After vi.mock, cancelBooking / editBooking are the raw config objects.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MutationConfig = { args: unknown; handler: (ctx: any, args: any) => Promise<unknown> }
+const modules = import.meta.glob('../convex/**/*.ts')
 
-const cancel = cancelBooking as unknown as MutationConfig
-const edit = editBooking as unknown as MutationConfig
+// ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-// ─── Mock context factory ─────────────────────────────────────────────────────
+async function seedUser(
+  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
+  slug: string,
+  role: string = 'DiveCenter',
+) {
+  await ctx.db.insert('users', {
+    tokenIdentifier: `clerk|${slug}`,
+    slug,
+    email: `${slug}@test.com`,
+    name: `${slug} Display`,
+    firstName: slug,
+    lastName: 'Test',
+    businessName: 'Test Biz',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    role: role as any,
+    isSeeded: false,
+    preferredLocale: 'en',
+  })
+}
 
-function makeCtx(opts: {
-  identity?: unknown
-  user?: unknown
-  booking?: unknown
-  reservations?: unknown[]
-  sessions?: unknown[]
-} = {}) {
-  // Use !== undefined so callers can pass null to simulate missing identity/user
-  const identity = opts.identity !== undefined ? opts.identity : { tokenIdentifier: 'tok_test' }
-  const user = opts.user !== undefined ? opts.user : { _id: 'user-1', slug: 'owner-slug' }
-  const booking = opts.booking !== undefined ? opts.booking : null
-  const reservations = opts.reservations ?? []
-  const sessions = opts.sessions ?? []
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db: any = {
-    get: vi.fn(async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (id === (booking as any)?._id) return booking
-      return null
-    }),
-    patch: vi.fn(async () => undefined),
-    delete: vi.fn(async () => undefined),
-    // Table-aware query mock: returns user for .unique(), correct list for .collect()
-    query: vi.fn((table: string) => ({
-      withIndex: vi.fn(() => ({
-        unique: vi.fn(async () => (table === 'users' ? user : null)),
-        collect: vi.fn(async () => {
-          if (table === 'reservations') return reservations
-          if (table === 'bookingSessions') return sessions
-          if (table === 'availabilitySnapshots') return []
-          if (table === 'bookingLinks') return []
-          return []
-        }),
-      })),
-    })),
-  }
-
-  return {
-    auth: { getUserIdentity: vi.fn(async () => identity) },
-    db,
-  }
+async function seedBooking(
+  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
+  ownerId: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return ctx.db.insert('bookings', {
+    ownerId,
+    ownerType: 'DiveCenter',
+    status: 'Draft',
+    createdAt: Date.now(),
+    holdTTL: 43200000,
+    paid: false,
+    activityType: ['OW'],
+    startDate: '2025-06-15',
+    endDate: '2025-06-17',
+    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] }],
+    operatorName: 'Test DC',
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: false,
+    bookingFormComplete: false,
+    customerFormComplete: false,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(overrides as any),
+  })
 }
 
 // ─── canBookingTransition ─────────────────────────────────────────────────────
@@ -127,176 +118,360 @@ describe('canReservationTransition', () => {
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
 describe('cancelBooking', () => {
-  beforeEach(() => vi.clearAllMocks())
-
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const ctx = makeCtx({ identity: null })
-    await expect(cancel.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'UNAUTHENTICATED' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
+
+    await expect(
+      t.mutation(api.bookings.status.cancelBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
   it('throws NOT_FOUND when booking does not exist', async () => {
-    const ctx = makeCtx({ booking: null })
-    await expect(cancel.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'NOT_FOUND' },
+    const t = convexTest(schema, modules)
+    // Insert user but no booking — grab a fake id from a dummy insert then delete it
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const id = await seedBooking(ctx, 'owner-slug')
+      await ctx.db.delete(id)
+      return id
     })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+        .mutation(api.bookings.status.cancelBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
   it('throws FORBIDDEN when caller does not own the booking', async () => {
-    const ctx = makeCtx({
-      user: { _id: 'user-1', slug: 'other-slug' },
-      booking: { _id: 'booking-1', ownerId: 'owner-slug', status: 'Draft' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'other-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
-    await expect(cancel.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'FORBIDDEN' },
-    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|other-slug' })
+        .mutation(api.bookings.status.cancelBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })
   })
 
   it('throws INVALID_STATUS when booking is already Cancelled', async () => {
-    const ctx = makeCtx({
-      booking: { _id: 'booking-1', ownerId: 'owner-slug', status: 'Cancelled' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
     })
-    await expect(cancel.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'INVALID_STATUS' },
-    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+        .mutation(api.bookings.status.cancelBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('INVALID_STATUS') })
   })
 
-  it('cancels a Draft booking — patches status to Cancelled', async () => {
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Draft' }
-    const ctx = makeCtx({ booking, reservations: [] })
-    await cancel.handler(ctx, { bookingId: 'booking-1' })
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', { status: 'Cancelled' })
+  it('cancels a Draft booking — status becomes Cancelled', async () => {
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.status.cancelBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Cancelled')
   })
 
   it('cancels an Upcoming booking and vacates active reservations', async () => {
-    const reservation = {
-      _id: 'res-1',
-      status: 'Confirmed',
-      bookingSessionId: 'session-1',
-      inventoryUnitId: 'unit-1',
-      unitsRequested: 1,
-    }
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Upcoming' }
-    const ctx = makeCtx({ booking, reservations: [reservation] })
-    await cancel.handler(ctx, { bookingId: 'booking-1' })
+    const t = convexTest(schema, modules)
 
-    // Reservation vacated
-    expect(ctx.db.patch).toHaveBeenCalledWith('res-1', expect.objectContaining({
-      status: 'Vacated',
-      vacatedBy: 'booking_cancelled',
-    }))
-    // Booking cancelled
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', { status: 'Cancelled' })
+    const { bookingId, reservationId } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        windowStart: '09:00',
+        windowEnd: '11:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const reservationId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+
+      return { bookingId, reservationId, snapshotId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.status.cancelBooking, { bookingId })
+
+    const [booking, reservation] = await t.run(async (ctx) => {
+      return Promise.all([ctx.db.get(bookingId), ctx.db.get(reservationId)])
+    })
+
+    expect(booking!.status).toBe('Cancelled')
+    expect(reservation!.status).toBe('Vacated')
+    expect(reservation!.vacatedBy).toBe('booking_cancelled')
   })
 
   it('cancels a Completed booking', async () => {
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Completed' }
-    const ctx = makeCtx({ booking, reservations: [] })
-    await cancel.handler(ctx, { bookingId: 'booking-1' })
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', { status: 'Cancelled' })
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.status.cancelBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Cancelled')
   })
 
   it('skips Vacated reservations during cancel', async () => {
-    const vacated = {
-      _id: 'res-1',
-      status: 'Vacated',
-      bookingSessionId: 'session-1',
-      inventoryUnitId: 'unit-1',
-      unitsRequested: 1,
-    }
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Draft' }
-    const ctx = makeCtx({ booking, reservations: [vacated] })
-    await cancel.handler(ctx, { bookingId: 'booking-1' })
-    // Only the booking patch, not the reservation
-    expect(ctx.db.patch).toHaveBeenCalledTimes(1)
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', { status: 'Cancelled' })
+    const t = convexTest(schema, modules)
+
+    const { bookingId, reservationId } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      const reservationId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Vacated',
+      })
+
+      return { bookingId, reservationId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.status.cancelBooking, { bookingId })
+
+    const [booking, reservation] = await t.run(async (ctx) => {
+      return Promise.all([ctx.db.get(bookingId), ctx.db.get(reservationId)])
+    })
+
+    // Booking is cancelled
+    expect(booking!.status).toBe('Cancelled')
+    // Already-Vacated reservation stays Vacated (not re-patched with a new vacatedBy)
+    expect(reservation!.status).toBe('Vacated')
   })
 })
 
 // ─── editBooking ──────────────────────────────────────────────────────────────
 
 describe('editBooking', () => {
-  beforeEach(() => vi.clearAllMocks())
-
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const ctx = makeCtx({ identity: null })
-    await expect(edit.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'UNAUTHENTICATED' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
     })
+
+    await expect(
+      t.mutation(api.bookings.edit.editBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
   it('throws INVALID_STATUS when booking is Draft', async () => {
-    const ctx = makeCtx({
-      booking: { _id: 'booking-1', ownerId: 'owner-slug', status: 'Draft' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
-    await expect(edit.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'INVALID_STATUS' },
-    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+        .mutation(api.bookings.edit.editBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('INVALID_STATUS') })
   })
 
   it('throws INVALID_STATUS when booking is Cancelled', async () => {
-    const ctx = makeCtx({
-      booking: { _id: 'booking-1', ownerId: 'owner-slug', status: 'Cancelled' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
     })
-    await expect(edit.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'INVALID_STATUS' },
-    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+        .mutation(api.bookings.edit.editBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('INVALID_STATUS') })
   })
 
-  it('resets Upcoming booking to Draft and clears sessions', async () => {
-    const session = { _id: 'session-1' }
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Upcoming' }
-    const ctx = makeCtx({ booking, reservations: [], sessions: [session] })
-    await edit.handler(ctx, { bookingId: 'booking-1' })
+  it('resets Upcoming booking to Draft and deletes its sessions', async () => {
+    const t = convexTest(schema, modules)
 
-    expect(ctx.db.delete).toHaveBeenCalledWith('session-1')
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', {
-      status: 'Draft',
-      bookingFormComplete: false,
-      submittedAt: undefined,
-      expiresAt: undefined,
+    const { bookingId, sessionId } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      return { bookingId, sessionId }
     })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.edit.editBooking, { bookingId })
+
+    const [booking, session] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(bookingId), ctx.db.get(sessionId)]),
+    )
+
+    expect(booking!.status).toBe('Draft')
+    expect(booking!.bookingFormComplete).toBe(false)
+    expect(session).toBeNull()
   })
 
   it('resets Completed booking to Draft', async () => {
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Completed' }
-    const ctx = makeCtx({ booking, reservations: [], sessions: [] })
-    await edit.handler(ctx, { bookingId: 'booking-1' })
-    expect(ctx.db.patch).toHaveBeenCalledWith('booking-1', expect.objectContaining({
-      status: 'Draft',
-      bookingFormComplete: false,
-    }))
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.edit.editBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Draft')
+    expect(booking!.bookingFormComplete).toBe(false)
   })
 
   it('vacates Confirmed reservations with reason operator_edit', async () => {
-    const reservation = {
-      _id: 'res-1',
-      status: 'Confirmed',
-      bookingSessionId: 'session-1',
-      inventoryUnitId: 'unit-1',
-      unitsRequested: 2,
-    }
-    const booking = { _id: 'booking-1', ownerId: 'owner-slug', status: 'Upcoming' }
-    const ctx = makeCtx({ booking, reservations: [reservation], sessions: [] })
-    await edit.handler(ctx, { bookingId: 'booking-1' })
+    const t = convexTest(schema, modules)
 
-    expect(ctx.db.patch).toHaveBeenCalledWith('res-1', expect.objectContaining({
-      status: 'Vacated',
-      vacatedBy: 'operator_edit',
-    }))
+    const { bookingId, reservationId } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        windowStart: '09:00',
+        windowEnd: '11:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const reservationId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+
+      return { bookingId, reservationId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookings.edit.editBooking, { bookingId })
+
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation!.status).toBe('Vacated')
+    expect(reservation!.vacatedBy).toBe('operator_edit')
   })
 
   it('throws FORBIDDEN when caller does not own the booking', async () => {
-    const ctx = makeCtx({
-      user: { _id: 'user-1', slug: 'other-slug' },
-      booking: { _id: 'booking-1', ownerId: 'owner-slug', status: 'Upcoming' },
+    const t = convexTest(schema, modules)
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'other-slug')
+      return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
     })
-    await expect(edit.handler(ctx, { bookingId: 'booking-1' })).rejects.toMatchObject({
-      data: { code: 'FORBIDDEN' },
-    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|other-slug' })
+        .mutation(api.bookings.edit.editBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })
   })
 })
-
-// Ensure ConvexError is imported so instanceof checks are available in this module
-void ConvexError

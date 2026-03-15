@@ -1,8 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,16 +35,7 @@ async function requireAuthAndOwnership(
   ctx: AnyCtx,
   bookingId: string,
 ): Promise<AnyCtx> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!user) throw new ConvexError({ code: 'USER_NOT_PROVISIONED' })
+  const { user } = await requireAuth(ctx)
 
   const booking = await ctx.db.get(bookingId)
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })

@@ -1,8 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { type AnyCtx } from './lib/auth'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
 

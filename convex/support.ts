@@ -1,14 +1,11 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
 
 // ─── generateUploadUrl ────────────────────────────────────────────────────────
 
 export async function _generateUploadUrlHandler(ctx: AnyCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+  await requireAuth(ctx)
 
   return await ctx.storage.generateUploadUrl()
 }
@@ -29,16 +26,7 @@ export async function _submitSupportRequestHandler(
     screenshotFileId?: string
   },
 ): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const id = await ctx.db.insert('supportRequests', {
     userId: caller.slug,

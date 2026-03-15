@@ -1,19 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
-
-const HOLD_TTL_MS = 43200000 // 12 hours (per CLAUDE.md default)
-
-const OPERATOR_ROLE_SET = new Set([
-  'DiveCenter',
-  'Agent',
-  'Liveaboard',
-  'DiveResort',
-  'DiveHostel',
-  'DiveSite',
-])
+import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS, type AnyCtx } from './lib/auth'
+import { releaseBookingReservations } from './bookingsMutations'
 
 type OperatorType =
   | 'DiveCenter'
@@ -35,16 +23,7 @@ type OperatorType =
 export const createDraftShell = mutation({
   args: {},
   handler: async (ctx: AnyCtx): Promise<string> => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
     if (!OPERATOR_ROLE_SET.has(user.role)) throw new ConvexError({ code: 'FORBIDDEN' })
 
     const today = new Date().toISOString().split('T')[0]
@@ -87,16 +66,7 @@ export const createReferralDraftShell = mutation({
     referralDcSlug: v.string(),
   },
   handler: async (ctx: AnyCtx, args: { referralDcSlug: string }): Promise<string> => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
     if (user.role !== 'Agent') throw new ConvexError({ code: 'FORBIDDEN' })
 
     const dcUser = await ctx.db
@@ -151,16 +121,7 @@ export const saveDraftState = mutation({
     ctx: AnyCtx,
     args: { bookingId: string; draftState: string },
   ): Promise<void> => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
@@ -179,15 +140,7 @@ export const saveDraftState = mutation({
 export const getBookingForWizard = query({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    const user = await getAuthUser(ctx)
     if (!user) return null
 
     const booking = await ctx.db.get(args.bookingId)
@@ -195,5 +148,109 @@ export const getBookingForWizard = query({
     if (booking.ownerId !== user.slug) return null
 
     return booking
+  },
+})
+
+// ─── Resumable draft types ────────────────────────────────────────────────────
+
+export type ResumableDraft = {
+  _id: string
+  _creationTime: number
+  activityType: string[]
+  startDate: string
+  endDate: string
+  diverCount: number
+  draftState: string
+}
+
+export type ResumableDraftsResult = {
+  drafts: ResumableDraft[]
+  hasMore: boolean
+}
+
+/**
+ * Lists Draft bookings owned by the caller that have a saved draftState.
+ * TTL-expired drafts are excluded (lazy expiry — filtered before the cron runs).
+ * Returns at most 5, sorted by _creationTime descending. hasMore indicates more exist.
+ * Exported for unit testing.
+ */
+export async function _listResumableDrafts(ctx: AnyCtx): Promise<ResumableDraftsResult> {
+  const user = await getAuthUser(ctx)
+  if (!user) return { drafts: [], hasMore: false }
+  if (!OPERATOR_ROLE_SET.has(user.role as string)) return { drafts: [], hasMore: false }
+
+  const now = Date.now()
+
+  const allBookings = await ctx.db
+    .query('bookings')
+    .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
+    .collect()
+
+  const resumable = allBookings.filter(
+    (b: AnyCtx) =>
+      b.status === 'Draft' &&
+      b.draftState != null &&
+      (b.expiresAt == null || (b.expiresAt as number) >= now),
+  )
+
+  resumable.sort((a: AnyCtx, b: AnyCtx) => (b._creationTime as number) - (a._creationTime as number))
+
+  const hasMore = resumable.length > 5
+  const top = resumable.slice(0, 5)
+
+  return {
+    drafts: top.map((b: AnyCtx) => ({
+      _id: b._id as string,
+      _creationTime: b._creationTime as number,
+      activityType: b.activityType as string[],
+      startDate: b.startDate as string,
+      endDate: b.endDate as string,
+      diverCount: (b.divers as Array<unknown>).length,
+      draftState: b.draftState as string,
+    })),
+    hasMore,
+  }
+}
+
+export const listResumableDrafts = query({
+  args: {},
+  handler: _listResumableDrafts,
+})
+
+/**
+ * Hard-deletes a Draft booking owned by the caller.
+ * Vacates any active reservations, deletes sessions and booking links,
+ * then removes the booking record entirely.
+ * Used by the operator to discard in-progress wizard sessions.
+ */
+export const discardDraft = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx: AnyCtx, args: { bookingId: string }): Promise<void> => {
+    const { user } = await requireAuth(ctx)
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: 'INVALID_STATUS' })
+
+    await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
+
+    const sessions = await ctx.db
+      .query('bookingSessions')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const s of sessions) {
+      await ctx.db.delete(s._id)
+    }
+
+    const links = await ctx.db
+      .query('bookingLinks')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const l of links) {
+      await ctx.db.delete(l._id)
+    }
+
+    await ctx.db.delete(args.bookingId)
   },
 })

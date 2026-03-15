@@ -1,241 +1,241 @@
-import { describe, it, expect, vi } from 'vitest'
-import { ConvexError } from 'convex/values'
+import { describe, it, expect } from 'vitest'
+import { convexTest } from 'convex-test'
+import schema from '../convex/schema'
+import { api } from '../convex/_generated/api'
 
-vi.mock('../convex/_generated/server', () => ({
-  mutation: (config: unknown) => config,
-  query: (config: unknown) => config,
-  internalMutation: (config: unknown) => config,
-  internalQuery: (config: unknown) => config,
-}))
+const modules = import.meta.glob('../convex/**/*.ts')
 
-import {
-  _getOpenRequestsHandler,
-  _getConfirmedScheduleHandler,
-} from '../convex/resourceQueries'
+// ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
+type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
 
-const CALLER = {
-  _id: 'u1',
-  slug: 'instructor-slug',
-  tokenIdentifier: 'user|123',
-  role: 'Instructor',
+async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
+  return ctx.db.insert('users', {
+    tokenIdentifier: `user|${slug}`,
+    slug,
+    email: `${slug}@test.com`,
+    name: 'John Doe',
+    firstName: 'John',
+    lastName: 'Doe',
+    businessName: 'Dive Pro',
+    role: 'Instructor',
+    isSeeded: false,
+    preferredLocale: 'en',
+  })
 }
 
-const UNIT = {
-  _id: 'unit1',
-  ownerId: 'instructor-slug',
-  ownerType: 'Instructor',
-  resourceType: 'Instructor',
-  displayName: 'John Doe',
-  capacityModel: 'Exclusive',
-  totalUnits: 1,
+async function seedUnit(ctx: Ctx, ownerId: string) {
+  return ctx.db.insert('inventoryUnits', {
+    resourceType: 'Instructor',
+    resourceId: ownerId,
+    displayName: 'John Doe',
+    capacityModel: 'Exclusive',
+    totalUnits: 1,
+    ownerId,
+    ownerType: 'Instructor',
+  })
 }
 
-const BOOKING = {
-  _id: 'booking1',
-  ownerId: 'dc-slug',
-  operatorName: 'Phuket Dive Center',
-  activityType: ['OW'],
-  startDate: '2024-06-01',
-  endDate: '2024-06-03',
-  divers: [
-    {
-      name: 'Alice',
-      abbrev: 'AL',
-      flag: { code: 'US', label: 'USA' },
-      startDate: '2024-06-01',
-      endDate: '2024-06-03',
-      activityType: ['OW'],
-    },
-    {
-      name: 'Bob',
-      abbrev: 'BO',
-      flag: { code: 'UK', label: 'United Kingdom' },
-      startDate: '2024-06-01',
-      endDate: '2024-06-03',
-      activityType: ['OW'],
-    },
-  ],
-  status: 'Draft',
-}
-
-const SESSION_A = {
-  _id: 'session1',
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  date: '2024-06-02',
-  startTime: '08:00',
-  endTime: '16:00',
-  timezone: 'Asia/Bangkok',
-}
-
-const SESSION_B = {
-  _id: 'session2',
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  date: '2024-06-01',
-  startTime: '09:00',
-  endTime: '12:00',
-  timezone: 'Asia/Bangkok',
-}
-
-const PENDING_RESERVATION = {
-  _id: 'res1',
-  _creationTime: 1000,
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  bookingSessionId: 'session1',
-  unitsRequested: 1,
-  status: 'PendingAcceptance',
-}
-
-const CONFIRMED_RESERVATION = {
-  _id: 'res2',
-  _creationTime: 2000,
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  bookingSessionId: 'session1',
-  unitsRequested: 1,
-  status: 'Confirmed',
-  confirmedAt: 999,
-}
-
-// ─── Mock factory ─────────────────────────────────────────────────────────────
-
-function makeCtx({
-  identity = { tokenIdentifier: 'user|123' } as unknown,
-  caller = CALLER as unknown,
-  units = [UNIT] as unknown[],
-  reservations = [] as unknown[],
-  sessions = [] as unknown[],
-  docsById = {} as Record<string, unknown>,
-} = {}) {
-  const defaultDocs: Record<string, unknown> = {
-    booking1: BOOKING,
-    session1: SESSION_A,
-    session2: SESSION_B,
-    ...docsById,
-  }
-
-  return {
-    auth: {
-      getUserIdentity: vi.fn().mockResolvedValue(identity),
-    },
-    db: {
-      get: vi.fn().mockImplementation((id: string) => Promise.resolve(defaultDocs[id] ?? null)),
-      query: vi.fn().mockImplementation((table: string) => {
-        let collectResult: unknown[] = []
-        let uniqueResult: unknown = null
-
-        if (table === 'users') {
-          uniqueResult = caller
-        } else if (table === 'inventoryUnits') {
-          collectResult = units
-        } else if (table === 'reservations') {
-          collectResult = reservations
-        } else if (table === 'bookingSessions') {
-          collectResult = sessions
-        }
-
-        const chain = {
-          withIndex: vi.fn(),
-          collect: vi.fn().mockResolvedValue(collectResult),
-          unique: vi.fn().mockResolvedValue(uniqueResult),
-          first: vi.fn().mockResolvedValue(collectResult[0] ?? null),
-        }
-        chain.withIndex.mockReturnValue(chain)
-        return chain
-      }),
-    },
-  }
-}
-
-function expectConvexError(err: unknown, code: string) {
-  expect(err).toBeInstanceOf(ConvexError)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  expect((err as ConvexError<any>).data).toMatchObject({ code })
+async function seedBooking(ctx: Ctx) {
+  return ctx.db.insert('bookings', {
+    ownerId: 'dc-slug',
+    ownerType: 'DiveCenter',
+    status: 'Draft',
+    createdAt: Date.now(),
+    holdTTL: 43200000,
+    paid: false,
+    activityType: ['OW'],
+    startDate: '2024-06-01',
+    endDate: '2024-06-03',
+    divers: [
+      { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: '2024-06-01', endDate: '2024-06-03', activityType: ['OW'] },
+      { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: '2024-06-01', endDate: '2024-06-03', activityType: ['OW'] },
+    ],
+    operatorName: 'Phuket Dive Center',
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: false,
+    bookingFormComplete: false,
+    customerFormComplete: false,
+  })
 }
 
 // ─── getOpenRequests ──────────────────────────────────────────────────────────
 
 describe('getOpenRequests', () => {
   it('returns PendingAcceptance reservations with booking context', async () => {
-    const ctx = makeCtx({ reservations: [PENDING_RESERVATION] })
+    const t = convexTest(schema, modules)
 
-    const result = await _getOpenRequestsHandler(ctx)
+    const result = await (async () => {
+      const { unitId, bookingId, reservationId } = await t.run(async (ctx) => {
+        await seedInstructorUser(ctx)
+        const unitId = await seedUnit(ctx, 'instructor-slug')
+        const bookingId = await seedBooking(ctx)
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date: '2024-06-02',
+          startTime: '08:00',
+          endTime: '16:00',
+          timezone: 'Asia/Bangkok',
+        })
+        const reservationId = await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'PendingAcceptance',
+        })
+        return { unitId, bookingId, reservationId }
+      })
+      return { unitId, bookingId, reservationId }
+    })()
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      reservationId: 'res1',
-      inventoryUnitId: 'unit1',
-      bookingId: 'booking1',
+    const items = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getOpenRequests)
+
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({
+      inventoryUnitId: result.unitId,
+      bookingId: result.bookingId,
       unitsRequested: 1,
-      createdAt: 1000,
       activityType: ['OW'],
       startDate: '2024-06-01',
       endDate: '2024-06-03',
       diverCount: 2,
       operatorName: 'Phuket Dive Center',
     })
+    expect(items[0].reservationId).toBeDefined()
+    expect(items[0].createdAt).toBeDefined()
   })
 
   it('returns empty array when no pending reservations exist', async () => {
-    const ctx = makeCtx({ reservations: [] })
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      await seedUnit(ctx, 'instructor-slug')
+    })
 
-    const result = await _getOpenRequestsHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getOpenRequests)
 
     expect(result).toEqual([])
   })
 
   it('returns empty array when caller owns no inventory units', async () => {
-    const ctx = makeCtx({ units: [], reservations: [PENDING_RESERVATION] })
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      // Seed a booking + reservation but NO unit for instructor-slug
+      const unitId = await seedUnit(ctx, 'other-instructor')
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+    })
 
-    const result = await _getOpenRequestsHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getOpenRequests)
 
     expect(result).toEqual([])
   })
 
   it('sorts by createdAt descending', async () => {
-    // Single unit, two reservations with different timestamps
-    const OLDER = { ...PENDING_RESERVATION, _id: 'res_old', _creationTime: 500 }
-    const NEWER = { ...PENDING_RESERVATION, _id: 'res_new', _creationTime: 1500 }
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      // Insert two reservations — order of insertion determines _creationTime
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+    })
 
-    const ctx = makeCtx({ reservations: [OLDER, NEWER] })
-
-    const result = await _getOpenRequestsHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getOpenRequests)
 
     expect(result).toHaveLength(2)
-    expect(result[0].createdAt).toBeGreaterThan(result[1].createdAt)
-    expect(result[0].reservationId).toBe('res_new')
-    expect(result[1].reservationId).toBe('res_old')
+    // Descending order: first item has higher createdAt
+    expect(result[0].createdAt).toBeGreaterThanOrEqual(result[1].createdAt)
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const ctx = makeCtx({ identity: null })
+    const t = convexTest(schema, modules)
 
-    await expect(_getOpenRequestsHandler(ctx)).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'UNAUTHENTICATED')
-      return true
-    })
+    await expect(
+      t.query(api.resourceQueries.getOpenRequests),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
   it('throws NOT_FOUND when caller user record does not exist', async () => {
-    const ctx = makeCtx({ caller: null })
+    const t = convexTest(schema, modules)
 
-    await expect(_getOpenRequestsHandler(ctx)).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'NOT_FOUND')
-      return true
-    })
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'user|nobody' })
+        .query(api.resourceQueries.getOpenRequests),
+    ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
   it('skips reservation when booking record is missing', async () => {
-    const ctx = makeCtx({
-      reservations: [PENDING_RESERVATION],
-      docsById: { booking1: null },
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      // Delete the booking to orphan the reservation
+      await ctx.db.delete(bookingId)
     })
 
-    const result = await _getOpenRequestsHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getOpenRequests)
 
     expect(result).toEqual([])
   })
@@ -245,18 +245,47 @@ describe('getOpenRequests', () => {
 
 describe('getConfirmedSchedule', () => {
   it('returns Confirmed reservations with booking context and sessions', async () => {
-    const ctx = makeCtx({
-      reservations: [CONFIRMED_RESERVATION],
-      sessions: [SESSION_A, SESSION_B],
+    const t = convexTest(schema, modules)
+
+    const { unitId, bookingId } = await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const bookingId = await seedBooking(ctx)
+
+      const session1Id = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '09:00',
+        endTime: '12:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: session1Id,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 999,
+      })
+      return { unitId, bookingId }
     })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
-      reservationId: 'res2',
-      inventoryUnitId: 'unit1',
-      bookingId: 'booking1',
+      inventoryUnitId: unitId,
+      bookingId,
       unitsRequested: 1,
       confirmedAt: 999,
       activityType: ['OW'],
@@ -269,97 +298,226 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('sorts sessions by date ascending within a booking', async () => {
-    const ctx = makeCtx({
-      reservations: [CONFIRMED_RESERVATION],
-      sessions: [SESSION_A, SESSION_B], // SESSION_A is 06-02, SESSION_B is 06-01
+    const t = convexTest(schema, modules)
+
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const bookingId = await seedBooking(ctx)
+
+      const session1Id = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02', // later date inserted first
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01', // earlier date inserted second
+        startTime: '09:00',
+        endTime: '12:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: session1Id,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 999,
+      })
     })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
     const dates = result[0].sessions.map((s) => s.date)
     expect(dates).toEqual(['2024-06-01', '2024-06-02'])
   })
 
   it('filters sessions to only those belonging to this inventory unit', async () => {
-    const OTHER_UNIT_SESSION = {
-      _id: 'session3',
-      bookingId: 'booking1',
-      inventoryUnitId: 'unit_other',
-      date: '2024-06-03',
-      startTime: '10:00',
-      endTime: '14:00',
-      timezone: 'Asia/Bangkok',
-    }
-    const ctx = makeCtx({
-      reservations: [CONFIRMED_RESERVATION],
-      sessions: [SESSION_A, OTHER_UNIT_SESSION],
+    const t = convexTest(schema, modules)
+
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const otherUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'other',
+        displayName: 'Other Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'other',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await seedBooking(ctx)
+
+      const session1Id = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      // Session belonging to a different unit
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: otherUnitId,
+        date: '2024-06-03',
+        startTime: '10:00',
+        endTime: '14:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: session1Id,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 999,
+      })
     })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
     expect(result[0].sessions).toHaveLength(1)
-    expect(result[0].sessions[0].sessionId).toBe('session1')
+    expect(result[0].sessions[0].date).toBe('2024-06-02')
   })
 
   it('sorts results by earliest session date ascending', async () => {
-    // Two confirmed reservations for different bookings under the same unit.
-    // Use empty sessions so sorting falls back to booking.startDate — avoids
-    // mock cross-contamination when two reservations share the sessions array.
-    const BOOKING_2 = { ...BOOKING, _id: 'booking2', startDate: '2024-05-01', endDate: '2024-05-02' }
-    const RESERVATION_2 = {
-      ...CONFIRMED_RESERVATION,
-      _id: 'res3',
-      bookingId: 'booking2',
-      inventoryUnitId: 'unit1',
-    }
+    const t = convexTest(schema, modules)
 
-    const ctx = makeCtx({
-      reservations: [CONFIRMED_RESERVATION, RESERVATION_2],
-      sessions: [],
-      docsById: { booking1: BOOKING, booking2: BOOKING_2 },
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+
+      // Booking 1: starts June 1
+      const booking1Id = await seedBooking(ctx)
+      const session1Id = await ctx.db.insert('bookingSessions', {
+        bookingId: booking1Id,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '09:00',
+        endTime: '12:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: booking1Id,
+        inventoryUnitId: unitId,
+        bookingSessionId: session1Id,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 100,
+      })
+
+      // Booking 2: starts May 1 (earlier)
+      const booking2Id = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: 43200000,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-05-01',
+        endDate: '2024-05-02',
+        divers: [{ name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: '2024-05-01', endDate: '2024-05-02', activityType: ['OW'] }],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+      const session2Id = await ctx.db.insert('bookingSessions', {
+        bookingId: booking2Id,
+        inventoryUnitId: unitId,
+        date: '2024-05-01',
+        startTime: '09:00',
+        endTime: '12:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: booking2Id,
+        inventoryUnitId: unitId,
+        bookingSessionId: session2Id,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 200,
+      })
     })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
-    // booking2 (startDate 2024-05-01) should sort before booking1 (2024-06-01)
-    expect(result[0].bookingId).toBe('booking2')
-    expect(result[1].bookingId).toBe('booking1')
+    // booking2 (May 1) should sort before booking1 (June 1)
+    expect(result[0].startDate).toBe('2024-05-01')
+    expect(result[1].startDate).toBe('2024-06-01')
   })
 
   it('returns empty array when no confirmed reservations exist', async () => {
-    const ctx = makeCtx({ reservations: [] })
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      await seedUnit(ctx, 'instructor-slug')
+    })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
     expect(result).toEqual([])
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const ctx = makeCtx({ identity: null })
+    const t = convexTest(schema, modules)
 
-    await expect(_getConfirmedScheduleHandler(ctx)).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'UNAUTHENTICATED')
-      return true
-    })
+    await expect(
+      t.query(api.resourceQueries.getConfirmedSchedule),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
   it('throws NOT_FOUND when caller user record does not exist', async () => {
-    const ctx = makeCtx({ caller: null })
+    const t = convexTest(schema, modules)
 
-    await expect(_getConfirmedScheduleHandler(ctx)).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'NOT_FOUND')
-      return true
-    })
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'user|nobody' })
+        .query(api.resourceQueries.getConfirmedSchedule),
+    ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
   it('skips reservation when booking record is missing', async () => {
-    const ctx = makeCtx({
-      reservations: [CONFIRMED_RESERVATION],
-      sessions: [SESSION_A],
-      docsById: { booking1: null },
+    const t = convexTest(schema, modules)
+    await t.run(async (ctx) => {
+      await seedInstructorUser(ctx)
+      const unitId = await seedUnit(ctx, 'instructor-slug')
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-02',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: 999,
+      })
+      await ctx.db.delete(bookingId)
     })
 
-    const result = await _getConfirmedScheduleHandler(ctx)
+    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+      .query(api.resourceQueries.getConfirmedSchedule)
 
     expect(result).toEqual([])
   })

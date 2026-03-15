@@ -1,0 +1,50 @@
+import { ConvexError, v } from 'convex/values'
+import { mutation } from '../_generated/server'
+import { requireAuth } from '../lib/auth'
+import {
+  type AnyCtx,
+  canBookingTransition,
+  releaseBookingReservations,
+} from './_shared'
+
+// ─── editBooking ──────────────────────────────────────────────────────────────
+
+/**
+ * Resets an Upcoming or Completed booking to Draft for editing.
+ * Vacates all reservations, clears sessions, and marks bookingFormComplete false.
+ */
+export const editBooking = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+    const { user } = await requireAuth(ctx)
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+    if (!canBookingTransition(booking.status, 'edit')) {
+      throw new ConvexError({
+        code: 'INVALID_STATUS',
+        reason: `Cannot edit booking in status '${booking.status}'`,
+      })
+    }
+
+    await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
+
+    // Clear sessions so operator can re-submit with new session data
+    const sessions = await ctx.db
+      .query('bookingSessions')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const session of sessions) {
+      await ctx.db.delete(session._id)
+    }
+
+    await ctx.db.patch(args.bookingId, {
+      status: 'Draft',
+      bookingFormComplete: false,
+      submittedAt: undefined,
+      expiresAt: undefined,
+    })
+  },
+})

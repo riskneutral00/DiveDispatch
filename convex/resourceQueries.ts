@@ -1,8 +1,5 @@
-import { ConvexError } from 'convex/values'
 import { query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
 
 // ─── Return types ─────────────────────────────────────────────────────────────
 
@@ -50,16 +47,7 @@ export type ConfirmedScheduleItem = {
  * descending (newest first) so the most urgent request appears at the top.
  */
 export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[]> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const units = await ctx.db
     .query('inventoryUnits')
@@ -115,16 +103,7 @@ export const getOpenRequests = query({
 export async function _getConfirmedScheduleHandler(
   ctx: AnyCtx,
 ): Promise<ConfirmedScheduleItem[]> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const units = await ctx.db
     .query('inventoryUnits')

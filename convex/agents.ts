@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth, getAuthUser, type AnyCtx } from './lib/auth'
 
 const locationValidator = v.object({ city: v.string(), country: v.string() })
 
@@ -16,16 +17,7 @@ export const create = mutation({
     defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
     if (user.role !== 'Agent') throw new ConvexError({ code: 'FORBIDDEN' })
 
     const existing = await ctx.db
@@ -51,16 +43,7 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
 
     const profile = await ctx.db
       .query('agents')
@@ -75,20 +58,12 @@ export const update = mutation({
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    const user = await getAuthUser(ctx)
     if (!user) return null
 
     const agent = await ctx.db
       .query('agents')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', user._id))
       .unique()
     if (!agent) return null
 

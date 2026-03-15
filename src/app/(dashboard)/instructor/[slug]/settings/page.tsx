@@ -1,5 +1,6 @@
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { InstructorProfileForm } from '@/components/dashboard/instructor-profile-form'
+import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
 
 export default async function InstructorSettingsPage({
   params,
@@ -11,6 +12,7 @@ export default async function InstructorSettingsPage({
   return (
     <DashboardShell roleSlug="instructor" slug={slug}>
       <InstructorProfileForm />
+      <PreferencesEditor />
     </DashboardShell>
   )
 }

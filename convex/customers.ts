@@ -1,31 +1,7 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
-
-// ── Shared token validation helper ───────────────────────────────────────────
-
-async function resolveToken(ctx: AnyCtx, token: string) {
-  const link = await ctx.db
-    .query('bookingLinks')
-    .withIndex('by_token', (q: AnyCtx) => q.eq('token', token))
-    .unique()
-  if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-  if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-  const booking = await ctx.db.get(link.bookingId)
-  if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-  const profile = await ctx.db
-    .query('customerProfiles')
-    .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', token))
-    .unique()
-  if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
-
-  return { link, booking, profile }
-}
+import { type AnyCtx } from './lib/auth'
+import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -36,21 +12,10 @@ async function resolveToken(ctx: AnyCtx, token: string) {
 export const getPortalContext = query({
   args: { token: v.string() },
   handler: async (ctx: AnyCtx, args: { token: string }) => {
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-    if (!link) return null
-    if (link.expiresAt < Date.now()) return null
+    const resolved = await resolvePortalTokenSoft(ctx, args.token)
+    if (!resolved) return null
 
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) return null
-    if (booking.status !== 'Draft') return null
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
+    const { link, booking, profile } = resolved
 
     let customer = null
     if (profile?.customerId) {
@@ -113,7 +78,7 @@ export const savePortalContact = mutation({
     allergies: v.optional(v.string()),
   },
   handler: async (ctx: AnyCtx, args: AnyCtx): Promise<void> => {
-    const { profile } = await resolveToken(ctx, args.token)
+    const { profile } = await resolvePortalToken(ctx, args.token)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { token: _token, ...contactData } = args

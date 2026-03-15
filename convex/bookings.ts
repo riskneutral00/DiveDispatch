@@ -1,8 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, OPERATOR_ROLE_SET, type AnyCtx } from './lib/auth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,15 +116,6 @@ export const ROLE_BOOKING_INDEX: Record<string, { index: string; field: string }
   Compressor: { index: 'by_compressorId', field: 'compressorId' },
 }
 
-const OPERATOR_ROLES = new Set([
-  'DiveCenter',
-  'Agent',
-  'Liveaboard',
-  'DiveResort',
-  'DiveHostel',
-  'DiveSite',
-])
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -174,19 +163,6 @@ function toCalendarBooking(b: AnyCtx, nameMap: Map<string, string>): CalendarBoo
   }
 }
 
-async function requireAuth(ctx: AnyCtx): Promise<AnyCtx> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!user) throw new ConvexError({ code: 'USER_NOT_PROVISIONED' })
-  return user
-}
-
 async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[]> {
   const roleConfig = ROLE_BOOKING_INDEX[user.role as string]
   if (!roleConfig) return []
@@ -206,7 +182,7 @@ export async function _listByOwner(
   ctx: AnyCtx,
   args: { ownerId: string; ownerType: string },
 ): Promise<CalendarBooking[]> {
-  const user = await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
   if (user.slug !== args.ownerId) throw new ConvexError({ code: 'FORBIDDEN' })
 
   const bookings = await ctx.db
@@ -232,7 +208,7 @@ export async function _listByStatus(
   ctx: AnyCtx,
   args: { status: string },
 ): Promise<CalendarBooking[]> {
-  const user = await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
 
   const allBookings = await resolveCallerBookings(ctx, user)
   const filtered = allBookings.filter((b: AnyCtx) => b.status === args.status)
@@ -253,7 +229,7 @@ export async function _listByResource(
   ctx: AnyCtx,
   args: { resourceId: string; resourceType: string },
 ): Promise<CalendarBooking[]> {
-  const user = await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
   if (user.slug !== args.resourceId) throw new ConvexError({ code: 'FORBIDDEN' })
 
   const roleConfig = ROLE_BOOKING_INDEX[args.resourceType]
@@ -282,7 +258,7 @@ export async function _listByResource(
 export async function _myDashboard(
   ctx: AnyCtx,
 ): Promise<{ bookings: CalendarBooking[]; requests: RequestItem[] }> {
-  const user = await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
 
   const allBookings = await resolveCallerBookings(ctx, user)
 
@@ -297,7 +273,7 @@ export async function _myDashboard(
 
   let requests: RequestItem[] = []
 
-  if (!OPERATOR_ROLES.has(user.role as string)) {
+  if (!OPERATOR_ROLE_SET.has(user.role as string)) {
     const inventoryUnits = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
@@ -354,7 +330,7 @@ export async function _getBookingDetail(
   ctx: AnyCtx,
   args: { bookingId: string },
 ): Promise<BookingDetail | null> {
-  const user = await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
 
   const booking = await ctx.db.get(args.bookingId)
   if (!booking) return null

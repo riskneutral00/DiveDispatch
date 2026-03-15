@@ -11,11 +11,19 @@ const isPublicRoute = createRouteMatcher([
 
 // role-select intentionally excluded: authenticated new users must reach it
 const isAuthRoute = createRouteMatcher([
-  '/sign-in(.*)',
   '/sign-up(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {
+  // Authenticated users on auth pages → bounce to dashboard
+  if (isAuthRoute(req)) {
+    const { userId } = await auth()
+    if (userId) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    return NextResponse.next()
+  }
+
   if (isPublicRoute(req)) return NextResponse.next()
 
   const { userId } = await auth()
@@ -24,11 +32,6 @@ export default clerkMiddleware(async (auth, req) => {
     const signInUrl = new URL('/sign-in', req.url)
     signInUrl.searchParams.set('redirect_url', req.url)
     return NextResponse.redirect(signInUrl)
-  }
-
-  // Authenticated users on auth pages get redirected to dashboard
-  if (isAuthRoute(req) && userId) {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   return NextResponse.next()

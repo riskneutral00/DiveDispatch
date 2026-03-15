@@ -1,17 +1,17 @@
 'use client'
 
 import { useReducer, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useMutation, useQuery } from 'convex/react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { WizardProgress } from './wizard-progress'
-import { StepDetails } from './step-details'
-import { StepDivers } from './step-divers'
-import { StepResources } from './step-resources'
-import { StepSessions } from './step-sessions'
-import { StepReview } from './step-review'
+import { CustomerStep } from './customer-step'
+import { ItineraryStep } from './itinerary-step'
+import { ReviewStep } from './review-step'
+import { AddCustomerDialog } from './add-customer-dialog'
 import {
   wizardReducer,
   makeInitialState,
@@ -20,7 +20,12 @@ import {
   WIZARD_STEPS,
   WIZARD_STEP_LABELS,
   type WizardStep,
+  type CustomerData,
 } from '@/lib/booking/wizard-state'
+import { useBookingDraftAutoSave } from '@/hooks/useBookingDraftAutoSave'
+import type { Language } from '@/lib/types/language'
+import type { CustomerContact } from '@/lib/booking/wizard-state'
+import { getSharedLanguages } from '@/lib/utils/language-matching'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +34,7 @@ interface BookingWizardProps {
 }
 
 export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProps) {
+  const router = useRouter()
   const isEditMode = !!initialBookingId
 
   const [state, dispatch] = useReducer(
@@ -38,14 +44,19 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  // initError only set on async failure (Promise .catch) — not setState in effect body
   const [initError, setInitError] = useState<string | null>(null)
+  const [isResetting, setIsResetting] = useState(false)
+  const [editResetError, setEditResetError] = useState<string | null>(null)
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
 
   const creatingRef = useRef(false)
   const initializedRef = useRef(false)
 
   const createDraftShell = useMutation(api.bookingDraftMutations.createDraftShell)
   const saveDraftState = useMutation(api.bookingDraftMutations.saveDraftState)
+  const editBooking = useMutation(api.bookings.edit.editBooking)
+
+  const { autoSaveError, cancelPending } = useBookingDraftAutoSave(state.bookingId, state)
 
   const existingBooking = useQuery(
     api.bookingDraftMutations.getBookingForWizard,
@@ -54,16 +65,25 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       : 'skip',
   )
 
+  // Derived: show the confirm dialog when booking is Upcoming/Completed
+  const showEditConfirm =
+    isEditMode &&
+    !isResetting &&
+    existingBooking != null &&
+    (existingBooking.status === 'Upcoming' || existingBooking.status === 'Completed')
+
   // Derived: show spinner until bookingId exists (new) or query resolves (edit)
   const isInitializing =
-    !initError && (isEditMode ? existingBooking === undefined : state.bookingId === null)
+    !initError &&
+    (isEditMode
+      ? existingBooking === undefined || isResetting
+      : state.bookingId === null)
 
   // New booking: create draft shell once on mount
   useEffect(() => {
     if (isEditMode || creatingRef.current || state.bookingId) return
     creatingRef.current = true
 
-    // Async — setState in .then/.catch is not flagged by react-hooks/set-state-in-effect
     createDraftShell()
       .then((id) => {
         dispatch({ type: 'SET_BOOKING_ID', payload: id })
@@ -74,12 +94,20 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       })
   }, [isEditMode, state.bookingId, createDraftShell])
 
-  // Edit mode: restore state from existing booking once it loads
+  // Edit mode: redirect cancelled bookings + restore wizard state
   useEffect(() => {
-    if (!isEditMode || initializedRef.current || existingBooking === undefined) return
-    initializedRef.current = true
-
+    if (!isEditMode || existingBooking === undefined) return
     if (existingBooking === null) return
+
+    if (existingBooking.status === 'Cancelled') {
+      router.push(`/booking/${initialBookingId}`)
+      return
+    }
+
+    if (existingBooking.status === 'Upcoming' || existingBooking.status === 'Completed') return
+
+    if (initializedRef.current) return
+    initializedRef.current = true
 
     if (existingBooking.draftState) {
       const restored = deserializeDraftState(existingBooking.draftState)
@@ -89,19 +117,27 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       }
     }
 
-    // Fallback: pre-fill details from booking fields
+    // Fallback: initialize with booking ID only
     dispatch({
-      type: 'UPDATE_FIELD',
+      type: 'RESET',
       payload: {
-        activityType: existingBooking.activityType,
-        startDate: existingBooking.startDate,
-        endDate: existingBooking.endDate,
-        portalContact: existingBooking.portalContact,
-        portalMedical: existingBooking.portalMedical,
-        portalWaiver: existingBooking.portalWaiver,
+        step: 'customers',
+        bookingId: initialBookingId!,
       },
     })
-  }, [isEditMode, existingBooking])
+  }, [isEditMode, existingBooking, initialBookingId, router])
+
+  async function handleConfirmEdit() {
+    if (!initialBookingId) return
+    setEditResetError(null)
+    setIsResetting(true)
+    try {
+      await editBooking({ bookingId: initialBookingId as Id<'bookings'> })
+    } catch (err: unknown) {
+      setEditResetError(err instanceof Error ? err.message : 'Failed to reset booking')
+      setIsResetting(false)
+    }
+  }
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
@@ -111,6 +147,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
 
   async function saveAndNavigate(targetStep: WizardStep) {
     setSaveError(null)
+    cancelPending()
 
     if (state.bookingId) {
       setIsSaving(true)
@@ -140,6 +177,22 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
     void saveAndNavigate(WIZARD_STEPS[currentIndex + 1])
   }
 
+  // ── Customer add ────────────────────────────────────────────────────────────
+
+  const sharedLanguages = getSharedLanguages(state.customers.map((c) => ({ flags: c.flags?.map((f) => ({ code: f.code, label: f.label })) ?? [] })))
+  const commonLanguageCodes = sharedLanguages.map((l) => l.code)
+
+  function handleAddCustomer(name: string, contact: CustomerContact, flags: Language[]) {
+    const customer: CustomerData = {
+      id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+      name,
+      contact,
+      flags: flags.map((f) => ({ code: f.code, label: f.label })),
+      courseEntries: [{ id: Math.random().toString(36).slice(2), activityCode: '', dates: [], agency: '' }],
+    }
+    dispatch({ type: 'ADD_CUSTOMER', customer })
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (initError) {
@@ -148,6 +201,49 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
         <p style={{ color: 'var(--color-destructive)', fontFamily: 'var(--font-body)' }}>
           {initError}
         </p>
+      </div>
+    )
+  }
+
+  if (showEditConfirm) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16">
+        <GlassCard padding="lg" elevated>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                size={20}
+                className="flex-shrink-0 mt-0.5"
+                style={{ color: 'var(--color-warning, #f59e0b)' }}
+              />
+              <div>
+                <h2
+                  className="text-lg font-semibold"
+                  style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+                >
+                  Edit this booking?
+                </h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+                  Editing will reset this booking to Draft and vacate all resource reservations.
+                  All assigned resources will need to re-confirm.
+                </p>
+              </div>
+            </div>
+            {editResetError && (
+              <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
+                {editResetError}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <GlassButton variant="primary" size="md" onClick={() => void handleConfirmEdit()}>
+                Yes, edit booking
+              </GlassButton>
+              <GlassButton variant="secondary" size="md" onClick={() => router.back()}>
+                Cancel
+              </GlassButton>
+            </div>
+          </div>
+        </GlassCard>
       </div>
     )
   }
@@ -167,17 +263,22 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
     )
   }
 
-  // Review step renders its own layout (back + submit buttons)
+  const bookingRef = initialBookingId
+    ? `#${initialBookingId.slice(-8).toUpperCase()}`
+    : state.bookingId
+      ? `#${state.bookingId.slice(-8).toUpperCase()}`
+      : null
+
+  // Review step renders its own layout (back + submit buttons inside)
   if (state.step === 'review') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-6">
           <h1
             className="text-2xl font-bold mb-1"
             style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
           >
-            {isEditMode ? 'Edit Booking' : 'New Booking'}
+            {isEditMode && bookingRef ? `Editing: ${bookingRef}` : 'New Booking'}
           </h1>
           {state.bookingId && (
             <p className="text-xs font-mono" style={{ color: 'var(--color-text-secondary)' }}>
@@ -194,33 +295,26 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
             >
               {WIZARD_STEP_LABELS[state.step]}
             </h2>
-            <StepReview state={state} dispatch={dispatch} />
+            <ReviewStep state={state} dispatch={dispatch} isEditMode={isEditMode} />
           </GlassCard>
         </div>
       </div>
     )
   }
 
-  // ── Steps 1–4 with shared navigation ──────────────────────────────────────
-
+  // Steps 1–2 with shared navigation
   function renderStepContent() {
     switch (state.step) {
-      case 'details':
-        return <StepDetails details={state.details} dispatch={dispatch} />
-      case 'divers':
-        return <StepDivers divers={state.divers} details={state.details} dispatch={dispatch} />
-      case 'resources':
-        return <StepResources resources={state.resources} details={state.details} dispatch={dispatch} />
-      case 'sessions':
+      case 'customers':
         return (
-          <StepSessions
-            sessions={state.sessions}
-            details={state.details}
-            divers={state.divers}
-            resources={state.resources}
+          <CustomerStep
+            customers={state.customers}
             dispatch={dispatch}
+            onAddOpen={() => setAddDialogOpen(true)}
           />
         )
+      case 'itinerary':
+        return <ItineraryStep state={state} dispatch={dispatch} />
       default:
         return null
     }
@@ -234,7 +328,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
           className="text-2xl font-bold mb-1"
           style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
         >
-          {isEditMode ? 'Edit Booking' : 'New Booking'}
+          {isEditMode && bookingRef ? `Editing: ${bookingRef}` : 'New Booking'}
         </h1>
         {state.bookingId && (
           <p className="text-xs font-mono" style={{ color: 'var(--color-text-secondary)' }}>
@@ -257,10 +351,15 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
         {renderStepContent()}
       </GlassCard>
 
-      {/* Save error */}
+      {/* Errors */}
       {saveError && (
         <p className="mt-3 text-sm" style={{ color: 'var(--color-destructive)' }}>
           {saveError}
+        </p>
+      )}
+      {autoSaveError && !saveError && (
+        <p className="mt-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          {autoSaveError}
         </p>
       )}
 
@@ -287,6 +386,14 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
           <ChevronRight size={16} />
         </GlassButton>
       </div>
+
+      {/* Add customer dialog */}
+      <AddCustomerDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onAdd={handleAddCustomer}
+        commonLanguageCodes={commonLanguageCodes}
+      />
     </div>
   )
 }

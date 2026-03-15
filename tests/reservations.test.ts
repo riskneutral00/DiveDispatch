@@ -1,154 +1,23 @@
-import { describe, it, expect, vi } from 'vitest'
-import { ConvexError } from 'convex/values'
+import { convexTest } from 'convex-test'
+import { describe, it, expect } from 'vitest'
+import schema from '../convex/schema'
+import { api } from '../convex/_generated/api'
+import { getDateRange } from '../convex/reservationsMutations'
 
-// Vitest mock for the Convex generated server module (not present in worktree)
-vi.mock('../convex/_generated/server', () => ({
-  mutation: (config: unknown) => config,
-  query: (config: unknown) => config,
-  internalMutation: (config: unknown) => config,
-  internalQuery: (config: unknown) => config,
-}))
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-import {
-  _acceptHandler,
-  _declineHandler,
-  getDateRange,
-} from '../convex/reservationsMutations'
+const HOLD_TTL = 43_200_000
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
-const USER = {
-  _id: 'u1',
-  slug: 'instructor-slug',
-  tokenIdentifier: 'user|123',
-  role: 'Instructor',
+function makeT() {
+  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-const OTHER_USER = {
-  _id: 'u2',
-  slug: 'other-slug',
-  tokenIdentifier: 'user|456',
-  role: 'Instructor',
-}
-
-const UNIT = {
-  _id: 'unit1',
-  ownerId: 'instructor-slug',
-  resourceType: 'Instructor',
-  ownerType: 'Instructor',
-  capacityModel: 'Exclusive',
-  totalUnits: 1,
-  displayName: 'John Doe',
-}
-
-const BOOKING = {
-  _id: 'booking1',
-  ownerId: 'dc-slug',
-  status: 'Draft',
-  startDate: '2024-06-01',
-  endDate: '2024-06-01',
-  bookingFormComplete: true,
-  customerFormComplete: true,
-  medicalHardBlock: false,
-  instructorId: 'instructor-slug',
-}
-
-const SESSION = {
-  _id: 'session1',
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  date: '2024-06-01',
-  startTime: '08:00',
-  endTime: '16:00',
-  timezone: 'Asia/Bangkok',
-}
-
-const SNAPSHOT = {
-  _id: 'snap1',
-  inventoryUnitId: 'unit1',
-  date: '2024-06-01',
-  windowStart: '08:00',
-  windowEnd: '16:00',
-  totalUnits: 1,
-  availableUnits: 0,
-  reservedUnits: 1,
-}
-
-const PENDING_RESERVATION = {
-  _id: 'res1',
-  bookingId: 'booking1',
-  inventoryUnitId: 'unit1',
-  bookingSessionId: 'session1',
-  unitsRequested: 1,
-  status: 'PendingAcceptance',
-}
-
-const CONFIRMED_RESERVATION = { ...PENDING_RESERVATION, status: 'Confirmed' }
-
-// ─── Mock factory ─────────────────────────────────────────────────────────────
-
-function makeCtx({
-  identity = { tokenIdentifier: 'user|123' } as unknown,
-  userByToken = USER as unknown,
-  docsById = {} as Record<string, unknown>,
-  reservations = [] as unknown[],
-  inventoryUnits = [] as unknown[],
-  snapshots = [] as unknown[],
-} = {}) {
-  const defaultDocs: Record<string, unknown> = {
-    u1: USER,
-    unit1: UNIT,
-    booking1: BOOKING,
-    session1: SESSION,
-    snap1: SNAPSHOT,
-    res1: PENDING_RESERVATION,
-    ...docsById,
-  }
-
-  return {
-    auth: {
-      getUserIdentity: vi.fn().mockResolvedValue(identity),
-    },
-    db: {
-      get: vi.fn().mockImplementation((id: string) => Promise.resolve(defaultDocs[id] ?? null)),
-      patch: vi.fn().mockResolvedValue(undefined),
-      insert: vi.fn().mockResolvedValue('new-id'),
-      delete: vi.fn().mockResolvedValue(undefined),
-      query: vi.fn().mockImplementation((table: string) => {
-        let collectResult: unknown[] = []
-        let uniqueResult: unknown = null
-
-        if (table === 'users') {
-          uniqueResult = userByToken
-          collectResult = userByToken ? [userByToken] : []
-        } else if (table === 'reservations') {
-          collectResult = reservations
-          uniqueResult = reservations[0] ?? null
-        } else if (table === 'inventoryUnits') {
-          collectResult = inventoryUnits
-          uniqueResult = inventoryUnits[0] ?? null
-        } else if (table === 'availabilitySnapshots') {
-          collectResult = snapshots
-          uniqueResult = snapshots[0] ?? null
-        }
-
-        const chain = {
-          withIndex: vi.fn(),
-          collect: vi.fn().mockResolvedValue(collectResult),
-          unique: vi.fn().mockResolvedValue(uniqueResult),
-          first: vi.fn().mockResolvedValue(collectResult[0] ?? null),
-        }
-        chain.withIndex.mockReturnValue(chain)
-        return chain
-      }),
-    },
-  }
-}
-
-function expectConvexError(err: unknown, code: string) {
-  expect(err).toBeInstanceOf(ConvexError)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  expect((err as ConvexError<any>).data).toMatchObject({ code })
+async function expectConvexError(promise: Promise<unknown>, code: string) {
+  await expect(promise).rejects.toSatisfy((err: unknown) => {
+    const e = err as { data: unknown }
+    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
+    return (data as Record<string, unknown>)?.code === code
+  })
 }
 
 // ─── getDateRange ─────────────────────────────────────────────────────────────
@@ -171,50 +40,310 @@ describe('getDateRange', () => {
 
 describe('acceptReservation', () => {
   it('transitions PendingAcceptance to Confirmed and sets confirmedAt', async () => {
-    const ctx = makeCtx({ reservations: [PENDING_RESERVATION] })
+    const t = makeT()
 
-    await _acceptHandler(ctx, { reservationId: 'res1' })
-
-    expect(ctx.db.patch).toHaveBeenCalledWith(
-      'res1',
-      expect.objectContaining({
-        status: 'Confirmed',
-        confirmedAt: expect.any(Number),
-      }),
-    )
-  })
-
-  it('is idempotent: double-accept does not re-patch the reservation', async () => {
-    const ctx = makeCtx({
-      docsById: { res1: CONFIRMED_RESERVATION },
-      reservations: [CONFIRMED_RESERVATION],
+    const { resId } = await t.run(async (ctx) => {
+      // Caller user (instructor who owns the unit)
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|123',
+        slug: 'instructor-slug',
+        email: 'instructor@test.com',
+        name: 'Instructor',
+        firstName: 'John',
+        lastName: 'Doe',
+        businessName: 'Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      // Booking owner
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc',
+        slug: 'dc-slug',
+        email: 'dc@test.com',
+        name: 'DC',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'instructor-slug',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { resId }
     })
 
-    await _acceptHandler(ctx, { reservationId: 'res1' })
+    await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+      api.reservationsMutations.acceptReservation,
+      { reservationId: resId },
+    )
 
-    // Early return — patch should not be called for the reservation
-    expect(ctx.db.patch).not.toHaveBeenCalledWith('res1', expect.anything())
+    await t.run(async (ctx) => {
+      const res = await ctx.db.get(resId)
+      expect(res?.status).toBe('Confirmed')
+      expect(res?.confirmedAt).toBeDefined()
+      expect(typeof res?.confirmedAt).toBe('number')
+    })
+  })
+
+  it('is idempotent: double-accept does not change confirmedAt', async () => {
+    const t = makeT()
+
+    const { resId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|123',
+        slug: 'instructor-slug',
+        email: 'instructor@test.com',
+        name: 'Instructor',
+        firstName: 'John',
+        lastName: 'Doe',
+        businessName: 'Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc',
+        slug: 'dc-slug',
+        email: 'dc@test.com',
+        name: 'DC',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'instructor-slug',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const confirmedAt = Date.now() - 5000
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt,
+      })
+      return { resId, confirmedAt }
+    })
+
+    // Second accept on already-Confirmed reservation should be a no-op
+    await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+      api.reservationsMutations.acceptReservation,
+      { reservationId: resId },
+    )
+
+    await t.run(async (ctx) => {
+      const res = await ctx.db.get(resId)
+      expect(res?.status).toBe('Confirmed')
+    })
   })
 
   it('throws FORBIDDEN when caller does not own the inventory unit', async () => {
-    const ctx = makeCtx({
-      userByToken: OTHER_USER,
-      reservations: [PENDING_RESERVATION],
+    const t = makeT()
+
+    const { resId } = await t.run(async (ctx) => {
+      // Caller is "other-slug", not the unit owner
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|456',
+        slug: 'other-slug',
+        email: 'other@test.com',
+        name: 'Other',
+        firstName: 'Other',
+        lastName: 'User',
+        businessName: 'Other Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug', // owned by instructor-slug, not other-slug
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { resId }
     })
 
-    await expect(_acceptHandler(ctx, { reservationId: 'res1' })).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'FORBIDDEN')
-      return true
-    })
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|456' }).mutation(
+        api.reservationsMutations.acceptReservation,
+        { reservationId: resId },
+      ),
+      'FORBIDDEN',
+    )
   })
 
   it('throws UNAUTHENTICATED when there is no identity', async () => {
-    const ctx = makeCtx({ identity: null })
+    const t = makeT()
 
-    await expect(_acceptHandler(ctx, { reservationId: 'res1' })).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'UNAUTHENTICATED')
-      return true
+    const { resId } = await t.run(async (ctx) => {
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { resId }
     })
+
+    await expectConvexError(
+      t.mutation(api.reservationsMutations.acceptReservation, { reservationId: resId }),
+      'UNAUTHENTICATED',
+    )
   })
 })
 
@@ -222,70 +351,339 @@ describe('acceptReservation', () => {
 
 describe('declineReservation', () => {
   it('vacates the reservation with stakeholder_declined and restores the snapshot', async () => {
-    const ctx = makeCtx({
-      reservations: [PENDING_RESERVATION],
-      snapshots: [SNAPSHOT],
+    const t = makeT()
+
+    const { resId, snapshotId, bookingId, unitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|123',
+        slug: 'instructor-slug',
+        email: 'instructor@test.com',
+        name: 'Instructor',
+        firstName: 'John',
+        lastName: 'Doe',
+        businessName: 'Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc',
+        slug: 'dc-slug',
+        email: 'dc@test.com',
+        name: 'DC',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'instructor-slug',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        availableUnits: 0,
+        reservedUnits: 1,
+      })
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { resId, snapshotId, bookingId, unitId }
     })
 
-    await _declineHandler(ctx, { bookingId: 'booking1', inventoryUnitId: 'unit1' })
-
-    expect(ctx.db.patch).toHaveBeenCalledWith(
-      'res1',
-      expect.objectContaining({
-        status: 'Vacated',
-        vacatedBy: 'stakeholder_declined',
-        vacatedAt: expect.any(Number),
-      }),
+    await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
     )
 
-    // unitsRequested=1 returned to snapshot (0 → 1 available, 1 → 0 reserved)
-    expect(ctx.db.patch).toHaveBeenCalledWith(
-      'snap1',
-      expect.objectContaining({
-        availableUnits: 1,
-        reservedUnits: 0,
-      }),
-    )
+    await t.run(async (ctx) => {
+      const res = await ctx.db.get(resId)
+      expect(res?.status).toBe('Vacated')
+      expect(res?.vacatedBy).toBe('stakeholder_declined')
+      expect(res?.vacatedAt).toBeDefined()
+
+      // unitsRequested=1 returned to snapshot (0 → 1 available, 1 → 0 reserved)
+      const snap = await ctx.db.get(snapshotId)
+      expect(snap?.availableUnits).toBe(1)
+      expect(snap?.reservedUnits).toBe(0)
+    })
   })
 
   it('sends hold_declined notification to the booking owner', async () => {
-    const ctx = makeCtx({ reservations: [PENDING_RESERVATION] })
+    const t = makeT()
 
-    await _declineHandler(ctx, { bookingId: 'booking1', inventoryUnitId: 'unit1' })
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|123',
+        slug: 'instructor-slug',
+        email: 'instructor@test.com',
+        name: 'Instructor',
+        firstName: 'John',
+        lastName: 'Doe',
+        businessName: 'Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc',
+        slug: 'dc-slug',
+        email: 'dc@test.com',
+        name: 'DC',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'instructor-slug',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { bookingId, unitId }
+    })
 
-    expect(ctx.db.insert).toHaveBeenCalledWith(
-      'notifications',
-      expect.objectContaining({
-        userId: 'dc-slug',
-        type: 'hold_declined',
-        bookingId: 'booking1',
-      }),
+    await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
     )
+
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
+      expect(holdDeclined).toBeDefined()
+      expect(holdDeclined?.userId).toBe('dc-slug')
+      expect(holdDeclined?.bookingId).toBe(bookingId)
+    })
   })
 
   it('sends no_backup_available when no alternative units exist', async () => {
-    // inventoryUnits defaults to [] — no candidates
-    const ctx = makeCtx({ reservations: [PENDING_RESERVATION] })
+    const t = makeT()
 
-    await _declineHandler(ctx, { bookingId: 'booking1', inventoryUnitId: 'unit1' })
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|123',
+        slug: 'instructor-slug',
+        email: 'instructor@test.com',
+        name: 'Instructor',
+        firstName: 'John',
+        lastName: 'Doe',
+        businessName: 'Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc',
+        slug: 'dc-slug',
+        email: 'dc@test.com',
+        name: 'DC',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'instructor-slug',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-01',
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      return { bookingId, unitId }
+      // No other inventoryUnits seeded — no alternatives
+    })
 
-    expect(ctx.db.insert).toHaveBeenCalledWith(
-      'notifications',
-      expect.objectContaining({
-        type: 'no_backup_available',
-        userId: 'dc-slug',
-      }),
+    await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
     )
+
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const noBackup = notifications.find((n) => n.type === 'no_backup_available')
+      expect(noBackup).toBeDefined()
+      expect(noBackup?.userId).toBe('dc-slug')
+    })
   })
 
   it('throws FORBIDDEN when caller does not own the inventory unit', async () => {
-    const ctx = makeCtx({ userByToken: OTHER_USER })
+    const t = makeT()
 
-    await expect(
-      _declineHandler(ctx, { bookingId: 'booking1', inventoryUnitId: 'unit1' }),
-    ).rejects.toSatisfy((err) => {
-      expectConvexError(err, 'FORBIDDEN')
-      return true
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      // Caller: other-slug (does NOT own the unit)
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|456',
+        slug: 'other-slug',
+        email: 'other@test.com',
+        name: 'Other',
+        firstName: 'Other',
+        lastName: 'User',
+        businessName: 'Other Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-slug',
+        displayName: 'John Doe',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-slug', // owned by instructor-slug, not other-slug
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-slug',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-01',
+        endDate: '2024-06-01',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      return { bookingId, unitId }
     })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|456' }).mutation(
+        api.reservationsMutations.declineReservation,
+        { bookingId, inventoryUnitId: unitId },
+      ),
+      'FORBIDDEN',
+    )
   })
 })

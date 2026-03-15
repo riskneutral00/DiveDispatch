@@ -228,6 +228,7 @@ export default defineSchema({
     ),
   })
     .index('by_bookingId', ['bookingId'])
+    .index('by_inventoryUnitId', ['inventoryUnitId'])
     .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date'])
     .index('by_date', ['date']),
 
@@ -297,6 +298,7 @@ export default defineSchema({
     physicianClearanceFileId: v.optional(v.id('_storage')),
   })
     .index('by_bookingId', ['bookingId'])
+    .index('by_bookingId_customerId', ['bookingId', 'customerId'])
     .index('by_customerId', ['customerId'])
     .index('by_linkToken', ['linkToken']),
 
@@ -358,7 +360,8 @@ export default defineSchema({
     availableUnits: v.number(),
   })
     .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date'])
-    .index('by_inventoryUnitId_date_windowStart', ['inventoryUnitId', 'date', 'windowStart']),
+    .index('by_inventoryUnitId_date_windowStart', ['inventoryUnitId', 'date', 'windowStart'])
+    .index('by_date', ['date']),
 
   // ── L1: Stakeholder Preferences ─────────────────────────────────────
 
@@ -387,7 +390,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index('by_userId', ['userId'])
-    .index('by_userId_readAt', ['userId', 'readAt']),
+    .index('by_userId_readAt', ['userId', 'readAt'])
+    .index('by_userId_createdAt', ['userId', 'createdAt']),
 
   // ── L1: Stakeholder Profile Tables ──────────────────────────────────
 
@@ -515,6 +519,8 @@ export default defineSchema({
     damageReportedBy: v.optional(v.string()),
   })
     .index('by_equipmentManagerId', ['equipmentManagerId'])
+    .index('by_equipmentManagerId_status', ['equipmentManagerId', 'status'])
+    .index('by_status', ['status'])
     .index('by_bookingId', ['bookingId'])
     .index('by_bagNumber', ['bagNumber']),
 
@@ -566,7 +572,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index('by_bannerSlug', ['bannerSlug'])
-    .index('by_bannedSlug', ['bannedSlug']),
+    .index('by_bannedSlug', ['bannedSlug'])
+    .index('by_bannerSlug_bannedSlug', ['bannerSlug', 'bannedSlug']),
 
   // ── L1: Booking Templates ───────────────────────────────────────────
 

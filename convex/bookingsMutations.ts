@@ -1,5 +1,33 @@
-import { ConvexError, v } from 'convex/values'
+ import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation } from './_generated/server'
+import { requireAuth } from './lib/auth'
+import { validateOrThrow } from './lib/validate'
+import { z } from 'zod'
+
+// ─── Inline session schema (convex/ cannot import from src/) ─────────────────
+// Mirrors bookingSessionsSchema but without the min(1) count so that all-external
+// bookings (sessions: []) continue to pass.
+const serverSessionSchema = z
+  .object({
+    inventoryUnitId: z.string().min(1, 'Inventory unit required'),
+    date: z.string().min(1, 'Date required'),
+    startTime: z.string().min(1, 'Start time required'),
+    endTime: z.string().min(1, 'End time required'),
+    timezone: z.string().min(1, 'Timezone required'),
+    unitsRequested: z.number().int().min(1, 'Units must be at least 1'),
+    deliveryLocation: z.enum(['BoatPier', 'Pool', 'Beach']).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['endTime'],
+        message: 'End time must be after start time',
+      })
+    }
+  })
+
+const serverSessionsSchema = z.array(serverSessionSchema)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +38,17 @@ type VacatedReason =
   | 'operator_edit'
   | 'noshow_replacement'
 
+type CourseCode =
+  | 'DSD'
+  | 'TRY_DIVE'
+  | 'OW'
+  | 'AOW'
+  | 'RESCUE'
+  | 'DM'
+  | 'FD'
+  | 'REFRESH'
+  | 'SPECIALTY'
+
 type SessionInput = {
   inventoryUnitId: string
   date: string
@@ -19,31 +58,67 @@ type SessionInput = {
   unitsRequested: number
   deliveryLocation?: 'BoatPier' | 'Pool' | 'Beach'
   diveSlots?: Array<{
-    courseCode:
-      | 'DSD'
-      | 'TRY_DIVE'
-      | 'OW'
-      | 'AOW'
-      | 'RESCUE'
-      | 'DM'
-      | 'FD'
-      | 'REFRESH'
-      | 'SPECIALTY'
+    courseCode: CourseCode
     diveNumber: number
     isConfined: boolean
     diverIndex: number
   }>
 }
 
+export type BookingData = {
+  activityType: CourseCode[]
+  startDate: string
+  endDate: string
+  portalContact: boolean
+  portalMedical: boolean
+  portalWaiver: boolean
+  instructorId?: string
+  boatId?: string
+  equipmentManagerId?: string
+  poolId?: string
+  compressorId?: string
+  agentId?: string
+  agentIsReferral?: boolean
+  externalStakeholders?: {
+    instructorName?: string
+    boatName?: string
+    equipmentManagerName?: string
+    poolName?: string
+    compressorName?: string
+  }
+  divers: Array<{
+    name: string
+    abbrev: string
+    flag: { code: string; label: string }
+    startDate: string
+    endDate: string
+    agency?: string
+    activityType: CourseCode[]
+  }>
+}
+
 export type SubmitToDraftArgs = {
   bookingId: string
   sessions: SessionInput[]
+  bookingData?: BookingData
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyCtx = any
 
 // ─── Validators ───────────────────────────────────────────────────────────────
+
+const courseCodeValidator = v.union(
+  v.literal('DSD'),
+  v.literal('TRY_DIVE'),
+  v.literal('OW'),
+  v.literal('AOW'),
+  v.literal('RESCUE'),
+  v.literal('DM'),
+  v.literal('FD'),
+  v.literal('REFRESH'),
+  v.literal('SPECIALTY'),
+)
 
 const sessionValidator = v.object({
   inventoryUnitId: v.id('inventoryUnits'),
@@ -58,22 +133,48 @@ const sessionValidator = v.object({
   diveSlots: v.optional(
     v.array(
       v.object({
-        courseCode: v.union(
-          v.literal('DSD'),
-          v.literal('TRY_DIVE'),
-          v.literal('OW'),
-          v.literal('AOW'),
-          v.literal('RESCUE'),
-          v.literal('DM'),
-          v.literal('FD'),
-          v.literal('REFRESH'),
-          v.literal('SPECIALTY'),
-        ),
+        courseCode: courseCodeValidator,
         diveNumber: v.number(),
         isConfined: v.boolean(),
         diverIndex: v.number(),
       }),
     ),
+  ),
+})
+
+const bookingDataValidator = v.object({
+  activityType: v.array(courseCodeValidator),
+  startDate: v.string(),
+  endDate: v.string(),
+  portalContact: v.boolean(),
+  portalMedical: v.boolean(),
+  portalWaiver: v.boolean(),
+  instructorId: v.optional(v.string()),
+  boatId: v.optional(v.string()),
+  equipmentManagerId: v.optional(v.string()),
+  poolId: v.optional(v.string()),
+  compressorId: v.optional(v.string()),
+  agentId: v.optional(v.string()),
+  agentIsReferral: v.optional(v.boolean()),
+  externalStakeholders: v.optional(
+    v.object({
+      instructorName: v.optional(v.string()),
+      boatName: v.optional(v.string()),
+      equipmentManagerName: v.optional(v.string()),
+      poolName: v.optional(v.string()),
+      compressorName: v.optional(v.string()),
+    }),
+  ),
+  divers: v.array(
+    v.object({
+      name: v.string(),
+      abbrev: v.string(),
+      flag: v.object({ code: v.string(), label: v.string() }),
+      startDate: v.string(),
+      endDate: v.string(),
+      agency: v.optional(v.string()),
+      activityType: v.array(courseCodeValidator),
+    }),
   ),
 })
 
@@ -219,16 +320,7 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
  */
 export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<string> {
   // 1. Auth
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user } = await requireAuth(ctx)
 
   // 2. Load booking + verify caller owns it
   // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
@@ -236,16 +328,30 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
   if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
+  // 2a. Server-side session structural validation.
+  // Does NOT enforce min(1) count — all-external bookings submit with sessions: [].
+  // Resource presence and session count are enforced client-side before reaching here.
+  validateOrThrow(serverSessionsSchema, args.sessions)
+
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
   // An external resource has a freeform name but no in-system ID on the booking.
   // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
-  const ext = booking.externalStakeholders as Record<string, string | undefined> | undefined
+  // Prefer bookingData (new wizard state) over the stored booking fields for this check,
+  // since createDraftShell creates a bare-bones booking with no resource IDs set.
+  const resolvedExt = args.bookingData?.externalStakeholders ??
+    (booking.externalStakeholders as Record<string, string | undefined> | undefined)
+  const resolvedInstructorId = args.bookingData?.instructorId ?? booking.instructorId
+  const resolvedBoatId = args.bookingData?.boatId ?? booking.boatId
+  const resolvedEquipmentManagerId = args.bookingData?.equipmentManagerId ?? booking.equipmentManagerId
+  const resolvedPoolId = args.bookingData?.poolId ?? booking.poolId
+  const resolvedCompressorId = args.bookingData?.compressorId ?? booking.compressorId
+
   const externalResourceTypes = new Set<string>()
-  if (!booking.instructorId && ext?.instructorName) externalResourceTypes.add('Instructor')
-  if (!booking.boatId && ext?.boatName) externalResourceTypes.add('Boat')
-  if (!booking.equipmentManagerId && ext?.equipmentManagerName) externalResourceTypes.add('Equipment')
-  if (!booking.poolId && ext?.poolName) externalResourceTypes.add('Pool')
-  if (!booking.compressorId && ext?.compressorName) externalResourceTypes.add('Compressor')
+  if (!resolvedInstructorId && resolvedExt?.instructorName) externalResourceTypes.add('Instructor')
+  if (!resolvedBoatId && resolvedExt?.boatName) externalResourceTypes.add('Boat')
+  if (!resolvedEquipmentManagerId && resolvedExt?.equipmentManagerName) externalResourceTypes.add('Equipment')
+  if (!resolvedPoolId && resolvedExt?.poolName) externalResourceTypes.add('Pool')
+  if (!resolvedCompressorId && resolvedExt?.compressorName) externalResourceTypes.add('Compressor')
 
   // 4. Blocked dates — reject before touching inventory
   if (user.blockedDates && user.blockedDates.length > 0) {
@@ -381,11 +487,32 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     })
   }
 
-  // Mark booking submitted and set TTL window
+  // Mark booking submitted and set TTL window.
+  // When bookingData is provided, persist the operator-supplied fields so the booking
+  // record reflects the actual wizard values (not the bare createDraftShell defaults).
+  // draftState is cleared on submit — it's only needed for resume-in-progress.
   await ctx.db.patch(args.bookingId, {
     submittedAt: now,
     expiresAt,
     bookingFormComplete: true,
+    draftState: undefined,
+    ...(args.bookingData && {
+      activityType: args.bookingData.activityType,
+      startDate: args.bookingData.startDate,
+      endDate: args.bookingData.endDate,
+      portalContact: args.bookingData.portalContact,
+      portalMedical: args.bookingData.portalMedical,
+      portalWaiver: args.bookingData.portalWaiver,
+      instructorId: args.bookingData.instructorId,
+      boatId: args.bookingData.boatId,
+      equipmentManagerId: args.bookingData.equipmentManagerId,
+      poolId: args.bookingData.poolId,
+      compressorId: args.bookingData.compressorId,
+      agentId: args.bookingData.agentId,
+      agentIsReferral: args.bookingData.agentIsReferral,
+      externalStakeholders: args.bookingData.externalStakeholders,
+      divers: args.bookingData.divers,
+    }),
   })
 
   // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
@@ -400,6 +527,7 @@ export const submitToDraft = mutation({
   args: {
     bookingId: v.id('bookings'),
     sessions: v.array(sessionValidator),
+    bookingData: v.optional(bookingDataValidator),
   },
   handler: _handler,
 })
@@ -411,16 +539,7 @@ export const submitToDraft = mutation({
 export const cancelBooking = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
@@ -445,16 +564,7 @@ export const cancelBooking = mutation({
 export const editBooking = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })

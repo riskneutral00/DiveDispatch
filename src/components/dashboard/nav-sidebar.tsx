@@ -2,13 +2,8 @@
 
 import { useClerk, useUser } from '@clerk/nextjs'
 import {
-  BookOpen,
-  Calendar,
   ChevronDown,
-  LayoutDashboard,
   LogOut,
-  Settings,
-  Users,
   Waves,
   X,
 } from 'lucide-react'
@@ -17,38 +12,9 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { ROLE_BY_CLERK_ROLE, ROLE_BY_KEY, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { buildNavItems } from '@/lib/nav-items'
+import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
-
-interface NavItem {
-  key: string
-  label: string
-  href: string
-  Icon: React.ElementType
-}
-
-function buildNavItems(roleSlug: RoleKey, slug: string): NavItem[] {
-  const roleConfig = ROLE_BY_KEY[roleSlug]
-  const base = `/${roleSlug}/${slug}`
-
-  const items: NavItem[] = [
-    { key: 'dashboard', label: 'Dashboard', href: `${base}/dashboard`, Icon: LayoutDashboard },
-  ]
-
-  if (roleConfig?.isOrganizer) {
-    items.push(
-      { key: 'bookings', label: 'Bookings', href: `${base}/bookings`, Icon: BookOpen },
-      { key: 'directory', label: 'Directory', href: `${base}/directory`, Icon: Users },
-    )
-  } else {
-    items.push(
-      { key: 'reservations', label: 'Reservations', href: `${base}/reservations`, Icon: Calendar },
-    )
-  }
-
-  items.push({ key: 'settings', label: 'Settings', href: `${base}/settings`, Icon: Settings })
-
-  return items
-}
 
 interface NavSidebarProps {
   roleSlug: RoleKey
@@ -88,7 +54,7 @@ export function NavSidebar({ roleSlug, slug, onClose }: NavSidebarProps) {
         background: 'var(--color-glass-bg)',
         backdropFilter: 'blur(var(--glass-blur))',
         WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        borderRight: '1px solid var(--color-glass-border)',
+        borderLeft: '1px solid var(--color-glass-border)',
       }}
     >
       {/* Header */}
@@ -113,6 +79,7 @@ export function NavSidebar({ roleSlug, slug, onClose }: NavSidebarProps) {
         </Link>
 
         <div className="flex items-center gap-2">
+          <BgSwitcher />
           <ThemeSwitcher />
           {onClose && (
             <button

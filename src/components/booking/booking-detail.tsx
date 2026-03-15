@@ -269,7 +269,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     booking != null ? { bookingId: bookingId as Id<'bookings'> } : 'skip',
   )
 
-  const cancelBooking = useMutation(api.bookingsMutations.cancelBooking)
+  const cancelBooking = useMutation(api.bookings.status.cancelBooking)
 
   const ttlLabel = useTTLCountdown(
     booking?.status === 'Draft' ? booking.expiresAt : undefined,
@@ -299,7 +299,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     )
   }
 
-  const canEdit = booking.status === 'Draft' || booking.status === 'Upcoming'
+  const canEdit = booking.status !== 'Cancelled'
   const canCancel = booking.status !== 'Cancelled'
 
   async function handleCancel() {

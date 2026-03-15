@@ -1,8 +1,6 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
 
 type ResourceOwnerType =
   | 'Boat'
@@ -114,16 +112,7 @@ export async function _toggleBlockedDate(
   ctx: AnyCtx,
   args: { date: string },
 ): Promise<boolean> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const user = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user } = await requireAuth(ctx)
 
   const current: string[] = (user.blockedDates as string[] | undefined) ?? []
   const idx = current.indexOf(args.date)

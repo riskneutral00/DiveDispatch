@@ -155,7 +155,7 @@ const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon–Sun
 
 export const COMPRESSOR: SeedStakeholder = {
   user: {
-    slug: 'compressor-chalong',
+    slug: 'x4kp2m',
     email: 'compressor-chalong+clerk_test@divedispatch.dev',
     name: 'Compressor Shop Chalong Pier',
     firstName: 'Chalong',
@@ -178,7 +178,7 @@ export const COMPRESSOR: SeedStakeholder = {
 
 export const HUG_OCEAN: SeedStakeholder = {
   user: {
-    slug: 'hug-ocean',
+    slug: 'n7rq5j',
     email: 'hug-ocean+clerk_test@divedispatch.dev',
     name: 'Hug Ocean',
     firstName: 'Hug',
@@ -239,7 +239,7 @@ export const HUG_OCEAN: SeedStakeholder = {
 
 export const WATER_PRO: SeedStakeholder = {
   user: {
-    slug: 'water-pro',
+    slug: 'b3wt9f',
     email: 'water-pro+clerk_test@divedispatch.dev',
     name: 'Water Pro',
     firstName: 'Water',
@@ -264,7 +264,7 @@ export const WATER_PRO: SeedStakeholder = {
 
 export const NEPTUNE: SeedStakeholder = {
   user: {
-    slug: 'neptune',
+    slug: 'z8mv4c',
     email: 'neptune+clerk_test@divedispatch.dev',
     name: 'Neptune',
     firstName: 'Neptune',
@@ -309,7 +309,7 @@ export const NEPTUNE: SeedStakeholder = {
 
 export const SHARK_BITES: SeedStakeholder = {
   user: {
-    slug: 'shark-bites',
+    slug: 'g2hn6x',
     email: 'shark-bites+clerk_test@divedispatch.dev',
     name: 'Shark Bites',
     firstName: 'Shark',
@@ -334,7 +334,7 @@ export const SHARK_BITES: SeedStakeholder = {
 
 export const PHUKET_DC: SeedStakeholder = {
   user: {
-    slug: 'phuket-dive-center',
+    slug: 'p5ky3w',
     email: 'phuket-dive-center+clerk_test@divedispatch.dev',
     name: 'Phuket Dive Center',
     firstName: 'Phuket',
@@ -399,7 +399,7 @@ export const PHUKET_DC: SeedStakeholder = {
 
 export const NICOLE_DC: SeedStakeholder = {
   user: {
-    slug: 'nicole-dive-center',
+    slug: 'q9bz7r',
     email: 'nicole-dive-center+clerk_test@divedispatch.dev',
     name: 'Nicole Dive Center',
     firstName: 'Nicole',
@@ -437,7 +437,7 @@ export const NICOLE_DC: SeedStakeholder = {
 
 export const MANTA_DC: SeedStakeholder = {
   user: {
-    slug: 'manta-dive-center',
+    slug: 'v6js2t',
     email: 'manta-dive-center+clerk_test@divedispatch.dev',
     name: 'Manta Dive Center',
     firstName: 'Manta',
@@ -462,7 +462,7 @@ export const MANTA_DC: SeedStakeholder = {
 
 export const SCUBANICKS: SeedStakeholder = {
   user: {
-    slug: 'scubanicks',
+    slug: 'm4fx8d',
     email: 'scubanicks+clerk_test@divedispatch.dev',
     name: 'ScubaNicks',
     firstName: 'Nick',
@@ -497,7 +497,7 @@ export const SCUBANICKS: SeedStakeholder = {
 
 export const SCUBA_DEEP: SeedStakeholder = {
   user: {
-    slug: 'scuba-deep',
+    slug: 'h3cp6n',
     email: 'scuba-deep+clerk_test@divedispatch.dev',
     name: 'Scuba Deep',
     firstName: 'Scuba',
@@ -555,7 +555,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
 
 export const PRAY_DC: SeedStakeholder = {
   user: {
-    slug: 'pray-dive-center',
+    slug: 't7gw1k',
     email: 'pray-dive-center+clerk_test@divedispatch.dev',
     name: 'Pray Dive Center',
     firstName: 'Pray',
@@ -580,7 +580,7 @@ export const PRAY_DC: SeedStakeholder = {
 
 export const AMANDA: SeedStakeholder = {
   user: {
-    slug: 'amanda',
+    slug: 'r5yz4q',
     email: 'amanda+clerk_test@divedispatch.dev',
     name: 'Amanda',
     firstName: 'Amanda',

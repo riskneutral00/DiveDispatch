@@ -1,10 +1,9 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
-import { tryAutoAdvance } from './bookingsMutations'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { tryAutoAdvance } from './bookings/_shared'
+import { type AnyCtx } from './lib/auth'
+import { resolvePortalToken } from './lib/portal'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
 
@@ -39,26 +38,7 @@ export const saveMedicalAnswers = mutation({
     ctx: AnyCtx,
     args: { token: string; answers: Record<string, boolean | string> },
   ): Promise<{ medicalHardBlock: boolean }> => {
-    // Validate token
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-
-    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-    // Resolve profile by linkToken (same UUID as the bookingLink token)
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
-
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
     // Any "Yes" triggers physician referral
     const hasYes = MEDICAL_QUESTION_KEYS.some((key) => args.answers[key] === true)
@@ -122,24 +102,7 @@ export const savePortalWaiver = mutation({
     ctx: AnyCtx,
     args: { token: string; signatureStorageId: string; guardianSignatureStorageId?: string },
   ): Promise<void> => {
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-
-    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
-
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { link, profile } = await resolvePortalToken(ctx, args.token)
 
     const patch: Record<string, unknown> = {
       waiverSignedAt: Date.now(),
@@ -190,24 +153,7 @@ export const savePortalEquipment = mutation({
       }
     },
   ): Promise<void> => {
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-
-    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
-
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { profile } = await resolvePortalToken(ctx, args.token)
 
     await ctx.db.patch(profile._id, { rentalChecklist: args.rentalChecklist })
   },
@@ -233,24 +179,7 @@ export const uploadPhysicianClearance = mutation({
     ctx: AnyCtx,
     args: { token: string; physicianClearanceStorageId: string },
   ): Promise<void> => {
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-
-    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
-
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
     await ctx.db.patch(profile._id, {
       physicianClearanceFileId: args.physicianClearanceStorageId,

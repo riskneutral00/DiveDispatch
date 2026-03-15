@@ -7,6 +7,7 @@ import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
+import { medicalAnswersSchema } from '@/lib/validation'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,13 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setTouched(true)
-    if (unanswered.length > 0) return
+
+    // Validate all 10 PADI medical questions are answered as booleans
+    const answersForValidation = Object.fromEntries(
+      MEDICAL_QUESTIONS.map((q) => [q.key, effectiveAnswers[q.key]]),
+    )
+    const schemaResult = medicalAnswersSchema.safeParse(answersForValidation)
+    if (!schemaResult.success) return
 
     setSubmitting(true)
     setError(null)

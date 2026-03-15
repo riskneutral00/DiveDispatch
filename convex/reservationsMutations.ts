@@ -1,8 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
+import { tryAutoAdvance } from './bookings/_shared'
 
 type ResourceType =
   | 'Instructor'
@@ -96,32 +95,6 @@ async function getOwnerCity(
   return profile?.city ?? null
 }
 
-/**
- * Advances a Draft booking to Upcoming when all conditions are simultaneously met.
- * Silent no-op when any condition is unmet — callers never need to check.
- *
- * Note: tryAutoAdvance is also implemented in bookingsMutations.ts (L1-06).
- * This local copy keeps this file self-contained for the worktree build.
- * The merger should deduplicate after L1-06 is integrated.
- */
-async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<void> {
-  const booking = await ctx.db.get(bookingId)
-  if (!booking || booking.status !== 'Draft') return
-  if (!booking.bookingFormComplete || !booking.customerFormComplete) return
-  if (booking.medicalHardBlock) return
-
-  const reservations = await ctx.db
-    .query('reservations')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
-    .collect()
-
-  const active = reservations.filter((r: AnyCtx) => r.status !== 'Vacated')
-
-  if (active.length > 0 && active.every((r: AnyCtx) => r.status === 'Confirmed')) {
-    await ctx.db.patch(bookingId, { status: 'Upcoming' })
-  }
-}
-
 // ─── acceptReservation ────────────────────────────────────────────────────────
 
 /**
@@ -135,16 +108,7 @@ export async function _acceptHandler(
   ctx: AnyCtx,
   args: { reservationId: string },
 ): Promise<void> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const reservation = await ctx.db.get(args.reservationId)
   if (!reservation) throw new ConvexError({ code: 'NOT_FOUND' })
@@ -188,16 +152,7 @@ export async function _declineHandler(
   ctx: AnyCtx,
   args: { bookingId: string; inventoryUnitId: string },
 ): Promise<void> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const unit = await ctx.db.get(args.inventoryUnitId)
   if (!unit) throw new ConvexError({ code: 'NOT_FOUND' })

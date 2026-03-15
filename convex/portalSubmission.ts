@@ -1,9 +1,25 @@
 import { ConvexError, v } from 'convex/values'
+import { z } from 'zod'
 import { mutation, query } from './_generated/server'
-import { tryAutoAdvance } from './bookingsMutations'
+import { tryAutoAdvance } from './bookings/_shared'
+import { type AnyCtx } from './lib/auth'
+import { resolvePortalToken } from './lib/portal'
+import { validateOrThrow } from './lib/validate'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+// Inline medical schema — mirrors medicalAnswersSchema from src/lib/validation/schemas.ts.
+// Defined inline to avoid importing across the convex/ → src/ boundary.
+const _medicalAnswersSchema = z.object({
+  medical_q1: z.boolean(),
+  medical_q2: z.boolean(),
+  medical_q3: z.boolean(),
+  medical_q4: z.boolean(),
+  medical_q5: z.boolean(),
+  medical_q6: z.boolean(),
+  medical_q7: z.boolean(),
+  medical_q8: z.boolean(),
+  medical_q9: z.boolean(),
+  medical_q10: z.boolean(),
+})
 
 // ─── getPortalStatus ──────────────────────────────────────────────────────────
 
@@ -71,23 +87,7 @@ export const submitPortal = mutation({
     ctx: AnyCtx,
     args: { token: string },
   ): Promise<{ medicalHardBlock: boolean }> => {
-    // Validate token
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-      .unique()
-    if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-    if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-      .unique()
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
     // Validate required forms are complete
     if (booking.portalContact && !profile.customerId) {
@@ -109,6 +109,18 @@ export const submitPortal = mutation({
       })
     }
 
+    // Server re-validation: validate stored medical answers are well-formed booleans.
+    // Re-derive medicalHardBlock from raw answers — never trust cached booking flag.
+    let medicalHardBlock = false
+    if (booking.portalMedical && profile.medicalAnswers) {
+      const validatedAnswers = validateOrThrow(_medicalAnswersSchema, profile.medicalAnswers)
+      medicalHardBlock = Object.values(validatedAnswers).some((v) => v === true)
+      // Keep booking flag in sync in case it drifted
+      if ((booking.medicalHardBlock as boolean) !== medicalHardBlock) {
+        await ctx.db.patch(link.bookingId, { medicalHardBlock })
+      }
+    }
+
     const now = Date.now()
 
     // Mark profile as submitted
@@ -120,6 +132,6 @@ export const submitPortal = mutation({
     // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
     await tryAutoAdvance(ctx, link.bookingId)
 
-    return { medicalHardBlock: booking.medicalHardBlock as boolean }
+    return { medicalHardBlock }
   },
 })

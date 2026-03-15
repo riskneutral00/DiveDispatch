@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
+import { getAuthUser } from './lib/auth'
 
 const stakeholderTypeValidator = v.union(
   v.literal('DiveCenter'),
@@ -144,16 +145,9 @@ export const listByRole = query({
     // Resolve the caller's slug for ban filtering (optional — unauthenticated
     // callers see unfiltered results).
     let bannedSlugs = new Set<string>()
-    const identity = await ctx.auth.getUserIdentity()
-    if (identity) {
-      const caller = await ctx.db
-        .query('users')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .withIndex('by_tokenIdentifier', (q: any) => q.eq('tokenIdentifier', identity.tokenIdentifier))
-        .unique()
-      if (caller) {
-        bannedSlugs = await getBannedSlugSet(ctx.db, caller.slug)
-      }
+    const caller = await getAuthUser(ctx)
+    if (caller) {
+      bannedSlugs = await getBannedSlugSet(ctx.db, caller.slug)
     }
 
     const users = await ctx.db

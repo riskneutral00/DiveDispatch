@@ -1,178 +1,155 @@
-import { describe, it, expect, vi } from 'vitest'
-
-vi.mock('../convex/_generated/server', () => ({
-  mutation: (config: unknown) => config,
-  query: (config: unknown) => config,
-  internalMutation: (config: unknown) => config,
-  internalQuery: (config: unknown) => config,
-}))
-
+import { describe, it, expect, beforeEach } from 'vitest'
+import { convexTest } from 'convex-test'
+import schema from '../convex/schema'
 import {
   _getUnavailableUnitIdsForDates,
   _listInventoryByType,
   _toggleBlockedDate,
 } from '../convex/availability'
+import {
+  TEST_TOKENS,
+  TEST_SLUGS,
+  seedUser,
+  seedInventoryUnit,
+  seedSnapshot,
+} from './fixtures/seedFixture'
 
-// ─── Fixtures ─────────────────────────────────────────────────────────────────
-
-const OWNER = {
-  _id: 'u1',
-  slug: 'owner-slug',
-  businessName: 'Blue Ocean Dive',
-  role: 'Instructor',
-}
-
-const UNIT_EXCLUSIVE: Record<string, unknown> = {
-  _id: 'unit1',
-  resourceType: 'Instructor',
-  ownerType: 'Instructor',
-  ownerId: 'owner-slug',
-  displayName: 'John Doe',
-  capacityModel: 'Exclusive',
-  totalUnits: 1,
-}
-
-const UNIT_POOLED: Record<string, unknown> = {
-  _id: 'unit2',
-  resourceType: 'Equipment',
-  ownerType: 'Equipment',
-  ownerId: 'owner-slug',
-  displayName: 'BCD Set',
-  capacityModel: 'Pooled',
-  totalUnits: 10,
-}
-
-const SNAP_FULL = {
-  _id: 'snap1',
-  inventoryUnitId: 'unit1',
-  date: '2024-06-01',
-  windowStart: '08:00',
-  windowEnd: '16:00',
-  totalUnits: 1,
-  reservedUnits: 1,
-  availableUnits: 0,
-}
-
-const SNAP_AVAILABLE = {
-  _id: 'snap2',
-  inventoryUnitId: 'unit2',
-  date: '2024-06-01',
-  windowStart: '08:00',
-  windowEnd: '16:00',
-  totalUnits: 10,
-  reservedUnits: 3,
-  availableUnits: 7,
-}
-
-const SNAP_POOLED_FULL = {
-  _id: 'snap3',
-  inventoryUnitId: 'unit2',
-  date: '2024-06-02',
-  windowStart: '08:00',
-  windowEnd: '16:00',
-  totalUnits: 10,
-  reservedUnits: 10,
-  availableUnits: 0,
-}
-
-// ─── Mock factory ─────────────────────────────────────────────────────────────
-
-function makeCtx({
-  snapshots = [] as unknown[],
-  inventoryUnits = [] as unknown[],
-  ownerUser = OWNER as unknown | null,
-} = {}) {
-  return {
-    db: {
-      query: vi.fn().mockImplementation((table: string) => {
-        let collectResult: unknown[] = []
-        let uniqueResult: unknown = null
-
-        if (table === 'availabilitySnapshots') {
-          collectResult = snapshots
-        } else if (table === 'inventoryUnits') {
-          collectResult = inventoryUnits
-        } else if (table === 'users') {
-          uniqueResult = ownerUser
-        }
-
-        const chain = {
-          withIndex: vi.fn(),
-          filter: vi.fn(),
-          collect: vi.fn().mockResolvedValue(collectResult),
-          unique: vi.fn().mockResolvedValue(uniqueResult),
-          first: vi.fn().mockResolvedValue(uniqueResult ?? collectResult[0] ?? null),
-        }
-        chain.withIndex.mockReturnValue(chain)
-        chain.filter.mockReturnValue(chain)
-        return chain
-      }),
-    },
-  }
-}
+const modules = import.meta.glob('../convex/**/*.ts')
+let t = convexTest(schema, modules)
+beforeEach(() => {
+  t = convexTest(schema, modules)
+})
 
 // ─── getUnavailableUnitIdsForDates ────────────────────────────────────────────
 
 describe('_getUnavailableUnitIdsForDates', () => {
   it('returns empty set when no snapshots exist', async () => {
-    const ctx = makeCtx({ snapshots: [] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
-    expect(result.size).toBe(0)
+    await t.run(async (ctx) => {
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      expect(result.size).toBe(0)
+    })
   })
 
   it('returns empty set when all snapshots have availableUnits > 0', async () => {
-    const ctx = makeCtx({ snapshots: [SNAP_AVAILABLE] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
-    expect(result.size).toBe(0)
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx)
+      await seedSnapshot(ctx, unitId, { totalUnits: 10, reservedUnits: 3, availableUnits: 7 })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      expect(result.size).toBe(0)
+    })
   })
 
   it('includes unit when Exclusive snapshot has availableUnits === 0', async () => {
-    const ctx = makeCtx({ snapshots: [SNAP_FULL] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
-    expect(result.has('unit1')).toBe(true)
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      await seedSnapshot(ctx, unitId, { totalUnits: 1, reservedUnits: 1, availableUnits: 0 })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      expect(result.has(unitId)).toBe(true)
+    })
   })
 
   it('includes unit when Pooled snapshot has availableUnits === 0', async () => {
-    const ctx = makeCtx({ snapshots: [SNAP_POOLED_FULL] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-02'])
-    expect(result.has('unit2')).toBe(true)
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Equipment',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: '2024-06-02',
+        totalUnits: 10,
+        reservedUnits: 10,
+        availableUnits: 0,
+      })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-02'])
+      expect(result.has(unitId)).toBe(true)
+    })
   })
 
   it('does not include unit where availableUnits > 0', async () => {
-    const ctx = makeCtx({ snapshots: [SNAP_FULL, SNAP_AVAILABLE] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
-    expect(result.has('unit1')).toBe(true)
-    expect(result.has('unit2')).toBe(false)
+    await t.run(async (ctx) => {
+      const fullUnitId = await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
+      const availUnitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Equipment',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: TEST_SLUGS.em,
+      })
+      await seedSnapshot(ctx, fullUnitId, { totalUnits: 1, reservedUnits: 1, availableUnits: 0 })
+      await seedSnapshot(ctx, availUnitId, { totalUnits: 10, reservedUnits: 3, availableUnits: 7 })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      expect(result.has(fullUnitId)).toBe(true)
+      expect(result.has(availUnitId)).toBe(false)
+    })
   })
 
-  it('deduplicates unit IDs when querying multiple dates', async () => {
-    // unit1 appears fully booked on both dates — should only appear once in Set
-    const ctx = makeCtx({ snapshots: [SNAP_FULL] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, [
-      '2024-06-01',
-      '2024-06-02',
-    ])
-    expect(result.size).toBe(1)
-    expect(result.has('unit1')).toBe(true)
+  it('deduplicates unit IDs when unit is unavailable on multiple queried dates', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx)
+      // Same unit fully booked on two different dates
+      await seedSnapshot(ctx, unitId, {
+        date: '2024-06-01',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: '2024-06-02',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01', '2024-06-02'])
+      expect(result.size).toBe(1)
+      expect(result.has(unitId)).toBe(true)
+    })
   })
 
   it('returns empty set when dates array is empty', async () => {
-    const ctx = makeCtx({ snapshots: [SNAP_FULL] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, [])
-    expect(result.size).toBe(0)
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx)
+      await seedSnapshot(ctx, unitId, { totalUnits: 1, reservedUnits: 1, availableUnits: 0 })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, [])
+      expect(result.size).toBe(0)
+    })
   })
 
   it('marks unit unavailable when any window has availableUnits === 0', async () => {
-    // One window available, one full — unit should still be flagged
-    const partiallyFull = {
-      ...SNAP_AVAILABLE,
-      _id: 'snap-partial',
-      inventoryUnitId: 'unit2',
-      availableUnits: 0,
-    }
-    const ctx = makeCtx({ snapshots: [SNAP_AVAILABLE, partiallyFull] })
-    const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
-    expect(result.has('unit2')).toBe(true)
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Equipment',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+      })
+      // One window available, one full — unit still flagged
+      await seedSnapshot(ctx, unitId, {
+        windowStart: '08:00',
+        windowEnd: '12:00',
+        totalUnits: 10,
+        reservedUnits: 3,
+        availableUnits: 7,
+      })
+      await seedSnapshot(ctx, unitId, {
+        windowStart: '12:00',
+        windowEnd: '16:00',
+        totalUnits: 10,
+        reservedUnits: 10,
+        availableUnits: 0,
+      })
+
+      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      expect(result.has(unitId)).toBe(true)
+    })
   })
 })
 
@@ -180,175 +157,209 @@ describe('_getUnavailableUnitIdsForDates', () => {
 
 describe('_listInventoryByType', () => {
   it('returns all units of a given type with joined ownerName', async () => {
-    const ctx = makeCtx({ inventoryUnits: [UNIT_EXCLUSIVE] })
-    const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+    await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        slug: TEST_SLUGS.instructor,
+        businessName: 'Blue Ocean Dive',
+        role: 'Instructor',
+        tokenIdentifier: TEST_TOKENS.instructor,
+        email: 'instr@test.com',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'John Doe',
+        ownerId: TEST_SLUGS.instructor,
+      })
 
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      id: 'unit1',
-      name: 'John Doe',
-      type: 'Instructor',
-      ownerId: 'owner-slug',
-      ownerName: 'Blue Ocean Dive',
+      const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        id: unitId,
+        name: 'John Doe',
+        type: 'Instructor',
+        ownerId: TEST_SLUGS.instructor,
+        ownerName: 'Blue Ocean Dive',
+      })
     })
   })
 
   it('returns empty array when no units of that type exist', async () => {
-    const ctx = makeCtx({ inventoryUnits: [] })
-    const result = await _listInventoryByType(ctx, { type: 'Boat' })
-    expect(result).toHaveLength(0)
+    await t.run(async (ctx) => {
+      // Insert an Instructor unit — should not appear when querying Boat
+      await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
+
+      const result = await _listInventoryByType(ctx, { type: 'Boat' })
+      expect(result).toHaveLength(0)
+    })
   })
 
   it('filters to ownerSlug when provided', async () => {
-    const otherUnit = { ...UNIT_EXCLUSIVE, _id: 'unit9', ownerId: 'other-slug' }
-    const ctx = makeCtx({ inventoryUnits: [UNIT_EXCLUSIVE, otherUnit] })
+    await t.run(async (ctx) => {
+      const unitA = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        ownerId: TEST_SLUGS.instructor,
+      })
+      // Second unit with a different owner
+      await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        ownerId: 'other-instructor',
+        ownerType: 'Instructor',
+      })
 
-    const result = await _listInventoryByType(ctx, {
-      type: 'Instructor',
-      ownerSlug: 'owner-slug',
+      const result = await _listInventoryByType(ctx, {
+        type: 'Instructor',
+        ownerSlug: TEST_SLUGS.instructor,
+      })
+
+      expect(result).toHaveLength(1)
+      expect(result[0].id).toBe(unitA)
     })
-
-    expect(result).toHaveLength(1)
-    expect(result[0].id).toBe('unit1')
   })
 
   it('returns all units when ownerSlug is not provided', async () => {
-    const otherUnit = {
-      ...UNIT_EXCLUSIVE,
-      _id: 'unit9',
-      ownerId: 'other-slug',
-      displayName: 'Jane Smith',
-    }
-    const ctx = makeCtx({ inventoryUnits: [UNIT_EXCLUSIVE, otherUnit] })
+    await t.run(async (ctx) => {
+      await seedInventoryUnit(ctx, { resourceType: 'Instructor', ownerId: TEST_SLUGS.instructor })
+      await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        ownerId: 'other-instructor',
+        ownerType: 'Instructor',
+        displayName: 'Jane Smith',
+      })
 
-    const result = await _listInventoryByType(ctx, { type: 'Instructor' })
-
-    expect(result).toHaveLength(2)
+      const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+      expect(result).toHaveLength(2)
+    })
   })
 
   it('falls back to displayName when owner user is not found', async () => {
-    const ctx = makeCtx({ inventoryUnits: [UNIT_EXCLUSIVE], ownerUser: null })
-    const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+    await t.run(async (ctx) => {
+      // Insert unit with ownerId that has NO corresponding user record
+      await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'John Doe',
+        ownerId: 'no-user-for-this-slug',
+      })
 
-    expect(result[0].ownerName).toBe('John Doe')
+      const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+      expect(result[0].ownerName).toBe('John Doe')
+    })
   })
 
   it('returns correct shape for Pooled resource type', async () => {
-    const ctx = makeCtx({ inventoryUnits: [UNIT_POOLED] })
-    const result = await _listInventoryByType(ctx, { type: 'Equipment' })
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Equipment',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        displayName: 'BCD Set',
+        ownerId: TEST_SLUGS.em,
+        ownerType: 'Equipment',
+      })
 
-    expect(result[0]).toMatchObject({
-      id: 'unit2',
-      name: 'BCD Set',
-      type: 'Equipment',
-      ownerId: 'owner-slug',
-      ownerName: 'Blue Ocean Dive',
+      const result = await _listInventoryByType(ctx, { type: 'Equipment' })
+
+      expect(result[0]).toMatchObject({
+        id: unitId,
+        name: 'BCD Set',
+        type: 'Equipment',
+        ownerId: TEST_SLUGS.em,
+      })
     })
   })
 
   it('does not expose booking or reservation data', async () => {
-    const ctx = makeCtx({ inventoryUnits: [UNIT_EXCLUSIVE] })
-    const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+    await t.run(async (ctx) => {
+      await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
 
-    // Result shape must not contain booking-related fields
-    const item = result[0]
-    expect(item).not.toHaveProperty('bookingId')
-    expect(item).not.toHaveProperty('reservedUnits')
-    expect(item).not.toHaveProperty('availableUnits')
+      const result = await _listInventoryByType(ctx, { type: 'Instructor' })
+      const item = result[0]
+
+      expect(item).not.toHaveProperty('bookingId')
+      expect(item).not.toHaveProperty('reservedUnits')
+      expect(item).not.toHaveProperty('availableUnits')
+    })
   })
 })
 
 // ─── toggleBlockedDate ────────────────────────────────────────────────────────
 
-function makeToggleCtx(user: Record<string, unknown> | null, tokenIdentifier: string | null) {
-  let storedUser = user ? { ...user } : null
-
-  return {
-    auth: {
-      getUserIdentity: async () => (tokenIdentifier ? { tokenIdentifier } : null),
-    },
-    db: {
-      query: vi.fn().mockImplementation(() => {
-        const chain = {
-          withIndex: vi.fn(),
-          unique: vi.fn().mockResolvedValue(storedUser),
-        }
-        chain.withIndex.mockReturnValue(chain)
-        return chain
-      }),
-      patch: vi.fn().mockImplementation((_id: string, fields: Record<string, unknown>) => {
-        if (storedUser) storedUser = { ...storedUser, ...fields }
-        return Promise.resolve()
-      }),
-    },
-    // Expose for assertions
-    getStoredUser: () => storedUser,
-  }
-}
-
 describe('_toggleBlockedDate', () => {
   it('blocks a date that was not previously blocked', async () => {
-    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: [] }
-    const ctx = makeToggleCtx(user, 'clerk|user1')
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      const userId = await seedUser(ctx, { blockedDates: [] })
 
-    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
 
-    expect(result).toBe(true)
-    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-15'])
-  })
-
-  it('unblocks a date that was previously blocked', async () => {
-    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-15'] }
-    const ctx = makeToggleCtx(user, 'clerk|user1')
-
-    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
-
-    expect(result).toBe(false)
-    expect(ctx.getStoredUser()?.blockedDates).toEqual([])
-  })
-
-  it('is idempotent when blocking an already-blocked date (second call unblocks)', async () => {
-    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-15'] }
-    const ctx = makeToggleCtx(user, 'clerk|user1')
-
-    // First call unblocks
-    await _toggleBlockedDate(ctx, { date: '2025-06-15' })
-    // Second call blocks again
-    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
-
-    expect(result).toBe(true)
-  })
-
-  it('handles undefined blockedDates (first block ever)', async () => {
-    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1' }
-    const ctx = makeToggleCtx(user, 'clerk|user1')
-
-    const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
-
-    expect(result).toBe(true)
-    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-15'])
-  })
-
-  it('throws UNAUTHENTICATED when identity is missing', async () => {
-    const ctx = makeToggleCtx(null, null)
-    await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
-      data: { code: 'UNAUTHENTICATED' },
+      expect(result).toBe(true)
+      const user = await ctx.db.get(userId)
+      expect((user as any)?.blockedDates).toEqual(['2025-06-15'])
     })
   })
 
-  it('throws NOT_FOUND when user record does not exist', async () => {
-    const ctx = makeToggleCtx(null, 'clerk|user1')
-    await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
-      data: { code: 'NOT_FOUND' },
+  it('unblocks a date that was previously blocked', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      const userId = await seedUser(ctx, { blockedDates: ['2025-06-15'] })
+
+      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+      expect(result).toBe(false)
+      const user = await ctx.db.get(userId)
+      expect((user as any)?.blockedDates).toEqual([])
+    })
+  })
+
+  it('is idempotent: second call re-blocks an unblocked date', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx, { blockedDates: ['2025-06-15'] })
+
+      // First call unblocks
+      await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+      // Second call blocks again
+      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+      expect(result).toBe(true)
+    })
+  })
+
+  it('handles undefined blockedDates (first block ever)', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      // No blockedDates field — schema marks it optional
+      const userId = await seedUser(ctx)
+
+      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+
+      expect(result).toBe(true)
+      const user = await ctx.db.get(userId)
+      expect((user as any)?.blockedDates).toEqual(['2025-06-15'])
+    })
+  })
+
+  it('throws UNAUTHENTICATED when identity is missing', async () => {
+    await t.run(async (ctx) => {
+      await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
+        data: { code: 'UNAUTHENTICATED' },
+      })
+    })
+  })
+
+  it('throws NOT_FOUND when user record does not exist in Convex', async () => {
+    // Identity present but no matching user in the DB
+    await t.withIdentity({ tokenIdentifier: 'test|ghost-user' }).run(async (ctx) => {
+      await expect(_toggleBlockedDate(ctx, { date: '2025-06-15' })).rejects.toMatchObject({
+        data: { code: 'NOT_FOUND' },
+      })
     })
   })
 
   it('preserves other blocked dates when adding a new one', async () => {
-    const user = { _id: 'u1', tokenIdentifier: 'clerk|user1', slug: 'user1', blockedDates: ['2025-06-10', '2025-06-20'] }
-    const ctx = makeToggleCtx(user, 'clerk|user1')
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      const userId = await seedUser(ctx, { blockedDates: ['2025-06-10', '2025-06-20'] })
 
-    await _toggleBlockedDate(ctx, { date: '2025-06-15' })
+      await _toggleBlockedDate(ctx, { date: '2025-06-15' })
 
-    expect(ctx.getStoredUser()?.blockedDates).toEqual(['2025-06-10', '2025-06-20', '2025-06-15'])
+      const user = await ctx.db.get(userId)
+      expect((user as any)?.blockedDates).toEqual(['2025-06-10', '2025-06-20', '2025-06-15'])
+    })
   })
 })

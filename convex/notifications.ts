@@ -1,8 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { requireAuth, type AnyCtx } from './lib/auth'
 
 type NotificationType =
   | 'hold_placed'
@@ -45,9 +43,7 @@ export async function _createNotificationHandler(
     message: string
   },
 ): Promise<void> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
+  await requireAuth(ctx)
   await notify(ctx, args)
 }
 
@@ -77,16 +73,7 @@ export async function _markAsReadHandler(
   ctx: AnyCtx,
   args: { notificationId: string },
 ): Promise<void> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-  const caller = await ctx.db
-    .query('users')
-    .withIndex('by_tokenIdentifier', (q: AnyCtx) =>
-      q.eq('tokenIdentifier', identity.tokenIdentifier),
-    )
-    .unique()
-  if (!caller) throw new ConvexError({ code: 'NOT_FOUND' })
+  const { user: caller } = await requireAuth(ctx)
 
   const notification = await ctx.db.get(args.notificationId)
   if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })

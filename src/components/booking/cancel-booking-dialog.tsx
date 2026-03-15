@@ -26,7 +26,7 @@ export function CancelBookingDialog({
   bookingId,
   onSuccess,
 }: CancelBookingDialogProps) {
-  const cancelBooking = useMutation(api.bookingsMutations.cancelBooking)
+  const cancelBooking = useMutation(api.bookings.status.cancelBooking)
 
   const [reason, setReason] = useState('')
   const [submitting, setSubmitting] = useState(false)

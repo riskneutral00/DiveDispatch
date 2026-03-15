@@ -2,13 +2,14 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { DEFAULT_THEME } from "./default-theme";
 import { loadGoogleFonts } from "./theme-loader";
+import { SKINS } from "./skins";
 import { ThemeConfig, ThemeContextValue, ThemeMode } from "./theme-types";
 import { clearInjectedVars, injectVars, themeToVars } from "./theme-utils";
 
@@ -38,7 +39,7 @@ interface ThemeProviderProps {
 //   ClerkProvider > ConvexProviderWithClerk > ThemeProvider
 export function ThemeProvider({
   children,
-  initialTheme = DEFAULT_THEME,
+  initialTheme = SKINS[0],
   initialMode = "dark",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeConfig>(initialTheme);
@@ -85,8 +86,8 @@ export function ThemeProvider({
     };
   }, []);
 
-  const setTheme = (next: ThemeConfig) => setThemeState(next);
-  const setMode = (next: ThemeMode) => setModeState(next);
+  const setTheme = useCallback((next: ThemeConfig) => setThemeState(next), []);
+  const setMode = useCallback((next: ThemeMode) => setModeState(next), []);
 
   return (
     <ThemeContext.Provider value={{ theme, mode, setTheme, setMode }}>

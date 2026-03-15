@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireAuth, getAuthUser } from './lib/auth'
 
 const credentialValidator = v.object({
   agency: v.string(),
@@ -18,16 +19,7 @@ export const create = mutation({
     languages: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
     if (user.role !== 'DiveMaster') throw new ConvexError({ code: 'FORBIDDEN' })
 
     const existing = await ctx.db
@@ -51,16 +43,7 @@ export const update = mutation({
     languages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    const { user } = await requireAuth(ctx)
 
     const profile = await ctx.db
       .query('diveMasters')
@@ -85,15 +68,7 @@ export const byUserId = query({
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    const user = await getAuthUser(ctx)
     if (!user) return null
 
     return await ctx.db

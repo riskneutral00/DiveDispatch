@@ -1,5 +1,9 @@
 import { ThemeConfig } from "./theme-types";
 
+// ── Swap these when Matt supplies real photos ─────────────────────────────────
+const PHOTO_OCEAN = "url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=80')"
+const PHOTO_CORAL = "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80')"
+
 // Skin definitions — source of truth for Ocean and Coral palettes + backgrounds.
 // Values derived from prototype/glass.html [data-skin] sections.
 // A future Convex migration will store skins in the DB; the shape stays identical.
@@ -34,10 +38,9 @@ export const SKINS: ThemeConfig[] = [
         glassSpecularSubtle: "rgba(255, 255, 255, 0.1)",
         glassShadow: "rgba(0, 0, 0, 0.2)",
         glassShadowElevated: "rgba(0, 0, 0, 0.3)",
-        bgImage:
-          "url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=80')",
+        bgImage: PHOTO_OCEAN,
         bgOverlay:
-          "linear-gradient(180deg, rgba(10, 46, 61, 0.82) 0%, rgba(10, 46, 61, 0.55) 40%, rgba(10, 46, 61, 0.6) 70%, rgba(10, 46, 61, 0.9) 100%)",
+          "linear-gradient(180deg, rgba(10, 46, 61, 0.45) 0%, rgba(10, 46, 61, 0.60) 100%)",
         bodyBg: "#071e28",
       },
       light: {
@@ -63,10 +66,9 @@ export const SKINS: ThemeConfig[] = [
         glassSpecularSubtle: "rgba(255, 255, 255, 0.3)",
         glassShadow: "rgba(0, 0, 0, 0.08)",
         glassShadowElevated: "rgba(0, 0, 0, 0.12)",
-        bgImage:
-          "url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=80')",
+        bgImage: PHOTO_OCEAN,
         bgOverlay:
-          "linear-gradient(180deg, rgba(220, 240, 250, 0.75) 0%, rgba(220, 240, 250, 0.45) 40%, rgba(220, 240, 250, 0.5) 70%, rgba(220, 240, 250, 0.8) 100%)",
+          "linear-gradient(180deg, rgba(220, 240, 250, 0.50) 0%, rgba(220, 240, 250, 0.65) 100%)",
         bodyBg: "#f0f9ff",
       },
     },
@@ -125,10 +127,9 @@ export const SKINS: ThemeConfig[] = [
         glassSpecularSubtle: "rgba(255, 255, 255, 0.1)",
         glassShadow: "rgba(0, 0, 0, 0.2)",
         glassShadowElevated: "rgba(0, 0, 0, 0.3)",
-        bgImage:
-          "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80')",
+        bgImage: PHOTO_CORAL,
         bgOverlay:
-          "linear-gradient(180deg, rgba(61, 24, 10, 0.8) 0%, rgba(61, 30, 10, 0.45) 40%, rgba(80, 20, 30, 0.5) 70%, rgba(40, 10, 20, 0.9) 100%)",
+          "linear-gradient(180deg, rgba(61, 24, 10, 0.45) 0%, rgba(40, 10, 20, 0.60) 100%)",
         bodyBg: "#1c0a04",
       },
       light: {
@@ -154,10 +155,9 @@ export const SKINS: ThemeConfig[] = [
         glassSpecularSubtle: "rgba(255, 255, 255, 0.3)",
         glassShadow: "rgba(0, 0, 0, 0.08)",
         glassShadowElevated: "rgba(0, 0, 0, 0.12)",
-        bgImage:
-          "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80')",
+        bgImage: PHOTO_CORAL,
         bgOverlay:
-          "linear-gradient(180deg, rgba(255, 237, 213, 0.75) 0%, rgba(255, 237, 213, 0.4) 40%, rgba(254, 215, 170, 0.45) 70%, rgba(255, 237, 213, 0.8) 100%)",
+          "linear-gradient(180deg, rgba(255, 237, 213, 0.50) 0%, rgba(255, 237, 213, 0.65) 100%)",
         bodyBg: "#fffbf5",
       },
     },

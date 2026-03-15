@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { z } from 'zod'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { AlertTriangle } from 'lucide-react'
@@ -9,11 +8,12 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
+import type { CustomerContactData } from '@/lib/validation'
+import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate } from '@/lib/constants/activity-rules'
+import type { CourseCode } from '@/lib/constants/course-catalog'
 
 // ── Constants ────────────────────────────────────────────────────────────────
-
-// Activity types that require a dive certification
-const CERTIFIED_ACTIVITY_TYPES = new Set(['FD', 'AOW', 'RESCUE', 'DM', 'REFRESH', 'SPECIALTY'])
 
 const CERT_AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS'] as const
 
@@ -33,38 +33,7 @@ const COUNTRIES = [
   'United Arab Emirates', 'United Kingdom', 'United States', 'Vietnam',
 ] as const
 
-// ── Zod Schema ───────────────────────────────────────────────────────────────
-
-const contactSchema = z.object({
-  legalFirstName: z.string().min(1, 'Required'),
-  legalLastName: z.string().min(1, 'Required'),
-  preferredName: z.string().optional(),
-  email: z.string().email('Invalid email address'),
-  phone: z
-    .string()
-    .min(1, 'Required')
-    .regex(/^\+?[\d\s\-().]{7,}$/, 'Use international format: +1 555 000 0000'),
-  dateOfBirth: z.string().min(1, 'Required'),
-  gender: z.enum(['M', 'F', 'Other']),
-  nationality: z.string().min(1, 'Required'),
-  passportNumber: z.string().min(1, 'Required'),
-  passportIssuingCountry: z.string().min(1, 'Required'),
-  passportExpirationDate: z.string().min(1, 'Required'),
-  emergencyContactName: z.string().min(1, 'Required'),
-  emergencyContactPhone: z
-    .string()
-    .min(1, 'Required')
-    .regex(/^\+?[\d\s\-().]{7,}$/, 'Use international format: +1 555 000 0000'),
-  emergencyContactRelation: z.string().min(1, 'Required'),
-  agency: z.string().optional(),
-  agencyID: z.string().optional(),
-  allergies: z.string().optional(),
-})
-
-type ContactFormData = z.infer<typeof contactSchema>
-type FormErrors = Partial<Record<keyof ContactFormData, string>>
-
-const defaultForm = (): ContactFormData => ({
+const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
   legalLastName: '',
   preferredName: '',
@@ -86,12 +55,14 @@ const defaultForm = (): ContactFormData => ({
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function isPassportExpiringSoon(dateStr: string): boolean {
+/** Warns if passport expires within 6 months of the reference date (default: today). */
+function isPassportExpiringSoon(dateStr: string, referenceDate?: string): boolean {
   if (!dateStr) return false
   const expiry = new Date(dateStr)
-  const sixMonthsFromNow = new Date()
-  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6)
-  return expiry <= sixMonthsFromNow
+  const ref = referenceDate ? new Date(referenceDate) : new Date()
+  const sixMonthsFromRef = new Date(ref)
+  sixMonthsFromRef.setMonth(sixMonthsFromRef.getMonth() + 6)
+  return expiry <= sixMonthsFromRef
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -172,23 +143,36 @@ function SectionHeading({ children }: SectionHeadingProps) {
 interface StepContactProps {
   token: string
   onComplete: () => void
+  /** ISO date string (YYYY-MM-DD) for the first dive session.
+   * Used for age-minimum checks and passport expiry warnings.
+   * Falls back to today when not provided. */
+  bookingStartDate?: string
 }
 
-export function StepContact({ token, onComplete }: StepContactProps) {
+export function StepContact({ token, onComplete, bookingStartDate }: StepContactProps) {
   const context = useQuery(api.customers.getPortalContext, { token })
   const save = useMutation(api.customers.savePortalContact)
 
-  const [form, setForm] = useState<ContactFormData>(defaultForm())
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [form, setFormState] = useState<CustomerContactData>(defaultForm())
   const [serverError, setServerError] = useState<string | null>(null)
+  const [ageError, setAgeError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  // Cert-conditional schema: agency + agencyID required if any activity needs it.
+  // Memoize on activity types to avoid hook churn.
+  const schema = useMemo(
+    () => makeCustomerContactSchema(context?.activityType ?? []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [(context?.activityType ?? []).join(',')],
+  )
+  const { validate, errors, clearError } = useFormValidation(schema)
 
   // Pre-fill from existing customer data and booking link hints
   useEffect(() => {
     if (!context) return
     if (context.customer) {
       const c = context.customer
-      setForm({
+      setFormState({
         legalFirstName: c.legalFirstName,
         legalLastName: c.legalLastName,
         preferredName: c.preferredName ?? '',
@@ -210,7 +194,7 @@ export function StepContact({ token, onComplete }: StepContactProps) {
     } else {
       // Pre-fill name/email from bookingLink hints if no saved record
       const nameParts = context.prefillName.split(' ')
-      setForm((prev) => ({
+      setFormState((prev) => ({
         ...prev,
         legalFirstName: nameParts[0] ?? '',
         legalLastName: nameParts.slice(1).join(' '),
@@ -220,60 +204,62 @@ export function StepContact({ token, onComplete }: StepContactProps) {
   }, [context])
 
   const requiresCert =
-    context !== undefined &&
-    context !== null &&
-    context.activityType.some((t) => CERTIFIED_ACTIVITY_TYPES.has(t))
+    context != null &&
+    context.activityType.some((t) =>
+      (CERT_REQUIRED_ACTIVITIES as readonly string[]).includes(t),
+    )
 
-  const setField = <K extends keyof ContactFormData>(key: K, value: ContactFormData[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  const setField = <K extends keyof CustomerContactData>(key: K, value: CustomerContactData[K]) => {
+    setFormState((prev) => ({ ...prev, [key]: value }))
+    clearError(key as string)
+    setAgeError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setServerError(null)
+    setAgeError(null)
 
-    // Build schema with conditional cert validation
-    const schema =
-      requiresCert
-        ? contactSchema.extend({
-            agency: z.string().min(1, 'Certification agency is required'),
-            agencyID: z.string().min(1, 'Agency ID is required'),
-          })
-        : contactSchema
+    const result = validate(form)
+    if (!result.success || !result.data) return
 
-    const result = schema.safeParse(form)
-    if (!result.success) {
-      const fieldErrors: FormErrors = {}
-      for (const issue of result.error.issues) {
-        const key = issue.path[0] as keyof ContactFormData
-        if (!fieldErrors[key]) fieldErrors[key] = issue.message
+    const validated = result.data
+
+    // Age check: diver must meet minimum age for their activity types
+    if (validated.dateOfBirth && context?.activityType?.length) {
+      const refDate = bookingStartDate ?? new Date().toISOString().slice(0, 10)
+      const age = calcAgeAtDate(validated.dateOfBirth, refDate)
+      const minAge = getMinAge(context.activityType as CourseCode[])
+      if (age < minAge) {
+        setAgeError(
+          `Diver must be at least ${minAge} years old for this activity. ` +
+            `Age at dive start: ${age} year${age === 1 ? '' : 's'}.`,
+        )
+        return
       }
-      setErrors(fieldErrors)
-      return
     }
 
     setSubmitting(true)
     try {
       await save({
         token,
-        legalFirstName: result.data.legalFirstName,
-        legalLastName: result.data.legalLastName,
-        preferredName: result.data.preferredName || undefined,
-        email: result.data.email,
-        phone: result.data.phone,
-        dateOfBirth: result.data.dateOfBirth,
-        gender: result.data.gender,
-        nationality: result.data.nationality,
-        passportNumber: result.data.passportNumber,
-        passportIssuingCountry: result.data.passportIssuingCountry,
-        passportExpirationDate: result.data.passportExpirationDate,
-        emergencyContactName: result.data.emergencyContactName,
-        emergencyContactPhone: result.data.emergencyContactPhone,
-        emergencyContactRelation: result.data.emergencyContactRelation,
-        agency: result.data.agency || undefined,
-        agencyID: result.data.agencyID || undefined,
-        allergies: result.data.allergies || undefined,
+        legalFirstName: validated.legalFirstName,
+        legalLastName: validated.legalLastName,
+        preferredName: validated.preferredName || undefined,
+        email: validated.email,
+        phone: validated.phone,
+        dateOfBirth: validated.dateOfBirth,
+        gender: validated.gender,
+        nationality: validated.nationality,
+        passportNumber: validated.passportNumber,
+        passportIssuingCountry: validated.passportIssuingCountry,
+        passportExpirationDate: validated.passportExpirationDate,
+        emergencyContactName: validated.emergencyContactName,
+        emergencyContactPhone: validated.emergencyContactPhone,
+        emergencyContactRelation: validated.emergencyContactRelation,
+        agency: validated.agency || undefined,
+        agencyID: validated.agencyID || undefined,
+        allergies: validated.allergies || undefined,
       })
       onComplete()
     } catch (err) {
@@ -315,7 +301,10 @@ export function StepContact({ token, onComplete }: StepContactProps) {
     )
   }
 
-  const passportExpiringSoon = isPassportExpiringSoon(form.passportExpirationDate)
+  const passportExpiringSoon = isPassportExpiringSoon(
+    form.passportExpirationDate,
+    bookingStartDate,
+  )
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -367,18 +356,25 @@ export function StepContact({ token, onComplete }: StepContactProps) {
             helperText="International format with country code"
             autoComplete="tel"
           />
-          <GlassInput
-            label="Date of Birth *"
-            type="date"
-            value={form.dateOfBirth}
-            onChange={(e) => setField('dateOfBirth', e.target.value)}
-            error={errors.dateOfBirth}
-            autoComplete="bday"
-          />
+          <div>
+            <GlassInput
+              label="Date of Birth *"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={(e) => setField('dateOfBirth', e.target.value)}
+              error={errors.dateOfBirth}
+              autoComplete="bday"
+            />
+            {ageError && (
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+                {ageError}
+              </p>
+            )}
+          </div>
           <GlassSelect
             label="Gender"
             value={form.gender}
-            onChange={(v) => setField('gender', v as ContactFormData['gender'])}
+            onChange={(v) => setField('gender', v as CustomerContactData['gender'])}
             options={['M', 'F', 'Other']}
             error={errors.gender}
             required

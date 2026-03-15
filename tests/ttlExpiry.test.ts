@@ -1,17 +1,16 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { convexTest } from 'convex-test'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import schema from '../convex/schema'
+import { internal } from '../convex/_generated/api'
+import { isSessionEnded } from '../convex/bookings/_shared'
 
-vi.mock('../convex/_generated/server', () => ({
-  mutation: (config: unknown) => config,
-  internalMutation: (config: unknown) => config,
-}))
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-import { isSessionEnded, expireHolds, completeBookings } from '../convex/bookingsMutations'
+const HOLD_TTL = 43_200_000
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type InternalMutationConfig = { args: unknown; handler: (ctx: any, args: any) => Promise<unknown> }
-
-const expireHoldsMutation = expireHolds as unknown as InternalMutationConfig
-const completeBookingsMutation = completeBookings as unknown as InternalMutationConfig
+function makeT() {
+  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
+}
 
 // ─── isSessionEnded ────────────────────────────────────────────────────────────
 
@@ -65,78 +64,197 @@ describe('isSessionEnded', () => {
 describe('expireHolds', () => {
   afterEach(() => vi.clearAllMocks())
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function makeCtx(drafts: any[] = []) {
-    return {
-      db: {
-        get: vi.fn(async () => null),
-        patch: vi.fn(async () => undefined),
-        delete: vi.fn(async () => undefined),
-        query: vi.fn((table: string) => ({
-          withIndex: vi.fn(() => ({
-            collect: vi.fn(async () => {
-              if (table === 'bookings') return drafts
-              return [] // reservations, bookingSessions, bookingLinks
-            }),
-            unique: vi.fn(async () => null),
-          })),
-        })),
-      },
-    }
-  }
-
   it('returns { expired: 0, more: false } when no bookings have expired', async () => {
-    const future = Date.now() + 10_000
-    const ctx = makeCtx([
-      { _id: 'b-1', status: 'Draft', expiresAt: future },
-    ])
-    const result = await expireHoldsMutation.handler(ctx, {})
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() + 10_000,
+      })
+    })
+
+    const result = await t.mutation(internal.bookings.status.expireHolds, {})
     expect(result).toEqual({ expired: 0, more: false })
-    expect(ctx.db.delete).not.toHaveBeenCalled()
   })
 
   it('deletes a booking whose expiresAt is in the past', async () => {
-    const past = Date.now() - 1_000
-    const ctx = makeCtx([
-      { _id: 'b-1', status: 'Draft', expiresAt: past },
-    ])
-    const result = await expireHoldsMutation.handler(ctx, {})
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      }),
+    )
+
+    const result = await t.mutation(internal.bookings.status.expireHolds, {})
     expect(result).toEqual({ expired: 1, more: false })
-    expect(ctx.db.delete).toHaveBeenCalledWith('b-1')
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking).toBeNull()
   })
 
   it('skips bookings with no expiresAt', async () => {
-    const ctx = makeCtx([
-      { _id: 'b-1', status: 'Draft', expiresAt: undefined },
-    ])
-    const result = await expireHoldsMutation.handler(ctx, {})
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+        // No expiresAt
+      }),
+    )
+
+    const result = await t.mutation(internal.bookings.status.expireHolds, {})
     expect(result).toEqual({ expired: 0, more: false })
-    expect(ctx.db.delete).not.toHaveBeenCalled()
+
+    // Booking should still exist
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking).not.toBeNull()
   })
 
   it('reports more: true when there are >100 expired bookings', async () => {
+    const t = makeT()
     const past = Date.now() - 1_000
-    const manyExpired = Array.from({ length: 101 }, (_, i) => ({
-      _id: `b-${i}`,
-      status: 'Draft',
-      expiresAt: past,
-    }))
-    const ctx = makeCtx(manyExpired)
-    const result = (await expireHoldsMutation.handler(ctx, {})) as { expired: number; more: boolean }
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 101; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'dc-test',
+          ownerType: 'DiveCenter',
+          status: 'Draft',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: ['OW'],
+          startDate: '2025-06-15',
+          endDate: '2025-06-15',
+          divers: [],
+          operatorName: 'Test DC',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          medicalHardBlock: false,
+          bookingFormComplete: true,
+          customerFormComplete: false,
+          expiresAt: past,
+        })
+      }
+    })
+
+    const result = (await t.mutation(internal.bookings.status.expireHolds, {})) as {
+      expired: number
+      more: boolean
+    }
     expect(result.expired).toBe(100)
     expect(result.more).toBe(true)
   })
 
   it('expires multiple bookings in the same run', async () => {
+    const t = makeT()
     const past = Date.now() - 1_000
-    const ctx = makeCtx([
-      { _id: 'b-1', status: 'Draft', expiresAt: past },
-      { _id: 'b-2', status: 'Draft', expiresAt: past },
-    ])
-    const result = await expireHoldsMutation.handler(ctx, {})
+
+    const [id1, id2] = await t.run(async (ctx) => {
+      const id1 = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: past,
+      })
+      const id2 = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-16',
+        endDate: '2025-06-16',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: past,
+      })
+      return [id1, id2]
+    })
+
+    const result = await t.mutation(internal.bookings.status.expireHolds, {})
     expect(result).toEqual({ expired: 2, more: false })
-    expect(ctx.db.delete).toHaveBeenCalledWith('b-1')
-    expect(ctx.db.delete).toHaveBeenCalledWith('b-2')
+
+    const [b1, b2] = await t.run(async (ctx) => [
+      await ctx.db.get(id1),
+      await ctx.db.get(id2),
+    ])
+    expect(b1).toBeNull()
+    expect(b2).toBeNull()
   })
 })
 
@@ -148,87 +266,251 @@ describe('completeBookings', () => {
     vi.restoreAllMocks()
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function makeCtx(bookings: any[] = [], sessions: any[] = []) {
-    return {
-      db: {
-        get: vi.fn(async () => null),
-        patch: vi.fn(async () => undefined),
-        delete: vi.fn(async () => undefined),
-        query: vi.fn((table: string) => ({
-          withIndex: vi.fn(() => ({
-            collect: vi.fn(async () => {
-              if (table === 'bookings') return bookings
-              if (table === 'bookingSessions') return sessions
-              return []
-            }),
-            unique: vi.fn(async () => null),
-          })),
-        })),
-      },
-    }
-  }
-
   it('returns { completed: 0, more: false } when no sessions have ended', async () => {
+    const t = makeT()
     // Session in the future
     vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T08:00:00Z').getTime())
-    const ctx = makeCtx(
-      [{ _id: 'b-1', status: 'Upcoming' }],
-      [{ _id: 's-1', date: '2024-06-15', endTime: '17:00', timezone: 'Asia/Bangkok' }],
-    )
-    const result = await completeBookingsMutation.handler(ctx, {})
+
+    await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-15',
+        endDate: '2024-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-15',
+        endTime: '17:00', // Bangkok 17:00 = UTC 10:00, and we're at UTC 08:00 (not ended yet)
+        startTime: '09:00',
+        timezone: 'Asia/Bangkok',
+      })
+    })
+
+    const result = await t.mutation(internal.bookings.status.completeBookings, {})
     expect(result).toEqual({ completed: 0, more: false })
-    expect(ctx.db.patch).not.toHaveBeenCalled()
   })
 
   it('completes a booking when its last session has ended', async () => {
+    const t = makeT()
     // 2024-06-15 12:00 UTC → Bangkok 19:00; session ended at 18:00
     vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
-    const ctx = makeCtx(
-      [{ _id: 'b-1', status: 'Upcoming' }],
-      [{ _id: 's-1', date: '2024-06-15', endTime: '18:00', timezone: 'Asia/Bangkok' }],
-    )
-    const result = await completeBookingsMutation.handler(ctx, {})
+
+    const bookingId = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-15',
+        endDate: '2024-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-15',
+        startTime: '08:00',
+        endTime: '18:00', // Bangkok 18:00 = UTC 11:00, we're at UTC 12:00 (ended)
+        timezone: 'Asia/Bangkok',
+      })
+      return bookingId
+    })
+
+    const result = await t.mutation(internal.bookings.status.completeBookings, {})
     expect(result).toEqual({ completed: 1, more: false })
-    expect(ctx.db.patch).toHaveBeenCalledWith('b-1', { status: 'Completed' })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Completed')
   })
 
   it('picks the last session by date and endTime for multi-session bookings', async () => {
-    // b-1 has two sessions; last one ends at 18:00 today
+    const t = makeT()
+    // 2024-06-15 12:00 UTC → Bangkok 19:00; last session ends at 18:00 today
     vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
-    const ctx = makeCtx(
-      [{ _id: 'b-1', status: 'Upcoming' }],
-      [
-        { _id: 's-1', date: '2024-06-14', endTime: '17:00', timezone: 'Asia/Bangkok' },
-        { _id: 's-2', date: '2024-06-15', endTime: '18:00', timezone: 'Asia/Bangkok' },
-      ],
-    )
-    const result = await completeBookingsMutation.handler(ctx, {})
+
+    const bookingId = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-14',
+        endDate: '2024-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+      // Earlier session — not the last
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-14',
+        startTime: '08:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      // Last session — check this one
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2024-06-15',
+        startTime: '08:00',
+        endTime: '18:00', // Bangkok 18:00 = UTC 11:00, we're at UTC 12:00 (ended)
+        timezone: 'Asia/Bangkok',
+      })
+      return bookingId
+    })
+
+    const result = await t.mutation(internal.bookings.status.completeBookings, {})
     expect(result).toEqual({ completed: 1, more: false })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Completed')
   })
 
   it('skips bookings with no sessions', async () => {
-    const ctx = makeCtx([{ _id: 'b-1', status: 'Upcoming' }], [])
-    const result = await completeBookingsMutation.handler(ctx, {})
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-15',
+        endDate: '2024-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      }),
+    )
+
+    const result = await t.mutation(internal.bookings.status.completeBookings, {})
     expect(result).toEqual({ completed: 0, more: false })
-    expect(ctx.db.patch).not.toHaveBeenCalled()
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Upcoming') // unchanged
   })
 
   it('reports more: true when there are >100 Upcoming bookings', async () => {
+    const t = makeT()
+    // 2024-06-15 12:00 UTC → Bangkok 19:00; sessions ended at 10:00 Bangkok
     vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
-    const manyBookings = Array.from({ length: 101 }, (_, i) => ({
-      _id: `b-${i}`,
-      status: 'Upcoming',
-    }))
-    // All bookings share the same sessions list — each one has ended
-    const ctx = makeCtx(
-      manyBookings,
-      [{ _id: 's-1', date: '2024-06-15', endTime: '10:00', timezone: 'Asia/Bangkok' }],
-    )
-    const result = (await completeBookingsMutation.handler(ctx, {})) as {
+
+    await t.run(async (ctx) => {
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 101,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+      for (let i = 0; i < 101; i++) {
+        const bookingId = await ctx.db.insert('bookings', {
+          ownerId: 'dc-test',
+          ownerType: 'DiveCenter',
+          status: 'Upcoming',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: ['OW'],
+          startDate: '2024-06-15',
+          endDate: '2024-06-15',
+          divers: [],
+          operatorName: 'Test DC',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          medicalHardBlock: false,
+          bookingFormComplete: true,
+          customerFormComplete: true,
+        })
+        await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date: '2024-06-15',
+          startTime: '08:00',
+          endTime: '10:00', // Bangkok 10:00 = UTC 03:00, we're at UTC 12:00 (ended)
+          timezone: 'Asia/Bangkok',
+        })
+      }
+    })
+
+    const result = (await t.mutation(internal.bookings.status.completeBookings, {})) as {
       completed: number
       more: boolean
     }
     expect(result.more).toBe(true)
+    expect(result.completed).toBe(100)
   })
 })

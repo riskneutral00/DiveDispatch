@@ -1,5 +1,6 @@
+import { notFound } from 'next/navigation'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
-import type { RoleKey } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 export default async function RoleSlugLayout({
   children,
@@ -9,6 +10,8 @@ export default async function RoleSlugLayout({
   params: Promise<{ roleSlug: string; slug: string }>
 }) {
   const { roleSlug, slug } = await params
+
+  if (!ROLE_BY_KEY[roleSlug as RoleKey]) notFound()
 
   return (
     <DashboardShell roleSlug={roleSlug as RoleKey} slug={slug}>

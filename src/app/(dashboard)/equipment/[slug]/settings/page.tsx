@@ -1,6 +1,7 @@
 import { Package } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
+import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
 
 export default async function EquipmentSettingsPage({
   params,
@@ -30,6 +31,7 @@ export default async function EquipmentSettingsPage({
           </div>
         </div>
         <EquipmentProfileForm />
+        <PreferencesEditor />
       </div>
     </DashboardShell>
   )

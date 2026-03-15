@@ -1,8 +1,7 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import { type AnyCtx } from './lib/auth'
+import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -72,29 +71,6 @@ export type PortalProgress = {
   firstIncompleteStep: PortalStep
 }
 
-// ── Token validation helper ───────────────────────────────────────────────────
-
-async function resolveTokenForPortal(ctx: AnyCtx, token: string) {
-  const link = await ctx.db
-    .query('bookingLinks')
-    .withIndex('by_token', (q: AnyCtx) => q.eq('token', token))
-    .unique()
-  if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-  if ((link.expiresAt as number) < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
-
-  const booking = await ctx.db.get(link.bookingId)
-  if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (booking.status !== 'Draft') throw new ConvexError({ code: 'BOOKING_CLOSED' })
-
-  const profile = await ctx.db
-    .query('customerProfiles')
-    .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', token))
-    .unique()
-  if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
-
-  return { link, booking, profile }
-}
-
 // ── getPortalProgress handler (exported for unit testing) ────────────────────
 
 /**
@@ -109,24 +85,10 @@ export async function _getPortalProgress(
   ctx: AnyCtx,
   args: { token: string },
 ): Promise<PortalProgress | null> {
-  const link = await ctx.db
-    .query('bookingLinks')
-    .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
-    .unique()
+  const resolved = await resolvePortalTokenSoft(ctx, args.token)
+  if (!resolved) return null
 
-  if (!link) return null
-  if ((link.expiresAt as number) < Date.now()) return null
-
-  const booking = await ctx.db.get(link.bookingId)
-  if (!booking) return null
-  if (booking.status !== 'Draft') return null
-
-  const profile = await ctx.db
-    .query('customerProfiles')
-    .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
-    .unique()
-
-  if (!profile) return null
+  const { booking, profile } = resolved
 
   // Load customer record for contact + equipment body measurement data
   let customer: Record<string, unknown> | null = null
@@ -254,7 +216,7 @@ export const saveWaiver = mutation({
     ctx: AnyCtx,
     args: { token: string; insurancePolicyNumber?: string },
   ): Promise<void> => {
-    const { profile } = await resolveTokenForPortal(ctx, args.token)
+    const { profile } = await resolvePortalToken(ctx, args.token)
 
     const patch: Record<string, unknown> = {
       waiverSignedAt: Date.now(),
@@ -301,7 +263,7 @@ export const saveEquipmentData = mutation({
     ),
   },
   handler: async (ctx: AnyCtx, args: AnyCtx): Promise<void> => {
-    const { profile } = await resolveTokenForPortal(ctx, args.token)
+    const { profile } = await resolvePortalToken(ctx, args.token)
 
     // Save body measurements to customers record if contact step is complete
     if (profile.customerId) {

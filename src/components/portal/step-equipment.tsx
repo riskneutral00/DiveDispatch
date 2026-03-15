@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
+import { GlassButton } from '../glass/glass-button'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,9 @@ export interface EquipmentData {
 
 interface StepEquipmentProps {
   onChange: (data: EquipmentData) => void
+  /** When provided, the component renders its own Continue button and
+   * validates before calling this callback. */
+  onComplete?: (data: EquipmentData) => void
 }
 
 // ── Unit conversion ──────────────────────────────────────────────────────────
@@ -59,16 +63,17 @@ interface ToggleGroupProps {
   value: string
   onChange: (v: string) => void
   'aria-label'?: string
+  hasError?: boolean
 }
 
-function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel }: ToggleGroupProps) {
+function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasError }: ToggleGroupProps) {
   return (
     <div
       role="group"
       aria-label={ariaLabel}
       className="inline-flex overflow-hidden border flex-shrink-0"
       style={{
-        borderColor: 'var(--color-glass-border)',
+        borderColor: hasError ? 'var(--color-destructive)' : 'var(--color-glass-border)',
         borderRadius: 'var(--border-radius)',
       }}
     >
@@ -136,9 +141,60 @@ function SectionHeading({
   )
 }
 
+// ── Validation ───────────────────────────────────────────────────────────────
+
+interface EquipmentErrors {
+  rentalChecklist?: string
+  heightCm?: string
+  weightKg?: string
+  shoeSize?: string
+  prescriptionStrength?: string
+}
+
+function validateEquipment(
+  rentalChecklist: Partial<RentalChecklist>,
+  heightValue: string,
+  heightUnit: HeightUnit,
+  weightValue: string,
+  weightUnit: WeightUnit,
+  shoeSizeValue: string,
+  needsPoweredLenses: boolean | null,
+  prescriptionDetails: string,
+): EquipmentErrors {
+  const errs: EquipmentErrors = {}
+
+  // All 5 rental items must be answered
+  const missingItems = RENTAL_ITEMS.filter((item) => !rentalChecklist[item.key])
+  if (missingItems.length > 0) {
+    errs.rentalChecklist = 'Please select Own or Rent for all equipment items.'
+  }
+
+  const hasAnyRental = RENTAL_ITEMS.some((item) => rentalChecklist[item.key] === 'rent')
+
+  if (hasAnyRental) {
+    const heightCm = toHeightCm(heightValue, heightUnit)
+    const weightKg = toWeightKg(weightValue, weightUnit)
+    if (!heightCm) errs.heightCm = 'Height is required when renting equipment.'
+    if (!weightKg) errs.weightKg = 'Weight is required when renting equipment.'
+
+    if (rentalChecklist.fins === 'rent') {
+      const shoeSize = toShoeSizeNum(shoeSizeValue)
+      if (!shoeSize) errs.shoeSize = 'Shoe size is required when renting fins.'
+    }
+
+    if (rentalChecklist.mask === 'rent' && needsPoweredLenses === true) {
+      if (!prescriptionDetails.trim()) {
+        errs.prescriptionStrength = 'Prescription details are required for powered lens rental.'
+      }
+    }
+  }
+
+  return errs
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function StepEquipment({ onChange }: StepEquipmentProps) {
+export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   const [heightValue, setHeightValue] = useState('')
   const [heightUnit, setHeightUnit] = useState<HeightUnit>('cm')
   const [weightValue, setWeightValue] = useState('')
@@ -151,6 +207,9 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
 
   const [rentalChecklist, setRentalChecklist] = useState<Partial<RentalChecklist>>({})
   const [maskPrescription, setMaskPrescription] = useState('')
+
+  // Show validation errors only after first submit attempt
+  const [attempted, setAttempted] = useState(false)
 
   // Stable ref for onChange so we don't trigger infinite effect loops when
   // the parent passes an inline function.
@@ -211,15 +270,58 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
     onChangeRef.current(data)
   }, [data])
 
+  // Compute current validation errors (for display when attempted=true)
+  const validationErrors = useMemo(
+    () =>
+      validateEquipment(
+        rentalChecklist,
+        heightValue,
+        heightUnit,
+        weightValue,
+        weightUnit,
+        shoeSizeValue,
+        needsPoweredLenses,
+        prescriptionDetails,
+      ),
+    [
+      rentalChecklist,
+      heightValue,
+      heightUnit,
+      weightValue,
+      weightUnit,
+      shoeSizeValue,
+      needsPoweredLenses,
+      prescriptionDetails,
+    ],
+  )
+
+  const displayErrors = attempted ? validationErrors : {}
+
   function handleRentalChange(key: keyof RentalChecklist, value: RentalChoice) {
     setRentalChecklist((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleComplete() {
+    setAttempted(true)
+    const errs = validateEquipment(
+      rentalChecklist,
+      heightValue,
+      heightUnit,
+      weightValue,
+      weightUnit,
+      shoeSizeValue,
+      needsPoweredLenses,
+      prescriptionDetails,
+    )
+    if (Object.keys(errs).length > 0) return
+    onComplete?.(data)
   }
 
   return (
     <div className="space-y-6">
       {/* ── Body Measurements ─────────────────────────────────────────── */}
       <GlassCard padding="md">
-        <SectionHeading note="(optional)">Body Measurements</SectionHeading>
+        <SectionHeading note="(required when renting)">Body Measurements</SectionHeading>
 
         <div className="space-y-4">
           {/* Height */}
@@ -240,6 +342,7 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
                 min="0"
                 className="flex-1 min-w-0"
                 aria-label="Height value"
+                error={displayErrors.heightCm}
               />
               <ToggleGroup
                 options={['cm', 'in'] as const}
@@ -268,6 +371,7 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
                 min="0"
                 className="flex-1 min-w-0"
                 aria-label="Weight value"
+                error={displayErrors.weightKg}
               />
               <ToggleGroup
                 options={['kg', 'lbs'] as const}
@@ -297,6 +401,7 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
                 onChange={(e) => setShoeSizeValue(e.target.value)}
                 className="flex-1 min-w-0"
                 aria-label="Shoe size value"
+                error={displayErrors.shoeSize}
               />
               <ToggleGroup
                 options={['EU', 'US', 'CM'] as const}
@@ -365,6 +470,9 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
               style={{ color: 'var(--color-text-secondary)' }}
             >
               Prescription Details
+              {rentalChecklist.mask === 'rent' && (
+                <span style={{ color: 'var(--color-destructive)' }}> *</span>
+              )}
             </label>
             <textarea
               value={prescriptionDetails}
@@ -375,10 +483,20 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
               style={{
                 color: 'var(--color-text-primary)',
                 caretColor: 'var(--color-accent)',
-                outlineColor: 'var(--color-accent)',
+                outlineColor: displayErrors.prescriptionStrength
+                  ? 'var(--color-destructive)'
+                  : 'var(--color-accent)',
                 borderRadius: 'var(--border-radius)',
+                ...(displayErrors.prescriptionStrength
+                  ? { boxShadow: '0 0 0 2px var(--color-destructive)' }
+                  : {}),
               }}
             />
+            {displayErrors.prescriptionStrength && (
+              <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+                {displayErrors.prescriptionStrength}
+              </p>
+            )}
           </div>
         )}
       </GlassCard>
@@ -391,23 +509,36 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
         </p>
 
         <div className="space-y-3">
-          {RENTAL_ITEMS.map(({ key, label }) => (
-            <div key={key} className="flex items-center justify-between gap-4">
-              <span
-                className="text-sm font-medium"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                {label}
-              </span>
-              <ToggleGroup
-                options={['own', 'rent'] as const}
-                value={rentalChecklist[key] ?? ''}
-                onChange={(v) => handleRentalChange(key, v as RentalChoice)}
-                aria-label={`${label} own or rent`}
-              />
-            </div>
-          ))}
+          {RENTAL_ITEMS.map(({ key, label }) => {
+            const unanswered = attempted && !rentalChecklist[key]
+            return (
+              <div key={key} className="flex items-center justify-between gap-4">
+                <span
+                  className="text-sm font-medium"
+                  style={{
+                    color: unanswered ? 'var(--color-destructive)' : 'var(--color-text-primary)',
+                  }}
+                >
+                  {label}
+                  {unanswered && ' *'}
+                </span>
+                <ToggleGroup
+                  options={['own', 'rent'] as const}
+                  value={rentalChecklist[key] ?? ''}
+                  onChange={(v) => handleRentalChange(key, v as RentalChoice)}
+                  aria-label={`${label} own or rent`}
+                  hasError={unanswered}
+                />
+              </div>
+            )
+          })}
         </div>
+
+        {displayErrors.rentalChecklist && (
+          <p className="mt-3 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+            {displayErrors.rentalChecklist}
+          </p>
+        )}
 
         {/* Mask prescription — only when renting mask + needs powered lenses */}
         {showMaskPrescription && (
@@ -426,6 +557,20 @@ export function StepEquipment({ onChange }: StepEquipmentProps) {
           </div>
         )}
       </GlassCard>
+
+      {/* Continue button — only rendered when parent passes onComplete */}
+      {onComplete && (
+        <div className="flex justify-end">
+          <GlassButton
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={handleComplete}
+          >
+            Continue
+          </GlassButton>
+        </div>
+      )}
     </div>
   )
 }

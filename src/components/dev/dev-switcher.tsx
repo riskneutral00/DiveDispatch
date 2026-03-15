@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
-import { useRouter } from 'next/navigation'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -40,9 +39,9 @@ const GROUPED = groupByRole()
 function DevSwitcherInner() {
   const { user } = useCurrentUser()
   const switchUser = useMutation(api.devSwitcher.devSwitchUser)
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const [selections, setSelections] = useState<Map<RoleKey, string>>(() => {
     const m = new Map<RoleKey, string>()
@@ -60,11 +59,22 @@ function DevSwitcherInner() {
   async function handleSwitch(slug: string | undefined) {
     if (!slug || switching) return
     setSwitching(slug)
+    setError(null)
     try {
       const result = await switchUser({ targetSlug: slug })
       const config = ROLE_BY_CLERK_ROLE[result.role as keyof typeof ROLE_BY_CLERK_ROLE]
-      setOpen(false)
-      router.push(`${config.route}/${result.slug}/dashboard`)
+      if (!config) {
+        setError(`Unknown role: ${result.role}`)
+        return
+      }
+      // Brief delay lets Convex propagate the tokenIdentifier patch before
+      // the new page's queries fire — prevents a transient FORBIDDEN error.
+      await new Promise((r) => setTimeout(r, 150))
+      window.location.href = `${config.route}/${result.slug}/dashboard`
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Switch failed — check console'
+      setError(msg)
     } finally {
       setSwitching(null)
     }
@@ -102,6 +112,17 @@ function DevSwitcherInner() {
             >
               Dev Switcher
             </div>
+            {error && (
+              <div
+                className="px-3 py-1.5 text-[11px] border-b"
+                style={{
+                  color: 'var(--color-destructive, #ef4444)',
+                  borderColor: 'var(--color-glass-border)',
+                }}
+              >
+                {error}
+              </div>
+            )}
             <div className="max-h-96 overflow-y-auto">
               {ROLES.map((config) => {
                 const users = GROUPED.get(config.key)
