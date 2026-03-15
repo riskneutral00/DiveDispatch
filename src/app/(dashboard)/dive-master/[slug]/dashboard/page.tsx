@@ -1,8 +1,6 @@
 import { Droplets } from 'lucide-react'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { OpenRequests } from '@/components/dashboard/open-requests'
-import { ConfirmedSchedule } from '@/components/dashboard/confirmed-schedule'
-import { AvailabilityCalendar } from '@/components/dashboard/availability-calendar'
 
 export default async function DiveMasterDashboardPage({
   params,
@@ -30,41 +28,15 @@ export default async function DiveMasterDashboardPage({
           </p>
         </div>
 
-        {/* Resource sections: requests left, availability right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left column: open requests + confirmed schedule */}
-          <div className="space-y-4">
-            <div>
-              <h2
-                className="text-base font-semibold mb-3"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-              >
-                Pending Requests
-              </h2>
-              <OpenRequests confirmOnDecline />
-            </div>
-
-            <div>
-              <h2
-                className="text-base font-semibold mb-3"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-              >
-                Confirmed Schedule
-              </h2>
-              <ConfirmedSchedule />
-            </div>
-          </div>
-
-          {/* Right column: availability calendar */}
-          <div>
-            <h2
-              className="text-base font-semibold mb-3"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-            >
-              Availability
-            </h2>
-            <AvailabilityCalendar />
-          </div>
+        {/* Open requests widget */}
+        <div>
+          <h2
+            className="text-base font-semibold mb-3"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          >
+            Pending Requests
+          </h2>
+          <OpenRequests confirmOnDecline />
         </div>
       </div>
     </DashboardShell>

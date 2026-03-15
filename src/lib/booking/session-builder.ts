@@ -1,10 +1,9 @@
 // ── Session Builder ───────────────────────────────────────────────────────────
-// Pure utility — no Convex, no React.
-// Exports Venue and ScheduledSession types (consumed by venue-toggle.tsx and
-// day-schedule.tsx). Also provides date range and delivery-location helpers.
+// Generates per-day session drafts from course catalog rules, diver assignments,
+// and resource selections. Pure utility — no Convex, no React.
 
+import type { DetailsState, DiverEntry, ResourcesState, SessionEntry } from './wizard-state'
 import { getCourseByCode, type CourseCode } from '@/lib/constants/course-catalog'
-import type { DayConfig } from '@/lib/booking/wizard-state'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -19,7 +18,7 @@ export interface DiveSlotDisplay {
 }
 
 export interface ScheduledSession {
-  // Fields that map to a session entry
+  // Fields that map to SessionEntry (wizard state)
   inventoryUnitId: string // placeholder — resolved by submitToDraft mutation
   date: string
   startTime: string
@@ -45,7 +44,7 @@ export function getDeliveryLocation(
   return venue === 'Shore' ? 'Beach' : 'BoatPier'
 }
 
-// ── Date Helpers ──────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function getDatesInRange(startDate: string, endDate: string): string[] {
   if (!startDate || !endDate) return []
@@ -62,19 +61,20 @@ export function getDatesInRange(startDate: string, endDate: string): string[] {
   return dates
 }
 
-// ── Course Sequence Builder ───────────────────────────────────────────────────
-
 interface SequenceEntry {
   dayIndex: number
   diveNumber: number
   isConfined: boolean
 }
 
+// Builds a dive sequence for a single course across the given number of booking days.
+// Confined courses put dives 1–2 on day 0 (pool), remaining days are open water.
 function buildCourseSequence(code: CourseCode, numDays: number): SequenceEntry[] {
   const course = getCourseByCode(code)
   if (!course) return []
 
   const effectiveDays = Math.max(numDays, course.minDays)
+  // Single-activity courses (no numbered dives) get 1 dive per day; others get 2.
   const divesPerDay = code === 'DSD' || code === 'FD' || code === 'REFRESH' ? 1 : 2
 
   const entries: SequenceEntry[] = []
@@ -88,76 +88,94 @@ function buildCourseSequence(code: CourseCode, numDays: number): SequenceEntry[]
   return entries
 }
 
-// ── Session Generator from DayConfig ─────────────────────────────────────────
-
-/** Convert new-style DayConfig[] into ScheduledSession[] for display. */
-export function buildSessionsFromDays(
-  days: DayConfig[],
-  customerCount: number,
-): ScheduledSession[] {
-  return days.map((day) => {
-    const isConfinedDay = day.venueType === 'pool'
-    const venue: Venue = day.venueType === 'shore' ? 'Shore' : 'Boat'
-
-    const diveSlots: DiveSlotDisplay[] = day.dives.map((slot, idx) => ({
-      courseCode: slot.courseCode as CourseCode,
-      diveNumber: slot.diveNumber,
-      isConfined: slot.isConfined,
-      diverIndex: idx,
-      diverAbbrev: String(idx + 1),
-    }))
-
-    return {
-      inventoryUnitId: day.inventoryUnitId ?? '',
-      date: day.date,
-      startTime: day.startTime,
-      endTime: day.endTime,
-      timezone: day.timezone,
-      unitsRequested: Math.max(customerCount, 1),
-      deliveryLocation: getDeliveryLocation(isConfinedDay, venue),
-      resourceType: isConfinedDay ? 'pool' : 'boat',
-      diveSlots,
-      isConfinedDay,
-    }
-  })
+function diverCountForConfined(divers: DiverEntry[]): number {
+  return divers.filter(d => d.activityType.some(c => getCourseByCode(c)?.requiresConfined)).length
 }
 
-// ── Auto-schedule from dates + course codes ───────────────────────────────────
+// ── Main Generator ────────────────────────────────────────────────────────────
 
-/** Build a default DayConfig[] from a date range and course codes. */
-export function buildDefaultDays(
-  startDate: string,
-  endDate: string,
-  courseCodes: CourseCode[],
+export function buildScheduledSessions(
+  details: DetailsState,
+  divers: DiverEntry[],
+  _resources: ResourcesState,
   timezone = 'Asia/Bangkok',
-): DayConfig[] {
-  const dates = getDatesInRange(startDate, endDate)
+): ScheduledSession[] {
+  const dates = getDatesInRange(details.startDate, details.endDate)
   if (dates.length === 0) return []
 
-  const anyConfined = courseCodes.some((c) => getCourseByCode(c)?.requiresConfined)
+  const anyConfinedCourse = divers.some(d =>
+    d.activityType.some(c => getCourseByCode(c)?.requiresConfined),
+  )
 
-  return dates.map((date, dayIndex) => {
-    const isConfinedDay = anyConfined && dayIndex === 0
+  const sessions: ScheduledSession[] = []
 
-    const dives = courseCodes.flatMap((code) => {
-      const seq = buildCourseSequence(code, dates.length)
-      return seq
-        .filter((e) => e.dayIndex === dayIndex)
-        .map((e) => ({
-          courseCode: code,
-          diveNumber: e.diveNumber,
-          isConfined: e.isConfined,
-        }))
-    })
+  for (let dayIndex = 0; dayIndex < dates.length; dayIndex++) {
+    const date = dates[dayIndex]
+    const isConfinedDay = anyConfinedCourse && dayIndex === 0
 
-    return {
-      date,
-      venueType: isConfinedDay ? ('pool' as const) : ('boat' as const),
-      dives,
-      divesPerDay: 2,
-      startTime: isConfinedDay ? '09:00' : '08:00',
-      endTime: isConfinedDay ? '14:00' : '12:00',
-      timezone,
+    // Build dive slots for this day across all divers and their courses
+    const diveSlots: DiveSlotDisplay[] = []
+    for (let di = 0; di < divers.length; di++) {
+      const diver = divers[di]
+      for (const courseCode of diver.activityType) {
+        const seq = buildCourseSequence(courseCode, dates.length)
+        for (const entry of seq) {
+          if (entry.dayIndex === dayIndex) {
+            diveSlots.push({
+              courseCode,
+              diveNumber: entry.diveNumber,
+              isConfined: entry.isConfined,
+              diverIndex: di,
+              diverAbbrev: diver.abbrev,
+            })
+          }
+        }
+      }
     }
-  })
+
+    if (isConfinedDay) {
+      sessions.push({
+        inventoryUnitId: '',
+        date,
+        startTime: '09:00',
+        endTime: '14:00',
+        timezone,
+        unitsRequested: Math.max(diverCountForConfined(divers), 1),
+        deliveryLocation: getDeliveryLocation(true),
+        resourceType: 'pool',
+        diveSlots,
+        isConfinedDay: true,
+      })
+    } else {
+      sessions.push({
+        inventoryUnitId: '',
+        date,
+        startTime: '08:00',
+        endTime: '12:00',
+        timezone,
+        unitsRequested: Math.max(divers.length, 1),
+        deliveryLocation: getDeliveryLocation(false, 'Boat'),
+        resourceType: 'boat',
+        diveSlots,
+        isConfinedDay: false,
+      })
+    }
+  }
+
+  return sessions
+}
+
+// ── Conversion ────────────────────────────────────────────────────────────────
+
+// Strips display-only fields, producing the lean entries stored in wizard state.
+export function toSessionEntries(sessions: ScheduledSession[]): SessionEntry[] {
+  return sessions.map(s => ({
+    inventoryUnitId: s.inventoryUnitId,
+    date: s.date,
+    startTime: s.startTime,
+    endTime: s.endTime,
+    timezone: s.timezone,
+    unitsRequested: s.unitsRequested,
+    deliveryLocation: s.deliveryLocation,
+  }))
 }

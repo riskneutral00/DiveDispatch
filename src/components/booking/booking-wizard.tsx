@@ -8,10 +8,11 @@ import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { WizardProgress } from './wizard-progress'
-import { CustomerStep } from './customer-step'
-import { ItineraryStep } from './itinerary-step'
-import { ReviewStep } from './review-step'
-import { AddCustomerDialog } from './add-customer-dialog'
+import { StepDetails } from './step-details'
+import { StepDivers } from './step-divers'
+import { StepResources } from './step-resources'
+import { StepSessions } from './step-sessions'
+import { StepReview } from './step-review'
 import {
   wizardReducer,
   makeInitialState,
@@ -20,12 +21,8 @@ import {
   WIZARD_STEPS,
   WIZARD_STEP_LABELS,
   type WizardStep,
-  type CustomerData,
 } from '@/lib/booking/wizard-state'
 import { useBookingDraftAutoSave } from '@/hooks/useBookingDraftAutoSave'
-import type { Language } from '@/lib/types/language'
-import type { CustomerContact } from '@/lib/booking/wizard-state'
-import { getSharedLanguages } from '@/lib/utils/language-matching'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -44,10 +41,11 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  // initError only set on async failure (Promise .catch) — not setState in effect body
   const [initError, setInitError] = useState<string | null>(null)
+  // isResetting only set from async handlers — not in effect body (avoids lint rule)
   const [isResetting, setIsResetting] = useState(false)
   const [editResetError, setEditResetError] = useState<string | null>(null)
-  const [addDialogOpen, setAddDialogOpen] = useState(false)
 
   const creatingRef = useRef(false)
   const initializedRef = useRef(false)
@@ -65,7 +63,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       : 'skip',
   )
 
-  // Derived: show the confirm dialog when booking is Upcoming/Completed
+  // Derived: show the confirm dialog when booking is Upcoming/Completed and we haven't triggered reset yet
   const showEditConfirm =
     isEditMode &&
     !isResetting &&
@@ -84,6 +82,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
     if (isEditMode || creatingRef.current || state.bookingId) return
     creatingRef.current = true
 
+    // Async — setState in .then/.catch is not flagged by react-hooks/set-state-in-effect
     createDraftShell()
       .then((id) => {
         dispatch({ type: 'SET_BOOKING_ID', payload: id })
@@ -94,7 +93,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       })
   }, [isEditMode, state.bookingId, createDraftShell])
 
-  // Edit mode: redirect cancelled bookings + restore wizard state
+  // Edit mode: redirect cancelled bookings + restore wizard state from Draft
   useEffect(() => {
     if (!isEditMode || existingBooking === undefined) return
     if (existingBooking === null) return
@@ -104,8 +103,10 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       return
     }
 
+    // Upcoming/Completed: confirm UI shown via derived showEditConfirm — nothing to do here
     if (existingBooking.status === 'Upcoming' || existingBooking.status === 'Completed') return
 
+    // Status is Draft — initialize wizard state once
     if (initializedRef.current) return
     initializedRef.current = true
 
@@ -117,12 +118,30 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       }
     }
 
-    // Fallback: initialize with booking ID only
+    // Fallback: pre-fill all wizard slices from booking fields
     dispatch({
       type: 'RESET',
       payload: {
-        step: 'customers',
+        step: 'details',
         bookingId: initialBookingId!,
+        details: {
+          activityType: existingBooking.activityType,
+          startDate: existingBooking.startDate,
+          endDate: existingBooking.endDate,
+          portalContact: existingBooking.portalContact,
+          portalMedical: existingBooking.portalMedical,
+          portalWaiver: existingBooking.portalWaiver,
+        },
+        divers: existingBooking.divers,
+        resources: {
+          instructorId: existingBooking.instructorId,
+          boatId: existingBooking.boatId,
+          equipmentManagerId: existingBooking.equipmentManagerId,
+          poolId: existingBooking.poolId,
+          compressorId: existingBooking.compressorId,
+          externalStakeholders: existingBooking.externalStakeholders,
+        },
+        sessions: [],
       },
     })
   }, [isEditMode, existingBooking, initialBookingId, router])
@@ -133,6 +152,7 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
     setIsResetting(true)
     try {
       await editBooking({ bookingId: initialBookingId as Id<'bookings'> })
+      // existingBooking query will reactively update to Draft — init effect will run
     } catch (err: unknown) {
       setEditResetError(err instanceof Error ? err.message : 'Failed to reset booking')
       setIsResetting(false)
@@ -175,22 +195,6 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
   function handleNext() {
     if (isLastStep) return
     void saveAndNavigate(WIZARD_STEPS[currentIndex + 1])
-  }
-
-  // ── Customer add ────────────────────────────────────────────────────────────
-
-  const sharedLanguages = getSharedLanguages(state.customers.map((c) => ({ flags: c.flags?.map((f) => ({ code: f.code, label: f.label })) ?? [] })))
-  const commonLanguageCodes = sharedLanguages.map((l) => l.code)
-
-  function handleAddCustomer(name: string, contact: CustomerContact, flags: Language[]) {
-    const customer: CustomerData = {
-      id: Math.random().toString(36).slice(2) + Date.now().toString(36),
-      name,
-      contact,
-      flags: flags.map((f) => ({ code: f.code, label: f.label })),
-      courseEntries: [{ id: Math.random().toString(36).slice(2), activityCode: '', dates: [], agency: '' }],
-    }
-    dispatch({ type: 'ADD_CUSTOMER', customer })
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -269,10 +273,11 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
       ? `#${state.bookingId.slice(-8).toUpperCase()}`
       : null
 
-  // Review step renders its own layout (back + submit buttons inside)
+  // Review step renders its own layout (back + submit buttons)
   if (state.step === 'review') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
+        {/* Header */}
         <div className="mb-6">
           <h1
             className="text-2xl font-bold mb-1"
@@ -295,26 +300,33 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
             >
               {WIZARD_STEP_LABELS[state.step]}
             </h2>
-            <ReviewStep state={state} dispatch={dispatch} isEditMode={isEditMode} />
+            <StepReview state={state} dispatch={dispatch} isEditMode={isEditMode} />
           </GlassCard>
         </div>
       </div>
     )
   }
 
-  // Steps 1–2 with shared navigation
+  // ── Steps 1–4 with shared navigation ──────────────────────────────────────
+
   function renderStepContent() {
     switch (state.step) {
-      case 'customers':
+      case 'details':
+        return <StepDetails details={state.details} dispatch={dispatch} />
+      case 'divers':
+        return <StepDivers divers={state.divers} details={state.details} dispatch={dispatch} />
+      case 'resources':
+        return <StepResources resources={state.resources} details={state.details} dispatch={dispatch} />
+      case 'sessions':
         return (
-          <CustomerStep
-            customers={state.customers}
+          <StepSessions
+            sessions={state.sessions}
+            details={state.details}
+            divers={state.divers}
+            resources={state.resources}
             dispatch={dispatch}
-            onAddOpen={() => setAddDialogOpen(true)}
           />
         )
-      case 'itinerary':
-        return <ItineraryStep state={state} dispatch={dispatch} />
       default:
         return null
     }
@@ -351,12 +363,13 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
         {renderStepContent()}
       </GlassCard>
 
-      {/* Errors */}
+      {/* Save error */}
       {saveError && (
         <p className="mt-3 text-sm" style={{ color: 'var(--color-destructive)' }}>
           {saveError}
         </p>
       )}
+      {/* Auto-save error (silent background save failed after retry) */}
       {autoSaveError && !saveError && (
         <p className="mt-3 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
           {autoSaveError}
@@ -386,14 +399,6 @@ export function BookingWizard({ bookingId: initialBookingId }: BookingWizardProp
           <ChevronRight size={16} />
         </GlassButton>
       </div>
-
-      {/* Add customer dialog */}
-      <AddCustomerDialog
-        open={addDialogOpen}
-        onClose={() => setAddDialogOpen(false)}
-        onAdd={handleAddCustomer}
-        commonLanguageCodes={commonLanguageCodes}
-      />
     </div>
   )
 }
