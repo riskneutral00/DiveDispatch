@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
-import { MapPin, Clock, Users } from 'lucide-react'
+import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '../../../../../convex/_generated/api'
 import { GlassCard } from '../../../../components/glass/glass-card'
 import { GlassBadge } from '../../../../components/glass/glass-badge'
@@ -12,11 +12,12 @@ import { StepMedical } from '../../../../components/portal/step-medical'
 import { StepWaiver } from '../../../../components/portal/step-waiver'
 import { StepEquipment } from '../../../../components/portal/step-equipment'
 import type { EquipmentData } from '../../../../components/portal/step-equipment'
+import { StepSafety } from '../../../../components/portal/step-safety'
 import { PortalSubmit } from '../../../../components/portal/portal-submit'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'submit'
+type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'safety' | 'submit'
 
 // ── Progress indicator ────────────────────────────────────────────────────────
 
@@ -97,6 +98,43 @@ export default function PortalTokenPage() {
     return null
   }
 
+  // Token already used — customer completed portal submission
+  if (result.status === 'completed') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <GlassCard className="max-w-md w-full text-center" padding="lg">
+          <div className="mb-4 flex justify-center">
+            <CheckCircle2 size={40} style={{ color: 'var(--color-success)' }} />
+          </div>
+          <h1
+            className="text-xl font-semibold mb-2"
+            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          >
+            Submission Complete
+          </h1>
+          <p className="text-sm font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
+            {result.customerName}
+          </p>
+          <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+            Your submission is complete.{result.operatorName ? ` ${result.operatorName}` : ''} will be
+            in touch before your activity{result.startDate ? ` on ${result.startDate}` : ''}.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="px-6 py-2.5 rounded-[var(--border-radius)] text-sm font-medium transition-all focus:outline-none focus-visible:ring-2"
+            style={{
+              background: 'var(--color-primary)',
+              color: 'var(--color-text-on-primary)',
+            }}
+          >
+            Close
+          </button>
+        </GlassCard>
+      </div>
+    )
+  }
+
   // Booking no longer in Draft — portal closed
   if (result.status === 'closed') {
     return (
@@ -128,6 +166,7 @@ export default function PortalTokenPage() {
     { key: 'medical', label: 'Medical' },
     { key: 'waiver', label: 'Waiver' },
     { key: 'equipment', label: 'Equipment' },
+    { key: 'safety', label: 'Safety' },
     { key: 'submit', label: 'Submit' },
   ]
 
@@ -140,6 +179,8 @@ export default function PortalTokenPage() {
       case 'waiver':
         return waiverDone
       case 'equipment':
+        return true // always optional
+      case 'safety':
         return true // always optional
       default:
         return false
@@ -188,7 +229,7 @@ export default function PortalTokenPage() {
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setCurrentStep('submit')}
+                onClick={() => setCurrentStep('safety')}
                 className="px-6 py-2.5 rounded-[var(--border-radius)] text-sm font-medium transition-all focus:outline-none focus-visible:ring-2"
                 style={{
                   background: 'var(--color-primary)',
@@ -199,6 +240,14 @@ export default function PortalTokenPage() {
               </button>
             </div>
           </div>
+        )
+      case 'safety':
+        return (
+          <StepSafety
+            token={token}
+            onComplete={() => setCurrentStep('submit')}
+            onBack={() => setCurrentStep('equipment')}
+          />
         )
       case 'submit':
         return <PortalSubmit token={token} />

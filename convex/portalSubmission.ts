@@ -129,6 +129,9 @@ export const submitPortal = mutation({
     // Set customerFormComplete on booking — may trigger auto-advance
     await ctx.db.patch(link.bookingId, { customerFormComplete: true })
 
+    // Invalidate the token — prevents re-submission via the same link
+    await ctx.db.patch(link._id, { usedAt: now })
+
     // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
     await tryAutoAdvance(ctx, link.bookingId)
 

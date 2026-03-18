@@ -6,6 +6,7 @@ import {
   canBookingTransition,
   releaseBookingReservations,
   isSessionEnded,
+  isBookingExpired,
 } from './_shared'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
@@ -35,53 +36,24 @@ export const cancelBooking = mutation({
   },
 })
 
-// ─── TTL expiry cron ──────────────────────────────────────────────────────────
+// ─── TTL expiry (lazy, client-triggered) ──────────────────────────────────────
 
 /**
- * Cron: expire Draft bookings whose holdTTL has lapsed.
- * Runs every 15 minutes. Vacates reservations then hard-deletes the booking.
- * Batch limit: 100 per run.
+ * Expires a single Draft booking whose holdTTL has lapsed.
+ * Called by the client (via useBookingWithExpiry hook) on lazy read.
+ * Idempotent: no-op if the booking is already Cancelled or not expired.
+ * Preserves sessions, links, and customerProfiles for audit trail.
+ * Transaction order: vacate reservations → restore snapshots → set status Cancelled.
  */
-export const expireHolds = internalMutation({
-  args: {},
-  handler: async (ctx: AnyCtx): Promise<{ expired: number; more: boolean }> => {
-    const now = Date.now()
+export const expireBooking = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx: AnyCtx, args: { bookingId: string }): Promise<void> => {
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) return
+    if (!isBookingExpired(booking)) return
 
-    const drafts = await ctx.db
-      .query('bookings')
-      .withIndex('by_status', (q: AnyCtx) => q.eq('status', 'Draft'))
-      .collect()
-
-    const expired = drafts.filter(
-      (b: AnyCtx) => b.expiresAt != null && b.expiresAt < now,
-    )
-
-    const batch = expired.slice(0, 100)
-    const more = expired.length > 100
-
-    for (const booking of batch) {
-      await releaseBookingReservations(ctx, booking._id, 'hold_expired')
-
-      const sessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
-        .collect()
-      for (const session of sessions) {
-        await ctx.db.delete(session._id)
-      }
-
-      const links = await ctx.db
-        .query('bookingLinks')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
-        .collect()
-      for (const link of links) {
-        await ctx.db.delete(link._id)
-      }
-
-      await ctx.db.delete(booking._id)
-    }
-
-    return { expired: batch.length, more }
+    await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
+    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
   },
 })
 

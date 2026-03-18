@@ -1,9 +1,12 @@
 'use client'
 
+import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { RadialProgress } from '@/components/onboarding/radial-progress'
 import { BgSwitcher } from './bg-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
 import { MobileBottomNav } from './mobile-bottom-nav'
@@ -21,6 +24,7 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const { user, isLoading } = useCurrentUser()
+  const onboardingStatus = useQuery(api.users.getOnboardingStatus)
   const router = useRouter()
 
   useEffect(() => {
@@ -56,6 +60,12 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         className="hidden md:flex items-center justify-end gap-2 px-4 py-2 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
+        {onboardingStatus && onboardingStatus.percentage < 100 && (
+          <RadialProgress
+            percentage={onboardingStatus.percentage}
+            incomplete={onboardingStatus.incomplete}
+          />
+        )}
         <BgSwitcher />
         <ThemeSwitcher />
         <NotificationBell />

@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, type AnyCtx } from './lib/auth'
+import { isBookingExpired } from './bookings/_shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ export type BookingLinkResult =
       endDate: string
       diverCount: number
     }
+  | { status: 'completed'; customerName: string; operatorName: string; startDate: string }
   | { status: 'expired' }
   | { status: 'closed' }
   | { status: 'not_found' }
@@ -91,7 +93,7 @@ export async function _createLink(
     .collect()
 
   const now = Date.now()
-  const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now)
+  const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now && !(l.usedAt))
   if (existing) return existing.token as string
 
   // Create new link — 30-day TTL
@@ -130,6 +132,21 @@ export const getByToken = query({
 
     const booking = await ctx.db.get(link.bookingId)
     if (!booking) return { status: 'not_found' }
+
+    // Token already used — customer completed portal submission.
+    if (link.usedAt) {
+      return {
+        status: 'completed',
+        customerName: link.customerName,
+        operatorName: booking.operatorName,
+        startDate: booking.startDate,
+      }
+    }
+
+    // Booking TTL has lapsed — lazy expiry detected on read.
+    if (isBookingExpired(booking)) {
+      return { status: 'expired' }
+    }
 
     // Booking closed means the portal should not accept new submissions.
     if (booking.status !== 'Draft') {
@@ -192,7 +209,7 @@ export const createBookingLink = mutation({
       .collect()
 
     const now = Date.now()
-    const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now)
+    const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now && !(l.usedAt))
 
     let token: string
     if (existing) {

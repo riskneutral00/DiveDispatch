@@ -159,6 +159,81 @@ export const savePortalEquipment = mutation({
   },
 })
 
+// ─── saveSafetyInfo ───────────────────────────────────────────────────────────
+
+/**
+ * Saves optional safety info (blood type, allergies, medications, insurance).
+ * All fields are optional — customer may submit with none, some, or all.
+ * Does not affect customerFormComplete or auto-advance. Idempotent.
+ * Auth: token IS the credential (no Clerk auth).
+ */
+export const saveSafetyInfo = mutation({
+  args: {
+    token: v.string(),
+    bloodType: v.optional(v.string()),
+    allergies: v.optional(v.string()),
+    medications: v.optional(v.string()),
+    insurancePolicyNumber: v.optional(v.string()),
+  },
+  handler: async (
+    ctx: AnyCtx,
+    args: {
+      token: string
+      bloodType?: string
+      allergies?: string
+      medications?: string
+      insurancePolicyNumber?: string
+    },
+  ): Promise<void> => {
+    const { profile } = await resolvePortalToken(ctx, args.token)
+
+    const patch: Record<string, string | undefined> = {}
+    if (args.bloodType !== undefined) patch.bloodType = args.bloodType
+    if (args.allergies !== undefined) patch.allergies = args.allergies
+    if (args.medications !== undefined) patch.medications = args.medications
+    if (args.insurancePolicyNumber !== undefined)
+      patch.insurancePolicyNumber = args.insurancePolicyNumber
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(profile._id, patch)
+    }
+  },
+})
+
+// ─── getSafetyInfoByToken ─────────────────────────────────────────────────────
+
+/**
+ * Returns saved safety info for the portal session identified by token.
+ * Used to pre-fill the form when a customer returns to the portal.
+ * Public — token is the credential.
+ */
+export const getSafetyInfoByToken = query({
+  args: { token: v.string() },
+  handler: async (
+    ctx: AnyCtx,
+    args: { token: string },
+  ): Promise<{
+    bloodType: string
+    allergies: string
+    medications: string
+    insurancePolicyNumber: string
+  } | null> => {
+    const profile = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .unique()
+
+    if (!profile) return null
+
+    return {
+      bloodType: profile.bloodType ?? '',
+      allergies: profile.allergies ?? '',
+      medications: profile.medications ?? '',
+      insurancePolicyNumber: profile.insurancePolicyNumber ?? '',
+    }
+  },
+})
+
 // ─── getMedicalByToken ─────────────────────────────────────────────────────────
 
 /**

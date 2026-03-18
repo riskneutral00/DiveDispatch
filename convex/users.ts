@@ -175,6 +175,124 @@ export const byId = query({
   },
 })
 
+// Organizer roles that can create bookingTemplates.
+const ORGANIZER_ROLES = new Set([
+  'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite',
+])
+
+// Returns the completion percentage and list of incomplete fields for onboarding.
+// Profile fields checked: name, city, country, contactEmail, contactPhone,
+// role-specific list field (associations / credentials / languages), focusedLanguages/languages.
+// Organizer roles also check: bookingTemplate configured.
+export const getOnboardingStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return { percentage: 0, incomplete: ['Profile not created'] }
+
+    const role = user.role
+    const incomplete: string[] = []
+
+    // ── Fetch role-specific profile record ───────────────────────────
+    let profile: Record<string, unknown> | null = null
+    const profileTable = {
+      DiveCenter: 'diveCenters',
+      Agent: 'agents',
+      Instructor: 'instructors',
+      DiveMaster: 'diveMasters',
+      Boat: 'boats',
+      Equipment: 'equipment',
+      Pool: 'pools',
+      Compressor: 'compressors',
+      Liveaboard: 'liveaboards',
+      DiveResort: 'diveResorts',
+      DiveHostel: 'diveHostels',
+      DiveSite: 'diveSites',
+    } as const
+
+    const table = profileTable[role as keyof typeof profileTable]
+    if (table) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      profile = await (ctx.db as any)
+        .query(table)
+        .withIndex('by_userId', (q: { eq: (f: string, v: unknown) => unknown }) =>
+          q.eq('userId', user._id),
+        )
+        .unique()
+    }
+
+    // ── Core profile fields (common to all roles) ────────────────────
+    const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
+    const arr = (v: unknown) => Array.isArray(v) && v.length > 0
+
+    if (!str(profile?.name)) incomplete.push('Business name')
+    if (role === 'Agent') {
+      const locations = profile?.locations as Array<{ city: string; country: string }> | undefined
+      if (!locations?.[0]?.city) incomplete.push('City')
+      if (!locations?.[0]?.country) incomplete.push('Country')
+    } else {
+      if (!str(profile?.city)) incomplete.push('City')
+      if (!str(profile?.country)) incomplete.push('Country')
+    }
+    if (!str(profile?.contactEmail)) incomplete.push('Contact email')
+    if (!str(profile?.contactPhone)) incomplete.push('Contact phone')
+
+    // ── Role-specific list field ─────────────────────────────────────
+    if (role === 'DiveCenter' || role === 'Agent' || role === 'Liveaboard') {
+      if (!arr(profile?.associations)) incomplete.push('Agency associations')
+    } else if (role === 'Instructor' || role === 'DiveMaster') {
+      if (!arr(profile?.credential)) incomplete.push('Credentials')
+    } else {
+      // Boat, Equipment, Pool, Compressor, DiveResort, DiveHostel, DiveSite
+      // No required list field beyond the common ones
+    }
+
+    // ── Language field ───────────────────────────────────────────────
+    if (role === 'Instructor' || role === 'DiveMaster') {
+      if (!arr(profile?.languages)) incomplete.push('Languages')
+    } else {
+      if (!arr(profile?.focusedLanguages)) incomplete.push('Languages')
+    }
+
+    // ── Quick Book pill (organizers only) ────────────────────────────
+    if (ORGANIZER_ROLES.has(role)) {
+      const template = await ctx.db
+        .query('bookingTemplates')
+        .withIndex('by_ownerId_ownerType', (q) =>
+          q.eq('ownerId', user.slug).eq('ownerType', role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite'),
+        )
+        .first()
+      if (!template) incomplete.push('Quick Book pill')
+    }
+
+    // ── Calculate total checkpoints for this role ────────────────────
+    const baseCount = 5 // name, city, country, contactEmail, contactPhone
+    const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
+    const hasTemplateSlot = ORGANIZER_ROLES.has(role)
+    const total = baseCount + (hasListField ? 1 : 0) + 1 /* languages */ + (hasTemplateSlot ? 1 : 0)
+    const filled = total - incomplete.length
+    const percentage = Math.round((filled / total) * 100)
+
+    return { percentage, incomplete }
+  },
+})
+
+// Marks onboarding as complete. Requires at minimum that name and email are set on the profile.
+export const completeOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthUser(ctx)
+    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+    // Require name is set (basic guard — profile form should have saved it already)
+    if (!user.name || user.name.trim() === '') {
+      throw new ConvexError({ code: 'VALIDATION', message: 'Profile must be completed before finishing onboarding.' })
+    }
+
+    await ctx.db.patch(user._id, { onboardingComplete: true })
+  },
+})
+
 // Internal: called by Clerk webhook to create or update a user record.
 // Role defaults to 'DiveCenter' for new users; overwritten when user selects
 // their role in the onboarding UI via setRole/createUser.

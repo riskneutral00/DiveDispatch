@@ -187,6 +187,7 @@ async function insertUser(ctx: { db: { insert: (...args: any[]) => any } }, s: S
     additionalRoles: s.user.additionalRoles,
     isSeeded: true,
     preferredLocale: s.user.preferredLocale,
+    onboardingComplete: true,
   })
 }
 

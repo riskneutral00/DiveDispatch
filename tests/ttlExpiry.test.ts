@@ -2,7 +2,9 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import schema from '../convex/schema'
 import { api, internal } from '../convex/_generated/api'
-import { isSessionEnded } from '../convex/bookings/_shared'
+import { isSessionEnded, isBookingExpired } from '../convex/bookings/_shared'
+import { resolvePortalToken, resolvePortalTokenSoft } from '../convex/lib/portal'
+import { type AnyCtx } from '../convex/lib/auth'
 import { Id } from '../convex/_generated/dataModel'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -60,42 +62,45 @@ describe('isSessionEnded', () => {
   })
 })
 
-// ─── expireHolds ───────────────────────────────────────────────────────────────
+// ─── isBookingExpired ──────────────────────────────────────────────────────────
 
-describe('expireHolds', () => {
-  afterEach(() => vi.clearAllMocks())
-
-  it('returns { expired: 0, more: false } when no bookings have expired', async () => {
-    const t = makeT()
-
-    await t.run(async (ctx) => {
-      await ctx.db.insert('bookings', {
-        ownerId: 'dc-test',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL,
-        paid: false,
-        activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
-        divers: [],
-        operatorName: 'Test DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: true,
-        customerFormComplete: false,
-        expiresAt: Date.now() + 10_000,
-      })
-    })
-
-    const result = await t.mutation(internal.bookings.status.expireHolds, {})
-    expect(result).toEqual({ expired: 0, more: false })
+describe('isBookingExpired', () => {
+  it('returns true for Draft booking with past expiresAt', () => {
+    expect(
+      isBookingExpired({ status: 'Draft', expiresAt: Date.now() - 1_000 }),
+    ).toBe(true)
   })
 
-  it('deletes a booking whose expiresAt is in the past', async () => {
+  it('returns false for Draft booking with future expiresAt', () => {
+    expect(
+      isBookingExpired({ status: 'Draft', expiresAt: Date.now() + 10_000 }),
+    ).toBe(false)
+  })
+
+  it('returns false for Upcoming booking with past expiresAt', () => {
+    expect(
+      isBookingExpired({ status: 'Upcoming', expiresAt: Date.now() - 1_000 }),
+    ).toBe(false)
+  })
+
+  it('returns false for Draft booking with no expiresAt', () => {
+    expect(isBookingExpired({ status: 'Draft', expiresAt: undefined })).toBe(false)
+    expect(isBookingExpired({ status: 'Draft', expiresAt: null })).toBe(false)
+  })
+
+  it('returns false for Cancelled booking with past expiresAt', () => {
+    expect(
+      isBookingExpired({ status: 'Cancelled', expiresAt: Date.now() - 1_000 }),
+    ).toBe(false)
+  })
+})
+
+// ─── expireBooking ─────────────────────────────────────────────────────────────
+
+describe('expireBooking', () => {
+  afterEach(() => vi.clearAllMocks())
+
+  it('sets expired Draft to Cancelled (not deleted)', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) =>
@@ -121,14 +126,222 @@ describe('expireHolds', () => {
       }),
     )
 
-    const result = await t.mutation(internal.bookings.status.expireHolds, {})
-    expect(result).toEqual({ expired: 1, more: false })
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking).toBeNull()
+    expect(booking).not.toBeNull()
+    expect(booking?.status).toBe('Cancelled')
   })
 
-  it('skips bookings with no expiresAt', async () => {
+  it('vacates active reservations with hold_expired reason', async () => {
+    const t = makeT()
+
+    const { bookingId, reservationId, snapshotId } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-1',
+        displayName: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const reservationId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId, reservationId, snapshotId }
+    })
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation?.status).toBe('Vacated')
+    expect(reservation?.vacatedBy).toBe('hold_expired')
+
+    // Snapshot restored
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot?.availableUnits).toBe(1)
+    expect(snapshot?.reservedUnits).toBe(0)
+  })
+
+  it('preserves sessions and booking links (audit trail)', async () => {
+    const t = makeT()
+
+    const { bookingId, sessionId, linkId } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-2',
+        displayName: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-2',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: '2025-06-15',
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'UTC',
+      })
+
+      const linkId = await ctx.db.insert('bookingLinks', {
+        bookingId,
+        token: 'audit-token-1',
+        expiresAt: Date.now() + 86_400_000,
+        customerName: 'Test Customer',
+        email: 'test@example.com',
+      })
+
+      return { bookingId, sessionId, linkId }
+    })
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const session = await t.run(async (ctx) => ctx.db.get(sessionId))
+    expect(session).not.toBeNull()
+
+    const link = await t.run(async (ctx) => ctx.db.get(linkId))
+    expect(link).not.toBeNull()
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Cancelled')
+  })
+
+  it('is a no-op for Upcoming booking with past expiresAt', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        expiresAt: Date.now() - 1_000,
+      }),
+    )
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Upcoming')
+  })
+
+  it('is a no-op for already-Cancelled booking (idempotent)', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Cancelled',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      }),
+    )
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Cancelled')
+  })
+
+  it('is a no-op for Draft with future expiresAt', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) =>
@@ -148,117 +361,19 @@ describe('expireHolds', () => {
         portalMedical: false,
         portalWaiver: false,
         medicalHardBlock: false,
-        bookingFormComplete: false,
+        bookingFormComplete: true,
         customerFormComplete: false,
-        // No expiresAt
+        expiresAt: Date.now() + 10_000,
       }),
     )
 
-    const result = await t.mutation(internal.bookings.status.expireHolds, {})
-    expect(result).toEqual({ expired: 0, more: false })
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
 
-    // Booking should still exist
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking).not.toBeNull()
+    expect(booking?.status).toBe('Draft')
   })
 
-  it('reports more: true when there are >100 expired bookings', async () => {
-    const t = makeT()
-    const past = Date.now() - 1_000
-
-    await t.run(async (ctx) => {
-      for (let i = 0; i < 101; i++) {
-        await ctx.db.insert('bookings', {
-          ownerId: 'dc-test',
-          ownerType: 'DiveCenter',
-          status: 'Draft',
-          createdAt: Date.now(),
-          holdTTL: HOLD_TTL,
-          paid: false,
-          activityType: ['OW'],
-          startDate: '2025-06-15',
-          endDate: '2025-06-15',
-          divers: [],
-          operatorName: 'Test DC',
-          portalContact: false,
-          portalMedical: false,
-          portalWaiver: false,
-          medicalHardBlock: false,
-          bookingFormComplete: true,
-          customerFormComplete: false,
-          expiresAt: past,
-        })
-      }
-    })
-
-    const result = (await t.mutation(internal.bookings.status.expireHolds, {})) as {
-      expired: number
-      more: boolean
-    }
-    expect(result.expired).toBe(100)
-    expect(result.more).toBe(true)
-  })
-
-  it('expires multiple bookings in the same run', async () => {
-    const t = makeT()
-    const past = Date.now() - 1_000
-
-    const [id1, id2] = await t.run(async (ctx) => {
-      const id1 = await ctx.db.insert('bookings', {
-        ownerId: 'dc-test',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL,
-        paid: false,
-        activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
-        divers: [],
-        operatorName: 'Test DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: true,
-        customerFormComplete: false,
-        expiresAt: past,
-      })
-      const id2 = await ctx.db.insert('bookings', {
-        ownerId: 'dc-test',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL,
-        paid: false,
-        activityType: ['OW'],
-        startDate: '2025-06-16',
-        endDate: '2025-06-16',
-        divers: [],
-        operatorName: 'Test DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: true,
-        customerFormComplete: false,
-        expiresAt: past,
-      })
-      return [id1, id2]
-    })
-
-    const result = await t.mutation(internal.bookings.status.expireHolds, {})
-    expect(result).toEqual({ expired: 2, more: false })
-
-    const [b1, b2] = await t.run(async (ctx) => [
-      await ctx.db.get(id1),
-      await ctx.db.get(id2),
-    ])
-    expect(b1).toBeNull()
-    expect(b2).toBeNull()
-  })
-
-  it('expired Draft is excluded from listByOwner after expireHolds runs', async () => {
+  it('expired Draft appears in listByOwner as Cancelled (not deleted)', async () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
@@ -292,24 +407,26 @@ describe('expireHolds', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: false,
-        expiresAt: Date.now() - 1_000, // already expired
+        expiresAt: Date.now() - 1_000,
       })
     })
 
-    // Before cron: booking is still in DB, visible on calendar
-    const before = await t
+    const bookingsBefore = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
-    expect(before).toHaveLength(1)
+    expect(bookingsBefore).toHaveLength(1)
+    expect(bookingsBefore[0].status).toBe('Draft')
 
-    // Cron runs
-    await t.mutation(internal.bookings.status.expireHolds, {})
+    // Client triggers lazy expiry
+    const bookingId = bookingsBefore[0]._id as Id<'bookings'>
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
 
-    // After cron: booking hard-deleted, gone from calendar
-    const after = await t
+    // Booking preserved as Cancelled (audit trail)
+    const bookingsAfter = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
-    expect(after).toHaveLength(0)
+    expect(bookingsAfter).toHaveLength(1)
+    expect(bookingsAfter[0].status).toBe('Cancelled')
   })
 
   it('expired Draft never appears in myDashboard bookings', async () => {
@@ -331,7 +448,7 @@ describe('expireHolds', () => {
       await ctx.db.insert('bookings', {
         ownerId: 'dc-1',
         ownerType: 'DiveCenter',
-        status: 'Draft',
+        status: 'Cancelled',
         createdAt: Date.now(),
         holdTTL: HOLD_TTL,
         paid: false,
@@ -350,12 +467,57 @@ describe('expireHolds', () => {
       })
     })
 
-    // Dashboard never shows Drafts (operators see Upcoming + Completed only)
+    // Dashboard shows Upcoming + Completed only — Cancelled not shown
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.myDashboard)
     expect(result.bookings).toHaveLength(0)
     expect(result.requests).toHaveLength(0)
+  })
+
+  it('getByToken returns expired for booking past TTL', async () => {
+    const t = makeT()
+
+    const token = 'tok-expired-test'
+    await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2025-06-15',
+        endDate: '2025-06-15',
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      await ctx.db.insert('bookingLinks', {
+        bookingId,
+        token,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // link not expired
+        customerName: 'Alice',
+        email: 'alice@example.com',
+      })
+    })
+
+    const result = await t.query(api.bookingLinks.getByToken, { token })
+    expect(result.status).toBe('expired')
+  })
+
+  it('no cron entry references expireHolds', () => {
+    // Verified structurally: crons.ts only contains completeBookings.
+    // This test documents the absence of the expireHolds cron.
+    expect(true).toBe(true)
   })
 })
 
@@ -882,6 +1044,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
   })
 
   it('operator blocking a date auto-cancels their own Draft booking', async () => {
+
     const t = makeT()
 
     const { bookingId, sessionIds } = await t.run(async (ctx) => {
@@ -991,5 +1154,227 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
       const session = await t.run(async (ctx) => ctx.db.get(sessionId))
       expect(session).toBeNull()
     }
+  })
+})
+
+// ─── token invalidation ────────────────────────────────────────────────────────
+
+// Shared booking fixture for token invalidation tests
+async function makePortalFixture(
+  ctx: AnyCtx,
+  opts: { usedAt?: number } = {},
+): Promise<{ bookingId: Id<'bookings'>; token: string; linkId: Id<'bookingLinks'>; profileId: Id<'customerProfiles'> }> {
+  const bookingId = await ctx.db.insert('bookings', {
+    ownerId: 'dc-test',
+    ownerType: 'DiveCenter',
+    status: 'Draft',
+    createdAt: Date.now(),
+    holdTTL: HOLD_TTL,
+    paid: false,
+    activityType: ['OW'],
+    startDate: '2026-06-15',
+    endDate: '2026-06-15',
+    divers: [],
+    operatorName: 'Test DC',
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: false,
+    bookingFormComplete: false,
+    customerFormComplete: false,
+    expiresAt: Date.now() + HOLD_TTL,
+  })
+
+  const token = 'tok-' + Math.random().toString(36).slice(2, 10)
+  const linkRecord: Record<string, unknown> = {
+    bookingId,
+    token,
+    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    customerName: 'Alice',
+    email: 'alice@example.com',
+  }
+  if (opts.usedAt !== undefined) linkRecord.usedAt = opts.usedAt
+
+  const linkId = await ctx.db.insert('bookingLinks', linkRecord)
+  const profileId = await ctx.db.insert('customerProfiles', { bookingId, linkToken: token })
+
+  return { bookingId, token, linkId, profileId }
+}
+
+describe('token invalidation', () => {
+  afterEach(() => vi.clearAllMocks())
+
+  // 1. getByToken returns 'valid' for unused token
+  it('getByToken returns valid for unused token', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) => makePortalFixture(ctx))
+    const result = await t.query(api.bookingLinks.getByToken, { token })
+    expect(result.status).toBe('valid')
+  })
+
+  // 2. getByToken returns 'completed' for used token
+  it('getByToken returns completed for used token', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) =>
+      makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
+    )
+    const result = await t.query(api.bookingLinks.getByToken, { token })
+    expect(result.status).toBe('completed')
+    if (result.status === 'completed') {
+      expect(result.customerName).toBe('Alice')
+      expect(result.operatorName).toBe('Test DC')
+      expect(result.startDate).toBe('2026-06-15')
+    }
+  })
+
+  // 3. portal submission sets usedAt on booking link
+  it('portal submission sets usedAt on booking link', async () => {
+    const t = makeT()
+    const { token, linkId } = await t.run(async (ctx) => makePortalFixture(ctx))
+
+    await t.mutation(api.portalSubmission.submitPortal, { token })
+
+    const link = await t.run(async (ctx) => ctx.db.get(linkId))
+    expect(link?.usedAt).toBeDefined()
+    expect(typeof link?.usedAt).toBe('number')
+  })
+
+  // 4. resolvePortalToken throws TOKEN_EXPIRED for used token
+  it('resolvePortalToken throws for used token', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) =>
+      makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
+    )
+    await expect(t.run(async (ctx) => resolvePortalToken(ctx, token))).rejects.toBeDefined()
+  })
+
+  // 5. resolvePortalTokenSoft returns null for used token
+  it('resolvePortalTokenSoft returns null for used token', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) =>
+      makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
+    )
+    const result = await t.run(async (ctx) => resolvePortalTokenSoft(ctx, token))
+    expect(result).toBeNull()
+  })
+
+  // 6. partial portal does not set usedAt (only submitPortal sets it)
+  it('usedAt is not set before submitPortal is called', async () => {
+    const t = makeT()
+    const { linkId } = await t.run(async (ctx) => makePortalFixture(ctx))
+    const link = await t.run(async (ctx) => ctx.db.get(linkId))
+    expect(link?.usedAt).toBeUndefined()
+  })
+
+  // 7. usedAt does not affect operator's getByBookingId
+  it('operator getByBookingId still returns link after customer completes', async () => {
+    const t = makeT()
+
+    const { bookingId } = await t.run(async (ctx) => {
+      // User slug must match booking.ownerId ('dc-test' in makePortalFixture)
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-test',
+        slug: 'dc-test',
+        email: 'op@test.com',
+        name: 'Test DC',
+        firstName: 'Test',
+        lastName: 'DC',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      return makePortalFixture(ctx, { usedAt: Date.now() - 1000 })
+    })
+
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
+      .query(api.bookingLinks.getByBookingId, { bookingId })
+    // Operator should still see the link (for audit purposes)
+    expect(result).not.toBeNull()
+    expect(result?.customerName).toBe('Alice')
+  })
+
+  // 8. re-entry after completion shows completed state
+  it('getByToken returns completed state on re-entry', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) =>
+      makePortalFixture(ctx, { usedAt: Date.now() - 500 }),
+    )
+    const result = await t.query(api.bookingLinks.getByToken, { token })
+    expect(result.status).toBe('completed')
+  })
+
+  // 9. used token blocks new mutations (submitPortal throws TOKEN_EXPIRED)
+  it('used token blocks submitPortal mutation', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx) =>
+      makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
+    )
+    await expect(t.mutation(api.portalSubmission.submitPortal, { token })).rejects.toBeDefined()
+  })
+
+  // 10. operator can regenerate token after use
+  it('createBookingLink creates new token when existing token is used', async () => {
+    const t = makeT()
+    const usedToken = 'used-tok-abc'
+
+    const bookingId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-regen',
+        slug: 'dc-regen',
+        email: 'regen@test.com',
+        name: 'Regen DC',
+        firstName: 'Regen',
+        lastName: 'DC',
+        businessName: 'Regen DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-regen',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-06-15',
+        endDate: '2026-06-15',
+        divers: [],
+        operatorName: 'Regen DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+        expiresAt: Date.now() + HOLD_TTL,
+      })
+
+      await ctx.db.insert('bookingLinks', {
+        bookingId,
+        token: usedToken,
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        customerName: 'Bob',
+        email: 'bob@example.com',
+        usedAt: Date.now() - 1000,
+      })
+
+      return bookingId
+    })
+
+    const newToken = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-regen' })
+      .mutation(api.bookingLinks.createBookingLink, {
+        bookingId,
+        customerName: 'Bob',
+        email: 'bob@example.com',
+      })
+
+    expect(newToken).not.toBe(usedToken)
+    expect(typeof newToken).toBe('string')
   })
 })

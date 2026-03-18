@@ -15,6 +15,7 @@ export type VacatedReason =
   | 'hold_expired'
   | 'operator_edit'
   | 'noshow_replacement'
+  | 'equipment_not_needed'
 
 export type CourseCode =
   | 'DSD'
@@ -225,6 +226,19 @@ export function isFullDayResource(inventoryUnit: {
   )
 }
 
+// ─── Expiry helper ────────────────────────────────────────────────────────────
+
+/**
+ * Pure predicate: true when a Draft booking's hold TTL has lapsed.
+ * Safe default: bookings without expiresAt never expire (treat as Upcoming-eligible).
+ */
+export function isBookingExpired(booking: {
+  status: string
+  expiresAt?: number | null
+}): boolean {
+  return booking.status === 'Draft' && booking.expiresAt != null && booking.expiresAt < Date.now()
+}
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 /**
@@ -282,6 +296,11 @@ export async function releaseBookingReservations(
  *
  * All-external bookings (zero in-system reservations) satisfy the reservation condition
  * vacuously — `[].every(fn)` is true — and advance immediately when form conditions are met.
+ *
+ * EM auto-release: if every customer profile has submitted a rentalChecklist with all
+ * gear set to 'own', the Equipment Manager reservation is vacated automatically —
+ * their services are not needed. This runs before the reservation confirmation check
+ * so the now-vacated EM slot does not block advancement.
  */
 export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<void> {
   const booking = await ctx.db.get(bookingId)
@@ -289,6 +308,71 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
   if (!booking.bookingFormComplete || !booking.customerFormComplete) return
   if (booking.medicalHardBlock) return
 
+  // ─── EM auto-release ──────────────────────────────────────────────────────
+  // Release the EM reservation when every customer owns all their gear.
+  // Requires: booking has an in-system EM, all customer profiles have submitted
+  // rentalChecklist, and every gear type is 'own'. Missing checklist → keep hold.
+  if (booking.equipmentManagerId) {
+    const profiles = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+      .collect()
+
+    const allOwnGear =
+      profiles.length > 0 &&
+      profiles.every((p: AnyCtx) => {
+        if (!p.rentalChecklist) return false
+        const c = p.rentalChecklist
+        return (
+          c.mask === 'own' &&
+          c.bcd === 'own' &&
+          c.wetsuit === 'own' &&
+          c.fins === 'own' &&
+          c.regulator === 'own'
+        )
+      })
+
+    if (allOwnGear) {
+      const allReservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+        .collect()
+
+      for (const res of allReservations) {
+        if (res.status === 'Vacated' || res.status === 'NoShow') continue
+        const unit = await ctx.db.get(res.inventoryUnitId)
+        if (!unit || unit.resourceType !== 'Equipment') continue
+
+        await ctx.db.patch(res._id, {
+          status: 'Vacated',
+          vacatedAt: Date.now(),
+          vacatedBy: 'equipment_not_needed',
+        })
+
+        // Restore availability snapshot — same pattern as releaseBookingReservations
+        const session = await ctx.db.get(res.bookingSessionId)
+        if (session) {
+          const snapshot = await ctx.db
+            .query('availabilitySnapshots')
+            .withIndex('by_inventoryUnitId_date_windowStart', (q: AnyCtx) =>
+              q
+                .eq('inventoryUnitId', res.inventoryUnitId)
+                .eq('date', session.date)
+                .eq('windowStart', session.startTime),
+            )
+            .unique()
+          if (snapshot) {
+            await ctx.db.patch(snapshot._id, {
+              availableUnits: snapshot.availableUnits + res.unitsRequested,
+              reservedUnits: Math.max(0, snapshot.reservedUnits - res.unitsRequested),
+            })
+          }
+        }
+      }
+    }
+  }
+
+  // ─── Reservation check ────────────────────────────────────────────────────
   const reservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))

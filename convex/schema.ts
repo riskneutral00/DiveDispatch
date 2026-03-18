@@ -129,6 +129,7 @@ export default defineSchema({
     isSeeded: v.boolean(),
     preferredLocale: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
+    onboardingComplete: v.optional(v.boolean()),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])
@@ -294,6 +295,8 @@ export default defineSchema({
     submittedAt: v.optional(v.number()),
     bloodType: v.optional(v.string()),
     insurancePolicyNumber: v.optional(v.string()),
+    allergies: v.optional(v.string()),
+    medications: v.optional(v.string()),
     physicianClearanceFileId: v.optional(v.id('_storage')),
   })
     .index('by_bookingId', ['bookingId'])
@@ -307,6 +310,7 @@ export default defineSchema({
     expiresAt: v.number(),
     customerName: v.string(),
     email: v.string(),
+    usedAt: v.optional(v.number()),
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_token', ['token']),
@@ -343,6 +347,7 @@ export default defineSchema({
         v.literal('hold_expired'),
         v.literal('operator_edit'),
         v.literal('noshow_replacement'),
+        v.literal('equipment_not_needed'),
       ),
     ),
   })
