@@ -6,6 +6,7 @@ import {
   Bell,
   CheckCircle,
   Clock,
+  Trash2,
   UserCheck,
   XCircle,
 } from 'lucide-react'
@@ -54,46 +55,62 @@ export { TYPE_ICON }
 interface NotificationItemProps {
   notification: NotificationDoc
   onClick: (id: string) => void
+  onDelete: (id: string) => void
 }
 
-export function NotificationItem({ notification, onClick }: NotificationItemProps) {
+export function NotificationItem({ notification, onClick, onDelete }: NotificationItemProps) {
   const isUnread = notification.readAt === undefined
 
   return (
-    <button
-      onClick={() => onClick(notification._id)}
+    <div
       className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors"
       style={{
         background: isUnread ? 'var(--color-surface-elevated)' : 'transparent',
         borderBottom: '1px solid var(--color-glass-border)',
       }}
     >
-      <div className="flex-shrink-0 mt-0.5">
-        <NotificationIcon type={notification.type} isUnread={isUnread} />
-      </div>
+      <button
+        onClick={() => onClick(notification._id)}
+        className="flex items-start gap-3 flex-1 min-w-0"
+      >
+        <div className="flex-shrink-0 mt-0.5">
+          <NotificationIcon type={notification.type} isUnread={isUnread} />
+        </div>
 
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm leading-snug"
-          style={{
-            color: 'var(--color-text-primary)',
-            fontWeight: isUnread ? 600 : 400,
-          }}
-        >
-          {notification.message}
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-          {timeAgo(notification.createdAt)}
-        </p>
-      </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-sm leading-snug"
+            style={{
+              color: 'var(--color-text-primary)',
+              fontWeight: isUnread ? 600 : 400,
+            }}
+          >
+            {notification.message}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+            {timeAgo(notification.createdAt)}
+          </p>
+        </div>
 
-      {isUnread && (
-        <div
-          className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
-          style={{ background: 'var(--color-primary)' }}
-          aria-label="Unread"
-        />
-      )}
-    </button>
+        {isUnread && (
+          <div
+            className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
+            style={{ background: 'var(--color-primary)' }}
+            aria-label="Unread"
+          />
+        )}
+      </button>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete(notification._id)
+        }}
+        className="flex-shrink-0 mt-0.5 p-1 rounded transition-opacity opacity-40 hover:opacity-100"
+        aria-label="Delete notification"
+      >
+        <Trash2 size={14} style={{ color: 'var(--color-text-secondary)' }} />
+      </button>
+    </div>
   )
 }

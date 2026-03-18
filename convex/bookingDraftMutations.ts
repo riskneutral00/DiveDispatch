@@ -2,6 +2,22 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS, type AnyCtx } from './lib/auth'
 import { releaseBookingReservations } from './bookingsMutations'
+import { MAX_ACTIVE_DRAFTS } from './lib/constants'
+
+/**
+ * Throws DRAFT_LIMIT if the operator identified by ownerId already has
+ * MAX_ACTIVE_DRAFTS Draft bookings. Call before inserting a new Draft.
+ */
+async function enforceDraftLimit(ctx: AnyCtx, ownerId: string): Promise<void> {
+  const existing = await ctx.db
+    .query('bookings')
+    .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', ownerId))
+    .collect()
+  const draftCount = existing.filter((b: AnyCtx) => b.status === 'Draft').length
+  if (draftCount >= MAX_ACTIVE_DRAFTS) {
+    throw new ConvexError({ code: 'DRAFT_LIMIT', maxDrafts: MAX_ACTIVE_DRAFTS })
+  }
+}
 
 type OperatorType =
   | 'DiveCenter'
@@ -25,6 +41,8 @@ export const createDraftShell = mutation({
   handler: async (ctx: AnyCtx): Promise<string> => {
     const { user } = await requireAuth(ctx)
     if (!OPERATOR_ROLE_SET.has(user.role)) throw new ConvexError({ code: 'FORBIDDEN' })
+
+    await enforceDraftLimit(ctx, user.slug)
 
     const today = new Date().toISOString().split('T')[0]
 
@@ -77,6 +95,8 @@ export const createReferralDraftShell = mutation({
     if (!OPERATOR_ROLE_SET.has(dcUser.role as string)) {
       throw new ConvexError({ code: 'FORBIDDEN' })
     }
+
+    await enforceDraftLimit(ctx, dcUser.slug as string)
 
     const today = new Date().toISOString().split('T')[0]
 
@@ -149,72 +169,6 @@ export const getBookingForWizard = query({
 
     return booking
   },
-})
-
-// ─── Resumable draft types ────────────────────────────────────────────────────
-
-export type ResumableDraft = {
-  _id: string
-  _creationTime: number
-  activityType: string[]
-  startDate: string
-  endDate: string
-  diverCount: number
-  draftState: string
-}
-
-export type ResumableDraftsResult = {
-  drafts: ResumableDraft[]
-  hasMore: boolean
-}
-
-/**
- * Lists Draft bookings owned by the caller that have a saved draftState.
- * TTL-expired drafts are excluded (lazy expiry — filtered before the cron runs).
- * Returns at most 5, sorted by _creationTime descending. hasMore indicates more exist.
- * Exported for unit testing.
- */
-export async function _listResumableDrafts(ctx: AnyCtx): Promise<ResumableDraftsResult> {
-  const user = await getAuthUser(ctx)
-  if (!user) return { drafts: [], hasMore: false }
-  if (!OPERATOR_ROLE_SET.has(user.role as string)) return { drafts: [], hasMore: false }
-
-  const now = Date.now()
-
-  const allBookings = await ctx.db
-    .query('bookings')
-    .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
-    .collect()
-
-  const resumable = allBookings.filter(
-    (b: AnyCtx) =>
-      b.status === 'Draft' &&
-      b.draftState != null &&
-      (b.expiresAt == null || (b.expiresAt as number) >= now),
-  )
-
-  resumable.sort((a: AnyCtx, b: AnyCtx) => (b._creationTime as number) - (a._creationTime as number))
-
-  const hasMore = resumable.length > 5
-  const top = resumable.slice(0, 5)
-
-  return {
-    drafts: top.map((b: AnyCtx) => ({
-      _id: b._id as string,
-      _creationTime: b._creationTime as number,
-      activityType: b.activityType as string[],
-      startDate: b.startDate as string,
-      endDate: b.endDate as string,
-      diverCount: (b.divers as Array<unknown>).length,
-      draftState: b.draftState as string,
-    })),
-    hasMore,
-  }
-}
-
-export const listResumableDrafts = query({
-  args: {},
-  handler: _listResumableDrafts,
 })
 
 /**

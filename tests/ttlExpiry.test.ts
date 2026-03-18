@@ -1,8 +1,9 @@
 import { convexTest } from 'convex-test'
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import schema from '../convex/schema'
-import { internal } from '../convex/_generated/api'
+import { api, internal } from '../convex/_generated/api'
 import { isSessionEnded } from '../convex/bookings/_shared'
+import { Id } from '../convex/_generated/dataModel'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -255,6 +256,106 @@ describe('expireHolds', () => {
     ])
     expect(b1).toBeNull()
     expect(b2).toBeNull()
+  })
+
+  it('expired Draft is excluded from listByOwner after expireHolds runs', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-1',
+        slug: 'dc-1',
+        email: 'dc1@test.com',
+        name: 'DC One',
+        firstName: 'DC',
+        lastName: 'One',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('bookings', {
+        ownerId: 'dc-1',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-03-16',
+        endDate: '2026-03-18',
+        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2026-03-16', endDate: '2026-03-18', activityType: ['OW'] }],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000, // already expired
+      })
+    })
+
+    // Before cron: booking is still in DB, visible on calendar
+    const before = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
+      .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
+    expect(before).toHaveLength(1)
+
+    // Cron runs
+    await t.mutation(internal.bookings.status.expireHolds, {})
+
+    // After cron: booking hard-deleted, gone from calendar
+    const after = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
+      .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
+    expect(after).toHaveLength(0)
+  })
+
+  it('expired Draft never appears in myDashboard bookings', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-1',
+        slug: 'dc-1',
+        email: 'dc1@test.com',
+        name: 'DC One',
+        firstName: 'DC',
+        lastName: 'One',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('bookings', {
+        ownerId: 'dc-1',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-03-16',
+        endDate: '2026-03-18',
+        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2026-03-16', endDate: '2026-03-18', activityType: ['OW'] }],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+    })
+
+    // Dashboard never shows Drafts (operators see Upcoming + Completed only)
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
+      .query(api.bookings.myDashboard)
+    expect(result.bookings).toHaveLength(0)
+    expect(result.requests).toHaveLength(0)
   })
 })
 
@@ -512,5 +613,383 @@ describe('completeBookings', () => {
     }
     expect(result.more).toBe(true)
     expect(result.completed).toBe(100)
+  })
+})
+
+// ─── toggleBlockedDate auto-cancel ────────────────────────────────────────────
+
+describe('toggleBlockedDate auto-cancels Draft bookings', () => {
+  afterEach(() => vi.clearAllMocks())
+
+  it('blocking a date auto-cancels overlapping Draft booking', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId, sessionIds, reservationIds, snapshotIds, linkId } = await t.run(
+      async (ctx) => {
+        // Instructor user
+        await ctx.db.insert('users', {
+          tokenIdentifier: 'clerk|inst-1',
+          slug: 'inst-1',
+          email: 'inst1@test.com',
+          name: 'Instructor One',
+          firstName: 'Instructor',
+          lastName: 'One',
+          businessName: 'Inst One Diving',
+          role: 'Instructor',
+          isSeeded: false,
+          preferredLocale: 'en',
+        })
+
+        // Inventory unit owned by instructor
+        const unitId = await ctx.db.insert('inventoryUnits', {
+          resourceType: 'Instructor',
+          resourceId: 'inst-1',
+          displayName: 'Instructor One',
+          capacityModel: 'Exclusive',
+          totalUnits: 1,
+          ownerId: 'inst-1',
+          ownerType: 'Instructor',
+        })
+
+        // Draft booking spanning 3 dates
+        const bookingId = await ctx.db.insert('bookings', {
+          ownerId: 'dc-test',
+          ownerType: 'DiveCenter',
+          status: 'Draft',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: ['AOW'],
+          startDate: '2024-06-14',
+          endDate: '2024-06-16',
+          divers: [
+            {
+              name: 'Alice',
+              abbrev: 'A',
+              flag: { code: 'US', label: 'USA' },
+              startDate: '2024-06-14',
+              endDate: '2024-06-16',
+              activityType: ['AOW'],
+            },
+          ],
+          operatorName: 'Test DC',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          medicalHardBlock: false,
+          bookingFormComplete: true,
+          customerFormComplete: false,
+          instructorId: 'inst-1',
+          expiresAt: Date.now() + HOLD_TTL,
+        })
+
+        // Sessions + reservations + snapshots for each date
+        const dates = ['2024-06-14', '2024-06-15', '2024-06-16']
+        const sessionIds: Id<'bookingSessions'>[] = []
+        const reservationIds: Id<'reservations'>[] = []
+        const snapshotIds: Id<'availabilitySnapshots'>[] = []
+
+        for (const date of dates) {
+          const sessionId = await ctx.db.insert('bookingSessions', {
+            bookingId,
+            inventoryUnitId: unitId,
+            date,
+            startTime: '09:00',
+            endTime: '17:00',
+            timezone: 'Asia/Bangkok',
+          })
+          sessionIds.push(sessionId)
+
+          const reservationId = await ctx.db.insert('reservations', {
+            bookingId,
+            inventoryUnitId: unitId,
+            bookingSessionId: sessionId,
+            unitsRequested: 1,
+            status: 'PendingAcceptance',
+          })
+          reservationIds.push(reservationId)
+
+          const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+            inventoryUnitId: unitId,
+            date,
+            windowStart: '09:00',
+            windowEnd: '17:00',
+            totalUnits: 1,
+            reservedUnits: 1,
+            availableUnits: 0,
+          })
+          snapshotIds.push(snapshotId)
+        }
+
+        // Booking link
+        const linkId = await ctx.db.insert('bookingLinks', {
+          bookingId,
+          token: 'test-token-123',
+          expiresAt: Date.now() + 86_400_000,
+          customerName: 'Alice',
+          email: 'alice@test.com',
+        })
+
+        return { bookingId, unitId, sessionIds, reservationIds, snapshotIds, linkId }
+      },
+    )
+
+    // Block date 2024-06-15 as the instructor
+    const result = await t
+      .withIdentity({ tokenIdentifier: 'clerk|inst-1' })
+      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'Instructor' })
+    expect(result).toBe(true)
+
+    // Booking should be hard-deleted
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking).toBeNull()
+
+    // All sessions should be deleted
+    for (const sessionId of sessionIds) {
+      const session = await t.run(async (ctx) => ctx.db.get(sessionId))
+      expect(session).toBeNull()
+    }
+
+    // All reservations should be vacated
+    for (const reservationId of reservationIds) {
+      const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+      expect(reservation?.status).toBe('Vacated')
+      expect(reservation?.vacatedBy).toBe('stakeholder_declined')
+    }
+
+    // All snapshots should be restored (availableUnits back to 1)
+    for (const snapshotId of snapshotIds) {
+      const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+      expect(snapshot?.availableUnits).toBe(1)
+      expect(snapshot?.reservedUnits).toBe(0)
+    }
+
+    // Booking link should be deleted
+    const link = await t.run(async (ctx) => ctx.db.get(linkId))
+    expect(link).toBeNull()
+  })
+
+  it('blocking a date does NOT cancel Upcoming bookings', async () => {
+    const t = makeT()
+
+    const { bookingId, reservationIds } = await t.run(async (ctx) => {
+      // Instructor user
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|inst-2',
+        slug: 'inst-2',
+        email: 'inst2@test.com',
+        name: 'Instructor Two',
+        firstName: 'Instructor',
+        lastName: 'Two',
+        businessName: 'Inst Two Diving',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-2',
+        displayName: 'Instructor Two',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-2',
+        ownerType: 'Instructor',
+      })
+
+      // Upcoming booking (already confirmed)
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-15',
+        endDate: '2024-06-16',
+        divers: [
+          {
+            name: 'Bob',
+            abbrev: 'B',
+            flag: { code: 'GB', label: 'UK' },
+            startDate: '2024-06-15',
+            endDate: '2024-06-16',
+            activityType: ['OW'],
+          },
+        ],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        instructorId: 'inst-2',
+      })
+
+      const reservationIds: Id<'reservations'>[] = []
+      for (const date of ['2024-06-15', '2024-06-16']) {
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date,
+          startTime: '09:00',
+          endTime: '17:00',
+          timezone: 'Asia/Bangkok',
+        })
+
+        const reservationId = await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'PendingAcceptance',
+        })
+        reservationIds.push(reservationId)
+
+        await ctx.db.insert('availabilitySnapshots', {
+          inventoryUnitId: unitId,
+          date,
+          windowStart: '09:00',
+          windowEnd: '17:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        })
+      }
+
+      return { bookingId, reservationIds }
+    })
+
+    // Block date 2024-06-15
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|inst-2' })
+      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'Instructor' })
+
+    // Booking should still exist (Upcoming, not deleted)
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking).not.toBeNull()
+    expect(booking?.status).toBe('Upcoming')
+
+    // Reservation on blocked date should be vacated
+    const res0 = await t.run(async (ctx) => ctx.db.get(reservationIds[0]))
+    expect(res0?.status).toBe('Vacated')
+
+    // Reservation on other date should remain PendingAcceptance
+    const res1 = await t.run(async (ctx) => ctx.db.get(reservationIds[1]))
+    expect(res1?.status).toBe('PendingAcceptance')
+  })
+
+  it('operator blocking a date auto-cancels their own Draft booking', async () => {
+    const t = makeT()
+
+    const { bookingId, sessionIds } = await t.run(async (ctx) => {
+      // DiveCenter user
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-1',
+        slug: 'dc-1',
+        email: 'dc1@test.com',
+        name: 'DC One',
+        firstName: 'DC',
+        lastName: 'One',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      // Inventory unit owned by a different stakeholder (instructor)
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-ext',
+        displayName: 'External Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-ext',
+        ownerType: 'Instructor',
+      })
+
+      // Draft booking owned by the DC
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-1',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2024-06-14',
+        endDate: '2024-06-16',
+        divers: [
+          {
+            name: 'Charlie',
+            abbrev: 'C',
+            flag: { code: 'AU', label: 'Australia' },
+            startDate: '2024-06-14',
+            endDate: '2024-06-16',
+            activityType: ['OW'],
+          },
+        ],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        instructorId: 'inst-ext',
+        expiresAt: Date.now() + HOLD_TTL,
+      })
+
+      // Sessions on the external instructor's unit
+      const sessionIds: Id<'bookingSessions'>[] = []
+      for (const date of ['2024-06-14', '2024-06-15', '2024-06-16']) {
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date,
+          startTime: '09:00',
+          endTime: '17:00',
+          timezone: 'Asia/Bangkok',
+        })
+        sessionIds.push(sessionId)
+
+        await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'PendingAcceptance',
+        })
+
+        await ctx.db.insert('availabilitySnapshots', {
+          inventoryUnitId: unitId,
+          date,
+          windowStart: '09:00',
+          windowEnd: '17:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        })
+      }
+
+      return { bookingId, sessionIds }
+    })
+
+    // DC blocks date 2024-06-15 (DC has no inventory units — only owns the booking)
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
+      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'DiveCenter' })
+
+    // Booking should be hard-deleted
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking).toBeNull()
+
+    // All sessions should be deleted
+    for (const sessionId of sessionIds) {
+      const session = await t.run(async (ctx) => ctx.db.get(sessionId))
+      expect(session).toBeNull()
+    }
   })
 })

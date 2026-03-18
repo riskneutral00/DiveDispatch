@@ -1,14 +1,12 @@
 # DiveDispatch
 
-Multi-stakeholder booking platform for scuba diving. Operator creates booking; instructors, boats, equipment, pool, compressor operators each confirm their slice. Customers complete a portal via tokenized link.
+Multi-stakeholder booking platform for scuba diving. Operator stakeholder creates booking; resoure stakholders each confirm their slice. Customers complete a portal via tokenized link.
 
 > **Scope:** Permanent architectural decisions, non-obvious business logic invariants, and project constraints only. Workflow how-tos, skill pointers, dev commands, and process steps do NOT belong here — put those in skills.
 
-## Source of Truth
+## Product Knowledge
 
-- Domain knowledge: `docs/DOMAIN_KNOWLEDGE.md`
-- Schema: `convex/schema.ts`
-- Task specs: `.overstory/specs/`
+All product decisions, domain rules, and business logic: `~/Desktop/DiveVault/DiveDispatch/`
 
 ## Dependency Direction
 
@@ -16,16 +14,12 @@ Multi-stakeholder booking platform for scuba diving. Operator creates booking; i
 convex/ ← lib/ ← components/ ← app/
 ```
 
-Never import upstream.
-
-## No Next.js API Routes
-
-**Never create Next.js API routes** (`app/api/`). Convex replaces REST/CRUD. Exception only if a third-party requires a URL Convex HTTP actions cannot serve — document in the spec.
+Never import upstream. Exception: `convex/seed.ts` imports from `src/lib/constants/gear-sizing.ts` (known violation, seed-only).
 
 ## Auth Boundary
 
-- Customer portal uses tokenized BookingLink (UUID, no Clerk auth).
-- Every mutation modifying a booking/reservation must verify caller ownership via `users.slug`.
+- **Clerk-authenticated mutations**: verify caller ownership via `users.slug`.
+- **Customer portal**: tokenized BookingLink (UUID, no Clerk auth) — token IS the credential.
 
 ## Provider Nesting Order (critical — wrong order = silent auth failure)
 
@@ -40,6 +34,7 @@ All-or-nothing: any single conflict aborts entire mutation, zero partial holds. 
 ## Three Non-Negotiable Invariants
 
 Any implementation that violates these is wrong:
+
 1. No Exclusive-unit inventory held by more than one booking for any overlapping session window.
 2. Pooled inventory decrements on hold placement; blocks only when count reaches zero.
 3. All AvailabilitySnapshot updates occur in the same Convex mutation as the Reservation write.
@@ -47,57 +42,12 @@ Any implementation that violates these is wrong:
 ## State Transitions
 
 Non-obvious rules:
-- **TTL is lazy expiry** (check on read, not cron). Draft + `expiresAt < now` → vacate reservations → delete booking (not cancelled).
+
+- **TTL is lazy expiry** — checked when a booking is read, not by scheduled cron. Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
+- **Medical block extends TTL by 24 hours** (total 36h from creation). Hard ceiling: 8pm night before the activity date — whichever comes first.
 - Draft → Upcoming auto-advances when: `bookingFormComplete && customerFormComplete && allInSystemReservationsConfirmed && !medicalHardBlock`.
-- External resources skip reservation checks; all-external booking advances immediately on customer portal complete.
-
-## Equipment Fulfillment
-
-Single-manager, strict-fail: one EquipmentManager per booking. Insufficient units → CONFLICT → full rollback. No cross-EM fallback.
-
-## Schema Changes
-
-Convex schema changes require full wipe + reseed. Plan schema carefully upfront.
 
 ## UI
 
 Never hardcode colors — use Glass components (`src/components/glass/`) or CSS variables.
-
-## Browser / Visual Verification
-
-Always use Playwright (MCP) to open the browser — never `open` or a raw URL. Before navigating, check if the dev server is running on port 3000. If not, start it with `tmux new-session -d -s dev "npm run dev"` and wait for it to be ready before navigating.
-
-**Auth in Playwright:** Always use the sign-in token method — never fill the Clerk form. The form triggers 2FA on new devices (Playwright is always a new device). Use the programmatic token flow from the `clerk-dev` skill instead.
-
-## Vault-Enriched Specs
-
-When writing an Overstory spec, search the full vault (`Inspirations/`, `PatternLibrary/`, `DiveDispatch/Lessons.md`, `DiveDispatch/Architecture.md`, `Sessions/`) for relevant content. Add observations to Implementation Notes.
-
-## Feature Request Workflow
-
-When Matt describes a feature, **do not implement it**. Instead:
-
-1. Interview him to gather the spec fields. Ask one question at a time.
-2. Write the spec to `.overstory/specs/<TIER>-<NN>-<slug>.md` using `.overstory/SPEC_TEMPLATE.md`.
-3. Confirm the file was written and tell him the ticket ID.
-
-Overstory's agent fleet picks up specs and builds them — your job is to produce well-formed specs, not code.
-
-| Request type | Action |
-|---|---|
-| New feature or screen | Write spec → Overstory |
-| Bug fix or hotfix | Implement directly |
-| Developer tooling / dev-mode utility | Implement directly |
-| Refactor / polish of existing code | Implement directly |
-
-### Spec naming
-
-Check the highest number in `.overstory/specs/` for the target tier, then increment.
-
-| Tier | Use when |
-|---|---|
-| L5 | New post-v1 features (default for new work) |
-| POST | Deferred / not scheduled yet |
-
-File name: `L5-<NN>-<kebab-slug>.md` (e.g., `L5-01-notification-inbox.md`)

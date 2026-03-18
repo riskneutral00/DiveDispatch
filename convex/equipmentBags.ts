@@ -1,34 +1,7 @@
-import { ConvexError, v } from 'convex/values'
-import { query } from './_generated/server'
+import { ConvexError } from 'convex/values'
 import { type AnyCtx } from './lib/auth'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
-
-/**
- * Returns the count of bags for the given EM that are available for assignment.
- *
- * "Available" means status === 'Returned': the bag is back in inventory after
- * a previous booking completed or was cancelled. 'Assigned' and 'InUse' bags
- * are held by another booking and cannot be claimed.
- *
- * The `date` parameter is accepted for API symmetry with the booking context
- * but availability is determined by bag status rather than date overlap,
- * since date overlap information lives on the booking record and bags are
- * released atomically when bookings close.
- */
-export async function _countAvailableBags(
-  ctx: AnyCtx,
-  args: { equipmentManagerId: string },
-): Promise<number> {
-  const bags = await ctx.db
-    .query('equipmentBags')
-    .withIndex('by_equipmentManagerId', (q: AnyCtx) =>
-      q.eq('equipmentManagerId', args.equipmentManagerId),
-    )
-    .collect()
-
-  return (bags as AnyCtx[]).filter((b) => b.status === 'Returned').length
-}
 
 /**
  * Assigns the lowest-bag-numbered available bags to the booking.
@@ -102,21 +75,3 @@ export async function releaseBagsForBooking(
     })
   }
 }
-
-// ─── Convex query exports ─────────────────────────────────────────────────────
-
-/**
- * Returns the number of equipment bags available for assignment by the given EM.
- * Used by the wizard's StepResources to surface capacity warnings before submit.
- * The `date` arg is accepted for future date-range filtering; currently
- * availability is determined purely by bag status.
- */
-export const countAvailableBags = query({
-  args: {
-    equipmentManagerId: v.string(),
-    date: v.string(),
-  },
-  handler: async (ctx, args): Promise<number> => {
-    return _countAvailableBags(ctx, { equipmentManagerId: args.equipmentManagerId })
-  },
-})

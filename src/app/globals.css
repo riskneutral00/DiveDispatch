@@ -28,6 +28,25 @@
   --bg-image: var(--bg-image);
   --bg-overlay: var(--bg-overlay);
   --body-bg: var(--body-bg);
+  /* Status colors for booking calendar bars */
+  --color-status-active: var(--color-status-active);
+  --color-status-active-bg: var(--color-status-active-bg);
+  --color-status-active-border: var(--color-status-active-border);
+  --color-status-draft: var(--color-status-draft);
+  --color-status-draft-bg: var(--color-status-draft-bg);
+  --color-status-draft-border: var(--color-status-draft-border);
+  --color-status-upcoming: var(--color-status-upcoming);
+  --color-status-upcoming-bg: var(--color-status-upcoming-bg);
+  --color-status-upcoming-border: var(--color-status-upcoming-border);
+  --color-status-completed: var(--color-status-completed);
+  --color-status-completed-bg: var(--color-status-completed-bg);
+  --color-status-completed-border: var(--color-status-completed-border);
+  --color-status-cancelled: var(--color-status-cancelled);
+  --color-status-cancelled-bg: var(--color-status-cancelled-bg);
+  --color-status-cancelled-border: var(--color-status-cancelled-border);
+  --color-status-urgent: var(--color-status-urgent);
+  --color-status-urgent-bg: var(--color-status-urgent-bg);
+  --color-status-urgent-border: var(--color-status-urgent-border);
 }
 
 /* ── Default theme fallback (light mode) ──────────────────────────────────────
@@ -65,6 +84,25 @@
   --bg-image: none;
   --bg-overlay: none;
   --body-bg: #f0f9ff;
+  /* Status colors — booking calendar bars */
+  --color-status-active: #16a34a;
+  --color-status-active-bg: rgba(22, 163, 74, 0.14);
+  --color-status-active-border: rgba(22, 163, 74, 0.5);
+  --color-status-draft: #d97706;
+  --color-status-draft-bg: rgba(217, 119, 6, 0.14);
+  --color-status-draft-border: rgba(217, 119, 6, 0.5);
+  --color-status-upcoming: #2563eb;
+  --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
+  --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
+  --color-status-completed: #64748b;
+  --color-status-completed-bg: rgba(100, 116, 139, 0.1);
+  --color-status-completed-border: rgba(100, 116, 139, 0.4);
+  --color-status-cancelled: #64748b;
+  --color-status-cancelled-bg: rgba(100, 116, 139, 0.1);
+  --color-status-cancelled-border: rgba(100, 116, 139, 0.4);
+  --color-status-urgent: #dc2626;
+  --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
+  --color-status-urgent-border: rgba(220, 38, 38, 0.5);
 }
 
 /* ── Default theme fallback — dark mode (Deep Ocean palette) ──────────────── */
@@ -100,12 +138,44 @@
     --bg-image: none;
     --bg-overlay: none;
     --body-bg: #0a2e3d;
+    /* Status colors — dark mode */
+    --color-status-active: #4ade80;
+    --color-status-active-bg: rgba(74, 222, 128, 0.14);
+    --color-status-active-border: rgba(74, 222, 128, 0.5);
+    --color-status-draft: #fbbf24;
+    --color-status-draft-bg: rgba(251, 191, 36, 0.14);
+    --color-status-draft-border: rgba(251, 191, 36, 0.5);
+    --color-status-upcoming: #60a5fa;
+    --color-status-upcoming-bg: rgba(96, 165, 250, 0.14);
+    --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
+    --color-status-completed: #94a3b8;
+    --color-status-completed-bg: rgba(148, 163, 184, 0.1);
+    --color-status-completed-border: rgba(148, 163, 184, 0.4);
+    --color-status-cancelled: #94a3b8;
+    --color-status-cancelled-bg: rgba(148, 163, 184, 0.1);
+    --color-status-cancelled-border: rgba(148, 163, 184, 0.4);
+    --color-status-urgent: #f87171;
+    --color-status-urgent-bg: rgba(248, 113, 113, 0.14);
+    --color-status-urgent-border: rgba(248, 113, 113, 0.5);
   }
+}
+
+/* ── Urgent Draft pulse animation ────────────────────────────────────────── */
+@keyframes urgent-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.urgent-pulse {
+  animation: urgent-pulse 2s ease-in-out infinite;
 }
 
 /* ── Base styles ─────────────────────────────────────────────────────────────
    All colors via CSS variables. Never hardcode.
    ──────────────────────────────────────────────────────────────────────────── */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--body-bg);
   color: var(--color-text-primary);
@@ -173,7 +243,9 @@ body {
   box-shadow:
     0 8px 32px var(--color-glass-shadow),
     inset 0 1px 0 var(--color-glass-specular-subtle);
-  transition: all var(--transition-speed) ease;
+  transition: box-shadow var(--transition-speed) ease,
+              border-color var(--transition-speed) ease,
+              transform var(--transition-speed) ease;
 }
 
 /* Specular top-edge highlight */
@@ -200,7 +272,9 @@ body {
   box-shadow:
     0 12px 48px var(--color-glass-shadow-elevated),
     inset 0 1px 0 var(--color-glass-specular-subtle);
-  transition: all var(--transition-speed) ease;
+  transition: box-shadow var(--transition-speed) ease,
+              border-color var(--transition-speed) ease,
+              transform var(--transition-speed) ease;
 }
 
 .glass-elevated::before {
@@ -217,6 +291,10 @@ body {
 }
 
 /* ── Glass field (input focus ring) ──────────────────────────────────────────*/
+.glass-field {
+  transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
 .glass-field:focus {
   outline: none;
   border-color: var(--color-glass-border-elevated);

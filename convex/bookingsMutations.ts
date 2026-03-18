@@ -354,10 +354,14 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (!resolvedCompressorId && resolvedExt?.compressorName) externalResourceTypes.add('Compressor')
 
   // 4. Blocked dates — reject before touching inventory
-  if (user.blockedDates && user.blockedDates.length > 0) {
-    const blocked = new Set<string>(user.blockedDates as string[])
+  const blockedDateDocs = await ctx.db
+    .query('stakeholderBlockedDates')
+    .withIndex('by_ownerSlug_roleType', (q: AnyCtx) => q.eq('ownerSlug', user.slug))
+    .collect()
+  const allBlocked = new Set<string>(blockedDateDocs.flatMap((d: AnyCtx) => d.dates as string[]))
+  if (allBlocked.size > 0) {
     for (const session of args.sessions) {
-      if (blocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
+      if (allBlocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
     }
   }
 

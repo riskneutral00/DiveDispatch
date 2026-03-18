@@ -127,7 +127,6 @@ export default defineSchema({
     role: stakeholderType,
     additionalRoles: v.optional(v.array(stakeholderType)),
     isSeeded: v.boolean(),
-    blockedDates: v.optional(v.array(v.string())),
     preferredLocale: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
   })
@@ -322,6 +321,7 @@ export default defineSchema({
     totalUnits: v.number(),
     ownerId: v.string(),
     ownerType: resourceOwnerType,
+    boatType: v.optional(boatTypeUnion),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_resourceType', ['resourceType'])
@@ -362,6 +362,14 @@ export default defineSchema({
     .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date'])
     .index('by_inventoryUnitId_date_windowStart', ['inventoryUnitId', 'date', 'windowStart'])
     .index('by_date', ['date']),
+
+  // ── L1: Stakeholder Blocked Dates ───────────────────────────────────
+
+  stakeholderBlockedDates: defineTable({
+    ownerSlug: v.string(),
+    roleType: v.string(), // matches ClerkRole: 'Boat', 'Instructor', etc.
+    dates: v.array(v.string()),
+  }).index('by_ownerSlug_roleType', ['ownerSlug', 'roleType']),
 
   // ── L1: Stakeholder Preferences ─────────────────────────────────────
 

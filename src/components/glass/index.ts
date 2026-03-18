@@ -4,3 +4,4 @@ export { GlassInput } from "./glass-input";
 export { GlassNav } from "./glass-nav";
 export { GlassDialog } from "./glass-dialog";
 export { GlassBadge } from "./glass-badge";
+export { BookingStatusBadge } from "./booking-status-badge";

@@ -17,10 +17,13 @@ export function GlassInput({
   disabled,
   className = "",
   id: externalId,
+  type,
+  onClick,
   ...props
 }: GlassInputProps) {
   const generatedId = useId();
   const id = externalId ?? generatedId;
+  const isDateLike = type === "date" || type === "datetime-local" || type === "time";
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -46,8 +49,15 @@ export function GlassInput({
 
         <input
           {...props}
+          type={type}
           id={id}
           disabled={disabled}
+          onClick={(e) => {
+            if (isDateLike && !disabled) {
+              e.currentTarget.showPicker();
+            }
+            onClick?.(e);
+          }}
           className={[
             "glass glass-field w-full text-sm",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -55,6 +65,7 @@ export function GlassInput({
             leadingIcon ? "pl-9" : "pl-3",
             trailingIcon ? "pr-9" : "pr-3",
             "py-2.5",
+            isDateLike ? "cursor-pointer" : "",
             className,
           ]
             .filter(Boolean)

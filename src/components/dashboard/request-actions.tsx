@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
+import { Trash2 } from 'lucide-react'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassDialog } from '@/components/glass/glass-dialog'
 
@@ -76,15 +77,20 @@ export function RequestActions({
         >
           Accept
         </GlassButton>
-        <GlassButton
-          size="sm"
-          variant="destructive"
+        <button
+          type="button"
+          className="p-1.5 rounded-full transition-colors"
+          style={{ color: 'var(--color-destructive)' }}
           onClick={handleDecline}
-          loading={declining}
-          disabled={accepting}
+          disabled={accepting || declining}
+          aria-label="Decline request"
         >
-          Decline
-        </GlassButton>
+          {declining ? (
+            <span className="block w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--color-destructive)', borderTopColor: 'transparent' }} />
+          ) : (
+            <Trash2 size={16} />
+          )}
+        </button>
       </div>
 
       {error && (

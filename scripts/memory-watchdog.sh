@@ -9,9 +9,9 @@
 set -euo pipefail
 
 POLL_INTERVAL=30          # seconds
-WARN_SWAP_GB=10           # log warning
-KILL_SWAP_GB=14           # SIGTERM oldest claude CLI process
-EMERGENCY_SWAP_GB=18      # SIGTERM all claude CLI processes
+WARN_SWAP_GB=4            # log warning
+KILL_SWAP_GB=6            # SIGTERM oldest claude CLI process
+EMERGENCY_SWAP_GB=8       # SIGTERM all claude CLI processes
 KILL_WAIT=10              # seconds to wait before SIGKILL
 
 LOG_DIR="$(cd "$(dirname "$0")/../.overstory/logs" && pwd)"

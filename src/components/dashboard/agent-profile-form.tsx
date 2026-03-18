@@ -9,28 +9,8 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
-
-// ── Constants ─────────────────────────────────────────────────────────
-
-const AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS'] as const
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'th', label: 'Thai' },
-  { code: 'zh', label: 'Chinese (Mandarin)' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'it', label: 'Italian' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'nl', label: 'Dutch' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'he', label: 'Hebrew' },
-  { code: 'sv', label: 'Swedish' },
-]
+import { DIVE_AGENCIES } from '@/lib/constants/agencies'
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -225,7 +205,7 @@ function AssociationRow({ index, association, errors, onChange, onRemove }: Asso
           label="Agency"
           value={association.agency}
           onChange={(v) => update('agency', v)}
-          options={AGENCIES}
+          options={DIVE_AGENCIES}
           placeholder="Select agency…"
           error={errors?.agency}
         />
@@ -545,7 +525,7 @@ export function AgentProfileForm() {
           Languages
         </h2>
         <div className="flex flex-wrap gap-2">
-          {LANGUAGES.map(({ code, label }) => {
+          {LANGUAGE_OPTIONS.map(({ code, label }) => {
             const selected = form.focusedLanguages.includes(code)
             return (
               <button

@@ -10,6 +10,38 @@ user-invocable: true
 
 When this skill is invoked, do the following steps in order — no questions, no prompts:
 
+**Step 0 — Pre-flight Validation**
+
+Before anything else, check for unguarded file conflicts across open specs.
+
+1. Read all `L*-*.md` specs in `.overstory/specs/`. Cross-reference `.seeds/issues.jsonl` — a spec is "open" if its status is not `closed`.
+2. Parse `## File Scope` from each open spec: extract backtick-wrapped file paths, normalize (strip `./`). Build a file → specs ownership matrix.
+3. For any file owned by 2+ specs, check: do those specs reference each other in `## Concurrency Lock` or `## Dependencies`?
+4. Classify each conflict:
+   - **UNGUARDED** (neither spec references the other in Concurrency Lock or Dependencies) → collect into conflict matrix
+   - **GUARDED** (lock or dependency exists between the specs) → OK, proceed
+   - **UNMET DEPENDENCY** (spec A depends on spec B, but B is not closed) → collect as warning
+5. **If any UNGUARDED conflicts exist → ABORT.** Print the conflict matrix:
+   ```
+   ABORT: Unguarded file conflicts detected.
+
+   | File | Spec A | Spec B | Guard |
+   |------|--------|--------|-------|
+   | path/to/file.ts | L6-01 | L6-03 | NONE |
+
+   Fix: Add Concurrency Lock or Dependencies between conflicting specs, then re-run.
+   ```
+   Do not proceed to Step 1.
+6. **If only warnings** (unmet dependencies, guarded conflicts) → print warnings and proceed:
+   ```
+   Pre-flight: All file conflicts guarded. Proceeding.
+   Warnings:
+   - L6-03 depends on L6-01 (not yet closed) — coordinator will defer.
+   ```
+7. **If no conflicts at all** → print "Pre-flight: No file overlaps. Proceeding." and continue.
+
+---
+
 **Step 1 — Sync unqueued specs into issues.jsonl**
 
 Read all spec files in `.overstory/specs/` and all existing entries in `.seeds/issues.jsonl`. For any spec file that matches `L[0-9]+-*.md` (NOT `POST-*.md`) and does not already have a corresponding entry in issues.jsonl (match by checking if the spec filename slug appears in any existing title or description), add it as a new open issue. Use this shape:
@@ -65,3 +97,7 @@ Tell the user: how many new specs were queued in step 1, total open tasks now, a
 | Coordinator hangs | Check `runner.log`, Ctrl+C, re-run |
 | Watchdog not found | `chmod +x scripts/memory-watchdog.sh` |
 | 5 batches done, tasks remain | Re-run the script |
+
+### After Completion
+
+When the runner finishes, suggest: **`/overstory-walkthrough`** to visually review what was built. Don't auto-invoke — the user may be away.

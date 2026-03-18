@@ -106,7 +106,7 @@ fi
 # --- Start throughput monitor ---
 throughput_monitor &
 THROUGHPUT_PID=$!
-log "Throughput monitor started (pid=$THROUGHPUT_PID, nudging if <${NUDGE_MAX_AGENTS} agents and >${NUDGE_MIN_FREE_GB}GB RAM free)"
+log "Throughput monitor started (pid=$THROUGHPUT_PID, nudging if <${NUDGE_MAX_AGENTS} agents and <${NUDGE_MAX_SWAP_GB}GB swap)"
 
 # --- Batch loop ---
 cd "$PROJECT_DIR"

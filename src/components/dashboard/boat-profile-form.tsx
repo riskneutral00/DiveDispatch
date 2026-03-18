@@ -8,6 +8,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../glass/glass-button'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -46,21 +47,6 @@ const DAYS = [
   { value: 5, label: 'Fri' },
   { value: 6, label: 'Sat' },
   { value: 0, label: 'Sun' },
-]
-
-const LANGUAGES = [
-  'English',
-  'Thai',
-  'Chinese (Mandarin)',
-  'Chinese (Cantonese)',
-  'Japanese',
-  'Korean',
-  'German',
-  'French',
-  'Spanish',
-  'Russian',
-  'Arabic',
-  'Dutch',
 ]
 
 // ── Zod schema ───────────────────────────────────────────────────────
@@ -329,13 +315,13 @@ export function BoatProfileForm() {
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          {LANGUAGES.map((lang) => {
-            const active = focusedLanguages.includes(lang)
+          {LANGUAGE_OPTIONS.map(({ label }) => {
+            const active = focusedLanguages.includes(label)
             return (
               <button
-                key={lang}
+                key={label}
                 type="button"
-                onClick={() => toggleLanguage(lang)}
+                onClick={() => toggleLanguage(label)}
                 className="px-3 py-1.5 text-sm rounded-full border transition-all"
                 style={{
                   background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
@@ -344,7 +330,7 @@ export function BoatProfileForm() {
                   transitionDuration: 'var(--transition-speed)',
                 }}
               >
-                {lang}
+                {label}
               </button>
             )
           })}

@@ -1,0 +1,61 @@
+/**
+ * Exhaustive route list derived from src/app/ directory structure.
+ *
+ * Public routes require no auth.
+ * Authenticated routes redirect to /sign-in if not logged in.
+ * Portal routes use a tokenized BookingLink (no Clerk auth).
+ */
+
+// ── Public routes ──────────────────────────────────────────────────────────────
+
+export const PUBLIC_ROUTES = {
+  landing: '/',
+  signIn: '/sign-in',
+  signUp: '/sign-up',
+  portalExpired: '/portal/expired',
+  portalWithToken: (token: string) => `/portal/${token}`,
+} as const
+
+// ── Authenticated routes (no role-slug needed) ────────────────────────────────
+
+export const AUTH_ROUTES = {
+  /** Generic dashboard redirect — sends user to role-scoped dashboard */
+  dashboard: '/dashboard',
+  account: '/account',
+  directory: '/directory',
+  help: '/help',
+  bookingNew: '/booking/new',
+  bookingById: (id: string) => `/booking/${id}`,
+  bookingEdit: (id: string) => `/booking/${id}/edit`,
+} as const
+
+// ── Role-scoped dashboard routes ───────────────────────────────────────────────
+
+/**
+ * Returns the dashboard URL for a given role and user slug.
+ * Pattern: /{roleSlug}/{userSlug}/dashboard
+ */
+export function dashboardRoute(roleSlug: string, userSlug: string): string {
+  return `/${roleSlug}/${userSlug}/dashboard`
+}
+
+/**
+ * Returns the settings URL for a given role and user slug.
+ * Pattern: /{roleSlug}/{userSlug}/settings
+ */
+export function settingsRoute(roleSlug: string, userSlug: string): string {
+  return `/${roleSlug}/${userSlug}/settings`
+}
+
+// ── Per-role route sets ────────────────────────────────────────────────────────
+
+/**
+ * All routes accessible to a user with the given roleSlug and userSlug.
+ * Used to drive exhaustive smoke tests.
+ */
+export function routesForRole(roleSlug: string, userSlug: string): string[] {
+  return [
+    dashboardRoute(roleSlug, userSlug),
+    settingsRoute(roleSlug, userSlug),
+  ]
+}

@@ -9,6 +9,7 @@ import type { Id } from '../../../convex/_generated/dataModel'
 import type { BookingDetail } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
 import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/glass'
+import { courseLabel } from '@/lib/constants/course-catalog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { PortalProgressCard } from './portal-progress-card'
@@ -356,7 +357,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
               )}
             </div>
             <p className="text-sm font-medium mt-1" style={{ color: 'var(--color-text-primary)' }}>
-              {booking.activityType.join(', ')}
+              {booking.activityType.map(courseLabel).join(', ')}
             </p>
             <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {formatDateRange(booking.startDate, booking.endDate)} ·{' '}

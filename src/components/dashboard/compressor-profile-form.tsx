@@ -8,6 +8,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -18,24 +19,6 @@ const GAS_MIXES = [
 ] as const
 
 type GasMix = 'air' | 'nitrox' | 'trimix'
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'th', label: 'Thai' },
-  { code: 'zh', label: 'Chinese (Mandarin)' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'it', label: 'Italian' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'nl', label: 'Dutch' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'he', label: 'Hebrew' },
-  { code: 'sv', label: 'Swedish' },
-]
 
 // ── Zod Schema ────────────────────────────────────────────────────────
 
@@ -206,7 +189,7 @@ export function CompressorProfileForm() {
 
   // ── Render ─────────────────────────────────────────────────────────
 
-  const langItems = LANGUAGES.map(({ code, label }) => ({ value: code, label }))
+  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">

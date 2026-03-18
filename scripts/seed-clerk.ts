@@ -18,6 +18,12 @@ import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
 import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
 
 const SEED_PASSWORD = 'REDACTED'
+const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits
+const MAX_RETRIES = 3
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms))
+}
 
 // Derive the Clerk JWT issuer from the publishable key.
 // pk_test_BASE64 → base64decode → "domain$" → "https://domain"
@@ -119,23 +125,41 @@ async function main(): Promise<void> {
   const result: Result = { created: [], skipped: [], updated: [], failed: [] }
   const patches: { email: string; tokenIdentifier: string }[] = []
 
-  for (const user of users) {
-    try {
-      const clerkUserId = await seedUser(user, result)
-      if (clerkUserId) {
-        patches.push({ email: user.email, tokenIdentifier: `${clerkIssuer}|${clerkUserId}` })
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i]
+    let clerkUserId: string | null = null
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        clerkUserId = await seedUser(user, result)
+        break
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        const isRateLimit = message.includes('Too Many Requests') || message.includes('429')
+        if (isRateLimit && attempt < MAX_RETRIES) {
+          const backoff = DELAY_MS * Math.pow(2, attempt)
+          console.log(`  ${user.email} — rate limited, retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`)
+          await sleep(backoff)
+        } else {
+          result.failed.push({ email: user.email, error: message })
+          console.error(`  ${user.email} — FAILED: ${message}`)
+          break
+        }
       }
+    }
+
+    if (clerkUserId) {
+      patches.push({ email: user.email, tokenIdentifier: `${clerkIssuer}|${clerkUserId}` })
       const status = result.created.includes(user.email)
         ? 'created'
         : result.updated.includes(user.email)
           ? 'updated'
           : 'skipped'
       console.log(`  ${user.email} — ${status}`)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      result.failed.push({ email: user.email, error: message })
-      console.error(`  ${user.email} — FAILED: ${message}`)
     }
+
+    // Space out API calls to stay under Clerk rate limits
+    if (i < users.length - 1) await sleep(DELAY_MS)
   }
 
   console.log(

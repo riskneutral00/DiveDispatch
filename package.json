@@ -8,12 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "npx convex run seed:seedAll",
-    "seed:force": "npx convex dev --once && npx convex run seed:wipeAll && npx convex run seed:seedAll",
+    "seed:force": "npx convex dev --once && npx convex run seed:wipeAll && npx convex run seed:seedAll && tsx scripts/seed-clerk.ts --force && npx convex run seed:seedVerify",
     "seed:clerk": "tsx scripts/seed-clerk.ts",
-    "seed:force:all": "npm run seed:force && tsx scripts/seed-clerk.ts --force",
+    "seed:force:all": "npm run seed:force",
     "wipe:all": "npx convex run seed:wipeAll",
+    "seed:verify": "npx convex run seed:seedVerify",
     "dev:token": "tsx scripts/get-signin-token.ts",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
@@ -26,11 +28,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.0",
     "convex-test": "^0.0.41",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",

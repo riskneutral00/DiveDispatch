@@ -1,6 +1,5 @@
 import {
   BookOpen,
-  Calendar,
   LayoutDashboard,
   Settings,
   Users,
@@ -26,10 +25,6 @@ export function buildNavItems(roleSlug: RoleKey, slug: string): NavItem[] {
     items.push(
       { key: 'bookings', label: 'Bookings', href: `${base}/bookings`, Icon: BookOpen },
       { key: 'directory', label: 'Directory', href: `${base}/directory`, Icon: Users },
-    )
-  } else {
-    items.push(
-      { key: 'reservations', label: 'Reservations', href: `${base}/reservations`, Icon: Calendar },
     )
   }
 

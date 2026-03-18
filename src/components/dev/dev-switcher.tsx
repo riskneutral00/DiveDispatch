@@ -5,6 +5,7 @@ import { useMutation } from 'convex/react'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { useDevSwitching } from './dev-switch-context'
 import { ROLES, ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
@@ -39,6 +40,7 @@ const GROUPED = groupByRole()
 function DevSwitcherInner() {
   const { user } = useCurrentUser()
   const switchUser = useMutation(api.devSwitcher.devSwitchUser)
+  const { setSwitching: setContextSwitching } = useDevSwitching()
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -58,6 +60,8 @@ function DevSwitcherInner() {
 
   async function handleSwitch(slug: string | undefined) {
     if (!slug || switching) return
+    // Signal context FIRST so sibling components skip their queries
+    setContextSwitching(true)
     setSwitching(slug)
     setError(null)
     try {
@@ -82,6 +86,16 @@ function DevSwitcherInner() {
 
   return (
     <>
+      {/* Full-screen overlay masks transitional query state during switch */}
+      {switching && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: 'var(--body-bg, #0f172a)' }}
+        >
+          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+        </div>
+      )}
+
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}

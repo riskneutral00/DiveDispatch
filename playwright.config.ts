@@ -8,6 +8,13 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   timeout: 60_000,
+  snapshotDir: './e2e/screenshots',
+  expect: {
+    toHaveScreenshot: {
+      // 1% pixel diff threshold — tighten after baseline stabilizes
+      maxDiffPixelRatio: 0.01,
+    },
+  },
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',

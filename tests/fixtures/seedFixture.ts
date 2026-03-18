@@ -37,7 +37,6 @@ export async function seedUser(
     firstName?: string
     lastName?: string
     businessName?: string
-    blockedDates?: string[]
   } = {},
 ) {
   return ctx.db.insert('users', {
@@ -51,7 +50,18 @@ export async function seedUser(
     role: overrides.role ?? 'DiveCenter',
     isSeeded: true,
     preferredLocale: 'en',
-    ...(overrides.blockedDates !== undefined ? { blockedDates: overrides.blockedDates } : {}),
+  })
+}
+
+/** Seed blocked dates into the stakeholderBlockedDates table. */
+export async function seedBlockedDates(
+  ctx: AnyCtx,
+  opts: { ownerSlug: string; roleType: string; dates: string[] },
+) {
+  return ctx.db.insert('stakeholderBlockedDates', {
+    ownerSlug: opts.ownerSlug,
+    roleType: opts.roleType,
+    dates: opts.dates,
   })
 }
 

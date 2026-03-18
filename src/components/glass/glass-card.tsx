@@ -7,6 +7,7 @@ interface GlassCardProps {
   elevated?: boolean;
   hoverable?: boolean;
   as?: React.ElementType;
+  style?: React.CSSProperties;
 }
 
 const paddingMap = {
@@ -23,9 +24,11 @@ export function GlassCard({
   elevated = false,
   hoverable = false,
   as: Tag = "div",
+  style,
 }: GlassCardProps) {
   return (
     <Tag
+      style={style}
       className={[
         elevated ? "glass-elevated" : "glass",
         "relative",

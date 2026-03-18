@@ -1,65 +1,78 @@
+// ── Wizard State (4-step) ─────────────────────────────────────────────────────
+// Step structure: Customers → Itinerary → Resources → Confirm
+
 import type { CourseCode } from '@/lib/constants/course-catalog'
+import { validatePrerequisiteOrder } from '@/lib/booking/course-validation'
 
 // ── Step definition ───────────────────────────────────────────────────────────
 
-export type WizardStep = 'details' | 'divers' | 'resources' | 'sessions' | 'review'
+export type WizardStep = 'customers' | 'itinerary' | 'resources' | 'confirm'
 
-export const WIZARD_STEPS: readonly WizardStep[] = ['details', 'divers', 'resources', 'sessions', 'review']
+export const WIZARD_STEPS: readonly WizardStep[] = ['customers', 'itinerary', 'resources', 'confirm']
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
-  details: 'Details',
-  divers: 'Divers',
+  customers: 'Customers',
+  itinerary: 'Program & Schedule',
   resources: 'Resources',
-  sessions: 'Sessions',
-  review: 'Review',
+  confirm: 'Confirmation',
 }
 
-// ── Slice types ───────────────────────────────────────────────────────────────
+export function stepIndex(step: WizardStep): number {
+  return WIZARD_STEPS.indexOf(step)
+}
 
-export interface DiverEntry {
+// ── Inline types ──────────────────────────────────────────────────────────────
+
+export interface CustomerContact {
+  email?: string
+  whatsapp?: string
+  line?: string
+}
+
+export interface CourseEntry {
+  id: string
+  activityCode: string
+  dates: string[]
+  agency: string
+}
+
+export interface CustomerData {
+  id: string
   name: string
-  abbrev: string
-  flag: { code: string; label: string }
-  startDate: string
-  endDate: string
-  agency?: string
-  activityType: CourseCode[]
+  contact?: CustomerContact
+  /** Language flags — code is ISO 2-letter country code, label is language name */
+  flags?: { code: string; label: string }[]
+  courseEntries?: CourseEntry[]
+  linkSent?: boolean
 }
 
-export interface DetailsState {
-  activityType: CourseCode[]
-  startDate: string
-  endDate: string
-  portalContact: boolean
-  portalMedical: boolean
-  portalWaiver: boolean
+export interface DiveSlot {
+  courseCode: string
+  diveNumber: number
+  isConfined: boolean
 }
 
-export interface ResourcesState {
-  instructorId?: string
-  boatId?: string
-  equipmentManagerId?: string
-  poolId?: string
-  compressorId?: string
-  agentId?: string
-  agentIsReferral?: boolean
-  externalStakeholders?: {
-    instructorName?: string
-    boatName?: string
-    equipmentManagerName?: string
-    poolName?: string
-    compressorName?: string
-  }
-}
-
-export interface SessionEntry {
-  inventoryUnitId: string
+export interface DayConfig {
   date: string
+  venueType: 'pool' | 'boat' | 'shore'
+  dives: DiveSlot[]
+  inventoryUnitId?: string
+  poolInventoryUnitId?: string
+  externalPoolName?: string
+  instructorSlug?: string
+  externalInstructorName?: string
+  externalVenueName?: string
+  isAutoAppended?: boolean
+  divesPerDay: number
   startTime: string
   endTime: string
   timezone: string
-  unitsRequested: number
-  deliveryLocation?: 'BoatPier' | 'Pool' | 'Beach'
+}
+
+export interface BookingConflictDetail {
+  inventoryUnitId: string
+  date: string
+  reason: string
 }
 
 // ── Root state ────────────────────────────────────────────────────────────────
@@ -67,10 +80,29 @@ export interface SessionEntry {
 export interface WizardState {
   step: WizardStep
   bookingId: string | null
-  details: DetailsState
-  divers: DiverEntry[]
-  resources: ResourcesState
-  sessions: SessionEntry[]
+
+  customers: CustomerData[]
+  activeCustomerIdx: number
+  draftCreating: boolean
+
+  selectedCourses: string[]
+  startDate: string
+  endDate: string
+  agency: string
+
+  days: DayConfig[]
+  equipment: string
+  compressor: string
+  equipmentIsExternal: boolean
+  compressorIsExternal: boolean
+  externalEquipmentName: string
+  externalCompressorName: string
+
+  sameForAll: boolean
+  saveAttempted: boolean
+  submitting: boolean
+  conflictError: BookingConflictDetail[] | null
+  submittedBookingId: string | null
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -78,41 +110,91 @@ export interface WizardState {
 export type WizardAction =
   | { type: 'SET_STEP'; payload: WizardStep }
   | { type: 'SET_BOOKING_ID'; payload: string }
-  | { type: 'UPDATE_FIELD'; payload: Partial<DetailsState> }
-  | { type: 'ADD_DIVER'; payload: DiverEntry }
-  | { type: 'REMOVE_DIVER'; payload: number }
-  | { type: 'UPDATE_DIVER'; payload: { index: number; data: Partial<DiverEntry> } }
-  | { type: 'SET_RESOURCE'; payload: Partial<ResourcesState> }
-  | { type: 'SET_SESSIONS'; payload: SessionEntry[] }
+  | { type: 'SET_DRAFT_CREATING'; value: boolean }
+  | { type: 'ADD_CUSTOMER'; customer: CustomerData }
+  | { type: 'UPDATE_CUSTOMER'; id: string; updates: Partial<CustomerData> }
+  | { type: 'REMOVE_CUSTOMER'; id: string }
+  | { type: 'SET_ACTIVE_CUSTOMER_IDX'; index: number }
+  | { type: 'MARK_CUSTOMER_LINK_SENT'; customerId: string }
+  | { type: 'ADD_COURSE_ENTRY'; customerId: string }
+  | { type: 'REMOVE_COURSE_ENTRY'; customerId: string; entryId: string }
+  | { type: 'UPDATE_COURSE_ENTRY'; customerId: string; entryId: string; patch: Partial<Omit<CourseEntry, 'id'>> }
+  | { type: 'COPY_COURSE_ENTRIES_TO_ALL' }
+  | { type: 'SET_AGENCY'; value: string }
+  | { type: 'SET_SAME_FOR_ALL'; value: boolean }
+  | { type: 'SET_DAY_INSTRUCTOR'; dayIndex: number; slug: string }
+  | { type: 'UPDATE_DAY'; dayIndex: number; patch: Partial<Pick<DayConfig, 'inventoryUnitId' | 'venueType' | 'externalInstructorName' | 'externalVenueName' | 'poolInventoryUnitId' | 'externalPoolName' | 'startTime' | 'endTime'>> }
+  | { type: 'APPLY_INSTRUCTOR_TO_REMAINING'; fromDayIndex: number; slug: string }
+  | { type: 'APPLY_VENUE_TO_REMAINING'; fromDayIndex: number; unitId: string }
+  | { type: 'REMOVE_DAY'; dayIndex: number }
+  | { type: 'SET_EQUIPMENT'; value: string }
+  | { type: 'SET_EQUIPMENT_EXTERNAL'; value: boolean }
+  | { type: 'SET_EXTERNAL_EQUIPMENT_NAME'; value: string }
+  | { type: 'SET_COMPRESSOR'; value: string }
+  | { type: 'SET_COMPRESSOR_EXTERNAL'; value: boolean }
+  | { type: 'SET_EXTERNAL_COMPRESSOR_NAME'; value: string }
+  | { type: 'SET_SUBMITTING'; value: boolean }
+  | { type: 'SET_CONFLICT_ERROR'; errors: BookingConflictDetail[] | null }
+  | { type: 'SET_SUBMITTED_BOOKING_ID'; id: string }
+  | { type: 'SET_SAVE_ATTEMPTED'; value: boolean }
+  | { type: 'TOGGLE_DIVE'; dayIndex: number; slot: DiveSlot }
+  | { type: 'SET_DAYS'; days: DayConfig[] }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-// Derives booking-level activityType as the union of all diver selections.
-function computeBookingActivityType(divers: DiverEntry[]): CourseCode[] {
-  return Array.from(new Set(divers.flatMap((d) => d.activityType)))
+function newEntryId(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
+function deriveDates(customers: CustomerData[]): { startDate: string; endDate: string } {
+  const allDates = customers.flatMap((c) => (c.courseEntries ?? []).flatMap((e) => e.dates))
+  if (allDates.length === 0) return { startDate: '', endDate: '' }
+  const sorted = [...allDates].sort()
+  return { startDate: sorted[0], endDate: sorted[sorted.length - 1] }
+}
+
+function deriveSelectedCourses(customers: CustomerData[]): string[] {
+  const codes = new Set<string>()
+  customers.forEach((c) => (c.courseEntries ?? []).forEach((e) => e.activityCode && codes.add(e.activityCode)))
+  return Array.from(codes)
+}
+
+// ── Initial state ─────────────────────────────────────────────────────────────
+
+export function makeInitialState(bookingId: string | null = null): WizardState {
+  return {
+    step: 'customers',
+    bookingId,
+    customers: [{
+      id: newEntryId(),
+      name: '',
+      contact: {},
+      flags: [],
+      courseEntries: [{ id: newEntryId(), activityCode: '', dates: [], agency: '' }],
+    }],
+    activeCustomerIdx: 0,
+    draftCreating: false,
+    selectedCourses: [],
+    startDate: '',
+    endDate: '',
+    agency: '',
+    days: [],
+    equipment: '',
+    compressor: '',
+    equipmentIsExternal: false,
+    compressorIsExternal: false,
+    externalEquipmentName: '',
+    externalCompressorName: '',
+    sameForAll: true,
+    saveAttempted: false,
+    submitting: false,
+    conflictError: null,
+    submittedBookingId: null,
+  }
 }
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
-
-export function makeInitialState(bookingId: string | null = null): WizardState {
-  const today = new Date().toISOString().split('T')[0]
-  return {
-    step: 'details',
-    bookingId,
-    details: {
-      activityType: [],
-      startDate: today,
-      endDate: today,
-      portalContact: true,
-      portalMedical: true,
-      portalWaiver: true,
-    },
-    divers: [],
-    resources: {},
-    sessions: [],
-  }
-}
 
 export function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
@@ -122,42 +204,193 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'SET_BOOKING_ID':
       return { ...state, bookingId: action.payload }
 
-    case 'UPDATE_FIELD':
-      return { ...state, details: { ...state.details, ...action.payload } }
+    case 'SET_DRAFT_CREATING':
+      return { ...state, draftCreating: action.value }
 
-    case 'ADD_DIVER': {
-      const newDivers = [...state.divers, action.payload]
+    case 'ADD_CUSTOMER': {
+      const next = [...state.customers, action.customer]
+      return { ...state, customers: next, activeCustomerIdx: next.length - 1 }
+    }
+
+    case 'UPDATE_CUSTOMER':
       return {
         ...state,
-        divers: newDivers,
-        details: { ...state.details, activityType: computeBookingActivityType(newDivers) },
+        customers: state.customers.map((c) =>
+          c.id === action.id ? { ...c, ...action.updates } : c,
+        ),
+      }
+
+    case 'REMOVE_CUSTOMER': {
+      const next = state.customers.filter((c) => c.id !== action.id)
+      return {
+        ...state,
+        customers: next,
+        activeCustomerIdx: Math.max(0, Math.min(state.activeCustomerIdx, next.length - 1)),
       }
     }
 
-    case 'REMOVE_DIVER': {
-      const newDivers = state.divers.filter((_, i) => i !== action.payload)
+    case 'SET_ACTIVE_CUSTOMER_IDX':
+      return { ...state, activeCustomerIdx: action.index }
+
+    case 'MARK_CUSTOMER_LINK_SENT':
       return {
         ...state,
-        divers: newDivers,
-        details: { ...state.details, activityType: computeBookingActivityType(newDivers) },
+        customers: state.customers.map((c) =>
+          c.id === action.customerId ? { ...c, linkSent: true } : c,
+        ),
+      }
+
+    case 'ADD_COURSE_ENTRY': {
+      const customers = state.customers.map((c) =>
+        c.id === action.customerId
+          ? { ...c, courseEntries: [...(c.courseEntries ?? []), { id: newEntryId(), activityCode: '', dates: [], agency: '' }] }
+          : c,
+      )
+      return { ...state, customers }
+    }
+
+    case 'REMOVE_COURSE_ENTRY': {
+      const customers = state.customers.map((c) => {
+        if (c.id !== action.customerId) return c
+        const entries = (c.courseEntries ?? []).filter((e) => e.id !== action.entryId)
+        return { ...c, courseEntries: entries.length > 0 ? entries : c.courseEntries }
+      })
+      const derived = deriveDates(customers)
+      return { ...state, customers, ...derived, selectedCourses: deriveSelectedCourses(customers) }
+    }
+
+    case 'UPDATE_COURSE_ENTRY': {
+      const customers = state.customers.map((c) => {
+        if (c.id !== action.customerId) return c
+        return {
+          ...c,
+          courseEntries: (c.courseEntries ?? []).map((e) =>
+            e.id === action.entryId ? { ...e, ...action.patch } : e,
+          ),
+        }
+      })
+      const derived = deriveDates(customers)
+      return { ...state, customers, ...derived, selectedCourses: deriveSelectedCourses(customers) }
+    }
+
+    case 'COPY_COURSE_ENTRIES_TO_ALL': {
+      const source = state.customers[0]?.courseEntries ?? []
+      const customers = state.customers.map((c, i) =>
+        i === 0 ? c : { ...c, courseEntries: source.map((e) => ({ ...e, id: newEntryId() })) },
+      )
+      const derived = deriveDates(customers)
+      return { ...state, customers, ...derived, selectedCourses: deriveSelectedCourses(customers) }
+    }
+
+    case 'SET_AGENCY':
+      return { ...state, agency: action.value }
+
+    case 'SET_SAME_FOR_ALL':
+      return { ...state, sameForAll: action.value }
+
+    case 'SET_DAY_INSTRUCTOR':
+      return {
+        ...state,
+        days: state.days.map((d, i) =>
+          i === action.dayIndex ? { ...d, instructorSlug: action.slug } : d,
+        ),
+      }
+
+    case 'UPDATE_DAY':
+      return {
+        ...state,
+        days: state.days.map((d, i) => (i === action.dayIndex ? { ...d, ...action.patch } : d)),
+      }
+
+    case 'APPLY_INSTRUCTOR_TO_REMAINING':
+      return {
+        ...state,
+        days: state.days.map((d, i) =>
+          i >= action.fromDayIndex ? { ...d, instructorSlug: action.slug } : d,
+        ),
+      }
+
+    case 'APPLY_VENUE_TO_REMAINING': {
+      const sourceDay = state.days[action.fromDayIndex]
+      if (!sourceDay) return state
+      const venueType = sourceDay.venueType
+      return {
+        ...state,
+        days: state.days.map((d, i) =>
+          i >= action.fromDayIndex && d.venueType === venueType
+            ? { ...d, inventoryUnitId: action.unitId, externalVenueName: sourceDay.externalVenueName }
+            : d,
+        ),
       }
     }
 
-    case 'UPDATE_DIVER': {
-      const { index, data } = action.payload
-      const newDivers = state.divers.map((d, i) => (i === index ? { ...d, ...data } : d))
+    case 'REMOVE_DAY': {
+      if (state.days.length <= 1) return state
+      const newDays = state.days.filter((_, i) => i !== action.dayIndex)
+      const newStart = newDays[0]?.date ?? state.startDate
+      const newEnd = newDays[newDays.length - 1]?.date ?? state.endDate
+      return { ...state, days: newDays, startDate: newStart, endDate: newEnd }
+    }
+
+    case 'SET_EQUIPMENT':
+      return { ...state, equipment: action.value }
+
+    case 'SET_EQUIPMENT_EXTERNAL':
+      return { ...state, equipmentIsExternal: action.value }
+
+    case 'SET_EXTERNAL_EQUIPMENT_NAME':
+      return { ...state, externalEquipmentName: action.value }
+
+    case 'SET_COMPRESSOR':
+      return { ...state, compressor: action.value }
+
+    case 'SET_COMPRESSOR_EXTERNAL':
+      return { ...state, compressorIsExternal: action.value }
+
+    case 'SET_EXTERNAL_COMPRESSOR_NAME':
+      return { ...state, externalCompressorName: action.value }
+
+    case 'SET_SUBMITTING':
+      return { ...state, submitting: action.value }
+
+    case 'SET_CONFLICT_ERROR':
+      return { ...state, conflictError: action.errors }
+
+    case 'SET_SUBMITTED_BOOKING_ID':
+      return { ...state, submittedBookingId: action.id, submitting: false }
+
+    case 'SET_SAVE_ATTEMPTED':
+      return { ...state, saveAttempted: action.value }
+
+    case 'TOGGLE_DIVE': {
+      const day = state.days[action.dayIndex]
+      if (!day) return state
+      const exists = day.dives.some(
+        (d) =>
+          d.courseCode === action.slot.courseCode &&
+          d.diveNumber === action.slot.diveNumber &&
+          d.isConfined === action.slot.isConfined,
+      )
+      const newDives = exists
+        ? day.dives.filter(
+            (d) =>
+              !(
+                d.courseCode === action.slot.courseCode &&
+                d.diveNumber === action.slot.diveNumber &&
+                d.isConfined === action.slot.isConfined
+              ),
+          )
+        : [...day.dives, action.slot]
       return {
         ...state,
-        divers: newDivers,
-        details: { ...state.details, activityType: computeBookingActivityType(newDivers) },
+        days: state.days.map((d, i) =>
+          i === action.dayIndex ? { ...d, dives: newDives } : d,
+        ),
       }
     }
 
-    case 'SET_RESOURCE':
-      return { ...state, resources: { ...state.resources, ...action.payload } }
-
-    case 'SET_SESSIONS':
-      return { ...state, sessions: action.payload }
+    case 'SET_DAYS':
+      return { ...state, days: action.days }
 
     case 'RESET':
       return action.payload
@@ -183,6 +416,124 @@ export function deserializeDraftState(json: string): WizardState | null {
   }
 }
 
-export function stepIndex(step: WizardStep): number {
-  return WIZARD_STEPS.indexOf(step)
+// ── Derived helpers ───────────────────────────────────────────────────────────
+
+/** Returns instructorSlug common to the most days (for booking-level resource). */
+export function getPrimaryInstructorSlug(days: DayConfig[]): string | undefined {
+  const counts = new Map<string, number>()
+  for (const d of days) {
+    if (d.instructorSlug && d.instructorSlug !== '__external__') {
+      counts.set(d.instructorSlug, (counts.get(d.instructorSlug) ?? 0) + 1)
+    }
+  }
+  let best: string | undefined
+  let bestCount = 0
+  for (const [slug, count] of counts) {
+    if (count > bestCount) {
+      best = slug
+      bestCount = count
+    }
+  }
+  return best
+}
+
+/** Derive CourseCode[] from customers' courseEntries for submitToDraft. */
+export function deriveActivityType(customers: CustomerData[]): CourseCode[] {
+  const codes = new Set<string>()
+  customers.forEach((c) =>
+    (c.courseEntries ?? []).forEach((e) => {
+      if (e.activityCode) codes.add(e.activityCode)
+    }),
+  )
+  return Array.from(codes) as CourseCode[]
+}
+
+// ── Validation Gates ─────────────────────────────────────────────────────────
+
+/** Format validators for contact fields. */
+export function isValidEmail(v: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+}
+export function isValidWhatsApp(v: string): boolean {
+  return /^\+?[\d\s\-().]{7,}$/.test(v)
+}
+export function isValidLine(v: string): boolean {
+  return /^[a-zA-Z0-9._]{4,}$/.test(v)
+}
+
+/** Check that a customer has at least one valid contact. */
+function hasValidContact(c: CustomerData): boolean {
+  if (!c.contact) return false
+  if (c.contact.email && isValidEmail(c.contact.email)) return true
+  if (c.contact.whatsapp && isValidWhatsApp(c.contact.whatsapp)) return true
+  if (c.contact.line && isValidLine(c.contact.line)) return true
+  return false
+}
+
+export function canAdvanceFromCustomers(customers: CustomerData[]): boolean {
+  if (customers.length === 0) return false
+  return customers.every(
+    (c) =>
+      c.name.trim().length > 0 &&
+      hasValidContact(c) &&
+      (c.flags?.length ?? 0) > 0,
+  )
+}
+
+/** Check all required fields for Step 2 (Itinerary). */
+export function canAdvanceFromItinerary(state: WizardState): boolean {
+  // When sameForAll is on, only customer[0] has courses — the rest get copied on advance
+  const courseCustomers = state.sameForAll ? state.customers.slice(0, 1) : state.customers
+
+  // Every diver has at least one course selected
+  const allHaveCourse = courseCustomers.every((c) =>
+    (c.courseEntries ?? []).some((e) => e.activityCode.length > 0),
+  )
+  if (!allHaveCourse) return false
+
+  // Must have days
+  if (state.days.length === 0) return false
+
+  // No empty days (every day has at least one dive)
+  if (state.days.some((d) => d.dives.length === 0)) return false
+
+  // No prerequisite ordering errors
+  for (const customer of courseCustomers) {
+    const entries = (customer.courseEntries ?? []).map((e) => ({
+      activityCode: e.activityCode,
+      dates: e.dates,
+    }))
+    if (validatePrerequisiteOrder(entries).length > 0) return false
+  }
+
+  return true
+}
+
+/** Check all required fields for Step 3 (Resources). */
+export function canAdvanceFromResources(state: WizardState): boolean {
+  for (const day of state.days) {
+    // Every day needs an instructor (system or external)
+    const hasInstructor =
+      (day.instructorSlug && day.instructorSlug !== '__external__') ||
+      (day.instructorSlug === '__external__' && day.externalInstructorName?.trim())
+    if (!hasInstructor) return false
+
+    // Boat days need a boat (or external)
+    if (day.venueType === 'boat') {
+      const hasBoat =
+        day.inventoryUnitId ||
+        day.externalVenueName?.trim()
+      if (!hasBoat) return false
+    }
+
+    // Pool days need a pool (or external)
+    if (day.venueType === 'pool') {
+      const hasPool =
+        day.poolInventoryUnitId ||
+        day.externalPoolName?.trim()
+      if (!hasPool) return false
+    }
+  }
+
+  return true
 }

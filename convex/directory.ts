@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
-import { query } from './_generated/server'
-import { getAuthUser } from './lib/auth'
+import { mutation, query } from './_generated/server'
+import { getAuthUser, requireAuth } from './lib/auth'
 
 const stakeholderTypeValidator = v.union(
   v.literal('DiveCenter'),
@@ -27,6 +27,15 @@ export type DirectoryEntry = {
   languages: string[]
   verified: boolean
   role: StakeholderRole
+  // Role-specific extras
+  agencies?: string[]       // Instructor: credential agencies (e.g. ['PADI', 'SSI'])
+  boatCapacity?: number     // Boat: max pax of largest vessel in fleet
+  boatType?: string         // Boat: type of largest vessel
+  gasMixes?: string[]       // Compressor: supported gas mixes
+  maxDepth?: number         // Pool: max depth in metres
+  maxCapacity?: number      // Pool: max capacity in pax
+  association?: string      // Agent: primary association agency name
+  isPreferred?: boolean     // Instructor: starred by the authenticated caller
 }
 
 type ProfileData = {
@@ -35,6 +44,14 @@ type ProfileData = {
   country: string
   languages: string[]
   verified: boolean
+  // Extras (populated per-role)
+  agencies?: string[]
+  boatCapacity?: number
+  boatType?: string
+  gasMixes?: string[]
+  maxDepth?: number
+  maxCapacity?: number
+  association?: string
 }
 
 // Queries the bans table in both directions for mySlug, returning the union
@@ -60,7 +77,7 @@ export async function getBannedSlugSet(db: any, mySlug: string): Promise<Set<str
   return result
 }
 
-// Returns profile display fields for a user given their role.
+// Returns profile display fields (including role-specific extras) for a user.
 // Returns null if no profile row exists yet.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function fetchProfile(db: any, userId: string, role: StakeholderRole): Promise<ProfileData | null> {
@@ -71,7 +88,14 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
     case 'Instructor': {
       const p = await byUser('instructors')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.languages, verified: p.verified }
+      return {
+        name: p.name,
+        city: p.city,
+        country: p.country,
+        languages: p.languages,
+        verified: p.verified,
+        agencies: (p.credential ?? []).map((c: { agency: string }) => c.agency),
+      }
     }
     case 'DiveMaster': {
       const p = await byUser('diveMasters')
@@ -87,12 +111,33 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       const p = await byUser('agents')
       if (!p) return null
       const loc = p.locations?.[0] ?? { city: '', country: '' }
-      return { name: p.name, city: loc.city, country: loc.country, languages: p.focusedLanguages, verified: p.verified }
+      return {
+        name: p.name,
+        city: loc.city,
+        country: loc.country,
+        languages: p.focusedLanguages,
+        verified: p.verified,
+        association: (p.associations ?? [])[0]?.agency,
+      }
     }
     case 'Boat': {
       const p = await byUser('boats')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      // Represent capacity as the max pax of the largest vessel in fleet.
+      const fleet: Array<{ boatName: string; maxPax: number; boatType: string }> = p.fleet ?? []
+      const largest = fleet.reduce(
+        (best: typeof fleet[0] | null, b) => (!best || b.maxPax > best.maxPax ? b : best),
+        null,
+      )
+      return {
+        name: p.name,
+        city: p.city,
+        country: p.country,
+        languages: p.focusedLanguages,
+        verified: p.verified,
+        boatCapacity: largest?.maxPax,
+        boatType: largest?.boatType,
+      }
     }
     case 'Equipment': {
       const p = await byUser('equipment')
@@ -102,12 +147,27 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
     case 'Pool': {
       const p = await byUser('pools')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return {
+        name: p.name,
+        city: p.city,
+        country: p.country,
+        languages: p.focusedLanguages,
+        verified: p.verified,
+        maxDepth: p.maxDepth,
+        maxCapacity: p.maxCapacity,
+      }
     }
     case 'Compressor': {
       const p = await byUser('compressors')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return {
+        name: p.name,
+        city: p.city,
+        country: p.country,
+        languages: p.focusedLanguages,
+        verified: p.verified,
+        gasMixes: p.gasMixes ?? [],
+      }
     }
     case 'Liveaboard': {
       const p = await byUser('liveaboards')
@@ -133,21 +193,34 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
 }
 
 // Returns stakeholders of a given role with profile data, filtered by the
-// caller's ban list, and optionally narrowed by city/country and language.
+// caller's ban list, and optionally narrowed by text search and role-specific
+// filters. Preferred instructors are sorted to the top for authenticated callers.
 export const listByRole = query({
   args: {
     role: stakeholderTypeValidator,
     city: v.optional(v.string()),
     country: v.optional(v.string()),
     language: v.optional(v.string()),
+    // Role-specific filter args
+    agency: v.optional(v.string()),          // Instructor: filter by credential agency
+    minCapacity: v.optional(v.number()),     // Boat: min fleet maxPax
+    gasMix: v.optional(v.string()),          // Compressor: required gas mix
   },
   handler: async (ctx, args): Promise<DirectoryEntry[]> => {
-    // Resolve the caller's slug for ban filtering (optional — unauthenticated
-    // callers see unfiltered results).
+    // Resolve caller for ban filtering and preferred-instructor sorting.
     let bannedSlugs = new Set<string>()
+    let preferredSlugs = new Set<string>()
     const caller = await getAuthUser(ctx)
     if (caller) {
-      bannedSlugs = await getBannedSlugSet(ctx.db, caller.slug)
+      const [bans, prefs] = await Promise.all([
+        getBannedSlugSet(ctx.db, caller.slug),
+        ctx.db
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller._id))
+          .unique(),
+      ])
+      bannedSlugs = bans
+      preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
     }
 
     const users = await ctx.db
@@ -163,9 +236,25 @@ export const listByRole = query({
           const profile = await fetchProfile(ctx.db, u._id, args.role)
           if (!profile) return null
 
+          // ── Text filters ──────────────────────────────────────────────
           if (args.city && profile.city.toLowerCase() !== args.city.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
           if (args.language && !profile.languages.some((l) => l.toLowerCase() === args.language!.toLowerCase())) return null
+
+          // ── Role-specific filters ─────────────────────────────────────
+          if (args.agency && args.agency !== 'all') {
+            const agencies = profile.agencies ?? []
+            if (!agencies.some((a) => a.toLowerCase() === args.agency!.toLowerCase())) return null
+          }
+          if (args.minCapacity !== undefined && args.minCapacity > 0) {
+            if ((profile.boatCapacity ?? 0) < args.minCapacity) return null
+          }
+          if (args.gasMix && args.gasMix !== 'all') {
+            const mixes = profile.gasMixes ?? []
+            if (!mixes.some((m) => m.toLowerCase() === args.gasMix!.toLowerCase())) return null
+          }
+
+          const isPreferred = args.role === 'Instructor' ? preferredSlugs.has(u.slug) : undefined
 
           return {
             slug: u.slug,
@@ -175,10 +264,68 @@ export const listByRole = query({
             languages: profile.languages,
             verified: profile.verified,
             role: args.role,
+            agencies: profile.agencies,
+            boatCapacity: profile.boatCapacity,
+            boatType: profile.boatType,
+            gasMixes: profile.gasMixes,
+            maxDepth: profile.maxDepth,
+            maxCapacity: profile.maxCapacity,
+            association: profile.association,
+            isPreferred,
           }
         }),
     )
 
-    return results.filter((r): r is DirectoryEntry => r !== null)
+    const filtered = results.filter((r): r is DirectoryEntry => r !== null)
+
+    // Sort preferred instructors to the top.
+    if (args.role === 'Instructor') {
+      filtered.sort((a, b) => (b.isPreferred ? 1 : 0) - (a.isPreferred ? 1 : 0))
+    }
+
+    return filtered
   },
 })
+
+// Toggles whether the authenticated caller has starred a given instructor slug
+// in their stakeholderPreferences.preferredInstructorSlugs.
+export const togglePreferredInstructor = mutation({
+  args: {
+    instructorSlug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { user } = await requireAuth(ctx)
+
+    const prefs = await ctx.db
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user._id))
+      .unique()
+
+    if (!prefs) {
+      // Create a minimal prefs row so the preferred slug can be stored.
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: user._id,
+        stakeholderType: user.role,
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 0,
+        useNamedUnits: false,
+        commonLanguageCodes: [],
+        preferredInstructorSlugs: [args.instructorSlug],
+        confirmOnAccept: false,
+        confirmOnDecline: false,
+      })
+      return { starred: true }
+    }
+
+    const current = prefs.preferredInstructorSlugs ?? []
+    const alreadyStarred = current.includes(args.instructorSlug)
+    const updated = alreadyStarred
+      ? current.filter((s) => s !== args.instructorSlug)
+      : [...current, args.instructorSlug]
+
+    await ctx.db.patch(prefs._id, { preferredInstructorSlugs: updated })
+    return { starred: !alreadyStarred }
+  },
+})
+

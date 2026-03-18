@@ -17,6 +17,8 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   const rawNotifications = useQuery(api.notifications.listNotifications, { userId, limit: 20 })
   const notifications = rawNotifications as NotificationDoc[] | undefined
   const markAsRead = useMutation(api.notifications.markAsRead)
+  const deleteNotification = useMutation(api.notifications.deleteNotification)
+  const clearAll = useMutation(api.notifications.clearAll)
 
   // Close on outside click
   useEffect(() => {
@@ -43,15 +45,15 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
     onClose()
   }
 
-  async function handleMarkAll() {
-    const unread = notifications?.filter((n) => n.readAt === undefined) ?? []
-    await Promise.all(
-      unread.map((n) => markAsRead({ notificationId: n._id as Id<'notifications'> })),
-    )
-    onClose()
+  async function handleDelete(id: string) {
+    await deleteNotification({ notificationId: id as Id<'notifications'> })
   }
 
-  const hasUnread = notifications?.some((n) => n.readAt === undefined) ?? false
+  async function handleClearAll() {
+    await clearAll({ userId })
+  }
+
+  const hasNotifications = (notifications?.length ?? 0) > 0
 
   return (
     <div
@@ -78,13 +80,13 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         >
           Notifications
         </span>
-        {hasUnread && (
+        {hasNotifications && (
           <button
-            onClick={handleMarkAll}
+            onClick={handleClearAll}
             className="text-xs font-medium transition-opacity hover:opacity-70"
             style={{ color: 'var(--color-primary)' }}
           >
-            Mark all as read
+            Clear all
           </button>
         )}
       </div>
@@ -112,6 +114,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
             key={n._id}
             notification={n}
             onClick={handleItemClick}
+            onDelete={handleDelete}
           />
         ))}
       </div>

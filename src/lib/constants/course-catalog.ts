@@ -207,6 +207,26 @@ export const COURSE_CATALOG: CourseCatalogEntry[] = [
 
 export const ALL_COURSE_CODES: CourseCode[] = [...COURSE_CODES];
 
+// ── Display Labels ──────────────────────────────────────────────────
+// Short human-friendly labels for UI dropdowns / badges.
+
+export const COURSE_DISPLAY_LABELS: Record<CourseCode, string> = {
+  DSD: 'DSD',
+  TRY_DIVE: 'Try Dive',
+  OW: 'OW',
+  AOW: 'AOW',
+  RESCUE: 'Rescue',
+  DM: 'DM',
+  FD: 'FD',
+  REFRESH: 'Refresh',
+  SPECIALTY: 'Specialty',
+};
+
+/** Return a UI-friendly label for a course code (e.g. TRY_DIVE → "Try Dive"). */
+export function courseLabel(code: string): string {
+  return COURSE_DISPLAY_LABELS[code as CourseCode] ?? code;
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────
 
 export function getCourseByCode(code: CourseCode): CourseCatalogEntry | undefined {

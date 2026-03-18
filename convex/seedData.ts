@@ -6,11 +6,18 @@
 const PHUKET = { city: 'Phuket', country: 'Thailand' } as const
 const VERIFIED = true
 const LOCALE = 'en'
-const ALL_DC_BOOKING_PREFS = {
-  owDays: 3,
-  aowDays: 2,
-  oaDays: 4,
-  aowSpecialties: ['Drift', 'Peak Performance Buoyancy', 'Wreck'],
+const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
+
+// Each DC has unique AOW specialty preferences (5 required for AOW's 5 adventure dives)
+const DC_BOOKING_PREFS = {
+  hugOcean:   { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Peak Performance Buoyancy', 'Wreck'] },
+  neptune:    { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Fish ID', 'Peak Performance Buoyancy', 'Underwater Navigation'] },
+  phuketDC:   { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Peak Performance Buoyancy', 'Underwater Navigation', 'Wreck'] },
+  nicoleDC:   { ...BOOKING_DAYS, aowSpecialties: ['Boat', 'Deep', 'Drift', 'Peak Performance Buoyancy', 'Wreck'] },
+  mantaDC:    { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Search & Recovery', 'Wreck'] },
+  scubaNicks: { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Naturalist', 'Peak Performance Buoyancy', 'Wreck'] },
+  scubaDeep:  { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Peak Performance Buoyancy', 'Underwater Navigation', 'Wreck'] },
+  prayDC:     { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Peak Performance Buoyancy', 'Underwater Navigation'] },
 }
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -196,7 +203,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     associations: [{ agency: 'PADI', number: 'S-34782' }],
     focusedLanguages: ['Mandarin', 'Thai'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.hugOcean,
   },
   boat: {
     name: 'M.V. Hug Ocean',
@@ -282,7 +289,7 @@ export const NEPTUNE: SeedStakeholder = {
     associations: [{ agency: 'PADI', number: 'S-41256' }],
     focusedLanguages: ['Mandarin'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.neptune,
   },
   pool: {
     name: 'Neptune',
@@ -352,7 +359,7 @@ export const PHUKET_DC: SeedStakeholder = {
     associations: [{ agency: 'PADI', number: 'S-29815' }],
     focusedLanguages: ['English', 'Thai', 'Chinese'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.phuketDC,
   },
   boat: {
     name: 'Phuket Dive Center',
@@ -417,7 +424,7 @@ export const NICOLE_DC: SeedStakeholder = {
     associations: [{ agency: 'PADI', number: 'S-55198' }],
     focusedLanguages: ['English', 'Cantonese'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.nicoleDC,
   },
   equipment: {
     name: 'Nicole Dive Center',
@@ -454,7 +461,7 @@ export const MANTA_DC: SeedStakeholder = {
     associations: [{ agency: 'SSI', number: 'DC-80234' }],
     focusedLanguages: ['English', 'French'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.mantaDC,
   },
 }
 
@@ -480,7 +487,7 @@ export const SCUBANICKS: SeedStakeholder = {
     associations: [{ agency: 'SSI', number: 'DC-91547' }],
     focusedLanguages: ['English'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.scubaNicks,
   },
   equipment: {
     name: 'ScubaNicks',
@@ -518,7 +525,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
     ],
     focusedLanguages: ['English'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.scubaDeep,
   },
   boat: {
     name: 'Scuba Deep',
@@ -572,7 +579,7 @@ export const PRAY_DC: SeedStakeholder = {
     associations: [{ agency: 'PADI', number: 'S-48203' }],
     focusedLanguages: ['German', 'French', 'Thai', 'English'],
     verified: VERIFIED,
-    bookingPreferences: ALL_DC_BOOKING_PREFS,
+    bookingPreferences: DC_BOOKING_PREFS.prayDC,
   },
 }
 

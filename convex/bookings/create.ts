@@ -9,6 +9,7 @@ import {
   bookingDataValidator,
   releaseBookingReservations,
   tryAutoAdvance,
+  isFullDayResource,
 } from './_shared'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
@@ -57,10 +58,14 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (!resolvedCompressorId && resolvedExt?.compressorName) externalResourceTypes.add('Compressor')
 
   // 4. Blocked dates — reject before touching inventory
-  if (user.blockedDates && user.blockedDates.length > 0) {
-    const blocked = new Set<string>(user.blockedDates as string[])
+  const blockedDateDocs = await ctx.db
+    .query('stakeholderBlockedDates')
+    .withIndex('by_ownerSlug_roleType', (q: AnyCtx) => q.eq('ownerSlug', user.slug))
+    .collect()
+  const allBlocked = new Set<string>(blockedDateDocs.flatMap((d: AnyCtx) => d.dates as string[]))
+  if (allBlocked.size > 0) {
     for (const session of args.sessions) {
-      if (blocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
+      if (allBlocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
     }
   }
 
@@ -106,6 +111,20 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
 
     // External resource — no inventory check or reservation row needed
     if (externalResourceTypes.has(inventoryUnit.resourceType as string)) continue
+
+    // Full-day overlap check: day boats and liveaboards are blocked for the entire
+    // calendar date when any reservation exists, regardless of time window.
+    if (isFullDayResource(inventoryUnit)) {
+      const allDaySnapshots = await ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q: AnyCtx) =>
+          q.eq('inventoryUnitId', session.inventoryUnitId).eq('date', session.date),
+        )
+        .collect()
+      for (const daySnap of allDaySnapshots) {
+        if (daySnap.availableUnits <= 0) throw new ConvexError({ code: 'CONFLICT' })
+      }
+    }
 
     // Lazy snapshot: if no snapshot exists, treat totalUnits as fully available
     const snapshot = await ctx.db

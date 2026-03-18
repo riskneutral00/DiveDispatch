@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { NICOLE, JAMES, WATER_PRO, COMPRESSOR_CHALONG, AMANDA } from './seed'
 
 /**
  * Derive the Convex HTTP actions base URL from the Convex cloud URL.
@@ -38,4 +39,31 @@ export async function signInAs(page: Page, email: string): Promise<void> {
   await page.goto(url)
   // Clerk processes the token and redirects to the app's after-sign-in URL
   await page.waitForURL('**/dashboard**', { timeout: 15_000 })
+}
+
+// ── Role-specific convenience helpers ─────────────────────────────────────────
+
+/** Sign in as the primary DiveCenter test user (Nicole). */
+export async function signInAsDiveCenter(page: Page): Promise<void> {
+  await signInAs(page, NICOLE.email)
+}
+
+/** Sign in as the primary Instructor test user (James Cooper). */
+export async function signInAsInstructor(page: Page): Promise<void> {
+  await signInAs(page, JAMES.email)
+}
+
+/** Sign in as the primary Pool test user (Water Pro). */
+export async function signInAsPool(page: Page): Promise<void> {
+  await signInAs(page, WATER_PRO.email)
+}
+
+/** Sign in as the primary Compressor test user (Compressor Chalong). */
+export async function signInAsCompressor(page: Page): Promise<void> {
+  await signInAs(page, COMPRESSOR_CHALONG.email)
+}
+
+/** Sign in as the primary Agent test user (Amanda). */
+export async function signInAsAgent(page: Page): Promise<void> {
+  await signInAs(page, AMANDA.email)
 }

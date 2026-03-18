@@ -159,42 +159,6 @@ export const savePortalEquipment = mutation({
   },
 })
 
-// ─── uploadPhysicianClearance ─────────────────────────────────────────────────
-
-/**
- * Stores the physician clearance document for a customer with a medical hard block.
- *
- * Sets physicianClearanceFileId and physicianClearedAt on the profile.
- * Notifies the booking owner so they can review and manually clear the block.
- * Note: uploading the document does NOT clear medicalHardBlock — the operator
- * must review and clear it manually.
- * Auth: token IS the credential (no Clerk auth).
- */
-export const uploadPhysicianClearance = mutation({
-  args: {
-    token: v.string(),
-    physicianClearanceStorageId: v.id('_storage'),
-  },
-  handler: async (
-    ctx: AnyCtx,
-    args: { token: string; physicianClearanceStorageId: string },
-  ): Promise<void> => {
-    const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
-
-    await ctx.db.patch(profile._id, {
-      physicianClearanceFileId: args.physicianClearanceStorageId,
-      physicianClearedAt: Date.now(),
-    })
-
-    await notify(ctx, {
-      userId: booking.ownerId,
-      type: 'physician_clearance_submitted',
-      bookingId: link.bookingId,
-      message: `Physician clearance submitted by ${link.customerName}. Review and clear the medical block if approved.`,
-    })
-  },
-})
-
 // ─── getMedicalByToken ─────────────────────────────────────────────────────────
 
 /**

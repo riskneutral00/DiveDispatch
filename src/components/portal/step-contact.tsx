@@ -12,10 +12,7 @@ import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate } from '@/lib/constants/activity-rules'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-
-// ── Constants ────────────────────────────────────────────────────────────────
-
-const CERT_AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS'] as const
+import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 
 const COUNTRIES = [
   'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria',
@@ -480,7 +477,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               label="Certifying Agency"
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}
-              options={CERT_AGENCIES}
+              options={DIVE_AGENCIES}
               placeholder="Select agency…"
               error={errors.agency}
               required

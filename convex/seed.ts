@@ -1,8 +1,9 @@
 import { v } from 'convex/values'
-import { internalAction, internalMutation } from './_generated/server'
+import { internalAction, internalMutation, internalQuery } from './_generated/server'
 import { internal } from './_generated/api'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
+import { generateCustomers, generateAllSeedData } from './seedBookingData'
 import {
   ALL_GEAR_SIZING,
   SCUBAPRO_WETSUITS,
@@ -116,13 +117,29 @@ export const seedAll = internalAction({
     await ctx.runMutation(internal.seed.seedResourceInventory)
     await ctx.runMutation(internal.seed.seedStakeholderPreferences)
     await ctx.runMutation(internal.seed.seedDefaultTheme)
+    // Batched booking data — split across 3 mutations to stay under 8192-write limit
+    const ids = await ctx.runMutation(internal.seed.seedBookingData_core)
+    await ctx.runMutation(internal.seed.seedBookingData_sessions, {
+      bookingIds: ids.bookingIds,
+    })
+    await ctx.runMutation(internal.seed.seedBookingData_profiles, {
+      customerIds: ids.customerIds,
+      bookingIds: ids.bookingIds,
+    })
   },
 })
 
 export const wipeAll = internalAction({
   args: {},
   handler: async (ctx) => {
-    await ctx.runMutation(internal.seed.wipeAllTables)
+    // Wipe table-by-table to stay under Convex 4096-read limit per mutation.
+    // Each wipeBatch call deletes up to 500 rows; loop until table is empty.
+    for (const table of TABLES_TO_WIPE) {
+      let deleted = 0
+      do {
+        deleted = await ctx.runMutation(internal.seed.wipeBatch, { table })
+      } while (deleted > 0)
+    }
   },
 })
 
@@ -139,17 +156,18 @@ const TABLES_TO_WIPE = [
   'agents', 'diveMasters',
   'liveaboards', 'cabins', 'tripSchedules',
   'diveResorts', 'rooms', 'diveHostels', 'diveSites',
+  'supportRequests',
+  'stakeholderBlockedDates',
 ] as const
 
-export const wipeAllTables = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    for (const table of TABLES_TO_WIPE) {
-      const rows = await ctx.db.query(table).collect()
-      for (const row of rows) {
-        await ctx.db.delete(row._id)
-      }
+export const wipeBatch = internalMutation({
+  args: { table: v.string() },
+  handler: async (ctx, { table }) => {
+    const rows = await ctx.db.query(table as any).take(500)
+    for (const row of rows) {
+      await ctx.db.delete(row._id)
     }
+    return rows.length
   },
 })
 
@@ -383,6 +401,207 @@ export const patchTokenIdentifiers = internalMutation({
   },
 })
 
+// ── Seed Booking Data (split into 3 mutations to stay under 8192-write limit) ──
+
+// Shared helper: resolve inventoryUnit ID by slug + resource type (cached)
+function makeInventoryResolver(ctx: { db: any }) {
+  const cache = new Map<string, string>()
+  return async function resolveInventoryUnit(slug: string, type: string): Promise<string> {
+    const cacheKey = `${slug}|${type}`
+    const cached = cache.get(cacheKey)
+    if (cached) return cached
+
+    const units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_resourceId', (q: any) => q.eq('resourceId', slug))
+      .collect()
+
+    const match = units.find((u: any) => u.resourceType === type)
+    if (!match) throw new Error(`No inventoryUnit for ${slug} (${type})`)
+
+    const id = match._id as unknown as string
+    cache.set(cacheKey, id)
+    return id
+  }
+}
+
+// Batch 1: Customers + Bookings (~560 writes)
+export const seedBookingData_core = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const existingBooking = await ctx.db.query('bookings').first()
+    if (existingBooking) return { customerIds: [] as string[], bookingIds: [] as string[] }
+
+    const customers = generateCustomers()
+    const data = generateAllSeedData(customers)
+
+    const customerIds: string[] = []
+    for (const c of data.customers) {
+      const id = await ctx.db.insert('customers', c)
+      customerIds.push(id as unknown as string)
+    }
+
+    const bookingIds: string[] = []
+    for (const b of data.bookings) {
+      const id = await ctx.db.insert('bookings', {
+        ...b,
+        customerProfileIds: [],
+      })
+      bookingIds.push(id as unknown as string)
+    }
+
+    return { customerIds, bookingIds }
+  },
+})
+
+// Batch 2: Sessions + Reservations + Snapshots (~4,520 writes)
+export const seedBookingData_sessions = internalMutation({
+  args: { bookingIds: v.array(v.string()) },
+  handler: async (ctx, { bookingIds }) => {
+    if (bookingIds.length === 0) return
+
+    const customers = generateCustomers()
+    const data = generateAllSeedData(customers)
+    const resolveInventoryUnit = makeInventoryResolver(ctx)
+
+    // Insert bookingSessions
+    const sessionIds: string[] = []
+    for (const s of data.bookingSessions) {
+      const inventoryUnitId = await resolveInventoryUnit(s.inventorySlug, s.inventoryType)
+      const id = await ctx.db.insert('bookingSessions', {
+        bookingId: bookingIds[s.bookingIndex] as any,
+        inventoryUnitId: inventoryUnitId as any,
+        date: s.date,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        timezone: s.timezone,
+        ...(s.deliveryLocation && { deliveryLocation: s.deliveryLocation }),
+      })
+      sessionIds.push(id as unknown as string)
+    }
+
+    // Build bookingIndex → first session offset map
+    const bookingSessionOffsets = new Map<number, number>()
+    let currentBookingIdx = -1
+    for (let i = 0; i < data.bookingSessions.length; i++) {
+      const bi = data.bookingSessions[i].bookingIndex
+      if (bi !== currentBookingIdx) {
+        bookingSessionOffsets.set(bi, i)
+        currentBookingIdx = bi
+      }
+    }
+
+    // Insert reservations
+    for (const r of data.reservations) {
+      const inventoryUnitId = await resolveInventoryUnit(r.inventorySlug, r.inventoryType)
+      const sessionOffset = bookingSessionOffsets.get(r.bookingIndex) ?? 0
+      const globalSessionIdx = sessionOffset + r.sessionIndex
+
+      await ctx.db.insert('reservations', {
+        bookingId: bookingIds[r.bookingIndex] as any,
+        inventoryUnitId: inventoryUnitId as any,
+        bookingSessionId: sessionIds[globalSessionIdx] as any,
+        unitsRequested: r.unitsRequested,
+        status: r.status,
+        ...(r.confirmedAt != null && { confirmedAt: r.confirmedAt }),
+        ...(r.expiresAt != null && { expiresAt: r.expiresAt }),
+        ...(r.vacatedAt != null && { vacatedAt: r.vacatedAt }),
+        ...(r.vacatedBy != null && { vacatedBy: r.vacatedBy }),
+      })
+    }
+
+    // Insert availability snapshots
+    for (const snap of data.availabilitySnapshots) {
+      const inventoryUnitId = await resolveInventoryUnit(snap.inventorySlug, snap.inventoryType)
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: inventoryUnitId as any,
+        date: snap.date,
+        windowStart: snap.windowStart,
+        windowEnd: snap.windowEnd,
+        totalUnits: snap.totalUnits,
+        reservedUnits: snap.reservedUnits,
+        availableUnits: snap.availableUnits,
+      })
+    }
+  },
+})
+
+// Batch 3: Profiles + Links + Bags + Notifications + Booking patches (~1,920 writes)
+export const seedBookingData_profiles = internalMutation({
+  args: {
+    customerIds: v.array(v.string()),
+    bookingIds: v.array(v.string()),
+  },
+  handler: async (ctx, { customerIds, bookingIds }) => {
+    if (bookingIds.length === 0) return
+
+    const customers = generateCustomers()
+    const data = generateAllSeedData(customers)
+
+    // Insert customerProfiles + bookingLinks
+    const profileIds: string[] = []
+    for (let i = 0; i < data.customerProfiles.length; i++) {
+      const cp = data.customerProfiles[i]
+      const bl = data.bookingLinks[i]
+
+      const profileId = await ctx.db.insert('customerProfiles', {
+        bookingId: bookingIds[cp.bookingIndex] as any,
+        customerId: customerIds[cp.customerIndex] as any,
+        linkToken: cp.linkToken,
+        ...(cp.accommodationName && { accommodationName: cp.accommodationName }),
+        ...(cp.needsPickup != null && { needsPickup: cp.needsPickup }),
+        ...(cp.submittedAt != null && { submittedAt: cp.submittedAt }),
+      })
+      profileIds.push(profileId as unknown as string)
+
+      await ctx.db.insert('bookingLinks', {
+        bookingId: bookingIds[bl.bookingIndex] as any,
+        token: bl.token,
+        expiresAt: bl.expiresAt,
+        customerName: bl.customerName,
+        email: bl.email,
+      })
+    }
+
+    // Patch bookings with customerProfileIds
+    const profilesByBooking = new Map<number, string[]>()
+    for (let i = 0; i < data.customerProfiles.length; i++) {
+      const bi = data.customerProfiles[i].bookingIndex
+      const existing = profilesByBooking.get(bi) ?? []
+      existing.push(profileIds[i])
+      profilesByBooking.set(bi, existing)
+    }
+    for (const [bi, pIds] of profilesByBooking) {
+      await ctx.db.patch(bookingIds[bi] as any, {
+        customerProfileIds: pIds as any,
+      })
+    }
+
+    // Insert equipment bags
+    for (const bag of data.equipmentBags) {
+      await ctx.db.insert('equipmentBags', {
+        bagNumber: bag.bagNumber,
+        equipmentManagerId: bag.equipmentManagerId,
+        bookingId: bookingIds[bag.bookingIndex] as any,
+        status: bag.status,
+        ...(bag.assignedAt != null && { assignedAt: bag.assignedAt }),
+        ...(bag.returnedAt != null && { returnedAt: bag.returnedAt }),
+      })
+    }
+
+    // Insert notifications
+    for (const n of data.notifications) {
+      await ctx.db.insert('notifications', {
+        userId: n.userId,
+        type: n.type,
+        bookingId: bookingIds[n.bookingIndex] as any,
+        message: n.message,
+        createdAt: n.createdAt,
+      })
+    }
+  },
+})
+
 // ── GAP-25: Seed Default Theme ──────────────────────────────────────
 
 export const seedDefaultTheme = internalMutation({
@@ -439,5 +658,50 @@ export const seedDefaultTheme = internalMutation({
     for (const user of allUsers) {
       await ctx.db.patch(user._id, { selectedThemeId: themeId })
     }
+  },
+})
+
+// ── Seed Verification ───────────────────────────────────────────────
+
+const VERIFY_TABLES = [
+  'users', 'bookings', 'customers', 'customerProfiles', 'bookingLinks',
+  'bookingSessions', 'reservations', 'availabilitySnapshots',
+  'equipmentBags', 'notifications', 'inventoryUnits',
+] as const
+
+export const countTable = internalQuery({
+  args: { table: v.string() },
+  handler: async (ctx, { table }) => {
+    const rows = await ctx.db.query(table as any).collect()
+    return rows.length
+  },
+})
+
+export const checkTokenIdentifiers = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<{ total: number; unlinked: number }> => {
+    const users = await ctx.db.query('users').collect()
+    const unlinked = users.filter((u) => u.tokenIdentifier?.startsWith('seed|'))
+    return { total: users.length, unlinked: unlinked.length }
+  },
+})
+
+export const seedVerify = internalAction({
+  args: {},
+  handler: async (ctx): Promise<Record<string, number | { total: number; unlinked: number }>> => {
+    const counts: Record<string, number> = {}
+    for (const table of VERIFY_TABLES) {
+      counts[table] = await ctx.runQuery(internal.seed.countTable, { table })
+    }
+
+    // Check tokenIdentifier linkage
+    const tokenCheck = await ctx.runQuery(internal.seed.checkTokenIdentifiers)
+    if (tokenCheck.unlinked > 0) {
+      console.warn(
+        `⚠ ${tokenCheck.unlinked}/${tokenCheck.total} users still have seed| tokenIdentifiers. Run: npm run seed:clerk -- --force`,
+      )
+    }
+
+    return { ...counts, _tokenCheck: tokenCheck }
   },
 })

@@ -6,24 +6,8 @@ import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
-
-const DIVE_AGENCIES = ['PADI', 'SSI', 'NAUI', 'CMAS', 'TDI', 'SDI', 'RAID', 'BSAC', 'GUE', 'IANTD']
-
-const FOCUSED_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'th', label: 'Thai' },
-  { code: 'zh', label: 'Mandarin' },
-  { code: 'yue', label: 'Cantonese' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'de', label: 'German' },
-  { code: 'fr', label: 'French' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'he', label: 'Hebrew' },
-  { code: 'nl', label: 'Dutch' },
-  { code: 'pl', label: 'Polish' },
-]
+import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 const AOW_SPECIALTIES = [
   'Peak Performance Buoyancy',
@@ -314,7 +298,7 @@ export function DiveCenterProfileForm() {
                       style={{ color: 'var(--color-text-primary)' }}
                     >
                       <option value="">Select agency…</option>
-                      {DIVE_AGENCIES.map((a) => (
+                      {DIVE_AGENCIES_EXTENDED.map((a) => (
                         <option key={a} value={a}>{a}</option>
                       ))}
                     </select>
@@ -356,7 +340,7 @@ export function DiveCenterProfileForm() {
           Languages Offered
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {FOCUSED_LANGUAGES.map(({ code, label }) => {
+          {LANGUAGE_OPTIONS.map(({ code, label }) => {
             const checked = form.focusedLanguages.includes(code)
             return (
               <label

@@ -88,6 +88,54 @@ export const markAsRead = mutation({
   handler: _markAsReadHandler,
 })
 
+// ─── deleteNotification ──────────────────────────────────────────────────────
+
+export async function _deleteNotificationHandler(
+  ctx: AnyCtx,
+  args: { notificationId: string },
+): Promise<void> {
+  const { user: caller } = await requireAuth(ctx)
+
+  const notification = await ctx.db.get(args.notificationId)
+  if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })
+
+  if (notification.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+  await ctx.db.delete(args.notificationId)
+}
+
+export const deleteNotification = mutation({
+  args: { notificationId: v.id('notifications') },
+  handler: _deleteNotificationHandler,
+})
+
+// ─── clearAll ────────────────────────────────────────────────────────────────
+
+export async function _clearAllHandler(
+  ctx: AnyCtx,
+  args: { userId: string },
+): Promise<number> {
+  const { user: caller } = await requireAuth(ctx)
+
+  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+  const all = await ctx.db
+    .query('notifications')
+    .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', args.userId))
+    .collect()
+
+  for (const n of all) {
+    await ctx.db.delete(n._id)
+  }
+
+  return all.length
+}
+
+export const clearAll = mutation({
+  args: { userId: v.string() },
+  handler: _clearAllHandler,
+})
+
 // ─── getUnreadCount ───────────────────────────────────────────────────────────
 
 export async function _getUnreadCountHandler(

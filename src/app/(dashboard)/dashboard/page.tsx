@@ -14,7 +14,7 @@ export default function DashboardRedirectPage() {
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace('/role-select')
+      router.replace('/account')
       return
     }
 
@@ -22,15 +22,14 @@ export default function DashboardRedirectPage() {
     if (roleConfig) {
       router.replace(`/${roleConfig.key}/${user.slug}/dashboard`)
     } else {
-      // No role set yet — send to role selection
-      router.replace('/role-select')
+      // No role set yet — send to onboarding wizard
+      router.replace('/account')
     }
   }, [user, isLoading, router])
 
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: 'var(--color-surface)' }}
     >
       <div
         className="flex items-center gap-3"

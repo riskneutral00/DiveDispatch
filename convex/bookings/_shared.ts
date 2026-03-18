@@ -203,6 +203,28 @@ export function canReservationTransition(
   }
 }
 
+// ─── Overlap granularity ──────────────────────────────────────────────────────
+
+/**
+ * Returns true if the inventory unit requires full-day overlap checking.
+ *
+ * Day boats and liveaboards go to one destination per day — a single reservation
+ * blocks all other bookings on that calendar date regardless of time window.
+ * All other resource types (speedboat, longtail, catamaran, rib, instructor,
+ * equipment, etc.) use time-window granularity.
+ *
+ * Safe default: missing boatType → time-window (never over-blocks).
+ */
+export function isFullDayResource(inventoryUnit: {
+  resourceType: string
+  boatType?: string
+}): boolean {
+  return (
+    inventoryUnit.resourceType === 'Boat' &&
+    (inventoryUnit.boatType === 'day_boat' || inventoryUnit.boatType === 'liveaboard')
+  )
+}
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 /**

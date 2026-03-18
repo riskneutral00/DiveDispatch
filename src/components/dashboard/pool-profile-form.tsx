@@ -8,21 +8,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
-
-const LANGUAGES = [
-  'English',
-  'Thai',
-  'Chinese',
-  'Japanese',
-  'Korean',
-  'German',
-  'French',
-  'Spanish',
-  'Russian',
-  'Italian',
-  'Portuguese',
-  'Dutch',
-]
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 const poolSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -237,13 +223,13 @@ export function PoolProfileForm() {
             Languages Spoken
           </p>
           <div className="flex flex-wrap gap-2">
-            {LANGUAGES.map((lang) => {
-              const selected = form.focusedLanguages.includes(lang)
+            {LANGUAGE_OPTIONS.map(({ label }) => {
+              const selected = form.focusedLanguages.includes(label)
               return (
                 <button
-                  key={lang}
+                  key={label}
                   type="button"
-                  onClick={() => toggleLanguage(lang)}
+                  onClick={() => toggleLanguage(label)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-[var(--border-radius)] border transition-all"
                   style={{
                     background: selected ? 'var(--color-primary)' : 'var(--color-glass-bg)',
@@ -256,7 +242,7 @@ export function PoolProfileForm() {
                   }}
                 >
                   {selected && <Check size={12} />}
-                  {lang}
+                  {label}
                 </button>
               )
             })}

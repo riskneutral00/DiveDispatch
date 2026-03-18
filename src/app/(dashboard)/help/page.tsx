@@ -6,7 +6,6 @@ export default function HelpPage() {
   return (
     <div
       className="min-h-screen py-8 px-4 sm:px-6 lg:px-8"
-      style={{ background: 'var(--color-surface)' }}
     >
       <div className="max-w-2xl mx-auto space-y-10">
         {/* Header */}

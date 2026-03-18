@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { PreferredInstructorList } from '@/components/dashboard/preferred-instructor-list'
+import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -32,25 +33,9 @@ const ACCEPTANCE_MODES = [
 
 type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'th', label: 'Thai' },
-  { code: 'zh', label: 'Chinese (Mandarin)' },
-  { code: 'ja', label: 'Japanese' },
-  { code: 'ko', label: 'Korean' },
-  { code: 'fr', label: 'French' },
-  { code: 'de', label: 'German' },
-  { code: 'ru', label: 'Russian' },
-  { code: 'it', label: 'Italian' },
-  { code: 'es', label: 'Spanish' },
-  { code: 'pt', label: 'Portuguese' },
-  { code: 'nl', label: 'Dutch' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'he', label: 'Hebrew' },
-  { code: 'sv', label: 'Swedish' },
-]
-
-const INSTRUCTOR_ROLES = new Set(['DiveCenter', 'Agent'])
+const ORGANIZER_ROLES_WITH_INSTRUCTOR_PREFS = new Set([
+  'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite',
+])
 
 // ── Validation ───────────────────────────────────────────────────────
 
@@ -209,8 +194,8 @@ export function PreferencesEditor() {
     )
   }
 
-  const showInstructorPrefs = me?.role != null && INSTRUCTOR_ROLES.has(me.role)
-  const langItems = LANGUAGES.map(({ code, label }) => ({ value: code, label }))
+  const showInstructorPrefs = me?.role != null && ORGANIZER_ROLES_WITH_INSTRUCTOR_PREFS.has(me.role)
+  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">

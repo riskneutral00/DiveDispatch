@@ -5,6 +5,7 @@ import { api } from '../convex/_generated/api'
 import {
   releaseBookingReservations,
   tryAutoAdvance,
+  isFullDayResource,
 } from '../convex/bookings/_shared'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -505,7 +506,11 @@ describe('submitToDraft', () => {
         role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
-        blockedDates: ['2025-06-15'],
+      })
+      await ctx.db.insert('stakeholderBlockedDates', {
+        ownerSlug: 'dc-test',
+        roleType: 'DiveCenter',
+        dates: ['2025-06-15'],
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -1375,5 +1380,1089 @@ describe('tryAutoAdvance', () => {
       const booking = await ctx.db.get(bookingId)
       expect(booking?.status).toBe('Draft')
     })
+  })
+})
+
+// ─── Draft Limit Tests ────────────────────────────────────────────────────────
+
+function makeDcUser(slug: string) {
+  return {
+    tokenIdentifier: `clerk|${slug}`,
+    slug,
+    email: `${slug}@test.com`,
+    name: slug,
+    firstName: 'DC',
+    lastName: 'Test',
+    businessName: `${slug} Business`,
+    role: 'DiveCenter' as const,
+    isSeeded: false,
+    preferredLocale: 'en' as const,
+  }
+}
+
+async function insertDraftBookings(ctx: AnyCtx, ownerId: string, count: number) {
+  for (let i = 0; i < count; i++) {
+    await ctx.db.insert('bookings', {
+      ownerId,
+      ownerType: 'DiveCenter',
+      status: 'Draft',
+      createdAt: Date.now(),
+      holdTTL: HOLD_TTL,
+      paid: false,
+      activityType: [],
+      startDate: '2025-06-15',
+      endDate: '2025-06-17',
+      divers: [],
+      operatorName: `${ownerId} Business`,
+      portalContact: true,
+      portalMedical: true,
+      portalWaiver: true,
+      medicalHardBlock: false,
+      bookingFormComplete: false,
+      customerFormComplete: false,
+    })
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyCtx = any
+
+describe('createDraftShell — draft limit', () => {
+  it('1 — succeeds with 0 existing drafts', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-1'))
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-1' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('2 — succeeds with 4 existing drafts (5th allowed)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-2'))
+      await insertDraftBookings(ctx, 'dc-limit-2', 4)
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-2' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('3 — fails with 5 existing drafts', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-3'))
+      await insertDraftBookings(ctx, 'dc-limit-3', 5)
+    })
+    await expectConvexError(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|dc-limit-3' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+      'DRAFT_LIMIT',
+    )
+  })
+
+  it('4 — Cancelled bookings do not count toward limit', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-4'))
+      await insertDraftBookings(ctx, 'dc-limit-4', 3)
+      for (let i = 0; i < 5; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'dc-limit-4',
+          ownerType: 'DiveCenter',
+          status: 'Cancelled',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: [],
+          startDate: '2025-06-15',
+          endDate: '2025-06-17',
+          divers: [],
+          operatorName: 'dc-limit-4 Business',
+          portalContact: true,
+          portalMedical: true,
+          portalWaiver: true,
+          medicalHardBlock: false,
+          bookingFormComplete: false,
+          customerFormComplete: false,
+        })
+      }
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-4' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('5 — Upcoming bookings do not count toward limit', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-5'))
+      await insertDraftBookings(ctx, 'dc-limit-5', 3)
+      for (let i = 0; i < 3; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'dc-limit-5',
+          ownerType: 'DiveCenter',
+          status: 'Upcoming',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: [],
+          startDate: '2025-06-15',
+          endDate: '2025-06-17',
+          divers: [],
+          operatorName: 'dc-limit-5 Business',
+          portalContact: true,
+          portalMedical: true,
+          portalWaiver: true,
+          medicalHardBlock: false,
+          bookingFormComplete: false,
+          customerFormComplete: false,
+        })
+      }
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-5' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('6 — Completed bookings do not count toward limit', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-6'))
+      await insertDraftBookings(ctx, 'dc-limit-6', 4)
+      for (let i = 0; i < 10; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'dc-limit-6',
+          ownerType: 'DiveCenter',
+          status: 'Completed',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: [],
+          startDate: '2025-06-15',
+          endDate: '2025-06-17',
+          divers: [],
+          operatorName: 'dc-limit-6 Business',
+          portalContact: true,
+          portalMedical: true,
+          portalWaiver: true,
+          medicalHardBlock: false,
+          bookingFormComplete: false,
+          customerFormComplete: false,
+        })
+      }
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-6' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('7 — createReferralDraftShell enforced for DC (target owner)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|agent-limit-7',
+        slug: 'agent-limit-7',
+        email: 'agent7@test.com',
+        name: 'agent-limit-7',
+        firstName: 'Agent',
+        lastName: 'Test',
+        businessName: 'Agent7 Business',
+        role: 'Agent',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', makeDcUser('dc-limit-7'))
+      await insertDraftBookings(ctx, 'dc-limit-7', 5)
+    })
+    await expectConvexError(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|agent-limit-7' })
+        .mutation(api.bookingDraftMutations.createReferralDraftShell, {
+          referralDcSlug: 'dc-limit-7',
+        }),
+      'DRAFT_LIMIT',
+    )
+  })
+
+  it('8 — limit is per-operator (DC-A blocked does not block DC-B)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDcUser('dc-limit-8a'))
+      await ctx.db.insert('users', makeDcUser('dc-limit-8b'))
+      await insertDraftBookings(ctx, 'dc-limit-8a', 5)
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-8b' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+
+  it('9 — Agent has own draft limit independent of DC limit', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|agent-limit-9',
+        slug: 'agent-limit-9',
+        email: 'agent9@test.com',
+        name: 'agent-limit-9',
+        firstName: 'Agent',
+        lastName: 'Nine',
+        businessName: 'Agent9 Business',
+        role: 'Agent',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      for (let i = 0; i < 5; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'agent-limit-9',
+          ownerType: 'Agent',
+          status: 'Draft',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: [],
+          startDate: '2025-06-15',
+          endDate: '2025-06-17',
+          divers: [],
+          operatorName: 'Agent9 Business',
+          portalContact: true,
+          portalMedical: true,
+          portalWaiver: true,
+          medicalHardBlock: false,
+          bookingFormComplete: false,
+          customerFormComplete: false,
+        })
+      }
+    })
+    await expectConvexError(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|agent-limit-9' })
+        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+      'DRAFT_LIMIT',
+    )
+  })
+
+  it('10 — multi-role user: 5 DC drafts + 0 Agent drafts → Agent draft succeeds', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      // DC user at limit
+      await ctx.db.insert('users', makeDcUser('dc-limit-10'))
+      await insertDraftBookings(ctx, 'dc-limit-10', 5)
+      // Agent user (same person, different slug/role)
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|agent-limit-10',
+        slug: 'agent-limit-10',
+        email: 'agent10@test.com',
+        name: 'agent-limit-10',
+        firstName: 'Agent',
+        lastName: 'Ten',
+        businessName: 'Agent10 Business',
+        role: 'Agent',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+    })
+    const bookingId = await t
+      .withIdentity({ tokenIdentifier: 'clerk|agent-limit-10' })
+      .mutation(api.bookingDraftMutations.createDraftShell, {})
+    expect(typeof bookingId).toBe('string')
+  })
+})
+
+// ─── Overlap Granularity Tests ────────────────────────────────────────────────
+
+// Shared helpers for overlap tests
+function makeBoatDcUser(slug: string) {
+  return {
+    tokenIdentifier: `clerk|${slug}`,
+    slug,
+    email: `${slug}@test.com`,
+    name: slug,
+    firstName: 'DC',
+    lastName: 'Test',
+    businessName: `${slug} Business`,
+    role: 'DiveCenter' as const,
+    isSeeded: false,
+    preferredLocale: 'en',
+  }
+}
+
+async function setupBoatOverlapScenario(
+  ctx: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  opts: {
+    slug: string
+    boatType: string
+    capacityModel?: 'Exclusive' | 'Pooled'
+    totalUnits?: number
+  },
+) {
+  await ctx.db.insert('users', makeBoatDcUser(opts.slug))
+  const bookingId = await ctx.db.insert('bookings', {
+    ownerId: opts.slug,
+    ownerType: 'DiveCenter',
+    status: 'Draft',
+    createdAt: Date.now(),
+    holdTTL: HOLD_TTL,
+    paid: false,
+    activityType: ['OW'],
+    startDate: '2026-04-01',
+    endDate: '2026-04-01',
+    divers: [],
+    operatorName: `${opts.slug} Business`,
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: false,
+    bookingFormComplete: false,
+    customerFormComplete: false,
+  })
+  const unitId = await ctx.db.insert('inventoryUnits', {
+    resourceType: 'Boat',
+    resourceId: opts.slug,
+    displayName: `${opts.boatType} unit`,
+    capacityModel: opts.capacityModel ?? 'Exclusive',
+    totalUnits: opts.totalUnits ?? 1,
+    ownerId: opts.slug,
+    ownerType: 'Boat',
+    boatType: opts.boatType,
+  })
+  return { bookingId, unitId }
+}
+
+describe('overlap granularity — isFullDayResource helper', () => {
+  it('12 — identifies day_boat and liveaboard as full-day resources', () => {
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'day_boat' })).toBe(true)
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'liveaboard' })).toBe(true)
+  })
+
+  it('12 — identifies speedboat, longtail, catamaran, rib as time-window resources', () => {
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'speedboat' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'longtail' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'catamaran' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Boat', boatType: 'rib' })).toBe(false)
+  })
+
+  it('12 — non-Boat resources are always time-window', () => {
+    expect(isFullDayResource({ resourceType: 'Instructor' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Equipment' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Pool' })).toBe(false)
+    expect(isFullDayResource({ resourceType: 'Boat' })).toBe(false) // missing boatType = safe default
+  })
+
+  it('13 — inventoryUnit boatType field is stored and read correctly', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-dc',
+        displayName: 'Day Boat',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'boat-dc',
+        ownerType: 'Boat',
+        boatType: 'day_boat',
+      })
+      const unit = await ctx.db.get(unitId)
+      expect(unit?.boatType).toBe('day_boat')
+      expect(isFullDayResource(unit!)).toBe(true)
+    })
+  })
+})
+
+describe('overlap granularity — full-day conflict (submitToDraft)', () => {
+  it('1-overlap — day boat blocks entire date: second booking different window → CONFLICT', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-dayboat-1', boatType: 'day_boat' })
+    })
+
+    // First booking: 08:00-16:00
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-dayboat-1' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '16:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    // Second booking for same day boat, different time window → must CONFLICT
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-dayboat-1',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-dayboat-1 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-dayboat-1' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId: b2,
+          sessions: [
+            {
+              inventoryUnitId: unitId,
+              date: '2026-04-01',
+              startTime: '13:00',
+              endTime: '17:00',
+              timezone: 'Asia/Bangkok',
+              unitsRequested: 1,
+            },
+          ],
+        },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('2-overlap — liveaboard blocks entire date: second booking same date → CONFLICT', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-liveaboard-2', boatType: 'liveaboard' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-liveaboard-2' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '16:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-liveaboard-2',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-liveaboard-2 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-liveaboard-2' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId: b2,
+          sessions: [
+            {
+              inventoryUnitId: unitId,
+              date: '2026-04-01',
+              startTime: '09:00',
+              endTime: '17:00',
+              timezone: 'Asia/Bangkok',
+              unitsRequested: 1,
+            },
+          ],
+        },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('3-overlap — speedboat allows same-day different window: succeeds', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, {
+        slug: 'dc-speedboat-3',
+        boatType: 'speedboat',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+    })
+
+    // First booking: 08:00-12:00
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-speedboat-3' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '12:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    // Second booking same day, different window: should succeed (time-window resource)
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-speedboat-3',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-speedboat-3 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    // Should NOT throw CONFLICT
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-speedboat-3' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b2,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '13:00',
+            endTime: '17:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(2)
+    })
+  })
+
+  it('4-overlap — longtail allows same-day different window: succeeds', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-longtail-4', boatType: 'longtail' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-longtail-4' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '11:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-longtail-4',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-longtail-4 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-longtail-4' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b2,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '13:00',
+            endTime: '16:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(2)
+    })
+  })
+
+  it('5-overlap — catamaran allows same-day different window: succeeds', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-catamaran-5', boatType: 'catamaran' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-catamaran-5' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '12:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-catamaran-5',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-catamaran-5 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-catamaran-5' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b2,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '14:00',
+            endTime: '18:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(2)
+    })
+  })
+
+  it('6-overlap — RIB allows same-day different window: succeeds', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-rib-6', boatType: 'rib' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-rib-6' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '10:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-rib-6',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-rib-6 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-rib-6' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b2,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '11:00',
+            endTime: '13:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(2)
+    })
+  })
+
+  it('7-overlap — speedboat blocks same time window: CONFLICT', async () => {
+    const t = makeT()
+
+    const { bookingId: b1, unitId } = await t.run(async (ctx) => {
+      return setupBoatOverlapScenario(ctx, { slug: 'dc-speedboat-7', boatType: 'speedboat' })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-speedboat-7' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '12:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-speedboat-7',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-speedboat-7 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-speedboat-7' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId: b2,
+          sessions: [
+            {
+              inventoryUnitId: unitId,
+              date: '2026-04-01',
+              startTime: '08:00',
+              endTime: '12:00',
+              timezone: 'Asia/Bangkok',
+              unitsRequested: 1,
+            },
+          ],
+        },
+      ),
+      'CONFLICT',
+    )
+  })
+
+  it('8-overlap — instructor allows same-day different window: succeeds', async () => {
+    const t = makeT()
+
+    const unitId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeBoatDcUser('dc-instr-8'))
+      return ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instr-8',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instr-8',
+        ownerType: 'Instructor',
+      })
+    })
+
+    const b1 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-instr-8',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-instr-8 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-instr-8' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '12:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-instr-8',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-instr-8 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    // Different window → should succeed
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-instr-8' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b2,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '13:00',
+            endTime: '17:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(2)
+    })
+  })
+
+  it('9-overlap — instructor blocks overlapping window: CONFLICT', async () => {
+    const t = makeT()
+
+    const unitId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeBoatDcUser('dc-instr-9'))
+      return ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instr-9',
+        displayName: 'Instructor unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instr-9',
+        ownerType: 'Instructor',
+      })
+    })
+
+    const b1 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-instr-9',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-instr-9 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    // Booking 1: 08:00-12:00
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-instr-9' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: b1,
+        sessions: [
+          {
+            inventoryUnitId: unitId,
+            date: '2026-04-01',
+            startTime: '08:00',
+            endTime: '12:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const b2 = await t.run(async (ctx) => {
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-instr-9',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: '2026-04-01',
+        endDate: '2026-04-01',
+        divers: [],
+        operatorName: 'dc-instr-9 Business',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    // Booking 2: 08:00-12:00 (same window) → CONFLICT (snapshot at 08:00 has availableUnits=0)
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-instr-9' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId: b2,
+          sessions: [
+            {
+              inventoryUnitId: unitId,
+              date: '2026-04-01',
+              startTime: '08:00',
+              endTime: '12:00',
+              timezone: 'Asia/Bangkok',
+              unitsRequested: 1,
+            },
+          ],
+        },
+      ),
+      'CONFLICT',
+    )
   })
 })

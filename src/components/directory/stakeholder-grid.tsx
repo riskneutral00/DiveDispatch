@@ -1,13 +1,20 @@
 import { Users } from 'lucide-react'
-import type { DirectoryEntry } from '../../../convex/directory'
+import type { RichDirectoryEntry } from './stakeholder-card'
 import { StakeholderCard } from './stakeholder-card'
 
 interface StakeholderGridProps {
-  entries: DirectoryEntry[]
+  entries: RichDirectoryEntry[]
   isLoading?: boolean
+  preferredSlugs?: string[]
+  onTogglePreferred?: (slug: string) => void
 }
 
-export function StakeholderGrid({ entries, isLoading }: StakeholderGridProps) {
+export function StakeholderGrid({
+  entries,
+  isLoading,
+  preferredSlugs = [],
+  onTogglePreferred,
+}: StakeholderGridProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -38,7 +45,12 @@ export function StakeholderGrid({ entries, isLoading }: StakeholderGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {entries.map((entry) => (
-        <StakeholderCard key={`${entry.role}-${entry.slug}`} entry={entry} />
+        <StakeholderCard
+          key={`${entry.role}-${entry.slug}`}
+          entry={entry}
+          isPreferred={preferredSlugs.includes(entry.slug)}
+          onTogglePreferred={onTogglePreferred}
+        />
       ))}
     </div>
   )
