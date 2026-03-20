@@ -270,7 +270,7 @@ export function DayRow({
                 onChange={(e) =>
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
                 }
-                placeholder="External"
+                placeholder="Instructor name"
               />
               <button
                 type="button"
@@ -328,7 +328,7 @@ export function DayRow({
                         : { externalVenueName: e.target.value }
                       dispatch({ type: 'UPDATE_DAY', dayIndex, patch })
                     }}
-                    placeholder="External"
+                    placeholder={`${venueLabel} name`}
                   />
                   <button
                     type="button"

@@ -76,62 +76,6 @@ test.describe('dashboard layout: no below-calendar content', () => {
   }
 })
 
-test.describe('dashboard calendar: pill sub-labels per role', () => {
-  test('Operator (Nicole DC): pills show instructor first name', async ({ page }) => {
-    await signInAs(page, NICOLE.email)
-    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath.replace(/[/]/g, '\\/')))
-    await expect(page.locator('[data-testid="booking-calendar"]')).toBeVisible({ timeout: 10_000 })
-    await expect(page.locator('[data-testid^="cell-"]').first()).toBeVisible({ timeout: 10_000 })
-
-    // Find any pill button with a sub-label separator
-    const pills = page.locator('[data-testid^="day-pills-"] button')
-    const count = await pills.count()
-    let found = false
-    for (let i = 0; i < count; i++) {
-      const text = await pills.nth(i).textContent()
-      if (text && text.includes(' \u00b7 ')) {
-        found = true
-        const subLabel = text.split(' \u00b7 ')[1]
-        // Sub-label should be a short first name (no "Dive Center", "Dive Resort", etc.)
-        expect(subLabel).toBeTruthy()
-        expect(subLabel).not.toContain('Dive Center')
-        expect(subLabel).not.toContain('Dive Resort')
-        // First names are single words
-        expect(subLabel!.split(' ')).toHaveLength(1)
-      }
-    }
-    expect(found, 'Expected at least one pill with a sub-label separator').toBe(true)
-  })
-
-  test('Instructor (Ryan Clarke): pills show shortened operator name', async ({ page }) => {
-    await signInAs(page, RYAN_CLARKE.email)
-    await expect(page).toHaveURL(new RegExp(RYAN_CLARKE.dashboardPath.replace(/[/]/g, '\\/')))
-    await expect(page.locator('[data-testid="booking-calendar"]')).toBeVisible({ timeout: 10_000 })
-    await expect(page.locator('[data-testid^="cell-"]').first()).toBeVisible({ timeout: 10_000 })
-
-    // Navigate forward through calendar ranges to find pills (seed bookings may be in future weeks)
-    const nextBtn = page.locator('button[aria-label="Next 2 weeks"]')
-    let found = false
-    for (let attempt = 0; attempt < 6 && !found; attempt++) {
-      const pills = page.locator('[data-testid^="day-pills-"] button')
-      const count = await pills.count()
-      for (let i = 0; i < count; i++) {
-        const text = await pills.nth(i).textContent()
-        if (text && text.includes(' \u00b7 ')) {
-          found = true
-          const subLabel = text.split(' \u00b7 ')[1]
-          expect(subLabel).toBeTruthy()
-          // Should not be "Ryan" (the viewer's own name) — it should be the operator
-          expect(subLabel).not.toBe('Ryan')
-          break
-        }
-      }
-      if (!found) await nextBtn.click()
-    }
-    expect(found, 'Expected at least one pill with a sub-label separator within 12 weeks').toBe(true)
-  })
-})
-
 test.describe('dashboard calendar: scroll threshold', () => {
   test('day cells have scroll container with 5-booking max-height', async ({ page }) => {
     await signInAs(page, NICOLE.email)
@@ -145,7 +89,7 @@ test.describe('dashboard calendar: scroll threshold', () => {
     for (let i = 0; i < count; i++) {
       const el = pillContainers.nth(i)
       await expect(el).toHaveCSS('overflow-y', 'auto')
-      await expect(el).toHaveCSS('height', '140px')
+      await expect(el).toHaveCSS('max-height', '140px')
     }
   })
 })

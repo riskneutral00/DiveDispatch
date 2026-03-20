@@ -9,7 +9,6 @@ import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
 import { GlassCard } from '@/components/glass'
 import { courseLabel } from '@/lib/constants/course-catalog'
-import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
 import {
   useCalendarRange,
   getDaysOfWeek,
@@ -31,7 +30,6 @@ interface BookingCalendarProps {
   onUrgentCancel?: (bookingId: string) => void
   legendStatuses?: CalendarDisplayStatus[]
   allDraftsUrgent?: boolean
-  viewerRole?: string
   footerAction?: React.ReactNode
   className?: string
 }
@@ -44,6 +42,12 @@ function buildBarLabel(booking: CalendarBooking): string {
   return types.map(courseLabel).join(', ') || 'Booking'
 }
 
+function buildBarSubLabel(booking: CalendarBooking): string | undefined {
+  const name = booking.customerName
+  if (!name) return undefined
+  return name.split(' ')[0]
+}
+
 export function BookingCalendar({
   bookings = [],
   blockedDates,
@@ -54,7 +58,6 @@ export function BookingCalendar({
   onUrgentCancel,
   legendStatuses,
   allDraftsUrgent = false,
-  viewerRole,
   footerAction,
   className,
 }: BookingCalendarProps) {
@@ -345,7 +348,7 @@ export function BookingCalendar({
                     <div
                       data-testid={`day-pills-${day.dateString}`}
                       className="overflow-y-auto"
-                      style={{ height: `${DAY_CELL_PILLS_MAX_HEIGHT}px` }}
+                      style={{ maxHeight: `${DAY_CELL_PILLS_MAX_HEIGHT}px` }}
                     >
                     {dayBars.map((bar) => {
                       const booking = resolvedBookings.find((b) => b._id === bar.id)
@@ -353,7 +356,7 @@ export function BookingCalendar({
                       const statusColors = STATUS_COLORS[bar.status]
                       const opacity = STATUS_OPACITY[bar.status]
                       const borderStyle = STATUS_BORDER_STYLE[bar.status]
-                      const subLabel = booking ? buildBarSubLabel(booking, viewerRole) : undefined
+                      const subLabel = booking ? buildBarSubLabel(booking) : undefined
 
                       // Label-follows-today: show label only on the "active" day cell
                       let showLabel = true
