@@ -44,6 +44,12 @@ export type SessionInput = {
   }>
 }
 
+export type BookingResourceInput = {
+  resourceType: string
+  resourceSlug?: string
+  externalName?: string
+}
+
 export type BookingData = {
   activityType: CourseCode[]
   startDate: string
@@ -51,20 +57,9 @@ export type BookingData = {
   portalContact: boolean
   portalMedical: boolean
   portalWaiver: boolean
-  instructorId?: string
-  boatId?: string
-  equipmentManagerId?: string
-  poolId?: string
-  compressorId?: string
   agentId?: string
   agentIsReferral?: boolean
-  externalStakeholders?: {
-    instructorName?: string
-    boatName?: string
-    equipmentManagerName?: string
-    poolName?: string
-    compressorName?: string
-  }
+  resources?: BookingResourceInput[]
   divers: Array<{
     name: string
     abbrev: string
@@ -84,7 +79,8 @@ export type SubmitToDraftArgs = {
 
 // ─── Validators ───────────────────────────────────────────────────────────────
 
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
+import { getResourcesForBooking } from '../bookingResources'
 
 export const courseCodeValidator = v.union(
   v.literal('DSD'),
@@ -120,6 +116,12 @@ export const sessionValidator = v.object({
   ),
 })
 
+export const bookingResourceInputValidator = v.object({
+  resourceType: v.string(),
+  resourceSlug: v.optional(v.string()),
+  externalName: v.optional(v.string()),
+})
+
 export const bookingDataValidator = v.object({
   activityType: v.array(courseCodeValidator),
   startDate: v.string(),
@@ -127,22 +129,9 @@ export const bookingDataValidator = v.object({
   portalContact: v.boolean(),
   portalMedical: v.boolean(),
   portalWaiver: v.boolean(),
-  instructorId: v.optional(v.string()),
-  boatId: v.optional(v.string()),
-  equipmentManagerId: v.optional(v.string()),
-  poolId: v.optional(v.string()),
-  compressorId: v.optional(v.string()),
   agentId: v.optional(v.string()),
   agentIsReferral: v.optional(v.boolean()),
-  externalStakeholders: v.optional(
-    v.object({
-      instructorName: v.optional(v.string()),
-      boatName: v.optional(v.string()),
-      equipmentManagerName: v.optional(v.string()),
-      poolName: v.optional(v.string()),
-      compressorName: v.optional(v.string()),
-    }),
-  ),
+  resources: v.optional(v.array(bookingResourceInputValidator)),
   divers: v.array(
     v.object({
       name: v.string(),
@@ -239,6 +228,32 @@ export function isBookingExpired(booking: {
   return booking.status === 'Draft' && booking.expiresAt != null && booking.expiresAt < Date.now()
 }
 
+// ─── Past-date guard ─────────────────────────────────────────────────────
+
+/**
+ * Throws ConvexError if any session date is before today (server-side, timezone-aware).
+ * Uses the same Intl.DateTimeFormat pattern as isSessionEnded.
+ */
+export function assertNoPastDates(
+  sessions: { date: string; timezone?: string }[],
+  timezone = 'Asia/Bangkok',
+): void {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const parts = Object.fromEntries(formatter.formatToParts(Date.now()).map((p) => [p.type, p.value]))
+  const todayISO = `${parts.year}-${parts.month}-${parts.day}`
+
+  for (const session of sessions) {
+    if (session.date < todayISO) {
+      throw new ConvexError({ code: 'PAST_DATE', date: session.date })
+    }
+  }
+}
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 /**
@@ -312,7 +327,12 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
   // Release the EM reservation when every customer owns all their gear.
   // Requires: booking has an in-system EM, all customer profiles have submitted
   // rentalChecklist, and every gear type is 'own'. Missing checklist → keep hold.
-  if (booking.equipmentManagerId) {
+  const bookingResourceRows = await getResourcesForBooking(ctx, bookingId)
+  const hasInSystemEM = bookingResourceRows.some(
+    (r: { resourceType: string; resourceSlug?: string }) =>
+      r.resourceType === 'Equipment' && r.resourceSlug,
+  )
+  if (hasInSystemEM) {
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))

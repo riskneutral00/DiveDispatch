@@ -2,6 +2,7 @@
 
 import type { BookingDetailReservation } from '../../../convex/bookings'
 import { GlassBadge } from '@/components/glass'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -34,18 +35,6 @@ function statusLabel(status: BookingDetailReservation['status']): string {
     default:
       return status
   }
-}
-
-function resourceTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    Instructor: 'Instructor',
-    DiveMaster: 'Divemaster',
-    Boat: 'Boat',
-    Equipment: 'Equipment',
-    Pool: 'Pool',
-    Compressor: 'Compressor',
-  }
-  return labels[type] ?? type
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -86,8 +75,16 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
               {res.inventoryUnitName}
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-              {resourceTypeLabel(res.resourceType)}
+              {ROLE_BY_CLERK_ROLE[res.resourceType as ClerkRole]?.label ?? res.resourceType}
+              {res.stakeholderName && (
+                <> · <span style={{ color: 'var(--color-text-secondary)' }}>{res.stakeholderName}</span></>
+              )}
             </p>
+            {res.vacatedBy && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--color-destructive)' }}>
+                Reason: {res.vacatedBy.replace(/_/g, ' ')}
+              </p>
+            )}
           </div>
           <GlassBadge variant={reservationVariant(res.status)} size="sm" dot>
             {statusLabel(res.status)}

@@ -10,7 +10,10 @@ import {
   releaseBookingReservations,
   tryAutoAdvance,
   isFullDayResource,
+  assertNoPastDates,
 } from './_shared'
+import { logBookingChange } from '../bookingAuditLog'
+import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
 
@@ -38,24 +41,15 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
-  // An external resource has a freeform name but no in-system ID on the booking.
+  // A resource with externalName (no resourceSlug) is outside the system.
   // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
-  // Prefer bookingData (new wizard state) over the stored booking fields for this check,
-  // since createDraftShell creates a bare-bones booking with no resource IDs set.
-  const resolvedExt = args.bookingData?.externalStakeholders ??
-    (booking.externalStakeholders as Record<string, string | undefined> | undefined)
-  const resolvedInstructorId = args.bookingData?.instructorId ?? booking.instructorId
-  const resolvedBoatId = args.bookingData?.boatId ?? booking.boatId
-  const resolvedEquipmentManagerId = args.bookingData?.equipmentManagerId ?? booking.equipmentManagerId
-  const resolvedPoolId = args.bookingData?.poolId ?? booking.poolId
-  const resolvedCompressorId = args.bookingData?.compressorId ?? booking.compressorId
-
+  const resources = args.bookingData?.resources ?? []
   const externalResourceTypes = new Set<string>()
-  if (!resolvedInstructorId && resolvedExt?.instructorName) externalResourceTypes.add('Instructor')
-  if (!resolvedBoatId && resolvedExt?.boatName) externalResourceTypes.add('Boat')
-  if (!resolvedEquipmentManagerId && resolvedExt?.equipmentManagerName) externalResourceTypes.add('Equipment')
-  if (!resolvedPoolId && resolvedExt?.poolName) externalResourceTypes.add('Pool')
-  if (!resolvedCompressorId && resolvedExt?.compressorName) externalResourceTypes.add('Compressor')
+  for (const r of resources) {
+    if (!r.resourceSlug && r.externalName) {
+      externalResourceTypes.add(r.resourceType)
+    }
+  }
 
   // 4. Blocked dates — reject before touching inventory
   const blockedDateDocs = await ctx.db
@@ -69,13 +63,35 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     }
   }
 
-  // 5. Edit mode — vacate existing holds and delete old session rows
+  // 4b. Past dates — reject sessions starting before today
+  assertNoPastDates(args.sessions)
+
+  // 5. Max non-confined dives per day — reject if any date exceeds 3
+  const nonConfinedPerDate = new Map<string, number>()
+  for (const session of args.sessions) {
+    if (!session.diveSlots) continue
+    for (const slot of session.diveSlots) {
+      if (!slot.isConfined) {
+        const count = nonConfinedPerDate.get(session.date) ?? 0
+        nonConfinedPerDate.set(session.date, count + 1)
+      }
+    }
+  }
+  for (const [date, count] of nonConfinedPerDate) {
+    if (count > 3) {
+      throw new ConvexError({ code: 'MAX_DIVES_EXCEEDED', date, count })
+    }
+  }
+
+  // 6. Edit mode — vacate existing holds and delete old session rows
   const existingReservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
     .collect()
 
-  if (existingReservations.length > 0) {
+  const isResubmit = existingReservations.length > 0
+
+  if (isResubmit) {
     await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
     const existingSessions = await ctx.db
       .query('bookingSessions')
@@ -187,7 +203,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       diveSlots: session.diveSlots,
     })
 
-    // Auto-confirm if stakeholder has opted into Auto acceptance mode
+    // Auto-confirm: stakeholder preference, out-of-system owner, or self-booking
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q: AnyCtx) =>
@@ -195,7 +211,13 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       )
       .unique()
 
-    const isAutoAccept = prefs?.acceptanceMode === 'Auto'
+    const ownerUser = await ctx.db
+      .query('users')
+      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', inventoryUnit.ownerId))
+      .unique()
+
+    const isSelfBooking = inventoryUnit.ownerId === booking.ownerId
+    const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? 'Confirmed' : 'PendingAcceptance'
 
     await ctx.db.insert('reservations', {
@@ -210,8 +232,6 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   }
 
   // Mark booking submitted and set TTL window.
-  // When bookingData is provided, persist the operator-supplied fields so the booking
-  // record reflects the actual wizard values (not the bare createDraftShell defaults).
   await ctx.db.patch(args.bookingId, {
     submittedAt: now,
     expiresAt,
@@ -223,20 +243,65 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       portalContact: args.bookingData.portalContact,
       portalMedical: args.bookingData.portalMedical,
       portalWaiver: args.bookingData.portalWaiver,
-      instructorId: args.bookingData.instructorId,
-      boatId: args.bookingData.boatId,
-      equipmentManagerId: args.bookingData.equipmentManagerId,
-      poolId: args.bookingData.poolId,
-      compressorId: args.bookingData.compressorId,
       agentId: args.bookingData.agentId,
       agentIsReferral: args.bookingData.agentIsReferral,
-      externalStakeholders: args.bookingData.externalStakeholders,
       divers: args.bookingData.divers,
     }),
   })
 
+  // ── Write bookingResources junction table ───────────────────────────────
+  if (isResubmit) {
+    await deleteResourcesForBooking(ctx, args.bookingId)
+  }
+  for (const r of resources) {
+    await insertBookingResource(ctx, args.bookingId, r.resourceType, r.resourceSlug, r.externalName)
+  }
+
   // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
   await tryAutoAdvance(ctx, args.bookingId)
+
+  // ── Audit log ──────────────────────────────────────────────────────────────
+  if (isResubmit && args.bookingData) {
+    // Compute diff: compare stored booking fields vs new bookingData
+    const diff: Record<string, { old: unknown; new: unknown }> = {}
+    const scalarFields = [
+      'startDate',
+      'endDate',
+      'agentId',
+    ] as const
+    for (const field of scalarFields) {
+      const oldVal = (booking as Record<string, unknown>)[field]
+      const newVal = (args.bookingData as Record<string, unknown>)[field]
+      if (oldVal !== newVal) {
+        diff[field] = { old: oldVal, new: newVal }
+      }
+    }
+    if (Object.keys(diff).length > 0) {
+      await logBookingChange(ctx, {
+        bookingId: args.bookingId,
+        action: 'edited',
+        actorSlug: user.slug,
+        actorType: 'operator',
+        diff: JSON.stringify(diff),
+      })
+    }
+  }
+
+  if (!isResubmit) {
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'created',
+      actorSlug: user.slug,
+      actorType: 'operator',
+    })
+  }
+
+  await logBookingChange(ctx, {
+    bookingId: args.bookingId,
+    action: 'submitted',
+    actorSlug: user.slug,
+    actorType: 'operator',
+  })
 
   return args.bookingId
 }

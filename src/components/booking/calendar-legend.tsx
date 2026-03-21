@@ -25,8 +25,9 @@ export function CalendarLegend({
 }: CalendarLegendProps) {
   return (
     <div
-      className={`flex flex-wrap gap-1.5${className ? ` ${className}` : ''}`}
+      className={`flex flex-wrap items-center gap-1.5${className ? ` ${className}` : ''}`}
     >
+      {/* Status border pills */}
       {statuses.map((status) => {
         const isHidden = hiddenStatuses?.has(status) ?? false
         const colors = STATUS_COLORS[status]
@@ -51,7 +52,7 @@ export function CalendarLegend({
               type="button"
               onClick={() => onToggle(status)}
               title={isHidden ? `Show ${status}` : `Hide ${status}`}
-              className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer"
+              className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
               style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
             >
               {status}
@@ -76,14 +77,14 @@ export function CalendarLegend({
             type="button"
             onClick={onToggleBlocked}
             title={blockedHidden ? 'Show Blocked' : 'Hide Blocked'}
-            className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer"
+            className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
             style={{
               fontSize: 'clamp(9px, 1.8vw, 12px)',
-              color: 'var(--color-text-secondary)',
+              color: 'var(--color-blocked)',
               background: blockedHidden
                 ? 'transparent'
-                : 'color-mix(in srgb, var(--color-text-secondary) 10%, transparent)',
-              border: '1px solid var(--color-glass-border)',
+                : 'var(--color-blocked-bg)',
+              border: '1px solid var(--color-blocked-border)',
               opacity: blockedHidden ? 0.55 : 1,
             }}
           >
@@ -94,9 +95,9 @@ export function CalendarLegend({
             className="rounded-full px-2 py-0.5 font-medium select-none"
             style={{
               fontSize: 'clamp(9px, 1.8vw, 12px)',
-              color: 'var(--color-text-secondary)',
-              background: 'color-mix(in srgb, var(--color-text-secondary) 10%, transparent)',
-              border: '1px solid var(--color-glass-border)',
+              color: 'var(--color-blocked)',
+              background: 'var(--color-blocked-bg)',
+              border: '1px solid var(--color-blocked-border)',
             }}
           >
             Blocked

@@ -1,4 +1,4 @@
-// 50 freelance instructors for seed data.
+// 40 freelance instructors for seed data.
 // DCs pull instructors by language match.
 
 import { SeedStakeholder, SeedUser } from './seedData'
@@ -57,27 +57,17 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 }
 
 const ROSTER: InstructorDef[] = [
-  // ── English-primary (1–10) ────────────────────────────────────────
-  { firstName: 'James', lastName: 'Cooper', languages: ['English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Sarah', lastName: 'Mitchell', languages: ['English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Tom', lastName: 'Harrison', languages: ['English', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Emily', lastName: 'Watson', languages: ['English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
+  // ── English-primary (1) ───────────────────────────────────────────
   { firstName: 'Ryan', lastName: 'Clarke', languages: ['English', 'French'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Daniel', lastName: 'Moore', languages: ['English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Laura', lastName: 'Bennett', languages: ['English', 'Thai'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Chris', lastName: 'Taylor', languages: ['English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Jessica', lastName: 'Adams', languages: ['English', 'German'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Mark', lastName: 'Sullivan', languages: ['English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
 
-  // ── Thai-primary (11–16) ──────────────────────────────────────────
-  { firstName: 'Somchai', lastName: 'Phetpradap', languages: ['Thai', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // ── Thai-primary (2–6) ────────────────────────────────────────────
   { firstName: 'Nattaya', lastName: 'Srisuk', languages: ['Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Kittipong', lastName: 'Jaidee', languages: ['Thai', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Arisa', lastName: 'Tanaka', languages: ['Thai', 'Japanese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Prasit', lastName: 'Wongsawat', languages: ['Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Supachai', lastName: 'Rattana', languages: ['Thai', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── Mandarin-primary (17–24) ──────────────────────────────────────
+  // ── Mandarin-primary (7–14) ───────────────────────────────────────
   { firstName: 'Wei', lastName: 'Chen', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Li', lastName: 'Ming', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Zhang', lastName: 'Yong', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
@@ -87,33 +77,33 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Liu', lastName: 'Hao', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Xu', lastName: 'Wei', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── Chinese-primary (25–28) ───────────────────────────────────────
+  // ── Chinese-primary (15–18) ───────────────────────────────────────
   { firstName: 'Zhou', lastName: 'Peng', languages: ['Chinese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Sun', lastName: 'Jing', languages: ['Chinese', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Ma', lastName: 'Lin', languages: ['Chinese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Gao', lastName: 'Tian', languages: ['Chinese', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── French-primary (29–32) ────────────────────────────────────────
+  // ── French-primary (19–22) ────────────────────────────────────────
   { firstName: 'Pierre', lastName: 'Dubois', languages: ['French', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Marie', lastName: 'Lefevre', languages: ['French'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Antoine', lastName: 'Bernard', languages: ['French', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Sophie', lastName: 'Martin', languages: ['French', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── German-primary (33–35) ────────────────────────────────────────
+  // ── German-primary (23–25) ────────────────────────────────────────
   { firstName: 'Klaus', lastName: 'Weber', languages: ['German', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Stefan', lastName: 'Braun', languages: ['German'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Heidi', lastName: 'Fischer', languages: ['German', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── Cantonese-primary (36–38) ─────────────────────────────────────
+  // ── Cantonese-primary (26–28) ─────────────────────────────────────
   { firstName: 'Chan', lastName: 'Wing', languages: ['Cantonese', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Lam', lastName: 'Ka Yan', languages: ['Cantonese'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
   { firstName: 'Ho', lastName: 'Siu Ming', languages: ['Cantonese', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
 
-  // ── Korean-primary (39–40) ────────────────────────────────────────
+  // ── Korean-primary (29–30) ────────────────────────────────────────
   { firstName: 'Park', lastName: 'Joon', languages: ['Korean', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
   { firstName: 'Kim', lastName: 'Soo-Yeon', languages: ['Korean'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
 
-  // ── SSI-only (41–46) ──────────────────────────────────────────────
+  // ── SSI-only (31–36) ──────────────────────────────────────────────
   { firstName: 'Yuki', lastName: 'Tanaka', languages: ['Japanese', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
   { firstName: 'Kenji', lastName: 'Nakamura', languages: ['Japanese'], credentials: [{ agency: 'SSI', level: 'Specialty Instructor' }] },
   { firstName: 'Dmitri', lastName: 'Volkov', languages: ['Russian', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
@@ -121,7 +111,7 @@ const ROSTER: InstructorDef[] = [
   { firstName: 'Ben', lastName: 'Walker', languages: ['English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
   { firstName: 'Alex', lastName: 'Turner', languages: ['English', 'Thai'], credentials: [{ agency: 'SSI', level: 'Specialty Instructor' }] },
 
-  // ── Dual-certified PADI + SSI (47–50) ─────────────────────────────
+  // ── Dual-certified PADI + SSI (37–40) ─────────────────────────────
   { firstName: 'Mike', lastName: 'Chen', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }] },
   { firstName: 'Rachel', lastName: 'Nguyen', languages: ['English', 'French'], credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'Specialty Instructor' }] },
   { firstName: 'Lee', lastName: 'Min-Ho', languages: ['Korean', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }, { agency: 'PADI', level: 'OWSI' }] },

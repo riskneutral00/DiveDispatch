@@ -1,10 +1,8 @@
 import {
-  BookOpen,
   LayoutDashboard,
   Settings,
   Users,
 } from 'lucide-react'
-import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 export interface NavItem {
   key: string
@@ -13,22 +11,12 @@ export interface NavItem {
   Icon: React.ElementType
 }
 
-export function buildNavItems(roleSlug: RoleKey, slug: string): NavItem[] {
-  const roleConfig = ROLE_BY_KEY[roleSlug]
+export function buildNavItems(roleSlug: string, slug: string): NavItem[] {
   const base = `/${roleSlug}/${slug}`
 
-  const items: NavItem[] = [
+  return [
     { key: 'dashboard', label: 'Dashboard', href: `${base}/dashboard`, Icon: LayoutDashboard },
+    { key: 'directory', label: 'Directory', href: `/directory`, Icon: Users },
+    { key: 'settings', label: 'Settings', href: `${base}/settings`, Icon: Settings },
   ]
-
-  if (roleConfig?.isOrganizer) {
-    items.push(
-      { key: 'bookings', label: 'Bookings', href: `${base}/bookings`, Icon: BookOpen },
-      { key: 'directory', label: 'Directory', href: `${base}/directory`, Icon: Users },
-    )
-  }
-
-  items.push({ key: 'settings', label: 'Settings', href: `${base}/settings`, Icon: Settings })
-
-  return items
 }

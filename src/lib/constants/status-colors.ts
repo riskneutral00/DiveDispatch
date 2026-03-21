@@ -1,6 +1,6 @@
 export type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
 
-export type CalendarDisplayStatus = BookingStatus | 'Active' | 'Urgent'
+export type CalendarDisplayStatus = BookingStatus | 'Active' | 'Urgent' | 'MultiDay'
 
 export const LOCKING_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set([
   'Active',
@@ -14,6 +14,28 @@ export const TERMINAL_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set([
   'Cancelled',
   'Completed',
 ])
+
+// Opacity for booking bars — Draft faded, Completed muted, others full
+export const STATUS_OPACITY: Record<CalendarDisplayStatus, number> = {
+  Active: 1.0,
+  Draft: 1.0,
+  Upcoming: 1.0,
+  Completed: 0.6,
+  Cancelled: 0,
+  Urgent: 1.0,
+  MultiDay: 1.0,
+}
+
+// Border style — Draft uses dashed to signal incomplete state
+export const STATUS_BORDER_STYLE: Record<CalendarDisplayStatus, 'dashed' | 'solid'> = {
+  Active: 'solid',
+  Draft: 'solid',
+  Upcoming: 'solid',
+  Completed: 'solid',
+  Cancelled: 'solid',
+  Urgent: 'solid',
+  MultiDay: 'solid',
+}
 
 // CSS custom property keys — defined in globals.css
 export const STATUS_COLORS: Record<
@@ -60,5 +82,11 @@ export const STATUS_COLORS: Record<
     bgVar: 'var(--color-status-urgent-bg)',
     borderVar: 'var(--color-status-urgent-border)',
     dotVar: 'var(--color-status-urgent)',
+  },
+  MultiDay: {
+    textVar: 'var(--color-status-multiday)',
+    bgVar: 'var(--color-status-multiday-bg)',
+    borderVar: 'var(--color-status-multiday-border)',
+    dotVar: 'var(--color-status-multiday)',
   },
 }

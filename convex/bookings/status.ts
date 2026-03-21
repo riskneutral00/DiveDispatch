@@ -8,6 +8,7 @@ import {
   isSessionEnded,
   isBookingExpired,
 } from './_shared'
+import { logBookingChange } from '../bookingAuditLog'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
@@ -33,6 +34,12 @@ export const cancelBooking = mutation({
 
     await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
     await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'cancelled',
+      actorSlug: user.slug,
+      actorType: 'operator',
+    })
   },
 })
 
@@ -54,6 +61,12 @@ export const expireBooking = mutation({
 
     await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
     await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'expired',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
   },
 })
 
@@ -91,6 +104,12 @@ export const completeBookings = internalMutation({
 
       if (isSessionEnded(last.date, last.endTime, last.timezone)) {
         await ctx.db.patch(booking._id, { status: 'Completed' })
+        await logBookingChange(ctx, {
+          bookingId: booking._id,
+          action: 'completed',
+          actorSlug: 'system',
+          actorType: 'system',
+        })
         completed++
       }
     }

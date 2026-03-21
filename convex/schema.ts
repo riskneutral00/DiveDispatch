@@ -21,7 +21,7 @@ const resourceOwnerType = v.union(
   v.literal('Liveaboard'),
   v.literal('DiveSite'),
 )
-// Liveaboard and DiveSite are dual-role (organizer + resource).
+// Liveaboard is a pure operator; DiveSite is a pure resource.
 // DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT added to this union.
 // DiveHostel inherits DiveResort's path — NOT added to this union.
 
@@ -125,7 +125,6 @@ export default defineSchema({
     nickname: v.optional(v.string()),
     businessName: v.string(),
     role: stakeholderType,
-    additionalRoles: v.optional(v.array(stakeholderType)),
     isSeeded: v.boolean(),
     preferredLocale: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
@@ -145,6 +144,18 @@ export default defineSchema({
   })
     .index('by_slug', ['slug'])
     .index('by_isActive', ['isActive']),
+
+  // ── L1: Booking Resources (junction table) ────────────────────────────
+
+  bookingResources: defineTable({
+    bookingId: v.id('bookings'),
+    resourceType: resourceOwnerType,
+    resourceSlug: v.optional(v.string()),
+    externalName: v.optional(v.string()),
+  })
+    .index('by_bookingId', ['bookingId'])
+    .index('by_resourceSlug', ['resourceSlug'])
+    .index('by_resourceType_resourceSlug', ['resourceType', 'resourceSlug']),
 
   // ── L1: Core Booking Tables ─────────────────────────────────────────
 
@@ -173,21 +184,7 @@ export default defineSchema({
       }),
     ),
     agentIsReferral: v.optional(v.boolean()),
-    instructorId: v.optional(v.string()),
-    boatId: v.optional(v.string()),
-    equipmentManagerId: v.optional(v.string()),
-    poolId: v.optional(v.string()),
-    compressorId: v.optional(v.string()),
     agentId: v.optional(v.string()),
-    externalStakeholders: v.optional(
-      v.object({
-        instructorName: v.optional(v.string()),
-        boatName: v.optional(v.string()),
-        equipmentManagerName: v.optional(v.string()),
-        poolName: v.optional(v.string()),
-        compressorName: v.optional(v.string()),
-      }),
-    ),
     operatorName: v.string(),
     portalContact: v.boolean(),
     portalMedical: v.boolean(),
@@ -199,11 +196,6 @@ export default defineSchema({
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_status', ['status'])
-    .index('by_instructorId', ['instructorId'])
-    .index('by_boatId', ['boatId'])
-    .index('by_equipmentManagerId', ['equipmentManagerId'])
-    .index('by_poolId', ['poolId'])
-    .index('by_compressorId', ['compressorId'])
     .index('by_agentId', ['agentId']),
 
   bookingSessions: defineTable({
@@ -311,6 +303,7 @@ export default defineSchema({
     customerName: v.string(),
     email: v.string(),
     usedAt: v.optional(v.number()),
+    channel: v.optional(v.union(v.literal('whatsapp'), v.literal('line'), v.literal('email'), v.literal('sms'))),
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_token', ['token']),
@@ -595,11 +588,10 @@ export default defineSchema({
     ownerType: operatorType,
     name: v.string(),
     activityType: v.array(courseCode),
-    instructorId: v.optional(v.string()),
-    boatId: v.optional(v.string()),
-    equipmentManagerId: v.optional(v.string()),
-    poolId: v.optional(v.string()),
-    compressorId: v.optional(v.string()),
+    resources: v.optional(v.array(v.object({
+      resourceType: resourceOwnerType,
+      resourceSlug: v.string(),
+    }))),
     createdAt: v.number(),
   }).index('by_ownerId_ownerType', ['ownerId', 'ownerType']),
 
@@ -743,4 +735,36 @@ export default defineSchema({
     status: v.string(),
     createdAt: v.number(),
   }).index('by_userId', ['userId']),
+
+  // ── L7: Audit Trail ──────────────────────────────────────────────────────────
+
+  bookingAuditLog: defineTable({
+    bookingId: v.id('bookings'),
+    action: v.union(
+      v.literal('created'),
+      v.literal('submitted'),
+      v.literal('confirmed'),
+      v.literal('cancelled'),
+      v.literal('expired'),
+      v.literal('completed'),
+      v.literal('edited'),
+      v.literal('reservation_accepted'),
+      v.literal('reservation_declined'),
+      v.literal('portal_submitted'),
+      v.literal('medical_blocked'),
+      v.literal('medical_cleared'),
+    ),
+    actorSlug: v.string(),
+    actorType: v.union(
+      v.literal('operator'),
+      v.literal('resource'),
+      v.literal('customer'),
+      v.literal('system'),
+    ),
+    timestamp: v.number(),
+    diff: v.optional(v.string()),
+    note: v.optional(v.string()),
+  })
+    .index('by_bookingId', ['bookingId'])
+    .index('by_bookingId_timestamp', ['bookingId', 'timestamp']),
 })

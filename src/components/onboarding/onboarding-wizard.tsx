@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
+import { Spinner } from '@/components/common/spinner'
+import { StepIndicator } from '@/components/common/step-indicator'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
@@ -81,12 +83,8 @@ export function OnboardingWizard() {
 
   if (!user || !onboardingStatus) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-text-secondary)' }}
-          aria-hidden
-        />
+      <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--color-text-secondary)' }}>
+        <Spinner />
       </div>
     )
   }
@@ -121,77 +119,8 @@ export function OnboardingWizard() {
         </div>
 
         {/* Step indicator */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0,
-            marginBottom: 32,
-          }}
-        >
-          {STEPS.map((s, i) => {
-            const isCurrent = s.key === step
-            const isDone = i < currentStepIndex
-            return (
-              <div key={s.key} style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      border: '1px solid',
-                      borderColor: isCurrent || isDone
-                        ? 'var(--color-primary)'
-                        : 'var(--color-glass-border)',
-                      background: isDone
-                        ? 'var(--color-primary)'
-                        : isCurrent
-                        ? 'var(--color-glass-bg-elevated)'
-                        : 'var(--color-glass-bg)',
-                      color: isDone
-                        ? 'var(--color-text-on-primary)'
-                        : isCurrent
-                        ? 'var(--color-primary)'
-                        : 'var(--color-text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      transition: 'all var(--transition-speed) ease',
-                    }}
-                  >
-                    {isDone ? '✓' : i + 1}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 500,
-                      color: isCurrent ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                      letterSpacing: '0.04em',
-                      transition: 'color var(--transition-speed) ease',
-                    }}
-                  >
-                    {s.label}
-                  </span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    style={{
-                      width: 48,
-                      height: 1,
-                      background: i < currentStepIndex ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                      margin: '0 8px',
-                      marginBottom: 20,
-                      transition: 'background var(--transition-speed) ease',
-                    }}
-                  />
-                )}
-              </div>
-            )
-          })}
+        <div style={{ marginBottom: 32 }}>
+          <StepIndicator steps={STEPS} currentIndex={currentStepIndex} />
         </div>
 
         {/* Step content */}

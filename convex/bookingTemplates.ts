@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { getAuthUser } from './lib/auth'
+import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 
 const courseCode = v.union(
   v.literal('DSD'),
@@ -39,14 +39,13 @@ export const create = mutation({
     const user = await getAuthUser(ctx)
     if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
 
-    const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite']
-    if (!ORGANIZER_ROLES.includes(user.role)) {
+    if (!OPERATOR_ROLE_SET.has(user.role)) {
       throw new ConvexError({ code: 'FORBIDDEN', message: 'Only organizer roles can create booking templates.' })
     }
 
     return ctx.db.insert('bookingTemplates', {
       ownerId: user.slug,
-      ownerType: user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite',
+      ownerType: user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
       name: args.name,
       activityType: args.activityType,
       createdAt: Date.now(),

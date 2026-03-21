@@ -9,9 +9,10 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks(.*)',
 ])
 
-// role-select intentionally excluded: authenticated new users must reach it
+// Auth'd users on sign-in → bounce to dashboard.
+// sign-up is NOT listed: auth'd users stay on /sign-up for the role/profile wizard steps.
 const isAuthRoute = createRouteMatcher([
-  '/sign-up(.*)',
+  '/sign-in(.*)',
 ])
 
 export default clerkMiddleware(async (auth, req) => {

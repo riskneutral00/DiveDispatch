@@ -75,6 +75,42 @@ interface Result {
   failed: { email: string; error: string }[]
 }
 
+/**
+ * Delete Clerk users whose +clerk_test@divedispatch.dev email is not in the
+ * current seed dataset. Only runs with --force. Never touches non-test accounts.
+ */
+async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
+  console.log('Pruning orphaned Clerk users...')
+  let pruned = 0
+  let offset = 0
+  const PAGE = 100
+
+  // Paginate through all Clerk users
+  while (true) {
+    const page = await clerk.users.getUserList({ limit: PAGE, offset })
+    if (page.data.length === 0) break
+
+    for (const user of page.data) {
+      const testEmail = user.emailAddresses.find((e) =>
+        e.emailAddress.includes('+clerk_test@divedispatch.dev')
+      )
+      if (!testEmail) continue // not a seed user — leave it alone
+      if (seedEmails.has(testEmail.emailAddress)) continue // still in seed data
+
+      await clerk.users.deleteUser(user.id)
+      console.log(`  ${testEmail.emailAddress} — pruned (not in seed data)`)
+      pruned++
+      await sleep(DELAY_MS)
+    }
+
+    if (page.data.length < PAGE) break
+    offset += PAGE
+  }
+
+  console.log(`Pruned ${pruned} orphaned Clerk user${pruned === 1 ? '' : 's'}.`)
+  return pruned
+}
+
 // Returns the Clerk user ID (for patching Convex tokenIdentifier), or null on failure.
 async function seedUser(user: SeedUser, result: Result): Promise<string | null> {
   const { email, firstName, lastName } = user
@@ -119,6 +155,12 @@ async function main(): Promise<void> {
     ...ALL_STAKEHOLDERS.map((s) => s.user),
     ...ALL_INSTRUCTORS.map((s) => s.user),
   ]
+
+  const seedEmails = new Set(users.map((u) => u.email))
+
+  if (force) {
+    await pruneOrphanClerkUsers(seedEmails)
+  }
 
   console.log(`Seeding ${users.length} Clerk users${force ? ' (--force)' : ''}...`)
 

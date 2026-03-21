@@ -11,8 +11,10 @@
 import type * as agents from "../agents.js";
 import type * as availability from "../availability.js";
 import type * as boats from "../boats.js";
+import type * as bookingAuditLog from "../bookingAuditLog.js";
 import type * as bookingDraftMutations from "../bookingDraftMutations.js";
 import type * as bookingLinks from "../bookingLinks.js";
+import type * as bookingResources from "../bookingResources.js";
 import type * as bookingTemplates from "../bookingTemplates.js";
 import type * as bookings from "../bookings.js";
 import type * as bookings__shared from "../bookings/_shared.js";
@@ -35,7 +37,6 @@ import type * as equipmentWidget from "../equipmentWidget.js";
 import type * as http from "../http.js";
 import type * as instructors from "../instructors.js";
 import type * as lib_auth from "../lib/auth.js";
-import type * as lib_constants from "../lib/constants.js";
 import type * as lib_portal from "../lib/portal.js";
 import type * as lib_validate from "../lib/validate.js";
 import type * as notifications from "../notifications.js";
@@ -51,6 +52,7 @@ import type * as seedInstructorData from "../seedInstructorData.js";
 import type * as stakeholderHierarchy from "../stakeholderHierarchy.js";
 import type * as stakeholderPreferences from "../stakeholderPreferences.js";
 import type * as support from "../support.js";
+import type * as testHelpers from "../testHelpers.js";
 import type * as themes from "../themes.js";
 import type * as users from "../users.js";
 
@@ -64,8 +66,10 @@ declare const fullApi: ApiFromModules<{
   agents: typeof agents;
   availability: typeof availability;
   boats: typeof boats;
+  bookingAuditLog: typeof bookingAuditLog;
   bookingDraftMutations: typeof bookingDraftMutations;
   bookingLinks: typeof bookingLinks;
+  bookingResources: typeof bookingResources;
   bookingTemplates: typeof bookingTemplates;
   bookings: typeof bookings;
   "bookings/_shared": typeof bookings__shared;
@@ -88,7 +92,6 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   instructors: typeof instructors;
   "lib/auth": typeof lib_auth;
-  "lib/constants": typeof lib_constants;
   "lib/portal": typeof lib_portal;
   "lib/validate": typeof lib_validate;
   notifications: typeof notifications;
@@ -104,6 +107,7 @@ declare const fullApi: ApiFromModules<{
   stakeholderHierarchy: typeof stakeholderHierarchy;
   stakeholderPreferences: typeof stakeholderPreferences;
   support: typeof support;
+  testHelpers: typeof testHelpers;
   themes: typeof themes;
   users: typeof users;
 }>;

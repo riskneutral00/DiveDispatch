@@ -3,12 +3,10 @@
 import { useReducer, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
-import { ConvexError } from "convex/values";
 import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  Send,
   X,
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
@@ -17,8 +15,7 @@ import { GlassCard, GlassButton } from "@/components/glass";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
 import { ItineraryStep } from "./itinerary-step";
-import { ResourceStep } from "./resource-step";
-import { BookingConfirmView } from "./booking-confirm-view";
+import { ReviewStep } from "./review-step";
 import {
   wizardReducer,
   makeInitialState,
@@ -27,23 +24,35 @@ import {
   WIZARD_STEPS,
   canAdvanceFromCustomers,
   canAdvanceFromItinerary,
-  canAdvanceFromResources,
-  deriveActivityType,
   type WizardStep,
 } from "@/lib/booking/wizard-state";
 import { useBookingDraftAutoSave } from "@/hooks/useBookingDraftAutoSave";
+import { Spinner } from "@/components/common/spinner";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface BookingWizardProps {
   bookingId?: string;
+  /** 'overlay' renders compact layout inside GlassDialog; 'page' renders standalone page layout */
+  mode?: "page" | "overlay";
+  /** Called instead of router.push('/dashboard') when user cancels in overlay mode */
+  onClose?: () => void;
+  /** Called when booking is submitted in overlay mode */
+  onComplete?: () => void;
+  /** Pre-fill course entries for the first customer (Quick Book template) */
+  initialCourses?: string[];
 }
 
 export function BookingWizard({
   bookingId: initialBookingId,
+  mode = "page",
+  onClose,
+  onComplete,
+  initialCourses,
 }: BookingWizardProps) {
   const router = useRouter();
   const isEditMode = !!initialBookingId;
+  const isOverlay = mode === "overlay";
 
   const [state, dispatch] = useReducer(
     wizardReducer,
@@ -51,7 +60,6 @@ export function BookingWizard({
   );
 
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
@@ -67,7 +75,6 @@ export function BookingWizard({
   const saveDraftState = useMutation(api.bookingDraftMutations.saveDraftState);
   const discardDraft = useMutation(api.bookingDraftMutations.discardDraft);
   const editBooking = useMutation(api.bookings.edit.editBooking);
-  const submitToDraft = useMutation(api.bookings.create.submitToDraft);
 
   const { autoSaveError, cancelPending } = useBookingDraftAutoSave(
     state.bookingId,
@@ -90,24 +97,41 @@ export function BookingWizard({
 
   const isInitializing =
     !initError &&
-    (isEditMode
-      ? existingBooking === undefined || isResetting
-      : state.bookingId === null);
+    isEditMode &&
+    (existingBooking === undefined || isResetting);
 
-  // New booking: create draft shell once on mount
+  // New booking with initialCourses: pre-fill locally (no draft shell yet)
   useEffect(() => {
-    if (isEditMode || creatingRef.current || state.bookingId || !isAuthenticated) return;
-    creatingRef.current = true;
+    if (isEditMode || initializedRef.current || !initialCourses?.length) return;
+    initializedRef.current = true;
+    const makeId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    dispatch({
+      type: "RESET",
+      payload: {
+        bookingId: null,
+        customers: [{
+          id: makeId(),
+          name: "",
+          contact: {},
+          flags: [],
+          courseEntries: initialCourses.map((code) => ({
+            id: makeId(),
+            activityCode: code,
+            dates: [],
+            agency: "",
+          })),
+        }],
+      },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, initialCourses]);
 
-    createDraftShell()
-      .then((id) => dispatch({ type: "SET_BOOKING_ID", payload: id }))
-      .catch((err: unknown) => {
-        creatingRef.current = false;
-        setInitError(
-          err instanceof Error ? err.message : "Failed to start booking",
-        );
-      });
-  }, [isEditMode, state.bookingId, createDraftShell, isAuthenticated]);
+  // Overlay mode: close overlay when booking is submitted
+  useEffect(() => {
+    if (isOverlay && state.submittedBookingId && onComplete) {
+      onComplete();
+    }
+  }, [isOverlay, state.submittedBookingId, onComplete]);
 
   // Edit mode: redirect cancelled bookings + restore wizard state
   useEffect(() => {
@@ -170,7 +194,11 @@ export function BookingWizard({
         // Draft may already be gone — safe to ignore
       }
     }
-    router.push("/dashboard");
+    if (isOverlay && onClose) {
+      onClose();
+    } else {
+      router.push("/dashboard");
+    }
   }
 
   // ── Navigation ──────────────────────────────────────────────────────────────
@@ -179,15 +207,13 @@ export function BookingWizard({
   const isFirstStep = currentIndex === 0;
   const isLastStep = currentIndex === WIZARD_STEPS.length - 1;
 
-  // Validation gate for current step
+  // Validation gate for current step (review manages its own buttons)
   function canAdvance(): boolean {
     switch (state.step) {
       case "customers":
         return canAdvanceFromCustomers(state.customers);
       case "itinerary":
         return canAdvanceFromItinerary(state);
-      case "resources":
-        return canAdvanceFromResources(state);
       default:
         return false;
     }
@@ -196,33 +222,45 @@ export function BookingWizard({
   async function saveAndNavigate(targetStep: WizardStep) {
     setSaveError(null);
     cancelPending();
+    setIsSaving(true);
 
-    if (state.bookingId) {
-      setIsSaving(true);
-      try {
-        // When advancing to resources with sameForAll, copy first customer courses to all
-        if (
-          state.step === "itinerary" &&
-          targetStep === "resources" &&
-          state.sameForAll &&
-          state.customers.length > 1
-        ) {
-          dispatch({ type: "COPY_COURSE_ENTRIES_TO_ALL" });
-        }
-
-        await saveDraftState({
-          bookingId: state.bookingId as Id<"bookings">,
-          draftState: serializeDraftState(state),
+    try {
+      // Create draft shell on first save (deferred from mount)
+      let currentBookingId = state.bookingId;
+      if (!currentBookingId && !isEditMode && state.step === "itinerary" && targetStep === "review") {
+        currentBookingId = await createDraftShell({
+          startDate: state.startDate,
+          endDate: state.endDate,
         });
-      } catch (err: unknown) {
-        setSaveError(
-          err instanceof Error ? err.message : "Failed to save progress",
-        );
-        setIsSaving(false);
-        return;
+        dispatch({ type: "SET_BOOKING_ID", payload: currentBookingId });
       }
+
+      // When advancing to review with sameForAll, copy first customer courses to all
+      if (
+        state.step === "itinerary" &&
+        targetStep === "review" &&
+        state.sameForAll &&
+        state.customers.length > 1
+      ) {
+        dispatch({ type: "COPY_COURSE_ENTRIES_TO_ALL" });
+      }
+
+      if (currentBookingId) {
+        // Build snapshot with correct bookingId — dispatch hasn't committed yet
+        const stateSnapshot = { ...state, bookingId: currentBookingId };
+        await saveDraftState({
+          bookingId: currentBookingId as Id<"bookings">,
+          draftState: serializeDraftState(stateSnapshot),
+        });
+      }
+    } catch (err: unknown) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save progress",
+      );
       setIsSaving(false);
+      return;
     }
+    setIsSaving(false);
 
     dispatch({ type: "SET_STEP", payload: targetStep });
   }
@@ -235,110 +273,6 @@ export function BookingWizard({
   function handleNext() {
     if (isLastStep) return;
     void saveAndNavigate(WIZARD_STEPS[currentIndex + 1]);
-  }
-
-  // ── Submit ──────────────────────────────────────────────────────────────────
-
-  async function handleSubmit() {
-    if (!state.bookingId) return;
-    setSubmitError(null);
-    dispatch({ type: "SET_SUBMITTING", value: true });
-
-    try {
-      const { customers, days } = state;
-      const activityType = deriveActivityType(customers);
-
-      const sessions = days
-        .filter(
-          (d) =>
-            d.venueType !== "shore" &&
-            (d.inventoryUnitId ||
-              d.externalVenueName ||
-              d.poolInventoryUnitId ||
-              d.externalPoolName),
-        )
-        .map((d) => ({
-          inventoryUnitId: (d.inventoryUnitId ||
-            d.poolInventoryUnitId ||
-            "") as Id<"inventoryUnits">,
-          date: d.date,
-          startTime: d.startTime,
-          endTime: d.endTime,
-          timezone: d.timezone,
-          unitsRequested: Math.max(customers.length, 1),
-          deliveryLocation: (d.venueType === "pool" ? "Pool" : "BoatPier") as
-            | "BoatPier"
-            | "Pool"
-            | "Beach",
-        }));
-
-      const divers = customers.map((c) => {
-        const firstEntry = c.courseEntries?.[0];
-        const allCodes = [
-          ...new Set(
-            (c.courseEntries ?? []).map((e) => e.activityCode).filter(Boolean),
-          ),
-        ];
-        const primaryFlag = c.flags?.[0] ?? { code: "GB", label: "English" };
-        return {
-          name: c.name,
-          abbrev: c.name.charAt(0).toUpperCase(),
-          flag: { code: primaryFlag.code, label: primaryFlag.label },
-          startDate: firstEntry?.dates[0] ?? state.startDate,
-          endDate:
-            firstEntry?.dates[1] ?? firstEntry?.dates[0] ?? state.endDate,
-          agency: firstEntry?.agency ?? "",
-          activityType:
-            allCodes as import("@/lib/constants/course-catalog").CourseCode[],
-        };
-      });
-
-      const externalStakeholders: Record<string, string | undefined> = {};
-      if (state.equipmentIsExternal && state.externalEquipmentName) {
-        externalStakeholders.equipmentManagerName = state.externalEquipmentName;
-      }
-      if (state.compressorIsExternal && state.externalCompressorName) {
-        externalStakeholders.compressorName = state.externalCompressorName;
-      }
-
-      await submitToDraft({
-        bookingId: state.bookingId as Id<"bookings">,
-        sessions,
-        bookingData: {
-          activityType,
-          startDate: state.startDate,
-          endDate: state.endDate,
-          portalContact: true,
-          portalMedical: true,
-          portalWaiver: false,
-          equipmentManagerId:
-            !state.equipmentIsExternal && state.equipment
-              ? (state.equipment as Id<"inventoryUnits">)
-              : undefined,
-          compressorId:
-            !state.compressorIsExternal && state.compressor
-              ? (state.compressor as Id<"inventoryUnits">)
-              : undefined,
-          ...(Object.keys(externalStakeholders).length > 0
-            ? { externalStakeholders }
-            : {}),
-          divers,
-        },
-      });
-
-      dispatch({ type: "SET_SUBMITTED_BOOKING_ID", id: state.bookingId });
-      dispatch({ type: "SET_STEP", payload: "confirm" });
-    } catch (err) {
-      dispatch({ type: "SET_SUBMITTING", value: false });
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string };
-        setSubmitError(
-          data.reason ?? data.code ?? "Submission failed. Please try again.",
-        );
-      } else {
-        setSubmitError("An unexpected error occurred. Please try again.");
-      }
-    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -428,13 +362,7 @@ export function BookingWizard({
         className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center"
         style={{ color: "var(--color-text-secondary)" }}
       >
-        <span
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-3"
-          aria-hidden
-        />
-        <span style={{ fontFamily: "var(--font-body)" }}>
-          Preparing booking…
-        </span>
+        <Spinner label="Preparing booking…" />
       </div>
     );
   }
@@ -445,37 +373,6 @@ export function BookingWizard({
       ? `#${state.bookingId.slice(-8).toUpperCase()}`
       : null;
 
-  // Confirmation view (Step 4) — full-page, no navigation chrome
-  if (state.step === "confirm") {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1
-            className="text-2xl font-bold mb-1"
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            {isEditMode ? "Booking Updated" : "Booking Created"}
-          </h1>
-          {bookingRef && (
-            <p
-              className="text-xs font-mono"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {bookingRef}
-            </p>
-          )}
-        </div>
-        <WizardProgress currentStep={state.step} />
-        <div className="mt-6">
-          <BookingConfirmView state={state} />
-        </div>
-      </div>
-    );
-  }
-
   // Step content
   function renderStepContent() {
     switch (state.step) {
@@ -483,15 +380,75 @@ export function BookingWizard({
         return <CustomerStep customers={state.customers} dispatch={dispatch} />;
       case "itinerary":
         return <ItineraryStep state={state} dispatch={dispatch} />;
-      case "resources":
-        return <ResourceStep state={state} dispatch={dispatch} />;
+      case "review":
+        return <ReviewStep state={state} dispatch={dispatch} isEditMode={isEditMode} />;
       default:
         return null;
     }
   }
 
   const advanceDisabled = !canAdvance();
-  const isResourceStep = state.step === "resources";
+  const isReviewStep = state.step === "review";
+
+  // In overlay mode: compact layout filling the dialog's scrollable content area
+  if (isOverlay) {
+    return (
+      <div className="px-4 py-4 sm:px-6">
+        {bookingRef && (
+          <p
+            className="text-xs font-mono mb-3"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {bookingRef}
+          </p>
+        )}
+
+        {/* Progress */}
+        <WizardProgress currentStep={state.step} />
+
+        {/* Step content */}
+        <div className="mt-4">{renderStepContent()}</div>
+
+        {/* Errors */}
+        {saveError && (
+          <p className="mt-3 text-sm" style={{ color: "var(--color-destructive)" }}>
+            {saveError}
+          </p>
+        )}
+        {autoSaveError && !saveError && !isReviewStep && (
+          <p className="mt-3 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            {autoSaveError}
+          </p>
+        )}
+
+        {/* Navigation */}
+        {!isReviewStep && (
+          <div className="flex justify-between items-center mt-4 gap-4">
+            <GlassButton
+              variant="secondary"
+              onClick={isFirstStep ? () => void handleCancel() : handleBack}
+              disabled={isSaving}
+              size="md"
+            >
+              <ChevronLeft size={16} />
+              {isFirstStep ? "Cancel" : "Back"}
+            </GlassButton>
+
+            <GlassButton
+              variant="primary"
+              onClick={handleNext}
+              disabled={advanceDisabled || isSaving}
+              loading={isSaving}
+              size="md"
+            >
+              Next
+              <ChevronRight size={16} />
+            </GlassButton>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -541,7 +498,7 @@ export function BookingWizard({
       {/* Step content */}
       <div className="mt-6">{renderStepContent()}</div>
 
-      {/* Errors */}
+      {/* Errors (save-state errors — review step manages its own submit errors) */}
       {saveError && (
         <p
           className="mt-3 text-sm"
@@ -550,27 +507,7 @@ export function BookingWizard({
           {saveError}
         </p>
       )}
-      {submitError && (
-        <div
-          className="flex items-start gap-3 mt-3 p-3 rounded-[var(--border-radius)] text-sm"
-          role="alert"
-          style={{
-            background:
-              "color-mix(in srgb, var(--color-destructive) 10%, transparent)",
-            border:
-              "1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent)",
-            color: "var(--color-destructive)",
-          }}
-        >
-          <AlertTriangle
-            size={15}
-            className="flex-shrink-0 mt-0.5"
-            aria-hidden
-          />
-          <span>{submitError}</span>
-        </div>
-      )}
-      {autoSaveError && !saveError && (
+      {autoSaveError && !saveError && !isReviewStep && (
         <p
           className="mt-3 text-xs"
           style={{ color: "var(--color-text-secondary)" }}
@@ -579,30 +516,19 @@ export function BookingWizard({
         </p>
       )}
 
-      {/* Navigation */}
-      <div className="flex justify-between items-center mt-6 gap-4">
-        <GlassButton
-          variant="secondary"
-          onClick={isFirstStep ? () => void handleCancel() : handleBack}
-          disabled={isSaving || state.submitting}
-          size="md"
-        >
-          <ChevronLeft size={16} />
-          {isFirstStep ? "Cancel" : "Back"}
-        </GlassButton>
-
-        {isResourceStep ? (
+      {/* Navigation — review step renders its own back+submit buttons */}
+      {!isReviewStep && (
+        <div className="flex justify-between items-center mt-6 gap-4">
           <GlassButton
-            variant="primary"
-            onClick={() => void handleSubmit()}
-            disabled={advanceDisabled || state.submitting || !state.bookingId}
-            loading={state.submitting}
+            variant="secondary"
+            onClick={isFirstStep ? () => void handleCancel() : handleBack}
+            disabled={isSaving}
             size="md"
           >
-            <Send size={16} />
-            {isEditMode ? "Update Booking" : "Submit Booking"}
+            <ChevronLeft size={16} />
+            {isFirstStep ? "Cancel" : "Back"}
           </GlassButton>
-        ) : (
+
           <GlassButton
             variant="primary"
             onClick={handleNext}
@@ -613,8 +539,8 @@ export function BookingWizard({
             Next
             <ChevronRight size={16} />
           </GlassButton>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

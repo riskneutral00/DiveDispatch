@@ -3,9 +3,9 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassInput } from '@/components/glass'
-import type { WizardState, WizardAction, DayConfig } from '@/lib/booking/wizard-state'
+import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
-import { ChevronDown, ExternalLink } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 interface ResourceStepProps {
   state: WizardState
@@ -63,168 +63,18 @@ function SelectField({
   )
 }
 
-// ── PerDayInstructorRow ─────────────────────────────────────────────────────
-
-function PerDayInstructorRow({
-  day,
-  dayIndex,
-  dayNumber,
-  instructorOptions,
-  dispatch,
-  totalDays,
-}: {
-  day: DayConfig
-  dayIndex: number
-  dayNumber: number
-  instructorOptions: ResourceOption[]
-  dispatch: Dispatch<WizardAction>
-  totalDays: number
-}) {
-  const isExternal = day.instructorSlug === '__external__'
-
-  return (
-    <div
-      className="flex flex-col gap-2 p-3 rounded-[var(--border-radius)] border"
-      style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <span
-          className="text-xs font-bold uppercase tracking-wider"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
-        >
-          Day {dayNumber}
-        </span>
-        <span className="text-xs capitalize" style={{ color: 'var(--color-text-secondary)' }}>
-          {day.venueType} · {day.date}
-        </span>
-        <span className="text-xs ml-auto" style={{ color: 'var(--color-text-secondary)' }}>
-          {day.dives.length} dive{day.dives.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {isExternal ? (
-        <div className="flex flex-col gap-1">
-          <GlassInput
-            label="Instructor (external)"
-            value={day.externalInstructorName ?? ''}
-            onChange={(e) =>
-              dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
-            }
-            placeholder="Instructor name"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: '' })
-              dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
-            }}
-            className="text-xs underline underline-offset-2 text-left"
-            style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-          >
-            Switch to system instructor
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1">
-          <SelectField
-            label="Instructor"
-            value={day.instructorSlug ?? ''}
-            onChange={(v) => dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: v })}
-            options={instructorOptions}
-            placeholder="Select instructor…"
-          />
-          {day.instructorSlug && dayIndex < totalDays - 1 && (
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'APPLY_INSTRUCTOR_TO_REMAINING', fromDayIndex: dayIndex, slug: day.instructorSlug! })}
-              className="text-xs text-left"
-              style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-            >
-              → Use for remaining days
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function ResourceStep({ state, dispatch }: ResourceStepProps) {
-  const { days } = state
+  // Load equipment and compressor resources (instructor/boat/pool moved to inline day-row pickers)
+  const equipmentManagers = useQuery(api.directory.listByRole, { role: 'Equipment' }) ?? []
+  const compressors = useQuery(api.directory.listByRole, { role: 'Compressor' }) ?? []
 
-  // Load resources
-  const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
-  const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
-  const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
-
-  const instructorOptions: ResourceOption[] = instructors.map((r) => ({ id: r.slug, label: r.name }))
-  const boatOptions: ResourceOption[] = boats.map((r) => ({ id: r.slug, label: r.name }))
-  const poolOptions: ResourceOption[] = pools.map((r) => ({ id: r.slug, label: r.name }))
-
-  // Derive which venue types need resources
-  const hasBoatDays = days.some((d) => d.venueType === 'boat')
-  const hasPoolDays = days.some((d) => d.venueType === 'pool')
+  const equipmentOptions: ResourceOption[] = equipmentManagers.map((r) => ({ id: r.slug, label: r.name }))
+  const compressorOptions: ResourceOption[] = compressors.map((r) => ({ id: r.slug, label: r.name }))
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Per-day instructors */}
-      <div className="flex flex-col gap-3">
-        <h3
-          className="text-sm font-semibold"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
-        >
-          Instructors (per day)
-        </h3>
-        {days.map((day, idx) => (
-          <PerDayInstructorRow
-            key={day.date + idx}
-            day={day}
-            dayIndex={idx}
-            dayNumber={idx + 1}
-            instructorOptions={instructorOptions}
-            dispatch={dispatch}
-            totalDays={days.length}
-          />
-        ))}
-      </div>
-
-      {/* Per-booking venue resources */}
-      <GlassCard padding="md" elevated>
-        <h3
-          className="text-sm font-semibold mb-3"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
-        >
-          Venue Resources
-        </h3>
-        <div className="flex flex-col gap-3">
-          {hasBoatDays && (
-            <VenueResourceRow
-              label="Boat"
-              venueType="boat"
-              days={days}
-              options={boatOptions}
-              dispatch={dispatch}
-            />
-          )}
-          {hasPoolDays && (
-            <VenueResourceRow
-              label="Pool"
-              venueType="pool"
-              days={days}
-              options={poolOptions}
-              dispatch={dispatch}
-            />
-          )}
-          {!hasBoatDays && !hasPoolDays && (
-            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              Shore days don't require venue resources.
-            </p>
-          )}
-        </div>
-      </GlassCard>
-
       {/* Equipment & Compressor */}
       <GlassCard padding="md" elevated>
         <h3
@@ -266,7 +116,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                       dispatch({ type: 'SET_EQUIPMENT', value: v })
                     }
                   }}
-                  options={[]}
+                  options={equipmentOptions}
                   placeholder="Select equipment manager…"
                 />
               </div>
@@ -305,7 +155,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                       dispatch({ type: 'SET_COMPRESSOR', value: v })
                     }
                   }}
-                  options={[]}
+                  options={compressorOptions}
                   placeholder="Select compressor…"
                 />
               </div>
@@ -314,95 +164,5 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
         </div>
       </GlassCard>
     </div>
-  )
-}
-
-// ── VenueResourceRow ────────────────────────────────────────────────────────
-
-function VenueResourceRow({
-  label,
-  venueType,
-  days,
-  options,
-  dispatch,
-}: {
-  label: string
-  venueType: 'boat' | 'pool'
-  days: DayConfig[]
-  options: ResourceOption[]
-  dispatch: Dispatch<WizardAction>
-}) {
-  // Find first day of this venue type to get/set the value
-  const firstDayIdx = days.findIndex((d) => d.venueType === venueType)
-  if (firstDayIdx < 0) return null
-
-  const day = days[firstDayIdx]
-  const currentId = venueType === 'pool' ? (day.poolInventoryUnitId ?? '') : (day.inventoryUnitId ?? '')
-  const externalName = venueType === 'pool' ? (day.externalPoolName ?? '') : (day.externalVenueName ?? '')
-  const isExternal = currentId === '__external__'
-
-  function handleChange(v: string) {
-    // Apply to all days of same venue type
-    for (let i = 0; i < days.length; i++) {
-      if (days[i].venueType !== venueType) continue
-      if (venueType === 'pool') {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { poolInventoryUnitId: v, externalPoolName: '' } })
-      } else {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { inventoryUnitId: v, externalVenueName: '' } })
-      }
-    }
-  }
-
-  function handleExternalNameChange(name: string) {
-    for (let i = 0; i < days.length; i++) {
-      if (days[i].venueType !== venueType) continue
-      if (venueType === 'pool') {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { externalPoolName: name } })
-      } else {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { externalVenueName: name } })
-      }
-    }
-  }
-
-  function switchToSystem() {
-    for (let i = 0; i < days.length; i++) {
-      if (days[i].venueType !== venueType) continue
-      if (venueType === 'pool') {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { poolInventoryUnitId: '', externalPoolName: '' } })
-      } else {
-        dispatch({ type: 'UPDATE_DAY', dayIndex: i, patch: { inventoryUnitId: '', externalVenueName: '' } })
-      }
-    }
-  }
-
-  if (isExternal) {
-    return (
-      <div className="flex flex-col gap-1">
-        <GlassInput
-          label={`${label} (external)`}
-          value={externalName}
-          onChange={(e) => handleExternalNameChange(e.target.value)}
-          placeholder={`${label} name`}
-        />
-        <button
-          type="button"
-          onClick={switchToSystem}
-          className="text-xs underline underline-offset-2 text-left"
-          style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-        >
-          Switch to system {label.toLowerCase()}
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <SelectField
-      label={label}
-      value={currentId}
-      onChange={handleChange}
-      options={options}
-      placeholder={`Select ${label.toLowerCase()}…`}
-    />
   )
 }

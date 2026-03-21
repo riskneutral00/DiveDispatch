@@ -23,6 +23,10 @@ export interface ColorPalette {
   glassSpecularSubtle: string;
   glassShadow: string;
   glassShadowElevated: string;
+  // Hover state (component-level surface effect)
+  glassBgHover: string;
+  glassBorderHover: string;
+  glassBlurHover: number; // px
   bgImage?: string; // optional — some skins use solid bodyBg only
   bgOverlay?: string; // optional
   bodyBg: string;
@@ -35,26 +39,22 @@ export interface ThemeConfig {
 
   // === Colors ===
   colors: {
-    light: ColorPalette;
+    light?: ColorPalette; // Deferred — dark-only for now
     dark: ColorPalette;
   };
 
   // === Typography ===
   typography: {
-    fontHeading: string; // Full CSS font-family string, e.g. "'Playfair Display', serif"
+    fontHeading: string;
     fontBody: string;
     fontAccent?: string;
     headingWeight: number; // 600–900
-    bodyWeight: number;    // 300–500
+    bodyWeight: number; // 300–500
   };
 
   // === Backgrounds ===
   backgrounds: {
-    heroImage?: string;
-    heroVideo?: string;
-    gradientOverlay?: string;
-    patternOverlay?: string;
-    fallbackColor: string;
+    fallbackColor?: string; // Used when no skin image loads; defaults to colors.dark.bodyBg
   };
 
   // === Shape & Decoration ===
@@ -68,9 +68,9 @@ export interface ThemeConfig {
   // === Motion ===
   motion: {
     transitionSpeed: "fast" | "normal" | "slow";
-    hoverEffect: "glow" | "lift" | "ripple" | "none";
-    pageTransition: "fade" | "slide" | "none";
-    ambientAnimation?: "bubbles" | "particles" | "aurora" | "none";
+    hoverEffect: "glow" | "none";
+    pageTransition: "fade" | "none";
+    ambientAnimation: "none";
   };
 }
 

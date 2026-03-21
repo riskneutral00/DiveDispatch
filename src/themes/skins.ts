@@ -1,190 +1,120 @@
 import { ThemeConfig } from "./theme-types";
 
-// ── Swap these when Matt supplies real photos ─────────────────────────────────
-const PHOTO_OCEAN = "url('https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=1920&q=80')"
-const PHOTO_CORAL = "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80')"
+// ── No background image — pure void. Swap when Matt supplies real photos. ─────
 
-// Skin definitions — source of truth for Ocean and Coral palettes + backgrounds.
-// Values derived from prototype/glass.html [data-skin] sections.
+// ── Shared glass formula — identical across all skins ─────────────────────────
+const GLASS_SHARED = {
+  glassBg: "rgba(255, 255, 255, 0.05)",
+  glassBorder: "rgba(255, 255, 255, 0.12)",
+  glassBlur: 14,
+  glassBgElevated: "rgba(255, 255, 255, 0.08)",
+  glassBorderElevated: "rgba(255, 255, 255, 0.25)",
+  glassBlurElevated: 24,
+  glassSpecular: "rgba(255, 255, 255, 0.4)",
+  glassSpecularSubtle: "rgba(255, 255, 255, 0.1)",
+  glassShadow: "rgba(0, 0, 0, 0.15)",
+  glassShadowElevated: "rgba(0, 0, 0, 0.25)",
+  // Hover: border glow (not fill). Fill barely changes; border picks up primaryGlow.
+  glassBgHover: "rgba(255, 255, 255, 0.10)",
+  glassBlurHover: 18,
+} as const;
+
+// ── Universal status colors — safety signals don't change per skin ────────────
+const STATUS_COLORS = {
+  success: "#34d399",
+  warning: "#fbbf24",
+  destructive: "#f87171",
+} as const;
+
+// ── Shared typography — Inter everywhere ──────────────────────────────────────
+const TYPOGRAPHY = {
+  fontHeading: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  fontBody: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  headingWeight: 700,
+  bodyWeight: 400,
+} as const;
+
+// ── Shared shape ──────────────────────────────────────────────────────────────
+const SHAPE = {
+  borderRadius: "16px",
+  buttonStyle: "rounded" as const,
+  dividerStyle: "line" as const,
+  iconStyle: "outlined" as const,
+};
+
+// ── Shared motion ─────────────────────────────────────────────────────────────
+const MOTION = {
+  transitionSpeed: "normal" as const,
+  hoverEffect: "glow" as const,
+  pageTransition: "fade" as const,
+  ambientAnimation: "none" as const,
+};
+
+// ── Skin definitions ──────────────────────────────────────────────────────────
+// Source of truth for Ocean and Coral palettes + backgrounds.
+// Dark-only for now; light palette deferred.
 // A future Convex migration will store skins in the DB; the shape stays identical.
-// To activate a skin: pass the ThemeConfig to ThemeProvider. No skin picker UI in this spec.
 
 export const SKINS: ThemeConfig[] = [
+  // ── Ocean Dark ── deep void + bioluminescent life ───────────────────────────
   {
     id: "ocean",
-    name: "Deep Ocean",
+    name: "Ocean Dark",
 
     colors: {
       dark: {
-        primary: "#0ea5e9",
-        secondary: "#38bdf8",
-        accent: "#22d3ee",
-        textPrimary: "rgba(255, 255, 255, 0.95)",
-        textSecondary: "rgba(255, 255, 255, 0.6)",
+        primary: "#e8786a", // warm coral/rose
+        secondary: "#4a9ece", // bioluminescent blue
+        accent: "#f0b866", // amber/bioluminescent warm
+        textPrimary: "#f0ebe4", // warm white
+        textSecondary: "#7a8a9e", // steel blue-gray
         textOnPrimary: "#ffffff",
-        glassBg: "rgba(255, 255, 255, 0.05)",
-        glassBorder: "rgba(255, 255, 255, 0.15)",
-        glassBlur: 16,
-        success: "#34d399",
-        warning: "#fbbf24",
-        destructive: "#f87171",
-        surface: "#071e28",
-        surfaceElevated: "#0a2535",
-        primaryGlow: "rgba(14, 165, 233, 0.4)",
-        glassBgElevated: "rgba(255, 255, 255, 0.08)",
-        glassBorderElevated: "rgba(255, 255, 255, 0.25)",
-        glassBlurElevated: 24,
-        glassSpecular: "rgba(255, 255, 255, 0.4)",
-        glassSpecularSubtle: "rgba(255, 255, 255, 0.1)",
-        glassShadow: "rgba(0, 0, 0, 0.2)",
-        glassShadowElevated: "rgba(0, 0, 0, 0.3)",
-        bgImage: PHOTO_OCEAN,
-        bgOverlay:
-          "linear-gradient(180deg, rgba(10, 46, 61, 0.45) 0%, rgba(10, 46, 61, 0.60) 100%)",
-        bodyBg: "#071e28",
-      },
-      light: {
-        primary: "#0284c7",
-        secondary: "#0ea5e9",
-        accent: "#06b6d4",
-        textPrimary: "rgba(0, 0, 0, 0.87)",
-        textSecondary: "rgba(0, 0, 0, 0.55)",
-        textOnPrimary: "#ffffff",
-        glassBg: "rgba(255, 255, 255, 0.6)",
-        glassBorder: "rgba(0, 0, 0, 0.08)",
-        glassBlur: 16,
-        success: "#10b981",
-        warning: "#f59e0b",
-        destructive: "#ef4444",
-        surface: "#f0f9ff",
-        surfaceElevated: "#ffffff",
-        primaryGlow: "rgba(2, 132, 199, 0.25)",
-        glassBgElevated: "rgba(255, 255, 255, 0.75)",
-        glassBorderElevated: "rgba(0, 0, 0, 0.12)",
-        glassBlurElevated: 24,
-        glassSpecular: "rgba(255, 255, 255, 0.7)",
-        glassSpecularSubtle: "rgba(255, 255, 255, 0.3)",
-        glassShadow: "rgba(0, 0, 0, 0.08)",
-        glassShadowElevated: "rgba(0, 0, 0, 0.12)",
-        bgImage: PHOTO_OCEAN,
-        bgOverlay:
-          "linear-gradient(180deg, rgba(220, 240, 250, 0.50) 0%, rgba(220, 240, 250, 0.65) 100%)",
-        bodyBg: "#f0f9ff",
+        ...GLASS_SHARED,
+        ...STATUS_COLORS,
+        primaryGlow: "rgba(232, 120, 106, 0.35)",
+        glassBorderHover: "rgba(232, 120, 106, 0.35)", // coral glow on hover
+        surface: "#111820", // barely lighter than void
+        surfaceElevated: "#1a2230", // elevated panels
+        bgImage: "linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%)",
+        bgOverlay: "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(15, 35, 60, 0.5) 0%, rgba(10, 25, 45, 0.25) 40%, transparent 100%)",
+        bodyBg: "#000000",
       },
     },
 
-    typography: {
-      fontHeading: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      fontBody: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      headingWeight: 700,
-      bodyWeight: 400,
-    },
-
-    backgrounds: {
-      fallbackColor: "#071e28",
-    },
-
-    shape: {
-      borderRadius: "16px",
-      buttonStyle: "rounded",
-      dividerStyle: "line",
-      iconStyle: "outlined",
-    },
-
-    motion: {
-      transitionSpeed: "normal",
-      hoverEffect: "glow",
-      pageTransition: "fade",
-      ambientAnimation: "none",
-    },
+    typography: { ...TYPOGRAPHY },
+    backgrounds: {},
+    shape: { ...SHAPE },
+    motion: { ...MOTION },
   },
 
+  // ── Coral Dark ── same void, warmer reef accent palette ─────────────────────
   {
     id: "coral",
-    name: "Coral Sunset",
+    name: "Coral Dark",
 
     colors: {
       dark: {
-        primary: "#f97316",
-        secondary: "#fb923c",
-        accent: "#fbbf24",
-        textPrimary: "rgba(255, 255, 255, 0.95)",
-        textSecondary: "rgba(255, 255, 255, 0.6)",
+        primary: "#e85d75", // coral pink
+        secondary: "#f0956a", // warm reef orange
+        accent: "#f5c542", // anemone gold
+        textPrimary: "#f0ebe4",
+        textSecondary: "#7a8a9e",
         textOnPrimary: "#ffffff",
-        glassBg: "rgba(255, 255, 255, 0.05)",
-        glassBorder: "rgba(255, 255, 255, 0.15)",
-        glassBlur: 16,
-        success: "#34d399",
-        warning: "#fbbf24",
-        destructive: "#f87171",
-        surface: "#1c0a04",
-        surfaceElevated: "#2a1208",
-        primaryGlow: "rgba(249, 115, 22, 0.4)",
-        glassBgElevated: "rgba(255, 255, 255, 0.08)",
-        glassBorderElevated: "rgba(255, 255, 255, 0.25)",
-        glassBlurElevated: 24,
-        glassSpecular: "rgba(255, 255, 255, 0.4)",
-        glassSpecularSubtle: "rgba(255, 255, 255, 0.1)",
-        glassShadow: "rgba(0, 0, 0, 0.2)",
-        glassShadowElevated: "rgba(0, 0, 0, 0.3)",
-        bgImage: PHOTO_CORAL,
-        bgOverlay:
-          "linear-gradient(180deg, rgba(61, 24, 10, 0.45) 0%, rgba(40, 10, 20, 0.60) 100%)",
-        bodyBg: "#1c0a04",
-      },
-      light: {
-        primary: "#ea580c",
-        secondary: "#f97316",
-        accent: "#f59e0b",
-        textPrimary: "rgba(0, 0, 0, 0.87)",
-        textSecondary: "rgba(0, 0, 0, 0.55)",
-        textOnPrimary: "#ffffff",
-        glassBg: "rgba(255, 255, 255, 0.6)",
-        glassBorder: "rgba(0, 0, 0, 0.08)",
-        glassBlur: 16,
-        success: "#10b981",
-        warning: "#f59e0b",
-        destructive: "#ef4444",
-        surface: "#fffbf5",
-        surfaceElevated: "#ffffff",
-        primaryGlow: "rgba(234, 88, 12, 0.25)",
-        glassBgElevated: "rgba(255, 255, 255, 0.75)",
-        glassBorderElevated: "rgba(0, 0, 0, 0.12)",
-        glassBlurElevated: 24,
-        glassSpecular: "rgba(255, 255, 255, 0.7)",
-        glassSpecularSubtle: "rgba(255, 255, 255, 0.3)",
-        glassShadow: "rgba(0, 0, 0, 0.08)",
-        glassShadowElevated: "rgba(0, 0, 0, 0.12)",
-        bgImage: PHOTO_CORAL,
-        bgOverlay:
-          "linear-gradient(180deg, rgba(255, 237, 213, 0.50) 0%, rgba(255, 237, 213, 0.65) 100%)",
-        bodyBg: "#fffbf5",
+        ...GLASS_SHARED,
+        ...STATUS_COLORS,
+        primaryGlow: "rgba(232, 93, 117, 0.35)",
+        glassBorderHover: "rgba(232, 93, 117, 0.35)", // coral-pink glow on hover
+        surface: "#111820",
+        surfaceElevated: "#1a2230",
+        bgImage: "linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%)",
+        bgOverlay: "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(15, 35, 60, 0.5) 0%, rgba(10, 25, 45, 0.25) 40%, transparent 100%)",
+        bodyBg: "#000000",
       },
     },
 
-    typography: {
-      fontHeading: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      fontBody: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      headingWeight: 700,
-      bodyWeight: 400,
-    },
-
-    backgrounds: {
-      fallbackColor: "#1c0a04",
-    },
-
-    shape: {
-      borderRadius: "16px",
-      buttonStyle: "rounded",
-      dividerStyle: "line",
-      iconStyle: "outlined",
-    },
-
-    motion: {
-      transitionSpeed: "normal",
-      hoverEffect: "glow",
-      pageTransition: "fade",
-      ambientAnimation: "none",
-    },
+    typography: { ...TYPOGRAPHY },
+    backgrounds: {},
+    shape: { ...SHAPE },
+    motion: { ...MOTION },
   },
 ];

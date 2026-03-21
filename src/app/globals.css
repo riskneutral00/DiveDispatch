@@ -25,139 +25,121 @@
   --color-glass-specular-subtle: var(--color-glass-specular-subtle);
   --color-glass-shadow: var(--color-glass-shadow);
   --color-glass-shadow-elevated: var(--color-glass-shadow-elevated);
+  --color-glass-bg-hover: var(--color-glass-bg-hover);
+  --color-glass-border-hover: var(--color-glass-border-hover);
   --bg-image: var(--bg-image);
   --bg-overlay: var(--bg-overlay);
   --body-bg: var(--body-bg);
-  /* Status colors for booking calendar bars */
-  --color-status-active: var(--color-status-active);
-  --color-status-active-bg: var(--color-status-active-bg);
-  --color-status-active-border: var(--color-status-active-border);
-  --color-status-draft: var(--color-status-draft);
-  --color-status-draft-bg: var(--color-status-draft-bg);
-  --color-status-draft-border: var(--color-status-draft-border);
-  --color-status-upcoming: var(--color-status-upcoming);
-  --color-status-upcoming-bg: var(--color-status-upcoming-bg);
-  --color-status-upcoming-border: var(--color-status-upcoming-border);
-  --color-status-completed: var(--color-status-completed);
-  --color-status-completed-bg: var(--color-status-completed-bg);
-  --color-status-completed-border: var(--color-status-completed-border);
-  --color-status-cancelled: var(--color-status-cancelled);
-  --color-status-cancelled-bg: var(--color-status-cancelled-bg);
-  --color-status-cancelled-border: var(--color-status-cancelled-border);
-  --color-status-urgent: var(--color-status-urgent);
-  --color-status-urgent-bg: var(--color-status-urgent-bg);
-  --color-status-urgent-border: var(--color-status-urgent-border);
+  --color-tooltip-bg: var(--color-tooltip-bg);
+  --color-tooltip-text: var(--color-tooltip-text);
+  /* Type scale */
+  --font-size-page-title: var(--font-size-page-title);
+  --font-size-card-title: var(--font-size-card-title);
+  --font-size-body: var(--font-size-body);
+  --font-size-label: var(--font-size-label);
+  --font-size-section-header: var(--font-size-section-header);
+  --letter-spacing-tight: var(--letter-spacing-tight);
+  --letter-spacing-normal: var(--letter-spacing-normal);
+  --letter-spacing-wide: var(--letter-spacing-wide);
 }
 
-/* ── Default theme fallback (light mode) ──────────────────────────────────────
-   ThemeProvider injects live values at runtime. These fallbacks ensure the
-   page renders correctly before JS hydrates (SSR, no-JS, flash prevention).
+/* ── Theme fallbacks (Ocean Dark — pre-hydration SSR safety) ─────────────────
+   ThemeProvider injects live values at runtime. These ensure the page renders
+   correctly before JS hydrates (SSR, no-JS, flash prevention).
+   Dark-only — no light-mode fallback.
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
-  --color-primary: #0284c7;
-  --color-secondary: #0ea5e9;
-  --color-accent: #f59e0b;
-  --color-text-primary: #1e293b;
-  --color-text-secondary: #64748b;
+  /* Palette */
+  --color-primary: #e8786a;
+  --color-secondary: #4a9ece;
+  --color-accent: #f0b866;
+  --color-text-primary: #f0ebe4;
+  --color-text-secondary: #7a8a9e;
   --color-text-on-primary: #ffffff;
-  --color-glass-bg: rgba(2, 132, 199, 0.08);
-  --color-glass-border: rgba(0, 0, 0, 0.1);
-  --glass-blur: 12px;
-  --color-surface: #f0f9ff;
-  --color-surface-elevated: #ffffff;
-  --color-success: #22c55e;
-  --color-warning: #eab308;
-  --color-destructive: #ef4444;
-  --font-heading: "Playfair Display", serif;
-  --font-body: "Nunito", sans-serif;
+  --color-surface: #111820;
+  --color-surface-elevated: #1a2230;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-destructive: #f87171;
+
+  /* Glass */
+  --color-glass-bg: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
+  --glass-blur: 14px;
+  --color-primary-glow: rgba(232, 120, 106, 0.35);
+  --color-glass-bg-elevated: rgba(255, 255, 255, 0.08);
+  --color-glass-border-elevated: rgba(255, 255, 255, 0.25);
+  --glass-blur-elevated: 24px;
+  --color-glass-specular: rgba(255, 255, 255, 0.4);
+  --color-glass-specular-subtle: rgba(255, 255, 255, 0.1);
+  --color-glass-shadow: rgba(0, 0, 0, 0.15);
+  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.25);
+
+  /* Glass hover — border glow, not fill */
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --color-glass-border-hover: rgba(232, 120, 106, 0.35);
+  --glass-blur-hover: 18px;
+
+  /* Background — ocean depth gradient: surface blue → twilight → abyss */
+  --bg-image: linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%);
+  /* Sunlight beam — radial glow from top-center, fades to transparent */
+  --bg-overlay: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(15, 35, 60, 0.5) 0%, rgba(10, 25, 45, 0.25) 40%, transparent 100%);
+  --body-bg: #000000;
+
+  /* Typography */
+  --font-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --border-radius: 16px;
   --transition-speed: 0.3s;
-  /* Glass visual parity additions */
-  --color-primary-glow: rgba(2, 132, 199, 0.25);
-  --color-glass-bg-elevated: rgba(255, 255, 255, 0.75);
-  --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
-  --glass-blur-elevated: 24px;
-  --color-glass-specular: rgba(255, 255, 255, 0.7);
-  --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
-  --color-glass-shadow: rgba(0, 0, 0, 0.08);
-  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.12);
-  --bg-image: none;
-  --bg-overlay: none;
-  --body-bg: #f0f9ff;
-  /* Status colors — booking calendar bars */
-  --color-status-active: #16a34a;
-  --color-status-active-bg: rgba(22, 163, 74, 0.14);
-  --color-status-active-border: rgba(22, 163, 74, 0.5);
-  --color-status-draft: #d97706;
-  --color-status-draft-bg: rgba(217, 119, 6, 0.14);
-  --color-status-draft-border: rgba(217, 119, 6, 0.5);
-  --color-status-upcoming: #2563eb;
-  --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
-  --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
-  --color-status-completed: #64748b;
-  --color-status-completed-bg: rgba(100, 116, 139, 0.1);
-  --color-status-completed-border: rgba(100, 116, 139, 0.4);
-  --color-status-cancelled: #64748b;
-  --color-status-cancelled-bg: rgba(100, 116, 139, 0.1);
-  --color-status-cancelled-border: rgba(100, 116, 139, 0.4);
+
+  /* Type scale */
+  --font-size-page-title: 28px;
+  --font-size-card-title: 16px;
+  --font-size-body: 14px;
+  --font-size-label: 13px;
+  --font-size-section-header: 11px;
+  --letter-spacing-tight: -0.03em;
+  --letter-spacing-normal: -0.01em;
+  --letter-spacing-wide: 0.08em;
+
+  /* Tooltip — high contrast against void */
+  --color-tooltip-bg: rgba(255, 255, 255, 0.92);
+  --color-tooltip-text: #0f172a;
+
+  /* Status colors — universal across all skins.
+     IMPORTANT: Do NOT add these to @theme inline. Tailwind's self-referential
+     var() resolution overwrites these values at build time. Status colors are
+     constants consumed via var() in JS — they never need Tailwind utilities. */
+  --color-status-active: #34d399;
+  --color-status-active-bg: rgba(52, 211, 153, 0.14);
+  --color-status-active-border: rgba(52, 211, 153, 0.5);
+  --color-status-draft: #fbbf24;
+  --color-status-draft-bg: rgba(251, 191, 36, 0.14);
+  --color-status-draft-border: rgba(251, 191, 36, 0.5);
+  --color-status-upcoming: #60a5fa;
+  --color-status-upcoming-bg: rgba(96, 165, 250, 0.14);
+  --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
+  --color-status-completed: #a8a29e;
+  --color-status-completed-bg: rgba(168, 162, 158, 0.14);
+  --color-status-completed-border: rgba(168, 162, 158, 0.50);
+  --color-status-cancelled: #a8a29e;
+  --color-status-cancelled-bg: rgba(168, 162, 158, 0.14);
+  --color-status-cancelled-border: rgba(168, 162, 158, 0.50);
   --color-status-urgent: #dc2626;
   --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
   --color-status-urgent-border: rgba(220, 38, 38, 0.5);
-}
+  --color-status-multiday: #d946ef;
+  --color-status-multiday-bg: rgba(217, 70, 239, 0.14);
+  --color-status-multiday-border: rgba(217, 70, 239, 0.5);
 
-/* ── Default theme fallback — dark mode (Deep Ocean palette) ──────────────── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: #0d7377;
-    --color-secondary: #14a3a8;
-    --color-accent: #e8a87c;
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #b0d4d6;
-    --color-text-on-primary: #ffffff;
-    --color-glass-bg: rgba(13, 115, 119, 0.15);
-    --color-glass-border: rgba(255, 255, 255, 0.2);
-    --glass-blur: 12px;
-    --color-surface: #0a2e3d;
-    --color-surface-elevated: #0f3d4f;
-    --color-success: #22c55e;
-    --color-warning: #eab308;
-    --color-destructive: #ef4444;
-    --font-heading: "Playfair Display", serif;
-    --font-body: "Nunito", sans-serif;
-    --border-radius: 16px;
-    --transition-speed: 0.3s;
-    /* Glass visual parity additions */
-    --color-primary-glow: rgba(13, 115, 119, 0.4);
-    --color-glass-bg-elevated: rgba(255, 255, 255, 0.08);
-    --color-glass-border-elevated: rgba(255, 255, 255, 0.25);
-    --glass-blur-elevated: 24px;
-    --color-glass-specular: rgba(255, 255, 255, 0.4);
-    --color-glass-specular-subtle: rgba(255, 255, 255, 0.1);
-    --color-glass-shadow: rgba(0, 0, 0, 0.2);
-    --color-glass-shadow-elevated: rgba(0, 0, 0, 0.3);
-    --bg-image: none;
-    --bg-overlay: none;
-    --body-bg: #0a2e3d;
-    /* Status colors — dark mode */
-    --color-status-active: #4ade80;
-    --color-status-active-bg: rgba(74, 222, 128, 0.14);
-    --color-status-active-border: rgba(74, 222, 128, 0.5);
-    --color-status-draft: #fbbf24;
-    --color-status-draft-bg: rgba(251, 191, 36, 0.14);
-    --color-status-draft-border: rgba(251, 191, 36, 0.5);
-    --color-status-upcoming: #60a5fa;
-    --color-status-upcoming-bg: rgba(96, 165, 250, 0.14);
-    --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
-    --color-status-completed: #94a3b8;
-    --color-status-completed-bg: rgba(148, 163, 184, 0.1);
-    --color-status-completed-border: rgba(148, 163, 184, 0.4);
-    --color-status-cancelled: #94a3b8;
-    --color-status-cancelled-bg: rgba(148, 163, 184, 0.1);
-    --color-status-cancelled-border: rgba(148, 163, 184, 0.4);
-    --color-status-urgent: #f87171;
-    --color-status-urgent-bg: rgba(248, 113, 113, 0.14);
-    --color-status-urgent-border: rgba(248, 113, 113, 0.5);
-  }
+  /* Blocked — operational constraint, not a booking status */
+  --color-blocked: #a78bfa;
+  --color-blocked-bg: rgba(167, 139, 250, 0.14);
+  --color-blocked-border: rgba(167, 139, 250, 0.50);
+
+  /* Calendar date watermarks */
+  --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  --color-date-blocked: rgba(255, 255, 255, 0.6);
 }
 
 /* ── Urgent Draft pulse animation ────────────────────────────────────────── */
@@ -241,9 +223,12 @@ body {
   border: 1px solid var(--color-glass-border);
   border-radius: var(--border-radius);
   box-shadow:
-    0 8px 32px var(--color-glass-shadow),
+    0 4px 20px var(--color-glass-shadow),
     inset 0 1px 0 var(--color-glass-specular-subtle);
-  transition: box-shadow var(--transition-speed) ease,
+  transition: background-color var(--transition-speed) ease,
+              backdrop-filter var(--transition-speed) ease,
+              -webkit-backdrop-filter var(--transition-speed) ease,
+              box-shadow var(--transition-speed) ease,
               border-color var(--transition-speed) ease,
               transform var(--transition-speed) ease;
 }
@@ -270,9 +255,12 @@ body {
   border: 1px solid var(--color-glass-border-elevated);
   border-radius: var(--border-radius);
   box-shadow:
-    0 12px 48px var(--color-glass-shadow-elevated),
+    0 8px 32px var(--color-glass-shadow-elevated),
     inset 0 1px 0 var(--color-glass-specular-subtle);
-  transition: box-shadow var(--transition-speed) ease,
+  transition: background-color var(--transition-speed) ease,
+              backdrop-filter var(--transition-speed) ease,
+              -webkit-backdrop-filter var(--transition-speed) ease,
+              box-shadow var(--transition-speed) ease,
               border-color var(--transition-speed) ease,
               transform var(--transition-speed) ease;
 }
@@ -344,4 +332,168 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Glass hover — border glow effect ────────────────────────────────────────
+   Desktop: border glows with primary color, fill barely changes,
+   background stays visible through glass. No color/text inversion.
+   Gated by [data-hover-effect="on"] on <html>.
+   ──────────────────────────────────────────────────────────────────────────── */
+[data-hover-effect="on"] .glass-surface:hover {
+  background-color: var(--color-glass-bg-hover);
+  backdrop-filter: blur(var(--glass-blur-hover));
+  -webkit-backdrop-filter: blur(var(--glass-blur-hover));
+  border-color: var(--color-glass-border-hover);
+  box-shadow:
+    0 0 20px var(--color-primary-glow),
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular);
+}
+
+/* Dark mode: flip ALL child variables to light-mode values on hover so content
+   matches day-mode appearance on the white-ish glass surface */
+[data-mode="dark"] [data-hover-effect="on"] .glass-surface:hover {
+  /* ── Text ── */
+  --color-text-primary: rgba(0, 0, 0, 0.87);
+  --color-text-secondary: rgba(0, 0, 0, 0.55);
+
+  /* ── Glass structural ── */
+  --color-glass-bg: rgba(255, 255, 255, 0.45);
+  --color-glass-border: rgba(0, 0, 0, 0.06);
+  --color-glass-bg-elevated: rgba(255, 255, 255, 0.55);
+  --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
+  --color-glass-specular: rgba(255, 255, 255, 0.7);
+  --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
+  --color-glass-shadow: rgba(0, 0, 0, 0.06);
+  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.10);
+
+  /* ── Surfaces ── */
+  --color-surface: #f0f9ff;
+  --color-surface-elevated: #ffffff;
+
+  /* ── Calendar watermarks ── */
+  --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+  --color-date-blocked: rgba(0, 0, 0, 0.25);
+
+  /* ── Status colors ── */
+  --color-status-active: #16a34a;
+  --color-status-active-bg: rgba(22, 163, 74, 0.14);
+  --color-status-active-border: rgba(22, 163, 74, 0.5);
+  --color-status-draft: #d97706;
+  --color-status-draft-bg: rgba(217, 119, 6, 0.14);
+  --color-status-draft-border: rgba(217, 119, 6, 0.5);
+  --color-status-upcoming: #2563eb;
+  --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
+  --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
+  --color-status-completed: #78716c;
+  --color-status-completed-bg: rgba(120, 113, 108, 0.14);
+  --color-status-completed-border: rgba(120, 113, 108, 0.50);
+  --color-status-cancelled: #78716c;
+  --color-status-cancelled-bg: rgba(120, 113, 108, 0.14);
+  --color-status-cancelled-border: rgba(120, 113, 108, 0.50);
+  --color-status-urgent: #dc2626;
+  --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
+  --color-status-urgent-border: rgba(220, 38, 38, 0.5);
+  --color-status-multiday: #c026d3;
+  --color-status-multiday-bg: rgba(192, 38, 211, 0.14);
+  --color-status-multiday-border: rgba(192, 38, 211, 0.5);
+
+  /* ── Blocked — light-mode variant ── */
+  --color-blocked: #7c3aed;
+  --color-blocked-bg: rgba(124, 58, 237, 0.14);
+  --color-blocked-border: rgba(124, 58, 237, 0.50);
+}
+
+/* Mobile: slightly brighter border at rest, coral glow flash on tap */
+@media (hover: none) {
+  .glass-surface {
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  [data-hover-effect="on"] .glass-surface:active {
+    border-color: var(--color-glass-border-hover);
+    box-shadow: 0 0 20px var(--color-primary-glow);
+  }
+
+  /* Dark mode mobile: same full light-mode flip as desktop hover */
+  [data-mode="dark"] [data-hover-effect="on"] .glass-surface {
+    /* ── Text ── */
+    --color-text-primary: rgba(0, 0, 0, 0.87);
+    --color-text-secondary: rgba(0, 0, 0, 0.55);
+
+    /* ── Glass structural ── */
+    --color-glass-bg: rgba(255, 255, 255, 0.45);
+    --color-glass-border: rgba(0, 0, 0, 0.06);
+    --color-glass-bg-elevated: rgba(255, 255, 255, 0.55);
+    --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
+    --color-glass-specular: rgba(255, 255, 255, 0.7);
+    --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
+    --color-glass-shadow: rgba(0, 0, 0, 0.06);
+    --color-glass-shadow-elevated: rgba(0, 0, 0, 0.10);
+
+    /* ── Surfaces ── */
+    --color-surface: #f0f9ff;
+    --color-surface-elevated: #ffffff;
+
+    /* ── Calendar watermarks ── */
+    --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
+    --color-date-blocked: rgba(0, 0, 0, 0.25);
+
+    /* ── Status colors ── */
+    --color-status-active: #16a34a;
+    --color-status-active-bg: rgba(22, 163, 74, 0.14);
+    --color-status-active-border: rgba(22, 163, 74, 0.5);
+    --color-status-draft: #d97706;
+    --color-status-draft-bg: rgba(217, 119, 6, 0.14);
+    --color-status-draft-border: rgba(217, 119, 6, 0.5);
+    --color-status-upcoming: #2563eb;
+    --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
+    --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
+    --color-status-completed: #78716c;
+    --color-status-completed-bg: rgba(120, 113, 108, 0.14);
+    --color-status-completed-border: rgba(120, 113, 108, 0.50);
+    --color-status-cancelled: #78716c;
+    --color-status-cancelled-bg: rgba(120, 113, 108, 0.14);
+    --color-status-cancelled-border: rgba(120, 113, 108, 0.50);
+    --color-status-urgent: #dc2626;
+    --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
+    --color-status-urgent-border: rgba(220, 38, 38, 0.5);
+    --color-status-multiday: #c026d3;
+    --color-status-multiday-bg: rgba(192, 38, 211, 0.14);
+    --color-status-multiday-border: rgba(192, 38, 211, 0.5);
+  }
+}
+
+/* Reduced motion: disable glass transitions */
+@media (prefers-reduced-motion: reduce) {
+  .glass,
+  .glass-elevated,
+  .glass-surface {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Stakeholder switch: fade-in on mount ──────────────────────────────────
+   DashboardShell re-mounts on every role switch, so a CSS animation on
+   <main> gives a natural crossfade with zero JS overhead.
+   ──────────────────────────────────────────────────────────────────────────── */
+@keyframes dashboard-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.dashboard-enter {
+  animation: dashboard-fade-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-enter {
+    animation: none;
+  }
 }

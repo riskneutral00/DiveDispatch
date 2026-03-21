@@ -29,8 +29,8 @@ If the thread file has a "Key Files" section, read those files too.
 
 Output exactly this format:
 ```
-**Phase:** [current phase name and number from TODO]
-**Next:** [exact next action from thread file]
+**Position:** [current position from TODO's "Current Position" section]
+**Next:** [the next step described in that section]
 Starting now.
 ```
 

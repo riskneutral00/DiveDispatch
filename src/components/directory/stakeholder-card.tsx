@@ -5,6 +5,7 @@ import { BadgeCheck, MapPin, Star } from 'lucide-react'
 import { GlassBadge } from '@/components/glass/glass-badge'
 import { GlassCard } from '@/components/glass/glass-card'
 import type { DirectoryEntry } from '../../../convex/directory'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 // Extends DirectoryEntry with role-specific fields returned by the enhanced
 // listByRole query (builder-directory-backend). Field names match the backend's
@@ -29,21 +30,6 @@ function flagEmoji(code: string): string {
     String.fromCodePoint(OFFSET + code.toUpperCase().charCodeAt(0)) +
     String.fromCodePoint(OFFSET + code.toUpperCase().charCodeAt(1))
   )
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  DiveCenter: 'Dive Center',
-  Agent: 'Agent',
-  Instructor: 'Instructor',
-  Boat: 'Boat',
-  Equipment: 'Equipment',
-  Pool: 'Pool',
-  Compressor: 'Compressor',
-  DiveMaster: 'Dive Master',
-  Liveaboard: 'Liveaboard',
-  DiveResort: 'Dive Resort',
-  DiveHostel: 'Dive Hostel',
-  DiveSite: 'Dive Site',
 }
 
 const ROLE_PATH_PREFIX: Record<string, string> = {
@@ -96,7 +82,7 @@ export function StakeholderCard({
 }: StakeholderCardProps) {
   const initials = entry.name.slice(0, 2).toUpperCase()
   const location = [entry.city, entry.country].filter(Boolean).join(', ')
-  const roleLabel = ROLE_LABELS[entry.role] ?? entry.role
+  const roleLabel = ROLE_BY_CLERK_ROLE[entry.role as ClerkRole]?.label ?? entry.role
   const href = profileHref(entry)
 
   const actionLabel =

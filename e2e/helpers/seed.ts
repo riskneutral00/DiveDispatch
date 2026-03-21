@@ -18,11 +18,11 @@ export const NICOLE = {
 
 // ── Instructors ───────────────────────────────────────────────────────────────
 
-export const JAMES = {
-  email: 'james-cooper+clerk_test@divedispatch.dev',
-  slug: 'james-cooper',
+export const RYAN_CLARKE = {
+  email: 'ryan-clarke+clerk_test@divedispatch.dev',
+  slug: 'ryan-clarke',
   roleKey: 'instructor',
-  dashboardPath: '/instructor/james-cooper/dashboard',
+  dashboardPath: '/instructor/ryan-clarke/dashboard',
 } as const
 
 export const SARAH = {
@@ -40,6 +40,26 @@ export const WATER_PRO = {
   slug: 'b3wt9f',
   roleKey: 'pool',
   dashboardPath: '/pool/b3wt9f/dashboard',
+} as const
+
+// ── Boat ──────────────────────────────────────────────────────────────────────
+
+/** Hug Ocean Boat — standalone Boat role seed user (slug: n7rq5j-bt) */
+export const HUG_OCEAN_BOAT = {
+  email: 'hug-ocean-boat+clerk_test@divedispatch.dev',
+  slug: 'n7rq5j-bt',
+  roleKey: 'boat',
+  dashboardPath: '/boat/n7rq5j-bt/dashboard',
+} as const
+
+// ── Equipment ─────────────────────────────────────────────────────────────────
+
+/** Nicole DC Equipment — standalone Equipment role seed user (slug: q9bz7r-eq) */
+export const NICOLE_DC_EQUIPMENT = {
+  email: 'nicole-dc-equipment+clerk_test@divedispatch.dev',
+  slug: 'q9bz7r-eq',
+  roleKey: 'equipment',
+  dashboardPath: '/equipment/q9bz7r-eq/dashboard',
 } as const
 
 // ── Compressor ────────────────────────────────────────────────────────────────
@@ -61,11 +81,6 @@ export const AMANDA = {
   roleKey: 'agent',
   dashboardPath: '/agent/r5yz4q/dashboard',
 } as const
-
-// ── Roles without standalone seed users ───────────────────────────────────────
-// Boat, Equipment, DiveMaster have no seed users with those as primary roles.
-// They appear only as additionalRoles on DiveCenter users.
-// TODO: add seed users for these roles to enable full coverage.
 
 // ── Booking defaults ──────────────────────────────────────────────────────────
 

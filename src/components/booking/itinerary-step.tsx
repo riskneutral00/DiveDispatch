@@ -1,13 +1,18 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { DayRow } from './day-row'
-import { generateDays } from '@/lib/booking/generate-days'
-import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo } from '@/lib/booking/course-validation'
-import type { WizardState, WizardAction, CourseEntry } from '@/lib/booking/wizard-state'
+import { ResourceStep } from './resource-step'
+import { generateDays, getAvailableDives, cascadeRemoveOrphans, ensureSufficientDays } from '@/lib/booking/generate-days'
+import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateMissingPrerequisites, validateStartDateNotInPast, calculateComboDates } from '@/lib/booking/course-validation'
+import { toISODateString } from '@/lib/utils/date'
+import type { WizardState, WizardAction, CourseEntry, DiveSlot } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { COURSE_CATALOG, COURSE_DISPLAY_LABELS } from '@/lib/constants/course-catalog'
+import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES } from '@/lib/constants/course-catalog'
+import { addDays } from '@/lib/utils/date'
 import type { Dispatch } from 'react'
 import { AlertTriangle, ChevronDown, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
 
@@ -29,9 +34,10 @@ interface CourseEntryRowProps {
   dispatch: Dispatch<WizardAction>
   agency: string
   minStartDate?: string
+  nextEntry?: CourseEntry
 }
 
-function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minStartDate }: CourseEntryRowProps) {
+function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minStartDate, nextEntry }: CourseEntryRowProps) {
   const agencyCodes = agency
     ? COURSE_CATALOG.filter((c) => c.agency === agency || c.agency === 'Universal').map((c) => c.code)
     : COURSE_CODES
@@ -42,6 +48,35 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   }
 
   function handleCourseChange(code: string) {
+    // O+A combo: create OW entry + auto-add AOW entry with correct date ranges
+    if (code === 'O+A') {
+      const startDate = entry.dates[0] ?? ''
+      if (startDate) {
+        const combo = calculateComboDates(startDate)
+        updateEntry({
+          activityCode: 'OW',
+          dates: combo.owDates,
+        })
+        dispatch({
+          type: 'ADD_COURSE_ENTRY',
+          customerId,
+          initialData: {
+            activityCode: 'AOW',
+            dates: combo.aowDates,
+            agency: entry.agency,
+          },
+        })
+      } else {
+        updateEntry({ activityCode: 'OW', dates: [] })
+        dispatch({
+          type: 'ADD_COURSE_ENTRY',
+          customerId,
+          initialData: { activityCode: 'AOW', dates: [], agency: entry.agency },
+        })
+      }
+      return
+    }
+
     const startDate = entry.dates[0] ?? ''
     const endDate = startDate ? getEndDateDefault(code, startDate) : ''
     updateEntry({
@@ -51,11 +86,39 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   }
 
   function handleStartDateChange(val: string) {
-    // Auto-fill end date from course defaults
-    const endDate = entry.activityCode
-      ? getEndDateDefault(entry.activityCode, val)
-      : val
-    updateEntry({ dates: [val, endDate] })
+    // O+A: detect OW+AOW combo for correct shared transition day dates
+    const isOACombo = entry.activityCode === 'OW' && nextEntry?.activityCode === 'AOW'
+
+    if (isOACombo) {
+      // O+A: OW gets [start, owEnd], AOW gets [owEnd, aowEnd]
+      const combo = calculateComboDates(val)
+      updateEntry({ dates: combo.owDates })
+      dispatch({
+        type: 'UPDATE_COURSE_ENTRY',
+        customerId,
+        entryId: nextEntry!.id,
+        patch: { dates: combo.aowDates },
+      })
+    } else {
+      const endDate = entry.activityCode
+        ? getEndDateDefault(entry.activityCode, val)
+        : val
+      updateEntry({ dates: [val, endDate] })
+
+      // General cascade: next starts day after current ends
+      if (nextEntry && !nextEntry.dates[0]) {
+        const nextStart = addDays(endDate, 1)
+        const nextEnd = nextEntry.activityCode
+          ? getEndDateDefault(nextEntry.activityCode, nextStart)
+          : nextStart
+        dispatch({
+          type: 'UPDATE_COURSE_ENTRY',
+          customerId,
+          entryId: nextEntry.id,
+          patch: { dates: [nextStart, nextEnd] },
+        })
+      }
+    }
   }
 
   function handleEndDateChange(val: string) {
@@ -72,7 +135,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
         {/* Course picker */}
         <div className="flex flex-col gap-1 min-w-0">
           <label className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
-            Course
+            Activity
           </label>
           <div className="relative">
             <select
@@ -81,10 +144,12 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               className="glass glass-field w-full text-sm py-2 pl-3 pr-8 appearance-none"
               style={{ color: entry.activityCode ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
             >
-              <option value="">Select course…</option>
+              <option value="">Select activity…</option>
               {uniqueCodes.map((code) => (
                 <option key={code} value={code}>{COURSE_DISPLAY_LABELS[code]}</option>
               ))}
+              <option disabled>──────────</option>
+              <option value="O+A">{COMBO_COURSES['O+A'].label}</option>
             </select>
             <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-secondary)' }} />
           </div>
@@ -145,28 +210,98 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
+  // Load instructor and venue options for inline day-row pickers
+  const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
+  const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
+  const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
+  const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name }))
+  const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
+  const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
+
+  // Load inventory units to map owner slugs → inventory unit Convex doc IDs.
+  // The review step needs these IDs to create sessions/reservations.
+  const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
+  const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []
+  const poolInventory = useQuery(api.availability.listInventoryByType, { type: 'Pool' }) ?? []
+
+  const inventoryMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const r of instructorInventory) map[r.ownerId] = r.id
+    for (const r of boatInventory) map[r.ownerId] = r.id
+    for (const r of poolInventory) map[r.ownerId] = r.id
+    return map
+  }, [instructorInventory, boatInventory, poolInventory])
+
+  useEffect(() => {
+    if (Object.keys(inventoryMap).length > 0) {
+      dispatch({ type: 'SET_INVENTORY_MAP', map: inventoryMap })
+    }
+  }, [inventoryMap, dispatch])
+
   // Derive all course codes and date range
   const allCourseCodes: CourseCode[] = [...new Set(
     customers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode as CourseCode)).filter(Boolean),
   )]
   const hasDateRange = state.startDate && state.endDate
 
-  // Prerequisite ordering errors (hard block) — per-customer
-  const orderingErrors = customers.flatMap((c) =>
-    validatePrerequisiteOrder(
-      (c.courseEntries ?? []).map((e) => ({ activityCode: e.activityCode, dates: e.dates })),
-    ),
-  )
-  const uniqueOrderingErrors = [...new Set(orderingErrors)]
+  // Hard block errors — per-customer
+  const today = toISODateString(new Date())
+  const hardErrors: string[] = []
+  for (const c of sameForAll ? customers.slice(0, 1) : customers) {
+    const entries = (c.courseEntries ?? []).map((e) => ({ activityCode: e.activityCode, dates: e.dates }))
+    const codes = entries.map((e) => e.activityCode).filter(Boolean)
+    hardErrors.push(...validatePrerequisiteOrder(entries))
+    hardErrors.push(...validateCourseDateOverlap(entries))
+    hardErrors.push(...validateNoDuplicateCourses(entries))
+    hardErrors.push(...validateMissingPrerequisites(codes))
+    hardErrors.push(...validateStartDateNotInPast(entries, today))
+  }
+  const uniqueOrderingErrors = [...new Set(hardErrors)]
 
-  // Prerequisite and combo warnings (soft)
-  const prereqWarnings = validatePrerequisites(allCourseCodes)
+  // Prerequisite and combo warnings (soft).
+  // Suppress soft prereq warnings when a hard missing-prereq error already covers the same relationship.
+  const rawPrereqWarnings = validatePrerequisites(allCourseCodes)
+  const hardMissingPrereqCodes = new Set(
+    uniqueOrderingErrors
+      .filter((e) => e.includes('requires') && e.includes('add it'))
+      .flatMap((e) => {
+        // Extract the prerequisite name from "X requires Y — add it…"
+        const match = e.match(/requires (.+?) —/)
+        return match ? [match[1]] : []
+      }),
+  )
+  const prereqWarnings = hardMissingPrereqCodes.size > 0
+    ? rawPrereqWarnings.filter((w) => !Array.from(hardMissingPrereqCodes).some((name) => w.includes(name)))
+    : rawPrereqWarnings
   const comboWarnings = validateCourseCombo(allCourseCodes)
-  const allWarnings = [...prereqWarnings, ...comboWarnings]
+
+  // Instructor ratio check
+  const diverCount = customers.length
+  const instructorRatioWarnings: string[] = []
+  if (diverCount > 0 && allCourseCodes.length > 0) {
+    // Find the most restrictive maxDiversPerInstructor across all selected courses
+    const agencyFilter = agency || undefined
+    let minRatio = Infinity
+    for (const code of allCourseCodes) {
+      const entry = COURSE_CATALOG.find((c) => c.code === code && (!agencyFilter || c.agency === agencyFilter || c.agency === 'Universal'))
+        ?? COURSE_CATALOG.find((c) => c.code === code)
+      if (entry && entry.maxDiversPerInstructor < minRatio) {
+        minRatio = entry.maxDiversPerInstructor
+      }
+    }
+    if (minRatio < Infinity && diverCount > minRatio) {
+      const requiredInstructors = Math.ceil(diverCount / minRatio)
+      instructorRatioWarnings.push(
+        `${diverCount} divers with max ${minRatio} per instructor — minimum ${requiredInstructors} instructors/DMs required.`,
+      )
+    }
+  }
+
+  const allWarnings = [...prereqWarnings, ...comboWarnings, ...instructorRatioWarnings]
 
   // Auto-generate days when courses + dates change
   useEffect(() => {
-    const key = `${allCourseCodes.sort().join(',')}|${state.startDate}|${state.endDate}`
+    const key = `${[...allCourseCodes].sort().join(',')}|${state.startDate}|${state.endDate}`
     if (key === prevCoursesRef.current) return
     if (!state.startDate || !state.endDate || allCourseCodes.length === 0) return
     prevCoursesRef.current = key
@@ -183,23 +318,55 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     dispatch({ type: 'SET_DAYS', days: newDays })
   }
 
+  function handleToggleDive(dayIndex: number, slot: DiveSlot) {
+    const day = days[dayIndex]
+    if (!day) return
+
+    const exists = day.dives.some(
+      (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
+    )
+
+    let newDays = days.map((d, i) => {
+      if (i !== dayIndex) return d
+      const newDives = exists
+        ? d.dives.filter(
+            (dv) => !(dv.courseCode === slot.courseCode && dv.diveNumber === slot.diveNumber && dv.isConfined === slot.isConfined),
+          )
+        : [...d.dives, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined }]
+      return { ...d, dives: newDives }
+    })
+
+    if (exists) {
+      newDays = cascadeRemoveOrphans(newDays, allCourseCodes)
+    } else {
+      newDays = ensureSufficientDays(newDays, allCourseCodes)
+    }
+
+    dispatch({ type: 'SET_DAYS', days: newDays })
+  }
+
   const customerNames = customers.map((c) => c.name || 'Customer')
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Copy-to-all toggle */}
+      {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
         <label
-          className="flex items-center gap-2 text-sm cursor-pointer"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+          className="flex items-center gap-2 text-sm"
+          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', opacity: 0.5, cursor: 'not-allowed' }}
+          title="Coming soon"
         >
           <input
             type="checkbox"
-            checked={sameForAll}
-            onChange={(e) => dispatch({ type: 'SET_SAME_FOR_ALL', value: e.target.checked })}
+            checked={false}
+            disabled
             className="accent-[var(--color-accent)]"
+            aria-label="Same courses for all customers (coming soon)"
           />
           Same courses for all customers
+          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--color-glass-border)', color: 'var(--color-text-secondary)' }}>
+            Coming soon
+          </span>
         </label>
       )}
 
@@ -224,7 +391,8 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
           <div className="flex flex-col gap-2">
             {(customer.courseEntries ?? []).map((entry, idx, arr) => {
               const prev = idx > 0 ? arr[idx - 1] : undefined
-              const minStart = prev?.dates[1] || prev?.dates[0] || undefined
+              const next = idx < arr.length - 1 ? arr[idx + 1] : undefined
+              const minStart = prev?.dates[1] || prev?.dates[0] || today
               return (
                 <CourseEntryRow
                   key={entry.id}
@@ -234,6 +402,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
                   dispatch={dispatch}
                   agency={agency}
                   minStartDate={minStart}
+                  nextEntry={next}
                 />
               )
             })}
@@ -246,7 +415,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
             style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
           >
             <Plus size={12} />
-            Add course
+            Add activity
           </button>
         </div>
       ))}
@@ -295,8 +464,8 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
         </div>
       )}
 
-      {/* Day rows */}
-      {days.length > 0 && (
+      {/* Day rows — hidden when no courses selected */}
+      {days.length > 0 && allCourseCodes.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3
@@ -319,9 +488,20 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               dispatch={dispatch}
               canRemove={days.length > 1}
               customerNames={customerNames}
+              availableDives={getAvailableDives(idx, days, allCourseCodes)}
+              onToggleDive={handleToggleDive}
+              instructorOptions={instructorOptions}
+              boatOptions={boatOptions}
+              poolOptions={poolOptions}
+              totalDays={days.length}
             />
           ))}
         </div>
+      )}
+
+      {/* Resources (instructors, venues, equipment) — shown after days are generated */}
+      {days.length > 0 && allCourseCodes.length > 0 && (
+        <ResourceStep state={state} dispatch={dispatch} />
       )}
 
       {/* Empty state if no customers */}

@@ -10,15 +10,14 @@ import {
   isValidEmail,
   isValidWhatsApp,
   isValidLine,
-  type WizardState,
   type CustomerData,
 } from '../src/lib/booking/wizard-state'
 
 // ── Step Definitions ────────────────────────────────────────────────────────
 
 describe('wizard step definitions', () => {
-  it('has 4 steps: customers, itinerary, resources, confirm', () => {
-    expect(WIZARD_STEPS).toEqual(['customers', 'itinerary', 'resources', 'confirm'])
+  it('has 3 steps: customers, itinerary, review', () => {
+    expect(WIZARD_STEPS).toEqual(['customers', 'itinerary', 'review'])
   })
 
   it('all steps have labels', () => {
@@ -58,7 +57,7 @@ describe('makeInitialState', () => {
 
 describe('ADD_CUSTOMER', () => {
   it('adds a customer', () => {
-    let state = makeInitialState()
+    const state = makeInitialState()
     // Initial state has 1 empty customer
     const initialCount = state.customers.length
     const customer = makeCustomer('Anna', 'anna@test.com')
@@ -130,7 +129,7 @@ describe('COPY_COURSE_ENTRIES_TO_ALL', () => {
       type: 'UPDATE_COURSE_ENTRY',
       customerId: anna.id,
       entryId: anna.courseEntries![0].id,
-      patch: { activityCode: 'OW', dates: ['2026-03-15', '2026-03-17'] },
+      patch: { activityCode: 'OW', dates: ['2026-04-15', '2026-04-17'] },
     })
     state = wizardReducer(state, { type: 'COPY_COURSE_ENTRIES_TO_ALL' })
 
@@ -149,7 +148,7 @@ describe('UPDATE_DAY venueType', () => {
     state = {
       ...state,
       days: [
-        { date: '2026-03-15', venueType: 'boat', dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-15', venueType: 'boat', dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
     state = wizardReducer(state, { type: 'UPDATE_DAY', dayIndex: 0, patch: { venueType: 'shore' } })
@@ -165,7 +164,7 @@ describe('TOGGLE_DIVE', () => {
     state = {
       ...state,
       days: [
-        { date: '2026-03-15', venueType: 'pool', dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-15', venueType: 'pool', dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
     state = wizardReducer(state, {
@@ -183,7 +182,7 @@ describe('TOGGLE_DIVE', () => {
       ...state,
       days: [
         {
-          date: '2026-03-15',
+          date: '2026-04-15',
           venueType: 'pool',
           dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
           divesPerDay: 3,
@@ -208,12 +207,12 @@ describe('SET_DAYS', () => {
   it('replaces entire days array', () => {
     let state = makeInitialState()
     const days = [
-      { date: '2026-03-15', venueType: 'pool' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
-      { date: '2026-03-16', venueType: 'boat' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+      { date: '2026-04-15', venueType: 'pool' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+      { date: '2026-04-16', venueType: 'boat' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
     ]
     state = wizardReducer(state, { type: 'SET_DAYS', days })
     expect(state.days.length).toBe(2)
-    expect(state.days[0].date).toBe('2026-03-15')
+    expect(state.days[0].date).toBe('2026-04-15')
   })
 })
 
@@ -352,42 +351,68 @@ describe('canAdvanceFromItinerary', () => {
     const state = {
       ...makeInitialState(),
       customers: [customer],
-      days: [{ date: '2026-03-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' }],
+      days: [{ date: '2026-04-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' }],
     }
     expect(canAdvanceFromItinerary(state)).toBe(false)
   })
 
   it('returns false when there are empty days (no dives)', () => {
     const customer = makeCustomer('Anna', 'anna@test.com')
-    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-03-15', '2026-03-17'], agency: '' }]
+    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-04-15', '2026-04-17'], agency: '' }]
     const state = {
       ...makeInitialState(),
       customers: [customer],
       days: [
-        { date: '2026-03-15', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
-        { date: '2026-03-16', venueType: 'boat' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' }, // empty!
+        { date: '2026-04-15', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-16', venueType: 'boat' as const, dives: [], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' }, // empty!
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(false)
   })
 
-  it('returns true when all conditions met', () => {
+  it('returns true when all conditions met (courses + dates + instructor + venue)', () => {
     const customer = makeCustomer('Anna', 'anna@test.com')
-    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-03-15', '2026-03-17'], agency: '' }]
+    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-04-15', '2026-04-17'], agency: '' }]
     const state = {
       ...makeInitialState(),
       customers: [customer],
       days: [
-        { date: '2026-03-15', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
-        { date: '2026-03-16', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }, { courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-15', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1', poolInventoryUnitId: 'pool-1' },
+        { date: '2026-04-16', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }, { courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1', inventoryUnitId: 'boat-1' },
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(true)
   })
 
-  it('returns true with sameForAll when only first customer has courses', () => {
+  it('returns false when instructor is missing on a day', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-04-15', '2026-04-17'], agency: '' }]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        { date: '2026-04-15', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', poolInventoryUnitId: 'pool-1' },
+      ],
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  it('returns true when boat day has instructor but no boat assigned', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-04-15', '2026-04-17'], agency: '' }]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        { date: '2026-04-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+      ],
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(true)
+  })
+
+  it('returns true with sameForAll when only first customer has courses (shore day with instructor)', () => {
     const c1 = makeCustomer('Anna', 'anna@test.com')
-    c1.courseEntries = [{ id: '1', activityCode: 'TRY_DIVE', dates: ['2026-03-18'], agency: '' }]
+    c1.courseEntries = [{ id: '1', activityCode: 'TRY_DIVE', dates: ['2026-04-18'], agency: '' }]
     const c2 = makeCustomer('Bob', 'bob@test.com')
     // c2 has no courses — sameForAll will copy on advance
     const state = {
@@ -395,7 +420,7 @@ describe('canAdvanceFromItinerary', () => {
       sameForAll: true,
       customers: [c1, c2],
       days: [
-        { date: '2026-03-18', venueType: 'shore' as const, dives: [{ courseCode: 'TRY_DIVE', diveNumber: 1, isConfined: false }], divesPerDay: 1, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-18', venueType: 'shore' as const, dives: [{ courseCode: 'TRY_DIVE', diveNumber: 1, isConfined: false }], divesPerDay: 1, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(true)
@@ -403,36 +428,223 @@ describe('canAdvanceFromItinerary', () => {
 
   it('returns false without sameForAll when second customer has no courses', () => {
     const c1 = makeCustomer('Anna', 'anna@test.com')
-    c1.courseEntries = [{ id: '1', activityCode: 'TRY_DIVE', dates: ['2026-03-18'], agency: '' }]
+    c1.courseEntries = [{ id: '1', activityCode: 'TRY_DIVE', dates: ['2026-04-18'], agency: '' }]
     const c2 = makeCustomer('Bob', 'bob@test.com')
     const state = {
       ...makeInitialState(),
       sameForAll: false,
       customers: [c1, c2],
       days: [
-        { date: '2026-03-18', venueType: 'shore' as const, dives: [{ courseCode: 'TRY_DIVE', diveNumber: 1, isConfined: false }], divesPerDay: 1, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-18', venueType: 'shore' as const, dives: [{ courseCode: 'TRY_DIVE', diveNumber: 1, isConfined: false }], divesPerDay: 1, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(false)
   })
+
+  // B1: validateCourseDateOverlap is wired in — overlapping dates block
+  it('blocks when courses have overlapping dates (mid-overlap)', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [
+      { id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' },
+      { id: '2', activityCode: 'AOW', dates: ['2026-03-21', '2026-03-23'], agency: '' }, // overlaps OW!
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: makeMinimalDays(),
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  // B7: Shared transition day is NOT overlap — should ALLOW
+  it('allows O+A with shared transition day (OW ends Mar 22, AOW starts Mar 22)', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [
+      { id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' },
+      { id: '2', activityCode: 'AOW', dates: ['2026-03-22', '2026-03-23'], agency: '' },
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: makeOADays(),
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(true)
+  })
+
+  // B4: Duplicate course check
+  it('blocks when customer has duplicate courses (OW twice)', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [
+      { id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' },
+      { id: '2', activityCode: 'OW', dates: ['2026-03-25', '2026-03-27'], agency: '' },
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: makeMinimalDays(),
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  // B5: Missing prerequisite = hard block
+  it('blocks when prerequisite is missing (AOW without OW in entries)', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [
+      { id: '1', activityCode: 'AOW', dates: ['2026-03-20', '2026-03-21'], agency: '' },
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        { date: '2026-03-20', venueType: 'boat' as const, dives: [{ courseCode: 'AOW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+      ],
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  // B6: Orphaned after delete — had OW+AOW, removed OW
+  it('blocks after delete-prerequisite scenario (had OW+AOW, removed OW entry)', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    // Only AOW remains after OW was deleted
+    customer.courseEntries = [
+      { id: '2', activityCode: 'AOW', dates: ['2026-03-22', '2026-03-23'], agency: '' },
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        { date: '2026-03-22', venueType: 'boat' as const, dives: [{ courseCode: 'AOW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+      ],
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  // B3: Per-day non-confined dive count cap
+  it('blocks when a day has > 3 non-confined dives', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' }]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        {
+          date: '2026-03-20', venueType: 'boat' as const, divesPerDay: 3,
+          startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1',
+          dives: [
+            { courseCode: 'OW', diveNumber: 1, isConfined: false },
+            { courseCode: 'OW', diveNumber: 2, isConfined: false },
+            { courseCode: 'OW', diveNumber: 3, isConfined: false },
+            { courseCode: 'OW', diveNumber: 4, isConfined: false }, // 4 non-confined!
+          ],
+        },
+      ],
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(false)
+  })
+
+  // Empty course entries don't break anything
+  it('allows sameForAll + O+A on customer 1 (customer 2 has no courses yet)', () => {
+    const c1 = makeCustomer('Anna', 'anna@test.com')
+    c1.courseEntries = [
+      { id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' },
+      { id: '2', activityCode: 'AOW', dates: ['2026-03-22', '2026-03-23'], agency: '' },
+    ]
+    const c2 = makeCustomer('Bob', 'bob@test.com')
+    // c2 has no courses — sameForAll will copy on advance
+    const state = {
+      ...makeInitialState(),
+      sameForAll: true,
+      customers: [c1, c2],
+      days: makeOADays(),
+    }
+    expect(canAdvanceFromItinerary(state)).toBe(true)
+  })
+
+  it('empty course entries (activityCode="") do not break validation', () => {
+    const customer = makeCustomer('Anna', 'anna@test.com')
+    customer.courseEntries = [
+      { id: '1', activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'], agency: '' },
+      { id: '2', activityCode: '', dates: [], agency: '' }, // empty entry
+    ]
+    const state = {
+      ...makeInitialState(),
+      customers: [customer],
+      days: [
+        { date: '2026-03-20', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+        { date: '2026-03-21', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }, { courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+      ],
+    }
+    // Should still pass — the empty entry is ignored
+    expect(canAdvanceFromItinerary(state)).toBe(true)
+  })
+})
+
+describe('APPLY_VENUE_TO_REMAINING', () => {
+  it('applies boat to remaining boat days', () => {
+    let state = makeInitialState()
+    state = {
+      ...state,
+      days: [
+        { date: '2026-04-15', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', inventoryUnitId: 'boat-1' },
+        { date: '2026-04-16', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-17', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 3, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+      ],
+    }
+    state = wizardReducer(state, { type: 'APPLY_VENUE_TO_REMAINING', fromDayIndex: 0, unitId: 'boat-1' })
+    expect(state.days[0].inventoryUnitId).toBe('boat-1')
+    expect(state.days[1].inventoryUnitId).toBe('boat-1')
+    expect(state.days[2].inventoryUnitId).toBe('boat-1')
+  })
+
+  it('applies pool to remaining pool days (not boat days)', () => {
+    let state = makeInitialState()
+    state = {
+      ...state,
+      days: [
+        { date: '2026-04-15', venueType: 'pool', dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', poolInventoryUnitId: 'pool-1' },
+        { date: '2026-04-16', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-17', venueType: 'pool', dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok' },
+      ],
+    }
+    state = wizardReducer(state, { type: 'APPLY_VENUE_TO_REMAINING', fromDayIndex: 0, unitId: 'pool-1' })
+    expect(state.days[0].poolInventoryUnitId).toBe('pool-1')
+    expect(state.days[1].poolInventoryUnitId).toBeUndefined() // boat day unchanged
+    expect(state.days[2].poolInventoryUnitId).toBe('pool-1')
+  })
+
+  it('does not affect days before fromDayIndex', () => {
+    let state = makeInitialState()
+    state = {
+      ...state,
+      days: [
+        { date: '2026-04-15', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: '2026-04-16', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', inventoryUnitId: 'boat-2' },
+        { date: '2026-04-17', venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 3, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+      ],
+    }
+    state = wizardReducer(state, { type: 'APPLY_VENUE_TO_REMAINING', fromDayIndex: 1, unitId: 'boat-2' })
+    expect(state.days[0].inventoryUnitId).toBeUndefined()
+    expect(state.days[1].inventoryUnitId).toBe('boat-2')
+    expect(state.days[2].inventoryUnitId).toBe('boat-2')
+  })
 })
 
 describe('canAdvanceFromResources', () => {
-  it('returns false when a boat day has no boat assigned', () => {
+  it('returns true when a boat day has instructor but no boat assigned', () => {
     const state = {
       ...makeInitialState(),
       days: [
-        { date: '2026-03-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+        { date: '2026-04-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
       ],
     }
-    expect(canAdvanceFromResources(state)).toBe(false)
+    expect(canAdvanceFromResources(state)).toBe(true)
   })
 
   it('returns false when any day has no instructor', () => {
     const state = {
       ...makeInitialState(),
       days: [
-        { date: '2026-03-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', inventoryUnitId: 'boat-1' },
+        { date: '2026-04-15', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', inventoryUnitId: 'boat-1' },
       ],
     }
     expect(canAdvanceFromResources(state)).toBe(false)
@@ -443,7 +655,7 @@ describe('canAdvanceFromResources', () => {
       ...makeInitialState(),
       days: [
         {
-          date: '2026-03-15',
+          date: '2026-04-15',
           venueType: 'shore' as const,
           dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }],
           divesPerDay: 3,
@@ -463,7 +675,7 @@ describe('canAdvanceFromResources', () => {
       ...makeInitialState(),
       days: [
         {
-          date: '2026-03-15',
+          date: '2026-04-15',
           venueType: 'pool' as const,
           dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
           divesPerDay: 3,
@@ -491,4 +703,21 @@ function makeCustomer(name: string, email: string): CustomerData {
     flags: [{ code: 'GB', label: 'English' }],
     courseEntries: [{ id: `entry-${_customerId}`, activityCode: '', dates: [], agency: '' }],
   }
+}
+
+/** Minimal days with instructor for passing basic validation */
+function makeMinimalDays() {
+  return [
+    { date: '2026-03-20', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+  ]
+}
+
+/** Full O+A schedule days: pool + 3 boat with OW+AOW dives and instructors */
+function makeOADays() {
+  return [
+    { date: '2026-03-20', venueType: 'pool' as const, dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }], divesPerDay: 3, startTime: '09:00', endTime: '14:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+    { date: '2026-03-21', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }, { courseCode: 'OW', diveNumber: 2, isConfined: false }, { courseCode: 'OW', diveNumber: 3, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+    { date: '2026-03-22', venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 4, isConfined: false }, { courseCode: 'AOW', diveNumber: 1, isConfined: false }, { courseCode: 'AOW', diveNumber: 2, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+    { date: '2026-03-23', venueType: 'boat' as const, dives: [{ courseCode: 'AOW', diveNumber: 3, isConfined: false }, { courseCode: 'AOW', diveNumber: 4, isConfined: false }, { courseCode: 'AOW', diveNumber: 5, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+  ]
 }

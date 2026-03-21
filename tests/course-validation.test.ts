@@ -4,6 +4,10 @@ import {
   validatePrerequisiteOrder,
   validateCourseCombo,
   validateCourseDateOverlap,
+  validateNoDuplicateCourses,
+  validateMissingPrerequisites,
+  validateStartDateNotInPast,
+  calculateComboDates,
   getEndDateDefault,
 } from '../src/lib/booking/course-validation'
 
@@ -131,7 +135,7 @@ describe('validateCourseCombo', () => {
   })
 })
 
-// ── Sequential Date Validation ──────────────────────────────────────────────
+// ── Date Overlap Validation ─────────────────────────────────────────────────
 
 describe('validateCourseDateOverlap', () => {
   it('returns no error when dates do not overlap', () => {
@@ -142,10 +146,29 @@ describe('validateCourseDateOverlap', () => {
     expect(validateCourseDateOverlap(courses)).toEqual([])
   })
 
-  it('flags overlapping dates for same diver', () => {
+  it('flags true overlapping dates (mid-overlap)', () => {
     const courses = [
       { activityCode: 'OW', dates: ['2026-03-15', '2026-03-17'] },
-      { activityCode: 'AOW', dates: ['2026-03-16', '2026-03-18'] }, // overlaps!
+      { activityCode: 'AOW', dates: ['2026-03-16', '2026-03-18'] },
+    ]
+    const errors = validateCourseDateOverlap(courses)
+    expect(errors.length).toBeGreaterThan(0)
+  })
+
+  it('allows shared transition day: OW [Mar 20, Mar 22] + AOW [Mar 22, Mar 23] → no error', () => {
+    // B7: The O+A shared transition day is NOT overlap
+    const courses = [
+      { activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'] },
+      { activityCode: 'AOW', dates: ['2026-03-22', '2026-03-23'] },
+    ]
+    expect(validateCourseDateOverlap(courses)).toEqual([])
+  })
+
+  it('catches single-day course overlap: DSD [Mar 20] + OW [Mar 20, Mar 22] → error', () => {
+    // B2: Single-date courses must still be overlap-checked
+    const courses = [
+      { activityCode: 'DSD', dates: ['2026-03-20'] },
+      { activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'] },
     ]
     const errors = validateCourseDateOverlap(courses)
     expect(errors.length).toBeGreaterThan(0)
@@ -165,28 +188,196 @@ describe('validateCourseDateOverlap', () => {
     ]
     expect(validateCourseDateOverlap(courses)).toEqual([])
   })
+
+  it('flags DSD [Mar 22] + OW [Mar 20, Mar 22] as overlap (not a combo transition)', () => {
+    // Non-combo pair sharing an endpoint must NOT be exempted
+    const courses = [
+      { activityCode: 'DSD', dates: ['2026-03-22'] },
+      { activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'] },
+    ]
+    const errors = validateCourseDateOverlap(courses)
+    expect(errors.length).toBeGreaterThan(0)
+  })
+
+  it('skips entries with empty activityCode', () => {
+    const courses = [
+      { activityCode: '', dates: ['2026-03-20', '2026-03-22'] },
+      { activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'] },
+    ]
+    expect(validateCourseDateOverlap(courses)).toEqual([])
+  })
+})
+
+// ── Duplicate Course Validation ─────────────────────────────────────────────
+
+describe('validateNoDuplicateCourses', () => {
+  it('OW + OW → error (duplicate)', () => {
+    const errors = validateNoDuplicateCourses([
+      { activityCode: 'OW' },
+      { activityCode: 'OW' },
+    ])
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('Duplicate')
+  })
+
+  it('OW + AOW → no error (different courses)', () => {
+    const errors = validateNoDuplicateCourses([
+      { activityCode: 'OW' },
+      { activityCode: 'AOW' },
+    ])
+    expect(errors).toEqual([])
+  })
+
+  it('empty activityCode entries are skipped', () => {
+    const errors = validateNoDuplicateCourses([
+      { activityCode: '' },
+      { activityCode: '' },
+      { activityCode: 'OW' },
+    ])
+    expect(errors).toEqual([])
+  })
+
+  it('single entry → no error', () => {
+    expect(validateNoDuplicateCourses([{ activityCode: 'OW' }])).toEqual([])
+  })
+
+  it('empty array → no error', () => {
+    expect(validateNoDuplicateCourses([])).toEqual([])
+  })
+})
+
+// ── Missing Prerequisite (hard error) ───────────────────────────────────────
+
+describe('validateMissingPrerequisites', () => {
+  it('AOW alone → error (OW missing)', () => {
+    const errors = validateMissingPrerequisites(['AOW'])
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('Open Water')
+  })
+
+  it('OW + AOW → no error (prereq present)', () => {
+    const errors = validateMissingPrerequisites(['OW', 'AOW'])
+    expect(errors).toEqual([])
+  })
+
+  it('OW alone → no error (no prereqs)', () => {
+    expect(validateMissingPrerequisites(['OW'])).toEqual([])
+  })
+
+  it('RESCUE alone → error (AOW missing)', () => {
+    const errors = validateMissingPrerequisites(['RESCUE'])
+    expect(errors.length).toBeGreaterThanOrEqual(1)
+    expect(errors.some((e) => e.toLowerCase().includes('advanced'))).toBe(true)
+  })
+
+  it('empty codes are filtered out', () => {
+    const errors = validateMissingPrerequisites(['', 'OW', ''])
+    expect(errors).toEqual([])
+  })
+
+  it('orphaned after delete: had OW+AOW, removed OW → error on AOW', () => {
+    // Simulates: user had OW + AOW, then deleted the OW entry
+    const errors = validateMissingPrerequisites(['AOW'])
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('Open Water')
+  })
+})
+
+// ── O+A Combo Date Calculation ──────────────────────────────────────────────
+
+describe('calculateComboDates', () => {
+  it('OW [Mar 20, Mar 22], AOW [Mar 22, Mar 23] for start = Mar 20', () => {
+    const result = calculateComboDates('2026-03-20')
+    expect(result.owDates).toEqual(['2026-03-20', '2026-03-22'])
+    expect(result.aowDates).toEqual(['2026-03-22', '2026-03-23'])
+  })
+
+  it('total span is 4 days (Mar 20 through Mar 23)', () => {
+    const result = calculateComboDates('2026-03-20')
+    // OW starts Mar 20, AOW ends Mar 23 → 4 calendar days
+    expect(result.owDates[0]).toBe('2026-03-20')
+    expect(result.aowDates[1]).toBe('2026-03-23')
+  })
+
+  it('shared transition day: OW end date === AOW start date', () => {
+    const result = calculateComboDates('2026-03-20')
+    expect(result.owDates[1]).toBe(result.aowDates[0])
+  })
+})
+
+// ── Past Start Date Validation ─────────────────────────────────────────────
+
+describe('validateStartDateNotInPast', () => {
+  const today = '2026-03-20'
+
+  it('OW starting yesterday → error', () => {
+    const errors = validateStartDateNotInPast(
+      [{ activityCode: 'OW', dates: ['2026-03-19', '2026-03-21'] }],
+      today,
+    )
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('2026-03-19')
+    expect(errors[0]).toContain('cannot start before today')
+  })
+
+  it('OW starting today → no error', () => {
+    const errors = validateStartDateNotInPast(
+      [{ activityCode: 'OW', dates: ['2026-03-20', '2026-03-22'] }],
+      today,
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('OW starting tomorrow → no error', () => {
+    const errors = validateStartDateNotInPast(
+      [{ activityCode: 'OW', dates: ['2026-03-21', '2026-03-23'] }],
+      today,
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('empty dates → skipped', () => {
+    const errors = validateStartDateNotInPast(
+      [{ activityCode: 'OW', dates: [] }],
+      today,
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('empty activityCode → skipped', () => {
+    const errors = validateStartDateNotInPast(
+      [{ activityCode: '', dates: ['2026-03-19'] }],
+      today,
+    )
+    expect(errors).toEqual([])
+  })
 })
 
 // ── End Date Defaults ───────────────────────────────────────────────────────
 
 describe('getEndDateDefault', () => {
-  it('OW: start + 2 days (3-day course, default)', () => {
-    const end = getEndDateDefault('OW', '2026-03-15')
-    expect(end).toBe('2026-03-17')
+  it('OW: start + 2 days (3-day course)', () => {
+    expect(getEndDateDefault('OW', '2026-03-15')).toBe('2026-03-17')
+  })
+
+  it('OW from Mar 20 → Mar 22 (not Mar 23)', () => {
+    // C3: Per BookingTestSpec 2d
+    expect(getEndDateDefault('OW', '2026-03-20')).toBe('2026-03-22')
   })
 
   it('AOW: start + 1 day (2-day course)', () => {
-    const end = getEndDateDefault('AOW', '2026-03-15')
-    expect(end).toBe('2026-03-16')
+    expect(getEndDateDefault('AOW', '2026-03-15')).toBe('2026-03-16')
+  })
+
+  it('AOW from Mar 22 → Mar 23', () => {
+    expect(getEndDateDefault('AOW', '2026-03-22')).toBe('2026-03-23')
   })
 
   it('DSD: same day (1-day course)', () => {
-    const end = getEndDateDefault('DSD', '2026-03-15')
-    expect(end).toBe('2026-03-15')
+    expect(getEndDateDefault('DSD', '2026-03-15')).toBe('2026-03-15')
   })
 
   it('returns start date for unknown course', () => {
-    const end = getEndDateDefault('UNKNOWN', '2026-03-15')
-    expect(end).toBe('2026-03-15')
+    expect(getEndDateDefault('UNKNOWN', '2026-03-15')).toBe('2026-03-15')
   })
 })

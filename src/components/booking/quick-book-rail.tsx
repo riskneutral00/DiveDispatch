@@ -1,7 +1,5 @@
 'use client'
 
-import { Anchor, BookOpen, Star, Waves } from 'lucide-react'
-import { GlassCard } from '@/components/glass'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -9,10 +7,7 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 interface QuickBookTemplate {
   id: string
   label: string
-  description: string
   courses: CourseCode[]
-  icon: React.ReactNode
-  colorVar: string
 }
 
 interface QuickBookRailProps {
@@ -21,83 +16,53 @@ interface QuickBookRailProps {
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 
-const TEMPLATES: QuickBookTemplate[] = [
-  {
-    id: 'dsd',
-    label: 'DSD',
-    description: 'Discover Scuba Diving — first-time experience',
-    courses: ['DSD'],
-    icon: <Waves size={18} />,
-    colorVar: 'var(--color-accent)',
-  },
-  {
-    id: 'ow',
-    label: 'Open Water',
-    description: 'Full OW certification course',
-    courses: ['OW'],
-    icon: <BookOpen size={18} />,
-    colorVar: 'var(--color-primary)',
-  },
-  {
-    id: 'aow',
-    label: 'Advanced OW',
-    description: 'Advanced Open Water course',
-    courses: ['AOW'],
-    icon: <Star size={18} />,
-    colorVar: 'var(--color-secondary)',
-  },
-  {
-    id: 'ow-aow',
-    label: 'OW + AOW',
-    description: 'Open Water then Advanced back-to-back',
-    courses: ['OW', 'AOW'],
-    icon: <Anchor size={18} />,
-    colorVar: 'var(--color-warning, #f59e0b)',
-  },
+const COURSE_TEMPLATES: QuickBookTemplate[] = [
+  { id: 'dsd', label: 'DSD', courses: ['DSD'] },
+  { id: 'ow', label: 'OWC', courses: ['OW'] },
+  { id: 'aow', label: 'AOWC', courses: ['AOW'] },
+  { id: 'ow-aow', label: 'O+A', courses: ['OW', 'AOW'] },
+  { id: 'fd', label: 'FD', courses: ['FD'] },
 ]
+
+const PILL_STYLE: React.CSSProperties = {
+  fontSize: '12px',
+  color: 'var(--color-text-primary)',
+  background: 'rgba(232,120,106,0.06)',
+  border: '2px solid rgba(232,120,106,0.20)',
+}
+
+const ACCENT_PILL_STYLE: React.CSSProperties = {
+  fontSize: '12px',
+  color: 'var(--color-accent)',
+  background: 'rgba(240,184,102,0.08)',
+  border: '1px solid var(--color-accent)',
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function QuickBookRail({ onSelect }: QuickBookRailProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <p
-        className="text-xs font-semibold uppercase tracking-wider"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+    <div className="flex items-center gap-1.5">
+      {COURSE_TEMPLATES.map((template) => (
+        <button
+          key={template.id}
+          type="button"
+          className="rounded-full px-3 py-1 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105 focus:outline-none focus-visible:ring-2"
+          style={PILL_STYLE}
+          onClick={() => onSelect(template.courses)}
+        >
+          {template.label}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        className="ml-auto rounded-full px-3 py-1 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105 focus:outline-none focus-visible:ring-2"
+        style={ACCENT_PILL_STYLE}
+        onClick={() => onSelect([])}
       >
-        Quick Book
-      </p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {TEMPLATES.map((template) => (
-          <button
-            key={template.id}
-            type="button"
-            onClick={() => onSelect(template.courses)}
-            className="text-left focus:outline-none focus-visible:ring-2 rounded-[var(--border-radius)]"
-            style={{ outlineColor: 'var(--color-accent)' }}
-          >
-            <GlassCard padding="sm" elevated className="h-full hover:scale-[1.02] transition-transform duration-150">
-              <div className="flex flex-col gap-2">
-                <span style={{ color: template.colorVar }}>{template.icon}</span>
-                <div>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
-                  >
-                    {template.label}
-                  </p>
-                  <p
-                    className="text-xs mt-0.5 leading-snug"
-                    style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-                  >
-                    {template.description}
-                  </p>
-                </div>
-              </div>
-            </GlassCard>
-          </button>
-        ))}
-      </div>
+        + Booking
+      </button>
     </div>
   )
 }

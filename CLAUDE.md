@@ -1,6 +1,6 @@
 # DiveDispatch
 
-Multi-stakeholder booking platform for scuba diving. Operator stakeholder creates booking; resoure stakholders each confirm their slice. Customers complete a portal via tokenized link.
+Multi-stakeholder booking platform for scuba diving. Operator stakeholder creates booking; resource stakeholders each confirm their slice. Customers complete a portal via tokenized link.
 
 > **Scope:** Permanent architectural decisions, non-obvious business logic invariants, and project constraints only. Workflow how-tos, skill pointers, dev commands, and process steps do NOT belong here — put those in skills.
 
@@ -10,22 +10,16 @@ All product decisions, domain rules, and business logic: `~/Desktop/DiveVault/Di
 
 ## Dependency Direction
 
-```
-convex/ ← lib/ ← components/ ← app/
-```
-
-Never import upstream. Exception: `convex/seed.ts` imports from `src/lib/constants/gear-sizing.ts` (known violation, seed-only).
+`convex/ ← lib/ ← components/ ← app/` — Never import upstream. (PostToolUse hook enforces this.)
 
 ## Auth Boundary
 
 - **Clerk-authenticated mutations**: verify caller ownership via `users.slug`.
 - **Customer portal**: tokenized BookingLink (UUID, no Clerk auth) — token IS the credential.
 
-## Provider Nesting Order (critical — wrong order = silent auth failure)
+## Provider Nesting Order
 
-```
-ClerkProvider > ConvexProviderWithClerk > ThemeProvider
-```
+`ClerkProvider > ConvexProviderWithClerk > ThemeProvider` — PostToolUse hook blocks wrong order.
 
 ## Mutation Patterns
 
@@ -48,6 +42,3 @@ Non-obvious rules:
 - **Medical block extends TTL by 24 hours** (total 36h from creation). Hard ceiling: 8pm night before the activity date — whichever comes first.
 - Draft → Upcoming auto-advances when: `bookingFormComplete && customerFormComplete && allInSystemReservationsConfirmed && !medicalHardBlock`.
 
-## UI
-
-Never hardcode colors — use Glass components (`src/components/glass/`) or CSS variables.

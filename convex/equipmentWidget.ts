@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, type AnyCtx } from './lib/auth'
+import { getBookingIdsForResourceType } from './bookingResources'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -100,13 +101,11 @@ export const getDiverEquipmentData = query({
       .unique()
     if (!emProfile) return null
 
-    // Bookings for this EM, filtered to date range in-memory
-    const allBookings = await (ctx as AnyCtx).db
-      .query('bookings')
-      .withIndex('by_equipmentManagerId', (q: AnyCtx) =>
-        q.eq('equipmentManagerId', user.slug),
-      )
-      .collect()
+    // Bookings for this EM via bookingResources junction table
+    const bookingIds = await getBookingIdsForResourceType(ctx, 'Equipment', user.slug as string)
+    const allBookings = (await Promise.all(
+      bookingIds.map((id: string) => (ctx as AnyCtx).db.get(id)),
+    )).filter(Boolean)
 
     const bookingsInRange = allBookings.filter(
       (b: AnyCtx) =>

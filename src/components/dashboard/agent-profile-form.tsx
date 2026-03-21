@@ -11,6 +11,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
+import { Spinner } from '@/components/common/spinner'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -376,11 +377,8 @@ export function AgentProfileForm() {
 
   if (profile === undefined) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div
-          className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-primary)' }}
-        />
+      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }

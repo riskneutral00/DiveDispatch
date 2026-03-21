@@ -45,16 +45,16 @@ File: `~/Desktop/DiveVault/Sessions/YYYY-MM-DD.md` (one per day, overwritten if 
 **Next action:** [Specific enough for a fresh session to execute]
 ```
 
-**Step 3 — Overwrite active thread (snapshot, not append)**
+**Step 3 — Update thread + TODO current position**
 
 - Read `~/.claude/projects/-Users-matthewlee-Desktop-DiveDispatch/memory/MEMORY.md`
 - Find the active thread file
-- **OVERWRITE** the thread file with current state only:
-  - Status as of today
-  - **NEXT ACTION** — specific: what to do, which files, which approach
-  - Key file paths
-  - Model recommendation
-- Do NOT keep old status sections. The thread is "where I am right now," not a history log. History lives in session files.
+- The thread file is a **pointer to TODO.md** — do NOT replace it with state tracking. Only update:
+  - Test baseline numbers (unit/integration count, E2E count, type errors)
+  - Recent commits list (last 5)
+  - Date stamp
+- Then update TODO.md's `### Current Position:` section with where you actually are now — which step, what's working, what's next. This is the single source of truth for `/continue`.
+- Do NOT duplicate TODO state into the thread. The thread says "read TODO.md." TODO.md says where you are.
 
 **Step 4 — Update TODO (check off, clean up)**
 

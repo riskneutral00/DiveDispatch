@@ -6,7 +6,7 @@ import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { serializeDraftState, type WizardState } from '@/lib/booking/wizard-state'
 
-const DEBOUNCE_MS = 2000
+const DEBOUNCE_MS = 3000
 const RETRY_DELAY_MS = 1000
 
 /**

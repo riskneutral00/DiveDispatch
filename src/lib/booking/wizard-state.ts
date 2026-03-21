@@ -1,20 +1,27 @@
-// ── Wizard State (4-step) ─────────────────────────────────────────────────────
-// Step structure: Customers → Itinerary → Resources → Confirm
+// ── Wizard State (3-step) ─────────────────────────────────────────────────────
+// Step structure: Customers → Itinerary (with resources) → Review
 
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { validatePrerequisiteOrder } from '@/lib/booking/course-validation'
+import { COURSE_CATALOG } from '@/lib/constants/course-catalog'
+import {
+  validatePrerequisiteOrder,
+  validateCourseDateOverlap,
+  validateNoDuplicateCourses,
+  validateMissingPrerequisites,
+  validateStartDateNotInPast,
+} from '@/lib/booking/course-validation'
+import { toISODateString } from '@/lib/utils/date'
 
 // ── Step definition ───────────────────────────────────────────────────────────
 
-export type WizardStep = 'customers' | 'itinerary' | 'resources' | 'confirm'
+export type WizardStep = 'customers' | 'itinerary' | 'review'
 
-export const WIZARD_STEPS: readonly WizardStep[] = ['customers', 'itinerary', 'resources', 'confirm']
+export const WIZARD_STEPS: readonly WizardStep[] = ['customers', 'itinerary', 'review']
 
 export const WIZARD_STEP_LABELS: Record<WizardStep, string> = {
   customers: 'Customers',
   itinerary: 'Program & Schedule',
-  resources: 'Resources',
-  confirm: 'Confirmation',
+  review: 'Review',
 }
 
 export function stepIndex(step: WizardStep): number {
@@ -103,6 +110,11 @@ export interface WizardState {
   submitting: boolean
   conflictError: BookingConflictDetail[] | null
   submittedBookingId: string | null
+
+  /** Maps resource owner slug → inventory unit Convex doc ID.
+   *  Populated by the itinerary step from listInventoryByType queries.
+   *  Used by the review step to build sessions with correct inventory unit IDs. */
+  inventoryUnitMap: Record<string, string>
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -116,7 +128,7 @@ export type WizardAction =
   | { type: 'REMOVE_CUSTOMER'; id: string }
   | { type: 'SET_ACTIVE_CUSTOMER_IDX'; index: number }
   | { type: 'MARK_CUSTOMER_LINK_SENT'; customerId: string }
-  | { type: 'ADD_COURSE_ENTRY'; customerId: string }
+  | { type: 'ADD_COURSE_ENTRY'; customerId: string; initialData?: Partial<Omit<CourseEntry, 'id'>> }
   | { type: 'REMOVE_COURSE_ENTRY'; customerId: string; entryId: string }
   | { type: 'UPDATE_COURSE_ENTRY'; customerId: string; entryId: string; patch: Partial<Omit<CourseEntry, 'id'>> }
   | { type: 'COPY_COURSE_ENTRIES_TO_ALL' }
@@ -139,6 +151,7 @@ export type WizardAction =
   | { type: 'SET_SAVE_ATTEMPTED'; value: boolean }
   | { type: 'TOGGLE_DIVE'; dayIndex: number; slot: DiveSlot }
   | { type: 'SET_DAYS'; days: DayConfig[] }
+  | { type: 'SET_INVENTORY_MAP'; map: Record<string, string> }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -191,6 +204,7 @@ export function makeInitialState(bookingId: string | null = null): WizardState {
     submitting: false,
     conflictError: null,
     submittedBookingId: null,
+    inventoryUnitMap: {},
   }
 }
 
@@ -241,12 +255,14 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       }
 
     case 'ADD_COURSE_ENTRY': {
+      const init = action.initialData ?? {}
       const customers = state.customers.map((c) =>
         c.id === action.customerId
-          ? { ...c, courseEntries: [...(c.courseEntries ?? []), { id: newEntryId(), activityCode: '', dates: [], agency: '' }] }
+          ? { ...c, courseEntries: [...(c.courseEntries ?? []), { id: newEntryId(), activityCode: '', dates: [], agency: '', ...init }] }
           : c,
       )
-      return { ...state, customers }
+      const derived = deriveDates(customers)
+      return { ...state, customers, ...derived, selectedCourses: deriveSelectedCourses(customers) }
     }
 
     case 'REMOVE_COURSE_ENTRY': {
@@ -316,11 +332,13 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       const venueType = sourceDay.venueType
       return {
         ...state,
-        days: state.days.map((d, i) =>
-          i >= action.fromDayIndex && d.venueType === venueType
-            ? { ...d, inventoryUnitId: action.unitId, externalVenueName: sourceDay.externalVenueName }
-            : d,
-        ),
+        days: state.days.map((d, i) => {
+          if (i < action.fromDayIndex || d.venueType !== venueType) return d
+          if (venueType === 'pool') {
+            return { ...d, poolInventoryUnitId: action.unitId, externalPoolName: sourceDay.externalPoolName }
+          }
+          return { ...d, inventoryUnitId: action.unitId, externalVenueName: sourceDay.externalVenueName }
+        }),
       }
     }
 
@@ -391,6 +409,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
 
     case 'SET_DAYS':
       return { ...state, days: action.days }
+
+    case 'SET_INVENTORY_MAP':
+      return { ...state, inventoryUnitMap: action.map }
 
     case 'RESET':
       return action.payload
@@ -480,7 +501,7 @@ export function canAdvanceFromCustomers(customers: CustomerData[]): boolean {
   )
 }
 
-/** Check all required fields for Step 2 (Itinerary). */
+/** Check all required fields for Step 2 (Itinerary + Resources). */
 export function canAdvanceFromItinerary(state: WizardState): boolean {
   // When sameForAll is on, only customer[0] has courses — the rest get copied on advance
   const courseCustomers = state.sameForAll ? state.customers.slice(0, 1) : state.customers
@@ -497,19 +518,79 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
   // No empty days (every day has at least one dive)
   if (state.days.some((d) => d.dives.length === 0)) return false
 
-  // No prerequisite ordering errors
+  // Per-customer validation
   for (const customer of courseCustomers) {
     const entries = (customer.courseEntries ?? []).map((e) => ({
       activityCode: e.activityCode,
       dates: e.dates,
     }))
+    const courseCodes = entries.map((e) => e.activityCode).filter(Boolean)
+
+    // No prerequisite ordering errors
     if (validatePrerequisiteOrder(entries).length > 0) return false
+
+    // B1: No overlapping course dates (shared transition day is allowed)
+    if (validateCourseDateOverlap(entries).length > 0) return false
+
+    // B4: No duplicate course codes per customer
+    if (validateNoDuplicateCourses(entries).length > 0) return false
+
+    // B5/B6: Missing prerequisite = hard block (catches orphaned after delete too)
+    if (validateMissingPrerequisites(courseCodes).length > 0) return false
+
+    // Past dates — cannot start a course before today
+    if (validateStartDateNotInPast(entries, toISODateString(new Date())).length > 0) return false
+  }
+
+  // B3: Per-day non-confined dive count cap (max divesPerDay, default 3)
+  for (const day of state.days) {
+    const nonConfinedCount = day.dives.filter((d) => !d.isConfined).length
+    if (nonConfinedCount > (day.divesPerDay || 3)) return false
+  }
+
+  // Instructor ratio: enough instructors/DMs for the diver count?
+  const allCourseCodes = [...new Set(
+    courseCustomers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode)).filter(Boolean),
+  )]
+  if (allCourseCodes.length > 0 && state.customers.length > 0) {
+    let minRatio = Infinity
+    for (const code of allCourseCodes) {
+      const entry = COURSE_CATALOG.find((c) => c.code === code)
+      if (entry && entry.maxDiversPerInstructor < minRatio) {
+        minRatio = entry.maxDiversPerInstructor
+      }
+    }
+    if (minRatio < Infinity && state.customers.length > minRatio) {
+      const requiredInstructors = Math.ceil(state.customers.length / minRatio)
+      // Count unique instructors assigned across all days (system slugs + external names)
+      const uniqueInstructors = new Set<string>()
+      for (const day of state.days) {
+        if (day.instructorSlug && day.instructorSlug !== '__external__') {
+          uniqueInstructors.add(day.instructorSlug)
+        } else if (day.instructorSlug === '__external__' && day.externalInstructorName?.trim()) {
+          uniqueInstructors.add(`ext:${day.externalInstructorName.trim().toLowerCase()}`)
+        }
+      }
+      if (uniqueInstructors.size < requiredInstructors) return false
+    }
+  }
+
+  // Resource checks (merged from canAdvanceFromResources — resources now live in itinerary step)
+  for (const day of state.days) {
+    // Every day needs an instructor (system or external)
+    const hasInstructor =
+      (day.instructorSlug && day.instructorSlug !== '__external__') ||
+      (day.instructorSlug === '__external__' && day.externalInstructorName?.trim())
+    if (!hasInstructor) return false
   }
 
   return true
 }
 
-/** Check all required fields for Step 3 (Resources). */
+/** Check all required fields for resources (instructor + venue per day).
+ * @deprecated Resources are now validated in canAdvanceFromItinerary.
+ * Kept for backward compatibility.
+ */
 export function canAdvanceFromResources(state: WizardState): boolean {
   for (const day of state.days) {
     // Every day needs an instructor (system or external)
@@ -517,22 +598,6 @@ export function canAdvanceFromResources(state: WizardState): boolean {
       (day.instructorSlug && day.instructorSlug !== '__external__') ||
       (day.instructorSlug === '__external__' && day.externalInstructorName?.trim())
     if (!hasInstructor) return false
-
-    // Boat days need a boat (or external)
-    if (day.venueType === 'boat') {
-      const hasBoat =
-        day.inventoryUnitId ||
-        day.externalVenueName?.trim()
-      if (!hasBoat) return false
-    }
-
-    // Pool days need a pool (or external)
-    if (day.venueType === 'pool') {
-      const hasPool =
-        day.poolInventoryUnitId ||
-        day.externalPoolName?.trim()
-      if (!hasPool) return false
-    }
   }
 
   return true

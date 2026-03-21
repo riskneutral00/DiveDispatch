@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { getAuthUser } from './lib/auth'
+import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 
 const stakeholderType = v.union(
   v.literal('DiveCenter'),
@@ -122,7 +122,7 @@ export const upsertUser = mutation({
   },
 })
 
-// Sets the role on initial role-select screen.
+// Sets the role during account setup.
 export const setRole = mutation({
   args: {
     role: stakeholderType,
@@ -175,10 +175,6 @@ export const byId = query({
   },
 })
 
-// Organizer roles that can create bookingTemplates.
-const ORGANIZER_ROLES = new Set([
-  'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite',
-])
 
 // Returns the completion percentage and list of incomplete fields for onboarding.
 // Profile fields checked: name, city, country, contactEmail, contactPhone,
@@ -255,11 +251,11 @@ export const getOnboardingStatus = query({
     }
 
     // ── Quick Book pill (organizers only) ────────────────────────────
-    if (ORGANIZER_ROLES.has(role)) {
+    if (OPERATOR_ROLE_SET.has(role)) {
       const template = await ctx.db
         .query('bookingTemplates')
         .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', user.slug).eq('ownerType', role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite'),
+          q.eq('ownerId', user.slug).eq('ownerType', role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'),
         )
         .first()
       if (!template) incomplete.push('Quick Book pill')
@@ -268,7 +264,7 @@ export const getOnboardingStatus = query({
     // ── Calculate total checkpoints for this role ────────────────────
     const baseCount = 5 // name, city, country, contactEmail, contactPhone
     const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
-    const hasTemplateSlot = ORGANIZER_ROLES.has(role)
+    const hasTemplateSlot = OPERATOR_ROLE_SET.has(role)
     const total = baseCount + (hasListField ? 1 : 0) + 1 /* languages */ + (hasTemplateSlot ? 1 : 0)
     const filled = total - incomplete.length
     const percentage = Math.round((filled / total) * 100)

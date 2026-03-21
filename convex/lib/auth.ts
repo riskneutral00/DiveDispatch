@@ -10,7 +10,6 @@ export const OPERATOR_ROLE_SET = new Set([
   'Liveaboard',
   'DiveResort',
   'DiveHostel',
-  'DiveSite',
 ])
 
 /** Default hold TTL: 12 hours. */

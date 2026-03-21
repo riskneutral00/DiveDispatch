@@ -39,7 +39,6 @@ export interface SeedUser {
   lastName: string
   businessName: string
   role: StakeholderRole
-  additionalRoles?: StakeholderRole[]
   preferredLocale: string
 }
 
@@ -181,7 +180,7 @@ export const COMPRESSOR: SeedStakeholder = {
   },
 }
 
-// ── 2. Hug Ocean (DC + Boat + Pool + Equipment) ────────────────────
+// ── 2. Hug Ocean (DC) ───────────────────────────────────────────────
 
 export const HUG_OCEAN: SeedStakeholder = {
   user: {
@@ -192,7 +191,6 @@ export const HUG_OCEAN: SeedStakeholder = {
     lastName: 'Ocean',
     businessName: 'Hug Ocean',
     role: 'DiveCenter',
-    additionalRoles: ['Boat', 'Pool', 'Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -204,6 +202,21 @@ export const HUG_OCEAN: SeedStakeholder = {
     focusedLanguages: ['Mandarin', 'Thai'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.hugOcean,
+  },
+}
+
+// ── 2a. Hug Ocean Boat ──────────────────────────────────────────────
+
+export const HUG_OCEAN_BOAT: SeedStakeholder = {
+  user: {
+    slug: 'n7rq5j-bt',
+    email: 'hug-ocean-boat+clerk_test@divedispatch.dev',
+    name: 'Hug Ocean Boat',
+    firstName: 'Hug',
+    lastName: 'Ocean Boat',
+    businessName: 'Hug Ocean Boat',
+    role: 'Boat',
+    preferredLocale: LOCALE,
   },
   boat: {
     name: 'M.V. Hug Ocean',
@@ -221,6 +234,21 @@ export const HUG_OCEAN: SeedStakeholder = {
     focusedLanguages: ['Mandarin', 'Thai'],
     verified: VERIFIED,
   },
+}
+
+// ── 2b. Hug Ocean Pool ──────────────────────────────────────────────
+
+export const HUG_OCEAN_POOL: SeedStakeholder = {
+  user: {
+    slug: 'n7rq5j-pl',
+    email: 'hug-ocean-pool+clerk_test@divedispatch.dev',
+    name: 'Hug Ocean Pool',
+    firstName: 'Hug',
+    lastName: 'Ocean Pool',
+    businessName: 'Hug Ocean Pool',
+    role: 'Pool',
+    preferredLocale: LOCALE,
+  },
   pool: {
     name: 'Hug Ocean',
     ...PHUKET,
@@ -230,6 +258,21 @@ export const HUG_OCEAN: SeedStakeholder = {
     maxCapacity: 15,
     focusedLanguages: ['Mandarin', 'Thai'],
     verified: VERIFIED,
+  },
+}
+
+// ── 2c. Hug Ocean Equipment ─────────────────────────────────────────
+
+export const HUG_OCEAN_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'n7rq5j-eq',
+    email: 'hug-ocean-equipment+clerk_test@divedispatch.dev',
+    name: 'Hug Ocean Equipment',
+    firstName: 'Hug',
+    lastName: 'Ocean Equipment',
+    businessName: 'Hug Ocean Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Hug Ocean',
@@ -267,7 +310,7 @@ export const WATER_PRO: SeedStakeholder = {
   },
 }
 
-// ── 4. Neptune (DC + Pool + Equipment) ──────────────────────────────
+// ── 4. Neptune (DC) ─────────────────────────────────────────────────
 
 export const NEPTUNE: SeedStakeholder = {
   user: {
@@ -278,7 +321,6 @@ export const NEPTUNE: SeedStakeholder = {
     lastName: 'Dive',
     businessName: 'Neptune',
     role: 'DiveCenter',
-    additionalRoles: ['Pool', 'Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -291,6 +333,21 @@ export const NEPTUNE: SeedStakeholder = {
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.neptune,
   },
+}
+
+// ── 4a. Neptune Pool ────────────────────────────────────────────────
+
+export const NEPTUNE_POOL: SeedStakeholder = {
+  user: {
+    slug: 'z8mv4c-pl',
+    email: 'neptune-pool+clerk_test@divedispatch.dev',
+    name: 'Neptune Pool',
+    firstName: 'Neptune',
+    lastName: 'Pool',
+    businessName: 'Neptune Pool',
+    role: 'Pool',
+    preferredLocale: LOCALE,
+  },
   pool: {
     name: 'Neptune',
     ...PHUKET,
@@ -300,6 +357,21 @@ export const NEPTUNE: SeedStakeholder = {
     maxCapacity: 6,
     focusedLanguages: ['Mandarin'],
     verified: VERIFIED,
+  },
+}
+
+// ── 4b. Neptune Equipment ───────────────────────────────────────────
+
+export const NEPTUNE_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'z8mv4c-eq',
+    email: 'neptune-equipment+clerk_test@divedispatch.dev',
+    name: 'Neptune Equipment',
+    firstName: 'Neptune',
+    lastName: 'Equipment',
+    businessName: 'Neptune Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Neptune',
@@ -337,7 +409,7 @@ export const SHARK_BITES: SeedStakeholder = {
   },
 }
 
-// ── 6. Phuket Dive Center (DC + Boat + Equipment) ──────────────────
+// ── 6. Phuket Dive Center (DC) ──────────────────────────────────────
 
 export const PHUKET_DC: SeedStakeholder = {
   user: {
@@ -348,7 +420,6 @@ export const PHUKET_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Phuket Dive Center',
     role: 'DiveCenter',
-    additionalRoles: ['Boat', 'Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -360,6 +431,21 @@ export const PHUKET_DC: SeedStakeholder = {
     focusedLanguages: ['English', 'Thai', 'Chinese'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.phuketDC,
+  },
+}
+
+// ── 6a. Phuket DC Boat ─────────────────────────────────────────────
+
+export const PHUKET_DC_BOAT: SeedStakeholder = {
+  user: {
+    slug: 'p5ky3w-bt',
+    email: 'phuket-dc-boat+clerk_test@divedispatch.dev',
+    name: 'Phuket DC Boat',
+    firstName: 'Phuket',
+    lastName: 'DC Boat',
+    businessName: 'Phuket DC Boat',
+    role: 'Boat',
+    preferredLocale: LOCALE,
   },
   boat: {
     name: 'Phuket Dive Center',
@@ -391,6 +477,21 @@ export const PHUKET_DC: SeedStakeholder = {
     focusedLanguages: ['English', 'Thai', 'Chinese'],
     verified: VERIFIED,
   },
+}
+
+// ── 6b. Phuket DC Equipment ────────────────────────────────────────
+
+export const PHUKET_DC_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'p5ky3w-eq',
+    email: 'phuket-dc-equipment+clerk_test@divedispatch.dev',
+    name: 'Phuket DC Equipment',
+    firstName: 'Phuket',
+    lastName: 'DC Equipment',
+    businessName: 'Phuket DC Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
+  },
   equipment: {
     name: 'Phuket Dive Center',
     ...PHUKET,
@@ -402,7 +503,7 @@ export const PHUKET_DC: SeedStakeholder = {
   },
 }
 
-// ── 7. Nicole Dive Center (DC + Equipment) ──────────────────────────
+// ── 7. Nicole Dive Center (DC) ──────────────────────────────────────
 
 export const NICOLE_DC: SeedStakeholder = {
   user: {
@@ -413,7 +514,6 @@ export const NICOLE_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Nicole Dive Center',
     role: 'DiveCenter',
-    additionalRoles: ['Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -425,6 +525,21 @@ export const NICOLE_DC: SeedStakeholder = {
     focusedLanguages: ['English', 'Cantonese'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.nicoleDC,
+  },
+}
+
+// ── 7a. Nicole DC Equipment ─────────────────────────────────────────
+
+export const NICOLE_DC_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'q9bz7r-eq',
+    email: 'nicole-dc-equipment+clerk_test@divedispatch.dev',
+    name: 'Nicole DC Equipment',
+    firstName: 'Nicole',
+    lastName: 'DC Equipment',
+    businessName: 'Nicole DC Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Nicole Dive Center',
@@ -465,7 +580,7 @@ export const MANTA_DC: SeedStakeholder = {
   },
 }
 
-// ── 9. ScubaNicks (DC + Equipment) ──────────────────────────────────
+// ── 9. ScubaNicks (DC) ──────────────────────────────────────────────
 
 export const SCUBANICKS: SeedStakeholder = {
   user: {
@@ -476,7 +591,6 @@ export const SCUBANICKS: SeedStakeholder = {
     lastName: 'ScubaNicks',
     businessName: 'ScubaNicks',
     role: 'DiveCenter',
-    additionalRoles: ['Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -489,6 +603,21 @@ export const SCUBANICKS: SeedStakeholder = {
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.scubaNicks,
   },
+}
+
+// ── 9a. ScubaNicks Equipment ────────────────────────────────────────
+
+export const SCUBANICKS_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'm4fx8d-eq',
+    email: 'scubanicks-equipment+clerk_test@divedispatch.dev',
+    name: 'ScubaNicks Equipment',
+    firstName: 'Nick',
+    lastName: 'ScubaNicks Equipment',
+    businessName: 'ScubaNicks Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
+  },
   equipment: {
     name: 'ScubaNicks',
     ...PHUKET,
@@ -500,7 +629,7 @@ export const SCUBANICKS: SeedStakeholder = {
   },
 }
 
-// ── 10. Scuba Deep (DC + Boat + Equipment) ──────────────────────────
+// ── 10. Scuba Deep (DC) ─────────────────────────────────────────────
 
 export const SCUBA_DEEP: SeedStakeholder = {
   user: {
@@ -511,7 +640,6 @@ export const SCUBA_DEEP: SeedStakeholder = {
     lastName: 'Deep',
     businessName: 'Scuba Deep',
     role: 'DiveCenter',
-    additionalRoles: ['Boat', 'Equipment'],
     preferredLocale: LOCALE,
   },
   diveCenter: {
@@ -526,6 +654,21 @@ export const SCUBA_DEEP: SeedStakeholder = {
     focusedLanguages: ['English'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS.scubaDeep,
+  },
+}
+
+// ── 10a. Scuba Deep Boat ────────────────────────────────────────────
+
+export const SCUBA_DEEP_BOAT: SeedStakeholder = {
+  user: {
+    slug: 'h3cp6n-bt',
+    email: 'scuba-deep-boat+clerk_test@divedispatch.dev',
+    name: 'Scuba Deep Boat',
+    firstName: 'Scuba',
+    lastName: 'Deep Boat',
+    businessName: 'Scuba Deep Boat',
+    role: 'Boat',
+    preferredLocale: LOCALE,
   },
   boat: {
     name: 'Scuba Deep',
@@ -546,6 +689,21 @@ export const SCUBA_DEEP: SeedStakeholder = {
     ],
     focusedLanguages: ['English'],
     verified: VERIFIED,
+  },
+}
+
+// ── 10b. Scuba Deep Equipment ───────────────────────────────────────
+
+export const SCUBA_DEEP_EQUIPMENT: SeedStakeholder = {
+  user: {
+    slug: 'h3cp6n-eq',
+    email: 'scuba-deep-equipment+clerk_test@divedispatch.dev',
+    name: 'Scuba Deep Equipment',
+    firstName: 'Scuba',
+    lastName: 'Deep Equipment',
+    businessName: 'Scuba Deep Equipment',
+    role: 'Equipment',
+    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Scuba Deep',
@@ -613,14 +771,47 @@ export const AMANDA: SeedStakeholder = {
 export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   COMPRESSOR,
   HUG_OCEAN,
+  HUG_OCEAN_BOAT,
+  HUG_OCEAN_POOL,
+  HUG_OCEAN_EQUIPMENT,
   WATER_PRO,
   NEPTUNE,
+  NEPTUNE_POOL,
+  NEPTUNE_EQUIPMENT,
   SHARK_BITES,
   PHUKET_DC,
+  PHUKET_DC_BOAT,
+  PHUKET_DC_EQUIPMENT,
   NICOLE_DC,
+  NICOLE_DC_EQUIPMENT,
   MANTA_DC,
   SCUBANICKS,
+  SCUBANICKS_EQUIPMENT,
   SCUBA_DEEP,
+  SCUBA_DEEP_BOAT,
+  SCUBA_DEEP_EQUIPMENT,
   PRAY_DC,
   AMANDA,
+]
+
+// ── Hierarchy Links (DC → managed resources) ───────────────────────
+
+export const HIERARCHY_LINKS: { parentSlug: string; parentType: StakeholderRole; childSlug: string; childType: StakeholderRole }[] = [
+  // Hug Ocean owns Boat, Pool, Equipment
+  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-bt', childType: 'Boat' },
+  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-pl', childType: 'Pool' },
+  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-eq', childType: 'Equipment' },
+  // Neptune owns Pool, Equipment
+  { parentSlug: 'z8mv4c', parentType: 'DiveCenter', childSlug: 'z8mv4c-pl', childType: 'Pool' },
+  { parentSlug: 'z8mv4c', parentType: 'DiveCenter', childSlug: 'z8mv4c-eq', childType: 'Equipment' },
+  // Phuket DC owns Boat, Equipment
+  { parentSlug: 'p5ky3w', parentType: 'DiveCenter', childSlug: 'p5ky3w-bt', childType: 'Boat' },
+  { parentSlug: 'p5ky3w', parentType: 'DiveCenter', childSlug: 'p5ky3w-eq', childType: 'Equipment' },
+  // Nicole DC owns Equipment
+  { parentSlug: 'q9bz7r', parentType: 'DiveCenter', childSlug: 'q9bz7r-eq', childType: 'Equipment' },
+  // ScubaNicks owns Equipment
+  { parentSlug: 'm4fx8d', parentType: 'DiveCenter', childSlug: 'm4fx8d-eq', childType: 'Equipment' },
+  // Scuba Deep owns Boat, Equipment
+  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'h3cp6n-bt', childType: 'Boat' },
+  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'h3cp6n-eq', childType: 'Equipment' },
 ]

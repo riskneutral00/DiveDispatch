@@ -6,6 +6,57 @@ import { getCourseByCode, type CourseCode, type CourseCatalogEntry } from '@/lib
 import { addDays, diffDays } from '@/lib/utils/date'
 import type { DayConfig, DiveSlot } from '@/lib/booking/wizard-state'
 
+// ── sortByPrerequisites ────────────────────────────────────────────────────
+
+/**
+ * Topological sort of course codes by prerequisite chain.
+ * Courses with no prerequisites come first, then those whose prereqs are satisfied.
+ * E.g. ['AOW', 'OW'] → ['OW', 'AOW'] because AOW requires OW.
+ */
+export function sortByPrerequisites(courseCodes: string[]): string[] {
+  if (courseCodes.length <= 1) return courseCodes
+
+  const inDegree = new Map<string, number>()
+  const dependents = new Map<string, string[]>()
+
+  for (const code of courseCodes) {
+    inDegree.set(code, 0)
+    if (!dependents.has(code)) dependents.set(code, [])
+  }
+
+  for (const code of courseCodes) {
+    const entry = getCourseByCode(code as CourseCode)
+    if (!entry?.prerequisites) continue
+    for (const prereq of entry.prerequisites) {
+      if (courseCodes.includes(prereq)) {
+        inDegree.set(code, (inDegree.get(code) ?? 0) + 1)
+        if (!dependents.has(prereq)) dependents.set(prereq, [])
+        dependents.get(prereq)!.push(code)
+      }
+    }
+  }
+
+  const queue = courseCodes.filter((c) => (inDegree.get(c) ?? 0) === 0)
+  const result: string[] = []
+
+  while (queue.length > 0) {
+    const node = queue.shift()!
+    result.push(node)
+    for (const dep of dependents.get(node) ?? []) {
+      const newDeg = (inDegree.get(dep) ?? 1) - 1
+      inDegree.set(dep, newDeg)
+      if (newDeg === 0) queue.push(dep)
+    }
+  }
+
+  // Fallback: append any remaining (cycles or independent courses)
+  for (const code of courseCodes) {
+    if (!result.includes(code)) result.push(code)
+  }
+
+  return result
+}
+
 // ── Dive Sequence Types ──────────────────────────────────────────────────────
 
 export interface DiveSlotDef {
@@ -24,8 +75,9 @@ export interface DiveSlotDef {
  */
 export function buildDiveSequence(courseCodes: string[]): DiveSlotDef[] {
   const slots: DiveSlotDef[] = []
+  const sorted = sortByPrerequisites(courseCodes)
 
-  for (const code of courseCodes) {
+  for (const code of sorted) {
     const entry = getCourseByCode(code as CourseCode)
     if (!entry) continue
 
@@ -96,7 +148,33 @@ export function generateDays(
 
   const hasConfined = courseCodes.some((c) => getCourseByCode(c as CourseCode)?.requiresConfined)
   const sequence = buildDiveSequence(courseCodes)
-  if (sequence.length === 0) return []
+  if (sequence.length === 0) {
+    // Fallback for courses with 0 mandated dives (FD, etc.)
+    // Generate boat days with 1 synthetic dive slot per course per day
+    const validCourses = courseCodes.filter((c) => getCourseByCode(c as CourseCode))
+    if (validCourses.length === 0) return []
+
+    let dayCount: number
+    if (endDate && endDate >= startDate) {
+      dayCount = diffDays(endDate, startDate) + 1
+    } else {
+      dayCount = 1
+    }
+
+    return Array.from({ length: dayCount }, (_, i) => ({
+      date: addDays(startDate, i),
+      venueType: 'boat' as const,
+      dives: validCourses.map((code) => ({
+        courseCode: code,
+        diveNumber: 1,
+        isConfined: false,
+      })),
+      divesPerDay: defaultDivesPerDay,
+      startTime: '08:00',
+      endTime: '17:00',
+      timezone: 'Asia/Bangkok',
+    }))
+  }
 
   // Calculate day count
   let dayCount: number
@@ -160,7 +238,19 @@ export function distributeDives(days: DayConfig[], courseCodes: string[]): DayCo
   if (days.length === 0 || courseCodes.length === 0) return days
 
   const sequence = buildDiveSequence(courseCodes)
-  if (sequence.length === 0) return days
+  if (sequence.length === 0) {
+    // Fallback: courses with 0 mandated dives (FD, etc.) get 1 synthetic dive per day
+    const validCourses = courseCodes.filter((c) => getCourseByCode(c as CourseCode))
+    if (validCourses.length === 0) return days
+    return days.map((d) => ({
+      ...d,
+      dives: validCourses.map((code) => ({
+        courseCode: code,
+        diveNumber: 1,
+        isConfined: false,
+      })),
+    }))
+  }
 
   const confined = sequence.filter((s) => s.isConfined)
   const nonConfined = sequence.filter((s) => !s.isConfined)
@@ -233,39 +323,78 @@ export function countNonConfined(dives: DiveSlot[]): number {
 // ── cascadeRemoveOrphans ─────────────────────────────────────────────────────
 
 /**
- * Remove orphaned dives whose prerequisite chain is broken after a deselect.
- * If dive N is missing but dive N+1 exists, remove N+1 and all subsequent.
+ * Remove dives that violate cross-day ordering or course-level prerequisites.
+ * Cross-day: a dive on Day N with sequence index ≤ the max index on Days 0..N-1
+ * is a backward violation and gets removed.
+ * Course prereq: if a prerequisite course has ANY unplaced dive, all dives of
+ * the dependent course are removed (e.g. missing OW dive → remove all AOW).
+ * Within-course gaps on the same or later days are allowed.
  */
 export function cascadeRemoveOrphans(days: DayConfig[], courseCodes: string[]): DayConfig[] {
   const sequence = buildDiveSequence(courseCodes)
   if (sequence.length === 0) return days
 
-  const allSelected = new Set(
-    days.flatMap((d) => d.dives.map((dv) => `${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`)),
-  )
+  // Pre-build sequence index map
+  const seqIdx = new Map<string, number>()
+  sequence.forEach((s, i) => seqIdx.set(`${s.courseCode}:${s.diveNumber}:${s.isConfined}`, i))
 
-  // Walk the sequence — once we hit a gap, everything after is invalid
-  const invalidKeys = new Set<string>()
-  let gapFound = false
+  let result = days.map(d => ({ ...d, dives: [...d.dives] }))
+  let changed = true
 
-  for (const slot of sequence) {
-    const key = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
-    if (!allSelected.has(key) && !slot.isConfined) {
-      gapFound = true
+  while (changed) {
+    changed = false
+    const allSelected = new Set(
+      result.flatMap(d => d.dives.map(dv => `${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`)),
+    )
+    const invalidKeys = new Set<string>()
+
+    // 1. Cross-day ordering: walk days, build highwater, flag violations
+    let prevHighwater = -1
+    for (let d = 0; d < result.length; d++) {
+      for (const dv of result[d].dives) {
+        const idx = seqIdx.get(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`) ?? -1
+        if (idx >= 0 && idx <= prevHighwater) {
+          invalidKeys.add(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`)
+        }
+      }
+      // Update highwater after checking (for next day)
+      for (const dv of result[d].dives) {
+        const idx = seqIdx.get(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`) ?? -1
+        if (idx > prevHighwater) prevHighwater = idx
+      }
     }
-    if (gapFound && !slot.isConfined && allSelected.has(key)) {
-      invalidKeys.add(key)
+
+    // 2. Course-level prereq: flag courses whose prereq has unplaced dives
+    for (const code of courseCodes) {
+      const entry = getCourseByCode(code as CourseCode)
+      if (!entry?.prerequisites) continue
+      for (const prereq of entry.prerequisites) {
+        if (!courseCodes.includes(prereq)) continue
+        const prereqDives = sequence.filter(s => s.courseCode === prereq)
+        const hasUnplaced = prereqDives.some(s =>
+          !allSelected.has(`${s.courseCode}:${s.diveNumber}:${s.isConfined}`),
+        )
+        if (hasUnplaced) {
+          for (const s of sequence.filter(s => s.courseCode === code)) {
+            const key = `${s.courseCode}:${s.diveNumber}:${s.isConfined}`
+            if (allSelected.has(key)) invalidKeys.add(key)
+          }
+        }
+      }
+    }
+
+    if (invalidKeys.size > 0) {
+      changed = true
+      result = result.map(d => ({
+        ...d,
+        dives: d.dives.filter(dv =>
+          !invalidKeys.has(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`),
+        ),
+      }))
     }
   }
 
-  if (invalidKeys.size === 0) return days
-
-  return days.map((d) => ({
-    ...d,
-    dives: d.dives.filter(
-      (dv) => !invalidKeys.has(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`),
-    ),
-  }))
+  return result
 }
 
 // ── autoFillPredecessors ─────────────────────────────────────────────────────
@@ -303,6 +432,17 @@ export function autoFillPredecessors(
   if (predecessors.length === 0) return days
 
   const result = days.map((d) => ({ ...d, dives: [...d.dives] }))
+
+  // Helper: find which day a dive is on in the current result
+  function getDiveDay(courseCode: string, diveNumber: number, isConfined: boolean): number {
+    for (let rd = 0; rd < result.length; rd++) {
+      if (result[rd].dives.some((dv) => dv.courseCode === courseCode && dv.diveNumber === diveNumber && dv.isConfined === isConfined)) {
+        return rd
+      }
+    }
+    return -1
+  }
+
   let predIdx = 0
 
   for (let d = 0; d < dayIndex && predIdx < predecessors.length; d++) {
@@ -310,10 +450,25 @@ export function autoFillPredecessors(
     const dayLimit = result[d].divesPerDay || divesPerDay
     while (predIdx < predecessors.length) {
       const pred = predecessors[predIdx]
-      // Pool days only accept confined dives
-      if (isPoolDay && !pred.isConfined) break
+      // Pool days accept confined + up to dayLimit non-confined dives
+      if (isPoolDay && !pred.isConfined && countNonConfined(result[d].dives) >= dayLimit) break
       // Non-pool days check divesPerDay limit for non-confined dives
       if (!isPoolDay && !pred.isConfined && countNonConfined(result[d].dives) >= dayLimit) break
+
+      // Ordering check: all sequence-predecessors of this dive must be on day d or earlier
+      const predSeqIdx = fullSequence.findIndex(
+        (s) => s.courseCode === pred.courseCode && s.diveNumber === pred.diveNumber && s.isConfined === pred.isConfined,
+      )
+      let minDay = 0
+      let canPlace = true
+      for (let i = 0; i < predSeqIdx; i++) {
+        const s = fullSequence[i]
+        const sDay = getDiveDay(s.courseCode, s.diveNumber, s.isConfined)
+        if (sDay < 0) { canPlace = false; break } // Predecessor not yet placed
+        if (sDay > minDay) minDay = sDay
+      }
+      if (!canPlace || d < minDay) break
+
       result[d].dives.push({
         courseCode: pred.courseCode,
         diveNumber: pred.diveNumber,
@@ -367,4 +522,80 @@ export function ensureSufficientDays(days: DayConfig[], courseCodes: string[]): 
     })
   }
   return result
+}
+
+// ── getAvailableDives ────────────────────────────────────────────────────────
+
+/**
+ * Returns all dives from the full sequence that are eligible for the given day.
+ * A dive is available if:
+ * - NOT already assigned to a DIFFERENT day
+ * - Venue compatible: pool accepts confined + non-confined; boat/shore accept non-confined only
+ * - Highwater: sequence index > max seq index of any dive on Days 0..dayIndex-1
+ * - Course-level prereq: dependent course blocked if prerequisite course has
+ *   available-but-unplaced dives (e.g. AOW blocked while OW 4 is still unplaced)
+ */
+export function getAvailableDives(
+  dayIndex: number,
+  days: DayConfig[],
+  courseCodes: string[],
+): DiveSlotDef[] {
+  const fullSequence = buildDiveSequence(courseCodes)
+  if (fullSequence.length === 0) return []
+
+  const day = days[dayIndex]
+  if (!day) return []
+
+  // Map each dive to its assigned day index
+  const assignedDay = new Map<string, number>()
+  for (let d = 0; d < days.length; d++) {
+    for (const dv of days[d].dives) {
+      assignedDay.set(`${dv.courseCode}:${dv.diveNumber}:${dv.isConfined}`, d)
+    }
+  }
+
+  // Highwater: max seq index of any dive on Days 0..dayIndex-1
+  let highwater = -1
+  for (let d = 0; d < dayIndex; d++) {
+    for (const dv of days[d].dives) {
+      const idx = fullSequence.findIndex(s =>
+        s.courseCode === dv.courseCode && s.diveNumber === dv.diveNumber && s.isConfined === dv.isConfined)
+      if (idx > highwater) highwater = idx
+    }
+  }
+
+  // Filter by assignment, venue, and highwater
+  const candidates = fullSequence.filter((slot, slotIdx) => {
+    const key = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
+    const assigned = assignedDay.get(key)
+
+    // Already assigned to a DIFFERENT day → not available here
+    if (assigned !== undefined && assigned !== dayIndex) return false
+
+    // Venue check: non-pool days don't accept confined dives
+    if (day.venueType !== 'pool' && slot.isConfined) return false
+
+    // Highwater: slotIdx must be > highwater
+    if (slotIdx <= highwater) return false
+
+    return true
+  })
+
+  // Course-level prereq: block courses whose prerequisite course has
+  // available-but-unplaced dives (candidate dives not yet assigned)
+  const blockedCourses = new Set<string>()
+  for (const code of courseCodes) {
+    const entry = getCourseByCode(code as CourseCode)
+    if (!entry?.prerequisites) continue
+    for (const prereq of entry.prerequisites) {
+      if (!courseCodes.includes(prereq)) continue
+      const hasUnplaced = candidates.some(s =>
+        s.courseCode === prereq &&
+        assignedDay.get(`${s.courseCode}:${s.diveNumber}:${s.isConfined}`) === undefined,
+      )
+      if (hasUnplaced) blockedCourses.add(code)
+    }
+  }
+
+  return candidates.filter(s => !blockedCourses.has(s.courseCode))
 }

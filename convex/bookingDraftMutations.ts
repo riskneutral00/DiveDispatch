@@ -2,22 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS, type AnyCtx } from './lib/auth'
 import { releaseBookingReservations } from './bookingsMutations'
-import { MAX_ACTIVE_DRAFTS } from './lib/constants'
-
-/**
- * Throws DRAFT_LIMIT if the operator identified by ownerId already has
- * MAX_ACTIVE_DRAFTS Draft bookings. Call before inserting a new Draft.
- */
-async function enforceDraftLimit(ctx: AnyCtx, ownerId: string): Promise<void> {
-  const existing = await ctx.db
-    .query('bookings')
-    .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', ownerId))
-    .collect()
-  const draftCount = existing.filter((b: AnyCtx) => b.status === 'Draft').length
-  if (draftCount >= MAX_ACTIVE_DRAFTS) {
-    throw new ConvexError({ code: 'DRAFT_LIMIT', maxDrafts: MAX_ACTIVE_DRAFTS })
-  }
-}
 
 type OperatorType =
   | 'DiveCenter'
@@ -25,7 +9,6 @@ type OperatorType =
   | 'Liveaboard'
   | 'DiveResort'
   | 'DiveHostel'
-  | 'DiveSite'
 
 /**
  * Creates a minimal Draft booking shell. Called once when the wizard first opens
@@ -37,14 +20,28 @@ type OperatorType =
  * For referral mode use createReferralDraftShell instead.
  */
 export const createDraftShell = mutation({
-  args: {},
-  handler: async (ctx: AnyCtx): Promise<string> => {
+  args: {
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+  },
+  handler: async (ctx: AnyCtx, args: { startDate?: string; endDate?: string }): Promise<string> => {
     const { user } = await requireAuth(ctx)
     if (!OPERATOR_ROLE_SET.has(user.role)) throw new ConvexError({ code: 'FORBIDDEN' })
 
-    await enforceDraftLimit(ctx, user.slug)
-
-    const today = new Date().toISOString().split('T')[0]
+    // Past dates — reject if optional startDate is before today
+    if (args.startDate) {
+      const fmt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+      const parts = Object.fromEntries(fmt.formatToParts(Date.now()).map((p) => [p.type, p.value]))
+      const todayISO = `${parts.year}-${parts.month}-${parts.day}`
+      if (args.startDate < todayISO) {
+        throw new ConvexError({ code: 'PAST_DATE', date: args.startDate })
+      }
+    }
 
     // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
     const agentId = user.role === 'Agent' ? (user.slug as string) : undefined
@@ -57,8 +54,8 @@ export const createDraftShell = mutation({
       holdTTL: HOLD_TTL_MS,
       paid: false,
       activityType: [],
-      startDate: today,
-      endDate: today,
+      startDate: args.startDate ?? '',
+      endDate: args.endDate ?? '',
       divers: [],
       agentId,
       operatorName: user.businessName,
@@ -96,10 +93,6 @@ export const createReferralDraftShell = mutation({
       throw new ConvexError({ code: 'FORBIDDEN' })
     }
 
-    await enforceDraftLimit(ctx, dcUser.slug as string)
-
-    const today = new Date().toISOString().split('T')[0]
-
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,
       ownerType: dcUser.role as OperatorType,
@@ -108,8 +101,8 @@ export const createReferralDraftShell = mutation({
       holdTTL: HOLD_TTL_MS,
       paid: false,
       activityType: [],
-      startDate: today,
-      endDate: today,
+      startDate: '',
+      endDate: '',
       divers: [],
       agentId: user.slug as string,
       agentIsReferral: true,

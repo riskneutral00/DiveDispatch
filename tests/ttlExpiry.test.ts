@@ -841,7 +841,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           medicalHardBlock: false,
           bookingFormComplete: true,
           customerFormComplete: false,
-          instructorId: 'inst-1',
           expiresAt: Date.now() + HOLD_TTL,
         })
 
@@ -987,7 +986,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'inst-2',
       })
 
       const reservationIds: Id<'reservations'>[] = []
@@ -1101,7 +1099,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: false,
-        instructorId: 'inst-ext',
         expiresAt: Date.now() + HOLD_TTL,
       })
 

@@ -6,6 +6,7 @@ import {
   canBookingTransition,
   releaseBookingReservations,
 } from './_shared'
+import { logBookingChange } from '../bookingAuditLog'
 
 // ─── editBooking ──────────────────────────────────────────────────────────────
 
@@ -45,6 +46,14 @@ export const editBooking = mutation({
       bookingFormComplete: false,
       submittedAt: undefined,
       expiresAt: undefined,
+    })
+
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'edited',
+      actorSlug: user.slug,
+      actorType: 'operator',
+      diff: JSON.stringify({ status: { old: booking.status, new: 'Draft' } }),
     })
   },
 })

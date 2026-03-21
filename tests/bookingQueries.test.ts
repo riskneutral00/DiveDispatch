@@ -26,8 +26,43 @@ async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
   })
 }
 
+// Resource fields that should go to bookingResources, not the booking doc
+const RESOURCE_FIELD_MAP: Record<string, string> = {
+  instructorId: 'Instructor',
+  boatId: 'Boat',
+  equipmentManagerId: 'Equipment',
+  poolId: 'Pool',
+  compressorId: 'Compressor',
+}
+const EXT_FIELD_MAP: Record<string, string> = {
+  instructorName: 'Instructor',
+  boatName: 'Boat',
+  equipmentManagerName: 'Equipment',
+  poolName: 'Pool',
+  compressorName: 'Compressor',
+}
+
 async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, unknown> = {}) {
-  return ctx.db.insert('bookings', {
+  // Separate resource fields from booking fields
+  const bookingOverrides = { ...overrides }
+  const resourceEntries: { type: string; slug?: string; ext?: string }[] = []
+
+  for (const [field, resourceType] of Object.entries(RESOURCE_FIELD_MAP)) {
+    const slug = bookingOverrides[field] as string | undefined
+    if (slug) {
+      resourceEntries.push({ type: resourceType, slug })
+      delete bookingOverrides[field]
+    }
+  }
+  const ext = bookingOverrides.externalStakeholders as Record<string, string> | undefined
+  if (ext) {
+    for (const [field, resourceType] of Object.entries(EXT_FIELD_MAP)) {
+      if (ext[field]) resourceEntries.push({ type: resourceType, ext: ext[field] })
+    }
+    delete bookingOverrides.externalStakeholders
+  }
+
+  const bookingId = await ctx.db.insert('bookings', {
     ownerId,
     ownerType: 'DiveCenter',
     status: 'Draft',
@@ -46,8 +81,21 @@ async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, 
     bookingFormComplete: false,
     customerFormComplete: false,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(overrides as any),
+    ...(bookingOverrides as any),
   })
+
+  // Insert bookingResources rows
+  for (const entry of resourceEntries) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await ctx.db.insert('bookingResources', {
+      bookingId,
+      resourceType: entry.type as any,
+      ...(entry.slug ? { resourceSlug: entry.slug } : {}),
+      ...(entry.ext ? { externalName: entry.ext } : {}),
+    } as any)
+  }
+
+  return bookingId
 }
 
 async function seedInventoryUnit(ctx: Ctx, ownerId: string, ownerType = 'Instructor') {
@@ -505,7 +553,7 @@ describe('myDashboard', () => {
     expect(result).toEqual({ bookings: [], requests: [] })
   })
 
-  it('operator role: returns only Upcoming and Completed in bookings', async () => {
+  it('operator role: returns Draft, Upcoming, and Completed in bookings (excludes Cancelled)', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       await seedUser(ctx, 'dc-1', 'DiveCenter')
@@ -518,10 +566,12 @@ describe('myDashboard', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.myDashboard)
 
-    expect(result.bookings).toHaveLength(2)
+    expect(result.bookings).toHaveLength(3)
     const statuses = result.bookings.map((b) => b.status)
+    expect(statuses).toContain('Draft')
     expect(statuses).toContain('Upcoming')
     expect(statuses).toContain('Completed')
+    expect(statuses).not.toContain('Cancelled')
   })
 
   it('operator role: returns empty requests array', async () => {

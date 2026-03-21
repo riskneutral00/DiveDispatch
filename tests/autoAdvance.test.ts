@@ -205,7 +205,11 @@ describe('tryAutoAdvance — EM release conditions', () => {
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        equipmentManagerId: 'em-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -232,7 +236,11 @@ describe('tryAutoAdvance — EM release conditions', () => {
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        equipmentManagerId: 'em-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -262,7 +270,11 @@ describe('tryAutoAdvance — EM release conditions', () => {
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        equipmentManagerId: 'em-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -288,7 +300,11 @@ describe('tryAutoAdvance — EM release conditions', () => {
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        equipmentManagerId: 'em-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -313,12 +329,17 @@ describe('tryAutoAdvance — EM release conditions', () => {
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, 'dc-slug')
-      // External equipment — no equipmentManagerId, no reservation
-      return seedBooking(ctx, 'dc-slug', {
+      // External equipment — no in-system EM, no reservation
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        externalStakeholders: { equipmentManagerName: 'External EM' },
       })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        externalName: 'External EM',
+      })
+      return bookingId
     })
 
     await t.run(async (ctx) => {
@@ -347,7 +368,7 @@ describe('tryAutoAdvance — trigger points', () => {
 
     // Empty sessions → no reservations → vacuously true after bookingFormComplete set
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-slug' }).mutation(
-      api['bookings/create'].submitToDraft,
+      api.bookings.create.submitToDraft,
       { bookingId, sessions: [] },
     )
 
@@ -366,9 +387,13 @@ describe('tryAutoAdvance — trigger points', () => {
         bookingFormComplete: true,
         customerFormComplete: true,
         medicalHardBlock: false,
-        equipmentManagerId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
       const reservationId = await seedReservation(
         ctx,
         bookingId,
@@ -493,16 +518,27 @@ describe('tryAutoAdvance — vacuous advance', () => {
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, 'dc-slug')
       // All external, no in-system reservations, both forms complete
-      return seedBooking(ctx, 'dc-slug', {
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
         medicalHardBlock: false,
-        externalStakeholders: {
-          instructorName: 'Ext Instructor',
-          boatName: 'Ext Boat',
-          equipmentManagerName: 'Ext EM',
-        },
       })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor',
+        externalName: 'Ext Instructor',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Boat',
+        externalName: 'Ext Boat',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        externalName: 'Ext EM',
+      })
+      return bookingId
     })
 
     await t.run(async (ctx) => {
@@ -615,7 +651,11 @@ describe('tryAutoAdvance — snapshot restoration on EM release', () => {
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
-        equipmentManagerId: 'em-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')

@@ -26,7 +26,7 @@ export default function AuthLayout({
 
       {/* Centered glass container */}
       <main className="relative z-10 flex-1 flex items-center justify-center p-4">
-        <div className="glass-elevated w-full max-w-md p-8 flex flex-col items-center">
+        <div className="glass-elevated w-full max-w-lg p-8 flex flex-col items-center">
           {children}
         </div>
       </main>

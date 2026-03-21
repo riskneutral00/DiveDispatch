@@ -68,6 +68,15 @@ export function ThemeProvider({
     // Stamp data attributes so CSS rules can target [data-theme] and [data-mode].
     document.documentElement.setAttribute("data-theme", theme.id);
     document.documentElement.setAttribute("data-mode", mode);
+
+    // Initialize hover-effect toggle if not already set (default: on)
+    if (!document.documentElement.hasAttribute("data-hover-effect")) {
+      const stored = localStorage.getItem("divedispatch-hover-effect");
+      document.documentElement.setAttribute(
+        "data-hover-effect",
+        stored === "off" ? "off" : "on",
+      );
+    }
   }, [theme, mode]);
 
   // Load fonts whenever the theme changes.

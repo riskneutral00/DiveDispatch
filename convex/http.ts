@@ -185,4 +185,62 @@ http.route({
   }),
 })
 
+// DEV-ONLY: delete a Convex user record by email for E2E test setup.
+// Clears the webhook-created user so the account page shows the setup wizard.
+http.route({
+  path: '/dev/delete-user',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    if (process.env.ENVIRONMENT === 'production') {
+      return new Response('Forbidden', { status: 403 })
+    }
+
+    let email: string
+    try {
+      const body = (await request.json()) as { email?: string }
+      if (!body.email || typeof body.email !== 'string') {
+        return new Response('email is required', { status: 400 })
+      }
+      email = body.email
+    } catch {
+      return new Response('Invalid JSON body', { status: 400 })
+    }
+
+    const result = await ctx.runMutation(internal.testHelpers.deleteUserByEmail, { email })
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }),
+})
+
+http.route({
+  path: '/dev/complete-customer-form',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    if (process.env.ENVIRONMENT === 'production') {
+      return new Response('Forbidden', { status: 403 })
+    }
+
+    let bookingId: string
+    try {
+      const body = (await request.json()) as { ownerSlug?: string }
+      if (!body.ownerSlug || typeof body.ownerSlug !== 'string') {
+        return new Response('ownerSlug is required', { status: 400 })
+      }
+      bookingId = body.ownerSlug
+    } catch {
+      return new Response('Invalid JSON body', { status: 400 })
+    }
+
+    const result = await ctx.runMutation(internal.testHelpers.completeCustomerForm, {
+      ownerSlug: bookingId,
+    })
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }),
+})
+
 export default http

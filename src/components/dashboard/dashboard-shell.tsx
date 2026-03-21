@@ -6,14 +6,14 @@ import { useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { Spinner } from '@/components/common/spinner'
 import { RadialProgress } from '@/components/onboarding/radial-progress'
 import { BgSwitcher } from './bg-switcher'
+import { OpacityToggle } from './opacity-toggle'
 import { HierarchySubBar } from './hierarchy-sub-bar'
 import { MobileBottomNav } from './mobile-bottom-nav'
 import { MobileTopNav } from './mobile-top-nav'
 import { NotificationBell } from './notification-bell'
-import { RoleTabBar } from './role-tab-bar'
-import { ThemeSwitcher } from './theme-switcher'
 import { UserMenu } from './user-menu'
 
 interface DashboardShellProps {
@@ -25,30 +25,34 @@ interface DashboardShellProps {
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const { user, isLoading } = useCurrentUser()
   const onboardingStatus = useQuery(api.users.getOnboardingStatus)
+  const managedChildren = useQuery(
+    api.stakeholderHierarchy.getManagedChildren,
+    user ? { parentSlug: user.slug } : 'skip',
+  )
   const router = useRouter()
 
   useEffect(() => {
     if (isLoading) return
     if (!user) {
-      router.replace('/role-select')
+      router.replace('/sign-up')
       return
     }
     if (user.slug !== slug) {
-      const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
-      if (config) {
-        router.replace(`${config.route}/${user.slug}/dashboard`)
+      // Allow access if slug belongs to a managed child resource
+      const isManagedChild = managedChildren?.some((c) => c.childSlug === slug)
+      if (!isManagedChild) {
+        const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
+        if (config) {
+          router.replace(`${config.route}/${user.slug}/dashboard`)
+        }
       }
     }
-  }, [user, isLoading, router, slug])
+  }, [user, isLoading, router, slug, managedChildren])
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-text-secondary)' }}
-          aria-hidden
-        />
+      <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--color-text-secondary)' }}>
+        <Spinner />
       </div>
     )
   }
@@ -66,8 +70,8 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
             incomplete={onboardingStatus.incomplete}
           />
         )}
+        <OpacityToggle />
         <BgSwitcher />
-        <ThemeSwitcher />
         <NotificationBell />
         <UserMenu roleSlug={roleSlug} slug={slug} />
       </header>
@@ -75,11 +79,11 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       {/* Mobile: sticky top header — visible on mobile only */}
       <MobileTopNav roleSlug={roleSlug} slug={slug} />
 
-      {/* Hierarchy sub-bar — only renders when user has managed resources */}
-      <HierarchySubBar slug={slug} />
+      {/* Hierarchy sub-bar — DC icon + managed resources, or back nav on resource dashboards */}
+      <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 
       {/* Page content — pb-20 on mobile clears the fixed bottom nav */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">{children}</main>
+      <main className="dashboard-enter flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">{children}</main>
 
       {/* Mobile: fixed bottom nav (thumb-zone navigation) */}
       <MobileBottomNav roleSlug={roleSlug} slug={slug} />

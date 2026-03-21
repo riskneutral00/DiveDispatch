@@ -7,13 +7,15 @@ import { Edit2, Copy, Check, ExternalLink, Play, Trash2 } from 'lucide-react'
 import { ConvexError } from 'convex/values'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import type { BookingDetail } from '../../../convex/bookings'
+import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { GlassButton, GlassBadge, GlassDialog } from '@/components/glass'
+import { GlassButton, GlassBadge, GlassDialog, RoleIcon } from '@/components/glass'
+import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
+import { AuditTrailTable } from './audit-trail-table'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,12 +25,6 @@ interface BookingDetailDialogProps {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-
-function flagEmoji(code: string): string {
-  return [...code.toUpperCase()]
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('')
-}
 
 function formatDateRange(start: string, end: string): string {
   if (start === end) return start
@@ -84,6 +80,193 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     >
       {children}
     </p>
+  )
+}
+
+// ── Customer table ───────────────────────────────────────────────────────────
+
+function CustomerTable({ booking }: { booking: BookingDetail }) {
+  const divers = booking.divers
+  const profiles = booking.customerProfiles
+
+  if (divers.length === 0) {
+    return (
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        No customers added.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {divers.map((diver, idx) => {
+        const profile = profiles[idx]
+        const portalComplete = profile?.submittedAt != null
+        return (
+          <div
+            key={idx}
+            className="flex items-center justify-between gap-3 p-2.5 rounded-lg border"
+            style={{
+              background: 'var(--color-glass-bg)',
+              borderColor: 'var(--color-glass-border)',
+            }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className="text-base flex-shrink-0"
+                aria-label={diver.flag.label}
+              >
+                {[...diver.flag.code.toUpperCase()]
+                  .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
+                  .join('')}
+              </span>
+              <div className="min-w-0">
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {diver.name}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  {diver.activityType.map(courseLabel).join(', ')}
+                </p>
+              </div>
+            </div>
+            <GlassBadge
+              variant={portalComplete ? 'success' : 'default'}
+              size="sm"
+              dot
+            >
+              {portalComplete ? 'Completed' : 'Pending'}
+            </GlassBadge>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Stakeholder list ─────────────────────────────────────────────────────────
+
+function StakeholderList({ stakeholders }: { stakeholders: BookingDetailStakeholder[] }) {
+  if (stakeholders.length === 0) {
+    return (
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        No resources assigned.
+      </p>
+    )
+  }
+
+  function reservationVariant(
+    status: string | undefined,
+  ): 'success' | 'warning' | 'destructive' | 'default' {
+    switch (status) {
+      case 'Confirmed':
+        return 'success'
+      case 'PendingAcceptance':
+        return 'warning'
+      case 'Vacated':
+      case 'NoShow':
+        return 'destructive'
+      default:
+        return 'default'
+    }
+  }
+
+  return (
+    <ul className="space-y-2">
+      {stakeholders.map((s, idx) => (
+        <li
+          key={idx}
+          className="flex items-center justify-between gap-3 p-2.5 rounded-lg border"
+          style={{
+            background: 'var(--color-glass-bg)',
+            borderColor: 'var(--color-glass-border)',
+          }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+              style={{
+                background: 'var(--color-glass-bg-elevated)',
+                border: '1px solid var(--color-glass-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <RoleIcon role={s.role as ClerkRole} size={18} />
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {s.name}
+                </p>
+                {s.isExternal && (
+                  <GlassBadge variant="default" size="sm">
+                    External
+                  </GlassBadge>
+                )}
+              </div>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                {s.role}
+                {s.contactEmail && <> · {s.contactEmail}</>}
+              </p>
+            </div>
+          </div>
+          {s.reservationStatus && (
+            <GlassBadge variant={reservationVariant(s.reservationStatus)} size="sm" dot>
+              {s.reservationStatus === 'PendingAcceptance' ? 'Pending' : s.reservationStatus}
+            </GlassBadge>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// ── Section tabs ─────────────────────────────────────────────────────────────
+
+type SectionId = 'overview' | 'customers' | 'schedule' | 'resources' | 'reservations' | 'audit'
+
+const SECTIONS: Array<{ id: SectionId; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'customers', label: 'Customers' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'resources', label: 'Resources' },
+  { id: 'reservations', label: 'Reservations' },
+  { id: 'audit', label: 'Audit Trail' },
+]
+
+function SectionTabs({
+  active,
+  onChange,
+}: {
+  active: SectionId
+  onChange: (id: SectionId) => void
+}) {
+  return (
+    <div
+      className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0"
+      style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+    >
+      {SECTIONS.map(({ id, label }) => (
+        <button
+          key={id}
+          onClick={() => onChange(id)}
+          className="px-3 py-1.5 text-xs font-medium rounded-t-md whitespace-nowrap transition-colors"
+          style={{
+            color: active === id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+            background:
+              active === id ? 'var(--color-glass-bg-elevated)' : 'transparent',
+            borderBottom: active === id ? '2px solid var(--color-accent)' : '2px solid transparent',
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -356,6 +539,7 @@ function BookingDetailContent({
   const router = useRouter()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const [activeSection, setActiveSection] = useState<SectionId>('overview')
 
   const booking = useQuery(api.bookings.getBookingDetail, {
     bookingId: bookingId as Id<'bookings'>,
@@ -401,127 +585,160 @@ function BookingDetailContent({
   ]
 
   return (
-    <div className="space-y-5">
-      {/* Header: status + TTL + activity + date + divers */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <GlassBadge variant={statusVariant(booking.status)} dot>
-            {booking.status}
-          </GlassBadge>
-          {isDraft && ttlLabel && (
-            <span
-              className="text-xs"
-              style={{
-                color:
-                  ttlLabel === 'Expired'
-                    ? 'var(--color-destructive)'
-                    : 'var(--color-text-secondary)',
-              }}
-            >
-              {ttlLabel}
-            </span>
-          )}
-        </div>
-        <p className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-          {booking.activityType.map(courseLabel).join(', ')}
-        </p>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
-          {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
-        </p>
+    <div className="flex flex-col h-full">
+      {/* Section navigation tabs */}
+      <div className="px-4 sm:px-6 pt-3 flex-shrink-0">
+        <SectionTabs active={activeSection} onChange={setActiveSection} />
+      </div>
 
-        {/* Diver names with flags */}
-        {booking.divers.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-0.5">
-            {booking.divers.map((diver, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center gap-1 text-sm"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                <span aria-label={diver.flag.label}>{flagEmoji(diver.flag.code)}</span>
-                {diver.name}
-              </span>
-            ))}
+      {/* Scrollable section content */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+
+        {/* ── Overview ─────────────────────────────────────────────────── */}
+        {activeSection === 'overview' && (
+          <>
+            {/* Status + summary */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <GlassBadge variant={statusVariant(booking.status)} dot>
+                  {booking.status}
+                </GlassBadge>
+                {isDraft && ttlLabel && (
+                  <span
+                    className="text-xs"
+                    style={{
+                      color:
+                        ttlLabel === 'Expired'
+                          ? 'var(--color-destructive)'
+                          : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {ttlLabel}
+                  </span>
+                )}
+              </div>
+              <p className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                {booking.activityType.map(courseLabel).join(', ')}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
+                {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                Operator: {booking.operatorName}
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              {isDraft ? (
+                <>
+                  <GlassButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      router.push(`/booking/${bookingId}/edit`)
+                      onClose()
+                    }}
+                  >
+                    <Play size={13} />
+                    Resume
+                  </GlassButton>
+                  <GlassButton
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDiscardDialog(true)}
+                  >
+                    <Trash2 size={13} />
+                    Discard
+                  </GlassButton>
+                </>
+              ) : (
+                canEdit && (
+                  <GlassButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      router.push(`/booking/${bookingId}/edit`)
+                      onClose()
+                    }}
+                  >
+                    <Edit2 size={13} />
+                    Edit Booking
+                  </GlassButton>
+                )
+              )}
+              {canCancel && !isDraft && (
+                <GlassButton
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowCancelDialog(true)}
+                >
+                  Cancel Booking
+                </GlassButton>
+              )}
+            </div>
+
+            {/* Portal completion pills */}
+            <div>
+              <SectionLabel>Customer Portal</SectionLabel>
+              <PortalPills pills={portalPills} />
+              <div className="mt-3">
+                <PortalLinkSection
+                  bookingId={bookingId}
+                  portalLink={portalLink ?? null}
+                  divers={booking.divers}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── Customers ────────────────────────────────────────────────── */}
+        {activeSection === 'customers' && (
+          <div>
+            <SectionLabel>Customers</SectionLabel>
+            <CustomerTable booking={booking} />
           </div>
         )}
-      </div>
 
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-2">
-        {isDraft ? (
-          <>
-            <GlassButton
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                router.push(`/booking/${bookingId}/edit`)
-                onClose()
-              }}
-            >
-              <Play size={13} />
-              Resume
-            </GlassButton>
-            <GlassButton
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowDiscardDialog(true)}
-            >
-              <Trash2 size={13} />
-              Discard
-            </GlassButton>
-          </>
-        ) : (
-          canEdit && (
-            <GlassButton
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                router.push(`/booking/${bookingId}/edit`)
-                onClose()
-              }}
-            >
-              <Edit2 size={13} />
-              Edit Booking
-            </GlassButton>
-          )
+        {/* ── Schedule ─────────────────────────────────────────────────── */}
+        {activeSection === 'schedule' && (
+          <div>
+            <SectionLabel>Session Schedule</SectionLabel>
+            {booking.sessions.length === 0 ? (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                No sessions scheduled.
+              </p>
+            ) : (
+              <SessionTimeline sessions={booking.sessions} />
+            )}
+          </div>
         )}
-        {canCancel && !isDraft && (
-          <GlassButton
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowCancelDialog(true)}
-          >
-            Cancel Booking
-          </GlassButton>
+
+        {/* ── Resources ────────────────────────────────────────────────── */}
+        {activeSection === 'resources' && (
+          <div>
+            <SectionLabel>Stakeholders</SectionLabel>
+            <StakeholderList stakeholders={booking.stakeholders} />
+          </div>
         )}
-      </div>
 
-      {/* Portal completion pills */}
-      <div>
-        <SectionLabel>Customer Portal</SectionLabel>
-        <PortalPills pills={portalPills} />
-        <div className="mt-3">
-          <PortalLinkSection
-            bookingId={bookingId}
-            portalLink={portalLink ?? null}
-            divers={booking.divers}
-          />
-        </div>
-      </div>
+        {/* ── Reservations ─────────────────────────────────────────────── */}
+        {activeSection === 'reservations' && (
+          <div>
+            <SectionLabel>Reservations</SectionLabel>
+            <ReservationStatusList reservations={booking.reservations} />
+          </div>
+        )}
 
-      {/* Sessions */}
-      {booking.sessions.length > 0 && (
-        <div>
-          <SectionLabel>Sessions</SectionLabel>
-          <SessionTimeline sessions={booking.sessions} />
-        </div>
-      )}
-
-      {/* Resources */}
-      <div>
-        <SectionLabel>Resources</SectionLabel>
-        <ReservationStatusList reservations={booking.reservations} />
+        {/* ── Audit Trail ──────────────────────────────────────────────── */}
+        {activeSection === 'audit' && (
+          <div>
+            <SectionLabel>Audit Trail</SectionLabel>
+            <AuditTrailTable bookingId={bookingId} />
+          </div>
+        )}
       </div>
 
       {/* Cancel dialog */}
@@ -553,14 +770,11 @@ export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogP
       open={bookingId !== null}
       onClose={onClose}
       title="Booking Detail"
-      size="xl"
-      className="!max-w-2xl"
+      fullScreen
     >
-      <div className="max-h-[70vh] overflow-y-auto pr-1">
-        {bookingId !== null && (
-          <BookingDetailContent bookingId={bookingId} onClose={onClose} />
-        )}
-      </div>
+      {bookingId !== null && (
+        <BookingDetailContent bookingId={bookingId} onClose={onClose} />
+      )}
     </GlassDialog>
   )
 }

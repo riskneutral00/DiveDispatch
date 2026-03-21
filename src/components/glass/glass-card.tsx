@@ -8,6 +8,7 @@ interface GlassCardProps {
   hoverable?: boolean;
   as?: React.ElementType;
   style?: React.CSSProperties;
+  onClick?: React.MouseEventHandler;
 }
 
 const paddingMap = {
@@ -25,14 +26,17 @@ export function GlassCard({
   hoverable = false,
   as: Tag = "div",
   style,
+  onClick,
 }: GlassCardProps) {
   return (
     <Tag
       style={style}
+      onClick={onClick}
+      {...(Tag === "button" ? { type: "button" } : {})}
       className={[
         elevated ? "glass-elevated" : "glass",
+        hoverable && "glass-surface cursor-pointer",
         "relative",
-        hoverable && "hover:scale-[1.01] cursor-pointer",
         paddingMap[padding],
         className,
       ]

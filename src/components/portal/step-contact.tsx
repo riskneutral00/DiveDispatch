@@ -13,6 +13,7 @@ import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate } from '@/lib/constants/activity-rules'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
+import { Spinner } from '@/components/common/spinner'
 
 const COUNTRIES = [
   'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria',
@@ -279,11 +280,8 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   if (context === undefined) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div
-          className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-primary)' }}
-        />
+      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }

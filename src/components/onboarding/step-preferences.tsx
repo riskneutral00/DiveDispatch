@@ -21,7 +21,7 @@ const QUICK_BOOK_OPTIONS = [
 
 type CourseCode = 'DSD' | 'TRY_DIVE' | 'OW' | 'AOW' | 'RESCUE' | 'DM' | 'FD' | 'REFRESH' | 'SPECIALTY'
 
-const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite']
+const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel']
 
 interface StepPreferencesProps {
   userRole: string

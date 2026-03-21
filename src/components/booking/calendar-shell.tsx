@@ -21,7 +21,7 @@ export function CalendarShell({
   const dayHeaders = getDaysOfWeek()
 
   return (
-    <GlassCard className={className}>
+    <GlassCard className={className} hoverable>
       {header}
 
       <div className="overflow-x-auto">

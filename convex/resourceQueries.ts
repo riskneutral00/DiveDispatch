@@ -4,7 +4,7 @@ import { requireAuth, type AnyCtx } from './lib/auth'
 // ─── Return types ─────────────────────────────────────────────────────────────
 
 export type OpenRequest = {
-  reservationId: string
+  reservationIds: string[]
   inventoryUnitId: string
   bookingId: string
   unitsRequested: number
@@ -56,7 +56,8 @@ export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[
     )
     .collect()
 
-  const results: OpenRequest[] = []
+  // Group reservations by booking+unit to deduplicate multi-day bookings
+  const byBooking = new Map<string, { unitId: string; resIds: string[]; units: number; createdAt: number }>()
 
   for (const unit of units) {
     const reservations = await ctx.db
@@ -66,23 +67,42 @@ export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[
       )
       .collect()
 
-    for (const reservation of reservations) {
-      const booking = await ctx.db.get(reservation.bookingId)
-      if (!booking) continue
-
-      results.push({
-        reservationId: reservation._id,
-        inventoryUnitId: unit._id,
-        bookingId: reservation.bookingId,
-        unitsRequested: reservation.unitsRequested,
-        createdAt: reservation._creationTime,
-        activityType: booking.activityType,
-        startDate: booking.startDate,
-        endDate: booking.endDate,
-        diverCount: booking.divers.length,
-        operatorName: booking.operatorName,
-      })
+    for (const res of reservations) {
+      const key = `${res.bookingId as string}|${unit._id as string}`
+      const existing = byBooking.get(key)
+      if (existing) {
+        existing.resIds.push(res._id as string)
+        existing.createdAt = Math.max(existing.createdAt, res._creationTime)
+      } else {
+        byBooking.set(key, {
+          unitId: unit._id as string,
+          resIds: [res._id as string],
+          units: res.unitsRequested as number,
+          createdAt: res._creationTime,
+        })
+      }
     }
+  }
+
+  const results: OpenRequest[] = []
+
+  for (const [key, { unitId, resIds, units: unitsRequested, createdAt }] of byBooking) {
+    const bookingId = key.split('|')[0]
+    const booking = await ctx.db.get(bookingId)
+    if (!booking) continue
+
+    results.push({
+      reservationIds: resIds,
+      inventoryUnitId: unitId,
+      bookingId,
+      unitsRequested,
+      createdAt,
+      activityType: booking.activityType as string[],
+      startDate: booking.startDate as string,
+      endDate: booking.endDate as string,
+      diverCount: (booking.divers as unknown[]).length,
+      operatorName: booking.operatorName as string,
+    })
   }
 
   return results.sort((a, b) => b.createdAt - a.createdAt)

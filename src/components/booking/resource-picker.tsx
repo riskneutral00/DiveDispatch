@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { GlassButton, GlassInput, GlassBadge } from '@/components/glass'
+import { Spinner } from '@/components/common/spinner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -108,13 +109,11 @@ export function ResourcePicker({
           style={{
             background: 'var(--color-glass-bg)',
             border: '1px solid var(--color-glass-border)',
+            color: 'var(--color-text-secondary)',
           }}
         >
-          <span
-            className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0"
-            style={{ color: 'var(--color-text-secondary)' }}
-          />
-          <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <Spinner size="sm" />
+          <span className="text-sm">
             Loading…
           </span>
         </div>

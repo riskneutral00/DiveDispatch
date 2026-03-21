@@ -45,7 +45,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
   const { customers, days, bookingId, startDate, endDate, equipment, compressor,
     equipmentIsExternal, compressorIsExternal, externalEquipmentName, externalCompressorName,
-    submitting } = state
+    submitting, inventoryUnitMap } = state
 
   const activityType = deriveActivityType(customers)
 
@@ -64,18 +64,74 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
     dispatch({ type: 'SET_SUBMITTING', value: true })
 
     try {
-      // Build sessions from days
-      const sessions = days
-        .filter((d) => d.venueType !== 'shore' && (d.inventoryUnitId || d.externalVenueName))
-        .map((d) => ({
-          inventoryUnitId: (d.inventoryUnitId ?? '') as Id<'inventoryUnits'>,
-          date: d.date,
-          startTime: d.startTime,
-          endTime: d.endTime,
-          timezone: d.timezone,
-          unitsRequested: Math.max(customers.length, 1),
-          deliveryLocation: (d.venueType === 'pool' ? 'Pool' : 'BoatPier') as 'BoatPier' | 'Pool' | 'Beach',
-        }))
+      // Build sessions from days — one per resource per day.
+      // Each in-system resource (venue + instructor) needs its own session
+      // so submitToDraft creates reservations and tracks availability.
+      type CourseCodeLiteral = import('@/lib/constants/course-catalog').CourseCode
+      type SessionEntry = {
+        inventoryUnitId: Id<'inventoryUnits'>
+        date: string
+        startTime: string
+        endTime: string
+        timezone: string
+        unitsRequested: number
+        deliveryLocation: 'BoatPier' | 'Pool' | 'Beach'
+        diveSlots?: { courseCode: CourseCodeLiteral; diveNumber: number; isConfined: boolean; diverIndex: number }[]
+      }
+      const sessions: SessionEntry[] = []
+      const sessionKey = (unitId: string, date: string) => `${unitId}|${date}`
+      const seen = new Set<string>()
+
+      for (const d of days) {
+        const deliveryLocation = (d.venueType === 'pool' ? 'Pool' : 'BoatPier') as 'BoatPier' | 'Pool' | 'Beach'
+
+        // Venue session (boat or pool) — skip shore days and external venues
+        if (d.venueType !== 'shore') {
+          const venueSlug = d.venueType === 'pool' ? d.poolInventoryUnitId : d.inventoryUnitId
+          const venueUnitId = venueSlug ? inventoryUnitMap[venueSlug] : undefined
+          if (venueUnitId) {
+            const key = sessionKey(venueUnitId, d.date)
+            if (!seen.has(key)) {
+              seen.add(key)
+              sessions.push({
+                inventoryUnitId: venueUnitId as Id<'inventoryUnits'>,
+                date: d.date,
+                startTime: d.startTime,
+                endTime: d.endTime,
+                timezone: d.timezone,
+                unitsRequested: Math.max(customers.length, 1),
+                deliveryLocation,
+              })
+            }
+          }
+        }
+
+        // Instructor session — in-system instructors need reservations too
+        if (d.instructorSlug && d.instructorSlug !== '__external__') {
+          const instrUnitId = inventoryUnitMap[d.instructorSlug]
+          if (instrUnitId) {
+            const key = sessionKey(instrUnitId, d.date)
+            if (!seen.has(key)) {
+              seen.add(key)
+              sessions.push({
+                inventoryUnitId: instrUnitId as Id<'inventoryUnits'>,
+                date: d.date,
+                startTime: d.startTime,
+                endTime: d.endTime,
+                timezone: d.timezone,
+                unitsRequested: 1, // Instructor = Exclusive (1 unit)
+                deliveryLocation,
+                diveSlots: d.dives.map((slot, idx) => ({
+                  courseCode: slot.courseCode as CourseCodeLiteral,
+                  diveNumber: slot.diveNumber,
+                  isConfined: slot.isConfined,
+                  diverIndex: idx,
+                })),
+              })
+            }
+          }
+        }
+      }
 
       // Build divers from customers
       const divers = customers.map((c) => {
@@ -93,17 +149,50 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         }
       })
 
-      // External stakeholders from equipment/compressor
-      const externalStakeholders: {
-        instructorName?: string
-        equipmentManagerName?: string
-        compressorName?: string
-      } = {}
-      if (equipmentIsExternal && externalEquipmentName) {
-        externalStakeholders.equipmentManagerName = externalEquipmentName
+      // Build generic resources array
+      const resources: Array<{ resourceType: string; resourceSlug?: string; externalName?: string }> = []
+
+      // Per-day resources (instructors, boats, pools) extracted from days
+      for (const d of days) {
+        if (d.instructorSlug && d.instructorSlug !== '__external__') {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.instructorSlug)) {
+            resources.push({ resourceType: 'Instructor', resourceSlug: d.instructorSlug })
+          }
+        } else if (d.instructorSlug === '__external__' && d.externalInstructorName?.trim()) {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalInstructorName)) {
+            resources.push({ resourceType: 'Instructor', externalName: d.externalInstructorName })
+          }
+        }
+        if (d.venueType === 'boat' && d.inventoryUnitId) {
+          if (!resources.some(r => r.resourceType === 'Boat' && r.resourceSlug === d.inventoryUnitId)) {
+            resources.push({ resourceType: 'Boat', resourceSlug: d.inventoryUnitId })
+          }
+        } else if (d.venueType === 'boat' && d.externalVenueName?.trim()) {
+          if (!resources.some(r => r.resourceType === 'Boat' && r.externalName === d.externalVenueName)) {
+            resources.push({ resourceType: 'Boat', externalName: d.externalVenueName })
+          }
+        }
+        if (d.venueType === 'pool' && d.poolInventoryUnitId) {
+          if (!resources.some(r => r.resourceType === 'Pool' && r.resourceSlug === d.poolInventoryUnitId)) {
+            resources.push({ resourceType: 'Pool', resourceSlug: d.poolInventoryUnitId })
+          }
+        } else if (d.venueType === 'pool' && d.externalPoolName?.trim()) {
+          if (!resources.some(r => r.resourceType === 'Pool' && r.externalName === d.externalPoolName)) {
+            resources.push({ resourceType: 'Pool', externalName: d.externalPoolName })
+          }
+        }
       }
-      if (compressorIsExternal && externalCompressorName) {
-        externalStakeholders.compressorName = externalCompressorName
+
+      // Equipment + Compressor
+      if (!equipmentIsExternal && equipment) {
+        resources.push({ resourceType: 'Equipment', resourceSlug: equipment })
+      } else if (equipmentIsExternal && externalEquipmentName) {
+        resources.push({ resourceType: 'Equipment', externalName: externalEquipmentName })
+      }
+      if (!compressorIsExternal && compressor) {
+        resources.push({ resourceType: 'Compressor', resourceSlug: compressor })
+      } else if (compressorIsExternal && externalCompressorName) {
+        resources.push({ resourceType: 'Compressor', externalName: externalCompressorName })
       }
 
       await submitToDraft({
@@ -116,9 +205,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
           portalContact: true,
           portalMedical: true,
           portalWaiver: false,
-          equipmentManagerId: !equipmentIsExternal && equipment ? (equipment as Id<'inventoryUnits'>) : undefined,
-          compressorId: !compressorIsExternal && compressor ? (compressor as Id<'inventoryUnits'>) : undefined,
-          ...(Object.keys(externalStakeholders).length > 0 ? { externalStakeholders } : {}),
+          resources,
           divers,
         },
       })

@@ -4,37 +4,80 @@ import { NICOLE, futureDateString } from './helpers/seed'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Wait for the wizard to finish initialising and return the draft bookingId. */
-async function waitForWizardReady(page: import('@playwright/test').Page): Promise<string> {
-  // The spinner says "Preparing booking…" while createDraftShell is in flight.
-  await page.waitForSelector('text=Preparing booking', { state: 'detached', timeout: 20_000 })
-  const bookingIdEl = page.locator('p.text-xs.font-mono').first()
-  await expect(bookingIdEl).not.toBeEmpty({ timeout: 15_000 })
-  return (await bookingIdEl.textContent()) ?? ''
+/** Open the booking overlay from the dashboard. */
+async function openBookingOverlay(page: import('@playwright/test').Page): Promise<void> {
+  // Click the "+ Booking" button on the dashboard
+  await page.getByRole('button', { name: /Booking/i }).click()
+  // Wait for the overlay wizard to render the customer step
+  await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 10_000 })
 }
 
-/** Fill the Details step: choose DSD and a 1-day date range. */
-async function fillDetails(page: import('@playwright/test').Page, startDate: string) {
-  // Select DSD activity type (button with aria-pressed)
-  await page.locator('button:has-text("PADI Discover Scuba Diving")').click()
-  // Set start and end date to same day (DSD = 1+ day minimum)
-  await page.getByLabel('Start Date').fill(startDate)
-  await page.getByLabel('End Date').fill(startDate)
+/** Fill Customer step: name, email contact, and select English language flag. */
+async function fillCustomerStep(
+  page: import('@playwright/test').Page,
+  name: string,
+  email: string,
+) {
+  await page.getByLabel('Full name *').fill(name)
+  // Email is the default contact type — fill the contact input
+  await page.locator('input[type="email"]').first().fill(email)
+  // Select English language flag
+  await page.getByRole('button', { name: 'English' }).click()
 }
 
-/** Add one diver with a given name (accordion starts open for index 0). */
-async function addDiver(page: import('@playwright/test').Page, firstName: string, lastName: string) {
-  await page.getByRole('button', { name: 'Add Diver' }).click()
-  // Accordion row 0 is open by default
-  await page.getByLabel('First Name').first().fill(firstName)
-  await page.getByLabel('Last Name').first().fill(lastName)
+/** Fill Itinerary step: select DSD course, set date, assign instructor. */
+async function fillItineraryStep(
+  page: import('@playwright/test').Page,
+  startDate: string,
+  options: { instructorName?: string; useExternal?: boolean; externalInstructorName?: string } = {},
+) {
+  // Select DSD course from the dropdown
+  await page.locator('select').first().selectOption('DSD')
+
+  // Fill start date (end date auto-fills for DSD = same day)
+  const startDateInput = page.locator('input[type="date"]').first()
+  await startDateInput.fill(startDate)
+
+  // Wait for days to auto-generate
+  await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
+
+  // Assign instructor
+  if (options.useExternal) {
+    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+    await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
+    await instructorSelect.selectOption('__external__')
+    if (options.externalInstructorName) {
+      await page.getByLabel('Instructor (external)').fill(options.externalInstructorName)
+    }
+  } else {
+    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+    await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
+
+    if (options.instructorName) {
+      const optionWithName = instructorSelect.locator(`option:has-text("${options.instructorName}")`)
+      const optionValue = await optionWithName.getAttribute('value')
+      if (optionValue) {
+        await instructorSelect.selectOption(optionValue)
+      }
+    } else {
+      // Select first available in-system instructor
+      const allOptions = instructorSelect.locator('option')
+      const count = await allOptions.count()
+      for (let i = 0; i < count; i++) {
+        const val = await allOptions.nth(i).getAttribute('value')
+        if (val && val !== '' && val !== '__external__') {
+          await instructorSelect.selectOption(val)
+          break
+        }
+      }
+    }
+  }
 }
 
 /** Advance the wizard to the next step. */
 async function clickNext(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: 'Next' }).click()
-  // Small pause for Convex saveDraftState round-trip
-  await page.waitForTimeout(500)
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.waitForTimeout(1_500)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -44,96 +87,83 @@ test.describe('booking-flow', () => {
     const startDate = futureDateString(30)
 
     await signInAs(page, NICOLE.email)
-    await page.goto('/booking/new')
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
 
-    const bookingId = await waitForWizardReady(page)
-    expect(bookingId).toBeTruthy()
+    // Open booking overlay from dashboard
+    await openBookingOverlay(page)
 
-    // Step 1: Details
-    await fillDetails(page, startDate)
+    // Step 1: Customers
+    await fillCustomerStep(page, 'Alice Test', 'alice@test.com')
     await clickNext(page)
 
-    // Step 2: Divers
-    await addDiver(page, 'Alice', 'Test')
+    // Step 2: Itinerary — DSD with first available instructor
+    await fillItineraryStep(page, startDate)
     await clickNext(page)
 
-    // Step 3: Resources — assign James Cooper as instructor
-    await page.locator('button:has-text("Select instructor")').click()
-    await page.getByText('James Cooper').first().click()
-    await clickNext(page)
-
-    // Step 4: Sessions — auto-generated from Details + Divers
-    // Just click Next (sessions should be present for DSD 1-day)
-    await clickNext(page)
-
-    // Step 5: Review — verify bookingId is still shown and submit
-    const reviewBookingId = await page.locator('p.text-xs.font-mono').first().textContent()
-    expect(reviewBookingId).toBe(bookingId)
+    // Step 3: Review — verify summary and submit
+    await expect(page.getByText('Alice Test')).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('DSD')).toBeVisible()
 
     await page.getByRole('button', { name: 'Submit Booking' }).click()
 
-    // After submission, wizard redirects → /dashboard → role-specific dashboard
-    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath), { timeout: 20_000 })
+    // Overlay closes after submission — dashboard should still be visible
+    await page.waitForTimeout(2_000)
+    await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10_000 })
   })
 
   test('booking appears in operator dashboard after creation', async ({ page }) => {
     const startDate = futureDateString(31)
 
     await signInAs(page, NICOLE.email)
-    await page.goto('/booking/new')
-    await waitForWizardReady(page)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
 
-    await fillDetails(page, startDate)
-    await clickNext(page)
-    await addDiver(page, 'Bob', 'Diver')
-    await clickNext(page)
-    // Resources: use external instructor (skip in-system)
-    await page.locator('button:has-text("Instructor")').locator('..').getByRole('button', { name: 'Not in system' }).click()
-    await page.getByPlaceholder('Enter instructor name').fill('Ext Instructor')
-    await clickNext(page)
+    await openBookingOverlay(page)
+
+    // Step 1: Customers
+    await fillCustomerStep(page, 'Bob Diver', 'bob@test.com')
     await clickNext(page)
 
+    // Step 2: Itinerary — DSD with external instructor
+    await fillItineraryStep(page, startDate, {
+      useExternal: true,
+      externalInstructorName: 'Ext Instructor',
+    })
+    await clickNext(page)
+
+    // Step 3: Review — submit
     await page.getByRole('button', { name: 'Submit Booking' }).click()
-    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath), { timeout: 20_000 })
+    await page.waitForTimeout(2_000)
 
-    // Dashboard shows booking list with the DSD booking we just created
+    // Dashboard should show DSD booking
     await expect(page.getByText('DSD').first()).toBeVisible({ timeout: 10_000 })
   })
 
   test('inventory conflict: same instructor double-booked on same date', async ({ page }) => {
-    const startDate = futureDateString(30)
+    const startDate = futureDateString(32)
 
-    // Sign in as Nicole and create FIRST booking with James Cooper
+    // Sign in as Nicole and create FIRST booking with Ryan Clarke
     await signInAs(page, NICOLE.email)
-    await page.goto('/booking/new')
-    await waitForWizardReady(page)
-    await fillDetails(page, startDate)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+
+    await openBookingOverlay(page)
+    await fillCustomerStep(page, 'Carol Diver', 'carol@test.com')
     await clickNext(page)
-    await addDiver(page, 'Carol', 'Diver')
-    await clickNext(page)
-    await page.locator('button:has-text("Select instructor")').click()
-    await page.getByText('James Cooper').first().click()
-    await clickNext(page)
+    await fillItineraryStep(page, startDate, { instructorName: 'Ryan Clarke' })
     await clickNext(page)
     await page.getByRole('button', { name: 'Submit Booking' }).click()
-    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath), { timeout: 20_000 })
+    await page.waitForTimeout(3_000)
 
     // Create SECOND booking with same instructor and same date — should conflict
-    await page.goto('/booking/new')
-    await waitForWizardReady(page)
-    await fillDetails(page, startDate)
+    await openBookingOverlay(page)
+    await fillCustomerStep(page, 'Dave Diver', 'dave@test.com')
     await clickNext(page)
-    await addDiver(page, 'Dave', 'Diver')
-    await clickNext(page)
-    await page.locator('button:has-text("Select instructor")').click()
-    await page.getByText('James Cooper').first().click()
-    await clickNext(page)
+    await fillItineraryStep(page, startDate, { instructorName: 'Ryan Clarke' })
     await clickNext(page)
     await page.getByRole('button', { name: 'Submit Booking' }).click()
 
-    // Expect an Availability conflict error (CONFLICT code from Convex)
+    // Expect an Availability conflict error
     await expect(
-      page.getByText(/conflict|unavailable|blocked/i).first()
+      page.getByText(/conflict|unavailable|blocked/i).first(),
     ).toBeVisible({ timeout: 10_000 })
   })
 })

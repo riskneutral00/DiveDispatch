@@ -2,6 +2,7 @@
 import { internalMutation, mutation } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { validateOrThrow } from './lib/validate'
+import { deleteResourcesForBooking, insertBookingResource } from './bookingResources'
 import { z } from 'zod'
 
 // ─── Inline session schema (convex/ cannot import from src/) ─────────────────
@@ -65,6 +66,12 @@ type SessionInput = {
   }>
 }
 
+type BookingResourceInput = {
+  resourceType: string
+  resourceSlug?: string
+  externalName?: string
+}
+
 export type BookingData = {
   activityType: CourseCode[]
   startDate: string
@@ -72,20 +79,9 @@ export type BookingData = {
   portalContact: boolean
   portalMedical: boolean
   portalWaiver: boolean
-  instructorId?: string
-  boatId?: string
-  equipmentManagerId?: string
-  poolId?: string
-  compressorId?: string
   agentId?: string
   agentIsReferral?: boolean
-  externalStakeholders?: {
-    instructorName?: string
-    boatName?: string
-    equipmentManagerName?: string
-    poolName?: string
-    compressorName?: string
-  }
+  resources?: BookingResourceInput[]
   divers: Array<{
     name: string
     abbrev: string
@@ -142,6 +138,12 @@ const sessionValidator = v.object({
   ),
 })
 
+const bookingResourceInputValidator = v.object({
+  resourceType: v.string(),
+  resourceSlug: v.optional(v.string()),
+  externalName: v.optional(v.string()),
+})
+
 const bookingDataValidator = v.object({
   activityType: v.array(courseCodeValidator),
   startDate: v.string(),
@@ -149,22 +151,9 @@ const bookingDataValidator = v.object({
   portalContact: v.boolean(),
   portalMedical: v.boolean(),
   portalWaiver: v.boolean(),
-  instructorId: v.optional(v.string()),
-  boatId: v.optional(v.string()),
-  equipmentManagerId: v.optional(v.string()),
-  poolId: v.optional(v.string()),
-  compressorId: v.optional(v.string()),
   agentId: v.optional(v.string()),
   agentIsReferral: v.optional(v.boolean()),
-  externalStakeholders: v.optional(
-    v.object({
-      instructorName: v.optional(v.string()),
-      boatName: v.optional(v.string()),
-      equipmentManagerName: v.optional(v.string()),
-      poolName: v.optional(v.string()),
-      compressorName: v.optional(v.string()),
-    }),
-  ),
+  resources: v.optional(v.array(bookingResourceInputValidator)),
   divers: v.array(
     v.object({
       name: v.string(),
@@ -334,24 +323,13 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   validateOrThrow(serverSessionsSchema, args.sessions)
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
-  // An external resource has a freeform name but no in-system ID on the booking.
-  // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
-  // Prefer bookingData (new wizard state) over the stored booking fields for this check,
-  // since createDraftShell creates a bare-bones booking with no resource IDs set.
-  const resolvedExt = args.bookingData?.externalStakeholders ??
-    (booking.externalStakeholders as Record<string, string | undefined> | undefined)
-  const resolvedInstructorId = args.bookingData?.instructorId ?? booking.instructorId
-  const resolvedBoatId = args.bookingData?.boatId ?? booking.boatId
-  const resolvedEquipmentManagerId = args.bookingData?.equipmentManagerId ?? booking.equipmentManagerId
-  const resolvedPoolId = args.bookingData?.poolId ?? booking.poolId
-  const resolvedCompressorId = args.bookingData?.compressorId ?? booking.compressorId
-
+  const resources = args.bookingData?.resources ?? []
   const externalResourceTypes = new Set<string>()
-  if (!resolvedInstructorId && resolvedExt?.instructorName) externalResourceTypes.add('Instructor')
-  if (!resolvedBoatId && resolvedExt?.boatName) externalResourceTypes.add('Boat')
-  if (!resolvedEquipmentManagerId && resolvedExt?.equipmentManagerName) externalResourceTypes.add('Equipment')
-  if (!resolvedPoolId && resolvedExt?.poolName) externalResourceTypes.add('Pool')
-  if (!resolvedCompressorId && resolvedExt?.compressorName) externalResourceTypes.add('Compressor')
+  for (const r of resources) {
+    if (!r.resourceSlug && r.externalName) {
+      externalResourceTypes.add(r.resourceType)
+    }
+  }
 
   // 4. Blocked dates — reject before touching inventory
   const blockedDateDocs = await ctx.db
@@ -469,7 +447,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       diveSlots: session.diveSlots,
     })
 
-    // Auto-confirm if stakeholder has opted into Auto acceptance mode
+    // Auto-confirm: stakeholder preference, out-of-system owner, or self-booking
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q: AnyCtx) =>
@@ -477,7 +455,13 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       )
       .unique()
 
-    const isAutoAccept = prefs?.acceptanceMode === 'Auto'
+    const ownerUser = await ctx.db
+      .query('users')
+      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', inventoryUnit.ownerId))
+      .unique()
+
+    const isSelfBooking = inventoryUnit.ownerId === booking.ownerId
+    const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? 'Confirmed' : 'PendingAcceptance'
 
     await ctx.db.insert('reservations', {
@@ -492,8 +476,6 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   }
 
   // Mark booking submitted and set TTL window.
-  // When bookingData is provided, persist the operator-supplied fields so the booking
-  // record reflects the actual wizard values (not the bare createDraftShell defaults).
   // draftState is cleared on submit — it's only needed for resume-in-progress.
   await ctx.db.patch(args.bookingId, {
     submittedAt: now,
@@ -507,17 +489,20 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
       portalContact: args.bookingData.portalContact,
       portalMedical: args.bookingData.portalMedical,
       portalWaiver: args.bookingData.portalWaiver,
-      instructorId: args.bookingData.instructorId,
-      boatId: args.bookingData.boatId,
-      equipmentManagerId: args.bookingData.equipmentManagerId,
-      poolId: args.bookingData.poolId,
-      compressorId: args.bookingData.compressorId,
       agentId: args.bookingData.agentId,
       agentIsReferral: args.bookingData.agentIsReferral,
-      externalStakeholders: args.bookingData.externalStakeholders,
       divers: args.bookingData.divers,
     }),
   })
+
+  // ── Write bookingResources junction table ───────────────────────────────
+  const isResubmit = existingReservations.length > 0
+  if (isResubmit) {
+    await deleteResourcesForBooking(ctx, args.bookingId)
+  }
+  for (const r of resources) {
+    await insertBookingResource(ctx, args.bookingId, r.resourceType, r.resourceSlug, r.externalName)
+  }
 
   // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
   await tryAutoAdvance(ctx, args.bookingId)

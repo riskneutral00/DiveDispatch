@@ -1,4 +1,20 @@
 import { defineConfig, devices } from '@playwright/test'
+import { readFileSync, existsSync } from 'fs'
+import { resolve } from 'path'
+
+// Load .env.local so E2E tests have access to NEXT_PUBLIC_CONVEX_URL etc.
+const envPath = resolve(__dirname, '.env.local')
+if (existsSync(envPath)) {
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eq = trimmed.indexOf('=')
+    if (eq < 0) continue
+    const key = trimmed.slice(0, eq)
+    const val = trimmed.slice(eq + 1)
+    if (!process.env[key]) process.env[key] = val
+  }
+}
 
 export default defineConfig({
   testDir: './e2e',

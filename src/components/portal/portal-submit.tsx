@@ -7,6 +7,7 @@ import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
+import { Spinner } from '@/components/common/spinner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -70,11 +71,8 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
 
   if (status === undefined) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div
-          className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-primary)' }}
-        />
+      <div className="flex items-center justify-center py-8" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }

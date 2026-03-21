@@ -43,6 +43,18 @@ describe('submitToDraft', () => {
         isSeeded: false,
         preferredLocale: 'en',
       })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|instructor-1',
+        slug: 'instructor-1',
+        email: 'instructor-1@test.com',
+        name: 'Instructor One',
+        firstName: 'Instructor',
+        lastName: 'One',
+        businessName: 'Instructor Biz',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
         ownerType: 'DiveCenter',
@@ -51,8 +63,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -81,7 +93,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -132,8 +144,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -154,7 +166,7 @@ describe('submitToDraft', () => {
       })
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -172,7 +184,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2025-06-15',
+              date: '2030-06-15',
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -209,8 +221,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -232,7 +244,7 @@ describe('submitToDraft', () => {
       // 3 available, requesting 4
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 10,
@@ -250,7 +262,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2025-06-15',
+              date: '2030-06-15',
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -287,8 +299,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -309,7 +321,7 @@ describe('submitToDraft', () => {
       })
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 5,
@@ -326,7 +338,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -367,8 +379,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -406,7 +418,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: exclusiveId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -414,7 +426,7 @@ describe('submitToDraft', () => {
           },
           {
             inventoryUnitId: pooledId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -449,8 +461,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -479,7 +491,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -510,7 +522,7 @@ describe('submitToDraft', () => {
       await ctx.db.insert('stakeholderBlockedDates', {
         ownerSlug: 'dc-test',
         roleType: 'DiveCenter',
-        dates: ['2025-06-15'],
+        dates: ['2030-06-15'],
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -520,8 +532,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -551,7 +563,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2025-06-15',
+              date: '2030-06-15',
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -580,6 +592,18 @@ describe('submitToDraft', () => {
         isSeeded: false,
         preferredLocale: 'en',
       })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|instructor-1',
+        slug: 'instructor-1',
+        email: 'instructor-1@test.com',
+        name: 'Instructor One',
+        firstName: 'Instructor',
+        lastName: 'One',
+        businessName: 'Instructor Biz',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
         ownerType: 'DiveCenter',
@@ -588,8 +612,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -611,7 +635,7 @@ describe('submitToDraft', () => {
       return { bookingId, unitId }
     })
 
-    // First submission — hold on 2025-06-15
+    // First submission — hold on 2030-06-15
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
       api.bookings.create.submitToDraft,
       {
@@ -619,7 +643,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -634,7 +658,7 @@ describe('submitToDraft', () => {
       expect(snap[0].availableUnits).toBe(0)
     })
 
-    // Second submission (edit) — hold on 2025-06-16 instead
+    // Second submission (edit) — hold on 2030-06-16 instead
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
       api.bookings.create.submitToDraft,
       {
@@ -642,7 +666,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-16',
+            date: '2030-06-16',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -661,10 +685,10 @@ describe('submitToDraft', () => {
       expect(vacated[0].vacatedBy).toBe('operator_edit')
       expect(active).toHaveLength(1)
 
-      // Original 2025-06-15 snapshot should be restored to availableUnits=1
+      // Original 2030-06-15 snapshot should be restored to availableUnits=1
       const snapshots = await ctx.db.query('availabilitySnapshots').collect()
       const originalSnap = snapshots.find(
-        (s) => s.date === '2025-06-15' && s.inventoryUnitId === unitId,
+        (s) => s.date === '2030-06-15' && s.inventoryUnitId === unitId,
       )
       expect(originalSnap?.availableUnits).toBe(1)
     })
@@ -694,8 +718,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -735,7 +759,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -776,8 +800,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -817,7 +841,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -857,8 +881,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -889,7 +913,7 @@ describe('submitToDraft', () => {
       // Exclusive unit already fully held
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: busyUnitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -907,7 +931,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: goodUnitId,
-              date: '2025-06-15',
+              date: '2030-06-15',
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -915,7 +939,7 @@ describe('submitToDraft', () => {
             },
             {
               inventoryUnitId: busyUnitId,
-              date: '2025-06-15',
+              date: '2030-06-15',
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -961,8 +985,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -971,14 +995,26 @@ describe('submitToDraft', () => {
         medicalHardBlock: false,
         bookingFormComplete: false,
         customerFormComplete: true,
-        externalStakeholders: { instructorName: 'Kaptan Ahmet' },
       })
       return { bookingId }
     })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
       api.bookings.create.submitToDraft,
-      { bookingId, sessions: [] },
+      {
+        bookingId,
+        sessions: [],
+        bookingData: {
+          activityType: ['OW'],
+          startDate: '2030-06-15',
+          endDate: '2030-06-17',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          divers: [],
+          resources: [{ resourceType: 'Instructor', externalName: 'Kaptan Ahmet' }],
+        },
+      },
     )
 
     await t.run(async (ctx) => {
@@ -1033,8 +1069,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: '2030-06-15',
+        endDate: '2030-06-17',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1043,8 +1079,6 @@ describe('submitToDraft', () => {
         medicalHardBlock: false,
         bookingFormComplete: false,
         customerFormComplete: false,
-        boatId: 'boat-1',
-        externalStakeholders: { instructorName: 'Kaptan Ahmet' },
       })
       return { bookingId, boatUnitId, instructorUnitId }
     })
@@ -1056,7 +1090,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: boatUnitId,
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -1064,13 +1098,26 @@ describe('submitToDraft', () => {
           },
           {
             inventoryUnitId: instructorUnitId, // should be skipped (external)
-            date: '2025-06-15',
+            date: '2030-06-15',
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
             unitsRequested: 1,
           },
         ],
+        bookingData: {
+          activityType: ['OW'],
+          startDate: '2030-06-15',
+          endDate: '2030-06-17',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          divers: [],
+          resources: [
+            { resourceType: 'Boat', resourceSlug: 'boat-1' },
+            { resourceType: 'Instructor', externalName: 'Kaptan Ahmet' },
+          ],
+        },
       },
     )
 
@@ -1101,8 +1148,8 @@ describe('releaseBookingReservations', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: '2030-06-15',
+        endDate: '2030-06-15',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1123,7 +1170,7 @@ describe('releaseBookingReservations', () => {
       })
       const snapshotId = await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -1133,7 +1180,7 @@ describe('releaseBookingReservations', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1177,8 +1224,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: '2030-06-15',
+        endDate: '2030-06-15',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1200,7 +1247,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1237,8 +1284,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: '2030-06-15',
+        endDate: '2030-06-15',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1260,7 +1307,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1297,8 +1344,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: '2030-06-15',
+        endDate: '2030-06-15',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1334,8 +1381,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: '2030-06-15',
+        endDate: '2030-06-15',
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1357,7 +1404,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: '2030-06-15',
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1383,299 +1430,6 @@ describe('tryAutoAdvance', () => {
   })
 })
 
-// ─── Draft Limit Tests ────────────────────────────────────────────────────────
-
-function makeDcUser(slug: string) {
-  return {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: slug,
-    firstName: 'DC',
-    lastName: 'Test',
-    businessName: `${slug} Business`,
-    role: 'DiveCenter' as const,
-    isSeeded: false,
-    preferredLocale: 'en' as const,
-  }
-}
-
-async function insertDraftBookings(ctx: AnyCtx, ownerId: string, count: number) {
-  for (let i = 0; i < count; i++) {
-    await ctx.db.insert('bookings', {
-      ownerId,
-      ownerType: 'DiveCenter',
-      status: 'Draft',
-      createdAt: Date.now(),
-      holdTTL: HOLD_TTL,
-      paid: false,
-      activityType: [],
-      startDate: '2025-06-15',
-      endDate: '2025-06-17',
-      divers: [],
-      operatorName: `${ownerId} Business`,
-      portalContact: true,
-      portalMedical: true,
-      portalWaiver: true,
-      medicalHardBlock: false,
-      bookingFormComplete: false,
-      customerFormComplete: false,
-    })
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
-
-describe('createDraftShell — draft limit', () => {
-  it('1 — succeeds with 0 existing drafts', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-1'))
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-1' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('2 — succeeds with 4 existing drafts (5th allowed)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-2'))
-      await insertDraftBookings(ctx, 'dc-limit-2', 4)
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-2' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('3 — fails with 5 existing drafts', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-3'))
-      await insertDraftBookings(ctx, 'dc-limit-3', 5)
-    })
-    await expectConvexError(
-      t
-        .withIdentity({ tokenIdentifier: 'clerk|dc-limit-3' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
-      'DRAFT_LIMIT',
-    )
-  })
-
-  it('4 — Cancelled bookings do not count toward limit', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-4'))
-      await insertDraftBookings(ctx, 'dc-limit-4', 3)
-      for (let i = 0; i < 5; i++) {
-        await ctx.db.insert('bookings', {
-          ownerId: 'dc-limit-4',
-          ownerType: 'DiveCenter',
-          status: 'Cancelled',
-          createdAt: Date.now(),
-          holdTTL: HOLD_TTL,
-          paid: false,
-          activityType: [],
-          startDate: '2025-06-15',
-          endDate: '2025-06-17',
-          divers: [],
-          operatorName: 'dc-limit-4 Business',
-          portalContact: true,
-          portalMedical: true,
-          portalWaiver: true,
-          medicalHardBlock: false,
-          bookingFormComplete: false,
-          customerFormComplete: false,
-        })
-      }
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-4' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('5 — Upcoming bookings do not count toward limit', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-5'))
-      await insertDraftBookings(ctx, 'dc-limit-5', 3)
-      for (let i = 0; i < 3; i++) {
-        await ctx.db.insert('bookings', {
-          ownerId: 'dc-limit-5',
-          ownerType: 'DiveCenter',
-          status: 'Upcoming',
-          createdAt: Date.now(),
-          holdTTL: HOLD_TTL,
-          paid: false,
-          activityType: [],
-          startDate: '2025-06-15',
-          endDate: '2025-06-17',
-          divers: [],
-          operatorName: 'dc-limit-5 Business',
-          portalContact: true,
-          portalMedical: true,
-          portalWaiver: true,
-          medicalHardBlock: false,
-          bookingFormComplete: false,
-          customerFormComplete: false,
-        })
-      }
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-5' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('6 — Completed bookings do not count toward limit', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-6'))
-      await insertDraftBookings(ctx, 'dc-limit-6', 4)
-      for (let i = 0; i < 10; i++) {
-        await ctx.db.insert('bookings', {
-          ownerId: 'dc-limit-6',
-          ownerType: 'DiveCenter',
-          status: 'Completed',
-          createdAt: Date.now(),
-          holdTTL: HOLD_TTL,
-          paid: false,
-          activityType: [],
-          startDate: '2025-06-15',
-          endDate: '2025-06-17',
-          divers: [],
-          operatorName: 'dc-limit-6 Business',
-          portalContact: true,
-          portalMedical: true,
-          portalWaiver: true,
-          medicalHardBlock: false,
-          bookingFormComplete: false,
-          customerFormComplete: false,
-        })
-      }
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-6' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('7 — createReferralDraftShell enforced for DC (target owner)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|agent-limit-7',
-        slug: 'agent-limit-7',
-        email: 'agent7@test.com',
-        name: 'agent-limit-7',
-        firstName: 'Agent',
-        lastName: 'Test',
-        businessName: 'Agent7 Business',
-        role: 'Agent',
-        isSeeded: false,
-        preferredLocale: 'en',
-      })
-      await ctx.db.insert('users', makeDcUser('dc-limit-7'))
-      await insertDraftBookings(ctx, 'dc-limit-7', 5)
-    })
-    await expectConvexError(
-      t
-        .withIdentity({ tokenIdentifier: 'clerk|agent-limit-7' })
-        .mutation(api.bookingDraftMutations.createReferralDraftShell, {
-          referralDcSlug: 'dc-limit-7',
-        }),
-      'DRAFT_LIMIT',
-    )
-  })
-
-  it('8 — limit is per-operator (DC-A blocked does not block DC-B)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', makeDcUser('dc-limit-8a'))
-      await ctx.db.insert('users', makeDcUser('dc-limit-8b'))
-      await insertDraftBookings(ctx, 'dc-limit-8a', 5)
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|dc-limit-8b' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-
-  it('9 — Agent has own draft limit independent of DC limit', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|agent-limit-9',
-        slug: 'agent-limit-9',
-        email: 'agent9@test.com',
-        name: 'agent-limit-9',
-        firstName: 'Agent',
-        lastName: 'Nine',
-        businessName: 'Agent9 Business',
-        role: 'Agent',
-        isSeeded: false,
-        preferredLocale: 'en',
-      })
-      for (let i = 0; i < 5; i++) {
-        await ctx.db.insert('bookings', {
-          ownerId: 'agent-limit-9',
-          ownerType: 'Agent',
-          status: 'Draft',
-          createdAt: Date.now(),
-          holdTTL: HOLD_TTL,
-          paid: false,
-          activityType: [],
-          startDate: '2025-06-15',
-          endDate: '2025-06-17',
-          divers: [],
-          operatorName: 'Agent9 Business',
-          portalContact: true,
-          portalMedical: true,
-          portalWaiver: true,
-          medicalHardBlock: false,
-          bookingFormComplete: false,
-          customerFormComplete: false,
-        })
-      }
-    })
-    await expectConvexError(
-      t
-        .withIdentity({ tokenIdentifier: 'clerk|agent-limit-9' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
-      'DRAFT_LIMIT',
-    )
-  })
-
-  it('10 — multi-role user: 5 DC drafts + 0 Agent drafts → Agent draft succeeds', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      // DC user at limit
-      await ctx.db.insert('users', makeDcUser('dc-limit-10'))
-      await insertDraftBookings(ctx, 'dc-limit-10', 5)
-      // Agent user (same person, different slug/role)
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|agent-limit-10',
-        slug: 'agent-limit-10',
-        email: 'agent10@test.com',
-        name: 'agent-limit-10',
-        firstName: 'Agent',
-        lastName: 'Ten',
-        businessName: 'Agent10 Business',
-        role: 'Agent',
-        isSeeded: false,
-        preferredLocale: 'en',
-      })
-    })
-    const bookingId = await t
-      .withIdentity({ tokenIdentifier: 'clerk|agent-limit-10' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
-    expect(typeof bookingId).toBe('string')
-  })
-})
 
 // ─── Overlap Granularity Tests ────────────────────────────────────────────────
 

@@ -236,3 +236,10 @@ export function getCourseByCode(code: CourseCode): CourseCatalogEntry | undefine
 export function getCoursesForAgency(agency: Agency): CourseCatalogEntry[] {
   return COURSE_CATALOG.filter((entry) => entry.agency === agency);
 }
+
+// ── Course Combos ────────────────────────────────────────────────
+// Pre-defined course combinations for common booking patterns.
+
+export const COMBO_COURSES = {
+  'O+A': { codes: ['OW', 'AOW'] as CourseCode[], label: 'O+A (OW + AOW)', minDays: 4 },
+} as const;

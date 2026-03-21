@@ -5,7 +5,7 @@ import { api } from '../../../convex/_generated/api'
 
 // Returns the authenticated user from Convex, or null if not yet loaded / unauthenticated.
 // Reactive — re-renders when the user document changes.
-// When user is null (after query resolves): caller should redirect to /account for onboarding.
+// When user is null (after query resolves): caller should redirect to /sign-up for onboarding.
 export function useCurrentUser() {
   const user = useQuery(api.users.me)
   const { isLoading: authLoading } = useConvexAuth()

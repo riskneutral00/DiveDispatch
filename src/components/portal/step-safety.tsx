@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
+import { Spinner } from '@/components/common/spinner'
 
 // ── Blood type options ────────────────────────────────────────────────────────
 
@@ -57,14 +58,8 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
   if (saved === undefined) {
     return (
-      <div className="flex justify-center py-8">
-        <div
-          className="w-6 h-6 border-4 rounded-full animate-spin"
-          style={{
-            borderColor: 'var(--color-glass-border)',
-            borderTopColor: 'var(--color-primary)',
-          }}
-        />
+      <div className="flex justify-center py-8" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }

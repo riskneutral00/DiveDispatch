@@ -8,6 +8,7 @@ export default defineConfig({
     },
   },
   test: {
+    setupFiles: ['./vitest.setup.ts'],
     exclude: [
       '**/node_modules/**',
       '**/.overstory/worktrees/**',

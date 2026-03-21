@@ -86,19 +86,7 @@ export interface SeedBooking {
     activityType: CourseCode[]
   }[]
   agentIsReferral?: boolean
-  instructorId?: string
-  boatId?: string
-  equipmentManagerId?: string
-  poolId?: string
-  compressorId?: string
   agentId?: string
-  externalStakeholders?: {
-    instructorName?: string
-    boatName?: string
-    equipmentManagerName?: string
-    poolName?: string
-    compressorName?: string
-  }
   operatorName: string
   portalContact: boolean
   portalMedical: boolean
@@ -174,16 +162,30 @@ export interface SeedEquipmentBag {
 
 export interface SeedNotification {
   userId: string
-  type: 'hold_placed' | 'hold_declined' | 'booking_cancelled' | 'booking_updated' | 'booking_referred' | 'medical_hard_block' | 'physician_clearance_submitted' | 'no_backup_available' | 'min_pax_not_met'
+  type: 'hold_declined' | 'booking_cancelled' | 'booking_updated' | 'booking_referred' | 'medical_hard_block' | 'physician_clearance_submitted' | 'no_backup_available' | 'min_pax_not_met'
   bookingIndex: number
   message: string
   readAt?: number
   createdAt: number
 }
 
+export interface SeedBlockedDate {
+  ownerSlug: string
+  roleType: string
+  dates: string[]
+}
+
+export interface SeedBookingResource {
+  bookingIndex: number
+  resourceType: string
+  resourceSlug?: string
+  externalName?: string
+}
+
 export interface SeedData {
   customers: SeedCustomer[]
   bookings: SeedBooking[]
+  bookingResources: SeedBookingResource[]
   customerProfiles: SeedCustomerProfile[]
   bookingLinks: SeedBookingLink[]
   bookingSessions: SeedBookingSession[]
@@ -191,6 +193,7 @@ export interface SeedData {
   availabilitySnapshots: SeedAvailabilitySnapshot[]
   equipmentBags: SeedEquipmentBag[]
   notifications: SeedNotification[]
+  blockedDates: SeedBlockedDate[]
 }
 
 // ── Booking Config ──────────────────────────────────────────────────
@@ -213,9 +216,9 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     ownerSlug: 'n7rq5j',
     ownerName: 'Hug Ocean',
     ownerType: 'DiveCenter',
-    count: 20,
-    activityMix: { DSD: 5, OW: 5, AOW: 3, 'OW+AOW': 3, FD: 4 },
-    statusMix: { Upcoming: 11, Draft: 4, Completed: 4, Cancelled: 1 },
+    count: 44,
+    activityMix: { DSD: 8, OW: 8, AOW: 5, 'OW+AOW': 2, FD: 11, TRY_DIVE: 3, RESCUE: 2, SPECIALTY: 2, REFRESH: 2 },
+    statusMix: { Upcoming: 28, Draft: 2, Completed: 12, Cancelled: 1 },
     ownBoatSlug: 'n7rq5j',
     ownPoolSlug: 'n7rq5j',
     ownEquipmentSlug: 'n7rq5j',
@@ -236,7 +239,7 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     ownerType: 'DiveCenter',
     count: 20,
     activityMix: { DSD: 5, OW: 5, AOW: 3, 'OW+AOW': 3, FD: 4 },
-    statusMix: { Upcoming: 11, Draft: 4, Completed: 4, Cancelled: 1 },
+    statusMix: { Upcoming: 13, Draft: 2, Completed: 4, Cancelled: 1 },
     ownBoatSlug: 'p5ky3w',
     ownEquipmentSlug: 'p5ky3w',
   },
@@ -246,7 +249,7 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     ownerType: 'DiveCenter',
     count: 20,
     activityMix: { DSD: 5, OW: 5, AOW: 3, 'OW+AOW': 3, FD: 4 },
-    statusMix: { Upcoming: 11, Draft: 4, Completed: 4, Cancelled: 1 },
+    statusMix: { Upcoming: 13, Draft: 2, Completed: 4, Cancelled: 1 },
     ownEquipmentSlug: 'q9bz7r',
   },
   {
@@ -272,7 +275,7 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     ownerType: 'DiveCenter',
     count: 20,
     activityMix: { DSD: 5, OW: 5, AOW: 3, 'OW+AOW': 3, FD: 4 },
-    statusMix: { Upcoming: 11, Draft: 4, Completed: 4, Cancelled: 1 },
+    statusMix: { Upcoming: 13, Draft: 2, Completed: 4, Cancelled: 1 },
     ownBoatSlug: 'h3cp6n',
     ownEquipmentSlug: 'h3cp6n',
   },
@@ -303,6 +306,77 @@ export const BOOKING_CONFIGS: BookingConfig[] = [
     statusMix: { Upcoming: 9, Draft: 3, Completed: 3, Cancelled: 0 },
     referralDCs: ['n7rq5j', 'p5ky3w', 'q9bz7r', 'h3cp6n', 'z8mv4c', 'v6js2t', 'm4fx8d', 't7gw1k'],
   },
+]
+
+// ── Hug Ocean color stress-test booking definitions ─────────────────
+// 40 hardcoded bookings covering every activity type, display status,
+// and a packed day (Mar 25) with 11 bookings for scroll testing.
+
+const HUG_OCEAN_BOOKINGS: {
+  activityType: CourseCode[]
+  startDate: string
+  endDate: string
+  status: BookingStatus
+  diverCount: number
+}[] = [
+  // Week 1: Mar 8–14 — Completed (endDate < 2026-03-19)
+  /* 0  */ { activityType: ['FD'], startDate: '2026-03-08', endDate: '2026-03-08', status: 'Completed', diverCount: 2 },
+  /* 1  */ { activityType: ['DSD'], startDate: '2026-03-09', endDate: '2026-03-09', status: 'Completed', diverCount: 3 },
+  /* 2  */ { activityType: ['OW'], startDate: '2026-03-09', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
+  /* 3  */ { activityType: ['AOW'], startDate: '2026-03-10', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
+  /* 4  */ { activityType: ['FD'], startDate: '2026-03-11', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
+  /* 5  */ { activityType: ['RESCUE'], startDate: '2026-03-10', endDate: '2026-03-12', status: 'Completed', diverCount: 2 },
+  /* 6  */ { activityType: ['TRY_DIVE'], startDate: '2026-03-12', endDate: '2026-03-12', status: 'Completed', diverCount: 4 },
+  /* 7  */ { activityType: ['SPECIALTY'], startDate: '2026-03-13', endDate: '2026-03-14', status: 'Completed', diverCount: 2 },
+
+  // Week 2: Mar 15–21 — Active + transition
+  /* 8  */ { activityType: ['FD'], startDate: '2026-03-14', endDate: '2026-03-14', status: 'Completed', diverCount: 2 },
+  /* 9  */ { activityType: ['OW'], startDate: '2026-03-16', endDate: '2026-03-18', status: 'Upcoming', diverCount: 2 },
+  /* 10 */ { activityType: ['OW', 'AOW'], startDate: '2026-03-17', endDate: '2026-03-21', status: 'Upcoming', diverCount: 3 },
+  /* 11 */ { activityType: ['DSD'], startDate: '2026-03-18', endDate: '2026-03-18', status: 'Upcoming', diverCount: 2 },
+  /* 12 */ { activityType: ['FD'], startDate: '2026-03-19', endDate: '2026-03-19', status: 'Upcoming', diverCount: 2 },
+  /* 13 */ { activityType: ['AOW'], startDate: '2026-03-19', endDate: '2026-03-20', status: 'Upcoming', diverCount: 2 },
+  /* 14 */ { activityType: ['DSD'], startDate: '2026-03-19', endDate: '2026-03-19', status: 'Upcoming', diverCount: 2 },
+  /* 15 */ { activityType: ['OW'], startDate: '2026-03-20', endDate: '2026-03-22', status: 'Upcoming', diverCount: 3 },
+  /* 16 */ { activityType: ['TRY_DIVE'], startDate: '2026-03-20', endDate: '2026-03-20', status: 'Upcoming', diverCount: 2 },
+  /* 17 */ { activityType: ['REFRESH'], startDate: '2026-03-21', endDate: '2026-03-21', status: 'Upcoming', diverCount: 2 },
+
+  // Week 3: Mar 22–28 — Upcoming + PACKED Mar 25
+  /* 18 */ { activityType: ['AOW'], startDate: '2026-03-22', endDate: '2026-03-23', status: 'Upcoming', diverCount: 2 },
+  /* 19 */ { activityType: ['FD'], startDate: '2026-03-23', endDate: '2026-03-23', status: 'Upcoming', diverCount: 2 },
+  /* 20 */ { activityType: ['DSD'], startDate: '2026-03-24', endDate: '2026-03-24', status: 'Upcoming', diverCount: 3 },
+  /* 21 */ { activityType: ['OW'], startDate: '2026-03-24', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
+  /* 22 */ { activityType: ['OW'], startDate: '2026-03-25', endDate: '2026-03-27', status: 'Upcoming', diverCount: 3 },
+  /* 23 */ { activityType: ['AOW'], startDate: '2026-03-25', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
+  /* 24 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
+  /* 25 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
+  /* 26 */ { activityType: ['DSD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 4 },
+  /* 27 */ { activityType: ['DSD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 2 },
+  /* 28 */ { activityType: ['TRY_DIVE'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
+  /* 29 */ { activityType: ['RESCUE'], startDate: '2026-03-25', endDate: '2026-03-27', status: 'Upcoming', diverCount: 2 },
+  /* 30 */ { activityType: ['SPECIALTY'], startDate: '2026-03-25', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
+  /* 31 */ { activityType: ['OW', 'AOW'], startDate: '2026-03-25', endDate: '2026-03-28', status: 'Upcoming', diverCount: 2 },
+  /* 32 */ { activityType: ['OW'], startDate: '2026-03-26', endDate: '2026-03-28', status: 'Upcoming', diverCount: 2 },
+  /* 33 */ { activityType: ['FD'], startDate: '2026-03-27', endDate: '2026-03-27', status: 'Upcoming', diverCount: 2 },
+
+  // Week 4: Mar 29 – Apr 4
+  /* 34 */ { activityType: ['AOW'], startDate: '2026-03-29', endDate: '2026-03-30', status: 'Draft', diverCount: 2 },
+  /* 35 */ { activityType: ['DSD'], startDate: '2026-03-30', endDate: '2026-03-30', status: 'Upcoming', diverCount: 3 },
+  /* 36 */ { activityType: ['FD'], startDate: '2026-03-31', endDate: '2026-03-31', status: 'Upcoming', diverCount: 2 },
+  /* 37 */ { activityType: ['OW'], startDate: '2026-04-01', endDate: '2026-04-03', status: 'Upcoming', diverCount: 2 },
+  /* 38 */ { activityType: ['DSD'], startDate: '2026-04-02', endDate: '2026-04-02', status: 'Cancelled', diverCount: 2 },
+  /* 39 */ { activityType: ['REFRESH'], startDate: '2026-04-04', endDate: '2026-04-04', status: 'Upcoming', diverCount: 2 },
+
+  // Ghost instructor bookings (Kai Sørensen — not in the system)
+  /* 40 */ { activityType: ['FD'], startDate: '2026-04-06', endDate: '2026-04-06', status: 'Upcoming', diverCount: 2 },
+  /* 41 */ { activityType: ['DSD'], startDate: '2026-04-10', endDate: '2026-04-10', status: 'Draft', diverCount: 3 },
+  /* 42 */ { activityType: ['OW'], startDate: '2026-04-14', endDate: '2026-04-17', status: 'Draft', diverCount: 2 },
+  /* 43 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 2 },
+]
+
+// Blocked dates for Hug Ocean Boat
+const HUG_OCEAN_BLOCKED_DATES: SeedBlockedDate[] = [
+  { ownerSlug: 'n7rq5j', roleType: 'Boat', dates: ['2026-03-15', '2026-03-22', '2026-03-29'] },
 ]
 
 // ── Name pools by region ────────────────────────────────────────────
@@ -436,25 +510,15 @@ const TOTAL_WEIGHT = REGION_POOLS.reduce((sum, r) => sum + r.weight, 0)
 // ── Instructor slugs (from seedInstructorData.ts roster order) ──────
 
 const INSTRUCTOR_SLUGS: { slug: string; languages: string[] }[] = [
-  // English-primary 0-9
-  { slug: 'james-cooper', languages: ['English'] },
-  { slug: 'sarah-mitchell', languages: ['English'] },
-  { slug: 'tom-harrison', languages: ['English', 'Thai'] },
-  { slug: 'emily-watson', languages: ['English'] },
+  // English-primary 0
   { slug: 'ryan-clarke', languages: ['English', 'French'] },
-  { slug: 'daniel-moore', languages: ['English'] },
-  { slug: 'laura-bennett', languages: ['English', 'Thai'] },
-  { slug: 'chris-taylor', languages: ['English'] },
-  { slug: 'jessica-adams', languages: ['English', 'German'] },
-  { slug: 'mark-sullivan', languages: ['English'] },
-  // Thai-primary 10-15
-  { slug: 'somchai-phetpradap', languages: ['Thai', 'English'] },
+  // Thai-primary 1-5
   { slug: 'nattaya-srisuk', languages: ['Thai'] },
   { slug: 'kittipong-jaidee', languages: ['Thai', 'English'] },
   { slug: 'arisa-tanaka', languages: ['Thai', 'Japanese'] },
   { slug: 'prasit-wongsawat', languages: ['Thai'] },
   { slug: 'supachai-rattana', languages: ['Thai', 'English'] },
-  // Mandarin-primary 16-23
+  // Mandarin-primary 6-13
   { slug: 'wei-chen', languages: ['Mandarin'] },
   { slug: 'li-ming', languages: ['Mandarin', 'English'] },
   { slug: 'zhang-yong', languages: ['Mandarin'] },
@@ -463,35 +527,35 @@ const INSTRUCTOR_SLUGS: { slug: string; languages: string[] }[] = [
   { slug: 'chen-xiaoli', languages: ['Mandarin', 'Thai'] },
   { slug: 'liu-hao', languages: ['Mandarin'] },
   { slug: 'xu-wei', languages: ['Mandarin', 'English'] },
-  // Chinese-primary 24-27
+  // Chinese-primary 14-17
   { slug: 'zhou-peng', languages: ['Chinese'] },
   { slug: 'sun-jing', languages: ['Chinese', 'English'] },
   { slug: 'ma-lin', languages: ['Chinese'] },
   { slug: 'gao-tian', languages: ['Chinese', 'Thai'] },
-  // French-primary 28-31
+  // French-primary 18-21
   { slug: 'pierre-dubois', languages: ['French', 'English'] },
   { slug: 'marie-lefevre', languages: ['French'] },
   { slug: 'antoine-bernard', languages: ['French', 'Thai'] },
   { slug: 'sophie-martin', languages: ['French', 'English'] },
-  // German-primary 32-34
+  // German-primary 22-24
   { slug: 'klaus-weber', languages: ['German', 'English'] },
   { slug: 'stefan-braun', languages: ['German'] },
   { slug: 'heidi-fischer', languages: ['German', 'Thai'] },
-  // Cantonese-primary 35-37
+  // Cantonese-primary 25-27
   { slug: 'chan-wing', languages: ['Cantonese', 'English'] },
   { slug: 'lam-ka-yan', languages: ['Cantonese'] },
   { slug: 'ho-siu-ming', languages: ['Cantonese', 'English'] },
-  // Korean-primary 38-39
+  // Korean-primary 28-29
   { slug: 'park-joon', languages: ['Korean', 'English'] },
   { slug: 'kim-soo-yeon', languages: ['Korean'] },
-  // SSI-only 40-45
+  // SSI-only 30-35
   { slug: 'yuki-tanaka', languages: ['Japanese', 'English'] },
   { slug: 'kenji-nakamura', languages: ['Japanese'] },
   { slug: 'dmitri-volkov', languages: ['Russian', 'English'] },
   { slug: 'olga-petrova', languages: ['Russian'] },
   { slug: 'ben-walker', languages: ['English'] },
   { slug: 'alex-turner', languages: ['English', 'Thai'] },
-  // Dual-certified 46-49
+  // Dual-certified 36-39
   { slug: 'mike-chen', languages: ['Mandarin', 'English'] },
   { slug: 'rachel-nguyen', languages: ['English', 'French'] },
   { slug: 'lee-min-ho', languages: ['Korean', 'English'] },
@@ -796,7 +860,29 @@ function findInstructorForLanguage(targetLang: string, bookingIndex: number, sta
     }
   }
 
-  // Last resort fallback: pick by modular index (no date check possible)
+  // Last resort fallback: try date-aware pick from ALL instructors before giving up
+  if (startDate && endDate) {
+    const allAvailableFallback: number[] = []
+    for (let i = 0; i < INSTRUCTOR_SLUGS.length; i++) {
+      const s = INSTRUCTOR_SLUGS[i].slug
+      let available = true
+      let cur = startDate!
+      while (cur <= endDate!) {
+        if (!isInstructorAvailableOnDate(s, cur)) { available = false; break }
+        cur = addDays(cur, 1)
+      }
+      if (available) allAvailableFallback.push(i)
+    }
+    if (allAvailableFallback.length > 0) {
+      const pick = allAvailableFallback[bookingIndex % allAvailableFallback.length]
+      instructorUseCounts[pick]++
+      const s = INSTRUCTOR_SLUGS[pick].slug
+      markInstructorForDateRange(s, startDate, endDate)
+      return s
+    }
+  }
+
+  // Absolute last resort: modular pick (may conflict — all instructors exhausted on these dates)
   const pick = candidates[(bookingIndex) % candidates.length]
   instructorUseCounts[pick]++
   const slug = INSTRUCTOR_SLUGS[pick].slug
@@ -890,6 +976,7 @@ function getEndDate(startDate: string, activityType: CourseCode[]): string {
 
 export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
   const bookings: SeedBooking[] = []
+  const bookingResources: SeedBookingResource[] = []
   const customerProfiles: SeedCustomerProfile[] = []
   const bookingLinks: SeedBookingLink[] = []
   const bookingSessions: SeedBookingSession[] = []
@@ -944,31 +1031,39 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
     let urgentDraftCount = 0
     const isLargeDC = config.count >= 20
 
+    // Check if this config uses hardcoded Hug Ocean bookings
+    const useHugOceanDefs = config.ownerSlug === 'n7rq5j' && config.ownerType === 'DiveCenter' && HUG_OCEAN_BOOKINGS.length > 0
+
     for (let bi = 0; bi < config.count; bi++) {
       const bIdx = globalBookingIndex
-      const activityType = activities[bi % activities.length]
-      const status = statuses[bi % statuses.length]
-      const startDate = getStartDate(status, bi, ci, activityType, bi, config.count)
-      const endDate = getEndDate(startDate, activityType)
 
-      // Boat capacity test: pack March 25 Hug Ocean boat to ~48 pax
-      // Hug Ocean's own Upcoming DSD bookings (first 5 with bi < 5), plus
-      // select DCs without own boats route to Hug Ocean on March 25 (bi=0 only)
-      // Target: 5*5 = 25 (Hug Ocean) + 5*~4 = ~20 (shared) ≈ 45-48
-      const isHugOceanCapacity = config.ownerSlug === 'n7rq5j' && status === 'Upcoming' && bi < 5
-      // Only DCs without own boats, first Upcoming booking only, exclude Agent configs
+      // Use hardcoded defs for Hug Ocean, generic mix for everything else
+      let activityType: CourseCode[]
+      let status: BookingStatus
+      let startDate: string
+      let endDate: string
+      let diverCount: number
+
+      if (useHugOceanDefs && bi < HUG_OCEAN_BOOKINGS.length) {
+        const def = HUG_OCEAN_BOOKINGS[bi]
+        activityType = def.activityType
+        status = def.status
+        startDate = def.startDate
+        endDate = def.endDate
+        diverCount = def.diverCount
+      } else {
+        activityType = activities[bi % activities.length]
+        status = statuses[bi % statuses.length]
+        startDate = getStartDate(status, bi, ci, activityType, bi, config.count)
+        endDate = getEndDate(startDate, activityType)
+        diverCount = getDiverCount(bIdx)
+      }
+
+      // Boat capacity test: pack March 25 for shared boats
       const isSharedBoatCapacity = !config.ownBoatSlug && config.ownerType === 'DiveCenter' && status === 'Upcoming' && bi === 0
 
-      // Determine number of divers
-      let diverCount: number
-      if (isHugOceanCapacity) {
-        // 5 bookings * 5 divers = 25 pax from Hug Ocean
+      if (isSharedBoatCapacity) {
         diverCount = 5
-      } else if (isSharedBoatCapacity) {
-        // 5 DCs * 1 booking each * ~5 divers = ~25 pax from shared DCs
-        diverCount = 5
-      } else {
-        diverCount = getDiverCount(bIdx)
       }
 
       // Assign customers from pool
@@ -998,72 +1093,94 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
         agentIsReferral = true
       }
 
-      // Determine if external stakeholders (5-8 bookings total)
-      const isExternal = bIdx >= 130 && bIdx <= 137
-
-      // Special scenario: boat capacity on March 25 for Hug Ocean
-      const isBoatCapacityTest = isHugOceanCapacity || isSharedBoatCapacity
-
       // Special scenario: language mismatch — Korean-only customer with English-only instructor
       const isLangMismatch = bIdx === 15
 
-      // Compute final dates early (boat capacity test may override)
+      // Compute final dates early (shared boat capacity test may override)
       let finalStartDate = startDate
       let finalEndDate = endDate
-      if (isBoatCapacityTest) {
+      if (isSharedBoatCapacity) {
         finalStartDate = '2026-03-25'
         finalEndDate = getEndDate('2026-03-25', activityType)
       }
 
-      // Determine resource assignments
+      // ── External stakeholders ─────────────────────────────────────
+      // Build first: each field marks that resource as outside the system.
+      // Then assign in-system IDs only for resources NOT marked external.
+      // Sessions/reservations are only created for in-system resources.
+      let externalStakeholders: {
+        instructorName?: string
+        boatName?: string
+        equipmentManagerName?: string
+        poolName?: string
+        compressorName?: string
+      } | undefined = undefined
+
+      if (bIdx >= 130 && bIdx <= 137) {
+        // All resources external — realistic name pools
+        const ei = bIdx - 130
+        const extInstructors = ['Tom Wilson', 'Lisa Chen', 'Marco Rossi', 'Sophie Laurent', 'Yuki Tanaka', 'James Cooper', 'Anna Berg', 'Carlos Mendez']
+        const extBoats = ['Blue Horizon', 'Sea Dragon', 'Island Spirit', 'Deep Blue', 'Ocean Star', 'Coral Queen', 'Andaman Explorer', 'Reef Runner']
+        const extEquipment = ['Dive Gear Phuket', 'Scuba Supply Co', 'Andaman Equipment', 'Ocean Gear Rental', 'Reef Tech', 'Island Dive Supply', 'Deep Blue Equipment', 'Thai Dive Gear']
+        const extCompressors = ['Chalong Air Fill', 'Phuket Air Station', 'Island Compressor', 'Dive Air Thailand', 'Andaman Fill Station', 'Rawai Air Service', 'Kata Compressor', 'Patong Air Supply']
+        const extPools = ['Kata Beach Resort Pool', 'Royal Phuket Hotel Pool', 'Coconut Island Pool', 'Laguna Pool Center']
+        externalStakeholders = {
+          instructorName: extInstructors[ei],
+          boatName: extBoats[ei],
+          equipmentManagerName: extEquipment[ei],
+          compressorName: extCompressors[ei],
+        }
+        if (activityType.includes('OW' as CourseCode)) {
+          externalStakeholders.poolName = extPools[ei % extPools.length]
+        }
+      } else if (config.ownerSlug === 'n7rq5j' && bi >= 40 && bi <= 43) {
+        // Operator-added outside instructor, own resources in-system
+        externalStakeholders = { instructorName: 'Kai Sørensen' }
+      }
+
+      // ── In-system resource assignments ────────────────────────────
       let bookingInstructorId: string | undefined = undefined
       let bookingBoatId: string | undefined = undefined
       let bookingEquipmentManagerId: string | undefined = undefined
       let bookingPoolId: string | undefined = undefined
       let bookingCompressorId: string | undefined = undefined
-      let externalStakeholders: SeedBooking['externalStakeholders'] = undefined
 
-      // All non-cancelled bookings use the shared compressor
-      if (status !== 'Cancelled') {
+      const ownerConfig = isReferralConfig(ci)
+        ? BOOKING_CONFIGS.find((c) => c.ownerSlug === actualOwnerId && c.ownerType === 'DiveCenter')
+        : config
+
+      // Compressor
+      if (!externalStakeholders?.compressorName && status !== 'Cancelled') {
         bookingCompressorId = COMPRESSOR_SLUG
       }
 
-      if (isExternal) {
-        externalStakeholders = {
-          instructorName: `External Instructor ${bIdx}`,
-          boatName: `External Boat ${bIdx}`,
-          equipmentManagerName: `External EM ${bIdx}`,
-        }
-        if (activityType.includes('OW' as CourseCode)) {
-          externalStakeholders.poolName = `External Pool ${bIdx}`
-        }
-      } else {
+      // Instructor
+      if (!externalStakeholders?.instructorName) {
         if (isLangMismatch) {
-          // Korean customer with English-only instructor
-          bookingInstructorId = 'james-cooper' // English only
-          markInstructorForDateRange('james-cooper', finalStartDate, finalEndDate)
+          bookingInstructorId = 'ben-walker' // English only (lang mismatch test)
+          markInstructorForDateRange('ben-walker', finalStartDate, finalEndDate)
         } else {
-          // Pick instructor with date-aware conflict detection
           bookingInstructorId = findInstructorForLanguage(firstCustomerLang, bIdx, finalStartDate, finalEndDate)
         }
+      }
 
-        // Get resource config for the actual owner (important for referrals)
-        const ownerConfig = isReferralConfig(ci)
-          ? BOOKING_CONFIGS.find((c) => c.ownerSlug === actualOwnerId && c.ownerType === 'DiveCenter')
-          : config
-
-        // Boat capacity test: DCs without own boats route to Hug Ocean on March 25
+      // Boat
+      if (!externalStakeholders?.boatName) {
         if (isSharedBoatCapacity) {
           bookingBoatId = 'n7rq5j' // Hug Ocean boat
         } else {
           bookingBoatId = getBoatSlug(ownerConfig || config, bIdx)
         }
-        bookingEquipmentManagerId = getEquipmentSlug(ownerConfig || config, bIdx)
+      }
 
-        // Pool only for OW or O+A
-        if (activityType.includes('OW' as CourseCode)) {
-          bookingPoolId = getPoolSlug(ownerConfig || config, bIdx)
-        }
+      // Equipment
+      if (!externalStakeholders?.equipmentManagerName) {
+        bookingEquipmentManagerId = getEquipmentSlug(ownerConfig || config, bIdx)
+      }
+
+      // Pool (OW or O+A only)
+      if (!externalStakeholders?.poolName && activityType.includes('OW' as CourseCode)) {
+        bookingPoolId = getPoolSlug(ownerConfig || config, bIdx)
       }
 
       // Portal flags
@@ -1081,7 +1198,9 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       // ExpiresAt for drafts
       let expiresAt: number | undefined = undefined
       if (status === 'Draft') {
-        if (isLargeDC && urgentDraftCount < 2) {
+        // For Hug Ocean hardcoded bookings, make the first draft urgent (bi=14, starts today)
+        const isUrgentHugOcean = useHugOceanDefs && bi < HUG_OCEAN_BOOKINGS.length && urgentDraftCount < 1
+        if (isUrgentHugOcean || (!useHugOceanDefs && isLargeDC && urgentDraftCount < 2)) {
           // Urgent: ~2 hours remaining
           expiresAt = NOW - 36000000 + HOLD_TTL
           urgentDraftCount++
@@ -1117,13 +1236,7 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
         endDate: finalEndDate,
         divers,
         ...(agentIsReferral !== undefined && { agentIsReferral }),
-        ...(bookingInstructorId !== undefined && { instructorId: bookingInstructorId }),
-        ...(bookingBoatId !== undefined && { boatId: bookingBoatId }),
-        ...(bookingEquipmentManagerId !== undefined && { equipmentManagerId: bookingEquipmentManagerId }),
-        ...(bookingPoolId !== undefined && { poolId: bookingPoolId }),
-        ...(bookingCompressorId !== undefined && { compressorId: bookingCompressorId }),
         ...(agentId !== undefined && { agentId }),
-        ...(externalStakeholders !== undefined && { externalStakeholders }),
         operatorName,
         portalContact: true,
         portalMedical: true,
@@ -1134,6 +1247,33 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       }
 
       bookings.push(booking)
+
+      // ── Booking resources (junction table dual-write) ───────────
+      if (bookingInstructorId) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Instructor', resourceSlug: bookingInstructorId })
+      } else if (externalStakeholders?.instructorName) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Instructor', externalName: externalStakeholders.instructorName })
+      }
+      if (bookingBoatId) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Boat', resourceSlug: bookingBoatId })
+      } else if (externalStakeholders?.boatName) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Boat', externalName: externalStakeholders.boatName })
+      }
+      if (bookingEquipmentManagerId) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Equipment', resourceSlug: bookingEquipmentManagerId })
+      } else if (externalStakeholders?.equipmentManagerName) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Equipment', externalName: externalStakeholders.equipmentManagerName })
+      }
+      if (bookingPoolId) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Pool', resourceSlug: bookingPoolId })
+      } else if (externalStakeholders?.poolName) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Pool', externalName: externalStakeholders.poolName })
+      }
+      if (bookingCompressorId) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Compressor', resourceSlug: bookingCompressorId })
+      } else if (externalStakeholders?.compressorName) {
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Compressor', externalName: externalStakeholders.compressorName })
+      }
 
       // ── Customer profiles ───────────────────────────────────────
       for (let di = 0; di < bookingCustomers.length; di++) {
@@ -1166,8 +1306,10 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
         })
       }
 
-      // ── Booking sessions and reservations (non-external only) ──
-      if (!isExternal) {
+      // ── Booking sessions and reservations ──
+      // Sessions are created for each in-system resource (ID set).
+      // External resources (name only in externalStakeholders) get no sessions.
+      {
         const sessionStartIdx = bookingSessions.length
 
         // Calculate how many session days this booking covers
@@ -1178,176 +1320,113 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
         const totalDays = Math.round((endDt.getTime() - startDt.getTime()) / (24 * 60 * 60 * 1000)) + 1
 
         // Determine reservation status based on booking status
-        let resStatus: ReservationStatus = 'PendingAcceptance'
+        // For Draft bookings, self-owned resources auto-confirm (owner can't accept their own booking)
+        let baseResStatus: ReservationStatus = 'PendingAcceptance'
         let confirmedAt: number | undefined = undefined
         let vacatedAt: number | undefined = undefined
         let vacatedBy: SeedReservation['vacatedBy'] = undefined
 
         if (status === 'Upcoming' || status === 'Completed') {
-          resStatus = 'Confirmed'
+          baseResStatus = 'Confirmed'
           confirmedAt = createdAt + 1800000 // 30 min after creation
         } else if (status === 'Cancelled') {
-          resStatus = 'Vacated'
+          baseResStatus = 'Vacated'
           vacatedAt = createdAt + 3600000
           vacatedBy = 'booking_cancelled'
+        }
+
+        // For Draft bookings, auto-confirm resources owned by the booking operator
+        // or resources with Auto acceptance preference (non-instructor types)
+        function resStatusForResource(resourceSlug: string, resourceType?: string): ReservationStatus {
+          if (status !== 'Draft') return baseResStatus
+          // Self-booking: auto-confirm
+          if (resourceSlug === actualOwnerId) return 'Confirmed'
+          // Non-instructor resources have Auto acceptance preference
+          if (resourceType && resourceType !== 'Instructor') return 'Confirmed'
+          return baseResStatus
+        }
+        function confirmedAtForResource(resourceSlug: string, resourceType?: string): number | undefined {
+          if (status !== 'Draft') return confirmedAt
+          if (resourceSlug === actualOwnerId) return createdAt
+          if (resourceType && resourceType !== 'Instructor') return createdAt
+          return confirmedAt
+        }
+
+        // Push a session + its reservation in one call (closure over booking-scoped vars)
+        function pushSession(
+          slug: string,
+          type: string,
+          date: string,
+          startTime: string,
+          endTime: string,
+          units: number,
+          deliveryLocation?: 'BoatPier' | 'Pool' | 'Beach',
+        ): void {
+          const sIdx = bookingSessions.length - sessionStartIdx
+          bookingSessions.push({
+            bookingIndex: bIdx,
+            inventorySlug: slug,
+            inventoryType: type,
+            date,
+            startTime,
+            endTime,
+            timezone: TIMEZONE,
+            ...(deliveryLocation && { deliveryLocation }),
+          })
+          const resConfirmedAt = confirmedAtForResource(slug, type)
+          reservations.push({
+            bookingIndex: bIdx,
+            sessionIndex: sIdx,
+            inventorySlug: slug,
+            inventoryType: type,
+            unitsRequested: units,
+            status: resStatusForResource(slug, type),
+            ...(resConfirmedAt !== undefined && { confirmedAt: resConfirmedAt }),
+            ...(status === 'Draft' && { expiresAt: expiresAt }),
+            ...(vacatedAt !== undefined && { vacatedAt }),
+            ...(vacatedBy !== undefined && { vacatedBy }),
+          })
         }
 
         // Generate sessions per day for each resource
         for (let day = 0; day < totalDays; day++) {
           const sessionDate = addDays(finalStartDate, day)
+          const isPoolOnlyDay = day === 0 && activityType.includes('OW' as CourseCode)
+          const location: 'Pool' | 'BoatPier' = isPoolOnlyDay ? 'Pool' : 'BoatPier'
 
-          // Instructor session
+          // Instructor
           if (bookingInstructorId) {
-            const sIdx = bookingSessions.length - sessionStartIdx
-            bookingSessions.push({
-              bookingIndex: bIdx,
-              inventorySlug: bookingInstructorId,
-              inventoryType: 'Instructor',
-              date: sessionDate,
-              startTime: '08:00',
-              endTime: '16:00',
-              timezone: TIMEZONE,
-              deliveryLocation: day === 0 && activityType.includes('OW' as CourseCode) ? 'Pool' : 'BoatPier',
-            })
-
-            reservations.push({
-              bookingIndex: bIdx,
-              sessionIndex: sIdx,
-              inventorySlug: bookingInstructorId,
-              inventoryType: 'Instructor',
-              unitsRequested: 1,
-              status: resStatus,
-              ...(confirmedAt !== undefined && { confirmedAt }),
-              ...(status === 'Draft' && { expiresAt: expiresAt }),
-              ...(vacatedAt !== undefined && { vacatedAt }),
-              ...(vacatedBy !== undefined && { vacatedBy }),
-            })
+            pushSession(bookingInstructorId, 'Instructor', sessionDate, '08:00', '16:00', 1, location)
           }
 
-          // Helper DM/instructor sessions for 5+ diver bookings
+          // Helper instructors (5+ divers)
           if (diverCount >= 5 && bookingInstructorId) {
-            // Primary instructor: 1:4 ratio, so if 5+ divers need a helper
             const helpersNeeded = Math.ceil(diverCount / 4) - 1
-            // DM helpers: 1:2 ratio
-            const dmsNeeded = Math.ceil(diverCount / 2)
-
             for (let h = 0; h < helpersNeeded; h++) {
               const helperSlug = findHelperInstructor(bookingInstructorId, bIdx, h, sessionDate)
-              const sIdx = bookingSessions.length - sessionStartIdx
-              bookingSessions.push({
-                bookingIndex: bIdx,
-                inventorySlug: helperSlug,
-                inventoryType: 'Instructor',
-                date: sessionDate,
-                startTime: '08:00',
-                endTime: '16:00',
-                timezone: TIMEZONE,
-                deliveryLocation: day === 0 && activityType.includes('OW' as CourseCode) ? 'Pool' : 'BoatPier',
-              })
-
-              reservations.push({
-                bookingIndex: bIdx,
-                sessionIndex: sIdx,
-                inventorySlug: helperSlug,
-                inventoryType: 'Instructor',
-                unitsRequested: 1,
-                status: resStatus,
-                ...(confirmedAt !== undefined && { confirmedAt }),
-                ...(status === 'Draft' && { expiresAt: expiresAt }),
-                ...(vacatedAt !== undefined && { vacatedAt }),
-                ...(vacatedBy !== undefined && { vacatedBy }),
-              })
+              pushSession(helperSlug, 'Instructor', sessionDate, '08:00', '16:00', 1, location)
             }
           }
 
-          // Boat session (all days except pool-only day 0 for OW)
-          const isPoolOnlyDay = day === 0 && activityType.includes('OW' as CourseCode)
+          // Boat (skip pool-only days)
           if (bookingBoatId && !isPoolOnlyDay) {
-            const sIdx = bookingSessions.length - sessionStartIdx
-            bookingSessions.push({
-              bookingIndex: bIdx,
-              inventorySlug: bookingBoatId,
-              inventoryType: 'Boat',
-              date: sessionDate,
-              startTime: '07:30',
-              endTime: '16:30',
-              timezone: TIMEZONE,
-              deliveryLocation: 'BoatPier',
-            })
-
-            reservations.push({
-              bookingIndex: bIdx,
-              sessionIndex: sIdx,
-              inventorySlug: bookingBoatId,
-              inventoryType: 'Boat',
-              unitsRequested: diverCount,
-              status: resStatus,
-              ...(confirmedAt !== undefined && { confirmedAt }),
-              ...(status === 'Draft' && { expiresAt: expiresAt }),
-              ...(vacatedAt !== undefined && { vacatedAt }),
-              ...(vacatedBy !== undefined && { vacatedBy }),
-            })
+            pushSession(bookingBoatId, 'Boat', sessionDate, '07:30', '16:30', diverCount, 'BoatPier')
           }
 
-          // Pool session (day 0 only for OW/O+A)
+          // Pool (day 0 only for OW)
           if (bookingPoolId && isPoolOnlyDay) {
-            const sIdx = bookingSessions.length - sessionStartIdx
-            bookingSessions.push({
-              bookingIndex: bIdx,
-              inventorySlug: bookingPoolId,
-              inventoryType: 'Pool',
-              date: sessionDate,
-              startTime: '09:00',
-              endTime: '12:00',
-              timezone: TIMEZONE,
-              deliveryLocation: 'Pool',
-            })
-
-            reservations.push({
-              bookingIndex: bIdx,
-              sessionIndex: sIdx,
-              inventorySlug: bookingPoolId,
-              inventoryType: 'Pool',
-              unitsRequested: diverCount,
-              status: resStatus,
-              ...(confirmedAt !== undefined && { confirmedAt }),
-              ...(status === 'Draft' && { expiresAt: expiresAt }),
-              ...(vacatedAt !== undefined && { vacatedAt }),
-              ...(vacatedBy !== undefined && { vacatedBy }),
-            })
+            pushSession(bookingPoolId, 'Pool', sessionDate, '09:00', '12:00', diverCount, 'Pool')
           }
 
-          // Compressor session (all boat days)
+          // Compressor (all boat days, 2 tanks per diver)
           if (bookingCompressorId && !isPoolOnlyDay) {
-            const sIdx = bookingSessions.length - sessionStartIdx
-            bookingSessions.push({
-              bookingIndex: bIdx,
-              inventorySlug: bookingCompressorId,
-              inventoryType: 'Compressor',
-              date: sessionDate,
-              startTime: '06:00',
-              endTime: '07:00',
-              timezone: TIMEZONE,
-            })
-
-            reservations.push({
-              bookingIndex: bIdx,
-              sessionIndex: sIdx,
-              inventorySlug: bookingCompressorId,
-              inventoryType: 'Compressor',
-              unitsRequested: diverCount * 2, // 2 tanks per diver
-              status: resStatus,
-              ...(confirmedAt !== undefined && { confirmedAt }),
-              ...(status === 'Draft' && { expiresAt: expiresAt }),
-              ...(vacatedAt !== undefined && { vacatedAt }),
-              ...(vacatedBy !== undefined && { vacatedBy }),
-            })
+            pushSession(bookingCompressorId, 'Compressor', sessionDate, '06:00', '07:00', diverCount * 2)
           }
         }
       }
 
-      // ── Equipment bags (for non-external, non-cancelled bookings) ──
-      if (!isExternal && status !== 'Cancelled' && bookingEquipmentManagerId) {
+      // ── Equipment bags (for bookings with in-system equipment manager) ──
+      if (status !== 'Cancelled' && bookingEquipmentManagerId) {
         for (let di = 0; di < diverCount; di++) {
           equipmentBags.push({
             bagNumber: `BAG-${String(bIdx).padStart(3, '0')}-${String(di + 1).padStart(2, '0')}`,
@@ -1362,30 +1441,6 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
 
       // ── Notifications ───────────────────────────────────────────
       if (status !== 'Draft') {
-        // Notify instructor of hold
-        if (bookingInstructorId) {
-          notifications.push({
-            userId: bookingInstructorId,
-            type: 'hold_placed',
-            bookingIndex: bIdx,
-            message: `New booking hold: ${activityType.join('+')} on ${finalStartDate} (${diverCount} divers)`,
-            readAt: status === 'Completed' ? createdAt + 600000 : undefined,
-            createdAt,
-          })
-        }
-
-        // Notify boat of hold
-        if (bookingBoatId && !isExternal) {
-          notifications.push({
-            userId: bookingBoatId,
-            type: 'hold_placed',
-            bookingIndex: bIdx,
-            message: `Boat reservation: ${diverCount} divers on ${finalStartDate}`,
-            readAt: status === 'Completed' ? createdAt + 600000 : undefined,
-            createdAt,
-          })
-        }
-
         // Referral notifications
         if (agentIsReferral) {
           notifications.push({
@@ -1467,6 +1522,7 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
   return {
     customers,
     bookings,
+    bookingResources,
     customerProfiles,
     bookingLinks,
     bookingSessions,
@@ -1474,6 +1530,7 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
     availabilitySnapshots: snapshots,
     equipmentBags,
     notifications,
+    blockedDates: HUG_OCEAN_BLOCKED_DATES,
   }
 }
 
@@ -1510,6 +1567,20 @@ function findHelperInstructor(primarySlug: string, bookingIndex: number, helperI
     }
   }
 
+  // Try any instructor (not just English-speaking) who is available on this date
+  if (sessionDate) {
+    const allPool = INSTRUCTOR_SLUGS
+      .filter((i) => i.slug !== primarySlug)
+      .map((i) => i.slug)
+    const allAvailable = allPool.filter(s => isInstructorAvailableOnDate(s, sessionDate))
+    if (allAvailable.length > 0) {
+      const s = allAvailable[(bookingIndex + helperIndex) % allAvailable.length]
+      markInstructorOnDate(s, sessionDate)
+      return s
+    }
+  }
+
+  // Absolute last resort
   const slug = pool[(bookingIndex + helperIndex) % pool.length]
   if (sessionDate) markInstructorOnDate(slug, sessionDate)
   return slug

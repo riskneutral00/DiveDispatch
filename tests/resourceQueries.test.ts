@@ -106,7 +106,8 @@ describe('getOpenRequests', () => {
       diverCount: 2,
       operatorName: 'Phuket Dive Center',
     })
-    expect(items[0].reservationId).toBeDefined()
+    expect(items[0].reservationIds).toBeDefined()
+    expect(items[0].reservationIds).toHaveLength(1)
     expect(items[0].createdAt).toBeDefined()
   })
 
@@ -187,9 +188,8 @@ describe('getOpenRequests', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
       .query(api.resourceQueries.getOpenRequests)
 
-    expect(result).toHaveLength(2)
-    // Descending order: first item has higher createdAt
-    expect(result[0].createdAt).toBeGreaterThanOrEqual(result[1].createdAt)
+    expect(result).toHaveLength(1)
+    expect(result[0].reservationIds).toHaveLength(2)
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {

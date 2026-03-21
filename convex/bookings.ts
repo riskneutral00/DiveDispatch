@@ -1,6 +1,11 @@
 import { ConvexError, v } from 'convex/values'
 import { query } from './_generated/server'
 import { requireAuth, OPERATOR_ROLE_SET, type AnyCtx } from './lib/auth'
+import {
+  getResourcesForBooking,
+  getBookingIdsForResource,
+  type BookingResource,
+} from './bookingResources'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +29,26 @@ export type BookingDetailReservation = {
   confirmedAt: number | undefined
   vacatedAt: number | undefined
   vacatedBy: string | undefined
+  stakeholderName: string | undefined
+}
+
+export type BookingDetailStakeholder = {
+  slug: string | undefined
+  name: string
+  role: string
+  isExternal: boolean
+  contactEmail: string | undefined
+  reservationStatus: string | undefined
+}
+
+export type BookingDetailAuditEntry = {
+  _id: string
+  action: string
+  actorSlug: string
+  actorType: string
+  timestamp: number
+  diff: string | undefined
+  note: string | undefined
 }
 
 export type BookingDetailCustomerProfile = {
@@ -73,6 +98,14 @@ export type BookingDetail = {
   sessions: BookingDetailSession[]
   reservations: BookingDetailReservation[]
   customerProfiles: BookingDetailCustomerProfile[]
+  stakeholders: BookingDetailStakeholder[]
+  auditLog: BookingDetailAuditEntry[]
+}
+
+export type CalendarBookingResource = {
+  resourceType: string
+  name: string
+  isExternal: boolean
 }
 
 export type CalendarBooking = {
@@ -85,6 +118,9 @@ export type CalendarBooking = {
   instructorName: string | undefined
   boatName: string | undefined
   customerName: string | undefined
+  operatorName: string
+  reservationStatus: string | undefined
+  resources: CalendarBookingResource[]
 }
 
 export type RequestItem = {
@@ -96,25 +132,24 @@ export type RequestItem = {
   ownerName: string
 }
 
-// ─── Role → index map ─────────────────────────────────────────────────────────
+// ─── Role → query strategy ────────────────────────────────────────────────────
 
-// Maps a stakeholder role to the bookings index and field that scopes queries
-// to bookings relevant to that caller.
-// Operators query by ownerId; resources query via their display-cache field.
-export const ROLE_BOOKING_INDEX: Record<string, { index: string; field: string }> = {
+// Operator roles query bookings by ownerId index.
+// Resource roles query bookingResources junction table by slug, then batch-fetch bookings.
+// Agent queries by agentId index (agent is not an operational resource).
+const OPERATOR_BOOKING_INDEX: Record<string, { index: string; field: string }> = {
   DiveCenter: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  Agent: { index: 'by_agentId', field: 'agentId' },
   Liveaboard: { index: 'by_ownerId_ownerType', field: 'ownerId' },
   DiveResort: { index: 'by_ownerId_ownerType', field: 'ownerId' },
   DiveHostel: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  DiveSite: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  Instructor: { index: 'by_instructorId', field: 'instructorId' },
-  DiveMaster: { index: 'by_instructorId', field: 'instructorId' },
-  Boat: { index: 'by_boatId', field: 'boatId' },
-  Equipment: { index: 'by_equipmentManagerId', field: 'equipmentManagerId' },
-  Pool: { index: 'by_poolId', field: 'poolId' },
-  Compressor: { index: 'by_compressorId', field: 'compressorId' },
+  Agent: { index: 'by_agentId', field: 'agentId' },
 }
+
+// Resource roles that use the bookingResources junction table
+const RESOURCE_ROLES = new Set([
+  'Instructor', 'DiveMaster', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
+])
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,11 +175,41 @@ export async function buildInstructorNameMap(
   return map
 }
 
-function toCalendarBooking(b: AnyCtx, nameMap: Map<string, string>): CalendarBooking {
+/** Build CalendarBookingResource[] from bookingResources rows + name map. */
+function buildCalendarResources(
+  resources: BookingResource[],
+  nameMap: Map<string, string>,
+): CalendarBookingResource[] {
+  return resources.map((r) => ({
+    resourceType: r.resourceType,
+    name: r.resourceSlug
+      ? (nameMap.get(r.resourceSlug) ?? r.resourceSlug)
+      : (r.externalName ?? 'Unknown'),
+    isExternal: !r.resourceSlug,
+  }))
+}
+
+async function toCalendarBooking(
+  ctx: AnyCtx,
+  b: AnyCtx,
+  nameMap: Map<string, string>,
+): Promise<CalendarBooking> {
   const divers = b.divers as Array<{ name: string }>
-  const ext = b.externalStakeholders as
-    | { instructorName?: string; boatName?: string }
-    | undefined
+
+  // Read from bookingResources junction table
+  const resources = await getResourcesForBooking(ctx, b._id as string)
+  const calendarResources = buildCalendarResources(resources, nameMap)
+
+  // Extract instructor/boat names from resources for backward compat
+  const instructorRes = resources.find((r: BookingResource) => r.resourceType === 'Instructor')
+  const boatRes = resources.find((r: BookingResource) => r.resourceType === 'Boat')
+
+  const instructorName = instructorRes
+    ? (instructorRes.resourceSlug ? nameMap.get(instructorRes.resourceSlug) : instructorRes.externalName)
+    : undefined
+  const boatName = boatRes
+    ? (boatRes.resourceSlug ? nameMap.get(boatRes.resourceSlug) : boatRes.externalName)
+    : undefined
 
   return {
     _id: b._id as string,
@@ -153,23 +218,37 @@ function toCalendarBooking(b: AnyCtx, nameMap: Map<string, string>): CalendarBoo
     endDate: b.endDate as string,
     status: b.status as string,
     diverCount: divers.length,
-    instructorName: b.instructorId
-      ? (nameMap.get(b.instructorId as string) ?? ext?.instructorName)
-      : ext?.instructorName,
-    boatName: b.boatId
-      ? (nameMap.get(b.boatId as string) ?? ext?.boatName)
-      : ext?.boatName,
+    instructorName,
+    boatName,
     customerName: divers[0]?.name,
+    operatorName: b.operatorName as string,
+    reservationStatus: undefined,
+    resources: calendarResources,
   }
 }
 
 async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[]> {
-  const roleConfig = ROLE_BOOKING_INDEX[user.role as string]
-  if (!roleConfig) return []
-  return ctx.db
-    .query('bookings')
-    .withIndex(roleConfig.index, (q: AnyCtx) => q.eq(roleConfig.field, user.slug))
-    .collect()
+  const role = user.role as string
+
+  // Operator and agent roles: use direct booking indexes
+  const operatorConfig = OPERATOR_BOOKING_INDEX[role]
+  if (operatorConfig) {
+    return ctx.db
+      .query('bookings')
+      .withIndex(operatorConfig.index, (q: AnyCtx) => q.eq(operatorConfig.field, user.slug))
+      .collect()
+  }
+
+  // Resource roles: query bookingResources junction table
+  if (RESOURCE_ROLES.has(role)) {
+    const bookingIds = await getBookingIdsForResource(ctx, user.slug as string)
+    const bookings = await Promise.all(
+      bookingIds.map((id) => ctx.db.get(id)),
+    )
+    return bookings.filter(Boolean)
+  }
+
+  return []
 }
 
 // ─── Handlers (exported for unit testing) ────────────────────────────────────
@@ -192,12 +271,18 @@ export async function _listByOwner(
     )
     .collect()
 
-  const slugs = bookings.flatMap((b: AnyCtx) =>
-    [b.instructorId, b.boatId].filter(Boolean),
-  ) as string[]
+  // Collect resource slugs from bookingResources for name resolution
+  const allResources: BookingResource[] = []
+  for (const b of bookings) {
+    const res = await getResourcesForBooking(ctx, b._id as string)
+    allResources.push(...res)
+  }
+  const slugs = allResources
+    .map((r) => r.resourceSlug)
+    .filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return bookings.map((b: AnyCtx) => toCalendarBooking(b, nameMap))
+  return Promise.all(bookings.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
@@ -213,12 +298,15 @@ export async function _listByStatus(
   const allBookings = await resolveCallerBookings(ctx, user)
   const filtered = allBookings.filter((b: AnyCtx) => b.status === args.status)
 
-  const slugs = filtered.flatMap((b: AnyCtx) =>
-    [b.instructorId, b.boatId].filter(Boolean),
-  ) as string[]
+  const allResources: BookingResource[] = []
+  for (const b of filtered) {
+    const res = await getResourcesForBooking(ctx, b._id as string)
+    allResources.push(...res)
+  }
+  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return filtered.map((b: AnyCtx) => toCalendarBooking(b, nameMap))
+  return Promise.all(filtered.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
@@ -232,27 +320,26 @@ export async function _listByResource(
   const { user } = await requireAuth(ctx)
   if (user.slug !== args.resourceId) throw new ConvexError({ code: 'FORBIDDEN' })
 
-  const roleConfig = ROLE_BOOKING_INDEX[args.resourceType]
-  if (!roleConfig) return []
+  // Query via bookingResources junction table
+  const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
+  const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id)))).filter(Boolean)
 
-  const bookings = await ctx.db
-    .query('bookings')
-    .withIndex(roleConfig.index, (q: AnyCtx) => q.eq(roleConfig.field, args.resourceId))
-    .collect()
-
-  const slugs = bookings.flatMap((b: AnyCtx) =>
-    [b.instructorId, b.boatId].filter(Boolean),
-  ) as string[]
+  const allResources: BookingResource[] = []
+  for (const b of bookings) {
+    const res = await getResourcesForBooking(ctx, b._id as string)
+    allResources.push(...res)
+  }
+  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return bookings.map((b: AnyCtx) => toCalendarBooking(b, nameMap))
+  return Promise.all(bookings.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
  * Dashboard query — returns CalendarBooking[] (Upcoming + Completed) and
  * RequestItem[] (pending reservation holds for resource stakeholders).
  *
- * Uses ROLE_BOOKING_INDEX to select the correct index per caller role.
+ * Uses bookingResources junction table for resource roles.
  * Resource roles additionally query reservations to surface incoming holds.
  */
 export async function _myDashboard(
@@ -262,22 +349,54 @@ export async function _myDashboard(
 
   const allBookings = await resolveCallerBookings(ctx, user)
 
-  const slugs = allBookings.flatMap((b: AnyCtx) =>
-    [b.instructorId, b.boatId].filter(Boolean),
-  ) as string[]
+  // Collect resource slugs from bookingResources for name resolution
+  const allResources: BookingResource[] = []
+  for (const b of allBookings) {
+    const res = await getResourcesForBooking(ctx, b._id as string)
+    allResources.push(...res)
+  }
+  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  const calendarBookings = allBookings
-    .filter((b: AnyCtx) => b.status === 'Upcoming' || b.status === 'Completed')
-    .map((b: AnyCtx) => toCalendarBooking(b, nameMap))
+  const isResourceRole = !OPERATOR_ROLE_SET.has(user.role as string)
 
-  let requests: RequestItem[] = []
-
-  if (!OPERATOR_ROLE_SET.has(user.role as string)) {
-    const inventoryUnits = await ctx.db
+  // Fetch caller's inventory units upfront (used for both reservationStatus and requests)
+  let callerUnitIds = new Set<string>()
+  let inventoryUnits: AnyCtx[] = []
+  if (isResourceRole) {
+    inventoryUnits = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
       .collect()
+    callerUnitIds = new Set(inventoryUnits.map((u: AnyCtx) => u._id as string))
+  }
+
+  const filteredBookings = allBookings.filter(
+    (b: AnyCtx) => b.status === 'Draft' || b.status === 'Upcoming' || b.status === 'Completed',
+  )
+
+  // Build calendar bookings, attaching caller's reservation status for resource roles
+  const calendarBookings: CalendarBooking[] = []
+  for (const b of filteredBookings) {
+    const cb = await toCalendarBooking(ctx, b, nameMap)
+
+    if (isResourceRole && callerUnitIds.size > 0) {
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', b._id))
+        .collect()
+      const callerRes = reservations.find(
+        (r: AnyCtx) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== 'Vacated',
+      )
+      cb.reservationStatus = callerRes?.status as string | undefined
+    }
+
+    calendarBookings.push(cb)
+  }
+
+  let requests: RequestItem[] = []
+
+  if (isResourceRole) {
 
     const allPending = (
       await Promise.all(
@@ -334,10 +453,24 @@ export async function _getBookingDetail(
 
   const booking = await ctx.db.get(args.bookingId)
   if (!booking) return null
-  if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+  // Allow access if caller owns the booking OR has a reservation on it
+  if (booking.ownerId !== user.slug) {
+    const callerUnits = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
+      .collect()
+    const callerUnitIds = new Set(callerUnits.map((u: AnyCtx) => u._id))
+    const bookingReservations = await ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+    const hasReservation = bookingReservations.some((r: AnyCtx) => callerUnitIds.has(r.inventoryUnitId))
+    if (!hasReservation) throw new ConvexError({ code: 'FORBIDDEN' })
+  }
 
   // Fetch related rows in parallel
-  const [sessions, reservations, customerProfiles] = await Promise.all([
+  const [sessions, reservations, customerProfiles, auditEntries] = await Promise.all([
     ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
@@ -349,6 +482,11 @@ export async function _getBookingDetail(
     ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect(),
+    ctx.db
+      .query('bookingAuditLog')
+      .withIndex('by_bookingId_timestamp', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .order('desc')
       .collect(),
   ])
 
@@ -367,25 +505,70 @@ export async function _getBookingDetail(
     }),
   )
 
-  // Resolve human-readable names for assigned resource slugs
-  const resourceSlugs = [
-    booking.instructorId,
-    booking.boatId,
-    booking.equipmentManagerId,
-    booking.poolId,
-    booking.compressorId,
-  ].filter(Boolean) as string[]
-  const nameMap = await buildInstructorNameMap(ctx, resourceSlugs)
+  // Resolve stakeholders from bookingResources junction table
+  const bookingResourceRows = await getResourcesForBooking(ctx, args.bookingId)
 
-  const ext = booking.externalStakeholders as
-    | {
-        instructorName?: string
-        boatName?: string
-        equipmentManagerName?: string
-        poolName?: string
-        compressorName?: string
+  const resourceSlugs = bookingResourceRows
+    .map((r: BookingResource) => r.resourceSlug)
+    .filter(Boolean) as string[]
+
+  const userProfileMap = new Map<string, { name: string; email: string; role: string }>()
+  await Promise.all(
+    [...new Set(resourceSlugs)].map(async (slug) => {
+      const u = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', slug))
+        .unique()
+      if (u) {
+        userProfileMap.set(slug, {
+          name: u.name as string,
+          email: u.email as string,
+          role: u.role as string,
+        })
       }
-    | undefined
+    }),
+  )
+
+  // Flat name map for reservation stakeholder resolution
+  const nameMap = new Map<string, string>()
+  userProfileMap.forEach((profile, slug) => nameMap.set(slug, profile.name))
+
+  // Build structured stakeholders list from bookingResources
+  const stakeholders: BookingDetailStakeholder[] = []
+  for (const br of bookingResourceRows) {
+    if (br.resourceSlug) {
+      const profile = userProfileMap.get(br.resourceSlug)
+      // Find reservation status for this stakeholder's inventory unit
+      const stakeholderRes = reservations.find((r: AnyCtx) => {
+        const iu = iuMap.get(r.inventoryUnitId as string)
+        return (iu?.ownerId as string | undefined) === br.resourceSlug
+      })
+      stakeholders.push({
+        slug: br.resourceSlug,
+        name: profile?.name ?? br.resourceSlug,
+        role: br.resourceType,
+        isExternal: false,
+        contactEmail: profile?.email,
+        reservationStatus: stakeholderRes?.status as string | undefined,
+      })
+    } else if (br.externalName) {
+      stakeholders.push({
+        slug: undefined,
+        name: br.externalName,
+        role: br.resourceType,
+        isExternal: true,
+        contactEmail: undefined,
+        reservationStatus: undefined,
+      })
+    }
+  }
+
+  // Derive per-type names from bookingResources for backward compat
+  const instructorBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Instructor')
+  const boatBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Boat')
+  const emBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Equipment')
+  const poolBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Pool')
+  const compBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Compressor')
 
   return {
     _id: booking._id as string,
@@ -406,26 +589,26 @@ export async function _getBookingDetail(
     portalContact: booking.portalContact as boolean,
     portalMedical: booking.portalMedical as boolean,
     portalWaiver: booking.portalWaiver as boolean,
-    instructorId: booking.instructorId as string | undefined,
-    boatId: booking.boatId as string | undefined,
-    equipmentManagerId: booking.equipmentManagerId as string | undefined,
-    poolId: booking.poolId as string | undefined,
-    compressorId: booking.compressorId as string | undefined,
-    instructorName: booking.instructorId
-      ? (nameMap.get(booking.instructorId as string) ?? ext?.instructorName)
-      : ext?.instructorName,
-    boatName: booking.boatId
-      ? (nameMap.get(booking.boatId as string) ?? ext?.boatName)
-      : ext?.boatName,
-    equipmentManagerName: booking.equipmentManagerId
-      ? (nameMap.get(booking.equipmentManagerId as string) ?? ext?.equipmentManagerName)
-      : ext?.equipmentManagerName,
-    poolName: booking.poolId
-      ? (nameMap.get(booking.poolId as string) ?? ext?.poolName)
-      : ext?.poolName,
-    compressorName: booking.compressorId
-      ? (nameMap.get(booking.compressorId as string) ?? ext?.compressorName)
-      : ext?.compressorName,
+    instructorId: instructorBR?.resourceSlug as string | undefined,
+    boatId: boatBR?.resourceSlug as string | undefined,
+    equipmentManagerId: emBR?.resourceSlug as string | undefined,
+    poolId: poolBR?.resourceSlug as string | undefined,
+    compressorId: compBR?.resourceSlug as string | undefined,
+    instructorName: instructorBR
+      ? (instructorBR.resourceSlug ? nameMap.get(instructorBR.resourceSlug) : instructorBR.externalName)
+      : undefined,
+    boatName: boatBR
+      ? (boatBR.resourceSlug ? nameMap.get(boatBR.resourceSlug) : boatBR.externalName)
+      : undefined,
+    equipmentManagerName: emBR
+      ? (emBR.resourceSlug ? nameMap.get(emBR.resourceSlug) : emBR.externalName)
+      : undefined,
+    poolName: poolBR
+      ? (poolBR.resourceSlug ? nameMap.get(poolBR.resourceSlug) : poolBR.externalName)
+      : undefined,
+    compressorName: compBR
+      ? (compBR.resourceSlug ? nameMap.get(compBR.resourceSlug) : compBR.externalName)
+      : undefined,
     sessions: sessions.map((s: AnyCtx) => ({
       _id: s._id as string,
       date: s.date as string,
@@ -437,24 +620,37 @@ export async function _getBookingDetail(
       inventoryUnitName:
         (iuMap.get(s.inventoryUnitId as string)?.displayName as string | undefined) ?? 'Unknown',
     })),
-    reservations: reservations.map((r: AnyCtx) => ({
-      _id: r._id as string,
-      inventoryUnitId: r.inventoryUnitId as string,
-      inventoryUnitName:
-        (iuMap.get(r.inventoryUnitId as string)?.displayName as string | undefined) ?? 'Unknown',
-      resourceType:
-        (iuMap.get(r.inventoryUnitId as string)?.resourceType as string | undefined) ?? 'Unknown',
-      status: r.status as string,
-      confirmedAt: r.confirmedAt as number | undefined,
-      vacatedAt: r.vacatedAt as number | undefined,
-      vacatedBy: r.vacatedBy as string | undefined,
-    })),
+    reservations: reservations.map((r: AnyCtx) => {
+      const iu = iuMap.get(r.inventoryUnitId as string)
+      const ownerSlug = iu?.ownerId as string | undefined
+      return {
+        _id: r._id as string,
+        inventoryUnitId: r.inventoryUnitId as string,
+        inventoryUnitName: (iu?.displayName as string | undefined) ?? 'Unknown',
+        resourceType: (iu?.resourceType as string | undefined) ?? 'Unknown',
+        status: r.status as string,
+        confirmedAt: r.confirmedAt as number | undefined,
+        vacatedAt: r.vacatedAt as number | undefined,
+        vacatedBy: r.vacatedBy as string | undefined,
+        stakeholderName: ownerSlug ? (nameMap.get(ownerSlug) ?? ownerSlug) : undefined,
+      }
+    }),
     customerProfiles: customerProfiles.map((cp: AnyCtx) => ({
       _id: cp._id as string,
       submittedAt: cp.submittedAt as number | undefined,
       waiverSignedAt: cp.waiverSignedAt as number | undefined,
       physicianClearanceRequired: cp.physicianClearanceRequired as boolean,
       physicianClearedAt: cp.physicianClearedAt as number | undefined,
+    })),
+    stakeholders,
+    auditLog: auditEntries.map((e: AnyCtx) => ({
+      _id: e._id as string,
+      action: e.action as string,
+      actorSlug: e.actorSlug as string,
+      actorType: e.actorType as string,
+      timestamp: e.timestamp as number,
+      diff: e.diff as string | undefined,
+      note: e.note as string | undefined,
     })),
   }
 }
@@ -470,7 +666,6 @@ export const listByOwner = query({
       v.literal('Liveaboard'),
       v.literal('DiveResort'),
       v.literal('DiveHostel'),
-      v.literal('DiveSite'),
     ),
   },
   handler: _listByOwner,

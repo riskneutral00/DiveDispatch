@@ -9,6 +9,7 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
+import { Spinner } from '@/components/common/spinner'
 
 const poolSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -117,11 +118,8 @@ export function PoolProfileForm() {
 
   if (profile === undefined) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div
-          className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}
-        />
+      <div className="flex items-center justify-center py-12" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }

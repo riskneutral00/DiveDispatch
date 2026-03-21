@@ -152,15 +152,19 @@ export function getDaysOfWeek(): string[] {
  * Upcoming + started → Active. Upcoming/Completed + past end → Completed.
  */
 export function deriveStatus(
-  booking: { startDate: string; endDate: string; status: string },
+  booking: { startDate: string; endDate: string; status: string; reservationStatus?: string },
   todayStr: string,
+  allDraftsUrgent = false,
 ): CalendarDisplayStatus | null {
   switch (booking.status) {
     case 'Cancelled':
       return null
     case 'Draft':
       if (booking.endDate && booking.endDate < todayStr) return null
-      if (isUrgentDraft(booking)) return 'Urgent'
+      // Resource roles: only urgent if caller still has a pending reservation
+      if (allDraftsUrgent && booking.reservationStatus === 'PendingAcceptance') return 'Urgent'
+      // Operator roles: time-based urgency check
+      if (!allDraftsUrgent && isUrgentDraft(booking)) return 'Urgent'
       return 'Draft'
     case 'Upcoming':
     case 'Completed':

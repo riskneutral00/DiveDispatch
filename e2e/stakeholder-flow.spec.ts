@@ -1,55 +1,52 @@
 import { test, expect } from '@playwright/test'
 import { signInAs } from './helpers/auth'
-import { NICOLE, JAMES, futureDateString } from './helpers/seed'
+import { NICOLE, RYAN_CLARKE, futureDateString } from './helpers/seed'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function waitForWizardReady(page: import('@playwright/test').Page): Promise<string> {
-  await page.waitForSelector('text=Preparing booking', { state: 'detached', timeout: 20_000 })
-  const bookingIdEl = page.locator('p.text-xs.font-mono').first()
-  await expect(bookingIdEl).not.toBeEmpty({ timeout: 15_000 })
-  return (await bookingIdEl.textContent()) ?? ''
-}
-
 /**
- * Create a booking as Nicole with James Cooper as instructor.
- * Returns when redirected to Nicole's dashboard.
+ * Create a booking as Nicole with Ryan Clarke as instructor via the dashboard overlay.
+ * Uses the 3-step wizard (Customers → Itinerary → Review).
  */
-async function createBookingWithJames(
+async function createBookingWithRyanClarke(
   page: import('@playwright/test').Page,
   startDate: string,
   diverName: string,
 ): Promise<void> {
-  await page.goto('/booking/new')
-  await waitForWizardReady(page)
+  // Open booking overlay from dashboard
+  await page.getByRole('button', { name: /Booking/i }).click()
+  await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 10_000 })
 
-  // Details: DSD, 1-day
-  await page.locator('button:has-text("PADI Discover Scuba Diving")').click()
-  await page.getByLabel('Start Date').fill(startDate)
-  await page.getByLabel('End Date').fill(startDate)
-  await page.getByRole('button', { name: 'Next' }).click()
-  await page.waitForTimeout(500)
+  // Step 1: Customers
+  await page.getByLabel('Full name *').fill(diverName)
+  await page.locator('input[type="email"]').first().fill(`${diverName.toLowerCase().replace(/\s/g, '')}@test.com`)
+  await page.getByRole('button', { name: 'English' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.waitForTimeout(1_500)
 
-  // Divers
-  await page.getByRole('button', { name: 'Add Diver' }).click()
-  await page.getByLabel('First Name').first().fill(diverName)
-  await page.getByLabel('Last Name').first().fill('Diver')
-  await page.getByRole('button', { name: 'Next' }).click()
-  await page.waitForTimeout(500)
+  // Step 2: Itinerary — DSD with Ryan Clarke
+  await page.locator('select').first().selectOption('DSD')
+  await page.locator('input[type="date"]').first().fill(startDate)
 
-  // Resources: assign James Cooper
-  await page.locator('button:has-text("Select instructor")').click()
-  await page.getByText('James Cooper').first().click()
-  await page.getByRole('button', { name: 'Next' }).click()
-  await page.waitForTimeout(500)
+  // Wait for days to generate + instructor dropdown to load
+  await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
+  const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+  await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
 
-  // Sessions (auto-generated)
-  await page.getByRole('button', { name: 'Next' }).click()
-  await page.waitForTimeout(500)
+  // Select Ryan Clarke
+  const ryanOption = instructorSelect.locator('option:has-text("Ryan Clarke")')
+  const ryanValue = await ryanOption.getAttribute('value')
+  if (ryanValue) {
+    await instructorSelect.selectOption(ryanValue)
+  }
 
-  // Submit
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.waitForTimeout(1_500)
+
+  // Step 3: Review — submit
   await page.getByRole('button', { name: 'Submit Booking' }).click()
-  await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath), { timeout: 20_000 })
+  // Wait for overlay to close
+  await page.waitForTimeout(3_000)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -58,44 +55,40 @@ test.describe('stakeholder-flow', () => {
   test('instructor accepts a booking request', async ({ page }) => {
     const startDate = futureDateString(45)
 
-    // Nicole creates a booking with James
+    // Nicole creates a booking with Ryan Clarke
     await signInAs(page, NICOLE.email)
-    await createBookingWithJames(page, startDate, 'Eve')
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+    await createBookingWithRyanClarke(page, startDate, 'Eve Diver')
 
-    // Switch to James
-    await signInAs(page, JAMES.email)
-    await page.goto(JAMES.dashboardPath)
+    // Switch to Ryan Clarke
+    await signInAs(page, RYAN_CLARKE.email)
+    await page.goto(RYAN_CLARKE.dashboardPath)
 
     // "Pending Requests" section should show the booking
     await expect(page.getByText('Pending Requests')).toBeVisible({ timeout: 10_000 })
 
-    // Count pending requests before accepting
     const acceptBtn = page.getByRole('button', { name: 'Accept' }).first()
     await expect(acceptBtn).toBeVisible({ timeout: 10_000 })
 
     await acceptBtn.click()
 
-    // After accepting, the request should disappear from Pending Requests
-    // and appear in the Confirmed Schedule section
+    // After accepting, the request should appear in Confirmed Schedule
     await expect(page.getByText('Confirmed Schedule')).toBeVisible({ timeout: 5_000 })
-
-    // The Accept button should either disappear (moved to confirmed)
-    // or the confirmed schedule should have content
-    await page.waitForTimeout(1_000) // allow Convex optimistic update to propagate
-    // Just verify confirmed schedule section is visible and no error occurred
+    await page.waitForTimeout(1_000)
     await expect(page.getByText('Confirmed Schedule')).toBeVisible()
   })
 
   test('instructor declines a booking request', async ({ page }) => {
     const startDate = futureDateString(46)
 
-    // Nicole creates another booking with James
+    // Nicole creates another booking with Ryan Clarke
     await signInAs(page, NICOLE.email)
-    await createBookingWithJames(page, startDate, 'Frank')
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+    await createBookingWithRyanClarke(page, startDate, 'Frank Diver')
 
-    // Switch to James
-    await signInAs(page, JAMES.email)
-    await page.goto(JAMES.dashboardPath)
+    // Switch to Ryan Clarke
+    await signInAs(page, RYAN_CLARKE.email)
+    await page.goto(RYAN_CLARKE.dashboardPath)
 
     // Pending requests should show
     await expect(page.getByText('Pending Requests')).toBeVisible({ timeout: 10_000 })
@@ -109,10 +102,8 @@ test.describe('stakeholder-flow', () => {
     await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
     await confirmDialog.getByRole('button', { name: 'Decline' }).click()
 
-    // After declining, the request should be removed from pending
-    await page.waitForTimeout(1_000) // Convex mutation to settle
-    // Either no more decline buttons (all requests handled) or at least the operation succeeded
-    // without error
+    // After declining, no error alert should appear
+    await page.waitForTimeout(1_000)
     await expect(page.locator('[role="alert"]')).not.toBeVisible()
   })
 })

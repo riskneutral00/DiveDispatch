@@ -96,7 +96,11 @@ describe('acceptReservation', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'instructor-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'instructor-slug',
       })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -184,7 +188,11 @@ describe('acceptReservation', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'instructor-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'instructor-slug',
       })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -405,7 +413,11 @@ describe('declineReservation', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'instructor-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'instructor-slug',
       })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -507,7 +519,11 @@ describe('declineReservation', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'instructor-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'instructor-slug',
       })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -596,7 +612,11 @@ describe('declineReservation', () => {
         medicalHardBlock: false,
         bookingFormComplete: true,
         customerFormComplete: true,
-        instructorId: 'instructor-slug',
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'instructor-slug',
       })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,

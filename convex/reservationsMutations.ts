@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
 import { requireAuth, type AnyCtx } from './lib/auth'
 import { tryAutoAdvance } from './bookings/_shared'
+import { deleteResourceByType } from './bookingResources'
 
 type ResourceType =
   | 'Instructor'
@@ -28,25 +29,6 @@ export function getDateRange(startDate: string, endDate: string): string[] {
   return dates
 }
 
-/**
- * Maps resourceType to the denormalized booking field to clear on decline.
- */
-function bookingFieldForResourceType(resourceType: ResourceType): string | null {
-  switch (resourceType) {
-    case 'Instructor':
-      return 'instructorId'
-    case 'Boat':
-      return 'boatId'
-    case 'Equipment':
-      return 'equipmentManagerId'
-    case 'Pool':
-      return 'poolId'
-    case 'Compressor':
-      return 'compressorId'
-    default:
-      return null
-  }
-}
 
 /**
  * Looks up the city of an inventoryUnit owner via their role-specific profile table.
@@ -138,6 +120,50 @@ export const acceptReservation = mutation({
   handler: _acceptHandler,
 })
 
+// ─── acceptBookingReservations ────────────────────────────────────────────────
+
+/**
+ * Accepts ALL PendingAcceptance reservations for a given booking+inventoryUnit
+ * in one mutation. Used by the Open Requests widget so multi-day bookings
+ * are confirmed with a single click.
+ */
+export async function _acceptBookingHandler(
+  ctx: AnyCtx,
+  args: { bookingId: string; inventoryUnitId: string },
+): Promise<void> {
+  const { user: caller } = await requireAuth(ctx)
+
+  const unit = await ctx.db.get(args.inventoryUnitId)
+  if (!unit) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+  const reservations = await ctx.db
+    .query('reservations')
+    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+    .collect()
+
+  const pending = reservations.filter(
+    (r: AnyCtx) =>
+      r.inventoryUnitId === args.inventoryUnitId && r.status === 'PendingAcceptance',
+  )
+
+  if (pending.length === 0) return // idempotent
+
+  for (const res of pending) {
+    await ctx.db.patch(res._id, { status: 'Confirmed', confirmedAt: Date.now() })
+  }
+
+  await tryAutoAdvance(ctx, args.bookingId)
+}
+
+export const acceptBookingReservations = mutation({
+  args: {
+    bookingId: v.id('bookings'),
+    inventoryUnitId: v.id('inventoryUnits'),
+  },
+  handler: _acceptBookingHandler,
+})
+
 // ─── declineReservation ───────────────────────────────────────────────────────
 
 /**
@@ -210,12 +236,11 @@ export async function _declineHandler(
     }
   }
 
-  // Clear the denormalized booking field and cascade status if needed (atomic single patch)
-  const fieldToClear = bookingFieldForResourceType(unit.resourceType as ResourceType)
+  // Delete from bookingResources junction table
+  await deleteResourceByType(ctx, args.bookingId, unit.resourceType as string)
+
+  // Cascade booking status if needed
   const bookingPatch: Record<string, unknown> = {}
-  if (fieldToClear) {
-    bookingPatch[fieldToClear] = undefined
-  }
   if (booking.status === 'Upcoming') {
     bookingPatch.status = 'Draft'
     bookingPatch.bookingFormComplete = false
@@ -294,4 +319,95 @@ export const declineReservation = mutation({
     inventoryUnitId: v.id('inventoryUnits'),
   },
   handler: _declineHandler,
+})
+
+// ─── declineByBookingForCaller ────────────────────────────────────────────────
+
+/**
+ * Resolves the caller's inventory unit(s) with active reservations on the
+ * booking, then declines all of them. Avoids threading inventoryUnitId
+ * through the client calendar data model.
+ */
+export const declineByBookingForCaller = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, args) => {
+    const { user: caller } = await requireAuth(ctx)
+
+    const units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', caller.slug))
+      .collect()
+
+    if (units.length === 0) {
+      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No inventory units found for caller.' })
+    }
+
+    const reservations = await ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+
+    const callerUnitIds = new Set(units.map((u: AnyCtx) => u._id))
+    const activeForCaller = reservations.filter(
+      (r: AnyCtx) =>
+        callerUnitIds.has(r.inventoryUnitId) &&
+        (r.status === 'PendingAcceptance' || r.status === 'Confirmed'),
+    )
+
+    if (activeForCaller.length === 0) {
+      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No active reservations found for this booking.' })
+    }
+
+    // Decline via each distinct inventory unit
+    const declinedUnits = new Set<string>()
+    for (const res of activeForCaller) {
+      if (declinedUnits.has(res.inventoryUnitId)) continue
+      declinedUnits.add(res.inventoryUnitId)
+      await _declineHandler(ctx, {
+        bookingId: args.bookingId as string,
+        inventoryUnitId: res.inventoryUnitId as string,
+      })
+    }
+  },
+})
+
+// ─── acceptByBookingForCaller ─────────────────────────────────────────────────
+
+/**
+ * Resolves the caller's inventory unit(s) with PendingAcceptance reservations
+ * on the booking, then confirms all of them. Mirrors declineByBookingForCaller.
+ */
+export const acceptByBookingForCaller = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, args) => {
+    const { user: caller } = await requireAuth(ctx)
+
+    const units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', caller.slug))
+      .collect()
+
+    if (units.length === 0) {
+      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No inventory units found for caller.' })
+    }
+
+    const reservations = await ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .collect()
+
+    const callerUnitIds = new Set(units.map((u: AnyCtx) => u._id))
+    const pendingForCaller = reservations.filter(
+      (r: AnyCtx) =>
+        callerUnitIds.has(r.inventoryUnitId) && r.status === 'PendingAcceptance',
+    )
+
+    if (pendingForCaller.length === 0) {
+      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No pending reservations found for this booking.' })
+    }
+
+    for (const res of pendingForCaller) {
+      await _acceptHandler(ctx, { reservationId: res._id as string })
+    }
+  },
 })

@@ -1,18 +1,19 @@
+import type { ComponentType } from 'react'
 import {
-  Anchor,
-  Building2,
-  Compass,
-  Droplets,
-  Globe,
-  Hotel,
-  Package,
-  Ship,
-  Sunset,
-  UserCog,
-  Wind,
-  Wrench,
-  type LucideIcon,
-} from 'lucide-react'
+  DiveCenterIcon,
+  AgentIcon,
+  LiveaboardIcon,
+  DiveResortIcon,
+  DiveHostelIcon,
+  DiveSiteIcon,
+  InstructorIcon,
+  DiveMasterIcon,
+  BoatIcon,
+  EquipmentIcon,
+  PoolIcon,
+  CompressorIcon,
+  type RoleIconProps,
+} from '@/components/icons/role-icons'
 
 export type RoleKey =
   | 'dive-center'
@@ -49,9 +50,10 @@ export interface RoleConfig {
   pluralLabel: string
   route: string
   browseRoute: string
-  icon: LucideIcon
+  icon: ComponentType<RoleIconProps>
   isOrganizer: boolean
   isResource: boolean
+  displayGroup: 'operator' | 'resource'
   tableName: string
   description: string
 }
@@ -65,9 +67,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Dive Centers',
     route: '/dive-center',
     browseRoute: '/resources/dive-centers',
-    icon: Compass,
+    icon: DiveCenterIcon,
     isOrganizer: true,
     isResource: false,
+    displayGroup: 'operator',
     tableName: 'diveCenters',
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
   },
@@ -78,9 +81,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Agents',
     route: '/agent',
     browseRoute: '/resources/agents',
-    icon: UserCog,
+    icon: AgentIcon,
     isOrganizer: true,
     isResource: false,
+    displayGroup: 'operator',
     tableName: 'agents',
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
   },
@@ -91,9 +95,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Liveaboards',
     route: '/liveaboard',
     browseRoute: '/resources/liveaboards',
-    icon: Ship,
+    icon: LiveaboardIcon,
     isOrganizer: true,
-    isResource: true,
+    isResource: false,
+    displayGroup: 'operator',
     tableName: 'liveaboards',
     description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
   },
@@ -104,9 +109,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Dive Resorts',
     route: '/dive-resort',
     browseRoute: '/resources/dive-resorts',
-    icon: Hotel,
+    icon: DiveResortIcon,
     isOrganizer: true,
     isResource: false,
+    displayGroup: 'operator',
     tableName: 'diveResorts',
     description: 'Offer dive packages, courses, and guided dives from a resort base.',
   },
@@ -117,9 +123,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Dive Hostels',
     route: '/dive-hostel',
     browseRoute: '/resources/dive-hostels',
-    icon: Building2,
+    icon: DiveHostelIcon,
     isOrganizer: true,
     isResource: false,
+    displayGroup: 'operator',
     tableName: 'diveHostels',
     description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
   },
@@ -130,9 +137,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Dive Sites',
     route: '/dive-site',
     browseRoute: '/resources/dive-sites',
-    icon: Globe,
-    isOrganizer: true,
+    icon: DiveSiteIcon,
+    isOrganizer: false,
     isResource: true,
+    displayGroup: 'operator',
     tableName: 'diveSites',
     description: 'Manage access and dive conditions for a specific underwater site.',
   },
@@ -145,9 +153,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Instructors',
     route: '/instructor',
     browseRoute: '/resources/instructors',
-    icon: Sunset,
+    icon: InstructorIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'instructors',
     description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
   },
@@ -158,9 +167,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Dive Masters',
     route: '/dive-master',
     browseRoute: '/resources/dive-masters',
-    icon: Droplets,
+    icon: DiveMasterIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'diveMasters',
     description: 'Guide certified divers, assist instructors, and lead fun dives.',
   },
@@ -171,9 +181,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Boats',
     route: '/boat',
     browseRoute: '/resources/boats',
-    icon: Anchor,
+    icon: BoatIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'boats',
     description: 'Provide vessel transport and surface support for dive operations.',
   },
@@ -184,9 +195,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Equipment Managers',
     route: '/equipment',
     browseRoute: '/resources/equipment',
-    icon: Package,
+    icon: EquipmentIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'equipment',
     description: 'Supply rental gear and manage inventory across dive bookings.',
   },
@@ -197,9 +209,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Pools',
     route: '/pool',
     browseRoute: '/resources/pools',
-    icon: Wrench,
+    icon: PoolIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'pools',
     description: 'Provide confined-water training space for beginner and refresher courses.',
   },
@@ -210,9 +223,10 @@ export const ROLES: RoleConfig[] = [
     pluralLabel: 'Compressors',
     route: '/compressor',
     browseRoute: '/resources/compressors',
-    icon: Wind,
+    icon: CompressorIcon,
     isOrganizer: false,
     isResource: true,
+    displayGroup: 'resource',
     tableName: 'compressors',
     description: 'Supply and track tank fills and gas blending for dive operations.',
   },
@@ -229,3 +243,7 @@ export const ROLE_BY_CLERK_ROLE = Object.fromEntries(
 
 export const ORGANIZER_ROLES = ROLES.filter((r) => r.isOrganizer)
 export const RESOURCE_ROLES = ROLES.filter((r) => r.isResource && !r.isOrganizer)
+
+// Display grouping for sign-up two-column layout (Dive Site appears in operator column for balance)
+export const DISPLAY_OPERATOR_ROLES = ROLES.filter((r) => r.displayGroup === 'operator')
+export const DISPLAY_RESOURCE_ROLES = ROLES.filter((r) => r.displayGroup === 'resource')

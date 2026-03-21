@@ -1,4 +1,5 @@
 import React from "react";
+import { Spinner } from "@/components/common/spinner";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
@@ -80,12 +81,7 @@ export function GlassButton({
         ...style,
       }}
     >
-      {loading && (
-        <span
-          aria-hidden
-          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"
-        />
-      )}
+      {loading && <Spinner size="sm" />}
       {children}
     </button>
   );

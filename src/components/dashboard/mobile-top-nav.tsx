@@ -3,7 +3,6 @@
 import type { RoleKey } from '@/lib/constants/roles'
 import { BgSwitcher } from './bg-switcher'
 import { NotificationBell } from './notification-bell'
-import { ThemeSwitcher } from './theme-switcher'
 import { UserMenu } from './user-menu'
 
 interface MobileTopNavProps {
@@ -23,7 +22,6 @@ export function MobileTopNav({ roleSlug, slug }: MobileTopNavProps) {
       }}
     >
       <BgSwitcher />
-      <ThemeSwitcher />
       <NotificationBell />
       <UserMenu roleSlug={roleSlug} slug={slug} />
     </div>

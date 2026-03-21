@@ -7,6 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { Spinner } from '@/components/common/spinner'
 
 interface Props {
   slugs: string[]
@@ -20,11 +21,8 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
 
   if (allInstructors === undefined) {
     return (
-      <div className="flex items-center justify-center py-6">
-        <div
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"
-          style={{ color: 'var(--color-primary)' }}
-        />
+      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+        <Spinner />
       </div>
     )
   }

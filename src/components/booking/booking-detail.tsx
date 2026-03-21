@@ -6,13 +6,15 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, X, ExternalLink, Copy, Check } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import type { BookingDetail } from '../../../convex/bookings'
+import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/glass'
+import { GlassCard, GlassButton, GlassBadge, GlassDialog, RoleIcon } from '@/components/glass'
+import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { PortalProgressCard } from './portal-progress-card'
+import { AuditTrailTable } from './audit-trail-table'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -253,6 +255,142 @@ function PortalLinkSection({
   )
 }
 
+// ── Customer table ──────────────────────────────────────────────────────────────
+
+function CustomerTable({ booking }: { booking: BookingDetail }) {
+  const divers = booking.divers
+  const profiles = booking.customerProfiles
+
+  if (divers.length === 0) {
+    return (
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        No customers added.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {divers.map((diver, idx) => {
+        const profile = profiles[idx]
+        const portalComplete = profile?.submittedAt != null
+        return (
+          <div
+            key={idx}
+            className="flex items-center justify-between gap-3 p-3 rounded-lg border"
+            style={{
+              background: 'var(--color-glass-bg)',
+              borderColor: 'var(--color-glass-border)',
+            }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base flex-shrink-0" aria-label={diver.flag.label}>
+                {[...diver.flag.code.toUpperCase()]
+                  .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
+                  .join('')}
+              </span>
+              <div className="min-w-0">
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {diver.name}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  {diver.activityType.map(courseLabel).join(', ')}
+                </p>
+              </div>
+            </div>
+            <GlassBadge variant={portalComplete ? 'success' : 'default'} size="sm" dot>
+              {portalComplete ? 'Completed' : 'Pending'}
+            </GlassBadge>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Stakeholder list ────────────────────────────────────────────────────────────
+
+function StakeholderList({ stakeholders }: { stakeholders: BookingDetailStakeholder[] }) {
+  if (stakeholders.length === 0) {
+    return (
+      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        No resources assigned.
+      </p>
+    )
+  }
+
+  function reservationVariant(
+    status: string | undefined,
+  ): 'success' | 'warning' | 'destructive' | 'default' {
+    switch (status) {
+      case 'Confirmed':
+        return 'success'
+      case 'PendingAcceptance':
+        return 'warning'
+      case 'Vacated':
+      case 'NoShow':
+        return 'destructive'
+      default:
+        return 'default'
+    }
+  }
+
+  return (
+    <ul className="space-y-2">
+      {stakeholders.map((s, idx) => (
+        <li
+          key={idx}
+          className="flex items-center justify-between gap-3 p-3 rounded-lg border"
+          style={{
+            background: 'var(--color-glass-bg)',
+            borderColor: 'var(--color-glass-border)',
+          }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{
+                background: 'var(--color-glass-bg-elevated)',
+                border: '1px solid var(--color-glass-border)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              <RoleIcon role={s.role as ClerkRole} size={18} />
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p
+                  className="text-sm font-medium truncate"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  {s.name}
+                </p>
+                {s.isExternal && (
+                  <GlassBadge variant="default" size="sm">
+                    External
+                  </GlassBadge>
+                )}
+              </div>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                {s.role}
+                {s.contactEmail && <> · {s.contactEmail}</>}
+              </p>
+            </div>
+          </div>
+          {s.reservationStatus && (
+            <GlassBadge variant={reservationVariant(s.reservationStatus)} size="sm" dot>
+              {s.reservationStatus === 'PendingAcceptance' ? 'Pending' : s.reservationStatus}
+            </GlassBadge>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function BookingDetail({ bookingId }: BookingDetailProps) {
@@ -391,17 +529,31 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         </div>
       </GlassCard>
 
+      {/* Customers */}
+      {booking.divers.length > 0 && (
+        <GlassCard padding="md">
+          <SectionLabel>Customers</SectionLabel>
+          <CustomerTable booking={booking} />
+        </GlassCard>
+      )}
+
       {/* Sessions */}
       {booking.sessions.length > 0 && (
         <GlassCard padding="md">
-          <SectionLabel>Sessions</SectionLabel>
+          <SectionLabel>Schedule</SectionLabel>
           <SessionTimeline sessions={booking.sessions} />
         </GlassCard>
       )}
 
+      {/* Stakeholders */}
+      <GlassCard padding="md">
+        <SectionLabel>Stakeholders</SectionLabel>
+        <StakeholderList stakeholders={booking.stakeholders} />
+      </GlassCard>
+
       {/* Reservations */}
       <GlassCard padding="md">
-        <SectionLabel>Resources</SectionLabel>
+        <SectionLabel>Reservations</SectionLabel>
         <ReservationStatusList reservations={booking.reservations} />
       </GlassCard>
 
@@ -422,6 +574,12 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
             divers={booking.divers}
           />
         </div>
+      </GlassCard>
+
+      {/* Audit trail */}
+      <GlassCard padding="md">
+        <SectionLabel>Audit Trail</SectionLabel>
+        <AuditTrailTable bookingId={bookingId} />
       </GlassCard>
 
       {/* Cancel dialog */}

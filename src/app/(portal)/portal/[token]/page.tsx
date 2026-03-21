@@ -13,46 +13,13 @@ import { StepWaiver } from '../../../../components/portal/step-waiver'
 import { StepEquipment } from '../../../../components/portal/step-equipment'
 import type { EquipmentData } from '../../../../components/portal/step-equipment'
 import { StepSafety } from '../../../../components/portal/step-safety'
+import { Spinner } from '@/components/common/spinner'
+import { StepIndicator } from '@/components/common/step-indicator'
 import { PortalSubmit } from '../../../../components/portal/portal-submit'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'safety' | 'submit'
-
-// ── Progress indicator ────────────────────────────────────────────────────────
-
-interface StepDotProps {
-  label: string
-  active: boolean
-  complete: boolean
-}
-
-function StepDot({ label, active, complete }: StepDotProps) {
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div
-        className="w-2.5 h-2.5 rounded-full transition-all"
-        style={{
-          background: complete
-            ? 'var(--color-success)'
-            : active
-              ? 'var(--color-primary)'
-              : 'var(--color-glass-border)',
-        }}
-        aria-hidden
-      />
-      <span
-        className="text-xs"
-        style={{
-          color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          fontWeight: active ? 600 : 400,
-        }}
-      >
-        {label}
-      </span>
-    </div>
-  )
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -81,14 +48,8 @@ export default function PortalTokenPage() {
   // Loading
   if (result === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div
-          className="w-8 h-8 border-4 rounded-full animate-spin"
-          style={{
-            borderColor: 'var(--color-glass-border)',
-            borderTopColor: 'var(--color-primary)',
-          }}
-        />
+      <div className="flex min-h-screen items-center justify-center p-4" style={{ color: 'var(--color-primary)' }}>
+        <Spinner size="lg" />
       </div>
     )
   }
@@ -305,16 +266,10 @@ export default function PortalTokenPage() {
         </GlassCard>
 
         {/* Step progress */}
-        <div className="flex justify-between px-2">
-          {STEPS.map(({ key, label }) => (
-            <StepDot
-              key={key}
-              label={label}
-              active={currentStep === key}
-              complete={isStepComplete(key)}
-            />
-          ))}
-        </div>
+        <StepIndicator
+          steps={STEPS}
+          currentIndex={STEPS.findIndex((s) => s.key === currentStep)}
+        />
 
         {/* Active step */}
         <div>{renderStep()}</div>

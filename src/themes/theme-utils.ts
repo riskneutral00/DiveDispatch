@@ -106,6 +106,10 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-glass-specular-subtle": palette.glassSpecularSubtle,
     "--color-glass-shadow": palette.glassShadow,
     "--color-glass-shadow-elevated": palette.glassShadowElevated,
+    // Hover state (component-level surface effect)
+    "--color-glass-bg-hover": palette.glassBgHover,
+    "--color-glass-border-hover": palette.glassBorderHover,
+    "--glass-blur-hover": `${palette.glassBlurHover}px`,
     "--body-bg": palette.bodyBg,
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
@@ -118,7 +122,10 @@ export function themeToVars(
   theme: ThemeConfig,
   mode: ThemeMode,
 ): Record<string, string> {
-  const palette = mode === "dark" ? theme.colors.dark : theme.colors.light;
+  const palette =
+    mode === "light" && theme.colors.light
+      ? theme.colors.light
+      : theme.colors.dark;
   const paletteVars = paletteToVars(palette);
   const vars: Record<string, string> = {
     ...paletteVars,
@@ -131,13 +138,7 @@ export function themeToVars(
   if (theme.typography.fontAccent) {
     vars["--font-accent"] = theme.typography.fontAccent;
   }
-  // Background fallbacks from theme.backgrounds (palette-level values take precedence).
-  if (!paletteVars["--bg-image"] && theme.backgrounds.heroImage) {
-    vars["--bg-image"] = theme.backgrounds.heroImage;
-  }
-  if (!paletteVars["--bg-overlay"] && theme.backgrounds.gradientOverlay) {
-    vars["--bg-overlay"] = theme.backgrounds.gradientOverlay;
-  }
+  // Background fallback — only used when no skin image loads.
   if (!paletteVars["--body-bg"] && theme.backgrounds.fallbackColor) {
     vars["--body-bg"] = theme.backgrounds.fallbackColor;
   }

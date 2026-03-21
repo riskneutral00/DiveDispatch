@@ -176,7 +176,6 @@ function DevSwitcherInner() {
                       {users.map((u) => (
                         <option key={u.slug} value={u.slug}>
                           {u.firstName}
-                          {u.additionalRoles?.length ? ` +${u.additionalRoles.length}` : ''}
                         </option>
                       ))}
                     </select>
