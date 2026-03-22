@@ -145,7 +145,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'Pool': {
-      const p = await byUser('pools')
+      const p = await byUser('venues')
       if (!p) return null
       return {
         name: p.name,
@@ -185,7 +185,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'DiveSite': {
-      const p = await byUser('diveSites')
+      const p = await byUser('venues')
       if (!p) return null
       return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }

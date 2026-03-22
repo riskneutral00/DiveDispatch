@@ -136,6 +136,20 @@ export const ALL_LANGUAGES: DiveLanguage[] = [...TOP_LANGUAGES, ...OTHER_LANGUAG
 
 export const VALID_LANGUAGE_CODE_SET = new Set<string>(ALL_LANGUAGES.map((l) => l.code))
 
+// Build reverse lookup: language label → country code (case-insensitive)
+const _labelToCode = new Map<string, string>(
+  ALL_LANGUAGES.map((l) => [l.label.toLowerCase(), l.code]),
+)
+
+/** Convert a language name/label to its country code for flag rendering.
+ *  Handles both formats: "English" → "GB", "GB" → "GB" (passthrough). */
+export function languageToCode(input: string): string {
+  if (!input) return ''
+  const upper = input.toUpperCase()
+  if (upper.length === 2 && VALID_LANGUAGE_CODE_SET.has(upper)) return upper
+  return _labelToCode.get(input.toLowerCase()) ?? ''
+}
+
 export const POPULAR_LANGUAGE_CODES: LanguageCode[] = [
   'GB',
   'FR',

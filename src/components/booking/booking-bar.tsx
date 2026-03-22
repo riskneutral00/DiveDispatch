@@ -1,6 +1,8 @@
 'use client'
 
 import { STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
+import { getBarBorderColor } from '@/lib/booking/bar-styles'
+import { BAR_ROW_HEIGHT } from '@/lib/constants/calendar-config'
 
 interface BookingBarProps {
   id: string
@@ -13,9 +15,10 @@ interface BookingBarProps {
   top?: number
   onClick?: (id: string) => void
   className?: string
+  isMultiDay?: boolean
 }
 
-export const BAR_ROW_HEIGHT = 28
+export { BAR_ROW_HEIGHT }
 
 export function BookingBar({
   id,
@@ -28,10 +31,12 @@ export function BookingBar({
   top,
   onClick,
   className,
+  isMultiDay,
 }: BookingBarProps) {
   const statusColors = STATUS_COLORS[status]
   const opacity = STATUS_OPACITY[status]
   const borderStyle = STATUS_BORDER_STYLE[status]
+  const borderColor = getBarBorderColor(status, !!isMultiDay, statusColors.borderVar)
   const span = endCol - startCol + 1
   const topVal = top !== undefined ? top : row * BAR_ROW_HEIGHT
 
@@ -54,10 +59,10 @@ export function BookingBar({
         color: status === 'Urgent'
           ? '#ffffff'
           : statusColors.textVar,
-        borderLeft: `3px ${borderStyle} ${statusColors.borderVar}`,
-        borderTop: `1px ${borderStyle} ${statusColors.borderVar}`,
-        borderRight: `1px ${borderStyle} ${statusColors.borderVar}`,
-        borderBottom: `1px ${borderStyle} ${statusColors.borderVar}`,
+        borderLeft: `3px ${borderStyle} ${borderColor}`,
+        borderTop: `1px ${borderStyle} ${borderColor}`,
+        borderRight: `1px ${borderStyle} ${borderColor}`,
+        borderBottom: `1px ${borderStyle} ${borderColor}`,
         cursor: onClick ? 'pointer' : 'default',
         display: 'flex',
         alignItems: 'center',

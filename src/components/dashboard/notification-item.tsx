@@ -32,13 +32,8 @@ function timeAgo(ts: number): string {
 
 // Static component — declared outside render to preserve reference identity.
 function NotificationIcon({ type, isUnread }: { type: string; isUnread: boolean }) {
-  if (type === 'hold_placed') return <Clock size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  if (type === 'hold_accepted') return <CheckCircle size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  if (type === 'hold_declined') return <XCircle size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  if (type === 'booking_cancelled') return <Ban size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  if (type === 'portal_complete') return <UserCheck size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  if (type === 'medical_hard_block') return <AlertTriangle size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
-  return <Bell size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
+  const Icon = TYPE_ICON[type] ?? Bell
+  return <Icon size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
 }
 
 export interface NotificationDoc {
@@ -49,7 +44,6 @@ export interface NotificationDoc {
   readAt?: number
 }
 
-// Keep TYPE_ICON exported for tests / storybook — not used in render path.
 export { TYPE_ICON }
 
 interface NotificationItemProps {

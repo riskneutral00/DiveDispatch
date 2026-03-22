@@ -6,6 +6,7 @@ import { GlassBadge } from '@/components/glass/glass-badge'
 import { GlassCard } from '@/components/glass/glass-card'
 import type { DirectoryEntry } from '../../../convex/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { LanguageFlags } from '@/components/common/language-flags'
 
 // Extends DirectoryEntry with role-specific fields returned by the enhanced
 // listByRole query (builder-directory-backend). Field names match the backend's
@@ -21,16 +22,6 @@ export type RichDirectoryEntry = DirectoryEntry & {
   isPreferred?: boolean  // Instructor: starred by the authenticated caller
 }
 
-// ISO alpha-2 → Regional Indicator Symbol emoji
-// Each letter maps to codepoint 0x1F1A5 + charCode
-function flagEmoji(code: string): string {
-  if (!code || code.length !== 2) return ''
-  const OFFSET = 0x1f1a5
-  return (
-    String.fromCodePoint(OFFSET + code.toUpperCase().charCodeAt(0)) +
-    String.fromCodePoint(OFFSET + code.toUpperCase().charCodeAt(1))
-  )
-}
 
 const ROLE_PATH_PREFIX: Record<string, string> = {
   DiveCenter: 'dive-center',
@@ -181,18 +172,7 @@ export function StakeholderCard({
         {/* Instructor / DiveMaster: language flags */}
         {(entry.role === 'Instructor' || entry.role === 'DiveMaster') &&
           entry.languages.length > 0 && (
-            <div className="mt-2 flex items-center gap-0.5 flex-wrap">
-              {entry.languages.slice(0, 6).map((code) => (
-                <span
-                  key={code}
-                  className="text-base leading-none"
-                  title={code}
-                  aria-label={code}
-                >
-                  {flagEmoji(code)}
-                </span>
-              ))}
-            </div>
+            <LanguageFlags languages={entry.languages} className="mt-2 text-base leading-none" />
           )}
 
         {/* Boat: capacity + type */}

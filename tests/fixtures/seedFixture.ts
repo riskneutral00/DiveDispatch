@@ -6,8 +6,12 @@
  * customise only what matters for that scenario.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
+import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
+import type { DataModel, Doc, Id } from '../../convex/_generated/dataModel'
+import { testDate } from '../helpers/dates'
+
+type SeedCtx = GenericMutationCtx<DataModel> &
+  Pick<GenericActionCtx<DataModel>, 'storage'>
 
 // ─── Well-known test identifiers ──────────────────────────────────────────────
 
@@ -27,11 +31,11 @@ export const TEST_SLUGS = {
 // ─── User seeds ───────────────────────────────────────────────────────────────
 
 export async function seedUser(
-  ctx: AnyCtx,
+  ctx: SeedCtx,
   overrides: {
     tokenIdentifier?: string
     slug?: string
-    role?: string
+    role?: Doc<'users'>['role']
     email?: string
     name?: string
     firstName?: string
@@ -55,7 +59,7 @@ export async function seedUser(
 
 /** Seed blocked dates into the stakeholderBlockedDates table. */
 export async function seedBlockedDates(
-  ctx: AnyCtx,
+  ctx: SeedCtx,
   opts: { ownerSlug: string; roleType: string; dates: string[] },
 ) {
   return ctx.db.insert('stakeholderBlockedDates', {
@@ -68,14 +72,14 @@ export async function seedBlockedDates(
 // ─── Inventory seeds ──────────────────────────────────────────────────────────
 
 export async function seedInventoryUnit(
-  ctx: AnyCtx,
+  ctx: SeedCtx,
   overrides: {
-    resourceType?: string
+    resourceType?: Doc<'inventoryUnits'>['resourceType']
     displayName?: string
     capacityModel?: 'Exclusive' | 'Pooled'
     totalUnits?: number
     ownerId?: string
-    ownerType?: string
+    ownerType?: Doc<'inventoryUnits'>['ownerType']
   } = {},
 ) {
   const resourceType = overrides.resourceType ?? 'Instructor'
@@ -95,8 +99,8 @@ export async function seedInventoryUnit(
 // ─── Availability seeds ───────────────────────────────────────────────────────
 
 export async function seedSnapshot(
-  ctx: AnyCtx,
-  inventoryUnitId: string,
+  ctx: SeedCtx,
+  inventoryUnitId: Id<'inventoryUnits'>,
   overrides: {
     date?: string
     windowStart?: string
@@ -111,7 +115,7 @@ export async function seedSnapshot(
   const availableUnits = overrides.availableUnits ?? totalUnits - reservedUnits
   return ctx.db.insert('availabilitySnapshots', {
     inventoryUnitId,
-    date: overrides.date ?? '2024-06-01',
+    date: overrides.date ?? testDate(5),
     windowStart: overrides.windowStart ?? '08:00',
     windowEnd: overrides.windowEnd ?? '16:00',
     totalUnits,
@@ -120,13 +124,89 @@ export async function seedSnapshot(
   })
 }
 
+// ─── Booking seeds ───────────────────────────────────────────────────────────
+
+export async function seedBooking(
+  ctx: SeedCtx,
+  overrides: {
+    ownerId?: string
+    ownerType?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+    bookingFormComplete?: boolean
+    customerFormComplete?: boolean
+    medicalHardBlock?: boolean
+    needsAttention?: boolean
+  } = {},
+) {
+  return ctx.db.insert('bookings', {
+    ownerId: overrides.ownerId ?? TEST_SLUGS.diveCenter,
+    ownerType: overrides.ownerType ?? 'DiveCenter',
+    status: overrides.status ?? 'Draft',
+    createdAt: Date.now(),
+    holdTTL: 43200000,
+    paid: false,
+    activityType: ['OW'],
+    startDate: overrides.startDate ?? testDate(5),
+    endDate: overrides.endDate ?? testDate(7),
+    divers: [{ name: 'Alice', abbrev: 'AL', flag: { code: 'en', label: 'English' }, startDate: overrides.startDate ?? testDate(5), endDate: overrides.endDate ?? testDate(7), activityType: ['OW'] }],
+    operatorName: 'Test DC',
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: overrides.medicalHardBlock ?? false,
+    bookingFormComplete: overrides.bookingFormComplete ?? true,
+    customerFormComplete: overrides.customerFormComplete ?? false,
+  })
+}
+
+export async function seedSession(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  inventoryUnitId: Id<'inventoryUnits'>,
+  overrides: {
+    date?: string
+    startTime?: string
+    endTime?: string
+  } = {},
+) {
+  return ctx.db.insert('bookingSessions', {
+    bookingId,
+    inventoryUnitId,
+    date: overrides.date ?? testDate(5),
+    startTime: overrides.startTime ?? '08:00',
+    endTime: overrides.endTime ?? '16:00',
+    timezone: 'Asia/Bangkok',
+  })
+}
+
+export async function seedReservation(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  inventoryUnitId: Id<'inventoryUnits'>,
+  sessionId: Id<'bookingSessions'>,
+  overrides: {
+    status?: string
+    unitsRequested?: number
+  } = {},
+) {
+  return ctx.db.insert('reservations', {
+    bookingId,
+    inventoryUnitId,
+    bookingSessionId: sessionId,
+    unitsRequested: overrides.unitsRequested ?? 1,
+    status: overrides.status ?? 'PendingAcceptance',
+  })
+}
+
 // ─── Notification seeds ───────────────────────────────────────────────────────
 
 export async function seedNotification(
-  ctx: AnyCtx,
+  ctx: SeedCtx,
   overrides: {
     userId?: string
-    type?: string
+    type?: Doc<'notifications'>['type']
     message?: string
     readAt?: number
     createdAt?: number

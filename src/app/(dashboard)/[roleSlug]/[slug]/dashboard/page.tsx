@@ -183,6 +183,7 @@ function DashboardContent({
         onUrgentCancel={handleUrgentCancel}
         legendStatuses={legendStatuses as CalendarDisplayStatus[]}
         allDraftsUrgent={isResourceOnly}
+        viewerRole={clerkRole}
       />
 
       {/* Click-to-detail dialog */}

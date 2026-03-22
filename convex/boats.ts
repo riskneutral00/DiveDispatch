@@ -48,7 +48,7 @@ export const create = mutation({
       .unique()
     if (existing) return existing._id
 
-    return await ctx.db.insert('boats', { ...args, userId: user._id, verified: false })
+    return await ctx.db.insert('boats', { ...args, userId: user._id, hasCompressor: false, verified: false })
   },
 })
 

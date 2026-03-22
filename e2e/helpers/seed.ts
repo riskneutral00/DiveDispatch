@@ -25,13 +25,6 @@ export const RYAN_CLARKE = {
   dashboardPath: '/instructor/ryan-clarke/dashboard',
 } as const
 
-export const SARAH = {
-  email: 'sarah-mitchell+clerk_test@divedispatch.dev',
-  slug: 'sarah-mitchell',
-  roleKey: 'instructor',
-  dashboardPath: '/instructor/sarah-mitchell/dashboard',
-} as const
-
 // ── Pool ──────────────────────────────────────────────────────────────────────
 
 /** Water Pro pool — primary Pool role seed user (slug: b3wt9f) */

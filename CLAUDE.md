@@ -39,6 +39,5 @@ Non-obvious rules:
 
 - **TTL is lazy expiry** — checked when a booking is read, not by scheduled cron. Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
-- **Medical block extends TTL by 24 hours** (total 36h from creation). Hard ceiling: 8pm night before the activity date — whichever comes first.
-- Draft → Upcoming auto-advances when: `bookingFormComplete && customerFormComplete && allInSystemReservationsConfirmed && !medicalHardBlock`.
+- Medical block, auto-advance conditions → `DiveVault/DiveDispatch/Architecture/Architecture.md`
 

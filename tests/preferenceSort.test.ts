@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { sortByPreference } from '../src/lib/booking/sort-by-preference'
-import type { ResourcePickerEntry } from '../src/components/booking/resource-picker'
+import type { ResourcePickerEntry } from '../src/lib/types/booking'
 
 function makeEntry(slug: string, name: string): ResourcePickerEntry {
   return { slug, name, city: 'Bangkok', country: 'TH', languages: [], verified: false }

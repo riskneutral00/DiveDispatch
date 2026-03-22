@@ -284,7 +284,12 @@ export async function releaseBookingReservations(
 
     // Restore snapshot units using the linked booking session for window coordinates
     const session = await ctx.db.get(res.bookingSessionId)
-    if (!session) continue
+    if (!session) {
+      throw new ConvexError({
+        code: 'ORPHANED_RESERVATION',
+        reason: `Reservation ${res._id} references missing session ${res.bookingSessionId}. Inventory cannot be restored — aborting to prevent capacity leak.`,
+      })
+    }
 
     const snapshot = await ctx.db
       .query('availabilitySnapshots')
@@ -296,12 +301,17 @@ export async function releaseBookingReservations(
       )
       .unique()
 
-    if (snapshot) {
-      await ctx.db.patch(snapshot._id, {
-        availableUnits: snapshot.availableUnits + res.unitsRequested,
-        reservedUnits: Math.max(0, snapshot.reservedUnits - res.unitsRequested),
+    if (!snapshot) {
+      throw new ConvexError({
+        code: 'MISSING_SNAPSHOT',
+        reason: `No availability snapshot found for unit ${res.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
       })
     }
+
+    await ctx.db.patch(snapshot._id, {
+      availableUnits: snapshot.availableUnits + res.unitsRequested,
+      reservedUnits: Math.max(0, snapshot.reservedUnits - res.unitsRequested),
+    })
   }
 }
 
@@ -399,9 +409,18 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
     .collect()
 
   const active = reservations.filter((r: AnyCtx) => r.status !== 'Vacated')
+  // A declined resource (stakeholder_declined) means the booking is missing a required
+  // resource and cannot advance. Vacated-for-other-reasons (equipment_not_needed) is fine.
+  const hasDeclinedResource = reservations.some(
+    (r: AnyCtx) => r.status === 'Vacated' && r.vacatedBy === 'stakeholder_declined',
+  )
 
-  // All in-system reservations must be Confirmed (vacuously true when all resources are external)
-  if (active.every((r: AnyCtx) => r.status === 'Confirmed')) {
+  // All in-system reservations must be Confirmed.
+  // Vacuously true when ALL resources are external (zero reservations ever created).
+  // Blocked when a required resource was declined (needs operator attention).
+  const allConfirmed = active.every((r: AnyCtx) => r.status === 'Confirmed')
+
+  if (allConfirmed && !hasDeclinedResource) {
     await ctx.db.patch(bookingId, { status: 'Upcoming' })
   }
 }
@@ -411,6 +430,39 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
  * Uses Intl.DateTimeFormat to compare current time against session end date/time.
  * Exported for unit testing.
  */
+/**
+ * Computes the medical-block hold deadline per CLAUDE.md rules:
+ *   Total 36h from booking creation, hard ceiling 8pm night before activity date.
+ *   Returns whichever comes first as a Unix timestamp.
+ */
+export function computeMedicalDeadline(
+  creationTime: number,
+  earliestDate: string,
+  timezone: string,
+): number {
+  const MEDICAL_TTL_MS = 36 * 60 * 60 * 1000
+  const ttlDeadline = creationTime + MEDICAL_TTL_MS
+
+  // 8pm night before the activity date in the session timezone.
+  // Use Intl to derive the UTC offset for the timezone at ~that date.
+  const [year, month, day] = earliestDate.split('-').map(Number)
+  const refUTC = Date.UTC(year, month - 1, day - 1, 12, 0, 0)
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    hour: '2-digit',
+    hour12: false,
+  })
+  const hourParts = formatter.formatToParts(refUTC)
+  const hourStr = hourParts.find((p) => p.type === 'hour')?.value ?? '12'
+  const localHour = parseInt(hourStr === '24' ? '0' : hourStr, 10)
+  const utcOffsetHours = localHour - 12
+
+  // 20:00 local = (20 - offset) UTC. Date.UTC handles hour overflow correctly.
+  const deadline8pm = Date.UTC(year, month - 1, day - 1, 20 - utcOffsetHours, 0, 0)
+
+  return Math.min(ttlDeadline, deadline8pm)
+}
+
 export function isSessionEnded(date: string, endTime: string, timezone: string): boolean {
   const now = Date.now()
 

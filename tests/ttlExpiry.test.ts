@@ -6,6 +6,7 @@ import { isSessionEnded, isBookingExpired } from '../convex/bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../convex/lib/portal'
 import { type AnyCtx } from '../convex/lib/auth'
 import { Id } from '../convex/_generated/dataModel'
+import { testDate, testToken } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,43 +23,43 @@ describe('isSessionEnded', () => {
 
   it('returns true when current date is past the session date', () => {
     // Mock: 2024-06-16 10:00 UTC → Bangkok (UTC+7) 2024-06-16 17:00
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-16T10:00:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '17:00', 'Asia/Bangkok')).toBe(true)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(6) + 'T10:00:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '17:00', 'Asia/Bangkok')).toBe(true)
   })
 
   it('returns true when current time exceeds session end time on the same day', () => {
     // Mock: 2024-06-15 12:00 UTC → Bangkok 2024-06-15 19:00; session ends 18:00
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '18:00', 'Asia/Bangkok')).toBe(true)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T12:00:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '18:00', 'Asia/Bangkok')).toBe(true)
   })
 
   it('returns true when current time exactly equals session end time', () => {
     // Mock: 2024-06-15 11:00 UTC → Bangkok 2024-06-15 18:00; session ends 18:00
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T11:00:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '18:00', 'Asia/Bangkok')).toBe(true)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T11:00:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '18:00', 'Asia/Bangkok')).toBe(true)
   })
 
   it('returns false when session has not ended yet', () => {
     // Mock: 2024-06-15 09:00 UTC → Bangkok 2024-06-15 16:00; session ends 18:00
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T09:00:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '18:00', 'Asia/Bangkok')).toBe(false)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T09:00:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '18:00', 'Asia/Bangkok')).toBe(false)
   })
 
   it('returns false when current date is before session date', () => {
     // Mock: 2024-06-14 10:00 UTC → Bangkok 2024-06-14 17:00; session is 2024-06-15
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-14T10:00:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '08:00', 'Asia/Bangkok')).toBe(false)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(4) + 'T10:00:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '08:00', 'Asia/Bangkok')).toBe(false)
   })
 
   it('works with UTC timezone', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T18:01:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '18:00', 'UTC')).toBe(true)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T18:01:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '18:00', 'UTC')).toBe(true)
   })
 
   it('handles midnight boundary (session ending at 00:00 next day)', () => {
     // 2024-06-15T17:01:00Z → Bangkok 2024-06-16 00:01; session 2024-06-15 ending 23:59
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T17:01:00Z').getTime())
-    expect(isSessionEnded('2024-06-15', '23:59', 'Asia/Bangkok')).toBe(true)
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T17:01:00Z').getTime())
+    expect(isSessionEnded(testDate(5), '23:59', 'Asia/Bangkok')).toBe(true)
   })
 })
 
@@ -112,8 +113,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -145,8 +146,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -171,7 +172,7 @@ describe('expireBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '17:00',
         timezone: 'Asia/Bangkok',
@@ -179,7 +180,7 @@ describe('expireBooking', () => {
 
       const snapshotId = await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '17:00',
         totalUnits: 1,
@@ -222,8 +223,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -248,7 +249,7 @@ describe('expireBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '17:00',
         timezone: 'UTC',
@@ -289,8 +290,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -321,8 +322,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -353,8 +354,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -397,9 +398,9 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-03-16',
-        endDate: '2026-03-18',
-        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2026-03-16', endDate: '2026-03-18', activityType: ['OW'] }],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
         operatorName: 'Test DC',
         portalContact: false,
         portalMedical: false,
@@ -453,9 +454,9 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-03-16',
-        endDate: '2026-03-18',
-        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2026-03-16', endDate: '2026-03-18', activityType: ['OW'] }],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
         operatorName: 'Test DC',
         portalContact: false,
         portalMedical: false,
@@ -488,8 +489,8 @@ describe('expireBooking', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2025-06-15',
-        endDate: '2025-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -532,7 +533,7 @@ describe('completeBookings', () => {
   it('returns { completed: 0, more: false } when no sessions have ended', async () => {
     const t = makeT()
     // Session in the future
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T08:00:00Z').getTime())
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T08:00:00Z').getTime())
 
     await t.run(async (ctx) => {
       const bookingId = await ctx.db.insert('bookings', {
@@ -543,8 +544,8 @@ describe('completeBookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-15',
-        endDate: '2024-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -566,7 +567,7 @@ describe('completeBookings', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-15',
+        date: testDate(5),
         endTime: '17:00', // Bangkok 17:00 = UTC 10:00, and we're at UTC 08:00 (not ended yet)
         startTime: '09:00',
         timezone: 'Asia/Bangkok',
@@ -580,7 +581,7 @@ describe('completeBookings', () => {
   it('completes a booking when its last session has ended', async () => {
     const t = makeT()
     // 2024-06-15 12:00 UTC → Bangkok 19:00; session ended at 18:00
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T12:00:00Z').getTime())
 
     const bookingId = await t.run(async (ctx) => {
       const bookingId = await ctx.db.insert('bookings', {
@@ -591,8 +592,8 @@ describe('completeBookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-15',
-        endDate: '2024-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -614,7 +615,7 @@ describe('completeBookings', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-15',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '18:00', // Bangkok 18:00 = UTC 11:00, we're at UTC 12:00 (ended)
         timezone: 'Asia/Bangkok',
@@ -632,7 +633,7 @@ describe('completeBookings', () => {
   it('picks the last session by date and endTime for multi-session bookings', async () => {
     const t = makeT()
     // 2024-06-15 12:00 UTC → Bangkok 19:00; last session ends at 18:00 today
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T12:00:00Z').getTime())
 
     const bookingId = await t.run(async (ctx) => {
       const bookingId = await ctx.db.insert('bookings', {
@@ -643,8 +644,8 @@ describe('completeBookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-14',
-        endDate: '2024-06-15',
+        startDate: testDate(4),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -667,7 +668,7 @@ describe('completeBookings', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-14',
+        date: testDate(4),
         startTime: '08:00',
         endTime: '17:00',
         timezone: 'Asia/Bangkok',
@@ -676,7 +677,7 @@ describe('completeBookings', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-15',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '18:00', // Bangkok 18:00 = UTC 11:00, we're at UTC 12:00 (ended)
         timezone: 'Asia/Bangkok',
@@ -703,8 +704,8 @@ describe('completeBookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-15',
-        endDate: '2024-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -726,7 +727,7 @@ describe('completeBookings', () => {
   it('reports more: true when there are >100 Upcoming bookings', async () => {
     const t = makeT()
     // 2024-06-15 12:00 UTC → Bangkok 19:00; sessions ended at 10:00 Bangkok
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2024-06-15T12:00:00Z').getTime())
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(5) + 'T12:00:00Z').getTime())
 
     await t.run(async (ctx) => {
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -747,8 +748,8 @@ describe('completeBookings', () => {
           holdTTL: HOLD_TTL,
           paid: false,
           activityType: ['OW'],
-          startDate: '2024-06-15',
-          endDate: '2024-06-15',
+          startDate: testDate(5),
+          endDate: testDate(5),
           divers: [],
           operatorName: 'Test DC',
           portalContact: false,
@@ -761,7 +762,7 @@ describe('completeBookings', () => {
         await ctx.db.insert('bookingSessions', {
           bookingId,
           inventoryUnitId: unitId,
-          date: '2024-06-15',
+          date: testDate(5),
           startTime: '08:00',
           endTime: '10:00', // Bangkok 10:00 = UTC 03:00, we're at UTC 12:00 (ended)
           timezone: 'Asia/Bangkok',
@@ -822,15 +823,15 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           holdTTL: HOLD_TTL,
           paid: false,
           activityType: ['AOW'],
-          startDate: '2024-06-14',
-          endDate: '2024-06-16',
+          startDate: testDate(4),
+          endDate: testDate(6),
           divers: [
             {
               name: 'Alice',
               abbrev: 'A',
               flag: { code: 'US', label: 'USA' },
-              startDate: '2024-06-14',
-              endDate: '2024-06-16',
+              startDate: testDate(4),
+              endDate: testDate(6),
               activityType: ['AOW'],
             },
           ],
@@ -845,7 +846,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         })
 
         // Sessions + reservations + snapshots for each date
-        const dates = ['2024-06-14', '2024-06-15', '2024-06-16']
+        const dates = [testDate(4), testDate(5), testDate(6)]
         const sessionIds: Id<'bookingSessions'>[] = []
         const reservationIds: Id<'reservations'>[] = []
         const snapshotIds: Id<'availabilitySnapshots'>[] = []
@@ -898,36 +899,34 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
     // Block date 2024-06-15 as the instructor
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|inst-1' })
-      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'Instructor' })
+      .mutation(api.availability.toggleBlockedDate, { date: testDate(5), roleType: 'Instructor' })
     expect(result).toBe(true)
 
-    // Booking should be hard-deleted
+    // Booking survives — only the instructor's reservation is vacated
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking).toBeNull()
+    expect(booking).not.toBeNull()
+    expect(booking!.status).toBe('Draft')
+    expect(booking!.needsAttention).toBe(true)
 
-    // All sessions should be deleted
+    // Sessions survive (booking structure intact)
     for (const sessionId of sessionIds) {
       const session = await t.run(async (ctx) => ctx.db.get(sessionId))
-      expect(session).toBeNull()
+      expect(session).not.toBeNull()
     }
 
-    // All reservations should be vacated
-    for (const reservationId of reservationIds) {
-      const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
-      expect(reservation?.status).toBe('Vacated')
-      expect(reservation?.vacatedBy).toBe('stakeholder_declined')
-    }
+    // Reservation on blocked date is vacated; others on non-blocked dates remain
+    const blockedDateReservation = await t.run(async (ctx) => ctx.db.get(reservationIds[1]))
+    expect(blockedDateReservation?.status).toBe('Vacated')
+    expect(blockedDateReservation?.vacatedBy).toBe('stakeholder_declined')
 
-    // All snapshots should be restored (availableUnits back to 1)
-    for (const snapshotId of snapshotIds) {
-      const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
-      expect(snapshot?.availableUnits).toBe(1)
-      expect(snapshot?.reservedUnits).toBe(0)
-    }
+    // Snapshot on blocked date is restored
+    const blockedSnapshot = await t.run(async (ctx) => ctx.db.get(snapshotIds[1]))
+    expect(blockedSnapshot?.availableUnits).toBe(1)
+    expect(blockedSnapshot?.reservedUnits).toBe(0)
 
-    // Booking link should be deleted
+    // Booking link survives
     const link = await t.run(async (ctx) => ctx.db.get(linkId))
-    expect(link).toBeNull()
+    expect(link).not.toBeNull()
   })
 
   it('blocking a date does NOT cancel Upcoming bookings', async () => {
@@ -967,15 +966,15 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-15',
-        endDate: '2024-06-16',
+        startDate: testDate(5),
+        endDate: testDate(6),
         divers: [
           {
             name: 'Bob',
             abbrev: 'B',
             flag: { code: 'GB', label: 'UK' },
-            startDate: '2024-06-15',
-            endDate: '2024-06-16',
+            startDate: testDate(5),
+            endDate: testDate(6),
             activityType: ['OW'],
           },
         ],
@@ -989,7 +988,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
       })
 
       const reservationIds: Id<'reservations'>[] = []
-      for (const date of ['2024-06-15', '2024-06-16']) {
+      for (const date of [testDate(5), testDate(6)]) {
         const sessionId = await ctx.db.insert('bookingSessions', {
           bookingId,
           inventoryUnitId: unitId,
@@ -1025,7 +1024,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
     // Block date 2024-06-15
     await t
       .withIdentity({ tokenIdentifier: 'clerk|inst-2' })
-      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'Instructor' })
+      .mutation(api.availability.toggleBlockedDate, { date: testDate(5), roleType: 'Instructor' })
 
     // Booking should still exist (Upcoming, not deleted)
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
@@ -1080,15 +1079,15 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-14',
-        endDate: '2024-06-16',
+        startDate: testDate(4),
+        endDate: testDate(6),
         divers: [
           {
             name: 'Charlie',
             abbrev: 'C',
             flag: { code: 'AU', label: 'Australia' },
-            startDate: '2024-06-14',
-            endDate: '2024-06-16',
+            startDate: testDate(4),
+            endDate: testDate(6),
             activityType: ['OW'],
           },
         ],
@@ -1104,7 +1103,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
 
       // Sessions on the external instructor's unit
       const sessionIds: Id<'bookingSessions'>[] = []
-      for (const date of ['2024-06-14', '2024-06-15', '2024-06-16']) {
+      for (const date of [testDate(4), testDate(5), testDate(6)]) {
         const sessionId = await ctx.db.insert('bookingSessions', {
           bookingId,
           inventoryUnitId: unitId,
@@ -1140,16 +1139,18 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
     // DC blocks date 2024-06-15 (DC has no inventory units — only owns the booking)
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .mutation(api.availability.toggleBlockedDate, { date: '2024-06-15', roleType: 'DiveCenter' })
+      .mutation(api.availability.toggleBlockedDate, { date: testDate(5), roleType: 'DiveCenter' })
 
-    // Booking should be hard-deleted
+    // Booking survives — DC blocking a date does not delete their bookings.
+    // The blocked date prevents new bookings; existing ones need manual handling.
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking).toBeNull()
+    expect(booking).not.toBeNull()
+    expect(booking!.status).toBe('Draft')
 
-    // All sessions should be deleted
+    // Sessions survive
     for (const sessionId of sessionIds) {
       const session = await t.run(async (ctx) => ctx.db.get(sessionId))
-      expect(session).toBeNull()
+      expect(session).not.toBeNull()
     }
   })
 })
@@ -1169,8 +1170,8 @@ async function makePortalFixture(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW'],
-    startDate: '2026-06-15',
-    endDate: '2026-06-15',
+    startDate: testDate(5),
+    endDate: testDate(5),
     divers: [],
     operatorName: 'Test DC',
     portalContact: false,
@@ -1182,7 +1183,7 @@ async function makePortalFixture(
     expiresAt: Date.now() + HOLD_TTL,
   })
 
-  const token = 'tok-' + Math.random().toString(36).slice(2, 10)
+  const token = testToken()
   const linkRecord: Record<string, unknown> = {
     bookingId,
     token,
@@ -1220,7 +1221,7 @@ describe('token invalidation', () => {
     if (result.status === 'completed') {
       expect(result.customerName).toBe('Alice')
       expect(result.operatorName).toBe('Test DC')
-      expect(result.startDate).toBe('2026-06-15')
+      expect(result.startDate).toBe(testDate(5))
     }
   })
 
@@ -1338,8 +1339,8 @@ describe('token invalidation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-06-15',
-        endDate: '2026-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Regen DC',
         portalContact: false,

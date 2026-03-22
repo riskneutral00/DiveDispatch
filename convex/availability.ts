@@ -64,6 +64,63 @@ export async function _getUnavailableUnitIdsForDates(
 }
 
 /**
+ * Per-date capacity for all inventory units on the given dates.
+ * Returns: { [unitId]: { [date]: { available, total } } }
+ *
+ * Units with no snapshot for a date return full capacity (totalUnits).
+ * For units with multiple time-window snapshots on a date, returns the
+ * minimum available across windows (worst-case for that day).
+ *
+ * Privacy invariant: exposes only capacity counts — never booking owner.
+ */
+export async function _getCapacityForDates(
+  ctx: AnyCtx,
+  dates: string[],
+): Promise<Record<string, Record<string, { available: number; total: number }>>> {
+  if (dates.length === 0) return {}
+
+  // Fetch all inventory units
+  const allUnits = await ctx.db.query('inventoryUnits').collect()
+  if (allUnits.length === 0) return {}
+
+  // Build result with defaults (full capacity for every unit on every date)
+  const result: Record<string, Record<string, { available: number; total: number }>> = {}
+  for (const unit of allUnits) {
+    const unitId = unit._id as string
+    result[unitId] = {}
+    for (const date of dates) {
+      result[unitId][date] = { available: unit.totalUnits, total: unit.totalUnits }
+    }
+  }
+
+  // Override with actual snapshot data
+  for (const date of dates) {
+    const snapshots = await ctx.db
+      .query('availabilitySnapshots')
+      .filter((q: AnyCtx) => q.eq(q.field('date'), date))
+      .collect()
+
+    // Group snapshots by unit — take minimum available across time windows
+    const unitMinAvailable = new Map<string, number>()
+    for (const snap of snapshots) {
+      const unitId = snap.inventoryUnitId as string
+      const current = unitMinAvailable.get(unitId)
+      if (current === undefined || snap.availableUnits < current) {
+        unitMinAvailable.set(unitId, snap.availableUnits)
+      }
+    }
+
+    for (const [unitId, available] of unitMinAvailable) {
+      if (result[unitId]) {
+        result[unitId][date] = { available, total: result[unitId][date].total }
+      }
+    }
+  }
+
+  return result
+}
+
+/**
  * Lists inventoryUnits by resourceType, optionally scoped to a single owner slug.
  * Joins with the users table to surface the owner's business name.
  *
@@ -130,6 +187,17 @@ export const getUnavailableUnitIdsForDates = query({
   handler: async (ctx, args): Promise<string[]> => {
     const set = await _getUnavailableUnitIdsForDates(ctx, args.dates)
     return Array.from(set)
+  },
+})
+
+/**
+ * Per-date capacity for all inventory units. UI uses this to show availability
+ * badges and hide fully-booked resources in the booking wizard pickers.
+ */
+export const getCapacityForDates = query({
+  args: { dates: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    return _getCapacityForDates(ctx, args.dates)
   },
 })
 
@@ -246,45 +314,15 @@ export async function _toggleBlockedDate(
       }
     }
 
-    // Also find Draft bookings OWNED by this stakeholder that have sessions on the blocked date
-    // (covers operator roles like DiveCenter that don't own inventory units but own bookings)
-    const sessionsOnDate = await ctx.db
-      .query('bookingSessions')
-      .withIndex('by_date', (q: AnyCtx) => q.eq('date', args.date))
-      .collect()
-    for (const session of sessionsOnDate) {
-      if (affectedBookingIds.has(session.bookingId)) continue
-      const booking = await ctx.db.get(session.bookingId)
-      if (!booking || booking.status !== 'Draft') continue
-      if (booking.ownerId !== user.slug) continue
-      affectedBookingIds.add(session.bookingId)
-    }
-
-    // Auto-cancel Draft bookings whose sessions overlap the blocked date
+    // Notify affected booking owners that a resource was declined.
+    // The booking survives — only the instructor's reservation was vacated (above).
+    // The DC operator will see the booking as needing attention.
     for (const bookingId of affectedBookingIds) {
       const booking = await ctx.db.get(bookingId)
       if (!booking || booking.status !== 'Draft') continue
 
-      // Release remaining reservations across all dates (already-vacated ones are skipped)
-      await releaseBookingReservations(ctx, bookingId, 'stakeholder_declined')
-
-      const allSessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
-        .collect()
-      for (const s of allSessions) {
-        await ctx.db.delete(s._id)
-      }
-
-      const links = await ctx.db
-        .query('bookingLinks')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
-        .collect()
-      for (const link of links) {
-        await ctx.db.delete(link._id)
-      }
-
-      await ctx.db.delete(bookingId)
+      // Mark booking as needing attention (instructor declined)
+      await ctx.db.patch(bookingId, { needsAttention: true })
     }
 
     return true
@@ -315,5 +353,17 @@ export const listInventoryByType = query({
   },
   handler: async (ctx, args) => {
     return _listInventoryByType(ctx, args)
+  },
+})
+
+/** List all dive sites (both owned and unowned) — no user join needed. */
+export const listDiveSites = query({
+  args: {},
+  handler: async (ctx) => {
+    const units = await ctx.db
+      .query('inventoryUnits')
+      .filter((q) => q.eq(q.field('resourceType'), 'DiveSite'))
+      .collect()
+    return units.map((u) => ({ id: u.resourceId, label: u.displayName }))
   },
 })

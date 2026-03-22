@@ -19,6 +19,7 @@ import { getEndDateDefault } from '../src/lib/booking/course-validation'
 import { addDays } from '../src/lib/utils/date'
 import { COMBO_COURSES } from '../src/lib/constants/course-catalog'
 import type { Id } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -59,14 +60,14 @@ async function seedBooking(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW', 'AOW'],
-    startDate: '2026-06-15',
-    endDate: '2026-06-18',
+    startDate: testDate(5),
+    endDate: testDate(8),
     divers: [
-      { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
-      { name: 'Sophie Martin', abbrev: 'SM', flag: { code: 'FR', label: 'French' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
-      { name: 'Takeshi Yamamoto', abbrev: 'TY', flag: { code: 'JP', label: 'Japanese' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
-      { name: 'Emma Thompson', abbrev: 'ET', flag: { code: 'GB', label: 'English' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
-      { name: 'Kim Soo-jin', abbrev: 'KS', flag: { code: 'KR', label: 'Korean' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
+      { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
+      { name: 'Sophie Martin', abbrev: 'SM', flag: { code: 'FR', label: 'French' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
+      { name: 'Takeshi Yamamoto', abbrev: 'TY', flag: { code: 'JP', label: 'Japanese' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
+      { name: 'Emma Thompson', abbrev: 'ET', flag: { code: 'GB', label: 'English' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
+      { name: 'Kim Soo-jin', abbrev: 'KS', flag: { code: 'KR', label: 'Korean' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
     ],
     operatorName: 'Hug Ocean',
     portalContact: false,
@@ -100,7 +101,7 @@ async function seedSession(
   return ctx.db.insert('bookingSessions', {
     bookingId,
     inventoryUnitId: unitId,
-    date: overrides.date ?? '2026-06-15',
+    date: overrides.date ?? testDate(5),
     startTime: overrides.startTime ?? '08:00',
     endTime: overrides.endTime ?? '17:00',
     timezone: overrides.timezone ?? 'Asia/Bangkok',
@@ -154,36 +155,41 @@ async function seedCustomerProfile(
 // ─── 2d: End date auto-calculates inclusively ────────────────────────────────
 
 describe('2d — end date inclusive calculation', () => {
-  it('OW start Mar 20 → end Mar 22 (3 days inclusive)', () => {
-    const result = getEndDateDefault('OW', '2026-03-20')
-    expect(result).toBe('2026-03-22')
+  it('OW start → end +2 days (3 days inclusive)', () => {
+    const start = testDate(5)
+    const result = getEndDateDefault('OW', start)
+    expect(result).toBe(addDays(start, 2))
   })
 
-  it('AOW start Mar 22 → end Mar 23 (2 days inclusive)', () => {
-    const result = getEndDateDefault('AOW', '2026-03-22')
-    expect(result).toBe('2026-03-23')
+  it('AOW start → end +1 day (2 days inclusive)', () => {
+    const start = testDate(7)
+    const result = getEndDateDefault('AOW', start)
+    expect(result).toBe(addDays(start, 1))
   })
 
-  it('DSD start Mar 20 → end Mar 20 (1 day)', () => {
-    const result = getEndDateDefault('DSD', '2026-03-20')
-    expect(result).toBe('2026-03-20')
+  it('DSD start → end same day (1 day)', () => {
+    const start = testDate(5)
+    const result = getEndDateDefault('DSD', start)
+    expect(result).toBe(start)
   })
 
-  it('FD start Mar 20 → end Mar 20 (1 day)', () => {
-    const result = getEndDateDefault('FD', '2026-03-20')
-    expect(result).toBe('2026-03-20')
+  it('FD start → end same day (1 day)', () => {
+    const start = testDate(5)
+    const result = getEndDateDefault('FD', start)
+    expect(result).toBe(start)
   })
 
-  it('DM start Mar 20 → end Mar 24 (5 days inclusive)', () => {
-    const result = getEndDateDefault('DM', '2026-03-20')
-    expect(result).toBe('2026-03-24')
+  it('DM start → end +4 days (5 days inclusive)', () => {
+    const start = testDate(5)
+    const result = getEndDateDefault('DM', start)
+    expect(result).toBe(addDays(start, 4))
   })
 
   it('O+A combo is 4 days inclusive', () => {
-    const start = '2026-03-20'
+    const start = testDate(5)
     const comboDays = COMBO_COURSES['O+A'].minDays // 4
     const end = addDays(start, comboDays - 1)
-    expect(end).toBe('2026-03-23')
+    expect(end).toBe(addDays(start, 3))
   })
 })
 
@@ -193,26 +199,25 @@ describe('2e — AOW cascade in O+A combo', () => {
   it('O+A combo: OW and AOW share same date range (4-day window)', () => {
     // In the O+A combo, both OW and AOW get the same 4-day date range
     // because the courses overlap (OW day 3 = AOW day 1 = transition day)
-    const start = '2026-03-20'
+    const start = testDate(5)
     const comboDays = COMBO_COURSES['O+A'].minDays // 4
-    const end = addDays(start, comboDays - 1) // 2026-03-23
+    const end = addDays(start, comboDays - 1)
 
     // Both courses should share [start, end]
-    expect(end).toBe('2026-03-23')
-    // Verify: 4 days = Mar 20, 21, 22, 23
+    expect(end).toBe(addDays(start, 3))
     expect(comboDays).toBe(4)
   })
 
   it('standalone AOW starts day after OW ends (general cascade)', () => {
     // When NOT using O+A combo, AOW starts after OW
-    const owStart = '2026-03-20'
-    const owEnd = getEndDateDefault('OW', owStart) // Mar 22
-    const aowStart = addDays(owEnd, 1) // Mar 23
-    const aowEnd = getEndDateDefault('AOW', aowStart) // Mar 24
+    const owStart = testDate(5)
+    const owEnd = getEndDateDefault('OW', owStart) // +2
+    const aowStart = addDays(owEnd, 1) // +3
+    const aowEnd = getEndDateDefault('AOW', aowStart) // +4
 
-    expect(owEnd).toBe('2026-03-22')
-    expect(aowStart).toBe('2026-03-23')
-    expect(aowEnd).toBe('2026-03-24')
+    expect(owEnd).toBe(addDays(owStart, 2))
+    expect(aowStart).toBe(addDays(owStart, 3))
+    expect(aowEnd).toBe(addDays(owStart, 4))
   })
 })
 
@@ -247,7 +252,7 @@ describe('2f — max 3 non-confined dives per day validation', () => {
           bookingId,
           sessions: [{
             inventoryUnitId: unitId,
-            date: '2026-06-15',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '17:00',
             timezone: 'Asia/Bangkok',
@@ -302,7 +307,7 @@ describe('2f — max 3 non-confined dives per day validation', () => {
         bookingId,
         sessions: [{
           inventoryUnitId: unitId,
-          date: '2026-06-15',
+          date: testDate(5),
           startTime: '08:00',
           endTime: '17:00',
           timezone: 'Asia/Bangkok',
@@ -337,13 +342,13 @@ describe('2k — external resources skip reservation pipeline', () => {
         sessions: [],
         bookingData: {
           activityType: ['OW', 'AOW'],
-          startDate: '2026-06-15',
-          endDate: '2026-06-18',
+          startDate: testDate(5),
+          endDate: testDate(8),
           portalContact: false,
           portalMedical: true,
           portalWaiver: false,
           divers: [
-            { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
+            { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
           ],
           resources: [
             { resourceType: 'Instructor', externalName: 'External Instructor' },
@@ -376,13 +381,13 @@ describe('2k — external resources skip reservation pipeline', () => {
         sessions: [],
         bookingData: {
           activityType: ['OW', 'AOW'],
-          startDate: '2026-06-15',
-          endDate: '2026-06-18',
+          startDate: testDate(5),
+          endDate: testDate(8),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
           divers: [
-            { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: '2026-06-15', endDate: '2026-06-18', activityType: ['OW', 'AOW'] },
+            { name: 'Chen Wei', abbrev: 'CW', flag: { code: 'CN', label: 'Mandarin' }, startDate: testDate(5), endDate: testDate(8), activityType: ['OW', 'AOW'] },
           ],
           resources: [
             { resourceType: 'Instructor', externalName: 'External Instructor' },
@@ -546,8 +551,8 @@ describe('4a — backend stays Upcoming on activity day', () => {
         customerFormComplete: true,
         medicalHardBlock: false,
         // startDate is today (simulated as past)
-        startDate: '2026-06-15',
-        endDate: '2026-06-18',
+        startDate: testDate(5),
+        endDate: testDate(8),
       })
     })
 
@@ -572,15 +577,15 @@ describe('4c — mid-course (day 2 of 4) → still not Completed', () => {
         status: 'Upcoming',
         bookingFormComplete: true,
         customerFormComplete: true,
-        startDate: '2026-06-15',
-        endDate: '2026-06-18',
+        startDate: testDate(5),
+        endDate: testDate(8),
       })
 
       // 4 sessions across 4 days — last session is far in the future
-      await seedSession(ctx, bookingId, unitId, { date: '2026-06-15', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2026-06-16', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2026-06-17', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2026-06-18', endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(5), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(6), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(7), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(8), endTime: '17:00' })
     })
 
     const result = (await t.mutation(internal.bookings.status.completeBookings, {})) as {
@@ -607,15 +612,15 @@ describe('4d — after last session ends → Completed', () => {
         status: 'Upcoming',
         bookingFormComplete: true,
         customerFormComplete: true,
-        startDate: '2024-01-10',
-        endDate: '2024-01-13',
+        startDate: testDate(-10),
+        endDate: testDate(-7),
       })
 
       // All sessions in the past
-      await seedSession(ctx, bookingId, unitId, { date: '2024-01-10', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2024-01-11', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2024-01-12', endTime: '17:00' })
-      await seedSession(ctx, bookingId, unitId, { date: '2024-01-13', endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(-10), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(-9), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(-8), endTime: '17:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(-7), endTime: '17:00' })
 
       return bookingId
     })
@@ -633,10 +638,10 @@ describe('4d — after last session ends → Completed', () => {
 
   it('isSessionEnded returns true for past date/time', () => {
     // 2024-01-01 at 17:00 Bangkok time is definitely in the past
-    expect(isSessionEnded('2024-01-01', '17:00', 'Asia/Bangkok')).toBe(true)
+    expect(isSessionEnded(testDate(-30), '17:00', 'Asia/Bangkok')).toBe(true)
   })
 
   it('isSessionEnded returns false for far future date/time', () => {
-    expect(isSessionEnded('2030-12-31', '23:59', 'Asia/Bangkok')).toBe(false)
+    expect(isSessionEnded(testDate(365), '23:59', 'Asia/Bangkok')).toBe(false)
   })
 })

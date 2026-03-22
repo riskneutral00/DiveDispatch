@@ -7,6 +7,7 @@ export interface BookingSpan {
   label: string
   status: CalendarDisplayStatus
   continuation?: boolean  // true when booking started in a prior week
+  isMultiDay?: boolean    // true when booking spans multiple days
 }
 
 export interface PackedBooking extends BookingSpan {

@@ -6,10 +6,10 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
-import { generateDays, getAvailableDives, cascadeRemoveOrphans, ensureSufficientDays } from '@/lib/booking/generate-days'
-import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateMissingPrerequisites, validateStartDateNotInPast, calculateComboDates } from '@/lib/booking/course-validation'
+import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
+import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateStartDateNotInPast, calculateComboDates, getUnavailableCodes, detectReferralWarnings } from '@/lib/booking/course-validation'
 import { toISODateString } from '@/lib/utils/date'
-import type { WizardState, WizardAction, CourseEntry, DiveSlot } from '@/lib/booking/wizard-state'
+import type { WizardState, WizardAction, CourseEntry, DiveSlot, DayConfig } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES } from '@/lib/constants/course-catalog'
 import { addDays } from '@/lib/utils/date'
@@ -25,6 +25,12 @@ interface ItineraryStepProps {
 
 const COURSE_CODES: CourseCode[] = ['DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'FD', 'REFRESH', 'SPECIALTY']
 
+// ── O+A Combo Locks ─────────────────────────────────────────────────────────
+// When booking an O+A combo, OW-4 (must complete OW) and AOW-1 (must start AOW)
+// are auto-selected and non-toggleable.
+
+
+
 // ── CourseEntryRow ──────────────────────────────────────────────────────────
 
 interface CourseEntryRowProps {
@@ -35,13 +41,16 @@ interface CourseEntryRowProps {
   agency: string
   minStartDate?: string
   nextEntry?: CourseEntry
+  unavailableCodes?: Set<string>
 }
 
-function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minStartDate, nextEntry }: CourseEntryRowProps) {
+function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minStartDate, nextEntry, unavailableCodes }: CourseEntryRowProps) {
   const agencyCodes = agency
     ? COURSE_CATALOG.filter((c) => c.agency === agency || c.agency === 'Universal').map((c) => c.code)
     : COURSE_CODES
-  const uniqueCodes = [...new Set(agencyCodes)] as CourseCode[]
+  const uniqueCodes = [...new Set(agencyCodes)].filter(
+    (c) => !unavailableCodes?.has(c),
+  ) as CourseCode[]
 
   function updateEntry(patch: Partial<Pick<CourseEntry, 'activityCode' | 'dates' | 'agency'>>) {
     dispatch({ type: 'UPDATE_COURSE_ENTRY', customerId, entryId: entry.id, patch })
@@ -204,6 +213,8 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   )
 }
 
+import { filterByAvailability } from '@/lib/booking/availability-filter'
+
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
@@ -214,7 +225,9 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
   const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
   const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
   const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
-  const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name }))
+  const shoreOptions = useQuery(api.availability.listDiveSites) ?? []
+  const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
+  const customerLanguageCodes = customers.flatMap(c => (c.flags ?? []).map(f => f.code))
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
   const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
 
@@ -223,14 +236,22 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
   const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
   const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []
   const poolInventory = useQuery(api.availability.listInventoryByType, { type: 'Pool' }) ?? []
-
   const inventoryMap = useMemo(() => {
     const map: Record<string, string> = {}
     for (const r of instructorInventory) map[r.ownerId] = r.id
     for (const r of boatInventory) map[r.ownerId] = r.id
     for (const r of poolInventory) map[r.ownerId] = r.id
+    // Shore options use resourceId as identifier (dive sites may be unowned)
+    // inventoryMap for shores will be populated when needed via listDiveSites
     return map
   }, [instructorInventory, boatInventory, poolInventory])
+
+  // Real-time availability: per-date capacity for all inventory units
+  const bookingDates = useMemo(() => days.map(d => d.date), [days])
+  const capacityData = useQuery(
+    api.availability.getCapacityForDates,
+    bookingDates.length > 0 ? { dates: bookingDates } : 'skip',
+  )
 
   useEffect(() => {
     if (Object.keys(inventoryMap).length > 0) {
@@ -253,26 +274,12 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     hardErrors.push(...validatePrerequisiteOrder(entries))
     hardErrors.push(...validateCourseDateOverlap(entries))
     hardErrors.push(...validateNoDuplicateCourses(entries))
-    hardErrors.push(...validateMissingPrerequisites(codes))
     hardErrors.push(...validateStartDateNotInPast(entries, today))
   }
   const uniqueOrderingErrors = [...new Set(hardErrors)]
 
   // Prerequisite and combo warnings (soft).
-  // Suppress soft prereq warnings when a hard missing-prereq error already covers the same relationship.
-  const rawPrereqWarnings = validatePrerequisites(allCourseCodes)
-  const hardMissingPrereqCodes = new Set(
-    uniqueOrderingErrors
-      .filter((e) => e.includes('requires') && e.includes('add it'))
-      .flatMap((e) => {
-        // Extract the prerequisite name from "X requires Y — add it…"
-        const match = e.match(/requires (.+?) —/)
-        return match ? [match[1]] : []
-      }),
-  )
-  const prereqWarnings = hardMissingPrereqCodes.size > 0
-    ? rawPrereqWarnings.filter((w) => !Array.from(hardMissingPrereqCodes).some((name) => w.includes(name)))
-    : rawPrereqWarnings
+  const prereqWarnings = validatePrerequisites(allCourseCodes)
   const comboWarnings = validateCourseCombo(allCourseCodes)
 
   // Instructor ratio check
@@ -297,7 +304,20 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     }
   }
 
-  const allWarnings = [...prereqWarnings, ...comboWarnings, ...instructorRatioWarnings]
+  // Referral detection — warn when first selected dive is not the first in sequence
+  const allSelectedDives = days.flatMap(d => d.dives)
+  const referralWarnings = detectReferralWarnings(allSelectedDives, allCourseCodes)
+
+  // Empty day warning — date range produces more days than dives fill
+  const emptyDayWarnings: string[] = []
+  const daysWithDives = days.filter(d => d.dives.length > 0).length
+  if (days.length > 0 && daysWithDives > 0 && daysWithDives < days.length) {
+    emptyDayWarnings.push(
+      `${days.length} days scheduled but only ${daysWithDives} have activities. Remove empty days or adjust end date.`,
+    )
+  }
+
+  const allWarnings = [...prereqWarnings, ...comboWarnings, ...instructorRatioWarnings, ...referralWarnings]
 
   // Auto-generate days when courses + dates change
   useEffect(() => {
@@ -322,30 +342,54 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     const day = days[dayIndex]
     if (!day) return
 
+    const diveKey = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
     const exists = day.dives.some(
       (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
     )
 
-    let newDays = days.map((d, i) => {
-      if (i !== dayIndex) return d
-      const newDives = exists
-        ? d.dives.filter(
-            (dv) => !(dv.courseCode === slot.courseCode && dv.diveNumber === slot.diveNumber && dv.isConfined === slot.isConfined),
-          )
-        : [...d.dives, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined }]
-      return { ...d, dives: newDives }
-    })
-
+    let newDays: typeof days
     if (exists) {
+      // Remove the clicked dive AND all dives after it in the global sequence from this day.
+      // Then redistribute those later dives to subsequent days.
+      const sequence = buildDiveSequence(allCourseCodes)
+      const clickedIdx = sequence.findIndex(s =>
+        s.courseCode === slot.courseCode && s.diveNumber === slot.diveNumber && s.isConfined === slot.isConfined)
+
+      // Remove clicked dive + all later dives (in global sequence) from this day
+      newDays = days.map((d, i) => {
+        if (i !== dayIndex) return d
+        const kept: DiveSlot[] = []
+        for (const dv of d.dives) {
+          const dvIdx = sequence.findIndex(s =>
+            s.courseCode === dv.courseCode && s.diveNumber === dv.diveNumber && s.isConfined === dv.isConfined)
+          if (dvIdx < clickedIdx) kept.push(dv)
+        }
+        return { ...d, dives: kept }
+      })
+
+      // Clean up orphans across all days (cross-day ordering + course prerequisites)
       newDays = cascadeRemoveOrphans(newDays, allCourseCodes)
     } else {
-      newDays = ensureSufficientDays(newDays, allCourseCodes)
+      // Adding a dive — enforce per-day non-confined limit
+      if (!slot.isConfined) {
+        const nonConfinedCount = day.dives.filter(d => !d.isConfined).length
+        if (nonConfinedCount >= (day.divesPerDay || 3)) return
+      }
+      const totalDivesBefore = days.flatMap(d => d.dives).length
+      newDays = days.map((d, i) => {
+        if (i !== dayIndex) return d
+        return { ...d, dives: [...d.dives, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined, venueType: slot.isConfined ? 'pool' as const : 'boat' as const }] }
+      })
+      // First dive selected globally → auto-fill remaining dives across all days
+      if (totalDivesBefore === 0) {
+        newDays = autoDistributeFromDive(newDays, slot, allCourseCodes)
+      }
     }
 
     dispatch({ type: 'SET_DAYS', days: newDays })
   }
 
-  const customerNames = customers.map((c) => c.name || 'Customer')
+
 
   return (
     <div className="flex flex-col gap-5">
@@ -393,6 +437,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               const prev = idx > 0 ? arr[idx - 1] : undefined
               const next = idx < arr.length - 1 ? arr[idx + 1] : undefined
               const minStart = prev?.dates[1] || prev?.dates[0] || today
+              const unavailable = getUnavailableCodes(arr, idx)
               return (
                 <CourseEntryRow
                   key={entry.id}
@@ -403,6 +448,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
                   agency={agency}
                   minStartDate={minStart}
                   nextEntry={next}
+                  unavailableCodes={unavailable}
                 />
               )
             })}
@@ -487,14 +533,38 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               dayNumber={idx + 1}
               dispatch={dispatch}
               canRemove={days.length > 1}
-              customerNames={customerNames}
               availableDives={getAvailableDives(idx, days, allCourseCodes)}
               onToggleDive={handleToggleDive}
-              instructorOptions={instructorOptions}
-              boatOptions={boatOptions}
-              poolOptions={poolOptions}
+              instructorOptions={filterByAvailability(instructorOptions, day.date, capacityData, inventoryMap)}
+              boatOptions={filterByAvailability(boatOptions, day.date, capacityData, inventoryMap)}
+              poolOptions={filterByAvailability(poolOptions, day.date, capacityData, inventoryMap)}
+              shoreOptions={shoreOptions}
               totalDays={days.length}
+              courseCodes={allCourseCodes}
+              customerLanguages={customerLanguageCodes}
             />
+          ))}
+        </div>
+      )}
+
+      {/* Empty day warning — between day cards and equipment */}
+      {emptyDayWarnings.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {emptyDayWarnings.map((warning, i) => (
+            <div
+              key={`empty-${i}`}
+              className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
+              role="alert"
+              style={{
+                background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 30%, transparent)',
+                color: 'var(--color-warning, #f59e0b)',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" aria-hidden />
+              <span>{warning}</span>
+            </div>
           ))}
         </div>
       )}

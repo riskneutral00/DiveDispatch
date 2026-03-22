@@ -64,7 +64,7 @@ async function getOwnerCity(
       .unique()
   } else if (ownerType === 'Pool') {
     profile = await ctx.db
-      .query('pools')
+      .query('venues')
       .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', user._id))
       .unique()
   } else if (ownerType === 'Compressor') {

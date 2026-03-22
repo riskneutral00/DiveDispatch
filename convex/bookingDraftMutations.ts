@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS, type AnyCtx } from './lib/auth'
-import { releaseBookingReservations } from './bookingsMutations'
+import { releaseBookingReservations } from './bookings/_shared'
 
 type OperatorType =
   | 'DiveCenter'

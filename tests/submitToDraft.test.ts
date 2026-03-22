@@ -7,6 +7,7 @@ import {
   tryAutoAdvance,
   isFullDayResource,
 } from '../convex/bookings/_shared'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,8 +64,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -93,7 +94,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -144,8 +145,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -166,7 +167,7 @@ describe('submitToDraft', () => {
       })
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -184,7 +185,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -221,8 +222,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -244,7 +245,7 @@ describe('submitToDraft', () => {
       // 3 available, requesting 4
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 10,
@@ -262,7 +263,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -299,8 +300,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -321,7 +322,7 @@ describe('submitToDraft', () => {
       })
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 5,
@@ -338,7 +339,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -379,8 +380,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -418,7 +419,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: exclusiveId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -426,7 +427,7 @@ describe('submitToDraft', () => {
           },
           {
             inventoryUnitId: pooledId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -461,8 +462,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -491,7 +492,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -522,7 +523,7 @@ describe('submitToDraft', () => {
       await ctx.db.insert('stakeholderBlockedDates', {
         ownerSlug: 'dc-test',
         roleType: 'DiveCenter',
-        dates: ['2030-06-15'],
+        dates: [testDate(5)],
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -532,8 +533,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -563,7 +564,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -612,8 +613,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -643,7 +644,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -666,7 +667,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-16',
+            date: testDate(6),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -688,7 +689,7 @@ describe('submitToDraft', () => {
       // Original 2030-06-15 snapshot should be restored to availableUnits=1
       const snapshots = await ctx.db.query('availabilitySnapshots').collect()
       const originalSnap = snapshots.find(
-        (s) => s.date === '2030-06-15' && s.inventoryUnitId === unitId,
+        (s) => s.date === testDate(5) && s.inventoryUnitId === unitId,
       )
       expect(originalSnap?.availableUnits).toBe(1)
     })
@@ -718,8 +719,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -759,7 +760,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -800,8 +801,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -841,7 +842,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -881,8 +882,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -913,7 +914,7 @@ describe('submitToDraft', () => {
       // Exclusive unit already fully held
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: busyUnitId,
-        date: '2030-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -931,7 +932,7 @@ describe('submitToDraft', () => {
           sessions: [
             {
               inventoryUnitId: goodUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -939,7 +940,7 @@ describe('submitToDraft', () => {
             },
             {
               inventoryUnitId: busyUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '11:00',
               timezone: 'Asia/Bangkok',
@@ -985,8 +986,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1006,8 +1007,8 @@ describe('submitToDraft', () => {
         sessions: [],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-15',
-          endDate: '2030-06-17',
+          startDate: testDate(5),
+          endDate: testDate(7),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -1069,8 +1070,8 @@ describe('submitToDraft', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1090,7 +1091,7 @@ describe('submitToDraft', () => {
         sessions: [
           {
             inventoryUnitId: boatUnitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -1098,7 +1099,7 @@ describe('submitToDraft', () => {
           },
           {
             inventoryUnitId: instructorUnitId, // should be skipped (external)
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -1107,8 +1108,8 @@ describe('submitToDraft', () => {
         ],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-15',
-          endDate: '2030-06-17',
+          startDate: testDate(5),
+          endDate: testDate(7),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -1148,8 +1149,8 @@ describe('releaseBookingReservations', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1170,7 +1171,7 @@ describe('releaseBookingReservations', () => {
       })
       const snapshotId = await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -1180,7 +1181,7 @@ describe('releaseBookingReservations', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1224,8 +1225,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1247,7 +1248,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1284,8 +1285,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1307,7 +1308,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1344,8 +1345,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1381,8 +1382,8 @@ describe('tryAutoAdvance', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2030-06-15',
-        endDate: '2030-06-15',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -1404,7 +1405,7 @@ describe('tryAutoAdvance', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -1467,8 +1468,8 @@ async function setupBoatOverlapScenario(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW'],
-    startDate: '2026-04-01',
-    endDate: '2026-04-01',
+    startDate: testDate(5),
+    endDate: testDate(5),
     divers: [],
     operatorName: `${opts.slug} Business`,
     portalContact: false,
@@ -1547,7 +1548,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '16:00',
             timezone: 'Asia/Bangkok',
@@ -1567,8 +1568,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-dayboat-1 Business',
         portalContact: false,
@@ -1588,7 +1589,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2026-04-01',
+              date: testDate(5),
               startTime: '13:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -1615,7 +1616,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '16:00',
             timezone: 'Asia/Bangkok',
@@ -1634,8 +1635,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-liveaboard-2 Business',
         portalContact: false,
@@ -1655,7 +1656,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2026-04-01',
+              date: testDate(5),
               startTime: '09:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -1688,7 +1689,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '12:00',
             timezone: 'Asia/Bangkok',
@@ -1708,8 +1709,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-speedboat-3 Business',
         portalContact: false,
@@ -1729,7 +1730,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '13:00',
             endTime: '17:00',
             timezone: 'Asia/Bangkok',
@@ -1759,7 +1760,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '11:00',
             timezone: 'Asia/Bangkok',
@@ -1778,8 +1779,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-longtail-4 Business',
         portalContact: false,
@@ -1798,7 +1799,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '13:00',
             endTime: '16:00',
             timezone: 'Asia/Bangkok',
@@ -1828,7 +1829,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '12:00',
             timezone: 'Asia/Bangkok',
@@ -1847,8 +1848,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-catamaran-5 Business',
         portalContact: false,
@@ -1867,7 +1868,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '14:00',
             endTime: '18:00',
             timezone: 'Asia/Bangkok',
@@ -1897,7 +1898,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '10:00',
             timezone: 'Asia/Bangkok',
@@ -1916,8 +1917,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-rib-6 Business',
         portalContact: false,
@@ -1936,7 +1937,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '11:00',
             endTime: '13:00',
             timezone: 'Asia/Bangkok',
@@ -1966,7 +1967,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '12:00',
             timezone: 'Asia/Bangkok',
@@ -1985,8 +1986,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-speedboat-7 Business',
         portalContact: false,
@@ -2006,7 +2007,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2026-04-01',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '12:00',
               timezone: 'Asia/Bangkok',
@@ -2044,8 +2045,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-instr-8 Business',
         portalContact: false,
@@ -2064,7 +2065,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '12:00',
             timezone: 'Asia/Bangkok',
@@ -2083,8 +2084,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-instr-8 Business',
         portalContact: false,
@@ -2104,7 +2105,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '13:00',
             endTime: '17:00',
             timezone: 'Asia/Bangkok',
@@ -2145,8 +2146,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-instr-9 Business',
         portalContact: false,
@@ -2166,7 +2167,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2026-04-01',
+            date: testDate(5),
             startTime: '08:00',
             endTime: '12:00',
             timezone: 'Asia/Bangkok',
@@ -2185,8 +2186,8 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'dc-instr-9 Business',
         portalContact: false,
@@ -2207,7 +2208,7 @@ describe('overlap granularity — full-day conflict (submitToDraft)', () => {
           sessions: [
             {
               inventoryUnitId: unitId,
-              date: '2026-04-01',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '12:00',
               timezone: 'Asia/Bangkok',

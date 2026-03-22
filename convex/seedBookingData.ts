@@ -1117,15 +1117,21 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       } | undefined = undefined
 
       if (bIdx >= 130 && bIdx <= 137) {
-        // All resources external
+        // All resources external — realistic name pools
+        const ei = bIdx - 130
+        const extInstructors = ['Tom Wilson', 'Lisa Chen', 'Marco Rossi', 'Sophie Laurent', 'Yuki Tanaka', 'James Cooper', 'Anna Berg', 'Carlos Mendez']
+        const extBoats = ['Blue Horizon', 'Sea Dragon', 'Island Spirit', 'Deep Blue', 'Ocean Star', 'Coral Queen', 'Andaman Explorer', 'Reef Runner']
+        const extEquipment = ['Dive Gear Phuket', 'Scuba Supply Co', 'Andaman Equipment', 'Ocean Gear Rental', 'Reef Tech', 'Island Dive Supply', 'Deep Blue Equipment', 'Thai Dive Gear']
+        const extCompressors = ['Chalong Air Fill', 'Phuket Air Station', 'Island Compressor', 'Dive Air Thailand', 'Andaman Fill Station', 'Rawai Air Service', 'Kata Compressor', 'Patong Air Supply']
+        const extPools = ['Kata Beach Resort Pool', 'Royal Phuket Hotel Pool', 'Coconut Island Pool', 'Laguna Pool Center']
         externalStakeholders = {
-          instructorName: `External Instructor ${bIdx}`,
-          boatName: `External Boat ${bIdx}`,
-          equipmentManagerName: `External EM ${bIdx}`,
-          compressorName: `External Compressor ${bIdx}`,
+          instructorName: extInstructors[ei],
+          boatName: extBoats[ei],
+          equipmentManagerName: extEquipment[ei],
+          compressorName: extCompressors[ei],
         }
         if (activityType.includes('OW' as CourseCode)) {
-          externalStakeholders.poolName = `External Pool ${bIdx}`
+          externalStakeholders.poolName = extPools[ei % extPools.length]
         }
       } else if (config.ownerSlug === 'n7rq5j' && bi >= 40 && bi <= 43) {
         // Operator-added outside instructor, own resources in-system

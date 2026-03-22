@@ -17,6 +17,7 @@ if (existsSync(envPath)) {
 }
 
 export default defineConfig({
+  globalSetup: './e2e/globalSetup.ts',
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

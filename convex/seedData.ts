@@ -75,19 +75,25 @@ interface BoatProfile {
     cutoffHours?: number
   }[]
   focusedLanguages: string[]
+  hasCompressor: boolean
   verified: boolean
 }
 
-interface PoolProfile {
+interface VenueProfile {
   name: string
   city: string
   country: string
   contactEmail: string
   contactPhone: string
-  maxDepth: number
-  maxCapacity: number
   focusedLanguages: string[]
   verified: boolean
+  venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
+  isPublic: boolean
+  confinedCapable: boolean
+  openWaterCapable: boolean
+  hasCompressor: boolean
+  maxDepth?: number
+  maxCapacity?: number
 }
 
 interface EquipmentProfile {
@@ -143,11 +149,18 @@ export interface SeedStakeholder {
   user: SeedUser
   diveCenter?: DiveCenterProfile
   boat?: BoatProfile
-  pool?: PoolProfile
+  pool?: VenueProfile
   equipment?: EquipmentProfile
   compressor?: CompressorProfile
   agent?: AgentProfile
   instructor?: InstructorProfile
+}
+
+/** Unowned dive sites — public locations seeded without user accounts. */
+export interface SeedDiveSite {
+  name: string
+  slug: string
+  capacity: number
 }
 
 // ── Route Helpers ───────────────────────────────────────────────────
@@ -232,6 +245,7 @@ export const HUG_OCEAN_BOAT: SeedStakeholder = {
       },
     ],
     focusedLanguages: ['Mandarin', 'Thai'],
+    hasCompressor: false,
     verified: VERIFIED,
   },
 }
@@ -258,6 +272,11 @@ export const HUG_OCEAN_POOL: SeedStakeholder = {
     maxCapacity: 15,
     focusedLanguages: ['Mandarin', 'Thai'],
     verified: VERIFIED,
+    venueType: 'Pool',
+    isPublic: false,
+    confinedCapable: true,
+    openWaterCapable: false,
+    hasCompressor: false,
   },
 }
 
@@ -307,6 +326,11 @@ export const WATER_PRO: SeedStakeholder = {
     maxCapacity: 25,
     focusedLanguages: ['Thai', 'English'],
     verified: VERIFIED,
+    venueType: 'Pool',
+    isPublic: false,
+    confinedCapable: true,
+    openWaterCapable: false,
+    hasCompressor: false,
   },
 }
 
@@ -357,6 +381,11 @@ export const NEPTUNE_POOL: SeedStakeholder = {
     maxCapacity: 6,
     focusedLanguages: ['Mandarin'],
     verified: VERIFIED,
+    venueType: 'Pool',
+    isPublic: false,
+    confinedCapable: true,
+    openWaterCapable: false,
+    hasCompressor: false,
   },
 }
 
@@ -406,6 +435,11 @@ export const SHARK_BITES: SeedStakeholder = {
     maxCapacity: 8,
     focusedLanguages: ['Thai', 'English'],
     verified: VERIFIED,
+    venueType: 'Pool',
+    isPublic: false,
+    confinedCapable: true,
+    openWaterCapable: false,
+    hasCompressor: false,
   },
 }
 
@@ -475,6 +509,7 @@ export const PHUKET_DC_BOAT: SeedStakeholder = {
       },
     ],
     focusedLanguages: ['English', 'Thai', 'Chinese'],
+    hasCompressor: false,
     verified: VERIFIED,
   },
 }
@@ -688,6 +723,7 @@ export const SCUBA_DEEP_BOAT: SeedStakeholder = {
       },
     ],
     focusedLanguages: ['English'],
+    hasCompressor: false,
     verified: VERIFIED,
   },
 }
@@ -765,6 +801,12 @@ export const AMANDA: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
+
+// ── Unowned Dive Sites (no user account) ────────────────────────────
+
+export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
+  { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
+]
 
 // ── All Non-Instructor Stakeholders ─────────────────────────────────
 

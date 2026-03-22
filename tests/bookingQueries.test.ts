@@ -3,6 +3,7 @@ import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { buildInstructorNameMap } from '../convex/bookings'
+import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -70,9 +71,9 @@ async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, 
     holdTTL: 43200000,
     paid: false,
     activityType: ['OW'],
-    startDate: '2025-06-15',
-    endDate: '2025-06-17',
-    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] }],
+    startDate: testDate(5),
+    endDate: testDate(7),
+    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
     operatorName: 'Test DC',
     portalContact: false,
     portalMedical: false,
@@ -222,8 +223,8 @@ describe('listByOwner', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       activityType: ['OW'],
-      startDate: '2025-06-15',
-      endDate: '2025-06-17',
+      startDate: testDate(5),
+      endDate: testDate(7),
       status: 'Upcoming',
       diverCount: 1,
     })
@@ -278,8 +279,8 @@ describe('listByOwner', () => {
       await seedUser(ctx, 'dc-1')
       await seedBooking(ctx, 'dc-1', {
         divers: [
-          { name: 'Bob', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: '2025-06-15', endDate: '2025-06-15', activityType: ['OW'] },
-          { name: 'Carol', abbrev: 'C', flag: { code: 'UK', label: 'UK' }, startDate: '2025-06-15', endDate: '2025-06-15', activityType: ['OW'] },
+          { name: 'Bob', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(5), activityType: ['OW'] },
+          { name: 'Carol', abbrev: 'C', flag: { code: 'UK', label: 'UK' }, startDate: testDate(5), endDate: testDate(5), activityType: ['OW'] },
         ],
       })
     })
@@ -615,7 +616,7 @@ describe('myDashboard', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-10',
+        date: testDate(10),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -624,7 +625,7 @@ describe('myDashboard', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-11',
+        date: testDate(12),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -648,7 +649,7 @@ describe('myDashboard', () => {
     const req = result.requests[0]
     expect(req.bookingId).toBe(bookingId)
     expect(req.activityType).toEqual(['OW', 'AOW'])
-    expect(req.dates).toEqual(['2025-07-10', '2025-07-11'])
+    expect(req.dates).toEqual([testDate(10), testDate(12)])
     expect(req.status).toBe('PendingAcceptance')
     expect(req.ownerName).toBe('Ocean DC')
     expect(req._id).toBeDefined()
@@ -669,7 +670,7 @@ describe('myDashboard', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-10',
+        date: testDate(10),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -679,7 +680,7 @@ describe('myDashboard', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-10',
+        date: testDate(10),
         startTime: '14:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -697,7 +698,7 @@ describe('myDashboard', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
       .query(api.bookings.myDashboard)
 
-    expect(result.requests[0].dates).toEqual(['2025-07-10'])
+    expect(result.requests[0].dates).toEqual([testDate(10)])
   })
 
   it('resource role: skips requests for non-existent bookings', async () => {
@@ -712,7 +713,7 @@ describe('myDashboard', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-10',
+        date: testDate(10),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -745,7 +746,7 @@ describe('myDashboard', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-07-10',
+        date: testDate(10),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',

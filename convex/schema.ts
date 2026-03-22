@@ -62,6 +62,16 @@ const boatTypeUnion = v.union(
   v.literal('rib'),
 )
 
+const venueType = v.union(
+  v.literal('Pool'),
+  v.literal('Shore'),
+  v.literal('Reef'),
+  v.literal('Lake'),
+  v.literal('River'),
+  v.literal('Quarry'),
+  v.literal('Other'),
+)
+
 const gasMix = v.union(v.literal('air'), v.literal('nitrox'), v.literal('trimix'))
 
 const courseCode = v.union(
@@ -193,6 +203,7 @@ export default defineSchema({
     draftState: v.optional(v.string()),
     bookingFormComplete: v.boolean(),
     customerFormComplete: v.boolean(),
+    needsAttention: v.optional(v.boolean()),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_status', ['status'])
@@ -381,6 +392,10 @@ export default defineSchema({
     useNamedUnits: v.boolean(),
     commonLanguageCodes: v.array(v.string()),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
+    preferredVenueSlugs: v.optional(v.array(v.string())),
+    preferredEquipmentSlugs: v.optional(v.array(v.string())),
+    preferredBoatSlugs: v.optional(v.array(v.string())),
+    preferredCompressorSlugs: v.optional(v.array(v.string())),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
   }).index('by_stakeholderId', ['stakeholderId']),
@@ -466,6 +481,7 @@ export default defineSchema({
       }),
     ),
     focusedLanguages: v.array(v.string()),
+    hasCompressor: v.boolean(),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -481,17 +497,22 @@ export default defineSchema({
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
-  pools: defineTable({
-    userId: v.id('users'),
+  venues: defineTable({
+    userId: v.optional(v.id('users')),
     name: v.string(),
     city: v.string(),
     country: v.string(),
-    contactEmail: v.string(),
-    contactPhone: v.string(),
-    maxDepth: v.number(),
-    maxCapacity: v.number(),
+    contactEmail: v.optional(v.string()),
+    contactPhone: v.optional(v.string()),
     focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
+    venueType: venueType,
+    isPublic: v.boolean(),
+    confinedCapable: v.boolean(),
+    openWaterCapable: v.boolean(),
+    hasCompressor: v.boolean(),
+    maxDepth: v.optional(v.number()),
+    maxCapacity: v.optional(v.number()),
   }).index('by_userId', ['userId']),
 
   compressors: defineTable({
@@ -713,16 +734,7 @@ export default defineSchema({
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
-  diveSites: defineTable({
-    userId: v.id('users'),
-    name: v.string(),
-    city: v.string(),
-    country: v.string(),
-    contactEmail: v.string(),
-    contactPhone: v.string(),
-    focusedLanguages: v.array(v.string()),
-    verified: v.boolean(),
-  }).index('by_userId', ['userId']),
+  // diveSites table removed — absorbed into `venues` table with venueType discriminator
 
   // ── L5: Support ─────────────────────────────────────────────────────────────
 

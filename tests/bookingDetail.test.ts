@@ -3,6 +3,7 @@ import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { logBookingChange } from '../convex/bookingAuditLog'
+import { testDate, testToken } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -44,15 +45,15 @@ async function seedBooking(
     holdTTL: 43200000,
     paid: false,
     activityType: ['OW'],
-    startDate: '2025-06-15',
-    endDate: '2025-06-17',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [
       {
         name: 'Alice',
         abbrev: 'A',
         flag: { code: 'TH', label: 'Thailand' },
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         activityType: ['OW'],
       },
     ],
@@ -99,7 +100,7 @@ async function seedReservation(
     (await ctx.db.insert('bookingSessions', {
       bookingId,
       inventoryUnitId,
-      date: '2025-06-15',
+      date: testDate(5),
       startTime: '09:00',
       endTime: '17:00',
       timezone: 'Asia/Bangkok',
@@ -122,7 +123,7 @@ async function seedSession(
   return ctx.db.insert('bookingSessions', {
     bookingId,
     inventoryUnitId,
-    date: '2025-06-15',
+    date: testDate(5),
     startTime: '09:00',
     endTime: '17:00',
     timezone: 'Asia/Bangkok',
@@ -136,7 +137,7 @@ async function seedCustomerProfile(
 ) {
   return ctx.db.insert('customerProfiles', {
     bookingId,
-    linkToken: `token-${Date.now()}-${Math.random()}`,
+    linkToken: testToken('token'),
     physicianClearanceRequired: false,
     ...(submittedAt !== undefined ? { submittedAt } : {}),
   })
@@ -238,9 +239,9 @@ describe('getBookingDetail', () => {
       await seedUser(ctx, 'dc-1')
       bookingId = await seedBooking(ctx, 'dc-1', {
         divers: [
-          { name: 'A', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] },
-          { name: 'B', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] },
-          { name: 'C', abbrev: 'C', flag: { code: 'GB', label: 'UK' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] },
+          { name: 'A', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
+          { name: 'B', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
+          { name: 'C', abbrev: 'C', flag: { code: 'GB', label: 'UK' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
         ],
       })
       await seedCustomerProfile(ctx, bookingId, Date.now()) // submitted
@@ -283,7 +284,7 @@ describe('getBookingDetail', () => {
 
     expect(result).not.toBeNull()
     expect(result!.sessions).toHaveLength(1)
-    expect(result!.sessions[0].date).toBe('2025-06-15')
+    expect(result!.sessions[0].date).toBe(testDate(5))
     expect(result!.sessions[0].startTime).toBe('09:00')
     expect(result!.sessions[0].endTime).toBe('17:00')
     expect(result!.sessions[0].inventoryUnitName).toBe('instructor-1 Unit')
@@ -372,8 +373,8 @@ describe('getBookingDetail', () => {
 
     expect(result).not.toBeNull()
     expect(result!.status).toBe('Upcoming')
-    expect(result!.startDate).toBe('2025-06-15')
-    expect(result!.endDate).toBe('2025-06-17')
+    expect(result!.startDate).toBe(testDate(5))
+    expect(result!.endDate).toBe(testDate(7))
     expect(result!.activityType).toContain('OW')
     expect(result!.operatorName).toBe('Test DC')
   })

@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
 import { internal } from './_generated/api'
-import { ALL_STAKEHOLDERS, HIERARCHY_LINKS, SeedStakeholder, StakeholderRole } from './seedData'
+import { ALL_STAKEHOLDERS, HIERARCHY_LINKS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -141,12 +141,12 @@ const TABLES_TO_WIPE = [
   'bookings', 'bookingResources', 'bookingSessions', 'customers', 'customerProfiles', 'bookingLinks',
   'inventoryUnits', 'reservations', 'availabilitySnapshots', 'equipmentInventory',
   'stakeholderPreferences', 'notifications',
-  'diveCenters', 'instructors', 'boats', 'equipment', 'pools', 'compressors',
+  'diveCenters', 'instructors', 'boats', 'equipment', 'venues', 'compressors',
   'equipmentBags', 'gearSizingLookup',
   'stakeholderHierarchy', 'bans', 'bookingTemplates',
   'agents', 'diveMasters',
   'liveaboards', 'cabins', 'tripSchedules',
-  'diveResorts', 'rooms', 'diveHostels', 'diveSites',
+  'diveResorts', 'rooms', 'diveHostels',
   'supportRequests',
   'stakeholderBlockedDates',
 ] as const
@@ -197,7 +197,7 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('boats', { userId, ...s.boat })
       }
       if (s.pool) {
-        await ctx.db.insert('pools', { userId, ...s.pool })
+        await ctx.db.insert('venues', { userId, ...s.pool })
       }
       if (s.equipment) {
         await ctx.db.insert('equipment', { userId, ...s.equipment })
@@ -350,7 +350,7 @@ export const seedResourceInventory = internalMutation({
           resourceId: s.user.slug,
           displayName: s.pool.name,
           capacityModel: 'Pooled',
-          totalUnits: s.pool.maxCapacity,
+          totalUnits: s.pool.maxCapacity ?? 1,
           ownerId: s.user.slug,
           ownerType: 'Pool',
         })
@@ -368,6 +368,20 @@ export const seedResourceInventory = internalMutation({
           ownerType: 'Compressor',
         })
       }
+
+    }
+
+    // Unowned dive sites: public locations, no owner user
+    for (const site of UNOWNED_DIVE_SITES) {
+      await ctx.db.insert('inventoryUnits', {
+        resourceType: 'DiveSite',
+        resourceId: site.slug,
+        displayName: site.name,
+        capacityModel: 'Pooled',
+        totalUnits: site.capacity,
+        ownerId: '__unowned__',
+        ownerType: 'DiveSite',
+      })
     }
   },
 })

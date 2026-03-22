@@ -4,19 +4,10 @@ import { useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { GlassButton, GlassInput, GlassBadge } from '@/components/glass'
 import { Spinner } from '@/components/common/spinner'
+import type { ResourcePickerEntry } from '@/lib/types/booking'
+import { LanguageFlags } from '@/components/common/language-flags'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface ResourcePickerEntry {
-  slug: string
-  name: string
-  city: string
-  country: string
-  languages: string[]
-  verified: boolean
-  /** Boat vessel names, pool names, etc. — shown as info badges */
-  subItems?: string[]
-}
+export type { ResourcePickerEntry }
 
 interface ResourcePickerProps {
   label: string
@@ -254,9 +245,7 @@ export function ResourcePicker({
             </GlassBadge>
           )}
           {selectedEntry.languages.length > 0 && (
-            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              {selectedEntry.languages.slice(0, 3).join(' · ')}
-            </span>
+            <LanguageFlags languages={selectedEntry.languages} className="text-sm" />
           )}
           {selectedEntry.subItems?.map((item) => (
             <GlassBadge key={item} variant="info" size="sm">
@@ -341,9 +330,7 @@ function PickerRow({
             {entry.city}, {entry.country}
           </span>
           {entry.languages.length > 0 && (
-            <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              · {entry.languages.slice(0, 2).join(', ')}
-            </span>
+            <LanguageFlags languages={entry.languages} className="text-xs" />
           )}
         </div>
 

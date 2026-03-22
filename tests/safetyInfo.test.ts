@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -23,8 +24,8 @@ async function seedPortalFixture(
     holdTTL: 43200000,
     paid: false,
     activityType: ['OW'],
-    startDate: '2025-06-15',
-    endDate: '2025-06-17',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [],
     operatorName: 'Test DC',
     portalContact: false,

@@ -21,7 +21,6 @@ import type * as bookings__shared from "../bookings/_shared.js";
 import type * as bookings_create from "../bookings/create.js";
 import type * as bookings_edit from "../bookings/edit.js";
 import type * as bookings_status from "../bookings/status.js";
-import type * as bookingsMutations from "../bookingsMutations.js";
 import type * as compressors from "../compressors.js";
 import type * as crons from "../crons.js";
 import type * as customerProfiles from "../customerProfiles.js";
@@ -76,7 +75,6 @@ declare const fullApi: ApiFromModules<{
   "bookings/create": typeof bookings_create;
   "bookings/edit": typeof bookings_edit;
   "bookings/status": typeof bookings_status;
-  bookingsMutations: typeof bookingsMutations;
   compressors: typeof compressors;
   crons: typeof crons;
   customerProfiles: typeof customerProfiles;

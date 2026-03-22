@@ -64,6 +64,8 @@ export interface DiveSlotDef {
   diveNumber: number
   isConfined: boolean
   label: string
+  /** True when the day's non-confined dive limit has been reached and this dive is not yet selected. */
+  capped?: boolean
 }
 
 // ── buildDiveSequence ────────────────────────────────────────────────────────
@@ -176,14 +178,21 @@ export function generateDays(
     }))
   }
 
-  // Calculate day count
+  // Calculate day count.
+  // Pool day (confined) can also host up to divesPerDay non-confined dives
+  // (pool morning → boat afternoon on the same day).
   let dayCount: number
   if (endDate && endDate >= startDate) {
     dayCount = diffDays(endDate, startDate) + 1
   } else {
     const nonConfined = sequence.filter((s) => !s.isConfined).length
-    const confinedDays = hasConfined ? 1 : 0
-    dayCount = confinedDays + Math.ceil(nonConfined / defaultDivesPerDay)
+    if (hasConfined) {
+      // Pool day absorbs up to divesPerDay non-confined dives
+      const overflow = Math.max(0, nonConfined - defaultDivesPerDay)
+      dayCount = 1 + Math.ceil(overflow / defaultDivesPerDay)
+    } else {
+      dayCount = Math.max(1, Math.ceil(nonConfined / defaultDivesPerDay))
+    }
   }
 
   const result: DayConfig[] = []
@@ -193,13 +202,14 @@ export function generateDays(
       venueType: hasConfined && i === 0 ? 'pool' : 'boat',
       dives: [],
       divesPerDay: defaultDivesPerDay,
-      startTime: hasConfined && i === 0 ? '09:00' : '08:00',
-      endTime: hasConfined && i === 0 ? '14:00' : '17:00',
+      startTime: '08:00',
+      endTime: '17:00',
       timezone: 'Asia/Bangkok',
     })
   }
 
-  return distributeDives(result, courseCodes)
+  // Days start empty — operator fills via ghost pills (dive-level selection).
+  return result
 }
 
 // ── generateDaysFromDates ────────────────────────────────────────────────────
@@ -224,7 +234,8 @@ export function generateDaysFromDates(courseCodes: string[], dates: string[]): D
     timezone: 'Asia/Bangkok',
   }))
 
-  return distributeDives(days, courseCodes)
+  // Days start empty — operator fills via ghost pills (dive-level selection).
+  return days
 }
 
 // ── distributeDives ──────────────────────────────────────────────────────────
@@ -481,6 +492,58 @@ export function autoFillPredecessors(
   return result
 }
 
+// ── autoDistributeFromDive ──────────────────────────────────────────────────
+
+/**
+ * Auto-fill all dives from the starting dive's position onward in the global
+ * sequence, distributed across available days respecting the per-day cap.
+ * Used when the operator selects their first dive — the rest auto-populate.
+ */
+export function autoDistributeFromDive(
+  days: DayConfig[],
+  startingDive: DiveSlot,
+  courseCodes: string[],
+): DayConfig[] {
+  const sequence = buildDiveSequence(courseCodes)
+  const startIdx = sequence.findIndex(s =>
+    s.courseCode === startingDive.courseCode &&
+    s.diveNumber === startingDive.diveNumber &&
+    s.isConfined === startingDive.isConfined,
+  )
+  if (startIdx < 0) return days
+
+  const remaining = sequence.slice(startIdx + 1)
+  if (remaining.length === 0) return days
+
+  const result = days.map(d => ({ ...d, dives: [...d.dives] }))
+
+  const startDayIdx = result.findIndex(d =>
+    d.dives.some(dv =>
+      dv.courseCode === startingDive.courseCode &&
+      dv.diveNumber === startingDive.diveNumber &&
+      dv.isConfined === startingDive.isConfined,
+    ),
+  )
+  if (startDayIdx < 0) return days
+
+  let slotIdx = 0
+  for (let d = startDayIdx; d < result.length && slotIdx < remaining.length; d++) {
+    const divesPerDay = result[d].divesPerDay || 3
+    while (slotIdx < remaining.length) {
+      const dive = remaining[slotIdx]
+      if (!dive.isConfined && countNonConfined(result[d].dives) >= divesPerDay) break
+      result[d].dives.push({
+        courseCode: dive.courseCode,
+        diveNumber: dive.diveNumber,
+        isConfined: dive.isConfined,
+      })
+      slotIdx++
+    }
+  }
+
+  return result
+}
+
 // ── ensureSufficientDays ─────────────────────────────────────────────────────
 
 /**
@@ -564,7 +627,7 @@ export function getAvailableDives(
     }
   }
 
-  // Filter by assignment, venue, and highwater
+  // Filter by assignment and highwater (venue is per-dive, not per-day)
   const candidates = fullSequence.filter((slot, slotIdx) => {
     const key = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
     const assigned = assignedDay.get(key)
@@ -572,13 +635,41 @@ export function getAvailableDives(
     // Already assigned to a DIFFERENT day → not available here
     if (assigned !== undefined && assigned !== dayIndex) return false
 
-    // Venue check: non-pool days don't accept confined dives
-    if (day.venueType !== 'pool' && slot.isConfined) return false
-
     // Highwater: slotIdx must be > highwater
     if (slotIdx <= highwater) return false
 
     return true
+  })
+
+  // Sequential selection: the dive sequence is one continuous global line
+  // across all courses (e.g. Confined → OW-1 → ... → OW-4 → AOW-1 → ... → AOW-5).
+  // Only the next dive in the global sequence is selectable.
+  // First pick (nothing selected yet) can be any dive (referral entry point).
+  // Already-selected dives on THIS day remain visible for toggling off.
+  const allSelectedDives = days.flatMap(d => d.dives)
+
+  // Global max: highest sequence index across ALL selected dives
+  let globalMaxSeqIndex = -1
+  for (const dv of allSelectedDives) {
+    const idx = fullSequence.findIndex(s =>
+      s.courseCode === dv.courseCode && s.diveNumber === dv.diveNumber && s.isConfined === dv.isConfined)
+    if (idx > globalMaxSeqIndex) globalMaxSeqIndex = idx
+  }
+
+  const sequentialCandidates = candidates.filter(slot => {
+    const key = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
+    const isAlreadySelected = assignedDay.get(key) !== undefined
+
+    // Already selected → keep visible (for toggling off)
+    if (isAlreadySelected) return true
+
+    // No dives selected globally → any dive is valid (referral first pick)
+    if (globalMaxSeqIndex === -1) return true
+
+    // Only the next dive in the global sequence is selectable
+    const slotIdx = fullSequence.findIndex(s =>
+      s.courseCode === slot.courseCode && s.diveNumber === slot.diveNumber && s.isConfined === slot.isConfined)
+    return slotIdx === globalMaxSeqIndex + 1
   })
 
   // Course-level prereq: block courses whose prerequisite course has
@@ -589,7 +680,7 @@ export function getAvailableDives(
     if (!entry?.prerequisites) continue
     for (const prereq of entry.prerequisites) {
       if (!courseCodes.includes(prereq)) continue
-      const hasUnplaced = candidates.some(s =>
+      const hasUnplaced = sequentialCandidates.some(s =>
         s.courseCode === prereq &&
         assignedDay.get(`${s.courseCode}:${s.diveNumber}:${s.isConfined}`) === undefined,
       )
@@ -597,5 +688,19 @@ export function getAvailableDives(
     }
   }
 
-  return candidates.filter(s => !blockedCourses.has(s.courseCode))
+  const eligible = sequentialCandidates.filter(s => !blockedCourses.has(s.courseCode))
+
+  // Per-day non-confined dive cap: mark unselected non-confined dives as capped
+  const nonConfinedOnDay = countNonConfined(day.dives)
+  const dayLimit = day.divesPerDay || 3
+  if (nonConfinedOnDay >= dayLimit) {
+    return eligible.map(s => {
+      if (s.isConfined) return s
+      const key = `${s.courseCode}:${s.diveNumber}:${s.isConfined}`
+      if (assignedDay.get(key) === dayIndex) return s // already selected — not capped
+      return { ...s, capped: true }
+    })
+  }
+
+  return eligible
 }

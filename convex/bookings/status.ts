@@ -81,7 +81,7 @@ export const completeBookings = internalMutation({
     const upcoming = await ctx.db
       .query('bookings')
       .withIndex('by_status', (q: AnyCtx) => q.eq('status', 'Upcoming'))
-      .collect()
+      .take(101)
 
     const batch = upcoming.slice(0, 100)
     const more = upcoming.length > 100

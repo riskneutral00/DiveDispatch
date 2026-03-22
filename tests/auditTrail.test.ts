@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import schema from '../convex/schema'
 import { api, internal } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
 import { logBookingChange } from '../convex/bookingAuditLog'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,8 +43,8 @@ async function seedBooking(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW'],
-    startDate: '2030-06-15',
-    endDate: '2030-06-17',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [],
     operatorName: 'Test DC',
     portalContact: false,
@@ -202,7 +203,7 @@ describe('submitToDraft creates audit entries', () => {
         sessions: [
           {
             inventoryUnitId: unitId,
-            date: '2030-06-15',
+            date: testDate(5),
             startTime: '09:00',
             endTime: '17:00',
             timezone: 'UTC',
@@ -211,8 +212,8 @@ describe('submitToDraft creates audit entries', () => {
         ],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-15',
-          endDate: '2030-06-17',
+          startDate: testDate(5),
+          endDate: testDate(7),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -304,7 +305,7 @@ describe('complete creates audit entry', () => {
     const t = makeT()
 
     // Mock: time is well after session end
-    vi.spyOn(Date, 'now').mockReturnValue(new Date('2030-06-16T10:00:00Z').getTime())
+    vi.spyOn(Date, 'now').mockReturnValue(new Date(testDate(6) + 'T10:00:00Z').getTime())
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx)
@@ -314,7 +315,7 @@ describe('complete creates audit entry', () => {
       await c.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2030-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '17:00',
         timezone: 'UTC',
@@ -352,7 +353,7 @@ describe('edit creates audit entry with diff', () => {
 
     const sessionArgs = {
       inventoryUnitId: unitId,
-      date: '2030-06-15',
+      date: testDate(5),
       startTime: '09:00',
       endTime: '17:00',
       timezone: 'UTC',
@@ -367,8 +368,8 @@ describe('edit creates audit entry with diff', () => {
         sessions: [sessionArgs],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-15',
-          endDate: '2030-06-17',
+          startDate: testDate(5),
+          endDate: testDate(7),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -382,11 +383,11 @@ describe('edit creates audit entry with diff', () => {
       api.bookings.create.submitToDraft,
       {
         bookingId,
-        sessions: [{ ...sessionArgs, date: '2030-06-20' }],
+        sessions: [{ ...sessionArgs, date: testDate(10) }],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-20',
-          endDate: '2025-06-22',
+          startDate: testDate(10),
+          endDate: testDate(12),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -407,11 +408,11 @@ describe('edit creates audit entry with diff', () => {
 
     const diff = JSON.parse(editedEntry!.diff as string) as Record<string, { old: string; new: string }>
     expect(diff.startDate).toBeDefined()
-    expect(diff.startDate.old).toBe('2030-06-15')
-    expect(diff.startDate.new).toBe('2030-06-20')
+    expect(diff.startDate.old).toBe(testDate(5))
+    expect(diff.startDate.new).toBe(testDate(10))
     expect(diff.endDate).toBeDefined()
-    expect(diff.endDate.old).toBe('2030-06-17')
-    expect(diff.endDate.new).toBe('2025-06-22')
+    expect(diff.endDate.old).toBe(testDate(7))
+    expect(diff.endDate.new).toBe(testDate(12))
   })
 })
 
@@ -430,7 +431,7 @@ describe('diff captures changed fields only', () => {
 
     const sessionArgs = {
       inventoryUnitId: unitId,
-      date: '2030-06-15',
+      date: testDate(5),
       startTime: '09:00',
       endTime: '17:00',
       timezone: 'UTC',
@@ -445,8 +446,8 @@ describe('diff captures changed fields only', () => {
         sessions: [sessionArgs],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-15',
-          endDate: '2030-06-17',
+          startDate: testDate(5),
+          endDate: testDate(7),
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,
@@ -460,11 +461,11 @@ describe('diff captures changed fields only', () => {
       api.bookings.create.submitToDraft,
       {
         bookingId,
-        sessions: [{ ...sessionArgs, date: '2030-06-20' }],
+        sessions: [{ ...sessionArgs, date: testDate(10) }],
         bookingData: {
           activityType: ['OW'],
-          startDate: '2030-06-20',
-          endDate: '2030-06-17', // unchanged
+          startDate: testDate(10),
+          endDate: testDate(7), // unchanged
           portalContact: false,
           portalMedical: false,
           portalWaiver: false,

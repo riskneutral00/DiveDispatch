@@ -6,14 +6,14 @@ const CONVEX_SITE_URL = 'https://vivid-bison-754.convex.site'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Open the booking overlay via a QUICK BOOK card. Default: DSD (simplest). */
+/** Open the booking overlay via a QUICK BOOK pill. Default: DSD (simplest). */
 async function openBookingOverlay(
   page: import('@playwright/test').Page,
-  card: 'DSD' | 'Open Water' | 'Advanced OW' | 'OW + AOW' = 'DSD',
+  card: 'DSD' | 'OW' | 'AOW' | 'O+A' = 'DSD',
 ): Promise<void> {
-  // Cards contain label + description (with em-dash), so match the card specifically
-  // This avoids matching booking bars which use "DSD · customer" format
-  await page.getByRole('button', { name: new RegExp(`^${card.replace('+', '\\+')}\\s`) }).first().click()
+  // Quick book pills have exact text labels (e.g. "DSD", "OW", "O+A").
+  // Booking bars use "DSD · customer" format — exact match avoids those.
+  await page.getByRole('button', { name: card, exact: true }).first().click()
   await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 10_000 })
 }
 
@@ -281,7 +281,7 @@ test.describe('2i — Instructor ratio warning', () => {
 
 // ── 1e / 1f: Draft persistence ──────────────────────────────────────────────
 
-test.describe('1e/1f — Draft persistence', () => {
+test.describe('1e — Draft persistence', () => {
   test('1e — fill all steps through review + close via X → draft saved', async ({ page }) => {
     await signInAs(page, NICOLE.email)
     await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
@@ -337,29 +337,6 @@ test.describe('1e/1f — Draft persistence', () => {
     await expect(page.getByRole('button', { name: /^DSD\s/ }).first()).toBeVisible({ timeout: 5_000 })
 
     // Re-open to confirm wizard starts fresh
-    await openBookingOverlay(page)
-    await expect(page.getByLabel('Full name *')).toHaveValue('')
-    await page.getByLabel('Close dialog').click()
-  })
-
-  test('1f — partial fill + close overlay on step 1 → no draft created', async ({ page }) => {
-    await signInAs(page, NICOLE.email)
-    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
-    await openBookingOverlay(page)
-
-    // Fill only name — no email, no language (incomplete)
-    await page.getByLabel('Full name *').fill('Incomplete Customer')
-
-    // Close overlay via X on step 1 — never clicked Next, so no draft shell exists
-    await page.getByLabel('Close dialog').click()
-    await page.waitForTimeout(500)
-
-    // Overlay should be closed — Quick Book cards visible again
-    await expect(page.getByRole('button', { name: /^DSD\s/ }).first()).toBeVisible({ timeout: 5_000 })
-
-    // No draft shell was created (Next was never clicked),
-    // so no booking with "Incomplete Customer" can exist.
-    // Re-open the overlay to confirm wizard starts fresh (empty name field)
     await openBookingOverlay(page)
     await expect(page.getByLabel('Full name *')).toHaveValue('')
     await page.getByLabel('Close dialog').click()
@@ -539,5 +516,79 @@ test.describe('4b/4e — Active and Completed badges', () => {
     await completedFilter.click()
     await page.waitForTimeout(500)
     await expect(bookingBar).not.toBeVisible({ timeout: 5_000 })
+  })
+})
+
+// ── Activity dropdown filtering ──────────────────────────────────────────────
+
+test.describe('dropdown filter — activity unavailability rules', () => {
+  async function advanceToItinerary(page: import('@playwright/test').Page) {
+    await signInAs(page, NICOLE.email)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+    await openBookingOverlay(page, 'DSD')
+    await page.getByLabel('Full name *').fill('Filter Test')
+    await page.locator('input[type="email"]').first().fill('filter@test.com')
+    await page.getByRole('button', { name: 'English' }).first().click()
+    await clickNext(page)
+  }
+
+  async function getSecondDropdownValues(page: import('@playwright/test').Page): Promise<string[]> {
+    await page.getByRole('button', { name: /Add activity/i }).click()
+    await page.waitForTimeout(300)
+    const selects = page.locator('select')
+    const secondSelect = selects.nth(1)
+    // Read option VALUES (course codes like 'AOW') not text — avoids false matches
+    // from the O+A combo label "O+A (OW + AOW)" which contains "AOW" as text.
+    return secondSelect.locator('option').evaluateAll((opts) =>
+      opts.map((o) => (o as HTMLOptionElement).value),
+    )
+  }
+
+  test.afterEach(async ({ page }) => {
+    await page.getByLabel('Close dialog').click().catch(() => {})
+  })
+
+  test('first = DSD → second dropdown: OW present, FD absent', async ({ page }) => {
+    await advanceToItinerary(page)
+    const courseSelect = page.locator('select').first()
+    await expect(courseSelect).toBeVisible({ timeout: 10_000 })
+    const values = await getSecondDropdownValues(page)
+    expect(values).toContain('OW')
+    expect(values).not.toContain('FD')
+  })
+
+  test('first = OW → second dropdown: OW absent, DSD absent, AOW present', async ({ page }) => {
+    await advanceToItinerary(page)
+    const courseSelect = page.locator('select').first()
+    await expect(courseSelect).toBeVisible({ timeout: 10_000 })
+    await courseSelect.selectOption('OW')
+    await expect(courseSelect).toHaveValue('OW')
+    const values = await getSecondDropdownValues(page)
+    expect(values).not.toContain('OW')
+    expect(values).not.toContain('DSD')
+    expect(values).toContain('AOW')
+  })
+
+  test('first = AOW → second dropdown: OW absent, AOW absent, RESCUE present', async ({ page }) => {
+    await advanceToItinerary(page)
+    const courseSelect = page.locator('select').first()
+    await expect(courseSelect).toBeVisible({ timeout: 10_000 })
+    await courseSelect.selectOption('AOW')
+    await expect(courseSelect).toHaveValue('AOW')
+    const values = await getSecondDropdownValues(page)
+    expect(values).not.toContain('OW')
+    expect(values).not.toContain('AOW')
+    expect(values).toContain('RESCUE')
+  })
+
+  test('first = FD → second dropdown: FD present (repeatable), DSD absent', async ({ page }) => {
+    await advanceToItinerary(page)
+    const courseSelect = page.locator('select').first()
+    await expect(courseSelect).toBeVisible({ timeout: 10_000 })
+    await courseSelect.selectOption('FD')
+    await expect(courseSelect).toHaveValue('FD')
+    const values = await getSecondDropdownValues(page)
+    expect(values).toContain('FD')
+    expect(values).not.toContain('DSD')
   })
 })

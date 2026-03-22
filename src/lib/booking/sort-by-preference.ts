@@ -1,4 +1,4 @@
-import type { ResourcePickerEntry } from '@/components/booking/resource-picker'
+import type { ResourcePickerEntry } from '@/lib/types/booking'
 
 /**
  * Sorts entries so preferred slugs appear first (in preference order),

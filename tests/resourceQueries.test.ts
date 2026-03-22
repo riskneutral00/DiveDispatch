@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -45,11 +46,11 @@ async function seedBooking(ctx: Ctx) {
     holdTTL: 43200000,
     paid: false,
     activityType: ['OW'],
-    startDate: '2024-06-01',
-    endDate: '2024-06-03',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [
-      { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: '2024-06-01', endDate: '2024-06-03', activityType: ['OW'] },
-      { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: '2024-06-01', endDate: '2024-06-03', activityType: ['OW'] },
+      { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
+      { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
     ],
     operatorName: 'Phuket Dive Center',
     portalContact: false,
@@ -75,7 +76,7 @@ describe('getOpenRequests', () => {
         const sessionId = await ctx.db.insert('bookingSessions', {
           bookingId,
           inventoryUnitId: unitId,
-          date: '2024-06-02',
+          date: testDate(6),
           startTime: '08:00',
           endTime: '16:00',
           timezone: 'Asia/Bangkok',
@@ -101,8 +102,8 @@ describe('getOpenRequests', () => {
       bookingId: result.bookingId,
       unitsRequested: 1,
       activityType: ['OW'],
-      startDate: '2024-06-01',
-      endDate: '2024-06-03',
+      startDate: testDate(5),
+      endDate: testDate(7),
       diverCount: 2,
       operatorName: 'Phuket Dive Center',
     })
@@ -134,7 +135,7 @@ describe('getOpenRequests', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -163,7 +164,7 @@ describe('getOpenRequests', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -218,7 +219,7 @@ describe('getOpenRequests', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -255,7 +256,7 @@ describe('getConfirmedSchedule', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -263,7 +264,7 @@ describe('getConfirmedSchedule', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '12:00',
         timezone: 'Asia/Bangkok',
@@ -289,8 +290,8 @@ describe('getConfirmedSchedule', () => {
       unitsRequested: 1,
       confirmedAt: 999,
       activityType: ['OW'],
-      startDate: '2024-06-01',
-      endDate: '2024-06-03',
+      startDate: testDate(5),
+      endDate: testDate(7),
       diverCount: 2,
       operatorName: 'Phuket Dive Center',
     })
@@ -308,7 +309,7 @@ describe('getConfirmedSchedule', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02', // later date inserted first
+        date: testDate(6), // later date inserted first
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -316,7 +317,7 @@ describe('getConfirmedSchedule', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01', // earlier date inserted second
+        date: testDate(5), // earlier date inserted second
         startTime: '09:00',
         endTime: '12:00',
         timezone: 'Asia/Bangkok',
@@ -335,7 +336,7 @@ describe('getConfirmedSchedule', () => {
       .query(api.resourceQueries.getConfirmedSchedule)
 
     const dates = result[0].sessions.map((s) => s.date)
-    expect(dates).toEqual(['2024-06-01', '2024-06-02'])
+    expect(dates).toEqual([testDate(5), testDate(6)])
   })
 
   it('filters sessions to only those belonging to this inventory unit', async () => {
@@ -358,7 +359,7 @@ describe('getConfirmedSchedule', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -367,7 +368,7 @@ describe('getConfirmedSchedule', () => {
       await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: otherUnitId,
-        date: '2024-06-03',
+        date: testDate(7),
         startTime: '10:00',
         endTime: '14:00',
         timezone: 'Asia/Bangkok',
@@ -386,7 +387,7 @@ describe('getConfirmedSchedule', () => {
       .query(api.resourceQueries.getConfirmedSchedule)
 
     expect(result[0].sessions).toHaveLength(1)
-    expect(result[0].sessions[0].date).toBe('2024-06-02')
+    expect(result[0].sessions[0].date).toBe(testDate(6))
   })
 
   it('sorts results by earliest session date ascending', async () => {
@@ -401,7 +402,7 @@ describe('getConfirmedSchedule', () => {
       const session1Id = await ctx.db.insert('bookingSessions', {
         bookingId: booking1Id,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '12:00',
         timezone: 'Asia/Bangkok',
@@ -424,9 +425,9 @@ describe('getConfirmedSchedule', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-05-01',
-        endDate: '2024-05-02',
-        divers: [{ name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: '2024-05-01', endDate: '2024-05-02', activityType: ['OW'] }],
+        startDate: testDate(3),
+        endDate: testDate(4),
+        divers: [{ name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(3), endDate: testDate(4), activityType: ['OW'] }],
         operatorName: 'Test DC',
         portalContact: false,
         portalMedical: false,
@@ -438,7 +439,7 @@ describe('getConfirmedSchedule', () => {
       const session2Id = await ctx.db.insert('bookingSessions', {
         bookingId: booking2Id,
         inventoryUnitId: unitId,
-        date: '2024-05-01',
+        date: testDate(3),
         startTime: '09:00',
         endTime: '12:00',
         timezone: 'Asia/Bangkok',
@@ -457,8 +458,8 @@ describe('getConfirmedSchedule', () => {
       .query(api.resourceQueries.getConfirmedSchedule)
 
     // booking2 (May 1) should sort before booking1 (June 1)
-    expect(result[0].startDate).toBe('2024-05-01')
-    expect(result[1].startDate).toBe('2024-06-01')
+    expect(result[0].startDate).toBe(testDate(3))
+    expect(result[1].startDate).toBe(testDate(5))
   })
 
   it('returns empty array when no confirmed reservations exist', async () => {
@@ -500,7 +501,7 @@ describe('getConfirmedSchedule', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-02',
+        date: testDate(6),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',

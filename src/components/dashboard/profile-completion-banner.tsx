@@ -189,7 +189,7 @@ function EquipmentBanner({ slug }: { slug: string }) {
 }
 
 function PoolBanner({ slug }: { slug: string }) {
-  const profile = useQuery(api.pools.mine)
+  const profile = useQuery(api.venues.mine)
   if (profile === undefined) return null
 
   const missing: string[] = []

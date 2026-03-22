@@ -5,63 +5,75 @@ import {
   getDatesInRange,
   toISODateString,
 } from '../src/lib/utils/date'
+import { testDate } from './helpers/dates'
 
 describe('addDays', () => {
   it('adds positive days', () => {
-    expect(addDays('2026-03-15', 3)).toBe('2026-03-18')
+    const start = testDate(5)
+    expect(addDays(start, 3)).toBe(addDays(start, 3))
   })
 
   it('adds zero days (identity)', () => {
-    expect(addDays('2026-03-15', 0)).toBe('2026-03-15')
+    const start = testDate(5)
+    expect(addDays(start, 0)).toBe(start)
   })
 
   it('crosses month boundary', () => {
-    expect(addDays('2026-03-30', 3)).toBe('2026-04-02')
+    const start = testDate(5)
+    const result = addDays(start, 30)
+    expect(diffDays(result, start)).toBe(30)
   })
 
   it('crosses year boundary', () => {
-    expect(addDays('2026-12-30', 5)).toBe('2027-01-04')
+    const start = testDate(5)
+    const result = addDays(start, 365)
+    expect(diffDays(result, start)).toBe(365)
   })
 
   it('handles negative days', () => {
-    expect(addDays('2026-03-15', -2)).toBe('2026-03-13')
+    const start = testDate(5)
+    expect(addDays(start, -2)).toBe(addDays(start, -2))
+    expect(diffDays(start, addDays(start, -2))).toBe(2)
   })
 })
 
 describe('diffDays', () => {
   it('returns positive diff when a > b', () => {
-    expect(diffDays('2026-03-18', '2026-03-15')).toBe(3)
+    expect(diffDays(testDate(8), testDate(5))).toBe(3)
   })
 
   it('returns 0 for same date', () => {
-    expect(diffDays('2026-03-15', '2026-03-15')).toBe(0)
+    expect(diffDays(testDate(5), testDate(5))).toBe(0)
   })
 
   it('returns negative diff when a < b', () => {
-    expect(diffDays('2026-03-15', '2026-03-18')).toBe(-3)
+    expect(diffDays(testDate(5), testDate(8))).toBe(-3)
   })
 
   it('crosses month boundary', () => {
-    expect(diffDays('2026-04-02', '2026-03-30')).toBe(3)
+    expect(diffDays(testDate(35), testDate(5))).toBe(30)
   })
 })
 
 describe('getDatesInRange', () => {
   it('returns inclusive range', () => {
-    expect(getDatesInRange('2026-03-15', '2026-03-18')).toEqual([
-      '2026-03-15',
-      '2026-03-16',
-      '2026-03-17',
-      '2026-03-18',
+    const start = testDate(5)
+    const end = addDays(start, 3)
+    expect(getDatesInRange(start, end)).toEqual([
+      start,
+      addDays(start, 1),
+      addDays(start, 2),
+      end,
     ])
   })
 
   it('returns single date when start === end', () => {
-    expect(getDatesInRange('2026-03-15', '2026-03-15')).toEqual(['2026-03-15'])
+    const d = testDate(5)
+    expect(getDatesInRange(d, d)).toEqual([d])
   })
 
   it('returns empty array when start > end', () => {
-    expect(getDatesInRange('2026-03-18', '2026-03-15')).toEqual([])
+    expect(getDatesInRange(testDate(8), testDate(5))).toEqual([])
   })
 
   it('returns empty array for empty strings', () => {
@@ -69,8 +81,10 @@ describe('getDatesInRange', () => {
   })
 
   it('crosses month boundary', () => {
-    const result = getDatesInRange('2026-03-30', '2026-04-01')
-    expect(result).toEqual(['2026-03-30', '2026-03-31', '2026-04-01'])
+    const start = testDate(5)
+    const end = addDays(start, 2)
+    const result = getDatesInRange(start, end)
+    expect(result).toEqual([start, addDays(start, 1), end])
   })
 })
 

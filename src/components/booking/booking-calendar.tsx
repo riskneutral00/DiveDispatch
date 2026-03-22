@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
-import { BAR_ROW_HEIGHT } from '@/components/booking/booking-bar'
-import { DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
+import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
 import { GlassCard } from '@/components/glass'
 import { courseLabel } from '@/lib/constants/course-catalog'
+import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
+import { getBarBorderColor } from '@/lib/booking/bar-styles'
 import {
   useCalendarRange,
   getDaysOfWeek,
@@ -30,6 +31,7 @@ interface BookingCalendarProps {
   onUrgentCancel?: (bookingId: string) => void
   legendStatuses?: CalendarDisplayStatus[]
   allDraftsUrgent?: boolean
+  viewerRole?: string
   footerAction?: React.ReactNode
   className?: string
 }
@@ -42,12 +44,6 @@ function buildBarLabel(booking: CalendarBooking): string {
   return types.map(courseLabel).join(', ') || 'Booking'
 }
 
-function buildBarSubLabel(booking: CalendarBooking): string | undefined {
-  const name = booking.customerName
-  if (!name) return undefined
-  return name.split(' ')[0]
-}
-
 export function BookingCalendar({
   bookings = [],
   blockedDates,
@@ -58,6 +54,7 @@ export function BookingCalendar({
   onUrgentCancel,
   legendStatuses,
   allDraftsUrgent = false,
+  viewerRole,
   footerAction,
   className,
 }: BookingCalendarProps) {
@@ -174,7 +171,8 @@ export function BookingCalendar({
             startCol,
             endCol,
             label: buildBarLabel(booking),
-            status: isMultiDay ? 'MultiDay' : booking.displayStatus,
+            status: booking.displayStatus,
+            isMultiDay,
             continuation: isContinuation,
           })
         }
@@ -348,15 +346,16 @@ export function BookingCalendar({
                     <div
                       data-testid={`day-pills-${day.dateString}`}
                       className="overflow-y-auto"
-                      style={{ maxHeight: `${DAY_CELL_PILLS_MAX_HEIGHT}px` }}
+                      style={{ height: `${DAY_CELL_PILLS_MAX_HEIGHT}px` }}
                     >
                     {dayBars.map((bar) => {
                       const booking = resolvedBookings.find((b) => b._id === bar.id)
-                      const isMultiDay = bar.status === 'MultiDay'
+                      const isMultiDay = !!bar.isMultiDay
                       const statusColors = STATUS_COLORS[bar.status]
                       const opacity = STATUS_OPACITY[bar.status]
                       const borderStyle = STATUS_BORDER_STYLE[bar.status]
-                      const subLabel = booking ? buildBarSubLabel(booking) : undefined
+                      const borderColor = getBarBorderColor(bar.status, isMultiDay, statusColors.borderVar)
+                      const subLabel = booking ? buildBarSubLabel(booking, viewerRole) : undefined
 
                       // Label-follows-today: show label only on the "active" day cell
                       let showLabel = true
@@ -386,10 +385,10 @@ export function BookingCalendar({
                             color: bar.status === 'Urgent'
                               ? '#ffffff'
                               : statusColors.textVar,
-                            borderLeft: `3px ${borderStyle} ${statusColors.borderVar}`,
-                            borderTop: `1px ${borderStyle} ${statusColors.borderVar}`,
-                            borderRight: `1px ${borderStyle} ${statusColors.borderVar}`,
-                            borderBottom: `1px ${borderStyle} ${statusColors.borderVar}`,
+                            borderLeft: `3px ${borderStyle} ${borderColor}`,
+                            borderTop: `1px ${borderStyle} ${borderColor}`,
+                            borderRight: `1px ${borderStyle} ${borderColor}`,
+                            borderBottom: `1px ${borderStyle} ${borderColor}`,
                             cursor: onBookingClick ? 'pointer' : 'default',
                             display: 'flex',
                             alignItems: 'center',

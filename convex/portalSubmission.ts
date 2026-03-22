@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { z } from 'zod'
 import { mutation, query } from './_generated/server'
-import { tryAutoAdvance } from './bookings/_shared'
+import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { type AnyCtx } from './lib/auth'
 import { resolvePortalToken } from './lib/portal'
 import { validateOrThrow } from './lib/validate'
@@ -117,7 +117,31 @@ export const submitPortal = mutation({
       medicalHardBlock = Object.values(validatedAnswers).some((v) => v === true)
       // Keep booking flag in sync in case it drifted
       if ((booking.medicalHardBlock as boolean) !== medicalHardBlock) {
-        await ctx.db.patch(link.bookingId, { medicalHardBlock })
+        const bookingPatch: Record<string, unknown> = { medicalHardBlock }
+
+        // Extend hold TTL when medical block activates (CLAUDE.md: 36h total, 8pm ceiling)
+        if (medicalHardBlock) {
+          const sessions = await ctx.db
+            .query('bookingSessions')
+            .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', link.bookingId))
+            .collect()
+
+          if (sessions.length > 0) {
+            const earliest = sessions.reduce((min: AnyCtx, s: AnyCtx) =>
+              s.date < min.date ? s : min,
+            )
+            const newExpiresAt = computeMedicalDeadline(
+              booking._creationTime,
+              earliest.date,
+              earliest.timezone ?? 'Asia/Bangkok',
+            )
+            if (newExpiresAt > ((booking.expiresAt as number) ?? 0)) {
+              bookingPatch.expiresAt = newExpiresAt
+            }
+          }
+        }
+
+        await ctx.db.patch(link.bookingId, bookingPatch)
       }
     }
 

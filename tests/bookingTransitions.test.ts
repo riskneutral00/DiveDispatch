@@ -6,6 +6,7 @@ import {
   canBookingTransition,
   canReservationTransition,
 } from '../convex/bookings/_shared'
+import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -44,9 +45,9 @@ async function seedBooking(
     holdTTL: 43200000,
     paid: false,
     activityType: ['OW'],
-    startDate: '2025-06-15',
-    endDate: '2025-06-17',
-    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: '2025-06-15', endDate: '2025-06-17', activityType: ['OW'] }],
+    startDate: testDate(5),
+    endDate: testDate(7),
+    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
     operatorName: 'Test DC',
     portalContact: false,
     portalMedical: false,
@@ -206,7 +207,7 @@ describe('cancelBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -214,7 +215,7 @@ describe('cancelBooking', () => {
 
       const snapshotId = await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,
@@ -279,7 +280,7 @@ describe('cancelBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -371,7 +372,7 @@ describe('editBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -427,7 +428,7 @@ describe('editBooking', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         startTime: '09:00',
         endTime: '11:00',
         timezone: 'Asia/Bangkok',
@@ -435,7 +436,7 @@ describe('editBooking', () => {
 
       await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2025-06-15',
+        date: testDate(5),
         windowStart: '09:00',
         windowEnd: '11:00',
         totalUnits: 1,

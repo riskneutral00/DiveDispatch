@@ -7,7 +7,6 @@ import {
   validatePrerequisiteOrder,
   validateCourseDateOverlap,
   validateNoDuplicateCourses,
-  validateMissingPrerequisites,
   validateStartDateNotInPast,
 } from '@/lib/booking/course-validation'
 import { toISODateString } from '@/lib/utils/date'
@@ -57,11 +56,16 @@ export interface DiveSlot {
   courseCode: string
   diveNumber: number
   isConfined: boolean
+  /** Per-dive venue: pool, boat, or shore. Defaults: confined → pool, non-confined → boat. */
+  venueType?: 'pool' | 'boat' | 'shore'
+  /** Slug of the selected resource (pool/boat/shore stakeholder). */
+  resourceSlug?: string
 }
 
 export interface DayConfig {
   date: string
-  venueType: 'pool' | 'boat' | 'shore'
+  /** @deprecated — venue is now per-dive (DiveSlot.venueType). Kept for backward compat. */
+  venueType?: 'pool' | 'boat' | 'shore'
   dives: DiveSlot[]
   inventoryUnitId?: string
   poolInventoryUnitId?: string
@@ -151,6 +155,8 @@ export type WizardAction =
   | { type: 'SET_SAVE_ATTEMPTED'; value: boolean }
   | { type: 'TOGGLE_DIVE'; dayIndex: number; slot: DiveSlot }
   | { type: 'SET_DAYS'; days: DayConfig[] }
+  | { type: 'SET_DIVE_VENUE'; dayIndex: number; diveIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceSlug?: string }
+  | { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING'; fromDayIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceSlug: string }
   | { type: 'SET_INVENTORY_MAP'; map: Record<string, string> }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
@@ -345,9 +351,10 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'REMOVE_DAY': {
       if (state.days.length <= 1) return state
       const newDays = state.days.filter((_, i) => i !== action.dayIndex)
-      const newStart = newDays[0]?.date ?? state.startDate
-      const newEnd = newDays[newDays.length - 1]?.date ?? state.endDate
-      return { ...state, days: newDays, startDate: newStart, endDate: newEnd }
+      // Don't update startDate/endDate — those are the user's chosen date range.
+      // Changing them triggers the useEffect in itinerary-step that calls generateDays(),
+      // which would wipe all configured dives/instructors/venues.
+      return { ...state, days: newDays }
     }
 
     case 'SET_EQUIPMENT':
@@ -409,6 +416,38 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
 
     case 'SET_DAYS':
       return { ...state, days: action.days }
+
+    case 'SET_DIVE_VENUE': {
+      const day = state.days[action.dayIndex]
+      if (!day) return state
+      const dive = day.dives[action.diveIndex]
+      if (!dive) return state
+      const updatedDive = { ...dive, venueType: action.venueType, resourceSlug: action.resourceSlug }
+      const newDives = day.dives.map((d, i) => (i === action.diveIndex ? updatedDive : d))
+      return {
+        ...state,
+        days: state.days.map((d, i) => (i === action.dayIndex ? { ...d, dives: newDives } : d)),
+      }
+    }
+
+    case 'APPLY_DIVE_RESOURCE_TO_REMAINING': {
+      return {
+        ...state,
+        days: state.days.map((d, i) => {
+          if (i < action.fromDayIndex) return d
+          return {
+            ...d,
+            dives: d.dives.map(dive => {
+              const diveVenue = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
+              if (diveVenue === action.venueType && !dive.resourceSlug) {
+                return { ...dive, resourceSlug: action.resourceSlug }
+              }
+              return dive
+            }),
+          }
+        }),
+      }
+    }
 
     case 'SET_INVENTORY_MAP':
       return { ...state, inventoryUnitMap: action.map }
@@ -535,8 +574,6 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
     // B4: No duplicate course codes per customer
     if (validateNoDuplicateCourses(entries).length > 0) return false
 
-    // B5/B6: Missing prerequisite = hard block (catches orphaned after delete too)
-    if (validateMissingPrerequisites(courseCodes).length > 0) return false
 
     // Past dates — cannot start a course before today
     if (validateStartDateNotInPast(entries, toISODateString(new Date())).length > 0) return false
@@ -546,6 +583,17 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
   for (const day of state.days) {
     const nonConfinedCount = day.dives.filter((d) => !d.isConfined).length
     if (nonConfinedCount > (day.divesPerDay || 3)) return false
+  }
+
+  // O+A combo: OW-4 and AOW-1 must be selected somewhere
+  const allCodesSet = new Set(
+    courseCustomers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode)).filter(Boolean),
+  )
+  if (allCodesSet.has('OW') && allCodesSet.has('AOW')) {
+    const allDives = state.days.flatMap((d) => d.dives)
+    const hasOW4 = allDives.some((d) => d.courseCode === 'OW' && d.diveNumber === 4 && !d.isConfined)
+    const hasAOW1 = allDives.some((d) => d.courseCode === 'AOW' && d.diveNumber === 1 && !d.isConfined)
+    if (!hasOW4 || !hasAOW1) return false
   }
 
   // Instructor ratio: enough instructors/DMs for the diver count?
@@ -582,7 +630,22 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
       (day.instructorSlug && day.instructorSlug !== '__external__') ||
       (day.instructorSlug === '__external__' && day.externalInstructorName?.trim())
     if (!hasInstructor) return false
+
+    // Every dive with a venue type must have a resource selected
+    for (const dive of day.dives) {
+      if (dive.venueType && !dive.resourceSlug) return false
+    }
   }
+
+  // Equipment manager required (system or external with name)
+  const hasEquipment = (state.equipment && state.equipment !== '__external__') ||
+    (state.equipment === '__external__' && state.externalEquipmentName?.trim())
+  if (!hasEquipment) return false
+
+  // Compressor required (system or external with name)
+  const hasCompressor = (state.compressor && state.compressor !== '__external__') ||
+    (state.compressor === '__external__' && state.externalCompressorName?.trim())
+  if (!hasCompressor) return false
 
   return true
 }

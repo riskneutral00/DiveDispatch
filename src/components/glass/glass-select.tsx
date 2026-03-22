@@ -1,0 +1,339 @@
+'use client'
+
+import { useState, useRef, useEffect, useCallback, useId } from 'react'
+import { ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { LanguageFlags } from '@/components/common/language-flags'
+import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
+
+export interface GlassSelectOption {
+  id: string
+  label: string
+  languages?: string[]
+  isPreferred?: boolean
+}
+
+interface GlassSelectProps {
+  label?: string
+  value: string
+  onChange: (v: string) => void
+  options: GlassSelectOption[]
+  placeholder?: string
+  /** When provided, splits options into 4 tiers by language match + preferred status */
+  customerLanguages?: string[]
+}
+
+const DEFAULT_VISIBLE = 2
+
+function OptionRow({
+  opt,
+  isSelected,
+  isFocused,
+  onSelect,
+  onHover,
+  id,
+}: {
+  opt: GlassSelectOption
+  isSelected: boolean
+  isFocused: boolean
+  onSelect: () => void
+  onHover: () => void
+  id: string
+}) {
+  return (
+    <li
+      id={id}
+      role="option"
+      aria-selected={isSelected}
+      onClick={onSelect}
+      onMouseEnter={onHover}
+      className="flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-colors"
+      style={{
+        fontFamily: 'var(--font-body)',
+        color: 'var(--color-text-primary)',
+        background: isFocused ? 'var(--color-accent-muted, rgba(232, 120, 106, 0.15))' : 'transparent',
+      }}
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        {isSelected && <Check size={14} className="flex-shrink-0" style={{ color: 'var(--color-accent)' }} />}
+        <span className="truncate">{opt.label}</span>
+      </span>
+      {opt.languages && opt.languages.length > 0 && (
+        <LanguageFlags languages={opt.languages} className="text-sm flex-shrink-0" />
+      )}
+    </li>
+  )
+}
+
+function TierSection({
+  title,
+  items,
+  defaultOpen,
+  value,
+  onSelect,
+  idPrefix,
+  globalIdxOffset,
+  focusedIdx,
+  setFocusedIdx,
+}: {
+  title: string
+  items: GlassSelectOption[]
+  defaultOpen: boolean
+  value: string
+  onSelect: (id: string) => void
+  idPrefix: string
+  globalIdxOffset: number
+  focusedIdx: number
+  setFocusedIdx: (idx: number) => void
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [showAll, setShowAll] = useState(false)
+
+  if (items.length === 0) return null
+
+  const visibleItems = showAll ? items : items.slice(0, DEFAULT_VISIBLE)
+  const hiddenCount = items.length - DEFAULT_VISIBLE
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold"
+        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+      >
+        {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+        {title} ({items.length})
+      </button>
+      {isOpen && (
+        <>
+          {visibleItems.map((opt, i) => {
+            const globalIdx = globalIdxOffset + i
+            return (
+              <OptionRow
+                key={opt.id}
+                opt={opt}
+                isSelected={opt.id === value}
+                isFocused={globalIdx === focusedIdx}
+                onSelect={() => onSelect(opt.id)}
+                onHover={() => setFocusedIdx(globalIdx)}
+                id={`${idPrefix}-opt-${globalIdx}`}
+              />
+            )
+          })}
+          {hiddenCount > 0 && !showAll && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setShowAll(true) }}
+              className="w-full px-3 py-1.5 text-xs text-left"
+              style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
+            >
+              Show {hiddenCount} more…
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages }: GlassSelectProps) {
+  const [open, setOpen] = useState(false)
+  const [focusedIdx, setFocusedIdx] = useState(-1)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const id = useId()
+
+  const selectedOption = options.find((o) => o.id === value)
+
+  const isTiered = customerLanguages !== undefined && customerLanguages.length > 0
+  const tiers = isTiered ? splitInstructorTiers(options, customerLanguages) : null
+
+  // Flat list of all options (for keyboard navigation indexing)
+  const flatOptions = tiers
+    ? [...tiers.tier1, ...tiers.tier2, ...tiers.tier3, ...tiers.tier4]
+    : options
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  useEffect(() => {
+    if (!open || focusedIdx < 0 || !listRef.current) return
+    const item = listRef.current.querySelector(`[id="${id}-opt-${focusedIdx}"]`) as HTMLElement | null
+    item?.scrollIntoView({ block: 'nearest' })
+  }, [focusedIdx, open, id])
+
+  const select = useCallback((optionId: string) => {
+    onChange(optionId)
+    setOpen(false)
+  }, [onChange])
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        setOpen(true)
+        setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value)))
+      }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setFocusedIdx((i) => Math.min(i + 1, flatOptions.length - 1))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setFocusedIdx((i) => Math.max(i - 1, 0))
+        break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        if (focusedIdx >= 0 && focusedIdx < flatOptions.length) {
+          select(flatOptions[focusedIdx].id)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setOpen(false)
+        break
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1" ref={containerRef}>
+      {label && (
+        <label
+          htmlFor={id}
+          className="text-xs font-medium"
+          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+        >
+          {label}
+        </label>
+      )}
+
+      <button
+        id={id}
+        type="button"
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={`${id}-list`}
+        onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
+        onKeyDown={handleKeyDown}
+        className="glass glass-field w-full text-sm py-2 pl-3 pr-8 text-left relative"
+        style={{
+          color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          fontFamily: 'var(--font-body)',
+        }}
+      >
+        <span className="flex items-center justify-between gap-2">
+          <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+          {selectedOption?.languages && selectedOption.languages.length > 0 && (
+            <LanguageFlags languages={selectedOption.languages} className="text-sm flex-shrink-0" />
+          )}
+        </span>
+        <ChevronDown
+          size={12}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform"
+          style={{
+            color: 'var(--color-text-secondary)',
+            transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)',
+          }}
+        />
+      </button>
+
+      {open && (
+        <ul
+          id={`${id}-list`}
+          ref={listRef}
+          role="listbox"
+          aria-activedescendant={focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
+          className="glass glass-elevated rounded-lg overflow-auto z-50 py-1"
+          style={{
+            maxHeight: '280px',
+            border: '1px solid var(--color-glass-border)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          {tiers ? (
+            (() => {
+              // First non-empty tier auto-opens
+              const firstNonEmpty =
+                tiers.tier1.length > 0 ? 1 :
+                tiers.tier2.length > 0 ? 2 :
+                tiers.tier3.length > 0 ? 3 : 4
+              return (
+                <>
+                  <TierSection
+                    title="Preferred & matching language"
+                    items={tiers.tier1}
+                    defaultOpen={firstNonEmpty === 1}
+                    value={value}
+                    onSelect={select}
+                    idPrefix={id}
+                    globalIdxOffset={0}
+                    focusedIdx={focusedIdx}
+                    setFocusedIdx={setFocusedIdx}
+                  />
+                  <TierSection
+                    title="Matching language"
+                    items={tiers.tier2}
+                    defaultOpen={firstNonEmpty === 2}
+                    value={value}
+                    onSelect={select}
+                    idPrefix={id}
+                    globalIdxOffset={tiers.tier1.length}
+                    focusedIdx={focusedIdx}
+                    setFocusedIdx={setFocusedIdx}
+                  />
+                  <TierSection
+                    title="Preferred"
+                    items={tiers.tier3}
+                    defaultOpen={firstNonEmpty === 3}
+                    value={value}
+                    onSelect={select}
+                    idPrefix={id}
+                    globalIdxOffset={tiers.tier1.length + tiers.tier2.length}
+                    focusedIdx={focusedIdx}
+                    setFocusedIdx={setFocusedIdx}
+                  />
+                  <TierSection
+                    title="All instructors"
+                    items={tiers.tier4}
+                    defaultOpen={firstNonEmpty === 4}
+                    value={value}
+                    onSelect={select}
+                    idPrefix={id}
+                    globalIdxOffset={tiers.tier1.length + tiers.tier2.length + tiers.tier3.length}
+                    focusedIdx={focusedIdx}
+                    setFocusedIdx={setFocusedIdx}
+                  />
+                </>
+              )
+            })()
+          ) : (
+            options.map((opt, idx) => (
+              <OptionRow
+                key={opt.id}
+                opt={opt}
+                isSelected={opt.id === value}
+                isFocused={idx === focusedIdx}
+                onSelect={() => select(opt.id)}
+                onHover={() => setFocusedIdx(idx)}
+                id={`${id}-opt-${idx}`}
+              />
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  )
+}

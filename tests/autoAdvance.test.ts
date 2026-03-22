@@ -18,6 +18,7 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
 import type { Id } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -58,15 +59,15 @@ async function seedBooking(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW'],
-    startDate: '2025-06-15',
-    endDate: '2025-06-17',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [
       {
         name: 'Alice',
         abbrev: 'A',
         flag: { code: 'TH', label: 'Thailand' },
-        startDate: '2025-06-15',
-        endDate: '2025-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         activityType: ['OW'],
       },
     ],
@@ -113,7 +114,7 @@ async function seedSession(
   return ctx.db.insert('bookingSessions', {
     bookingId,
     inventoryUnitId: unitId,
-    date: '2025-06-15',
+    date: testDate(5),
     startTime: '08:00',
     endTime: '17:00',
     timezone: 'Asia/Bangkok',
@@ -143,7 +144,7 @@ async function seedSnapshot(
 ): Promise<Id<'availabilitySnapshots'>> {
   return ctx.db.insert('availabilitySnapshots', {
     inventoryUnitId: unitId,
-    date: '2025-06-15',
+    date: testDate(5),
     windowStart: '08:00',
     windowEnd: '17:00',
     totalUnits: 1,

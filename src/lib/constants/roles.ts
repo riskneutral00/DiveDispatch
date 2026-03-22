@@ -13,7 +13,7 @@ import {
   PoolIcon,
   CompressorIcon,
   type RoleIconProps,
-} from '@/components/icons/role-icons'
+} from '@/lib/icons/role-icons'
 
 export type RoleKey =
   | 'dive-center'
@@ -141,7 +141,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'operator',
-    tableName: 'diveSites',
+    tableName: 'venues',
     description: 'Manage access and dive conditions for a specific underwater site.',
   },
 
@@ -213,7 +213,7 @@ export const ROLES: RoleConfig[] = [
     isOrganizer: false,
     isResource: true,
     displayGroup: 'resource',
-    tableName: 'pools',
+    tableName: 'venues',
     description: 'Provide confined-water training space for beginner and refresher courses.',
   },
   {

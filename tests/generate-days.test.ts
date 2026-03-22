@@ -5,6 +5,7 @@ import {
   buildDiveSequence,
   distributeDives,
   autoFillPredecessors,
+  autoDistributeFromDive,
   ensureSufficientDays,
   cascadeRemoveOrphans,
   countNonConfined,
@@ -12,6 +13,8 @@ import {
   getAvailableDives,
 } from '../src/lib/booking/generate-days'
 import type { DayConfig, DiveSlot } from '../src/lib/booking/wizard-state'
+import { testDate } from './helpers/dates'
+import { addDays } from '../src/lib/utils/date'
 
 // ── buildDiveSequence ──────────────────────────────────────────────────────
 
@@ -61,37 +64,37 @@ describe('buildDiveSequence', () => {
 
 describe('generateDays', () => {
   it('returns empty for no courses', () => {
-    expect(generateDays([], '2026-03-15')).toEqual([])
+    expect(generateDays([], testDate(5))).toEqual([])
   })
 
   it('returns empty for empty start date', () => {
     expect(generateDays(['OW'], '')).toEqual([])
   })
 
-  it('generates exactly 3 days for OW (1 pool + 2 boat)', () => {
-    // A1: Tighten from >= 3 to === 3. OW = 1 confined + 4 open at 3/day = 1 pool + 2 boat
-    const days = generateDays(['OW'], '2026-03-15')
-    expect(days.length).toBe(3)
+  it('generates exactly 2 days for OW (1 pool absorbs 3 OW + 1 boat)', () => {
+    // Pool day absorbs confined + up to 3 non-confined. OW = 4 non-confined, overflow 1 → 1 boat day
+    const days = generateDays(['OW'], testDate(5))
+    expect(days.length).toBe(2)
   })
 
   it('first day is pool when course has confined requirement', () => {
-    const days = generateDays(['OW'], '2026-03-15')
+    const days = generateDays(['OW'], testDate(5))
     expect(days[0].venueType).toBe('pool')
   })
 
   it('non-confined courses skip pool day', () => {
-    const days = generateDays(['AOW'], '2026-03-15')
+    const days = generateDays(['AOW'], testDate(5))
     expect(days.every((d) => d.venueType !== 'pool')).toBe(true)
   })
 
-  it('distributes dives across days', () => {
-    const days = generateDays(['OW'], '2026-03-15')
+  it('generateDays returns empty dives (operator fills via ghost pills)', () => {
+    const days = generateDays(['OW'], testDate(5))
     const totalDives = days.reduce((sum, d) => sum + d.dives.length, 0)
-    expect(totalDives).toBe(5) // 1 confined + 4 open
+    expect(totalDives).toBe(0)
   })
 
-  it('confined dives placed on pool day only', () => {
-    const days = generateDays(['OW'], '2026-03-15')
+  it('distributeDives places confined on pool day, open on boat days', () => {
+    const days = distributeDives(generateDays(['OW'], testDate(5)), ['OW'])
     const poolDay = days.find((d) => d.venueType === 'pool')
     expect(poolDay).toBeDefined()
     expect(poolDay!.dives.some((d) => d.isConfined)).toBe(true)
@@ -103,14 +106,14 @@ describe('generateDays', () => {
   })
 
   it('respects endDate when provided (expands day count)', () => {
-    const days = generateDays(['OW'], '2026-03-15', 3, '2026-03-19')
-    expect(days.length).toBe(5) // 15,16,17,18,19
-    expect(days[0].date).toBe('2026-03-15')
-    expect(days[4].date).toBe('2026-03-19')
+    const days = generateDays(['OW'], testDate(5), 3, addDays(testDate(5), 4))
+    expect(days.length).toBe(5) // 5 consecutive days
+    expect(days[0].date).toBe(testDate(5))
+    expect(days[4].date).toBe(addDays(testDate(5), 4))
   })
 
   it('uses default divesPerDay of 3', () => {
-    const days = generateDays(['OW'], '2026-03-15')
+    const days = generateDays(['OW'], testDate(5))
     const boatDays = days.filter((d) => d.venueType === 'boat')
     for (const d of boatDays) {
       // Non-confined dives per day should not exceed 3
@@ -118,15 +121,15 @@ describe('generateDays', () => {
     }
   })
 
-  it('generates DSD as single-day booking', () => {
-    const days = generateDays(['DSD'], '2026-03-15')
+  it('generates DSD as single-day booking (empty — operator selects confined pill)', () => {
+    const days = generateDays(['DSD'], testDate(5))
     expect(days.length).toBe(1)
     expect(days[0].venueType).toBe('pool')
-    expect(days[0].dives.length).toBe(1)
+    expect(days[0].dives.length).toBe(0) // empty, operator selects
   })
 
   it('generates days for FD (0 mandated dives) with synthetic dive slots', () => {
-    const days = generateDays(['FD'], '2026-03-20', 3, '2026-03-21')
+    const days = generateDays(['FD'], testDate(10), 3, addDays(testDate(10), 1))
     expect(days.length).toBe(2)
     expect(days[0].venueType).toBe('boat')
     expect(days[0].dives.length).toBe(1)
@@ -135,7 +138,7 @@ describe('generateDays', () => {
   })
 
   it('generates single day for FD without endDate', () => {
-    const days = generateDays(['FD'], '2026-03-20')
+    const days = generateDays(['FD'], testDate(10))
     expect(days.length).toBe(1)
     expect(days[0].venueType).toBe('boat')
     expect(days[0].dives[0].courseCode).toBe('FD')
@@ -143,32 +146,31 @@ describe('generateDays', () => {
 
   // A2: AOW alone = exactly 2 days (no confined, 5 dives at 3/day = ceil(5/3) = 2)
   it('generates exactly 2 days for AOW alone', () => {
-    const days = generateDays(['AOW'], '2026-03-20')
+    const days = generateDays(['AOW'], testDate(10))
     expect(days.length).toBe(2)
     expect(days.every((d) => d.venueType === 'boat')).toBe(true)
   })
 
-  // A2: O+A without endDate = exactly 4 days (1 pool + 3 boat)
-  it('O+A generates exactly 4 days (1 pool + 3 boat)', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20')
-    expect(days.length).toBe(4)
+  // O+A without endDate: pool absorbs 3 non-confined, overflow 6 → ceil(6/3)=2 boat → 3 days total
+  it('O+A generates exactly 3 days (1 pool + 2 boat)', () => {
+    const days = generateDays(['OW', 'AOW'], testDate(10))
+    expect(days.length).toBe(3)
     expect(days[0].venueType).toBe('pool')
-    expect(days.filter((d) => d.venueType === 'boat').length).toBe(3)
+    expect(days.filter((d) => d.venueType === 'boat').length).toBe(2)
   })
 
-  // A4: All OW dives placed before any AOW dive in O+A distribution
-  it('O+A: all OW dives precede AOW dives in distribution', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20')
+  // distributeDives still orders OW before AOW
+  it('O+A distributeDives: all OW dives precede AOW dives', () => {
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10)), ['OW', 'AOW'])
     const allDives = days.flatMap((d) => d.dives)
     const lastOWIdx = allDives.reduce((acc, d, i) => (d.courseCode === 'OW' && !d.isConfined ? i : acc), -1)
     const firstAOWIdx = allDives.findIndex((d) => d.courseCode === 'AOW')
-    expect(firstAOWIdx).toBeGreaterThan(lastOWIdx)
+    if (firstAOWIdx >= 0) expect(firstAOWIdx).toBeGreaterThan(lastOWIdx)
   })
 
-  // A3: O+A transition day — the boat day containing the last OW dive also contains the first AOW dive
-  it('O+A: transition day has both OW and AOW dives', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20')
-    // Find the boat day that has at least one OW dive AND at least one AOW dive
+  // distributeDives: O+A transition day has both OW and AOW dives
+  it('O+A distributeDives: transition day has both OW and AOW dives', () => {
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10)), ['OW', 'AOW'])
     const transitionDay = days.find(
       (d) =>
         d.venueType === 'boat' &&
@@ -178,17 +180,17 @@ describe('generateDays', () => {
     expect(transitionDay).toBeDefined()
   })
 
-  // A5: Pool day gets only confined dives from distributeDives
-  it('pool day contains only confined dives', () => {
-    const days = generateDays(['OW'], '2026-03-15')
+  // Pool day starts empty (operator fills via ghost pills)
+  it('pool day starts empty', () => {
+    const days = generateDays(['OW'], testDate(5))
     const poolDay = days.find((d) => d.venueType === 'pool')
     expect(poolDay).toBeDefined()
-    expect(poolDay!.dives.every((d) => d.isConfined)).toBe(true)
+    expect(poolDay!.dives.length).toBe(0)
   })
 
   // Per-day non-confined dive limit: each day ≤ 3 non-confined dives (default divesPerDay)
   it('no day exceeds 3 non-confined dives (O+A distribution)', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20')
+    const days = generateDays(['OW', 'AOW'], testDate(10))
     for (const day of days) {
       expect(countNonConfined(day.dives)).toBeLessThanOrEqual(3)
     }
@@ -199,28 +201,28 @@ describe('generateDays', () => {
 
 describe('generateDaysFromDates', () => {
   it('creates days from explicit date array', () => {
-    const days = generateDaysFromDates(['OW'], ['2026-03-15', '2026-03-17', '2026-03-20'])
+    const days = generateDaysFromDates(['OW'], [testDate(5), testDate(7), testDate(10)])
     expect(days.length).toBe(3)
-    expect(days[0].date).toBe('2026-03-15')
-    expect(days[1].date).toBe('2026-03-17')
-    expect(days[2].date).toBe('2026-03-20')
+    expect(days[0].date).toBe(testDate(5))
+    expect(days[1].date).toBe(testDate(7))
+    expect(days[2].date).toBe(testDate(10))
   })
 
   it('sorts dates even if given out of order', () => {
-    const days = generateDaysFromDates(['OW'], ['2026-03-20', '2026-03-15', '2026-03-17'])
-    expect(days.map((d) => d.date)).toEqual(['2026-03-15', '2026-03-17', '2026-03-20'])
+    const days = generateDaysFromDates(['OW'], [testDate(10), testDate(5), testDate(7)])
+    expect(days.map((d) => d.date)).toEqual([testDate(5), testDate(7), testDate(10)])
   })
 
   it('first date is pool when course requires confined', () => {
-    const days = generateDaysFromDates(['OW'], ['2026-03-15', '2026-03-16'])
+    const days = generateDaysFromDates(['OW'], [testDate(5), testDate(6)])
     expect(days[0].venueType).toBe('pool')
     expect(days[1].venueType).toBe('boat')
   })
 
-  it('distributes dives across provided dates', () => {
-    const days = generateDaysFromDates(['OW'], ['2026-03-15', '2026-03-16', '2026-03-17'])
+  it('returns empty dives (operator fills via ghost pills)', () => {
+    const days = generateDaysFromDates(['OW'], [testDate(5), testDate(6), testDate(7)])
     const totalDives = days.reduce((sum, d) => sum + d.dives.length, 0)
-    expect(totalDives).toBe(5) // 1 confined + 4 open
+    expect(totalDives).toBe(0)
   })
 
   it('returns empty for empty dates', () => {
@@ -228,7 +230,7 @@ describe('generateDaysFromDates', () => {
   })
 
   it('returns empty for empty courses', () => {
-    expect(generateDaysFromDates([], ['2026-03-15'])).toEqual([])
+    expect(generateDaysFromDates([], [testDate(5)])).toEqual([])
   })
 })
 
@@ -237,8 +239,8 @@ describe('generateDaysFromDates', () => {
 describe('distributeDives', () => {
   it('places confined dives on pool day', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat'),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat'),
     ]
     const result = distributeDives(days, ['OW'])
     const poolDay = result.find((d) => d.venueType === 'pool')!
@@ -247,9 +249,9 @@ describe('distributeDives', () => {
 
   it('does not place non-confined dives on pool day', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat'),
-      makeDayConfig('2026-03-17', 'boat'),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat'),
+      makeDayConfig(testDate(7), 'boat'),
     ]
     const result = distributeDives(days, ['OW'])
     const poolDay = result.find((d) => d.venueType === 'pool')!
@@ -259,9 +261,9 @@ describe('distributeDives', () => {
 
   it('distributes non-confined dives across boat days', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat', 3),
-      makeDayConfig('2026-03-17', 'boat', 3),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat', 3),
+      makeDayConfig(testDate(7), 'boat', 3),
     ]
     const result = distributeDives(days, ['OW'])
     const boatDays = result.filter((d) => d.venueType === 'boat')
@@ -271,10 +273,10 @@ describe('distributeDives', () => {
 
   it('respects divesPerDay limit per boat day', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat', 2),
-      makeDayConfig('2026-03-17', 'boat', 2),
-      makeDayConfig('2026-03-18', 'boat', 2),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat', 2),
+      makeDayConfig(testDate(7), 'boat', 2),
+      makeDayConfig(testDate(8), 'boat', 2),
     ]
     const result = distributeDives(days, ['OW'])
     const boatDays = result.filter((d) => d.venueType === 'boat')
@@ -286,8 +288,8 @@ describe('distributeDives', () => {
   it('overflows to last day when not enough boat days', () => {
     // OW needs 4 open-water dives, but only 1 boat day with limit 3
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat', 3),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat', 3),
     ]
     const result = distributeDives(days, ['OW'])
     const boatDay = result.find((d) => d.venueType === 'boat')!
@@ -297,8 +299,8 @@ describe('distributeDives', () => {
 
   it('handles AOW-only (no pool day needed)', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'boat', 3),
-      makeDayConfig('2026-03-16', 'boat', 3),
+      makeDayConfig(testDate(5), 'boat', 3),
+      makeDayConfig(testDate(6), 'boat', 3),
     ]
     const result = distributeDives(days, ['AOW'])
     const totalDives = result.reduce((sum, d) => sum + d.dives.length, 0)
@@ -312,9 +314,9 @@ describe('autoFillPredecessors', () => {
   it('fills earlier dives when a later dive is selected', () => {
     const sequence = buildDiveSequence(['OW'])
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat'),
-      makeDayConfig('2026-03-17', 'boat'),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat'),
+      makeDayConfig(testDate(7), 'boat'),
     ]
     // User selects OW dive 3 on day 2 (dayIndex=2)
     const diveSlot: DiveSlot = { courseCode: 'OW', diveNumber: 3, isConfined: false }
@@ -332,9 +334,9 @@ describe('autoFillPredecessors', () => {
   it('skips already-assigned dives', () => {
     const sequence = buildDiveSequence(['OW'])
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-15', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-16', 'boat'), dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }] },
-      makeDayConfig('2026-03-17', 'boat'),
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(6), 'boat'), dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }] },
+      makeDayConfig(testDate(7), 'boat'),
     ]
     const diveSlot: DiveSlot = { courseCode: 'OW', diveNumber: 3, isConfined: false }
     const result = autoFillPredecessors(2, diveSlot, days, sequence, 3)
@@ -348,7 +350,7 @@ describe('autoFillPredecessors', () => {
 
   it('returns unchanged days when dayIndex is 0', () => {
     const sequence = buildDiveSequence(['OW'])
-    const days: DayConfig[] = [makeDayConfig('2026-03-15', 'pool')]
+    const days: DayConfig[] = [makeDayConfig(testDate(5), 'pool')]
     const diveSlot: DiveSlot = { courseCode: 'OW', diveNumber: 0, isConfined: true }
     const result = autoFillPredecessors(0, diveSlot, days, sequence, 3)
     expect(result).toBe(days)
@@ -361,8 +363,8 @@ describe('ensureSufficientDays', () => {
   it('appends days when dives overflow', () => {
     // OW needs 4 non-confined dives but we only have 1 boat day with 3/day limit
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat', 3),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat', 3),
     ]
     // No dives scheduled yet
     const result = ensureSufficientDays(days, ['OW'])
@@ -376,13 +378,13 @@ describe('ensureSufficientDays', () => {
 
   it('does not append when enough days exist', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-15', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-16', 'boat', 3), dives: [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(6), 'boat', 3), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-17', 'boat', 3), dives: [
+      { ...makeDayConfig(testDate(7), 'boat', 3), dives: [
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
     ]
@@ -392,8 +394,8 @@ describe('ensureSufficientDays', () => {
 
   it('appended days have sequential dates', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-15', 'pool'),
-      makeDayConfig('2026-03-16', 'boat', 2),
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat', 2),
     ]
     const result = ensureSufficientDays(days, ['OW'])
     for (let i = 1; i < result.length; i++) {
@@ -410,11 +412,11 @@ describe('cascadeRemoveOrphans', () => {
     // Under highwater rules, within-course gaps are allowed
     const days: DayConfig[] = [
       {
-        ...makeDayConfig('2026-03-15', 'pool'),
+        ...makeDayConfig(testDate(5), 'pool'),
         dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
       },
       {
-        ...makeDayConfig('2026-03-16', 'boat'),
+        ...makeDayConfig(testDate(6), 'boat'),
         dives: [
           { courseCode: 'OW', diveNumber: 1, isConfined: false },
           { courseCode: 'OW', diveNumber: 3, isConfined: false }, // skipped 2
@@ -432,11 +434,11 @@ describe('cascadeRemoveOrphans', () => {
   it('returns unchanged days when no orphans', () => {
     const days: DayConfig[] = [
       {
-        ...makeDayConfig('2026-03-15', 'pool'),
+        ...makeDayConfig(testDate(5), 'pool'),
         dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
       },
       {
-        ...makeDayConfig('2026-03-16', 'boat'),
+        ...makeDayConfig(testDate(6), 'boat'),
         dives: [
           { courseCode: 'OW', diveNumber: 1, isConfined: false },
           { courseCode: 'OW', diveNumber: 2, isConfined: false },
@@ -502,32 +504,33 @@ describe('sortByPrerequisites', () => {
 describe('getAvailableDives', () => {
   it('returns confined dive on pool day when nothing is placed', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-20', 'pool'),
-      makeDayConfig('2026-03-21', 'boat'),
+      makeDayConfig(testDate(10), 'pool'),
+      makeDayConfig(testDate(11), 'boat'),
     ]
     const available = getAvailableDives(0, days, ['OW'])
     expect(available.some((s) => s.isConfined && s.courseCode === 'OW')).toBe(true)
   })
 
-  it('does not show confined dives on boat days', () => {
+  it('shows all dives including confined on boat days (venue is per-dive)', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-20', 'pool'),
-      makeDayConfig('2026-03-21', 'boat'),
+      makeDayConfig(testDate(10), 'pool'),
+      makeDayConfig(testDate(11), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW'])
-    expect(available.some((s) => s.isConfined)).toBe(false)
+    // Confined is available on boat days — venue is per-dive now
+    expect(available.some((s) => s.isConfined)).toBe(true)
   })
 
   it('respects predecessor ordering: AOW dives unavailable until all OW dives placed', () => {
     // Day 1 pool: OW C placed. Day 2 boat: OW 1-3 placed. Day 3 boat: nothing placed.
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     // Day 2: OW-4 not placed yet, so no AOW dives should be available
     const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
@@ -542,16 +545,16 @@ describe('getAvailableDives', () => {
 
   it('shows AOW dives once all OW dives are placed', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-22', 'boat'), dives: [
+      { ...makeDayConfig(testDate(12), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
-      makeDayConfig('2026-03-23', 'boat'),
+      makeDayConfig(testDate(13), 'boat'),
     ]
     // Day 3 (index 2): OW-4 is here, so AOW-1 should be available on day 3 or later
     const day3Available = getAvailableDives(2, days, ['OW', 'AOW'])
@@ -560,6 +563,275 @@ describe('getAvailableDives', () => {
     // Day 4 (index 3): AOW dives also available
     const day4Available = getAvailableDives(3, days, ['OW', 'AOW'])
     expect(day4Available.some((s) => s.courseCode === 'AOW')).toBe(true)
+  })
+
+  it('caps non-confined ghost pills when day already has 3 non-confined dives', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    // OW-4 should be capped (day already has 3 non-confined)
+    const ow4 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 4)
+    expect(ow4).toBeDefined()
+    expect(ow4!.capped).toBe(true)
+    // Already-selected dives should NOT be capped
+    const ow1 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 1)
+    expect(ow1).toBeDefined()
+    expect(ow1!.capped).toBeUndefined()
+  })
+
+  it('confined excluded by sequence rule when non-confined dives selected (not capping)', () => {
+    // Once OW 1-3 are selected, Confined is past in the sequence — it won't
+    // appear at all (filtered by sequential rule, not by capping).
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const confined = available.find((s) => s.isConfined)
+    expect(confined).toBeUndefined()
+  })
+
+  it('does not cap when under limit', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const ow3 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 3)
+    expect(ow3).toBeDefined()
+    expect(ow3!.capped).toBeUndefined()
+  })
+
+  it('respects custom divesPerDay', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat', 2),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const ow3 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 3)
+    expect(ow3).toBeDefined()
+    expect(ow3!.capped).toBe(true)
+  })
+
+  it('already-selected dives are never capped', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const selectedDives = available.filter((s) =>
+      !s.isConfined && [1, 2, 3].includes(s.diveNumber),
+    )
+    for (const d of selectedDives) {
+      expect(d.capped).toBeUndefined()
+    }
+  })
+
+  // ── Sequence enforcement: confined follows same rules as numbered dives ──
+
+  it('confined unavailable on same day when OW 1 is already selected', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+        ],
+      },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const confined = available.find((s) => s.isConfined && s.courseCode === 'OW')
+    expect(confined).toBeUndefined()
+  })
+
+  it('confined unavailable on later days when OW 1 is on Day 1', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const day2Available = getAvailableDives(1, days, ['OW'])
+    const confined = day2Available.find((s) => s.isConfined && s.courseCode === 'OW')
+    expect(confined).toBeUndefined()
+  })
+
+  it('OW 1 unavailable on Day 2 when OW 3 is on Day 1', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const day2Available = getAvailableDives(1, days, ['OW'])
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 1)).toBe(false)
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 2)).toBe(false)
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 3)).toBe(false)
+    // Only OW 4 should be available
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 4)).toBe(true)
+  })
+
+  it('first pick on Day 1 can be any dive (referral flexibility)', () => {
+    const days: DayConfig[] = [
+      makeDayConfig(testDate(10), 'boat'),
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    // All OW dives should be available: Confined, OW 1-4
+    expect(available.some((s) => s.isConfined && s.courseCode === 'OW')).toBe(true)
+    expect(available.some((s) => s.courseCode === 'OW' && s.diveNumber === 1)).toBe(true)
+    expect(available.some((s) => s.courseCode === 'OW' && s.diveNumber === 4)).toBe(true)
+  })
+
+  it('O+A combo: AOW dives follow OW in one continuous sequence', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 1, isConfined: false },
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+        ],
+      },
+      {
+        ...makeDayConfig(testDate(11), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 4, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(12), 'boat'),
+    ]
+    const day3Available = getAvailableDives(2, days, ['OW', 'AOW'])
+    // No OW dives or confined should appear
+    expect(day3Available.some((s) => s.courseCode === 'OW')).toBe(false)
+    // Only AOW 1+ should be available
+    expect(day3Available.some((s) => s.courseCode === 'AOW' && s.diveNumber === 1)).toBe(true)
+    expect(day3Available.some((s) => s.courseCode === 'AOW' && s.diveNumber === 2)).toBe(false) // only next sequential
+  })
+
+  // ── Deselection scenarios: what's available after removing a dive ────────
+
+  it('after deselecting OW 3: OW 3 is available as ghost pill on Day 1', () => {
+    // Scenario: O+A booking started from OW 2 (referral). OW 2-4 auto-filled on Day 1.
+    // User deselects OW 3 → OW 4 also removed from Day 1 (cascade).
+    // OW 3 should still be available as a ghost pill on Day 1 (next in sequence after OW 2).
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+          // OW 3 was deselected, OW 4 cascaded off this day
+        ],
+      },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const day1Available = getAvailableDives(0, days, ['OW', 'AOW'])
+    // OW 3 should be the next available ghost pill on Day 1
+    expect(day1Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 3)).toBe(true)
+  })
+
+  it('after deselecting OW 3: OW 3 is also available on Day 2', () => {
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
+    // OW 3 should be available on Day 2 (next after highwater OW 2)
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 3)).toBe(true)
+  })
+
+  it('OW 4 is NOT available before OW 3 is placed somewhere', () => {
+    // After deselecting OW 3, only OW 2 remains. OW 4 should NOT be selectable
+    // because it requires OW 3 first (sequential rule).
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    // Day 1: only OW 3 should be next, NOT OW 4
+    const day1Available = getAvailableDives(0, days, ['OW', 'AOW'])
+    expect(day1Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 4)).toBe(false)
+
+    // Day 2: same — only OW 3 is next
+    const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
+    expect(day2Available.some((s) => s.courseCode === 'OW' && s.diveNumber === 4)).toBe(false)
+  })
+
+  it('no day should show more than 3 non-confined dives after redistribution', () => {
+    // After deselecting OW 3 from Day 1 (which had OW 2-4), the redistributed
+    // dives on Day 2 must not exceed the 3-per-day cap.
+    const days: DayConfig[] = [
+      {
+        ...makeDayConfig(testDate(10), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        ],
+      },
+      {
+        ...makeDayConfig(testDate(11), 'boat'),
+        dives: [
+          { courseCode: 'OW', diveNumber: 3, isConfined: false },
+          { courseCode: 'OW', diveNumber: 4, isConfined: false },
+          { courseCode: 'AOW', diveNumber: 1, isConfined: false },
+        ],
+      },
+      makeDayConfig(testDate(12), 'boat'),
+    ]
+    // Day 2 has exactly 3 non-confined — at the cap
+    expect(countNonConfined(days[1].dives)).toBe(3)
+    // OW 4 should be capped on Day 2 (already at 3), NOT a 4th non-confined
+    const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
+    const uncapped = day2Available.filter(s => !s.isConfined && !('capped' in s && (s as any).capped))
+    // All non-selected dives should be capped since day is at limit
+    const unselectedUncapped = uncapped.filter(s => {
+      return !days[1].dives.some(d => d.courseCode === s.courseCode && d.diveNumber === s.diveNumber)
+    })
+    expect(unselectedUncapped).toHaveLength(0)
   })
 })
 
@@ -614,20 +886,20 @@ describe('prerequisite ordering invariants', () => {
     expect(lastOWIdx).toBeLessThan(firstAOWIdx)
   })
 
-  it('3. O+A 5-day spread: ordering holds', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20', 3, '2026-03-24')
+  it('3. O+A 5-day spread: ordering holds with distributeDives', () => {
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 4)), ['OW', 'AOW'])
     expect(days.length).toBe(5)
     assertDiveOrder(days, { courseCode: 'OW', diveNumber: 4 }, { courseCode: 'AOW', diveNumber: 1 })
   })
 
-  it('4. O+A 4-day default: OW-4 same day or before AOW-1', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20', 3, '2026-03-23')
+  it('4. O+A 4-day default: OW-4 same day or before AOW-1 with distributeDives', () => {
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 3)), ['OW', 'AOW'])
     expect(days.length).toBe(4)
     assertDiveOrder(days, { courseCode: 'OW', diveNumber: 4 }, { courseCode: 'AOW', diveNumber: 1 })
   })
 
-  it('5. OW-only 3 days: confined on day 1, open water on days 2-3', () => {
-    const days = generateDays(['OW'], '2026-03-20')
+  it('5. OW-only: distributeDives places confined before open water', () => {
+    const days = distributeDives(generateDays(['OW'], testDate(10)), ['OW'])
     expect(days[0].venueType).toBe('pool')
     expect(days[0].dives.some((d) => d.isConfined)).toBe(true)
     const allDives = days.flatMap((d) => d.dives)
@@ -646,8 +918,8 @@ describe('prerequisite ordering invariants', () => {
   })
 
   it('7. cascadeRemoveOrphans: removing OW-2 keeps OW-C, OW-1, OW-3, OW-4; removes all AOW', () => {
-    // Set up a 4-day O+A with all dives placed
-    const days = generateDays(['OW', 'AOW'], '2026-03-20', 3, '2026-03-23')
+    // Set up a 4-day O+A with all dives placed via distributeDives
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 3)), ['OW', 'AOW'])
     // Remove OW-2 from wherever it is
     const daysWithout2 = days.map((d) => ({
       ...d,
@@ -667,16 +939,16 @@ describe('prerequisite ordering invariants', () => {
   it('8. autoFillPredecessors preserves order: adding AOW-3 auto-fills AOW-1 and AOW-2', () => {
     // 4-day O+A with all OW dives placed but NO AOW dives
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-22', 'boat'), dives: [
+      { ...makeDayConfig(testDate(12), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
-      makeDayConfig('2026-03-23', 'boat'),
+      makeDayConfig(testDate(13), 'boat'),
     ]
     const fullSequence = buildDiveSequence(['OW', 'AOW'])
     const diveSlot: DiveSlot = { courseCode: 'AOW', diveNumber: 3, isConfined: false }
@@ -696,13 +968,13 @@ describe('prerequisite ordering invariants', () => {
 
   it('9. getAvailableDives respects order: no AOW on day 2 when OW-4 not placed', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
     expect(day2Available.some((s) => s.courseCode === 'AOW')).toBe(false)
@@ -711,8 +983,8 @@ describe('prerequisite ordering invariants', () => {
   })
 
   it('10. Toggle ON/OFF round-trip preserves ordering invariant', () => {
-    // Start with full 4-day O+A
-    const days = generateDays(['OW', 'AOW'], '2026-03-20', 3, '2026-03-23')
+    // Start with full 4-day O+A (using distributeDives to pre-fill)
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 3)), ['OW', 'AOW'])
     assertDiveOrder(days, { courseCode: 'OW', diveNumber: 4 }, { courseCode: 'AOW', diveNumber: 1 })
 
     // Toggle OFF OW-3: cascade keeps OW-4 (gap OK), removes all AOW (course prereq)
@@ -740,14 +1012,65 @@ describe('prerequisite ordering invariants', () => {
   })
 })
 
+// ── Deselect + cascadeRemoveOrphans regression (handleToggleDive fix) ────────
+
+describe('deselect → cascadeRemoveOrphans (regression)', () => {
+  it('deselect OW-3 from day with OW-2,3,4: no out-of-sequence OW-4, AOW removed', () => {
+    // Simulate: O+A auto-filled, then user deselects OW-3 on its day.
+    // handleToggleDive removes OW-3 + later same-day dives, then calls cascadeRemoveOrphans.
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 3)), ['OW', 'AOW'])
+    const sequence = buildDiveSequence(['OW', 'AOW'])
+
+    // Find the day containing OW-3
+    const ow3DayIdx = days.findIndex(d =>
+      d.dives.some(dv => dv.courseCode === 'OW' && dv.diveNumber === 3 && !dv.isConfined))
+    expect(ow3DayIdx).toBeGreaterThanOrEqual(0)
+
+    const ow3SeqIdx = sequence.findIndex(s =>
+      s.courseCode === 'OW' && s.diveNumber === 3 && !s.isConfined)
+
+    // Simulate handleToggleDive: remove OW-3 + all later dives from the same day
+    const afterRemove = days.map((d, i) => {
+      if (i !== ow3DayIdx) return d
+      const kept = d.dives.filter(dv => {
+        const dvIdx = sequence.findIndex(s =>
+          s.courseCode === dv.courseCode && s.diveNumber === dv.diveNumber && s.isConfined === dv.isConfined)
+        return dvIdx < ow3SeqIdx
+      })
+      return { ...d, dives: kept }
+    })
+
+    // Apply cascadeRemoveOrphans (the fix)
+    const result = cascadeRemoveOrphans(afterRemove, ['OW', 'AOW'])
+    const allDives = result.flatMap(d => d.dives)
+
+    // OW-3 gone (deselected)
+    expect(allDives.some(d => d.courseCode === 'OW' && d.diveNumber === 3)).toBe(false)
+    // AOW removed (OW prerequisite incomplete)
+    expect(allDives.some(d => d.courseCode === 'AOW')).toBe(false)
+    // OW-C, OW-1, OW-2 survive
+    expect(allDives.some(d => d.courseCode === 'OW' && d.diveNumber === 0)).toBe(true)
+    expect(allDives.some(d => d.courseCode === 'OW' && d.diveNumber === 1)).toBe(true)
+    expect(allDives.some(d => d.courseCode === 'OW' && d.diveNumber === 2)).toBe(true)
+    // OW-4 survives (within-course gaps allowed) but NOT before any existing OW dive
+    if (allDives.some(d => d.courseCode === 'OW' && d.diveNumber === 4)) {
+      const ow4DayIdx = result.findIndex(d =>
+        d.dives.some(dv => dv.courseCode === 'OW' && dv.diveNumber === 4))
+      const ow2DayIdx = result.findIndex(d =>
+        d.dives.some(dv => dv.courseCode === 'OW' && dv.diveNumber === 2))
+      expect(ow4DayIdx).toBeGreaterThanOrEqual(ow2DayIdx)
+    }
+  })
+})
+
 // ── Highwater Mark Availability ──────────────────────────────────────────────
 
 describe('highwater mark availability', () => {
   it('1. pool day shows all OW dives', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-20', 'pool'),
-      makeDayConfig('2026-03-21', 'boat'),
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(10), 'pool'),
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     const available = getAvailableDives(0, days, ['OW'])
     expect(available.length).toBe(5) // OW C + OW 1-4
@@ -755,56 +1078,60 @@ describe('highwater mark availability', () => {
     expect(available.some(s => s.diveNumber === 4)).toBe(true)
   })
 
-  it('2. boat day shows non-confined OW dives', () => {
+  it('2. boat day shows all OW dives including confined (venue is per-dive)', () => {
     const days: DayConfig[] = [
-      makeDayConfig('2026-03-20', 'pool'),
-      makeDayConfig('2026-03-21', 'boat'),
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(10), 'pool'),
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW'])
-    expect(available.length).toBe(4) // OW 1-4 (no OW C — confined blocked on boat)
-    expect(available.some(s => s.isConfined)).toBe(false)
+    expect(available.length).toBe(5) // OW C + OW 1-4 (confined available — venue is per-dive)
+    expect(available.some(s => s.isConfined)).toBe(true)
   })
 
-  it('3. highwater excludes earlier dives on later days', () => {
+  it('3. highwater excludes earlier dives; sequential allows only next', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
       ] },
-      makeDayConfig('2026-03-21', 'boat'),
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW'])
-    // Highwater from Day 0 = 2 (OW-2 seq idx). Only OW 3, OW 4 available.
-    expect(available.map(s => s.diveNumber).sort()).toEqual([3, 4])
+    // Highwater from Day 0 = OW-2. Sequential: only OW-3 is next.
+    // Confined is past in sequence — not available.
+    expect(available.some(s => s.isConfined)).toBe(false)
+    const nonConfined = available.filter(s => !s.isConfined)
+    expect(nonConfined.map(s => s.diveNumber)).toEqual([3])
   })
 
-  it('4. transfer student: Day 0 has [OW 4], Day 1 gets AOW', () => {
+  it('4. transfer student: Day 0 has [OW 4], Day 1 gets AOW 1 (next in global sequence)', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
-      makeDayConfig('2026-03-21', 'boat'),
-      makeDayConfig('2026-03-22', 'boat'),
-      makeDayConfig('2026-03-23', 'boat'),
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
+      makeDayConfig(testDate(13), 'boat'),
     ]
     const available = getAvailableDives(1, days, ['OW', 'AOW'])
-    // Highwater = 4 (OW-4). Only AOW 1-5 available (all OW below highwater)
+    // Highwater = OW-4. Global sequence: only AOW-1 is next
     expect(available.every(s => s.courseCode === 'AOW')).toBe(true)
-    expect(available.length).toBe(5)
+    expect(available.length).toBe(1)
+    expect(available[0].diveNumber).toBe(1)
   })
 
   it('5. AOW blocked until all OW placed (course prereq)', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 0, isConfined: true },
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
     ]
     const available = getAvailableDives(2, days, ['OW', 'AOW'])
     // OW 4 available but unplaced → AOW blocked
@@ -814,45 +1141,48 @@ describe('highwater mark availability', () => {
 
   it('6. AOW available once all OW placed', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 0, isConfined: true },
       ] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
         { courseCode: 'OW', diveNumber: 2, isConfined: false },
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-22', 'boat'), dives: [
+      { ...makeDayConfig(testDate(12), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
-      makeDayConfig('2026-03-23', 'boat'),
+      makeDayConfig(testDate(13), 'boat'),
     ]
-    // Day 2 (index 2): OW 4 placed here, AOW 1 should be available
+    // Day 2 (index 2): OW 4 placed here, AOW 1 should be available (next in global sequence)
     const day2 = getAvailableDives(2, days, ['OW', 'AOW'])
     expect(day2.some(s => s.courseCode === 'AOW' && s.diveNumber === 1)).toBe(true)
-    // Day 3 (index 3): All AOW available
+    // Day 3 (index 3): Only AOW 1 is next (global sequence continues from OW-4)
     const day3 = getAvailableDives(3, days, ['OW', 'AOW'])
-    expect(day3.filter(s => s.courseCode === 'AOW').length).toBe(5)
+    const aowDives = day3.filter(s => s.courseCode === 'AOW')
+    expect(aowDives.length).toBe(1)
+    expect(aowDives[0].diveNumber).toBe(1)
   })
 
-  it('7. same-day: any combination within a day', () => {
+  it('7. sequential: with OW-1,2,3 selected, only OW-4 is next', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
-        { courseCode: 'OW', diveNumber: 3, isConfined: false },
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
+        { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      makeDayConfig('2026-03-21', 'boat'),
-      makeDayConfig('2026-03-22', 'boat'),
+      makeDayConfig(testDate(11), 'boat'),
     ]
     const available = getAvailableDives(0, days, ['OW'])
-    // OW C, OW 2, OW 4 still available (plus OW 1, OW 3 already on this day)
-    expect(available.some(s => s.isConfined)).toBe(true)
-    expect(available.some(s => s.diveNumber === 2)).toBe(true)
-    expect(available.some(s => s.diveNumber === 4)).toBe(true)
+    // OW-1,2,3 already selected → only OW-4 is next; Confined is past in sequence
+    const unselected = available.filter(s => !s.isConfined && ![1, 2, 3].includes(s.diveNumber))
+    expect(unselected.length).toBe(1)
+    expect(unselected[0].diveNumber).toBe(4)
+    expect(available.some(s => s.isConfined)).toBe(false)
   })
 
   it('8. gaps allowed in cascade: deselect OW C keeps OW 1-4', () => {
-    const days = generateDays(['OW', 'AOW'], '2026-03-20', 3, '2026-03-23')
+    const days = distributeDives(generateDays(['OW', 'AOW'], testDate(10), 3, addDays(testDate(10), 3)), ['OW', 'AOW'])
     // Remove OW C
     const daysWithoutC = days.map(d => ({
       ...d,
@@ -871,10 +1201,10 @@ describe('highwater mark availability', () => {
 
   it('9. cross-day violation cascaded', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
       ] },
     ]
@@ -886,10 +1216,10 @@ describe('highwater mark availability', () => {
 
   it('10. no cascade when gaps exist but ordering valid', () => {
     const days: DayConfig[] = [
-      { ...makeDayConfig('2026-03-20', 'pool'), dives: [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [
         { courseCode: 'OW', diveNumber: 1, isConfined: false },
       ] },
-      { ...makeDayConfig('2026-03-21', 'boat'), dives: [
+      { ...makeDayConfig(testDate(11), 'boat'), dives: [
         { courseCode: 'OW', diveNumber: 3, isConfined: false },
         { courseCode: 'OW', diveNumber: 4, isConfined: false },
       ] },
@@ -901,6 +1231,99 @@ describe('highwater mark availability', () => {
     expect(remaining.some(d => d.diveNumber === 1)).toBe(true)
     expect(remaining.some(d => d.diveNumber === 3)).toBe(true)
     expect(remaining.some(d => d.diveNumber === 4)).toBe(true)
+  })
+})
+
+// ── Sequential Dive Selection ────────────────────────────────────────────────
+
+describe('sequential dive selection', () => {
+  it('no dives selected → all dives available (referral first pick)', () => {
+    const days: DayConfig[] = [
+      makeDayConfig(testDate(5), 'pool'),
+      makeDayConfig(testDate(6), 'boat'),
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    // All 5 OW dives available (confined + 1-4)
+    expect(available.length).toBe(5)
+  })
+
+  it('OW-1 selected → only OW-2 is next (forward only)', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 1, isConfined: false },
+      ] },
+      makeDayConfig(testDate(6), 'boat'),
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const unselectedNonConfined = available.filter(s => !s.isConfined && s.diveNumber !== 1)
+    expect(unselectedNonConfined.length).toBe(1)
+    expect(unselectedNonConfined[0].diveNumber).toBe(2)
+  })
+
+  it('OW-3 selected as referral → only OW-4 is next', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 3, isConfined: false },
+      ] },
+      makeDayConfig(testDate(6), 'boat'),
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const unselectedNonConfined = available.filter(s => !s.isConfined && s.diveNumber !== 3)
+    expect(unselectedNonConfined.length).toBe(1)
+    expect(unselectedNonConfined[0].diveNumber).toBe(4)
+  })
+
+  it('OW-4 selected as referral → no more non-confined dives available', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 4, isConfined: false },
+      ] },
+      makeDayConfig(testDate(6), 'boat'),
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    const unselectedNonConfined = available.filter(s => !s.isConfined && s.diveNumber !== 4)
+    expect(unselectedNonConfined.length).toBe(0)
+  })
+
+  it('confined unavailable when non-confined dive is selected (sequence rule)', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 3, isConfined: false },
+      ] },
+    ]
+    const available = getAvailableDives(0, days, ['OW'])
+    expect(available.some(s => s.isConfined)).toBe(false)
+  })
+
+  it('cross-day: OW-1,2 on day 1 → day 2 only shows OW-3', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 1, isConfined: false },
+        { courseCode: 'OW', diveNumber: 2, isConfined: false },
+      ] },
+      makeDayConfig(testDate(6), 'boat'),
+    ]
+    const available = getAvailableDives(1, days, ['OW'])
+    const nonConfined = available.filter(s => !s.isConfined)
+    expect(nonConfined.length).toBe(1)
+    expect(nonConfined[0].diveNumber).toBe(3)
+  })
+
+  it('O+A: OW-4 selected → AOW-1 available (course prereq met)', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(5), 'pool'), dives: [
+        { courseCode: 'OW', diveNumber: 1, isConfined: false },
+        { courseCode: 'OW', diveNumber: 2, isConfined: false },
+        { courseCode: 'OW', diveNumber: 3, isConfined: false },
+      ] },
+      { ...makeDayConfig(testDate(6), 'boat'), dives: [
+        { courseCode: 'OW', diveNumber: 4, isConfined: false },
+      ] },
+      makeDayConfig(testDate(7), 'boat'),
+    ]
+    const available = getAvailableDives(2, days, ['OW', 'AOW'])
+    // All OW dives placed → AOW should be available
+    expect(available.some(s => s.courseCode === 'AOW')).toBe(true)
   })
 })
 
@@ -921,3 +1344,117 @@ function makeDayConfig(
     timezone: 'Asia/Bangkok',
   }
 }
+
+// ── autoDistributeFromDive ─────────────────────────────────────────────────
+
+describe('autoDistributeFromDive', () => {
+  it('auto-distributes remaining OW dives when starting from Confined', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 0, isConfined: true }, ['OW'])
+    // Day 1 (pool): Confined + OW 1-3 (confined doesn't count toward cap)
+    expect(result[0].dives).toHaveLength(4)
+    // Day 2 (boat): OW 4
+    expect(result[1].dives.some(d => d.courseCode === 'OW' && d.diveNumber === 4)).toBe(true)
+  })
+
+  it('auto-distributes from referral starting point (OW 3)', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'boat'), dives: [{ courseCode: 'OW', diveNumber: 3, isConfined: false }] },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 3, isConfined: false }, ['OW'])
+    // Day 1: OW 3 (already there) + OW 4 (auto-filled)
+    expect(result[0].dives).toHaveLength(2)
+    expect(result[0].dives[1]).toMatchObject({ courseCode: 'OW', diveNumber: 4 })
+    // No Confined, OW 1, or OW 2 placed anywhere
+    const allDives = result.flatMap(d => d.dives)
+    expect(allDives.some(d => d.diveNumber === 0)).toBe(false)
+    expect(allDives.some(d => d.diveNumber === 1)).toBe(false)
+    expect(allDives.some(d => d.diveNumber === 2)).toBe(false)
+  })
+
+  it('respects 3-per-day non-confined cap during auto-fill', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'boat'), dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }] },
+      makeDayConfig(testDate(11), 'boat'),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 1, isConfined: false }, ['OW'])
+    // Day 1: OW 1 + OW 2 + OW 3 = 3 non-confined (cap)
+    expect(countNonConfined(result[0].dives)).toBe(3)
+    // Day 2: OW 4
+    expect(result[1].dives.some(d => d.diveNumber === 4)).toBe(true)
+  })
+
+  it('distributes O+A combo across days from Confined', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'pool'), dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }] },
+      makeDayConfig(testDate(11), 'boat'),
+      makeDayConfig(testDate(12), 'boat'),
+      makeDayConfig(testDate(13), 'boat'),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 0, isConfined: true }, ['OW', 'AOW'])
+    const allDives = result.flatMap(d => d.dives)
+    // All 10 dives placed (1 confined + 4 OW + 5 AOW)
+    expect(allDives).toHaveLength(10)
+    // No day exceeds 3 non-confined
+    for (const day of result) {
+      expect(countNonConfined(day.dives)).toBeLessThanOrEqual(3)
+    }
+  })
+})
+
+// ── divesPerDay boundary tests ──────────────────────────────────────────────
+
+describe('autoDistributeFromDive — divesPerDay boundaries', () => {
+  it('divesPerDay=1: distributes one non-confined dive per day', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'boat', 1), dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }] },
+      makeDayConfig(testDate(11), 'boat', 1),
+      makeDayConfig(testDate(12), 'boat', 1),
+      makeDayConfig(testDate(13), 'boat', 1),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 1, isConfined: false }, ['OW'])
+    // Each day should have exactly 1 non-confined dive
+    expect(countNonConfined(result[0].dives)).toBe(1)
+    expect(countNonConfined(result[1].dives)).toBe(1)
+    expect(countNonConfined(result[2].dives)).toBe(1)
+  })
+
+  it('divesPerDay=4: allows 4 non-confined dives per day', () => {
+    const days: DayConfig[] = [
+      { ...makeDayConfig(testDate(10), 'boat', 4), dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }] },
+      makeDayConfig(testDate(11), 'boat', 4),
+    ]
+    const result = autoDistributeFromDive(days, { courseCode: 'OW', diveNumber: 1, isConfined: false }, ['OW'])
+    // Day 1 should hold all 4 OW non-confined dives (OW 1-4)
+    expect(countNonConfined(result[0].dives)).toBe(4)
+    // Day 2 should be empty (all fit on day 1)
+    expect(result[1].dives).toHaveLength(0)
+  })
+})
+
+// ── Venue sort order (global dive sequence, not alphabetical) ──────────────
+
+describe('buildDiveSequence sort order', () => {
+  it('orders OW dives before AOW dives (not alphabetical)', () => {
+    const sequence = buildDiveSequence(['OW', 'AOW'])
+    const codes = sequence.map(s => `${s.courseCode}:${s.diveNumber}`)
+    // OW comes before AOW in the sequence (even though "AOW" < "OW" alphabetically)
+    const lastOWIdx = codes.findLastIndex(c => c.startsWith('OW'))
+    const firstAOWIdx = codes.findIndex(c => c.startsWith('AOW'))
+    expect(lastOWIdx).toBeLessThan(firstAOWIdx)
+  })
+
+  it('O+A combo: Confined → OW 1-4 → AOW 1-5 in that order', () => {
+    const sequence = buildDiveSequence(['OW', 'AOW'])
+    expect(sequence[0]).toMatchObject({ courseCode: 'OW', diveNumber: 0, isConfined: true })
+    expect(sequence[1]).toMatchObject({ courseCode: 'OW', diveNumber: 1, isConfined: false })
+    expect(sequence[4]).toMatchObject({ courseCode: 'OW', diveNumber: 4, isConfined: false })
+    expect(sequence[5]).toMatchObject({ courseCode: 'AOW', diveNumber: 1, isConfined: false })
+    expect(sequence[9]).toMatchObject({ courseCode: 'AOW', diveNumber: 5, isConfined: false })
+  })
+})

@@ -6,4 +6,6 @@ export { GlassDialog } from "./glass-dialog";
 export { GlassBadge } from "./glass-badge";
 export { BookingStatusBadge } from "./booking-status-badge";
 export { GlassTooltip } from "./glass-tooltip";
+export { GlassSelect } from "./glass-select";
+export type { GlassSelectOption } from "./glass-select";
 export { RoleIcon } from "./role-icon";

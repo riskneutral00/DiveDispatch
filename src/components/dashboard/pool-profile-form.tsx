@@ -37,9 +37,9 @@ const EMPTY_FORM: PoolFormData = {
 }
 
 export function PoolProfileForm() {
-  const profile = useQuery(api.pools.mine)
-  const create = useMutation(api.pools.create)
-  const update = useMutation(api.pools.update)
+  const profile = useQuery(api.venues.mine)
+  const create = useMutation(api.venues.create)
+  const update = useMutation(api.venues.update)
 
   const [form, setForm] = useState<PoolFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -106,7 +106,14 @@ export function PoolProfileForm() {
       if (profile) {
         await update(result.data)
       } else {
-        await create(result.data)
+        await create({
+          ...result.data,
+          venueType: 'Pool',
+          isPublic: false,
+          confinedCapable: true,
+          openWaterCapable: false,
+          hasCompressor: false,
+        })
       }
       setSaved(true)
     } catch (err) {

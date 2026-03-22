@@ -3,6 +3,7 @@ import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import {
   _getUnavailableUnitIdsForDates,
+  _getCapacityForDates,
   _listInventoryByType,
   _toggleBlockedDate,
 } from '../convex/availability'
@@ -15,6 +16,7 @@ import {
   seedSnapshot,
   seedBlockedDates,
 } from './fixtures/seedFixture'
+import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 let t = convexTest(schema, modules)
@@ -27,7 +29,7 @@ beforeEach(() => {
 describe('_getUnavailableUnitIdsForDates', () => {
   it('returns empty set when no snapshots exist', async () => {
     await t.run(async (ctx) => {
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.size).toBe(0)
     })
   })
@@ -37,7 +39,7 @@ describe('_getUnavailableUnitIdsForDates', () => {
       const unitId = await seedInventoryUnit(ctx)
       await seedSnapshot(ctx, unitId, { totalUnits: 10, reservedUnits: 3, availableUnits: 7 })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.size).toBe(0)
     })
   })
@@ -51,7 +53,7 @@ describe('_getUnavailableUnitIdsForDates', () => {
       })
       await seedSnapshot(ctx, unitId, { totalUnits: 1, reservedUnits: 1, availableUnits: 0 })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(unitId)).toBe(true)
     })
   })
@@ -64,13 +66,13 @@ describe('_getUnavailableUnitIdsForDates', () => {
         totalUnits: 10,
       })
       await seedSnapshot(ctx, unitId, {
-        date: '2024-06-02',
+        date: testDate(7),
         totalUnits: 10,
         reservedUnits: 10,
         availableUnits: 0,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-02'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(7)])
       expect(result.has(unitId)).toBe(true)
     })
   })
@@ -87,7 +89,7 @@ describe('_getUnavailableUnitIdsForDates', () => {
       await seedSnapshot(ctx, fullUnitId, { totalUnits: 1, reservedUnits: 1, availableUnits: 0 })
       await seedSnapshot(ctx, availUnitId, { totalUnits: 10, reservedUnits: 3, availableUnits: 7 })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(fullUnitId)).toBe(true)
       expect(result.has(availUnitId)).toBe(false)
     })
@@ -98,19 +100,19 @@ describe('_getUnavailableUnitIdsForDates', () => {
       const unitId = await seedInventoryUnit(ctx)
       // Same unit fully booked on two different dates
       await seedSnapshot(ctx, unitId, {
-        date: '2024-06-01',
+        date: testDate(5),
         totalUnits: 1,
         reservedUnits: 1,
         availableUnits: 0,
       })
       await seedSnapshot(ctx, unitId, {
-        date: '2024-06-02',
+        date: testDate(7),
         totalUnits: 1,
         reservedUnits: 1,
         availableUnits: 0,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01', '2024-06-02'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5), testDate(7)])
       expect(result.size).toBe(1)
       expect(result.has(unitId)).toBe(true)
     })
@@ -149,7 +151,7 @@ describe('_getUnavailableUnitIdsForDates', () => {
         availableUnits: 0,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2024-06-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(unitId)).toBe(true)
     })
   })
@@ -291,7 +293,7 @@ describe('_toggleBlockedDate', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
 
-      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       expect(result).toBe(true)
       const doc = await ctx.db
@@ -300,7 +302,7 @@ describe('_toggleBlockedDate', () => {
           q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
-      expect(doc?.dates).toEqual(['2025-06-15'])
+      expect(doc?.dates).toEqual([testDate(5)])
     })
   })
 
@@ -310,10 +312,10 @@ describe('_toggleBlockedDate', () => {
       await seedBlockedDates(ctx, {
         ownerSlug: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
-        dates: ['2025-06-15'],
+        dates: [testDate(5)],
       })
 
-      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       expect(result).toBe(false)
       const doc = await ctx.db
@@ -332,13 +334,13 @@ describe('_toggleBlockedDate', () => {
       await seedBlockedDates(ctx, {
         ownerSlug: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
-        dates: ['2025-06-15'],
+        dates: [testDate(5)],
       })
 
       // First call unblocks
-      await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
       // Second call blocks again
-      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       expect(result).toBe(true)
     })
@@ -348,7 +350,7 @@ describe('_toggleBlockedDate', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
 
-      const result = await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       expect(result).toBe(true)
       const doc = await ctx.db
@@ -357,14 +359,14 @@ describe('_toggleBlockedDate', () => {
           q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
-      expect(doc?.dates).toEqual(['2025-06-15'])
+      expect(doc?.dates).toEqual([testDate(5)])
     })
   })
 
   it('throws UNAUTHENTICATED when identity is missing', async () => {
     await t.run(async (ctx) => {
       await expect(
-        _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' }),
+        _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' }),
       ).rejects.toMatchObject({
         data: { code: 'UNAUTHENTICATED' },
       })
@@ -375,7 +377,7 @@ describe('_toggleBlockedDate', () => {
     // Identity present but no matching user in the DB
     await t.withIdentity({ tokenIdentifier: 'test|ghost-user' }).run(async (ctx) => {
       await expect(
-        _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' }),
+        _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' }),
       ).rejects.toMatchObject({
         data: { code: 'NOT_FOUND' },
       })
@@ -388,10 +390,10 @@ describe('_toggleBlockedDate', () => {
       await seedBlockedDates(ctx, {
         ownerSlug: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
-        dates: ['2025-06-10', '2025-06-20'],
+        dates: [testDate(3), testDate(10)],
       })
 
-      await _toggleBlockedDate(ctx, { date: '2025-06-15', roleType: 'DiveCenter' })
+      await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
 
       const doc = await ctx.db
         .query('stakeholderBlockedDates')
@@ -399,7 +401,7 @@ describe('_toggleBlockedDate', () => {
           q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
-      expect(doc?.dates).toEqual(['2025-06-10', '2025-06-20', '2025-06-15'])
+      expect(doc?.dates).toEqual([testDate(3), testDate(10), testDate(5)])
     })
   })
 })
@@ -423,7 +425,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
       })
       // One seat reserved, one still available — but full-day blocks the whole date
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-01',
+        date: testDate(5),
         windowStart: '08:00',
         windowEnd: '16:00',
         totalUnits: 2,
@@ -431,7 +433,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         availableUnits: 1,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2026-04-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(unitId)).toBe(true)
     })
   })
@@ -451,7 +453,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         boatType: 'speedboat',
       })
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-01',
+        date: testDate(5),
         windowStart: '08:00',
         windowEnd: '12:00',
         totalUnits: 3,
@@ -459,7 +461,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         availableUnits: 2,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2026-04-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(unitId)).toBe(false)
     })
   })
@@ -477,7 +479,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         boatType: 'liveaboard',
       })
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-01',
+        date: testDate(5),
         windowStart: '08:00',
         windowEnd: '16:00',
         totalUnits: 1,
@@ -485,7 +487,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         availableUnits: 0,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2026-04-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       expect(result.has(unitId)).toBe(true)
     })
   })
@@ -504,7 +506,7 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
       })
       // Partial reservation, availableUnits > 0
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-01',
+        date: testDate(5),
         windowStart: '08:00',
         windowEnd: '16:00',
         totalUnits: 2,
@@ -512,11 +514,212 @@ describe('_getUnavailableUnitIdsForDates — full-day vs time-window', () => {
         availableUnits: 1,
       })
 
-      const result = await _getUnavailableUnitIdsForDates(ctx, ['2026-04-01'])
+      const result = await _getUnavailableUnitIdsForDates(ctx, [testDate(5)])
       // Time-window behavior: availableUnits > 0 → not unavailable
       expect(result.has(unitId)).toBe(false)
       // Confirm isFullDayResource respects the safe default
       expect(isFullDayResource({ resourceType: 'Boat' })).toBe(false)
+    })
+  })
+})
+
+// ─── getCapacityForDates (TDD — per-date availability for resource pickers) ──
+
+describe('_getCapacityForDates', () => {
+  it('Exclusive, no bookings → full capacity', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      // No snapshot → full capacity returned
+      expect(entry).toEqual({ available: 1, total: 1 })
+    })
+  })
+
+  it('Exclusive, one booking → zero available', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 0, total: 1 })
+    })
+  })
+
+  it('Pooled, no bookings → full capacity', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 20,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 20, total: 20 })
+    })
+  })
+
+  it('Pooled, partially booked → remaining capacity', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 20,
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        totalUnits: 20,
+        reservedUnits: 5,
+        availableUnits: 15,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 15, total: 20 })
+    })
+  })
+
+  it('Pooled, fully booked → zero available', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 20,
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        totalUnits: 20,
+        reservedUnits: 20,
+        availableUnits: 0,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 0, total: 20 })
+    })
+  })
+
+  it('multi-date: per-date granularity (available Day 1, full Day 2)', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      // Day 1: no snapshot (available)
+      // Day 2: fully booked
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(6),
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5), testDate(6)])
+      expect(result[unitId as string]?.[testDate(5)]).toEqual({ available: 1, total: 1 })
+      expect(result[unitId as string]?.[testDate(6)]).toEqual({ available: 0, total: 1 })
+    })
+  })
+
+  it('no snapshot for date → returns full capacity from unit', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Pool',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+      })
+      // Snapshot exists for a different date, not the queried date
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(10),
+        totalUnits: 10,
+        reservedUnits: 5,
+        availableUnits: 5,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 10, total: 10 })
+    })
+  })
+
+  it('snapshot restored after release → available again', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      // Snapshot shows released (available restored)
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        totalUnits: 1,
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      const entry = result[unitId as string]?.[testDate(5)]
+      expect(entry).toEqual({ available: 1, total: 1 })
+    })
+  })
+
+  it('empty dates array → returns empty result', async () => {
+    await t.run(async (ctx) => {
+      await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
+
+      const result = await _getCapacityForDates(ctx, [])
+      expect(Object.keys(result)).toHaveLength(0)
+    })
+  })
+
+  it('multiple units: returns capacity for each independently', async () => {
+    await t.run(async (ctx) => {
+      const instrId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instr-a',
+      })
+      const boatId = await seedInventoryUnit(ctx, {
+        resourceType: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 20,
+        ownerId: 'boat-a',
+        ownerType: 'Boat',
+      })
+      // Instructor fully booked, boat has 15/20
+      await seedSnapshot(ctx, instrId, {
+        date: testDate(5),
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedSnapshot(ctx, boatId, {
+        date: testDate(5),
+        totalUnits: 20,
+        reservedUnits: 5,
+        availableUnits: 15,
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      expect(result[instrId as string]?.[testDate(5)]).toEqual({ available: 0, total: 1 })
+      expect(result[boatId as string]?.[testDate(5)]).toEqual({ available: 15, total: 20 })
     })
   })
 })

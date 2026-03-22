@@ -20,6 +20,8 @@ export interface CourseCatalogEntry {
   maxDiversPerInstructor: number;
   prerequisites: CourseCode[];
   description: string;
+  /** True if this course can appear more than once in the same booking (e.g. FD on different dates). */
+  repeatable: boolean;
 }
 
 // ── PADI Courses ────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
+    repeatable: true,
     description: 'Introductory dive for non-certified divers',
   },
   {
@@ -43,6 +46,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
+    repeatable: false,
     description: 'Entry-level certification with confined and open water dives',
   },
   {
@@ -53,6 +57,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['OW'],
+    repeatable: false,
     description: 'Five adventure dives including deep and navigation',
   },
   {
@@ -63,6 +68,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['AOW'],
+    repeatable: false,
     description: 'Self-rescue and diver-rescue skills with emergency scenarios',
   },
   {
@@ -73,6 +79,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 1,
     prerequisites: ['RESCUE'],
+    repeatable: false,
     description: 'Professional-level training to lead and assist dive activities',
   },
   {
@@ -83,6 +90,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
+    repeatable: true,
     description: 'Informal DSD alternative for dive centers not following official PADI SOP',
   },
   {
@@ -93,6 +101,7 @@ const PADI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['OW'],
+    repeatable: true,
     description: 'Specialty diving courses (Deep, Wreck, Nitrox, etc.)',
   },
 ];
@@ -108,6 +117,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
+    repeatable: true,
     description: 'Introductory dive for non-certified divers',
   },
   {
@@ -118,6 +128,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 8,
     prerequisites: [],
+    repeatable: false,
     description: 'Entry-level certification with confined and open water dives',
   },
   {
@@ -128,6 +139,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['OW'],
+    repeatable: false,
     description: 'Five specialty dives to explore advanced techniques',
   },
   {
@@ -138,6 +150,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['AOW'],
+    repeatable: false,
     description: 'Stress management and rescue techniques for real-world scenarios',
   },
   {
@@ -148,6 +161,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 1,
     prerequisites: ['RESCUE'],
+    repeatable: false,
     description: 'Professional-level training to guide certified divers',
   },
   {
@@ -158,6 +172,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 4,
     prerequisites: [],
+    repeatable: true,
     description: 'Informal introductory dive alternative for dive centers not following official SSI SOP',
   },
   {
@@ -168,6 +183,7 @@ const SSI_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['OW'],
+    repeatable: true,
     description: 'Specialty diving courses (Deep, Wreck, Enriched Air, etc.)',
   },
 ];
@@ -183,6 +199,7 @@ const UNIVERSAL_COURSES: CourseCatalogEntry[] = [
     requiresConfined: false,
     maxDiversPerInstructor: 4,
     prerequisites: ['OW'],
+    repeatable: true,
     description: 'Recreational diving for certified divers',
   },
   {
@@ -193,6 +210,7 @@ const UNIVERSAL_COURSES: CourseCatalogEntry[] = [
     requiresConfined: true,
     maxDiversPerInstructor: 2,
     prerequisites: ['OW'],
+    repeatable: false,
     description: 'Skills review for certified divers returning after a break',
   },
 ];

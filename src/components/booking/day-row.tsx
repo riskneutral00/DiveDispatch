@@ -1,17 +1,21 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets, ChevronDown } from 'lucide-react'
-import { GlassCard, GlassInput } from '@/components/glass'
+import { GlassCard, GlassInput, GlassSelect } from '@/components/glass'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
+import type { DiveSlotDef } from '@/lib/booking/generate-days'
+import { buildDiveSequence } from '@/lib/booking/generate-days'
 import type { Dispatch } from 'react'
 import { getCourseByCode } from '@/lib/constants/course-catalog'
 import type { CourseCode } from '@/lib/constants/course-catalog'
+import { languageFlagText } from '@/components/common/language-flags'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface ResourceOption {
   id: string
   label: string
+  languages?: string[]
 }
 
 interface DayRowProps {
@@ -20,10 +24,8 @@ interface DayRowProps {
   dayNumber: number
   dispatch: Dispatch<WizardAction>
   canRemove?: boolean
-  /** Customer names for labeling dive pills — e.g. ["Anna", "Bob"] */
-  customerNames?: string[]
   /** All dives eligible for this day (active + ghost). When provided, pills persist as ghosts. */
-  availableDives?: DiveSlot[]
+  availableDives?: DiveSlotDef[]
   /** Cascade-aware toggle handler. When provided, replaces the default TOGGLE_DIVE dispatch. */
   onToggleDive?: (dayIndex: number, slot: DiveSlot) => void
   /** Instructor options for inline picker */
@@ -32,8 +34,14 @@ interface DayRowProps {
   boatOptions?: ResourceOption[]
   /** Pool options for inline picker */
   poolOptions?: ResourceOption[]
+  /** Shore/beach options for inline picker */
+  shoreOptions?: ResourceOption[]
   /** Total number of days (for "use for remaining" button visibility) */
   totalDays?: number
+  /** Course codes for global dive sequence sort order */
+  courseCodes?: string[]
+  /** Customer language codes for instructor tier filtering */
+  customerLanguages?: string[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -47,10 +55,8 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function deriveDayLabel(day: DayConfig): string {
-  if (day.venueType === 'pool') return 'Confined Water'
-  if (day.venueType === 'shore') return 'Shore Dive'
-  return 'Boat Dive'
+function deriveDayLabel(_day: DayConfig): string {
+  return 'Dive Day'
 }
 
 const VENUE_ICONS = {
@@ -99,7 +105,7 @@ function SelectField({
           <option value="__external__">External (not in system)</option>
           {options.map((opt) => (
             <option key={opt.id} value={opt.id}>
-              {opt.label}
+              {opt.label}{languageFlagText(opt.languages)}
             </option>
           ))}
         </select>
@@ -114,39 +120,42 @@ function SelectField({
 function DivePill({
   slot,
   active,
+  capped,
   onToggle,
-  customerName,
 }: {
   slot: DiveSlot
   active: boolean
+  /** Day's non-confined dive limit reached — pill disabled */
+  capped?: boolean
   onToggle: () => void
-  customerName?: string
 }) {
   const label = slot.isConfined
-    ? `${slot.courseCode} C`
+    ? 'Confined'
     : `${slot.courseCode} ${slot.diveNumber}`
 
-  const displayLabel = customerName
-    ? `${label} (${customerName})`
-    : label
+  const isCappedAndInactive = capped && !active
 
   return (
     <button
       type="button"
-      onClick={onToggle}
-      title={getCourseByCode(slot.courseCode as CourseCode)?.name ?? slot.courseCode}
+      onClick={isCappedAndInactive ? undefined : onToggle}
+      disabled={isCappedAndInactive}
+      title={
+        isCappedAndInactive
+          ? 'Day limit reached — max 3 dives'
+          : getCourseByCode(slot.courseCode as CourseCode)?.name ?? slot.courseCode
+      }
       className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
       style={{
-        background: active
-          ? 'var(--color-accent)'
-          : 'var(--color-glass-bg)',
+        background: active ? 'var(--color-accent)' : 'var(--color-glass-bg)',
         color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
         border: `1px ${active ? 'solid' : 'dashed'} ${active ? 'transparent' : 'var(--color-glass-border)'}`,
-        opacity: active ? 1 : 0.5,
+        opacity: active ? 1 : isCappedAndInactive ? 0.3 : 0.5,
         fontFamily: 'var(--font-body)',
+        cursor: isCappedAndInactive ? 'not-allowed' : 'pointer',
       }}
     >
-      {displayLabel}
+      {label}
     </button>
   )
 }
@@ -159,21 +168,17 @@ export function DayRow({
   dayNumber,
   dispatch,
   canRemove = false,
-  customerNames = [],
   availableDives,
   onToggleDive,
   instructorOptions = [],
   boatOptions = [],
   poolOptions = [],
+  shoreOptions = [],
   totalDays = 1,
+  courseCodes = [],
+  customerLanguages,
 }: DayRowProps) {
-  function handleVenueTypeChange(venueType: 'boat' | 'shore' | 'pool') {
-    dispatch({
-      type: 'UPDATE_DAY',
-      dayIndex,
-      patch: { venueType, inventoryUnitId: '', externalVenueName: '', poolInventoryUnitId: '', externalPoolName: '' },
-    })
-  }
+  const showRemainingCheckbox = dayIndex < totalDays - 1
 
   function handleDiveToggle(slot: DiveSlot) {
     dispatch({ type: 'TOGGLE_DIVE', dayIndex, slot })
@@ -233,149 +238,7 @@ export function DayRow({
         )}
       </div>
 
-      {/* Venue type toggle */}
-      <div className="flex gap-1 mb-3">
-        {(['pool', 'boat', 'shore'] as const).map((vt) => {
-          const Icon = VENUE_ICONS[vt]
-          const active = day.venueType === vt
-          return (
-            <button
-              key={vt}
-              type="button"
-              onClick={() => handleVenueTypeChange(vt)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors border"
-              style={{
-                background: active ? 'var(--color-accent)' : 'var(--color-glass-bg)',
-                color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                borderColor: active ? 'transparent' : 'var(--color-glass-border)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <Icon size={11} />
-              {VENUE_LABELS[vt]}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Inline resource pickers */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-        {/* Instructor */}
-        <div className="flex flex-col gap-1">
-          {day.instructorSlug === '__external__' ? (
-            <>
-              <GlassInput
-                label="Instructor (external)"
-                value={day.externalInstructorName ?? ''}
-                onChange={(e) =>
-                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
-                }
-                placeholder="Instructor name"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: '' })
-                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
-                }}
-                className="text-xs underline underline-offset-2 text-left"
-                style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-              >
-                Switch to system instructor
-              </button>
-            </>
-          ) : (
-            <>
-              <SelectField
-                label="Instructor"
-                value={day.instructorSlug ?? ''}
-                onChange={(v) => dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: v })}
-                options={instructorOptions}
-                placeholder="Select instructor…"
-              />
-              {day.instructorSlug && dayIndex < totalDays - 1 && (
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'APPLY_INSTRUCTOR_TO_REMAINING', fromDayIndex: dayIndex, slug: day.instructorSlug! })}
-                  className="text-xs text-left"
-                  style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-                >
-                  → Use for remaining days
-                </button>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Venue (hidden for shore) */}
-        {day.venueType !== 'shore' && (() => {
-          const isPool = day.venueType === 'pool'
-          const currentId = isPool ? (day.poolInventoryUnitId ?? '') : (day.inventoryUnitId ?? '')
-          const externalName = isPool ? (day.externalPoolName ?? '') : (day.externalVenueName ?? '')
-          const isExternal = currentId === '__external__'
-          const options = isPool ? poolOptions : boatOptions
-          const venueLabel = isPool ? 'Pool' : 'Boat'
-          return (
-            <div className="flex flex-col gap-1">
-              {isExternal ? (
-                <>
-                  <GlassInput
-                    label={`${venueLabel} (external)`}
-                    value={externalName}
-                    onChange={(e) => {
-                      const patch = isPool
-                        ? { externalPoolName: e.target.value }
-                        : { externalVenueName: e.target.value }
-                      dispatch({ type: 'UPDATE_DAY', dayIndex, patch })
-                    }}
-                    placeholder={`${venueLabel} name`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const patch = isPool
-                        ? { poolInventoryUnitId: '', externalPoolName: '' }
-                        : { inventoryUnitId: '', externalVenueName: '' }
-                      dispatch({ type: 'UPDATE_DAY', dayIndex, patch })
-                    }}
-                    className="text-xs underline underline-offset-2 text-left"
-                    style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-                  >
-                    Switch to system {venueLabel.toLowerCase()}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <SelectField
-                    label={venueLabel}
-                    value={currentId}
-                    onChange={(v) => {
-                      const patch = isPool
-                        ? { poolInventoryUnitId: v, externalPoolName: '' }
-                        : { inventoryUnitId: v, externalVenueName: '' }
-                      dispatch({ type: 'UPDATE_DAY', dayIndex, patch })
-                    }}
-                    options={options}
-                    placeholder={`Select ${venueLabel.toLowerCase()}…`}
-                  />
-                  {currentId && dayIndex < totalDays - 1 && (
-                    <button
-                      type="button"
-                      onClick={() => dispatch({ type: 'APPLY_VENUE_TO_REMAINING', fromDayIndex: dayIndex, unitId: currentId })}
-                      className="text-xs text-left"
-                      style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-                    >
-                      → Use for remaining {day.venueType} days
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )
-        })()}
-      </div>
-
-      {/* Time fields */}
+      {/* Row 1: Time fields */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <GlassInput
           label="Start time"
@@ -391,40 +254,185 @@ export function DayRow({
         />
       </div>
 
-      {/* Dive pills (interactive toggle — ghost pills for available-but-unassigned) */}
-      {(() => {
-        const displaySlots = availableDives ?? day.dives
-        if (displaySlots.length === 0) {
+      {/* Row 2: Instructor (left half) + Dive pills (right half) */}
+      <div className="grid grid-cols-2 gap-3 mb-3 items-end">
+        {/* Instructor */}
+        <div className="flex flex-col gap-1">
+          {day.instructorSlug === '__external__' ? (
+            <>
+              <GlassInput
+                label="Instructor (external)"
+                value={day.externalInstructorName ?? ''}
+                onChange={(e) =>
+                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: e.target.value } })
+                }
+                placeholder="External"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: '' })
+                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
+                }}
+                className="text-xs underline underline-offset-2 text-left"
+                style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
+              >
+                Switch to system instructor
+              </button>
+            </>
+          ) : (
+            <GlassSelect
+              label="Instructor"
+              value={day.instructorSlug ?? ''}
+              onChange={(v) => {
+                dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: v })
+                if (v && showRemainingCheckbox) {
+                  dispatch({ type: 'APPLY_INSTRUCTOR_TO_REMAINING', fromDayIndex: dayIndex, slug: v })
+                }
+              }}
+              options={[
+                { id: '__external__', label: 'External (not in system)' },
+                ...instructorOptions,
+              ]}
+              placeholder="Select instructor…"
+              customerLanguages={customerLanguages}
+            />
+          )}
+        </div>
+
+        {/* Dive pills */}
+        {(() => {
+          const displaySlots = availableDives ?? day.dives
+          if (displaySlots.length === 0) {
+            return (
+              <p
+                className="text-xs text-center py-2"
+                style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+              >
+                No dives scheduled
+              </p>
+            )
+          }
           return (
-            <p
-              className="text-xs text-center py-2"
-              style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-            >
-              No dives scheduled
-            </p>
+            <div className="flex flex-wrap gap-1 items-end pb-1">
+              {displaySlots.map((slot, i) => {
+                const isActive = day.dives.some(
+                  (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
+                )
+                const isCapped = 'capped' in slot && (slot as DiveSlotDef).capped === true
+                return (
+                  <DivePill
+                    key={`${slot.courseCode}-${slot.diveNumber}-${slot.isConfined}-${i}`}
+                    slot={slot}
+                    active={isActive}
+                    capped={isCapped}
+                    onToggle={() =>
+                      onToggleDive
+                        ? onToggleDive(dayIndex, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined })
+                        : handleDiveToggle({ courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined })
+                    }
+                  />
+                )
+              })}
+            </div>
           )
-        }
+        })()}
+      </div>
+
+      {/* Per-dive venue assignment (sorted by dive sequence order) */}
+      {day.dives.length > 0 && (() => {
+        // Sort dives by sequence: confined first, then by diveNumber
+        const sequence = courseCodes.length > 0 ? buildDiveSequence(courseCodes) : []
+        const sortedDives = [...day.dives].sort((a, b) => {
+          const aIdx = sequence.findIndex(s => s.courseCode === a.courseCode && s.diveNumber === a.diveNumber && s.isConfined === a.isConfined)
+          const bIdx = sequence.findIndex(s => s.courseCode === b.courseCode && s.diveNumber === b.diveNumber && s.isConfined === b.isConfined)
+          if (aIdx >= 0 && bIdx >= 0) return aIdx - bIdx
+          if (a.isConfined && !b.isConfined) return -1
+          if (!a.isConfined && b.isConfined) return 1
+          return a.diveNumber - b.diveNumber
+        })
+        // Map sorted dive back to its original index in day.dives
+        const originalIndex = (dive: DiveSlot) =>
+          day.dives.findIndex(d => d.courseCode === dive.courseCode && d.diveNumber === dive.diveNumber && d.isConfined === dive.isConfined)
+
         return (
           <div
-            className="flex flex-wrap gap-1 pt-3 border-t"
+            className="flex flex-col gap-2 pt-3 border-t mt-1"
             style={{ borderColor: 'var(--color-glass-border)' }}
           >
-            {displaySlots.map((slot, i) => {
-              const isActive = day.dives.some(
-                (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
-              )
+            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}>
+              Venue Assignment
+            </span>
+            {sortedDives.map((dive) => {
+              const diveIdx = originalIndex(dive)
+              const diveLabel = dive.isConfined ? 'Confined' : `${dive.courseCode} ${dive.diveNumber}`
+              const venueOptions: ('pool' | 'boat' | 'shore')[] = dive.isConfined
+                ? ['pool', 'boat', 'shore']
+                : ['boat', 'shore']
+              const currentVenue = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
+              const resourceOpts = currentVenue === 'pool' ? poolOptions : currentVenue === 'shore' ? shoreOptions : boatOptions
+
               return (
-                <DivePill
-                  key={`${slot.courseCode}-${slot.diveNumber}-${slot.isConfined}-${i}`}
-                  slot={slot}
-                  active={isActive}
-                  onToggle={() =>
-                    onToggleDive
-                      ? onToggleDive(dayIndex, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined })
-                      : handleDiveToggle({ courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined })
-                  }
-                  customerName={customerNames[0]}
-                />
+                <div key={`venue-${dive.courseCode}-${dive.diveNumber}-${dive.isConfined}`} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium w-16 shrink-0" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
+                      {diveLabel}
+                    </span>
+                    <div className="flex gap-1">
+                      {venueOptions.map((vt) => {
+                        const Icon = VENUE_ICONS[vt]
+                        const isVenueSelected = currentVenue === vt
+                        return (
+                          <button
+                            key={vt}
+                            type="button"
+                            onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
+                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border"
+                            style={{
+                              background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
+                              color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+                              borderColor: isVenueSelected ? 'transparent' : 'var(--color-glass-border)',
+                              fontFamily: 'var(--font-body)',
+                            }}
+                            title={VENUE_LABELS[vt]}
+                          >
+                            <Icon size={10} />
+                            {VENUE_LABELS[vt]}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <select
+                        value={dive.resourceSlug ?? ''}
+                        onChange={(e) => {
+                          const slug = e.target.value || undefined
+                          // Set this dive's resource
+                          dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceSlug: slug })
+                          // Waterfall: fill subsequent dives with same venue type (same day + later days)
+                          if (slug) {
+                            for (let j = diveIdx + 1; j < day.dives.length; j++) {
+                              const nextDive = day.dives[j]
+                              const nextVenue = nextDive.venueType ?? (nextDive.isConfined ? 'pool' : 'boat')
+                              if (nextVenue === currentVenue && !nextDive.resourceSlug) {
+                                dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: j, venueType: nextVenue, resourceSlug: slug })
+                              }
+                            }
+                            dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceSlug: slug })
+                          }
+                        }}
+                        className="glass glass-field w-full text-xs py-1 pl-2 pr-6 appearance-none"
+                        style={{ color: dive.resourceSlug ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+                      >
+                        <option value="">Select {VENUE_LABELS[currentVenue].toLowerCase()}…</option>
+                        <option value="__external__">External (not in system)</option>
+                        {resourceOpts.map((opt) => (
+                          <option key={opt.id} value={opt.id}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               )
             })}
           </div>

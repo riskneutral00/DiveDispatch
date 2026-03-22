@@ -16,6 +16,7 @@ import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,15 +57,15 @@ async function seedBooking(
     holdTTL: HOLD_TTL,
     paid: false,
     activityType: ['OW'],
-    startDate: '2030-06-15',
-    endDate: '2030-06-17',
+    startDate: testDate(5),
+    endDate: testDate(7),
     divers: [
       {
         name: 'Alice',
         abbrev: 'A',
         flag: { code: 'TH', label: 'Thailand' },
-        startDate: '2030-06-15',
-        endDate: '2030-06-17',
+        startDate: testDate(5),
+        endDate: testDate(7),
         activityType: ['OW'],
       },
     ],
@@ -136,7 +137,7 @@ describe('bookingResources round-trip lifecycle', () => {
           sessions: [
             {
               inventoryUnitId: instUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -144,7 +145,7 @@ describe('bookingResources round-trip lifecycle', () => {
             },
             {
               inventoryUnitId: emUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -153,8 +154,8 @@ describe('bookingResources round-trip lifecycle', () => {
           ],
           bookingData: {
             activityType: ['OW'],
-            startDate: '2030-06-15',
-            endDate: '2030-06-17',
+            startDate: testDate(5),
+            endDate: testDate(7),
             portalContact: false,
             portalMedical: false,
             portalWaiver: false,
@@ -163,8 +164,8 @@ describe('bookingResources round-trip lifecycle', () => {
                 name: 'Alice',
                 abbrev: 'A',
                 flag: { code: 'TH', label: 'Thailand' },
-                startDate: '2030-06-15',
-                endDate: '2030-06-17',
+                startDate: testDate(5),
+                endDate: testDate(7),
                 activityType: ['OW'],
               },
             ],
@@ -234,7 +235,7 @@ describe('bookingResources round-trip lifecycle', () => {
           sessions: [
             {
               inventoryUnitId: instUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -242,7 +243,7 @@ describe('bookingResources round-trip lifecycle', () => {
             },
             {
               inventoryUnitId: emUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -251,8 +252,8 @@ describe('bookingResources round-trip lifecycle', () => {
           ],
           bookingData: {
             activityType: ['OW'],
-            startDate: '2030-06-15',
-            endDate: '2030-06-17',
+            startDate: testDate(5),
+            endDate: testDate(7),
             portalContact: false,
             portalMedical: false,
             portalWaiver: false,
@@ -261,8 +262,8 @@ describe('bookingResources round-trip lifecycle', () => {
                 name: 'Alice',
                 abbrev: 'A',
                 flag: { code: 'TH', label: 'Thailand' },
-                startDate: '2030-06-15',
-                endDate: '2030-06-17',
+                startDate: testDate(5),
+                endDate: testDate(7),
                 activityType: ['OW'],
               },
             ],
@@ -325,7 +326,7 @@ describe('bookingResources round-trip lifecycle', () => {
           sessions: [
             {
               inventoryUnitId: instUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -333,7 +334,7 @@ describe('bookingResources round-trip lifecycle', () => {
             },
             {
               inventoryUnitId: emUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -342,8 +343,8 @@ describe('bookingResources round-trip lifecycle', () => {
           ],
           bookingData: {
             activityType: ['OW'],
-            startDate: '2030-06-15',
-            endDate: '2030-06-17',
+            startDate: testDate(5),
+            endDate: testDate(7),
             portalContact: false,
             portalMedical: false,
             portalWaiver: false,
@@ -352,8 +353,8 @@ describe('bookingResources round-trip lifecycle', () => {
                 name: 'Alice',
                 abbrev: 'A',
                 flag: { code: 'TH', label: 'Thailand' },
-                startDate: '2030-06-15',
-                endDate: '2030-06-17',
+                startDate: testDate(5),
+                endDate: testDate(7),
                 activityType: ['OW'],
               },
             ],
@@ -404,7 +405,7 @@ describe('bookingResources round-trip lifecycle', () => {
           sessions: [
             {
               inventoryUnitId: instUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -412,7 +413,7 @@ describe('bookingResources round-trip lifecycle', () => {
             },
             {
               inventoryUnitId: emUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -421,8 +422,8 @@ describe('bookingResources round-trip lifecycle', () => {
           ],
           bookingData: {
             activityType: ['OW'],
-            startDate: '2030-06-15',
-            endDate: '2030-06-17',
+            startDate: testDate(5),
+            endDate: testDate(7),
             portalContact: false,
             portalMedical: false,
             portalWaiver: false,
@@ -431,8 +432,8 @@ describe('bookingResources round-trip lifecycle', () => {
                 name: 'Alice',
                 abbrev: 'A',
                 flag: { code: 'TH', label: 'Thailand' },
-                startDate: '2030-06-15',
-                endDate: '2030-06-17',
+                startDate: testDate(5),
+                endDate: testDate(7),
                 activityType: ['OW'],
               },
             ],
@@ -524,7 +525,7 @@ describe('bookingResources round-trip lifecycle', () => {
           sessions: [
             {
               inventoryUnitId: instUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -532,7 +533,7 @@ describe('bookingResources round-trip lifecycle', () => {
             },
             {
               inventoryUnitId: emUnitId,
-              date: '2030-06-15',
+              date: testDate(5),
               startTime: '08:00',
               endTime: '17:00',
               timezone: 'Asia/Bangkok',
@@ -541,8 +542,8 @@ describe('bookingResources round-trip lifecycle', () => {
           ],
           bookingData: {
             activityType: ['OW'],
-            startDate: '2030-06-15',
-            endDate: '2030-06-17',
+            startDate: testDate(5),
+            endDate: testDate(7),
             portalContact: false,
             portalMedical: false,
             portalWaiver: false,
@@ -551,8 +552,8 @@ describe('bookingResources round-trip lifecycle', () => {
                 name: 'Alice',
                 abbrev: 'A',
                 flag: { code: 'TH', label: 'Thailand' },
-                startDate: '2030-06-15',
-                endDate: '2030-06-17',
+                startDate: testDate(5),
+                endDate: testDate(7),
                 activityType: ['OW'],
               },
             ],
@@ -583,7 +584,7 @@ describe('bookingResources round-trip lifecycle', () => {
         const snap = await ctx.db
           .query('availabilitySnapshots')
           .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-            q.eq('inventoryUnitId', emUnitId).eq('date', '2030-06-15').eq('windowStart', '08:00'),
+            q.eq('inventoryUnitId', emUnitId).eq('date', testDate(5)).eq('windowStart', '08:00'),
           )
           .unique()
         return snap
@@ -629,7 +630,7 @@ describe('bookingResources round-trip lifecycle', () => {
         return ctx.db
           .query('availabilitySnapshots')
           .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-            q.eq('inventoryUnitId', emUnitId).eq('date', '2030-06-15').eq('windowStart', '08:00'),
+            q.eq('inventoryUnitId', emUnitId).eq('date', testDate(5)).eq('windowStart', '08:00'),
           )
           .unique()
       })

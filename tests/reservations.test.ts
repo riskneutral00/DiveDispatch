@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { getDateRange } from '../convex/reservationsMutations'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -24,14 +25,14 @@ async function expectConvexError(promise: Promise<unknown>, code: string) {
 
 describe('getDateRange', () => {
   it('returns single date when start equals end', () => {
-    expect(getDateRange('2024-06-01', '2024-06-01')).toEqual(['2024-06-01'])
+    expect(getDateRange(testDate(5), testDate(5))).toEqual([testDate(5)])
   })
 
   it('returns inclusive range across multiple days', () => {
-    expect(getDateRange('2024-06-01', '2024-06-03')).toEqual([
-      '2024-06-01',
-      '2024-06-02',
-      '2024-06-03',
+    expect(getDateRange(testDate(5), testDate(7))).toEqual([
+      testDate(5),
+      testDate(6),
+      testDate(7),
     ])
   })
 })
@@ -86,8 +87,8 @@ describe('acceptReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -105,7 +106,7 @@ describe('acceptReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -178,8 +179,8 @@ describe('acceptReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -197,7 +198,7 @@ describe('acceptReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -260,8 +261,8 @@ describe('acceptReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -274,7 +275,7 @@ describe('acceptReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -319,8 +320,8 @@ describe('acceptReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -333,7 +334,7 @@ describe('acceptReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -403,8 +404,8 @@ describe('declineReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -422,14 +423,14 @@ describe('declineReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
       })
       const snapshotId = await ctx.db.insert('availabilitySnapshots', {
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         windowStart: '08:00',
         windowEnd: '16:00',
         totalUnits: 1,
@@ -509,8 +510,8 @@ describe('declineReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -528,7 +529,7 @@ describe('declineReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -602,8 +603,8 @@ describe('declineReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -621,7 +622,7 @@ describe('declineReservation', () => {
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
-        date: '2024-06-01',
+        date: testDate(5),
         startTime: '08:00',
         endTime: '16:00',
         timezone: 'Asia/Bangkok',
@@ -684,8 +685,8 @@ describe('declineReservation', () => {
         holdTTL: HOLD_TTL,
         paid: false,
         activityType: ['OW'],
-        startDate: '2024-06-01',
-        endDate: '2024-06-01',
+        startDate: testDate(5),
+        endDate: testDate(5),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,

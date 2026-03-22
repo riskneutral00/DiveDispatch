@@ -198,12 +198,12 @@ export const getOnboardingStatus = query({
       DiveMaster: 'diveMasters',
       Boat: 'boats',
       Equipment: 'equipment',
-      Pool: 'pools',
+      Pool: 'venues',
       Compressor: 'compressors',
       Liveaboard: 'liveaboards',
       DiveResort: 'diveResorts',
       DiveHostel: 'diveHostels',
-      DiveSite: 'diveSites',
+      DiveSite: 'venues',
     } as const
 
     const table = profileTable[role as keyof typeof profileTable]
@@ -261,11 +261,22 @@ export const getOnboardingStatus = query({
       if (!template) incomplete.push('Quick Book pill')
     }
 
+    // ── Preferred instructors (organizers only) ───────────────────────
+    if (OPERATOR_ROLE_SET.has(role)) {
+      const prefs = await ctx.db
+        .query('stakeholderPreferences')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user._id))
+        .unique()
+      if (!prefs?.preferredInstructorSlugs?.length) incomplete.push('Preferred instructors')
+    }
+
     // ── Calculate total checkpoints for this role ────────────────────
     const baseCount = 5 // name, city, country, contactEmail, contactPhone
     const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
     const hasTemplateSlot = OPERATOR_ROLE_SET.has(role)
-    const total = baseCount + (hasListField ? 1 : 0) + 1 /* languages */ + (hasTemplateSlot ? 1 : 0)
+    const hasPreferredInstructors = OPERATOR_ROLE_SET.has(role)
+    const total = baseCount + (hasListField ? 1 : 0) + 1 /* languages */ + (hasTemplateSlot ? 1 : 0) + (hasPreferredInstructors ? 1 : 0)
     const filled = total - incomplete.length
     const percentage = Math.round((filled / total) * 100)
 
