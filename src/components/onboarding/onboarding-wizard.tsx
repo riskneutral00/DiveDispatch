@@ -135,7 +135,7 @@ export function OnboardingWizard() {
       if (user) {
         const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
         if (config) {
-          router.replace(`/${user.slug}/${config.key}/dashboard`)
+          router.replace(`/${user.slug}/${config.key}`)
           return
         }
       }

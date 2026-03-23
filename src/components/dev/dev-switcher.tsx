@@ -74,7 +74,7 @@ function DevSwitcherInner() {
       // Brief delay lets Convex propagate the tokenIdentifier patch before
       // the new page's queries fire — prevents a transient FORBIDDEN error.
       await new Promise((r) => setTimeout(r, 150))
-      window.location.href = `/${result.slug}/${config.key}/dashboard`
+      window.location.href = `/${result.slug}/${config.key}`
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'Switch failed — check console'

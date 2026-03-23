@@ -65,7 +65,7 @@ describe('Sign-in page routing', () => {
     })
 
     const { getByText } = render(<SignInPage />)
-    expect(mockReplace).toHaveBeenCalledWith('/dive-center/deep-blue/dashboard')
+    expect(mockReplace).toHaveBeenCalledWith('/deep-blue/dive-center')
     expect(getByText('Redirecting…')).toBeInTheDocument()
   })
 
@@ -79,7 +79,7 @@ describe('Sign-in page routing', () => {
     })
 
     render(<SignInPage />)
-    expect(mockReplace).toHaveBeenCalledWith('/dive-center/partial-user/dashboard')
+    expect(mockReplace).toHaveBeenCalledWith('/partial-user/dive-center')
     expect(mockReplace).not.toHaveBeenCalledWith('/onboarding')
   })
 

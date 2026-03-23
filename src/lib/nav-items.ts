@@ -15,7 +15,7 @@ export function buildNavItems(roleSlug: string, slug: string): NavItem[] {
   const base = `/${slug}/${roleSlug}`
 
   return [
-    { key: 'dashboard', label: 'Dashboard', href: `${base}/dashboard`, Icon: LayoutDashboard },
+    { key: 'dashboard', label: 'Dashboard', href: base, Icon: LayoutDashboard },
     { key: 'directory', label: 'Directory', href: `/directory`, Icon: Users },
     { key: 'settings', label: 'Settings', href: `${base}/settings`, Icon: Settings },
   ]

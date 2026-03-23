@@ -129,7 +129,7 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
     render(<SignUpPage />)
 
-    expect(mockReplace).toHaveBeenCalledWith('/dive-center/deep-blue-diving/dashboard')
+    expect(mockReplace).toHaveBeenCalledWith('/deep-blue-diving/dive-center')
   })
 
   it('redirects partial users (role set, onboarding not complete) to dashboard — no /onboarding detour', () => {
@@ -143,7 +143,7 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
     render(<SignUpPage />)
 
-    expect(mockReplace).toHaveBeenCalledWith('/dive-center/mike-smith/dashboard')
+    expect(mockReplace).toHaveBeenCalledWith('/mike-smith/dive-center')
     expect(mockReplace).not.toHaveBeenCalledWith('/onboarding')
   })
 

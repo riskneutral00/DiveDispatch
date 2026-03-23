@@ -122,7 +122,30 @@ In the **category notebook** (not triage), create a note for future cross-refere
 
 This enables querying across multiple videos in the same category later.
 
-### Step 8 — Output
+### Step 8 — Vault cross-post (conditional)
+
+If the video's category maps to a DiveVault domain, append a summary to the relevant Research.md:
+
+| Category | Vault target |
+|---|---|
+| Diving/Marine | `~/Desktop/DiveVault/DiveDispatch/Product/Research.md` |
+| Business/Strategy | `~/Desktop/DiveVault/RiskNeutral/Strategy/Research.md` |
+| AI/Tech | Skip |
+| Other categories | Skip |
+
+**Format appended:**
+```markdown
+## [video title] — [YYYY-MM-DD]
+[1-line summary derived from Key Lessons]
+Full: ~/Desktop/YouTubeVault/<folder>/<slug>.md
+```
+
+**Rules:**
+1. Read the target file first. If the video title already appears, skip (no duplicates).
+2. If the file doesn't exist, create it with a `# Research` heading first, then append.
+3. If it exists, append under the existing content.
+
+### Step 9 — Output
 
 Display the full formatted document in chat. Then print:
 
@@ -131,7 +154,12 @@ Saved: ~/Desktop/YouTubeVault/<folder>/<slug>.md
 Notebook: <notebook title> (source + note added)
 ```
 
-If multiple videos were processed, repeat Steps 2–7 for each, then show all outputs together.
+If a vault cross-post occurred, also print:
+```
+Vault: cross-posted to ~/Desktop/DiveVault/.../Research.md
+```
+
+If multiple videos were processed, repeat Steps 2–8 for each, then show all outputs together.
 
 ---
 

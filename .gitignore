@@ -19,6 +19,8 @@
 # next.js
 /.next/
 /out/
+# Next.js 16 renamed middleware → proxy. Block the deprecated file.
+src/middleware.ts
 
 # production
 /build

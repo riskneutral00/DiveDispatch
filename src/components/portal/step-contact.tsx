@@ -144,6 +144,22 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   const [ageError, setAgeError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Returning customer dedup
+  const [returningCustomer, setReturningCustomer] = useState<{
+    _id: string
+    legalFirstName: string
+    legalLastName: string
+    email: string
+  } | null>(null)
+  const [returningConfirmed, setReturningConfirmed] = useState(false)
+  const [returningDismissed, setReturningDismissed] = useState(false)
+  const checkReturning = useQuery(
+    api.customers.checkReturningCustomer,
+    form.email && form.email.includes('@') && !returningDismissed
+      ? { email: form.email }
+      : 'skip',
+  )
+
   // Cert-conditional schema: agency + agencyID required if any activity needs it.
   // Memoize on activity types to avoid hook churn.
   const schema = useMemo(
@@ -189,6 +205,45 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     }
   }, [context])
 
+  // Show returning customer banner when match found
+  useEffect(() => {
+    if (checkReturning && !returningConfirmed && !returningDismissed) {
+      setReturningCustomer(checkReturning)
+    }
+  }, [checkReturning, returningConfirmed, returningDismissed])
+
+  function confirmReturningCustomer() {
+    if (!checkReturning) return
+    setReturningConfirmed(true)
+    setReturningCustomer(null)
+    // Pre-fill everything except medical/waiver
+    setFormState((prev) => ({
+      ...prev,
+      legalFirstName: checkReturning.legalFirstName,
+      legalLastName: checkReturning.legalLastName,
+      preferredName: checkReturning.preferredName ?? '',
+      email: checkReturning.email,
+      phone: checkReturning.phone,
+      dateOfBirth: checkReturning.dateOfBirth,
+      gender: checkReturning.gender,
+      nationality: checkReturning.nationality,
+      passportNumber: checkReturning.passportNumber,
+      passportIssuingCountry: checkReturning.passportIssuingCountry,
+      passportExpirationDate: checkReturning.passportExpirationDate,
+      emergencyContactName: checkReturning.emergencyContactName,
+      emergencyContactPhone: checkReturning.emergencyContactPhone,
+      emergencyContactRelation: checkReturning.emergencyContactRelation,
+      agency: checkReturning.agency ?? '',
+      agencyID: checkReturning.agencyID ?? '',
+      allergies: checkReturning.allergies ?? '',
+    }))
+  }
+
+  function dismissReturningCustomer() {
+    setReturningDismissed(true)
+    setReturningCustomer(null)
+  }
+
   const requiresCert =
     context != null &&
     context.activityType.some((t) =>
@@ -229,6 +284,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     try {
       await save({
         token,
+        ...(returningConfirmed && checkReturning?._id
+          ? { existingCustomerId: checkReturning._id }
+          : {}),
         legalFirstName: validated.legalFirstName,
         legalLastName: validated.legalLastName,
         preferredName: validated.preferredName || undefined,
@@ -291,6 +349,34 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      {/* Returning customer banner */}
+      {returningCustomer && !returningConfirmed && !returningDismissed && (
+        <GlassCard padding="md">
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Welcome back! We found your info from a previous booking.
+            </p>
+            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
+            </p>
+            <div className="flex gap-2">
+              <GlassButton type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
+                Yes, that&apos;s me
+              </GlassButton>
+              <GlassButton type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
+                Not me
+              </GlassButton>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      {returningConfirmed && (
+        <p className="text-sm px-1" style={{ color: 'var(--color-success)' }}>
+          Your previous info has been loaded. Review and update anything that&apos;s changed.
+        </p>
+      )}
+
       {/* Personal Information */}
       <GlassCard padding="md">
         <SectionHeading>Personal Information</SectionHeading>

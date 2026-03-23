@@ -27,10 +27,13 @@ const PERSONAL_ROLE_KEYS = new Set(['instructor', 'dive-master'])
 interface AccountFormValues {
   firstName: string
   lastName: string
+  nickname: string
   businessName: string
   contactEmail: string
+  phone: string
   preferredLocale: string
   preferredChannel: ChannelKey | null
+  customerLanguages: string[]
 }
 
 export default function AccountPage() {
@@ -42,10 +45,13 @@ export default function AccountPage() {
   const [values, setValues] = useState<AccountFormValues>({
     firstName: '',
     lastName: '',
+    nickname: '',
     businessName: '',
     contactEmail: '',
+    phone: '',
     preferredLocale: 'en',
     preferredChannel: null,
+    customerLanguages: [],
   })
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -56,10 +62,13 @@ export default function AccountPage() {
       setValues({
         firstName: user.firstName ?? '',
         lastName: user.lastName ?? '',
+        nickname: user.nickname ?? '',
         businessName: user.businessName ?? '',
         contactEmail: user.email ?? '',
+        phone: user.phone ?? '',
         preferredLocale: user.preferredLocale ?? 'en',
         preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
+        customerLanguages: user.customerLanguages ?? [],
       })
     }
   }, [user])
@@ -116,8 +125,13 @@ export default function AccountPage() {
       await createUser({
         role: user!.role,
         businessName,
+        firstName: values.firstName.trim() || undefined,
+        lastName: values.lastName.trim() || undefined,
+        nickname: values.nickname.trim() || undefined,
+        phone: values.phone.trim() || undefined,
         preferredLocale: values.preferredLocale,
         preferredChannel: values.preferredChannel ?? undefined,
+        customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -141,7 +155,7 @@ export default function AccountPage() {
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
         <Link
-          href={`/${slug}/${roleSlug}/dashboard`}
+          href={`/${slug}/${roleSlug}`}
           className="flex items-center gap-1 text-sm transition-opacity hover:opacity-70"
           style={{ color: 'var(--color-text-secondary)' }}
         >
@@ -203,6 +217,14 @@ export default function AccountPage() {
                   />
                 </div>
 
+                <GlassInput
+                  label="Nickname"
+                  value={values.nickname}
+                  onChange={(e) => set('nickname', e.target.value)}
+                  placeholder="What people call you"
+                  autoComplete="nickname"
+                />
+
                 {showBusinessName && (
                   <GlassInput
                     label="Business name"
@@ -213,13 +235,23 @@ export default function AccountPage() {
                   />
                 )}
 
-                <GlassInput
-                  label="Contact email"
-                  type="email"
-                  value={values.contactEmail}
-                  onChange={(e) => set('contactEmail', e.target.value)}
-                  autoComplete="email"
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <GlassInput
+                    label="Contact email"
+                    type="email"
+                    value={values.contactEmail}
+                    onChange={(e) => set('contactEmail', e.target.value)}
+                    autoComplete="email"
+                  />
+                  <GlassInput
+                    label="Phone"
+                    type="tel"
+                    value={values.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                    placeholder="+66 81 234 5678"
+                    autoComplete="tel"
+                  />
+                </div>
               </div>
             </GlassCard>
 
@@ -270,6 +302,22 @@ export default function AccountPage() {
                       )
                     })}
                   </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                    Customer languages
+                  </p>
+                  <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                    Languages you can serve customers in.
+                  </p>
+                  <LanguagePicker
+                    value={values.customerLanguages
+                      .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
+                      .filter((l): l is NonNullable<typeof l> => l !== undefined)
+                      .map((l) => ({ code: l.code, label: l.label }))}
+                    onChange={(langs) => set('customerLanguages', langs.map((l) => l.code))}
+                  />
                 </div>
               </div>
             </GlassCard>

@@ -12,6 +12,10 @@ All product decisions, domain rules, and business logic: `~/Desktop/DiveVault/Di
 
 `convex/ ← lib/ ← components/ ← app/` — Never import upstream. (PostToolUse hook enforces this.)
 
+## Proxy (not Middleware)
+
+Next.js 16 renamed `middleware.ts` → `proxy.ts`. Auth proxy lives at `src/proxy.ts`. **Never create `src/middleware.ts`** — it conflicts and crashes the dev server. `.gitignore` blocks it.
+
 ## Auth Boundary
 
 - **Clerk-authenticated mutations**: verify caller ownership via `users.slug`.
