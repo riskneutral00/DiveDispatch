@@ -14,7 +14,9 @@ intimately and doesn't need to prove it.
 warm, living accents — coral, amber, bioluminescent blue. Inspired by the Ocex magazine "dive"
 layout: deep black water with bioluminescent creatures providing all illumination.
 
-**Dark mode only.** Underwater = dark. Light mode is deferred. The void IS the product.
+**Two modes.** Night = deep void (dark). Day = shallow water (light blue monochromatic).
+The background IS the product in both modes — glass panels stay transparent so the
+background is always visible.
 
 ---
 
@@ -46,7 +48,26 @@ layout: deep black water with bioluminescent creatures providing all illuminatio
 
 Same void background, text colors, glass formula, and status colors as Ocean.
 
-### Status Colors (universal — constant across all skins)
+### Ocean Light (day mode)
+
+| Token | Value | Purpose |
+|-------|-------|---------|
+| `--color-primary` | `#2563eb` | Blue-600 — primary actions |
+| `--color-primary-glow` | `rgba(37, 99, 235, 0.20)` | Hover glow, focus rings |
+| `--color-secondary` | `#3b82f6` | Blue-500 — secondary accents |
+| `--color-accent` | `#3b82f6` | Blue-500 (=secondary, merged) |
+| `--color-text-primary` | `#1e3a5f` | Dark navy — body text |
+| `--color-text-secondary` | `#64748b` | Slate-500 — secondary text |
+| `--color-text-on-primary` | `#ffffff` | Text on primary buttons |
+| `--color-surface` | `#dbeafe` | Blue-100 |
+| `--color-surface-elevated` | `#eff6ff` | Blue-50 |
+| `--body-bg` | `#dbeafe` | Light blue base |
+
+Monochromatic blue — one color family at different shades. Glass panels use the
+bright tier (12% white frost) so the blue background shows through everything.
+Background gradient: `#eff6ff` → `#e0edf8` → `#d0e4f2` → `#bfdbfe`.
+
+### Status Colors — Night (dark tier, 400-level)
 
 | Status | Foreground | Background | Border |
 |--------|-----------|------------|--------|
@@ -58,7 +79,20 @@ Same void background, text colors, glass formula, and status colors as Ocean.
 | Urgent | `#f87171` | `rgba(248,113,113,0.14)` | `rgba(248,113,113,0.5)` |
 | Blocked* | `#a78bfa` | `rgba(167,139,250,0.14)` | `rgba(167,139,250,0.5)` |
 
-Safety signals never change per skin. These values are set in `globals.css` `:root`.
+### Status Colors — Day (bright tier, 600-level)
+
+| Status | Foreground | Background | Border |
+|--------|-----------|------------|--------|
+| Active | `#059669` | `rgba(5,150,105,0.10)` | `rgba(5,150,105,0.5)` |
+| Draft | `#d97706` | `rgba(217,119,6,0.10)` | `rgba(217,119,6,0.5)` |
+| Upcoming | `#2563eb` | `rgba(37,99,235,0.10)` | `rgba(37,99,235,0.5)` |
+| Completed | `#7c3aed` | `rgba(124,58,237,0.10)` | `rgba(124,58,237,0.5)` |
+| Cancelled | `#7c3aed` | `rgba(124,58,237,0.10)` | `rgba(124,58,237,0.5)` |
+| Urgent | `#dc2626` | `rgba(220,38,38,0.10)` | `rgba(220,38,38,0.5)` |
+| Blocked* | `#dc2626` | `rgba(220,38,38,0.10)` | `rgba(220,38,38,0.5)` |
+
+Status hues shift per mode for contrast: 400-level on dark, 600-level on light.
+Red stays the same for urgent/blocked in both modes.
 
 ---
 
@@ -132,7 +166,7 @@ picks a tier when authoring the skin; it does not change at runtime.
 |------|----------------|---------------|------------|
 | **dark** | Void gradients, deep ocean photos | White-tinted (5%) | Warm white `#f0ebe4` |
 | **medium** | Underwater photos, twilight, blue water | Black-tinted (20%) | White `#ffffff` |
-| **bright** | Shallow reef, tropical surface, sand | White-tinted (45%) | Near-black `rgba(0,0,0,0.87)` |
+| **bright** | Shallow reef, tropical surface, light blue | White-tinted (12%) | Dark navy `#1e3a5f` |
 
 **Dark tier** (current default):
 
@@ -159,12 +193,14 @@ picks a tier when authoring the skin; it does not change at runtime.
 | `--color-glass-bg-elevated` | `rgba(0,0,0, 0.28)` | Heavier darkening |
 | `--glass-blur-elevated` | `28px` | Heavier blur |
 
-**Bright tier** (for light backgrounds):
+**Bright tier** (for light backgrounds — low opacity, background shows through):
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `--color-glass-bg` | `rgba(255,255,255, 0.45)` | White frost |
-| `--color-glass-border` | `rgba(0,0,0, 0.06)` | Dark ghost border |
+| `--color-glass-bg` | `rgba(255,255,255, 0.12)` | Whisper of frost |
+| `--color-glass-border` | `rgba(0,0,0, 0.08)` | Dark ghost border |
+| `--color-glass-bg-elevated` | `rgba(255,255,255, 0.20)` | Modal frost |
+| `--color-glass-border-elevated` | `rgba(0,0,0, 0.18)` | Modal edge |
 | `--color-glass-shadow` | `rgba(0,0,0, 0.06)` | Subtle shadow |
 
 Full tier values in `src/themes/skins.ts` → `GLASS_FORMULAS`.
@@ -280,9 +316,9 @@ any element that needs to be visible across all skin/mode combinations.
 
 | Token | Purpose | Dark | Medium | Bright |
 |-------|---------|------|--------|--------|
-| `--opacity-watermark` | Date numbers, decorative text | 0.18 | 0.25 | 0.35 |
-| `--opacity-subtle` | Status backgrounds, tinted highlights | 0.14 | 0.20 | 0.28 |
-| `--opacity-muted` | Disabled states, placeholders | 0.50 | 0.55 | 0.65 |
+| `--opacity-watermark` | Date numbers, decorative text | 0.18 | 0.40 | 0.55 |
+| `--opacity-subtle` | Status backgrounds, tinted highlights | 0.14 | 0.30 | 0.10 |
+| `--opacity-muted` | Disabled states, placeholders | 0.50 | 0.55 | 0.70 |
 
 Status background vars in `:root` use `--opacity-subtle` via modern `rgb()` syntax:
 ```css

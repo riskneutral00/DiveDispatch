@@ -87,11 +87,11 @@ describe('createBookingLink', () => {
     const { link, profile } = await t.run(async (ctx) => {
       const link = await ctx.db
         .query('bookingLinks')
-        .withIndex('by_token', (q: Ctx) => q.eq('token', token))
+        .withIndex('by_token', (q) => q.eq('token', token))
         .unique()
       const profile = await ctx.db
         .query('customerProfiles')
-        .withIndex('by_linkToken', (q: Ctx) => q.eq('linkToken', token))
+        .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
         .unique()
       return { link, profile }
     })
@@ -131,11 +131,11 @@ describe('createBookingLink', () => {
     const { linkCount, profileCount } = await t.run(async (ctx) => {
       const links = await ctx.db
         .query('bookingLinks')
-        .withIndex('by_bookingId', (q: Ctx) => q.eq('bookingId', bookingId))
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
         .collect()
       const profiles = await ctx.db
         .query('customerProfiles')
-        .withIndex('by_linkToken', (q: Ctx) => q.eq('linkToken', token1))
+        .withIndex('by_linkToken', (q) => q.eq('linkToken', token1))
         .collect()
       return { linkCount: links.length, profileCount: profiles.length }
     })
@@ -165,7 +165,7 @@ describe('createBookingLink', () => {
     await t.run(async (ctx) => {
       const link = await ctx.db
         .query('bookingLinks')
-        .withIndex('by_token', (q: Ctx) => q.eq('token', token1))
+        .withIndex('by_token', (q) => q.eq('token', token1))
         .unique()
       if (link) await ctx.db.patch(link._id, { usedAt: Date.now() })
     })

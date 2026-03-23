@@ -205,7 +205,7 @@ export default defineSchema({
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_status', ['status'])
-    .index('by_status_createdAt', ['status', '_creationTime'])
+    .index('by_status_createdAt', ['status', 'createdAt'])
     .index('by_agentId', ['agentId']),
 
   bookingSessions: defineTable({
@@ -597,6 +597,19 @@ export default defineSchema({
     .index('by_inventoryUnitId', ['inventoryUnitId'])
     .index('by_equipmentManagerId', ['equipmentManagerId'])
     .index('by_equipmentManagerId_gearType', ['equipmentManagerId', 'gearType']),
+
+  // ── L0: Multi-Role ─────────────────────────────────────────────────
+
+  userRoles: defineTable({
+    userId: v.id('users'),
+    role: stakeholderType,
+    isPrimary: v.boolean(),
+    createdAt: v.number(),
+    profileComplete: v.boolean(),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_userId_role', ['userId', 'role'])
+    .index('by_role', ['role']),
 
   // ── L1: Relationships & Moderation ──────────────────────────────────
 

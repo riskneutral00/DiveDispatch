@@ -13,6 +13,8 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { WithoutSystemFields } from 'convex/server'
+import type { Doc } from '../convex/_generated/dataModel'
 import { isFullDayResource } from '../convex/bookings/_shared'
 import { testDate } from './helpers/dates'
 
@@ -47,7 +49,7 @@ function makeDCUser() {
   }
 }
 
-function makeBooking(ownerId: string, overrides: Record<string, unknown> = {}) {
+function makeBooking(ownerId: string, overrides: Partial<WithoutSystemFields<Doc<'bookings'>>> = {}): WithoutSystemFields<Doc<'bookings'>> {
   return {
     ownerId,
     ownerType: 'DiveCenter',
@@ -67,7 +69,7 @@ function makeBooking(ownerId: string, overrides: Record<string, unknown> = {}) {
     bookingFormComplete: false,
     customerFormComplete: false,
     ...overrides,
-  }
+  } as WithoutSystemFields<Doc<'bookings'>>
 }
 
 // ─── Invariant 1: Exclusive double-hold ──────────────────────────────────────

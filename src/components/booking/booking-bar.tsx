@@ -57,7 +57,7 @@ export function BookingBar({
           ? 'var(--color-status-urgent)'
           : statusColors.bgVar,
         color: status === 'Urgent'
-          ? '#ffffff'
+          ? 'var(--color-text-on-primary)'
           : statusColors.textVar,
         borderLeft: `3px ${borderStyle} ${borderColor}`,
         borderTop: `1px ${borderStyle} ${borderColor}`,

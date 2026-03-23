@@ -1,13 +1,10 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { use } from 'react'
-import { DashboardContent } from '@/components/dashboard/dashboard-content'
-
-export default function Page({
+export default async function Page({
   params,
 }: {
   params: Promise<{ slug: string }>
 }) {
-  const { slug } = use(params)
-  return <DashboardContent roleSlug="dive-master" slug={slug} />
+  const { slug } = await params
+  redirect(`/${slug}/dive-master/dashboard`)
 }

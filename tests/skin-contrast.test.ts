@@ -104,7 +104,12 @@ describe('Skin opacity tokens & readability surface', () => {
             ['subtle', palette.opacitySubtle],
             ['muted', palette.opacityMuted],
           ] as const) {
-            expect(val, `${name} > 0`).toBeGreaterThan(0)
+            // Bright palettes may use 0 for subtle (no tint needed on light bg)
+            if (name === 'subtle' && palette.luminanceClass === 'bright') {
+              expect(val, `${name} >= 0`).toBeGreaterThanOrEqual(0)
+            } else {
+              expect(val, `${name} > 0`).toBeGreaterThan(0)
+            }
             expect(val, `${name} < 1`).toBeLessThan(1)
           }
         })

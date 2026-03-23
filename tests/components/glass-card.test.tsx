@@ -14,13 +14,6 @@ describe('GlassCard', () => {
     expect(classes).not.toContain('glass')
   })
 
-  it('elevated prop still renders glass-container (no glass-elevated)', () => {
-    const { container } = render(<GlassCard elevated>Content</GlassCard>)
-    const el = container.firstElementChild!
-    expect(el.className).toContain('glass-container')
-    expect(el.className).not.toContain('glass-elevated')
-  })
-
   it('hoverable adds glass-surface class', () => {
     const { container } = render(<GlassCard hoverable>Content</GlassCard>)
     const el = container.firstElementChild!

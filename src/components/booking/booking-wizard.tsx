@@ -301,7 +301,7 @@ export function BookingWizard({
               <AlertTriangle
                 size={20}
                 className="flex-shrink-0 mt-0.5"
-                style={{ color: "var(--color-warning, #f59e0b)" }}
+                style={{ color: "var(--color-warning, #fbbf24)" }}
               />
               <div>
                 <h2

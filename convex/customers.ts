@@ -24,7 +24,7 @@ export async function _checkReturningCustomerHandler(
     .collect()
 
   // Also try lowercase match across all if exact didn't work
-  let match = allByEmail[0] ?? null
+  let match: (typeof allByEmail)[number] | null = allByEmail[0] ?? null
   if (!match) {
     // Fallback: scan for case-insensitive match
     const recent = await ctx.db.query('customers').order('desc').take(500)

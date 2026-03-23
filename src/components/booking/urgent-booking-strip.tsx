@@ -45,9 +45,9 @@ export function UrgentBookingStrip({
           className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
           style={{
             background: 'var(--color-status-urgent)',
-            color: '#ffffff',
+            color: 'var(--color-text-on-primary)',
             border: '1px solid var(--color-status-urgent-border)',
-            boxShadow: '0 0 8px rgba(239, 68, 68, 0.3)',
+            boxShadow: '0 0 8px var(--color-destructive-glow)',
             lineHeight: '1.2',
           }}
         >

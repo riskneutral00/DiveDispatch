@@ -216,8 +216,8 @@ export function DayRow({
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full"
               style={{
-                background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent)',
-                color: 'var(--color-warning, #f59e0b)',
+                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 15%, transparent)',
+                color: 'var(--color-warning, #fbbf24)',
               }}
             >
               Auto-added
@@ -228,7 +228,7 @@ export function DayRow({
           <button
             type="button"
             onClick={() => dispatch({ type: 'REMOVE_DAY', dayIndex })}
-            className="p-1 rounded opacity-50 hover:opacity-100 transition-opacity"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded opacity-50 hover:opacity-100 transition-opacity"
             style={{ color: 'var(--color-destructive)' }}
             title="Remove day"
             aria-label={`Remove day ${dayNumber}`}
@@ -387,7 +387,7 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors border"
+                            className="flex items-center gap-0.5 min-h-[44px] px-2.5 py-1.5 rounded text-[10px] font-medium transition-colors border"
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',

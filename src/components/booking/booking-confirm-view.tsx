@@ -26,9 +26,9 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       <div
         className="flex items-center gap-2 px-4 py-3 rounded-[var(--border-radius)]"
         style={{
-          background: 'color-mix(in srgb, var(--color-success, #10b981) 12%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--color-success, #10b981) 30%, transparent)',
-          color: 'var(--color-success, #10b981)',
+          background: 'color-mix(in srgb, var(--color-success, #34d399) 12%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--color-success, #34d399) 30%, transparent)',
+          color: 'var(--color-success, #34d399)',
         }}
       >
         <Check size={16} className="flex-shrink-0" />
@@ -74,8 +74,8 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
                   <span
                     className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
                     style={{
-                      background: 'color-mix(in srgb, var(--color-success, #10b981) 15%, transparent)',
-                      color: 'var(--color-success, #10b981)',
+                      background: 'color-mix(in srgb, var(--color-success, #34d399) 15%, transparent)',
+                      color: 'var(--color-success, #34d399)',
                     }}
                   >
                     Link sent

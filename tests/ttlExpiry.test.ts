@@ -1502,14 +1502,16 @@ async function makePortalFixture(
   })
 
   const token = testToken()
-  const linkRecord: Record<string, unknown> = {
+  const linkBase = {
     bookingId,
     token,
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
     customerName: 'Alice',
     email: 'alice@example.com',
   }
-  if (opts.usedAt !== undefined) linkRecord.usedAt = opts.usedAt
+  const linkRecord = opts.usedAt !== undefined
+    ? { ...linkBase, usedAt: opts.usedAt }
+    : linkBase
 
   const linkId = await ctx.db.insert('bookingLinks', linkRecord)
   const profileId = await ctx.db.insert('customerProfiles', { bookingId, linkToken: token })

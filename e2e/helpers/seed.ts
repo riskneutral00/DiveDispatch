@@ -4,16 +4,33 @@
  * All seed user passwords: REDACTED
  *
  * Slugs come from convex/seedData.ts — must stay in sync.
+ * Multi-role operators use their primary role slug for dashboard paths.
  */
 
 // ── Operator: DiveCenter ───────────────────────────────────────────────────────
 
-/** Nicole Dive Center — primary test DiveCenter user (slug: q9bz7r) */
+/** Hug Ocean — multi-role: DC + Boat + Pool + Equipment (slug: n7rq5j) */
+export const HUG_OCEAN = {
+  email: 'hug-ocean+clerk_test@divedispatch.dev',
+  slug: 'n7rq5j',
+  roleKey: 'dive-center',
+  dashboardPath: '/dive-center/n7rq5j/dashboard',
+} as const
+
+/** Nicole Dive Center — multi-role: DC + Equipment (slug: q9bz7r) */
 export const NICOLE = {
   email: 'nicole-dive-center+clerk_test@divedispatch.dev',
   slug: 'q9bz7r',
   roleKey: 'dive-center',
   dashboardPath: '/dive-center/q9bz7r/dashboard',
+} as const
+
+/** Sirolo — multi-role: DC + Boat + Equipment (slug: sirolo) */
+export const SIROLO = {
+  email: 'sirolo+clerk_test@divedispatch.dev',
+  slug: 'sirolo',
+  roleKey: 'dive-center',
+  dashboardPath: '/dive-center/sirolo/dashboard',
 } as const
 
 // ── Instructors ───────────────────────────────────────────────────────────────
@@ -25,44 +42,13 @@ export const RYAN_CLARKE = {
   dashboardPath: '/instructor/ryan-clarke/dashboard',
 } as const
 
-// ── Pool ──────────────────────────────────────────────────────────────────────
+// ── DiveMasters ──────────────────────────────────────────────────────────────
 
-/** Water Pro pool — primary Pool role seed user (slug: b3wt9f) */
-export const WATER_PRO = {
-  email: 'water-pro+clerk_test@divedispatch.dev',
-  slug: 'b3wt9f',
-  roleKey: 'pool',
-  dashboardPath: '/pool/b3wt9f/dashboard',
-} as const
-
-// ── Boat ──────────────────────────────────────────────────────────────────────
-
-/** Hug Ocean Boat — standalone Boat role seed user (slug: n7rq5j-bt) */
-export const HUG_OCEAN_BOAT = {
-  email: 'hug-ocean-boat+clerk_test@divedispatch.dev',
-  slug: 'n7rq5j-bt',
-  roleKey: 'boat',
-  dashboardPath: '/boat/n7rq5j-bt/dashboard',
-} as const
-
-// ── Equipment ─────────────────────────────────────────────────────────────────
-
-/** Nicole DC Equipment — standalone Equipment role seed user (slug: q9bz7r-eq) */
-export const NICOLE_DC_EQUIPMENT = {
-  email: 'nicole-dc-equipment+clerk_test@divedispatch.dev',
-  slug: 'q9bz7r-eq',
-  roleKey: 'equipment',
-  dashboardPath: '/equipment/q9bz7r-eq/dashboard',
-} as const
-
-// ── Compressor ────────────────────────────────────────────────────────────────
-
-/** Compressor Chalong — primary Compressor role seed user (slug: x4kp2m) */
-export const COMPRESSOR_CHALONG = {
-  email: 'compressor-chalong+clerk_test@divedispatch.dev',
-  slug: 'x4kp2m',
-  roleKey: 'compressor',
-  dashboardPath: '/compressor/x4kp2m/dashboard',
+export const ARISA = {
+  email: 'arisa-kanchanaburi+clerk_test@divedispatch.dev',
+  slug: 'arisa-kanchanaburi',
+  roleKey: 'dive-master',
+  dashboardPath: '/dive-master/arisa-kanchanaburi/dashboard',
 } as const
 
 // ── Agent ─────────────────────────────────────────────────────────────────────

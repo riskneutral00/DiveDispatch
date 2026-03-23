@@ -272,6 +272,35 @@ export const discardDraft = mutation({
       await ctx.db.delete(l._id)
     }
 
+    // Delete all customerProfiles for this booking (orphaned after booking deletion)
+    const profiles = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const p of profiles) {
+      await ctx.db.delete(p._id)
+    }
+
+    // Delete all equipmentBags assigned to this booking (orphaned after booking deletion)
+    const bags = await ctx.db
+      .query('equipmentBags')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const b of bags) {
+      await ctx.db.delete(b._id)
+    }
+
+    // Hard-delete all reservations for this booking — includes vacated ones from prior
+    // edit cycles that releaseBookingReservations skipped (already Vacated). Leaving
+    // them would orphan records referencing a deleted bookingId.
+    const reservations = await ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const r of reservations) {
+      await ctx.db.delete(r._id)
+    }
+
     await ctx.db.delete(args.bookingId)
   },
 })

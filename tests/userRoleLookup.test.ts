@@ -9,6 +9,7 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
@@ -47,7 +48,7 @@ describe('users.setRole', () => {
       .mutation(api.users.setRole, { role: 'Instructor', businessName: 'New Biz' })
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId)
+      const user = await ctx.db.get(userId) as Doc<'users'> | null
       expect(user!.role).toBe('Instructor')
       expect(user!.businessName).toBe('New Biz')
     })
@@ -92,7 +93,7 @@ describe('users.upsertUser', () => {
     expect(userId).toBeTruthy()
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId as any)
+      const user = await ctx.db.get(userId as any) as Doc<'users'> | null
       expect(user!.email).toBe('new@test.com')
       expect(user!.role).toBe('Instructor')
       expect(user!.slug).toBeTruthy()
@@ -115,7 +116,7 @@ describe('users.upsertUser', () => {
     })
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId as any)
+      const user = await ctx.db.get(userId as any) as Doc<'users'> | null
       expect(user!.email).toBe('updated@test.com')
       expect(user!.name).toBe('Updated Name')
       // Role is NOT updated on existing users

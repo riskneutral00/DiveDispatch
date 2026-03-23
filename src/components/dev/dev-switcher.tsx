@@ -130,7 +130,7 @@ function DevSwitcherInner() {
               <div
                 className="px-3 py-1.5 text-[11px] border-b"
                 style={{
-                  color: 'var(--color-destructive, #ef4444)',
+                  color: 'var(--color-destructive, #dc2626)',
                   borderColor: 'var(--color-glass-border)',
                 }}
               >

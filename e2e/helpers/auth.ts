@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { NICOLE, RYAN_CLARKE, WATER_PRO, COMPRESSOR_CHALONG, AMANDA } from './seed'
+import { NICOLE, RYAN_CLARKE, HUG_OCEAN, AMANDA } from './seed'
 
 /**
  * Derive the Convex HTTP actions base URL from the Convex cloud URL.
@@ -56,14 +56,9 @@ export async function signInAsInstructor(page: Page): Promise<void> {
   await signInAs(page, RYAN_CLARKE.email)
 }
 
-/** Sign in as the primary Pool test user (Water Pro). */
-export async function signInAsPool(page: Page): Promise<void> {
-  await signInAs(page, WATER_PRO.email)
-}
-
-/** Sign in as the primary Compressor test user (Compressor Chalong). */
-export async function signInAsCompressor(page: Page): Promise<void> {
-  await signInAs(page, COMPRESSOR_CHALONG.email)
+/** Sign in as a multi-role operator (Hug Ocean — DC + Boat + Pool + Equipment). */
+export async function signInAsMultiRole(page: Page): Promise<void> {
+  await signInAs(page, HUG_OCEAN.email)
 }
 
 /** Sign in as the primary Agent test user (Amanda). */

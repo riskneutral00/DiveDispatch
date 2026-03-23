@@ -55,23 +55,24 @@
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Palette */
-  --color-primary: #de6e60;
-  --color-secondary: #4a9ece;
-  --color-accent: #f0b866;
-  --color-text-primary: #f0ebe4;
-  --color-text-secondary: #7a8a9e;
+  --color-primary: #60a5fa;
+  --color-secondary: #fbbf24;
+  --color-accent: #fbbf24;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a8a29e;
   --color-text-on-primary: #ffffff;
   --color-surface: #111820;
   --color-surface-elevated: #1a2230;
   --color-success: #34d399;
   --color-warning: #fbbf24;
-  --color-destructive: #f87171;
+  --color-destructive: #dc2626;
+  --color-destructive-glow: color-mix(in srgb, var(--color-destructive) 30%, transparent);
 
   /* Glass */
   --color-glass-bg: rgba(255, 255, 255, 0.05);
   --color-glass-border: rgba(255, 255, 255, 0.12);
   --glass-blur: 14px;
-  --color-primary-glow: rgba(222, 110, 96, 0.35);
+  --color-primary-glow: rgba(96, 165, 250, 0.35);
   --color-glass-bg-elevated: rgba(255, 255, 255, 0.08);
   --color-glass-border-elevated: rgba(255, 255, 255, 0.25);
   --glass-blur-elevated: 24px;
@@ -82,7 +83,7 @@
 
   /* Glass hover — border glow, not fill */
   --color-glass-bg-hover: rgba(255, 255, 255, 0.10);
-  --color-glass-border-hover: rgba(222, 110, 96, 0.35);
+  --color-glass-border-hover: rgba(96, 165, 250, 0.35);
   --glass-blur-hover: 18px;
 
   /* Glass container — theme-driven readability surface */
@@ -120,34 +121,34 @@
   --color-tooltip-bg: rgba(255, 255, 255, 0.92);
   --color-tooltip-text: #0f172a;
 
-  /* Status colors — universal across all skins.
+  /* Status colors — SSR fallbacks (dark mode defaults).
+     Runtime values injected by ThemeProvider per luminance class.
      IMPORTANT: Do NOT add these to @theme inline. Tailwind's self-referential
-     var() resolution overwrites these values at build time. Status colors are
-     constants consumed via var() in JS — they never need Tailwind utilities. */
+     var() resolution overwrites these values at build time. */
   --color-status-active: #34d399;
-  --color-status-active-bg: rgb(52 211 153 / var(--opacity-subtle));
-  --color-status-active-border: rgba(52, 211, 153, 0.5);
+  --color-status-active-bg: color-mix(in srgb, var(--color-status-active) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-active-border: color-mix(in srgb, var(--color-status-active) 50%, transparent);
   --color-status-draft: #fbbf24;
-  --color-status-draft-bg: rgb(251 191 36 / var(--opacity-subtle));
-  --color-status-draft-border: rgba(251, 191, 36, 0.5);
+  --color-status-draft-bg: color-mix(in srgb, var(--color-status-draft) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-draft-border: color-mix(in srgb, var(--color-status-draft) 50%, transparent);
   --color-status-upcoming: #60a5fa;
-  --color-status-upcoming-bg: rgb(96 165 250 / var(--opacity-subtle));
-  --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
-  --color-status-completed: #a8a29e;
-  --color-status-completed-bg: rgb(168 162 158 / var(--opacity-subtle));
-  --color-status-completed-border: rgba(168, 162, 158, 0.50);
-  --color-status-cancelled: #a8a29e;
-  --color-status-cancelled-bg: rgb(168 162 158 / var(--opacity-subtle));
-  --color-status-cancelled-border: rgba(168, 162, 158, 0.50);
+  --color-status-upcoming-bg: color-mix(in srgb, var(--color-status-upcoming) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-upcoming-border: color-mix(in srgb, var(--color-status-upcoming) 50%, transparent);
+  --color-status-completed: #a78bfa; /* violet */
+  --color-status-completed-bg: color-mix(in srgb, var(--color-status-completed) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-completed-border: color-mix(in srgb, var(--color-status-completed) 50%, transparent);
+  --color-status-cancelled: #a78bfa; /* violet */
+  --color-status-cancelled-bg: color-mix(in srgb, var(--color-status-cancelled) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-cancelled-border: color-mix(in srgb, var(--color-status-cancelled) 50%, transparent);
   --color-status-urgent: #dc2626;
-  --color-status-urgent-bg: rgb(220 38 38 / var(--opacity-subtle));
-  --color-status-urgent-border: rgba(220, 38, 38, 0.5);
+  --color-status-urgent-bg: color-mix(in srgb, var(--color-status-urgent) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-status-urgent-border: color-mix(in srgb, var(--color-status-urgent) 50%, transparent);
   --color-status-multiday-border: rgba(255, 255, 255, 0.7);
 
-  /* Blocked — operational constraint, not a booking status */
-  --color-blocked: #a78bfa;
-  --color-blocked-bg: rgb(167 139 250 / var(--opacity-subtle));
-  --color-blocked-border: rgba(167, 139, 250, 0.50);
+  /* Blocked — operational constraint, uses urgent color (icon differentiates) */
+  --color-blocked: #dc2626;
+  --color-blocked-bg: color-mix(in srgb, var(--color-blocked) calc(var(--opacity-subtle) * 100%), transparent);
+  --color-blocked-border: color-mix(in srgb, var(--color-blocked) 50%, transparent);
 
   /* Calendar date watermarks — opacity scales per luminance class */
   --color-date-watermark: color-mix(in srgb, var(--color-text-primary) calc(var(--opacity-watermark) * 100%), transparent);
@@ -348,13 +349,13 @@ body {
 }
 
 .glass-btn-destructive:not(:disabled):hover {
-  box-shadow: 0 0 24px rgba(248, 113, 113, 0.3), 0 4px 16px var(--color-glass-shadow);
+  box-shadow: 0 0 24px var(--color-destructive-glow), 0 4px 16px var(--color-glass-shadow);
   transform: translateY(-1px);
 }
 
 .glass-btn-destructive-ghost:not(:disabled):hover {
   color: var(--color-destructive) !important;
-  box-shadow: 0 0 12px rgba(248, 113, 113, 0.2);
+  box-shadow: 0 0 12px var(--color-destructive-glow);
 }
 
 .glass-btn:not(:disabled):active {
@@ -385,7 +386,7 @@ body {
     inset 0 1px 0 var(--color-glass-specular);
 }
 
-/* Mobile: slightly brighter border at rest, coral glow flash on tap */
+/* Mobile: slightly brighter border at rest, primary glow flash on tap */
 @media (hover: none) {
   .glass-surface {
     border-color: var(--color-glass-container-border);

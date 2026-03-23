@@ -6,7 +6,7 @@ import {
   canBookingTransition,
   canReservationTransition,
 } from '../convex/bookings/_shared'
-import { testDate } from './helpers/dates'
+import { testDate, testToken } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -1170,5 +1170,159 @@ describe('cancelBooking — snapshot restoration', () => {
     // Pooled boat snapshot restored: 6 + 3 = 9, 4 - 3 = 1
     expect(snap2!.availableUnits).toBe(9)
     expect(snap2!.reservedUnits).toBe(1)
+  })
+})
+
+// ─── discardDraft orphan cleanup ─────────────────────────────────────────────
+
+describe('discardDraft orphan cleanup', () => {
+  it('deletes all customerProfiles linked to the booking', async () => {
+    const t = convexTest(schema, modules)
+
+    const { bookingId, profile1Id, profile2Id } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
+
+      const profile1Id = await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: testToken('tok'),
+      })
+      const profile2Id = await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: testToken('tok'),
+      })
+
+      return { bookingId, profile1Id, profile2Id }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookingDraftMutations.discardDraft, { bookingId })
+
+    const [profile1, profile2, remaining] = await t.run(async (ctx) =>
+      Promise.all([
+        ctx.db.get(profile1Id),
+        ctx.db.get(profile2Id),
+        ctx.db
+          .query('customerProfiles')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+          .collect(),
+      ]),
+    )
+
+    expect(profile1).toBeNull()
+    expect(profile2).toBeNull()
+    expect(remaining).toHaveLength(0)
+  })
+
+  it('deletes all equipmentBags assigned to the booking', async () => {
+    const t = convexTest(schema, modules)
+
+    const { bookingId, bag1Id, bag2Id } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
+
+      const bag1Id = await ctx.db.insert('equipmentBags', {
+        bagNumber: 'BAG-001',
+        equipmentManagerId: 'equip-mgr-1',
+        bookingId,
+        status: 'Assigned',
+        assignedAt: Date.now(),
+      })
+      const bag2Id = await ctx.db.insert('equipmentBags', {
+        bagNumber: 'BAG-002',
+        equipmentManagerId: 'equip-mgr-1',
+        bookingId,
+        status: 'InUse',
+        assignedAt: Date.now(),
+      })
+
+      return { bookingId, bag1Id, bag2Id }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookingDraftMutations.discardDraft, { bookingId })
+
+    const [bag1, bag2, remaining] = await t.run(async (ctx) =>
+      Promise.all([
+        ctx.db.get(bag1Id),
+        ctx.db.get(bag2Id),
+        ctx.db
+          .query('equipmentBags')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+          .collect(),
+      ]),
+    )
+
+    expect(bag1).toBeNull()
+    expect(bag2).toBeNull()
+    expect(remaining).toHaveLength(0)
+  })
+
+  it('hard-deletes vacated reservations left from a prior edit cycle', async () => {
+    const t = convexTest(schema, modules)
+
+    const { bookingId, res1Id, res2Id } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'owner-slug')
+      const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-1',
+        displayName: 'Instructor One',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Vacated reservations from a prior edit cycle — status already Vacated
+      const res1Id = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Vacated',
+        vacatedBy: 'operator_edit',
+        vacatedAt: Date.now() - 60_000,
+      })
+      const res2Id = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Vacated',
+        vacatedBy: 'operator_edit',
+        vacatedAt: Date.now() - 30_000,
+      })
+
+      return { bookingId, res1Id, res2Id }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+      .mutation(api.bookingDraftMutations.discardDraft, { bookingId })
+
+    const [res1, res2, remaining] = await t.run(async (ctx) =>
+      Promise.all([
+        ctx.db.get(res1Id),
+        ctx.db.get(res2Id),
+        ctx.db
+          .query('reservations')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+          .collect(),
+      ]),
+    )
+
+    expect(res1).toBeNull()
+    expect(res2).toBeNull()
+    expect(remaining).toHaveLength(0)
   })
 })

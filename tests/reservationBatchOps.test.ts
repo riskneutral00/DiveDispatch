@@ -9,6 +9,7 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 import {
   seedUser,
   seedBooking,
@@ -108,8 +109,8 @@ describe('declineByBookingForCaller', () => {
       .mutation(api.reservationsMutations.declineByBookingForCaller, { bookingId })
 
     await t.run(async (ctx) => {
-      const res1 = await ctx.db.get(resId1)
-      const res2 = await ctx.db.get(resId2)
+      const res1 = await ctx.db.get(resId1) as Doc<'reservations'> | null
+      const res2 = await ctx.db.get(resId2) as Doc<'reservations'> | null
       expect(res1!.status).toBe('Vacated')
       expect(res2!.status).toBe('Vacated')
     })
@@ -167,7 +168,7 @@ describe('acceptByBookingForCaller', () => {
       .mutation(api.reservationsMutations.acceptByBookingForCaller, { bookingId })
 
     await t.run(async (ctx) => {
-      const res = await ctx.db.get(resId)
+      const res = await ctx.db.get(resId) as Doc<'reservations'> | null
       expect(res!.status).toBe('Confirmed')
       expect(res!.confirmedAt).toBeTruthy()
     })
@@ -194,7 +195,7 @@ describe('acceptByBookingForCaller', () => {
       .mutation(api.reservationsMutations.acceptByBookingForCaller, { bookingId })
 
     await t.run(async (ctx) => {
-      const pending = await ctx.db.get(pendingResId)
+      const pending = await ctx.db.get(pendingResId) as Doc<'reservations'> | null
       expect(pending!.status).toBe('Confirmed')
     })
   })

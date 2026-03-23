@@ -9,8 +9,8 @@ type Appearance = Record<string, any>
 const TEXT_PRIMARY = 'rgba(255, 255, 255, 0.95)'
 const TEXT_SECONDARY = 'rgba(255, 255, 255, 0.6)'
 const TEXT_MUTED = 'rgba(255, 255, 255, 0.4)'
-const PRIMARY = '#de6e60'
-const DESTRUCTIVE = '#f87171'
+const PRIMARY = '#60a5fa'
+const DESTRUCTIVE = '#dc2626'
 const RADIUS = '16px'      // card / container radius
 const RADIUS_SM = '10px'   // component radius (buttons, inputs, badges)
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -162,8 +162,8 @@ export const clerkGlassAppearance: Appearance = {
 
     // Error alerts
     alert: {
-      background: 'rgba(248, 113, 113, 0.1)',
-      border: '1px solid rgba(248, 113, 113, 0.3)',
+      background: 'rgba(220, 38, 38, 0.1)',
+      border: '1px solid rgba(220, 38, 38, 0.3)',
       borderRadius: RADIUS_SM,
     },
     alertText: {

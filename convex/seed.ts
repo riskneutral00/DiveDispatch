@@ -110,8 +110,9 @@ export const seedAll = internalAction({
   args: {},
   handler: async (ctx) => {
     await ctx.runMutation(internal.seed.seedStakeholders)
-    await ctx.runMutation(internal.seed.seedHierarchy)
     await ctx.runMutation(internal.seed.seedInstructors)
+    await ctx.runMutation(internal.seed.seedUserRoles)
+    await ctx.runMutation(internal.seed.seedHierarchy)
     await ctx.runMutation(internal.seed.seedEquipmentInventory)
     await ctx.runMutation(internal.seed.seedGearSizingLookup)
     await ctx.runMutation(internal.seed.seedResourceInventory)
@@ -138,7 +139,7 @@ export const wipeAll = internalAction({
 // ── Wipe ─────────────────────────────────────────────────────────────
 
 const TABLES_TO_WIPE = [
-  'users', 'themes',
+  'users', 'userRoles', 'themes',
   'bookings', 'bookingResources', 'bookingSessions', 'customers', 'customerProfiles', 'bookingLinks',
   'inventoryUnits', 'reservations', 'availabilitySnapshots', 'equipmentInventory',
   'stakeholderPreferences', 'notifications',
@@ -213,6 +214,38 @@ export const seedStakeholders = internalMutation({
   },
 })
 
+// ── Seed User Roles (multi-role junction table) ────────────────────
+
+export const seedUserRoles = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query('userRoles').first()
+    if (existing) return 'Already seeded'
+
+    const allSeeds = [...ALL_STAKEHOLDERS, ...ALL_INSTRUCTORS]
+    for (const s of allSeeds) {
+      if (!s.roles || s.roles.length === 0) continue
+
+      const user = await ctx.db
+        .query('users')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .withIndex('by_slug', (q: any) => q.eq('slug', s.user.slug))
+        .unique()
+      if (!user) continue
+
+      for (const r of s.roles) {
+        await ctx.db.insert('userRoles', {
+          userId: user._id,
+          role: r.role,
+          isPrimary: r.isPrimary,
+          createdAt: Date.now(),
+          profileComplete: true,
+        })
+      }
+    }
+  },
+})
+
 // ── Seed Hierarchy (DC → managed resource links) ───────────────────
 
 export const seedHierarchy = internalMutation({
@@ -248,7 +281,27 @@ export const seedInstructors = internalMutation({
 
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
-      if (s.instructor) {
+      if (s.user.role === 'DiveMaster' && s.instructor) {
+        // DiveMasters use diveMasters table — credential has no courses
+        const { courses: _ignored, ...credNoCourses } = s.instructor.credential[0] ?? {}
+        await ctx.db.insert('diveMasters', {
+          userId,
+          name: s.instructor.name,
+          placeName: s.instructor.placeName,
+          country: s.instructor.country,
+          lat: s.instructor.lat,
+          lng: s.instructor.lng,
+          contactEmail: s.instructor.contactEmail,
+          contactPhone: s.instructor.contactPhone,
+          credential: s.instructor.credential.map((c) => ({
+            agency: c.agency,
+            level: c.level,
+            agencyID: c.agencyID,
+          })),
+          languages: s.instructor.languages,
+          verified: s.instructor.verified,
+        })
+      } else if (s.instructor) {
         await ctx.db.insert('instructors', { userId, ...s.instructor })
       }
     }
@@ -315,16 +368,17 @@ export const seedGearSizingLookup = internalMutation({
 export const seedResourceInventory = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Instructors: 1 Exclusive unit per instructor
+    // Instructors + DiveMasters: 1 Exclusive unit each
     for (const s of ALL_INSTRUCTORS) {
+      const resourceType = s.user.role === 'DiveMaster' ? 'Instructor' : 'Instructor'
       await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
+        resourceType: s.user.role === 'DiveMaster' ? 'Instructor' : 'Instructor',
         resourceId: s.user.slug,
         displayName: s.user.name,
         capacityModel: 'Exclusive',
         totalUnits: 1,
         ownerId: s.user.slug,
-        ownerType: 'Instructor',
+        ownerType: s.user.role === 'DiveMaster' ? 'DiveMaster' : 'Instructor',
       })
     }
 
@@ -393,25 +447,28 @@ export const seedStakeholderPreferences = internalMutation({
   args: {},
   handler: async (ctx) => {
     // Language-based preferred instructor mapping for operators
+    // Pattern: all instructors sharing at least one customer language
     const OPERATOR_PREFERRED_INSTRUCTORS: Record<string, string[]> = {
-      // Hug Ocean: Mandarin, Thai
-      'n7rq5j': ['wei-chen', 'li-ming', 'zhang-yong', 'nattaya-srisuk', 'kittipong-jaidee'],
-      // Neptune: Mandarin
-      'z8mv4c': ['wei-chen', 'li-ming', 'zhang-yong', 'wang-fei', 'huang-jie'],
-      // Phuket DC: English, Thai, Chinese
-      'p5ky3w': ['ryan-clarke', 'kittipong-jaidee', 'supachai-rattana', 'zhou-peng', 'ben-walker'],
-      // Nicole DC: English, Cantonese
-      'q9bz7r': ['ryan-clarke', 'chan-wing', 'lam-ka-yan', 'ho-siu-ming', 'ben-walker'],
-      // Manta DC: English, French
-      'v6js2t': ['ryan-clarke', 'pierre-dubois', 'marie-lefevre', 'sophie-martin', 'rachel-nguyen'],
-      // ScubaNicks: English
-      'm4fx8d': ['ryan-clarke', 'ben-walker', 'alex-turner', 'mike-chen', 'rachel-nguyen'],
-      // Scuba Deep: English
-      'h3cp6n': ['ryan-clarke', 'ben-walker', 'alex-turner', 'david-schmidt', 'rachel-nguyen'],
-      // Pray DC: German, French, Thai, English
-      't7gw1k': ['klaus-weber', 'pierre-dubois', 'nattaya-srisuk', 'ryan-clarke', 'heidi-fischer'],
-      // Amanda (Agent): Chinese
-      'r5yz4q': ['zhou-peng', 'sun-jing', 'ma-lin', 'gao-tian', 'wei-chen'],
+      // Hug Ocean: CN, TW, TH, GB
+      'n7rq5j': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'mike-chen', 'rachel-nguyen', 'maria-santos'],
+      // Neptune: CN, TW, GB
+      'z8mv4c': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen', 'lee-min-ho'],
+      // Phuket DC: TH, GB
+      'p5ky3w': ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'stefan-braun', 'maria-santos'],
+      // Nicole DC: TW, CN, GB
+      'q9bz7r': ['nicole-tam', 'zhang-yong', 'wei-chen', 'li-ming', 'mike-chen', 'rachel-nguyen'],
+      // Manta DC: FR, GB
+      'v6js2t': ['pierre-dubois', 'maria-santos', 'ryan-clarke'],
+      // ScubaNicks: GB
+      'm4fx8d': ['ryan-clarke', 'mike-chen', 'rachel-nguyen', 'david-schmidt', 'yuki-tanaka'],
+      // Scuba Deep: GB, CN, TW
+      'h3cp6n': ['ryan-clarke', 'wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
+      // Sirolo: GB, CN, TW
+      'sirolo': ['ryan-clarke', 'wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
+      // Pray DC: DE, FR, GB, TH
+      't7gw1k': ['stefan-braun', 'david-schmidt', 'pierre-dubois', 'maria-santos', 'ryan-clarke', 'nattaya-srisuk'],
+      // Amanda (Agent): CN, TW
+      'r5yz4q': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
     }
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [

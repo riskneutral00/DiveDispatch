@@ -640,7 +640,7 @@ describe('tryAutoAdvance — guard conditions', () => {
   })
 })
 
-// ─── 16. Snapshot restoration ─────────────────────────────────────────────────
+// ─── 16-19. Snapshot restoration ──────────────────────────────────────────────
 
 describe('tryAutoAdvance — snapshot restoration on EM release', () => {
   it('16 — availability snapshot availableUnits incremented when EM reservation vacated', async () => {
@@ -673,5 +673,149 @@ describe('tryAutoAdvance — snapshot restoration on EM release', () => {
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     expect(snapshot!.availableUnits).toBe(1) // restored: 0 → 1
     expect(snapshot!.reservedUnits).toBe(0) // restored: 1 → 0
+  })
+})
+
+// ─── H18. EM auto-release snapshot restoration ────────────────────────────────
+
+describe('H18: EM auto-release snapshot restoration', () => {
+  it('17 — snapshot unchanged when any customer still rents gear', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotId, resId } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-slug')
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
+      // Snapshot: 1 reserved, 0 available — should remain unchanged
+      const snapshotId = await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
+      // Alice owns all gear, Bob still rents fins — EM cannot be released
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      await seedCustomerProfile(ctx, bookingId, 'tok-b', { ...ALL_OWN, fins: 'rent' })
+      return { bookingId, snapshotId, resId }
+    })
+
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const [res, snapshot] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(resId), ctx.db.get(snapshotId)]),
+    )
+    // Reservation must stay active — gear still needed
+    expect(res!.status).toBe('PendingAcceptance')
+    // Snapshot must not be touched — no units were freed
+    expect(snapshot!.availableUnits).toBe(0)
+    expect(snapshot!.reservedUnits).toBe(1)
+  })
+
+  it('18 — each session snapshot independently restored when EM spans multiple sessions', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotId1, snapshotId2 } = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-slug')
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        startDate: testDate(5),
+        endDate: testDate(6),
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+
+      // Session 1 — day 5
+      const sessionId1 = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId1, 'Confirmed')
+      const snapshotId1 = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      // Session 2 — day 6
+      const sessionId2 = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(6),
+        startTime: '08:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId2, 'Confirmed')
+      const snapshotId2 = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(6),
+        windowStart: '08:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      return { bookingId, snapshotId1, snapshotId2 }
+    })
+
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const [snap1, snap2] = await t.run(async (ctx) =>
+      Promise.all([
+        ctx.db.get(snapshotId1 as import('../convex/_generated/dataModel').Id<'availabilitySnapshots'>),
+        ctx.db.get(snapshotId2 as import('../convex/_generated/dataModel').Id<'availabilitySnapshots'>),
+      ]),
+    )
+    // Both sessions' snapshots must have their unit freed
+    expect(snap1!.availableUnits).toBe(1)
+    expect(snap1!.reservedUnits).toBe(0)
+    expect(snap2!.availableUnits).toBe(1)
+    expect(snap2!.reservedUnits).toBe(0)
+  })
+
+  it('19 — no crash when booking has no bookingResources rows', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-slug')
+      return seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      // Intentionally no bookingResources inserted — hasInSystemEM is false
+    })
+
+    // Must not throw
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    // No reservations → vacuously all confirmed → advances
+    expect(booking!.status).toBe('Upcoming')
   })
 })

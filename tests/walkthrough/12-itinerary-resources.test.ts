@@ -6,7 +6,7 @@
  */
 
 import { convexTest } from 'convex-test'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
@@ -115,9 +115,12 @@ describe('createDraftShell', () => {
       await seedCoverage(ctx, 'dc-shell-1', userId)
     })
 
+    vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-shell-1' })
       .mutation(api.bookingDraftMutations.createDraftShell, {})
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     await t.run(async (ctx) => {
       const booking = await ctx.db.get(bookingId as unknown as Id<'bookings'>)
@@ -134,12 +137,15 @@ describe('createDraftShell', () => {
       await seedCoverage(ctx, 'dc-shell-2', userId)
     })
 
+    vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-shell-2' })
       .mutation(api.bookingDraftMutations.createDraftShell, {
         startDate: testDate(5),
         endDate: testDate(5),
       })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     await t.run(async (ctx) => {
       const booking = await ctx.db.get(bookingId as unknown as Id<'bookings'>)

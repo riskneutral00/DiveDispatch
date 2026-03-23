@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
@@ -143,7 +144,7 @@ describe('saveDraftState', () => {
 
     // Verify persistence
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId)
+      const booking = await ctx.db.get(bookingId) as Doc<'bookings'> | null
       expect(booking!.draftState).toBe(payload)
     })
   })

@@ -58,3 +58,6 @@ next-env.d.ts
 screenshots/
 test-results/
 playwright-report/
+
+# Temporary patch files
+.patches/

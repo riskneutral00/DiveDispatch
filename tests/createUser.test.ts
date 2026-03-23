@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
@@ -8,6 +8,7 @@ const modules = import.meta.glob('../convex/**/*.ts')
 describe('createUser mutation', () => {
   it('persists phone and preferredChannel', async () => {
     const t = convexTest(schema, modules)
+    vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|phone-user' })
       .mutation(api.users.createUser, {
@@ -17,6 +18,9 @@ describe('createUser mutation', () => {
         preferredChannel: 'WhatsApp',
       })
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.phone).toBe('+66123456789')
     expect(user?.preferredChannel).toBe('WhatsApp')
@@ -24,6 +28,7 @@ describe('createUser mutation', () => {
 
   it('persists explicit firstName, lastName, nickname', async () => {
     const t = convexTest(schema, modules)
+    vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|named-user' })
       .mutation(api.users.createUser, {
@@ -34,6 +39,9 @@ describe('createUser mutation', () => {
         nickname: 'Captain Mike',
       })
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.firstName).toBe('Mike')
     expect(user?.lastName).toBe('Johnson')
@@ -42,12 +50,16 @@ describe('createUser mutation', () => {
 
   it('defaults phone and preferredChannel to undefined when omitted', async () => {
     const t = convexTest(schema, modules)
+    vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|no-phone' })
       .mutation(api.users.createUser, {
         role: 'DiveCenter',
         businessName: 'Test DC',
       })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.phone).toBeUndefined()
@@ -59,12 +71,17 @@ describe('createUser mutation', () => {
     const identity = { tokenIdentifier: 'clerk|idem-user' }
 
     // First call creates the user
+    vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       role: 'DiveCenter',
       businessName: 'Old Biz',
     })
 
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
     // Second call patches with new data
+    vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       role: 'Agent',
       businessName: 'New Biz',
@@ -72,6 +89,9 @@ describe('createUser mutation', () => {
       preferredChannel: 'LINE',
       nickname: 'Updated Nick',
     })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     const user = await t
       .withIdentity(identity)
@@ -90,10 +110,14 @@ describe('updateBusinessInfo mutation', () => {
     const identity = { tokenIdentifier: 'clerk|biz-user' }
 
     // Create user first
+    vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       role: 'DiveCenter',
       businessName: 'Placeholder',
     })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     // Patch business info
     await t.withIdentity(identity).mutation(api.users.updateBusinessInfo, {

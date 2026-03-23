@@ -41,6 +41,15 @@ export interface ColorPalette {
   opacityWatermark: number; // date numbers, decorative text (0.18–0.35)
   opacitySubtle: number; // status backgrounds, tinted highlights (0.14–0.28)
   opacityMuted: number; // disabled states, placeholders (0.50–0.65)
+  // Status colors — adapt per luminance class (400-level dark, 600-level bright)
+  statusActive: string;
+  statusDraft: string;
+  statusUpcoming: string;
+  statusCompleted: string;
+  statusCancelled: string;
+  statusUrgent: string;
+  statusBlocked: string;
+  statusMultidayBorder: string;
 }
 
 export interface ThemeConfig {

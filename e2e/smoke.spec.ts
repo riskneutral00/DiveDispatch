@@ -3,11 +3,10 @@ import {
   signInAs,
   signInAsDiveCenter,
   signInAsInstructor,
-  signInAsPool,
-  signInAsCompressor,
+  signInAsMultiRole,
   signInAsAgent,
 } from './helpers/auth'
-import { NICOLE, WATER_PRO, COMPRESSOR_CHALONG, AMANDA } from './helpers/seed'
+import { NICOLE, HUG_OCEAN, AMANDA } from './helpers/seed'
 import { dashboardRoute, PUBLIC_ROUTES, AUTH_ROUTES } from './helpers/routes'
 import { checkAccessibility } from './helpers/accessibility'
 import { captureConsoleErrors } from './helpers/console'
@@ -113,24 +112,13 @@ test.describe('smoke: role dashboards', () => {
     })
   })
 
-  test('dashboard loads for Pool', async ({ page }) => {
-    await signInAsPool(page)
-    const expectedPath = dashboardRoute(WATER_PRO.roleKey, WATER_PRO.slug)
+  test('dashboard loads for multi-role operator (Hug Ocean)', async ({ page }) => {
+    await signInAsMultiRole(page)
+    const expectedPath = dashboardRoute(HUG_OCEAN.roleKey, HUG_OCEAN.slug)
     await expect(page).toHaveURL(new RegExp(expectedPath.replace(/[/]/g, '\\/')))
     await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10_000 })
     await page.screenshot({
-      path: 'e2e/screenshots/pool/dashboard.png',
-      fullPage: true,
-    })
-  })
-
-  test('dashboard loads for Compressor', async ({ page }) => {
-    await signInAsCompressor(page)
-    const expectedPath = dashboardRoute(COMPRESSOR_CHALONG.roleKey, COMPRESSOR_CHALONG.slug)
-    await expect(page).toHaveURL(new RegExp(expectedPath.replace(/[/]/g, '\\/')))
-    await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10_000 })
-    await page.screenshot({
-      path: 'e2e/screenshots/compressor/dashboard.png',
+      path: 'e2e/screenshots/multi-role/dashboard.png',
       fullPage: true,
     })
   })

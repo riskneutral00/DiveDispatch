@@ -34,8 +34,8 @@ export function NotificationBell() {
           <span
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1"
             style={{
-              background: 'var(--color-error, #ef4444)',
-              color: '#ffffff',
+              background: 'var(--color-status-urgent)',
+              color: 'var(--color-text-on-primary)',
             }}
             aria-hidden="true"
           >

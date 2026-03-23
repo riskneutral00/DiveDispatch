@@ -3,9 +3,8 @@ import { convexTest } from 'convex-test'
 import { readFileSync } from 'node:fs'
 import schema from '../convex/schema'
 import { restoreSnapshotUnits } from '../convex/bookings/_shared'
+import type { Doc } from '../convex/_generated/dataModel'
 import {
-  TEST_TOKENS,
-  TEST_SLUGS,
   seedUser,
   seedInventoryUnit,
   seedSnapshot,
@@ -22,11 +21,8 @@ beforeEach(() => {
 describe('restoreSnapshotUnits', () => {
   it('restores available and reserved counts', async () => {
     await t.run(async (ctx) => {
-      const user = await seedUser(ctx, TEST_SLUGS.operator, TEST_TOKENS.operator)
-      const unit = await seedInventoryUnit(ctx, user, {
-        totalUnits: 5,
-        ownerType: 'operator',
-      })
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
       const snapshotId = await seedSnapshot(ctx, unit, {
         totalUnits: 5,
         availableUnits: 3,
@@ -35,7 +31,7 @@ describe('restoreSnapshotUnits', () => {
 
       await restoreSnapshotUnits(ctx, snapshotId, 3, 2, 1)
 
-      const snapshot = await ctx.db.get(snapshotId)
+      const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(4)
       expect(snapshot!.reservedUnits).toBe(1)
     })
@@ -43,11 +39,8 @@ describe('restoreSnapshotUnits', () => {
 
   it('clamps reservedUnits to zero when underflow would occur', async () => {
     await t.run(async (ctx) => {
-      const user = await seedUser(ctx, TEST_SLUGS.operator, TEST_TOKENS.operator)
-      const unit = await seedInventoryUnit(ctx, user, {
-        totalUnits: 5,
-        ownerType: 'operator',
-      })
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
       const snapshotId = await seedSnapshot(ctx, unit, {
         totalUnits: 5,
         availableUnits: 4,
@@ -57,7 +50,7 @@ describe('restoreSnapshotUnits', () => {
       // Release 3 units when only 1 is reserved — should clamp to 0
       await restoreSnapshotUnits(ctx, snapshotId, 4, 1, 3)
 
-      const snapshot = await ctx.db.get(snapshotId)
+      const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(7)
       expect(snapshot!.reservedUnits).toBe(0)
     })
@@ -65,11 +58,8 @@ describe('restoreSnapshotUnits', () => {
 
   it('handles zero units requested (no-op)', async () => {
     await t.run(async (ctx) => {
-      const user = await seedUser(ctx, TEST_SLUGS.operator, TEST_TOKENS.operator)
-      const unit = await seedInventoryUnit(ctx, user, {
-        totalUnits: 5,
-        ownerType: 'operator',
-      })
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
       const snapshotId = await seedSnapshot(ctx, unit, {
         totalUnits: 5,
         availableUnits: 3,
@@ -78,7 +68,7 @@ describe('restoreSnapshotUnits', () => {
 
       await restoreSnapshotUnits(ctx, snapshotId, 3, 2, 0)
 
-      const snapshot = await ctx.db.get(snapshotId)
+      const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(3)
       expect(snapshot!.reservedUnits).toBe(2)
     })
@@ -86,11 +76,8 @@ describe('restoreSnapshotUnits', () => {
 
   it('restores multi-unit pool correctly', async () => {
     await t.run(async (ctx) => {
-      const user = await seedUser(ctx, TEST_SLUGS.operator, TEST_TOKENS.operator)
-      const unit = await seedInventoryUnit(ctx, user, {
-        totalUnits: 10,
-        ownerType: 'operator',
-      })
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 10 })
       const snapshotId = await seedSnapshot(ctx, unit, {
         totalUnits: 10,
         availableUnits: 4,
@@ -99,7 +86,7 @@ describe('restoreSnapshotUnits', () => {
 
       await restoreSnapshotUnits(ctx, snapshotId, 4, 6, 3)
 
-      const snapshot = await ctx.db.get(snapshotId)
+      const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(7)
       expect(snapshot!.reservedUnits).toBe(3)
     })

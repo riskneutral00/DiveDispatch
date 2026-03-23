@@ -117,15 +117,15 @@ function iconColor(action: AuditAction): string {
     case 'completed':
     case 'reservation_accepted':
     case 'medical_cleared':
-      return 'var(--color-status-confirmed-icon, var(--color-success, #22c55e))'
+      return 'var(--color-status-confirmed-icon, var(--color-success, #34d399))'
     case 'cancelled':
     case 'expired':
     case 'reservation_declined':
     case 'medical_blocked':
-      return 'var(--color-status-cancelled-icon, var(--color-destructive, #ef4444))'
+      return 'var(--color-status-cancelled-icon, var(--color-destructive, #dc2626))'
     case 'edited':
     case 'portal_submitted':
-      return 'var(--color-status-upcoming-icon, var(--color-info, #3b82f6))'
+      return 'var(--color-status-upcoming-icon, var(--color-info, #60a5fa))'
   }
 }
 
@@ -175,7 +175,7 @@ function DiffExpander({ diff }: { diff: string }) {
                 {String(change.old ?? '—')}
               </span>
               <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
-              <span style={{ color: 'var(--color-success, #22c55e)' }}>
+              <span style={{ color: 'var(--color-success, #34d399)' }}>
                 {String(change.new ?? '—')}
               </span>
             </div>

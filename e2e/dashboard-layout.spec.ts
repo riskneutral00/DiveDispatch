@@ -3,10 +3,8 @@ import { signInAs } from './helpers/auth'
 import {
   NICOLE,
   RYAN_CLARKE,
-  WATER_PRO,
-  HUG_OCEAN_BOAT,
-  NICOLE_DC_EQUIPMENT,
-  COMPRESSOR_CHALONG,
+  HUG_OCEAN,
+  SIROLO,
   AMANDA,
 } from './helpers/seed'
 
@@ -23,10 +21,8 @@ test.describe('dashboard layout: no below-calendar content', () => {
   const roles = [
     { name: 'DiveCenter (Nicole)', seed: NICOLE },
     { name: 'Instructor (Ryan Clarke)', seed: RYAN_CLARKE },
-    { name: 'Pool (Water Pro)', seed: WATER_PRO },
-    { name: 'Boat (Hug Ocean)', seed: HUG_OCEAN_BOAT },
-    { name: 'Equipment (Nicole DC)', seed: NICOLE_DC_EQUIPMENT },
-    { name: 'Compressor (Chalong)', seed: COMPRESSOR_CHALONG },
+    { name: 'Multi-role DC+Boat+Pool+Equip (Hug Ocean)', seed: HUG_OCEAN },
+    { name: 'Multi-role DC+Boat+Equip (Sirolo)', seed: SIROLO },
     { name: 'Agent (Amanda)', seed: AMANDA },
   ]
 

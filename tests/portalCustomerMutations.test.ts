@@ -10,6 +10,7 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 import { testDate, testToken } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -143,10 +144,10 @@ describe('savePortalContact', () => {
     })
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.customerId).toBeTruthy()
 
-      const customer = await ctx.db.get(profile!.customerId!)
+      const customer = await ctx.db.get(profile!.customerId!) as Doc<'customers'> | null
       expect(customer!.legalFirstName).toBe('Alice')
       expect(customer!.legalLastName).toBe('Smith')
       expect(customer!.email).toBe('alice@example.com')
@@ -212,7 +213,7 @@ describe('saveMedicalAnswers', () => {
     })
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.medicalAnswers).toBeTruthy()
       expect(profile!.medicalSchemaVersion).toBe('10346_v1')
       expect(profile!.physicianClearanceRequired).toBe(false)
@@ -238,7 +239,7 @@ describe('saveMedicalAnswers', () => {
     expect(result.medicalHardBlock).toBe(true)
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.physicianClearanceRequired).toBe(true)
     })
   })
@@ -283,7 +284,7 @@ describe('savePortalWaiver', () => {
     })
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.waiverSignedAt).toBeGreaterThanOrEqual(before)
       expect(profile!.signatureFileId).toBe(storageId)
     })
@@ -321,7 +322,7 @@ describe('savePortalEquipment', () => {
     })
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.rentalChecklist).toEqual(checklist)
     })
   })
@@ -357,7 +358,7 @@ describe('saveSafetyInfo', () => {
     })
 
     await t.run(async (ctx) => {
-      const profile = await ctx.db.get(profileId)
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
       expect(profile!.bloodType).toBe('O+')
       expect(profile!.allergies).toBe('None')
     })

@@ -39,7 +39,7 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   },
   destructive: {
     background: "var(--color-destructive)",
-    color: "#ffffff",
+    color: "var(--color-text-on-primary)",
     borderColor: "var(--color-destructive)",
   },
   "destructive-ghost": {

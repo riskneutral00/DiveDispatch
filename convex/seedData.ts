@@ -4,21 +4,12 @@
 // ── Shared Defaults ─────────────────────────────────────────────────
 
 const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
+const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
 const VERIFIED = true
-const LOCALE = 'en'
 const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
 
-// Each DC has unique AOW specialty preferences (5 required for AOW's 5 adventure dives)
-const DC_BOOKING_PREFS = {
-  hugOcean:   { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Peak Performance Buoyancy', 'Wreck'] },
-  neptune:    { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Fish ID', 'Peak Performance Buoyancy', 'Underwater Navigation'] },
-  phuketDC:   { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Peak Performance Buoyancy', 'Underwater Navigation', 'Wreck'] },
-  nicoleDC:   { ...BOOKING_DAYS, aowSpecialties: ['Boat', 'Deep', 'Drift', 'Peak Performance Buoyancy', 'Wreck'] },
-  mantaDC:    { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Search & Recovery', 'Wreck'] },
-  scubaNicks: { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Naturalist', 'Peak Performance Buoyancy', 'Wreck'] },
-  scubaDeep:  { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Peak Performance Buoyancy', 'Underwater Navigation', 'Wreck'] },
-  prayDC:     { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Night', 'Peak Performance Buoyancy', 'Underwater Navigation'] },
-}
+// All DCs share the same AOW specialty set
+const DC_BOOKING_PREFS = { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Wreck'] }
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -165,6 +156,7 @@ interface InstructorProfile {
 
 export interface SeedStakeholder {
   user: SeedUser
+  roles?: { role: StakeholderRole; isPrimary: boolean }[]
   diveCenter?: DiveCenterProfile
   boat?: BoatProfile
   pool?: VenueProfile
@@ -174,7 +166,7 @@ export interface SeedStakeholder {
   instructor?: InstructorProfile
 }
 
-/** Unowned dive sites — public locations seeded without user accounts. */
+/** Unowned dive sites -- public locations seeded without user accounts. */
 export interface SeedDiveSite {
   name: string
   slug: string
@@ -186,32 +178,9 @@ export interface SeedDiveSite {
 const RACHA = 'Racha Noi / Racha Yai'
 const SHARK_KC = 'Shark Point / King Cruiser'
 const PHI_PHI = 'Phi Phi'
-const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon–Sun
+const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon-Sun
 
-// ── 1. Compressor Shop Chalong Pier ─────────────────────────────────
-
-export const COMPRESSOR: SeedStakeholder = {
-  user: {
-    slug: 'x4kp2m',
-    email: 'compressor-chalong+clerk_test@divedispatch.dev',
-    name: 'Compressor Shop Chalong Pier',
-    firstName: 'Chalong',
-    lastName: 'Compressor',
-    businessName: 'Compressor Shop Chalong Pier',
-    role: 'Compressor',
-    preferredLocale: LOCALE,
-  },
-  compressor: {
-    name: 'Compressor Shop Chalong Pier',
-    ...PHUKET,
-    contactEmail: 'compressor-chalong@divedispatch.dev',
-    contactPhone: '+66-76-381-001',
-    focusedLanguages: ['Thai', 'English'],
-    verified: VERIFIED,
-  },
-}
-
-// ── 2. Hug Ocean (DC) ───────────────────────────────────────────────
+// ── 1. Hug Ocean (DC + Boat + Pool + Equipment) ────────────────────
 
 export const HUG_OCEAN: SeedStakeholder = {
   user: {
@@ -222,32 +191,23 @@ export const HUG_OCEAN: SeedStakeholder = {
     lastName: 'Ocean',
     businessName: 'Hug Ocean',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'zh-CN',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Boat', isPrimary: false },
+    { role: 'Pool', isPrimary: false },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'Hug Ocean',
     ...PHUKET,
     contactEmail: 'hug-ocean@divedispatch.dev',
     contactPhone: '+66-76-381-100',
     associations: [{ agency: 'PADI', number: 'S-34782' }],
-    focusedLanguages: ['Mandarin', 'Thai'],
+    focusedLanguages: ['CN', 'TH'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.hugOcean,
-  },
-}
-
-// ── 2a. Hug Ocean Boat ──────────────────────────────────────────────
-
-export const HUG_OCEAN_BOAT: SeedStakeholder = {
-  user: {
-    slug: 'n7rq5j-bt',
-    email: 'hug-ocean-boat+clerk_test@divedispatch.dev',
-    name: 'Hug Ocean Boat',
-    firstName: 'Hug',
-    lastName: 'Ocean Boat',
-    businessName: 'Hug Ocean Boat',
-    role: 'Boat',
-    preferredLocale: LOCALE,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
   boat: {
     name: 'M.V. Hug Ocean',
@@ -262,24 +222,9 @@ export const HUG_OCEAN_BOAT: SeedStakeholder = {
         routes: [{ diveSite: RACHA, daysOfWeek: ALL_DAYS }],
       },
     ],
-    focusedLanguages: ['Mandarin', 'Thai'],
-    hasCompressor: false,
+    focusedLanguages: ['CN', 'TH'],
+    hasCompressor: true,
     verified: VERIFIED,
-  },
-}
-
-// ── 2b. Hug Ocean Pool ──────────────────────────────────────────────
-
-export const HUG_OCEAN_POOL: SeedStakeholder = {
-  user: {
-    slug: 'n7rq5j-pl',
-    email: 'hug-ocean-pool+clerk_test@divedispatch.dev',
-    name: 'Hug Ocean Pool',
-    firstName: 'Hug',
-    lastName: 'Ocean Pool',
-    businessName: 'Hug Ocean Pool',
-    role: 'Pool',
-    preferredLocale: LOCALE,
   },
   pool: {
     name: 'Hug Ocean',
@@ -288,71 +233,26 @@ export const HUG_OCEAN_POOL: SeedStakeholder = {
     contactPhone: '+66-76-381-102',
     maxDepth: 3,
     maxCapacity: 15,
-    focusedLanguages: ['Mandarin', 'Thai'],
+    focusedLanguages: ['CN', 'TH'],
     verified: VERIFIED,
     venueType: 'Pool',
     isPublic: false,
     confinedCapable: true,
     openWaterCapable: false,
     hasCompressor: false,
-  },
-}
-
-// ── 2c. Hug Ocean Equipment ─────────────────────────────────────────
-
-export const HUG_OCEAN_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'n7rq5j-eq',
-    email: 'hug-ocean-equipment+clerk_test@divedispatch.dev',
-    name: 'Hug Ocean Equipment',
-    firstName: 'Hug',
-    lastName: 'Ocean Equipment',
-    businessName: 'Hug Ocean Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Hug Ocean',
     ...PHUKET,
     contactEmail: 'hug-ocean@divedispatch.dev',
     contactPhone: '+66-76-381-103',
-    focusedLanguages: ['Mandarin', 'Thai'],
+    focusedLanguages: ['CN', 'TH'],
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
 }
 
-// ── 3. Water Pro (Pool) ─────────────────────────────────────────────
-
-export const WATER_PRO: SeedStakeholder = {
-  user: {
-    slug: 'b3wt9f',
-    email: 'water-pro+clerk_test@divedispatch.dev',
-    name: 'Water Pro',
-    firstName: 'Water',
-    lastName: 'Pro',
-    businessName: 'Water Pro',
-    role: 'Pool',
-    preferredLocale: LOCALE,
-  },
-  pool: {
-    name: 'Water Pro',
-    ...PHUKET,
-    contactEmail: 'water-pro@divedispatch.dev',
-    contactPhone: '+66-76-382-001',
-    maxDepth: 3,
-    maxCapacity: 25,
-    focusedLanguages: ['Thai', 'English'],
-    verified: VERIFIED,
-    venueType: 'Pool',
-    isPublic: false,
-    confinedCapable: true,
-    openWaterCapable: false,
-    hasCompressor: false,
-  },
-}
-
-// ── 4. Neptune (DC) ─────────────────────────────────────────────────
+// ── 2. Neptune (DC + Pool + Equipment) ─────────────────────────────
 
 export const NEPTUNE: SeedStakeholder = {
   user: {
@@ -363,32 +263,22 @@ export const NEPTUNE: SeedStakeholder = {
     lastName: 'Dive',
     businessName: 'Neptune',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'zh-CN',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Pool', isPrimary: false },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'Neptune',
     ...PHUKET,
     contactEmail: 'neptune@divedispatch.dev',
     contactPhone: '+66-76-383-001',
     associations: [{ agency: 'PADI', number: 'S-41256' }],
-    focusedLanguages: ['Mandarin'],
+    focusedLanguages: ['CN'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.neptune,
-  },
-}
-
-// ── 4a. Neptune Pool ────────────────────────────────────────────────
-
-export const NEPTUNE_POOL: SeedStakeholder = {
-  user: {
-    slug: 'z8mv4c-pl',
-    email: 'neptune-pool+clerk_test@divedispatch.dev',
-    name: 'Neptune Pool',
-    firstName: 'Neptune',
-    lastName: 'Pool',
-    businessName: 'Neptune Pool',
-    role: 'Pool',
-    preferredLocale: LOCALE,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
   pool: {
     name: 'Neptune',
@@ -397,71 +287,26 @@ export const NEPTUNE_POOL: SeedStakeholder = {
     contactPhone: '+66-76-383-002',
     maxDepth: 2.5,
     maxCapacity: 6,
-    focusedLanguages: ['Mandarin'],
+    focusedLanguages: ['CN'],
     verified: VERIFIED,
     venueType: 'Pool',
     isPublic: false,
     confinedCapable: true,
     openWaterCapable: false,
     hasCompressor: false,
-  },
-}
-
-// ── 4b. Neptune Equipment ───────────────────────────────────────────
-
-export const NEPTUNE_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'z8mv4c-eq',
-    email: 'neptune-equipment+clerk_test@divedispatch.dev',
-    name: 'Neptune Equipment',
-    firstName: 'Neptune',
-    lastName: 'Equipment',
-    businessName: 'Neptune Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Neptune',
     ...PHUKET,
     contactEmail: 'neptune@divedispatch.dev',
     contactPhone: '+66-76-383-003',
-    focusedLanguages: ['Mandarin'],
+    focusedLanguages: ['CN'],
     manufacturersByGearType: { wetsuit: ['Aqua Lung'], bcd: ['Aqua Lung'] },
     verified: VERIFIED,
   },
 }
 
-// ── 5. Shark Bites (Pool) ───────────────────────────────────────────
-
-export const SHARK_BITES: SeedStakeholder = {
-  user: {
-    slug: 'g2hn6x',
-    email: 'shark-bites+clerk_test@divedispatch.dev',
-    name: 'Shark Bites',
-    firstName: 'Shark',
-    lastName: 'Bites',
-    businessName: 'Shark Bites',
-    role: 'Pool',
-    preferredLocale: LOCALE,
-  },
-  pool: {
-    name: 'Shark Bites',
-    ...PHUKET,
-    contactEmail: 'shark-bites@divedispatch.dev',
-    contactPhone: '+66-76-384-001',
-    maxDepth: 2.5,
-    maxCapacity: 8,
-    focusedLanguages: ['Thai', 'English'],
-    verified: VERIFIED,
-    venueType: 'Pool',
-    isPublic: false,
-    confinedCapable: true,
-    openWaterCapable: false,
-    hasCompressor: false,
-  },
-}
-
-// ── 6. Phuket Dive Center (DC) ──────────────────────────────────────
+// ── 3. Phuket Dive Center (DC + Boat + Equipment) ─────────────────
 
 export const PHUKET_DC: SeedStakeholder = {
   user: {
@@ -472,32 +317,22 @@ export const PHUKET_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Phuket Dive Center',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'th',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Boat', isPrimary: false },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'Phuket Dive Center',
     ...PHUKET,
     contactEmail: 'phuket-dive-center@divedispatch.dev',
     contactPhone: '+66-76-385-001',
     associations: [{ agency: 'PADI', number: 'S-29815' }],
-    focusedLanguages: ['English', 'Thai', 'Chinese'],
+    focusedLanguages: ['GB', 'TH', 'CN'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.phuketDC,
-  },
-}
-
-// ── 6a. Phuket DC Boat ─────────────────────────────────────────────
-
-export const PHUKET_DC_BOAT: SeedStakeholder = {
-  user: {
-    slug: 'p5ky3w-bt',
-    email: 'phuket-dc-boat+clerk_test@divedispatch.dev',
-    name: 'Phuket DC Boat',
-    firstName: 'Phuket',
-    lastName: 'DC Boat',
-    businessName: 'Phuket DC Boat',
-    role: 'Boat',
-    preferredLocale: LOCALE,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
   boat: {
     name: 'Phuket Dive Center',
@@ -526,37 +361,22 @@ export const PHUKET_DC_BOAT: SeedStakeholder = {
         ],
       },
     ],
-    focusedLanguages: ['English', 'Thai', 'Chinese'],
+    focusedLanguages: ['GB', 'TH', 'CN'],
     hasCompressor: false,
     verified: VERIFIED,
-  },
-}
-
-// ── 6b. Phuket DC Equipment ────────────────────────────────────────
-
-export const PHUKET_DC_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'p5ky3w-eq',
-    email: 'phuket-dc-equipment+clerk_test@divedispatch.dev',
-    name: 'Phuket DC Equipment',
-    firstName: 'Phuket',
-    lastName: 'DC Equipment',
-    businessName: 'Phuket DC Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
   },
   equipment: {
     name: 'Phuket Dive Center',
     ...PHUKET,
     contactEmail: 'phuket-dive-center@divedispatch.dev',
     contactPhone: '+66-76-385-003',
-    focusedLanguages: ['English', 'Thai', 'Chinese'],
+    focusedLanguages: ['GB', 'TH', 'CN'],
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
 }
 
-// ── 7. Nicole Dive Center (DC) ──────────────────────────────────────
+// ── 4. Nicole Dive Center (DC + Equipment) ─────────────────────────
 
 export const NICOLE_DC: SeedStakeholder = {
   user: {
@@ -567,39 +387,28 @@ export const NICOLE_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Nicole Dive Center',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'zh-TW',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'Nicole Dive Center',
     ...PHUKET,
     contactEmail: 'nicole-dive-center@divedispatch.dev',
     contactPhone: '+66-76-386-001',
     associations: [{ agency: 'PADI', number: 'S-55198' }],
-    focusedLanguages: ['English', 'Cantonese'],
+    focusedLanguages: ['GB', 'TW'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.nicoleDC,
-  },
-}
-
-// ── 7a. Nicole DC Equipment ─────────────────────────────────────────
-
-export const NICOLE_DC_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'q9bz7r-eq',
-    email: 'nicole-dc-equipment+clerk_test@divedispatch.dev',
-    name: 'Nicole DC Equipment',
-    firstName: 'Nicole',
-    lastName: 'DC Equipment',
-    businessName: 'Nicole DC Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
   equipment: {
     name: 'Nicole Dive Center',
     ...PHUKET,
     contactEmail: 'nicole-dive-center@divedispatch.dev',
     contactPhone: '+66-76-386-002',
-    focusedLanguages: ['English', 'Cantonese'],
+    focusedLanguages: ['GB', 'TW'],
     manufacturersByGearType: {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
@@ -608,7 +417,7 @@ export const NICOLE_DC_EQUIPMENT: SeedStakeholder = {
   },
 }
 
-// ── 8. Manta Dive Center (DC only) ─────────────────────────────────
+// ── 5. Manta Dive Center (DC only) ─────────────────────────────────
 
 export const MANTA_DC: SeedStakeholder = {
   user: {
@@ -619,21 +428,24 @@ export const MANTA_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Manta Dive Center',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'fr',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+  ],
   diveCenter: {
     name: 'Manta Dive Center',
     ...PHUKET,
     contactEmail: 'manta-dive-center@divedispatch.dev',
     contactPhone: '+66-76-387-001',
     associations: [{ agency: 'SSI', number: 'DC-80234' }],
-    focusedLanguages: ['English', 'French'],
+    focusedLanguages: ['GB', 'FR'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.mantaDC,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
 }
 
-// ── 9. ScubaNicks (DC) ──────────────────────────────────────────────
+// ── 6. ScubaNicks (DC + Equipment) ─────────────────────────────────
 
 export const SCUBANICKS: SeedStakeholder = {
   user: {
@@ -644,45 +456,34 @@ export const SCUBANICKS: SeedStakeholder = {
     lastName: 'ScubaNicks',
     businessName: 'ScubaNicks',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'en',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'ScubaNicks',
     ...PHUKET,
     contactEmail: 'scubanicks@divedispatch.dev',
     contactPhone: '+66-76-388-001',
     associations: [{ agency: 'SSI', number: 'DC-91547' }],
-    focusedLanguages: ['English'],
+    focusedLanguages: ['GB'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.scubaNicks,
-  },
-}
-
-// ── 9a. ScubaNicks Equipment ────────────────────────────────────────
-
-export const SCUBANICKS_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'm4fx8d-eq',
-    email: 'scubanicks-equipment+clerk_test@divedispatch.dev',
-    name: 'ScubaNicks Equipment',
-    firstName: 'Nick',
-    lastName: 'ScubaNicks Equipment',
-    businessName: 'ScubaNicks Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
   equipment: {
     name: 'ScubaNicks',
     ...PHUKET,
     contactEmail: 'scubanicks@divedispatch.dev',
     contactPhone: '+66-76-388-002',
-    focusedLanguages: ['English'],
+    focusedLanguages: ['GB'],
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
 }
 
-// ── 10. Scuba Deep (DC) ─────────────────────────────────────────────
+// ── 7. Scuba Deep (DC + Equipment) ─────────────────────────────────
 
 export const SCUBA_DEEP: SeedStakeholder = {
   user: {
@@ -693,8 +494,12 @@ export const SCUBA_DEEP: SeedStakeholder = {
     lastName: 'Deep',
     businessName: 'Scuba Deep',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'en',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Equipment', isPrimary: false },
+  ],
   diveCenter: {
     name: 'Scuba Deep',
     ...PHUKET,
@@ -704,30 +509,54 @@ export const SCUBA_DEEP: SeedStakeholder = {
       { agency: 'SSI', number: 'DC-72019' },
       { agency: 'PADI', number: 'S-61834' },
     ],
-    focusedLanguages: ['English'],
+    focusedLanguages: ['GB'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.scubaDeep,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
-}
-
-// ── 10a. Scuba Deep Boat ────────────────────────────────────────────
-
-export const SCUBA_DEEP_BOAT: SeedStakeholder = {
-  user: {
-    slug: 'h3cp6n-bt',
-    email: 'scuba-deep-boat+clerk_test@divedispatch.dev',
-    name: 'Scuba Deep Boat',
-    firstName: 'Scuba',
-    lastName: 'Deep Boat',
-    businessName: 'Scuba Deep Boat',
-    role: 'Boat',
-    preferredLocale: LOCALE,
-  },
-  boat: {
+  equipment: {
     name: 'Scuba Deep',
     ...PHUKET,
     contactEmail: 'scuba-deep@divedispatch.dev',
-    contactPhone: '+66-76-389-002',
+    contactPhone: '+66-76-389-003',
+    focusedLanguages: ['GB'],
+    manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
+    verified: VERIFIED,
+  },
+}
+
+// ── 8. Sirolo (DC + Boat + Equipment) ──────────────────────────────
+
+export const SIROLO: SeedStakeholder = {
+  user: {
+    slug: 'sirolo',
+    email: 'sirolo+clerk_test@divedispatch.dev',
+    name: 'Sirolo',
+    firstName: 'Prasit',
+    lastName: 'Wongsawat',
+    businessName: 'Sirolo',
+    role: 'DiveCenter',
+    preferredLocale: 'th',
+  },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+    { role: 'Boat', isPrimary: false },
+    { role: 'Equipment', isPrimary: false },
+  ],
+  diveCenter: {
+    name: 'Sirolo',
+    ...CHALONG,
+    contactEmail: 'sirolo@divedispatch.dev',
+    contactPhone: '+66-76-391-001',
+    associations: [{ agency: 'PADI', number: 'S-70123' }],
+    focusedLanguages: ['GB', 'CN', 'TW'],
+    verified: VERIFIED,
+    bookingPreferences: DC_BOOKING_PREFS,
+  },
+  boat: {
+    name: 'Sirolo',
+    ...CHALONG,
+    contactEmail: 'sirolo@divedispatch.dev',
+    contactPhone: '+66-76-391-002',
     fleet: [
       {
         boatName: 'M.V. Sirolo',
@@ -740,37 +569,22 @@ export const SCUBA_DEEP_BOAT: SeedStakeholder = {
         ],
       },
     ],
-    focusedLanguages: ['English'],
+    focusedLanguages: ['GB', 'CN', 'TW'],
     hasCompressor: false,
     verified: VERIFIED,
   },
-}
-
-// ── 10b. Scuba Deep Equipment ───────────────────────────────────────
-
-export const SCUBA_DEEP_EQUIPMENT: SeedStakeholder = {
-  user: {
-    slug: 'h3cp6n-eq',
-    email: 'scuba-deep-equipment+clerk_test@divedispatch.dev',
-    name: 'Scuba Deep Equipment',
-    firstName: 'Scuba',
-    lastName: 'Deep Equipment',
-    businessName: 'Scuba Deep Equipment',
-    role: 'Equipment',
-    preferredLocale: LOCALE,
-  },
   equipment: {
-    name: 'Scuba Deep',
-    ...PHUKET,
-    contactEmail: 'scuba-deep@divedispatch.dev',
-    contactPhone: '+66-76-389-003',
-    focusedLanguages: ['English'],
+    name: 'Sirolo',
+    ...CHALONG,
+    contactEmail: 'sirolo@divedispatch.dev',
+    contactPhone: '+66-76-391-003',
+    focusedLanguages: ['GB', 'CN', 'TW'],
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
 }
 
-// ── 11. Pray Dive Center (DC only) ─────────────────────────────────
+// ── 9. Pray Dive Center (DC only) ──────────────────────────────────
 
 export const PRAY_DC: SeedStakeholder = {
   user: {
@@ -781,21 +595,24 @@ export const PRAY_DC: SeedStakeholder = {
     lastName: 'Dive Center',
     businessName: 'Pray Dive Center',
     role: 'DiveCenter',
-    preferredLocale: LOCALE,
+    preferredLocale: 'en',
   },
+  roles: [
+    { role: 'DiveCenter', isPrimary: true },
+  ],
   diveCenter: {
     name: 'Pray Dive Center',
     ...PHUKET,
     contactEmail: 'pray-dive-center@divedispatch.dev',
     contactPhone: '+66-76-390-001',
     associations: [{ agency: 'PADI', number: 'S-48203' }],
-    focusedLanguages: ['German', 'French', 'Thai', 'English'],
+    focusedLanguages: ['DE', 'FR', 'TH', 'GB'],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS.prayDC,
+    bookingPreferences: DC_BOOKING_PREFS,
   },
 }
 
-// ── 12. Amanda (Agent) ──────────────────────────────────────────────
+// ── 10. Amanda (Agent) ─────────────────────────────────────────────
 
 export const AMANDA: SeedStakeholder = {
   user: {
@@ -806,15 +623,18 @@ export const AMANDA: SeedStakeholder = {
     lastName: 'Chen',
     businessName: 'Amanda',
     role: 'Agent',
-    preferredLocale: LOCALE,
+    preferredLocale: 'zh-CN',
   },
+  roles: [
+    { role: 'Agent', isPrimary: true },
+  ],
   agent: {
     name: 'Amanda',
     locations: [{ placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 }],
     contactEmail: 'amanda@divedispatch.dev',
     contactPhone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
-    focusedLanguages: ['Chinese'],
+    focusedLanguages: ['CN'],
     defaultReferralMode: 'independent',
     verified: VERIFIED,
   },
@@ -829,49 +649,21 @@ export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
 // ── All Non-Instructor Stakeholders ─────────────────────────────────
 
 export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
-  COMPRESSOR,
   HUG_OCEAN,
-  HUG_OCEAN_BOAT,
-  HUG_OCEAN_POOL,
-  HUG_OCEAN_EQUIPMENT,
-  WATER_PRO,
   NEPTUNE,
-  NEPTUNE_POOL,
-  NEPTUNE_EQUIPMENT,
-  SHARK_BITES,
   PHUKET_DC,
-  PHUKET_DC_BOAT,
-  PHUKET_DC_EQUIPMENT,
   NICOLE_DC,
-  NICOLE_DC_EQUIPMENT,
   MANTA_DC,
   SCUBANICKS,
-  SCUBANICKS_EQUIPMENT,
   SCUBA_DEEP,
-  SCUBA_DEEP_BOAT,
-  SCUBA_DEEP_EQUIPMENT,
+  SIROLO,
   PRAY_DC,
   AMANDA,
 ]
 
-// ── Hierarchy Links (DC → managed resources) ───────────────────────
+// ── Hierarchy Links (cross-stakeholder relationships) ───────────────
 
 export const HIERARCHY_LINKS: { parentSlug: string; parentType: StakeholderRole; childSlug: string; childType: StakeholderRole }[] = [
-  // Hug Ocean owns Boat, Pool, Equipment
-  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-bt', childType: 'Boat' },
-  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-pl', childType: 'Pool' },
-  { parentSlug: 'n7rq5j', parentType: 'DiveCenter', childSlug: 'n7rq5j-eq', childType: 'Equipment' },
-  // Neptune owns Pool, Equipment
-  { parentSlug: 'z8mv4c', parentType: 'DiveCenter', childSlug: 'z8mv4c-pl', childType: 'Pool' },
-  { parentSlug: 'z8mv4c', parentType: 'DiveCenter', childSlug: 'z8mv4c-eq', childType: 'Equipment' },
-  // Phuket DC owns Boat, Equipment
-  { parentSlug: 'p5ky3w', parentType: 'DiveCenter', childSlug: 'p5ky3w-bt', childType: 'Boat' },
-  { parentSlug: 'p5ky3w', parentType: 'DiveCenter', childSlug: 'p5ky3w-eq', childType: 'Equipment' },
-  // Nicole DC owns Equipment
-  { parentSlug: 'q9bz7r', parentType: 'DiveCenter', childSlug: 'q9bz7r-eq', childType: 'Equipment' },
-  // ScubaNicks owns Equipment
-  { parentSlug: 'm4fx8d', parentType: 'DiveCenter', childSlug: 'm4fx8d-eq', childType: 'Equipment' },
-  // Scuba Deep owns Boat, Equipment
-  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'h3cp6n-bt', childType: 'Boat' },
-  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'h3cp6n-eq', childType: 'Equipment' },
+  // Scuba Deep uses Sirolo's boat
+  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'sirolo', childType: 'Boat' },
 ]

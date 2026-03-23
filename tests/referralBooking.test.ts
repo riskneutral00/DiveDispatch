@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -116,7 +117,7 @@ describe('createReferralDraftShell', () => {
 
     // Verify ownership fields
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as any)
+      const booking = await ctx.db.get(bookingId as any) as Doc<'bookings'> | null
       expect(booking).toBeTruthy()
 
       // DC is the owner
@@ -151,7 +152,7 @@ describe('createReferralDraftShell', () => {
       })
 
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as any)
+      const booking = await ctx.db.get(bookingId as any) as Doc<'bookings'> | null
       expect(booking!.ownerId).toBe('target-lb')
       expect(booking!.ownerType).toBe('Liveaboard')
       expect(booking!.agentId).toBe('agent-lb')

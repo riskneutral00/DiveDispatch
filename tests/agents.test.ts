@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc } from '../convex/_generated/dataModel'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -70,7 +71,7 @@ describe('agents.create', () => {
     expect(agentId).toBeTruthy()
 
     await t.run(async (ctx) => {
-      const agent = await ctx.db.get(agentId as any)
+      const agent = await ctx.db.get(agentId as any) as Doc<'agents'> | null
       expect(agent).toBeTruthy()
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.userId).toEqual(userId)
@@ -142,7 +143,7 @@ describe('agents.update', () => {
       })
 
     await t.run(async (ctx) => {
-      const agent = await ctx.db.get(agentId)
+      const agent = await ctx.db.get(agentId) as Doc<'agents'> | null
       expect(agent!.name).toBe('Updated Agent')
       expect(agent!.defaultReferralMode).toBe('referral')
       // Unchanged fields preserved

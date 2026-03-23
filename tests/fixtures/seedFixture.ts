@@ -142,8 +142,8 @@ export async function seedBooking(
 ) {
   return ctx.db.insert('bookings', {
     ownerId: overrides.ownerId ?? TEST_SLUGS.diveCenter,
-    ownerType: overrides.ownerType ?? 'DiveCenter',
-    status: overrides.status ?? 'Draft',
+    ownerType: (overrides.ownerType ?? 'DiveCenter') as Doc<'bookings'>['ownerType'],
+    status: (overrides.status ?? 'Draft') as Doc<'bookings'>['status'],
     createdAt: Date.now(),
     holdTTL: 43200000,
     paid: false,
@@ -196,7 +196,7 @@ export async function seedReservation(
     inventoryUnitId,
     bookingSessionId: sessionId,
     unitsRequested: overrides.unitsRequested ?? 1,
-    status: overrides.status ?? 'PendingAcceptance',
+    status: (overrides.status ?? 'PendingAcceptance') as Doc<'reservations'>['status'],
   })
 }
 

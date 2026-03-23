@@ -57,9 +57,9 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
           className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-sm"
           role="alert"
           style={{
-            background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 30%, transparent)',
-            color: 'var(--color-warning, #f59e0b)',
+            background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-warning, #fbbf24) 30%, transparent)',
+            color: 'var(--color-warning, #fbbf24)',
             fontFamily: 'var(--font-body)',
           }}
         >

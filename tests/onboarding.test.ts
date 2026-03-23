@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
@@ -57,8 +57,12 @@ async function seedDiveCenterProfile(
 describe('onboarding schema', () => {
   it('new user created via createUser has onboardingComplete undefined', async () => {
     const t = convexTest(schema, modules)
+    vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|new-dc' })
       .mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'Test DC' })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.onboardingComplete).toBeUndefined()

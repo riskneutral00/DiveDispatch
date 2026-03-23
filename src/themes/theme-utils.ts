@@ -118,6 +118,15 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--opacity-watermark": String(palette.opacityWatermark),
     "--opacity-subtle": String(palette.opacitySubtle),
     "--opacity-muted": String(palette.opacityMuted),
+    // Status colors — adapt per luminance class
+    "--color-status-active": palette.statusActive,
+    "--color-status-draft": palette.statusDraft,
+    "--color-status-upcoming": palette.statusUpcoming,
+    "--color-status-completed": palette.statusCompleted,
+    "--color-status-cancelled": palette.statusCancelled,
+    "--color-status-urgent": palette.statusUrgent,
+    "--color-blocked": palette.statusBlocked,
+    "--color-status-multiday-border": palette.statusMultidayBorder,
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;

@@ -1,18 +1,17 @@
-// 40 freelance instructors for seed data.
+// 15 freelance instructors + 3 DiveMasters for seed data.
 // DCs pull instructors by language match.
 
-import { SeedStakeholder, SeedUser } from './seedData'
+import { SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
 
 const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
-
-const PADI_OW_COURSES = ['Open Water', 'Advanced Open Water', 'Rescue Diver', 'Divemaster']
-const SSI_OW_COURSES = ['Open Water Diver', 'Advanced Adventurer', 'Diver Stress & Rescue', 'Dive Guide']
 
 interface InstructorDef {
   firstName: string
   lastName: string
   languages: string[]
   credentials: { agency: string; level: string }[]
+  courses: string[]
+  role?: 'Instructor' | 'DiveMaster'
 }
 
 function toSlug(first: string, last: string): string {
@@ -23,6 +22,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
   const slug = toSlug(def.firstName, def.lastName)
   const email = `${slug}+clerk_test@divedispatch.dev`
   const phone = `+66-81-${String(600 + index).padStart(3, '0')}-${String(1000 + index).padStart(4, '0')}`
+  const role: StakeholderRole = def.role === 'DiveMaster' ? 'DiveMaster' : 'Instructor'
 
   const user: SeedUser = {
     slug,
@@ -31,7 +31,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     firstName: def.firstName,
     lastName: def.lastName,
     businessName: `${def.firstName} ${def.lastName}`,
-    role: 'Instructor',
+    role,
     preferredLocale: 'en',
   }
 
@@ -39,11 +39,13 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     agency: c.agency,
     level: c.level,
     agencyID: c.agency === 'PADI' ? `PADI-${300000 + index * 10 + i}` : `SSI-${500000 + index * 10 + i}`,
-    courses: c.agency === 'PADI' ? PADI_OW_COURSES : SSI_OW_COURSES,
+    // DiveMasters have no courses; Instructors get their specialty courses
+    courses: role === 'DiveMaster' ? [] as string[] : def.courses,
   }))
 
   return {
     user,
+    roles: [{ role, isPrimary: true }],
     instructor: {
       name: `${def.firstName} ${def.lastName}`,
       ...PHUKET,
@@ -57,65 +59,192 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 }
 
 const ROSTER: InstructorDef[] = [
-  // ── English-primary (1) ───────────────────────────────────────────
-  { firstName: 'Ryan', lastName: 'Clarke', languages: ['English', 'French'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // ── Instructors (1-15) ────────────────────────────────────────────
 
-  // ── Thai-primary (2–6) ────────────────────────────────────────────
-  { firstName: 'Nattaya', lastName: 'Srisuk', languages: ['Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Kittipong', lastName: 'Jaidee', languages: ['Thai', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Arisa', lastName: 'Tanaka', languages: ['Thai', 'Japanese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Prasit', lastName: 'Wongsawat', languages: ['Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Supachai', lastName: 'Rattana', languages: ['Thai', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 1. Ryan Clarke
+  {
+    firstName: 'Ryan',
+    lastName: 'Clarke',
+    languages: ['GB', 'TH'],
+    credentials: [{ agency: 'PADI', level: 'OWSI' }],
+    courses: [],
+  },
 
-  // ── Mandarin-primary (7–14) ───────────────────────────────────────
-  { firstName: 'Wei', lastName: 'Chen', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Li', lastName: 'Ming', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Zhang', lastName: 'Yong', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Wang', lastName: 'Fei', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Huang', lastName: 'Jie', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Chen', lastName: 'Xiaoli', languages: ['Mandarin', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Liu', lastName: 'Hao', languages: ['Mandarin'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Xu', lastName: 'Wei', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 2. Nattaya Srisuk
+  {
+    firstName: 'Nattaya',
+    lastName: 'Srisuk',
+    languages: ['TH', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'OWSI' }],
+    courses: [],
+  },
 
-  // ── Chinese-primary (15–18) ───────────────────────────────────────
-  { firstName: 'Zhou', lastName: 'Peng', languages: ['Chinese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Sun', lastName: 'Jing', languages: ['Chinese', 'English'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Ma', lastName: 'Lin', languages: ['Chinese'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Gao', lastName: 'Tian', languages: ['Chinese', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 3. Wei Chen
+  {
+    firstName: 'Wei',
+    lastName: 'Chen',
+    languages: ['CN', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'MSDT' }],
+    courses: ['Nitrox', 'Deep', 'Wreck'],
+  },
 
-  // ── French-primary (19–22) ────────────────────────────────────────
-  { firstName: 'Pierre', lastName: 'Dubois', languages: ['French', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Marie', lastName: 'Lefevre', languages: ['French'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Antoine', lastName: 'Bernard', languages: ['French', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Sophie', lastName: 'Martin', languages: ['French', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 4. Li Ming
+  {
+    firstName: 'Li',
+    lastName: 'Ming',
+    languages: ['CN', 'GB'],
+    credentials: [{ agency: 'SSI', level: 'OWI' }],
+    courses: [],
+  },
 
-  // ── German-primary (23–25) ────────────────────────────────────────
-  { firstName: 'Klaus', lastName: 'Weber', languages: ['German', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Stefan', lastName: 'Braun', languages: ['German'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Heidi', lastName: 'Fischer', languages: ['German', 'Thai'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 5. Zhang Yong
+  {
+    firstName: 'Zhang',
+    lastName: 'Yong',
+    languages: ['CN', 'TW', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'OWSI' }],
+    courses: ['Deep'],
+  },
 
-  // ── Cantonese-primary (26–28) ─────────────────────────────────────
-  { firstName: 'Chan', lastName: 'Wing', languages: ['Cantonese', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Lam', lastName: 'Ka Yan', languages: ['Cantonese'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
-  { firstName: 'Ho', lastName: 'Siu Ming', languages: ['Cantonese', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
+  // 6. Nicole Tam
+  {
+    firstName: 'Nicole',
+    lastName: 'Tam',
+    languages: ['TW', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'OWSI' }],
+    courses: ['PPB'],
+  },
 
-  // ── Korean-primary (29–30) ────────────────────────────────────────
-  { firstName: 'Park', lastName: 'Joon', languages: ['Korean', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'Kim', lastName: 'Soo-Yeon', languages: ['Korean'], credentials: [{ agency: 'PADI', level: 'MSDT' }] },
+  // 7. Pierre Dubois
+  {
+    firstName: 'Pierre',
+    lastName: 'Dubois',
+    languages: ['FR', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'MSDT' }],
+    courses: ['Deep', 'Wreck', 'Nitrox'],
+  },
 
-  // ── SSI-only (31–36) ──────────────────────────────────────────────
-  { firstName: 'Yuki', lastName: 'Tanaka', languages: ['Japanese', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
-  { firstName: 'Kenji', lastName: 'Nakamura', languages: ['Japanese'], credentials: [{ agency: 'SSI', level: 'Specialty Instructor' }] },
-  { firstName: 'Dmitri', lastName: 'Volkov', languages: ['Russian', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
-  { firstName: 'Olga', lastName: 'Petrova', languages: ['Russian'], credentials: [{ agency: 'SSI', level: 'Specialty Instructor' }] },
-  { firstName: 'Ben', lastName: 'Walker', languages: ['English'], credentials: [{ agency: 'SSI', level: 'OWI' }] },
-  { firstName: 'Alex', lastName: 'Turner', languages: ['English', 'Thai'], credentials: [{ agency: 'SSI', level: 'Specialty Instructor' }] },
+  // 8. Stefan Braun
+  {
+    firstName: 'Stefan',
+    lastName: 'Braun',
+    languages: ['DE', 'GB', 'TH'],
+    credentials: [{ agency: 'SSI', level: 'OWI' }],
+    courses: ['Deep'],
+  },
 
-  // ── Dual-certified PADI + SSI (37–40) ─────────────────────────────
-  { firstName: 'Mike', lastName: 'Chen', languages: ['Mandarin', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }] },
-  { firstName: 'Rachel', lastName: 'Nguyen', languages: ['English', 'French'], credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'Specialty Instructor' }] },
-  { firstName: 'Lee', lastName: 'Min-Ho', languages: ['Korean', 'English'], credentials: [{ agency: 'SSI', level: 'OWI' }, { agency: 'PADI', level: 'OWSI' }] },
-  { firstName: 'David', lastName: 'Schmidt', languages: ['German', 'English'], credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }] },
+  // 9. Somphon Kaew
+  {
+    firstName: 'Somphon',
+    lastName: 'Kaew',
+    languages: ['TH', 'CN', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'OWSI' }],
+    courses: [],
+  },
+
+  // 10. Mike Chen (dual PADI + SSI)
+  {
+    firstName: 'Mike',
+    lastName: 'Chen',
+    languages: ['GB', 'CN', 'TW'],
+    credentials: [
+      { agency: 'PADI', level: 'MSDT' },
+      { agency: 'SSI', level: 'OWI' },
+    ],
+    courses: ['Nitrox', 'Deep', 'Wreck', 'PPB', 'Sidemount'],
+  },
+
+  // 11. Rachel Nguyen (dual PADI + SSI)
+  {
+    firstName: 'Rachel',
+    lastName: 'Nguyen',
+    languages: ['GB', 'CN'],
+    credentials: [
+      { agency: 'PADI', level: 'MSDT' },
+      { agency: 'SSI', level: 'OWI' },
+    ],
+    courses: ['Deep', 'Nitrox'],
+  },
+
+  // 12. Lee Min-Ho (dual PADI + SSI)
+  {
+    firstName: 'Lee',
+    lastName: 'Min-Ho',
+    languages: ['GB', 'KR', 'CN'],
+    credentials: [
+      { agency: 'PADI', level: 'OWSI' },
+      { agency: 'SSI', level: 'Advanced OWI' },
+    ],
+    courses: ['Deep', 'PPB'],
+  },
+
+  // 13. David Schmidt (dual PADI + SSI)
+  {
+    firstName: 'David',
+    lastName: 'Schmidt',
+    languages: ['DE', 'GB'],
+    credentials: [
+      { agency: 'PADI', level: 'OWSI' },
+      { agency: 'SSI', level: 'OWI' },
+    ],
+    courses: ['Nitrox'],
+  },
+
+  // 14. Yuki Tanaka (dual PADI + SSI)
+  {
+    firstName: 'Yuki',
+    lastName: 'Tanaka',
+    languages: ['JP', 'GB'],
+    credentials: [
+      { agency: 'PADI', level: 'OWSI' },
+      { agency: 'SSI', level: 'OWI' },
+    ],
+    courses: ['Deep', 'Wreck'],
+  },
+
+  // 15. Maria Santos (dual PADI + SSI)
+  {
+    firstName: 'Maria',
+    lastName: 'Santos',
+    languages: ['GB', 'FR', 'TH'],
+    credentials: [
+      { agency: 'PADI', level: 'MSDT' },
+      { agency: 'SSI', level: 'Advanced OWI' },
+    ],
+    courses: ['Nitrox', 'Deep', 'PPB', 'Sidemount'],
+  },
+
+  // ── DiveMasters (16-18) ───────────────────────────────────────────
+
+  // 16. Arisa Kanchanaburi
+  {
+    firstName: 'Arisa',
+    lastName: 'Kanchanaburi',
+    languages: ['TH', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'Divemaster' }],
+    courses: [],
+    role: 'DiveMaster',
+  },
+
+  // 17. Kittipong Jaidee
+  {
+    firstName: 'Kittipong',
+    lastName: 'Jaidee',
+    languages: ['TH', 'GB'],
+    credentials: [{ agency: 'SSI', level: 'Dive Guide' }],
+    courses: [],
+    role: 'DiveMaster',
+  },
+
+  // 18. Prasit Rattana
+  {
+    firstName: 'Prasit',
+    lastName: 'Rattana',
+    languages: ['TH', 'GB'],
+    credentials: [{ agency: 'PADI', level: 'Divemaster' }],
+    courses: [],
+    role: 'DiveMaster',
+  },
 ]
 
 export const ALL_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))

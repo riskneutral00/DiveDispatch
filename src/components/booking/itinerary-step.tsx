@@ -476,9 +476,9 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
               role="alert"
               style={{
-                background: 'color-mix(in srgb, var(--color-destructive, #ef4444) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-destructive, #ef4444) 30%, transparent)',
-                color: 'var(--color-destructive, #ef4444)',
+                background: 'color-mix(in srgb, var(--color-destructive, #dc2626) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-destructive, #dc2626) 30%, transparent)',
+                color: 'var(--color-destructive, #dc2626)',
                 fontFamily: 'var(--font-body)',
               }}
             >
@@ -498,9 +498,9 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
               role="alert"
               style={{
-                background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 30%, transparent)',
-                color: 'var(--color-warning, #f59e0b)',
+                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-warning, #fbbf24) 30%, transparent)',
+                color: 'var(--color-warning, #fbbf24)',
                 fontFamily: 'var(--font-body)',
               }}
             >
@@ -557,9 +557,9 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
               role="alert"
               style={{
-                background: 'color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 30%, transparent)',
-                color: 'var(--color-warning, #f59e0b)',
+                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 12%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--color-warning, #fbbf24) 30%, transparent)',
+                color: 'var(--color-warning, #fbbf24)',
                 fontFamily: 'var(--font-body)',
               }}
             >

@@ -52,32 +52,26 @@ export const GLASS_FORMULAS = {
 
   // Bright backgrounds (shallow reef, tropical surface, sand)
   // White-tinted fill — text is near-black
+  // Low opacity so the coloured background stays visible through glass
   bright: {
-    glassBg: "rgba(255, 255, 255, 0.45)",
-    glassBorder: "rgba(0, 0, 0, 0.06)",
+    glassBg: "rgba(255, 255, 255, 0.12)",
+    glassBorder: "rgba(0, 0, 0, 0.08)",
     glassBlur: 14,
-    glassBgElevated: "rgba(255, 255, 255, 0.55)",
-    glassBorderElevated: "rgba(0, 0, 0, 0.12)",
+    glassBgElevated: "rgba(255, 255, 255, 0.20)",
+    glassBorderElevated: "rgba(0, 0, 0, 0.18)",
     glassBlurElevated: 24,
-    glassSpecular: "rgba(255, 255, 255, 0.7)",
+    glassSpecular: "rgba(255, 255, 255, 0.5)",
     glassSpecularSubtle: "rgba(255, 255, 255, 0.3)",
     glassShadow: "rgba(0, 0, 0, 0.06)",
     glassShadowElevated: "rgba(0, 0, 0, 0.10)",
-    glassBgHover: "rgba(255, 255, 255, 0.60)",
+    glassBgHover: "rgba(255, 255, 255, 0.18)",
     glassBlurHover: 18,
-    glassContainerBorder: "rgba(0, 0, 0, 0.12)",
-    glassContainerBg: "rgba(255, 255, 255, 0.50)",
+    glassContainerBorder: "rgba(0, 0, 0, 0.06)",
+    glassContainerBg: "rgba(255, 255, 255, 0.06)",
     opacityWatermark: 0.55,
-    opacitySubtle: 0.38,
+    opacitySubtle: 0.10,
     opacityMuted: 0.70,
   },
-} as const;
-
-// ── Universal status colors — safety signals don't change per skin ──────────
-const STATUS_COLORS = {
-  success: "#34d399",
-  warning: "#fbbf24",
-  destructive: "#f87171",
 } as const;
 
 // ── Shared typography — Inter everywhere ────────────────────────────────────
@@ -106,7 +100,10 @@ const MOTION = {
 
 // ── Skin definitions ────────────────────────────────────────────────────────
 // Each skin has dark + light palettes with distinct backgrounds.
-// A future Convex migration will store skins in the DB; the shape stays identical.
+// Status/semantic colors are inlined per-skin (no shared STATUS_FORMULAS)
+// because day and night palettes have deliberately different hue sets.
+// 7 hues per mode: primary, accent, active, draft, upcoming, urgent, text.
+// Merged roles: secondary=accent, warning=draft, completed/cancelled=textSecondary, blocked=urgent.
 
 export const SKINS: ThemeConfig[] = [
   // ── Ocean ── cool deep blues, bioluminescent accents ──────────────────────
@@ -116,16 +113,27 @@ export const SKINS: ThemeConfig[] = [
 
     colors: {
       dark: {
-        primary: "#de6e60",
-        secondary: "#4a9ece",
-        accent: "#f0b866",
-        textPrimary: "#f0ebe4",
-        textSecondary: "#7a8a9e",
-        textOnPrimary: "#ffffff",
+        primary: "#60a5fa",
+        secondary: "#60a5fa", // = accent (merged) — monochromatic blue
+        accent: "#60a5fa",
+        textPrimary: "#ffffff",
+        textSecondary: "#a8a29e",
+        textOnPrimary: "#000000",
         ...GLASS_FORMULAS.dark,
-        ...STATUS_COLORS,
-        primaryGlow: "rgba(222, 110, 96, 0.35)",
-        glassBorderHover: "rgba(222, 110, 96, 0.35)",
+        // Semantic — 7-color strict palette
+        success: "#34d399",
+        warning: "#fbbf24", // = draft
+        destructive: "#dc2626",
+        statusActive: "#34d399",
+        statusDraft: "#fbbf24",
+        statusUpcoming: "#60a5fa",
+        statusCompleted: "#a78bfa", // violet
+        statusCancelled: "#a78bfa", // violet
+        statusUrgent: "#dc2626",
+        statusBlocked: "#dc2626", // = urgent (icon differentiates)
+        statusMultidayBorder: "rgba(255, 255, 255, 0.7)",
+        primaryGlow: "rgba(96, 165, 250, 0.35)",
+        glassBorderHover: "rgba(96, 165, 250, 0.35)",
         surface: "#111820",
         surfaceElevated: "#1a2230",
         bgImage:
@@ -136,77 +144,34 @@ export const SKINS: ThemeConfig[] = [
         luminanceClass: "dark",
       },
       light: {
-        primary: "#d4614f",
-        secondary: "#2a7db5",
-        accent: "#d4982e",
-        textPrimary: "rgba(0, 0, 0, 0.87)",
-        textSecondary: "rgba(0, 0, 0, 0.55)",
+        primary: "#2563eb",
+        secondary: "#3b82f6",
+        accent: "#3b82f6",
+        textPrimary: "#1e3a5f",
+        textSecondary: "#64748b",
         textOnPrimary: "#ffffff",
         ...GLASS_FORMULAS.bright,
-        ...STATUS_COLORS,
-        primaryGlow: "rgba(212, 97, 79, 0.25)",
-        glassBorderHover: "rgba(212, 97, 79, 0.30)",
-        surface: "#f0f9ff",
-        surfaceElevated: "#ffffff",
+        // Semantic — 600-level for light-bg contrast
+        success: "#059669",
+        warning: "#d97706",
+        destructive: "#dc2626",
+        statusActive: "#059669",
+        statusDraft: "#d97706",
+        statusUpcoming: "#2563eb",
+        statusCompleted: "#7c3aed",
+        statusCancelled: "#7c3aed",
+        statusUrgent: "#dc2626",
+        statusBlocked: "#dc2626",
+        statusMultidayBorder: "rgba(0, 0, 0, 0.5)",
+        primaryGlow: "rgba(37, 99, 235, 0.20)",
+        glassBorderHover: "rgba(37, 99, 235, 0.25)",
+        surface: "#dbeafe",
+        surfaceElevated: "#eff6ff",
         bgImage:
-          "linear-gradient(to bottom, #87ceeb 0%, #5fb8d9 20%, #3aa5c8 40%, #1e8fb5 60%, #0d7aa0 80%, #066a8f 100%)",
+          "linear-gradient(to bottom, #eff6ff 0%, #e0edf8 25%, #d0e4f2 50%, #bfdbfe 100%)",
         bgOverlay:
-          "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.4) 0%, rgba(200, 230, 255, 0.2) 50%, transparent 100%)",
-        bodyBg: "#e8f4fd",
-        luminanceClass: "bright",
-      },
-    },
-
-    typography: { ...TYPOGRAPHY },
-    backgrounds: {},
-    shape: { ...SHAPE },
-    motion: { ...MOTION },
-  },
-
-  // ── Coral ── warm reef tones, rose/orange/gold accents ────────────────────
-  {
-    id: "coral",
-    name: "Coral",
-
-    colors: {
-      dark: {
-        primary: "#e85d75",
-        secondary: "#f0956a",
-        accent: "#f5c542",
-        textPrimary: "#f0ebe4",
-        textSecondary: "#7a8a9e",
-        textOnPrimary: "#ffffff",
-        ...GLASS_FORMULAS.dark,
-        ...STATUS_COLORS,
-        primaryGlow: "rgba(232, 93, 117, 0.35)",
-        glassBorderHover: "rgba(232, 93, 117, 0.35)",
-        surface: "#1a1418",
-        surfaceElevated: "#261c22",
-        bgImage:
-          "linear-gradient(to bottom, #1a0e14 0%, #150a10 30%, #10060c 50%, #080208 65%, #000000 80%, #000000 100%)",
-        bgOverlay:
-          "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(60, 20, 35, 0.5) 0%, rgba(40, 12, 25, 0.25) 40%, transparent 100%)",
-        bodyBg: "#000000",
-        luminanceClass: "dark",
-      },
-      light: {
-        primary: "#d44a62",
-        secondary: "#d4784e",
-        accent: "#c9a020",
-        textPrimary: "rgba(0, 0, 0, 0.87)",
-        textSecondary: "rgba(0, 0, 0, 0.55)",
-        textOnPrimary: "#ffffff",
-        ...GLASS_FORMULAS.bright,
-        ...STATUS_COLORS,
-        primaryGlow: "rgba(212, 74, 98, 0.25)",
-        glassBorderHover: "rgba(212, 74, 98, 0.30)",
-        surface: "#fff5f0",
-        surfaceElevated: "#ffffff",
-        bgImage:
-          "linear-gradient(to bottom, #f5c6aa 0%, #e8a889 20%, #d98e72 40%, #c8735c 60%, #b55e4a 80%, #9e4a3a 100%)",
-        bgOverlay:
-          "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 220, 200, 0.2) 50%, transparent 100%)",
-        bodyBg: "#fdf2ec",
+          "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(96, 165, 250, 0.12) 0%, rgba(59, 130, 246, 0.06) 40%, transparent 100%)",
+        bodyBg: "#dbeafe",
         luminanceClass: "bright",
       },
     },

@@ -75,7 +75,7 @@ export function GlassInput({
             caretColor: "var(--color-accent)",
             ...(error ? {
               borderColor: "var(--color-destructive)",
-              boxShadow: `0 0 0 3px rgba(239, 68, 68, 0.3)`,
+              boxShadow: `0 0 0 3px var(--color-destructive-glow)`,
             } : {}),
           }}
           aria-invalid={!!error}

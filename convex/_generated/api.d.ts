@@ -57,6 +57,7 @@ import type * as stakeholderPreferences from "../stakeholderPreferences.js";
 import type * as support from "../support.js";
 import type * as testHelpers from "../testHelpers.js";
 import type * as themes from "../themes.js";
+import type * as userRoles from "../userRoles.js";
 import type * as users from "../users.js";
 import type * as venues from "../venues.js";
 
@@ -116,6 +117,7 @@ declare const fullApi: ApiFromModules<{
   support: typeof support;
   testHelpers: typeof testHelpers;
   themes: typeof themes;
+  userRoles: typeof userRoles;
   users: typeof users;
   venues: typeof venues;
 }>;
