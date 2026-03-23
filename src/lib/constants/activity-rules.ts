@@ -66,3 +66,17 @@ export function calcAgeAtDate(dateOfBirth: string, referenceDate: string): numbe
   }
   return age
 }
+
+/**
+ * Returns true if the passport expiration date falls within 6 months of the
+ * reference date. Many destinations require at least 6 months passport validity.
+ * Returns false if dateStr is empty/falsy.
+ */
+export function isPassportExpiringSoon(dateStr: string, referenceDate?: string): boolean {
+  if (!dateStr) return false
+  const expiry = new Date(dateStr)
+  const ref = referenceDate ? new Date(referenceDate) : new Date()
+  const sixMonthsFromRef = new Date(ref)
+  sixMonthsFromRef.setMonth(sixMonthsFromRef.getMonth() + 6)
+  return expiry <= sixMonthsFromRef
+}

@@ -1132,6 +1132,295 @@ describe('submitToDraft', () => {
       expect(snapshots[0].inventoryUnitId).toBe(boatUnitId)
     })
   })
+
+  // ─── H6: Mixed Internal + External Resource Tests ──────────────────────────
+
+  it('14 — all-external: zero reservations, zero snapshots, bookingFormComplete = true', async () => {
+    const t = makeT()
+
+    const { bookingId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-test',
+        slug: 'dc-test',
+        email: 'dc@test.com',
+        name: 'dc-test',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+      return { bookingId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId,
+        sessions: [],
+        bookingData: {
+          activityType: ['OW'],
+          startDate: testDate(5),
+          endDate: testDate(7),
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          divers: [],
+          resources: [
+            { resourceType: 'Instructor', externalName: 'External Instructor' },
+            { resourceType: 'Boat', externalName: 'External Boat' },
+          ],
+        },
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(0)
+
+      const snapshots = await ctx.db.query('availabilitySnapshots').collect()
+      expect(snapshots).toHaveLength(0)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.bookingFormComplete).toBe(true)
+    })
+  })
+
+  it('15 — mixed internal + external: 1 reservation (internal), external gets no reservation; junction has 2 rows', async () => {
+    const t = makeT()
+
+    const { bookingId, instructorUnitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-test',
+        slug: 'dc-test',
+        email: 'dc@test.com',
+        name: 'dc-test',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|instructor-mix',
+        slug: 'instructor-mix',
+        email: 'instructor-mix@test.com',
+        name: 'Instructor Mix',
+        firstName: 'Mix',
+        lastName: 'Instructor',
+        businessName: 'Mix Instructor Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const instructorUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-mix',
+        displayName: 'Internal instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-mix',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+      return { bookingId, instructorUnitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId,
+        sessions: [
+          {
+            inventoryUnitId: instructorUnitId,
+            date: testDate(5),
+            startTime: '09:00',
+            endTime: '11:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+        bookingData: {
+          activityType: ['OW'],
+          startDate: testDate(5),
+          endDate: testDate(7),
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          divers: [],
+          resources: [
+            { resourceType: 'Instructor', resourceSlug: 'instructor-mix' },
+            { resourceType: 'Boat', externalName: 'External Boat' },
+          ],
+        },
+      },
+    )
+
+    await t.run(async (ctx) => {
+      // Only the internal instructor gets a reservation
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(1)
+      expect(reservations[0].inventoryUnitId).toBe(instructorUnitId)
+
+      // Only the internal instructor gets a snapshot
+      const snapshots = await ctx.db.query('availabilitySnapshots').collect()
+      expect(snapshots).toHaveLength(1)
+      expect(snapshots[0].inventoryUnitId).toBe(instructorUnitId)
+      expect(snapshots[0].reservedUnits).toBe(1)
+
+      // Junction table has 2 rows: one internal, one external
+      const junctionRows = await ctx.db.query('bookingResources').collect()
+      expect(junctionRows).toHaveLength(2)
+
+      const internalRow = junctionRows.find((r) => r.resourceSlug === 'instructor-mix')
+      const externalRow = junctionRows.find((r) => r.externalName === 'External Boat')
+      expect(internalRow).toBeDefined()
+      expect(internalRow?.resourceType).toBe('Instructor')
+      expect(externalRow).toBeDefined()
+      expect(externalRow?.resourceType).toBe('Boat')
+    })
+  })
+
+  it('16 — external resource does not block auto-advance: mixed booking advances when internal confirms', async () => {
+    const t = makeT()
+
+    const { bookingId, instructorUnitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-test',
+        slug: 'dc-test',
+        email: 'dc@test.com',
+        name: 'dc-test',
+        firstName: 'DC',
+        lastName: 'Test',
+        businessName: 'Test DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const instructorUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-advance',
+        displayName: 'Auto-advance instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-advance',
+        ownerType: 'Instructor',
+      })
+      // Auto-accept preference so reservation is immediately Confirmed
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: 'instructor-advance',
+        stakeholderType: 'Instructor',
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 0,
+        useNamedUnits: false,
+        commonLanguageCodes: ['en'],
+        confirmOnAccept: true,
+        confirmOnDecline: true,
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: true, // customer form already done
+      })
+      return { bookingId, instructorUnitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId,
+        sessions: [
+          {
+            inventoryUnitId: instructorUnitId,
+            date: testDate(5),
+            startTime: '09:00',
+            endTime: '11:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+        bookingData: {
+          activityType: ['OW'],
+          startDate: testDate(5),
+          endDate: testDate(7),
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          divers: [],
+          resources: [
+            { resourceType: 'Instructor', resourceSlug: 'instructor-advance' },
+            { resourceType: 'Boat', externalName: 'External Boat' },
+          ],
+        },
+      },
+    )
+
+    await t.run(async (ctx) => {
+      // Internal instructor reservation is auto-confirmed
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(1)
+      expect(reservations[0].status).toBe('Confirmed')
+
+      // Booking advanced to Upcoming — external boat did NOT block auto-advance
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+      expect(booking?.bookingFormComplete).toBe(true)
+    })
+  })
 })
 
 // ─── Helper function tests ────────────────────────────────────────────────────

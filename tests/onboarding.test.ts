@@ -39,8 +39,10 @@ async function seedDiveCenterProfile(
   return ctx.db.insert('diveCenters', {
     userId,
     name: 'Test Dive Center',
-    city: 'Koh Tao',
+    placeName: 'Koh Tao',
     country: 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
     contactEmail: 'info@testdc.com',
     contactPhone: '+66123456789',
     associations: [{ agency: 'PADI', number: '12345' }],
@@ -79,12 +81,14 @@ describe('getOnboardingStatus', () => {
     const t = convexTest(schema, modules)
     const userId = await t.run(async (ctx) => seedUser(ctx, 'dc-partial'))
 
-    // Insert profile with only name, city, country filled (3 of 9)
+    // Insert profile with only name, placeName, country filled (3 of 9)
     await t.run(async (ctx) =>
       seedDiveCenterProfile(ctx, userId, {
         name: 'Partial DC',
-        city: 'Koh Tao',
+        placeName: 'Koh Tao',
         country: 'Thailand',
+        lat: 10.0957,
+        lng: 99.8408,
         contactEmail: '',       // missing
         contactPhone: '',       // missing
         associations: [],       // missing
@@ -124,23 +128,20 @@ describe('getOnboardingStatus', () => {
       }),
     )
 
-    // Create preferred instructors
+    // Create preferred instructors — stakeholderId must be the slug string
     await t.run(async (ctx) => {
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'dc-complete')).unique()
-      if (user) {
-        await ctx.db.insert('stakeholderPreferences', {
-          stakeholderId: user._id as any,
-          stakeholderType: 'DiveCenter',
-          acceptanceMode: 'Auto',
-          maxHoursPerDay: 8,
-          postJobBlockDuration: 0,
-          useNamedUnits: false,
-          commonLanguageCodes: [],
-          preferredInstructorSlugs: ['inst-1'],
-          confirmOnAccept: false,
-          confirmOnDecline: false,
-        })
-      }
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: 'dc-complete',
+        stakeholderType: 'DiveCenter',
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 0,
+        useNamedUnits: false,
+        commonLanguageCodes: [],
+        preferredInstructorSlugs: ['inst-1'],
+        confirmOnAccept: false,
+        confirmOnDecline: false,
+      })
     })
 
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-complete' })
@@ -212,22 +213,20 @@ describe('Quick Book pills (bookingTemplates)', () => {
     await t.run(async (ctx) => seedDiveCenterProfile(ctx, userId))
 
     // Seed preferred instructors so only Quick Book pill is missing
+    // stakeholderId must be the slug string, not user._id
     await t.run(async (ctx) => {
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'dc-pill-check')).unique()
-      if (user) {
-        await ctx.db.insert('stakeholderPreferences', {
-          stakeholderId: user._id as any,
-          stakeholderType: 'DiveCenter',
-          acceptanceMode: 'Auto',
-          maxHoursPerDay: 8,
-          postJobBlockDuration: 0,
-          useNamedUnits: false,
-          commonLanguageCodes: [],
-          preferredInstructorSlugs: ['inst-1'],
-          confirmOnAccept: false,
-          confirmOnDecline: false,
-        })
-      }
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: 'dc-pill-check',
+        stakeholderType: 'DiveCenter',
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 0,
+        useNamedUnits: false,
+        commonLanguageCodes: [],
+        preferredInstructorSlugs: ['inst-1'],
+        confirmOnAccept: false,
+        confirmOnDecline: false,
+      })
     })
 
     // No template yet → Quick Book pill incomplete

@@ -1,10 +1,12 @@
 import { v } from 'convex/values'
+import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { mutation } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import { requireAuth } from './lib/auth'
 
 // ─── generateUploadUrl ────────────────────────────────────────────────────────
 
-export async function _generateUploadUrlHandler(ctx: AnyCtx): Promise<string> {
+export async function _generateUploadUrlHandler(ctx: MutationCtx): Promise<string> {
   await requireAuth(ctx)
 
   return await ctx.storage.generateUploadUrl()
@@ -18,7 +20,7 @@ export const generateUploadUrl = mutation({
 // ─── submitSupportRequest ─────────────────────────────────────────────────────
 
 export async function _submitSupportRequestHandler(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: {
     subject: string
     category: string
@@ -33,7 +35,7 @@ export async function _submitSupportRequestHandler(
     subject: args.subject,
     category: args.category,
     message: args.message,
-    screenshotFileId: args.screenshotFileId,
+    screenshotFileId: args.screenshotFileId as Id<"_storage"> | undefined,
     status: 'Open',
     createdAt: Date.now(),
   })

@@ -1,27 +1,27 @@
 import { v } from 'convex/values'
+import type { QueryCtx } from './_generated/server'
 import { query } from './_generated/server'
-import type { AnyCtx } from './lib/auth'
 
 // Managed resource types owned by organizers.
 // Instructor and DiveMaster are always independent and are never included.
 const MANAGED_CHILD_TYPES = new Set(['Boat', 'Equipment', 'Pool', 'Compressor'])
 
 export async function _getManagedChildrenHandler(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { parentSlug: string },
 ): Promise<Array<{ childSlug: string; childType: string; childName: string }>> {
   const rows = await ctx.db
     .query('stakeholderHierarchy')
-    .withIndex('by_parentSlug', (q: AnyCtx) => q.eq('parentSlug', args.parentSlug))
+    .withIndex('by_parentSlug', (q) => q.eq('parentSlug', args.parentSlug))
     .collect()
 
-  const managed = rows.filter((r: AnyCtx) => MANAGED_CHILD_TYPES.has(r.childType))
+  const managed = rows.filter((r) => MANAGED_CHILD_TYPES.has(r.childType))
 
   const results: Array<{ childSlug: string; childType: string; childName: string }> = []
   for (const r of managed) {
     const childUser = await ctx.db
       .query('users')
-      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', r.childSlug))
+      .withIndex('by_slug', (q) => q.eq('slug', r.childSlug))
       .unique()
     results.push({
       childSlug: r.childSlug as string,
@@ -43,14 +43,14 @@ export const getManagedParent = query({
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query('stakeholderHierarchy')
-      .withIndex('by_childSlug', (q: AnyCtx) => q.eq('childSlug', args.childSlug))
+      .withIndex('by_childSlug', (q) => q.eq('childSlug', args.childSlug))
       .first()
 
     if (!row) return null
 
     const parentUser = await ctx.db
       .query('users')
-      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', row.parentSlug))
+      .withIndex('by_slug', (q) => q.eq('slug', row.parentSlug))
       .unique()
 
     return {

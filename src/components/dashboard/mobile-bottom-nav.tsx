@@ -23,6 +23,7 @@ export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
         WebkitBackdropFilter: 'blur(var(--glass-blur))',
         borderTop: '1px solid var(--color-glass-border)',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+        willChange: 'transform',
       }}
       aria-label="Main navigation"
     >

@@ -1,7 +1,7 @@
 export interface ResourcePickerEntry {
   slug: string
   name: string
-  city: string
+  placeName: string
   country: string
   languages: string[]
   verified: boolean

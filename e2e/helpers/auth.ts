@@ -103,7 +103,7 @@ export async function signUpFresh(page: Page): Promise<{
     },
     body: JSON.stringify({
       email_address: [email],
-      password: 'TestPassword123!',
+      password: 'DiveDispatch-E2E-Xk9$mQ7!',
       first_name: 'E2E',
       last_name: 'Test',
     }),

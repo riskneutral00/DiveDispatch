@@ -33,8 +33,7 @@ For each closed ticket in the batch, determine the navigable URL(s) by reading t
 - `/account` — Onboarding wizard / account settings
 - `/[roleSlug]/[slug]/dashboard` — Role dashboard with skyline calendar
 - `/directory` — Stakeholder directory
-- `/booking/new` — Booking wizard
-- `/booking/[bookingId]` — Booking detail
+- `/booking/[bookingId]` — Booking detail (creation via dashboard overlay)
 - `/help` — Help page
 - `/[role]/[slug]/settings` — Profile settings (per role)
 
@@ -122,8 +121,7 @@ For dialogs/modals (e.g. booking detail dialog):
 **Suggested route order:**
 1. `/dive-center/n7rq5j/dashboard` — Skyline calendar, dashboard shell, nav
 2. `/directory` — Enhanced directory
-3. `/booking/new` — Booking wizard
-4. `/account` — Onboarding / account page
+3. `/account` — Onboarding / account page
 5. `/help` — Help page
 6. Any role-specific settings pages affected by the batch
 

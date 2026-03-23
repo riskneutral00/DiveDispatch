@@ -3,7 +3,7 @@
 
 import { SeedStakeholder, SeedUser } from './seedData'
 
-const PHUKET = { city: 'Phuket', country: 'Thailand' } as const
+const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 
 const PADI_OW_COURSES = ['Open Water', 'Advanced Open Water', 'Rescue Diver', 'Divemaster']
 const SSI_OW_COURSES = ['Open Water Diver', 'Advanced Adventurer', 'Diver Stress & Rescue', 'Dive Guide']

@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
-import { query } from './_generated/server'
-import { requireAuth, OPERATOR_ROLE_SET, type AnyCtx } from './lib/auth'
+import { type QueryCtx, query } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
+import { requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
 import {
   getResourcesForBooking,
   getBookingIdsForResource,
@@ -158,7 +159,7 @@ const RESOURCE_ROLES = new Set([
  * Avoids N+1 when denormalizing resource names on booking list items.
  */
 export async function buildInstructorNameMap(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   slugs: string[],
 ): Promise<Map<string, string>> {
   const unique = [...new Set(slugs)]
@@ -167,7 +168,7 @@ export async function buildInstructorNameMap(
     unique.map(async (slug) => {
       const user = await ctx.db
         .query('users')
-        .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', slug))
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
         .unique()
       if (user) map.set(slug, user.name as string)
     }),
@@ -190,8 +191,8 @@ function buildCalendarResources(
 }
 
 async function toCalendarBooking(
-  ctx: AnyCtx,
-  b: AnyCtx,
+  ctx: QueryCtx,
+  b: Doc<'bookings'>,
   nameMap: Map<string, string>,
 ): Promise<CalendarBooking> {
   const divers = b.divers as Array<{ name: string }>
@@ -227,7 +228,7 @@ async function toCalendarBooking(
   }
 }
 
-async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[]> {
+async function resolveCallerBookings(ctx: QueryCtx, user: Doc<'users'>): Promise<Doc<'bookings'>[]> {
   const role = user.role as string
 
   // Operator and agent roles: use direct booking indexes
@@ -235,7 +236,8 @@ async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[
   if (operatorConfig) {
     return ctx.db
       .query('bookings')
-      .withIndex(operatorConfig.index, (q: AnyCtx) => q.eq(operatorConfig.field, user.slug))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .withIndex(operatorConfig.index as any, (q: any) => q.eq(operatorConfig.field, user.slug))
       .collect()
   }
 
@@ -243,9 +245,9 @@ async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[
   if (RESOURCE_ROLES.has(role)) {
     const bookingIds = await getBookingIdsForResource(ctx, user.slug as string)
     const bookings = await Promise.all(
-      bookingIds.map((id) => ctx.db.get(id)),
+      bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)),
     )
-    return bookings.filter(Boolean)
+    return bookings.filter(Boolean) as Doc<"bookings">[]
   }
 
   return []
@@ -258,7 +260,7 @@ async function resolveCallerBookings(ctx: AnyCtx, user: AnyCtx): Promise<AnyCtx[
  * Auth: caller slug must match ownerId.
  */
 export async function _listByOwner(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { ownerId: string; ownerType: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
@@ -266,8 +268,8 @@ export async function _listByOwner(
 
   const bookings = await ctx.db
     .query('bookings')
-    .withIndex('by_ownerId_ownerType', (q: AnyCtx) =>
-      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType),
+    .withIndex('by_ownerId_ownerType', (q) =>
+      q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel" | "DiveSite"),
     )
     .collect()
 
@@ -282,7 +284,7 @@ export async function _listByOwner(
     .filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(bookings.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
+  return Promise.all(bookings.map((b) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
@@ -290,13 +292,13 @@ export async function _listByOwner(
  * Scoped to caller via role index — never leaks cross-user data.
  */
 export async function _listByStatus(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { status: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
 
   const allBookings = await resolveCallerBookings(ctx, user)
-  const filtered = allBookings.filter((b: AnyCtx) => b.status === args.status)
+  const filtered = allBookings.filter((b) => b.status === args.status)
 
   const allResources: BookingResource[] = []
   for (const b of filtered) {
@@ -306,7 +308,7 @@ export async function _listByStatus(
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(filtered.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
+  return Promise.all(filtered.map((b) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
@@ -314,7 +316,7 @@ export async function _listByStatus(
  * Auth: caller slug must match resourceId.
  */
 export async function _listByResource(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { resourceId: string; resourceType: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
@@ -322,7 +324,7 @@ export async function _listByResource(
 
   // Query via bookingResources junction table
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
-  const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id)))).filter(Boolean)
+  const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as Doc<"bookings">[]
 
   const allResources: BookingResource[] = []
   for (const b of bookings) {
@@ -332,7 +334,7 @@ export async function _listByResource(
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(bookings.map((b: AnyCtx) => toCalendarBooking(ctx, b, nameMap)))
+  return Promise.all(bookings.map((b) => toCalendarBooking(ctx, b, nameMap)))
 }
 
 /**
@@ -343,7 +345,7 @@ export async function _listByResource(
  * Resource roles additionally query reservations to surface incoming holds.
  */
 export async function _myDashboard(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
 ): Promise<{ bookings: CalendarBooking[]; requests: RequestItem[] }> {
   const { user } = await requireAuth(ctx)
 
@@ -362,17 +364,17 @@ export async function _myDashboard(
 
   // Fetch caller's inventory units upfront (used for both reservationStatus and requests)
   let callerUnitIds = new Set<string>()
-  let inventoryUnits: AnyCtx[] = []
+  let inventoryUnits: Doc<'inventoryUnits'>[] = []
   if (isResourceRole) {
     inventoryUnits = await ctx.db
       .query('inventoryUnits')
-      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
+      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
       .collect()
-    callerUnitIds = new Set(inventoryUnits.map((u: AnyCtx) => u._id as string))
+    callerUnitIds = new Set(inventoryUnits.map((u) => u._id as string))
   }
 
   const filteredBookings = allBookings.filter(
-    (b: AnyCtx) => b.status === 'Draft' || b.status === 'Upcoming' || b.status === 'Completed',
+    (b) => b.status === 'Draft' || b.status === 'Upcoming' || b.status === 'Completed',
   )
 
   // Build calendar bookings, attaching caller's reservation status for resource roles
@@ -383,10 +385,10 @@ export async function _myDashboard(
     if (isResourceRole && callerUnitIds.size > 0) {
       const reservations = await ctx.db
         .query('reservations')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', b._id))
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
         .collect()
       const callerRes = reservations.find(
-        (r: AnyCtx) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== 'Vacated',
+        (r) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== 'Vacated',
       )
       cb.reservationStatus = callerRes?.status as string | undefined
     }
@@ -400,10 +402,10 @@ export async function _myDashboard(
 
     const allPending = (
       await Promise.all(
-        inventoryUnits.map((iu: AnyCtx) =>
+        inventoryUnits.map((iu) =>
           ctx.db
             .query('reservations')
-            .withIndex('by_inventoryUnitId_status', (q: AnyCtx) =>
+            .withIndex('by_inventoryUnitId_status', (q) =>
               q.eq('inventoryUnitId', iu._id).eq('status', 'PendingAcceptance'),
             )
             .collect(),
@@ -412,16 +414,16 @@ export async function _myDashboard(
     ).flat()
 
     const requestItems = await Promise.all(
-      allPending.map(async (res: AnyCtx) => {
-        const booking = await ctx.db.get(res.bookingId as string)
+      allPending.map(async (res) => {
+        const booking = await ctx.db.get(res.bookingId as Id<"bookings">)
         if (!booking) return null
 
         const sessions = await ctx.db
           .query('bookingSessions')
-          .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', res.bookingId))
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', res.bookingId))
           .collect()
 
-        const dates: string[] = [...new Set<string>(sessions.map((s: AnyCtx) => s.date as string))].sort()
+        const dates: string[] = [...new Set<string>(sessions.map((s) => s.date as string))].sort()
 
         return {
           _id: res._id as string,
@@ -446,26 +448,28 @@ export async function _myDashboard(
  * Returns null if the booking does not exist.
  */
 export async function _getBookingDetail(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { bookingId: string },
 ): Promise<BookingDetail | null> {
   const { user } = await requireAuth(ctx)
 
-  const booking = await ctx.db.get(args.bookingId)
+  const bookingId = args.bookingId as Id<"bookings">
+  const booking = await ctx.db.get(bookingId)
   if (!booking) return null
+  const b = booking as Doc<"bookings">
 
   // Allow access if caller owns the booking OR has a reservation on it
-  if (booking.ownerId !== user.slug) {
+  if (b.ownerId !== user.slug) {
     const callerUnits = await ctx.db
       .query('inventoryUnits')
-      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
+      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
       .collect()
-    const callerUnitIds = new Set(callerUnits.map((u: AnyCtx) => u._id))
+    const callerUnitIds = new Set(callerUnits.map((u) => u._id))
     const bookingReservations = await ctx.db
       .query('reservations')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
       .collect()
-    const hasReservation = bookingReservations.some((r: AnyCtx) => callerUnitIds.has(r.inventoryUnitId))
+    const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
     if (!hasReservation) throw new ConvexError({ code: 'FORBIDDEN' })
   }
 
@@ -473,19 +477,19 @@ export async function _getBookingDetail(
   const [sessions, reservations, customerProfiles, auditEntries] = await Promise.all([
     ctx.db
       .query('bookingSessions')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
       .collect(),
     ctx.db
       .query('reservations')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
       .collect(),
     ctx.db
       .query('customerProfiles')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
       .collect(),
     ctx.db
       .query('bookingAuditLog')
-      .withIndex('by_bookingId_timestamp', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId_timestamp', (q) => q.eq('bookingId', bookingId))
       .order('desc')
       .collect(),
   ])
@@ -493,20 +497,20 @@ export async function _getBookingDetail(
   // Build a map of inventoryUnit id → record for display names
   const allIuIds = [
     ...new Set<string>([
-      ...sessions.map((s: AnyCtx) => s.inventoryUnitId as string),
-      ...reservations.map((r: AnyCtx) => r.inventoryUnitId as string),
+      ...sessions.map((s) => s.inventoryUnitId as string),
+      ...reservations.map((r) => r.inventoryUnitId as string),
     ]),
   ]
-  const iuMap = new Map<string, AnyCtx>()
+  const iuMap = new Map<string, Doc<'inventoryUnits'>>()
   await Promise.all(
     allIuIds.map(async (iuId) => {
-      const iu = await ctx.db.get(iuId)
-      if (iu) iuMap.set(iuId, iu)
+      const iu = await ctx.db.get(iuId as Id<"inventoryUnits">)
+      if (iu) iuMap.set(iuId, iu as Doc<"inventoryUnits">)
     }),
   )
 
   // Resolve stakeholders from bookingResources junction table
-  const bookingResourceRows = await getResourcesForBooking(ctx, args.bookingId)
+  const bookingResourceRows = await getResourcesForBooking(ctx, bookingId as string)
 
   const resourceSlugs = bookingResourceRows
     .map((r: BookingResource) => r.resourceSlug)
@@ -517,7 +521,7 @@ export async function _getBookingDetail(
     [...new Set(resourceSlugs)].map(async (slug) => {
       const u = await ctx.db
         .query('users')
-        .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', slug))
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
         .unique()
       if (u) {
         userProfileMap.set(slug, {
@@ -539,7 +543,7 @@ export async function _getBookingDetail(
     if (br.resourceSlug) {
       const profile = userProfileMap.get(br.resourceSlug)
       // Find reservation status for this stakeholder's inventory unit
-      const stakeholderRes = reservations.find((r: AnyCtx) => {
+      const stakeholderRes = reservations.find((r) => {
         const iu = iuMap.get(r.inventoryUnitId as string)
         return (iu?.ownerId as string | undefined) === br.resourceSlug
       })
@@ -571,24 +575,24 @@ export async function _getBookingDetail(
   const compBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Compressor')
 
   return {
-    _id: booking._id as string,
-    ownerId: booking.ownerId as string,
-    ownerType: booking.ownerType as string,
-    status: booking.status as string,
-    activityType: booking.activityType as string[],
-    startDate: booking.startDate as string,
-    endDate: booking.endDate as string,
-    holdTTL: booking.holdTTL as number,
-    expiresAt: booking.expiresAt as number | undefined,
-    createdAt: booking.createdAt as number,
-    divers: booking.divers as BookingDetail['divers'],
-    operatorName: booking.operatorName as string,
-    bookingFormComplete: booking.bookingFormComplete as boolean,
-    customerFormComplete: booking.customerFormComplete as boolean,
-    medicalHardBlock: booking.medicalHardBlock as boolean,
-    portalContact: booking.portalContact as boolean,
-    portalMedical: booking.portalMedical as boolean,
-    portalWaiver: booking.portalWaiver as boolean,
+    _id: b._id as string,
+    ownerId: b.ownerId as string,
+    ownerType: b.ownerType as string,
+    status: b.status as string,
+    activityType: b.activityType as string[],
+    startDate: b.startDate as string,
+    endDate: b.endDate as string,
+    holdTTL: b.holdTTL as number,
+    expiresAt: b.expiresAt as number | undefined,
+    createdAt: b.createdAt as number,
+    divers: b.divers as BookingDetail['divers'],
+    operatorName: b.operatorName as string,
+    bookingFormComplete: b.bookingFormComplete as boolean,
+    customerFormComplete: b.customerFormComplete as boolean,
+    medicalHardBlock: b.medicalHardBlock as boolean,
+    portalContact: b.portalContact as boolean,
+    portalMedical: b.portalMedical as boolean,
+    portalWaiver: b.portalWaiver as boolean,
     instructorId: instructorBR?.resourceSlug as string | undefined,
     boatId: boatBR?.resourceSlug as string | undefined,
     equipmentManagerId: emBR?.resourceSlug as string | undefined,
@@ -609,7 +613,7 @@ export async function _getBookingDetail(
     compressorName: compBR
       ? (compBR.resourceSlug ? nameMap.get(compBR.resourceSlug) : compBR.externalName)
       : undefined,
-    sessions: sessions.map((s: AnyCtx) => ({
+    sessions: sessions.map((s) => ({
       _id: s._id as string,
       date: s.date as string,
       startTime: s.startTime as string,
@@ -620,7 +624,7 @@ export async function _getBookingDetail(
       inventoryUnitName:
         (iuMap.get(s.inventoryUnitId as string)?.displayName as string | undefined) ?? 'Unknown',
     })),
-    reservations: reservations.map((r: AnyCtx) => {
+    reservations: reservations.map((r) => {
       const iu = iuMap.get(r.inventoryUnitId as string)
       const ownerSlug = iu?.ownerId as string | undefined
       return {
@@ -635,7 +639,7 @@ export async function _getBookingDetail(
         stakeholderName: ownerSlug ? (nameMap.get(ownerSlug) ?? ownerSlug) : undefined,
       }
     }),
-    customerProfiles: customerProfiles.map((cp: AnyCtx) => ({
+    customerProfiles: customerProfiles.map((cp) => ({
       _id: cp._id as string,
       submittedAt: cp.submittedAt as number | undefined,
       waiverSignedAt: cp.waiverSignedAt as number | undefined,
@@ -643,7 +647,7 @@ export async function _getBookingDetail(
       physicianClearedAt: cp.physicianClearedAt as number | undefined,
     })),
     stakeholders,
-    auditLog: auditEntries.map((e: AnyCtx) => ({
+    auditLog: auditEntries.map((e) => ({
       _id: e._id as string,
       action: e.action as string,
       actorSlug: e.actorSlug as string,

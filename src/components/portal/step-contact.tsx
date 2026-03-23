@@ -10,7 +10,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
-import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate } from '@/lib/constants/activity-rules'
+import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
@@ -50,18 +50,6 @@ const defaultForm = (): CustomerContactData => ({
   agencyID: '',
   allergies: '',
 })
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Warns if passport expires within 6 months of the reference date (default: today). */
-function isPassportExpiringSoon(dateStr: string, referenceDate?: string): boolean {
-  if (!dateStr) return false
-  const expiry = new Date(dateStr)
-  const ref = referenceDate ? new Date(referenceDate) : new Date()
-  const sixMonthsFromRef = new Date(ref)
-  sixMonthsFromRef.setMonth(sixMonthsFromRef.getMonth() + 6)
-  return expiry <= sixMonthsFromRef
-}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -304,7 +292,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* Personal Information */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionHeading>Personal Information</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
@@ -387,7 +375,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </GlassCard>
 
       {/* Passport / ID */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionHeading>Passport / ID</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
@@ -435,7 +423,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </GlassCard>
 
       {/* Emergency Contact */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionHeading>Emergency Contact</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
@@ -468,7 +456,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {/* Diving Certification (conditional) */}
       {requiresCert && (
-        <GlassCard padding="md" elevated>
+        <GlassCard padding="md">
           <SectionHeading>Diving Certification</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassSelect
@@ -492,7 +480,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       {/* Health Information */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionHeading>Health Information</SectionHeading>
         <div className="flex flex-col gap-1.5">
           <label

@@ -48,7 +48,7 @@ function BannerDisplay({
   return (
     <div
       role="alert"
-      className="glass flex items-start gap-3 px-4 py-3 cursor-pointer"
+      className="glass-container flex items-start gap-3 px-4 py-3 cursor-pointer"
       style={{ border: '1px solid var(--color-warning)' }}
       onClick={() => router.push(settingsHref)}
     >
@@ -91,7 +91,7 @@ function InstructorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/instructor/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/instructor/profile`} slug={slug} />
   )
 }
 
@@ -110,7 +110,7 @@ function DiveMasterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/dive-master/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/dive-master/profile`} slug={slug} />
   )
 }
 
@@ -128,7 +128,7 @@ function DiveCenterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/dive-center/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/dive-center/profile`} slug={slug} />
   )
 }
 
@@ -147,7 +147,7 @@ function AgentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/agent/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/agent/profile`} slug={slug} />
   )
 }
 
@@ -166,7 +166,7 @@ function BoatBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/boat/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/boat/settings`} slug={slug} />
   )
 }
 
@@ -184,7 +184,7 @@ function EquipmentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/equipment/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/equipment/settings`} slug={slug} />
   )
 }
 
@@ -204,7 +204,7 @@ function PoolBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/pool/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/pool/settings`} slug={slug} />
   )
 }
 
@@ -223,7 +223,7 @@ function CompressorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/compressor/${slug}/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/compressor/settings`} slug={slug} />
   )
 }
 

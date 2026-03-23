@@ -2,7 +2,6 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance } from './bookings/_shared'
-import { type AnyCtx } from './lib/auth'
 import { resolvePortalToken } from './lib/portal'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
@@ -35,8 +34,8 @@ export const saveMedicalAnswers = mutation({
     answers: v.record(v.string(), v.union(v.boolean(), v.string())),
   },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string; answers: Record<string, boolean | string> },
+    ctx,
+    args,
   ): Promise<{ medicalHardBlock: boolean }> => {
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
@@ -99,8 +98,8 @@ export const savePortalWaiver = mutation({
     guardianSignatureStorageId: v.optional(v.id('_storage')),
   },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string; signatureStorageId: string; guardianSignatureStorageId?: string },
+    ctx,
+    args,
   ): Promise<void> => {
     const { link, profile } = await resolvePortalToken(ctx, args.token)
 
@@ -140,18 +139,8 @@ export const savePortalEquipment = mutation({
     }),
   },
   handler: async (
-    ctx: AnyCtx,
-    args: {
-      token: string
-      rentalChecklist: {
-        mask: 'own' | 'rent'
-        bcd: 'own' | 'rent'
-        wetsuit: 'own' | 'rent'
-        fins: 'own' | 'rent'
-        regulator: 'own' | 'rent'
-        maskPrescription?: string
-      }
-    },
+    ctx,
+    args,
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
@@ -176,14 +165,8 @@ export const saveSafetyInfo = mutation({
     insurancePolicyNumber: v.optional(v.string()),
   },
   handler: async (
-    ctx: AnyCtx,
-    args: {
-      token: string
-      bloodType?: string
-      allergies?: string
-      medications?: string
-      insurancePolicyNumber?: string
-    },
+    ctx,
+    args,
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
@@ -210,8 +193,8 @@ export const saveSafetyInfo = mutation({
 export const getSafetyInfoByToken = query({
   args: { token: v.string() },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string },
+    ctx,
+    args,
   ): Promise<{
     bloodType: string
     allergies: string
@@ -220,7 +203,7 @@ export const getSafetyInfoByToken = query({
   } | null> => {
     const profile = await ctx.db
       .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
       .unique()
 
     if (!profile) return null
@@ -244,22 +227,22 @@ export const getSafetyInfoByToken = query({
 export const getMedicalByToken = query({
   args: { token: v.string() },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string },
+    ctx,
+    args,
   ): Promise<{
     answers: Record<string, boolean | string>
     physicianClearanceRequired: boolean
   } | null> => {
     const profile = await ctx.db
       .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
       .unique()
 
     if (!profile) return null
 
     return {
       answers: profile.medicalAnswers ?? {},
-      physicianClearanceRequired: profile.physicianClearanceRequired,
+      physicianClearanceRequired: profile.physicianClearanceRequired ?? false,
     }
   },
 })

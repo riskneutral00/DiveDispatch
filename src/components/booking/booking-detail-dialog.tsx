@@ -9,7 +9,7 @@ import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { GlassButton, GlassBadge, GlassDialog, RoleIcon } from '@/components/glass'
+import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog, RoleIcon } from '@/components/glass'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { CancelBookingDialog } from './cancel-booking-dialog'
@@ -247,26 +247,13 @@ function SectionTabs({
   onChange: (id: SectionId) => void
 }) {
   return (
-    <div
-      className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0"
-      style={{ borderBottom: '1px solid var(--color-glass-border)' }}
-    >
-      {SECTIONS.map(({ id, label }) => (
-        <button
-          key={id}
-          onClick={() => onChange(id)}
-          className="px-3 py-1.5 text-xs font-medium rounded-t-md whitespace-nowrap transition-colors"
-          style={{
-            color: active === id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-            background:
-              active === id ? 'var(--color-glass-bg-elevated)' : 'transparent',
-            borderBottom: active === id ? '2px solid var(--color-accent)' : '2px solid transparent',
-          }}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <GlassButtonGroup
+      variant="tabs"
+      value={active}
+      onChange={(v) => onChange(v as SectionId)}
+      options={SECTIONS.map(({ id, label }) => ({ value: id, label }))}
+      aria-label="Booking sections"
+    />
   )
 }
 

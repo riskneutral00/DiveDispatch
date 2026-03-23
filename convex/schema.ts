@@ -1,5 +1,7 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { courseCodeValidator as courseCode } from './shared/courseCodes'
+import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
 
 // ── Typed Unions ────────────────────────────────────────────────────
 
@@ -12,15 +14,6 @@ const operatorType = v.union(
   v.literal('DiveSite'),
 )
 
-const resourceOwnerType = v.union(
-  v.literal('Boat'),
-  v.literal('Equipment'),
-  v.literal('Pool'),
-  v.literal('Compressor'),
-  v.literal('Instructor'),
-  v.literal('Liveaboard'),
-  v.literal('DiveSite'),
-)
 // Liveaboard is a pure operator; DiveSite is a pure resource.
 // DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT added to this union.
 // DiveHostel inherits DiveResort's path — NOT added to this union.
@@ -74,17 +67,6 @@ const venueType = v.union(
 
 const gasMix = v.union(v.literal('air'), v.literal('nitrox'), v.literal('trimix'))
 
-const courseCode = v.union(
-  v.literal('DSD'),
-  v.literal('TRY_DIVE'),
-  v.literal('OW'),
-  v.literal('AOW'),
-  v.literal('RESCUE'),
-  v.literal('DM'),
-  v.literal('FD'),
-  v.literal('REFRESH'),
-  v.literal('SPECIALTY'),
-)
 
 // PrePayRequired and PostPayAllowed behave identically to Auto until Stripe integration. Schema placeholders retained.
 const acceptanceMode = v.union(
@@ -115,9 +97,12 @@ const notificationType = v.union(
   v.literal('booking_updated'),
   v.literal('booking_referred'),
   v.literal('medical_hard_block'),
+  v.literal('medical_cleared'),
   v.literal('physician_clearance_submitted'),
   v.literal('no_backup_available'),
   v.literal('min_pax_not_met'),
+  v.literal('noshow_marked'),
+  v.literal('noshow_reverted'),
 )
 
 // ── Schema ──────────────────────────────────────────────────────────
@@ -134,6 +119,18 @@ export default defineSchema({
     lastName: v.string(),
     nickname: v.optional(v.string()),
     businessName: v.string(),
+    customerLanguages: v.optional(v.array(v.string())),
+    phone: v.optional(v.string()),
+    preferredChannel: v.optional(
+      v.union(
+        v.literal('WhatsApp'),
+        v.literal('LINE'),
+        v.literal('Messenger'),
+        v.literal('WeChat'),
+        v.literal('KakaoTalk'),
+        v.literal('Instagram'),
+      ),
+    ),
     role: stakeholderType,
     isSeeded: v.boolean(),
     preferredLocale: v.string(),
@@ -204,9 +201,11 @@ export default defineSchema({
     bookingFormComplete: v.boolean(),
     customerFormComplete: v.boolean(),
     needsAttention: v.optional(v.boolean()),
+    isDemo: v.optional(v.boolean()),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_status', ['status'])
+    .index('by_status_createdAt', ['status', '_creationTime'])
     .index('by_agentId', ['agentId']),
 
   bookingSessions: defineTable({
@@ -343,6 +342,7 @@ export default defineSchema({
     status: reservationStatus,
     confirmedAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
+    noShowAt: v.optional(v.number()),
     vacatedAt: v.optional(v.number()),
     vacatedBy: v.optional(
       v.union(
@@ -419,8 +419,11 @@ export default defineSchema({
   diveCenters: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
@@ -439,8 +442,11 @@ export default defineSchema({
   instructors: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     credential: v.array(
@@ -458,8 +464,11 @@ export default defineSchema({
   boats: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     fleet: v.array(
@@ -488,8 +497,11 @@ export default defineSchema({
   equipment: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     focusedLanguages: v.array(v.string()),
@@ -500,8 +512,11 @@ export default defineSchema({
   venues: defineTable({
     userId: v.optional(v.id('users')),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     focusedLanguages: v.array(v.string()),
@@ -518,8 +533,11 @@ export default defineSchema({
   compressors: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     gasMixes: v.optional(v.array(gasMix)),
@@ -621,7 +639,7 @@ export default defineSchema({
   agents: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    locations: v.array(v.object({ city: v.string(), country: v.string() })),
+    locations: v.array(v.object({ placeName: v.string(), country: v.string(), lat: v.number(), lng: v.number(), placeId: v.optional(v.string()) })),
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
@@ -635,8 +653,11 @@ export default defineSchema({
   diveMasters: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     credential: v.array(
@@ -655,8 +676,11 @@ export default defineSchema({
   liveaboards: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     focusedLanguages: v.array(v.string()),
@@ -698,8 +722,11 @@ export default defineSchema({
   diveResorts: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     focusedLanguages: v.array(v.string()),
@@ -724,8 +751,11 @@ export default defineSchema({
   diveHostels: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    city: v.string(),
+    placeName: v.string(),
     country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
     bedCount: v.number(),

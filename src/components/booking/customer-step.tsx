@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Plus, Trash2, ChevronDown } from 'lucide-react'
-import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
+import { GlassButton, GlassButtonGroup, GlassCard, GlassInput } from '@/components/glass'
+import type { GlassButtonGroupOption } from '@/components/glass'
 import { LanguagePicker } from '@/components/common/language-picker'
 import { countryCodeToEmoji } from '@/components/common/flag-emoji'
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
@@ -68,7 +69,7 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
       )}
 
       <GlassButton variant="secondary" size="md" onClick={handleAddCustomer} className="w-full">
-        <Plus size={15} />
+        <Plus size={16} />
         Add Customer
       </GlassButton>
     </div>
@@ -138,7 +139,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
     flags.length > 0
 
   return (
-    <GlassCard padding="md" elevated>
+    <GlassCard padding="md">
       <div className="flex flex-col gap-3">
         {/* Full name + remove */}
         <div className="flex items-end gap-2">
@@ -174,29 +175,17 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
             Contact *
           </label>
           <div className="flex gap-2">
-            <div
-              className="inline-flex rounded-[var(--border-radius)] overflow-hidden border flex-shrink-0"
-              style={{ borderColor: 'var(--color-glass-border)' }}
-              role="group"
+            <GlassButtonGroup
+              variant="segment"
+              value={contactType}
+              onChange={(v) => handleContactTypeChange(v as ContactType)}
               aria-label="Contact type"
-            >
-              {(['email', 'whatsapp', 'line'] as ContactType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleContactTypeChange(type)}
-                  className="px-2.5 py-2 text-xs font-medium capitalize transition-all border-l first:border-l-0"
-                  style={{
-                    background: contactType === type ? 'var(--color-accent)' : 'var(--color-glass-bg)',
-                    color: contactType === type ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                    borderColor: 'var(--color-glass-border)',
-                    fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  {type === 'email' ? 'Email' : type === 'whatsapp' ? 'WhatsApp' : 'LINE'}
-                </button>
-              ))}
-            </div>
+              options={[
+                { value: 'email', label: 'Email' },
+                { value: 'whatsapp', label: 'WhatsApp' },
+                { value: 'line', label: 'LINE' },
+              ] satisfies GlassButtonGroupOption[]}
+            />
             <input
               value={getContactValue()}
               onChange={(e) => handleContactValueChange(e.target.value)}

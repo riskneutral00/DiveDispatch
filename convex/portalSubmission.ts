@@ -2,7 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { z } from 'zod'
 import { mutation, query } from './_generated/server'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
-import { type AnyCtx } from './lib/auth'
 import { resolvePortalToken } from './lib/portal'
 import { validateOrThrow } from './lib/validate'
 
@@ -31,8 +30,8 @@ const _medicalAnswersSchema = z.object({
 export const getPortalStatus = query({
   args: { token: v.string() },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string },
+    ctx,
+    args,
   ): Promise<{
     contactComplete: boolean
     medicalComplete: boolean
@@ -45,7 +44,7 @@ export const getPortalStatus = query({
   } | null> => {
     const link = await ctx.db
       .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
+      .withIndex('by_token', (q) => q.eq('token', args.token))
       .unique()
     if (!link) return null
     if (link.expiresAt < Date.now()) return null
@@ -55,7 +54,7 @@ export const getPortalStatus = query({
 
     const profile = await ctx.db
       .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', args.token))
+      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
       .unique()
     if (!profile) return null
 
@@ -84,8 +83,8 @@ export const getPortalStatus = query({
 export const submitPortal = mutation({
   args: { token: v.string() },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string },
+    ctx,
+    args,
   ): Promise<{ medicalHardBlock: boolean }> => {
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
@@ -123,11 +122,11 @@ export const submitPortal = mutation({
         if (medicalHardBlock) {
           const sessions = await ctx.db
             .query('bookingSessions')
-            .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', link.bookingId))
+            .withIndex('by_bookingId', (q) => q.eq('bookingId', link.bookingId))
             .collect()
 
           if (sessions.length > 0) {
-            const earliest = sessions.reduce((min: AnyCtx, s: AnyCtx) =>
+            const earliest = sessions.reduce((min, s) =>
               s.date < min.date ? s : min,
             )
             const newExpiresAt = computeMedicalDeadline(

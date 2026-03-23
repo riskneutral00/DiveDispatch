@@ -541,6 +541,15 @@ describe('declineReservation', () => {
         unitsRequested: 1,
         status: 'PendingAcceptance',
       })
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
       return { bookingId, unitId }
     })
 
@@ -634,6 +643,15 @@ describe('declineReservation', () => {
         unitsRequested: 1,
         status: 'PendingAcceptance',
       })
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
       return { bookingId, unitId }
       // No other inventoryUnits seeded — no alternatives
     })
@@ -706,5 +724,220 @@ describe('declineReservation', () => {
       ),
       'FORBIDDEN',
     )
+  })
+})
+
+// ─── acceptBookingReservations (bulk accept) ─────────────────────────────────
+
+describe('acceptBookingReservations', () => {
+  it('bulk accept: confirms ALL days of a multi-day booking in one call', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId, resIds } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|bulk-inst',
+        slug: 'bulk-instructor',
+        email: 'bulk@test.com',
+        name: 'Bulk Instructor',
+        firstName: 'Bulk',
+        lastName: 'Instructor',
+        businessName: 'Bulk Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc-bulk',
+        slug: 'dc-bulk',
+        email: 'dc-bulk@test.com',
+        name: 'DC Bulk',
+        firstName: 'DC',
+        lastName: 'Bulk',
+        businessName: 'Bulk DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'bulk-instructor',
+        displayName: 'Bulk Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'bulk-instructor',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-bulk',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Bulk DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'bulk-instructor',
+      })
+
+      // 3-day booking: day 5, 6, 7
+      const resIds: string[] = []
+      for (let day = 5; day <= 7; day++) {
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date: testDate(day),
+          startTime: '08:00',
+          endTime: '16:00',
+          timezone: 'Asia/Bangkok',
+        })
+        const resId = await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'PendingAcceptance',
+        })
+        resIds.push(resId)
+      }
+      return { bookingId, unitId, resIds }
+    })
+
+    // Single bulk accept call
+    await t.withIdentity({ tokenIdentifier: 'user|bulk-inst' }).mutation(
+      api.reservationsMutations.acceptBookingReservations,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // All 3 reservations confirmed
+    await t.run(async (ctx) => {
+      for (const resId of resIds) {
+        const res = await ctx.db.get(resId)
+        expect(res?.status).toBe('Confirmed')
+        expect(res?.confirmedAt).toBeDefined()
+        expect(typeof res?.confirmedAt).toBe('number')
+      }
+
+      // Booking should auto-advance to Upcoming (all conditions met)
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+    })
+  })
+
+  it('accept idempotency: accepting already-Confirmed reservations is a no-op, no error', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId, confirmedAt } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|idem-inst',
+        slug: 'idem-instructor',
+        email: 'idem@test.com',
+        name: 'Idem Instructor',
+        firstName: 'Idem',
+        lastName: 'Instructor',
+        businessName: 'Idem Co',
+        role: 'Instructor',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc-idem',
+        slug: 'dc-idem',
+        email: 'dc-idem@test.com',
+        name: 'DC Idem',
+        firstName: 'DC',
+        lastName: 'Idem',
+        businessName: 'Idem DC',
+        role: 'DiveCenter',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'idem-instructor',
+        displayName: 'Idem Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'idem-instructor',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-idem',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(6),
+        divers: [],
+        operatorName: 'Idem DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Instructor' as any,
+        resourceSlug: 'idem-instructor',
+      })
+
+      // Both reservations already Confirmed
+      const confirmedAt = Date.now() - 10000
+      for (let day = 5; day <= 6; day++) {
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date: testDate(day),
+          startTime: '08:00',
+          endTime: '16:00',
+          timezone: 'Asia/Bangkok',
+        })
+        await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'Confirmed',
+          confirmedAt,
+        })
+      }
+      return { bookingId, unitId, confirmedAt }
+    })
+
+    // Second call should not throw — idempotent
+    await t.withIdentity({ tokenIdentifier: 'user|idem-inst' }).mutation(
+      api.reservationsMutations.acceptBookingReservations,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // Reservations still Confirmed, no state change
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId', (q: any) => q.eq('bookingId', bookingId))
+        .collect()
+
+      expect(reservations).toHaveLength(2)
+      for (const res of reservations) {
+        expect(res.status).toBe('Confirmed')
+      }
+    })
   })
 })

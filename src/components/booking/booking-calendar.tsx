@@ -1,12 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
-import { GlassCard } from '@/components/glass'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
 import { getBarBorderColor } from '@/lib/booking/bar-styles'
@@ -15,8 +14,8 @@ import {
   getDaysOfWeek,
   deriveStatus,
   parseDateLocal,
-  toISODateString,
 } from '@/lib/hooks/use-calendar-range'
+import { toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { CalendarBooking } from '../../../convex/bookings'
 
@@ -35,6 +34,8 @@ interface BookingCalendarProps {
   footerAction?: React.ReactNode
   className?: string
 }
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function buildBarLabel(booking: CalendarBooking): string {
   const types = booking.activityType
@@ -62,6 +63,29 @@ export function BookingCalendar({
     useCalendarRange()
 
   const [expanded, setExpanded] = useState(false)
+  const now = useMemo(() => new Date(), [])
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+  const viewYear = range.start.getFullYear()
+  const viewMonth = range.start.getMonth()
+  const [pickerYear, setPickerYear] = useState(viewYear)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  // Sync picker year when range changes
+  useEffect(() => { setPickerYear(viewYear) }, [viewYear])
+
+  // Click-outside dismiss
+  useEffect(() => {
+    if (!expanded) return
+    function handleClick(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setExpanded(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [expanded])
+
   useEffect(() => {
     onRangeChange?.(toISODateString(range.start), toISODateString(range.end))
   }, [range, onRangeChange])
@@ -184,13 +208,10 @@ export function BookingCalendar({
 
   return (
     <div data-testid="booking-calendar" className={`flex flex-col ${className ?? ''}`}>
-      {/* ── Header card ── */}
-      <GlassCard padding="none" hoverable>
-        <div
-          className="px-3 sm:px-5 py-2"
-          style={{ borderBottom: '1px solid var(--color-glass-border)' }}
-        >
-          <div className="flex items-center justify-center gap-3">
+      {/* ── Nav row — standalone island with popover ── */}
+      <div className="flex flex-col items-center py-2" ref={pickerRef}>
+        <div className="relative inline-flex">
+          <div className="glass-container glass-surface transition rounded-lg inline-flex items-center gap-3 px-3 py-1">
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
@@ -224,62 +245,109 @@ export function BookingCalendar({
             </button>
           </div>
 
-          {/* Month/date jump */}
+          {/* ── Month picker popover — true overlay ── */}
           {expanded && (
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-2 pb-1">
-              <label className="flex items-center gap-2 text-sm">
-                <span style={{ color: 'var(--color-text-secondary)' }}>Jump to:</span>
-                <input
-                  type="month"
-                  className="rounded-lg px-2 py-1 text-sm border"
-                  style={{
-                    background: 'var(--color-glass-bg)',
-                    color: 'var(--color-text-primary)',
-                    borderColor: 'var(--color-glass-border)',
-                  }}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const [y, m] = e.target.value.split('-').map(Number)
-                      jumpToDate(new Date(y, m - 1, 1))
-                      setExpanded(false)
-                    }
-                  }}
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => { resetRange(); setExpanded(false) }}
-                className="text-sm hover:underline underline-offset-4"
-                style={{ color: 'var(--color-primary)' }}
-              >
-                Today
-              </button>
+            <div
+              className="absolute z-50 left-1/2 -translate-x-1/2 mt-2 glass-elevated rounded-lg py-3 px-4"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                width: '240px',
+                boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
+              }}
+            >
+              {/* Year nav */}
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  type="button"
+                  onClick={() => { if (pickerYear > currentYear - 1) setPickerYear((y) => y - 1) }}
+                  className={`p-1 rounded transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'}`}
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  aria-label="Previous year"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+                >
+                  {pickerYear}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { if (pickerYear < currentYear + 1) setPickerYear((y) => y + 1) }}
+                  className={`p-1 rounded transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'}`}
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  aria-label="Next year"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+
+              {/* Month grid 4×3 */}
+              <div className="grid grid-cols-4 gap-1">
+                {MONTH_LABELS.map((label, i) => {
+                  const isCurrentMonth = pickerYear === currentYear && i === currentMonth
+                  const isViewMonth = pickerYear === viewYear && i === viewMonth
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        jumpToDate(new Date(pickerYear, i, 1))
+                        setExpanded(false)
+                      }}
+                      className="glass-container glass-surface transition rounded-md py-1.5 text-xs font-medium"
+                      style={{
+                        color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
+                        background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,
+                        fontFamily: 'var(--font-body)',
+                        borderColor: isViewMonth ? 'var(--color-primary)' : undefined,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Today reset */}
+              <div className="flex justify-center mt-3">
+                <button
+                  type="button"
+                  onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
+                  className="text-xs font-medium transition-opacity hover:opacity-80"
+                  style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-body)' }}
+                >
+                  Today
+                </button>
+              </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Day-of-week labels */}
-        <div className="overflow-x-auto">
-          <div className="min-w-[320px]">
-            <div className="grid grid-cols-7">
-              {dayHeaders.map((day, i) => (
-                <div
-                  key={day}
-                  className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest"
-                  style={{
-                    color:
-                      i === todayCol
-                        ? 'var(--color-text-primary)'
-                        : 'var(--color-text-secondary)',
-                  }}
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
+      {/* ── Day-of-week labels — plain, no container, no hover ── */}
+      <div className="overflow-x-auto mt-1">
+        <div className="min-w-[320px]">
+          <div className="grid grid-cols-7">
+            {dayHeaders.map((day, i) => (
+              <div
+                key={day}
+                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest"
+                style={{
+                  color:
+                    i === todayCol
+                      ? 'var(--color-text-primary)'
+                      : 'var(--color-text-secondary)',
+                }}
+              >
+                {day}
+              </div>
+            ))}
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* ── Week rows + inter-week gaps ── */}
       {weeks.map((week, wi) => {
@@ -311,7 +379,7 @@ export function BookingCalendar({
                   <div
                     key={day.dateString}
                     data-testid={`cell-${day.dateString}`}
-                    className={`glass flex flex-col p-1.5 min-h-[56px] rounded-lg ${
+                    className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-lg ${
                       isLocked
                         ? 'cursor-default'
                         : isPast
@@ -320,9 +388,9 @@ export function BookingCalendar({
                     }`}
                     style={{
                       background: isBlocked
-                        ? 'rgba(167, 139, 250, 0.12)'
+                        ? 'var(--color-blocked-bg)'
                         : day.isToday
-                          ? 'rgba(52, 211, 153, 0.08)'
+                          ? 'var(--color-status-active-bg)'
                           : undefined,
                     }}
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
@@ -332,10 +400,10 @@ export function BookingCalendar({
                       className="text-[10px] leading-none mb-1 select-none pointer-events-none"
                       style={{
                         color: isBlocked
-                          ? 'rgba(255,255,255,0.6)'
+                          ? 'var(--color-date-blocked)'
                           : day.isToday
-                            ? 'rgba(52, 211, 153, 0.35)'
-                            : 'color-mix(in srgb, var(--color-text-primary) 18%, transparent)',
+                            ? 'var(--color-status-active)'
+                            : 'var(--color-date-watermark)',
                         fontWeight: day.isToday ? 700 : 500,
                       }}
                     >

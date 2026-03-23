@@ -24,7 +24,6 @@ export const AUTH_ROUTES = {
   account: '/account',
   directory: '/directory',
   help: '/help',
-  bookingNew: '/booking/new',
   bookingById: (id: string) => `/booking/${id}`,
   bookingEdit: (id: string) => `/booking/${id}/edit`,
 } as const
@@ -33,18 +32,18 @@ export const AUTH_ROUTES = {
 
 /**
  * Returns the dashboard URL for a given role and user slug.
- * Pattern: /{roleSlug}/{userSlug}/dashboard
+ * Pattern: /{userSlug}/{roleSlug}/dashboard
  */
 export function dashboardRoute(roleSlug: string, userSlug: string): string {
-  return `/${roleSlug}/${userSlug}/dashboard`
+  return `/${userSlug}/${roleSlug}/dashboard`
 }
 
 /**
  * Returns the settings URL for a given role and user slug.
- * Pattern: /{roleSlug}/{userSlug}/settings
+ * Pattern: /{userSlug}/{roleSlug}/settings
  */
 export function settingsRoute(roleSlug: string, userSlug: string): string {
-  return `/${roleSlug}/${userSlug}/settings`
+  return `/${userSlug}/${roleSlug}/settings`
 }
 
 // ── Per-role route sets ────────────────────────────────────────────────────────

@@ -538,7 +538,7 @@ describe('L9-02: Frontend — getUnavailableUnitIdsForDates', () => {
     }
 
     // Query should return this unit as unavailable
-    const unavailable = await t.query(api.availability.getUnavailableUnitIdsForDates, {
+    const unavailable = await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).query(api.availability.getUnavailableUnitIdsForDates, {
       dates: [testDate(5)],
     })
     expect(unavailable).toContain(unitId)
@@ -572,7 +572,7 @@ describe('L9-02: Frontend — getUnavailableUnitIdsForDates', () => {
         ],
       })
 
-    const unavailable = await t.query(api.availability.getUnavailableUnitIdsForDates, {
+    const unavailable = await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).query(api.availability.getUnavailableUnitIdsForDates, {
       dates: [testDate(5)],
     })
     expect(unavailable).not.toContain(unitId)
@@ -611,13 +611,13 @@ describe('L9-02: Frontend — getUnavailableUnitIdsForDates', () => {
     }
 
     // June 15 → unavailable
-    const unavailableJune15 = await t.query(api.availability.getUnavailableUnitIdsForDates, {
+    const unavailableJune15 = await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).query(api.availability.getUnavailableUnitIdsForDates, {
       dates: [testDate(5)],
     })
     expect(unavailableJune15).toContain(unitId)
 
     // June 16 → still available (no bookings)
-    const unavailableJune16 = await t.query(api.availability.getUnavailableUnitIdsForDates, {
+    const unavailableJune16 = await t.withIdentity({ tokenIdentifier: 'clerk|dc-test' }).query(api.availability.getUnavailableUnitIdsForDates, {
       dates: [testDate(6)],
     })
     expect(unavailableJune16).not.toContain(unitId)

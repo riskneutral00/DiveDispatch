@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
-import { ConvexError } from 'convex/values'
 import { AlertTriangle, Calendar, Users, Send, ChevronLeft } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -12,6 +11,7 @@ import { countryCodeToEmoji } from '@/components/common/flag-emoji'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { deriveActivityType } from '@/lib/booking/wizard-state'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import type { Dispatch } from 'react'
 
 interface ReviewStepProps {
@@ -214,12 +214,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       router.push(isEditMode ? `/booking/${bookingId}` : '/dashboard')
     } catch (err) {
       dispatch({ type: 'SET_SUBMITTING', value: false })
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string }
-        setSubmitError(data.reason ?? data.code ?? 'Submission failed. Please try again.')
-      } else {
-        setSubmitError('An unexpected error occurred. Please try again.')
-      }
+      setSubmitError(parseConvexError(err, 'Submission failed. Please try again.'))
     }
   }
 
@@ -228,7 +223,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
   return (
     <div className="flex flex-col gap-4">
       {/* Customers */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
             <Users size={11} />
@@ -261,7 +256,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       </GlassCard>
 
       {/* Date range + courses */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
             <Calendar size={11} />
@@ -292,7 +287,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
       {/* Days */}
       {days.length > 0 && (
-        <GlassCard padding="md" elevated>
+        <GlassCard padding="md">
           <SectionLabel>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</SectionLabel>
           <div className="flex flex-col gap-1.5">
             {days.map((d, i) => (

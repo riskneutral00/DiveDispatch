@@ -74,7 +74,7 @@ function DevSwitcherInner() {
       // Brief delay lets Convex propagate the tokenIdentifier patch before
       // the new page's queries fire — prevents a transient FORBIDDEN error.
       await new Promise((r) => setTimeout(r, 150))
-      window.location.href = `${config.route}/${result.slug}/dashboard`
+      window.location.href = `/${result.slug}/${config.key}/dashboard`
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'Switch failed — check console'
@@ -116,7 +116,7 @@ function DevSwitcherInner() {
       {/* Panel */}
       {open && (
         <div className="fixed bottom-12 right-4 z-50 w-80">
-          <GlassCard padding="none" elevated className="overflow-hidden">
+          <GlassCard padding="none" className="overflow-hidden">
             <div
               className="px-4 py-2 text-xs font-semibold border-b"
               style={{

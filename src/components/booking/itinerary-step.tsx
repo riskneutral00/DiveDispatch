@@ -196,15 +196,15 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (
-              <button
+              <GlassButton
+                variant="destructive-ghost"
+                size="sm"
                 type="button"
                 onClick={() => dispatch({ type: 'REMOVE_COURSE_ENTRY', customerId, entryId: entry.id })}
-                className="p-2 opacity-50 hover:opacity-100 transition-opacity rounded"
-                style={{ color: 'var(--color-destructive)' }}
-                title="Remove course"
+                aria-label="Remove course"
               >
-                <Trash2 size={13} />
-              </button>
+                <Trash2 size={16} />
+              </GlassButton>
             )}
           </div>
         </div>
@@ -454,15 +454,16 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
             })}
           </div>
 
-          <button
+          <GlassButton
+            variant="ghost"
+            size="sm"
             type="button"
             onClick={() => dispatch({ type: 'ADD_COURSE_ENTRY', customerId: customer.id })}
-            className="flex items-center gap-1 mt-2 text-xs"
-            style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
+            className="mt-2"
           >
-            <Plus size={12} />
+            <Plus size={16} />
             Add activity
-          </button>
+          </GlassButton>
         </div>
       ))}
 

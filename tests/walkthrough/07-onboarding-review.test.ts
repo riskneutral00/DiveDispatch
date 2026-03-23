@@ -2,16 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
+import type { MutationCtx } from '../../convex/_generated/server'
 
 const modules = import.meta.glob('../../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
-
 async function seedUser(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   slug: string,
   overrides: Record<string, unknown> = {},
 ) {

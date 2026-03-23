@@ -38,7 +38,7 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       </div>
 
       {/* Customer list */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <div className="flex items-center gap-1.5 mb-3">
           <Users size={13} style={{ color: 'var(--color-text-secondary)' }} />
           <p
@@ -93,7 +93,7 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       </GlassCard>
 
       {/* Booking summary */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <div className="flex items-center gap-1.5 mb-3">
           <Calendar size={13} style={{ color: 'var(--color-text-secondary)' }} />
           <p

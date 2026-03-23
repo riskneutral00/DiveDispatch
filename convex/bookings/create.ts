@@ -1,8 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
+import type { MutationCtx } from '../_generated/server'
+import type { Id, Doc } from '../_generated/dataModel'
 import {
-  type AnyCtx,
   type SessionInput,
   type SubmitToDraftArgs,
   sessionValidator,
@@ -30,15 +31,15 @@ import { deleteResourcesForBooking, insertBookingResource } from '../bookingReso
  *   Invariant 2: Pooled unit — availableUnits must be ≥ unitsRequested
  *   Invariant 3: Snapshot updates occur in the same mutation as Reservation writes
  */
-export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<string> {
+export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promise<string> {
   // 1. Auth
   const { user } = await requireAuth(ctx)
 
   // 2. Load booking + verify caller owns it
   // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
-  const booking = await ctx.db.get(args.bookingId)
+  const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if ((booking as Doc<"bookings">).ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
   // A resource with externalName (no resourceSlug) is outside the system.
@@ -54,9 +55,9 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   // 4. Blocked dates — reject before touching inventory
   const blockedDateDocs = await ctx.db
     .query('stakeholderBlockedDates')
-    .withIndex('by_ownerSlug_roleType', (q: AnyCtx) => q.eq('ownerSlug', user.slug))
+    .withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', user.slug))
     .collect()
-  const allBlocked = new Set<string>(blockedDateDocs.flatMap((d: AnyCtx) => d.dates as string[]))
+  const allBlocked = new Set<string>(blockedDateDocs.flatMap((d) => d.dates as string[]))
   if (allBlocked.size > 0) {
     for (const session of args.sessions) {
       if (allBlocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
@@ -86,7 +87,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   // 6. Edit mode — vacate existing holds and delete old session rows
   const existingReservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
     .collect()
 
   const isResubmit = existingReservations.length > 0
@@ -95,7 +96,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
     const existingSessions = await ctx.db
       .query('bookingSessions')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
       .collect()
     for (const s of existingSessions) {
       await ctx.db.delete(s._id)
@@ -105,24 +106,15 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   // STEP 1: Read-only pass — build plans or throw CONFLICT (zero writes so far)
   type SessionPlan = {
     session: SessionInput
-    inventoryUnit: {
-      _id: string
-      capacityModel: 'Exclusive' | 'Pooled'
-      totalUnits: number
-      ownerId: string
-    }
-    snapshot: {
-      _id: string
-      availableUnits: number
-      reservedUnits: number
-    } | null
+    inventoryUnit: Doc<"inventoryUnits">
+    snapshot: Doc<"availabilitySnapshots"> | null
     currentAvailable: number
   }
 
   const plans: SessionPlan[] = []
 
   for (const session of args.sessions) {
-    const inventoryUnit = await ctx.db.get(session.inventoryUnitId)
+    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as Doc<"inventoryUnits"> | null
     if (!inventoryUnit) throw new ConvexError({ code: 'NOT_FOUND' })
 
     // External resource — no inventory check or reservation row needed
@@ -133,8 +125,8 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     if (isFullDayResource(inventoryUnit)) {
       const allDaySnapshots = await ctx.db
         .query('availabilitySnapshots')
-        .withIndex('by_inventoryUnitId_date', (q: AnyCtx) =>
-          q.eq('inventoryUnitId', session.inventoryUnitId).eq('date', session.date),
+        .withIndex('by_inventoryUnitId_date', (q) =>
+          q.eq('inventoryUnitId', session.inventoryUnitId as Id<"inventoryUnits">).eq('date', session.date),
         )
         .collect()
       for (const daySnap of allDaySnapshots) {
@@ -145,9 +137,9 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     // Lazy snapshot: if no snapshot exists, treat totalUnits as fully available
     const snapshot = await ctx.db
       .query('availabilitySnapshots')
-      .withIndex('by_inventoryUnitId_date_windowStart', (q: AnyCtx) =>
+      .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
         q
-          .eq('inventoryUnitId', session.inventoryUnitId)
+          .eq('inventoryUnitId', session.inventoryUnitId as Id<"inventoryUnits">)
           .eq('date', session.date)
           .eq('windowStart', session.startTime),
       )
@@ -168,7 +160,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
 
   // STEP 3: No conflicts detected — write everything atomically
   const now = Date.now()
-  const expiresAt = now + (booking.holdTTL as number)
+  const expiresAt = now + ((booking as Doc<"bookings">).holdTTL as number)
 
   for (const { session, inventoryUnit, snapshot, currentAvailable } of plans) {
     const newAvailable = currentAvailable - session.unitsRequested
@@ -182,7 +174,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     } else {
       // Lazy creation: first time this unit+date+window is used
       await ctx.db.insert('availabilitySnapshots', {
-        inventoryUnitId: session.inventoryUnitId,
+        inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
         date: session.date,
         windowStart: session.startTime,
         windowEnd: session.endTime,
@@ -193,8 +185,8 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     }
 
     const sessionId = await ctx.db.insert('bookingSessions', {
-      bookingId: args.bookingId,
-      inventoryUnitId: session.inventoryUnitId,
+      bookingId: args.bookingId as Id<"bookings">,
+      inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       date: session.date,
       startTime: session.startTime,
       endTime: session.endTime,
@@ -206,23 +198,23 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
     // Auto-confirm: stakeholder preference, out-of-system owner, or self-booking
     const prefs = await ctx.db
       .query('stakeholderPreferences')
-      .withIndex('by_stakeholderId', (q: AnyCtx) =>
+      .withIndex('by_stakeholderId', (q) =>
         q.eq('stakeholderId', inventoryUnit.ownerId),
       )
       .unique()
 
     const ownerUser = await ctx.db
       .query('users')
-      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', inventoryUnit.ownerId))
+      .withIndex('by_slug', (q) => q.eq('slug', inventoryUnit.ownerId))
       .unique()
 
-    const isSelfBooking = inventoryUnit.ownerId === booking.ownerId
+    const isSelfBooking = inventoryUnit.ownerId === (booking as Doc<"bookings">).ownerId
     const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? 'Confirmed' : 'PendingAcceptance'
 
     await ctx.db.insert('reservations', {
-      bookingId: args.bookingId,
-      inventoryUnitId: session.inventoryUnitId,
+      bookingId: args.bookingId as Id<"bookings">,
+      inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       bookingSessionId: sessionId,
       unitsRequested: session.unitsRequested,
       status: reservationStatus,
@@ -232,7 +224,7 @@ export async function _handler(ctx: AnyCtx, args: SubmitToDraftArgs): Promise<st
   }
 
   // Mark booking submitted and set TTL window.
-  await ctx.db.patch(args.bookingId, {
+  await ctx.db.patch(args.bookingId as Id<"bookings">, {
     submittedAt: now,
     expiresAt,
     bookingFormComplete: true,

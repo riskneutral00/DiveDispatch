@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import { type MutationCtx, type QueryCtx, mutation, query } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+import { requireAuth, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,12 +35,12 @@ export type BookingLinkInfo = {
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 
 async function requireAuthAndOwnership(
-  ctx: AnyCtx,
+  ctx: DbCtx,
   bookingId: string,
-): Promise<AnyCtx> {
+) {
   const { user } = await requireAuth(ctx)
 
-  const booking = await ctx.db.get(bookingId)
+  const booking = await ctx.db.get(bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
   if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
@@ -53,18 +54,18 @@ async function requireAuthAndOwnership(
  * Auth: caller slug must match booking.ownerId.
  */
 export async function _getByBookingId(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { bookingId: string },
 ): Promise<BookingLinkInfo | null> {
   await requireAuthAndOwnership(ctx, args.bookingId)
 
   const links = await ctx.db
     .query('bookingLinks')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
     .collect()
 
   const now = Date.now()
-  const valid = links.find((l: AnyCtx) => (l.expiresAt as number) > now)
+  const valid = links.find((l) => (l.expiresAt as number) > now)
   if (!valid) return null
 
   return {
@@ -81,7 +82,7 @@ export async function _getByBookingId(
  * Auth: caller slug must match booking.ownerId.
  */
 export async function _createLink(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: { bookingId: string; customerName: string; email: string },
 ): Promise<string> {
   await requireAuthAndOwnership(ctx, args.bookingId)
@@ -89,11 +90,11 @@ export async function _createLink(
   // Return existing valid link rather than creating duplicates
   const links = await ctx.db
     .query('bookingLinks')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
     .collect()
 
   const now = Date.now()
-  const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now && !(l.usedAt))
+  const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))
   if (existing) return existing.token as string
 
   // Create new link — 30-day TTL
@@ -101,7 +102,7 @@ export async function _createLink(
   const expiresAt = now + 30 * 24 * 60 * 60 * 1000
 
   await ctx.db.insert('bookingLinks', {
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<"bookings">,
     token,
     expiresAt,
     customerName: args.customerName,
@@ -118,10 +119,10 @@ export async function _createLink(
 // can redirect/render without wrapping in an error boundary.
 export const getByToken = query({
   args: { token: v.string() },
-  handler: async (ctx: AnyCtx, args: { token: string }): Promise<BookingLinkResult> => {
+  handler: async (ctx, args): Promise<BookingLinkResult> => {
     const link = await ctx.db
       .query('bookingLinks')
-      .withIndex('by_token', (q: AnyCtx) => q.eq('token', args.token))
+      .withIndex('by_token', (q) => q.eq('token', args.token))
       .unique()
 
     if (!link) return { status: 'not_found' }
@@ -196,20 +197,17 @@ export const createBookingLink = mutation({
     customerName: v.string(),
     email: v.string(),
   },
-  handler: async (
-    ctx: AnyCtx,
-    args: { bookingId: string; customerName: string; email: string },
-  ): Promise<string> => {
+  handler: async (ctx, args): Promise<string> => {
     await requireAuthAndOwnership(ctx, args.bookingId)
 
     // Return existing valid link rather than creating duplicates
     const links = await ctx.db
       .query('bookingLinks')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
       .collect()
 
     const now = Date.now()
-    const existing = links.find((l: AnyCtx) => (l.expiresAt as number) > now && !(l.usedAt))
+    const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))
 
     let token: string
     if (existing) {
@@ -231,7 +229,7 @@ export const createBookingLink = mutation({
     // Atomically ensure customerProfile slot exists for this token
     const existingProfile = await ctx.db
       .query('customerProfiles')
-      .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', token))
+      .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
       .unique()
 
     if (!existingProfile) {

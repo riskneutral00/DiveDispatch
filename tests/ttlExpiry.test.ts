@@ -4,7 +4,7 @@ import schema from '../convex/schema'
 import { api, internal } from '../convex/_generated/api'
 import { isSessionEnded, isBookingExpired } from '../convex/bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../convex/lib/portal'
-import { type AnyCtx } from '../convex/lib/auth'
+import type { MutationCtx } from '../convex/_generated/server'
 import { Id } from '../convex/_generated/dataModel'
 import { testDate, testToken } from './helpers/dates'
 
@@ -474,6 +474,324 @@ describe('expireBooking', () => {
       .query(api.bookings.myDashboard)
     expect(result.bookings).toHaveLength(0)
     expect(result.requests).toHaveLength(0)
+  })
+
+  // ── H1: TTL Expiry Lifecycle (QA Hardening) ───────────────────────────────
+
+  it('H1-1: snapshot restoration on expiry — exclusive unit restored to availableUnits: 1', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotId } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-h1-1',
+        displayName: 'Instructor H1-1',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-h1-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId, snapshotId }
+    })
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot!.availableUnits).toBe(1)
+    expect(snapshot!.reservedUnits).toBe(0)
+  })
+
+  it('H1-2: multi-session expiry — ALL 3 snapshots restored atomically', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotIds } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      // Instructor (Exclusive, 1 unit)
+      const instructorUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-h1-2',
+        displayName: 'Instructor H1-2',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-h1-2',
+        ownerType: 'Instructor',
+      })
+
+      // Boat (Pooled, 10 seats)
+      const boatUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-h1-2',
+        displayName: 'Boat H1-2',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: 'boat-h1-2',
+        ownerType: 'Boat',
+      })
+
+      // Pool (Exclusive, 1 unit)
+      const poolUnitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Pool',
+        resourceId: 'pool-h1-2',
+        displayName: 'Pool H1-2',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'pool-h1-2',
+        ownerType: 'Pool',
+      })
+
+      const snapshotIds: Id<'availabilitySnapshots'>[] = []
+
+      // Session 1: Instructor on day 5
+      const sess1 = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: instructorUnitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+      snapshotIds.push(
+        await ctx.db.insert('availabilitySnapshots', {
+          inventoryUnitId: instructorUnitId,
+          date: testDate(5),
+          windowStart: '09:00',
+          windowEnd: '17:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        }),
+      )
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: instructorUnitId,
+        bookingSessionId: sess1,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      // Session 2: Boat on day 6
+      const sess2 = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: boatUnitId,
+        date: testDate(6),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      snapshotIds.push(
+        await ctx.db.insert('availabilitySnapshots', {
+          inventoryUnitId: boatUnitId,
+          date: testDate(6),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 10,
+          reservedUnits: 3,
+          availableUnits: 7,
+        }),
+      )
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: boatUnitId,
+        bookingSessionId: sess2,
+        unitsRequested: 3,
+        status: 'Confirmed',
+      })
+
+      // Session 3: Pool on day 7
+      const sess3 = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: poolUnitId,
+        date: testDate(7),
+        startTime: '10:00',
+        endTime: '12:00',
+        timezone: 'Asia/Bangkok',
+      })
+      snapshotIds.push(
+        await ctx.db.insert('availabilitySnapshots', {
+          inventoryUnitId: poolUnitId,
+          date: testDate(7),
+          windowStart: '10:00',
+          windowEnd: '12:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        }),
+      )
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: poolUnitId,
+        bookingSessionId: sess3,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId, snapshotIds }
+    })
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    // All 3 snapshots restored
+    const [instrSnap, boatSnap, poolSnap] = await t.run(async (ctx) =>
+      Promise.all(snapshotIds.map((id) => ctx.db.get(id))),
+    )
+
+    // Instructor: exclusive, 1 unit restored
+    expect(instrSnap!.availableUnits).toBe(1)
+    expect(instrSnap!.reservedUnits).toBe(0)
+
+    // Boat: pooled, 3 units restored (7 → 10, 3 → 0)
+    expect(boatSnap!.availableUnits).toBe(10)
+    expect(boatSnap!.reservedUnits).toBe(0)
+
+    // Pool: exclusive, 1 unit restored
+    expect(poolSnap!.availableUnits).toBe(1)
+    expect(poolSnap!.reservedUnits).toBe(0)
+
+    // Booking cancelled
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Cancelled')
+  })
+
+  it('H1-3: pooled unit restoration — 2 of 5 boat seats restored on expiry', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotId } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-h1-3',
+        displayName: 'Boat H1-3',
+        capacityModel: 'Pooled',
+        totalUnits: 5,
+        ownerId: 'boat-h1-3',
+        ownerType: 'Boat',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Snapshot: 3 available, 2 reserved (this booking holds 2)
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 5,
+        reservedUnits: 2,
+        availableUnits: 3,
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 2,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId, snapshotId }
+    })
+
+    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot!.availableUnits).toBe(5)
+    expect(snapshot!.reservedUnits).toBe(0)
   })
 
   it('getByToken returns expired for booking past TTL', async () => {
@@ -1159,7 +1477,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
 
 // Shared booking fixture for token invalidation tests
 async function makePortalFixture(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   opts: { usedAt?: number } = {},
 ): Promise<{ bookingId: Id<'bookings'>; token: string; linkId: Id<'bookingLinks'>; profileId: Id<'customerProfiles'> }> {
   const bookingId = await ctx.db.insert('bookings', {

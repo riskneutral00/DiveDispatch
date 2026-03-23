@@ -38,6 +38,8 @@ Working directory: `~/Desktop/DiveDispatch`
 
 Vault path: `~/Desktop/DiveVault/`
 
+> **Important:** DiveVault is outside the project directory. The `Write` and `Edit` tools may fail on external paths. For ALL file operations under `~/Desktop/DiveVault/`, use `Bash` with heredoc writes (`cat <<'EOF' > path`) instead of the Write tool, and `sed -i ''` or full rewrites via Bash instead of the Edit tool.
+
 1. Scan the conversation for vault-worthy items. Categories per the global CLAUDE.md routing table:
 
    | What | Where |

@@ -1,6 +1,8 @@
 import { ConvexError, v } from 'convex/values'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import { requireAuth } from './lib/auth'
 
 type NotificationType =
   | 'hold_placed'
@@ -9,13 +11,16 @@ type NotificationType =
   | 'booking_updated'
   | 'booking_referred'
   | 'medical_hard_block'
+  | 'medical_cleared'
   | 'physician_clearance_submitted'
   | 'no_backup_available'
+  | 'noshow_marked'
+  | 'noshow_reverted'
   | 'min_pax_not_met'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: {
     userId: string
     type: NotificationType
@@ -26,7 +31,7 @@ export async function notify(
   await ctx.db.insert('notifications', {
     userId: args.userId,
     type: args.type,
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<'bookings'> | undefined,
     message: args.message,
     createdAt: Date.now(),
   })
@@ -35,7 +40,7 @@ export async function notify(
 // ─── createNotification ───────────────────────────────────────────────────────
 
 export async function _createNotificationHandler(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: {
     userId: string
     type: NotificationType
@@ -70,17 +75,18 @@ export const createNotification = mutation({
 // ─── markAsRead ───────────────────────────────────────────────────────────────
 
 export async function _markAsReadHandler(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: { notificationId: string },
 ): Promise<void> {
   const { user: caller } = await requireAuth(ctx)
 
-  const notification = await ctx.db.get(args.notificationId)
+  const notifId = args.notificationId as Id<'notifications'>
+  const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })
 
   if (notification.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
-  await ctx.db.patch(args.notificationId, { readAt: Date.now() })
+  await ctx.db.patch(notifId, { readAt: Date.now() })
 }
 
 export const markAsRead = mutation({
@@ -91,17 +97,18 @@ export const markAsRead = mutation({
 // ─── deleteNotification ──────────────────────────────────────────────────────
 
 export async function _deleteNotificationHandler(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: { notificationId: string },
 ): Promise<void> {
   const { user: caller } = await requireAuth(ctx)
 
-  const notification = await ctx.db.get(args.notificationId)
+  const notifId = args.notificationId as Id<'notifications'>
+  const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })
 
   if (notification.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
 
-  await ctx.db.delete(args.notificationId)
+  await ctx.db.delete(notifId)
 }
 
 export const deleteNotification = mutation({
@@ -112,7 +119,7 @@ export const deleteNotification = mutation({
 // ─── clearAll ────────────────────────────────────────────────────────────────
 
 export async function _clearAllHandler(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: { userId: string },
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
@@ -121,7 +128,7 @@ export async function _clearAllHandler(
 
   const all = await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', args.userId))
+    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
     .collect()
 
   for (const n of all) {
@@ -139,15 +146,18 @@ export const clearAll = mutation({
 // ─── getUnreadCount ───────────────────────────────────────────────────────────
 
 export async function _getUnreadCountHandler(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { userId: string },
 ): Promise<number> {
+  const { user: caller } = await requireAuth(ctx)
+  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
   const notifications = await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', args.userId))
+    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
     .collect()
 
-  return notifications.filter((n: AnyCtx) => n.readAt === undefined).length
+  return notifications.filter((n) => n.readAt === undefined).length
 }
 
 export const getUnreadCount = query({
@@ -160,14 +170,17 @@ export const getUnreadCount = query({
 const DEFAULT_LIMIT = 20
 
 export async function _listNotificationsHandler(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
   args: { userId: string; limit?: number },
 ): Promise<unknown[]> {
+  const { user: caller } = await requireAuth(ctx)
+  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
   const limit = args.limit ?? DEFAULT_LIMIT
 
   return await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', args.userId))
+    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
     .order('desc')
     .take(limit)
 }

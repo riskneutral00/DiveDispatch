@@ -2,15 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
+import type { MutationCtx } from '../../convex/_generated/server'
 
 const modules = import.meta.glob('../../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyCtx = any
-
-async function seedUser(ctx: AnyCtx, slug: string) {
+async function seedUser(ctx: MutationCtx, slug: string) {
   return ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -36,7 +34,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity({ tokenIdentifier: 'clerk|dc-assoc' })
       .mutation(api.diveCenters.create, {
         name: 'Assoc Test DC',
-        city: 'Phuket',
+        placeName: 'Phuket',
+        lat: 7.8804,
+        lng: 98.3923,
         country: 'Thailand',
         contactEmail: 'assoc@test.com',
         contactPhone: '+66891234567',
@@ -61,7 +61,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity({ tokenIdentifier: 'clerk|dc-langs' })
       .mutation(api.diveCenters.create, {
         name: 'Languages Test DC',
-        city: 'Koh Tao',
+        placeName: 'Koh Tao',
+        lat: 10.0957,
+        lng: 99.8408,
         country: 'Thailand',
         contactEmail: 'langs@test.com',
         contactPhone: '+66891234568',
@@ -86,7 +88,9 @@ describe('05: onboarding profile step — save mutation', () => {
       .withIdentity({ tokenIdentifier: 'clerk|dc-days' })
       .mutation(api.diveCenters.create, {
         name: 'Days Test DC',
-        city: 'Phuket',
+        placeName: 'Phuket',
+        lat: 7.8804,
+        lng: 98.3923,
         country: 'Thailand',
         contactEmail: 'days@test.com',
         contactPhone: '+66891234569',

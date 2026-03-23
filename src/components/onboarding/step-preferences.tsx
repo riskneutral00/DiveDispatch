@@ -19,7 +19,7 @@ const QUICK_BOOK_OPTIONS = [
   { code: 'SPECIALTY' as const, label: 'Specialty' },
 ]
 
-type CourseCode = 'DSD' | 'TRY_DIVE' | 'OW' | 'AOW' | 'RESCUE' | 'DM' | 'FD' | 'REFRESH' | 'SPECIALTY'
+import { type CourseCode } from '@/lib/constants/course-catalog'
 
 const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel']
 

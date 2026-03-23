@@ -1,6 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
-import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { internal } from './_generated/api'
+import { getAuthUser } from './lib/auth'
+import { checkProfileCompleteness } from './lib/profileCompleteness'
 
 const stakeholderType = v.union(
   v.literal('DiveCenter'),
@@ -33,10 +35,28 @@ async function generateUniqueSlug(db: any): Promise<string> {
 
 // Auth-aware registration. Called from UI after Clerk sign-up + role selection.
 // Idempotent: returns existing user._id if already created.
+const preferredChannelValidator = v.optional(
+  v.union(
+    v.literal('WhatsApp'),
+    v.literal('LINE'),
+    v.literal('Messenger'),
+    v.literal('WeChat'),
+    v.literal('KakaoTalk'),
+    v.literal('Instagram'),
+  ),
+)
+
 export const createUser = mutation({
   args: {
     role: stakeholderType,
-    businessName: v.string(),
+    businessName: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    nickname: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    preferredChannel: preferredChannelValidator,
+    preferredLocale: v.optional(v.string()),
+    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -49,31 +69,61 @@ export const createUser = mutation({
       )
       .unique()
 
+    // Explicit args override Clerk identity values; businessName falls back to Clerk name
+    const identityFirstName =
+      (identity as Record<string, unknown>).givenName as string ?? ''
+    const identityLastName =
+      (identity as Record<string, unknown>).familyName as string ?? ''
+    const firstName = args.firstName ?? identityFirstName
+    const lastName = args.lastName ?? identityLastName
+    const name = identity.name ?? ''
+    const email = identity.email ?? ''
+    const businessName = args.businessName ?? name
+
     if (existing) {
-      await ctx.db.patch(existing._id, { role: args.role, businessName: args.businessName })
+      await ctx.db.patch(existing._id, {
+        role: args.role,
+        businessName,
+        ...(args.firstName !== undefined && { firstName: args.firstName }),
+        ...(args.lastName !== undefined && { lastName: args.lastName }),
+        ...(args.nickname !== undefined && { nickname: args.nickname }),
+        ...(args.phone !== undefined && { phone: args.phone }),
+        ...(args.preferredChannel !== undefined && { preferredChannel: args.preferredChannel }),
+        ...(args.preferredLocale !== undefined && { preferredLocale: args.preferredLocale }),
+        ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
+      })
       return existing._id
     }
 
-    const name = identity.name ?? ''
-    const firstName =
-      (identity as Record<string, unknown>).givenName as string ?? ''
-    const lastName =
-      (identity as Record<string, unknown>).familyName as string ?? ''
-    const email = identity.email ?? ''
-
     const slug = await generateUniqueSlug(ctx.db)
-    return await ctx.db.insert('users', {
+    const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
       slug,
       email,
       name,
       firstName,
       lastName,
-      businessName: args.businessName,
+      ...(args.nickname !== undefined && { nickname: args.nickname }),
+      ...(args.phone !== undefined && { phone: args.phone }),
+      ...(args.preferredChannel !== undefined && { preferredChannel: args.preferredChannel }),
+      businessName,
+      customerLanguages: args.customerLanguages,
       role: args.role,
       isSeeded: false,
-      preferredLocale: 'en',
+      preferredLocale: args.preferredLocale ?? 'en',
     })
+
+    // Schedule demo bookings for operator roles
+    const DEMO_OPERATOR_ROLES = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
+    if (DEMO_OPERATOR_ROLES.has(args.role)) {
+      await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
+        slug,
+        role: args.role,
+        operatorName: businessName,
+      })
+    }
+
+    return userId
   },
 })
 
@@ -118,6 +168,23 @@ export const upsertUser = mutation({
       role: args.role,
       isSeeded: false,
       preferredLocale: 'en',
+    })
+  },
+})
+
+// Patches businessName and customerLanguages during onboarding step 4 (Business Info).
+export const updateBusinessInfo = mutation({
+  args: {
+    businessName: v.string(),
+    customerLanguages: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+
+    await ctx.db.patch(user._id, {
+      businessName: args.businessName,
+      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
     })
   },
 })
@@ -177,7 +244,7 @@ export const byId = query({
 
 
 // Returns the completion percentage and list of incomplete fields for onboarding.
-// Profile fields checked: name, city, country, contactEmail, contactPhone,
+// Profile fields checked: name, placeName, country, contactEmail, contactPhone,
 // role-specific list field (associations / credentials / languages), focusedLanguages/languages.
 // Organizer roles also check: bookingTemplate configured.
 export const getOnboardingStatus = query({
@@ -185,102 +252,7 @@ export const getOnboardingStatus = query({
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
     if (!user) return { percentage: 0, incomplete: ['Profile not created'] }
-
-    const role = user.role
-    const incomplete: string[] = []
-
-    // ── Fetch role-specific profile record ───────────────────────────
-    let profile: Record<string, unknown> | null = null
-    const profileTable = {
-      DiveCenter: 'diveCenters',
-      Agent: 'agents',
-      Instructor: 'instructors',
-      DiveMaster: 'diveMasters',
-      Boat: 'boats',
-      Equipment: 'equipment',
-      Pool: 'venues',
-      Compressor: 'compressors',
-      Liveaboard: 'liveaboards',
-      DiveResort: 'diveResorts',
-      DiveHostel: 'diveHostels',
-      DiveSite: 'venues',
-    } as const
-
-    const table = profileTable[role as keyof typeof profileTable]
-    if (table) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      profile = await (ctx.db as any)
-        .query(table)
-        .withIndex('by_userId', (q: { eq: (f: string, v: unknown) => unknown }) =>
-          q.eq('userId', user._id),
-        )
-        .unique()
-    }
-
-    // ── Core profile fields (common to all roles) ────────────────────
-    const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
-    const arr = (v: unknown) => Array.isArray(v) && v.length > 0
-
-    if (!str(profile?.name)) incomplete.push('Business name')
-    if (role === 'Agent') {
-      const locations = profile?.locations as Array<{ city: string; country: string }> | undefined
-      if (!locations?.[0]?.city) incomplete.push('City')
-      if (!locations?.[0]?.country) incomplete.push('Country')
-    } else {
-      if (!str(profile?.city)) incomplete.push('City')
-      if (!str(profile?.country)) incomplete.push('Country')
-    }
-    if (!str(profile?.contactEmail)) incomplete.push('Contact email')
-    if (!str(profile?.contactPhone)) incomplete.push('Contact phone')
-
-    // ── Role-specific list field ─────────────────────────────────────
-    if (role === 'DiveCenter' || role === 'Agent' || role === 'Liveaboard') {
-      if (!arr(profile?.associations)) incomplete.push('Agency associations')
-    } else if (role === 'Instructor' || role === 'DiveMaster') {
-      if (!arr(profile?.credential)) incomplete.push('Credentials')
-    } else {
-      // Boat, Equipment, Pool, Compressor, DiveResort, DiveHostel, DiveSite
-      // No required list field beyond the common ones
-    }
-
-    // ── Language field ───────────────────────────────────────────────
-    if (role === 'Instructor' || role === 'DiveMaster') {
-      if (!arr(profile?.languages)) incomplete.push('Languages')
-    } else {
-      if (!arr(profile?.focusedLanguages)) incomplete.push('Languages')
-    }
-
-    // ── Quick Book pill (organizers only) ────────────────────────────
-    if (OPERATOR_ROLE_SET.has(role)) {
-      const template = await ctx.db
-        .query('bookingTemplates')
-        .withIndex('by_ownerId_ownerType', (q) =>
-          q.eq('ownerId', user.slug).eq('ownerType', role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'),
-        )
-        .first()
-      if (!template) incomplete.push('Quick Book pill')
-    }
-
-    // ── Preferred instructors (organizers only) ───────────────────────
-    if (OPERATOR_ROLE_SET.has(role)) {
-      const prefs = await ctx.db
-        .query('stakeholderPreferences')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user._id))
-        .unique()
-      if (!prefs?.preferredInstructorSlugs?.length) incomplete.push('Preferred instructors')
-    }
-
-    // ── Calculate total checkpoints for this role ────────────────────
-    const baseCount = 5 // name, city, country, contactEmail, contactPhone
-    const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
-    const hasTemplateSlot = OPERATOR_ROLE_SET.has(role)
-    const hasPreferredInstructors = OPERATOR_ROLE_SET.has(role)
-    const total = baseCount + (hasListField ? 1 : 0) + 1 /* languages */ + (hasTemplateSlot ? 1 : 0) + (hasPreferredInstructors ? 1 : 0)
-    const filled = total - incomplete.length
-    const percentage = Math.round((filled / total) * 100)
-
-    return { percentage, incomplete }
+    return checkProfileCompleteness(ctx, user)
   },
 })
 

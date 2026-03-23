@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useId } from 'react'
+import { useState, useRef, useEffect, useCallback, useId, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { LanguageFlags } from '@/components/common/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
@@ -24,7 +24,7 @@ interface GlassSelectProps {
 
 const DEFAULT_VISIBLE = 2
 
-function OptionRow({
+const OptionRow = memo(function OptionRow({
   opt,
   isSelected,
   isFocused,
@@ -62,7 +62,7 @@ function OptionRow({
       )}
     </li>
   )
-}
+})
 
 function TierSection({
   title,
@@ -256,11 +256,11 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
           ref={listRef}
           role="listbox"
           aria-activedescendant={focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
-          className="glass glass-elevated rounded-lg overflow-auto z-50 py-1"
+          className="glass-container rounded-lg overflow-auto z-50 py-1"
           style={{
             maxHeight: '280px',
             border: '1px solid var(--color-glass-border)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
           }}
         >
           {tiers ? (

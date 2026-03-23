@@ -185,7 +185,7 @@ export function DayRow({
   }
 
   return (
-    <GlassCard padding="sm" elevated>
+    <GlassCard padding="sm">
       {/* Header */}
       <div
         className="flex items-center justify-between pb-2 mb-2 border-b"

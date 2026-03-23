@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import { isUrgentDraft } from '@/lib/utils/booking-urgency'
+import { toISODateString } from '@/lib/utils/date'
 
 // ─── Calendar utility types ────────────────────────────────────────────────────
 
@@ -20,13 +21,6 @@ export type CalendarWeek = CalendarDay[]
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 const MAX_RANGE_DAYS = 4 * 7
-
-export function toISODateString(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 function isTodayDate(date: Date): boolean {
   const now = new Date()

@@ -24,6 +24,7 @@ const OTHER_LANGUAGE_ENTRIES = [
   { code: 'IN', label: 'Hindi' },
   { code: 'MY', label: 'Malay' },
   { code: 'VN', label: 'Vietnamese' },
+  { code: 'MV', label: 'Dhivehi' },
   { code: 'PL', label: 'Polish' },
   { code: 'DK', label: 'Danish' },
   { code: 'FI', label: 'Finnish' },
@@ -112,6 +113,7 @@ const SEARCH_TERMS: Partial<Record<LanguageCode, string>> = {
   CN: 'chinese mandarin simplified',
   TW: 'chinese traditional taiwan',
   HK: 'chinese cantonese hong kong',
+  MV: 'maldives maldivian divehi',
   JM: 'jamaican',
   PH: 'tagalog filipino philippines',
   CY: 'cymraeg uk britain',
@@ -141,31 +143,56 @@ const _labelToCode = new Map<string, string>(
   ALL_LANGUAGES.map((l) => [l.label.toLowerCase(), l.code]),
 )
 
-/** Convert a language name/label to its country code for flag rendering.
- *  Handles both formats: "English" → "GB", "GB" → "GB" (passthrough). */
+// ISO-639 language codes → country codes for backward compatibility
+// Profile forms historically stored ISO-639 ('en', 'th', 'zh'), but the
+// canonical format is country codes ('GB', 'TH', 'CN').
+const ISO_TO_COUNTRY: Record<string, string> = {
+  en: 'GB', th: 'TH', zh: 'CN', yue: 'HK', ja: 'JP', ko: 'KR',
+  fr: 'FR', de: 'DE', ru: 'RU', it: 'IT', es: 'ES', pt: 'BR',
+  nl: 'NL', ar: 'SA', he: 'IL', sv: 'SE', pl: 'PL',
+}
+
+/** Convert a language name/label/code to its country code for flag rendering.
+ *  Handles all formats: "English" → "GB", "GB" → "GB", "en" → "GB". */
 export function languageToCode(input: string): string {
   if (!input) return ''
   const upper = input.toUpperCase()
   if (upper.length === 2 && VALID_LANGUAGE_CODE_SET.has(upper)) return upper
+  const isoHit = ISO_TO_COUNTRY[input.toLowerCase()]
+  if (isoHit) return isoHit
   return _labelToCode.get(input.toLowerCase()) ?? ''
 }
 
-export const POPULAR_LANGUAGE_CODES: LanguageCode[] = [
-  'GB',
-  'FR',
-  'DE',
-  'BR',
-  'ES',
-  'IT',
-  'NL',
-  'NO',
-  'RU',
-  'CN',
-  'HK',
-  'TH',
-  'JP',
-  'KR',
-  'ID',
-  'SA',
-  'IL',
-]
+/** Curated list for profile forms — matches the original 17-language set. */
+export const PROFILE_LANGUAGE_OPTIONS = [
+  { code: 'GB' as LanguageCode, label: 'English' },
+  { code: 'TH' as LanguageCode, label: 'Thai' },
+  { code: 'CN' as LanguageCode, label: 'Mandarin' },
+  { code: 'HK' as LanguageCode, label: 'Cantonese' },
+  { code: 'JP' as LanguageCode, label: 'Japanese' },
+  { code: 'KR' as LanguageCode, label: 'Korean' },
+  { code: 'FR' as LanguageCode, label: 'French' },
+  { code: 'DE' as LanguageCode, label: 'German' },
+  { code: 'RU' as LanguageCode, label: 'Russian' },
+  { code: 'IT' as LanguageCode, label: 'Italian' },
+  { code: 'ES' as LanguageCode, label: 'Spanish' },
+  { code: 'BR' as LanguageCode, label: 'Portuguese' },
+  { code: 'NL' as LanguageCode, label: 'Dutch' },
+  { code: 'SA' as LanguageCode, label: 'Arabic' },
+  { code: 'IL' as LanguageCode, label: 'Hebrew' },
+  { code: 'SE' as LanguageCode, label: 'Swedish' },
+  { code: 'PL' as LanguageCode, label: 'Polish' },
+] as const
+
+/** Row 1: Asian languages (Chinese Simplified leads) */
+export const POPULAR_ROW1_CODES: LanguageCode[] = ['CN', 'TH', 'JP', 'KR', 'ID', 'RU', 'MV', 'VN']
+/** Row 2: European languages (Chinese Traditional leads) */
+export const POPULAR_ROW2_CODES: LanguageCode[] = ['TW', 'GB', 'FR', 'DE', 'ES', 'IT', 'NL', 'NO']
+
+export const POPULAR_LANGUAGE_CODES: LanguageCode[] = [...POPULAR_ROW1_CODES, ...POPULAR_ROW2_CODES]
+
+/** Chinese codes render native script labels instead of flag emoji */
+export const CHINESE_SCRIPT_LABELS: Partial<Record<LanguageCode, string>> = {
+  CN: '简体',
+  TW: '繁體',
+}

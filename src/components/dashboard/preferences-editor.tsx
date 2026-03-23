@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
+import { SettingsTabBar } from '@/components/common/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
@@ -9,7 +10,11 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { PreferredInstructorList } from '@/components/dashboard/preferred-instructor-list'
-import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
+import { PreferredVenueList } from '@/components/dashboard/preferred-venue-list'
+import { PreferredEquipmentList } from '@/components/dashboard/preferred-equipment-list'
+import { PreferredBoatList } from '@/components/dashboard/preferred-boat-list'
+import { PreferredCompressorList } from '@/components/dashboard/preferred-compressor-list'
+import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -34,7 +39,7 @@ const ACCEPTANCE_MODES = [
 
 type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
 
-const ORGANIZER_ROLES_WITH_INSTRUCTOR_PREFS = new Set([
+const ORGANIZER_ROLES = new Set([
   'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite',
 ])
 
@@ -48,6 +53,10 @@ const prefsSchema = z.object({
   confirmOnAccept: z.boolean(),
   confirmOnDecline: z.boolean(),
   preferredInstructorSlugs: z.array(z.string()).optional(),
+  preferredVenueSlugs: z.array(z.string()).optional(),
+  preferredEquipmentSlugs: z.array(z.string()).optional(),
+  preferredBoatSlugs: z.array(z.string()).optional(),
+  preferredCompressorSlugs: z.array(z.string()).optional(),
 })
 
 type PrefsFormData = z.infer<typeof prefsSchema>
@@ -61,6 +70,10 @@ const defaultFormData = (): PrefsFormData => ({
   confirmOnAccept: false,
   confirmOnDecline: false,
   preferredInstructorSlugs: [],
+  preferredVenueSlugs: [],
+  preferredEquipmentSlugs: [],
+  preferredBoatSlugs: [],
+  preferredCompressorSlugs: [],
 })
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -117,6 +130,74 @@ function CheckboxGroup({ label, items, selected, onChange, error }: CheckboxGrou
   )
 }
 
+// ── Coverage Status ──────────────────────────────────────────────────
+
+interface CoverageStatusProps {
+  instructorSlugs: string[]
+  venueSlugs: string[]
+  equipmentSlugs: string[]
+  boatSlugs: string[]
+  compressorSlugs: string[]
+}
+
+function CoverageStatus({
+  instructorSlugs,
+  venueSlugs,
+  equipmentSlugs,
+  boatSlugs,
+  compressorSlugs,
+}: CoverageStatusProps) {
+  // Simplified client-side check: "has at least one" for each resource type.
+  // The detailed capability check (confinedCapable, openWaterCapable, hasCompressor)
+  // happens server-side at booking time via createDraftShell.
+  // A boat satisfies venue needs; a boat or venue with compressor satisfies compressor needs.
+  const hasBoat = boatSlugs.length > 0
+  const checks = [
+    { label: 'Instructor', met: instructorSlugs.length > 0 },
+    { label: 'Equipment Provider', met: equipmentSlugs.length > 0 },
+    { label: 'Venue or Boat', met: venueSlugs.length > 0 || hasBoat },
+    { label: 'Compressor', met: compressorSlugs.length > 0 || hasBoat },
+  ]
+  const allMet = checks.every((c) => c.met)
+
+  return (
+    <GlassCard padding="md">
+      <h2
+        className="text-sm font-semibold uppercase tracking-wider mb-4"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        Booking Readiness
+      </h2>
+      <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        These resources must be configured before you can create bookings.
+        Detailed capability checks happen when you submit a booking.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {checks.map(({ label, met }) => (
+          <div
+            key={label}
+            className="flex items-center gap-2 text-sm px-3 py-2 rounded-[var(--border-radius)]"
+            style={{ background: 'var(--color-glass-bg-elevated)' }}
+          >
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ background: met ? 'var(--color-success)' : 'var(--color-destructive)' }}
+            />
+            <span style={{ color: met ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+      {allMet && (
+        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--color-success)' }}>
+          All coverage requirements met. You can create bookings.
+        </p>
+      )}
+    </GlassCard>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────
 
 export function PreferencesEditor() {
@@ -129,6 +210,7 @@ export function PreferencesEditor() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [activeTab, setActiveTab] = useState('booking')
 
   useEffect(() => {
     if (prefs) {
@@ -140,6 +222,10 @@ export function PreferencesEditor() {
         confirmOnAccept: prefs.confirmOnAccept,
         confirmOnDecline: prefs.confirmOnDecline,
         preferredInstructorSlugs: prefs.preferredInstructorSlugs ?? [],
+        preferredVenueSlugs: prefs.preferredVenueSlugs ?? [],
+        preferredEquipmentSlugs: prefs.preferredEquipmentSlugs ?? [],
+        preferredBoatSlugs: prefs.preferredBoatSlugs ?? [],
+        preferredCompressorSlugs: prefs.preferredCompressorSlugs ?? [],
       })
     }
   }, [prefs])
@@ -192,182 +278,272 @@ export function PreferencesEditor() {
     )
   }
 
-  const showInstructorPrefs = me?.role != null && ORGANIZER_ROLES_WITH_INSTRUCTOR_PREFS.has(me.role)
+  const showResourcePrefs = me?.role != null && ORGANIZER_ROLES.has(me.role)
   const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
+  const tabs = useMemo(() => {
+    const base = [
+      { id: 'booking', label: 'Booking' },
+      { id: 'availability', label: 'Availability' },
+    ]
+    if (showResourcePrefs) base.push({ id: 'resources', label: 'Resources' })
+    return base
+  }, [showResourcePrefs])
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
+    <form onSubmit={handleSubmit} noValidate className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10">
+      <div className="mb-6">
         <h1
           className="text-2xl font-bold mb-1"
           style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
         >
-          Preferences
+          Settings
         </h1>
         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Configure how you handle bookings and availability.
+          Booking behaviour and availability preferences
         </p>
       </div>
 
-      {/* Acceptance Mode */}
-      <GlassCard padding="md" elevated>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Acceptance Mode
-        </h2>
-        <div className="space-y-2">
-          {ACCEPTANCE_MODES.map(({ value, label, description }) => {
-            const checked = form.acceptanceMode === value
-            return (
-              <label
-                key={value}
-                className="flex items-start gap-3 cursor-pointer p-3 rounded-[var(--border-radius)] transition-colors"
-                style={{
-                  background: checked ? 'var(--color-glass-bg-elevated)' : 'transparent',
-                  border: `1px solid ${checked ? 'var(--color-primary)' : 'transparent'}`,
-                }}
+      <SettingsTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+
+      <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="space-y-6">
+
+        {/* ── Booking tab ─────────────────────────────────────────── */}
+        {activeTab === 'booking' && (
+          <>
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
               >
-                <input
-                  type="radio"
-                  name="acceptanceMode"
-                  value={value}
-                  checked={checked}
-                  onChange={() => setField('acceptanceMode', value)}
-                  className="mt-0.5"
-                  style={{ accentColor: 'var(--color-primary)' }}
+                Acceptance Mode
+              </h2>
+              <div className="space-y-2">
+                {ACCEPTANCE_MODES.map(({ value, label, description }) => {
+                  const checked = form.acceptanceMode === value
+                  return (
+                    <label
+                      key={value}
+                      className="flex items-start gap-3 cursor-pointer p-3 rounded-[var(--border-radius)] transition-colors"
+                      style={{
+                        background: checked ? 'var(--color-glass-bg-elevated)' : 'transparent',
+                        border: `1px solid ${checked ? 'var(--color-primary)' : 'transparent'}`,
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="acceptanceMode"
+                        value={value}
+                        checked={checked}
+                        onChange={() => setField('acceptanceMode', value)}
+                        className="mt-0.5"
+                        style={{ accentColor: 'var(--color-primary)' }}
+                      />
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                          {label}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                          {description}
+                        </p>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </GlassCard>
+
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Confirmation Alerts
+              </h2>
+              <div className="space-y-3">
+                {(
+                  [
+                    { key: 'confirmOnAccept', label: 'Notify me when a booking is accepted' },
+                    { key: 'confirmOnDecline', label: 'Notify me when a booking is declined' },
+                  ] as const
+                ).map(({ key, label }) => (
+                  <label
+                    key={key}
+                    className="flex items-center gap-3 cursor-pointer select-none text-sm"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form[key]}
+                      onChange={(e) => setField(key, e.target.checked)}
+                      className="rounded"
+                      style={{ accentColor: 'var(--color-primary)' }}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </GlassCard>
+          </>
+        )}
+
+        {/* ── Availability tab ─────────────────────────────────────── */}
+        {activeTab === 'availability' && (
+          <>
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Availability Limits
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <GlassInput
+                  label="Max hours per day"
+                  type="number"
+                  min={1}
+                  max={16}
+                  value={form.maxHoursPerDay}
+                  onChange={(e) => setField('maxHoursPerDay', Number(e.target.value))}
+                  error={errors.maxHoursPerDay}
                 />
-                <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                    {label}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
-                    {description}
-                  </p>
-                </div>
-              </label>
-            )
-          })}
-        </div>
-      </GlassCard>
+                <GlassInput
+                  label="Post-job block (minutes)"
+                  type="number"
+                  min={0}
+                  max={480}
+                  value={form.postJobBlockDuration}
+                  onChange={(e) => setField('postJobBlockDuration', Number(e.target.value))}
+                  error={errors.postJobBlockDuration}
+                />
+              </div>
+            </GlassCard>
 
-      {/* Availability limits */}
-      <GlassCard padding="md" elevated>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Availability Limits
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassInput
-            label="Max hours per day"
-            type="number"
-            min={1}
-            max={16}
-            value={form.maxHoursPerDay}
-            onChange={(e) => setField('maxHoursPerDay', Number(e.target.value))}
-            error={errors.maxHoursPerDay}
-          />
-          <GlassInput
-            label="Post-job block (minutes)"
-            type="number"
-            min={0}
-            max={480}
-            value={form.postJobBlockDuration}
-            onChange={(e) => setField('postJobBlockDuration', Number(e.target.value))}
-            error={errors.postJobBlockDuration}
-          />
-        </div>
-      </GlassCard>
-
-      {/* Notifications */}
-      <GlassCard padding="md" elevated>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Confirmation Alerts
-        </h2>
-        <div className="space-y-3">
-          {(
-            [
-              { key: 'confirmOnAccept', label: 'Notify me when a booking is accepted' },
-              { key: 'confirmOnDecline', label: 'Notify me when a booking is declined' },
-            ] as const
-          ).map(({ key, label }) => (
-            <label
-              key={key}
-              className="flex items-center gap-3 cursor-pointer select-none text-sm"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              <input
-                type="checkbox"
-                checked={form[key]}
-                onChange={(e) => setField(key, e.target.checked)}
-                className="rounded"
-                style={{ accentColor: 'var(--color-primary)' }}
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Language Preferences
+              </h2>
+              <CheckboxGroup
+                label="Languages you work in"
+                items={langItems}
+                selected={form.commonLanguageCodes}
+                onChange={(values) => setField('commonLanguageCodes', values)}
+                error={errors.commonLanguageCodes}
               />
-              <span>{label}</span>
-            </label>
-          ))}
-        </div>
-      </GlassCard>
+            </GlassCard>
+          </>
+        )}
 
-      {/* Language preferences */}
-      <GlassCard padding="md" elevated>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Language Preferences
-        </h2>
-        <CheckboxGroup
-          label="Languages you work in"
-          items={langItems}
-          selected={form.commonLanguageCodes}
-          onChange={(values) => setField('commonLanguageCodes', values)}
-          error={errors.commonLanguageCodes}
-        />
-      </GlassCard>
+        {/* ── Resources tab (organizer roles only) ─────────────────── */}
+        {activeTab === 'resources' && showResourcePrefs && (
+          <>
+            <CoverageStatus
+              instructorSlugs={form.preferredInstructorSlugs ?? []}
+              venueSlugs={form.preferredVenueSlugs ?? []}
+              equipmentSlugs={form.preferredEquipmentSlugs ?? []}
+              boatSlugs={form.preferredBoatSlugs ?? []}
+              compressorSlugs={form.preferredCompressorSlugs ?? []}
+            />
 
-      {/* Preferred instructors (DiveCenter / Agent only) */}
-      {showInstructorPrefs && (
-        <GlassCard padding="md" elevated>
-          <h2
-            className="text-sm font-semibold uppercase tracking-wider mb-4"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Preferred Instructors
-          </h2>
-          <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            Rank instructors in order of booking priority. The wizard will suggest them first.
-          </p>
-          <PreferredInstructorList
-            slugs={form.preferredInstructorSlugs ?? []}
-            onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
-          />
-        </GlassCard>
-      )}
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Preferred Instructors
+              </h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                Rank instructors in order of booking priority. The wizard will suggest them first.
+              </p>
+              <PreferredInstructorList
+                slugs={form.preferredInstructorSlugs ?? []}
+                onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
+              />
+            </GlassCard>
 
-      {/* Server error */}
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Preferred Venues
+              </h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                Pools and dive sites, ranked by preference. Need at least one confined water and one open water venue (or a boat).
+              </p>
+              <PreferredVenueList
+                slugs={form.preferredVenueSlugs ?? []}
+                onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+              />
+            </GlassCard>
+
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Preferred Equipment Providers
+              </h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                At least one equipment provider is required before creating bookings.
+              </p>
+              <PreferredEquipmentList
+                slugs={form.preferredEquipmentSlugs ?? []}
+                onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
+              />
+            </GlassCard>
+
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Preferred Boats
+              </h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                A boat satisfies both confined and open water venue requirements.
+              </p>
+              <PreferredBoatList
+                slugs={form.preferredBoatSlugs ?? []}
+                onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+              />
+            </GlassCard>
+
+            <GlassCard padding="md">
+              <h2
+                className="text-sm font-semibold uppercase tracking-wider mb-4"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Preferred Compressors
+              </h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                Not required if a preferred boat or venue has a compressor.
+              </p>
+              <PreferredCompressorList
+                slugs={form.preferredCompressorSlugs ?? []}
+                onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
+              />
+            </GlassCard>
+          </>
+        )}
+
+      </div>
+
       {serverError && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
+        <p className="text-sm text-center mt-4" style={{ color: 'var(--color-destructive)' }}>
           {serverError}
         </p>
       )}
-
-      {/* Success */}
       {saved && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>
+        <p className="text-sm text-center mt-4" style={{ color: 'var(--color-success)' }}>
           Preferences saved.
         </p>
       )}
 
-      {/* Submit */}
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <GlassButton
           type="submit"
           variant="primary"
@@ -375,7 +551,7 @@ export function PreferencesEditor() {
           loading={submitting}
           disabled={submitting}
         >
-          Save Preferences
+          Save
         </GlassButton>
       </div>
     </form>

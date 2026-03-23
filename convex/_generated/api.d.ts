@@ -25,6 +25,7 @@ import type * as compressors from "../compressors.js";
 import type * as crons from "../crons.js";
 import type * as customerProfiles from "../customerProfiles.js";
 import type * as customers from "../customers.js";
+import type * as demoBookings from "../demoBookings.js";
 import type * as devSwitcher from "../devSwitcher.js";
 import type * as directory from "../directory.js";
 import type * as diveCenters from "../diveCenters.js";
@@ -37,9 +38,9 @@ import type * as http from "../http.js";
 import type * as instructors from "../instructors.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_portal from "../lib/portal.js";
+import type * as lib_profileCompleteness from "../lib/profileCompleteness.js";
 import type * as lib_validate from "../lib/validate.js";
 import type * as notifications from "../notifications.js";
-import type * as pools from "../pools.js";
 import type * as portalDraft from "../portalDraft.js";
 import type * as portalSubmission from "../portalSubmission.js";
 import type * as reservationsMutations from "../reservationsMutations.js";
@@ -48,12 +49,16 @@ import type * as seed from "../seed.js";
 import type * as seedBookingData from "../seedBookingData.js";
 import type * as seedData from "../seedData.js";
 import type * as seedInstructorData from "../seedInstructorData.js";
+import type * as shared_courseCodes from "../shared/courseCodes.js";
+import type * as shared_languageCodes from "../shared/languageCodes.js";
+import type * as shared_resourceOwnerTypes from "../shared/resourceOwnerTypes.js";
 import type * as stakeholderHierarchy from "../stakeholderHierarchy.js";
 import type * as stakeholderPreferences from "../stakeholderPreferences.js";
 import type * as support from "../support.js";
 import type * as testHelpers from "../testHelpers.js";
 import type * as themes from "../themes.js";
 import type * as users from "../users.js";
+import type * as venues from "../venues.js";
 
 import type {
   ApiFromModules,
@@ -79,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   customerProfiles: typeof customerProfiles;
   customers: typeof customers;
+  demoBookings: typeof demoBookings;
   devSwitcher: typeof devSwitcher;
   directory: typeof directory;
   diveCenters: typeof diveCenters;
@@ -91,9 +97,9 @@ declare const fullApi: ApiFromModules<{
   instructors: typeof instructors;
   "lib/auth": typeof lib_auth;
   "lib/portal": typeof lib_portal;
+  "lib/profileCompleteness": typeof lib_profileCompleteness;
   "lib/validate": typeof lib_validate;
   notifications: typeof notifications;
-  pools: typeof pools;
   portalDraft: typeof portalDraft;
   portalSubmission: typeof portalSubmission;
   reservationsMutations: typeof reservationsMutations;
@@ -102,12 +108,16 @@ declare const fullApi: ApiFromModules<{
   seedBookingData: typeof seedBookingData;
   seedData: typeof seedData;
   seedInstructorData: typeof seedInstructorData;
+  "shared/courseCodes": typeof shared_courseCodes;
+  "shared/languageCodes": typeof shared_languageCodes;
+  "shared/resourceOwnerTypes": typeof shared_resourceOwnerTypes;
   stakeholderHierarchy: typeof stakeholderHierarchy;
   stakeholderPreferences: typeof stakeholderPreferences;
   support: typeof support;
   testHelpers: typeof testHelpers;
   themes: typeof themes;
   users: typeof users;
+  venues: typeof venues;
 }>;
 
 /**

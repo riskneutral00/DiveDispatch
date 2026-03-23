@@ -162,20 +162,8 @@ test.describe('smoke: role dashboards', () => {
 })
 
 // ── Booking wizard ────────────────────────────────────────────────────────────
-
-test.describe('smoke: booking wizard', () => {
-  test('booking wizard page loads', async ({ page }) => {
-    await signInAsDiveCenter(page)
-    await page.goto(AUTH_ROUTES.bookingNew)
-    await expect(page).not.toHaveURL(/sign-in/)
-    // Wait for wizard to initialize — customer step form should appear
-    await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 15_000 })
-    await page.screenshot({
-      path: 'e2e/screenshots/booking/new.png',
-      fullPage: true,
-    })
-  })
-})
+// Booking creation now uses an overlay on the dashboard (booking-overlay.tsx).
+// The /booking/new route was removed. Overlay smoke test lives in walkthrough specs.
 
 // ── Portal ────────────────────────────────────────────────────────────────────
 

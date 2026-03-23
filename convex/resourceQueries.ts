@@ -1,5 +1,8 @@
 import { query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import type { QueryCtx } from './_generated/server'
+import type { Doc, Id } from './_generated/dataModel'
+import { requireAuth } from './lib/auth'
+import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
 
 // ─── Return types ─────────────────────────────────────────────────────────────
 
@@ -46,13 +49,13 @@ export type ConfirmedScheduleItem = {
  * authenticated caller, enriched with booking context. Sorted by creation time
  * descending (newest first) so the most urgent request appears at the top.
  */
-export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[]> {
+export async function _getOpenRequestsHandler(ctx: QueryCtx): Promise<OpenRequest[]> {
   const { user: caller } = await requireAuth(ctx)
 
   const units = await ctx.db
     .query('inventoryUnits')
-    .withIndex('by_ownerId_ownerType', (q: AnyCtx) =>
-      q.eq('ownerId', caller.slug).eq('ownerType', caller.role),
+    .withIndex('by_ownerId_ownerType', (q) =>
+      q.eq('ownerId', caller.slug).eq('ownerType', caller.role as ResourceOwnerType),
     )
     .collect()
 
@@ -62,7 +65,7 @@ export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[
   for (const unit of units) {
     const reservations = await ctx.db
       .query('reservations')
-      .withIndex('by_inventoryUnitId_status', (q: AnyCtx) =>
+      .withIndex('by_inventoryUnitId_status', (q) =>
         q.eq('inventoryUnitId', unit._id).eq('status', 'PendingAcceptance'),
       )
       .collect()
@@ -84,11 +87,18 @@ export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[
     }
   }
 
+  // Batch-fetch all referenced bookings in parallel
+  const uniqueBookingIds = [...new Set([...byBooking.keys()].map(k => k.split('|')[0]))]
+  const bookingDocs = await Promise.all(uniqueBookingIds.map(id => ctx.db.get(id as Id<'bookings'>)))
+  const bookingMap = new Map(
+    bookingDocs.filter(Boolean).map((b) => [b!._id as string, b!]),
+  )
+
   const results: OpenRequest[] = []
 
   for (const [key, { unitId, resIds, units: unitsRequested, createdAt }] of byBooking) {
     const bookingId = key.split('|')[0]
-    const booking = await ctx.db.get(bookingId)
+    const booking = bookingMap.get(bookingId)
     if (!booking) continue
 
     results.push({
@@ -98,10 +108,10 @@ export async function _getOpenRequestsHandler(ctx: AnyCtx): Promise<OpenRequest[
       unitsRequested,
       createdAt,
       activityType: booking.activityType as string[],
-      startDate: booking.startDate as string,
-      endDate: booking.endDate as string,
-      diverCount: (booking.divers as unknown[]).length,
-      operatorName: booking.operatorName as string,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      diverCount: booking.divers.length,
+      operatorName: booking.operatorName,
     })
   }
 
@@ -121,61 +131,81 @@ export const getOpenRequests = query({
  * details. Sorted by earliest session date ascending for calendar display.
  */
 export async function _getConfirmedScheduleHandler(
-  ctx: AnyCtx,
+  ctx: QueryCtx,
 ): Promise<ConfirmedScheduleItem[]> {
   const { user: caller } = await requireAuth(ctx)
 
   const units = await ctx.db
     .query('inventoryUnits')
-    .withIndex('by_ownerId_ownerType', (q: AnyCtx) =>
-      q.eq('ownerId', caller.slug).eq('ownerType', caller.role),
+    .withIndex('by_ownerId_ownerType', (q) =>
+      q.eq('ownerId', caller.slug).eq('ownerType', caller.role as ResourceOwnerType),
     )
     .collect()
 
-  const results: ConfirmedScheduleItem[] = []
-
+  // Collect all confirmed reservations across all units
+  const allReservations: Array<{ unit: Doc<'inventoryUnits'>; reservation: Doc<'reservations'> }> = []
   for (const unit of units) {
     const reservations = await ctx.db
       .query('reservations')
-      .withIndex('by_inventoryUnitId_status', (q: AnyCtx) =>
+      .withIndex('by_inventoryUnitId_status', (q) =>
         q.eq('inventoryUnitId', unit._id).eq('status', 'Confirmed'),
       )
       .collect()
-
     for (const reservation of reservations) {
-      const booking = await ctx.db.get(reservation.bookingId)
-      if (!booking) continue
-
-      const allSessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', reservation.bookingId))
-        .collect()
-
-      const sessions = allSessions
-        .filter((s: AnyCtx) => s.inventoryUnitId === unit._id)
-        .map((s: AnyCtx) => ({
-          sessionId: s._id,
-          date: s.date,
-          startTime: s.startTime,
-          endTime: s.endTime,
-          timezone: s.timezone,
-        }))
-        .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
-
-      results.push({
-        reservationId: reservation._id,
-        inventoryUnitId: unit._id,
-        bookingId: reservation.bookingId,
-        unitsRequested: reservation.unitsRequested,
-        confirmedAt: reservation.confirmedAt,
-        activityType: booking.activityType,
-        startDate: booking.startDate,
-        endDate: booking.endDate,
-        diverCount: booking.divers.length,
-        operatorName: booking.operatorName,
-        sessions,
-      })
+      allReservations.push({ unit, reservation })
     }
+  }
+
+  // Batch-fetch all referenced bookings and sessions in parallel
+  const uniqueBookingIds = [...new Set(allReservations.map(r => r.reservation.bookingId as string))]
+  const [bookingDocs, sessionsByBooking] = await Promise.all([
+    Promise.all(uniqueBookingIds.map(id => ctx.db.get(id as Id<'bookings'>))),
+    Promise.all(
+      uniqueBookingIds.map(id =>
+        ctx.db.query('bookingSessions')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
+          .collect(),
+      ),
+    ),
+  ])
+
+  const bookingMap = new Map(
+    bookingDocs.filter(Boolean).map((b) => [b!._id as string, b!]),
+  )
+  const sessionMap = new Map(
+    uniqueBookingIds.map((id, i) => [id, sessionsByBooking[i]]),
+  )
+
+  const results: ConfirmedScheduleItem[] = []
+
+  for (const { unit, reservation } of allReservations) {
+    const booking = bookingMap.get(reservation.bookingId as string)
+    if (!booking) continue
+
+    const sessions = (sessionMap.get(reservation.bookingId as string) ?? [])
+      .filter((s) => s.inventoryUnitId === unit._id)
+      .map((s) => ({
+        sessionId: s._id,
+        date: s.date,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        timezone: s.timezone,
+      }))
+      .sort((a: { date: string }, b: { date: string }) => a.date.localeCompare(b.date))
+
+    results.push({
+      reservationId: reservation._id,
+      inventoryUnitId: unit._id,
+      bookingId: reservation.bookingId,
+      unitsRequested: reservation.unitsRequested,
+      confirmedAt: reservation.confirmedAt,
+      activityType: booking.activityType,
+      startDate: booking.startDate,
+      endDate: booking.endDate,
+      diverCount: booking.divers.length,
+      operatorName: booking.operatorName,
+      sessions,
+    })
   }
 
   return results.sort((a, b) => {

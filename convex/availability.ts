@@ -1,16 +1,11 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
-import { releaseBookingReservations, isFullDayResource } from './bookings/_shared'
+import { requireAuth, type DbCtx } from './lib/auth'
+import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } from './bookings/_shared'
 
-type ResourceOwnerType =
-  | 'Boat'
-  | 'Equipment'
-  | 'Pool'
-  | 'Compressor'
-  | 'Instructor'
-  | 'Liveaboard'
-  | 'DiveSite'
+import { type ResourceOwnerType, resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
 
 export type InventoryListItem = {
   id: string
@@ -30,17 +25,24 @@ export type InventoryListItem = {
  * Privacy invariant: exposes only availableUnits count — never booking owner.
  */
 export async function _getUnavailableUnitIdsForDates(
-  ctx: AnyCtx,
+  ctx: DbCtx,
   dates: string[],
 ): Promise<Set<string>> {
   const unavailable = new Set<string>()
 
-  for (const date of dates) {
-    const snapshots = await ctx.db
-      .query('availabilitySnapshots')
-      .filter((q: AnyCtx) => q.eq(q.field('date'), date))
-      .collect()
+  // Fetch all snapshots for the date range using by_date index
+  const allSnapshots = await Promise.all(
+    dates.map((date) =>
+      ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_date', (q) => q.eq('date', date))
+        .collect(),
+    ),
+  )
 
+  // Collect unit IDs that need full-day checks
+  const needsFullDayCheck = new Set<string>()
+  for (const snapshots of allSnapshots) {
     for (const snap of snapshots) {
       if (unavailable.has(snap.inventoryUnitId)) continue
 
@@ -49,13 +51,19 @@ export async function _getUnavailableUnitIdsForDates(
         continue
       }
 
-      // Full-day resources are unavailable for the entire date as soon as any
-      // reservation exists — even if some capacity technically remains.
       if (snap.reservedUnits > 0) {
-        const unit = await ctx.db.get(snap.inventoryUnitId)
-        if (unit && isFullDayResource(unit)) {
-          unavailable.add(snap.inventoryUnitId)
-        }
+        needsFullDayCheck.add(snap.inventoryUnitId)
+      }
+    }
+  }
+
+  // Batch-load units that need full-day resource check
+  if (needsFullDayCheck.size > 0) {
+    const unitIds = [...needsFullDayCheck].filter((id) => !unavailable.has(id))
+    const units = await Promise.all(unitIds.map((id) => ctx.db.get(id as Id<"inventoryUnits">)))
+    for (const unit of units) {
+      if (unit && isFullDayResource(unit as { resourceType: string; boatType?: string })) {
+        unavailable.add(unit._id as string)
       }
     }
   }
@@ -74,7 +82,7 @@ export async function _getUnavailableUnitIdsForDates(
  * Privacy invariant: exposes only capacity counts — never booking owner.
  */
 export async function _getCapacityForDates(
-  ctx: AnyCtx,
+  ctx: DbCtx,
   dates: string[],
 ): Promise<Record<string, Record<string, { available: number; total: number }>>> {
   if (dates.length === 0) return {}
@@ -86,24 +94,24 @@ export async function _getCapacityForDates(
   // Build result with defaults (full capacity for every unit on every date)
   const result: Record<string, Record<string, { available: number; total: number }>> = {}
   for (const unit of allUnits) {
-    const unitId = unit._id as string
+    const unitId = unit._id
     result[unitId] = {}
     for (const date of dates) {
       result[unitId][date] = { available: unit.totalUnits, total: unit.totalUnits }
     }
   }
 
-  // Override with actual snapshot data
+  // Override with actual snapshot data (using by_date index)
   for (const date of dates) {
     const snapshots = await ctx.db
       .query('availabilitySnapshots')
-      .filter((q: AnyCtx) => q.eq(q.field('date'), date))
+      .withIndex('by_date', (q) => q.eq('date', date))
       .collect()
 
     // Group snapshots by unit — take minimum available across time windows
     const unitMinAvailable = new Map<string, number>()
     for (const snap of snapshots) {
-      const unitId = snap.inventoryUnitId as string
+      const unitId = snap.inventoryUnitId
       const current = unitMinAvailable.get(unitId)
       if (current === undefined || snap.availableUnits < current) {
         unitMinAvailable.set(unitId, snap.availableUnits)
@@ -127,36 +135,39 @@ export async function _getCapacityForDates(
  * Privacy invariant: does not expose booking or reservation data.
  */
 export async function _listInventoryByType(
-  ctx: AnyCtx,
+  ctx: DbCtx,
   args: { type: ResourceOwnerType; ownerSlug?: string },
 ): Promise<InventoryListItem[]> {
   let units = await ctx.db
     .query('inventoryUnits')
-    .withIndex('by_resourceType', (q: AnyCtx) => q.eq('resourceType', args.type))
+    .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
     .collect()
 
   if (args.ownerSlug !== undefined) {
-    units = units.filter((u: AnyCtx) => u.ownerId === args.ownerSlug)
+    units = units.filter((u) => u.ownerId === args.ownerSlug)
   }
 
-  const results: InventoryListItem[] = []
+  // Batch-fetch all unique owners in parallel
+  const uniqueOwnerIds = [...new Set(units.map((u) => u.ownerId as string))]
+  const ownerDocs = await Promise.all(
+    uniqueOwnerIds.map(slug =>
+      ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).first(),
+    ),
+  )
+  const ownerMap = new Map(
+    uniqueOwnerIds.map((slug, i) => [slug, ownerDocs[i]]),
+  )
 
-  for (const unit of units) {
-    const owner = await ctx.db
-      .query('users')
-      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', unit.ownerId))
-      .first()
-
-    results.push({
+  return units.map((unit) => {
+    const owner = ownerMap.get(unit.ownerId as string)
+    return {
       id: unit._id,
       name: unit.displayName,
       type: unit.resourceType as ResourceOwnerType,
       ownerId: unit.ownerId,
       ownerName: owner?.businessName ?? unit.displayName,
-    })
-  }
-
-  return results
+    }
+  })
 }
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -170,7 +181,7 @@ export const getBlockedDatesForStakeholder = query({
   handler: async (ctx, args): Promise<string[]> => {
     const doc = await ctx.db
       .query('stakeholderBlockedDates')
-      .withIndex('by_ownerSlug_roleType', (q: AnyCtx) =>
+      .withIndex('by_ownerSlug_roleType', (q) =>
         q.eq('ownerSlug', args.ownerSlug).eq('roleType', args.roleType),
       )
       .unique()
@@ -185,6 +196,7 @@ export const getBlockedDatesForStakeholder = query({
 export const getUnavailableUnitIdsForDates = query({
   args: { dates: v.array(v.string()) },
   handler: async (ctx, args): Promise<string[]> => {
+    await requireAuth(ctx)
     const set = await _getUnavailableUnitIdsForDates(ctx, args.dates)
     return Array.from(set)
   },
@@ -197,6 +209,7 @@ export const getUnavailableUnitIdsForDates = query({
 export const getCapacityForDates = query({
   args: { dates: v.array(v.string()) },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
     return _getCapacityForDates(ctx, args.dates)
   },
 })
@@ -216,14 +229,14 @@ function effectiveResourceType(roleType: string): string {
  * Auto-decline loop is scoped to inventory units matching the role's resourceType.
  */
 export async function _toggleBlockedDate(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: { date: string; roleType: string },
 ): Promise<boolean> {
   const { user } = await requireAuth(ctx)
 
   const existing = await ctx.db
     .query('stakeholderBlockedDates')
-    .withIndex('by_ownerSlug_roleType', (q: AnyCtx) =>
+    .withIndex('by_ownerSlug_roleType', (q) =>
       q.eq('ownerSlug', user.slug).eq('roleType', args.roleType),
     )
     .unique()
@@ -251,22 +264,50 @@ export async function _toggleBlockedDate(
       })
     }
 
-    // Auto-decline pending reservations on this date — scoped to this role's resourceType
+    // Gate: reject if any Confirmed reservations exist on this date for caller's units
     const resourceType = effectiveResourceType(args.roleType)
     const allUnits = await ctx.db
       .query('inventoryUnits')
-      .withIndex('by_ownerId_ownerType', (q: AnyCtx) => q.eq('ownerId', user.slug))
+      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
       .collect()
 
-    const units = allUnits.filter((u: AnyCtx) => u.resourceType === resourceType)
+    const units = allUnits.filter((u) => u.resourceType === resourceType)
 
+    // First pass: check for Confirmed reservations — block the entire operation if any exist
+    for (const unit of units) {
+      const sessions = await ctx.db
+        .query('bookingSessions')
+        .withIndex('by_inventoryUnitId_date', (q) =>
+          q.eq('inventoryUnitId', unit._id).eq('date', args.date),
+        )
+        .collect()
+
+      for (const session of sessions) {
+        const confirmed = await ctx.db
+          .query('reservations')
+          .withIndex('by_inventoryUnitId_status', (q) =>
+            q.eq('inventoryUnitId', unit._id).eq('status', 'Confirmed'),
+          )
+          .filter((q) => q.eq(q.field('bookingSessionId'), session._id))
+          .collect()
+
+        if (confirmed.length > 0) {
+          throw new ConvexError({
+            code: 'CONFIRMED_RESERVATION_EXISTS' as const,
+            message: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
+          })
+        }
+      }
+    }
+
+    // Second pass: vacate PendingAcceptance reservations (safe — no Confirmed exist)
     const now = Date.now()
     const affectedBookingIds = new Set<string>()
 
     for (const unit of units) {
       const sessions = await ctx.db
         .query('bookingSessions')
-        .withIndex('by_inventoryUnitId_date', (q: AnyCtx) =>
+        .withIndex('by_inventoryUnitId_date', (q) =>
           q.eq('inventoryUnitId', unit._id).eq('date', args.date),
         )
         .collect()
@@ -276,10 +317,10 @@ export async function _toggleBlockedDate(
 
         const pending = await ctx.db
           .query('reservations')
-          .withIndex('by_inventoryUnitId_status', (q: AnyCtx) =>
+          .withIndex('by_inventoryUnitId_status', (q) =>
             q.eq('inventoryUnitId', unit._id).eq('status', 'PendingAcceptance'),
           )
-          .filter((q: AnyCtx) => q.eq(q.field('bookingSessionId'), session._id))
+          .filter((q) => q.eq(q.field('bookingSessionId'), session._id))
           .collect()
 
         for (const reservation of pending) {
@@ -292,7 +333,7 @@ export async function _toggleBlockedDate(
           // Restore snapshot (Invariant 3: same mutation as reservation write)
           const snapshot = await ctx.db
             .query('availabilitySnapshots')
-            .withIndex('by_inventoryUnitId_date_windowStart', (q: AnyCtx) =>
+            .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
               q
                 .eq('inventoryUnitId', unit._id)
                 .eq('date', session.date)
@@ -306,10 +347,7 @@ export async function _toggleBlockedDate(
             )
           }
 
-          await ctx.db.patch(snapshot._id, {
-            availableUnits: snapshot.availableUnits + reservation.unitsRequested,
-            reservedUnits: Math.max(0, snapshot.reservedUnits - reservation.unitsRequested),
-          })
+          await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, reservation.unitsRequested)
         }
       }
     }
@@ -318,11 +356,11 @@ export async function _toggleBlockedDate(
     // The booking survives — only the instructor's reservation was vacated (above).
     // The DC operator will see the booking as needing attention.
     for (const bookingId of affectedBookingIds) {
-      const booking = await ctx.db.get(bookingId)
-      if (!booking || booking.status !== 'Draft') continue
+      const booking = await ctx.db.get(bookingId as Id<"bookings">)
+      if (!booking || (booking as { status: string }).status !== 'Draft') continue
 
       // Mark booking as needing attention (instructor declined)
-      await ctx.db.patch(bookingId, { needsAttention: true })
+      await ctx.db.patch(bookingId as Id<"bookings">, { needsAttention: true })
     }
 
     return true
@@ -340,15 +378,7 @@ export const toggleBlockedDate = mutation({
  */
 export const listInventoryByType = query({
   args: {
-    type: v.union(
-      v.literal('Boat'),
-      v.literal('Equipment'),
-      v.literal('Pool'),
-      v.literal('Compressor'),
-      v.literal('Instructor'),
-      v.literal('Liveaboard'),
-      v.literal('DiveSite'),
-    ),
+    type: resourceOwnerTypeValidator,
     ownerSlug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

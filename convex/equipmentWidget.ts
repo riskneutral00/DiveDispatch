@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
+import type { Id, Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import { requireAuth } from './lib/auth'
 import { getBookingIdsForResourceType } from './bookingResources'
 
 // ── Return types ───────────────────────────────────────────────────────────────
@@ -95,45 +96,46 @@ export const getDiverEquipmentData = query({
     const { user } = await requireAuth(ctx)
 
     // EM profile (manufacturersByGearType preference)
-    const emProfile = await (ctx as AnyCtx).db
+    const emProfile = await ctx.db
       .query('equipment')
-      .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
     if (!emProfile) return null
 
     // Bookings for this EM via bookingResources junction table
     const bookingIds = await getBookingIdsForResourceType(ctx, 'Equipment', user.slug as string)
     const allBookings = (await Promise.all(
-      bookingIds.map((id: string) => (ctx as AnyCtx).db.get(id)),
-    )).filter(Boolean)
+      bookingIds.map((id: string) => ctx.db.get(id as Id<'bookings'>)),
+    )).filter(Boolean) as Doc<'bookings'>[]
 
     const bookingsInRange = allBookings.filter(
-      (b: AnyCtx) =>
-        b.startDate <= args.dateRangeEnd && b.endDate >= args.dateRangeStart,
+      (b) =>
+        b!.startDate <= args.dateRangeEnd && b!.endDate >= args.dateRangeStart,
     )
 
     // Build booking rows
     const bookingRows: BookingRow[] = []
     for (const booking of bookingsInRange) {
+      if (!booking) continue
       // Bags for this booking (sorted by bagNumber for positional diver mapping)
-      const bags: AnyCtx[] = await (ctx as AnyCtx).db
+      const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
         .collect()
       const sortedBags = [...bags].sort((a, b) =>
         String(a.bagNumber).localeCompare(String(b.bagNumber)),
       )
 
       // Fetch customer profiles in parallel
-      const profileIds: AnyCtx[] = booking.customerProfileIds ?? []
-      const profiles: AnyCtx[] = await Promise.all(
-        profileIds.map((id: AnyCtx) => (ctx as AnyCtx).db.get(id)),
+      const profileIds = booking.customerProfileIds ?? []
+      const profiles = await Promise.all(
+        profileIds.map((id) => ctx.db.get(id)),
       )
 
       const diverRows: DiverRow[] = []
       for (let i = 0; i < booking.divers.length; i++) {
         const diver = booking.divers[i]
-        const profile: AnyCtx = profiles[i] ?? null
+        const profile = profiles[i] ?? null
 
         let heightCm: number | undefined
         let weightKg: number | undefined
@@ -146,7 +148,7 @@ export const getDiverEquipmentData = query({
         if (profile) {
           rentalChecklist = profile.rentalChecklist as RentalChecklist | undefined
           if (profile.customerId) {
-            const customer: AnyCtx = await (ctx as AnyCtx).db.get(profile.customerId)
+            const customer = await ctx.db.get(profile.customerId)
             if (customer) {
               heightCm = customer.heightCm
               weightKg = customer.weightKg
@@ -202,12 +204,12 @@ export const getDiverEquipmentData = query({
 
     let gearSizingEntries: GearSizingRow[] = []
     if (preferredManufacturers.size > 0) {
-      const allEntries: AnyCtx[] = await (ctx as AnyCtx).db
+      const allEntries = await ctx.db
         .query('gearSizingLookup')
         .collect()
       gearSizingEntries = allEntries
-        .filter((e: AnyCtx) => preferredManufacturers.has(e.manufacturer))
-        .map((e: AnyCtx) => ({
+        .filter((e) => preferredManufacturers.has(e.manufacturer))
+        .map((e) => ({
           manufacturer: e.manufacturer,
           gearType: e.gearType,
           size: e.size,
@@ -221,16 +223,16 @@ export const getDiverEquipmentData = query({
     }
 
     // Equipment inventory with totalUnits from linked inventoryUnits
-    const inventoryRecords: AnyCtx[] = await (ctx as AnyCtx).db
+    const inventoryRecords = await ctx.db
       .query('equipmentInventory')
-      .withIndex('by_equipmentManagerId', (q: AnyCtx) =>
+      .withIndex('by_equipmentManagerId', (q) =>
         q.eq('equipmentManagerId', user.slug),
       )
       .collect()
 
     const inventory: GearInventoryItem[] = []
     for (const inv of inventoryRecords) {
-      const unit: AnyCtx = await (ctx as AnyCtx).db.get(inv.inventoryUnitId)
+      const unit = await ctx.db.get(inv.inventoryUnitId)
       inventory.push({
         gearType: inv.gearType,
         manufacturer: inv.manufacturer,
@@ -262,13 +264,13 @@ export const markBagPickedUp = mutation({
   args: { bagId: v.id('equipmentBags') },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
-    const bag = await (ctx as AnyCtx).db.get(args.bagId)
+    const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: 'NOT_FOUND' })
     if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
     if (bag.status !== 'Assigned') {
       throw new ConvexError({ code: 'INVALID_STATE', reason: 'Bag must be Assigned to mark as picked up' })
     }
-    await (ctx as AnyCtx).db.patch(args.bagId, { status: 'InUse' })
+    await ctx.db.patch(args.bagId, { status: 'InUse' })
   },
 })
 
@@ -280,12 +282,12 @@ export const markBagReturned = mutation({
   args: { bagId: v.id('equipmentBags') },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
-    const bag = await (ctx as AnyCtx).db.get(args.bagId)
+    const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: 'NOT_FOUND' })
     if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
     if (bag.status !== 'InUse') {
       throw new ConvexError({ code: 'INVALID_STATE', reason: 'Bag must be InUse to mark as returned' })
     }
-    await (ctx as AnyCtx).db.patch(args.bagId, { status: 'Returned', returnedAt: Date.now() })
+    await ctx.db.patch(args.bagId, { status: 'Returned', returnedAt: Date.now() })
   },
 })

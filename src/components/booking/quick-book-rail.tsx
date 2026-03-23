@@ -1,5 +1,9 @@
 'use client'
 
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { GlassTooltip } from '@/components/glass/glass-tooltip'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -24,45 +28,74 @@ const COURSE_TEMPLATES: QuickBookTemplate[] = [
   { id: 'fd', label: 'FD', courses: ['FD'] },
 ]
 
+const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all focus:outline-none focus-visible:ring-2'
+
 const PILL_STYLE: React.CSSProperties = {
   fontSize: '12px',
   color: 'var(--color-text-primary)',
-  background: 'rgba(232,120,106,0.06)',
-  border: '2px solid rgba(232,120,106,0.20)',
+  background: 'var(--color-primary-glow)',
+  border: '2px solid var(--color-glass-border-hover)',
 }
 
 const ACCENT_PILL_STYLE: React.CSSProperties = {
   fontSize: '12px',
   color: 'var(--color-accent)',
-  background: 'rgba(240,184,102,0.08)',
+  background: 'var(--color-glass-bg)',
   border: '1px solid var(--color-accent)',
 }
+
+const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
+
+const TOOLTIP_LABEL = 'Complete your profile to create bookings'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function QuickBookRail({ onSelect }: QuickBookRailProps) {
+  const { user, isLoading } = useCurrentUser()
+  const onboardingStatus = useQuery(api.users.getOnboardingStatus)
+  const canBook = !isLoading && onboardingStatus?.percentage === 100
+
   return (
     <div className="flex items-center gap-1.5">
-      {COURSE_TEMPLATES.map((template) => (
-        <button
-          key={template.id}
-          type="button"
-          className="rounded-full px-3 py-1 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105 focus:outline-none focus-visible:ring-2"
-          style={PILL_STYLE}
-          onClick={() => onSelect(template.courses)}
-        >
-          {template.label}
-        </button>
-      ))}
+      {COURSE_TEMPLATES.map((template) => {
+        const btn = (
+          <button
+            type="button"
+            disabled={!canBook}
+            className={`${PILL_BASE} ${canBook ? 'cursor-pointer hover:brightness-125 hover:scale-105' : ''}`}
+            style={canBook ? PILL_STYLE : { ...PILL_STYLE, ...DISABLED_OVERLAY }}
+            onClick={canBook ? () => onSelect(template.courses) : undefined}
+          >
+            {template.label}
+          </button>
+        )
+        return canBook ? (
+          <span key={template.id}>{btn}</span>
+        ) : (
+          <GlassTooltip key={template.id} label={TOOLTIP_LABEL}>
+            {btn}
+          </GlassTooltip>
+        )
+      })}
 
-      <button
-        type="button"
-        className="ml-auto rounded-full px-3 py-1 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105 focus:outline-none focus-visible:ring-2"
-        style={ACCENT_PILL_STYLE}
-        onClick={() => onSelect([])}
-      >
-        + Booking
-      </button>
+      {(() => {
+        const btn = (
+          <button
+            type="button"
+            disabled={!canBook}
+            className={`${PILL_BASE} ${canBook ? 'cursor-pointer hover:brightness-125 hover:scale-105' : ''}`}
+            style={canBook ? ACCENT_PILL_STYLE : { ...ACCENT_PILL_STYLE, ...DISABLED_OVERLAY }}
+            onClick={canBook ? () => onSelect([]) : undefined}
+          >
+            + Booking
+          </button>
+        )
+        return canBook ? (
+          <span className="ml-auto">{btn}</span>
+        ) : (
+          <GlassTooltip label={TOOLTIP_LABEL} className="ml-auto">{btn}</GlassTooltip>
+        )
+      })()}
     </div>
   )
 }

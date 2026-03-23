@@ -24,7 +24,7 @@ function RoleTile({
     <button
       type="button"
       onClick={() => onToggle(role)}
-      className="glass relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2"
+      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2"
       style={{
         borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
         background: selected ? 'var(--color-primary-glow)' : 'var(--color-glass-bg)',
@@ -49,12 +49,14 @@ function RoleTile({
 interface StepRoleSelectionProps {
   selectedRoles: RoleConfig[]
   onToggle: (role: RoleConfig) => void
+  onBack: () => void
   onContinue: () => void
 }
 
 export function StepRoleSelection({
   selectedRoles,
   onToggle,
+  onBack,
   onContinue,
 }: StepRoleSelectionProps) {
   const selectedSet = new Set(selectedRoles.map((r) => r.key))
@@ -74,7 +76,7 @@ export function StepRoleSelection({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 mb-4">
+      <div className="w-full grid grid-cols-2 gap-2.5 mb-4" data-testid="wizard-content">
         {/* Organizers */}
         <div className="col-span-2 mb-0.5">
           <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
@@ -106,14 +108,23 @@ export function StepRoleSelection({
         ))}
       </div>
 
-      <GlassButton
-        variant="primary"
-        fullWidth
-        disabled={!canContinue}
-        onClick={onContinue}
-      >
-        Continue
-      </GlassButton>
+      <div className="flex gap-3 w-full" data-testid="wizard-nav">
+        <GlassButton
+          variant="secondary"
+          fullWidth
+          onClick={onBack}
+        >
+          Back
+        </GlassButton>
+        <GlassButton
+          variant="primary"
+          fullWidth
+          disabled={!canContinue}
+          onClick={onContinue}
+        >
+          Next
+        </GlassButton>
+      </div>
 
       {/* Role descriptions below button */}
       {selectedRoles.length > 0 && (

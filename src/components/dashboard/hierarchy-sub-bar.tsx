@@ -48,7 +48,7 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
     >
       {/* Parent DC icon — always first */}
       <Link
-        href={`/${dcCfg.key}/${dcSlug}/dashboard`}
+        href={`/${dcSlug}/${dcCfg.key}/dashboard`}
         className="flex items-center px-2.5 py-2 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
         style={{
           background: isDCView ? 'var(--color-accent-glow, rgba(0,191,255,0.15))' : 'transparent',
@@ -77,7 +77,7 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
         return (
           <Link
             key={child.childSlug}
-            href={`/${cfg.key}/${child.childSlug}/dashboard`}
+            href={`/${child.childSlug}/${cfg.key}/dashboard`}
             className="flex items-center px-2.5 py-2 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
             style={{
               background: isActive ? 'var(--color-accent-glow, rgba(0,191,255,0.15))' : 'transparent',

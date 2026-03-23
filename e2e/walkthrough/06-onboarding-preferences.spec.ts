@@ -13,12 +13,16 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 async function setupToPreferences(page: Page): Promise<() => Promise<void>> {
   const { cleanup } = await signUpFresh(page)
 
-  // ── Step 1: Role selection ──────────────────────────────────────────
+  // ── Step 1: Language selection ──────────────────────────────────────
   await page.goto(`${BASE_URL}/account`)
-  await expect(page.getByText("What's your role?")).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('App language')).toBeVisible({ timeout: 15_000 })
+  await page.getByRole('button', { name: 'English' }).first().click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
 
+  // ── Step 2: Role selection ──────────────────────────────────────────
+  await expect(page.getByText("What's your role?")).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: 'Dive Center', exact: true }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   // ── Step 2: Profile form ────────────────────────────────────────────
   await expect(page.getByText('Set up your profile')).toBeVisible({ timeout: 10_000 })
@@ -30,14 +34,14 @@ async function setupToPreferences(page: Page): Promise<() => Promise<void>> {
   await page.getByLabel('Country').fill('Thailand')
   await page.getByLabel('Contact email').fill('prefs@e2etest.com')
   await page.getByLabel('Contact phone').fill('+66891230099')
-  await page.getByRole('button', { name: 'Complete Setup' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   // ── Step 3: Onboarding wizard — Profile step ────────────────────────
   await expect(page).toHaveURL(/\/onboarding/, { timeout: 30_000 })
   await expect(page.getByText('Welcome to DiveDispatch')).toBeVisible({ timeout: 10_000 })
 
   // Advance from Profile step → Preferences step
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(page.getByText('Preferences')).toBeVisible({ timeout: 10_000 })
 
   return cleanup
@@ -81,7 +85,7 @@ test.describe('walkthrough: onboarding preferences', () => {
     cleanupFn = await setupToPreferences(page)
 
     // Skip: click Continue without adding any pills
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
 
     // Should advance to Review step
     await expect(page.getByText('Ready to go!')).toBeVisible({ timeout: 10_000 })
@@ -100,7 +104,7 @@ test.describe('walkthrough: onboarding preferences', () => {
     await expect(page.getByText('DSD, OW')).toBeVisible({ timeout: 5_000 })
 
     // Click wizard Continue → advance to Review step
-    await page.getByRole('button', { name: 'Continue' }).click()
+    await page.getByRole('button', { name: 'Next', exact: true }).click()
     await expect(page.getByText('Ready to go!')).toBeVisible({ timeout: 10_000 })
   })
 })

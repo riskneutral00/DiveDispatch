@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { type AnyCtx } from './lib/auth'
+import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ export type PortalProgress = {
  * Auth: token IS the credential (no Clerk auth).
  */
 export async function _getPortalProgress(
-  ctx: AnyCtx,
+  ctx: DbCtx,
   args: { token: string },
 ): Promise<PortalProgress | null> {
   const resolved = await resolvePortalTokenSoft(ctx, args.token)
@@ -213,8 +213,8 @@ export const saveWaiver = mutation({
     insurancePolicyNumber: v.optional(v.string()),
   },
   handler: async (
-    ctx: AnyCtx,
-    args: { token: string; insurancePolicyNumber?: string },
+    ctx,
+    args,
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
@@ -262,7 +262,7 @@ export const saveEquipmentData = mutation({
       }),
     ),
   },
-  handler: async (ctx: AnyCtx, args: AnyCtx): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
     // Save body measurements to customers record if contact step is complete

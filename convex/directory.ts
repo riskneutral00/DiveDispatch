@@ -22,7 +22,7 @@ type StakeholderRole = typeof stakeholderTypeValidator['type']
 export type DirectoryEntry = {
   slug: string
   name: string
-  city: string
+  placeName: string
   country: string
   languages: string[]
   verified: boolean
@@ -40,7 +40,7 @@ export type DirectoryEntry = {
 
 type ProfileData = {
   name: string
-  city: string
+  placeName: string
   country: string
   languages: string[]
   verified: boolean
@@ -90,7 +90,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       if (!p) return null
       return {
         name: p.name,
-        city: p.city,
+        placeName: p.placeName,
         country: p.country,
         languages: p.languages,
         verified: p.verified,
@@ -100,20 +100,20 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
     case 'DiveMaster': {
       const p = await byUser('diveMasters')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.languages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.languages, verified: p.verified }
     }
     case 'DiveCenter': {
       const p = await byUser('diveCenters')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'Agent': {
       const p = await byUser('agents')
       if (!p) return null
-      const loc = p.locations?.[0] ?? { city: '', country: '' }
+      const loc = p.locations?.[0] ?? { placeName: '', country: '' }
       return {
         name: p.name,
-        city: loc.city,
+        placeName: loc.placeName,
         country: loc.country,
         languages: p.focusedLanguages,
         verified: p.verified,
@@ -131,7 +131,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       )
       return {
         name: p.name,
-        city: p.city,
+        placeName: p.placeName,
         country: p.country,
         languages: p.focusedLanguages,
         verified: p.verified,
@@ -142,14 +142,14 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
     case 'Equipment': {
       const p = await byUser('equipment')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'Pool': {
       const p = await byUser('venues')
       if (!p) return null
       return {
         name: p.name,
-        city: p.city,
+        placeName: p.placeName,
         country: p.country,
         languages: p.focusedLanguages,
         verified: p.verified,
@@ -162,7 +162,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
       if (!p) return null
       return {
         name: p.name,
-        city: p.city,
+        placeName: p.placeName,
         country: p.country,
         languages: p.focusedLanguages,
         verified: p.verified,
@@ -172,22 +172,22 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
     case 'Liveaboard': {
       const p = await byUser('liveaboards')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'DiveResort': {
       const p = await byUser('diveResorts')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'DiveHostel': {
       const p = await byUser('diveHostels')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
     case 'DiveSite': {
       const p = await byUser('venues')
       if (!p) return null
-      return { name: p.name, city: p.city, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
     }
   }
 }
@@ -198,7 +198,7 @@ async function fetchProfile(db: any, userId: string, role: StakeholderRole): Pro
 export const listByRole = query({
   args: {
     role: stakeholderTypeValidator,
-    city: v.optional(v.string()),
+    placeName: v.optional(v.string()),
     country: v.optional(v.string()),
     language: v.optional(v.string()),
     // Role-specific filter args
@@ -216,7 +216,7 @@ export const listByRole = query({
         getBannedSlugSet(ctx.db, caller.slug),
         ctx.db
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller._id))
+          .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
           .unique(),
       ])
       bannedSlugs = bans
@@ -237,7 +237,7 @@ export const listByRole = query({
           if (!profile) return null
 
           // ── Text filters ──────────────────────────────────────────────
-          if (args.city && profile.city.toLowerCase() !== args.city.toLowerCase()) return null
+          if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
           if (args.language && !profile.languages.some((l) => l.toLowerCase() === args.language!.toLowerCase())) return null
 
@@ -259,7 +259,7 @@ export const listByRole = query({
           return {
             slug: u.slug,
             name: profile.name,
-            city: profile.city,
+            placeName: profile.placeName,
             country: profile.country,
             languages: profile.languages,
             verified: profile.verified,
@@ -298,13 +298,13 @@ export const togglePreferredInstructor = mutation({
 
     const prefs = await ctx.db
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user._id))
+      .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user.slug))
       .unique()
 
     if (!prefs) {
       // Create a minimal prefs row so the preferred slug can be stored.
       await ctx.db.insert('stakeholderPreferences', {
-        stakeholderId: user._id,
+        stakeholderId: user.slug,
         stakeholderType: user.role,
         acceptanceMode: 'Auto',
         maxHoursPerDay: 8,

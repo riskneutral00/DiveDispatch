@@ -295,7 +295,7 @@ export function BookingWizard({
   if (showEditConfirm) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16">
-        <GlassCard padding="lg" elevated>
+        <GlassCard padding="lg">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <AlertTriangle
@@ -466,21 +466,17 @@ export function BookingWizard({
               ? `Editing: ${bookingRef}`
               : "New Booking"}
           </h1>
-          <button
+          <GlassButton
+            variant="ghost"
+            size="sm"
             type="button"
             onClick={() => void handleCancel()}
             disabled={state.submitting}
-            className="p-2 rounded-full transition-opacity hover:opacity-80"
-            style={{
-              background: "var(--color-glass-bg)",
-              border: "1px solid var(--color-glass-border)",
-              color: "var(--color-text-secondary)",
-            }}
-            title="Cancel and return to dashboard"
+            className="rounded-full"
             aria-label="Cancel booking"
           >
-            <X size={18} />
-          </button>
+            <X size={16} />
+          </GlassButton>
         </div>
         {bookingRef && (
           <p

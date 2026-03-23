@@ -1,7 +1,15 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS, type AnyCtx } from './lib/auth'
-import { releaseBookingReservations } from './bookings/_shared'
+import { internal } from './_generated/api'
+import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS } from './lib/auth'
+import { checkProfileCompleteness } from './lib/profileCompleteness'
+import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
+import {
+  checkPreferenceCoverage,
+  type CoverageInput,
+  type VenueCapabilities,
+  type BoatCapabilities,
+} from '../src/lib/booking/coverage-validation'
 
 type OperatorType =
   | 'DiveCenter'
@@ -24,23 +32,87 @@ export const createDraftShell = mutation({
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
   },
-  handler: async (ctx: AnyCtx, args: { startDate?: string; endDate?: string }): Promise<string> => {
+  handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
     if (!OPERATOR_ROLE_SET.has(user.role)) throw new ConvexError({ code: 'FORBIDDEN' })
 
+    // ── Profile completeness gate — must be 100% to create bookings ──
+    const profileStatus = await checkProfileCompleteness(ctx, user)
+    if (profileStatus.percentage < 100) {
+      throw new ConvexError({ code: 'PROFILE_INCOMPLETE', missing: profileStatus.incomplete })
+    }
+
     // Past dates — reject if optional startDate is before today
     if (args.startDate) {
-      const fmt = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Bangkok',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      })
-      const parts = Object.fromEntries(fmt.formatToParts(Date.now()).map((p) => [p.type, p.value]))
-      const todayISO = `${parts.year}-${parts.month}-${parts.day}`
-      if (args.startDate < todayISO) {
-        throw new ConvexError({ code: 'PAST_DATE', date: args.startDate })
+      assertNoPastDates([{ date: args.startDate }])
+    }
+
+    // ── Coverage gate — preferred resources must cover all 5 requirements ──
+    const prefs = await ctx.db
+      .query('stakeholderPreferences')
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
+      .unique()
+
+    const prefInstructors = prefs?.preferredInstructorSlugs ?? []
+    const prefEquipment = prefs?.preferredEquipmentSlugs ?? []
+    const prefVenues = prefs?.preferredVenueSlugs ?? []
+    const prefBoats = prefs?.preferredBoatSlugs ?? []
+    const prefCompressors = prefs?.preferredCompressorSlugs ?? []
+
+    // Build venue capabilities from the venues table
+    const venueCapabilities: Record<string, VenueCapabilities> = {}
+    for (const slug of prefVenues) {
+      const venueUser = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (venueUser) {
+        const venue = await ctx.db
+          .query('venues')
+          .withIndex('by_userId', (q) => q.eq('userId', venueUser._id))
+          .unique()
+        if (venue) {
+          venueCapabilities[slug] = {
+            confinedCapable: venue.confinedCapable,
+            openWaterCapable: venue.openWaterCapable,
+            hasCompressor: venue.hasCompressor,
+          }
+        }
       }
+    }
+
+    // Build boat capabilities from the boats table
+    const boatCapabilities: Record<string, BoatCapabilities> = {}
+    for (const slug of prefBoats) {
+      const boatUser = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique()
+      if (boatUser) {
+        const boat = await ctx.db
+          .query('boats')
+          .withIndex('by_userId', (q) => q.eq('userId', boatUser._id))
+          .unique()
+        if (boat) {
+          boatCapabilities[slug] = {
+            hasCompressor: boat.hasCompressor,
+          }
+        }
+      }
+    }
+
+    const coverageInput: CoverageInput = {
+      preferredInstructorSlugs: prefInstructors,
+      preferredEquipmentSlugs: prefEquipment,
+      preferredVenueSlugs: prefVenues,
+      preferredBoatSlugs: prefBoats,
+      preferredCompressorSlugs: prefCompressors,
+      venueCapabilities,
+      boatCapabilities,
+    }
+    const coverage = checkPreferenceCoverage(coverageInput)
+    if (!coverage.isComplete) {
+      throw new ConvexError({ code: 'COVERAGE_INCOMPLETE', missing: coverage.missing })
     }
 
     // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
@@ -67,6 +139,11 @@ export const createDraftShell = mutation({
       customerFormComplete: false,
     })
 
+    // Clean up demo bookings after first real booking creation
+    await ctx.scheduler.runAfter(0, internal.demoBookings.cleanupDemoBookings, {
+      ownerId: user.slug,
+    })
+
     return bookingId as string
   },
 })
@@ -80,13 +157,13 @@ export const createReferralDraftShell = mutation({
   args: {
     referralDcSlug: v.string(),
   },
-  handler: async (ctx: AnyCtx, args: { referralDcSlug: string }): Promise<string> => {
+  handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
     if (user.role !== 'Agent') throw new ConvexError({ code: 'FORBIDDEN' })
 
     const dcUser = await ctx.db
       .query('users')
-      .withIndex('by_slug', (q: AnyCtx) => q.eq('slug', args.referralDcSlug))
+      .withIndex('by_slug', (q) => q.eq('slug', args.referralDcSlug))
       .unique()
     if (!dcUser) throw new ConvexError({ code: 'NOT_FOUND' })
     if (!OPERATOR_ROLE_SET.has(dcUser.role as string)) {
@@ -130,10 +207,7 @@ export const saveDraftState = mutation({
     bookingId: v.id('bookings'),
     draftState: v.string(),
   },
-  handler: async (
-    ctx: AnyCtx,
-    args: { bookingId: string; draftState: string },
-  ): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
@@ -152,7 +226,7 @@ export const saveDraftState = mutation({
  */
 export const getBookingForWizard = query({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+  handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
     if (!user) return null
 
@@ -172,7 +246,7 @@ export const getBookingForWizard = query({
  */
 export const discardDraft = mutation({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
@@ -184,7 +258,7 @@ export const discardDraft = mutation({
 
     const sessions = await ctx.db
       .query('bookingSessions')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
       .collect()
     for (const s of sessions) {
       await ctx.db.delete(s._id)
@@ -192,7 +266,7 @@ export const discardDraft = mutation({
 
     const links = await ctx.db
       .query('bookingLinks')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
       .collect()
     for (const l of links) {
       await ctx.db.delete(l._id)

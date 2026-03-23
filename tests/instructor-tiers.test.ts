@@ -99,4 +99,32 @@ describe('splitInstructorTiers', () => {
     expect(result.tier3).toHaveLength(0)
     expect(result.tier4).toHaveLength(0)
   })
+
+  it('matches ISO-639 stored languages against country-code customer flags', () => {
+    // Profile forms currently store ISO-639 codes ('en', 'zh', etc.)
+    // Customer flags use country codes ('GB', 'CN', etc.)
+    const options = [
+      makeOpt('ryan', { languages: ['en'], isPreferred: true }),
+    ]
+    const result = splitInstructorTiers(options, ['GB'])
+    expect(result.tier1.map(o => o.id)).toEqual(['ryan'])
+  })
+
+  it('matches ISO-639 on both sides (instructor + customer both ISO-639)', () => {
+    const options = [
+      makeOpt('nat', { languages: ['ja'], isPreferred: false }),
+    ]
+    const result = splitInstructorTiers(options, ['ja'])
+    expect(result.tier2.map(o => o.id)).toEqual(['nat'])
+  })
+
+  it('matches across all three formats (ISO-639, label, country code)', () => {
+    const options = [
+      makeOpt('a', { languages: ['en'], isPreferred: false }),       // ISO-639
+      makeOpt('b', { languages: ['English'], isPreferred: false }),   // label
+      makeOpt('c', { languages: ['GB'], isPreferred: false }),        // country code
+    ]
+    const result = splitInstructorTiers(options, ['GB'])
+    expect(result.tier2.map(o => o.id)).toEqual(['a', 'b', 'c'])
+  })
 })

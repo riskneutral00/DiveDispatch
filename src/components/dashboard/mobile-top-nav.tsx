@@ -2,6 +2,7 @@
 
 import type { RoleKey } from '@/lib/constants/roles'
 import { BgSwitcher } from './bg-switcher'
+import { ThemeSwitcher } from './theme-switcher'
 import { NotificationBell } from './notification-bell'
 import { UserMenu } from './user-menu'
 
@@ -19,8 +20,10 @@ export function MobileTopNav({ roleSlug, slug }: MobileTopNavProps) {
         backdropFilter: 'blur(var(--glass-blur))',
         WebkitBackdropFilter: 'blur(var(--glass-blur))',
         borderBottom: '1px solid var(--color-glass-border)',
+        willChange: 'transform',
       }}
     >
+      <ThemeSwitcher />
       <BgSwitcher />
       <NotificationBell />
       <UserMenu roleSlug={roleSlug} slug={slug} />

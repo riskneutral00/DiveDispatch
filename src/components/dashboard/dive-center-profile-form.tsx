@@ -2,12 +2,14 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { Minus, Plus, Save } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
+import { GlassButton, GlassInput } from '@/components/glass'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
-import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
+import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { LanguagePicker } from '@/components/common/language-picker'
+import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const AOW_SPECIALTIES = [
   'Peak Performance Buoyancy',
@@ -24,10 +26,17 @@ const AOW_SPECIALTIES = [
   'Digital Underwater Photography',
 ]
 
+const locationSchema = z.object({
+  placeName: z.string().min(1),
+  country: z.string().min(1),
+  lat: z.number(),
+  lng: z.number(),
+  placeId: z.string().optional(),
+})
+
 const formSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
-  city: z.string().min(1, 'City is required'),
-  country: z.string().min(1, 'Country is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Contact phone is required'),
   associations: z.array(
@@ -41,8 +50,7 @@ const formSchema = z.object({
 
 type FormState = {
   name: string
-  city: string
-  country: string
+  location: LocationValue | null
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
@@ -55,8 +63,7 @@ type FormState = {
 
 const INITIAL_FORM: FormState = {
   name: '',
-  city: '',
-  country: '',
+  location: null,
   contactEmail: '',
   contactPhone: '',
   associations: [],
@@ -67,43 +74,68 @@ const INITIAL_FORM: FormState = {
   aowSpecialties: [],
 }
 
-export function DiveCenterProfileForm() {
+export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
+
+export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
   const existing = useQuery(api.diveCenters.mine)
+  const me = useQuery(api.users.me)
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const [form, setForm] = useState<FormState>(INITIAL_FORM)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [initialized, setInitialized] = useState(false)
-
-  useEffect(() => {
-    if (existing !== undefined && !initialized) {
-      if (existing) {
-        setForm({
-          name: existing.name,
-          city: existing.city,
-          country: existing.country,
-          contactEmail: existing.contactEmail,
-          contactPhone: existing.contactPhone,
-          associations: existing.associations,
-          focusedLanguages: existing.focusedLanguages,
-          owDays: existing.bookingPreferences?.owDays?.toString() ?? '',
-          aowDays: existing.bookingPreferences?.aowDays?.toString() ?? '',
-          oaDays: existing.bookingPreferences?.oaDays?.toString() ?? '',
-          aowSpecialties: existing.bookingPreferences?.aowSpecialties ?? [],
-        })
+  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+    profile: existing,
+    me,
+    schema: formSchema,
+    defaults: INITIAL_FORM,
+    fromProfile: (p) => ({
+      name: p.name,
+      location: {
+        placeName: p.placeName,
+        country: p.country,
+        lat: p.lat,
+        lng: p.lng,
+        placeId: p.placeId ?? undefined,
+      } as LocationValue,
+      contactEmail: p.contactEmail,
+      contactPhone: p.contactPhone,
+      associations: p.associations,
+      focusedLanguages: p.focusedLanguages,
+      owDays: p.bookingPreferences?.owDays?.toString() ?? '',
+      aowDays: p.bookingPreferences?.aowDays?.toString() ?? '',
+      oaDays: p.bookingPreferences?.oaDays?.toString() ?? '',
+      aowSpecialties: p.bookingPreferences?.aowSpecialties ?? [],
+    }),
+    fromMe: (u, defaults) => ({
+      ...defaults,
+      name: u.businessName ?? '',
+      contactEmail: u.email ?? '',
+      focusedLanguages: u.customerLanguages ?? [],
+    }),
+    toPayload: (f) => {
+      const loc = f.location!
+      const owDays = f.owDays ? parseInt(f.owDays, 10) : undefined
+      const aowDays = f.aowDays ? parseInt(f.aowDays, 10) : undefined
+      const oaDays = f.oaDays ? parseInt(f.oaDays, 10) : undefined
+      const aowSpecialties = f.aowSpecialties.length > 0 ? f.aowSpecialties : undefined
+      const hasPrefs = owDays !== undefined || aowDays !== undefined || oaDays !== undefined || aowSpecialties !== undefined
+      return {
+        name: f.name,
+        placeName: loc.placeName,
+        country: loc.country,
+        lat: loc.lat,
+        lng: loc.lng,
+        placeId: loc.placeId,
+        contactEmail: f.contactEmail,
+        contactPhone: f.contactPhone,
+        associations: f.associations,
+        focusedLanguages: f.focusedLanguages,
+        bookingPreferences: hasPrefs ? { owDays, aowDays, oaDays, aowSpecialties } : undefined,
       }
-      setInitialized(true)
-    }
-  }, [existing, initialized])
-
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next })
-  }
+    },
+    create,
+    update,
+    onSaved,
+  })
 
   function addAssociation() {
     setField('associations', [...form.associations, { agency: '', number: '' }])
@@ -117,15 +149,6 @@ export function DiveCenterProfileForm() {
     setField('associations', form.associations.map((a, i) => i === idx ? { ...a, [field]: value } : a))
   }
 
-  function toggleLanguage(code: string) {
-    setField(
-      'focusedLanguages',
-      form.focusedLanguages.includes(code)
-        ? form.focusedLanguages.filter((l) => l !== code)
-        : [...form.focusedLanguages, code],
-    )
-  }
-
   function toggleSpecialty(s: string) {
     setField(
       'aowSpecialties',
@@ -135,55 +158,7 @@ export function DiveCenterProfileForm() {
     )
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaved(false)
-    setServerError(null)
-
-    const result = formSchema.safeParse(form)
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        const path = issue.path.join('.')
-        if (!fieldErrors[path]) fieldErrors[path] = issue.message
-      }
-      setErrors(fieldErrors)
-      return
-    }
-
-    const owDays = form.owDays ? parseInt(form.owDays, 10) : undefined
-    const aowDays = form.aowDays ? parseInt(form.aowDays, 10) : undefined
-    const oaDays = form.oaDays ? parseInt(form.oaDays, 10) : undefined
-    const aowSpecialties = form.aowSpecialties.length > 0 ? form.aowSpecialties : undefined
-    const hasPrefs = owDays !== undefined || aowDays !== undefined || oaDays !== undefined || aowSpecialties !== undefined
-
-    const payload = {
-      name: form.name,
-      city: form.city,
-      country: form.country,
-      contactEmail: form.contactEmail,
-      contactPhone: form.contactPhone,
-      associations: form.associations,
-      focusedLanguages: form.focusedLanguages,
-      bookingPreferences: hasPrefs ? { owDays, aowDays, oaDays, aowSpecialties } : undefined,
-    }
-
-    setSaving(true)
-    try {
-      if (existing) {
-        await update(payload)
-      } else {
-        await create(payload)
-      }
-      setSaved(true)
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Save failed')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (existing === undefined) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
@@ -194,53 +169,46 @@ export function DiveCenterProfileForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1
-          className="text-2xl font-bold"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          {existing ? 'Profile Settings' : 'Complete Your Profile'}
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {existing
-            ? 'Update your dive center information.'
-            : 'Tell us about your dive center to get started.'}
-        </p>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {!section && (
+        <div>
+          <h1
+            className="text-2xl font-bold"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          >
+            {isUpdate ? 'Profile Settings' : 'Complete Your Profile'}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            {isUpdate
+              ? 'Update your dive center information.'
+              : 'Tell us about your dive center to get started.'}
+          </p>
+        </div>
+      )}
 
       {/* Basic Information */}
-      <GlassCard>
+      {(!section || section === 'contact') && (
+      <div className="space-y-4">
         <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
+          className="text-xs font-semibold uppercase tracking-wider"
           style={{ color: 'var(--color-text-secondary)' }}
         >
           Basic Information
         </h2>
+        <GlassInput
+          label="Business Name"
+          value={form.name}
+          onChange={(e) => setField('name', e.target.value)}
+          placeholder="e.g. Ocean Explorer Dive Center"
+          error={errors.name}
+        />
+        <LocationPicker
+          label="Location"
+          value={form.location}
+          onChange={(loc) => setField('location', loc)}
+          error={errors.location}
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2">
-            <GlassInput
-              label="Business Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              placeholder="e.g. Ocean Explorer Dive Center"
-              error={errors.name}
-            />
-          </div>
-          <GlassInput
-            label="City"
-            value={form.city}
-            onChange={(e) => setField('city', e.target.value)}
-            placeholder="e.g. Phuket"
-            error={errors.city}
-          />
-          <GlassInput
-            label="Country"
-            value={form.country}
-            onChange={(e) => setField('country', e.target.value)}
-            placeholder="e.g. Thailand"
-            error={errors.country}
-          />
           <GlassInput
             label="Contact Email"
             type="email"
@@ -258,13 +226,15 @@ export function DiveCenterProfileForm() {
             error={errors.contactPhone}
           />
         </div>
-      </GlassCard>
+      </div>
+      )}
 
       {/* Agency Affiliations */}
-      <GlassCard>
-        <div className="flex items-center justify-between mb-4">
+      {(!section || section === 'associations') && (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
           <h2
-            className="text-sm font-semibold uppercase tracking-wider"
+            className="text-xs font-semibold uppercase tracking-wider"
             style={{ color: 'var(--color-text-secondary)' }}
           >
             Agency Affiliations
@@ -329,55 +299,43 @@ export function DiveCenterProfileForm() {
             ))}
           </div>
         )}
-      </GlassCard>
+      </div>
+      )}
 
       {/* Languages */}
-      <GlassCard>
+      {(!section || section === 'languages') && (
+      <div className="space-y-4">
         <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
+          className="text-xs font-semibold uppercase tracking-wider"
           style={{ color: 'var(--color-text-secondary)' }}
         >
           Languages Offered
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {LANGUAGE_OPTIONS.map(({ code, label }) => {
-            const checked = form.focusedLanguages.includes(code)
-            return (
-              <label
-                key={code}
-                className="flex items-center gap-2 px-3 py-2 rounded-[var(--border-radius)] cursor-pointer transition-all"
-                style={{
-                  background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
-                  color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
-                  border: `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
-                  transitionDuration: 'var(--transition-speed)',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  className="sr-only"
-                  checked={checked}
-                  onChange={() => toggleLanguage(code)}
-                />
-                <span className="text-sm">{label}</span>
-              </label>
-            )
-          })}
-        </div>
-      </GlassCard>
+        <LanguagePicker
+          value={form.focusedLanguages
+            .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
+            .filter((l): l is NonNullable<typeof l> => l !== undefined)
+            .map((l) => ({ code: l.code, label: l.label }))}
+          onChange={(langs) => setField('focusedLanguages', langs.map((l) => l.code))}
+        />
+      </div>
+      )}
 
       {/* Booking Preferences */}
-      <GlassCard>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-1"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Booking Preferences
-        </h2>
-        <p className="text-xs mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-          Default course durations used when creating bookings.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {(!section || section === 'associations') && (
+      <div className="space-y-4">
+        <div>
+          <h2
+            className="text-xs font-semibold uppercase tracking-wider mb-1"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Booking Preferences
+          </h2>
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Default course durations used when creating bookings.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <GlassInput
             label="Open Water Days"
             type="number"
@@ -439,7 +397,8 @@ export function DiveCenterProfileForm() {
             })}
           </div>
         </div>
-      </GlassCard>
+      </div>
+      )}
 
       {serverError && (
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
@@ -453,7 +412,7 @@ export function DiveCenterProfileForm() {
       <div className="flex justify-end">
         <GlassButton type="submit" loading={saving}>
           <Save size={16} />
-          {existing ? 'Save Changes' : 'Create Profile'}
+          {isUpdate ? 'Save Changes' : 'Create Profile'}
         </GlassButton>
       </div>
     </form>

@@ -2,13 +2,14 @@ import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
 import {
-  type AnyCtx,
   canBookingTransition,
   releaseBookingReservations,
   isSessionEnded,
   isBookingExpired,
+  tryAutoAdvance,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
+import { notify } from '../notifications'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ import { logBookingChange } from '../bookingAuditLog'
  */
 export const cancelBooking = mutation({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+  handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
@@ -54,7 +55,7 @@ export const cancelBooking = mutation({
  */
 export const expireBooking = mutation({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) return
     if (!isBookingExpired(booking)) return
@@ -70,6 +71,87 @@ export const expireBooking = mutation({
   },
 })
 
+// ─── clearMedicalBlock ───────────────────────────────────────────────────────
+
+/**
+ * Operator lifts a medical hard block after reviewing physician clearance.
+ *
+ * Auth: Clerk-authenticated. Caller must own the booking (ownerId === user.slug).
+ * Idempotent: no-op when medicalHardBlock is already false.
+ *
+ * Transaction order (all-or-nothing):
+ *  1. Reset physicianClearanceRequired on all linked customerProfiles
+ *  2. Remove 'medical_block' flag from linked customer records
+ *  3. Clear medicalHardBlock on the booking (last — ensures profiles are clean first)
+ *  4. Notify booking owner
+ *  5. Write 'medical_cleared' audit log entry
+ *  6. Call tryAutoAdvance (may promote Draft → Upcoming)
+ *
+ * Note: Does NOT reset or shorten expiresAt. The extended hold TTL set when
+ * the medical block was activated remains in effect.
+ */
+export const clearMedicalBlock = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, args): Promise<void> => {
+    const { user } = await requireAuth(ctx)
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+
+    // Idempotent: already cleared — nothing to do
+    if (!booking.medicalHardBlock) return
+
+    // 1-2. Reset physician clearance + remove flags on all linked profiles FIRST
+    const profiles = await ctx.db
+      .query('customerProfiles')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+
+    for (const profile of profiles) {
+      if (profile.physicianClearanceRequired) {
+        await ctx.db.patch(profile._id, { physicianClearanceRequired: false })
+      }
+
+      if (profile.customerId) {
+        const customer = await ctx.db.get(profile.customerId)
+        if (customer) {
+          const flags = customer.flags ?? []
+          if (flags.includes('medical_block')) {
+            await ctx.db.patch(profile.customerId, {
+              flags: flags.filter((f) => f !== 'medical_block') as ('medical_block')[],
+            })
+          }
+        }
+      }
+    }
+
+    // 3. Clear the block on the booking (after profiles are clean)
+    await ctx.db.patch(args.bookingId, { medicalHardBlock: false })
+
+    // 4. Notify booking owner
+    await notify(ctx, {
+      userId: booking.ownerId,
+      type: 'medical_cleared',
+      bookingId: args.bookingId,
+      message: 'Medical block cleared: physician clearance reviewed and approved.',
+    })
+
+    // 5. Audit trail
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'medical_cleared',
+      actorSlug: user.slug,
+      actorType: 'operator',
+    })
+
+    // 6. May promote Draft → Upcoming now that the block is lifted
+    await tryAutoAdvance(ctx, args.bookingId)
+  },
+})
+
+// ─── completeBookings ────────────────────────────────────────────────────────
+
 /**
  * Cron: auto-complete Upcoming bookings whose last session has ended.
  * Runs hourly. Uses timezone-aware comparison via Intl.DateTimeFormat.
@@ -77,10 +159,10 @@ export const expireBooking = mutation({
  */
 export const completeBookings = internalMutation({
   args: {},
-  handler: async (ctx: AnyCtx): Promise<{ completed: number; more: boolean }> => {
+  handler: async (ctx): Promise<{ completed: number; more: boolean }> => {
     const upcoming = await ctx.db
       .query('bookings')
-      .withIndex('by_status', (q: AnyCtx) => q.eq('status', 'Upcoming'))
+      .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
       .take(101)
 
     const batch = upcoming.slice(0, 100)
@@ -90,13 +172,13 @@ export const completeBookings = internalMutation({
     for (const booking of batch) {
       const sessions = await ctx.db
         .query('bookingSessions')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', booking._id))
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
         .collect()
 
       if (sessions.length === 0) continue
 
       // Last session = max date, then max endTime (both YYYY-MM-DD / HH:MM are lex-sortable)
-      const last = sessions.reduce((latest: AnyCtx, s: AnyCtx) => {
+      const last = sessions.reduce((latest, s) => {
         if (s.date > latest.date) return s
         if (s.date === latest.date && s.endTime > latest.endTime) return s
         return latest

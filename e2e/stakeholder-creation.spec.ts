@@ -23,7 +23,14 @@ test.describe('stakeholder creation', () => {
       const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
       await page.goto(`${baseUrl}/account`)
 
-      // ── Step 3: Role selection ─────────────────────────────────────
+      // ── Step 3: Language selection ───────────────────────────────────
+      await expect(page.getByText('App language')).toBeVisible({
+        timeout: 15_000,
+      })
+      await page.getByRole('button', { name: 'English' }).first().click()
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
+
+      // ── Step 4: Role selection ─────────────────────────────────────
       await expect(page.getByText("What's your role?")).toBeVisible({
         timeout: 15_000,
       })
@@ -34,8 +41,8 @@ test.describe('stakeholder creation', () => {
         page.getByRole('button', { name: role.tileLabel, exact: true }),
       ).toHaveAttribute('aria-pressed', 'true')
 
-      // Click Continue
-      await page.getByRole('button', { name: 'Continue' }).click()
+      // Click Next
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
 
       // ── Step 4: Profile form ───────────────────────────────────────
       await expect(page.getByText('Set up your profile')).toBeVisible({
@@ -55,13 +62,11 @@ test.describe('stakeholder creation', () => {
       if (role.showsBusinessName) {
         await page.getByLabel('Business name').fill(role.profile.businessName)
       }
-      await page.getByLabel('City').fill(role.profile.city)
-      await page.getByLabel('Country').fill(role.profile.country)
-      await page.getByLabel('Contact email').fill(role.profile.contactEmail)
-      await page.getByLabel('Contact phone').fill(role.profile.contactPhone)
+      // Location and contact fields are collected in the dashboard profile form,
+      // not the sign-up wizard. LocationPicker requires live Google Places API.
 
-      // Click Complete Setup
-      await page.getByRole('button', { name: 'Complete Setup' }).click()
+      // Click Next to submit profile
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
 
       // ── Step 5: Redirect → dashboard → OnboardingGuard → /onboarding
       await expect(page).toHaveURL(/\/onboarding/, { timeout: 30_000 })
@@ -74,16 +79,16 @@ test.describe('stakeholder creation', () => {
       // Step indicator should show Profile as step 1
       await expect(page.getByText('Profile')).toBeVisible()
 
-      // Click Continue to advance to Step 2 (Preferences)
-      await page.getByRole('button', { name: 'Continue' }).click()
+      // Click Next to advance to Step 2 (Preferences)
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
 
       // ── Step 7: Onboarding wizard — Step 2 (Preferences) ──────────
       await expect(page.getByText('Preferences')).toBeVisible({
         timeout: 10_000,
       })
 
-      // Click Continue to advance to Step 3 (Review)
-      await page.getByRole('button', { name: 'Continue' }).click()
+      // Click Next to advance to Step 3 (Review)
+      await page.getByRole('button', { name: 'Next', exact: true }).click()
 
       // ── Step 8: Onboarding wizard — Step 3 (Review) ───────────────
       await expect(page.getByText('Ready to go!')).toBeVisible({

@@ -116,6 +116,7 @@ export const seedAll = internalAction({
     await ctx.runMutation(internal.seed.seedGearSizingLookup)
     await ctx.runMutation(internal.seed.seedResourceInventory)
     await ctx.runMutation(internal.seed.seedStakeholderPreferences)
+    await ctx.runMutation(internal.seed.seedBookingTemplates)
     await ctx.runMutation(internal.seed.seedDefaultTheme)
   },
 })
@@ -391,6 +392,28 @@ export const seedResourceInventory = internalMutation({
 export const seedStakeholderPreferences = internalMutation({
   args: {},
   handler: async (ctx) => {
+    // Language-based preferred instructor mapping for operators
+    const OPERATOR_PREFERRED_INSTRUCTORS: Record<string, string[]> = {
+      // Hug Ocean: Mandarin, Thai
+      'n7rq5j': ['wei-chen', 'li-ming', 'zhang-yong', 'nattaya-srisuk', 'kittipong-jaidee'],
+      // Neptune: Mandarin
+      'z8mv4c': ['wei-chen', 'li-ming', 'zhang-yong', 'wang-fei', 'huang-jie'],
+      // Phuket DC: English, Thai, Chinese
+      'p5ky3w': ['ryan-clarke', 'kittipong-jaidee', 'supachai-rattana', 'zhou-peng', 'ben-walker'],
+      // Nicole DC: English, Cantonese
+      'q9bz7r': ['ryan-clarke', 'chan-wing', 'lam-ka-yan', 'ho-siu-ming', 'ben-walker'],
+      // Manta DC: English, French
+      'v6js2t': ['ryan-clarke', 'pierre-dubois', 'marie-lefevre', 'sophie-martin', 'rachel-nguyen'],
+      // ScubaNicks: English
+      'm4fx8d': ['ryan-clarke', 'ben-walker', 'alex-turner', 'mike-chen', 'rachel-nguyen'],
+      // Scuba Deep: English
+      'h3cp6n': ['ryan-clarke', 'ben-walker', 'alex-turner', 'david-schmidt', 'rachel-nguyen'],
+      // Pray DC: German, French, Thai, English
+      't7gw1k': ['klaus-weber', 'pierre-dubois', 'nattaya-srisuk', 'ryan-clarke', 'heidi-fischer'],
+      // Amanda (Agent): Chinese
+      'r5yz4q': ['zhou-peng', 'sun-jing', 'ma-lin', 'gao-tian', 'wei-chen'],
+    }
+
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
       ...ALL_STAKEHOLDERS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
       ...ALL_INSTRUCTORS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
@@ -407,6 +430,30 @@ export const seedStakeholderPreferences = internalMutation({
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
+        ...(OPERATOR_PREFERRED_INSTRUCTORS[slug] && {
+          preferredInstructorSlugs: OPERATOR_PREFERRED_INSTRUCTORS[slug],
+        }),
+      })
+    }
+  },
+})
+
+// ── Seed Booking Templates (Quick Book defaults for operators) ───────
+
+const OPERATOR_ROLES = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
+
+export const seedBookingTemplates = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    for (const s of ALL_STAKEHOLDERS) {
+      if (!OPERATOR_ROLES.has(s.user.role)) continue
+
+      await ctx.db.insert('bookingTemplates', {
+        ownerId: s.user.slug,
+        ownerType: s.user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
+        name: 'DSD',
+        activityType: ['DSD'],
+        createdAt: Date.now(),
       })
     }
   },

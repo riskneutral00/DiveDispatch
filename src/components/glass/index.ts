@@ -1,6 +1,10 @@
 export { GlassCard } from "./glass-card";
 export { GlassButton } from "./glass-button";
+export { GlassButtonGroup } from "./glass-button-group";
+export type { GlassButtonGroupOption } from "./glass-button-group";
+export { GlassLink } from "./glass-link";
 export { GlassInput } from "./glass-input";
+export { GlassTextarea } from "./glass-textarea";
 export { GlassNav } from "./glass-nav";
 export { GlassDialog } from "./glass-dialog";
 export { GlassBadge } from "./glass-badge";

@@ -25,13 +25,15 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
   })
 }
 
-async function seedInstructorProfile(ctx: Ctx, userId: string, name: string, city: string, country: string, languages: string[], verified = false) {
+async function seedInstructorProfile(ctx: Ctx, userId: string, name: string, placeName: string, country: string, languages: string[], verified = false) {
   return ctx.db.insert('instructors', {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: userId as any,
     name,
-    city,
+    placeName,
     country,
+    lat: 7.8804,
+    lng: 98.3923,
     contactEmail: `${userId}@test.com`,
     contactPhone: '+66000000000',
     credential: [],
@@ -131,7 +133,7 @@ describe('listByRole basic listing', () => {
     )
     expect(result[0]).toMatchObject({
       name: expect.any(String),
-      city: expect.any(String),
+      placeName: expect.any(String),
       country: expect.any(String),
       languages: expect.any(Array),
       verified: expect.any(Boolean),
@@ -243,7 +245,7 @@ describe('listByRole ban filtering', () => {
 // ─── listByRole: location filter ─────────────────────────────────────────────
 
 describe('listByRole location filter', () => {
-  it('filters by city (case-insensitive)', async () => {
+  it('filters by placeName (case-insensitive)', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -252,7 +254,7 @@ describe('listByRole location filter', () => {
       await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', city: 'phuket' })
+    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'phuket' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('john-abc')
   })
@@ -273,7 +275,7 @@ describe('listByRole location filter', () => {
     expect(result.every((r) => r.country === 'Thailand')).toBe(true)
   })
 
-  it('filters by both city and country', async () => {
+  it('filters by both placeName and country', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -284,19 +286,19 @@ describe('listByRole location filter', () => {
       await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', ['de', 'en'], true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', city: 'Krabi', country: 'Thailand' })
+    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'Thailand' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('jane-def')
   })
 
-  it('returns empty when no match for city', async () => {
+  it('returns empty when no match for placeName', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', city: 'Bangkok' })
+    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Bangkok' })
     expect(result).toHaveLength(0)
   })
 })

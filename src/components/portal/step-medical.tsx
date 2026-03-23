@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ConvexError } from 'convex/values'
 import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { medicalAnswersSchema } from '@/lib/validation'
+import { getConvexErrorCode } from '@/lib/utils/convex-error'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -113,15 +113,11 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
         onComplete()
       }
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const code = (err.data as { code: string }).code
-        if (code === 'TOKEN_EXPIRED') {
-          setError('This portal link has expired. Please contact your dive center for a new link.')
-        } else if (code === 'BOOKING_CLOSED') {
-          setError('This booking is no longer accepting submissions.')
-        } else {
-          setError('An error occurred. Please try again.')
-        }
+      const code = getConvexErrorCode(err)
+      if (code === 'TOKEN_EXPIRED') {
+        setError('This portal link has expired. Please contact your dive center for a new link.')
+      } else if (code === 'BOOKING_CLOSED') {
+        setError('This booking is no longer accepting submissions.')
       } else {
         setError('An error occurred. Please try again.')
       }

@@ -3,11 +3,8 @@
 // and instructor-ratio enforcement. Agency standards (PADI/SSI) determine
 // max divers per instructor; Universal courses are agency-agnostic.
 
-export const COURSE_CODES = [
-  'DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'FD', 'REFRESH', 'SPECIALTY',
-] as const;
-
-export type CourseCode = (typeof COURSE_CODES)[number];
+import { COURSE_CODES, type CourseCode } from '../../../convex/shared/courseCodes';
+export { COURSE_CODES, type CourseCode } from '../../../convex/shared/courseCodes';
 
 export type Agency = 'PADI' | 'SSI' | 'Universal';
 

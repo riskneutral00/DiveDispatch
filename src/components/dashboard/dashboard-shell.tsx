@@ -9,7 +9,7 @@ import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/common/spinner'
 import { RadialProgress } from '@/components/onboarding/radial-progress'
 import { BgSwitcher } from './bg-switcher'
-import { OpacityToggle } from './opacity-toggle'
+import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
 import { MobileBottomNav } from './mobile-bottom-nav'
 import { MobileTopNav } from './mobile-top-nav'
@@ -43,7 +43,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       if (!isManagedChild) {
         const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
         if (config) {
-          router.replace(`${config.route}/${user.slug}/dashboard`)
+          router.replace(`/${user.slug}/${config.key}/dashboard`)
         }
       }
     }
@@ -70,7 +70,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
             incomplete={onboardingStatus.incomplete}
           />
         )}
-        <OpacityToggle />
+        <ThemeSwitcher />
         <BgSwitcher />
         <NotificationBell />
         <UserMenu roleSlug={roleSlug} slug={slug} />

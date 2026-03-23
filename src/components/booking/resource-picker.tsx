@@ -237,7 +237,7 @@ export function ResourcePicker({
           style={{ background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)' }}
         >
           <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {selectedEntry.city}, {selectedEntry.country}
+            {selectedEntry.placeName}, {selectedEntry.country}
           </span>
           {selectedEntry.verified && (
             <GlassBadge variant="success" size="sm" dot>
@@ -327,7 +327,7 @@ function PickerRow({
         {/* Location + languages */}
         <div className="flex items-center gap-1 mt-0.5">
           <span className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
-            {entry.city}, {entry.country}
+            {entry.placeName}, {entry.country}
           </span>
           {entry.languages.length > 0 && (
             <LanguageFlags languages={entry.languages} className="text-xs" />

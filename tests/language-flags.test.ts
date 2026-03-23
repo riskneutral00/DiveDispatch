@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { languageFlagText } from '../src/components/common/language-flags'
-import { languageToCode } from '../src/lib/constants/dive-languages'
+import { languageToCode, PROFILE_LANGUAGE_OPTIONS } from '../src/lib/constants/dive-languages'
 
 describe('languageFlagText', () => {
   it('returns empty string for empty array', () => {
@@ -53,6 +53,12 @@ describe('languageFlagText', () => {
     expect(result).toContain('🇹🇭')
     expect(result).not.toContain('Klingon')
   })
+
+  it('resolves ISO-639 codes to flag emojis', () => {
+    const result = languageFlagText(['en', 'zh'])
+    expect(result).toContain('🇬🇧')
+    expect(result).toContain('🇨🇳')
+  })
 })
 
 describe('languageToCode', () => {
@@ -77,4 +83,35 @@ describe('languageToCode', () => {
     expect(languageToCode('Klingon')).toBe('')
     expect(languageToCode('')).toBe('')
   })
+
+  it('resolves ISO-639 codes to country codes', () => {
+    expect(languageToCode('en')).toBe('GB')
+    expect(languageToCode('zh')).toBe('CN')
+    expect(languageToCode('yue')).toBe('HK')
+    expect(languageToCode('ja')).toBe('JP')
+    expect(languageToCode('ko')).toBe('KR')
+    expect(languageToCode('pt')).toBe('BR')
+    expect(languageToCode('ar')).toBe('SA')
+    expect(languageToCode('he')).toBe('IL')
+    expect(languageToCode('sv')).toBe('SE')
+  })
+
+  it('resolves ISO-639 codes that coincidentally match country codes', () => {
+    expect(languageToCode('th')).toBe('TH')
+    expect(languageToCode('fr')).toBe('FR')
+    expect(languageToCode('de')).toBe('DE')
+    expect(languageToCode('ru')).toBe('RU')
+    expect(languageToCode('it')).toBe('IT')
+    expect(languageToCode('es')).toBe('ES')
+    expect(languageToCode('nl')).toBe('NL')
+    expect(languageToCode('pl')).toBe('PL')
+  })
+})
+
+describe('PROFILE_LANGUAGE_OPTIONS round-trip', () => {
+  for (const { code, label } of PROFILE_LANGUAGE_OPTIONS) {
+    it(`${label} (${code}) resolves via languageToCode`, () => {
+      expect(languageToCode(code)).toBe(code)
+    })
+  }
 })

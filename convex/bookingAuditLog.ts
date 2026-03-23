@@ -1,6 +1,8 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
-import { requireAuth, type AnyCtx } from './lib/auth'
+import type { MutationCtx, QueryCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
+import { requireAuth } from './lib/auth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,11 +40,11 @@ export type LogBookingChangeArgs = {
  * Signature mirrors other shared helpers (releaseBookingReservations, tryAutoAdvance).
  */
 export async function logBookingChange(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   args: LogBookingChangeArgs,
 ): Promise<void> {
   await ctx.db.insert('bookingAuditLog', {
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<"bookings">,
     action: args.action,
     actorSlug: args.actorSlug,
     actorType: args.actorType,
@@ -60,12 +62,12 @@ export async function logBookingChange(
  */
 export const getAuditLog = query({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+  handler: async (ctx, args) => {
     await requireAuth(ctx)
 
     return ctx.db
       .query('bookingAuditLog')
-      .withIndex('by_bookingId_timestamp', (q: AnyCtx) =>
+      .withIndex('by_bookingId_timestamp', (q) =>
         q.eq('bookingId', args.bookingId),
       )
       .order('desc')

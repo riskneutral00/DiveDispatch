@@ -1,7 +1,7 @@
 'use client'
 
 import { useClerk, useUser } from '@clerk/nextjs'
-import { LogOut, Settings, User } from 'lucide-react'
+import { LogOut, Settings, User, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
@@ -71,7 +71,17 @@ export function UserMenu({ roleSlug, slug }: UserMenuProps) {
             </div>
 
             <Link
-              href={`/${roleSlug}/${slug}/settings`}
+              href={`/${slug}/${roleSlug}/profile`}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <User size={14} />
+              Profile
+            </Link>
+
+            <Link
+              href={`/${slug}/${roleSlug}/settings`}
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
               style={{ color: 'var(--color-text-secondary)' }}
@@ -81,13 +91,13 @@ export function UserMenu({ roleSlug, slug }: UserMenuProps) {
             </Link>
 
             <Link
-              href={`/${roleSlug}/${slug}/account`}
+              href="/account"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
               style={{ color: 'var(--color-text-secondary)' }}
             >
-              <User size={14} />
-              Profile
+              <SlidersHorizontal size={14} />
+              Account
             </Link>
 
             <div

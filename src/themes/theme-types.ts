@@ -30,6 +30,17 @@ export interface ColorPalette {
   bgImage?: string; // optional — some skins use solid bodyBg only
   bgOverlay?: string; // optional
   bodyBg: string;
+  // Luminance class — selects which glass formula tier applies to this palette.
+  // Set at design time per-skin, not calculated at runtime.
+  luminanceClass: "dark" | "medium" | "bright";
+  // Ghost border for .glass-container — was hardcoded in CSS, now theme-driven
+  glassContainerBorder: string;
+  // Readability surface for .glass-container — no blur, just semi-transparent bg
+  glassContainerBg: string;
+  // Semantic opacity tokens — scale per luminance class for readability
+  opacityWatermark: number; // date numbers, decorative text (0.18–0.35)
+  opacitySubtle: number; // status backgrounds, tinted highlights (0.14–0.28)
+  opacityMuted: number; // disabled states, placeholders (0.50–0.65)
 }
 
 export interface ThemeConfig {

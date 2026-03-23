@@ -2,13 +2,14 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { Anchor, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../glass/glass-button'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
-import { LANGUAGE_OPTIONS } from '@/lib/constants/languages'
+import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
+import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -26,6 +27,15 @@ interface FleetState {
   boatType: BoatType | ''
   routes: RouteState[]
   cutoffHours: string
+}
+
+type FormState = {
+  name: string
+  location: LocationValue | null
+  contactEmail: string
+  contactPhone: string
+  focusedLanguages: string[]
+  fleet: FleetState[]
 }
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -67,10 +77,17 @@ const fleetZod = z.object({
   cutoffHours: z.number().min(0).optional(),
 })
 
+const locationSchema = z.object({
+  placeName: z.string().min(1),
+  country: z.string().min(1),
+  lat: z.number(),
+  lng: z.number(),
+  placeId: z.string().optional(),
+})
+
 const profileZod = z.object({
   name: z.string().min(1, 'Business name required'),
-  city: z.string().min(1, 'City required'),
-  country: z.string().min(1, 'Country required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location required' }),
   contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone required'),
   focusedLanguages: z.array(z.string()).min(1, 'Select at least one language'),
@@ -92,6 +109,15 @@ function parseOptionalInt(s: string): number | undefined {
   return isNaN(n) ? undefined : n
 }
 
+const INITIAL_FORM: FormState = {
+  name: '',
+  location: null,
+  contactEmail: '',
+  contactPhone: '',
+  focusedLanguages: [],
+  fleet: [emptyFleet()],
+}
+
 // ── Main component ───────────────────────────────────────────────────
 
 export function BoatProfileForm() {
@@ -99,138 +125,82 @@ export function BoatProfileForm() {
   const create = useMutation(api.boats.create)
   const update = useMutation(api.boats.update)
 
-  const [name, setName] = useState('')
-  const [city, setCity] = useState('')
-  const [country, setCountry] = useState('')
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-  const [focusedLanguages, setFocusedLanguages] = useState<string[]>([])
-  const [fleet, setFleet] = useState<FleetState[]>([emptyFleet()])
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    if (!profile) return
-    setName(profile.name)
-    setCity(profile.city)
-    setCountry(profile.country)
-    setContactEmail(profile.contactEmail)
-    setContactPhone(profile.contactPhone)
-    setFocusedLanguages(profile.focusedLanguages)
-    setFleet(
-      profile.fleet.length > 0
-        ? profile.fleet.map((f) => ({
-            boatName: f.boatName,
-            maxPax: String(f.maxPax),
-            minPax: f.minPax != null ? String(f.minPax) : '',
-            boatType: f.boatType,
-            routes: f.routes ?? [],
-            cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
-          }))
-        : [emptyFleet()],
-    )
-  }, [profile])
+  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+    profile,
+    schema: profileZod,
+    defaults: INITIAL_FORM,
+    fromProfile: (p) => ({
+      name: p.name,
+      location: {
+        placeName: p.placeName,
+        country: p.country,
+        lat: p.lat,
+        lng: p.lng,
+        placeId: p.placeId ?? undefined,
+      } as LocationValue,
+      contactEmail: p.contactEmail,
+      contactPhone: p.contactPhone,
+      focusedLanguages: p.focusedLanguages,
+      fleet:
+        p.fleet.length > 0
+          ? p.fleet.map((f: Record<string, unknown>) => ({
+              boatName: f.boatName as string,
+              maxPax: String(f.maxPax),
+              minPax: f.minPax != null ? String(f.minPax) : '',
+              boatType: f.boatType as BoatType,
+              routes: (f.routes as RouteState[] | undefined) ?? [],
+              cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
+            }))
+          : [emptyFleet()],
+    }),
+    toPayload: (f) => {
+      const loc = f.location!
+      const fleetParsed = f.fleet.map((v) => ({
+        boatName: v.boatName,
+        maxPax: parseOptionalInt(v.maxPax) ?? 0,
+        minPax: parseOptionalInt(v.minPax),
+        boatType: v.boatType,
+        routes: v.routes.length > 0 ? v.routes : undefined,
+        cutoffHours: parseOptionalInt(v.cutoffHours),
+      }))
+      return {
+        name: f.name,
+        placeName: loc.placeName,
+        country: loc.country,
+        lat: loc.lat,
+        lng: loc.lng,
+        placeId: loc.placeId,
+        contactEmail: f.contactEmail,
+        contactPhone: f.contactPhone,
+        focusedLanguages: f.focusedLanguages,
+        fleet: fleetParsed,
+      }
+    },
+    create,
+    update,
+  })
 
   function toggleLanguage(lang: string) {
-    setFocusedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
+    setField(
+      'focusedLanguages',
+      form.focusedLanguages.includes(lang)
+        ? form.focusedLanguages.filter((l) => l !== lang)
+        : [...form.focusedLanguages, lang],
     )
   }
 
-  function addFleet() {
-    setFleet((prev) => [...prev, emptyFleet()])
-  }
-
-  function removeFleet(i: number) {
-    setFleet((prev) => prev.filter((_, idx) => idx !== i))
-  }
-
-  function updateFleet(i: number, patch: Partial<FleetState>) {
-    setFleet((prev) => prev.map((f, idx) => (idx === i ? { ...f, ...patch } : f)))
-  }
-
-  function addRoute(fi: number) {
-    setFleet((prev) =>
-      prev.map((f, i) => (i === fi ? { ...f, routes: [...f.routes, emptyRoute()] } : f)),
-    )
-  }
-
-  function removeRoute(fi: number, ri: number) {
-    setFleet((prev) =>
-      prev.map((f, i) =>
-        i === fi ? { ...f, routes: f.routes.filter((_, idx) => idx !== ri) } : f,
-      ),
-    )
-  }
-
-  function updateRoute(fi: number, ri: number, patch: Partial<RouteState>) {
-    setFleet((prev) =>
-      prev.map((f, i) =>
-        i === fi
-          ? { ...f, routes: f.routes.map((r, idx) => (idx === ri ? { ...r, ...patch } : r)) }
-          : f,
-      ),
-    )
-  }
-
+  function addFleet() { setField('fleet', [...form.fleet, emptyFleet()]) }
+  function removeFleet(i: number) { setField('fleet', form.fleet.filter((_, idx) => idx !== i)) }
+  function updateFleet(i: number, patch: Partial<FleetState>) { setField('fleet', form.fleet.map((f, idx) => (idx === i ? { ...f, ...patch } : f))) }
+  function addRoute(fi: number) { setField('fleet', form.fleet.map((f, i) => (i === fi ? { ...f, routes: [...f.routes, emptyRoute()] } : f))) }
+  function removeRoute(fi: number, ri: number) { setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.filter((_, idx) => idx !== ri) } : f)) }
+  function updateRoute(fi: number, ri: number, patch: Partial<RouteState>) { setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.map((r, idx) => (idx === ri ? { ...r, ...patch } : r)) } : f)) }
   function toggleDay(fi: number, ri: number, day: number) {
-    const days = fleet[fi].routes[ri].daysOfWeek
-    updateRoute(fi, ri, {
-      daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day],
-    })
+    const days = form.fleet[fi].routes[ri].daysOfWeek
+    updateRoute(fi, ri, { daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] })
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setErrors({})
-    setSaved(false)
-
-    const fleetParsed = fleet.map((f) => ({
-      boatName: f.boatName,
-      maxPax: parseOptionalInt(f.maxPax) ?? 0,
-      minPax: parseOptionalInt(f.minPax),
-      boatType: f.boatType,
-      routes: f.routes.length > 0 ? f.routes : undefined,
-      cutoffHours: parseOptionalInt(f.cutoffHours),
-    }))
-
-    const result = profileZod.safeParse({
-      name,
-      city,
-      country,
-      contactEmail,
-      contactPhone,
-      focusedLanguages,
-      fleet: fleetParsed,
-    })
-
-    if (!result.success) {
-      const errs: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        const key = issue.path.length > 0 ? issue.path.join('.') : '_form'
-        if (!errs[key]) errs[key] = issue.message
-      }
-      setErrors(errs)
-      return
-    }
-
-    setSubmitting(true)
-    try {
-      if (profile) {
-        await update(result.data)
-      } else {
-        await create(result.data)
-      }
-      setSaved(true)
-    } catch (err) {
-      setErrors({ _form: err instanceof Error ? err.message : 'Save failed' })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (profile === undefined) {
+  if (loading) {
     return (
       <div className="flex justify-center py-16">
         <span style={{ color: 'var(--color-text-secondary)' }}>Loading…</span>
@@ -246,7 +216,7 @@ export function BoatProfileForm() {
           className="text-2xl font-bold"
           style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
         >
-          {profile ? 'Edit Profile' : 'Complete Your Profile'}
+          {isUpdate ? 'Edit Profile' : 'Complete Your Profile'}
         </h1>
       </div>
 
@@ -258,42 +228,34 @@ export function BoatProfileForm() {
         >
           Contact Information
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <GlassInput
             label="Business Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={form.name}
+            onChange={(e) => setField('name', e.target.value)}
             error={errors['name']}
             placeholder="Phuket Boat Co."
           />
-          <GlassInput
-            label="City"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            error={errors['city']}
-            placeholder="Phuket"
+          <LocationPicker
+            label="Location"
+            value={form.location}
+            onChange={(loc) => setField('location', loc)}
+            error={errors['location']}
           />
-          <GlassInput
-            label="Country"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            error={errors['country']}
-            placeholder="Thailand"
-          />
-          <GlassInput
-            label="Contact Email"
-            type="email"
-            value={contactEmail}
-            onChange={(e) => setContactEmail(e.target.value)}
-            error={errors['contactEmail']}
-            placeholder="info@phuketboat.com"
-          />
-          <div className="sm:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <GlassInput
+              label="Contact Email"
+              type="email"
+              value={form.contactEmail}
+              onChange={(e) => setField('contactEmail', e.target.value)}
+              error={errors['contactEmail']}
+              placeholder="info@phuketboat.com"
+            />
             <GlassInput
               label="Contact Phone"
               type="tel"
-              value={contactPhone}
-              onChange={(e) => setContactPhone(e.target.value)}
+              value={form.contactPhone}
+              onChange={(e) => setField('contactPhone', e.target.value)}
               error={errors['contactPhone']}
               placeholder="+66 81 234 5678"
             />
@@ -315,13 +277,13 @@ export function BoatProfileForm() {
           </p>
         )}
         <div className="flex flex-wrap gap-2">
-          {LANGUAGE_OPTIONS.map(({ label }) => {
-            const active = focusedLanguages.includes(label)
+          {LANGUAGE_OPTIONS.map(({ code, label }) => {
+            const active = form.focusedLanguages.includes(code)
             return (
               <button
-                key={label}
+                key={code}
                 type="button"
-                onClick={() => toggleLanguage(label)}
+                onClick={() => toggleLanguage(code)}
                 className="px-3 py-1.5 text-sm rounded-full border transition-all"
                 style={{
                   background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
@@ -352,13 +314,13 @@ export function BoatProfileForm() {
           </GlassButton>
         </div>
         <div className="space-y-4">
-          {fleet.map((vessel, fi) => (
+          {form.fleet.map((vessel, fi) => (
             <FleetEntryCard
               key={fi}
               vessel={vessel}
               fleetIdx={fi}
               errors={errors}
-              canRemove={fleet.length > 1}
+              canRemove={form.fleet.length > 1}
               onUpdate={(patch) => updateFleet(fi, patch)}
               onRemove={() => removeFleet(fi)}
               onAddRoute={() => addRoute(fi)}
@@ -370,20 +332,19 @@ export function BoatProfileForm() {
         </div>
       </div>
 
-      {errors['_form'] && (
+      {(serverError || errors['_form']) && (
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {errors['_form']}
+          {serverError || errors['_form']}
         </p>
       )}
-
       {saved && (
         <p className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>
           Profile saved successfully.
         </p>
       )}
 
-      <GlassButton type="submit" loading={submitting} fullWidth>
-        {profile ? 'Save Changes' : 'Create Profile'}
+      <GlassButton type="submit" loading={saving} fullWidth>
+        {isUpdate ? 'Save Changes' : 'Create Profile'}
       </GlassButton>
     </form>
   )
@@ -404,33 +365,15 @@ interface FleetEntryCardProps {
   onToggleDay: (ri: number, day: number) => void
 }
 
-function FleetEntryCard({
-  vessel,
-  fleetIdx: fi,
-  errors,
-  canRemove,
-  onUpdate,
-  onRemove,
-  onAddRoute,
-  onRemoveRoute,
-  onUpdateRoute,
-  onToggleDay,
-}: FleetEntryCardProps) {
+function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onRemove, onAddRoute, onRemoveRoute, onUpdateRoute, onToggleDay }: FleetEntryCardProps) {
   return (
-    <GlassCard elevated>
+    <GlassCard>
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          Vessel {fi + 1}
-          {vessel.boatName ? ` — ${vessel.boatName}` : ''}
+          Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
         </span>
         {canRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="flex items-center gap-1 text-sm px-2 py-1 rounded transition-opacity hover:opacity-80"
-            style={{ color: 'var(--color-destructive)' }}
-            aria-label={`Remove vessel ${fi + 1}`}
-          >
+          <button type="button" onClick={onRemove} className="flex items-center gap-1 text-sm px-2 py-1 rounded transition-opacity hover:opacity-80" style={{ color: 'var(--color-destructive)' }} aria-label={`Remove vessel ${fi + 1}`}>
             <Trash2 size={13} />
             Remove
           </button>
@@ -438,128 +381,49 @@ function FleetEntryCard({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-        <GlassInput
-          label="Boat Name"
-          value={vessel.boatName}
-          onChange={(e) => onUpdate({ boatName: e.target.value })}
-          error={errors[`fleet.${fi}.boatName`]}
-          placeholder="Sea Breeze"
-        />
-
-        {/* Boat type select */}
+        <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
         <div className="flex flex-col gap-1.5">
-          <label
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Boat Type
-          </label>
+          <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Boat Type</label>
           <select
             value={vessel.boatType}
             onChange={(e) => onUpdate({ boatType: e.target.value as BoatType })}
             className="glass w-full text-sm px-3 py-2.5 focus:outline-none rounded-[var(--border-radius)]"
-            style={{
-              color: vessel.boatType ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-            }}
+            style={{ color: vessel.boatType ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
           >
             <option value="">Select type…</option>
-            {BOAT_TYPE_OPTIONS.map((bt) => (
-              <option key={bt.value} value={bt.value}>
-                {bt.label}
-              </option>
-            ))}
+            {BOAT_TYPE_OPTIONS.map((bt) => <option key={bt.value} value={bt.value}>{bt.label}</option>)}
           </select>
-          {errors[`fleet.${fi}.boatType`] && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-              {errors[`fleet.${fi}.boatType`]}
-            </p>
-          )}
+          {errors[`fleet.${fi}.boatType`] && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors[`fleet.${fi}.boatType`]}</p>}
         </div>
-
-        <GlassInput
-          label="Max Passengers"
-          type="number"
-          min={1}
-          value={vessel.maxPax}
-          onChange={(e) => onUpdate({ maxPax: e.target.value })}
-          error={errors[`fleet.${fi}.maxPax`]}
-          placeholder="20"
-        />
-
-        <GlassInput
-          label="Min Passengers (optional)"
-          type="number"
-          min={1}
-          value={vessel.minPax}
-          onChange={(e) => onUpdate({ minPax: e.target.value })}
-          error={errors[`fleet.${fi}.minPax`]}
-          placeholder="4"
-        />
-
+        <GlassInput label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
+        <GlassInput label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
         <div className="sm:col-span-2">
-          <GlassInput
-            label="Cutoff Hours (optional)"
-            type="number"
-            min={0}
-            value={vessel.cutoffHours}
-            onChange={(e) => onUpdate({ cutoffHours: e.target.value })}
-            error={errors[`fleet.${fi}.cutoffHours`]}
-            helperText="Hours before departure when bookings close"
-            placeholder="24"
-          />
+          <GlassInput label="Cutoff Hours (optional)" type="number" min={0} value={vessel.cutoffHours} onChange={(e) => onUpdate({ cutoffHours: e.target.value })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
         </div>
       </div>
 
-      {/* Routes */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Routes
-          </span>
-          <button
-            type="button"
-            onClick={onAddRoute}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80"
-            style={{
-              color: 'var(--color-text-primary)',
-              borderColor: 'var(--color-glass-border)',
-              background: 'var(--color-glass-bg)',
-            }}
-          >
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Routes</span>
+          <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80" style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
             <Plus size={11} />
             Add Route
           </button>
         </div>
-
         {vessel.routes.length === 0 && (
           <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             No routes added. Routes define which dive sites this vessel visits and on which days.
           </p>
         )}
-
         <div className="space-y-3 mt-2">
           {vessel.routes.map((route, ri) => (
-            <RouteRow
-              key={ri}
-              route={route}
-              fleetIdx={fi}
-              routeIdx={ri}
-              errors={errors}
-              onUpdate={(patch) => onUpdateRoute(ri, patch)}
-              onRemove={() => onRemoveRoute(ri)}
-              onToggleDay={(day) => onToggleDay(ri, day)}
-            />
+            <RouteRow key={ri} route={route} fleetIdx={fi} routeIdx={ri} errors={errors} onUpdate={(patch) => onUpdateRoute(ri, patch)} onRemove={() => onRemoveRoute(ri)} onToggleDay={(day) => onToggleDay(ri, day)} />
           ))}
         </div>
       </div>
     </GlassCard>
   )
 }
-
-// ── Route row ────────────────────────────────────────────────────────
 
 interface RouteRowProps {
   route: RouteState
@@ -573,59 +437,28 @@ interface RouteRowProps {
 
 function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
   return (
-    <div
-      className="p-3 rounded-[var(--border-radius)] space-y-2"
-      style={{
-        background: 'var(--color-surface-elevated)',
-        border: '1px solid var(--color-glass-border)',
-      }}
-    >
+    <div className="p-3 rounded-[var(--border-radius)] space-y-2" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-glass-border)' }}>
       <div className="flex items-start gap-2">
         <div className="flex-1">
-          <GlassInput
-            value={route.diveSite}
-            onChange={(e) => onUpdate({ diveSite: e.target.value })}
-            error={errors[`fleet.${fi}.routes.${ri}.diveSite`]}
-            placeholder="Dive site name (e.g. Shark Point)"
-          />
+          <GlassInput value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Remove route"
-          className="mt-2 flex-shrink-0 transition-opacity hover:opacity-80"
-          style={{ color: 'var(--color-destructive)' }}
-        >
+        <button type="button" onClick={onRemove} aria-label="Remove route" className="mt-2 flex-shrink-0 transition-opacity hover:opacity-80" style={{ color: 'var(--color-destructive)' }}>
           <Trash2 size={14} />
         </button>
       </div>
-
       <div className="flex flex-wrap gap-1.5">
         {DAYS.map((d) => {
           const active = route.daysOfWeek.includes(d.value)
           return (
-            <button
-              key={d.value}
-              type="button"
-              onClick={() => onToggleDay(d.value)}
-              className="px-2.5 py-1 text-xs rounded border transition-all"
-              style={{
-                background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                transitionDuration: 'var(--transition-speed)',
-              }}
-            >
+            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-xs rounded border transition-all"
+              style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}>
               {d.label}
             </button>
           )
         })}
       </div>
-
       {errors[`fleet.${fi}.routes.${ri}.daysOfWeek`] && (
-        <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>
-          {errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}
-        </p>
+        <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>{errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}</p>
       )}
     </div>
   )

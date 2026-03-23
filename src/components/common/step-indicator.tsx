@@ -3,7 +3,7 @@
 import { Check } from 'lucide-react'
 
 interface StepIndicatorProps {
-  steps: { key: string; label: string }[]
+  steps: readonly { key: string; label: string }[]
   currentIndex: number
 }
 
@@ -59,7 +59,7 @@ export function StepIndicator({ steps, currentIndex }: StepIndicatorProps) {
               <div
                 className="h-px mx-2 mb-5 transition-all"
                 style={{
-                  width: 48,
+                  width: steps.length <= 5 ? 48 : 24,
                   background: isCompleted
                     ? 'var(--color-success)'
                     : 'var(--color-glass-border)',

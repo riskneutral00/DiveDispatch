@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, getAuthUser, type AnyCtx } from './lib/auth'
+import { requireAuth, getAuthUser } from './lib/auth'
 
-const locationValidator = v.object({ city: v.string(), country: v.string() })
+const locationValidator = v.object({ placeName: v.string(), country: v.string(), lat: v.number(), lng: v.number(), placeId: v.optional(v.string()) })
 
 const associationValidator = v.object({ agency: v.string(), number: v.string() })
 
@@ -63,15 +63,15 @@ export const mine = query({
 
     const agent = await ctx.db
       .query('agents')
-      .withIndex('by_userId', (q: AnyCtx) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
     if (!agent) return null
 
-    // Normalize: expose flat city/country from locations[0] for consumers that expect it
+    // Normalize: expose flat placeName/country from locations[0] for consumers that expect it
     const primary = agent.locations[0]
     return {
       ...agent,
-      city: primary?.city ?? '',
+      placeName: primary?.placeName ?? '',
       country: primary?.country ?? '',
     }
   },

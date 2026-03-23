@@ -28,6 +28,7 @@ describe('StepRoleSelection', () => {
   const defaultProps = {
     selectedRoles: [] as typeof ORGANIZER_ROLES,
     onToggle: vi.fn(),
+    onBack: vi.fn(),
     onContinue: vi.fn(),
   }
 
@@ -46,7 +47,7 @@ describe('StepRoleSelection', () => {
 
   it('disables Continue when no roles are selected', () => {
     const { getByRole } = render(<StepRoleSelection {...defaultProps} />)
-    const btn = getByRole('button', { name: /continue/i })
+    const btn = getByRole('button', { name: /^next$/i })
     expect(btn).toBeDisabled()
   })
 
@@ -57,7 +58,7 @@ describe('StepRoleSelection', () => {
         selectedRoles={[ORGANIZER_ROLES[0]]}
       />,
     )
-    const btn = getByRole('button', { name: /continue/i })
+    const btn = getByRole('button', { name: /^next$/i })
     expect(btn).not.toBeDisabled()
   })
 
@@ -85,7 +86,7 @@ describe('StepRoleSelection', () => {
       />,
     )
 
-    await user.click(getByRole('button', { name: /continue/i }))
+    await user.click(getByRole('button', { name: /^next$/i }))
     expect(onContinue).toHaveBeenCalled()
   })
 

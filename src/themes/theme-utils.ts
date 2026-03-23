@@ -111,6 +111,13 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-glass-border-hover": palette.glassBorderHover,
     "--glass-blur-hover": `${palette.glassBlurHover}px`,
     "--body-bg": palette.bodyBg,
+    // Glass container — theme-driven (was hardcoded in CSS)
+    "--color-glass-container-border": palette.glassContainerBorder,
+    "--color-glass-container-bg": palette.glassContainerBg,
+    // Semantic opacity tokens — scale per luminance class
+    "--opacity-watermark": String(palette.opacityWatermark),
+    "--opacity-subtle": String(palette.opacitySubtle),
+    "--opacity-muted": String(palette.opacityMuted),
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;
@@ -148,11 +155,20 @@ export function themeToVars(
 // ── DOM injection ─────────────────────────────────────────────────────────────
 
 // Sets CSS custom properties directly on document.documentElement.
+// Suppresses transitions during the swap so glass elements don't animate
+// through intermediate states (which causes visible sidebar jitter).
 export function injectVars(vars: Record<string, string>): void {
   const root = document.documentElement;
+  root.classList.add("theme-switching");
   for (const [key, value] of Object.entries(vars)) {
     root.style.setProperty(key, value);
   }
+  // Double-rAF: first frame applies vars, second re-enables transitions after paint.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      root.classList.remove("theme-switching");
+    });
+  });
 }
 
 // Removes CSS custom properties that were previously injected.

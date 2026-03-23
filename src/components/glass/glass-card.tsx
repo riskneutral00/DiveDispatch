@@ -4,7 +4,6 @@ interface GlassCardProps {
   children: React.ReactNode;
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
-  elevated?: boolean;
   hoverable?: boolean;
   as?: React.ElementType;
   style?: React.CSSProperties;
@@ -22,7 +21,6 @@ export function GlassCard({
   children,
   className = "",
   padding = "md",
-  elevated = false,
   hoverable = false,
   as: Tag = "div",
   style,
@@ -34,7 +32,7 @@ export function GlassCard({
       onClick={onClick}
       {...(Tag === "button" ? { type: "button" } : {})}
       className={[
-        elevated ? "glass-elevated" : "glass",
+        "glass-container",
         hoverable && "glass-surface cursor-pointer",
         "relative",
         paddingMap[padding],

@@ -2,7 +2,6 @@ import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
 import {
-  type AnyCtx,
   canBookingTransition,
   releaseBookingReservations,
 } from './_shared'
@@ -16,7 +15,7 @@ import { logBookingChange } from '../bookingAuditLog'
  */
 export const editBooking = mutation({
   args: { bookingId: v.id('bookings') },
-  handler: async (ctx: AnyCtx, args: { bookingId: string }) => {
+  handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
@@ -35,7 +34,7 @@ export const editBooking = mutation({
     // Clear sessions so operator can re-submit with new session data
     const sessions = await ctx.db
       .query('bookingSessions')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
       .collect()
     for (const session of sessions) {
       await ctx.db.delete(session._id)

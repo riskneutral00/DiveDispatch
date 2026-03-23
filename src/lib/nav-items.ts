@@ -12,7 +12,7 @@ export interface NavItem {
 }
 
 export function buildNavItems(roleSlug: string, slug: string): NavItem[] {
-  const base = `/${roleSlug}/${slug}`
+  const base = `/${slug}/${roleSlug}`
 
   return [
     { key: 'dashboard', label: 'Dashboard', href: `${base}/dashboard`, Icon: LayoutDashboard },

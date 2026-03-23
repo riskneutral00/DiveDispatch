@@ -91,14 +91,13 @@ async function pruneOrphanClerkUsers(seedEmails: Set<string>): Promise<number> {
     if (page.data.length === 0) break
 
     for (const user of page.data) {
-      const testEmail = user.emailAddresses.find((e) =>
-        e.emailAddress.includes('+clerk_test@divedispatch.dev')
+      const devEmail = user.emailAddresses.find((e) =>
+        e.emailAddress.endsWith('@divedispatch.dev')
       )
-      if (!testEmail) continue // not a seed user — leave it alone
-      if (seedEmails.has(testEmail.emailAddress)) continue // still in seed data
+      if (!devEmail) continue // not a divedispatch.dev user — leave it alone
 
       await clerk.users.deleteUser(user.id)
-      console.log(`  ${testEmail.emailAddress} — pruned (not in seed data)`)
+      console.log(`  ${devEmail.emailAddress} — pruned (not in seed data)`)
       pruned++
       await sleep(DELAY_MS)
     }

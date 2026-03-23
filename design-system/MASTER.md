@@ -24,8 +24,8 @@ layout: deep black water with bioluminescent creatures providing all illuminatio
 
 | Token | Value | Purpose |
 |-------|-------|---------|
-| `--color-primary` | `#e8786a` | Warm coral/rose — primary actions |
-| `--color-primary-glow` | `rgba(232, 120, 106, 0.35)` | Hover glow, focus rings |
+| `--color-primary` | `#de6e60` | Warm coral/rose — primary actions |
+| `--color-primary-glow` | `rgba(222, 110, 96, 0.35)` | Hover glow, focus rings |
 | `--color-secondary` | `#4a9ece` | Bioluminescent blue — secondary accents |
 | `--color-accent` | `#f0b866` | Amber/bioluminescent warm — highlights |
 | `--color-text-primary` | `#f0ebe4` | Warm white — body text |
@@ -33,7 +33,7 @@ layout: deep black water with bioluminescent creatures providing all illuminatio
 | `--color-text-on-primary` | `#ffffff` | Text on primary buttons |
 | `--color-surface` | `#111820` | Barely lighter than void |
 | `--color-surface-elevated` | `#1a2230` | Elevated panels |
-| `--body-bg` | `#0a0e14` | Deep void background |
+| `--body-bg` | `#000000` | Deep void background |
 
 ### Coral Dark (alternate skin)
 
@@ -103,6 +103,12 @@ glass is just a bordered box.
 surface — luminous borders that emit light, specular highlights that catch edges, depth through
 transparency rather than shadows. The glass feels like it's made of water.
 
+**Flattening rule:** Only interactive leaf elements (inputs, selects, buttons) carry `backdrop-filter`.
+Containers use `.glass-container` — transparent background, ghost border (`var(--color-glass-container-border)`),
+no blur, no shadow. Nested `.glass-container` elements automatically lose their border (CSS
+descendant rule) so only one ghost-border layer is ever visible. Side-by-side containers on the
+same plane both keep their borders.
+
 ### Background Layer Stack
 
 Three layers. The background is architecture, not decoration.
@@ -116,7 +122,19 @@ z-2  .app-shell    — relative, all UI content
 **Rule:** Every page MUST render both `.bg-image` and `.bg-overlay`. Glass without
 the background stack is broken.
 
-### Glass Formula (CONSTANT across all skins)
+### Glass Formula Tiers (luminance class system)
+
+Each palette declares a `luminanceClass` — "dark", "medium", or "bright" — which selects the
+glass formula tier. Glass values are constant within a tier. No per-skin tuning. The skin designer
+picks a tier when authoring the skin; it does not change at runtime.
+
+| Tier | Background type | Fill strategy | Text color |
+|------|----------------|---------------|------------|
+| **dark** | Void gradients, deep ocean photos | White-tinted (5%) | Warm white `#f0ebe4` |
+| **medium** | Underwater photos, twilight, blue water | Black-tinted (20%) | White `#ffffff` |
+| **bright** | Shallow reef, tropical surface, sand | White-tinted (45%) | Near-black `rgba(0,0,0,0.87)` |
+
+**Dark tier** (current default):
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
@@ -130,6 +148,26 @@ the background stack is broken.
 | `--color-glass-specular-subtle` | `rgba(255,255,255, 0.1)` | Inset specular |
 | `--color-glass-shadow` | `rgba(0,0,0, 0.15)` | Standard shadow |
 | `--color-glass-shadow-elevated` | `rgba(0,0,0, 0.25)` | Elevated shadow |
+
+**Medium tier** (for image backgrounds):
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `--color-glass-bg` | `rgba(0,0,0, 0.20)` | Black tint — darkens busy images |
+| `--color-glass-border` | `rgba(255,255,255, 0.15)` | Slightly brighter border |
+| `--glass-blur` | `18px` | Higher blur for busy images |
+| `--color-glass-bg-elevated` | `rgba(0,0,0, 0.28)` | Heavier darkening |
+| `--glass-blur-elevated` | `28px` | Heavier blur |
+
+**Bright tier** (for light backgrounds):
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `--color-glass-bg` | `rgba(255,255,255, 0.45)` | White frost |
+| `--color-glass-border` | `rgba(0,0,0, 0.06)` | Dark ghost border |
+| `--color-glass-shadow` | `rgba(0,0,0, 0.06)` | Subtle shadow |
+
+Full tier values in `src/themes/skins.ts` → `GLASS_FORMULAS`.
 
 ### Glass States
 
@@ -179,6 +217,29 @@ No color inversion. No opacity fog. Just light.
 }
 ```
 
+**Container** — readability surface with ghost border. No blur, no shadow.
+Used by `GlassCard`, `GlassDialog`, and any non-interactive wrapper.
+The semi-transparent background provides a readability floor so text inside
+cards is always visible regardless of the background image.
+
+```css
+.glass-container {
+  background-color: var(--color-glass-container-bg);  /* tier-driven */
+  border: 1px solid var(--color-glass-container-border);
+  border-radius: var(--border-radius);
+}
+
+/* Nested: lose border AND go transparent (avoid stacking tints) */
+.glass-container .glass-container {
+  border-color: transparent;
+  background-color: transparent;
+}
+```
+
+**Why no blur on containers?** Each `backdrop-filter` creates a new stacking context.
+With 30-60 cards/cells on a dashboard, this would break tooltips, dropdowns, and dialogs.
+The semi-transparent background alone provides the readability floor at zero GPU cost.
+
 **Specular highlight** — top-edge light line on all glass classes.
 
 ```css
@@ -198,7 +259,7 @@ flashes the coral glow briefly via CSS `:active`.
 
 ```css
 @media (hover: none) {
-  .glass-surface { border-color: rgba(255, 255, 255, 0.18); }
+  .glass-surface { border-color: var(--color-glass-container-border); }
   [data-hover-effect="on"] .glass-surface:active {
     border-color: var(--color-glass-border-hover);
     box-shadow: 0 0 20px var(--color-primary-glow);
@@ -211,6 +272,28 @@ flashes the coral glow briefly via CSS `:active`.
 User-controlled via `data-hover-effect="on|off"` on `<html>`.
 Toggle UI: `OpacityToggle` component in the top bar (Layers icon).
 
+### Semantic Opacity Tokens
+
+Three opacity tokens adapt per luminance class, eliminating hardcoded opacity values
+that were tuned for dark-only. Used by status backgrounds, date watermarks, and
+any element that needs to be visible across all skin/mode combinations.
+
+| Token | Purpose | Dark | Medium | Bright |
+|-------|---------|------|--------|--------|
+| `--opacity-watermark` | Date numbers, decorative text | 0.18 | 0.25 | 0.35 |
+| `--opacity-subtle` | Status backgrounds, tinted highlights | 0.14 | 0.20 | 0.28 |
+| `--opacity-muted` | Disabled states, placeholders | 0.50 | 0.55 | 0.65 |
+
+Status background vars in `:root` use `--opacity-subtle` via modern `rgb()` syntax:
+```css
+--color-status-active-bg: rgb(52 211 153 / var(--opacity-subtle));
+```
+
+Date watermark uses `--opacity-watermark` via `color-mix()`:
+```css
+--color-date-watermark: color-mix(in srgb, var(--color-text-primary) calc(var(--opacity-watermark) * 100%), transparent);
+```
+
 ---
 
 ## Skin Anatomy
@@ -220,16 +303,27 @@ A skin bundles:
 | Layer | Per-skin? | Description |
 |-------|-----------|-------------|
 | Palette | Yes | `primary`, `secondary`, `accent`, `primaryGlow` |
-| Background image | Yes | `--bg-image` |
-| Overlay gradient | Yes | `--bg-overlay` |
+| Luminance class | Yes | `"dark"`, `"medium"`, or `"bright"` — selects glass tier |
+| Background image | Yes | `--bg-image` (CSS gradient or `url()`) |
+| Overlay gradient | Yes | `--bg-overlay` (mandatory readability layer) |
 | Body fallback | Yes | `--body-bg` |
-| Glass formula | **Constant** | All `--color-glass-*` variables |
+| Glass formula | **Per-tier** | Selected by `luminanceClass`, constant within tier |
 | Typography | **Constant** | Inter everywhere |
 | Shape | **Constant** | `--border-radius: 16px` |
 | Status colors | **Constant** | Safety signals don't change |
 
+Each skin has **two palettes** (dark + light), each with its own luminance class,
+background image, and overlay. A skin's dark palette might be `"dark"` class while
+its light palette is `"bright"` class.
+
+**Image backgrounds:** `--bg-image` supports both CSS gradients and `url()` paths.
+Still images go in `public/skins/{skin-id}/bg-dark.jpg` (and `bg-light.jpg`).
+The overlay (`--bg-overlay`) is a mandatory readability layer calibrated per skin.
+
 Skin data lives in `src/themes/skins.ts` as `ThemeConfig[]`.
+Glass tier definitions in `GLASS_FORMULAS` (same file).
 `ThemeProvider` applies the active skin's CSS variables to `:root`.
+WCAG contrast validated in `tests/skin-contrast.test.ts`.
 
 ---
 
@@ -239,11 +333,12 @@ All glass components live in `src/components/glass/`:
 
 | Component | File | Glass class | Hoverable |
 |-----------|------|-------------|-----------|
-| `GlassCard` | `glass-card.tsx` | `.glass` or `.glass-elevated` | Optional via `hoverable` prop |
+| `GlassCard` | `glass-card.tsx` | `.glass-container` (transparent, ghost border) | Optional via `hoverable` prop |
 | `GlassButton` | `glass-button.tsx` | Custom per variant | N/A (has own hover states) |
-| `GlassInput` | `glass-input.tsx` | `.glass-field` | N/A (focus ring) |
-| `GlassBadge` | `glass-badge.tsx` | `.glass` (subtle) | No |
-| `GlassSelect` | `glass-select.tsx` | `.glass-field` | N/A (focus ring) |
+| `GlassInput` | `glass-input.tsx` | `.glass .glass-field` | N/A (focus ring) |
+| `GlassBadge` | `glass-badge.tsx` | Inline tint (no blur) | No |
+| `GlassSelect` | `glass-select.tsx` | `.glass .glass-field` | N/A (focus ring) |
+| `GlassDialog` | `glass-dialog.tsx` | `.glass-container` (transparent, ghost border) | N/A |
 
 ### Button Variants
 
@@ -253,6 +348,24 @@ All glass components live in `src/components/glass/`:
 | Secondary | Glass bg + blur | Elevates + lift |
 | Ghost | Transparent | Fills to glass bg |
 | Destructive | `var(--color-destructive)` | Red glow shadow + lift |
+| Destructive Ghost | Transparent, muted gray text | Text turns red + soft glow (no fill) |
+
+### Button Taxonomy
+
+Canonical mapping of every use case to variant/size/icon. All icon-only buttons require `aria-label`.
+
+| Use Case | Variant | Size | Icon | Icon Size |
+|---|---|---|---|---|
+| Primary CTA (wizard next) | primary | md | ChevronRight | 16px |
+| Submit / Confirm | primary | md | Send or Check | 16px |
+| Portal Continue (full-width) | primary | lg | none | — |
+| Back (wizard) | secondary | md | ChevronLeft | 16px |
+| Section-level Add | secondary | md/sm | Plus | 16px |
+| Inline Add (dense forms) | ghost | sm | Plus | 16px |
+| Inline Remove (list items) | destructive-ghost | sm | Trash2 | 16px |
+| Dialog Destructive confirm | destructive | sm/md | optional | 16px |
+| Ghost tertiary (reorder, copy) | ghost | sm | varies | 16px |
+| Page / dialog close | ghost | sm | X | 16px |
 
 ---
 
@@ -269,7 +382,7 @@ Stripped values (not supported): "lift", "ripple", "slide", "bubbles", "particle
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  .glass, .glass-elevated, .glass-surface {
+  .glass, .glass-elevated, .glass-container, .glass-surface {
     transition-duration: 0.01ms !important;
   }
 }
@@ -297,6 +410,8 @@ Stripped values (not supported): "lift", "ripple", "slide", "bubbles", "particle
 - **Never** hardcode colors — use CSS variables exclusively
 - **Never** use heavy shadows for depth — use transparency layering
 - **Never** invert text colors on hover — border glow, not color flip
+- **Never** nest `backdrop-filter` — only leaf elements (inputs, selects, buttons) carry blur. Containers use `.glass-container`
+- **Never** put a ghost border inside another ghost border — one border layer max (CSS enforces this automatically)
 
 ---
 

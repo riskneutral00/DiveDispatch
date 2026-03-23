@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronUp, ChevronDown, X } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -37,7 +37,7 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
         (e) =>
           !slugs.includes(e.slug) &&
           (e.name.toLowerCase().includes(trimmed) ||
-            e.city.toLowerCase().includes(trimmed)),
+            e.placeName.toLowerCase().includes(trimmed)),
       )
     : []
 
@@ -96,7 +96,7 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
               >
                 <span className="font-medium">{entry.name}</span>
                 <span className="ml-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                  {entry.city}
+                  {entry.placeName}
                 </span>
               </button>
             ))}
@@ -114,7 +114,7 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
           {slugs.map((slug, index) => {
             const entry = slugToEntry[slug]
             return (
-              <GlassCard key={slug} padding="sm" elevated>
+              <GlassCard key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span
                     className="text-xs font-bold w-5 text-center shrink-0"
@@ -126,9 +126,9 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
                       {entry?.name ?? slug}
                     </p>
-                    {entry?.city && (
+                    {entry?.placeName && (
                       <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
-                        {entry.city}
+                        {entry.placeName}
                       </p>
                     )}
                   </div>
@@ -141,7 +141,7 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
                       disabled={index === 0}
                       aria-label="Move up"
                     >
-                      <ChevronUp size={14} />
+                      <ChevronUp size={16} />
                     </GlassButton>
                     <GlassButton
                       variant="ghost"
@@ -151,16 +151,16 @@ export function PreferredInstructorList({ slugs, onChange }: Props) {
                       disabled={index === slugs.length - 1}
                       aria-label="Move down"
                     >
-                      <ChevronDown size={14} />
+                      <ChevronDown size={16} />
                     </GlassButton>
                     <GlassButton
-                      variant="destructive"
+                      variant="destructive-ghost"
                       size="sm"
                       type="button"
                       onClick={() => remove(index)}
                       aria-label="Remove instructor"
                     >
-                      <X size={14} />
+                      <Trash2 size={16} />
                     </GlassButton>
                   </div>
                 </div>

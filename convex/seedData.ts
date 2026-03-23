@@ -3,7 +3,7 @@
 
 // ── Shared Defaults ─────────────────────────────────────────────────
 
-const PHUKET = { city: 'Phuket', country: 'Thailand' } as const
+const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const VERIFIED = true
 const LOCALE = 'en'
 const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
@@ -44,8 +44,11 @@ export interface SeedUser {
 
 interface DiveCenterProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
@@ -61,8 +64,11 @@ interface DiveCenterProfile {
 
 interface BoatProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   fleet: {
@@ -81,8 +87,11 @@ interface BoatProfile {
 
 interface VenueProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   focusedLanguages: string[]
@@ -98,8 +107,11 @@ interface VenueProfile {
 
 interface EquipmentProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   focusedLanguages: string[]
@@ -109,8 +121,11 @@ interface EquipmentProfile {
 
 interface CompressorProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   gasMixes?: GasMixType[]
@@ -120,7 +135,7 @@ interface CompressorProfile {
 
 interface AgentProfile {
   name: string
-  locations: { city: string; country: string }[]
+  locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
@@ -131,8 +146,11 @@ interface AgentProfile {
 
 interface InstructorProfile {
   name: string
-  city: string
+  placeName: string
   country: string
+  lat: number
+  lng: number
+  placeId?: string
   contactEmail: string
   contactPhone: string
   credential: {
@@ -792,7 +810,7 @@ export const AMANDA: SeedStakeholder = {
   },
   agent: {
     name: 'Amanda',
-    locations: [{ city: 'Phuket', country: 'Thailand' }],
+    locations: [{ placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 }],
     contactEmail: 'amanda@divedispatch.dev',
     contactPhone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],

@@ -1,176 +1,69 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronLeft } from 'lucide-react'
 import { api } from '../../../../convex/_generated/api'
-import {
-  ROLE_BY_CLERK_ROLE,
-  type ClerkRole,
-} from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
+import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { LanguagePicker } from '@/components/common/language-picker'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 import { Spinner } from '@/components/common/spinner'
+import { BgSwitcher } from '@/components/dashboard/bg-switcher'
+import { ThemeSwitcher } from '@/components/dashboard/theme-switcher'
+import { NotificationBell } from '@/components/dashboard/notification-bell'
+import { UserMenu } from '@/components/dashboard/user-menu'
+import { MobileTopNav } from '@/components/dashboard/mobile-top-nav'
+import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav'
+import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
-// Roles where a personal name is used instead of a business name
 const PERSONAL_ROLE_KEYS = new Set(['instructor', 'dive-master'])
 
-interface ProfileFormValues {
+interface AccountFormValues {
   firstName: string
   lastName: string
   businessName: string
   contactEmail: string
+  preferredLocale: string
+  preferredChannel: ChannelKey | null
 }
-
-// ── Edit mode profile form ────────────────────────────────────────────────────
-
-function EditProfileForm({
-  user,
-  onSave,
-  submitting,
-  error,
-}: {
-  user: NonNullable<ReturnType<typeof useQuery<typeof api.users.me>>>
-  onSave: (values: ProfileFormValues) => void
-  submitting: boolean
-  error: string
-}) {
-  const [values, setValues] = useState<ProfileFormValues>({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    businessName: user.businessName,
-    contactEmail: user.email,
-  })
-
-  const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
-  const hasPersonalOnlyRole = roleConfig && PERSONAL_ROLE_KEYS.has(roleConfig.key)
-  const showBusinessName = !hasPersonalOnlyRole
-
-  function set(field: keyof ProfileFormValues, value: string) {
-    setValues((v) => ({ ...v, [field]: value }))
-  }
-
-  const isComplete =
-    values.firstName.trim() &&
-    values.lastName.trim() &&
-    (!showBusinessName || values.businessName.trim())
-
-  return (
-    <div className="w-full max-w-2xl mx-auto px-4 py-10">
-      <div className="mb-8 text-center">
-        <h1
-          className="text-2xl font-semibold mb-2"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Edit Profile
-        </h1>
-        {roleConfig && (
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {roleConfig.label}
-          </p>
-        )}
-      </div>
-
-      <GlassCard elevated>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            if (isComplete) onSave(values)
-          }}
-          className="flex flex-col gap-4"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <GlassInput
-              label="First name"
-              value={values.firstName}
-              onChange={(e) => set('firstName', e.target.value)}
-              autoComplete="given-name"
-              required
-            />
-            <GlassInput
-              label="Last name"
-              value={values.lastName}
-              onChange={(e) => set('lastName', e.target.value)}
-              autoComplete="family-name"
-              required
-            />
-          </div>
-
-          {showBusinessName && (
-            <GlassInput
-              label="Business name"
-              value={values.businessName}
-              onChange={(e) => set('businessName', e.target.value)}
-              autoComplete="organization"
-              required
-            />
-          )}
-
-          <GlassInput
-            label="Contact email"
-            type="email"
-            value={values.contactEmail}
-            onChange={(e) => set('contactEmail', e.target.value)}
-            autoComplete="email"
-          />
-
-          {error && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-              {error}
-            </p>
-          )}
-
-          <GlassButton
-            type="submit"
-            variant="primary"
-            fullWidth
-            disabled={!isComplete || submitting}
-            loading={submitting}
-          >
-            Save Changes
-          </GlassButton>
-        </form>
-      </GlassCard>
-    </div>
-  )
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AccountPage() {
   const user = useQuery(api.users.me)
+  const { user: convexUser } = useCurrentUser()
   const router = useRouter()
   const createUser = useMutation(api.users.createUser)
 
+  const [values, setValues] = useState<AccountFormValues>({
+    firstName: '',
+    lastName: '',
+    businessName: '',
+    contactEmail: '',
+    preferredLocale: 'en',
+    preferredChannel: null,
+  })
   const [submitting, setSubmitting] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleEditSave(values: ProfileFormValues) {
-    if (!user) return
-    const businessName = values.businessName.trim() || `${values.firstName} ${values.lastName}`
-    const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
-
-    setSubmitting(true)
-    setError('')
-
-    try {
-      await createUser({
-        role: user.role,
-        businessName,
+  useEffect(() => {
+    if (user) {
+      setValues({
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        businessName: user.businessName ?? '',
+        contactEmail: user.email ?? '',
+        preferredLocale: user.preferredLocale ?? 'en',
+        preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
       })
-      if (roleConfig) {
-        router.push(`/${roleConfig.key}/${user.slug}/dashboard`)
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Something went wrong. Please try again.',
-      )
-      setSubmitting(false)
     }
-  }
+  }, [user])
 
-  // Loading state
   if (user === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -179,7 +72,6 @@ export default function AccountPage() {
     )
   }
 
-  // No Convex user → redirect to sign-up wizard
   if (user === null) {
     router.replace('/sign-up')
     return (
@@ -189,13 +81,221 @@ export default function AccountPage() {
     )
   }
 
-  // Edit mode: user exists
+  const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
+  const hasPersonalOnlyRole = roleConfig && PERSONAL_ROLE_KEYS.has(roleConfig.key)
+  const showBusinessName = !hasPersonalOnlyRole
+
+  const roleSlug = roleConfig?.key
+  const slug = convexUser?.slug
+  if (!roleSlug || !slug) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner label="Loading…" />
+      </div>
+    )
+  }
+
+  function set<K extends keyof AccountFormValues>(field: K, value: AccountFormValues[K]) {
+    setValues((v) => ({ ...v, [field]: value }))
+    setSaved(false)
+  }
+
+  const isComplete =
+    values.firstName.trim() &&
+    values.lastName.trim() &&
+    (!showBusinessName || values.businessName.trim())
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!isComplete) return
+    setError('')
+    setSaved(false)
+    setSubmitting(true)
+    try {
+      const businessName = values.businessName.trim() || `${values.firstName} ${values.lastName}`
+      await createUser({
+        role: user!.role,
+        businessName,
+        preferredLocale: values.preferredLocale,
+        preferredChannel: values.preferredChannel ?? undefined,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === values.preferredLocale)
+  const selectedLocale = selectedLocaleObj
+    ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
+    : []
+
   return (
-    <EditProfileForm
-      user={user}
-      onSave={handleEditSave}
-      submitting={submitting}
-      error={error}
-    />
+    <>
+      {/* Desktop top bar */}
+      <header
+        className="hidden md:flex items-center justify-between gap-2 px-4 py-2 flex-shrink-0"
+        style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+      >
+        <Link
+          href={`/${slug}/${roleSlug}/dashboard`}
+          className="flex items-center gap-1 text-sm transition-opacity hover:opacity-70"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          <ChevronLeft size={16} />
+          Dashboard
+        </Link>
+        <div className="flex items-center gap-2">
+          <ThemeSwitcher />
+          <BgSwitcher />
+          <NotificationBell />
+          <UserMenu roleSlug={roleSlug} slug={slug} />
+        </div>
+      </header>
+
+      {/* Mobile top nav */}
+      <MobileTopNav roleSlug={roleSlug} slug={slug} />
+
+      {/* Page content */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">
+        <div className="w-full max-w-lg mx-auto">
+          <div className="mb-6">
+            <h1
+              className="text-2xl font-bold mb-1"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            >
+              Account
+            </h1>
+            {roleConfig && (
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {roleConfig.label}
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <GlassCard>
+              <div className="flex flex-col gap-4">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  Identity
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <GlassInput
+                    label="First name"
+                    value={values.firstName}
+                    onChange={(e) => set('firstName', e.target.value)}
+                    autoComplete="given-name"
+                    required
+                  />
+                  <GlassInput
+                    label="Last name"
+                    value={values.lastName}
+                    onChange={(e) => set('lastName', e.target.value)}
+                    autoComplete="family-name"
+                    required
+                  />
+                </div>
+
+                {showBusinessName && (
+                  <GlassInput
+                    label="Business name"
+                    value={values.businessName}
+                    onChange={(e) => set('businessName', e.target.value)}
+                    autoComplete="organization"
+                    required
+                  />
+                )}
+
+                <GlassInput
+                  label="Contact email"
+                  type="email"
+                  value={values.contactEmail}
+                  onChange={(e) => set('contactEmail', e.target.value)}
+                  autoComplete="email"
+                />
+              </div>
+            </GlassCard>
+
+            <GlassCard>
+              <div className="flex flex-col gap-5">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  App Preferences
+                </p>
+
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                    App language
+                  </p>
+                  <LanguagePicker
+                    value={selectedLocale}
+                    onChange={(langs) => {
+                      if (langs[0]) set('preferredLocale', langs[0].code)
+                    }}
+                    max={1}
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                    Preferred communication channel
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMUNICATION_CHANNELS.map((ch) => {
+                      const active = values.preferredChannel === ch.key
+                      return (
+                        <button
+                          key={ch.key}
+                          type="button"
+                          onClick={() => set('preferredChannel', active ? null : ch.key)}
+                          className="px-3 py-1.5 rounded-full text-sm transition-colors border cursor-pointer"
+                          style={{
+                            background: active ? 'var(--color-glass-bg-elevated)' : 'transparent',
+                            borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
+                            color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                            transitionDuration: 'var(--transition-speed)',
+                          }}
+                        >
+                          {ch.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+
+            {error && (
+              <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
+                {error}
+              </p>
+            )}
+
+            <div className="flex justify-end">
+              <GlassButton
+                type="submit"
+                variant="primary"
+                disabled={!isComplete || submitting}
+                loading={submitting}
+              >
+                {saved ? 'Saved ✓' : 'Save Changes'}
+              </GlassButton>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      {/* Mobile bottom nav */}
+      <MobileBottomNav roleSlug={roleSlug} slug={slug} />
+    </>
   )
 }

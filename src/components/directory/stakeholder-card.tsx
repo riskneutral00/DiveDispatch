@@ -72,7 +72,7 @@ export function StakeholderCard({
   onTogglePreferred,
 }: StakeholderCardProps) {
   const initials = entry.name.slice(0, 2).toUpperCase()
-  const location = [entry.city, entry.country].filter(Boolean).join(', ')
+  const location = [entry.placeName, entry.country].filter(Boolean).join(', ')
   const roleLabel = ROLE_BY_CLERK_ROLE[entry.role as ClerkRole]?.label ?? entry.role
   const href = profileHref(entry)
 

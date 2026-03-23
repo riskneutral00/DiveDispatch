@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { type AnyCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -11,7 +10,7 @@ import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
  */
 export const getPortalContext = query({
   args: { token: v.string() },
-  handler: async (ctx: AnyCtx, args: { token: string }) => {
+  handler: async (ctx, args) => {
     const resolved = await resolvePortalTokenSoft(ctx, args.token)
     if (!resolved) return null
 
@@ -77,7 +76,7 @@ export const savePortalContact = mutation({
     agencyID: v.optional(v.string()),
     allergies: v.optional(v.string()),
   },
-  handler: async (ctx: AnyCtx, args: AnyCtx): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -21,7 +21,7 @@ export default function DashboardRedirectPage() {
 
     const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
     if (roleConfig) {
-      router.replace(`/${roleConfig.key}/${user.slug}/dashboard`)
+      router.replace(`/${user.slug}/${roleConfig.key}`)
     } else {
       // No role set yet — send to sign-up wizard
       router.replace('/sign-up')

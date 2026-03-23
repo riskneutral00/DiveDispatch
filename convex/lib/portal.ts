@@ -1,5 +1,5 @@
 import { ConvexError } from 'convex/values'
-import type { AnyCtx } from './auth'
+import type { DbCtx } from './auth'
 import { isBookingExpired } from '../bookings/_shared'
 
 /**
@@ -7,10 +7,10 @@ import { isBookingExpired } from '../bookings/_shared'
  * Throws on invalid/expired token, missing booking, non-Draft status, or missing profile.
  * Use in mutations where token failure should abort.
  */
-export async function resolvePortalToken(ctx: AnyCtx, token: string) {
+export async function resolvePortalToken(ctx: DbCtx, token: string) {
   const link = await ctx.db
     .query('bookingLinks')
-    .withIndex('by_token', (q: AnyCtx) => q.eq('token', token))
+    .withIndex('by_token', (q) => q.eq('token', token))
     .unique()
   if (!link) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
   if (link.expiresAt < Date.now()) throw new ConvexError({ code: 'TOKEN_EXPIRED' })
@@ -23,7 +23,7 @@ export async function resolvePortalToken(ctx: AnyCtx, token: string) {
 
   const profile = await ctx.db
     .query('customerProfiles')
-    .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', token))
+    .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
     .unique()
   if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
 
@@ -34,10 +34,10 @@ export async function resolvePortalToken(ctx: AnyCtx, token: string) {
  * Validates a portal token, returning null on any failure instead of throwing.
  * Use in queries where invalid tokens should yield null.
  */
-export async function resolvePortalTokenSoft(ctx: AnyCtx, token: string) {
+export async function resolvePortalTokenSoft(ctx: DbCtx, token: string) {
   const link = await ctx.db
     .query('bookingLinks')
-    .withIndex('by_token', (q: AnyCtx) => q.eq('token', token))
+    .withIndex('by_token', (q) => q.eq('token', token))
     .unique()
   if (!link) return null
   if (link.expiresAt < Date.now()) return null
@@ -50,7 +50,7 @@ export async function resolvePortalTokenSoft(ctx: AnyCtx, token: string) {
 
   const profile = await ctx.db
     .query('customerProfiles')
-    .withIndex('by_linkToken', (q: AnyCtx) => q.eq('linkToken', token))
+    .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
     .unique()
   if (!profile) return null
 

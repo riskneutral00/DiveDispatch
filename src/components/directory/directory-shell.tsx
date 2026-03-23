@@ -122,13 +122,13 @@ export function DirectoryShell() {
   const entries = useMemo(() => {
     let base = byRole[selectedRole]
 
-    // Text search: name, city, country
+    // Text search: name, placeName, country
     if (search.trim()) {
       const q = search.toLowerCase()
       base = base.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
-          e.city.toLowerCase().includes(q) ||
+          e.placeName.toLowerCase().includes(q) ||
           e.country.toLowerCase().includes(q),
       )
     }

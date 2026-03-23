@@ -77,7 +77,7 @@ export function RadialProgress({ percentage, incomplete, size = 40 }: RadialProg
 
       {open && (
         <div style={{ position: 'absolute', right: 0, top: size + 8, zIndex: 50, minWidth: 200 }}>
-          <GlassCard elevated padding="sm">
+          <GlassCard padding="sm">
             <p
               style={{
                 fontSize: 11,

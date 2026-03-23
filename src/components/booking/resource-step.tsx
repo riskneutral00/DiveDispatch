@@ -2,7 +2,7 @@
 
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard, GlassInput } from '@/components/glass'
+import { GlassCard, GlassInput, GlassLink } from '@/components/glass'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
 import { ChevronDown } from 'lucide-react'
@@ -76,7 +76,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
   return (
     <div className="flex flex-col gap-5">
       {/* Equipment & Compressor */}
-      <GlassCard padding="md" elevated>
+      <GlassCard padding="md">
         <h3
           className="text-sm font-semibold mb-3"
           style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
@@ -94,14 +94,9 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                   onChange={(e) => dispatch({ type: 'SET_EXTERNAL_EQUIPMENT_NAME', value: e.target.value })}
                   placeholder="Equipment manager name"
                 />
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'SET_EQUIPMENT_EXTERNAL', value: false })}
-                  className="text-xs underline underline-offset-2 text-left"
-                  style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-                >
+                <GlassLink onClick={() => dispatch({ type: 'SET_EQUIPMENT_EXTERNAL', value: false })}>
                   Switch to system
-                </button>
+                </GlassLink>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -133,14 +128,9 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                   onChange={(e) => dispatch({ type: 'SET_EXTERNAL_COMPRESSOR_NAME', value: e.target.value })}
                   placeholder="Compressor name"
                 />
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'SET_COMPRESSOR_EXTERNAL', value: false })}
-                  className="text-xs underline underline-offset-2 text-left"
-                  style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
-                >
+                <GlassLink onClick={() => dispatch({ type: 'SET_COMPRESSOR_EXTERNAL', value: false })}>
                   Switch to system
-                </button>
+                </GlassLink>
               </div>
             ) : (
               <div className="flex flex-col gap-1">

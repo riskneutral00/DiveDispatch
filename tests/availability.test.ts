@@ -7,7 +7,7 @@ import {
   _listInventoryByType,
   _toggleBlockedDate,
 } from '../convex/availability'
-import { isFullDayResource } from '../convex/bookings/_shared'
+import { isFullDayResource, releaseBookingReservations } from '../convex/bookings/_shared'
 import {
   TEST_TOKENS,
   TEST_SLUGS,
@@ -15,6 +15,9 @@ import {
   seedInventoryUnit,
   seedSnapshot,
   seedBlockedDates,
+  seedBooking,
+  seedSession,
+  seedReservation,
 } from './fixtures/seedFixture'
 import { testDate } from './helpers/dates'
 
@@ -404,6 +407,102 @@ describe('_toggleBlockedDate', () => {
       expect(doc?.dates).toEqual([testDate(3), testDate(10), testDate(5)])
     })
   })
+  it('rejects date block when Confirmed reservation exists on that date', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
+
+      await expect(
+        _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' }),
+      ).rejects.toMatchObject({
+        data: { code: 'CONFIRMED_RESERVATION_EXISTS' },
+      })
+    })
+  })
+
+  it('allows date block when only PendingAcceptance reservations exist (no Confirmed)', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
+
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
+
+      expect(result).toBe(true)
+
+      // PendingAcceptance reservation should be vacated
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations[0].status).toBe('Vacated')
+    })
+  })
+
+  it('rejects date block even if mix of Pending + Confirmed exists', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+
+      // Booking 1: Confirmed
+      const booking1 = await seedBooking(ctx, { status: 'Upcoming' })
+      const session1 = await seedSession(ctx, booking1, unitId)
+      await seedReservation(ctx, booking1, unitId, session1, { status: 'Confirmed' })
+
+      // Booking 2: PendingAcceptance
+      const booking2 = await seedBooking(ctx)
+      const session2 = await seedSession(ctx, booking2, unitId, { startTime: '09:00' })
+      await seedReservation(ctx, booking2, unitId, session2, { status: 'PendingAcceptance' })
+
+      await seedSnapshot(ctx, unitId, { totalUnits: 2, reservedUnits: 2, availableUnits: 0 })
+
+      await expect(
+        _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' }),
+      ).rejects.toMatchObject({
+        data: { code: 'CONFIRMED_RESERVATION_EXISTS' },
+      })
+
+      // Neither reservation should be touched
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations.find((r) => r.status === 'Confirmed')).toBeTruthy()
+      expect(reservations.find((r) => r.status === 'PendingAcceptance')).toBeTruthy()
+    })
+  })
+
+  it('allows unblocking a date regardless of reservation status', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.instructor,
+        roleType: 'Instructor',
+        dates: [testDate(5)],
+      })
+
+      // Unblocking should always work — no reservation check needed
+      const result = await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
+      expect(result).toBe(false)
+    })
+  })
 })
 
 // ─── Full-day vs time-window overlap granularity ──────────────────────────────
@@ -720,6 +819,165 @@ describe('_getCapacityForDates', () => {
       const result = await _getCapacityForDates(ctx, [testDate(5)])
       expect(result[instrId as string]?.[testDate(5)]).toEqual({ available: 0, total: 1 })
       expect(result[boatId as string]?.[testDate(5)]).toEqual({ available: 15, total: 20 })
+    })
+  })
+})
+
+// ─── H4: Snapshot Window Matching ──────────────────────────────────────────
+
+describe('H4 — Snapshot window matching via releaseBookingReservations', () => {
+  it('H4-1: exact match succeeds — restore finds snapshot by unit/date/windowStart', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      const snapshotId = await seedSnapshot(ctx, unitId, {
+        date: '2026-04-15',
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: '2026-04-15',
+        startTime: '09:00',
+        endTime: '17:00',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+
+      // Release should find the exact snapshot and restore
+      await releaseBookingReservations(ctx, bookingId, 'hold_expired')
+
+      const snapshot = await ctx.db.get(snapshotId)
+      expect(snapshot!.availableUnits).toBe(1)
+      expect(snapshot!.reservedUnits).toBe(0)
+    })
+  })
+
+  it('H4-2: date format mismatch — "2026-4-15" vs "2026-04-15" throws MISSING_SNAPSHOT', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      // Snapshot stored with zero-padded date
+      await seedSnapshot(ctx, unitId, {
+        date: '2026-04-15',
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const bookingId = await seedBooking(ctx)
+      // Session with non-zero-padded date — mismatch
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: '2026-4-15',
+        startTime: '09:00',
+        endTime: '17:00',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+
+      // Should throw MISSING_SNAPSHOT because index lookup won't match
+      await expect(
+        releaseBookingReservations(ctx, bookingId, 'hold_expired'),
+      ).rejects.toMatchObject({
+        data: { code: 'MISSING_SNAPSHOT' },
+      })
+    })
+  })
+
+  it('H4-3: time format mismatch — "9:00" vs "09:00" throws MISSING_SNAPSHOT', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+      // Snapshot stored with zero-padded time
+      await seedSnapshot(ctx, unitId, {
+        date: '2026-04-15',
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const bookingId = await seedBooking(ctx)
+      // Session with non-zero-padded time — mismatch
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: '2026-04-15',
+        startTime: '9:00',
+        endTime: '17:00',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+
+      // Should throw MISSING_SNAPSHOT because index lookup won't match
+      await expect(
+        releaseBookingReservations(ctx, bookingId, 'hold_expired'),
+      ).rejects.toMatchObject({
+        data: { code: 'MISSING_SNAPSHOT' },
+      })
+    })
+  })
+
+  it('H4-4: multi-window same date — vacate morning only, afternoon unchanged', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+      })
+
+      // Morning snapshot
+      const morningSnapId = await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '12:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      // Afternoon snapshot (different booking holds this)
+      const afternoonSnapId = await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '13:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      // Booking A: holds the morning slot
+      const bookingA = await seedBooking(ctx)
+      const sessionA = await seedSession(ctx, bookingA, unitId, {
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '12:00',
+      })
+      await seedReservation(ctx, bookingA, unitId, sessionA, { status: 'PendingAcceptance' })
+
+      // Release booking A — only morning session
+      await releaseBookingReservations(ctx, bookingA, 'hold_expired')
+
+      // Morning snapshot restored
+      const morningSnap = await ctx.db.get(morningSnapId)
+      expect(morningSnap!.availableUnits).toBe(1)
+      expect(morningSnap!.reservedUnits).toBe(0)
+
+      // Afternoon snapshot unchanged
+      const afternoonSnap = await ctx.db.get(afternoonSnapId)
+      expect(afternoonSnap!.availableUnits).toBe(0)
+      expect(afternoonSnap!.reservedUnits).toBe(1)
     })
   })
 })

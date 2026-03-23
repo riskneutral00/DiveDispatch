@@ -1,5 +1,6 @@
 import { ConvexError } from 'convex/values'
-import { type AnyCtx } from './lib/auth'
+import type { MutationCtx } from './_generated/server'
+import type { Id } from './_generated/dataModel'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
 
@@ -16,19 +17,19 @@ import { type AnyCtx } from './lib/auth'
  * mutation as the Reservation write.")
  */
 export async function assignBagsForBooking(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   bookingId: string,
   equipmentManagerId: string,
   diverCount: number,
 ): Promise<void> {
   const bags = await ctx.db
     .query('equipmentBags')
-    .withIndex('by_equipmentManagerId', (q: AnyCtx) =>
+    .withIndex('by_equipmentManagerId', (q) =>
       q.eq('equipmentManagerId', equipmentManagerId),
     )
     .collect()
 
-  const available = (bags as AnyCtx[])
+  const available = bags
     .filter((b) => b.status === 'Returned')
     .sort((a, b) => String(a.bagNumber).localeCompare(String(b.bagNumber)))
 
@@ -42,7 +43,7 @@ export async function assignBagsForBooking(
   for (const bag of toAssign) {
     await ctx.db.patch(bag._id, {
       status: 'Assigned',
-      bookingId,
+      bookingId: bookingId as Id<"bookings">,
       assignedAt: now,
     })
   }
@@ -58,15 +59,15 @@ export async function assignBagsForBooking(
  * data loss in mid-use scenarios; those are handled by the EM manually.
  */
 export async function releaseBagsForBooking(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   bookingId: string,
 ): Promise<void> {
   const bags = await ctx.db
     .query('equipmentBags')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<"bookings">))
     .collect()
 
-  const assigned = (bags as AnyCtx[]).filter((b) => b.status === 'Assigned')
+  const assigned = bags.filter((b) => b.status === 'Assigned')
 
   for (const bag of assigned) {
     await ctx.db.patch(bag._id, {

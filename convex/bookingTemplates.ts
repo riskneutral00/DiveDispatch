@@ -1,18 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
-
-const courseCode = v.union(
-  v.literal('DSD'),
-  v.literal('TRY_DIVE'),
-  v.literal('OW'),
-  v.literal('AOW'),
-  v.literal('RESCUE'),
-  v.literal('DM'),
-  v.literal('FD'),
-  v.literal('REFRESH'),
-  v.literal('SPECIALTY'),
-)
+import { courseCodeValidator as courseCode } from './shared/courseCodes'
 
 export const list = query({
   args: {},

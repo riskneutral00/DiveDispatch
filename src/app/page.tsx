@@ -6,10 +6,12 @@ export default async function Home() {
   const t = await getTranslations()
 
   return (
-    <main
-      className="min-h-screen flex flex-col items-center justify-center px-4 py-16"
-      style={{ background: "var(--color-surface)" }}
-    >
+    <div className="min-h-screen relative">
+      <div className="bg-image" />
+      <div className="bg-overlay" />
+      <main
+        className="app-shell min-h-screen flex flex-col items-center justify-center px-4 py-16 relative"
+      >
       {/* Hero */}
       <div className="text-center mb-12 max-w-2xl">
         <div
@@ -75,5 +77,6 @@ export default async function Home() {
         </Link>
       </div>
     </main>
+    </div>
   )
 }

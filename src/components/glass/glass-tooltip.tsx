@@ -64,7 +64,6 @@ export function GlassTooltip({ label, children, className }: GlassTooltipProps) 
     <span
       ref={ref}
       className={`relative inline-flex ${className ?? ''}`}
-      title={label}
       onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

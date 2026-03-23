@@ -24,7 +24,7 @@ vi.mock('convex/react', async () => {
 
 // Stub heavy child components to avoid transitive import issues
 vi.mock('@/components/dashboard/bg-switcher', () => ({ BgSwitcher: () => null }))
-vi.mock('@/components/dashboard/opacity-toggle', () => ({ OpacityToggle: () => null }))
+vi.mock('@/components/dashboard/theme-switcher', () => ({ ThemeSwitcher: () => null }))
 vi.mock('@/components/dashboard/hierarchy-sub-bar', () => ({ HierarchySubBar: () => null }))
 vi.mock('@/components/dashboard/mobile-bottom-nav', () => ({ MobileBottomNav: () => null }))
 vi.mock('@/components/dashboard/mobile-top-nav', () => ({ MobileTopNav: () => null }))
@@ -77,7 +77,7 @@ describe('DashboardShell redirect logic', () => {
     )
 
     // managedChildren is undefined (useQuery stubbed), so mismatch triggers redirect
-    expect(mockReplace).toHaveBeenCalledWith('/dive-center/abc/dashboard')
+    expect(mockReplace).toHaveBeenCalledWith('/abc/dive-center/dashboard')
   })
 
   it('renders children when slug matches', () => {

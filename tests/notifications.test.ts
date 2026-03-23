@@ -149,7 +149,8 @@ describe('markAsRead', () => {
 
 describe('getUnreadCount', () => {
   it('returns count of notifications without readAt', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter }) // unread
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter }) // unread
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, readAt: Date.now() }) // read
@@ -160,7 +161,8 @@ describe('getUnreadCount', () => {
   })
 
   it('returns 0 when all notifications are read', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, readAt: Date.now() })
 
       const count = await _getUnreadCountHandler(ctx, { userId: TEST_SLUGS.diveCenter })
@@ -169,9 +171,19 @@ describe('getUnreadCount', () => {
   })
 
   it('returns 0 when user has no notifications', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       const count = await _getUnreadCountHandler(ctx, { userId: TEST_SLUGS.diveCenter })
       expect(count).toBe(0)
+    })
+  })
+
+  it('throws FORBIDDEN when caller queries another user', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      await expect(
+        _getUnreadCountHandler(ctx, { userId: 'someone-else' }),
+      ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
     })
   })
 })
@@ -180,7 +192,8 @@ describe('getUnreadCount', () => {
 
 describe('listNotifications', () => {
   it('returns notifications for the user', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
       await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, readAt: Date.now() })
 
@@ -190,7 +203,8 @@ describe('listNotifications', () => {
   })
 
   it('respects the limit parameter', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       for (let i = 0; i < 10; i++) {
         await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, createdAt: i * 1000 })
       }
@@ -204,7 +218,8 @@ describe('listNotifications', () => {
   })
 
   it('uses default limit of 20 when no limit provided', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       for (let i = 0; i < 25; i++) {
         await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, createdAt: i * 1000 })
       }
@@ -215,7 +230,8 @@ describe('listNotifications', () => {
   })
 
   it('returns notifications in descending creation order', async () => {
-    await t.run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
       const n1 = await seedNotification(ctx, {
         userId: TEST_SLUGS.diveCenter,
         message: 'first',
@@ -230,6 +246,15 @@ describe('listNotifications', () => {
       // Most recently inserted (n2) should come first in desc order
       expect(result[0]._id).toBe(n2)
       expect(result[1]._id).toBe(n1)
+    })
+  })
+
+  it('throws FORBIDDEN when caller queries another user', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      await expect(
+        _listNotificationsHandler(ctx, { userId: 'someone-else' }),
+      ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
     })
   })
 })

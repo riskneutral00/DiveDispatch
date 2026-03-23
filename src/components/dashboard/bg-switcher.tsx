@@ -1,40 +1,36 @@
 'use client'
 
-import { Sun, Waves } from 'lucide-react'
+import { Palette } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SKINS } from '@/themes/skins'
 import { useTheme } from '@/themes/theme-provider'
 
 const STORAGE_KEY = 'divedispatch-bg-pref'
-type BgKey = 'ocean' | 'coral'
 
 export function BgSwitcher() {
   const { setTheme } = useTheme()
-  const [bg, setBg] = useState<BgKey>(() => {
-    if (typeof window === 'undefined') return 'ocean'
+  const [index, setIndex] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0
     const stored = localStorage.getItem(STORAGE_KEY)
-    return stored === 'coral' ? 'coral' : 'ocean'
+    const idx = SKINS.findIndex(s => s.id === stored)
+    return idx >= 0 ? idx : 0
   })
 
   useEffect(() => {
-    const skin = SKINS.find(s => s.id === bg) ?? SKINS[0]
-    setTheme(skin)
-  }, [bg, setTheme])
+    setTheme(SKINS[index])
+  }, [index, setTheme])
 
-  function toggle() {
-    const next: BgKey = bg === 'ocean' ? 'coral' : 'ocean'
-    setBg(next)
-    localStorage.setItem(STORAGE_KEY, next)
-    const skin = SKINS.find(s => s.id === next) ?? SKINS[0]
-    setTheme(skin)
+  function cycle() {
+    const next = (index + 1) % SKINS.length
+    setIndex(next)
+    localStorage.setItem(STORAGE_KEY, SKINS[next].id)
+    setTheme(SKINS[next])
   }
-
-  const Icon = bg === 'ocean' ? Waves : Sun
 
   return (
     <button
-      aria-label={bg === 'ocean' ? 'Switch to coral background' : 'Switch to ocean background'}
-      onClick={toggle}
+      aria-label={`Switch skin (current: ${SKINS[index].name})`}
+      onClick={cycle}
       className="flex items-center justify-center w-8 h-8 rounded-full transition-all"
       style={{
         background: 'var(--color-glass-bg)',
@@ -43,7 +39,7 @@ export function BgSwitcher() {
         transitionDuration: 'var(--transition-speed)',
       }}
     >
-      <Icon size={15} />
+      <Palette size={15} />
     </button>
   )
 }

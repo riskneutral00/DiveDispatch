@@ -16,36 +16,26 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
     background: "var(--color-glass-bg)",
     color: "var(--color-text-primary)",
     borderColor: "var(--color-glass-border)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
   },
   success: {
     background: "color-mix(in srgb, var(--color-success) 20%, transparent)",
     color: "var(--color-success)",
     borderColor: "color-mix(in srgb, var(--color-success) 30%, transparent)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
   },
   warning: {
     background: "color-mix(in srgb, var(--color-warning) 20%, transparent)",
     color: "var(--color-warning)",
     borderColor: "color-mix(in srgb, var(--color-warning) 30%, transparent)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
   },
   destructive: {
     background: "color-mix(in srgb, var(--color-destructive) 20%, transparent)",
     color: "var(--color-destructive)",
     borderColor: "color-mix(in srgb, var(--color-destructive) 30%, transparent)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
   },
   info: {
     background: "color-mix(in srgb, var(--color-secondary) 20%, transparent)",
     color: "var(--color-secondary)",
     borderColor: "color-mix(in srgb, var(--color-secondary) 30%, transparent)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
   },
 };
 

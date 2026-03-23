@@ -44,8 +44,6 @@ export interface NotificationDoc {
   readAt?: number
 }
 
-export { TYPE_ICON }
-
 interface NotificationItemProps {
   notification: NotificationDoc
   onClick: (id: string) => void

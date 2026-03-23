@@ -27,6 +27,11 @@
   --color-glass-shadow-elevated: var(--color-glass-shadow-elevated);
   --color-glass-bg-hover: var(--color-glass-bg-hover);
   --color-glass-border-hover: var(--color-glass-border-hover);
+  --color-glass-container-border: var(--color-glass-container-border);
+  --color-glass-container-bg: var(--color-glass-container-bg);
+  --opacity-watermark: var(--opacity-watermark);
+  --opacity-subtle: var(--opacity-subtle);
+  --opacity-muted: var(--opacity-muted);
   --bg-image: var(--bg-image);
   --bg-overlay: var(--bg-overlay);
   --body-bg: var(--body-bg);
@@ -50,7 +55,7 @@
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Palette */
-  --color-primary: #e8786a;
+  --color-primary: #de6e60;
   --color-secondary: #4a9ece;
   --color-accent: #f0b866;
   --color-text-primary: #f0ebe4;
@@ -66,7 +71,7 @@
   --color-glass-bg: rgba(255, 255, 255, 0.05);
   --color-glass-border: rgba(255, 255, 255, 0.12);
   --glass-blur: 14px;
-  --color-primary-glow: rgba(232, 120, 106, 0.35);
+  --color-primary-glow: rgba(222, 110, 96, 0.35);
   --color-glass-bg-elevated: rgba(255, 255, 255, 0.08);
   --color-glass-border-elevated: rgba(255, 255, 255, 0.25);
   --glass-blur-elevated: 24px;
@@ -77,8 +82,17 @@
 
   /* Glass hover — border glow, not fill */
   --color-glass-bg-hover: rgba(255, 255, 255, 0.10);
-  --color-glass-border-hover: rgba(232, 120, 106, 0.35);
+  --color-glass-border-hover: rgba(222, 110, 96, 0.35);
   --glass-blur-hover: 18px;
+
+  /* Glass container — theme-driven readability surface */
+  --color-glass-container-border: rgba(255, 255, 255, 0.06);
+  --color-glass-container-bg: rgba(0, 0, 0, 0.12);
+
+  /* Semantic opacity tokens — scale per luminance class */
+  --opacity-watermark: 0.18;
+  --opacity-subtle: 0.14;
+  --opacity-muted: 0.50;
 
   /* Background — ocean depth gradient: surface blue → twilight → abyss */
   --bg-image: linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%);
@@ -111,33 +125,33 @@
      var() resolution overwrites these values at build time. Status colors are
      constants consumed via var() in JS — they never need Tailwind utilities. */
   --color-status-active: #34d399;
-  --color-status-active-bg: rgba(52, 211, 153, 0.14);
+  --color-status-active-bg: rgb(52 211 153 / var(--opacity-subtle));
   --color-status-active-border: rgba(52, 211, 153, 0.5);
   --color-status-draft: #fbbf24;
-  --color-status-draft-bg: rgba(251, 191, 36, 0.14);
+  --color-status-draft-bg: rgb(251 191 36 / var(--opacity-subtle));
   --color-status-draft-border: rgba(251, 191, 36, 0.5);
   --color-status-upcoming: #60a5fa;
-  --color-status-upcoming-bg: rgba(96, 165, 250, 0.14);
+  --color-status-upcoming-bg: rgb(96 165 250 / var(--opacity-subtle));
   --color-status-upcoming-border: rgba(96, 165, 250, 0.5);
   --color-status-completed: #a8a29e;
-  --color-status-completed-bg: rgba(168, 162, 158, 0.14);
+  --color-status-completed-bg: rgb(168 162 158 / var(--opacity-subtle));
   --color-status-completed-border: rgba(168, 162, 158, 0.50);
   --color-status-cancelled: #a8a29e;
-  --color-status-cancelled-bg: rgba(168, 162, 158, 0.14);
+  --color-status-cancelled-bg: rgb(168 162 158 / var(--opacity-subtle));
   --color-status-cancelled-border: rgba(168, 162, 158, 0.50);
   --color-status-urgent: #dc2626;
-  --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
+  --color-status-urgent-bg: rgb(220 38 38 / var(--opacity-subtle));
   --color-status-urgent-border: rgba(220, 38, 38, 0.5);
   --color-status-multiday-border: rgba(255, 255, 255, 0.7);
 
   /* Blocked — operational constraint, not a booking status */
   --color-blocked: #a78bfa;
-  --color-blocked-bg: rgba(167, 139, 250, 0.14);
+  --color-blocked-bg: rgb(167 139 250 / var(--opacity-subtle));
   --color-blocked-border: rgba(167, 139, 250, 0.50);
 
-  /* Calendar date watermarks */
-  --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
-  --color-date-blocked: rgba(255, 255, 255, 0.6);
+  /* Calendar date watermarks — opacity scales per luminance class */
+  --color-date-watermark: color-mix(in srgb, var(--color-text-primary) calc(var(--opacity-watermark) * 100%), transparent);
+  --color-date-blocked: var(--color-text-secondary);
 }
 
 /* ── Urgent Draft pulse animation ────────────────────────────────────────── */
@@ -276,6 +290,20 @@ body {
   z-index: 1;
 }
 
+/* ── Glass container (readability surface — no blur, semi-transparent bg) ───*/
+.glass-container {
+  position: relative;
+  background-color: var(--color-glass-container-bg);
+  border: 1px solid var(--color-glass-container-border);
+  border-radius: var(--border-radius);
+}
+
+/* Nested containers: lose border AND go transparent (avoid stacking tints) */
+.glass-container .glass-container {
+  border-color: transparent;
+  background-color: transparent;
+}
+
 /* ── Glass field (input focus ring) ──────────────────────────────────────────*/
 .glass-field {
   transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
@@ -293,6 +321,10 @@ body {
    Base variant styles are applied via inline styles on GlassButton.
    Hover/focus states must be CSS classes due to pseudo-selector requirements.
    ──────────────────────────────────────────────────────────────────────────── */
+.glass-btn {
+  will-change: transform;
+}
+
 .glass-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--color-primary-glow);
@@ -318,6 +350,11 @@ body {
 .glass-btn-destructive:not(:disabled):hover {
   box-shadow: 0 0 24px rgba(248, 113, 113, 0.3), 0 4px 16px var(--color-glass-shadow);
   transform: translateY(-1px);
+}
+
+.glass-btn-destructive-ghost:not(:disabled):hover {
+  color: var(--color-destructive) !important;
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.2);
 }
 
 .glass-btn:not(:disabled):active {
@@ -348,120 +385,29 @@ body {
     inset 0 1px 0 var(--color-glass-specular);
 }
 
-/* Dark mode: flip ALL child variables to light-mode values on hover so content
-   matches day-mode appearance on the white-ish glass surface */
-[data-mode="dark"] [data-hover-effect="on"] .glass-surface:hover {
-  /* ── Text ── */
-  --color-text-primary: rgba(0, 0, 0, 0.87);
-  --color-text-secondary: rgba(0, 0, 0, 0.55);
-
-  /* ── Glass structural ── */
-  --color-glass-bg: rgba(255, 255, 255, 0.45);
-  --color-glass-border: rgba(0, 0, 0, 0.06);
-  --color-glass-bg-elevated: rgba(255, 255, 255, 0.55);
-  --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
-  --color-glass-specular: rgba(255, 255, 255, 0.7);
-  --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
-  --color-glass-shadow: rgba(0, 0, 0, 0.06);
-  --color-glass-shadow-elevated: rgba(0, 0, 0, 0.10);
-
-  /* ── Surfaces ── */
-  --color-surface: #f0f9ff;
-  --color-surface-elevated: #ffffff;
-
-  /* ── Calendar watermarks ── */
-  --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
-  --color-date-blocked: rgba(0, 0, 0, 0.25);
-
-  /* ── Status colors ── */
-  --color-status-active: #16a34a;
-  --color-status-active-bg: rgba(22, 163, 74, 0.14);
-  --color-status-active-border: rgba(22, 163, 74, 0.5);
-  --color-status-draft: #d97706;
-  --color-status-draft-bg: rgba(217, 119, 6, 0.14);
-  --color-status-draft-border: rgba(217, 119, 6, 0.5);
-  --color-status-upcoming: #2563eb;
-  --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
-  --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
-  --color-status-completed: #78716c;
-  --color-status-completed-bg: rgba(120, 113, 108, 0.14);
-  --color-status-completed-border: rgba(120, 113, 108, 0.50);
-  --color-status-cancelled: #78716c;
-  --color-status-cancelled-bg: rgba(120, 113, 108, 0.14);
-  --color-status-cancelled-border: rgba(120, 113, 108, 0.50);
-  --color-status-urgent: #dc2626;
-  --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
-  --color-status-urgent-border: rgba(220, 38, 38, 0.5);
-  --color-status-multiday-border: rgba(0, 0, 0, 0.3);
-
-  /* ── Blocked — light-mode variant ── */
-  --color-blocked: #7c3aed;
-  --color-blocked-bg: rgba(124, 58, 237, 0.14);
-  --color-blocked-border: rgba(124, 58, 237, 0.50);
-}
-
 /* Mobile: slightly brighter border at rest, coral glow flash on tap */
 @media (hover: none) {
   .glass-surface {
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: var(--color-glass-container-border);
   }
 
   [data-hover-effect="on"] .glass-surface:active {
     border-color: var(--color-glass-border-hover);
     box-shadow: 0 0 20px var(--color-primary-glow);
   }
+}
 
-  /* Dark mode mobile: same full light-mode flip as desktop hover */
-  [data-mode="dark"] [data-hover-effect="on"] .glass-surface {
-    /* ── Text ── */
-    --color-text-primary: rgba(0, 0, 0, 0.87);
-    --color-text-secondary: rgba(0, 0, 0, 0.55);
-
-    /* ── Glass structural ── */
-    --color-glass-bg: rgba(255, 255, 255, 0.45);
-    --color-glass-border: rgba(0, 0, 0, 0.06);
-    --color-glass-bg-elevated: rgba(255, 255, 255, 0.55);
-    --color-glass-border-elevated: rgba(0, 0, 0, 0.12);
-    --color-glass-specular: rgba(255, 255, 255, 0.7);
-    --color-glass-specular-subtle: rgba(255, 255, 255, 0.3);
-    --color-glass-shadow: rgba(0, 0, 0, 0.06);
-    --color-glass-shadow-elevated: rgba(0, 0, 0, 0.10);
-
-    /* ── Surfaces ── */
-    --color-surface: #f0f9ff;
-    --color-surface-elevated: #ffffff;
-
-    /* ── Calendar watermarks ── */
-    --color-date-watermark: color-mix(in srgb, var(--color-text-primary) 18%, transparent);
-    --color-date-blocked: rgba(0, 0, 0, 0.25);
-
-    /* ── Status colors ── */
-    --color-status-active: #16a34a;
-    --color-status-active-bg: rgba(22, 163, 74, 0.14);
-    --color-status-active-border: rgba(22, 163, 74, 0.5);
-    --color-status-draft: #d97706;
-    --color-status-draft-bg: rgba(217, 119, 6, 0.14);
-    --color-status-draft-border: rgba(217, 119, 6, 0.5);
-    --color-status-upcoming: #2563eb;
-    --color-status-upcoming-bg: rgba(37, 99, 235, 0.14);
-    --color-status-upcoming-border: rgba(37, 99, 235, 0.5);
-    --color-status-completed: #78716c;
-    --color-status-completed-bg: rgba(120, 113, 108, 0.14);
-    --color-status-completed-border: rgba(120, 113, 108, 0.50);
-    --color-status-cancelled: #78716c;
-    --color-status-cancelled-bg: rgba(120, 113, 108, 0.14);
-    --color-status-cancelled-border: rgba(120, 113, 108, 0.50);
-    --color-status-urgent: #dc2626;
-    --color-status-urgent-bg: rgba(220, 38, 38, 0.14);
-    --color-status-urgent-border: rgba(220, 38, 38, 0.5);
-    --color-status-multiday-border: rgba(0, 0, 0, 0.3);
-  }
+/* Theme switch: suppress ALL transitions so variable swap is instant (no jitter) */
+.theme-switching,
+.theme-switching * {
+  transition-duration: 0s !important;
 }
 
 /* Reduced motion: disable glass transitions */
 @media (prefers-reduced-motion: reduce) {
   .glass,
   .glass-elevated,
+  .glass-container,
   .glass-surface {
     transition-duration: 0.01ms !important;
   }

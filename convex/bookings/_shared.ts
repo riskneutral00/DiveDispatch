@@ -4,8 +4,8 @@
  * registrations. Import freely from any other convex/ file.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyCtx = any
+import type { MutationCtx } from '../_generated/server'
+import type { Id } from '../_generated/dataModel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,16 +17,8 @@ export type VacatedReason =
   | 'noshow_replacement'
   | 'equipment_not_needed'
 
-export type CourseCode =
-  | 'DSD'
-  | 'TRY_DIVE'
-  | 'OW'
-  | 'AOW'
-  | 'RESCUE'
-  | 'DM'
-  | 'FD'
-  | 'REFRESH'
-  | 'SPECIALTY'
+import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
+export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 
 export type SessionInput = {
   inventoryUnitId: string
@@ -82,17 +74,6 @@ export type SubmitToDraftArgs = {
 import { ConvexError, v } from 'convex/values'
 import { getResourcesForBooking } from '../bookingResources'
 
-export const courseCodeValidator = v.union(
-  v.literal('DSD'),
-  v.literal('TRY_DIVE'),
-  v.literal('OW'),
-  v.literal('AOW'),
-  v.literal('RESCUE'),
-  v.literal('DM'),
-  v.literal('FD'),
-  v.literal('REFRESH'),
-  v.literal('SPECIALTY'),
-)
 
 export const sessionValidator = v.object({
   inventoryUnitId: v.id('inventoryUnits'),
@@ -181,13 +162,17 @@ export function canBookingTransition(
  */
 export function canReservationTransition(
   currentStatus: 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow',
-  action: 'accept' | 'vacate',
+  action: 'accept' | 'vacate' | 'mark_noshow' | 'revert_noshow',
 ): boolean {
   switch (action) {
     case 'accept':
       return currentStatus === 'PendingAcceptance'
     case 'vacate':
       return currentStatus === 'PendingAcceptance' || currentStatus === 'Confirmed'
+    case 'mark_noshow':
+      return currentStatus === 'Confirmed'
+    case 'revert_noshow':
+      return currentStatus === 'NoShow'
     default:
       return false
   }
@@ -256,23 +241,37 @@ export function assertNoPastDates(
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
+/** Restore availability snapshot when a reservation is released. */
+export async function restoreSnapshotUnits(
+  ctx: MutationCtx,
+  snapshotId: Id<"availabilitySnapshots">,
+  currentAvailable: number,
+  currentReserved: number,
+  unitsRequested: number,
+) {
+  await ctx.db.patch(snapshotId, {
+    availableUnits: currentAvailable + unitsRequested,
+    reservedUnits: Math.max(0, currentReserved - unitsRequested),
+  })
+}
+
 /**
  * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
  * and restores their corresponding AvailabilitySnapshot counts atomically.
  * Used by: edit mode re-submission, cancellation, TTL expiry.
  */
 export async function releaseBookingReservations(
-  ctx: AnyCtx,
+  ctx: MutationCtx,
   bookingId: string,
   reason: VacatedReason,
 ): Promise<void> {
   const reservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
     .collect()
 
   const active = reservations.filter(
-    (r: AnyCtx) => r.status === 'PendingAcceptance' || r.status === 'Confirmed',
+    (r) => r.status === 'PendingAcceptance' || r.status === 'Confirmed',
   )
 
   for (const res of active) {
@@ -293,7 +292,7 @@ export async function releaseBookingReservations(
 
     const snapshot = await ctx.db
       .query('availabilitySnapshots')
-      .withIndex('by_inventoryUnitId_date_windowStart', (q: AnyCtx) =>
+      .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
         q
           .eq('inventoryUnitId', res.inventoryUnitId)
           .eq('date', session.date)
@@ -308,10 +307,7 @@ export async function releaseBookingReservations(
       })
     }
 
-    await ctx.db.patch(snapshot._id, {
-      availableUnits: snapshot.availableUnits + res.unitsRequested,
-      reservedUnits: Math.max(0, snapshot.reservedUnits - res.unitsRequested),
-    })
+    await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, res.unitsRequested)
   }
 }
 
@@ -327,8 +323,8 @@ export async function releaseBookingReservations(
  * their services are not needed. This runs before the reservation confirmation check
  * so the now-vacated EM slot does not block advancement.
  */
-export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<void> {
-  const booking = await ctx.db.get(bookingId)
+export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promise<void> {
+  const booking = await ctx.db.get(bookingId as Id<'bookings'>)
   if (!booking || booking.status !== 'Draft') return
   if (!booking.bookingFormComplete || !booking.customerFormComplete) return
   if (booking.medicalHardBlock) return
@@ -345,12 +341,12 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
   if (hasInSystemEM) {
     const profiles = await ctx.db
       .query('customerProfiles')
-      .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
       .collect()
 
     const allOwnGear =
       profiles.length > 0 &&
-      profiles.every((p: AnyCtx) => {
+      profiles.every((p) => {
         if (!p.rentalChecklist) return false
         const c = p.rentalChecklist
         return (
@@ -365,7 +361,7 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
     if (allOwnGear) {
       const allReservations = await ctx.db
         .query('reservations')
-        .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
         .collect()
 
       for (const res of allReservations) {
@@ -384,7 +380,7 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
         if (session) {
           const snapshot = await ctx.db
             .query('availabilitySnapshots')
-            .withIndex('by_inventoryUnitId_date_windowStart', (q: AnyCtx) =>
+            .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
               q
                 .eq('inventoryUnitId', res.inventoryUnitId)
                 .eq('date', session.date)
@@ -392,10 +388,7 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
             )
             .unique()
           if (snapshot) {
-            await ctx.db.patch(snapshot._id, {
-              availableUnits: snapshot.availableUnits + res.unitsRequested,
-              reservedUnits: Math.max(0, snapshot.reservedUnits - res.unitsRequested),
-            })
+            await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, res.unitsRequested)
           }
         }
       }
@@ -405,23 +398,23 @@ export async function tryAutoAdvance(ctx: AnyCtx, bookingId: string): Promise<vo
   // ─── Reservation check ────────────────────────────────────────────────────
   const reservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q: AnyCtx) => q.eq('bookingId', bookingId))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
     .collect()
 
-  const active = reservations.filter((r: AnyCtx) => r.status !== 'Vacated')
+  const active = reservations.filter((r) => r.status !== 'Vacated')
   // A declined resource (stakeholder_declined) means the booking is missing a required
   // resource and cannot advance. Vacated-for-other-reasons (equipment_not_needed) is fine.
   const hasDeclinedResource = reservations.some(
-    (r: AnyCtx) => r.status === 'Vacated' && r.vacatedBy === 'stakeholder_declined',
+    (r) => r.status === 'Vacated' && r.vacatedBy === 'stakeholder_declined',
   )
 
   // All in-system reservations must be Confirmed.
   // Vacuously true when ALL resources are external (zero reservations ever created).
   // Blocked when a required resource was declined (needs operator attention).
-  const allConfirmed = active.every((r: AnyCtx) => r.status === 'Confirmed')
+  const allConfirmed = active.every((r) => r.status === 'Confirmed')
 
   if (allConfirmed && !hasDeclinedResource) {
-    await ctx.db.patch(bookingId, { status: 'Upcoming' })
+    await ctx.db.patch(bookingId as Id<'bookings'>, { status: 'Upcoming' })
   }
 }
 

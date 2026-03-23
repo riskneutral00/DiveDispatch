@@ -27,7 +27,27 @@ const COURSE_DURATIONS: Record<string, number> = {
   SPECIALTY: 2,
 }
 
-type CourseCode = 'DSD' | 'TRY_DIVE' | 'OW' | 'AOW' | 'RESCUE' | 'DM' | 'FD' | 'REFRESH' | 'SPECIALTY'
+// ── Date Helpers (hoisted for use in HUG_OCEAN_BOOKINGS) ──────────
+function dateStr(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function addDays(date: string, days: number): string {
+  const [y, m, d] = date.split('-').map(Number)
+  const dt = new Date(y, m - 1, d + days)
+  return dateStr(dt.getFullYear(), dt.getMonth() + 1, dt.getDate())
+}
+
+const TODAY = (() => {
+  const d = new Date(NOW)
+  return dateStr(d.getFullYear(), d.getMonth() + 1, d.getDate())
+})()
+
+function relativeDate(offset: number): string {
+  return addDays(TODAY, offset)
+}
+
+import { type CourseCode } from './shared/courseCodes'
 type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
 type ReservationStatus = 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
 type Gender = 'M' | 'F' | 'Other'
@@ -319,64 +339,64 @@ const HUG_OCEAN_BOOKINGS: {
   status: BookingStatus
   diverCount: number
 }[] = [
-  // Week 1: Mar 8–14 — Completed (endDate < 2026-03-19)
-  /* 0  */ { activityType: ['FD'], startDate: '2026-03-08', endDate: '2026-03-08', status: 'Completed', diverCount: 2 },
-  /* 1  */ { activityType: ['DSD'], startDate: '2026-03-09', endDate: '2026-03-09', status: 'Completed', diverCount: 3 },
-  /* 2  */ { activityType: ['OW'], startDate: '2026-03-09', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
-  /* 3  */ { activityType: ['AOW'], startDate: '2026-03-10', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
-  /* 4  */ { activityType: ['FD'], startDate: '2026-03-11', endDate: '2026-03-11', status: 'Completed', diverCount: 2 },
-  /* 5  */ { activityType: ['RESCUE'], startDate: '2026-03-10', endDate: '2026-03-12', status: 'Completed', diverCount: 2 },
-  /* 6  */ { activityType: ['TRY_DIVE'], startDate: '2026-03-12', endDate: '2026-03-12', status: 'Completed', diverCount: 4 },
-  /* 7  */ { activityType: ['SPECIALTY'], startDate: '2026-03-13', endDate: '2026-03-14', status: 'Completed', diverCount: 2 },
+  // Week 1: ~2 weeks ago — Completed
+  /* 0  */ { activityType: ['FD'], startDate: relativeDate(-14), endDate: relativeDate(-14), status: 'Completed', diverCount: 2 },
+  /* 1  */ { activityType: ['DSD'], startDate: relativeDate(-13), endDate: relativeDate(-13), status: 'Completed', diverCount: 3 },
+  /* 2  */ { activityType: ['OW'], startDate: relativeDate(-13), endDate: relativeDate(-11), status: 'Completed', diverCount: 2 },
+  /* 3  */ { activityType: ['AOW'], startDate: relativeDate(-12), endDate: relativeDate(-11), status: 'Completed', diverCount: 2 },
+  /* 4  */ { activityType: ['FD'], startDate: relativeDate(-11), endDate: relativeDate(-11), status: 'Completed', diverCount: 2 },
+  /* 5  */ { activityType: ['RESCUE'], startDate: relativeDate(-12), endDate: relativeDate(-10), status: 'Completed', diverCount: 2 },
+  /* 6  */ { activityType: ['TRY_DIVE'], startDate: relativeDate(-10), endDate: relativeDate(-10), status: 'Completed', diverCount: 4 },
+  /* 7  */ { activityType: ['SPECIALTY'], startDate: relativeDate(-9), endDate: relativeDate(-8), status: 'Completed', diverCount: 2 },
 
-  // Week 2: Mar 15–21 — Active + transition
-  /* 8  */ { activityType: ['FD'], startDate: '2026-03-14', endDate: '2026-03-14', status: 'Completed', diverCount: 2 },
-  /* 9  */ { activityType: ['OW'], startDate: '2026-03-16', endDate: '2026-03-18', status: 'Upcoming', diverCount: 2 },
-  /* 10 */ { activityType: ['OW', 'AOW'], startDate: '2026-03-17', endDate: '2026-03-21', status: 'Upcoming', diverCount: 3 },
-  /* 11 */ { activityType: ['DSD'], startDate: '2026-03-18', endDate: '2026-03-18', status: 'Upcoming', diverCount: 2 },
-  /* 12 */ { activityType: ['FD'], startDate: '2026-03-19', endDate: '2026-03-19', status: 'Upcoming', diverCount: 2 },
-  /* 13 */ { activityType: ['AOW'], startDate: '2026-03-19', endDate: '2026-03-20', status: 'Upcoming', diverCount: 2 },
-  /* 14 */ { activityType: ['DSD'], startDate: '2026-03-19', endDate: '2026-03-19', status: 'Upcoming', diverCount: 2 },
-  /* 15 */ { activityType: ['OW'], startDate: '2026-03-20', endDate: '2026-03-22', status: 'Upcoming', diverCount: 3 },
-  /* 16 */ { activityType: ['TRY_DIVE'], startDate: '2026-03-20', endDate: '2026-03-20', status: 'Upcoming', diverCount: 2 },
-  /* 17 */ { activityType: ['REFRESH'], startDate: '2026-03-21', endDate: '2026-03-21', status: 'Upcoming', diverCount: 2 },
+  // Week 2: ~1 week ago — Active + transition
+  /* 8  */ { activityType: ['FD'], startDate: relativeDate(-8), endDate: relativeDate(-8), status: 'Completed', diverCount: 2 },
+  /* 9  */ { activityType: ['OW'], startDate: relativeDate(-6), endDate: relativeDate(-4), status: 'Upcoming', diverCount: 2 },
+  /* 10 */ { activityType: ['OW', 'AOW'], startDate: relativeDate(-5), endDate: relativeDate(-1), status: 'Upcoming', diverCount: 3 },
+  /* 11 */ { activityType: ['DSD'], startDate: relativeDate(-4), endDate: relativeDate(-4), status: 'Upcoming', diverCount: 2 },
+  /* 12 */ { activityType: ['FD'], startDate: relativeDate(-3), endDate: relativeDate(-3), status: 'Upcoming', diverCount: 2 },
+  /* 13 */ { activityType: ['AOW'], startDate: relativeDate(-3), endDate: relativeDate(-2), status: 'Upcoming', diverCount: 2 },
+  /* 14 */ { activityType: ['DSD'], startDate: relativeDate(-3), endDate: relativeDate(-3), status: 'Upcoming', diverCount: 2 },
+  /* 15 */ { activityType: ['OW'], startDate: relativeDate(-2), endDate: relativeDate(0), status: 'Upcoming', diverCount: 3 },
+  /* 16 */ { activityType: ['TRY_DIVE'], startDate: relativeDate(-2), endDate: relativeDate(-2), status: 'Upcoming', diverCount: 2 },
+  /* 17 */ { activityType: ['REFRESH'], startDate: relativeDate(-1), endDate: relativeDate(-1), status: 'Upcoming', diverCount: 2 },
 
-  // Week 3: Mar 22–28 — Upcoming + PACKED Mar 25
-  /* 18 */ { activityType: ['AOW'], startDate: '2026-03-22', endDate: '2026-03-23', status: 'Upcoming', diverCount: 2 },
-  /* 19 */ { activityType: ['FD'], startDate: '2026-03-23', endDate: '2026-03-23', status: 'Upcoming', diverCount: 2 },
-  /* 20 */ { activityType: ['DSD'], startDate: '2026-03-24', endDate: '2026-03-24', status: 'Upcoming', diverCount: 3 },
-  /* 21 */ { activityType: ['OW'], startDate: '2026-03-24', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
-  /* 22 */ { activityType: ['OW'], startDate: '2026-03-25', endDate: '2026-03-27', status: 'Upcoming', diverCount: 3 },
-  /* 23 */ { activityType: ['AOW'], startDate: '2026-03-25', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
-  /* 24 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
-  /* 25 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
-  /* 26 */ { activityType: ['DSD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 4 },
-  /* 27 */ { activityType: ['DSD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 2 },
-  /* 28 */ { activityType: ['TRY_DIVE'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 3 },
-  /* 29 */ { activityType: ['RESCUE'], startDate: '2026-03-25', endDate: '2026-03-27', status: 'Upcoming', diverCount: 2 },
-  /* 30 */ { activityType: ['SPECIALTY'], startDate: '2026-03-25', endDate: '2026-03-26', status: 'Upcoming', diverCount: 2 },
-  /* 31 */ { activityType: ['OW', 'AOW'], startDate: '2026-03-25', endDate: '2026-03-28', status: 'Upcoming', diverCount: 2 },
-  /* 32 */ { activityType: ['OW'], startDate: '2026-03-26', endDate: '2026-03-28', status: 'Upcoming', diverCount: 2 },
-  /* 33 */ { activityType: ['FD'], startDate: '2026-03-27', endDate: '2026-03-27', status: 'Upcoming', diverCount: 2 },
+  // Week 3: this week — Upcoming + PACKED day (today+3)
+  /* 18 */ { activityType: ['AOW'], startDate: relativeDate(0), endDate: relativeDate(1), status: 'Upcoming', diverCount: 2 },
+  /* 19 */ { activityType: ['FD'], startDate: relativeDate(1), endDate: relativeDate(1), status: 'Upcoming', diverCount: 2 },
+  /* 20 */ { activityType: ['DSD'], startDate: relativeDate(2), endDate: relativeDate(2), status: 'Upcoming', diverCount: 3 },
+  /* 21 */ { activityType: ['OW'], startDate: relativeDate(2), endDate: relativeDate(4), status: 'Upcoming', diverCount: 2 },
+  /* 22 */ { activityType: ['OW'], startDate: relativeDate(3), endDate: relativeDate(5), status: 'Upcoming', diverCount: 3 },
+  /* 23 */ { activityType: ['AOW'], startDate: relativeDate(3), endDate: relativeDate(4), status: 'Upcoming', diverCount: 2 },
+  /* 24 */ { activityType: ['FD'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 3 },
+  /* 25 */ { activityType: ['FD'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 3 },
+  /* 26 */ { activityType: ['DSD'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 4 },
+  /* 27 */ { activityType: ['DSD'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 2 },
+  /* 28 */ { activityType: ['TRY_DIVE'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 3 },
+  /* 29 */ { activityType: ['RESCUE'], startDate: relativeDate(3), endDate: relativeDate(5), status: 'Upcoming', diverCount: 2 },
+  /* 30 */ { activityType: ['SPECIALTY'], startDate: relativeDate(3), endDate: relativeDate(4), status: 'Upcoming', diverCount: 2 },
+  /* 31 */ { activityType: ['OW', 'AOW'], startDate: relativeDate(3), endDate: relativeDate(6), status: 'Upcoming', diverCount: 2 },
+  /* 32 */ { activityType: ['OW'], startDate: relativeDate(4), endDate: relativeDate(6), status: 'Upcoming', diverCount: 2 },
+  /* 33 */ { activityType: ['FD'], startDate: relativeDate(5), endDate: relativeDate(5), status: 'Upcoming', diverCount: 2 },
 
-  // Week 4: Mar 29 – Apr 4
-  /* 34 */ { activityType: ['AOW'], startDate: '2026-03-29', endDate: '2026-03-30', status: 'Draft', diverCount: 2 },
-  /* 35 */ { activityType: ['DSD'], startDate: '2026-03-30', endDate: '2026-03-30', status: 'Upcoming', diverCount: 3 },
-  /* 36 */ { activityType: ['FD'], startDate: '2026-03-31', endDate: '2026-03-31', status: 'Upcoming', diverCount: 2 },
-  /* 37 */ { activityType: ['OW'], startDate: '2026-04-01', endDate: '2026-04-03', status: 'Upcoming', diverCount: 2 },
-  /* 38 */ { activityType: ['DSD'], startDate: '2026-04-02', endDate: '2026-04-02', status: 'Cancelled', diverCount: 2 },
-  /* 39 */ { activityType: ['REFRESH'], startDate: '2026-04-04', endDate: '2026-04-04', status: 'Upcoming', diverCount: 2 },
+  // Week 4: next week
+  /* 34 */ { activityType: ['AOW'], startDate: relativeDate(7), endDate: relativeDate(8), status: 'Draft', diverCount: 2 },
+  /* 35 */ { activityType: ['DSD'], startDate: relativeDate(8), endDate: relativeDate(8), status: 'Upcoming', diverCount: 3 },
+  /* 36 */ { activityType: ['FD'], startDate: relativeDate(9), endDate: relativeDate(9), status: 'Upcoming', diverCount: 2 },
+  /* 37 */ { activityType: ['OW'], startDate: relativeDate(10), endDate: relativeDate(12), status: 'Upcoming', diverCount: 2 },
+  /* 38 */ { activityType: ['DSD'], startDate: relativeDate(11), endDate: relativeDate(11), status: 'Cancelled', diverCount: 2 },
+  /* 39 */ { activityType: ['REFRESH'], startDate: relativeDate(13), endDate: relativeDate(13), status: 'Upcoming', diverCount: 2 },
 
   // Ghost instructor bookings (Kai Sørensen — not in the system)
-  /* 40 */ { activityType: ['FD'], startDate: '2026-04-06', endDate: '2026-04-06', status: 'Upcoming', diverCount: 2 },
-  /* 41 */ { activityType: ['DSD'], startDate: '2026-04-10', endDate: '2026-04-10', status: 'Draft', diverCount: 3 },
-  /* 42 */ { activityType: ['OW'], startDate: '2026-04-14', endDate: '2026-04-17', status: 'Draft', diverCount: 2 },
-  /* 43 */ { activityType: ['FD'], startDate: '2026-03-25', endDate: '2026-03-25', status: 'Upcoming', diverCount: 2 },
+  /* 40 */ { activityType: ['FD'], startDate: relativeDate(15), endDate: relativeDate(15), status: 'Upcoming', diverCount: 2 },
+  /* 41 */ { activityType: ['DSD'], startDate: relativeDate(19), endDate: relativeDate(19), status: 'Draft', diverCount: 3 },
+  /* 42 */ { activityType: ['OW'], startDate: relativeDate(23), endDate: relativeDate(26), status: 'Draft', diverCount: 2 },
+  /* 43 */ { activityType: ['FD'], startDate: relativeDate(3), endDate: relativeDate(3), status: 'Upcoming', diverCount: 2 },
 ]
 
 // Blocked dates for Hug Ocean Boat
 const HUG_OCEAN_BLOCKED_DATES: SeedBlockedDate[] = [
-  { ownerSlug: 'n7rq5j', roleType: 'Boat', dates: ['2026-03-15', '2026-03-22', '2026-03-29'] },
+  { ownerSlug: 'n7rq5j', roleType: 'Boat', dates: [relativeDate(-7), relativeDate(0), relativeDate(7)] },
 ]
 
 // ── Name pools by region ────────────────────────────────────────────
@@ -617,16 +637,6 @@ const COUNTRY_LANGUAGES: Record<string, string> = {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
-
-function dateStr(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
-
-function addDays(date: string, days: number): string {
-  const [y, m, d] = date.split('-').map(Number)
-  const dt = new Date(y, m - 1, d + days)
-  return dateStr(dt.getFullYear(), dt.getMonth() + 1, dt.getDate())
-}
 
 function deterministicUUID(prefix: string, index: number): string {
   const hex = (n: number, len: number) => n.toString(16).padStart(len, '0')
@@ -925,8 +935,7 @@ function getEquipmentSlug(config: BookingConfig, bookingIndex: number): string |
 
 function getStartDate(status: BookingStatus, bookingIndex: number, configIndex: number, activityType?: CourseCode[], localIndex?: number, dcCount?: number): string {
   if (status === 'Completed') {
-    // March 8-14, but cap so endDate doesn't exceed March 14
-    // Longest course reaching here: O+A = 4 days (startDay + 3 <= 14 → startDay <= 11)
+    // ~2 weeks ago, cap so endDate doesn't exceed day -8
     let maxDuration = 1
     if (activityType) {
       if (activityType.length === 2 && activityType.includes('OW' as CourseCode) && activityType.includes('AOW' as CourseCode)) {
@@ -935,31 +944,27 @@ function getStartDate(status: BookingStatus, bookingIndex: number, configIndex: 
         maxDuration = COURSE_DURATIONS[activityType[0]] || 1
       }
     }
-    const maxStartDay = 14 - (maxDuration - 1) // e.g. OW(3): 12, AOW(2): 13, O+A(4): 11
-    const rangeSize = maxStartDay - 8 + 1
-    const day = 8 + (bookingIndex % rangeSize)
-    return dateStr(2026, 3, day)
+    const earliestOffset = -14
+    const latestOffset = -8 - (maxDuration - 1) // e.g. OW(3): -10, AOW(2): -9, O+A(4): -11
+    const rangeSize = latestOffset - earliestOffset + 1
+    const offset = earliestOffset + (bookingIndex % rangeSize)
+    return relativeDate(offset)
   }
   if (status === 'Cancelled') {
-    // Past dates
-    const day = 10 + (bookingIndex % 5)
-    return dateStr(2026, 3, day)
+    // ~2 weeks ago
+    const offset = -14 + (bookingIndex % 5)
+    return relativeDate(offset)
   }
-  // Active bookings: March 15 – April 20
-  // For small DCs (<=10 bookings), compress to ~10-day range to ensure overlap
-  // Multi-day courses (OW=3, AOW=2, O+A=4) naturally create overlap when clustered
+  // Active bookings: today through +25 days
   const li = localIndex ?? bookingIndex
   if (dcCount && dcCount <= 10) {
-    // Compress: spread across ~10 days (March 15-24) so multi-day courses overlap heavily
+    // Compress: spread across ~10 days so multi-day courses overlap heavily
     const dayOffset = (li + configIndex * 2) % 10
-    const baseDay = 15 + dayOffset
-    return dateStr(2026, 3, baseDay)
+    return relativeDate(dayOffset)
   }
-  // Large DCs: spread across 25 days (March 15 – April 8) for denser overlap
+  // Large DCs: spread across 25 days for denser overlap
   const dayOffset = (bookingIndex * 2 + configIndex * 5) % 25
-  const baseDay = 15 + dayOffset
-  if (baseDay <= 31) return dateStr(2026, 3, baseDay)
-  return dateStr(2026, 4, baseDay - 31)
+  return relativeDate(dayOffset)
 }
 
 function getEndDate(startDate: string, activityType: CourseCode[]): string {
@@ -1100,8 +1105,8 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       let finalStartDate = startDate
       let finalEndDate = endDate
       if (isSharedBoatCapacity) {
-        finalStartDate = '2026-03-25'
-        finalEndDate = getEndDate('2026-03-25', activityType)
+        finalStartDate = relativeDate(3)
+        finalEndDate = getEndDate(relativeDate(3), activityType)
       }
 
       // ── External stakeholders ─────────────────────────────────────

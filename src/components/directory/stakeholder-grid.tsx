@@ -21,7 +21,7 @@ export function StakeholderGrid({
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="glass h-28 rounded-[var(--border-radius)] animate-pulse"
+            className="glass-container h-28 rounded-[var(--border-radius)] animate-pulse"
             style={{ background: 'var(--color-glass-bg)' }}
           />
         ))}

@@ -35,7 +35,9 @@ describe('diveCenters.create (profile setup)', () => {
     const id = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-01' })
       .mutation(api.diveCenters.create, {
         name: "Matt & Miss Mermaid's DC",
-        city: 'Phuket',
+        placeName: 'Phuket',
+        lat: 7.8804,
+        lng: 98.3923,
         country: 'Thailand',
         contactEmail: 'matt@divedispatch.dev',
         contactPhone: '+66812345678',
@@ -45,7 +47,7 @@ describe('diveCenters.create (profile setup)', () => {
 
     const profile = await t.run(async (ctx) => ctx.db.get(id))
     expect(profile?.name).toBe("Matt & Miss Mermaid's DC")
-    expect(profile?.city).toBe('Phuket')
+    expect(profile?.placeName).toBe('Phuket')
     expect(profile?.country).toBe('Thailand')
     expect(profile?.contactEmail).toBe('matt@divedispatch.dev')
     expect(profile?.contactPhone).toBe('+66812345678')
@@ -59,7 +61,9 @@ describe('diveCenters.create (profile setup)', () => {
 
     const args = {
       name: 'Idempotent DC',
-      city: 'Koh Tao',
+      placeName: 'Koh Tao',
+        lat: 10.0957,
+        lng: 99.8408,
       country: 'Thailand',
       contactEmail: 'idem@dc.com',
       contactPhone: '+66800000000',
@@ -98,7 +102,9 @@ describe('diveCenters.create (profile setup)', () => {
       t.withIdentity({ tokenIdentifier: 'clerk|profile-inst-01' })
         .mutation(api.diveCenters.create, {
           name: 'Bad Actor',
-          city: 'Phuket',
+          placeName: 'Phuket',
+        lat: 7.8804,
+        lng: 98.3923,
           country: 'Thailand',
           contactEmail: 'bad@test.com',
           contactPhone: '+66800000000',

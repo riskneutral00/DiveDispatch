@@ -26,7 +26,7 @@ async function seedUser(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   role: any = 'DiveCenter',
 ) {
-  await ctx.db.insert('users', {
+  return ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -40,6 +40,70 @@ async function seedUser(
   })
 }
 
+/** Seed minimal resources + preferences so profile + coverage gates pass */
+async function seedCoverage(ctx: Ctx, operatorSlug: string, operatorUserId: Id<'users'>) {
+  // DiveCenter profile record
+  await ctx.db.insert('diveCenters', {
+    userId: operatorUserId,
+    name: 'Test DC',
+    placeName: 'Koh Tao',
+    country: 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    contactEmail: `${operatorSlug}@test.com`,
+    contactPhone: '+66123456789',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    associations: [{ agency: 'PADI', number: '12345' }] as any,
+    focusedLanguages: ['en'],
+    verified: true,
+  })
+  // Booking template (Quick Book pill)
+  await ctx.db.insert('bookingTemplates', {
+    ownerId: operatorSlug,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ownerType: 'DiveCenter' as any,
+    name: 'Default',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    activityType: ['DSD'] as any,
+    createdAt: Date.now(),
+  })
+  // Instructor user
+  await ctx.db.insert('users', {
+    tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com',
+    name: 'Instr', firstName: 'I', lastName: 'C', businessName: 'IC',
+    role: 'Instructor' as never, isSeeded: false, preferredLocale: 'en',
+  })
+  // Equipment user
+  await ctx.db.insert('users', {
+    tokenIdentifier: 'clerk|em-cov', slug: 'em-cov', email: 'e@t.com',
+    name: 'EM', firstName: 'E', lastName: 'M', businessName: 'EM',
+    role: 'Equipment' as never, isSeeded: false, preferredLocale: 'en',
+  })
+  // Venue user + venue record (confined + open + compressor)
+  const venueUser = await ctx.db.insert('users', {
+    tokenIdentifier: 'clerk|venue-cov', slug: 'venue-cov', email: 'v@t.com',
+    name: 'Venue', firstName: 'V', lastName: 'C', businessName: 'VC',
+    role: 'Pool' as never, isSeeded: false, preferredLocale: 'en',
+  })
+  await ctx.db.insert('venues', {
+    userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0,
+    focusedLanguages: ['en'], verified: true, venueType: 'Pool' as never,
+    isPublic: false, confinedCapable: true, openWaterCapable: true, hasCompressor: true,
+  })
+  // Preferences
+  await ctx.db.insert('stakeholderPreferences', {
+    stakeholderId: operatorSlug, stakeholderType: 'DiveCenter' as never,
+    acceptanceMode: 'Auto' as never, maxHoursPerDay: 8,
+    postJobBlockDuration: 0, useNamedUnits: false,
+    commonLanguageCodes: ['en'], confirmOnAccept: false, confirmOnDecline: false,
+    preferredInstructorSlugs: ['instr-cov'],
+    preferredEquipmentSlugs: ['em-cov'],
+    preferredVenueSlugs: ['venue-cov'],
+    preferredBoatSlugs: [],
+    preferredCompressorSlugs: [],
+  })
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('createDraftShell', () => {
@@ -47,7 +111,8 @@ describe('createDraftShell', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-shell-1')
+      const userId = await seedUser(ctx, 'dc-shell-1')
+      await seedCoverage(ctx, 'dc-shell-1', userId)
     })
 
     const bookingId = await t
@@ -65,7 +130,8 @@ describe('createDraftShell', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-shell-2')
+      const userId = await seedUser(ctx, 'dc-shell-2')
+      await seedCoverage(ctx, 'dc-shell-2', userId)
     })
 
     const bookingId = await t

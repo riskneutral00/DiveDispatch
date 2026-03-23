@@ -9,14 +9,12 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/const
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
-import { StepProfileSetup, type ProfileFormValues } from '@/components/onboarding/step-profile-setup'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 
-const WIZARD_STEPS = [
+export const SIGNUP_STEPS = [
   { key: 'signup', label: 'Sign Up' },
   { key: 'role', label: 'Role' },
-  { key: 'profile', label: 'Profile' },
-]
+] as const
 
 export default function SignUpPage() {
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
@@ -25,27 +23,14 @@ export default function SignUpPage() {
   const router = useRouter()
 
   const [selectedRoles, setSelectedRoles] = useState<RoleConfig[]>([])
-  const [wizardStep, setWizardStep] = useState<'role' | 'profile'>('role')
   const [submitting, setSubmitting] = useState(false)
-  const [redirectPending, setRedirectPending] = useState(false)
   const [error, setError] = useState('')
 
-  // Redirect once the Convex user record appears after createUser
+  // Any user with a record → dashboard (banner handles incomplete state)
   useEffect(() => {
-    if (!redirectPending || !user) return
-    const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
-    if (roleConfig) {
-      router.replace(`/${roleConfig.key}/${user.slug}/dashboard`)
-    }
-  }, [redirectPending, user, router])
-
-  // Completed user visiting /sign-up → dashboard
-  useEffect(() => {
-    if (user && user.businessName) {
+    if (user) {
       const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
-      if (roleConfig) {
-        router.replace(`/${roleConfig.key}/${user.slug}/dashboard`)
-      }
+      router.replace(roleConfig ? `/${user.slug}/${roleConfig.key}` : '/dashboard')
     }
   }, [user, router])
 
@@ -57,20 +42,16 @@ export default function SignUpPage() {
     )
   }
 
-  async function handleProfileSubmit(values: ProfileFormValues) {
+  async function handleRoleSubmit() {
     if (!selectedRoles.length) return
     const primaryRole = selectedRoles[0]
-    const businessName = values.businessName.trim() || `${values.firstName} ${values.lastName}`
 
     setSubmitting(true)
     setError('')
 
     try {
-      await createUser({
-        role: primaryRole.clerkRole,
-        businessName,
-      })
-      setRedirectPending(true)
+      await createUser({ role: primaryRole.clerkRole })
+      // The user useEffect above will redirect to dashboard once the record appears
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Something went wrong. Please try again.',
@@ -81,7 +62,6 @@ export default function SignUpPage() {
 
   // ── Determine which step to show ────────────────────────────────────────────
 
-  // Still loading auth state
   if (authLoading) {
     return <Spinner label="Loading…" />
   }
@@ -91,7 +71,7 @@ export default function SignUpPage() {
     return (
       <>
         <div className="w-full mb-6">
-          <StepIndicator steps={WIZARD_STEPS} currentIndex={0} />
+          <StepIndicator steps={SIGNUP_STEPS} currentIndex={0} />
         </div>
         <SignUp
           fallbackRedirectUrl="/sign-up"
@@ -106,43 +86,29 @@ export default function SignUpPage() {
     return <Spinner label="Loading…" />
   }
 
-  // Authenticated + completed user → redirect (handled by useEffect, show spinner)
-  if (user && user.businessName) {
+  // User record exists — redirecting via useEffect
+  if (user) {
     return <Spinner label="Redirecting…" />
   }
 
-  // Authenticated, no Convex user → Steps 2-3
-  const currentIndex = wizardStep === 'role' ? 1 : 2
-
+  // Authenticated, no Convex user → Step 2: Role selection
   return (
     <>
       <div className="w-full mb-6">
-        <StepIndicator steps={WIZARD_STEPS} currentIndex={currentIndex} />
+        <StepIndicator steps={SIGNUP_STEPS} currentIndex={1} />
       </div>
 
-      {wizardStep === 'role' ? (
-        <StepRoleSelection
-          selectedRoles={selectedRoles}
-          onToggle={toggleRole}
-          onContinue={() => setWizardStep('profile')}
-        />
-      ) : (
-        <StepProfileSetup
-          selectedRoles={selectedRoles}
-          initialValues={{
-            firstName: '',
-            lastName: '',
-            businessName: '',
-            city: '',
-            country: '',
-            contactEmail: '',
-            contactPhone: '',
-          }}
-          onBack={() => setWizardStep('role')}
-          onSubmit={handleProfileSubmit}
-          submitting={submitting || redirectPending}
-          error={error}
-        />
+      <StepRoleSelection
+        selectedRoles={selectedRoles}
+        onToggle={toggleRole}
+        onBack={() => {}} // no back from role step — they already signed up
+        onContinue={handleRoleSubmit}
+      />
+      {submitting && <Spinner label="Creating account…" />}
+      {error && (
+        <p className="text-sm mt-2 text-center" style={{ color: 'var(--color-destructive)' }}>
+          {error}
+        </p>
       )}
     </>
   )
