@@ -8,6 +8,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
@@ -53,61 +54,6 @@ const defaultForm = (): CustomerContactData => ({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-interface GlassSelectProps {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: readonly string[]
-  error?: string
-  placeholder?: string
-  required?: boolean
-}
-
-function GlassSelect({
-  label,
-  value,
-  onChange,
-  options,
-  error,
-  placeholder,
-  required,
-}: GlassSelectProps) {
-  return (
-    <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-        {label}
-        {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 rounded-[var(--border-radius)]"
-        style={{
-          color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          outlineColor: error ? 'var(--color-destructive)' : 'var(--color-accent)',
-          ...(error ? { boxShadow: '0 0 0 2px var(--color-destructive)' } : {}),
-        }}
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-      {error && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {error}
-        </p>
-      )}
-    </div>
-  )
-}
 
 interface SectionHeadingProps {
   children: React.ReactNode
@@ -440,16 +386,18 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               </p>
             )}
           </div>
-          <GlassSelect
+          <GlassSimpleSelect
             label="Gender"
+            data-testid="portal-gender-select"
             value={form.gender}
             onChange={(v) => setField('gender', v as CustomerContactData['gender'])}
             options={['M', 'F', 'Other']}
             error={errors.gender}
             required
           />
-          <GlassSelect
+          <GlassSimpleSelect
             label="Nationality"
+            data-testid="portal-nationality-select"
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
             options={COUNTRIES}
@@ -471,8 +419,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
           />
-          <GlassSelect
+          <GlassSimpleSelect
             label="Issuing Country"
+            data-testid="portal-issuing-country-select"
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
             options={COUNTRIES}
@@ -545,7 +494,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         <GlassCard padding="md">
           <SectionHeading>Diving Certification</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassSelect
+            <GlassSimpleSelect
               label="Certifying Agency"
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}

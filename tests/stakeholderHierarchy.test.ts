@@ -9,7 +9,7 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
+import { seedUser, seedStakeholderHierarchy, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -17,25 +17,6 @@ function makeT() {
   return convexTest(schema, modules)
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedHierarchy(
-  ctx: Ctx,
-  parentSlug: string,
-  parentType: string,
-  childSlug: string,
-  childType: string,
-) {
-  await ctx.db.insert('stakeholderHierarchy', {
-    parentSlug,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parentType: parentType as any,
-    childSlug,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    childType: childType as any,
-    createdAt: Date.now(),
-  })
-}
 
 // ─── getManagedChildren ──────────────────────────────────────────────────────
 
@@ -58,7 +39,7 @@ describe('getManagedChildren', () => {
         role: 'Boat',
         businessName: 'Fast Boat Co',
       })
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-child', 'Boat')
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-child', childType: 'Boat' })
     })
 
     const result = await t.query(api.stakeholderHierarchy.getManagedChildren, {
@@ -81,10 +62,10 @@ describe('getManagedChildren', () => {
       await seedUser(ctx, { tokenIdentifier: 'test|pool-1', slug: 'pool-1', role: 'Pool', businessName: 'Pool' })
       await seedUser(ctx, { tokenIdentifier: 'test|comp-1', slug: 'comp-1', role: 'Compressor', businessName: 'Comp' })
 
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-1', 'Boat')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'equip-1', 'Equipment')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'pool-1', 'Pool')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'comp-1', 'Compressor')
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-1', childType: 'Boat' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'equip-1', childType: 'Equipment' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'pool-1', childType: 'Pool' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'comp-1', childType: 'Compressor' })
     })
 
     const result = await t.query(api.stakeholderHierarchy.getManagedChildren, {
@@ -104,9 +85,9 @@ describe('getManagedChildren', () => {
       await seedUser(ctx, { tokenIdentifier: 'test|dm-x', slug: 'dm-x', role: 'DiveMaster', businessName: 'DM' })
       await seedUser(ctx, { tokenIdentifier: 'test|boat-ok', slug: 'boat-ok', role: 'Boat', businessName: 'Boat' })
 
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'instr-x', 'Instructor')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'dm-x', 'DiveMaster')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-ok', 'Boat')
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'instr-x', childType: 'Instructor' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'dm-x', childType: 'DiveMaster' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-ok', childType: 'Boat' })
     })
 
     const result = await t.query(api.stakeholderHierarchy.getManagedChildren, {
@@ -124,8 +105,8 @@ describe('getManagedChildren', () => {
       await seedUser(ctx, { tokenIdentifier: 'test|boat-a', slug: 'boat-a', role: 'Boat', businessName: 'Boat A' })
       await seedUser(ctx, { tokenIdentifier: 'test|boat-b', slug: 'boat-b', role: 'Boat', businessName: 'Boat B' })
 
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-a', 'Boat')
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-b', 'Boat')
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-a', childType: 'Boat' })
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-b', childType: 'Boat' })
     })
 
     const result = await t.query(api.stakeholderHierarchy.getManagedChildren, {
@@ -154,7 +135,7 @@ describe('getManagedParent', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx, { businessName: 'Blue Ocean Diving' })
       await seedUser(ctx, { tokenIdentifier: 'test|boat-child', slug: 'boat-child', role: 'Boat' })
-      await seedHierarchy(ctx, TEST_SLUGS.diveCenter, 'DiveCenter', 'boat-child', 'Boat')
+      await seedStakeholderHierarchy(ctx, { parentSlug: TEST_SLUGS.diveCenter, parentType: 'DiveCenter', childSlug: 'boat-child', childType: 'Boat' })
     })
 
     const result = await t.query(api.stakeholderHierarchy.getManagedParent, {

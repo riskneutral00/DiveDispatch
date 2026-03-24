@@ -19,6 +19,8 @@ export type AuditAction =
   | 'portal_submitted'
   | 'medical_blocked'
   | 'medical_cleared'
+  | 'noshow_marked'
+  | 'noshow_reverted'
 
 export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
 

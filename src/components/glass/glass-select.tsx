@@ -20,6 +20,8 @@ interface GlassSelectProps {
   placeholder?: string
   /** When provided, splits options into 4 tiers by language match + preferred status */
   customerLanguages?: string[]
+  /** Pass-through for E2E test selectors */
+  'data-testid'?: string
 }
 
 const DEFAULT_VISIBLE = 2
@@ -50,7 +52,7 @@ const OptionRow = memo(function OptionRow({
       style={{
         fontFamily: 'var(--font-body)',
         color: 'var(--color-text-primary)',
-        background: isFocused ? 'var(--color-accent-muted, rgba(232, 120, 106, 0.15))' : 'transparent',
+        background: isFocused ? 'var(--color-accent-muted)' : 'transparent',
       }}
     >
       <span className="flex items-center gap-2 min-w-0">
@@ -136,7 +138,7 @@ function TierSection({
   )
 }
 
-export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages }: GlassSelectProps) {
+export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages, 'data-testid': testId }: GlassSelectProps) {
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -226,6 +228,7 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={`${id}-list`}
+        data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
         className="glass glass-field w-full text-sm py-2 pl-3 pr-8 text-left relative"

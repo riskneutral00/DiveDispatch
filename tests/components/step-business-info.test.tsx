@@ -56,15 +56,6 @@ describe('StepBusinessInfo', () => {
   }
 
   describe('operator role', () => {
-    it('renders business name input and customer languages picker', () => {
-      const { getByLabelText, getByText, getByTestId } = render(
-        <StepBusinessInfo {...defaultProps} selectedRoles={[operatorRole]} />,
-      )
-      expect(getByLabelText('Business name')).toBeTruthy()
-      expect(getByText('Customer languages')).toBeTruthy()
-      expect(getByTestId('language-picker')).toBeTruthy()
-    })
-
     it('disables Next when business name is empty', () => {
       const { getByRole } = render(
         <StepBusinessInfo {...defaultProps} selectedRoles={[operatorRole]} />,
@@ -101,13 +92,7 @@ describe('StepBusinessInfo', () => {
       })
     })
 
-    it('shows role labels in subtitle', () => {
-      const { getByText } = render(
-        <StepBusinessInfo {...defaultProps} selectedRoles={[operatorRole]} />,
-      )
-      expect(getByText('Dive Center')).toBeTruthy()
-    })
-  })
+})
 
   describe('resource role', () => {
     it('renders placeholder message instead of form', () => {

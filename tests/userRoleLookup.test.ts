@@ -93,7 +93,7 @@ describe('users.upsertUser', () => {
     expect(userId).toBeTruthy()
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId as any) as Doc<'users'> | null
+      const user = await ctx.db.get(userId)
       expect(user!.email).toBe('new@test.com')
       expect(user!.role).toBe('Instructor')
       expect(user!.slug).toBeTruthy()
@@ -116,7 +116,7 @@ describe('users.upsertUser', () => {
     })
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId as any) as Doc<'users'> | null
+      const user = await ctx.db.get(userId)
       expect(user!.email).toBe('updated@test.com')
       expect(user!.name).toBe('Updated Name')
       // Role is NOT updated on existing users

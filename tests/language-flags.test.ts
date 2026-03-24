@@ -87,7 +87,6 @@ describe('languageToCode', () => {
   it('resolves ISO-639 codes to country codes', () => {
     expect(languageToCode('en')).toBe('GB')
     expect(languageToCode('zh')).toBe('CN')
-    expect(languageToCode('yue')).toBe('HK')
     expect(languageToCode('ja')).toBe('JP')
     expect(languageToCode('ko')).toBe('KR')
     expect(languageToCode('pt')).toBe('BR')

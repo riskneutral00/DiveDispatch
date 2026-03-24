@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser } from './lib/auth'
+import { checkHasRole } from './userRoles'
 
 export const create = mutation({
   args: {
@@ -17,7 +18,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
-    if (user.role !== 'Equipment') throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasRole(ctx, user._id, 'Equipment')) throw new ConvexError({ code: 'FORBIDDEN' })
 
     const existing = await ctx.db
       .query('equipment')

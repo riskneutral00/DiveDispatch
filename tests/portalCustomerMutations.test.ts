@@ -11,7 +11,14 @@ import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
-import { testDate, testToken } from './helpers/dates'
+import { testDate, testToken, dob } from './helpers/dates'
+import {
+  seedPortalFixture as _seedPortalFixture,
+  seedBooking,
+  seedBookingLink,
+  seedCustomerProfile,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,8 +29,6 @@ function makeT() {
   return convexTest(schema, modules)
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
 async function expectConvexError(promise: Promise<unknown>, code: string) {
   await expect(promise).rejects.toSatisfy((err: unknown) => {
     const e = err as { data: unknown }
@@ -33,55 +38,25 @@ async function expectConvexError(promise: Promise<unknown>, code: string) {
 }
 
 async function seedPortalFixture(
-  ctx: Ctx,
+  ctx: SeedCtx,
   overrides: {
-    bookingOverrides?: Record<string, unknown>
-    linkOverrides?: Record<string, unknown>
-    profileOverrides?: Record<string, unknown>
+    bookingOverrides?: Parameters<typeof seedBooking>[1]
+    linkOverrides?: Parameters<typeof seedBookingLink>[2]
+    profileOverrides?: Parameters<typeof seedCustomerProfile>[2]
   } = {},
 ) {
-  const bookingId = await ctx.db.insert('bookings', {
-    ownerId: 'dc-test',
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(5),
-    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(5), activityType: ['OW'] }],
-    operatorName: 'Test DC',
-    portalContact: true,
-    portalMedical: true,
-    portalWaiver: true,
-    medicalHardBlock: false,
-    bookingFormComplete: true,
-    customerFormComplete: false,
-    expiresAt: Date.now() + HOLD_TTL,
-    ...(overrides.bookingOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const token = testToken('portal-cust')
-  const linkId = await ctx.db.insert('bookingLinks', {
-    bookingId,
-    token,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    customerName: 'Alice',
-    email: 'alice@example.com',
-    ...(overrides.linkOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const profileId = await ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: token,
-    ...(overrides.profileOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  return { bookingId, token, linkId, profileId }
+  return _seedPortalFixture(ctx, {
+    booking: {
+      ownerId: 'dc-test',
+      portalContact: true,
+      portalMedical: true,
+      portalWaiver: true,
+      expiresAt: Date.now() + HOLD_TTL,
+      ...overrides.bookingOverrides,
+    },
+    link: overrides.linkOverrides,
+    profile: overrides.profileOverrides,
+  })
 }
 
 const VALID_CONTACT = {
@@ -89,7 +64,7 @@ const VALID_CONTACT = {
   legalLastName: 'Smith',
   email: 'alice@example.com',
   phone: '+66123456789',
-  dateOfBirth: '1990-01-15',
+  dateOfBirth: dob(35),
   gender: 'F' as const,
   nationality: 'US',
   passportNumber: 'ABC123',
@@ -378,42 +353,15 @@ describe('cross-booking isolation', () => {
       tokenA = fixtureA.token
 
       // Create a second booking with its own token
-      const bookingB = await ctx.db.insert('bookings', {
-        ownerId: 'dc-test',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL,
-        paid: false,
-        activityType: ['OW'],
-        startDate: testDate(10),
-        endDate: testDate(10),
-        divers: [{ name: 'Bob', abbrev: 'B', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(10), endDate: testDate(10), activityType: ['OW'] }],
-        operatorName: 'Test DC',
-        portalContact: true,
-        portalMedical: true,
-        portalWaiver: true,
-        medicalHardBlock: false,
-        bookingFormComplete: true,
-        customerFormComplete: false,
-        expiresAt: Date.now() + HOLD_TTL,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-
-      tokenB = testToken('portal-iso')
-      await ctx.db.insert('bookingLinks', {
-        bookingId: bookingB,
-        token: tokenB,
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-        customerName: 'Bob',
-        email: 'bob@example.com',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
-      await ctx.db.insert('customerProfiles', {
-        bookingId: bookingB,
-        linkToken: tokenB,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+      const fixtureB = await seedPortalFixture(ctx, {
+        bookingOverrides: {
+          startDate: testDate(10),
+          endDate: testDate(10),
+          divers: [{ name: 'Bob', abbrev: 'B', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(10), endDate: testDate(10), activityType: ['OW'] }],
+        },
+        linkOverrides: { customerName: 'Bob', email: 'bob@example.com' },
+      })
+      tokenB = fixtureB.token
     })
 
     // Save contact on booking A

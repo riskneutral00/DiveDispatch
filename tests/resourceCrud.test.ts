@@ -10,29 +10,13 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import type { Doc, Id } from '../convex/_generated/dataModel'
+import { seedUser } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
 function makeT() {
   return convexTest(schema, modules)
-}
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role: string) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: `${slug} Business`,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
 }
 
 // ─── Resource configs ─────────────────────────────────────────────────────────
@@ -48,11 +32,20 @@ const COMMON_LOCATION = {
 }
 
 // Each entry: { apiModule, role, createArgs, updateArgs, uniqueField }
-const RESOURCE_CONFIGS = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CrudApi = { create: any; update: any; mine: any; byUserId: any }
+
+const RESOURCE_CONFIGS: Array<{
+  name: string
+  apiModule: CrudApi
+  role: Doc<'users'>['role']
+  createArgs: Record<string, unknown>
+  updateArgs: Record<string, unknown>
+  uniqueField: string
+}> = [
   {
     name: 'equipment',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.equipment as any,
+    apiModule: api.equipment as CrudApi,
     role: 'Equipment',
     createArgs: { name: 'Test Equip', ...COMMON_LOCATION },
     updateArgs: { name: 'Updated Equip' },
@@ -60,8 +53,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'boats',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.boats as any,
+    apiModule: api.boats as CrudApi,
     role: 'Boat',
     createArgs: { name: 'Test Boat', ...COMMON_LOCATION, fleet: [] },
     updateArgs: { name: 'Updated Boat' },
@@ -69,8 +61,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'venues',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.venues as any,
+    apiModule: api.venues as CrudApi,
     role: 'Pool',
     createArgs: {
       name: 'Test Venue',
@@ -86,8 +77,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'instructors',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.instructors as any,
+    apiModule: api.instructors as CrudApi,
     role: 'Instructor',
     createArgs: {
       name: 'Test Instructor',
@@ -105,8 +95,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'diveMasters',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.diveMasters as any,
+    apiModule: api.diveMasters as CrudApi,
     role: 'DiveMaster',
     createArgs: {
       name: 'Test DM',
@@ -124,8 +113,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'compressors',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.compressors as any,
+    apiModule: api.compressors as CrudApi,
     role: 'Compressor',
     createArgs: { name: 'Test Compressor', ...COMMON_LOCATION },
     updateArgs: { name: 'Updated Compressor' },
@@ -133,8 +121,7 @@ const RESOURCE_CONFIGS = [
   },
   {
     name: 'diveCenters',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    apiModule: api.diveCenters as any,
+    apiModule: api.diveCenters as CrudApi,
     role: 'DiveCenter',
     createArgs: {
       name: 'Test DC',
@@ -164,7 +151,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const wrongRole = config.role === 'Instructor' ? 'Equipment' : 'Instructor'
         await t.run(async (ctx) => {
-          await seedUser(ctx, 'wrong-role', wrongRole)
+          await seedUser(ctx, { slug: 'wrong-role', tokenIdentifier: 'clerk|wrong-role', role: wrongRole as Doc<'users'>['role'] })
         })
 
         await expect(
@@ -177,7 +164,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-user`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         const id = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
@@ -186,10 +173,10 @@ for (const config of RESOURCE_CONFIGS) {
         expect(id).toBeTruthy()
 
         await t.run(async (ctx) => {
-          const record = await ctx.db.get(id as any)
+          const record = await ctx.db.get(id) as Record<string, unknown> | null
           expect(record).toBeTruthy()
-          expect((record as any)[config.uniqueField]).toBe(config.createArgs.name)
-          expect((record as any).verified).toBe(false)
+          expect(record![config.uniqueField]).toBe(config.createArgs.name)
+          expect(record!.verified).toBe(false)
         })
       })
 
@@ -197,7 +184,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-dup`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         const id1 = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
@@ -223,7 +210,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-noprof`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         await expect(
@@ -236,7 +223,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-upd`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         // Create first
@@ -248,9 +235,9 @@ for (const config of RESOURCE_CONFIGS) {
           .mutation(config.apiModule.update, config.updateArgs)
 
         await t.run(async (ctx) => {
-          const record = await ctx.db.get(id as any)
-          expect((record as any)[config.uniqueField]).toBe(
-            (config.updateArgs as any)[config.uniqueField],
+          const record = await ctx.db.get(id) as Record<string, unknown> | null
+          expect(record![config.uniqueField]).toBe(
+            config.updateArgs[config.uniqueField],
           )
         })
       })
@@ -269,7 +256,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-nomine`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
@@ -281,7 +268,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const slug = `${config.name}-mine`
         await t.run(async (ctx) => {
-          await seedUser(ctx, slug, config.role)
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
@@ -290,7 +277,7 @@ for (const config of RESOURCE_CONFIGS) {
         const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
           .query(config.apiModule.mine, {})
         expect(result).toBeTruthy()
-        expect((result as any).name).toBe(config.createArgs.name)
+        expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
       })
     })
 
@@ -300,9 +287,9 @@ for (const config of RESOURCE_CONFIGS) {
       it('returns profile by userId', async () => {
         const t = makeT()
         const slug = `${config.name}-byuid`
-        let userId: any
+        let userId!: Id<'users'>
         await t.run(async (ctx) => {
-          userId = await seedUser(ctx, slug, config.role)
+          userId = await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
         })
 
         await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
@@ -310,15 +297,15 @@ for (const config of RESOURCE_CONFIGS) {
 
         const result = await t.query(config.apiModule.byUserId, { userId })
         expect(result).toBeTruthy()
-        expect((result as any).name).toBe(config.createArgs.name)
+        expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
       })
 
       it('returns null for non-existent userId', async () => {
         const t = makeT()
         // Seed a user so we have a valid-looking ID format, but don't create a profile
-        let userId: any
+        let userId!: Id<'users'>
         await t.run(async (ctx) => {
-          userId = await seedUser(ctx, 'no-profile', config.role)
+          userId = await seedUser(ctx, { slug: 'no-profile', tokenIdentifier: 'clerk|no-profile', role: config.role })
         })
 
         const result = await t.query(config.apiModule.byUserId, { userId })

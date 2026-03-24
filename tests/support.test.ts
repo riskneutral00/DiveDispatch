@@ -49,7 +49,7 @@ describe('submitSupportRequest', () => {
       })
 
       expect(id).toBeTruthy()
-      const request = await ctx.db.get(id as any)
+      const request = await ctx.db.get(id)
       expect(request).toMatchObject({
         userId: TEST_SLUGS.diveCenter,
         subject: 'Test subject',
@@ -76,8 +76,8 @@ describe('submitSupportRequest', () => {
         screenshotFileId: fileId,
       })
 
-      const request = await ctx.db.get(id as any)
-      expect((request as any)?.screenshotFileId).toBe(fileId)
+      const request = await ctx.db.get(id)
+      expect(request?.screenshotFileId).toBe(fileId)
     })
   })
 
@@ -91,8 +91,8 @@ describe('submitSupportRequest', () => {
         message: 'What is the status default?',
       })
 
-      const request = await ctx.db.get(id as any)
-      expect((request as any)?.status).toBe('Open')
+      const request = await ctx.db.get(id)
+      expect(request?.status).toBe('Open')
     })
   })
 

@@ -29,7 +29,7 @@ describe('userRoles.myRoles', () => {
   it('returns empty array when user has no userRoles rows', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx)
+      await seedUser(ctx, { skipUserRoles: true })
     })
 
     const roles = await t
@@ -42,7 +42,7 @@ describe('userRoles.myRoles', () => {
     const t = makeT()
     let userId: any
     await t.run(async (ctx) => {
-      userId = await seedUser(ctx)
+      userId = await seedUser(ctx, { skipUserRoles: true })
       const now = Date.now()
       await ctx.db.insert('userRoles', {
         userId,
@@ -78,7 +78,7 @@ describe('userRoles.myRoles', () => {
   it('returns only the requesting user\'s roles, not other users\'', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const dcUserId = await seedUser(ctx)
+      const dcUserId = await seedUser(ctx, { skipUserRoles: true })
       const instrUserId = await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,
         slug: TEST_SLUGS.instructor,
@@ -116,7 +116,7 @@ describe('userRoles.hasRole', () => {
     const t = makeT()
     let userId: any
     await t.run(async (ctx) => {
-      userId = await seedUser(ctx)
+      userId = await seedUser(ctx, { skipUserRoles: true })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -135,7 +135,7 @@ describe('userRoles.hasRole', () => {
   it('returns false when user does not have the role', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
+      const userId = await seedUser(ctx, { skipUserRoles: true })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -164,7 +164,7 @@ describe('userRoles.addRole', () => {
   it('adds a new role to the user', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx)
+      await seedUser(ctx, { skipUserRoles: true })
     })
 
     await t
@@ -183,7 +183,7 @@ describe('userRoles.addRole', () => {
   it('rejects duplicate role for the same user', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
+      const userId = await seedUser(ctx, { skipUserRoles: true })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -212,7 +212,7 @@ describe('userRoles.hasAnyOperatorRole', () => {
   it('returns true when user has an operator role', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
+      const userId = await seedUser(ctx, { skipUserRoles: true })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
@@ -231,7 +231,7 @@ describe('userRoles.hasAnyOperatorRole', () => {
   it('returns false when user has only resource roles', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
+      const userId = await seedUser(ctx, { skipUserRoles: true })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
@@ -254,7 +254,7 @@ describe('userRoles.primaryRole', () => {
   it('returns the role marked as primary', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
+      const userId = await seedUser(ctx, { skipUserRoles: true })
       const now = Date.now()
       await ctx.db.insert('userRoles', {
         userId,
@@ -289,7 +289,7 @@ describe('userRoles.primaryRole', () => {
   it('returns null when user has no roles', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedUser(ctx)
+      await seedUser(ctx, { skipUserRoles: true })
     })
 
     const primary = await t

@@ -261,7 +261,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
             <line x1="23" y1="18" x2="32" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             <circle cx="18" cy="18" r="3.5" stroke="white" strokeWidth="2.5" fill="none" />
             {/* Drop shadow lines for contrast */}
-            <line x1="18" y1="4"  x2="18" y2="13" stroke="rgba(0,0,0,0.4)" strokeWidth="4" strokeLinecap="round" style={{ mixBlendMode: 'multiply' }} />
+            <line x1="18" y1="4"  x2="18" y2="13" stroke="var(--color-text-secondary)" strokeWidth="4" strokeLinecap="round" style={{ mixBlendMode: 'multiply' }} />
           </svg>
         </div>
       </div>
@@ -355,7 +355,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label }: Trigger
             ...(error
               ? {
                   borderColor: 'var(--color-destructive)',
-                  boxShadow: '0 0 0 3px rgba(239,68,68,0.3)',
+                  boxShadow: '0 0 0 3px var(--color-destructive-glow)',
                 }
               : {}),
           }}

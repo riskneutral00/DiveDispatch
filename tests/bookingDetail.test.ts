@@ -4,142 +4,58 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { logBookingChange } from '../convex/bookingAuditLog'
 import { testDate, testToken } from './helpers/dates'
+import type { Id } from '../convex/_generated/dataModel'
+import {
+  seedUser,
+  seedBooking,
+  seedInventoryUnit,
+  seedSession,
+  seedReservation,
+  seedBookingResource,
+  seedCustomerProfile,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
+// ─── Local thin wrapper ──────────────────────────────────────────────────────
+// The shared seedReservation requires a sessionId; this wrapper auto-creates
+// a session when none is provided, matching the original local helper behavior.
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
+async function seedReservationWithAutoSession(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  inventoryUnitId: Id<'inventoryUnits'>,
+  status: 'PendingAcceptance' | 'Confirmed' | 'Declined' | 'Released',
+  bookingSessionId?: Id<'bookingSessions'>,
+) {
+  const sessionId =
+    bookingSessionId ??
+    (await seedSession(ctx, bookingId, inventoryUnitId, {
+      date: testDate(5),
+      startTime: '09:00',
+      endTime: '17:00',
+    }))
+  return seedReservation(ctx, bookingId, inventoryUnitId, sessionId, { status })
+}
 
-async function seedUser(
-  ctx: Ctx,
+// ─── Local helper for seedUser with positional slug/role pattern ─────────────
+
+async function seedTestUser(
+  ctx: SeedCtx,
   slug: string,
-  role = 'DiveCenter',
+  role: 'DiveCenter' | 'Instructor' | 'Boat' | 'Equipment' | 'Pool' | 'Compressor' | 'DiveMaster' | 'Agent' = 'DiveCenter',
   email?: string,
 ) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
+  return seedUser(ctx, {
     slug,
+    tokenIdentifier: `clerk|${slug}`,
+    role,
     email: email ?? `${slug}@test.com`,
     name: `${slug} Name`,
     firstName: slug,
     lastName: 'Test',
     businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
-async function seedBooking(
-  ctx: Ctx,
-  ownerId: string,
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('bookings', {
-    ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
-    divers: [
-      {
-        name: 'Alice',
-        abbrev: 'A',
-        flag: { code: 'TH', label: 'Thailand' },
-        startDate: testDate(5),
-        endDate: testDate(7),
-        activityType: ['OW'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(overrides as any),
-  })
-}
-
-async function seedInventoryUnit(
-  ctx: Ctx,
-  ownerId: string,
-  resourceType: string,
-) {
-  return ctx.db.insert('inventoryUnits', {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resourceType: resourceType as any,
-    resourceId: ownerId,
-    displayName: `${ownerId} Unit`,
-    capacityModel: 'Exclusive',
-    totalUnits: 1,
-    ownerId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ownerType: resourceType as any,
-  })
-}
-
-async function seedReservation(
-  ctx: Ctx,
-  bookingId: string,
-  inventoryUnitId: string,
-  status: string,
-  bookingSessionId?: string,
-) {
-  // If no session provided, create a placeholder session
-  const sessionId =
-    bookingSessionId ??
-    (await ctx.db.insert('bookingSessions', {
-      bookingId,
-      inventoryUnitId,
-      date: testDate(5),
-      startTime: '09:00',
-      endTime: '17:00',
-      timezone: 'Asia/Bangkok',
-    }))
-  return ctx.db.insert('reservations', {
-    bookingId,
-    inventoryUnitId,
-    bookingSessionId: sessionId,
-    unitsRequested: 1,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    status: status as any,
-  })
-}
-
-async function seedSession(
-  ctx: Ctx,
-  bookingId: string,
-  inventoryUnitId: string,
-) {
-  return ctx.db.insert('bookingSessions', {
-    bookingId,
-    inventoryUnitId,
-    date: testDate(5),
-    startTime: '09:00',
-    endTime: '17:00',
-    timezone: 'Asia/Bangkok',
-  })
-}
-
-async function seedCustomerProfile(
-  ctx: Ctx,
-  bookingId: string,
-  submittedAt?: number,
-) {
-  return ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: testToken('token'),
-    physicianClearanceRequired: false,
-    ...(submittedAt !== undefined ? { submittedAt } : {}),
   })
 }
 
@@ -149,19 +65,32 @@ describe('getBookingDetail', () => {
   // ── test 1: returns all stakeholder names (in-system) ──────────────────────
   it('returns all stakeholder names for in-system IDs', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedUser(ctx, 'boat-1', 'Boat')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedTestUser(ctx, 'boat-1', 'Boat')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
         resourceSlug: 'boat-1',
       })
@@ -194,17 +123,30 @@ describe('getBookingDetail', () => {
   // ── test 2: returns external stakeholder names ─────────────────────────────
   it('returns external stakeholder names with isExternal=true', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         externalName: 'External Instructor Joe',
       })
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
         externalName: 'External Boat Sally',
       })
@@ -234,17 +176,21 @@ describe('getBookingDetail', () => {
   // ── test 3: returns all customer profiles with portal completion status ─────
   it('returns all customer profiles with portal completion status', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1', {
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
         divers: [
           { name: 'A', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
           { name: 'B', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
           { name: 'C', abbrev: 'C', flag: { code: 'GB', label: 'UK' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
         ],
       })
-      await seedCustomerProfile(ctx, bookingId, Date.now()) // submitted
+      await seedCustomerProfile(ctx, bookingId, { submittedAt: Date.now() }) // submitted
       await seedCustomerProfile(ctx, bookingId) // pending
       await seedCustomerProfile(ctx, bookingId) // pending
     })
@@ -264,18 +210,41 @@ describe('getBookingDetail', () => {
   // ── test 4: returns sessions with inventory info ───────────────────────────
   it('returns sessions with date, time, and inventory unit display name', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      const iuId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      await seedSession(ctx, bookingId, iuId)
+      const iuId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 Unit',
+      })
+      await seedSession(ctx, bookingId, iuId, {
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '17:00',
+      })
     })
 
     const result = await t
@@ -293,18 +262,37 @@ describe('getBookingDetail', () => {
   // ── test 5: returns reservations with status and stakeholder name ──────────
   it('returns reservations with status, resource name, and stakeholder name', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      const iuId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      await seedReservation(ctx, bookingId, iuId, 'Confirmed')
+      const iuId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 Unit',
+      })
+      await seedReservationWithAutoSession(ctx, bookingId, iuId, 'Confirmed')
     })
 
     const result = await t
@@ -322,10 +310,25 @@ describe('getBookingDetail', () => {
   // ── test 6: returns audit log ──────────────────────────────────────────────
   it('returns audit log entries sorted by timestamp descending', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1')
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
     })
     // Insert audit entries
     await t
@@ -361,10 +364,26 @@ describe('getBookingDetail', () => {
   // ── test 7: overview fields present ───────────────────────────────────────
   it('returns overview fields: status, dates, activityType, operatorName', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        status: 'Upcoming',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
     })
 
     const result = await t
@@ -382,18 +401,31 @@ describe('getBookingDetail', () => {
   // ── test 8: stakeholders include isExternal flag ──────────────────────────
   it('stakeholders have isExternal flag distinguishing in-system vs external', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
         externalName: 'Charter Express',
       })
@@ -415,18 +447,37 @@ describe('getBookingDetail', () => {
   // ── test 9: reservation status values ────────────────────────────────────
   it('returns reservation with PendingAcceptance status', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      const iuId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      await seedReservation(ctx, bookingId, iuId, 'PendingAcceptance')
+      const iuId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 Unit',
+      })
+      await seedReservationWithAutoSession(ctx, bookingId, iuId, 'PendingAcceptance')
     })
 
     const result = await t
@@ -440,12 +491,27 @@ describe('getBookingDetail', () => {
   // ── test 10: customer portal status shown via submittedAt ─────────────────
   it('customer profiles reflect portal completion via submittedAt', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     const submittedTime = Date.now()
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await seedCustomerProfile(ctx, bookingId, submittedTime)
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedCustomerProfile(ctx, bookingId, { submittedAt: submittedTime })
     })
 
     const result = await t
@@ -459,10 +525,25 @@ describe('getBookingDetail', () => {
   // ── test 11: auditLog array present ──────────────────────────────────────
   it('auditLog field is always present (empty if no entries)', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      bookingId = await seedBooking(ctx, 'dc-1')
+      await seedTestUser(ctx, 'dc-1')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
     })
 
     const result = await t
@@ -477,18 +558,37 @@ describe('getBookingDetail', () => {
   // ── test 12: stakeholder reservation status propagated ────────────────────
   it('stakeholder reservationStatus reflects their inventory unit status', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: string
+    let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      bookingId = await seedBooking(ctx, 'dc-1')
-      await ctx.db.insert('bookingResources', {
-        bookingId: bookingId as any,
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-1',
+        bookingFormComplete: false,
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'A',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+      })
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
         resourceSlug: 'instructor-1',
       })
-      const iuId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      await seedReservation(ctx, bookingId, iuId, 'Confirmed')
+      const iuId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 Unit',
+      })
+      await seedReservationWithAutoSession(ctx, bookingId, iuId, 'Confirmed')
     })
 
     const result = await t

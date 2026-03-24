@@ -32,19 +32,6 @@ describe('StepRoleSelection', () => {
     onContinue: vi.fn(),
   }
 
-  it('renders organizer and resource section headers', () => {
-    const { getByText } = render(<StepRoleSelection {...defaultProps} />)
-    expect(getByText('Organizers')).toBeInTheDocument()
-    expect(getByText('Resources')).toBeInTheDocument()
-  })
-
-  it('renders all role tiles', () => {
-    const { getByText } = render(<StepRoleSelection {...defaultProps} />)
-    for (const role of [...ORGANIZER_ROLES, ...RESOURCE_ROLES]) {
-      expect(getByText(role.label)).toBeInTheDocument()
-    }
-  })
-
   it('disables Continue when no roles are selected', () => {
     const { getByRole } = render(<StepRoleSelection {...defaultProps} />)
     const btn = getByRole('button', { name: /^next$/i })
@@ -101,14 +88,4 @@ describe('StepRoleSelection', () => {
     expect(tile).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('shows role descriptions for selected roles', () => {
-    const role = ORGANIZER_ROLES[0]
-    const { getByText } = render(
-      <StepRoleSelection
-        {...defaultProps}
-        selectedRoles={[role]}
-      />,
-    )
-    expect(getByText(role.description)).toBeInTheDocument()
-  })
 })

@@ -126,7 +126,7 @@ export function StakeholderCard({
                   className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
                   style={{
                     background: isPreferred
-                      ? 'rgba(59,130,246,0.15)'
+                      ? 'var(--color-primary-muted)'
                       : 'var(--color-glass-bg)',
                     color: isPreferred ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                     transitionDuration: 'var(--transition-speed)',

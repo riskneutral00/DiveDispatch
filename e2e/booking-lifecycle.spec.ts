@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 import { signInAs } from './helpers/auth'
 import { NICOLE, futureDateString } from './helpers/seed'
 
-const CONVEX_SITE_URL = 'https://vivid-bison-754.convex.site'
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.cloud', '.site')
+if (!CONVEX_SITE_URL) throw new Error('NEXT_PUBLIC_CONVEX_URL env var required for E2E tests')
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,7 @@ async function fillOneCustomer(
   await nameInputs.nth(index).fill(name)
 
   // Email is the default contact type — find the email inputs
-  const emailInputs = page.locator('input[type="email"]')
+  const emailInputs = page.locator('[data-testid="customer-email"]')
   await emailInputs.nth(index).fill(email)
 
   // Select English language flag — each customer has one flag picker,
@@ -98,7 +99,7 @@ test.describe('1 — Customer step validation', () => {
 
   test('1a — name missing → Next disabled', async ({ page }) => {
     // Fill contact and language but NOT name
-    await page.locator('input[type="email"]').first().fill('test@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('test@test.com')
     await page.getByRole('button', { name: 'English' }).click()
 
     const nextBtn = page.getByRole('button', { name: 'Next', exact: true })
@@ -117,7 +118,7 @@ test.describe('1 — Customer step validation', () => {
   test('1c — language missing → Next disabled', async ({ page }) => {
     // Fill name and contact but NOT language
     await page.getByLabel('Full name *').fill('Test Customer')
-    await page.locator('input[type="email"]').first().fill('test@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('test@test.com')
 
     const nextBtn = page.getByRole('button', { name: 'Next', exact: true })
     await expect(nextBtn).toBeDisabled()
@@ -141,7 +142,7 @@ test.describe('2 — Itinerary step', () => {
 
     // Fill customer step with one customer and advance
     await page.getByLabel('Full name *').fill('Test Customer')
-    await page.locator('input[type="email"]').first().fill('test@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('test@test.com')
     await page.getByRole('button', { name: 'English' }).first().click()
     await clickNext(page)
   })
@@ -161,10 +162,10 @@ test.describe('2 — Itinerary step', () => {
 
   test('2b — date picker min attribute prevents past dates', async ({ page }) => {
     // Select a course first
-    await page.locator('select').first().selectOption('OW')
+    await page.locator('[data-testid="course-activity-select"]').first().selectOption('OW')
 
     // The start date input should have a min attribute set
-    const startDateInput = page.locator('input[type="date"]').first()
+    const startDateInput = page.locator('[data-testid="course-start-date"]').first()
     await expect(startDateInput).toBeVisible()
 
     // Verify we can set a future date
@@ -175,7 +176,7 @@ test.describe('2 — Itinerary step', () => {
 
   test('2g — prerequisite ordering error shown (AOW before OW)', async ({ page }) => {
     // Select AOW first
-    await page.locator('select').first().selectOption('AOW')
+    await page.locator('[data-testid="course-activity-select"]').first().selectOption('AOW')
 
     // Add another course entry
     await page.getByRole('button', { name: /Add activity/i }).click()
@@ -188,7 +189,7 @@ test.describe('2 — Itinerary step', () => {
 
   test('2h — no schedule visible when no courses selected', async ({ page }) => {
     // QUICK BOOK pre-fills DSD — clear it to test empty state
-    await page.locator('select').first().selectOption('')
+    await page.locator('[data-testid="course-activity-select"]').first().selectOption('')
     await page.waitForTimeout(300)
 
     // With no course selected, day rows should not appear.
@@ -200,15 +201,16 @@ test.describe('2 — Itinerary step', () => {
   test('2j — external resource entry works', async ({ page }) => {
     // DSD is pre-filled from QUICK BOOK — just fill a date
     const startDate = futureDateString(30)
-    await page.locator('input[type="date"]').first().fill(startDate)
+    await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
 
     // Wait for schedule to generate
     await expect(page.getByText(/Day 1/).first()).toBeVisible({ timeout: 5_000 })
 
     // Select external instructor in the inline instructor dropdown (inside Day card)
-    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+    const instructorSelect = page.locator('[data-testid="instructor-select"]')
     await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-    await instructorSelect.selectOption('__external__')
+    await instructorSelect.click()
+    await page.getByRole('option', { name: 'External (not in system)' }).click()
 
     // External instructor name input should appear
     const externalInput = page.getByLabel('Instructor (external)')
@@ -264,13 +266,13 @@ test.describe('2i — Instructor ratio warning', () => {
     await clickNext(page)
 
     // Select OW course (PADI max 4 divers per instructor)
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     await courseSelect.selectOption('OW')
 
     // Set a start date
     const startDate = futureDateString(30)
-    await page.locator('input[type="date"]').first().fill(startDate)
+    await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
 
     // Warning should appear about instructor ratio
     await expect(
@@ -289,19 +291,20 @@ test.describe('1e — Draft persistence', () => {
 
     // Step 1: Fill customer
     await page.getByLabel('Full name *').fill('Draft Persist Test')
-    await page.locator('input[type="email"]').first().fill('draft-persist@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('draft-persist@test.com')
     await page.getByRole('button', { name: 'English' }).first().click()
     await clickNext(page)
 
     // Step 2: DSD pre-filled, set start date
     const startDate = futureDateString(7)
-    await page.locator('input[type="date"]').first().fill(startDate)
+    await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
     await expect(page.getByText(/Day 1/).first()).toBeVisible({ timeout: 5_000 })
 
     // Assign external instructor so Next is enabled
-    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+    const instructorSelect = page.locator('[data-testid="instructor-select"]')
     await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-    await instructorSelect.selectOption('__external__')
+    await instructorSelect.click()
+    await page.getByRole('option', { name: 'External (not in system)' }).click()
     await page.getByLabel('Instructor (external)').fill('External Instructor')
 
     // Advance to review — this creates the draft shell with dates
@@ -323,7 +326,7 @@ test.describe('1e — Draft persistence', () => {
 
     // Fill customer completely on step 1
     await page.getByLabel('Full name *').fill('No Draft Customer')
-    await page.locator('input[type="email"]').first().fill('no-draft@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('no-draft@test.com')
     await page.getByRole('button', { name: 'English' }).first().click()
 
     // Advance to step 2 — no draft shell created yet (deferred to review)
@@ -357,16 +360,16 @@ test.describe('2c — Second activity date constraint', () => {
 
     // Fill customer and advance to step 2
     await page.getByLabel('Full name *').fill('Test Customer')
-    await page.locator('input[type="email"]').first().fill('test@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('test@test.com')
     await page.getByRole('button', { name: 'English' }).first().click()
     await clickNext(page)
 
     // Select OW (3 days) and set a start date
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     await courseSelect.selectOption('OW')
     const owStart = futureDateString(20)
-    await page.locator('input[type="date"]').first().fill(owStart)
+    await page.locator('[data-testid="course-start-date"]').first().fill(owStart)
     await page.waitForTimeout(500)
 
     // Add a second activity
@@ -374,14 +377,13 @@ test.describe('2c — Second activity date constraint', () => {
     await page.waitForTimeout(300)
 
     // Select AOW for the second entry
-    const secondCourseSelect = page.locator('select').nth(1)
+    const secondCourseSelect = page.locator('[data-testid="course-activity-select"]').nth(1)
     await secondCourseSelect.selectOption('AOW')
     await page.waitForTimeout(300)
 
     // The second date input should have min attribute >= OW end date
-    const dateInputs = page.locator('input[type="date"]')
-    // First two inputs are OW start/end, third is AOW start
-    const aowStartInput = dateInputs.nth(2)
+    // Each course entry has a data-testid="course-start-date"; the second is AOW's start
+    const aowStartInput = page.locator('[data-testid="course-start-date"]').nth(1)
     const minAttr = await aowStartInput.getAttribute('min')
     expect(minAttr).toBeTruthy()
 
@@ -400,22 +402,23 @@ async function submitDsdBooking(
 ) {
   // Step 1: Fill customer
   await page.getByLabel('Full name *').fill('Badge Test Customer')
-  await page.locator('input[type="email"]').first().fill('badge-test@test.com')
+  await page.locator('[data-testid="customer-email"]').first().fill('badge-test@test.com')
   await page.getByRole('button', { name: 'English' }).first().click()
   await clickNext(page)
 
   // Step 2: DSD pre-filled, set start date
-  await page.locator('input[type="date"]').first().fill(startDate)
+  await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
   await expect(page.getByText(/Day 1/).first()).toBeVisible({ timeout: 5_000 })
 
   // Assign external instructor
-  const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+  const instructorSelect = page.locator('[data-testid="instructor-select"]')
   await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-  await instructorSelect.selectOption('__external__')
+  await instructorSelect.click()
+  await page.getByRole('option', { name: 'External (not in system)' }).click()
   await page.getByLabel('Instructor (external)').fill('External Instructor')
 
   // Assign external pool (DSD day 1 = confined water / pool venue type)
-  const poolSelect = page.locator('select').filter({ hasText: /Select pool/ })
+  const poolSelect = page.locator('[data-testid="pool-select"]')
   if (await poolSelect.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await poolSelect.selectOption('__external__')
     await page.getByLabel('Pool (external)').fill('External Pool')
@@ -527,7 +530,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
     await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
     await openBookingOverlay(page, 'DSD')
     await page.getByLabel('Full name *').fill('Filter Test')
-    await page.locator('input[type="email"]').first().fill('filter@test.com')
+    await page.locator('[data-testid="customer-email"]').first().fill('filter@test.com')
     await page.getByRole('button', { name: 'English' }).first().click()
     await clickNext(page)
   }
@@ -535,8 +538,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
   async function getSecondDropdownValues(page: import('@playwright/test').Page): Promise<string[]> {
     await page.getByRole('button', { name: /Add activity/i }).click()
     await page.waitForTimeout(300)
-    const selects = page.locator('select')
-    const secondSelect = selects.nth(1)
+    const secondSelect = page.locator('[data-testid="course-activity-select"]').nth(1)
     // Read option VALUES (course codes like 'AOW') not text — avoids false matches
     // from the O+A combo label "O+A (OW + AOW)" which contains "AOW" as text.
     return secondSelect.locator('option').evaluateAll((opts) =>
@@ -550,7 +552,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
 
   test('first = DSD → second dropdown: OW present, FD absent', async ({ page }) => {
     await advanceToItinerary(page)
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     const values = await getSecondDropdownValues(page)
     expect(values).toContain('OW')
@@ -559,7 +561,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
 
   test('first = OW → second dropdown: OW absent, DSD absent, AOW present', async ({ page }) => {
     await advanceToItinerary(page)
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     await courseSelect.selectOption('OW')
     await expect(courseSelect).toHaveValue('OW')
@@ -571,7 +573,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
 
   test('first = AOW → second dropdown: OW absent, AOW absent, RESCUE present', async ({ page }) => {
     await advanceToItinerary(page)
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     await courseSelect.selectOption('AOW')
     await expect(courseSelect).toHaveValue('AOW')
@@ -583,7 +585,7 @@ test.describe('dropdown filter — activity unavailability rules', () => {
 
   test('first = FD → second dropdown: FD present (repeatable), DSD absent', async ({ page }) => {
     await advanceToItinerary(page)
-    const courseSelect = page.locator('select').first()
+    const courseSelect = page.locator('[data-testid="course-activity-select"]').first()
     await expect(courseSelect).toBeVisible({ timeout: 10_000 })
     await courseSelect.selectOption('FD')
     await expect(courseSelect).toHaveValue('FD')

@@ -80,23 +80,19 @@ async function createBookingWithRyanAndGetToken(
 
   // Step 1: Customers
   await page.getByLabel('Full name *').fill('Upcoming Test Diver')
-  await page.locator('input[type="email"]').first().fill('upcoming.test@test.com')
+  await page.locator('[data-testid="customer-email"]').first().fill('upcoming.test@test.com')
   await page.getByRole('button', { name: 'English' }).click()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   // Step 2: Itinerary — DSD with Ryan Clarke
-  await page.locator('select').first().selectOption('DSD')
-  await page.locator('input[type="date"]').first().fill(startDate)
+  await page.locator('[data-testid="course-activity-select"]').first().selectOption('DSD')
+  await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
   await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
 
-  const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+  const instructorSelect = page.locator('[data-testid="instructor-select"]')
   await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-
-  const ryanOption = instructorSelect.locator('option:has-text("Ryan Clarke")')
-  const ryanValue = await ryanOption.getAttribute('value')
-  if (ryanValue) {
-    await instructorSelect.selectOption(ryanValue)
-  }
+  await instructorSelect.click()
+  await page.getByRole('option', { name: 'Ryan Clarke' }).click()
 
   await page.getByRole('button', { name: 'Next', exact: true }).click()
 
@@ -115,7 +111,7 @@ async function createBookingWithRyanAndGetToken(
 
   await page.getByRole('button', { name: 'Copy Link' }).click()
 
-  const urlDiv = page.locator('.font-mono.break-all')
+  const urlDiv = page.locator('[data-testid="portal-link-url"]')
   await expect(urlDiv).toBeVisible({ timeout: 10_000 })
   const urlText = await urlDiv.textContent()
   if (!urlText?.includes('/portal/')) throw new Error('Portal URL not found')

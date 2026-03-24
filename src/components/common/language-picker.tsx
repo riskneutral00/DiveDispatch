@@ -225,9 +225,9 @@ function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
         ? 'h-8 px-2 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border'
         : FLAG_TILE}
       style={{
-        background: active ? 'var(--color-primary-muted, rgba(var(--color-primary-rgb,99,102,241),0.15))' : 'transparent',
+        background: active ? 'var(--color-primary-muted)' : 'transparent',
         borderColor: active
-          ? 'var(--color-primary-border, rgba(var(--color-primary-rgb,99,102,241),0.4))'
+          ? 'var(--color-primary-border)'
           : 'var(--color-glass-border)',
         color: isText ? 'var(--color-text-primary)' : undefined,
         opacity: disabled ? 0.4 : 1,

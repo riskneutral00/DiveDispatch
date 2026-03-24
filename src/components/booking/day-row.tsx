@@ -283,6 +283,7 @@ export function DayRow({
           ) : (
             <GlassSelect
               label="Instructor"
+              data-testid="instructor-select"
               value={day.instructorSlug ?? ''}
               onChange={(v) => {
                 dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: v })
@@ -421,6 +422,7 @@ export function DayRow({
                             dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceSlug: slug })
                           }
                         }}
+                        data-testid={`${currentVenue}-select`}
                         className="glass glass-field w-full text-xs py-1 pl-2 pr-6 appearance-none"
                         style={{ color: dive.resourceSlug ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
                       >

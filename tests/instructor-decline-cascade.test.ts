@@ -32,7 +32,7 @@ beforeEach(() => {
 })
 
 // Helper: set up a booking with an instructor
-async function setupBookingWithInstructor(ctx: any, opts?: { instructorSlug?: string; instructorToken?: string; date?: string }) {
+async function setupBookingWithInstructor(ctx: Parameters<typeof _toggleBlockedDate>[0], opts?: { instructorSlug?: string; instructorToken?: string; date?: string }) {
   const instrSlug = opts?.instructorSlug ?? TEST_SLUGS.instructor
   const instrToken = opts?.instructorToken ?? TEST_TOKENS.instructor
   const date = opts?.date ?? testDate(5)
@@ -81,7 +81,7 @@ describe('instructor blocks date — booking cascade', () => {
 
       // Instructor blocks the date
       await _toggleBlockedDate(
-        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as any,
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as Parameters<typeof _toggleBlockedDate>[0],
         { date, roleType: 'Instructor' },
       )
 
@@ -97,7 +97,7 @@ describe('instructor blocks date — booking cascade', () => {
       const { unitId, instrToken, date } = await setupBookingWithInstructor(ctx)
 
       await _toggleBlockedDate(
-        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as any,
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as Parameters<typeof _toggleBlockedDate>[0],
         { date, roleType: 'Instructor' },
       )
 
@@ -117,7 +117,7 @@ describe('instructor blocks date — booking cascade', () => {
       const { reservationId, instrToken, date } = await setupBookingWithInstructor(ctx)
 
       await _toggleBlockedDate(
-        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as any,
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as Parameters<typeof _toggleBlockedDate>[0],
         { date, roleType: 'Instructor' },
       )
 

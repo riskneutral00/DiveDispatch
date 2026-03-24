@@ -8,9 +8,9 @@
 
 import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
 import type { DataModel, Doc, Id } from '../../convex/_generated/dataModel'
-import { testDate } from '../helpers/dates'
+import { testDate, testToken } from '../helpers/dates'
 
-type SeedCtx = GenericMutationCtx<DataModel> &
+export type SeedCtx = GenericMutationCtx<DataModel> &
   Pick<GenericActionCtx<DataModel>, 'storage'>
 
 // ─── Well-known test identifiers ──────────────────────────────────────────────
@@ -41,9 +41,11 @@ export async function seedUser(
     firstName?: string
     lastName?: string
     businessName?: string
+    skipUserRoles?: boolean
   } = {},
 ) {
-  return ctx.db.insert('users', {
+  const role = overrides.role ?? 'DiveCenter'
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: overrides.tokenIdentifier ?? TEST_TOKENS.diveCenter,
     slug: overrides.slug ?? TEST_SLUGS.diveCenter,
     email: overrides.email ?? 'test@test.com',
@@ -51,10 +53,21 @@ export async function seedUser(
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
     businessName: overrides.businessName ?? 'Test Business',
-    role: overrides.role ?? 'DiveCenter',
+    role,
     isSeeded: true,
     preferredLocale: 'en',
   })
+  // Seed matching userRoles entry so checkHasRole() works
+  if (!overrides.skipUserRoles) {
+    await ctx.db.insert('userRoles', {
+      userId,
+      role,
+      isPrimary: true,
+      createdAt: Date.now(),
+      profileComplete: false,
+    })
+  }
+  return userId
 }
 
 /** Seed blocked dates into the stakeholderBlockedDates table. */
@@ -130,34 +143,58 @@ export async function seedBooking(
   ctx: SeedCtx,
   overrides: {
     ownerId?: string
-    ownerType?: string
-    status?: string
+    ownerType?: Doc<'bookings'>['ownerType']
+    status?: Doc<'bookings'>['status']
     startDate?: string
     endDate?: string
+    activityType?: Doc<'bookings'>['activityType']
+    divers?: Doc<'bookings'>['divers']
+    operatorName?: string
+    paid?: boolean
+    portalContact?: boolean
+    portalMedical?: boolean
+    portalWaiver?: boolean
     bookingFormComplete?: boolean
     customerFormComplete?: boolean
     medicalHardBlock?: boolean
     needsAttention?: boolean
+    submittedAt?: number
+    expiresAt?: number
+    draftState?: string
+    agentId?: string
+    agentIsReferral?: boolean
+    isDemo?: boolean
+    holdTTL?: number
   } = {},
 ) {
+  const startDate = overrides.startDate ?? testDate(5)
+  const endDate = overrides.endDate ?? testDate(7)
+  const activityType = overrides.activityType ?? ['OW']
   return ctx.db.insert('bookings', {
     ownerId: overrides.ownerId ?? TEST_SLUGS.diveCenter,
-    ownerType: (overrides.ownerType ?? 'DiveCenter') as Doc<'bookings'>['ownerType'],
-    status: (overrides.status ?? 'Draft') as Doc<'bookings'>['status'],
+    ownerType: overrides.ownerType ?? 'DiveCenter',
+    status: overrides.status ?? 'Draft',
     createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
-    startDate: overrides.startDate ?? testDate(5),
-    endDate: overrides.endDate ?? testDate(7),
-    divers: [{ name: 'Alice', abbrev: 'AL', flag: { code: 'en', label: 'English' }, startDate: overrides.startDate ?? testDate(5), endDate: overrides.endDate ?? testDate(7), activityType: ['OW'] }],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
+    holdTTL: overrides.holdTTL ?? 43200000,
+    paid: overrides.paid ?? false,
+    activityType,
+    startDate,
+    endDate,
+    divers: overrides.divers ?? [{ name: 'Alice', abbrev: 'AL', flag: { code: 'en', label: 'English' }, startDate, endDate, activityType }],
+    operatorName: overrides.operatorName ?? 'Test DC',
+    portalContact: overrides.portalContact ?? false,
+    portalMedical: overrides.portalMedical ?? false,
+    portalWaiver: overrides.portalWaiver ?? false,
     medicalHardBlock: overrides.medicalHardBlock ?? false,
     bookingFormComplete: overrides.bookingFormComplete ?? true,
     customerFormComplete: overrides.customerFormComplete ?? false,
+    ...(overrides.submittedAt !== undefined ? { submittedAt: overrides.submittedAt } : {}),
+    ...(overrides.expiresAt !== undefined ? { expiresAt: overrides.expiresAt } : {}),
+    ...(overrides.draftState !== undefined ? { draftState: overrides.draftState } : {}),
+    ...(overrides.agentId !== undefined ? { agentId: overrides.agentId } : {}),
+    ...(overrides.agentIsReferral !== undefined ? { agentIsReferral: overrides.agentIsReferral } : {}),
+    ...(overrides.needsAttention !== undefined ? { needsAttention: overrides.needsAttention } : {}),
+    ...(overrides.isDemo !== undefined ? { isDemo: overrides.isDemo } : {}),
   })
 }
 
@@ -187,7 +224,7 @@ export async function seedReservation(
   inventoryUnitId: Id<'inventoryUnits'>,
   sessionId: Id<'bookingSessions'>,
   overrides: {
-    status?: string
+    status?: Doc<'reservations'>['status']
     unitsRequested?: number
   } = {},
 ) {
@@ -196,7 +233,7 @@ export async function seedReservation(
     inventoryUnitId,
     bookingSessionId: sessionId,
     unitsRequested: overrides.unitsRequested ?? 1,
-    status: (overrides.status ?? 'PendingAcceptance') as Doc<'reservations'>['status'],
+    status: overrides.status ?? 'PendingAcceptance',
   })
 }
 
@@ -219,4 +256,290 @@ export async function seedNotification(
     createdAt: overrides.createdAt ?? Date.now(),
     ...(overrides.readAt !== undefined ? { readAt: overrides.readAt } : {}),
   })
+}
+
+// ─── Booking Link seeds ──────────────────────────────────────────────────────
+
+export async function seedBookingLink(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  overrides: {
+    token?: string
+    expiresAt?: number
+    customerName?: string
+    email?: string
+    usedAt?: number
+    channel?: Doc<'bookingLinks'>['channel']
+  } = {},
+) {
+  return ctx.db.insert('bookingLinks', {
+    bookingId,
+    token: overrides.token ?? testToken('link'),
+    expiresAt: overrides.expiresAt ?? Date.now() + 30 * 24 * 60 * 60 * 1000,
+    customerName: overrides.customerName ?? 'Alice',
+    email: overrides.email ?? 'alice@example.com',
+    ...(overrides.usedAt !== undefined ? { usedAt: overrides.usedAt } : {}),
+    ...(overrides.channel !== undefined ? { channel: overrides.channel } : {}),
+  })
+}
+
+// ─── Customer Profile seeds ──────────────────────────────────────────────────
+
+export async function seedCustomerProfile(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  overrides: {
+    linkToken?: string
+    customerId?: Id<'customers'>
+    submittedAt?: number
+    waiverSignedAt?: number
+    signatureFileId?: Id<'_storage'>
+    medicalSchemaVersion?: string
+    medicalAnswers?: Doc<'customerProfiles'>['medicalAnswers']
+    physicianClearanceRequired?: boolean
+    physicianClearedAt?: number
+    rentalChecklist?: Doc<'customerProfiles'>['rentalChecklist']
+    bloodType?: string
+    allergies?: string
+    medications?: string
+    accommodationName?: string
+    needsPickup?: boolean
+    pickupLocation?: string
+    pickupTime?: string
+  } = {},
+) {
+  return ctx.db.insert('customerProfiles', {
+    bookingId,
+    linkToken: overrides.linkToken ?? testToken('cp'),
+    ...(overrides.customerId !== undefined ? { customerId: overrides.customerId } : {}),
+    ...(overrides.submittedAt !== undefined ? { submittedAt: overrides.submittedAt } : {}),
+    ...(overrides.waiverSignedAt !== undefined ? { waiverSignedAt: overrides.waiverSignedAt } : {}),
+    ...(overrides.signatureFileId !== undefined ? { signatureFileId: overrides.signatureFileId } : {}),
+    ...(overrides.medicalSchemaVersion !== undefined ? { medicalSchemaVersion: overrides.medicalSchemaVersion } : {}),
+    ...(overrides.medicalAnswers !== undefined ? { medicalAnswers: overrides.medicalAnswers } : {}),
+    ...(overrides.physicianClearanceRequired !== undefined ? { physicianClearanceRequired: overrides.physicianClearanceRequired } : {}),
+    ...(overrides.physicianClearedAt !== undefined ? { physicianClearedAt: overrides.physicianClearedAt } : {}),
+    ...(overrides.rentalChecklist !== undefined ? { rentalChecklist: overrides.rentalChecklist } : {}),
+    ...(overrides.bloodType !== undefined ? { bloodType: overrides.bloodType } : {}),
+    ...(overrides.allergies !== undefined ? { allergies: overrides.allergies } : {}),
+    ...(overrides.medications !== undefined ? { medications: overrides.medications } : {}),
+    ...(overrides.accommodationName !== undefined ? { accommodationName: overrides.accommodationName } : {}),
+    ...(overrides.needsPickup !== undefined ? { needsPickup: overrides.needsPickup } : {}),
+    ...(overrides.pickupLocation !== undefined ? { pickupLocation: overrides.pickupLocation } : {}),
+    ...(overrides.pickupTime !== undefined ? { pickupTime: overrides.pickupTime } : {}),
+  })
+}
+
+// ─── Booking Resource seeds ──────────────────────────────────────────────────
+
+export async function seedBookingResource(
+  ctx: SeedCtx,
+  bookingId: Id<'bookings'>,
+  overrides: {
+    resourceType: Doc<'bookingResources'>['resourceType']
+    resourceSlug?: string
+    externalName?: string
+  },
+) {
+  return ctx.db.insert('bookingResources', {
+    bookingId,
+    resourceType: overrides.resourceType,
+    ...(overrides.resourceSlug !== undefined ? { resourceSlug: overrides.resourceSlug } : {}),
+    ...(overrides.externalName !== undefined ? { externalName: overrides.externalName } : {}),
+  })
+}
+
+// ─── Stakeholder Preferences seeds ──────────────────────────────────────────
+
+export async function seedStakeholderPreferences(
+  ctx: SeedCtx,
+  stakeholderId: string,
+  overrides: {
+    stakeholderType?: Doc<'stakeholderPreferences'>['stakeholderType']
+    acceptanceMode?: Doc<'stakeholderPreferences'>['acceptanceMode']
+    maxHoursPerDay?: number
+    postJobBlockDuration?: number
+    useNamedUnits?: boolean
+    commonLanguageCodes?: string[]
+    confirmOnAccept?: boolean
+    confirmOnDecline?: boolean
+    preferredInstructorSlugs?: string[]
+    preferredVenueSlugs?: string[]
+    preferredEquipmentSlugs?: string[]
+    preferredBoatSlugs?: string[]
+    preferredCompressorSlugs?: string[]
+    noWorkAfterTime?: string
+  } = {},
+) {
+  return ctx.db.insert('stakeholderPreferences', {
+    stakeholderId,
+    stakeholderType: overrides.stakeholderType ?? 'DiveCenter',
+    acceptanceMode: overrides.acceptanceMode ?? 'Auto',
+    maxHoursPerDay: overrides.maxHoursPerDay ?? 8,
+    postJobBlockDuration: overrides.postJobBlockDuration ?? 0,
+    useNamedUnits: overrides.useNamedUnits ?? false,
+    commonLanguageCodes: overrides.commonLanguageCodes ?? ['en'],
+    confirmOnAccept: overrides.confirmOnAccept ?? true,
+    confirmOnDecline: overrides.confirmOnDecline ?? true,
+    ...(overrides.preferredInstructorSlugs !== undefined ? { preferredInstructorSlugs: overrides.preferredInstructorSlugs } : {}),
+    ...(overrides.preferredVenueSlugs !== undefined ? { preferredVenueSlugs: overrides.preferredVenueSlugs } : {}),
+    ...(overrides.preferredEquipmentSlugs !== undefined ? { preferredEquipmentSlugs: overrides.preferredEquipmentSlugs } : {}),
+    ...(overrides.preferredBoatSlugs !== undefined ? { preferredBoatSlugs: overrides.preferredBoatSlugs } : {}),
+    ...(overrides.preferredCompressorSlugs !== undefined ? { preferredCompressorSlugs: overrides.preferredCompressorSlugs } : {}),
+    ...(overrides.noWorkAfterTime !== undefined ? { noWorkAfterTime: overrides.noWorkAfterTime } : {}),
+  })
+}
+
+// ─── Stakeholder Hierarchy seeds ─────────────────────────────────────────────
+
+export async function seedStakeholderHierarchy(
+  ctx: SeedCtx,
+  opts: {
+    parentSlug: string
+    parentType: Doc<'stakeholderHierarchy'>['parentType']
+    childSlug: string
+    childType: Doc<'stakeholderHierarchy'>['childType']
+  },
+) {
+  return ctx.db.insert('stakeholderHierarchy', {
+    parentSlug: opts.parentSlug,
+    parentType: opts.parentType,
+    childSlug: opts.childSlug,
+    childType: opts.childType,
+    createdAt: Date.now(),
+  })
+}
+
+// ─── Profile seeds ──────────────────────────────────────────────────────────
+
+export async function seedDiveCenterProfile(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    placeName?: string
+    country?: string
+    lat?: number
+    lng?: number
+    contactEmail?: string
+    contactPhone?: string
+    associations?: Array<{ agency: string; number: string }>
+    focusedLanguages?: string[]
+    verified?: boolean
+  } = {},
+) {
+  return ctx.db.insert('diveCenters', {
+    userId,
+    name: overrides.name ?? 'Test DC',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: overrides.lat ?? 10.0957,
+    lng: overrides.lng ?? 99.8408,
+    contactEmail: overrides.contactEmail ?? 'dc@test.com',
+    contactPhone: overrides.contactPhone ?? '+66123456789',
+    associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
+    focusedLanguages: overrides.focusedLanguages ?? ['en'],
+    verified: overrides.verified ?? true,
+  })
+}
+
+export async function seedAgent(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    contactEmail?: string
+    contactPhone?: string
+    associations?: Array<{ agency: string; number: string }>
+    focusedLanguages?: string[]
+    defaultReferralMode?: Doc<'agents'>['defaultReferralMode']
+    verified?: boolean
+  } = {},
+) {
+  return ctx.db.insert('agents', {
+    userId,
+    name: overrides.name ?? 'Test Agent',
+    locations: [{ placeName: 'Koh Tao', country: 'Thailand', lat: 10.09, lng: 99.84 }],
+    contactEmail: overrides.contactEmail ?? 'agent@test.com',
+    contactPhone: overrides.contactPhone ?? '+66123456789',
+    associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
+    focusedLanguages: overrides.focusedLanguages ?? ['en'],
+    defaultReferralMode: overrides.defaultReferralMode ?? 'independent',
+    verified: overrides.verified ?? false,
+  })
+}
+
+export async function seedVenue(
+  ctx: SeedCtx,
+  overrides: {
+    userId?: Id<'users'>
+    name?: string
+    placeName?: string
+    country?: string
+    lat?: number
+    lng?: number
+    venueType?: Doc<'venues'>['venueType']
+    focusedLanguages?: string[]
+    verified?: boolean
+    isPublic?: boolean
+    confinedCapable?: boolean
+    openWaterCapable?: boolean
+    hasCompressor?: boolean
+  } = {},
+) {
+  return ctx.db.insert('venues', {
+    name: overrides.name ?? 'Test Venue',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: overrides.lat ?? 10.0957,
+    lng: overrides.lng ?? 99.8408,
+    venueType: overrides.venueType ?? 'Pool',
+    focusedLanguages: overrides.focusedLanguages ?? ['en'],
+    verified: overrides.verified ?? true,
+    isPublic: overrides.isPublic ?? true,
+    confinedCapable: overrides.confinedCapable ?? true,
+    openWaterCapable: overrides.openWaterCapable ?? false,
+    hasCompressor: overrides.hasCompressor ?? false,
+    ...(overrides.userId !== undefined ? { userId: overrides.userId } : {}),
+  })
+}
+
+// ─── Booking Template seeds ──────────────────────────────────────────────────
+
+export async function seedBookingTemplate(
+  ctx: SeedCtx,
+  overrides: {
+    ownerId?: string
+    ownerType?: Doc<'bookingTemplates'>['ownerType']
+    name?: string
+    activityType?: Doc<'bookingTemplates'>['activityType']
+  } = {},
+) {
+  return ctx.db.insert('bookingTemplates', {
+    ownerId: overrides.ownerId ?? TEST_SLUGS.diveCenter,
+    ownerType: overrides.ownerType ?? 'DiveCenter',
+    name: overrides.name ?? 'Default',
+    activityType: overrides.activityType ?? ['OW'],
+    createdAt: Date.now(),
+  })
+}
+
+// ─── Composite: Portal Fixture ──────────────────────────────────────────────
+
+export async function seedPortalFixture(
+  ctx: SeedCtx,
+  overrides: {
+    booking?: Parameters<typeof seedBooking>[1]
+    link?: Omit<Parameters<typeof seedBookingLink>[2], 'token'> & { token?: string }
+    profile?: Omit<Parameters<typeof seedCustomerProfile>[2], 'linkToken'> & { linkToken?: string }
+  } = {},
+) {
+  const bookingId = await seedBooking(ctx, overrides.booking)
+  const token = overrides.link?.token ?? testToken('portal')
+  const linkId = await seedBookingLink(ctx, bookingId, { ...overrides.link, token })
+  const profileId = await seedCustomerProfile(ctx, bookingId, {
+    ...overrides.profile,
+    linkToken: overrides.profile?.linkToken ?? token,
+  })
+  return { bookingId, linkId, token, profileId }
 }

@@ -11,6 +11,14 @@ import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { testDate } from '../helpers/dates'
+import {
+  seedUser as _seedUser,
+  seedDiveCenterProfile,
+  seedBookingTemplate,
+  seedVenue,
+  seedStakeholderPreferences,
+  type SeedCtx,
+} from '../fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -18,84 +26,27 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
-
-async function seedUser(
-  ctx: Ctx,
-  slug: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  role: any = 'DiveCenter',
-) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: `${slug} Business`,
-    role,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
+async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'DiveCenter') {
+  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', businessName: `${slug} Business`, role })
 }
 
 /** Seed minimal resources + preferences so profile + coverage gates pass */
-async function seedCoverage(ctx: Ctx, operatorSlug: string, operatorUserId: Id<'users'>) {
+async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: Id<'users'>) {
   // DiveCenter profile record
-  await ctx.db.insert('diveCenters', {
-    userId: operatorUserId,
-    name: 'Test DC',
-    placeName: 'Koh Tao',
-    country: 'Thailand',
-    lat: 10.0957,
-    lng: 99.8408,
-    contactEmail: `${operatorSlug}@test.com`,
-    contactPhone: '+66123456789',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    associations: [{ agency: 'PADI', number: '12345' }] as any,
-    focusedLanguages: ['en'],
-    verified: true,
-  })
+  await seedDiveCenterProfile(ctx, operatorUserId, { contactEmail: `${operatorSlug}@test.com` })
   // Booking template (Quick Book pill)
-  await ctx.db.insert('bookingTemplates', {
-    ownerId: operatorSlug,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ownerType: 'DiveCenter' as any,
-    name: 'Default',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activityType: ['DSD'] as any,
-    createdAt: Date.now(),
-  })
+  await seedBookingTemplate(ctx, { ownerId: operatorSlug, activityType: ['DSD'] })
   // Instructor user
-  await ctx.db.insert('users', {
-    tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com',
-    name: 'Instr', firstName: 'I', lastName: 'C', businessName: 'IC',
-    role: 'Instructor' as never, isSeeded: false, preferredLocale: 'en',
-  })
+  await _seedUser(ctx, { tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com', name: 'Instr', firstName: 'I', lastName: 'C', businessName: 'IC', role: 'Instructor' })
   // Equipment user
-  await ctx.db.insert('users', {
-    tokenIdentifier: 'clerk|em-cov', slug: 'em-cov', email: 'e@t.com',
-    name: 'EM', firstName: 'E', lastName: 'M', businessName: 'EM',
-    role: 'Equipment' as never, isSeeded: false, preferredLocale: 'en',
-  })
+  await _seedUser(ctx, { tokenIdentifier: 'clerk|em-cov', slug: 'em-cov', email: 'e@t.com', name: 'EM', firstName: 'E', lastName: 'M', businessName: 'EM', role: 'Equipment' })
   // Venue user + venue record (confined + open + compressor)
-  const venueUser = await ctx.db.insert('users', {
-    tokenIdentifier: 'clerk|venue-cov', slug: 'venue-cov', email: 'v@t.com',
-    name: 'Venue', firstName: 'V', lastName: 'C', businessName: 'VC',
-    role: 'Pool' as never, isSeeded: false, preferredLocale: 'en',
-  })
-  await ctx.db.insert('venues', {
-    userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0,
-    focusedLanguages: ['en'], verified: true, venueType: 'Pool' as never,
-    isPublic: false, confinedCapable: true, openWaterCapable: true, hasCompressor: true,
-  })
+  const venueUser = await _seedUser(ctx, { tokenIdentifier: 'clerk|venue-cov', slug: 'venue-cov', email: 'v@t.com', name: 'Venue', firstName: 'V', lastName: 'C', businessName: 'VC', role: 'Pool' })
+  await seedVenue(ctx, { userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0, isPublic: false, confinedCapable: true, openWaterCapable: true, hasCompressor: true })
   // Preferences
-  await ctx.db.insert('stakeholderPreferences', {
-    stakeholderId: operatorSlug, stakeholderType: 'DiveCenter' as never,
-    acceptanceMode: 'Auto' as never, maxHoursPerDay: 8,
-    postJobBlockDuration: 0, useNamedUnits: false,
-    commonLanguageCodes: ['en'], confirmOnAccept: false, confirmOnDecline: false,
+  await seedStakeholderPreferences(ctx, operatorSlug, {
+    confirmOnAccept: false,
+    confirmOnDecline: false,
     preferredInstructorSlugs: ['instr-cov'],
     preferredEquipmentSlugs: ['em-cov'],
     preferredVenueSlugs: ['venue-cov'],

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { filterByAvailability, type CapacityData } from '../src/lib/booking/availability-filter'
+import { testDate } from './helpers/dates'
 
-const DATE = '2026-04-01'
+const DATE = testDate(10)
 
 function opt(id: string, label: string) {
   return { id, label }
@@ -57,7 +58,7 @@ describe('filterByAvailability', () => {
 
   it('option with no capacity data for date → included (assume available)', () => {
     const options = [opt('instr-a', 'Alice')]
-    const capacity: CapacityData = { 'unit-a': { '2026-05-01': { available: 0, total: 1 } } } // different date
+    const capacity: CapacityData = { 'unit-a': { [testDate(40)]: { available: 0, total: 1 } } } // different date
     const inventoryMap = { 'instr-a': 'unit-a' }
     const result = filterByAvailability(options, DATE, capacity, inventoryMap)
     expect(result).toHaveLength(1)

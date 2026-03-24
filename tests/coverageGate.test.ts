@@ -12,6 +12,14 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import {
+  seedUser,
+  seedStakeholderPreferences,
+  seedDiveCenterProfile,
+  seedBookingTemplate,
+  seedVenue,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -19,71 +27,28 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
-async function seedPreferences(
-  ctx: Ctx,
-  stakeholderId: string,
-  stakeholderType: string,
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('stakeholderPreferences', {
-    stakeholderId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stakeholderType: stakeholderType as any,
-    acceptanceMode: 'Auto',
-    maxHoursPerDay: 8,
-    postJobBlockDuration: 0,
-    useNamedUnits: false,
-    commonLanguageCodes: ['en'],
-    confirmOnAccept: true,
-    confirmOnDecline: true,
-    ...overrides,
-  })
+/** Thin wrapper: adapts positional (ctx, slug, role?) to shared seedUser overrides format */
+async function seedUserBySlug(ctx: SeedCtx, slug: string, role: Parameters<typeof seedUser>[1]['role'] = 'DiveCenter') {
+  return seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
 }
 
 async function seedVenueUser(
-  ctx: Ctx,
+  ctx: SeedCtx,
   slug: string,
   caps: { confinedCapable: boolean; openWaterCapable: boolean; hasCompressor: boolean },
 ) {
-  const userId = await seedUser(ctx, slug, 'Pool')
-  await ctx.db.insert('venues', {
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Pool' })
+  await seedVenue(ctx, {
     userId,
     name: `${slug} Venue`,
-    placeName: 'Koh Tao',
-    country: 'Thailand',
-    lat: 10.0957,
-    lng: 99.8408,
-    focusedLanguages: ['en'],
-    verified: true,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    venueType: 'Pool' as any,
-    isPublic: true,
     confinedCapable: caps.confinedCapable,
     openWaterCapable: caps.openWaterCapable,
     hasCompressor: caps.hasCompressor,
   })
 }
 
-async function seedBoatUser(ctx: Ctx, slug: string, hasCompressor: boolean) {
-  const userId = await seedUser(ctx, slug, 'Boat')
+async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) {
+  const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Boat' })
   await ctx.db.insert('boats', {
     userId,
     name: `${slug} Boat`,
@@ -101,30 +66,9 @@ async function seedBoatUser(ctx: Ctx, slug: string, hasCompressor: boolean) {
 }
 
 /** Seed diveCenters profile + bookingTemplates so profileCompleteness gate passes */
-async function seedDiveCenterProfile(ctx: Ctx, userId: Id<'users'>, slug: string) {
-  await ctx.db.insert('diveCenters', {
-    userId,
-    name: 'Test DC',
-    placeName: 'Koh Tao',
-    country: 'Thailand',
-    lat: 10.0957,
-    lng: 99.8408,
-    contactEmail: `${slug}@test.com`,
-    contactPhone: '+66123456789',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    associations: [{ agency: 'PADI', number: '12345' }] as any,
-    focusedLanguages: ['en'],
-    verified: true,
-  })
-  await ctx.db.insert('bookingTemplates', {
-    ownerId: slug,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ownerType: 'DiveCenter' as any,
-    name: 'Default',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activityType: ['DSD'] as any,
-    createdAt: Date.now(),
-  })
+async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
+  await seedDiveCenterProfile(ctx, userId, { contactEmail: `${slug}@test.com` })
+  await seedBookingTemplate(ctx, { ownerId: slug, activityType: ['DSD'] })
 }
 
 async function expectConvexError(promise: Promise<unknown>, code: string) {
@@ -141,10 +85,10 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects with COVERAGE_INCOMPLETE when only instructor is in preferences (no equipment/venue/boat/compressor)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-noprofs')
-      await seedDiveCenterProfile(ctx, userId, 'dc-noprofs')
-      await seedUser(ctx, 'inst-gate', 'Instructor')
-      await seedPreferences(ctx, 'dc-noprofs', 'DiveCenter', {
+      const userId = await seedUserBySlug(ctx, 'dc-noprofs')
+      await seedDCProfile(ctx, userId,'dc-noprofs')
+      await seedUserBySlug(ctx, 'inst-gate', 'Instructor')
+      await seedStakeholderPreferences(ctx, 'dc-noprofs', {
         preferredInstructorSlugs: ['inst-gate'],
       })
     })
@@ -161,10 +105,10 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects with COVERAGE_INCOMPLETE listing 4 missing when only instructor pref is set', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-empty')
-      await seedDiveCenterProfile(ctx, userId, 'dc-empty')
-      await seedUser(ctx, 'inst-gate', 'Instructor')
-      await seedPreferences(ctx, 'dc-empty', 'DiveCenter', {
+      const userId = await seedUserBySlug(ctx, 'dc-empty')
+      await seedDCProfile(ctx, userId,'dc-empty')
+      await seedUserBySlug(ctx, 'inst-gate', 'Instructor')
+      await seedStakeholderPreferences(ctx, 'dc-empty', {
         preferredInstructorSlugs: ['inst-gate'],
         preferredEquipmentSlugs: [],
         preferredVenueSlugs: [],
@@ -197,10 +141,10 @@ describe('createDraftShell — coverage gate', () => {
   it('rejects when only instructor is preferred (missing 4 others)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-partial')
-      await seedDiveCenterProfile(ctx, userId, 'dc-partial')
-      await seedUser(ctx, 'inst-1', 'Instructor')
-      await seedPreferences(ctx, 'dc-partial', 'DiveCenter', {
+      const userId = await seedUserBySlug(ctx, 'dc-partial')
+      await seedDCProfile(ctx, userId,'dc-partial')
+      await seedUserBySlug(ctx, 'inst-1', 'Instructor')
+      await seedStakeholderPreferences(ctx, 'dc-partial', {
         preferredInstructorSlugs: ['inst-1'],
       })
     })
@@ -225,17 +169,17 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds when all 5 coverage requirements are met via venue + standalone compressor', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-full')
-      await seedDiveCenterProfile(ctx, userId, 'dc-full')
-      await seedUser(ctx, 'inst-1', 'Instructor')
-      await seedUser(ctx, 'equip-1', 'Equipment')
-      await seedUser(ctx, 'comp-1', 'Compressor')
+      const userId = await seedUserBySlug(ctx, 'dc-full')
+      await seedDCProfile(ctx, userId,'dc-full')
+      await seedUserBySlug(ctx, 'inst-1', 'Instructor')
+      await seedUserBySlug(ctx, 'equip-1', 'Equipment')
+      await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
         openWaterCapable: true,
         hasCompressor: false,
       })
-      await seedPreferences(ctx, 'dc-full', 'DiveCenter', {
+      await seedStakeholderPreferences(ctx, 'dc-full', {
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredVenueSlugs: ['venue-1'],
@@ -267,12 +211,12 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds when boat with compressor covers venue + compressor needs', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-boat')
-      await seedDiveCenterProfile(ctx, userId, 'dc-boat')
-      await seedUser(ctx, 'inst-1', 'Instructor')
-      await seedUser(ctx, 'equip-1', 'Equipment')
+      const userId = await seedUserBySlug(ctx, 'dc-boat')
+      await seedDCProfile(ctx, userId,'dc-boat')
+      await seedUserBySlug(ctx, 'inst-1', 'Instructor')
+      await seedUserBySlug(ctx, 'equip-1', 'Equipment')
       await seedBoatUser(ctx, 'boat-1', true)
-      await seedPreferences(ctx, 'dc-boat', 'DiveCenter', {
+      await seedStakeholderPreferences(ctx, 'dc-boat', {
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredBoatSlugs: ['boat-1'],
@@ -295,17 +239,17 @@ describe('createDraftShell — coverage gate', () => {
   it('succeeds without startDate arg (optional dates)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-nodate')
-      await seedDiveCenterProfile(ctx, userId, 'dc-nodate')
-      await seedUser(ctx, 'inst-1', 'Instructor')
-      await seedUser(ctx, 'equip-1', 'Equipment')
-      await seedUser(ctx, 'comp-1', 'Compressor')
+      const userId = await seedUserBySlug(ctx, 'dc-nodate')
+      await seedDCProfile(ctx, userId,'dc-nodate')
+      await seedUserBySlug(ctx, 'inst-1', 'Instructor')
+      await seedUserBySlug(ctx, 'equip-1', 'Equipment')
+      await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
         openWaterCapable: true,
         hasCompressor: false,
       })
-      await seedPreferences(ctx, 'dc-nodate', 'DiveCenter', {
+      await seedStakeholderPreferences(ctx, 'dc-nodate', {
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredVenueSlugs: ['venue-1'],

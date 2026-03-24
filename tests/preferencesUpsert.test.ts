@@ -12,26 +12,10 @@ import { api } from '../convex/_generated/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+import { seedUser } from './fixtures/seedFixture'
+
 function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
 }
 
 /** Base args with all required fields filled in for the upsert mutation. */
@@ -52,7 +36,7 @@ function baseArgs(overrides: Record<string, unknown> = {}) {
 describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
   it('persists preferredVenueSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-venue'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-venue', tokenIdentifier: 'clerk|dc-venue', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-venue' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -69,7 +53,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredEquipmentSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-equip'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-equip', tokenIdentifier: 'clerk|dc-equip', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-equip' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -85,7 +69,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredBoatSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-boat'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-boat', tokenIdentifier: 'clerk|dc-boat', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-boat' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -101,7 +85,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists preferredCompressorSlugs on upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-comp'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-comp', tokenIdentifier: 'clerk|dc-comp', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-comp' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -117,7 +101,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('persists all 5 preferred arrays in a single upsert', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-all5'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-all5', tokenIdentifier: 'clerk|dc-all5', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-all5' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -144,7 +128,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('upsert with only instructor slugs leaves new arrays undefined', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-inst-only'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-inst-only', tokenIdentifier: 'clerk|dc-inst-only', role: 'DiveCenter' }))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-inst-only' }).mutation(
       api.stakeholderPreferences.upsert,
@@ -164,7 +148,7 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
 
   it('second upsert updates arrays without losing existing data', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-update'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-update', tokenIdentifier: 'clerk|dc-update', role: 'DiveCenter' }))
 
     // First upsert: set all 5 arrays
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-update' }).mutation(

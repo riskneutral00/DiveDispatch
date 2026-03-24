@@ -4,53 +4,19 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures/seedFixture'
+import type { Id } from '../convex/_generated/dataModel'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role: string = 'DiveCenter') {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Ctx,
+  ctx: SeedCtx,
   ownerId: string,
-  overrides: Record<string, unknown> = {},
+  overrides: Parameters<typeof _seedBooking>[1] = {},
 ) {
-  return ctx.db.insert('bookings', {
-    ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
-    divers: [],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    ...overrides,
-  } as any)
+  return _seedBooking(ctx, { ownerId, bookingFormComplete: false, divers: [], ...overrides })
 }
 
 // ─── saveDraftState ──────────────────────────────────────────────────────────
@@ -58,9 +24,9 @@ async function seedBooking(
 describe('saveDraftState', () => {
   it('rejects unauthenticated callers with UNAUTHENTICATED', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: any
+    let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-owner')
+      await seedUser(ctx, { slug: 'dc-owner', tokenIdentifier: 'clerk|dc-owner', role: 'DiveCenter' })
       bookingId = await seedBooking(ctx, 'dc-owner')
     })
 
@@ -74,9 +40,9 @@ describe('saveDraftState', () => {
 
   it('rejects non-existent booking with NOT_FOUND', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: any
+    let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-nf')
+      await seedUser(ctx, { slug: 'dc-nf', tokenIdentifier: 'clerk|dc-nf', role: 'DiveCenter' })
       // Create then delete to get a valid but non-existent ID
       bookingId = await seedBooking(ctx, 'dc-nf')
       await ctx.db.delete(bookingId)
@@ -93,10 +59,10 @@ describe('saveDraftState', () => {
 
   it('rejects non-owner with FORBIDDEN', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: any
+    let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-real-owner')
-      await seedUser(ctx, 'dc-intruder', 'DiveCenter')
+      await seedUser(ctx, { slug: 'dc-real-owner', tokenIdentifier: 'clerk|dc-real-owner', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'dc-intruder', tokenIdentifier: 'clerk|dc-intruder', role: 'DiveCenter' })
       bookingId = await seedBooking(ctx, 'dc-real-owner')
     })
 
@@ -111,9 +77,9 @@ describe('saveDraftState', () => {
 
   it('rejects non-Draft booking with INVALID_STATUS', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: any
+    let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-upcoming')
+      await seedUser(ctx, { slug: 'dc-upcoming', tokenIdentifier: 'clerk|dc-upcoming', role: 'DiveCenter' })
       bookingId = await seedBooking(ctx, 'dc-upcoming', { status: 'Upcoming' })
     })
 
@@ -128,9 +94,9 @@ describe('saveDraftState', () => {
 
   it('persists draftState on valid Draft booking owned by caller', async () => {
     const t = convexTest(schema, modules)
-    let bookingId: any
+    let bookingId!: Id<'bookings'>
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-save')
+      await seedUser(ctx, { slug: 'dc-save', tokenIdentifier: 'clerk|dc-save', role: 'DiveCenter' })
       bookingId = await seedBooking(ctx, 'dc-save')
     })
 

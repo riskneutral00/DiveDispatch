@@ -3,7 +3,7 @@
 import { use } from 'react'
 import { DashboardContent } from '@/components/dashboard/dashboard-content'
 
-// Fallback for any non-standard roleSlug that doesn't match a static role directory.
+// Primary dashboard page — roleSlug is validated by the parent layout.
 export default function DashboardPage({
   params,
 }: {

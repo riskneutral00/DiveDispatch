@@ -5,35 +5,13 @@ import { api } from '../convex/_generated/api'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
+
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(
-  ctx: Ctx,
-  slug: string,
-  role: string = 'DiveCenter',
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-    ...overrides,
-  })
-}
-
 async function seedDiveCenterProfile(
-  ctx: Ctx,
-  userId: Awaited<ReturnType<Ctx['db']['insert']>>,
+  ctx: SeedCtx,
+  userId: Awaited<ReturnType<SeedCtx['db']['insert']>>,
   overrides: Record<string, unknown> = {},
 ) {
   return ctx.db.insert('diveCenters', {
@@ -72,7 +50,7 @@ describe('onboarding schema', () => {
 describe('getOnboardingStatus', () => {
   it('returns 0% when user has no profile', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-noprofile'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-noprofile', tokenIdentifier: 'clerk|dc-noprofile', role: 'DiveCenter' }))
 
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-noprofile' })
       .query(api.users.getOnboardingStatus, {})
@@ -83,7 +61,7 @@ describe('getOnboardingStatus', () => {
 
   it('returns ~33% when DiveCenter user has 3 of 9 fields filled', async () => {
     const t = convexTest(schema, modules)
-    const userId = await t.run(async (ctx) => seedUser(ctx, 'dc-partial'))
+    const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-partial', tokenIdentifier: 'clerk|dc-partial', role: 'DiveCenter' }))
 
     // Insert profile with only name, placeName, country filled (3 of 9)
     await t.run(async (ctx) =>
@@ -117,7 +95,7 @@ describe('getOnboardingStatus', () => {
 
   it('returns 100% when all fields filled, template exists, and preferred instructors set', async () => {
     const t = convexTest(schema, modules)
-    const userId = await t.run(async (ctx) => seedUser(ctx, 'dc-complete'))
+    const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-complete', tokenIdentifier: 'clerk|dc-complete', role: 'DiveCenter' }))
 
     await t.run(async (ctx) => seedDiveCenterProfile(ctx, userId))
 
@@ -160,7 +138,7 @@ describe('completeOnboarding', () => {
   it('sets onboardingComplete = true on the user record', async () => {
     const t = convexTest(schema, modules)
     const userId = await t.run(async (ctx) =>
-      seedUser(ctx, 'dc-ready', 'DiveCenter', { name: 'Ready DC' }),
+      seedUser(ctx, { slug: 'dc-ready', tokenIdentifier: 'clerk|dc-ready', role: 'DiveCenter', name: 'Ready DC' }),
     )
 
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-ready' })
@@ -180,7 +158,7 @@ describe('completeOnboarding', () => {
   it('throws VALIDATION when user name is blank', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) =>
-      seedUser(ctx, 'dc-noname', 'DiveCenter', { name: '' }),
+      seedUser(ctx, { slug: 'dc-noname', tokenIdentifier: 'clerk|dc-noname', role: 'DiveCenter', name: '' }),
     )
 
     await expect(
@@ -193,7 +171,7 @@ describe('completeOnboarding', () => {
 describe('Quick Book pills (bookingTemplates)', () => {
   it('creates bookingTemplate entries from preferences step', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-pills', 'DiveCenter', { name: 'Pills DC' }))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-pills', tokenIdentifier: 'clerk|dc-pills', role: 'DiveCenter', name: 'Pills DC' }))
 
     // Create two Quick Book pills
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-pills' })
@@ -212,7 +190,7 @@ describe('Quick Book pills (bookingTemplates)', () => {
 
   it('getOnboardingStatus sees Quick Book pill as complete after template created', async () => {
     const t = convexTest(schema, modules)
-    const userId = await t.run(async (ctx) => seedUser(ctx, 'dc-pill-check', 'DiveCenter'))
+    const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-pill-check', tokenIdentifier: 'clerk|dc-pill-check', role: 'DiveCenter' }))
 
     await t.run(async (ctx) => seedDiveCenterProfile(ctx, userId))
 

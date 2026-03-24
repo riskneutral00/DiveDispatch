@@ -7,6 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
@@ -77,36 +78,6 @@ const INITIAL_FORM: ProfileFormData = {
 
 // ── Sub-components ────────────────────────────────────────────────────
 
-interface SelectProps {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: readonly string[]
-  error?: string
-  placeholder?: string
-}
-
-function GlassSelect({ label, value, onChange, options, error, placeholder }: SelectProps) {
-  return (
-    <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 rounded-[var(--border-radius)]"
-        style={{
-          color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          outlineColor: error ? 'var(--color-destructive)' : 'var(--color-accent)',
-          ...(error ? { boxShadow: `0 0 0 2px var(--color-destructive)` } : {}),
-        }}
-      >
-        {placeholder && <option value="" disabled>{placeholder}</option>}
-        {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-      {error && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>}
-    </div>
-  )
-}
 
 interface CheckboxGroupProps {
   label: string
@@ -168,7 +139,7 @@ function CredentialRow({ index, credential, errors, onChange, onRemove, canRemov
         )}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <GlassSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
+        <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
         <GlassInput label="Certification Level" placeholder="e.g. Open Water Instructor" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
         <GlassInput label="Agency Instructor ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-1" />
       </div>

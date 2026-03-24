@@ -157,6 +157,7 @@ export function SendPortalLink({
           {/* Link preview */}
           {resolvedUrl && (
             <div
+              data-testid="portal-link-url"
               className="text-xs font-mono p-2 rounded break-all"
               style={{
                 background: 'var(--color-glass-bg)',

@@ -343,6 +343,7 @@ function PortalLinkSection({
     return (
       <div className="space-y-2">
         <div
+          data-testid="portal-link-url"
           className="flex items-center gap-2 p-2.5 rounded-lg border text-xs font-mono break-all"
           style={{
             background: 'var(--color-glass-bg)',

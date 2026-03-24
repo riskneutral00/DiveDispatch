@@ -4,11 +4,11 @@ import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../../convex/lib/portal'
 import { Id } from '../../convex/_generated/dataModel'
-import { testDate, testToken } from '../helpers/dates'
+import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
+import { passportExpiry, dob } from '../helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const HOLD_TTL = 43_200_000
 const modules = import.meta.glob('../../convex/**/*.ts')
 
 function makeT() {
@@ -23,73 +23,6 @@ async function expectConvexError(promise: Promise<unknown>, code: string) {
   })
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-/**
- * Seeds a complete portal fixture: user, booking, bookingLink, customerProfile.
- * Returns IDs and token for use in tests.
- */
-async function seedPortalFixture(
-  ctx: Ctx,
-  overrides: {
-    linkOverrides?: Record<string, unknown>
-    bookingOverrides?: Record<string, unknown>
-    profileOverrides?: Record<string, unknown>
-  } = {},
-) {
-  const bookingId = await ctx.db.insert('bookings', {
-    ownerId: 'dc-test',
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(5),
-    divers: [
-      {
-        name: 'Alice',
-        abbrev: 'A',
-        flag: { code: 'TH', label: 'Thailand' },
-        startDate: testDate(5),
-        endDate: testDate(5),
-        activityType: ['OW'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    expiresAt: Date.now() + HOLD_TTL,
-    ...(overrides.bookingOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const token = testToken()
-  const linkId = await ctx.db.insert('bookingLinks', {
-    bookingId,
-    token,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    customerName: 'Alice',
-    email: 'alice@example.com',
-    ...(overrides.linkOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const profileId = await ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: token,
-    ...(overrides.profileOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  return { bookingId, token, linkId, profileId }
-}
-
 // ─── L9-08: Token Lifecycle ──────────────────────────────────────────────────
 
 describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
@@ -101,9 +34,10 @@ describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
 
   it('expired link (30d past) → expired', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     const result = await t.query(api.bookingLinks.getByToken, { token })
@@ -112,9 +46,9 @@ describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
 
   it('token for Upcoming booking → closed', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Upcoming' },
+        booking: { status: 'Upcoming', bookingFormComplete: false },
       }),
     )
     const result = await t.query(api.bookingLinks.getByToken, { token })
@@ -123,9 +57,9 @@ describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
 
   it('token for Cancelled booking → closed', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Cancelled' },
+        booking: { status: 'Cancelled', bookingFormComplete: false },
       }),
     )
     const result = await t.query(api.bookingLinks.getByToken, { token })
@@ -138,7 +72,7 @@ describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
 describe('L9-08: resolvePortalToken — rejection paths', () => {
   it('non-existent token → throws TOKEN_EXPIRED', async () => {
     const t = makeT()
-    const code = await t.run(async (ctx) => {
+    const code = await t.run(async (ctx: SeedCtx) => {
       try {
         await resolvePortalToken(ctx, 'no-such-token')
         return null
@@ -153,12 +87,13 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
 
   it('expired link → throws TOKEN_EXPIRED', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
-    const code = await t.run(async (ctx) => {
+    const code = await t.run(async (ctx: SeedCtx) => {
       try {
         await resolvePortalToken(ctx, token)
         return null
@@ -173,12 +108,12 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
 
   it('non-Draft booking → throws BOOKING_CLOSED', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Upcoming' },
+        booking: { status: 'Upcoming', bookingFormComplete: false },
       }),
     )
-    const code = await t.run(async (ctx) => {
+    const code = await t.run(async (ctx: SeedCtx) => {
       try {
         await resolvePortalToken(ctx, token)
         return null
@@ -193,23 +128,24 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
 
   it('resolvePortalTokenSoft returns null for expired link', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
-    const result = await t.run(async (ctx) => resolvePortalTokenSoft(ctx, token))
+    const result = await t.run(async (ctx: SeedCtx) => resolvePortalTokenSoft(ctx, token))
     expect(result).toBeNull()
   })
 
   it('resolvePortalTokenSoft returns null for non-Draft booking', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Cancelled' },
+        booking: { status: 'Cancelled', bookingFormComplete: false },
       }),
     )
-    const result = await t.run(async (ctx) => resolvePortalTokenSoft(ctx, token))
+    const result = await t.run(async (ctx: SeedCtx) => resolvePortalTokenSoft(ctx, token))
     expect(result).toBeNull()
   })
 })
@@ -219,9 +155,10 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
 describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
   it('saveMedicalAnswers rejects expired token', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -235,9 +172,10 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
 
   it('savePortalWaiver rejects expired token', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     // signatureStorageId needs to be a valid-looking ID for the validator
@@ -252,9 +190,10 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
 
   it('savePortalEquipment rejects expired token', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -268,9 +207,10 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
 
   it('savePortalContact rejects expired token', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -280,12 +220,12 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
         legalLastName: 'Smith',
         email: 'alice@test.com',
         phone: '+66812345678',
-        dateOfBirth: '1990-01-15',
+        dateOfBirth: dob(35),
         gender: 'F' as const,
         nationality: 'US',
         passportNumber: 'US123456',
         passportIssuingCountry: 'US',
-        passportExpirationDate: '2030-01-01',
+        passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+66899999999',
         emergencyContactRelation: 'Spouse',
@@ -296,9 +236,10 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
 
   it('submitPortal rejects expired token', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        linkOverrides: { expiresAt: Date.now() - 1000 },
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -311,9 +252,9 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
 describe('L9-09: Portal Mutation Guards — non-Draft booking rejection', () => {
   it('saveMedicalAnswers rejects token for Upcoming booking', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Upcoming' },
+        booking: { status: 'Upcoming', bookingFormComplete: false },
       }),
     )
     await expectConvexError(
@@ -327,9 +268,9 @@ describe('L9-09: Portal Mutation Guards — non-Draft booking rejection', () => 
 
   it('savePortalEquipment rejects token for Cancelled booking', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { status: 'Cancelled' },
+        booking: { status: 'Cancelled', bookingFormComplete: false },
       }),
     )
     await expectConvexError(
@@ -347,9 +288,9 @@ describe('L9-09: Portal Mutation Guards — non-Draft booking rejection', () => 
 describe('L9-10: submitPortal — FORMS_INCOMPLETE validation', () => {
   it('rejects when portalContact required but contact not submitted', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { portalContact: true },
+        booking: { portalContact: true, bookingFormComplete: false },
         // profile has no customerId → contact not submitted
       }),
     )
@@ -361,9 +302,9 @@ describe('L9-10: submitPortal — FORMS_INCOMPLETE validation', () => {
 
   it('rejects when portalMedical required but medical not submitted', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { portalMedical: true },
+        booking: { portalMedical: true, bookingFormComplete: false },
         // profile has no medicalAnswers → medical not submitted
       }),
     )
@@ -375,9 +316,9 @@ describe('L9-10: submitPortal — FORMS_INCOMPLETE validation', () => {
 
   it('rejects when portalWaiver required but waiver not signed', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) =>
+    const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: { portalWaiver: true },
+        booking: { portalWaiver: true, bookingFormComplete: false },
         // profile has no waiverSignedAt → waiver not signed
       }),
     )
@@ -393,13 +334,14 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
     const t = makeT()
     // Seed: booking says medicalHardBlock=false, but medical answers have a "yes"
     // submitPortal should re-derive and correct the flag
-    const { token, bookingId } = await t.run(async (ctx) =>
+    const { token, bookingId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: {
+        booking: {
           portalMedical: true,
           medicalHardBlock: false, // Drifted — should be true
+          bookingFormComplete: false,
         },
-        profileOverrides: {
+        profile: {
           medicalAnswers: {
             medical_q1: true, // ← "yes" answer = hard block
             medical_q2: false,
@@ -420,19 +362,20 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
     expect(result.medicalHardBlock).toBe(true)
 
     // Verify booking flag was corrected
-    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    const booking = await t.run(async (ctx: SeedCtx) => ctx.db.get(bookingId))
     expect(booking!.medicalHardBlock).toBe(true)
   })
 
   it('clears medicalHardBlock when all answers are false', async () => {
     const t = makeT()
-    const { token, bookingId } = await t.run(async (ctx) =>
+    const { token, bookingId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
-        bookingOverrides: {
+        booking: {
           portalMedical: true,
           medicalHardBlock: true, // Drifted — should be false
+          bookingFormComplete: false,
         },
-        profileOverrides: {
+        profile: {
           medicalAnswers: {
             medical_q1: false,
             medical_q2: false,
@@ -452,7 +395,7 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
     const result = await t.mutation(api.portalSubmission.submitPortal, { token })
     expect(result.medicalHardBlock).toBe(false)
 
-    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    const booking = await t.run(async (ctx: SeedCtx) => ctx.db.get(bookingId))
     expect(booking!.medicalHardBlock).toBe(false)
   })
 })
@@ -460,13 +403,15 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
 describe('L9-10: submitPortal — single-use enforcement', () => {
   it('submitPortal sets usedAt and marks customerFormComplete', async () => {
     const t = makeT()
-    const { token, linkId, bookingId, profileId } = await t.run(async (ctx) =>
-      seedPortalFixture(ctx),
+    const { token, linkId, bookingId, profileId } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      }),
     )
 
     await t.mutation(api.portalSubmission.submitPortal, { token })
 
-    const [link, booking, profile] = await t.run(async (ctx) => {
+    const [link, booking, profile] = await t.run(async (ctx: SeedCtx) => {
       return [
         await ctx.db.get(linkId),
         await ctx.db.get(bookingId),
@@ -481,7 +426,11 @@ describe('L9-10: submitPortal — single-use enforcement', () => {
 
   it('double-submit → second call rejected', async () => {
     const t = makeT()
-    const { token } = await t.run(async (ctx) => seedPortalFixture(ctx))
+    const { token } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      }),
+    )
 
     // First submit succeeds
     await t.mutation(api.portalSubmission.submitPortal, { token })

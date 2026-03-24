@@ -2,8 +2,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '../helpers/render'
 import type { CalendarDay } from '@/lib/hooks/use-calendar-range'
+import { addDays, toISODateString } from '@/lib/utils/date'
 
-// ── Build a controlled 7-day week: 2026-03-15 (Sun) → 2026-03-21 (Sat) ──
+// ── Build a controlled 7-day week relative to a dynamic "today" ─────────────
+// ANCHOR is 10 days from the real today. The faked clock is set to ANCHOR.
+const ANCHOR = addDays(toISODateString(new Date()), 10)
+const anchorDate = new Date(ANCHOR + 'T12:00:00')
+
+// 7-day week: ANCHOR is at index 5 ("today"), index 0–4 = past, index 6 = future
+const WEEK_START = addDays(ANCHOR, -5)
+const FUTURE_DATE = addDays(ANCHOR, 1)
+
 function makeDay(dateString: string, isToday: boolean): CalendarDay {
   const [y, m, d] = dateString.split('-').map(Number)
   return {
@@ -15,15 +24,10 @@ function makeDay(dateString: string, isToday: boolean): CalendarDay {
   }
 }
 
-const WEEK: CalendarDay[] = [
-  makeDay('2026-03-15', false),
-  makeDay('2026-03-16', false),
-  makeDay('2026-03-17', false),
-  makeDay('2026-03-18', false),
-  makeDay('2026-03-19', false),
-  makeDay('2026-03-20', true),  // today (Friday)
-  makeDay('2026-03-21', false), // future (Saturday)
-]
+const WEEK: CalendarDay[] = Array.from({ length: 7 }, (_, i) => {
+  const ds = addDays(ANCHOR, i - 5)
+  return makeDay(ds, ds === ANCHOR)
+})
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -35,12 +39,15 @@ vi.mock('@/lib/hooks/use-calendar-range', async () => {
   return {
     ...actual,
     useCalendarRange: () => ({
-      range: { start: new Date(2026, 2, 15), end: new Date(2026, 2, 21) },
+      range: {
+        start: new Date(WEEK_START + 'T00:00:00'),
+        end: new Date(FUTURE_DATE + 'T00:00:00'),
+      },
       shiftRange: vi.fn(),
       jumpToDate: vi.fn(),
       resetRange: vi.fn(),
       weeks: [WEEK],
-      headerLabel: 'Mar 15 – 21, 2026',
+      headerLabel: `${WEEK_START} – ${FUTURE_DATE}`,
       todayCol: 5,
     }),
   }
@@ -72,7 +79,7 @@ import { BookingCalendar } from '@/components/booking/booking-calendar'
 describe('BookingCalendar — past vs today/future click behavior', () => {
   beforeEach(() => {
     vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 2, 20, 12, 0, 0)) // 2026-03-20 noon
+    vi.setSystemTime(anchorDate)
   })
 
   afterEach(() => {
@@ -81,32 +88,32 @@ describe('BookingCalendar — past vs today/future click behavior', () => {
 
   it('past date has glass-surface class (hover shimmer)', () => {
     const { getByTestId } = render(<BookingCalendar onDateClick={vi.fn()} />)
-    const cell = getByTestId('cell-2026-03-15')
+    const cell = getByTestId(`cell-${WEEK_START}`)
     expect(cell.className).toContain('glass-surface')
   })
 
   it('past date ignores clicks', () => {
     const spy = vi.fn()
     const { getByTestId } = render(<BookingCalendar onDateClick={spy} />)
-    fireEvent.click(getByTestId('cell-2026-03-15'))
+    fireEvent.click(getByTestId(`cell-${WEEK_START}`))
     expect(spy).not.toHaveBeenCalled()
   })
 
   it('today highlights and is clickable', () => {
     const spy = vi.fn()
     const { getByTestId } = render(<BookingCalendar onDateClick={spy} />)
-    const cell = getByTestId('cell-2026-03-20')
+    const cell = getByTestId(`cell-${ANCHOR}`)
     expect(cell.className).toContain('glass-surface')
     fireEvent.click(cell)
-    expect(spy).toHaveBeenCalledWith('2026-03-20')
+    expect(spy).toHaveBeenCalledWith(ANCHOR)
   })
 
   it('future date highlights and is clickable', () => {
     const spy = vi.fn()
     const { getByTestId } = render(<BookingCalendar onDateClick={spy} />)
-    const cell = getByTestId('cell-2026-03-21')
+    const cell = getByTestId(`cell-${FUTURE_DATE}`)
     expect(cell.className).toContain('glass-surface')
     fireEvent.click(cell)
-    expect(spy).toHaveBeenCalledWith('2026-03-21')
+    expect(spy).toHaveBeenCalledWith(FUTURE_DATE)
   })
 })

@@ -129,7 +129,7 @@ http.route({
   path: '/dev/signin-token',
   method: 'POST',
   handler: httpAction(async (_ctx, request) => {
-    if (process.env.ENVIRONMENT === 'production') {
+    if (process.env.ENVIRONMENT !== 'development') {
       return new Response('Forbidden', { status: 403 })
     }
 
@@ -173,8 +173,7 @@ http.route({
       body: JSON.stringify({ user_id: userId }),
     })
     if (!tokenRes.ok) {
-      const err = await tokenRes.text()
-      return new Response(`Failed to create sign-in token: ${err}`, { status: 500 })
+      return new Response('Failed to create sign-in token', { status: 500 })
     }
     const tokenData = (await tokenRes.json()) as { token: string; url: string }
 
@@ -191,7 +190,7 @@ http.route({
   path: '/dev/delete-user',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
-    if (process.env.ENVIRONMENT === 'production') {
+    if (process.env.ENVIRONMENT !== 'development') {
       return new Response('Forbidden', { status: 403 })
     }
 
@@ -218,7 +217,7 @@ http.route({
   path: '/dev/complete-customer-form',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
-    if (process.env.ENVIRONMENT === 'production') {
+    if (process.env.ENVIRONMENT !== 'development') {
       return new Response('Forbidden', { status: 403 })
     }
 

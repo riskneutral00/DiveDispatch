@@ -3,10 +3,15 @@ import { describe, it, expect } from 'vitest'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate } from '../helpers/dates'
+import {
+  seedUser as _seedUser,
+  seedBooking as _seedBooking,
+  seedInventoryUnit,
+  type SeedCtx,
+} from '../fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const HOLD_TTL = 43_200_000
 const modules = import.meta.glob('../../convex/**/*.ts')
 
 function makeT() {
@@ -21,70 +26,23 @@ async function expectConvexError(promise: Promise<unknown>, code: string) {
   })
 }
 
-async function seedUser(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
-  slug: string,
-  role: string = 'DiveCenter',
-) {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
+async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'DiveCenter') {
+  await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
 }
 
-async function seedBooking(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
-  ownerId: string,
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('bookings', {
+async function seedBooking(ctx: SeedCtx, ownerId: string, overrides: Record<string, unknown> = {}) {
+  return _seedBooking(ctx, {
     ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['OW'],
     startDate: testDate(5),
     endDate: testDate(7),
-    divers: [
-      {
-        name: 'Alice',
-        abbrev: 'A',
-        flag: { code: 'TH', label: 'Thailand' },
-        startDate: testDate(5),
-        endDate: testDate(7),
-        activityType: ['OW'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
     bookingFormComplete: false,
-    customerFormComplete: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(overrides as any),
+    ...overrides,
   })
 }
 
-async function seedExclusiveInstructor(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
-  ownerSlug: string = 'instructor-1',
-) {
-  return ctx.db.insert('inventoryUnits', {
+async function seedExclusiveInstructor(ctx: SeedCtx, ownerSlug: string = 'instructor-1') {
+  return seedInventoryUnit(ctx, {
     resourceType: 'Instructor',
-    resourceId: ownerSlug,
     displayName: 'Instructor One',
     capacityModel: 'Exclusive',
     totalUnits: 1,
@@ -94,12 +52,12 @@ async function seedExclusiveInstructor(
 }
 
 async function seedBoat(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
+  ctx: SeedCtx,
   opts: {
     ownerSlug?: string
     totalUnits?: number
     boatType?: string
-    capacityModel?: string
+    capacityModel?: 'Exclusive' | 'Pooled'
   } = {},
 ) {
   const {
@@ -117,8 +75,7 @@ async function seedBoat(
     ownerId: ownerSlug,
     ownerType: 'Boat',
     boatType,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+  } as never)
 }
 
 // ─── L9-01: Exclusive Unit — No Double Hold ──────────────────────────────────

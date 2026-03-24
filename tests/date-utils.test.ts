@@ -89,11 +89,13 @@ describe('getDatesInRange', () => {
 })
 
 describe('toISODateString', () => {
+  const year = new Date().getFullYear()
+
   it('formats a Date to YYYY-MM-DD', () => {
-    expect(toISODateString(new Date(2026, 2, 15))).toBe('2026-03-15')
+    expect(toISODateString(new Date(year, 2, 15))).toBe(`${year}-03-15`)
   })
 
   it('zero-pads single-digit months', () => {
-    expect(toISODateString(new Date(2026, 0, 5))).toBe('2026-01-05')
+    expect(toISODateString(new Date(year, 0, 5))).toBe(`${year}-01-05`)
   })
 })

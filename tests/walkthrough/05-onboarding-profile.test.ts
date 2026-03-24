@@ -9,7 +9,7 @@ const modules = import.meta.glob('../../convex/**/*.ts')
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
 async function seedUser(ctx: MutationCtx, slug: string) {
-  return ctx.db.insert('users', {
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -21,6 +21,14 @@ async function seedUser(ctx: MutationCtx, slug: string) {
     isSeeded: false,
     preferredLocale: 'en',
   })
+  await ctx.db.insert('userRoles', {
+    userId,
+    role: 'DiveCenter',
+    isPrimary: true,
+    createdAt: Date.now(),
+    profileComplete: false,
+  })
+  return userId
 }
 
 // ─── Tests: diveCenters.create (onboarding profile step save) ─────────────────

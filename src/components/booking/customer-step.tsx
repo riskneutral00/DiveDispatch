@@ -197,6 +197,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
                     : 'LINE ID'
               }
               type={contactType === 'email' ? 'email' : 'text'}
+              data-testid={contactType === 'email' ? 'customer-email' : undefined}
               className="glass glass-field flex-1 text-sm py-2 px-3"
               style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
             />

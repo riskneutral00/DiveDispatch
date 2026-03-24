@@ -19,7 +19,7 @@ import {
   seedSession,
   seedReservation,
 } from './fixtures/seedFixture'
-import { testDate } from './helpers/dates'
+import { testDate, malformedDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 let t = convexTest(schema, modules)
@@ -827,6 +827,7 @@ describe('_getCapacityForDates', () => {
 
 describe('H4 — Snapshot window matching via releaseBookingReservations', () => {
   it('H4-1: exact match succeeds — restore finds snapshot by unit/date/windowStart', async () => {
+    const date = testDate(20)
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
@@ -834,7 +835,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
         totalUnits: 1,
       })
       const snapshotId = await seedSnapshot(ctx, unitId, {
-        date: '2026-04-15',
+        date,
         windowStart: '09:00',
         windowEnd: '17:00',
         totalUnits: 1,
@@ -844,7 +845,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
 
       const bookingId = await seedBooking(ctx)
       const sessionId = await seedSession(ctx, bookingId, unitId, {
-        date: '2026-04-15',
+        date,
         startTime: '09:00',
         endTime: '17:00',
       })
@@ -859,7 +860,8 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
     })
   })
 
-  it('H4-2: date format mismatch — "2026-4-15" vs "2026-04-15" throws MISSING_SNAPSHOT', async () => {
+  it('H4-2: date format mismatch — non-zero-padded vs zero-padded throws MISSING_SNAPSHOT', async () => {
+    const date = testDate(20)
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
@@ -868,7 +870,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       // Snapshot stored with zero-padded date
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-15',
+        date,
         windowStart: '09:00',
         windowEnd: '17:00',
         totalUnits: 1,
@@ -879,7 +881,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       const bookingId = await seedBooking(ctx)
       // Session with non-zero-padded date — mismatch
       const sessionId = await seedSession(ctx, bookingId, unitId, {
-        date: '2026-4-15',
+        date: malformedDate(date),
         startTime: '09:00',
         endTime: '17:00',
       })
@@ -895,6 +897,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
   })
 
   it('H4-3: time format mismatch — "9:00" vs "09:00" throws MISSING_SNAPSHOT', async () => {
+    const date = testDate(20)
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Instructor',
@@ -903,7 +906,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       // Snapshot stored with zero-padded time
       await seedSnapshot(ctx, unitId, {
-        date: '2026-04-15',
+        date,
         windowStart: '09:00',
         windowEnd: '17:00',
         totalUnits: 1,
@@ -914,7 +917,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       const bookingId = await seedBooking(ctx)
       // Session with non-zero-padded time — mismatch
       const sessionId = await seedSession(ctx, bookingId, unitId, {
-        date: '2026-04-15',
+        date,
         startTime: '9:00',
         endTime: '17:00',
       })

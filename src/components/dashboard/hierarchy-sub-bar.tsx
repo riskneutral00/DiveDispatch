@@ -51,7 +51,7 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
         href={`/${dcSlug}/${dcCfg.key}/dashboard`}
         className="flex items-center px-2.5 py-2 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
         style={{
-          background: isDCView ? 'var(--color-accent-glow, rgba(0,191,255,0.15))' : 'transparent',
+          background: isDCView ? 'var(--color-accent-glow)' : 'transparent',
           border: `1px solid ${isDCView ? 'var(--color-accent)' : 'var(--color-glass-border)'}`,
           color: isDCView ? 'var(--color-accent)' : 'var(--color-text-secondary)',
           transitionDuration: 'var(--transition-speed)',
@@ -80,7 +80,7 @@ export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
             href={`/${child.childSlug}/${cfg.key}/dashboard`}
             className="flex items-center px-2.5 py-2 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
             style={{
-              background: isActive ? 'var(--color-accent-glow, rgba(0,191,255,0.15))' : 'transparent',
+              background: isActive ? 'var(--color-accent-glow)' : 'transparent',
               border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-glass-border)'}`,
               color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
               transitionDuration: 'var(--transition-speed)',

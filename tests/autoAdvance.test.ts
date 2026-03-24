@@ -19,6 +19,7 @@ import { api } from '../convex/_generated/api'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
 import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,26 +29,8 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Ctx,
+  ctx: SeedCtx,
   ownerId: string,
   overrides: Record<string, unknown> = {},
 ): Promise<Id<'bookings'>> {
@@ -82,7 +65,7 @@ async function seedBooking(
   })
 }
 
-async function seedEquipmentUnit(ctx: Ctx, ownerId: string): Promise<Id<'inventoryUnits'>> {
+async function seedEquipmentUnit(ctx: SeedCtx, ownerId: string): Promise<Id<'inventoryUnits'>> {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Equipment',
     resourceId: ownerId,
@@ -94,7 +77,7 @@ async function seedEquipmentUnit(ctx: Ctx, ownerId: string): Promise<Id<'invento
   })
 }
 
-async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'inventoryUnits'>> {
+async function seedInstructorUnit(ctx: SeedCtx, ownerId: string): Promise<Id<'inventoryUnits'>> {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Instructor',
     resourceId: ownerId,
@@ -107,7 +90,7 @@ async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'invent
 }
 
 async function seedSession(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   unitId: Id<'inventoryUnits'>,
 ): Promise<Id<'bookingSessions'>> {
@@ -122,7 +105,7 @@ async function seedSession(
 }
 
 async function seedReservation(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   unitId: Id<'inventoryUnits'>,
   sessionId: Id<'bookingSessions'>,
@@ -138,7 +121,7 @@ async function seedReservation(
 }
 
 async function seedSnapshot(
-  ctx: Ctx,
+  ctx: SeedCtx,
   unitId: Id<'inventoryUnits'>,
   { reservedUnits = 1 } = {},
 ): Promise<Id<'availabilitySnapshots'>> {
@@ -154,7 +137,7 @@ async function seedSnapshot(
 }
 
 async function seedCustomerProfile(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   token: string,
   rentalChecklist?: {
@@ -173,7 +156,7 @@ async function seedCustomerProfile(
 }
 
 async function seedBookingLink(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   token: string,
 ): Promise<Id<'bookingLinks'>> {
@@ -201,7 +184,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
     const t = makeT()
 
     const { bookingId, resId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -232,7 +215,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
     const t = makeT()
 
     const { bookingId, resId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -266,7 +249,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
     const t = makeT()
 
     const { bookingId, resId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -296,7 +279,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
     const t = makeT()
 
     const { bookingId, resId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -329,7 +312,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       // External equipment — no in-system EM, no reservation
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -359,7 +342,7 @@ describe('tryAutoAdvance — trigger points', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       // customerFormComplete pre-set; submitToDraft sets bookingFormComplete
       return seedBooking(ctx, 'dc-slug', {
         customerFormComplete: true,
@@ -381,8 +364,8 @@ describe('tryAutoAdvance — trigger points', () => {
     const t = makeT()
 
     const { reservationId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
-      await seedUser(ctx, 'em-slug', 'Equipment')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'em-slug', tokenIdentifier: 'clerk|em-slug', role: 'Equipment' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -427,7 +410,7 @@ describe('tryAutoAdvance — trigger points', () => {
     const TOKEN = 'med-trigger-token'
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -464,7 +447,7 @@ describe('tryAutoAdvance — trigger points', () => {
     const TOKEN = 'waiver-trigger-token'
 
     const { bookingId, signatureStorageId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -491,7 +474,7 @@ describe('tryAutoAdvance — trigger points', () => {
     const TOKEN = 'portal-trigger-token'
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       // portalContact/Medical/Waiver all false → no form validation required
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -517,7 +500,7 @@ describe('tryAutoAdvance — vacuous advance', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       // All external, no in-system reservations, both forms complete
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -558,7 +541,7 @@ describe('tryAutoAdvance — guard conditions', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -578,7 +561,7 @@ describe('tryAutoAdvance — guard conditions', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: false, // incomplete
         customerFormComplete: true,
@@ -598,7 +581,7 @@ describe('tryAutoAdvance — guard conditions', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: false, // incomplete
@@ -618,7 +601,7 @@ describe('tryAutoAdvance — guard conditions', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedInstructorUnit(ctx, 'instructor-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -647,7 +630,7 @@ describe('tryAutoAdvance — snapshot restoration on EM release', () => {
     const t = makeT()
 
     const { bookingId, snapshotId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -683,7 +666,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
     const t = makeT()
 
     const { bookingId, snapshotId, resId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -722,7 +705,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
     const t = makeT()
 
     const { bookingId, snapshotId1, snapshotId2 } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const unitId = await seedEquipmentUnit(ctx, 'em-slug')
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
@@ -801,7 +784,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -817,5 +800,86 @@ describe('H18: EM auto-release snapshot restoration', () => {
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     // No reservations → vacuously all confirmed → advances
     expect(booking!.status).toBe('Upcoming')
+  })
+
+  it('H18: blocks advance when a resource was stakeholder_declined', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bId = await seedBooking(ctx, 'blue-ocean', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        medicalHardBlock: false,
+        portalContact: true,
+        portalMedical: true,
+        portalWaiver: true,
+      })
+
+      // Instructor reservation — Confirmed
+      const instrUnit = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-1',
+        displayName: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-1',
+        ownerType: 'Instructor',
+      })
+      const instrSession = await ctx.db.insert('bookingSessions', {
+        bookingId: bId,
+        inventoryUnitId: instrUnit,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: bId,
+        inventoryUnitId: instrUnit,
+        bookingSessionId: instrSession,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: Date.now(),
+      })
+
+      // Boat reservation — Vacated by stakeholder_declined
+      const boatUnit = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-1',
+        displayName: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: 'boat-1',
+        ownerType: 'Boat',
+      })
+      const boatSession = await ctx.db.insert('bookingSessions', {
+        bookingId: bId,
+        inventoryUnitId: boatUnit,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: bId,
+        inventoryUnitId: boatUnit,
+        bookingSessionId: boatSession,
+        unitsRequested: 1,
+        status: 'Vacated',
+        vacatedAt: Date.now(),
+        vacatedBy: 'stakeholder_declined',
+      })
+
+      return bId
+    })
+
+    // tryAutoAdvance should NOT promote — a resource was declined
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Draft')
   })
 })

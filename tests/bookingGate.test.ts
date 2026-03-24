@@ -1,82 +1,50 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
+import {
+  seedUser,
+  seedDiveCenterProfile,
+  seedBookingTemplate,
+  seedStakeholderPreferences,
+  seedVenue,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
+// ─── Composite helper ────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(
-  ctx: Ctx,
-  slug: string,
-  role: string = 'DiveCenter',
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
+async function seedFullProfile(ctx: SeedCtx, slug: string) {
+  const userId = await seedUser(ctx, {
     slug,
+    tokenIdentifier: `clerk|${slug}`,
+    role: 'DiveCenter',
     email: `${slug}@test.com`,
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
     businessName: 'Test Biz',
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-    ...overrides,
   })
-}
-
-async function seedDiveCenterProfile(
-  ctx: Ctx,
-  userId: any,
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('diveCenters', {
-    userId,
+  await seedDiveCenterProfile(ctx, userId, {
     name: 'Test Dive Center',
-    placeName: 'Koh Tao',
-    country: 'Thailand',
-    lat: 10.0957,
-    lng: 99.8408,
     contactEmail: 'info@testdc.com',
-    contactPhone: '+66123456789',
-    associations: [{ agency: 'PADI', number: '12345' }],
-    focusedLanguages: ['en'],
-    verified: false,
-    ...overrides,
-  } as any)
-}
-
-async function seedFullProfile(ctx: Ctx, slug: string) {
-  // Create user
-  const userId = await seedUser(ctx, slug)
-  // Create DC profile with all fields
-  await seedDiveCenterProfile(ctx, userId)
-  // Create booking template (Quick Book pill)
-  await ctx.db.insert('bookingTemplates', {
+  })
+  await seedBookingTemplate(ctx, {
     ownerId: slug,
     ownerType: 'DiveCenter',
     name: 'DSD',
     activityType: ['DSD'],
-    createdAt: Date.now(),
-  } as any)
-  // Create stakeholder preferences with preferred instructors
-  await ctx.db.insert('stakeholderPreferences', {
-    stakeholderId: slug,
+  })
+  await seedStakeholderPreferences(ctx, slug, {
     stakeholderType: 'DiveCenter',
-    acceptanceMode: 'Auto',
     maxHoursPerDay: 0,
     postJobBlockDuration: 0,
-    useNamedUnits: false,
     commonLanguageCodes: [],
     confirmOnAccept: false,
     confirmOnDecline: false,
     preferredInstructorSlugs: ['test-instructor-1', 'test-instructor-2'],
-  } as any)
+  })
   return userId
 }
 
@@ -86,20 +54,29 @@ describe('booking gate: profile completeness', () => {
   it('getOnboardingStatus returns 78% when missing template + preferred instructors', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-78')
-      await seedDiveCenterProfile(ctx, userId)
+      const userId = await seedUser(ctx, {
+        slug: 'dc-78',
+        tokenIdentifier: 'clerk|dc-78',
+        role: 'DiveCenter',
+        email: 'dc-78@test.com',
+        name: 'dc-78 Display',
+        firstName: 'dc-78',
+        lastName: 'Test',
+        businessName: 'Test Biz',
+      })
+      await seedDiveCenterProfile(ctx, userId, {
+        name: 'Test Dive Center',
+        contactEmail: 'info@testdc.com',
+      })
       // Seed preferences WITHOUT preferredInstructorSlugs
-      await ctx.db.insert('stakeholderPreferences', {
-        stakeholderId: 'dc-78',
+      await seedStakeholderPreferences(ctx, 'dc-78', {
         stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
         maxHoursPerDay: 0,
         postJobBlockDuration: 0,
-        useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
-      } as any)
+      })
     })
 
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-78' })
@@ -126,20 +103,29 @@ describe('booking gate: profile completeness', () => {
   it('createDraftShell rejects with PROFILE_INCOMPLETE at 78%', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, 'dc-gate-fail')
-      await seedDiveCenterProfile(ctx, userId)
+      const userId = await seedUser(ctx, {
+        slug: 'dc-gate-fail',
+        tokenIdentifier: 'clerk|dc-gate-fail',
+        role: 'DiveCenter',
+        email: 'dc-gate-fail@test.com',
+        name: 'dc-gate-fail Display',
+        firstName: 'dc-gate-fail',
+        lastName: 'Test',
+        businessName: 'Test Biz',
+      })
+      await seedDiveCenterProfile(ctx, userId, {
+        name: 'Test Dive Center',
+        contactEmail: 'info@testdc.com',
+      })
       // Preferences without preferred instructors
-      await ctx.db.insert('stakeholderPreferences', {
-        stakeholderId: 'dc-gate-fail',
+      await seedStakeholderPreferences(ctx, 'dc-gate-fail', {
         stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
         maxHoursPerDay: 0,
         postJobBlockDuration: 0,
-        useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
-      } as any)
+      })
     })
 
     await expect(
@@ -166,52 +152,46 @@ describe('booking gate: profile completeness', () => {
           preferredEquipmentSlugs: ['test-equipment'],
           preferredVenueSlugs: ['test-venue'],
           preferredCompressorSlugs: ['test-compressor'],
-        } as any)
+        })
       }
 
       // Create instructor user
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|test-instructor',
+      await seedUser(ctx, {
         slug: 'test-instructor',
+        tokenIdentifier: 'clerk|test-instructor',
+        role: 'Instructor',
         email: 'inst@test.com',
         name: 'Test Instructor',
         firstName: 'Test',
         lastName: 'Instructor',
         businessName: 'Test Instructor',
-        role: 'Instructor',
-        isSeeded: false,
-        preferredLocale: 'en',
-      } as any)
+      })
 
       // Create equipment user
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|test-equipment',
+      await seedUser(ctx, {
         slug: 'test-equipment',
+        tokenIdentifier: 'clerk|test-equipment',
+        role: 'Equipment',
         email: 'eq@test.com',
         name: 'Test Equipment',
         firstName: 'Test',
         lastName: 'Equipment',
         businessName: 'Test Equipment',
-        role: 'Equipment',
-        isSeeded: false,
-        preferredLocale: 'en',
-      } as any)
+      })
 
       // Create venue user + venue record (confined + open water capable)
-      const venueUserId = await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|test-venue',
+      const venueUserId = await seedUser(ctx, {
         slug: 'test-venue',
+        tokenIdentifier: 'clerk|test-venue',
+        role: 'Pool',
         email: 'venue@test.com',
         name: 'Test Venue',
         firstName: 'Test',
         lastName: 'Venue',
         businessName: 'Test Venue',
-        role: 'Pool',
-        isSeeded: false,
-        preferredLocale: 'en',
-      } as any)
+      })
 
-      await ctx.db.insert('venues', {
+      await seedVenue(ctx, {
         userId: venueUserId,
         name: 'Test Pool',
         placeName: 'Koh Tao',
@@ -225,26 +205,27 @@ describe('booking gate: profile completeness', () => {
         hasCompressor: false,
         isPublic: false,
         venueType: 'Pool',
-      } as any)
+      })
 
       // Create compressor user
-      await ctx.db.insert('users', {
-        tokenIdentifier: 'clerk|test-compressor',
+      await seedUser(ctx, {
         slug: 'test-compressor',
+        tokenIdentifier: 'clerk|test-compressor',
+        role: 'Compressor',
         email: 'comp@test.com',
         name: 'Test Compressor',
         firstName: 'Test',
         lastName: 'Compressor',
         businessName: 'Test Compressor',
-        role: 'Compressor',
-        isSeeded: false,
-        preferredLocale: 'en',
-      } as any)
+      })
     })
 
     // This should succeed — passes both profile gate (100%) and coverage gate
+    vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|dc-gate-pass' })
       .mutation(api.bookingDraftMutations.createDraftShell, {})
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
 
     expect(bookingId).toBeTruthy()
     expect(typeof bookingId).toBe('string')

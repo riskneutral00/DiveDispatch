@@ -13,3 +13,5 @@ export { GlassTooltip } from "./glass-tooltip";
 export { GlassSelect } from "./glass-select";
 export type { GlassSelectOption } from "./glass-select";
 export { RoleIcon } from "./role-icon";
+export { GlassSimpleSelect } from "./glass-simple-select";
+export { GlassErrorCard } from "./glass-error-card";

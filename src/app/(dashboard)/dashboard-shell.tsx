@@ -35,8 +35,8 @@ function OnboardingBanner() {
       role="status"
       aria-live="polite"
       style={{
-        background: 'var(--color-warning-bg, rgba(234, 179, 8, 0.12))',
-        borderBottom: '1px solid rgba(234, 179, 8, 0.25)',
+        background: 'var(--color-warning-bg)',
+        borderBottom: '1px solid var(--color-warning-border)',
         padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',

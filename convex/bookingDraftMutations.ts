@@ -1,7 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
-import { requireAuth, getAuthUser, OPERATOR_ROLE_SET, HOLD_TTL_MS } from './lib/auth'
+import { requireAuth, getAuthUser, HOLD_TTL_MS } from './lib/auth'
+import { checkHasRole, checkHasAnyOperatorRole } from './userRoles'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
 import {
@@ -34,7 +35,7 @@ export const createDraftShell = mutation({
   },
   handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
-    if (!OPERATOR_ROLE_SET.has(user.role)) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasAnyOperatorRole(ctx, user._id)) throw new ConvexError({ code: 'FORBIDDEN' })
 
     // ── Profile completeness gate — must be 100% to create bookings ──
     const profileStatus = await checkProfileCompleteness(ctx, user)
@@ -116,7 +117,7 @@ export const createDraftShell = mutation({
     }
 
     // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
-    const agentId = user.role === 'Agent' ? (user.slug as string) : undefined
+    const agentId = await checkHasRole(ctx, user._id, 'Agent') ? (user.slug as string) : undefined
 
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
@@ -159,14 +160,14 @@ export const createReferralDraftShell = mutation({
   },
   handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
-    if (user.role !== 'Agent') throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: 'FORBIDDEN' })
 
     const dcUser = await ctx.db
       .query('users')
       .withIndex('by_slug', (q) => q.eq('slug', args.referralDcSlug))
       .unique()
     if (!dcUser) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (!OPERATOR_ROLE_SET.has(dcUser.role as string)) {
+    if (!await checkHasAnyOperatorRole(ctx, dcUser._id)) {
       throw new ConvexError({ code: 'FORBIDDEN' })
     }
 

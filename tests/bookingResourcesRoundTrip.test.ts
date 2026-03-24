@@ -17,6 +17,7 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,26 +27,8 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Ctx,
+  ctx: SeedCtx,
   ownerId: string,
   overrides: Record<string, unknown> = {},
 ): Promise<Id<'bookings'>> {
@@ -80,7 +63,7 @@ async function seedBooking(
   })
 }
 
-async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'inventoryUnits'>> {
+async function seedInstructorUnit(ctx: SeedCtx, ownerId: string): Promise<Id<'inventoryUnits'>> {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Instructor',
     resourceId: ownerId,
@@ -92,7 +75,7 @@ async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'invent
   })
 }
 
-async function seedEquipmentUnit(ctx: Ctx, ownerId: string): Promise<Id<'inventoryUnits'>> {
+async function seedEquipmentUnit(ctx: SeedCtx, ownerId: string): Promise<Id<'inventoryUnits'>> {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Equipment',
     resourceId: ownerId,
@@ -115,9 +98,9 @@ describe('bookingResources round-trip lifecycle', () => {
 
       // Seed 3 users: operator, instructor, equipment manager
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
-        await seedUser(ctx, 'dc-test', 'DiveCenter')
-        await seedUser(ctx, 'inst-1', 'Instructor')
-        await seedUser(ctx, 'em-1', 'Equipment')
+        await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+        await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor' })
+        await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -214,9 +197,9 @@ describe('bookingResources round-trip lifecycle', () => {
       const t = makeT()
 
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
-        await seedUser(ctx, 'dc-test', 'DiveCenter')
-        await seedUser(ctx, 'inst-1', 'Instructor')
-        await seedUser(ctx, 'em-1', 'Equipment')
+        await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+        await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor', name: 'inst-1 Display' })
+        await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment', name: 'em-1 Display' })
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -305,9 +288,9 @@ describe('bookingResources round-trip lifecycle', () => {
       const t = makeT()
 
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
-        await seedUser(ctx, 'dc-test', 'DiveCenter')
-        await seedUser(ctx, 'inst-1', 'Instructor')
-        await seedUser(ctx, 'em-1', 'Equipment')
+        await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+        await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor' })
+        await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -384,9 +367,9 @@ describe('bookingResources round-trip lifecycle', () => {
       const t = makeT()
 
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
-        await seedUser(ctx, 'dc-test', 'DiveCenter')
-        await seedUser(ctx, 'inst-1', 'Instructor')
-        await seedUser(ctx, 'em-1', 'Equipment')
+        await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+        await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor' })
+        await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')
@@ -504,9 +487,9 @@ describe('bookingResources round-trip lifecycle', () => {
       const t = makeT()
 
       const { bookingId, instUnitId, emUnitId } = await t.run(async (ctx) => {
-        await seedUser(ctx, 'dc-test', 'DiveCenter')
-        await seedUser(ctx, 'inst-1', 'Instructor')
-        await seedUser(ctx, 'em-1', 'Equipment')
+        await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+        await seedUser(ctx, { slug: 'inst-1', tokenIdentifier: 'clerk|inst-1', role: 'Instructor' })
+        await seedUser(ctx, { slug: 'em-1', tokenIdentifier: 'clerk|em-1', role: 'Equipment' })
 
         const instUnitId = await seedInstructorUnit(ctx, 'inst-1')
         const emUnitId = await seedEquipmentUnit(ctx, 'em-1')

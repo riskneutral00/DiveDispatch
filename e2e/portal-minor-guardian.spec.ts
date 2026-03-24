@@ -22,17 +22,18 @@ async function createBookingAndGetToken(page: import('@playwright/test').Page, s
   await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 10_000 })
 
   await page.getByLabel('Full name *').fill('Minor Test Diver')
-  await page.locator('input[type="email"]').first().fill('minor.test@test.com')
+  await page.locator('[data-testid="customer-email"]').first().fill('minor.test@test.com')
   await page.getByRole('button', { name: 'English' }).click()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
 
-  await page.locator('select').first().selectOption('DSD')
-  await page.locator('input[type="date"]').first().fill(startDate)
+  await page.locator('[data-testid="course-activity-select"]').first().selectOption('DSD')
+  await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
   await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
 
-  const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
+  const instructorSelect = page.locator('[data-testid="instructor-select"]')
   await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-  await instructorSelect.selectOption('__external__')
+  await instructorSelect.click()
+  await page.getByRole('option', { name: 'External (not in system)' }).click()
   await page.getByLabel('Instructor (external)').fill('External Instructor')
 
   await page.getByRole('button', { name: 'Next', exact: true }).click()
@@ -48,7 +49,7 @@ async function createBookingAndGetToken(page: import('@playwright/test').Page, s
 
   await page.getByRole('button', { name: 'Copy Link' }).click()
 
-  const urlDiv = page.locator('.font-mono.break-all')
+  const urlDiv = page.locator('[data-testid="portal-link-url"]')
   await expect(urlDiv).toBeVisible({ timeout: 10_000 })
   const urlText = await urlDiv.textContent()
   if (!urlText?.includes('/portal/')) throw new Error('Portal URL not found')
@@ -71,11 +72,11 @@ async function completeContactStepAsMinor(
   await page.getByLabel('Phone *').first().fill('+1 555 000 9999')
   await page.getByLabel('Date of Birth *').fill(minorDob)
 
-  await page.locator('label:has-text("Gender") ~ select').selectOption('M')
-  await page.locator('label:has-text("Nationality") ~ select').selectOption('United States')
+  await page.locator('[data-testid="portal-gender-select"]').selectOption('M')
+  await page.locator('[data-testid="portal-nationality-select"]').selectOption('United States')
 
   await page.getByLabel('Passport Number *').fill('MINOR12345')
-  await page.locator('label:has-text("Issuing Country") ~ select').selectOption('United States')
+  await page.locator('[data-testid="portal-issuing-country-select"]').selectOption('United States')
   await page.getByLabel('Expiration Date *').fill('2030-01-01')
 
   await page.getByLabel('Full Name *').fill('Parent Name')
@@ -150,11 +151,11 @@ test.describe('portal: minor with guardian', () => {
     await page.getByLabel('Phone *').first().fill('+1 555 000 7777')
     await page.getByLabel('Date of Birth *').fill('1990-06-15')
 
-    await page.locator('label:has-text("Gender") ~ select').selectOption('F')
-    await page.locator('label:has-text("Nationality") ~ select').selectOption('United States')
+    await page.locator('[data-testid="portal-gender-select"]').selectOption('F')
+    await page.locator('[data-testid="portal-nationality-select"]').selectOption('United States')
 
     await page.getByLabel('Passport Number *').fill('ADULT12345')
-    await page.locator('label:has-text("Issuing Country") ~ select').selectOption('United States')
+    await page.locator('[data-testid="portal-issuing-country-select"]').selectOption('United States')
     await page.getByLabel('Expiration Date *').fill('2030-01-01')
 
     await page.getByLabel('Full Name *').fill('Emergency Contact')

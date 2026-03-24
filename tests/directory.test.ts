@@ -6,11 +6,12 @@ import { getBannedSlugSet } from '../convex/directory'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
+import type { Id } from '../convex/_generated/dataModel'
+import { type SeedCtx } from './fixtures/seedFixture'
+
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedInstructorUser(ctx: Ctx, slug: string) {
+async function seedInstructorUser(ctx: SeedCtx, slug: string) {
   return ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
@@ -25,10 +26,9 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
   })
 }
 
-async function seedInstructorProfile(ctx: Ctx, userId: string, name: string, placeName: string, country: string, languages: string[], verified = false) {
+async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, languages: string[], verified = false) {
   return ctx.db.insert('instructors', {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    userId: userId as any,
+    userId,
     name,
     placeName,
     country,
@@ -42,7 +42,7 @@ async function seedInstructorProfile(ctx: Ctx, userId: string, name: string, pla
   })
 }
 
-async function seedCallerUser(ctx: Ctx, slug: string) {
+async function seedCallerUser(ctx: SeedCtx, slug: string) {
   return ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,

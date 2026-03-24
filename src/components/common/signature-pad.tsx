@@ -176,7 +176,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
             border: error
               ? '2px solid var(--color-destructive)'
               : '1px solid var(--color-glass-border)',
-            background: 'rgba(255,255,255,0.85)',
+            background: 'var(--color-glass-bg-elevated)',
           }}
         >
           <canvas
@@ -199,7 +199,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           {empty && (
             <span
               className="absolute bottom-5 left-4 right-4 text-xs pointer-events-none select-none"
-              style={{ color: 'rgba(0,0,0,0.25)' }}
+              style={{ color: 'var(--color-text-secondary)' }}
             >
               Sign here ✕
             </span>

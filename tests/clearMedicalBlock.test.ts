@@ -19,7 +19,8 @@ import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
-import { testDate } from './helpers/dates'
+import { testDate, dob } from './helpers/dates'
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,26 +30,8 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Ctx,
+  ctx: SeedCtx,
   ownerId: string,
   overrides: Record<string, unknown> = {},
 ): Promise<Id<'bookings'>> {
@@ -84,7 +67,7 @@ async function seedBooking(
 }
 
 async function seedCustomerProfile(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   token: string,
   overrides: Record<string, unknown> = {},
@@ -97,7 +80,7 @@ async function seedCustomerProfile(
 }
 
 async function seedCustomer(
-  ctx: Ctx,
+  ctx: SeedCtx,
   overrides: Record<string, unknown> = {},
 ): Promise<Id<'customers'>> {
   return ctx.db.insert('customers', {
@@ -106,7 +89,7 @@ async function seedCustomer(
     email: 'alice@test.com',
     phone: '+66123456789',
     nationality: 'US',
-    dateOfBirth: '1990-01-15',
+    dateOfBirth: dob(35),
     passportNumber: 'US12345678',
     passportIssuingCountry: 'US',
     passportExpirationDate: testDate(365),
@@ -126,7 +109,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         medicalHardBlock: true,
       })
@@ -146,7 +129,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', { medicalHardBlock: true })
     })
 
@@ -161,8 +144,8 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
-      await seedUser(ctx, 'other-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'other-slug', tokenIdentifier: 'clerk|other-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', { medicalHardBlock: true })
     })
 
@@ -178,7 +161,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         medicalHardBlock: false,
       })
@@ -199,7 +182,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const id = await seedBooking(ctx, 'dc-slug')
       await ctx.db.delete(id)
       return id
@@ -217,7 +200,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       // All advance conditions met EXCEPT medicalHardBlock
       return seedBooking(ctx, 'dc-slug', {
         medicalHardBlock: true,
@@ -241,7 +224,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', {
         medicalHardBlock: true,
         bookingFormComplete: false, // still incomplete
@@ -264,7 +247,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', { medicalHardBlock: true })
     })
 
@@ -291,7 +274,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const { bookingId, customerId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const customerId = await seedCustomer(ctx, {
         flags: ['medical_block'],
       })
@@ -321,7 +304,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const { bookingId, profileId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'dc-slug', {
         medicalHardBlock: true,
       })
@@ -347,7 +330,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', { medicalHardBlock: true })
     })
 
@@ -374,7 +357,7 @@ describe('clearMedicalBlock', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-slug')
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-slug', { medicalHardBlock: true })
     })
 

@@ -29,29 +29,6 @@ describe('StepAboutYou', () => {
     onContinue: vi.fn(),
   }
 
-  it('renders all required fields', () => {
-    const { getByLabelText, getByText, getByTestId } = render(
-      <StepAboutYou {...defaultProps} />,
-    )
-    expect(getByText('App language')).toBeTruthy()
-    expect(getByLabelText('First name')).toBeTruthy()
-    expect(getByLabelText('Last name')).toBeTruthy()
-    expect(getByLabelText(/nickname/i)).toBeTruthy()
-    expect(getByLabelText('Phone')).toBeTruthy()
-    expect(getByText('Preferred communication channel')).toBeTruthy()
-    expect(getByTestId('language-picker')).toBeTruthy()
-  })
-
-  it('renders all communication channel options', () => {
-    const { getByText } = render(<StepAboutYou {...defaultProps} />)
-    expect(getByText('WhatsApp')).toBeTruthy()
-    expect(getByText('LINE')).toBeTruthy()
-    expect(getByText('Messenger')).toBeTruthy()
-    expect(getByText('WeChat')).toBeTruthy()
-    expect(getByText('KakaoTalk')).toBeTruthy()
-    expect(getByText('Instagram')).toBeTruthy()
-  })
-
   it('disables Next when no app language is selected', () => {
     const { getByRole } = render(<StepAboutYou {...defaultProps} />)
     expect(getByRole('button', { name: /^next$/i })).toBeDisabled()

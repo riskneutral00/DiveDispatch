@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser } from './lib/auth'
+import { checkHasRole } from './userRoles'
 
 const gasMixValidator = v.union(
   v.literal('air'),
@@ -23,7 +24,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
-    if (user.role !== 'Compressor') throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasRole(ctx, user._id, 'Compressor')) throw new ConvexError({ code: 'FORBIDDEN' })
 
     const existing = await ctx.db
       .query('compressors')

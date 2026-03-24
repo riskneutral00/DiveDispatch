@@ -2,80 +2,10 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
-import { testDate, testToken } from '../helpers/dates'
+import { testDate, passportExpiry, dob } from '../helpers/dates'
+import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
 
 const modules = import.meta.glob('../../convex/**/*.ts')
-
-const HOLD_TTL = 43_200_000
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-// ── Seed helper ───────────────────────────────────────────────────────────────
-
-/**
- * Seeds a complete portal fixture: booking, bookingLink, customerProfile.
- * Mirrors the pattern from tests/hardening/portal-security.test.ts.
- */
-async function seedPortalFixture(
-  ctx: Ctx,
-  overrides: {
-    linkOverrides?: Record<string, unknown>
-    bookingOverrides?: Record<string, unknown>
-    profileOverrides?: Record<string, unknown>
-  } = {},
-) {
-  const bookingId = await ctx.db.insert('bookings', {
-    ownerId: 'dc-contact-test',
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['DSD'],
-    startDate: testDate(5),
-    endDate: testDate(5),
-    divers: [
-      {
-        name: 'Bob',
-        abbrev: 'B',
-        flag: { code: 'AU', label: 'Australia' },
-        startDate: testDate(5),
-        endDate: testDate(5),
-        activityType: ['DSD'],
-      },
-    ],
-    operatorName: 'Reef DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    expiresAt: Date.now() + HOLD_TTL,
-    ...(overrides.bookingOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const token = testToken('tok-contact')
-  const linkId = await ctx.db.insert('bookingLinks', {
-    bookingId,
-    token,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    customerName: 'Bob Diver',
-    email: 'bob@example.com',
-    ...(overrides.linkOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const profileId = await ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: token,
-    ...(overrides.profileOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  return { bookingId, token, linkId, profileId }
-}
 
 /** Minimal valid contact payload for savePortalContact. */
 function makeContactArgs(token: string, overrides: Record<string, unknown> = {}) {
@@ -85,12 +15,12 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
     legalLastName: 'Diver',
     email: 'bob@example.com',
     phone: '+61 412 345 678',
-    dateOfBirth: '1988-03-22',
+    dateOfBirth: dob(37),
     gender: 'M' as const,
     nationality: 'Australia',
     passportNumber: 'PA1234567',
     passportIssuingCountry: 'Australia',
-    passportExpirationDate: '2031-03-01',
+    passportExpirationDate: passportExpiry(),
     emergencyContactName: 'Carol Diver',
     emergencyContactPhone: '+61 400 111 222',
     emergencyContactRelation: 'Spouse',
@@ -103,7 +33,27 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
 describe('getPortalContext', () => {
   it('returns prefill data for new customer (no saved record)', async () => {
     const t = convexTest(schema, modules)
-    const { token } = await t.run(async (ctx) => seedPortalFixture(ctx))
+    const { token } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-contact-test',
+          activityType: ['DSD'],
+          operatorName: 'Reef DC',
+          bookingFormComplete: false,
+          divers: [
+            {
+              name: 'Bob',
+              abbrev: 'B',
+              flag: { code: 'AU', label: 'Australia' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'],
+            },
+          ],
+        },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+      }),
+    )
 
     const context = await t.query(api.customers.getPortalContext, { token })
 
@@ -119,8 +69,26 @@ describe('getPortalContext', () => {
 
   it('returns existing customer data when available', async () => {
     const t = convexTest(schema, modules)
-    const { token } = await t.run(async (ctx) => {
-      const fixture = await seedPortalFixture(ctx)
+    const { token } = await t.run(async (ctx: SeedCtx) => {
+      const fixture = await seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-contact-test',
+          activityType: ['DSD'],
+          operatorName: 'Reef DC',
+          bookingFormComplete: false,
+          divers: [
+            {
+              name: 'Bob',
+              abbrev: 'B',
+              flag: { code: 'AU', label: 'Australia' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'],
+            },
+          ],
+        },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+      })
 
       // Insert a customer and link it to the profile
       const customerId = await ctx.db.insert('customers', {
@@ -128,18 +96,17 @@ describe('getPortalContext', () => {
         legalLastName: 'Diver',
         email: 'bob@example.com',
         phone: '+61 412 345 678',
-        dateOfBirth: '1988-03-22',
+        dateOfBirth: dob(37),
         gender: 'M',
         nationality: 'Australia',
         passportNumber: 'PA1234567',
         passportIssuingCountry: 'Australia',
-        passportExpirationDate: '2031-03-01',
+        passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Carol Diver',
         emergencyContactPhone: '+61 400 111 222',
         emergencyContactRelation: 'Spouse',
         createdAt: Date.now(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+      })
 
       await ctx.db.patch(fixture.profileId, { customerId })
 
@@ -171,11 +138,31 @@ describe('getPortalContext', () => {
 describe('savePortalContact', () => {
   it('creates new customer record and sets profile.customerId', async () => {
     const t = convexTest(schema, modules)
-    const { token, profileId } = await t.run(async (ctx) => seedPortalFixture(ctx))
+    const { token, profileId } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-contact-test',
+          activityType: ['DSD'],
+          operatorName: 'Reef DC',
+          bookingFormComplete: false,
+          divers: [
+            {
+              name: 'Bob',
+              abbrev: 'B',
+              flag: { code: 'AU', label: 'Australia' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'],
+            },
+          ],
+        },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+      }),
+    )
 
     await t.mutation(api.customers.savePortalContact, makeContactArgs(token))
 
-    const { profile, customer } = await t.run(async (ctx) => {
+    const { profile, customer } = await t.run(async (ctx: SeedCtx) => {
       const profile = await ctx.db.get(profileId)
       const customer = profile?.customerId ? await ctx.db.get(profile.customerId) : null
       return { profile, customer }
@@ -196,7 +183,27 @@ describe('savePortalContact', () => {
 
   it('updates existing customer record on second call', async () => {
     const t = convexTest(schema, modules)
-    const { token, profileId } = await t.run(async (ctx) => seedPortalFixture(ctx))
+    const { token, profileId } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-contact-test',
+          activityType: ['DSD'],
+          operatorName: 'Reef DC',
+          bookingFormComplete: false,
+          divers: [
+            {
+              name: 'Bob',
+              abbrev: 'B',
+              flag: { code: 'AU', label: 'Australia' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'],
+            },
+          ],
+        },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+      }),
+    )
 
     // First call — creates customer
     await t.mutation(api.customers.savePortalContact, makeContactArgs(token))
@@ -211,7 +218,7 @@ describe('savePortalContact', () => {
       }),
     )
 
-    const { profile, customer } = await t.run(async (ctx) => {
+    const { profile, customer } = await t.run(async (ctx: SeedCtx) => {
       const profile = await ctx.db.get(profileId)
       const customer = profile?.customerId ? await ctx.db.get(profile.customerId) : null
       return { profile, customer }

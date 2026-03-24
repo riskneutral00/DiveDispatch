@@ -7,57 +7,18 @@ import {
   canReservationTransition,
 } from '../convex/bookings/_shared'
 import { testDate, testToken } from './helpers/dates'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-async function seedUser(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
-  slug: string,
-  role: string = 'DiveCenter',
-) {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0],
+  ctx: SeedCtx,
   ownerId: string,
-  overrides: Record<string, unknown> = {},
+  overrides: Parameters<typeof _seedBooking>[1] = {},
 ) {
-  return ctx.db.insert('bookings', {
-    ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
-    divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(overrides as any),
-  })
+  return _seedBooking(ctx, { ownerId, bookingFormComplete: false, ...overrides })
 }
 
 // ─── canBookingTransition ─────────────────────────────────────────────────────
@@ -122,7 +83,7 @@ describe('cancelBooking', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
 
@@ -135,7 +96,7 @@ describe('cancelBooking', () => {
     const t = convexTest(schema, modules)
     // Insert user but no booking — grab a fake id from a dummy insert then delete it
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const id = await seedBooking(ctx, 'owner-slug')
       await ctx.db.delete(id)
       return id
@@ -150,7 +111,7 @@ describe('cancelBooking', () => {
   it('throws FORBIDDEN when caller does not own the booking', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'other-slug')
+      await seedUser(ctx, { slug: 'other-slug', tokenIdentifier: 'clerk|other-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
 
@@ -163,7 +124,7 @@ describe('cancelBooking', () => {
   it('throws INVALID_STATUS when booking is already Cancelled', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
     })
 
@@ -176,7 +137,7 @@ describe('cancelBooking', () => {
   it('cancels a Draft booking — status becomes Cancelled', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
 
@@ -191,7 +152,7 @@ describe('cancelBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -249,7 +210,7 @@ describe('cancelBooking', () => {
   it('cancels a Completed booking', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
     })
 
@@ -264,7 +225,7 @@ describe('cancelBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -317,7 +278,7 @@ describe('editBooking', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
     })
 
@@ -329,7 +290,7 @@ describe('editBooking', () => {
   it('throws INVALID_STATUS when booking is Draft', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
 
@@ -342,7 +303,7 @@ describe('editBooking', () => {
   it('throws INVALID_STATUS when booking is Cancelled', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
     })
 
@@ -356,7 +317,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, sessionId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -396,7 +357,7 @@ describe('editBooking', () => {
   it('resets Completed booking to Draft', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
     })
 
@@ -412,7 +373,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -466,7 +427,7 @@ describe('editBooking', () => {
   it('throws FORBIDDEN when caller does not own the booking', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'other-slug')
+      await seedUser(ctx, { slug: 'other-slug', tokenIdentifier: 'clerk|other-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
     })
 
@@ -482,7 +443,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, res1Id, res2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -579,7 +540,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, instructorSnapshotId, boatSnapshotId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       // Exclusive instructor unit
@@ -683,7 +644,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', {
         status: 'Upcoming',
         expiresAt: Date.now() + 43200000,
@@ -706,7 +667,7 @@ describe('editBooking', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, reservationId, snapshotId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -773,7 +734,7 @@ describe('discardDraft', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
     })
 
@@ -785,7 +746,7 @@ describe('discardDraft', () => {
   it('throws INVALID_STATUS when booking is Upcoming', async () => {
     const t = convexTest(schema, modules)
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
     })
 
@@ -801,7 +762,7 @@ describe('discardDraft', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, snapshot1Id, snapshot2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const unit1Id = await ctx.db.insert('inventoryUnits', {
@@ -904,7 +865,7 @@ describe('discardDraft', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, s1, s2, s3 } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -965,7 +926,7 @@ describe('discardDraft', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, link1Id, link2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const link1Id = await ctx.db.insert('bookingLinks', {
@@ -1005,7 +966,7 @@ describe('discardDraft', () => {
     const t = convexTest(schema, modules)
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -1058,7 +1019,7 @@ describe('cancelBooking — snapshot restoration', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, res1Id, res2Id, snap1Id, snap2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
 
       const unit1Id = await ctx.db.insert('inventoryUnits', {
@@ -1180,7 +1141,7 @@ describe('discardDraft orphan cleanup', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, profile1Id, profile2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const profile1Id = await ctx.db.insert('customerProfiles', {
@@ -1218,7 +1179,7 @@ describe('discardDraft orphan cleanup', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, bag1Id, bag2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const bag1Id = await ctx.db.insert('equipmentBags', {
@@ -1262,7 +1223,7 @@ describe('discardDraft orphan cleanup', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId, res1Id, res2Id } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'owner-slug')
+      await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'owner-slug', { status: 'Draft' })
 
       const unitId = await ctx.db.insert('inventoryUnits', {

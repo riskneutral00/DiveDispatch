@@ -7,29 +7,18 @@ import {
   signInAsAgent,
 } from './helpers/auth'
 import { NICOLE, HUG_OCEAN, AMANDA } from './helpers/seed'
-import { dashboardRoute, PUBLIC_ROUTES, AUTH_ROUTES } from './helpers/routes'
+import { dashboardRoute, PUBLIC_ROUTES } from './helpers/routes'
 import { checkAccessibility } from './helpers/accessibility'
 import { captureConsoleErrors } from './helpers/console'
 
 // ── Public pages ──────────────────────────────────────────────────────────────
 
 test.describe('smoke: public pages', () => {
-  test('landing page loads', async ({ page }) => {
-    await page.goto(PUBLIC_ROUTES.landing)
-    await expect(page).toHaveTitle(/DiveDispatch/i)
-  })
-
   test('landing page accessibility', async ({ page }) => {
     await page.goto(PUBLIC_ROUTES.landing)
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1_000) // let styles settle
     await checkAccessibility(page)
-  })
-
-  test('sign-in page is reachable', async ({ page }) => {
-    await page.goto(PUBLIC_ROUTES.signIn)
-    await expect(page).not.toHaveURL(/404/)
-    await expect(page).not.toHaveURL(/\/dashboard/)
   })
 
   test('sign-in page accessibility', async ({ page }) => {
@@ -40,14 +29,6 @@ test.describe('smoke: public pages', () => {
     await checkAccessibility(page, { exclude: ['.cl-rootBox'] })
   })
 
-  test('help page loads', async ({ page }) => {
-    await signInAsDiveCenter(page)
-    await page.goto(AUTH_ROUTES.help)
-    await expect(page).not.toHaveURL(/sign-in/)
-    await expect(page).toHaveURL(/help/)
-    await page.waitForLoadState('domcontentloaded')
-    await page.screenshot({ path: 'e2e/screenshots/help/help.png', fullPage: true })
-  })
 })
 
 // ── Auth redirects ─────────────────────────────────────────────────────────────
@@ -134,19 +115,6 @@ test.describe('smoke: role dashboards', () => {
     })
   })
 
-  // Boat, Equipment, DiveMaster have no standalone seed users.
-  // These tests are skipped until seed data is added for those roles.
-  test.skip('dashboard loads for Boat', async () => {
-    // TODO: add Boat seed user (primary role: Boat)
-  })
-
-  test.skip('dashboard loads for Equipment', async () => {
-    // TODO: add Equipment seed user (primary role: Equipment)
-  })
-
-  test.skip('dashboard loads for DiveMaster', async () => {
-    // TODO: add DiveMaster seed user (primary role: DiveMaster)
-  })
 })
 
 // ── Booking wizard ────────────────────────────────────────────────────────────

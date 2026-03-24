@@ -7,7 +7,6 @@ const TOP_LANGUAGE_ENTRIES = [
   { code: 'NO', label: 'Norwegian' },
   { code: 'RU', label: 'Russian' },
   { code: 'CN', label: 'Mandarin' },
-  { code: 'HK', label: 'Cantonese' },
   { code: 'TH', label: 'Thai' },
   { code: 'JP', label: 'Japanese' },
   { code: 'KR', label: 'Korean' },
@@ -112,7 +111,7 @@ export interface DiveLanguage {
 const SEARCH_TERMS: Partial<Record<LanguageCode, string>> = {
   CN: 'chinese mandarin simplified',
   TW: 'chinese traditional taiwan',
-  HK: 'chinese cantonese hong kong',
+
   MV: 'maldives maldivian divehi',
   JM: 'jamaican',
   PH: 'tagalog filipino philippines',
@@ -147,7 +146,7 @@ const _labelToCode = new Map<string, string>(
 // Profile forms historically stored ISO-639 ('en', 'th', 'zh'), but the
 // canonical format is country codes ('GB', 'TH', 'CN').
 const ISO_TO_COUNTRY: Record<string, string> = {
-  en: 'GB', th: 'TH', zh: 'CN', yue: 'HK', ja: 'JP', ko: 'KR',
+  en: 'GB', th: 'TH', zh: 'CN', ja: 'JP', ko: 'KR',
   fr: 'FR', de: 'DE', ru: 'RU', it: 'IT', es: 'ES', pt: 'BR',
   nl: 'NL', ar: 'SA', he: 'IL', sv: 'SE', pl: 'PL',
 }
@@ -168,7 +167,6 @@ export const PROFILE_LANGUAGE_OPTIONS = [
   { code: 'GB' as LanguageCode, label: 'English' },
   { code: 'TH' as LanguageCode, label: 'Thai' },
   { code: 'CN' as LanguageCode, label: 'Mandarin' },
-  { code: 'HK' as LanguageCode, label: 'Cantonese' },
   { code: 'JP' as LanguageCode, label: 'Japanese' },
   { code: 'KR' as LanguageCode, label: 'Korean' },
   { code: 'FR' as LanguageCode, label: 'French' },

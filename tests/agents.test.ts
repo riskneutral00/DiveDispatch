@@ -3,26 +3,14 @@ import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
+import { seedUser as _seedUser, seedAgent, type SeedCtx } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role: string = 'Agent') {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
+async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'Agent') {
+  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
 }
 
 const VALID_AGENT_ARGS = {
@@ -60,7 +48,7 @@ describe('agents.create', () => {
 
   it('creates agent profile for Agent user', async () => {
     const t = convexTest(schema, modules)
-    let userId: any
+    let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, 'new-agent', 'Agent')
     })
@@ -71,7 +59,7 @@ describe('agents.create', () => {
     expect(agentId).toBeTruthy()
 
     await t.run(async (ctx) => {
-      const agent = await ctx.db.get(agentId as any) as Doc<'agents'> | null
+      const agent = await ctx.db.get(agentId) as Doc<'agents'> | null
       expect(agent).toBeTruthy()
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.userId).toEqual(userId)
@@ -126,14 +114,10 @@ describe('agents.update', () => {
 
   it('updates agent profile fields', async () => {
     const t = convexTest(schema, modules)
-    let agentId: any
+    let agentId: Awaited<ReturnType<typeof seedAgent>> | undefined
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, 'upd-agent', 'Agent')
-      agentId = await ctx.db.insert('agents', {
-        ...VALID_AGENT_ARGS,
-        userId,
-        verified: false,
-      } as any)
+      agentId = await seedAgent(ctx, userId)
     })
 
     await t.withIdentity({ tokenIdentifier: 'clerk|upd-agent' })
@@ -143,7 +127,7 @@ describe('agents.update', () => {
       })
 
     await t.run(async (ctx) => {
-      const agent = await ctx.db.get(agentId) as Doc<'agents'> | null
+      const agent = await ctx.db.get(agentId!) as Doc<'agents'> | null
       expect(agent!.name).toBe('Updated Agent')
       expect(agent!.defaultReferralMode).toBe('referral')
       // Unchanged fields preserved
@@ -177,11 +161,7 @@ describe('agents.mine', () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, 'my-agent', 'Agent')
-      await ctx.db.insert('agents', {
-        ...VALID_AGENT_ARGS,
-        userId,
-        verified: false,
-      } as any)
+      await seedAgent(ctx, userId)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-agent' })

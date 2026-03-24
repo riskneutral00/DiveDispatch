@@ -114,11 +114,11 @@ export function StepAboutYou({
               style={{
                 background:
                   values.preferredChannel === ch.key
-                    ? 'var(--color-primary-muted, rgba(var(--color-primary-rgb,99,102,241),0.15))'
+                    ? 'var(--color-primary-muted)'
                     : 'transparent',
                 borderColor:
                   values.preferredChannel === ch.key
-                    ? 'var(--color-primary-border, rgba(var(--color-primary-rgb,99,102,241),0.4))'
+                    ? 'var(--color-primary-border)'
                     : 'var(--color-glass-border)',
                 color: 'var(--color-text-primary)',
               }}

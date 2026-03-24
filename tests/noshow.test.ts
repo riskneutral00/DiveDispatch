@@ -64,6 +64,14 @@ describe('markNoShow', () => {
       const res = await ctx.db.get(reservationId)
       expect(res!.status).toBe('NoShow')
       expect(res!.noShowAt).toBeTypeOf('number')
+
+      // H15: audit log entry
+      const logs = await ctx.db.query('bookingAuditLog').collect()
+      expect(logs).toContainEqual(expect.objectContaining({
+        action: 'noshow_marked',
+        actorSlug: TEST_SLUGS.diveCenter,
+        actorType: 'operator',
+      }))
     })
   })
 
@@ -211,6 +219,14 @@ describe('revertNoShow', () => {
       const res = await ctx.db.get(reservationId)
       expect(res!.status).toBe('Confirmed')
       expect(res!.noShowAt).toBeUndefined()
+
+      // H15: audit log entries (mark + revert)
+      const logs = await ctx.db.query('bookingAuditLog').collect()
+      expect(logs).toContainEqual(expect.objectContaining({
+        action: 'noshow_reverted',
+        actorSlug: TEST_SLUGS.diveCenter,
+        actorType: 'operator',
+      }))
     })
   })
 

@@ -8,7 +8,7 @@ import {
   seedUser,
   seedBooking,
 } from './fixtures/seedFixture'
-import { testDate } from './helpers/dates'
+import { testDate, passportExpiry, dob } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
 
 const modules = import.meta.glob('../convex/**/*.ts')
@@ -47,12 +47,12 @@ async function seedExistingCustomer(ctx: Parameters<typeof seedUser>[0]) {
     legalLastName: 'Smith',
     email: 'alice@example.com',
     phone: '+66812345678',
-    dateOfBirth: '1990-05-15',
+    dateOfBirth: dob(35),
     gender: 'F',
     nationality: 'United Kingdom',
     passportNumber: 'GB123456789',
     passportIssuingCountry: 'United Kingdom',
-    passportExpirationDate: '2030-01-01',
+    passportExpirationDate: passportExpiry(),
     emergencyContactName: 'Bob Smith',
     emergencyContactPhone: '+44712345678',
     emergencyContactRelation: 'Spouse',
@@ -135,12 +135,12 @@ describe('savePortalContact — returning customer', () => {
         legalLastName: 'Smith',
         email: 'alice@example.com',
         phone: '+66812345678',
-        dateOfBirth: '1990-05-15',
+        dateOfBirth: dob(35),
         gender: 'F',
         nationality: 'United Kingdom',
         passportNumber: 'GB123456789',
         passportIssuingCountry: 'United Kingdom',
-        passportExpirationDate: '2030-01-01',
+        passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',
@@ -167,12 +167,12 @@ describe('savePortalContact — returning customer', () => {
         legalLastName: 'Johnson', // Name changed
         email: 'alice@example.com',
         phone: '+66812345678',
-        dateOfBirth: '1990-05-15',
+        dateOfBirth: dob(35),
         gender: 'F',
         nationality: 'United Kingdom',
         passportNumber: 'GB999999999', // New passport
         passportIssuingCountry: 'United Kingdom',
-        passportExpirationDate: '2035-06-01',
+        passportExpirationDate: passportExpiry(8),
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',
@@ -232,12 +232,12 @@ describe('savePortalContact — returning customer', () => {
         legalLastName: 'Smith',
         email: 'alice@example.com',
         phone: '+66812345678',
-        dateOfBirth: '1990-05-15',
+        dateOfBirth: dob(35),
         gender: 'F' as const,
         nationality: 'United Kingdom',
         passportNumber: 'GB123456789',
         passportIssuingCountry: 'United Kingdom',
-        passportExpirationDate: '2030-01-01',
+        passportExpirationDate: passportExpiry(),
         emergencyContactName: 'Bob',
         emergencyContactPhone: '+44712345678',
         emergencyContactRelation: 'Spouse',

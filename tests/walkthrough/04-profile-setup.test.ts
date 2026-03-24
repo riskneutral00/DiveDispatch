@@ -2,27 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
+import { seedUser as _seedUser, type SeedCtx } from '../fixtures/seedFixture'
 
 const modules = import.meta.glob('../../convex/**/*.ts')
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: 'DiveCenter' as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
+async function seedUser(ctx: SeedCtx, slug: string) {
+  return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test' })
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -83,7 +70,7 @@ describe('diveCenters.create (profile setup)', () => {
   it('rejects callers who are not DiveCenter role', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) =>
-      ctx.db.insert('users', {
+      _seedUser(ctx, {
         tokenIdentifier: 'clerk|profile-inst-01',
         slug: 'profile-inst-01',
         email: 'inst@test.com',
@@ -91,10 +78,7 @@ describe('diveCenters.create (profile setup)', () => {
         firstName: 'Inst',
         lastName: 'Test',
         businessName: 'Inst Biz',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        role: 'Instructor' as any,
-        isSeeded: false,
-        preferredLocale: 'en',
+        role: 'Instructor',
       }),
     )
 

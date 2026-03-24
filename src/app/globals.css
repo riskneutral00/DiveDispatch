@@ -67,6 +67,12 @@
   --color-warning: #fbbf24;
   --color-destructive: #dc2626;
   --color-destructive-glow: color-mix(in srgb, var(--color-destructive) 30%, transparent);
+  --color-warning-bg: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  --color-warning-border: color-mix(in srgb, var(--color-warning) 25%, transparent);
+  --color-primary-muted: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  --color-primary-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  --color-accent-muted: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  --color-accent-glow: color-mix(in srgb, var(--color-accent) 15%, transparent);
 
   /* Glass */
   --color-glass-bg: rgba(255, 255, 255, 0.05);

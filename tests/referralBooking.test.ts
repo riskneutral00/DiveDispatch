@@ -2,34 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-import type { Doc } from '../convex/_generated/dataModel'
+import type { Doc, Id } from '../convex/_generated/dataModel'
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
-
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(
-  ctx: Ctx,
-  slug: string,
-  role: string = 'DiveCenter',
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: `${slug} Business`,
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-    ...overrides,
-  })
-}
 
 // ─── createReferralDraftShell ─────────────────────────────────────────────────
 
@@ -37,7 +13,7 @@ describe('createReferralDraftShell', () => {
   it('rejects non-Agent callers with FORBIDDEN', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-caller', 'DiveCenter')
+      await seedUser(ctx, { slug: 'dc-caller', tokenIdentifier: 'clerk|dc-caller', role: 'DiveCenter' })
     })
 
     await expect(
@@ -51,7 +27,7 @@ describe('createReferralDraftShell', () => {
   it('rejects Instructor callers with FORBIDDEN', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instr-caller', 'Instructor')
+      await seedUser(ctx, { slug: 'instr-caller', tokenIdentifier: 'clerk|instr-caller', role: 'Instructor' })
     })
 
     await expect(
@@ -75,7 +51,7 @@ describe('createReferralDraftShell', () => {
   it('rejects non-existent DC slug with NOT_FOUND', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-user', 'Agent')
+      await seedUser(ctx, { slug: 'agent-user', tokenIdentifier: 'clerk|agent-user', role: 'Agent' })
     })
 
     await expect(
@@ -89,8 +65,8 @@ describe('createReferralDraftShell', () => {
   it('rejects referral to non-operator role (Instructor) with FORBIDDEN', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-ref', 'Agent')
-      await seedUser(ctx, 'instructor-target', 'Instructor')
+      await seedUser(ctx, { slug: 'agent-ref', tokenIdentifier: 'clerk|agent-ref', role: 'Agent' })
+      await seedUser(ctx, { slug: 'instructor-target', tokenIdentifier: 'clerk|instructor-target', role: 'Instructor' })
     })
 
     await expect(
@@ -104,8 +80,8 @@ describe('createReferralDraftShell', () => {
   it('creates referral booking with correct ownership assignment', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'referral-agent', 'Agent')
-      await seedUser(ctx, 'target-dc', 'DiveCenter', { businessName: 'Target DC Biz' })
+      await seedUser(ctx, { slug: 'referral-agent', tokenIdentifier: 'clerk|referral-agent', role: 'Agent' })
+      await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter', businessName: 'Target DC Biz' })
     })
 
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|referral-agent' })
@@ -117,7 +93,7 @@ describe('createReferralDraftShell', () => {
 
     // Verify ownership fields
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as any) as Doc<'bookings'> | null
+      const booking = await ctx.db.get(bookingId)
       expect(booking).toBeTruthy()
 
       // DC is the owner
@@ -142,8 +118,8 @@ describe('createReferralDraftShell', () => {
   it('allows referral to other operator types (Liveaboard)', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'agent-lb', 'Agent')
-      await seedUser(ctx, 'target-lb', 'Liveaboard', { businessName: 'LB Biz' })
+      await seedUser(ctx, { slug: 'agent-lb', tokenIdentifier: 'clerk|agent-lb', role: 'Agent' })
+      await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard', businessName: 'LB Biz' })
     })
 
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|agent-lb' })
@@ -152,7 +128,7 @@ describe('createReferralDraftShell', () => {
       })
 
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as any) as Doc<'bookings'> | null
+      const booking = await ctx.db.get(bookingId)
       expect(booking!.ownerId).toBe('target-lb')
       expect(booking!.ownerType).toBe('Liveaboard')
       expect(booking!.agentId).toBe('agent-lb')

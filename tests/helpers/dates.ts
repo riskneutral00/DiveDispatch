@@ -14,6 +14,26 @@ export function today(): string {
   return toISODateString(new Date())
 }
 
+/** Passport expiry N years in the future. Always valid. */
+export function passportExpiry(yearsOut = 5): string {
+  return testDate(yearsOut * 365)
+}
+
+/** Date of birth N years in the past. */
+export function dob(yearsAgo = 25): string {
+  return testDate(-yearsAgo * 365)
+}
+
+/**
+ * Strip leading zero from month in an ISO date to produce a deliberately
+ * malformed date string (e.g. "2026-4-15" instead of "2026-04-15").
+ * Used to test format-mismatch error paths.
+ */
+export function malformedDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split('-')
+  return `${y}-${parseInt(m, 10)}-${d}`
+}
+
 // ── Deterministic Token Helper ──────────────────────────────────────────────
 // Replaces Math.random() in tests. Counter resets per test run — no collisions
 // within a single vitest execution.

@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate, testToken } from '../helpers/dates'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,58 +22,11 @@ async function expectConvexError(promise: Promise<unknown>, code: string) {
   })
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role: string = 'DiveCenter') {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
+async function seedBooking(ctx: SeedCtx, ownerId: string, overrides: Parameters<typeof _seedBooking>[1] = {}) {
+  return _seedBooking(ctx, { ownerId, bookingFormComplete: false, ...overrides })
 }
 
-async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, unknown> = {}) {
-  return ctx.db.insert('bookings', {
-    ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
-    divers: [
-      {
-        name: 'Alice',
-        abbrev: 'A',
-        flag: { code: 'TH', label: 'Thailand' },
-        startDate: testDate(5),
-        endDate: testDate(7),
-        activityType: ['OW'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(overrides as any),
-  })
-}
-
-async function seedExclusiveInstructor(ctx: Ctx, ownerSlug: string = 'instructor-1') {
+async function seedExclusiveInstructor(ctx: SeedCtx, ownerSlug: string = 'instructor-1') {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Instructor',
     resourceId: ownerSlug,
@@ -91,8 +45,8 @@ describe('L9-14: Cancel booking → accept reservation → INVALID_STATUS', () =
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
       const bookingId = await seedBooking(ctx, 'dc-test')
       const unitId = await seedExclusiveInstructor(ctx)
       return { bookingId, unitId }
@@ -190,8 +144,8 @@ describe('L9-14: Accept reservation → cancel booking → reservation vacated',
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
       const bookingId = await seedBooking(ctx, 'dc-test')
       const unitId = await seedExclusiveInstructor(ctx)
       return { bookingId, unitId }

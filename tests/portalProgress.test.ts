@@ -2,7 +2,15 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-import { testDate, testToken } from './helpers/dates'
+import type { Doc } from '../convex/_generated/dataModel'
+import { testDate, testToken, dob } from './helpers/dates'
+import {
+  seedPortalFixture as _seedPortalFixture,
+  seedBooking,
+  seedBookingLink,
+  seedCustomerProfile,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -13,85 +21,53 @@ function makeT() {
   return convexTest(schema, modules)
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-/**
- * Seeds a portal fixture: booking, bookingLink, customerProfile.
- * Accepts overrides for each entity to exercise different scenarios.
- */
 async function seedPortalFixture(
-  ctx: Ctx,
+  ctx: SeedCtx,
   overrides: {
-    bookingOverrides?: Record<string, unknown>
-    linkOverrides?: Record<string, unknown>
-    profileOverrides?: Record<string, unknown>
+    bookingOverrides?: Parameters<typeof seedBooking>[1]
+    linkOverrides?: Parameters<typeof seedBookingLink>[2]
+    profileOverrides?: Parameters<typeof seedCustomerProfile>[2]
   } = {},
 ) {
-  const bookingId = await ctx.db.insert('bookings', {
-    ownerId: 'dc-portal-progress',
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(7),
-    endDate: testDate(7),
-    divers: [
-      {
-        name: 'Alice',
-        abbrev: 'A',
-        flag: { code: 'US', label: 'United States' },
-        startDate: testDate(7),
-        endDate: testDate(7),
-        activityType: ['OW'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: true,
-    portalMedical: true,
-    portalWaiver: true,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    expiresAt: Date.now() + HOLD_TTL,
-    ...(overrides.bookingOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const token = testToken('tok-progress')
-  const linkId = await ctx.db.insert('bookingLinks', {
-    bookingId,
-    token,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-    customerName: 'Alice',
-    email: 'alice@example.com',
-    ...(overrides.linkOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  const profileId = await ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: token,
-    ...(overrides.profileOverrides ?? {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-
-  return { bookingId, token, linkId, profileId }
+  return _seedPortalFixture(ctx, {
+    booking: {
+      ownerId: 'dc-portal-progress',
+      portalContact: true,
+      portalMedical: true,
+      portalWaiver: true,
+      bookingFormComplete: false,
+      expiresAt: Date.now() + HOLD_TTL,
+      ...overrides.bookingOverrides,
+    },
+    link: overrides.linkOverrides,
+    profile: overrides.profileOverrides,
+  })
 }
 
 /** Seeds a customer record and links it to the profile (contact step complete). */
 async function seedCustomer(
-  ctx: Ctx,
+  ctx: SeedCtx,
   profileId: Awaited<ReturnType<typeof seedPortalFixture>>['profileId'],
-  customerOverrides: Record<string, unknown> = {},
+  customerOverrides: {
+    agency?: string
+    agencyID?: string
+    totalDives?: number
+    lastDiveDate?: string
+    heightCm?: number
+    weightKg?: number
+    shoeSize?: number
+    shoeSizeUnit?: Doc<'customers'>['shoeSizeUnit']
+    needsPoweredLenses?: boolean
+    prescriptionStrength?: string
+    allergies?: string
+  } = {},
 ) {
   const customerId = await ctx.db.insert('customers', {
     legalFirstName: 'Alice',
     legalLastName: 'Tester',
     email: 'alice@example.com',
     phone: '+1-555-0100',
-    dateOfBirth: '1990-06-15',
+    dateOfBirth: dob(35),
     gender: 'F',
     nationality: 'US',
     passportNumber: 'US12345678',
@@ -101,9 +77,18 @@ async function seedCustomer(
     emergencyContactPhone: '+1-555-0101',
     emergencyContactRelation: 'Spouse',
     createdAt: Date.now(),
-    ...customerOverrides,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
+    ...(customerOverrides.agency !== undefined ? { agency: customerOverrides.agency } : {}),
+    ...(customerOverrides.agencyID !== undefined ? { agencyID: customerOverrides.agencyID } : {}),
+    ...(customerOverrides.totalDives !== undefined ? { totalDives: customerOverrides.totalDives } : {}),
+    ...(customerOverrides.lastDiveDate !== undefined ? { lastDiveDate: customerOverrides.lastDiveDate } : {}),
+    ...(customerOverrides.heightCm !== undefined ? { heightCm: customerOverrides.heightCm } : {}),
+    ...(customerOverrides.weightKg !== undefined ? { weightKg: customerOverrides.weightKg } : {}),
+    ...(customerOverrides.shoeSize !== undefined ? { shoeSize: customerOverrides.shoeSize } : {}),
+    ...(customerOverrides.shoeSizeUnit !== undefined ? { shoeSizeUnit: customerOverrides.shoeSizeUnit } : {}),
+    ...(customerOverrides.needsPoweredLenses !== undefined ? { needsPoweredLenses: customerOverrides.needsPoweredLenses } : {}),
+    ...(customerOverrides.prescriptionStrength !== undefined ? { prescriptionStrength: customerOverrides.prescriptionStrength } : {}),
+    ...(customerOverrides.allergies !== undefined ? { allergies: customerOverrides.allergies } : {}),
+  })
   await ctx.db.patch(profileId, { customerId })
   return customerId
 }

@@ -10,7 +10,7 @@ import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
+import { seedUser, seedStakeholderPreferences, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
@@ -18,25 +18,6 @@ function makeT() {
   return convexTest(schema, modules)
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-/** Seed prefs row (onboarding always creates this before toggle is used) */
-async function seedPrefs(ctx: Ctx, slug: string, existingInstructors: string[] = []) {
-  await ctx.db.insert('stakeholderPreferences', {
-    stakeholderId: slug,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    stakeholderType: 'DiveCenter' as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    acceptanceMode: 'Auto' as any,
-    maxHoursPerDay: 8,
-    postJobBlockDuration: 0,
-    useNamedUnits: false,
-    commonLanguageCodes: ['en'],
-    confirmOnAccept: true,
-    confirmOnDecline: true,
-    preferredInstructorSlugs: existingInstructors,
-  })
-}
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -52,7 +33,7 @@ describe('togglePreferredInstructor', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx)
-      await seedPrefs(ctx, TEST_SLUGS.diveCenter)
+      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
@@ -74,7 +55,7 @@ describe('togglePreferredInstructor', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx)
-      await seedPrefs(ctx, TEST_SLUGS.diveCenter, ['instr-1'])
+      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, { preferredInstructorSlugs: ['instr-1'] })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
@@ -95,7 +76,7 @@ describe('togglePreferredInstructor', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx)
-      await seedPrefs(ctx, TEST_SLUGS.diveCenter, ['instr-1'])
+      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, { preferredInstructorSlugs: ['instr-1'] })
     })
 
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })

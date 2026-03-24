@@ -1,7 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
+import { requireAuth } from './lib/auth'
+import { checkHasAnyOperatorRole } from './userRoles'
 import {
   getResourcesForBooking,
   getBookingIdsForResource,
@@ -360,7 +361,7 @@ export async function _myDashboard(
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  const isResourceRole = !OPERATOR_ROLE_SET.has(user.role as string)
+  const isResourceRole = !await checkHasAnyOperatorRole(ctx, user._id)
 
   // Fetch caller's inventory units upfront (used for both reservationStatus and requests)
   let callerUnitIds = new Set<string>()

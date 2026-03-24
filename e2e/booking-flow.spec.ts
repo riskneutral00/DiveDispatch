@@ -20,7 +20,7 @@ async function fillCustomerStep(
 ) {
   await page.getByLabel('Full name *').fill(name)
   // Email is the default contact type — fill the contact input
-  await page.locator('input[type="email"]').first().fill(email)
+  await page.locator('[data-testid="customer-email"]').first().fill(email)
   // Select English language flag
   await page.getByRole('button', { name: 'English' }).click()
 }
@@ -32,41 +32,38 @@ async function fillItineraryStep(
   options: { instructorName?: string; useExternal?: boolean; externalInstructorName?: string } = {},
 ) {
   // Select DSD course from the dropdown
-  await page.locator('select').first().selectOption('DSD')
+  await page.locator('[data-testid="course-activity-select"]').first().selectOption('DSD')
 
   // Fill start date (end date auto-fills for DSD = same day)
-  const startDateInput = page.locator('input[type="date"]').first()
+  const startDateInput = page.locator('[data-testid="course-start-date"]').first()
   await startDateInput.fill(startDate)
 
   // Wait for days to auto-generate
   await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
 
   // Assign instructor
+  const instructorSelect = page.locator('[data-testid="instructor-select"]')
+  await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
+
   if (options.useExternal) {
-    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
-    await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
-    await instructorSelect.selectOption('__external__')
+    await instructorSelect.click()
+    await page.getByRole('option', { name: 'External (not in system)' }).click()
     if (options.externalInstructorName) {
       await page.getByLabel('Instructor (external)').fill(options.externalInstructorName)
     }
   } else {
-    const instructorSelect = page.locator('select').filter({ hasText: /Select instructor/ })
-    await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
+    await instructorSelect.click()
 
     if (options.instructorName) {
-      const optionWithName = instructorSelect.locator(`option:has-text("${options.instructorName}")`)
-      const optionValue = await optionWithName.getAttribute('value')
-      if (optionValue) {
-        await instructorSelect.selectOption(optionValue)
-      }
+      await page.getByRole('option', { name: options.instructorName }).click()
     } else {
-      // Select first available in-system instructor
-      const allOptions = instructorSelect.locator('option')
+      // Select first available in-system instructor (skip External option)
+      const allOptions = page.getByRole('option')
       const count = await allOptions.count()
       for (let i = 0; i < count; i++) {
-        const val = await allOptions.nth(i).getAttribute('value')
-        if (val && val !== '' && val !== '__external__') {
-          await instructorSelect.selectOption(val)
+        const text = await allOptions.nth(i).textContent()
+        if (text && !text.includes('External')) {
+          await allOptions.nth(i).click()
           break
         }
       }

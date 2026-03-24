@@ -79,6 +79,23 @@ describe('createNotification', () => {
     })
   })
 
+  it('throws FORBIDDEN when userId does not match caller slug', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      await expect(
+        _createNotificationHandler(ctx, {
+          userId: 'some-other-user',
+          type: 'hold_placed',
+          message: 'injected notification',
+        }),
+      ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications).toHaveLength(0)
+    })
+  })
+
   it('throws UNAUTHENTICATED when there is no identity', async () => {
     await t.run(async (ctx) => {
       await expect(
@@ -103,7 +120,7 @@ describe('markAsRead', () => {
       await _markAsReadHandler(ctx, { notificationId: notifId })
 
       const notif = await ctx.db.get(notifId)
-      expect((notif as any)?.readAt).toEqual(expect.any(Number))
+      expect(notif?.readAt).toEqual(expect.any(Number))
     })
   })
 
@@ -241,8 +258,7 @@ describe('listNotifications', () => {
         message: 'second',
       })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await _listNotificationsHandler(ctx, { userId: TEST_SLUGS.diveCenter }) as any[]
+      const result = await _listNotificationsHandler(ctx, { userId: TEST_SLUGS.diveCenter })
       // Most recently inserted (n2) should come first in desc order
       expect(result[0]._id).toBe(n2)
       expect(result[1]._id).toBe(n1)

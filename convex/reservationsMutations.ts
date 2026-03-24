@@ -8,6 +8,7 @@ import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
 import { notify } from './notifications'
+import { logBookingChange } from './bookingAuditLog'
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -108,6 +109,13 @@ export async function _acceptHandler(
     confirmedAt: Date.now(),
   })
 
+  await logBookingChange(ctx, {
+    bookingId: reservation.bookingId as string,
+    action: 'reservation_accepted',
+    actorSlug: caller.slug,
+    actorType: 'resource',
+  })
+
   await tryAutoAdvance(ctx, reservation.bookingId)
 }
 
@@ -148,6 +156,14 @@ export async function _acceptBookingHandler(
   for (const res of pending) {
     await ctx.db.patch(res._id, { status: 'Confirmed', confirmedAt: Date.now() })
   }
+
+  await logBookingChange(ctx, {
+    bookingId: args.bookingId,
+    action: 'reservation_accepted',
+    actorSlug: caller.slug,
+    actorType: 'resource',
+    note: `Bulk accepted ${pending.length} reservation(s) for unit ${unit.displayName}`,
+  })
 
   await tryAutoAdvance(ctx, args.bookingId)
 }
@@ -252,6 +268,13 @@ export async function _declineHandler(
   if (Object.keys(bookingPatch).length > 0) {
     await ctx.db.patch(args.bookingId as Id<"bookings">, bookingPatch)
   }
+
+  await logBookingChange(ctx, {
+    bookingId: args.bookingId,
+    action: 'reservation_declined',
+    actorSlug: caller.slug,
+    actorType: 'resource',
+  })
 
   // Notify the booking owner of the decline
   await ctx.db.insert('notifications', {
@@ -472,6 +495,13 @@ export async function _markNoShowHandler(
     noShowAt: Date.now(),
   })
 
+  await logBookingChange(ctx, {
+    bookingId: reservation.bookingId as string,
+    action: 'noshow_marked',
+    actorSlug: user.slug,
+    actorType: 'operator',
+  })
+
   // Notify resource stakeholder
   const unit = await ctx.db.get(reservation.inventoryUnitId)
   if (unit) {
@@ -522,6 +552,13 @@ export async function _revertNoShowHandler(
   await ctx.db.patch(args.reservationId as Id<'reservations'>, {
     status: 'Confirmed',
     noShowAt: undefined,
+  })
+
+  await logBookingChange(ctx, {
+    bookingId: reservation.bookingId as string,
+    action: 'noshow_reverted',
+    actorSlug: user.slug,
+    actorType: 'operator',
   })
 
   // Notify resource stakeholder

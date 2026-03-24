@@ -808,6 +808,8 @@ export default defineSchema({
       v.literal('portal_submitted'),
       v.literal('medical_blocked'),
       v.literal('medical_cleared'),
+      v.literal('noshow_marked'),
+      v.literal('noshow_reverted'),
     ),
     actorSlug: v.string(),
     actorType: v.union(

@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { getAuthUser } from './lib/auth'
+import { checkHasAnyOperatorRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 
 export const list = query({
@@ -28,7 +29,7 @@ export const create = mutation({
     const user = await getAuthUser(ctx)
     if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
 
-    if (!OPERATOR_ROLE_SET.has(user.role)) {
+    if (!await checkHasAnyOperatorRole(ctx, user._id)) {
       throw new ConvexError({ code: 'FORBIDDEN', message: 'Only organizer roles can create booking templates.' })
     }
 

@@ -20,6 +20,7 @@ import { addDays } from '../src/lib/utils/date'
 import { COMBO_COURSES } from '../src/lib/constants/course-catalog'
 import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import { seedUser, type SeedCtx } from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -29,26 +30,8 @@ function makeT() {
   return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
 }
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
 async function seedBooking(
-  ctx: Ctx,
+  ctx: SeedCtx,
   ownerId: string,
   overrides: Record<string, unknown> = {},
 ): Promise<Id<'bookings'>> {
@@ -80,7 +63,7 @@ async function seedBooking(
   })
 }
 
-async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'inventoryUnits'>> {
+async function seedInstructorUnit(ctx: SeedCtx, ownerId: string): Promise<Id<'inventoryUnits'>> {
   return ctx.db.insert('inventoryUnits', {
     resourceType: 'Instructor',
     resourceId: ownerId,
@@ -93,7 +76,7 @@ async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'invent
 }
 
 async function seedSession(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   unitId: Id<'inventoryUnits'>,
   overrides: { date?: string; startTime?: string; endTime?: string; timezone?: string } = {},
@@ -109,7 +92,7 @@ async function seedSession(
 }
 
 async function seedReservation(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   unitId: Id<'inventoryUnits'>,
   sessionId: Id<'bookingSessions'>,
@@ -125,7 +108,7 @@ async function seedReservation(
 }
 
 async function seedBookingLink(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   token: string,
   customerName = 'Test Customer',
@@ -140,7 +123,7 @@ async function seedBookingLink(
 }
 
 async function seedCustomerProfile(
-  ctx: Ctx,
+  ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   token: string,
   overrides: Record<string, unknown> = {},
@@ -228,8 +211,8 @@ describe('2f — max 3 non-confined dives per day validation', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
-      await seedUser(ctx, 'instr-1', 'Instructor')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'instr-1', tokenIdentifier: 'clerk|instr-1', role: 'Instructor' })
       const unitId = await seedInstructorUnit(ctx, 'instr-1')
       const bookingId = await seedBooking(ctx, 'dc-test', {
         customerFormComplete: true,
@@ -272,8 +255,8 @@ describe('2f — max 3 non-confined dives per day validation', () => {
     const t = makeT()
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
-      await seedUser(ctx, 'instr-1', 'Instructor')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'instr-1', tokenIdentifier: 'clerk|instr-1', role: 'Instructor' })
       const unitId = await seedInstructorUnit(ctx, 'instr-1')
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: 'instr-1',
@@ -329,7 +312,7 @@ describe('2k — external resources skip reservation pipeline', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-test', {
         customerFormComplete: true,
       })
@@ -368,7 +351,7 @@ describe('2k — external resources skip reservation pipeline', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-test')
+      await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
       return seedBooking(ctx, 'dc-test', {
         customerFormComplete: true,
       })
@@ -408,8 +391,8 @@ describe('3a — all 5 customers complete + James accepts → Upcoming', () => {
     const t = makeT()
 
     const { bookingId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
-      await seedUser(ctx, 'james-cooper', 'Instructor')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'james-cooper', tokenIdentifier: 'clerk|james-cooper', role: 'Instructor' })
       const unitId = await seedInstructorUnit(ctx, 'james-cooper')
 
       const bookingId = await seedBooking(ctx, 'hug-ocean', {
@@ -439,7 +422,7 @@ describe('3b — 4/5 customers complete, 1 hasn\'t → stays Draft', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       return seedBooking(ctx, 'hug-ocean', {
         bookingFormComplete: true,
         customerFormComplete: false, // one customer hasn't completed
@@ -461,7 +444,7 @@ describe('3c — unresolved medical flag → stays Draft', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       return seedBooking(ctx, 'hug-ocean', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -483,7 +466,7 @@ describe('3d — medical cleared → physician clearance → Upcoming', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       const bookingId = await seedBooking(ctx, 'hug-ocean', {
         bookingFormComplete: true,
         customerFormComplete: true,
@@ -511,8 +494,8 @@ describe('3e — all customers done but James hasn\'t accepted → stays Draft',
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
-      await seedUser(ctx, 'james-cooper', 'Instructor')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'james-cooper', tokenIdentifier: 'clerk|james-cooper', role: 'Instructor' })
       const unitId = await seedInstructorUnit(ctx, 'james-cooper')
 
       const bookingId = await seedBooking(ctx, 'hug-ocean', {
@@ -544,7 +527,7 @@ describe('4a — backend stays Upcoming on activity day', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       return seedBooking(ctx, 'hug-ocean', {
         status: 'Upcoming',
         bookingFormComplete: true,
@@ -570,7 +553,7 @@ describe('4c — mid-course (day 2 of 4) → still not Completed', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       const unitId = await seedInstructorUnit(ctx, 'james-cooper')
 
       const bookingId = await seedBooking(ctx, 'hug-ocean', {
@@ -605,7 +588,7 @@ describe('4d — after last session ends → Completed', () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
-      await seedUser(ctx, 'hug-ocean')
+      await seedUser(ctx, { slug: 'hug-ocean', tokenIdentifier: 'clerk|hug-ocean', role: 'DiveCenter' })
       const unitId = await seedInstructorUnit(ctx, 'james-cooper')
 
       const bookingId = await seedBooking(ctx, 'hug-ocean', {

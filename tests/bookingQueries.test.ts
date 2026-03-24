@@ -4,38 +4,48 @@ import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { buildInstructorNameMap } from '../convex/bookings'
 import { testDate } from './helpers/dates'
+import type { Doc, Id } from '../convex/_generated/dataModel'
+import {
+  seedUser,
+  seedBooking,
+  seedInventoryUnit,
+  seedBookingResource,
+  type SeedCtx,
+} from './fixtures/seedFixture'
 
 const modules = import.meta.glob('../convex/**/*.ts')
 
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
+// ─── Local thin wrapper for positional seedUser ─────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string, role = 'DiveCenter') {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
+async function seedTestUser(
+  ctx: SeedCtx,
+  slug: string,
+  role: Doc<'users'>['role'] = 'DiveCenter',
+) {
+  return seedUser(ctx, {
     slug,
+    tokenIdentifier: `clerk|${slug}`,
+    role,
     email: `${slug}@test.com`,
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
     businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
-    isSeeded: false,
-    preferredLocale: 'en',
   })
 }
 
-// Resource fields that should go to bookingResources, not the booking doc
-const RESOURCE_FIELD_MAP: Record<string, string> = {
+// ─── Resource field splitting helper ─────────────────────────────────────────
+// Test-specific logic: splits convenience fields like `instructorId` into
+// seedBookingResource calls, keeping the seedBooking call clean.
+
+const RESOURCE_FIELD_MAP: Record<string, Doc<'bookingResources'>['resourceType']> = {
   instructorId: 'Instructor',
   boatId: 'Boat',
   equipmentManagerId: 'Equipment',
   poolId: 'Pool',
   compressorId: 'Compressor',
 }
-const EXT_FIELD_MAP: Record<string, string> = {
+const EXT_FIELD_MAP: Record<string, Doc<'bookingResources'>['resourceType']> = {
   instructorName: 'Instructor',
   boatName: 'Boat',
   equipmentManagerName: 'Equipment',
@@ -43,10 +53,14 @@ const EXT_FIELD_MAP: Record<string, string> = {
   compressorName: 'Compressor',
 }
 
-async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, unknown> = {}) {
+async function seedBookingWithResources(
+  ctx: SeedCtx,
+  ownerId: string,
+  overrides: Record<string, unknown> = {},
+) {
   // Separate resource fields from booking fields
   const bookingOverrides = { ...overrides }
-  const resourceEntries: { type: string; slug?: string; ext?: string }[] = []
+  const resourceEntries: { type: Doc<'bookingResources'>['resourceType']; slug?: string; ext?: string }[] = []
 
   for (const [field, resourceType] of Object.entries(RESOURCE_FIELD_MAP)) {
     const slug = bookingOverrides[field] as string | undefined
@@ -63,54 +77,31 @@ async function seedBooking(ctx: Ctx, ownerId: string, overrides: Record<string, 
     delete bookingOverrides.externalStakeholders
   }
 
-  const bookingId = await ctx.db.insert('bookings', {
+  const bookingId = await seedBooking(ctx, {
     ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
+    bookingFormComplete: false,
     startDate: testDate(5),
     endDate: testDate(7),
     divers: [{ name: 'Alice', abbrev: 'A', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] }],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(bookingOverrides as any),
+    ...bookingOverrides as {
+      status?: Doc<'bookings'>['status']
+      ownerType?: Doc<'bookings'>['ownerType']
+      operatorName?: string
+      activityType?: Doc<'bookings'>['activityType']
+      divers?: Doc<'bookings'>['divers']
+    },
   })
 
-  // Insert bookingResources rows
+  // Insert bookingResources rows using typed factory
   for (const entry of resourceEntries) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await ctx.db.insert('bookingResources', {
-      bookingId,
-      resourceType: entry.type as any,
+    await seedBookingResource(ctx, bookingId, {
+      resourceType: entry.type,
       ...(entry.slug ? { resourceSlug: entry.slug } : {}),
       ...(entry.ext ? { externalName: entry.ext } : {}),
-    } as any)
+    })
   }
 
   return bookingId
-}
-
-async function seedInventoryUnit(ctx: Ctx, ownerId: string, ownerType = 'Instructor') {
-  return ctx.db.insert('inventoryUnits', {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resourceType: ownerType as any,
-    resourceId: ownerId,
-    displayName: `${ownerId} unit`,
-    capacityModel: 'Exclusive',
-    totalUnits: 1,
-    ownerId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ownerType: ownerType as any,
-  })
 }
 
 // ─── buildInstructorNameMap ───────────────────────────────────────────────────
@@ -127,7 +118,7 @@ describe('buildInstructorNameMap', () => {
 
   it('resolves known slugs to display names', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'instructor-1', 'Instructor'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1'])
       return Object.fromEntries(map)
@@ -137,7 +128,7 @@ describe('buildInstructorNameMap', () => {
 
   it('deduplicates slugs before querying', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'instructor-1', 'Instructor'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1', 'instructor-1', 'instructor-1'])
       return Object.fromEntries(map)
@@ -158,8 +149,8 @@ describe('buildInstructorNameMap', () => {
   it('resolves multiple slugs', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedUser(ctx, 'boat-owner-1', 'Boat')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedTestUser(ctx, 'boat-owner-1', 'Boat')
     })
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1', 'boat-owner-1'])
@@ -192,7 +183,7 @@ describe('listByOwner', () => {
 
   it('throws FORBIDDEN when caller slug does not match ownerId', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-2'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'dc-2'))
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-2' })
@@ -202,7 +193,7 @@ describe('listByOwner', () => {
 
   it('returns empty array when owner has no bookings', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-1'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'dc-1'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' })
@@ -213,8 +204,8 @@ describe('listByOwner', () => {
   it('returns CalendarBooking shape with correct fields', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -234,8 +225,8 @@ describe('listByOwner', () => {
   it('scopes by ownerType — excludes mismatched ownerType', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { ownerType: 'Agent' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { ownerType: 'Agent' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -247,9 +238,9 @@ describe('listByOwner', () => {
   it('denormalizes instructorName from name map', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedBooking(ctx, 'dc-1', { instructorId: 'instructor-1', status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedBookingWithResources(ctx, 'dc-1', { instructorId: 'instructor-1', status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -261,8 +252,8 @@ describe('listByOwner', () => {
   it('falls back to externalStakeholders when no in-system instructor', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', {
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', {
         externalStakeholders: { instructorName: 'External Joe' },
       })
     })
@@ -276,8 +267,8 @@ describe('listByOwner', () => {
   it('sets customerName from first diver', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', {
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', {
         divers: [
           { name: 'Bob', abbrev: 'B', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(5), activityType: ['OW'] },
           { name: 'Carol', abbrev: 'C', flag: { code: 'UK', label: 'UK' }, startDate: testDate(5), endDate: testDate(5), activityType: ['OW'] },
@@ -295,10 +286,10 @@ describe('listByOwner', () => {
   it('returns multiple bookings for the same owner, excludes other owners', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Draft' })
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
-      await seedBooking(ctx, 'dc-2', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedBookingWithResources(ctx, 'dc-2', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -331,8 +322,8 @@ describe('listByStatus', () => {
   it('returns empty array when no bookings match status', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -344,9 +335,9 @@ describe('listByStatus', () => {
   it('returns only caller bookings with matching status', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Draft' })
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -359,9 +350,9 @@ describe('listByStatus', () => {
   it('does not return other owners bookings with same status', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
-      await seedBooking(ctx, 'dc-2', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedBookingWithResources(ctx, 'dc-2', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -374,9 +365,9 @@ describe('listByStatus', () => {
   it('works for resource role — uses by_instructorId index', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
-      await seedBooking(ctx, 'dc-2', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
+      await seedBookingWithResources(ctx, 'dc-2', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
@@ -389,9 +380,9 @@ describe('listByStatus', () => {
   it('returns all statuses correctly — Completed', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1')
-      await seedBooking(ctx, 'dc-1', { status: 'Completed' })
-      await seedBooking(ctx, 'dc-1', { status: 'Cancelled' })
+      await seedTestUser(ctx, 'dc-1')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Completed' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Cancelled' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -424,7 +415,7 @@ describe('listByResource', () => {
 
   it('throws FORBIDDEN when caller slug does not match resourceId', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'instructor-2', 'Instructor'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'instructor-2', 'Instructor'))
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|instructor-2' })
@@ -434,7 +425,7 @@ describe('listByResource', () => {
 
   it('returns empty array when no bookings assigned to resource', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'instructor-1', 'Instructor'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
       .query(api.bookings.listByResource, { resourceId: 'instructor-1', resourceType: 'Instructor' })
@@ -445,10 +436,10 @@ describe('listByResource', () => {
   it('returns bookings where instructor is assigned', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
-      await seedBooking(ctx, 'dc-1', { status: 'Draft', instructorId: 'instructor-1' })
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', instructorId: 'instructor-1' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
@@ -460,9 +451,9 @@ describe('listByResource', () => {
   it('works for Boat resource type', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'boat-owner-1', 'Boat')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
-      await seedBooking(ctx, 'dc-1', { status: 'Draft', boatId: 'boat-owner-1' })
+      await seedTestUser(ctx, 'boat-owner-1', 'Boat')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', boatId: 'boat-owner-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|boat-owner-1' })
@@ -474,8 +465,8 @@ describe('listByResource', () => {
   it('works for Equipment resource type', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'em-1', 'Equipment')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', equipmentManagerId: 'em-1' })
+      await seedTestUser(ctx, 'em-1', 'Equipment')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', equipmentManagerId: 'em-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|em-1' })
@@ -487,8 +478,8 @@ describe('listByResource', () => {
   it('works for Pool resource type', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'pool-1', 'Pool')
-      await seedBooking(ctx, 'dc-1', { status: 'Draft', poolId: 'pool-1' })
+      await seedTestUser(ctx, 'pool-1', 'Pool')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', poolId: 'pool-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|pool-1' })
@@ -500,8 +491,8 @@ describe('listByResource', () => {
   it('works for Compressor resource type', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'comp-1', 'Compressor')
-      await seedBooking(ctx, 'dc-1', { status: 'Draft', compressorId: 'comp-1' })
+      await seedTestUser(ctx, 'comp-1', 'Compressor')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', compressorId: 'comp-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|comp-1' })
@@ -513,8 +504,8 @@ describe('listByResource', () => {
   it('denormalizes boatName from name map', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'boat-owner-1', 'Boat')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
+      await seedTestUser(ctx, 'boat-owner-1', 'Boat')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|boat-owner-1' })
@@ -546,7 +537,7 @@ describe('myDashboard', () => {
 
   it('returns empty dashboard for operator with no bookings', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-1', 'DiveCenter'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.myDashboard)
@@ -557,11 +548,11 @@ describe('myDashboard', () => {
   it('operator role: returns Draft, Upcoming, and Completed in bookings (excludes Cancelled)', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dc-1', 'DiveCenter')
-      await seedBooking(ctx, 'dc-1', { status: 'Draft' })
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming' })
-      await seedBooking(ctx, 'dc-1', { status: 'Completed' })
-      await seedBooking(ctx, 'dc-1', { status: 'Cancelled' })
+      await seedTestUser(ctx, 'dc-1', 'DiveCenter')
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Completed' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Cancelled' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -577,7 +568,7 @@ describe('myDashboard', () => {
 
   it('operator role: returns empty requests array', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'dc-1', 'DiveCenter'))
+    await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
       .query(api.bookings.myDashboard)
@@ -588,10 +579,10 @@ describe('myDashboard', () => {
   it('resource role: returns calendar bookings from confirmed assignments', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
-      await seedBooking(ctx, 'dc-1', { status: 'Completed', instructorId: 'instructor-1' })
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Completed', instructorId: 'instructor-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
@@ -604,10 +595,10 @@ describe('myDashboard', () => {
     const t = convexTest(schema, modules)
 
     const { bookingId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      const unitId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
 
-      const bookingId = await seedBooking(ctx, 'dc-1', {
+      const bookingId = await seedBookingWithResources(ctx, 'dc-1', {
         status: 'Draft',
         operatorName: 'Ocean DC',
         activityType: ['OW', 'AOW'],
@@ -659,10 +650,10 @@ describe('myDashboard', () => {
     const t = convexTest(schema, modules)
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      const unitId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
 
-      const bookingId = await seedBooking(ctx, 'dc-1', {
+      const bookingId = await seedBookingWithResources(ctx, 'dc-1', {
         status: 'Draft',
         operatorName: 'Ocean DC',
       })
@@ -705,11 +696,11 @@ describe('myDashboard', () => {
     const t = convexTest(schema, modules)
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      const unitId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
 
       // Create a booking, get its id, then delete it
-      const bookingId = await seedBooking(ctx, 'dc-1', { status: 'Draft' })
+      const bookingId = await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
         inventoryUnitId: unitId,
@@ -739,9 +730,9 @@ describe('myDashboard', () => {
     const t = convexTest(schema, modules)
 
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'instructor-1', 'Instructor')
-      const unitId = await seedInventoryUnit(ctx, 'instructor-1', 'Instructor')
-      const bookingId = await seedBooking(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
+      const bookingId = await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
 
       const sessionId = await ctx.db.insert('bookingSessions', {
         bookingId,
@@ -772,9 +763,9 @@ describe('myDashboard', () => {
   it('DiveMaster role: uses by_instructorId index same as Instructor', async () => {
     const t = convexTest(schema, modules)
     await t.run(async (ctx) => {
-      await seedUser(ctx, 'dm-1', 'DiveMaster')
-      await seedInventoryUnit(ctx, 'dm-1', 'Instructor')
-      await seedBooking(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'dm-1' })
+      await seedTestUser(ctx, 'dm-1', 'DiveMaster')
+      await seedInventoryUnit(ctx, { ownerId: 'dm-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'dm-1 unit' })
+      await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'dm-1' })
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dm-1' })

@@ -3,72 +3,33 @@ import { describe, it, expect } from 'vitest'
 import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate, testToken } from '../helpers/dates'
+import { seedUser, seedBooking, seedBookingLink, type SeedCtx } from '../fixtures/seedFixture'
 
 const modules = import.meta.glob('../../convex/**/*.ts')
-
-const HOLD_TTL = 43_200_000
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-// ── Seed helpers ──────────────────────────────────────────────────────────────
-
-async function seedUser(ctx: Ctx, slug: string) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test DC',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: 'DiveCenter' as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
-
-async function seedBooking(ctx: Ctx, ownerId: string) {
-  return ctx.db.insert('bookings', {
-    ownerId,
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL,
-    paid: false,
-    activityType: ['DSD'],
-    startDate: testDate(5),
-    endDate: testDate(5),
-    divers: [
-      {
-        name: 'Test Diver',
-        abbrev: 'T',
-        flag: { code: 'US', label: 'United States' },
-        startDate: testDate(5),
-        endDate: testDate(5),
-        activityType: ['DSD'],
-      },
-    ],
-    operatorName: 'Test DC',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-    expiresAt: Date.now() + HOLD_TTL,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any)
-}
 
 // ── Tests: createBookingLink ──────────────────────────────────────────────────
 
 describe('createBookingLink', () => {
   it('creates link + customerProfile atomically', async () => {
     const t = convexTest(schema, modules)
-    const { bookingId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'link-dc-01')
-      const bookingId = await seedBooking(ctx, 'link-dc-01')
+    const { bookingId } = await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx, { slug: 'link-dc-01', tokenIdentifier: 'clerk|link-dc-01' })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'link-dc-01',
+        activityType: ['DSD'],
+        bookingFormComplete: false,
+        divers: [
+          {
+            name: 'Test Diver',
+            abbrev: 'T',
+            flag: { code: 'US', label: 'United States' },
+            startDate: testDate(5),
+            endDate: testDate(5),
+            activityType: ['DSD'],
+          },
+        ],
+        expiresAt: Date.now() + 43_200_000,
+      })
       return { bookingId }
     })
 
@@ -84,7 +45,7 @@ describe('createBookingLink', () => {
     expect(token.length).toBeGreaterThan(0)
 
     // Verify bookingLink was created
-    const { link, profile } = await t.run(async (ctx) => {
+    const { link, profile } = await t.run(async (ctx: SeedCtx) => {
       const link = await ctx.db
         .query('bookingLinks')
         .withIndex('by_token', (q) => q.eq('token', token))
@@ -109,9 +70,24 @@ describe('createBookingLink', () => {
 
   it('is idempotent — returns existing token for same booking', async () => {
     const t = convexTest(schema, modules)
-    const { bookingId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'link-dc-02')
-      const bookingId = await seedBooking(ctx, 'link-dc-02')
+    const { bookingId } = await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx, { slug: 'link-dc-02', tokenIdentifier: 'clerk|link-dc-02' })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'link-dc-02',
+        activityType: ['DSD'],
+        bookingFormComplete: false,
+        divers: [
+          {
+            name: 'Test Diver',
+            abbrev: 'T',
+            flag: { code: 'US', label: 'United States' },
+            startDate: testDate(5),
+            endDate: testDate(5),
+            activityType: ['DSD'],
+          },
+        ],
+        expiresAt: Date.now() + 43_200_000,
+      })
       return { bookingId }
     })
 
@@ -128,7 +104,7 @@ describe('createBookingLink', () => {
     expect(token2).toBe(token1)
 
     // Only one bookingLink and one customerProfile created
-    const { linkCount, profileCount } = await t.run(async (ctx) => {
+    const { linkCount, profileCount } = await t.run(async (ctx: SeedCtx) => {
       const links = await ctx.db
         .query('bookingLinks')
         .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
@@ -146,9 +122,24 @@ describe('createBookingLink', () => {
 
   it('excludes used tokens from idempotency check — creates new token', async () => {
     const t = convexTest(schema, modules)
-    const { bookingId } = await t.run(async (ctx) => {
-      await seedUser(ctx, 'link-dc-03')
-      const bookingId = await seedBooking(ctx, 'link-dc-03')
+    const { bookingId } = await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx, { slug: 'link-dc-03', tokenIdentifier: 'clerk|link-dc-03' })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'link-dc-03',
+        activityType: ['DSD'],
+        bookingFormComplete: false,
+        divers: [
+          {
+            name: 'Test Diver',
+            abbrev: 'T',
+            flag: { code: 'US', label: 'United States' },
+            startDate: testDate(5),
+            endDate: testDate(5),
+            activityType: ['DSD'],
+          },
+        ],
+        expiresAt: Date.now() + 43_200_000,
+      })
       return { bookingId }
     })
 
@@ -162,7 +153,7 @@ describe('createBookingLink', () => {
       })
 
     // Mark the first link as used
-    await t.run(async (ctx) => {
+    await t.run(async (ctx: SeedCtx) => {
       const link = await ctx.db
         .query('bookingLinks')
         .withIndex('by_token', (q) => q.eq('token', token1))
@@ -189,14 +180,9 @@ describe('createBookingLink', () => {
 describe('getByToken', () => {
   it('returns valid status with correct fields', async () => {
     const t = convexTest(schema, modules)
-    const token = await t.run(async (ctx) => {
-      const bookingId = await ctx.db.insert('bookings', {
+    const token = await t.run(async (ctx: SeedCtx) => {
+      const bookingId = await seedBooking(ctx, {
         ownerId: 'dc-getby-01',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL,
-        paid: false,
         activityType: ['DSD'],
         startDate: testDate(10),
         endDate: testDate(10),
@@ -211,25 +197,16 @@ describe('getByToken', () => {
           },
         ],
         operatorName: 'Ocean DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
         bookingFormComplete: false,
-        customerFormComplete: false,
-        expiresAt: Date.now() + HOLD_TTL,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+        expiresAt: Date.now() + 43_200_000,
+      })
 
       const token = testToken('tok-getby')
-      await ctx.db.insert('bookingLinks', {
-        bookingId,
+      await seedBookingLink(ctx, bookingId, {
         token,
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
         customerName: 'Alice',
         email: 'alice@example.com',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any)
+      })
 
       return token
     })

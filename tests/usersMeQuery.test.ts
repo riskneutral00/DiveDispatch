@@ -3,25 +3,9 @@ import { convexTest } from 'convex-test'
 import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 
+import { seedUser } from './fixtures/seedFixture'
+
 const modules = import.meta.glob('../convex/**/*.ts')
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
-
-async function seedUser(ctx: Ctx, slug: string) {
-  return ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} Display`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: 'Test Biz',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: 'DiveCenter' as any,
-    isSeeded: false,
-    preferredLocale: 'en',
-  })
-}
 
 describe('users.me query', () => {
   it('returns null when authenticated but no user record exists', async () => {
@@ -36,7 +20,7 @@ describe('users.me query', () => {
 
   it('returns user when record exists with matching tokenIdentifier', async () => {
     const t = convexTest(schema, modules)
-    await t.run(async (ctx) => seedUser(ctx, 'existing-dc'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'existing-dc', tokenIdentifier: 'clerk|existing-dc', role: 'DiveCenter' }))
 
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|existing-dc' })

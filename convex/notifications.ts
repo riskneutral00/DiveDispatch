@@ -48,7 +48,10 @@ export async function _createNotificationHandler(
     message: string
   },
 ): Promise<void> {
-  await requireAuth(ctx)
+  const { user } = await requireAuth(ctx)
+  if (args.userId !== user.slug) {
+    throw new ConvexError({ code: 'FORBIDDEN' })
+  }
   await notify(ctx, args)
 }
 
