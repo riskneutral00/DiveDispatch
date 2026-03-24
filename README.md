@@ -2,9 +2,9 @@
 
 **Multi-stakeholder booking platform for the scuba diving industry.**
 
-<!-- badges -->
-<!-- ![Build](https://img.shields.io/github/actions/workflow/status/...) -->
-<!-- ![License](https://img.shields.io/badge/license-TBD-lightgrey) -->
+![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)
+
+> **Status:** Active development. Pre-launch. Built by [Risk Neutral](https://github.com/riskneutral00).
 
 ---
 
@@ -42,7 +42,7 @@ The UI is built on a **Liquid Glass** aesthetic — glassmorphism with backdrop 
 ### Install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/riskneutral00/DiveDispatch.git
 cd DiveDispatch
 npm install
 ```
@@ -95,7 +95,7 @@ npm run seed:clerk
 npm run seed:force:all
 ```
 
-Seed credentials: email format `{name}@divedispatch.dev`, password `REDACTED`.
+After seeding, credentials are printed to the terminal. See the seed scripts for details.
 
 ## Project Structure
 
@@ -192,12 +192,11 @@ Single-manager, strict-fail model. The operator selects one EquipmentManager per
 | `npm run seed:force` | Wipe + reseed Convex database |
 | `npm run seed:clerk` | Create matching Clerk users |
 | `npm run seed:force:all` | Wipe + reseed database + Clerk users |
-| `npm run wipe:all` | Wipe all Convex data |
 | `npm test` | Run Vitest unit tests |
 
 ## Testing
 
-**E2E is the primary testing strategy.** Playwright tests cover critical user journeys across the full stack — Clerk auth, Convex mutations, reactive UI, and state transitions. Unit tests are reserved for genuinely complex, non-obvious business logic.
+Tests follow a **cheapest-test-first** strategy. Unit tests (Vitest) cover pure logic — validation, calculation, transformation. Behavioral and integration tests cover state transitions and multi-step chains. E2E tests (Playwright) are reserved for frontend-backend wiring that cannot be caught at a lower level.
 
 ```bash
 # Unit tests
@@ -209,15 +208,8 @@ npx playwright test
 
 ## Contributing
 
-- TypeScript strict mode. No `any` types.
-- Prefer immutability — spread operators, `.map()`, `.filter()`.
-- Functions < 50 lines. Files < 800 lines.
-- Only "why" comments.
-- Use Glass components or CSS variables for all styling. Never hardcode colors.
-- Use Lucide icons exclusively.
-
-See [`CLAUDE.md`](./CLAUDE.md) for full development guidelines.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for code style, testing philosophy, and PR guidelines.
 
 ## License
 
-TBD
+[AGPL-3.0](./LICENSE)

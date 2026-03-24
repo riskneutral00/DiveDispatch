@@ -4,7 +4,7 @@
 >
 > **What this document is NOT:** Schema reference (see `convex/schema.ts`), architectural rules (see `CLAUDE.md`), or implementation details (see the codebase).
 >
-> **Origin:** AI-to-AI knowledge transfer from the DiveDispatch v0.1 codebase (31 tables, 419 commits, ~51K lines), synthesized with Matt's domain expertise as a dive instructor and former software developer.
+> **Origin:** Synthesized from domain expertise in dive operations and the DiveDispatch v0.1 codebase.
 
 ---
 
@@ -12,11 +12,10 @@
 
 1. [Context & Vision](#section-1-context--vision)
 2. [Domain Rationale](#section-2-domain-rationale)
-3. [Full Stakeholder Interview](#section-3-full-stakeholder-interview)
-4. [Booking Wizard & Portal Flows](#section-4-booking-wizard--portal-flows)
-5. [Customer Portal Form Specs](#section-5-customer-portal-form-specs)
-6. [Notification Trigger Table](#section-6-notification-trigger-table)
-7. [Gap Analysis & Deferred Features](#section-7-gap-analysis--deferred-features)
+3. [Booking Wizard & Portal Flows](#section-3-booking-wizard--portal-flows)
+4. [Customer Portal Form Specs](#section-4-customer-portal-form-specs)
+5. [Notification Trigger Table](#section-5-notification-trigger-table)
+6. [Gap Analysis & Deferred Features](#section-6-gap-analysis--deferred-features)
 
 ---
 
@@ -128,256 +127,7 @@ Silent, bidirectional: banned parties hidden from each other's pickers/search/di
 
 ---
 
-## Section 3: Full Stakeholder Interview
-
-> **Date:** 2026-03-01 / 2026-03-02
-> **Interviewer:** DiveDispatch (AI — businessman + technical lead)
-> **Interviewee:** Matt (representing every stakeholder role)
-> **Purpose:** Validate that the application solves real problems for every stakeholder. Identify gaps between current build and actual needs.
-
----
-
-### 1. Dive Center
-
-#### Context
-Matt operates two dive centers with fundamentally different models:
-- **DC-A (Full-service):** Owns boat, instructors, equipment, pool, compressor. Sets schedules directly.
-- **DC-B (Storefront-only):** No owned resources. Coordinates with external boats, instructors, other stakeholders for every booking.
-
-#### Pain Points
-- **Scheduling coordination** across boats, instructors, and customers.
-- **Marketing** and reaching tourists (language barriers, payment acceptance — cash only, no credit cards).
-- **Route-based boat selection:** Different customer types (try dive vs. fun dive vs. AOW course) require different dive sites. Try-dive customers are restricted to safer areas (Ratchayai/Ratchanoi in Phuket). Fun dive and course customers go to Phi Phi or other destinations. Must find the specific boat going to the right route on that day.
-- **Instructor matching:** Need instructors by language and specialty. Preferred instructors get priority, but when a customer needs a language or certification the preferred instructors don't have, must find alternatives fast.
-- **Seat availability on shared boats:** Never knows capacity until calling the boat. Sometimes only a few seats left, and it's a race against other dive centers to grab them.
-- **Last-minute boat cancellations:** Boat cancels due to insufficient customers, forcing a scramble to find a replacement boat with available seats.
-- **Forgotten bookings:** More common than double-booking — forgetting a booking entirely or mixing up dates, resulting in no instructor arranged.
-- **Paperwork:** Sometimes customers fill out forms at the shop before the dive. Sometimes the DC forgets entirely. Wants automated sending via booking link.
-- **Agents:** Works with agents who send customers. Wants the system to handle agent referrals.
-
-#### Key Decisions (Matt's Answers)
-- Paperwork should auto-send via portal link at booking creation.
-- Instructor language matching should auto-filter available instructors by customer's language need.
-- Agent integration should support full handoff.
-
----
-
-### 2. Instructor
-
-#### Context
-Freelance dive instructors in Thailand face unique challenges. Most would prefer steady work with one dive center, but DCs cherry-pick the best/cheapest instructors on demand. True freelancers like Matt are rare. Legally, instructors need a TAT (Tourism Authority of Thailand) license to advertise services — most freelancers who find their own customers are technically breaking the law, though it's extremely common.
-
-#### Pain Points
-- **Missed bookings while diving:** Underwater for hours with no cell reception. By the time they surface, the DC found someone else. This is the #1 pain.
-- **Payment uncertainty:** Payment terms vary wildly by DC — same day (rare, best DCs), end of week (most), one or two months later (some), or never (DCs that go bankrupt).
-- **No visibility into DC schedules:** An instructor doesn't know how a DC operates internally. Even instructors who want to work for a single DC get used only as emergency replacements because the DC has pick of the best/cheapest.
-- **Last-minute cancellations:** Entire day of income lost with no notice.
-- **Own customers are risky:** Finding your own customers means advertising (TAT license required). Very common but technically illegal without the license.
-
-#### Key Decisions
-- **Auto-accept:** System should auto-accept bookings with a configurable timeout (e.g., if instructor doesn't respond in X hours, auto-accept). Solves the underwater problem.
-- **Cancellation policy:** System should enforce/display cancellation terms. Instructor needs to know as early as possible.
-- **Own customers:** Instructors can book their own customers through the system. Booking owner = Instructor.
-
----
-
-### 3. Boat Manager
-
-#### Context
-Operates multiple boats with different layouts. Works with many dive centers daily. Has a "Boat Master" (captain/first mate) who handles on-the-water operations including seating arrangements.
-
-#### Pain Points
-- **Filling the boat:** Empty seats are lost revenue. Needs visibility into demand from all DCs.
-- **Minimum-pax threshold:** Each trip has a minimum. If not met, trip cancels. Cutoff is typically 6pm the day before.
-- **Cancellation cascade:** When a boat cancels, DCs scramble. Even when the boat tells the DC in time, the DC doesn't always tell their instructors — instructors show up with equipment on the wrong boat the next day.
-- **Desired solution:** Auto-assign a backup boat. Not just "tell the DC there's space elsewhere" but actually move the booking to the backup boat.
-- **Seating chart complexity:** Each boat has a different layout. In the morning, the boat master assigns seating based on:
-  - Diver experience (experienced near exit, beginners inside/out of the way)
-  - DC grouping (sometimes an entire side belongs to one DC)
-  - Mixed groups (5 different DCs — arrange by DC or by customer type)
-  - Instructor preferences (some talk to the boat master directly to request a spot)
-  - Ultimately the boat master has final say.
-- **Wants an AI recommendation algorithm** for seating that considers diver type, but boat master has manual override authority.
-
-#### Key Decisions
-- Seating chart is a high-value feature with recommendation algorithm + manual override.
-- Boat Master is a sub-role with different permissions than Boat Manager (seating authority, not full admin).
-- Manifest is essential — every boat needs one showing all customers, their DC, instructor, pickup/dropoff, customer type, passport info.
-- Backup boat auto-assignment on cancellation is a key differentiator.
-- Multi-boat management dashboard for operators with more than one boat.
-
----
-
-### 4. Equipment Manager
-
-#### Context
-The EM's main work is physical labor — packing bags, washing gear. Technology can help most with the daily logistics tracking.
-
-#### Pain Points
-- **Daily bag tracking:** Currently writes down by hand for each bag: which boat, which customer, which instructor. Tedious and error-prone.
-- **Sizing:** Gets height, weight, shoe size from customers. Uses experience to know which sizes to pull from which manufacturers.
-- **Gear return:** Instructors leave bags on boats. Boats deliver them back because they know which bags belong to which EM. Works but informal.
-- **Gear mix-ups:** Instructors mix up gear with other customers' gear. Seemingly unavoidable.
-- **Powered lenses:** Needs to know if customer needs powered lenses for their mask — not currently captured.
-- **Delivery location varies:** Sometimes delivers bags to the boat pier, sometimes to the pool (for confined open water), sometimes to the beach.
-
-#### Key Decisions
-- **Digital bag ID system:** Each bag gets a number (e.g., "12345"). Digitally linked to customer + instructor + boat. Instructor checks the app to see which bag is theirs. Huge value.
-- **Powered lenses** field needed on customer profile / booking.
-- **Delivery location** field needed per session (pool, beach, boat pier).
-- Inventory tracking (what's available, what's out) via real-time dashboard is useful.
-
----
-
-### 5. Pool Operator
-
-#### Pain Points
-- Simple operation. Main need is knowing how many lanes are booked and when.
-
-#### Key Decisions
-- Lane booking with time slots is sufficient.
-- No complex features needed beyond the basic calendar and availability view.
-- Pool is often part of a hotel/resort — the pool operator is typically not a dive industry person.
-
----
-
-### 6. Compressor Operator
-
-#### Context
-Extremely simple operation. Maintains an infinite surplus of filled air cylinders. Nitrox fills need a bit more time but can be done overnight. Trimix is very rare.
-
-#### Pain Points
-- Essentially none that technology solves. Customers drop off and pick up cylinders themselves.
-
-#### Key Decisions
-- A gas-mix catalog (air, nitrox, trimix) on the profile so DCs can see what's available is the only useful feature.
-- Lowest-priority stakeholder in terms of feature depth.
-
----
-
-### 7. Agent (Travel Agent)
-
-#### Context
-Sells dive packages globally — anywhere there's diving in the world. Biggest earner is selling liveaboard trips. Customers come primarily online (website, social media, travel platforms).
-
-#### Pain Points
-- **Coordinating availability** across multiple DCs and liveaboards — too many calls and chats.
-- **Building accurate quotes** — prices change, add-ons vary, can never give an instant answer.
-- **Managing customer paperwork** — each DC requires different forms.
-
-#### Workflow
-- **DC bookings: Full handoff.** Agent sends customer to DC and is done.
-- **Liveaboard bookings: Direct coordination.** Messages/calls the liveaboard operator, relays availability to customer, back and forth until confirmed. No pre-allocated berths.
-- **Global reach:** Sells diving everywhere in the world, not just one region.
-
-#### Key Decisions
-- Real-time liveaboard availability is the killer feature for agents.
-- Agent profile should show which operators they work with.
-
----
-
-### 8. Liveaboard Operator
-
-#### Context
-Runs multi-day dive trips. Schedules planned a year in advance with some flexibility. Almost entirely dependent on agents for bookings.
-
-#### Pain Points
-- **Filling the boat:** Each trip needs minimum guests to be profitable. Empty berths are lost revenue.
-- **Agent sync:** Dozens of agents selling trips. Availability tracked via spreadsheet/notebook. First-come-first-served by phone — double-booking risk.
-- **Logistics:** Provisioning, crew scheduling, equipment, route planning.
-- **Cancellation handling:** Instead of canceling an under-filled trip, upgrades customers to a partner liveaboard running the same schedule. Cross-boat booking transfer.
-- **Cabin types vary per boat.** Each liveaboard has its own layout and pricing structure.
-- **Equipment:** Fair mix — some customers bring own gear, some have DC-provided gear, some rent directly from the liveaboard.
-- **Passenger manifest:** Full manifest needed before departure — name, cert level, dive count, medical, emergency contact, passport (for some destinations).
-- **Transport:** All of: self-arranged, operator-provided (hotel/airport transfers with flight numbers), or agent/DC-arranged. Needs to track per customer.
-
-#### Key Decisions
-- Real-time berth/cabin availability for agents is the highest-priority feature.
-- Trip schedule calendar (year-ahead) with berth counts per trip.
-- Cross-boat booking transfer for under-filled trips.
-- Per-boat cabin layout and type definitions (shared, private, suite, etc.).
-- Manifest with transport logistics is mandatory.
-- Equipment source tracking per guest (own / DC-provided / rental).
-
----
-
-### 9. Dive Resort
-
-#### Context
-50/50 split — some guests come for the resort, some exclusively to dive, some are spouses of divers. Dive hostels are a subset: 99% dive-focused.
-
-#### Key Decisions
-- Resort lodging management is NOT a DiveDispatch priority. Resorts may keep their own hotel software and use DD only for dive operations.
-- Functionally, a dive resort that owns a DC behaves identically to a standalone DC in the system.
-- Dive hostels are just resorts where diving is 99% of the business — no special treatment needed in the system.
-
----
-
-### 10. Customers
-
-#### 10a. First-Time Diver (Try Dive / Discover Scuba)
-
-**Entry:** Walk-in off the street. Impulse decision while on vacation.
-**Cares about:** Price, what's included, how long it takes. Quick decision.
-**Paperwork:** Expects some (safety), but needs it to be fast.
-**Post-dive:** Wants photos/videos as souvenirs. Photos sometimes come from the DC, sometimes from the instructor.
-**Upsell opportunity:** If they loved it, they may want to continue into a full Open Water course over the next few days. The booking should support a "continue to course" flow — extending the existing booking, preserving paperwork and customer data.
-
-#### 10b. Student Diver (Taking a Course)
-
-**Decision factors:** Price, reviews/reputation, AND language (need instructor who speaks their language for a multi-day course). Shops around more carefully than try-divers.
-**Biggest concern:** Schedule clarity — needs to know exactly when and where to show up each day (pool, boat, classroom). Day-by-day itinerary.
-**E-learning:** PADI/SSI e-learning is common — students complete theory online before arriving, then do practical on-site. *(E-learning completion tracking — deferred)*
-**Post-course needs:** Confirmation of completion, dive log of skills/dives completed, cert card info once issued, photos, and a path to book next dive trip as a newly certified diver. *(Dive log / post-course tracking — deferred)*
-
-#### 10c. Certified Fun Diver
-
-**Booking:** Walk-in the day before, ask what's going out tomorrow. Low friction.
-**Cares about:** Which dive sites the boat is going to — this is the #1 factor.
-**Gear:** Brings everything, just needs tank and weights.
-**Buddy:** Doesn't care — flexible, DC handles pairing.
-
-#### 10d. Repeat DiveDispatch User
-
-**Retention hook:** Can rebook with preferred DC or instructor easily, or find a trusted operator at a new destination.
-**Wants:** Full diver profile — cert level, dive log, preferences, saved operators, booking history.
-**Discovery:** Search by location + dive sites — "Who goes to Richelieu Rock this week?"
-**Account:** Yes — a full profile with social login or magic link. No passwords.
-
----
-
-### Cross-Cutting Features Discovered
-
-#### Centralized Manifest Component
-A reusable `<Manifest>` component importable by any stakeholder dashboard. Shows all customers for a trip/boat/date. Columns include:
-- Customer name, passport/ID, emergency contact
-- Cert level, dive count, customer type (try dive, fun dive, course, etc.)
-- Affiliated dive center and instructor
-- Equipment source (own, DC-provided, rented)
-- Pick-up and drop-off location + transport details
-- Medical flags
-
-**Role-based column visibility:**
-
-| Role | Emphasis |
-|------|----------|
-| Boat Manager / Boat Master | Full manifest + seating chart integration |
-| Liveaboard Operator | Full manifest + cabin assignments |
-| Dive Center | Their customers only, for a given boat/date |
-| Instructor | Their assigned customers only |
-| Equipment Manager | Gear column + bag ID linkage |
-
-#### Transport Logistics
-Per-customer transport info on the manifest:
-- Self-arranged
-- Operator-provided (hotel pickup, airport transfer with flight number)
-- Agent/DC-arranged
-- Pick-up time and location
-- Drop-off location
-
----
-
-## Section 4: Booking Wizard & Portal Flows
+## Section 3: Booking Wizard & Portal Flows
 
 ### Booking Wizard Flow
 
@@ -428,7 +178,7 @@ DCs can configure booking preferences: `owDays` (default Open Water days), `aowD
 
 ---
 
-## Section 5: Customer Portal Form Specs
+## Section 4: Customer Portal Form Specs
 
 The customer portal is accessed via tokenized BookingLink (UUID). No account required. 4-step flow.
 
@@ -579,7 +329,7 @@ Display Liability Release legal text verbatim (read-only scrollable block).
 
 ---
 
-## Section 6: Notification Trigger Table
+## Section 5: Notification Trigger Table
 
 Every notification is created inline by the mutation that triggers it (via a `notify()` helper — NOT a separate mutation). Notifications are stored in the `notifications` table with `readAt` initially undefined.
 
@@ -597,7 +347,7 @@ Every notification is created inline by the mutation that triggers it (via a `no
 
 ---
 
-## Section 7: Gap Analysis & Deferred Features
+## Section 6: Gap Analysis & Deferred Features
 
 ### Newly Discovered Features (from stakeholder interview)
 

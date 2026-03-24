@@ -74,3 +74,8 @@ playwright-report/
 
 # Stale skill versions (only SKILL.md is canonical)
 .claude/skills/**/skill *.md
+
+# Internal AI tooling (keep locally, not public)
+.mulch/
+.overstory/
+docs/LLM_HANDOFF.md
