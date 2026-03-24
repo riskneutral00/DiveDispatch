@@ -3,32 +3,44 @@
 **Multi-stakeholder booking platform for the scuba diving industry.**
 
 ![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)
+![Built with Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![Built with Convex](https://img.shields.io/badge/Convex-real--time-ff6b35?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkw0IDdWMTdMMTIgMjJMMjAgMTdWN0wxMiAyWiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
-> **Status:** Active development. Pre-launch. Built by [Risk Neutral](https://github.com/riskneutral00).
+> **Status:** Active development &middot; Pre-launch &middot; Built by [Risk Neutral](https://github.com/riskneutral00)
+
+<!-- TODO: Add hero screenshot or GIF here once available -->
+<!-- ![DiveDispatch Dashboard](docs/assets/hero.png) -->
 
 ---
 
-## Overview
+## The Problem
 
-DiveDispatch is the connective tissue between every business in the dive supply chain. One booking flows through the dive center that organizes the trip, the instructor who teaches it, the boat that carries everyone, the equipment manager who packs the gear, and the compressor that fills the tanks — all coordinated in real time.
+Running a dive operation means coordinating instructors, boats, gear, tanks, and customers — usually over WhatsApp groups and spreadsheets. One booking touches half a dozen independent businesses, and if any of them double-books, the whole trip falls apart.
 
-Operators create bookings from a staff dashboard. The system checks availability across all required resources, places atomic holds on inventory, and fans out acceptance requests to each stakeholder. Customers complete their paperwork (waivers, medical questionnaire, gear sizing) through a tokenized portal link — no account required.
+## The Solution
 
-The UI is built on a **Liquid Glass** aesthetic — glassmorphism with backdrop blur, luminous borders, and fully themeable skins. Themes are a core product feature, not a cosmetic afterthought: every component is driven by CSS custom properties, and each theme ships with both light and dark palettes.
+DiveDispatch replaces that with a single booking that flows through every stakeholder in real time. An operator creates a booking from the staff dashboard. The system checks availability across all required resources, places atomic holds on inventory, and fans out acceptance requests to each stakeholder. Customers complete their paperwork through a tokenized link — no account required.
+
+## Why DiveDispatch?
+
+- **Multi-stakeholder coordination** — One booking, many businesses. Each confirms their slice independently.
+- **Atomic inventory** — No double-bookings, no partial holds, no race conditions. All-or-nothing.
+- **Zero-friction customer portal** — Tokenized link for waivers, medical forms, and gear sizing. Works on any phone, no sign-up needed.
+- **Themeable by design** — Liquid Glass aesthetic with swappable skins, light/dark palettes, and CSS custom property theming baked into every component.
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Framework | Next.js 16 (App Router) | Server/client rendering, routing |
-| Backend | Convex | Real-time database, mutations, subscriptions |
-| Auth | Clerk | Staff authentication, user management |
-| Styling | Tailwind CSS 4 + CSS custom properties | Utility classes + themeable design tokens |
-| Validation | Zod 4 | Client-side form validation |
-| i18n | next-intl | Internationalization |
-| Icons | Lucide React | Icon system |
-| E2E Testing | Playwright | End-to-end browser tests |
-| Unit Testing | Vitest | Unit/integration tests |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Framework | Next.js 16 (App Router) | Server/client rendering with React Server Components |
+| Backend | Convex | Real-time database with ACID mutations and live subscriptions |
+| Auth | Clerk | Passwordless staff auth with JWT integration |
+| Styling | Tailwind CSS 4 + CSS custom properties | Utility classes layered on themeable design tokens |
+| Validation | Zod 4 | End-to-end type-safe validation |
+| i18n | next-intl | Full internationalization support |
+| E2E Testing | Playwright | Browser-based end-to-end tests |
+| Unit Testing | Vitest | Fast unit and integration tests |
 
 ## Getting Started
 
@@ -97,12 +109,40 @@ npm run seed:force:all
 
 After seeding, credentials are printed to the terminal. See the seed scripts for details.
 
-## Project Structure
+## How It Works
+
+A booking moves through four statuses: **Draft → Upcoming → Completed → Cancelled**. Each resource hold is a Reservation that stakeholders independently confirm or decline. Inventory is tracked via atomic snapshots — updated in the same mutation as the reservation write, guaranteeing consistency.
+
+12 stakeholder roles span two categories:
+
+- **Organizers** (create bookings): DiveCenter, Agent, Liveaboard, DiveResort, DiveHostel, DiveSite
+- **Resources** (confirm participation): Instructor, DiveMaster, Boat, Equipment, Pool, Compressor
+
+For full domain knowledge — booking lifecycle, reservation states, availability snapshots, equipment fulfillment — see [`docs/DOMAIN_KNOWLEDGE.md`](./docs/DOMAIN_KNOWLEDGE.md).
+
+## Architecture
+
+### Dependency Direction
+
+```
+convex/  ←  lib/  ←  components/  ←  app/
+```
+
+Never import upstream. `convex/` knows nothing about React. `lib/` knows nothing about components.
+
+### Auth Boundary
+
+- **Staff routes:** Clerk auth required. Mutations validate Clerk identity at entry.
+- **Customer portal:** Tokenized BookingLink (UUID). No Clerk auth needed.
+- Every mutation modifying a booking verifies caller ownership via `users.slug`.
+
+<details>
+<summary><strong>Project Structure</strong></summary>
 
 ```
 DiveDispatch/
 ├── convex/                   # Convex backend (schema, mutations, queries, seeds)
-├── docs/                     # Domain knowledge (DOMAIN_KNOWLEDGE.md)
+├── docs/                     # Domain knowledge, LLM handoff docs
 ├── e2e/                      # Playwright end-to-end tests
 ├── messages/                 # i18n translation files
 ├── public/                   # Static assets
@@ -118,7 +158,7 @@ DiveDispatch/
 │   │   ├── booking/          # Booking-specific components
 │   │   ├── common/           # Shared UI components
 │   │   ├── dashboard/        # Dashboard layout components
-│   │   ├── glass/            # Liquid Glass design system (GlassCard, GlassButton, etc.)
+│   │   ├── glass/            # Liquid Glass design system
 │   │   ├── portal/           # Customer portal components
 │   │   └── ui/               # Base UI primitives
 │   ├── lib/
@@ -132,53 +172,7 @@ DiveDispatch/
 └── tests/                    # Vitest unit tests
 ```
 
-## Architecture
-
-### Dependency Direction
-
-```
-convex/  ←  lib/  ←  components/  ←  app/
-```
-
-Never import upstream. `convex/` knows nothing about React. `lib/` knows nothing about components.
-
-### Provider Nesting Order
-
-Order is critical — wrong nesting causes silent auth failures:
-
-```
-ClerkProvider → ConvexProviderWithClerk → ThemeProvider
-```
-
-### Auth Boundary
-
-- **Staff routes:** Clerk auth required. Mutations validate Clerk identity at entry.
-- **Customer portal:** Tokenized BookingLink (UUID). No Clerk auth needed.
-- Every mutation modifying a booking verifies caller ownership via `users.slug`.
-
-## Key Concepts
-
-### Booking Lifecycle
-
-A booking moves through four statuses: **Draft → Upcoming → Completed → Cancelled**. A booking auto-advances from Draft to Upcoming when both the operator's booking form and the customer's portal form are complete (and no medical hard-blocks exist). Cancellation is terminal — no undo.
-
-### Reservation States
-
-Each resource hold on a booking is a Reservation: **PendingAcceptance → Confirmed** (stakeholder accepts) or **PendingAcceptance → Vacated** (decline/cancel/expiry). Vacated reservations release inventory back to the pool.
-
-### Availability Snapshots
-
-Inventory is tracked via `AvailabilitySnapshot` documents. Snapshot updates always occur in the **same Convex mutation** as the Reservation write — this guarantees no double-booking of exclusive units and correct decrement of pooled inventory.
-
-### Equipment Fulfillment
-
-Single-manager, strict-fail model. The operator selects one EquipmentManager per booking. If that manager lacks sufficient inventory, the entire booking conflicts — no cross-manager fallback, no split holds.
-
-### 12 Stakeholder Roles
-
-**Organizers** (create bookings): DiveCenter, Agent, Liveaboard, DiveResort, DiveHostel, DiveSite
-
-**Resources** (confirm participation): Instructor, DiveMaster, Boat, Equipment, Pool, Compressor
+</details>
 
 ## Scripts
 
@@ -196,7 +190,7 @@ Single-manager, strict-fail model. The operator selects one EquipmentManager per
 
 ## Testing
 
-Tests follow a **cheapest-test-first** strategy. Unit tests (Vitest) cover pure logic — validation, calculation, transformation. Behavioral and integration tests cover state transitions and multi-step chains. E2E tests (Playwright) are reserved for frontend-backend wiring that cannot be caught at a lower level.
+Tests follow a **cheapest-test-first** strategy. Unit tests cover pure logic. Behavioral tests cover state transitions. E2E tests are reserved for frontend-backend wiring that can't be caught at a lower level.
 
 ```bash
 # Unit tests
@@ -208,7 +202,7 @@ npx playwright test
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for code style, testing philosophy, and PR guidelines.
+Contributions welcome. Please open an issue to discuss before submitting a PR.
 
 ## License
 
