@@ -10,25 +10,19 @@
  * 4a-4d: Active/Completed lifecycle
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api, internal } from '../convex/_generated/api'
 import { tryAutoAdvance, isSessionEnded } from '../convex/bookings/_shared'
 import { getEndDateDefault } from '../src/lib/booking/course-validation'
 import { addDays } from '../src/lib/utils/date'
 import { COMBO_COURSES } from '../src/lib/constants/course-catalog'
 import type { Id } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
 import { seedUser, type SeedCtx } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
 
 async function seedBooking(
   ctx: SeedCtx,

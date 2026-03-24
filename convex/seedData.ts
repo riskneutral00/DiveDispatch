@@ -1,6 +1,9 @@
 // Seed data constants for all stakeholders.
 // Consumed by convex/seed.ts internal mutations.
 
+import type { StakeholderRole } from './lib/validators'
+export type { StakeholderRole }
+
 // ── Shared Defaults ─────────────────────────────────────────────────
 
 const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
@@ -10,13 +13,6 @@ const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
 
 // All DCs share the same AOW specialty set
 const DC_BOOKING_PREFS = { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Wreck'] }
-
-// ── Types ───────────────────────────────────────────────────────────
-
-export type StakeholderRole =
-  | 'DiveCenter' | 'Agent' | 'Instructor' | 'Boat' | 'Equipment'
-  | 'Pool' | 'Compressor' | 'DiveMaster' | 'Liveaboard' | 'DiveResort'
-  | 'DiveHostel' | 'DiveSite'
 
 export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
 

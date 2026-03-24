@@ -7,7 +7,7 @@
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
-import { restoreSnapshotUnits } from './inventory-release'
+import { restoreSnapshotUnits } from './inventoryRelease'
 
 /**
  * Advances booking Draft → Upcoming when all conditions are simultaneously satisfied.

@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { seedUser as _seedUser, type SeedCtx } from '../fixtures/seedFixture'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -16,7 +13,7 @@ async function seedUser(ctx: SeedCtx, slug: string) {
 
 describe('setRole', () => {
   it('sets users.role to DiveCenter', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, 'role-dc-01'))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|role-dc-01' })
@@ -28,7 +25,7 @@ describe('setRole', () => {
   })
 
   it('sets users.role to Instructor', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, 'role-inst-01'))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|role-inst-01' })
@@ -39,7 +36,7 @@ describe('setRole', () => {
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.mutation(api.users.setRole, { role: 'DiveCenter', businessName: 'X' }),
@@ -47,7 +44,7 @@ describe('setRole', () => {
   })
 
   it('throws NOT_FOUND when user record does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|nonexistent-user' })

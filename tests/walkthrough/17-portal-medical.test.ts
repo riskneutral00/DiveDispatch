@@ -1,16 +1,9 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
-
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
 
 // All 10 PADI medical questions answered "No"
 const ALL_NO: Record<string, boolean> = Object.fromEntries(

@@ -5,18 +5,13 @@
  * resource arrays: instructors, venues, equipment, boats, compressors.
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 import { seedUser } from './fixtures/seedFixture'
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
+import { makeT } from './helpers/convex-helpers'
 
 /** Base args with all required fields filled in for the upsert mutation. */
 function baseArgs(overrides: Record<string, unknown> = {}) {

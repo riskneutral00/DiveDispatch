@@ -1,17 +1,10 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate } from '../helpers/dates'
 import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
-
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
 
 // ─── submitPortal ─────────────────────────────────────────────────────────────
 

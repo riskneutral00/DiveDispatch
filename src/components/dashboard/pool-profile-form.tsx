@@ -11,6 +11,7 @@ import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/di
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { toggleInArray } from '@/lib/utils/arrays'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -109,12 +110,7 @@ export function PoolProfileForm() {
   })
 
   function toggleLanguage(lang: string) {
-    setField(
-      'focusedLanguages',
-      form.focusedLanguages.includes(lang)
-        ? form.focusedLanguages.filter((l) => l !== lang)
-        : [...form.focusedLanguages, lang],
-    )
+    setField('focusedLanguages', toggleInArray(form.focusedLanguages, lang))
   }
 
   if (loading) {

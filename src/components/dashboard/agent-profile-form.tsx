@@ -13,6 +13,7 @@ import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/di
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { toggleInArray } from '@/lib/utils/arrays'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -207,9 +208,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
   }
 
   const toggleLanguage = (code: string) => {
-    setField('focusedLanguages', form.focusedLanguages.includes(code)
-      ? form.focusedLanguages.filter((l) => l !== code)
-      : [...form.focusedLanguages, code])
+    setField('focusedLanguages', toggleInArray(form.focusedLanguages, code))
   }
 
   if (loading) {

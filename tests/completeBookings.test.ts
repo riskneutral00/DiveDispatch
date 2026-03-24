@@ -12,22 +12,16 @@
  *   - Already-Completed bookings not re-processed
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import schema from '../convex/schema'
 import { internal } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
-
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
+type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
 async function seedBooking(
   ctx: Ctx,

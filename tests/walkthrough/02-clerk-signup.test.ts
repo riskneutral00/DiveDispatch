@@ -1,15 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('createUser (post sign-up)', () => {
   it('creates a user record with the selected role', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-01' })
@@ -24,7 +21,7 @@ describe('createUser (post sign-up)', () => {
   })
 
   it('is idempotent — returns same ID on second call', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     vi.useFakeTimers({ now: Date.now() })
     const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-02' })
@@ -39,7 +36,7 @@ describe('createUser (post sign-up)', () => {
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.mutation(api.users.createUser, { role: 'DiveCenter', businessName: 'X' }),
@@ -47,7 +44,7 @@ describe('createUser (post sign-up)', () => {
   })
 
   it('new user has onboardingComplete undefined', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t.withIdentity({ tokenIdentifier: 'clerk|signup-dc-03' })

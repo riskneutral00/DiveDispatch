@@ -4,6 +4,7 @@ import { requireAuth, type DbCtx } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } from './bookings/_shared'
+import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
 
@@ -125,6 +126,36 @@ export async function _getCapacityForDates(
     }
   }
 
+  // Override with blocked-date data: set available=0 for units whose owner
+  // has blocked the date for the matching resourceType.
+  // Privacy: blocked-date info never leaves the server — client only sees available=0.
+  const blockedDocs = await ctx.db.query('stakeholderBlockedDates').collect()
+  if (blockedDocs.length > 0) {
+    // Build lookup: Map<"ownerSlug|resourceType", Set<blockedDate>>
+    const blockedLookup = new Map<string, Set<string>>()
+    for (const doc of blockedDocs) {
+      const resourceType = effectiveResourceType(doc.roleType)
+      const key = `${doc.ownerSlug}|${resourceType}`
+      const existing = blockedLookup.get(key)
+      if (existing) {
+        for (const d of doc.dates) existing.add(d)
+      } else {
+        blockedLookup.set(key, new Set(doc.dates))
+      }
+    }
+
+    for (const unit of allUnits) {
+      const key = `${unit.ownerId}|${unit.resourceType}`
+      const blockedSet = blockedLookup.get(key)
+      if (!blockedSet) continue
+      for (const date of dates) {
+        if (blockedSet.has(date)) {
+          result[unit._id][date] = { available: 0, total: result[unit._id][date].total }
+        }
+      }
+    }
+  }
+
   return result
 }
 
@@ -174,19 +205,28 @@ export async function _listInventoryByType(
 
 /**
  * Returns the blocked dates for a specific stakeholder role.
- * Keyed by (ownerSlug, roleType) so each role has its own isolated set.
+ * Auth-gated: only the owning stakeholder can read their own blocked dates.
+ * Returns [] for mismatched slugs (silent deny — does not reveal slug existence).
  */
+export async function _getBlockedDatesForStakeholder(
+  ctx: DbCtx,
+  args: { ownerSlug: string; roleType: string },
+): Promise<string[]> {
+  const { user } = await requireAuth(ctx)
+  if (user.slug !== args.ownerSlug) return []
+
+  const doc = await ctx.db
+    .query('stakeholderBlockedDates')
+    .withIndex('by_ownerSlug_roleType', (q) =>
+      q.eq('ownerSlug', args.ownerSlug).eq('roleType', args.roleType),
+    )
+    .unique()
+  return doc?.dates ?? []
+}
+
 export const getBlockedDatesForStakeholder = query({
   args: { ownerSlug: v.string(), roleType: v.string() },
-  handler: async (ctx, args): Promise<string[]> => {
-    const doc = await ctx.db
-      .query('stakeholderBlockedDates')
-      .withIndex('by_ownerSlug_roleType', (q) =>
-        q.eq('ownerSlug', args.ownerSlug).eq('roleType', args.roleType),
-      )
-      .unique()
-    return doc?.dates ?? []
-  },
+  handler: async (ctx, args) => _getBlockedDatesForStakeholder(ctx, args),
 })
 
 /**
@@ -211,6 +251,90 @@ export const getCapacityForDates = query({
   handler: async (ctx, args) => {
     await requireAuth(ctx)
     return _getCapacityForDates(ctx, args.dates)
+  },
+})
+
+/**
+ * Checks availability of preferred resources across a date range.
+ * Resolves slugs → inventory unit IDs, then checks capacity.
+ * Returns per-resource-type availability for the operator's preferred picks.
+ */
+export const checkPreferredAvailability = query({
+  args: {
+    dates: v.array(v.string()),
+    preferredSlugs: v.object({
+      instructor: v.array(v.string()),
+      venue: v.array(v.string()),
+      boat: v.array(v.string()),
+      equipment: v.array(v.string()),
+      compressor: v.array(v.string()),
+    }),
+  },
+  handler: async (ctx, args): Promise<Record<string, { slug: string; available: boolean }[]>> => {
+    await requireAuth(ctx)
+    if (args.dates.length === 0) return {}
+
+    // Collect all slugs to resolve
+    const allSlugs = [
+      ...args.preferredSlugs.instructor,
+      ...args.preferredSlugs.venue,
+      ...args.preferredSlugs.boat,
+      ...args.preferredSlugs.equipment,
+      ...args.preferredSlugs.compressor,
+    ]
+    if (allSlugs.length === 0) return {}
+
+    // Resolve slugs → inventory units (batch via by_resourceId index)
+    const unitsBySlug = new Map<string, { _id: string; totalUnits: number }>()
+    await Promise.all(
+      allSlugs.map(async (slug) => {
+        const units = await ctx.db
+          .query('inventoryUnits')
+          .withIndex('by_resourceId', (q) => q.eq('resourceId', slug))
+          .collect()
+        // Take first unit for the slug (primary unit)
+        if (units[0]) {
+          unitsBySlug.set(slug, { _id: units[0]._id, totalUnits: units[0].totalUnits })
+        }
+      }),
+    )
+
+    // Fetch snapshots for all dates (reuse by_date index pattern)
+    const allSnapshots = await Promise.all(
+      args.dates.map((date) =>
+        ctx.db
+          .query('availabilitySnapshots')
+          .withIndex('by_date', (q) => q.eq('date', date))
+          .collect(),
+      ),
+    )
+
+    // Build unavailable set: unitIds with zero availability on ANY date
+    const unavailable = new Set<string>()
+    for (const snapshots of allSnapshots) {
+      for (const snap of snapshots) {
+        if (snap.availableUnits <= 0) {
+          unavailable.add(snap.inventoryUnitId)
+        }
+      }
+    }
+
+    // Check each resource type
+    function checkSlugs(slugs: string[]): { slug: string; available: boolean }[] {
+      return slugs.map((slug) => {
+        const unit = unitsBySlug.get(slug)
+        if (!unit) return { slug, available: true } // No inventory unit = external, always "available"
+        return { slug, available: !unavailable.has(unit._id) }
+      })
+    }
+
+    return {
+      instructor: checkSlugs(args.preferredSlugs.instructor),
+      venue: checkSlugs(args.preferredSlugs.venue),
+      boat: checkSlugs(args.preferredSlugs.boat),
+      equipment: checkSlugs(args.preferredSlugs.equipment),
+      compressor: checkSlugs(args.preferredSlugs.compressor),
+    }
   },
 })
 
@@ -254,6 +378,10 @@ export async function _toggleBlockedDate(
     return false
   } else {
     // Not blocked → block (add)
+    // Past-date guard: only applies to the block path
+    if (args.date < todayISO()) {
+      throw new ConvexError({ code: 'PAST_DATE', date: args.date })
+    }
     if (existing) {
       await ctx.db.patch(existing._id, { dates: [...current, args.date] })
     } else {

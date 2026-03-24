@@ -70,7 +70,10 @@ export function GlassDialog({
         className="fixed inset-0 p-0 bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-md w-full max-w-none m-0 h-full"
         style={{ border: "none" }}
       >
-        <div className="flex h-full items-center justify-center sm:p-4">
+        <div
+          className="flex h-full items-center justify-center sm:p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        >
           <div
             className={[
               "glass-container flex flex-col shadow-2xl",

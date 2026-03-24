@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   _getUnavailableUnitIdsForDates,
   _getCapacityForDates,
+  _getBlockedDatesForStakeholder,
   _listInventoryByType,
   _toggleBlockedDate,
 } from '../convex/availability'
@@ -20,11 +19,12 @@ import {
   seedReservation,
 } from './fixtures/seedFixture'
 import { testDate, malformedDate } from './helpers/dates'
+import { todayISO } from '../convex/bookings/stateMachine'
+import { makeT } from './helpers/convex-helpers'
 
-const modules = import.meta.glob('../convex/**/*.ts')
-let t = convexTest(schema, modules)
+let t = makeT()
 beforeEach(() => {
-  t = convexTest(schema, modules)
+  t = makeT()
 })
 
 // ─── getUnavailableUnitIdsForDates ────────────────────────────────────────────
@@ -503,6 +503,232 @@ describe('_toggleBlockedDate', () => {
       expect(result).toBe(false)
     })
   })
+
+  // ─── Past-date guard ────────────────────────────────────────────────────────
+
+  describe('past-date guard', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('rejects blocking a date in the past', async () => {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+        await seedUser(ctx)
+
+        await expect(
+          _toggleBlockedDate(ctx, { date: testDate(-1), roleType: 'DiveCenter' }),
+        ).rejects.toThrow('PAST_DATE')
+      })
+    })
+
+    it('allows blocking today', async () => {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+        await seedUser(ctx)
+
+        const result = await _toggleBlockedDate(ctx, { date: todayISO(), roleType: 'DiveCenter' })
+        expect(result).toBe(true)
+      })
+    })
+
+    it('allows blocking tomorrow', async () => {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+        await seedUser(ctx)
+
+        const result = await _toggleBlockedDate(ctx, { date: testDate(1), roleType: 'DiveCenter' })
+        expect(result).toBe(true)
+      })
+    })
+
+    it('allows unblocking a past date (no past-date check on unblock path)', async () => {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+        await seedUser(ctx)
+        // Seed a blocked date that is already in the past
+        await seedBlockedDates(ctx, {
+          ownerSlug: TEST_SLUGS.diveCenter,
+          roleType: 'DiveCenter',
+          dates: [testDate(-3)],
+        })
+
+        // Unblocking past dates should always work
+        const result = await _toggleBlockedDate(ctx, { date: testDate(-3), roleType: 'DiveCenter' })
+        expect(result).toBe(false)
+      })
+    })
+  })
+
+  // ─── Role isolation ─────────────────────────────────────────────────────────
+
+  describe('role isolation', () => {
+    it('blocking Instructor role does not affect Equipment dates for same owner', async () => {
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+        await seedUser(ctx, {
+          tokenIdentifier: TEST_TOKENS.instructor,
+          slug: TEST_SLUGS.instructor,
+          role: 'Instructor',
+        })
+
+        // Block a date for Instructor role
+        await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
+
+        // Equipment role for same owner should have no blocked dates
+        const equipDoc = await ctx.db
+          .query('stakeholderBlockedDates')
+          .withIndex('by_ownerSlug_roleType', (q: any) =>
+            q.eq('ownerSlug', TEST_SLUGS.instructor).eq('roleType', 'Equipment'),
+          )
+          .unique()
+        expect(equipDoc).toBeNull()
+      })
+    })
+
+    it('blocking Boat role does not affect DiveCenter dates for same owner', async () => {
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+        await seedUser(ctx)
+
+        // Block dates for two different roles
+        await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Boat' })
+        await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveCenter' })
+
+        // Each role has its own isolated record
+        const boatDoc = await ctx.db
+          .query('stakeholderBlockedDates')
+          .withIndex('by_ownerSlug_roleType', (q: any) =>
+            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
+          )
+          .unique()
+        const dcDoc = await ctx.db
+          .query('stakeholderBlockedDates')
+          .withIndex('by_ownerSlug_roleType', (q: any) =>
+            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+          )
+          .unique()
+
+        expect(boatDoc?.dates).toEqual([testDate(5)])
+        expect(dcDoc?.dates).toEqual([testDate(5)])
+
+        // Unblock Boat — DiveCenter should be unaffected
+        await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Boat' })
+        const boatAfter = await ctx.db
+          .query('stakeholderBlockedDates')
+          .withIndex('by_ownerSlug_roleType', (q: any) =>
+            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
+          )
+          .unique()
+        const dcAfter = await ctx.db
+          .query('stakeholderBlockedDates')
+          .withIndex('by_ownerSlug_roleType', (q: any) =>
+            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+          )
+          .unique()
+
+        expect(boatAfter?.dates).toEqual([])
+        expect(dcAfter?.dates).toEqual([testDate(5)])
+      })
+    })
+
+    it('DiveMaster block maps to Instructor resourceType for reservation check', async () => {
+      await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+        await seedUser(ctx, {
+          tokenIdentifier: TEST_TOKENS.instructor,
+          slug: TEST_SLUGS.instructor,
+          role: 'Instructor',
+        })
+        const unitId = await seedInventoryUnit(ctx, {
+          resourceType: 'Instructor',
+          capacityModel: 'Exclusive',
+          totalUnits: 1,
+          ownerId: TEST_SLUGS.instructor,
+        })
+        // Confirmed reservation on Instructor unit
+        const bookingId = await seedBooking(ctx)
+        const sessionId = await seedSession(ctx, bookingId, unitId)
+        await seedReservation(ctx, bookingId, unitId, sessionId, {
+          status: 'Confirmed',
+        })
+
+        // DiveMaster role should hit the Instructor reservation gate
+        await expect(
+          _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'DiveMaster' }),
+        ).rejects.toThrow('CONFIRMED_RESERVATION_EXISTS')
+      })
+    })
+  })
+})
+
+// ─── getBlockedDatesForStakeholder (auth + privacy) ──────────────────────────
+
+describe('_getBlockedDatesForStakeholder', () => {
+  it('returns dates for the owning stakeholder', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.diveCenter,
+        roleType: 'DiveCenter',
+        dates: [testDate(5), testDate(10)],
+      })
+
+      const result = await _getBlockedDatesForStakeholder(ctx, {
+        ownerSlug: TEST_SLUGS.diveCenter,
+        roleType: 'DiveCenter',
+      })
+      expect(result).toEqual([testDate(5), testDate(10)])
+    })
+  })
+
+  it('rejects unauthenticated caller', async () => {
+    await t.run(async (ctx) => {
+      await expect(
+        _getBlockedDatesForStakeholder(ctx, {
+          ownerSlug: TEST_SLUGS.diveCenter,
+          roleType: 'DiveCenter',
+        }),
+      ).rejects.toThrow('UNAUTHENTICATED')
+    })
+  })
+
+  it('returns empty array for a different users slug (silent deny)', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      // Seed both users
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.diveCenter,
+        slug: TEST_SLUGS.diveCenter,
+        role: 'DiveCenter',
+      })
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.diveCenter,
+        roleType: 'DiveCenter',
+        dates: [testDate(5)],
+      })
+
+      // Instructor tries to query DiveCenter's blocked dates → silent deny
+      const result = await _getBlockedDatesForStakeholder(ctx, {
+        ownerSlug: TEST_SLUGS.diveCenter,
+        roleType: 'DiveCenter',
+      })
+      expect(result).toEqual([])
+    })
+  })
+
+  it('returns empty array when no blocked dates exist', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      const result = await _getBlockedDatesForStakeholder(ctx, {
+        ownerSlug: TEST_SLUGS.diveCenter,
+        roleType: 'DiveCenter',
+      })
+      expect(result).toEqual([])
+    })
+  })
 })
 
 // ─── Full-day vs time-window overlap granularity ──────────────────────────────
@@ -819,6 +1045,103 @@ describe('_getCapacityForDates', () => {
       const result = await _getCapacityForDates(ctx, [testDate(5)])
       expect(result[instrId as string]?.[testDate(5)]).toEqual({ available: 0, total: 1 })
       expect(result[boatId as string]?.[testDate(5)]).toEqual({ available: 15, total: 20 })
+    })
+  })
+
+  // ─── Blocked-date inventory exclusion ─────────────────────────────────────
+
+  it('blocked owner returns available=0 for blocked date', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+      })
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.instructor,
+        roleType: 'Instructor',
+        dates: [testDate(5)],
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      expect(result[unitId as string]?.[testDate(5)]).toEqual({ available: 0, total: 1 })
+    })
+  })
+
+  it('same unit returns normal capacity for non-blocked date', async () => {
+    await t.run(async (ctx) => {
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+      })
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.instructor,
+        roleType: 'Instructor',
+        dates: [testDate(5)],
+      })
+
+      // Query a different date — not blocked
+      const result = await _getCapacityForDates(ctx, [testDate(7)])
+      expect(result[unitId as string]?.[testDate(7)]).toEqual({ available: 1, total: 1 })
+    })
+  })
+
+  it('blocked Instructor role does not zero Equipment units for same owner', async () => {
+    await t.run(async (ctx) => {
+      // Same owner has both Instructor and Equipment inventory
+      await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+      })
+      const equipId = await seedInventoryUnit(ctx, {
+        resourceType: 'Equipment',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Equipment',
+      })
+      // Only Instructor role is blocked
+      await seedBlockedDates(ctx, {
+        ownerSlug: TEST_SLUGS.instructor,
+        roleType: 'Instructor',
+        dates: [testDate(5)],
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      // Equipment capacity should be unaffected
+      expect(result[equipId as string]?.[testDate(5)]).toEqual({ available: 10, total: 10 })
+    })
+  })
+
+  it('unblocked owner unaffected by another owners block', async () => {
+    await t.run(async (ctx) => {
+      // Blocked instructor
+      await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'blocked-instr',
+      })
+      await seedBlockedDates(ctx, {
+        ownerSlug: 'blocked-instr',
+        roleType: 'Instructor',
+        dates: [testDate(5)],
+      })
+      // Unblocked instructor
+      const unblockedId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'free-instr',
+      })
+
+      const result = await _getCapacityForDates(ctx, [testDate(5)])
+      expect(result[unblockedId as string]?.[testDate(5)]).toEqual({ available: 1, total: 1 })
     })
   })
 })

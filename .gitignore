@@ -21,6 +21,16 @@
 /out/
 # Next.js 16 renamed middleware → proxy. Block the deprecated file.
 src/middleware.ts
+# Static role dirs replaced by dynamic [roleSlug] route (commit 0254168).
+# Leftover static dirs shadow the dynamic route, losing DashboardShell layout.
+src/app/(dashboard)/[slug]/agent/
+src/app/(dashboard)/[slug]/boat/
+src/app/(dashboard)/[slug]/compressor/
+src/app/(dashboard)/[slug]/dive-center/
+src/app/(dashboard)/[slug]/dive-master/
+src/app/(dashboard)/[slug]/equipment/
+src/app/(dashboard)/[slug]/instructor/
+src/app/(dashboard)/[slug]/pool/
 
 # production
 /build
@@ -61,3 +71,6 @@ playwright-report/
 
 # Temporary patch files
 .patches/
+
+# Stale skill versions (only SKILL.md is canonical)
+.claude/skills/**/skill *.md

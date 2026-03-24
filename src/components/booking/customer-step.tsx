@@ -153,16 +153,15 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
             />
           </div>
           {canRemove && (
-            <button
+            <GlassButton
+              variant="destructive-ghost"
+              size="sm"
               type="button"
               onClick={() => dispatch({ type: 'REMOVE_CUSTOMER', id: customer.id })}
-              className="p-2 mb-[1px] rounded-md opacity-50 hover:opacity-100 transition-opacity"
-              style={{ color: 'var(--color-destructive)' }}
-              title="Remove customer"
               aria-label={`Remove ${customer.name || `customer ${index + 1}`}`}
             >
-              <Trash2 size={14} />
-            </button>
+              <Trash2 size={16} />
+            </GlassButton>
           )}
         </div>
 

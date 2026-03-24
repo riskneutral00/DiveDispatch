@@ -10,20 +10,14 @@
  * 5. Does NOT advance with medicalHardBlock=true
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { tryAutoAdvance } from '../../convex/bookings/_shared'
 import type { Id } from '../../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../../convex/**/*.ts'))
-}
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 

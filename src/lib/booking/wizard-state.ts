@@ -86,6 +86,20 @@ export interface BookingConflictDetail {
   reason: string
 }
 
+// ── Pre-fill payload (drag-to-date) ──────────────────────────────────────────
+
+export interface BookingPreFill {
+  courses: string[]
+  startDate: string
+  endDate: string
+  agency: string
+  instructorSlug: string
+  venueSlug: string
+  boatSlug: string
+  equipmentSlug: string
+  compressorSlug: string
+}
+
 // ── Root state ────────────────────────────────────────────────────────────────
 
 export interface WizardState {
@@ -119,6 +133,11 @@ export interface WizardState {
    *  Populated by the itinerary step from listInventoryByType queries.
    *  Used by the review step to build sessions with correct inventory unit IDs. */
   inventoryUnitMap: Record<string, string>
+
+  /** Pre-fill hints from drag-to-date — itinerary step uses these to default-select resources */
+  preFillInstructorSlug?: string
+  preFillVenueSlug?: string
+  preFillBoatSlug?: string
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -211,6 +230,9 @@ export function makeInitialState(bookingId: string | null = null): WizardState {
     conflictError: null,
     submittedBookingId: null,
     inventoryUnitMap: {},
+    preFillInstructorSlug: undefined,
+    preFillVenueSlug: undefined,
+    preFillBoatSlug: undefined,
   }
 }
 

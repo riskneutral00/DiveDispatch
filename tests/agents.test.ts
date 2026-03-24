@@ -1,11 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import { seedUser as _seedUser, seedAgent, type SeedCtx } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -27,7 +24,7 @@ const VALID_AGENT_ARGS = {
 
 describe('agents.create', () => {
   it('rejects unauthenticated callers with UNAUTHENTICATED', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.mutation(api.agents.create, VALID_AGENT_ARGS),
@@ -35,7 +32,7 @@ describe('agents.create', () => {
   })
 
   it('rejects non-Agent roles with FORBIDDEN', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, 'dc-user', 'DiveCenter')
     })
@@ -47,7 +44,7 @@ describe('agents.create', () => {
   })
 
   it('creates agent profile for Agent user', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let userId: Awaited<ReturnType<typeof seedUser>> | undefined
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, 'new-agent', 'Agent')
@@ -71,7 +68,7 @@ describe('agents.create', () => {
   })
 
   it('returns existing agent ID on duplicate create (idempotent)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, 'dup-agent', 'Agent')
     })
@@ -93,7 +90,7 @@ describe('agents.create', () => {
 
 describe('agents.update', () => {
   it('rejects unauthenticated callers with UNAUTHENTICATED', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.mutation(api.agents.update, { name: 'New Name' }),
@@ -101,7 +98,7 @@ describe('agents.update', () => {
   })
 
   it('rejects when no agent profile exists with NOT_FOUND', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, 'no-profile', 'Agent')
     })
@@ -113,7 +110,7 @@ describe('agents.update', () => {
   })
 
   it('updates agent profile fields', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let agentId: Awaited<ReturnType<typeof seedAgent>> | undefined
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, 'upd-agent', 'Agent')
@@ -140,14 +137,14 @@ describe('agents.update', () => {
 
 describe('agents.mine', () => {
   it('returns null for unauthenticated callers', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const result = await t.query(api.agents.mine, {})
     expect(result).toBeNull()
   })
 
   it('returns null when no agent profile exists', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, 'no-agent-profile', 'Agent')
     })
@@ -158,7 +155,7 @@ describe('agents.mine', () => {
   })
 
   it('returns agent profile with normalized location fields', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, 'my-agent', 'Agent')
       await seedAgent(ctx, userId)

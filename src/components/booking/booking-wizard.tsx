@@ -25,6 +25,7 @@ import {
   canAdvanceFromCustomers,
   canAdvanceFromItinerary,
   type WizardStep,
+  type BookingPreFill,
 } from "@/lib/booking/wizard-state";
 import { useBookingDraftAutoSave } from "@/hooks/useBookingDraftAutoSave";
 import { Spinner } from "@/components/common/spinner";
@@ -41,6 +42,8 @@ interface BookingWizardProps {
   onComplete?: () => void;
   /** Pre-fill course entries for the first customer (Quick Book template) */
   initialCourses?: string[];
+  /** Full pre-fill from drag-to-date (courses, dates, agency, resources) */
+  initialPreFill?: BookingPreFill;
 }
 
 export function BookingWizard({
@@ -49,6 +52,7 @@ export function BookingWizard({
   onClose,
   onComplete,
   initialCourses,
+  initialPreFill,
 }: BookingWizardProps) {
   const router = useRouter();
   const isEditMode = !!initialBookingId;
@@ -125,6 +129,43 @@ export function BookingWizard({
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, initialCourses]);
+
+  // Drag-to-date: full pre-fill (courses + dates + agency + resources)
+  useEffect(() => {
+    if (isEditMode || initializedRef.current || !initialPreFill) return;
+    initializedRef.current = true;
+    const makeId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const { courses, startDate, endDate, agency, instructorSlug, venueSlug, boatSlug, equipmentSlug, compressorSlug } = initialPreFill;
+    dispatch({
+      type: "RESET",
+      payload: {
+        bookingId: null,
+        startDate,
+        endDate,
+        agency,
+        equipment: equipmentSlug,
+        compressor: compressorSlug,
+        preFillInstructorSlug: instructorSlug || undefined,
+        preFillVenueSlug: venueSlug || undefined,
+        preFillBoatSlug: boatSlug || undefined,
+        customers: [{
+          id: makeId(),
+          name: "",
+          contact: {},
+          flags: [],
+          courseEntries: courses.length > 0
+            ? courses.map((code) => ({
+                id: makeId(),
+                activityCode: code,
+                dates: [startDate, endDate],
+                agency,
+              }))
+            : [{ id: makeId(), activityCode: "", dates: [startDate, endDate], agency }],
+        }],
+      },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, initialPreFill]);
 
   // Overlay mode: close overlay when booking is submitted
   useEffect(() => {

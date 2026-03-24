@@ -1,16 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import {
   _generateUploadUrlHandler,
   _submitSupportRequestHandler,
 } from '../convex/support'
 import { TEST_TOKENS, TEST_SLUGS, seedUser } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
-const modules = import.meta.glob('../convex/**/*.ts')
-let t = convexTest(schema, modules)
+let t = makeT()
 beforeEach(() => {
-  t = convexTest(schema, modules)
+  t = makeT()
 })
 
 // ─── generateUploadUrl ────────────────────────────────────────────────────────

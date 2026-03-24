@@ -6,12 +6,11 @@
  * (instructor, equipment, confined water, open water, compressor).
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect, vi } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 import {
   seedUser,
   seedStakeholderPreferences,
@@ -22,10 +21,6 @@ import {
 } from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
 
 /** Thin wrapper: adapts positional (ctx, slug, role?) to shared seedUser overrides format */
 async function seedUserBySlug(ctx: SeedCtx, slug: string, role: Parameters<typeof seedUser>[1]['role'] = 'DiveCenter') {
@@ -69,14 +64,6 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
 async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
   await seedDiveCenterProfile(ctx, userId, { contactEmail: `${slug}@test.com` })
   await seedBookingTemplate(ctx, { ownerId: slug, activityType: ['DSD'] })
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

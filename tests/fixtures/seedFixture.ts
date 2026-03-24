@@ -504,6 +504,94 @@ export async function seedVenue(
   })
 }
 
+export async function seedInstructorProfile(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    placeName?: string
+    country?: string
+    contactEmail?: string
+    contactPhone?: string
+    credential?: Array<{ agency: string; level: string; agencyID: string; courses: string[] }>
+    languages?: string[]
+    verified?: boolean
+  } = {},
+) {
+  return ctx.db.insert('instructors', {
+    userId,
+    name: overrides.name ?? 'Test Instructor',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    contactEmail: overrides.contactEmail ?? 'instructor@test.com',
+    contactPhone: overrides.contactPhone ?? '+66123456789',
+    credential: overrides.credential ?? [
+      { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
+    ],
+    languages: overrides.languages ?? ['en'],
+    verified: overrides.verified ?? true,
+  })
+}
+
+export async function seedBoatProfile(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    placeName?: string
+    country?: string
+    contactEmail?: string
+    contactPhone?: string
+    fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
+    focusedLanguages?: string[]
+    verified?: boolean
+  } = {},
+) {
+  return ctx.db.insert('boats', {
+    userId,
+    name: overrides.name ?? 'Test Boat',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    contactEmail: overrides.contactEmail ?? 'boat@test.com',
+    contactPhone: overrides.contactPhone ?? '+66123456789',
+    fleet: overrides.fleet ?? [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
+    focusedLanguages: overrides.focusedLanguages ?? ['en'],
+    hasCompressor: false,
+    verified: overrides.verified ?? true,
+  })
+}
+
+export async function seedEquipmentProfile(
+  ctx: SeedCtx,
+  userId: Id<'users'>,
+  overrides: {
+    name?: string
+    placeName?: string
+    country?: string
+    contactEmail?: string
+    contactPhone?: string
+    focusedLanguages?: string[]
+    verified?: boolean
+  } = {},
+) {
+  return ctx.db.insert('equipment', {
+    userId,
+    name: overrides.name ?? 'Test Equipment',
+    placeName: overrides.placeName ?? 'Koh Tao',
+    country: overrides.country ?? 'Thailand',
+    lat: 10.0957,
+    lng: 99.8408,
+    contactEmail: overrides.contactEmail ?? 'equip@test.com',
+    contactPhone: overrides.contactPhone ?? '+66123456789',
+    focusedLanguages: overrides.focusedLanguages ?? ['en'],
+    verified: overrides.verified ?? true,
+  })
+}
+
 // ─── Booking Template seeds ──────────────────────────────────────────────────
 
 export async function seedBookingTemplate(

@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
 import { internal } from './_generated/api'
+import { OPERATOR_ROLE_SET } from './lib/auth'
 import { ALL_STAKEHOLDERS, HIERARCHY_LINKS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
@@ -370,15 +371,14 @@ export const seedResourceInventory = internalMutation({
   handler: async (ctx) => {
     // Instructors + DiveMasters: 1 Exclusive unit each
     for (const s of ALL_INSTRUCTORS) {
-      const resourceType = s.user.role === 'DiveMaster' ? 'Instructor' : 'Instructor'
       await ctx.db.insert('inventoryUnits', {
-        resourceType: s.user.role === 'DiveMaster' ? 'Instructor' : 'Instructor',
+        resourceType: 'Instructor' as const,
         resourceId: s.user.slug,
         displayName: s.user.name,
         capacityModel: 'Exclusive',
         totalUnits: 1,
         ownerId: s.user.slug,
-        ownerType: s.user.role === 'DiveMaster' ? 'DiveMaster' : 'Instructor',
+        ownerType: 'Instructor' as const,
       })
     }
 
@@ -497,7 +497,8 @@ export const seedStakeholderPreferences = internalMutation({
 
 // ── Seed Booking Templates (Quick Book defaults for operators) ───────
 
-const OPERATOR_ROLES = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
+// Re-use canonical OPERATOR_ROLE_SET from lib/auth
+const OPERATOR_ROLES = OPERATOR_ROLE_SET
 
 export const seedBookingTemplates = internalMutation({
   args: {},

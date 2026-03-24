@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
+import { Spinner } from '@/components/common/spinner'
 import { NotificationItem } from './notification-item'
 import type { NotificationDoc } from './notification-item'
 
@@ -94,12 +95,9 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {notifications === undefined && (
-          <p
-            className="text-sm text-center py-6"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Loading…
-          </p>
+          <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+            <Spinner />
+          </div>
         )}
         {notifications?.length === 0 && (
           <p

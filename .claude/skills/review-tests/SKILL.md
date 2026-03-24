@@ -13,10 +13,10 @@ When this skill is invoked, execute all steps in order — no questions, no prom
 
 | Flag | Behavior |
 |------|----------|
-| *(none)* | Vitest only (fast path) |
-| `--full` | Vitest + Playwright E2E |
+| *(none)* | Vitest + quality scan + QA health assessment (full default) |
+| `--full` | Above + Playwright E2E |
 | `--e2e` | Playwright E2E only |
-| `--quality` | Skip test execution, quality scan only (Phases 2–3) |
+| `--quality` | Skip test execution, quality scan + assessment only (Phases 2–3) |
 
 ---
 
@@ -143,7 +143,118 @@ Report distribution table.
 
 ---
 
-## Phase 3.5 — TDD Spec Generation
+## Phase 3.5a — QA Health Assessment
+
+Always runs. This is the core of the QA architect's report.
+
+### Test Pyramid Breakdown
+
+Run `npx vitest run --reporter=json` and classify each test file:
+
+| Classifier | Category |
+|---|---|
+| File in `tests/hardening/` | Hardening |
+| File in `tests/walkthrough/` | Walkthrough |
+| File in `tests/frontend/` | Contract |
+| File in `tests/perf/` | Performance |
+| File in `tests/a11y/` | Accessibility |
+| File in `tests/components/` | Component |
+| File uses `convexTest` or imports `convex-test` | Integration |
+| File uses `render` from `@testing-library` or `tests/helpers/render` | Component |
+| File in `src/lib/**/__tests__/` | Unit |
+| Everything else in `tests/` | Unit |
+
+Count passing tests per file from JSON output. Report:
+
+```
+Test Pyramid
+────────────
+Unit:        {N} tests ({pct}%)  — {files} files
+Integration: {N} tests ({pct}%)  — {files} files
+Component:   {N} tests ({pct}%)  — {files} files
+Hardening:   {N} tests ({pct}%)  — {files} files
+Contract:    {N} tests ({pct}%)  — {files} files
+Perf:        {N} tests ({pct}%)  — {files} files
+Security:    {N} tests ({pct}%)  — {files} files
+A11y:        {N} tests ({pct}%)  — {files} files
+E2E:         {N} tests ({pct}%)  — {files} files
+Total:       {N} tests
+
+⚠ Component at {pct}% (target: 15%)
+⚠ E2E at 0% (target: 5%)
+```
+
+### Untested Component Inventory
+
+Scan `src/components/**/*.tsx`. For each, search `tests/components/` for a matching test. Classify risk:
+
+- **HIGH RISK**: component file contains `useMutation` or `useAction` (writes data)
+- **MEDIUM RISK**: component file contains `onClick`, `onChange`, or `<form`
+- **LOW RISK**: pure display component
+
+```
+Untested Components ({N}/{total})
+─────────────────────────────────
+HIGH RISK (mutations/forms):
+  {path} — no test
+  ...
+
+MEDIUM RISK (interactive):
+  {path} — no test
+  ...
+```
+
+### Test Category Gaps
+
+| Category | Directory | Minimum | Status |
+|---|---|---|---|
+| Hardening | `tests/hardening/` | 3+ files | ✓ or ✗ |
+| Performance | `tests/perf/` | 1+ files | ✓ or ✗ |
+| Security | `tests/hardening/*sanitization*` or `*security*` | 1+ files | ✓ or ✗ |
+| Accessibility | `tests/a11y/` | 1+ files | ✓ or ✗ |
+| Frontend contracts | `tests/frontend/` | 1+ files | ✓ or ✗ |
+
+Missing categories → HIGH finding.
+
+### Data-Flow Gap Analysis
+
+For each `src/components/**/*.tsx` that imports `useMutation`:
+1. Extract mutation name (e.g., `api.bookings.status.cancelBooking`)
+2. Search `tests/` for a test that imports or references that mutation
+3. If no test → flag as data contract gap
+
+```
+Data-Flow Gaps ({N} mutations without contract tests)
+────────────────────────────────────────────────────
+  {component} → {mutation} — UNTESTED
+  ...
+```
+
+### Assessment Score
+
+```
+Assessment Score: {N}/100
+─────────────────────────
+  Pyramid balance:    {N}/25  (target: unit 30%, integration 45%, component 15%, other 10%)
+  Component coverage: {N}/25  (% of mutation-calling components with tests)
+  Category gaps:      {N}/25  (all 5 categories present = 25)
+  Data contracts:     {N}/25  (% of mutations with contract tests)
+```
+
+### H-Specs from Assessment
+
+For each HIGH RISK untested component and each data-flow gap, write an H-spec to TODO.md (same format as Phase 3.5b below). These H-specs are the **bridge to `/qa`** — run `/qa --from-assessment` to generate tests for them.
+
+### Cadence
+
+```
+Recommended: Run /review-tests --assessment weekly or before major releases.
+Last assessment: {date from most recent vault report, or 'never'}
+```
+
+---
+
+## Phase 3.5b — TDD Spec Generation
 
 For each **CRITICAL** and **HIGH** finding that is actionable (fixable, not just reportable):
 

@@ -1,10 +1,9 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import { getDateRange } from '../convex/reservationsMutations'
 import { testDate } from './helpers/dates'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 import {
   seedUser,
   seedBooking,
@@ -17,18 +16,6 @@ import {
 } from './fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
-}
 
 /** Seed a standard instructor + DC + unit + booking + session + reservation + bookingResource setup */
 async function seedAcceptScenario(

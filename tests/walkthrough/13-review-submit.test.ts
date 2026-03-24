@@ -9,20 +9,14 @@
  * 5. AvailabilitySnapshot updated in the same mutation as reservation write
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
+import { makeT, expectConvexError } from '../helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../../convex/**/*.ts'))
-}
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
@@ -87,14 +81,6 @@ async function seedInstructorUnit(ctx: Ctx, ownerId: string): Promise<Id<'invent
     totalUnits: 1,
     ownerId,
     ownerType: 'Instructor',
-  })
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
   })
 }
 

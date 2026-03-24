@@ -1,11 +1,8 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate, passportExpiry, dob } from '../helpers/dates'
 import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 /** Minimal valid contact payload for savePortalContact. */
 function makeContactArgs(token: string, overrides: Record<string, unknown> = {}) {
@@ -32,7 +29,7 @@ function makeContactArgs(token: string, overrides: Record<string, unknown> = {})
 
 describe('getPortalContext', () => {
   it('returns prefill data for new customer (no saved record)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: {
@@ -68,7 +65,7 @@ describe('getPortalContext', () => {
   })
 
   it('returns existing customer data when available', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { token } = await t.run(async (ctx: SeedCtx) => {
       const fixture = await seedPortalFixture(ctx, {
         booking: {
@@ -123,7 +120,7 @@ describe('getPortalContext', () => {
   })
 
   it('returns null for invalid token', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const context = await t.query(api.customers.getPortalContext, {
       token: 'invalid-token-xyz',
@@ -137,7 +134,7 @@ describe('getPortalContext', () => {
 
 describe('savePortalContact', () => {
   it('creates new customer record and sets profile.customerId', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { token, profileId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: {
@@ -182,7 +179,7 @@ describe('savePortalContact', () => {
   })
 
   it('updates existing customer record on second call', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { token, profileId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: {

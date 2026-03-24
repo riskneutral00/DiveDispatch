@@ -149,3 +149,19 @@ describe('Lookup maps', () => {
     }
   })
 })
+
+describe('Booking creation eligibility (isOrganizer gates QuickBookRail + createDraftShell)', () => {
+  it('exactly these 5 roles can create bookings', () => {
+    const keys = ORGANIZER_ROLES.map((r) => r.key).sort()
+    expect(keys).toEqual(
+      ['agent', 'dive-center', 'dive-hostel', 'dive-resort', 'liveaboard'],
+    )
+  })
+
+  it('exactly these 7 roles cannot create bookings', () => {
+    const keys = RESOURCE_ROLES.map((r) => r.key).sort()
+    expect(keys).toEqual(
+      ['boat', 'compressor', 'dive-master', 'dive-site', 'equipment', 'instructor', 'pool'],
+    )
+  })
+})

@@ -1,6 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { buildInstructorNameMap } from '../convex/bookings'
 import { testDate } from './helpers/dates'
@@ -12,8 +10,7 @@ import {
   seedBookingResource,
   type SeedCtx,
 } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Local thin wrapper for positional seedUser ─────────────────────────────
 
@@ -108,7 +105,7 @@ async function seedBookingWithResources(
 
 describe('buildInstructorNameMap', () => {
   it('returns empty map for empty slug list', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, [])
       return Object.fromEntries(map)
@@ -117,7 +114,7 @@ describe('buildInstructorNameMap', () => {
   })
 
   it('resolves known slugs to display names', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1'])
@@ -127,7 +124,7 @@ describe('buildInstructorNameMap', () => {
   })
 
   it('deduplicates slugs before querying', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['instructor-1', 'instructor-1', 'instructor-1'])
@@ -138,7 +135,7 @@ describe('buildInstructorNameMap', () => {
   })
 
   it('skips unknown slugs without error', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const entries = await t.run(async (ctx) => {
       const map = await buildInstructorNameMap(ctx, ['unknown-slug'])
       return Object.fromEntries(map)
@@ -147,7 +144,7 @@ describe('buildInstructorNameMap', () => {
   })
 
   it('resolves multiple slugs', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
       await seedTestUser(ctx, 'boat-owner-1', 'Boat')
@@ -165,7 +162,7 @@ describe('buildInstructorNameMap', () => {
 
 describe('listByOwner', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.bookings.listByOwner, { ownerId: 'dc-1', ownerType: 'DiveCenter' }),
@@ -173,7 +170,7 @@ describe('listByOwner', () => {
   })
 
   it('throws NOT_FOUND when user does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -182,7 +179,7 @@ describe('listByOwner', () => {
   })
 
   it('throws FORBIDDEN when caller slug does not match ownerId', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-2'))
 
     await expect(
@@ -192,7 +189,7 @@ describe('listByOwner', () => {
   })
 
   it('returns empty array when owner has no bookings', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-1'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -202,7 +199,7 @@ describe('listByOwner', () => {
   })
 
   it('returns CalendarBooking shape with correct fields', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
@@ -223,7 +220,7 @@ describe('listByOwner', () => {
   })
 
   it('scopes by ownerType — excludes mismatched ownerType', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { ownerType: 'Agent' })
@@ -236,7 +233,7 @@ describe('listByOwner', () => {
   })
 
   it('denormalizes instructorName from name map', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
@@ -250,7 +247,7 @@ describe('listByOwner', () => {
   })
 
   it('falls back to externalStakeholders when no in-system instructor', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', {
@@ -265,7 +262,7 @@ describe('listByOwner', () => {
   })
 
   it('sets customerName from first diver', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', {
@@ -284,7 +281,7 @@ describe('listByOwner', () => {
   })
 
   it('returns multiple bookings for the same owner, excludes other owners', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
@@ -303,7 +300,7 @@ describe('listByOwner', () => {
 
 describe('listByStatus', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.bookings.listByStatus, { status: 'Draft' }),
@@ -311,7 +308,7 @@ describe('listByStatus', () => {
   })
 
   it('throws NOT_FOUND when user does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -320,7 +317,7 @@ describe('listByStatus', () => {
   })
 
   it('returns empty array when no bookings match status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
@@ -333,7 +330,7 @@ describe('listByStatus', () => {
   })
 
   it('returns only caller bookings with matching status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
@@ -348,7 +345,7 @@ describe('listByStatus', () => {
   })
 
   it('does not return other owners bookings with same status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming' })
@@ -363,7 +360,7 @@ describe('listByStatus', () => {
   })
 
   it('works for resource role — uses by_instructorId index', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
@@ -378,7 +375,7 @@ describe('listByStatus', () => {
   })
 
   it('returns all statuses correctly — Completed', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Completed' })
@@ -397,7 +394,7 @@ describe('listByStatus', () => {
 
 describe('listByResource', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.bookings.listByResource, { resourceId: 'instructor-1', resourceType: 'Instructor' }),
@@ -405,7 +402,7 @@ describe('listByResource', () => {
   })
 
   it('throws NOT_FOUND when user does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
@@ -414,7 +411,7 @@ describe('listByResource', () => {
   })
 
   it('throws FORBIDDEN when caller slug does not match resourceId', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'instructor-2', 'Instructor'))
 
     await expect(
@@ -424,7 +421,7 @@ describe('listByResource', () => {
   })
 
   it('returns empty array when no bookings assigned to resource', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'instructor-1', 'Instructor'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
@@ -434,7 +431,7 @@ describe('listByResource', () => {
   })
 
   it('returns bookings where instructor is assigned', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' })
@@ -449,7 +446,7 @@ describe('listByResource', () => {
   })
 
   it('works for Boat resource type', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'boat-owner-1', 'Boat')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
@@ -463,7 +460,7 @@ describe('listByResource', () => {
   })
 
   it('works for Equipment resource type', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'em-1', 'Equipment')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', equipmentManagerId: 'em-1' })
@@ -476,7 +473,7 @@ describe('listByResource', () => {
   })
 
   it('works for Pool resource type', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'pool-1', 'Pool')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', poolId: 'pool-1' })
@@ -489,7 +486,7 @@ describe('listByResource', () => {
   })
 
   it('works for Compressor resource type', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'comp-1', 'Compressor')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft', compressorId: 'comp-1' })
@@ -502,7 +499,7 @@ describe('listByResource', () => {
   })
 
   it('denormalizes boatName from name map', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'boat-owner-1', 'Boat')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', boatId: 'boat-owner-1' })
@@ -519,7 +516,7 @@ describe('listByResource', () => {
 
 describe('myDashboard', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.bookings.myDashboard),
@@ -527,7 +524,7 @@ describe('myDashboard', () => {
   })
 
   it('throws NOT_FOUND when user does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -536,7 +533,7 @@ describe('myDashboard', () => {
   })
 
   it('returns empty dashboard for operator with no bookings', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -546,7 +543,7 @@ describe('myDashboard', () => {
   })
 
   it('operator role: returns Draft, Upcoming, and Completed in bookings (excludes Cancelled)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1', 'DiveCenter')
       await seedBookingWithResources(ctx, 'dc-1', { status: 'Draft' })
@@ -567,7 +564,7 @@ describe('myDashboard', () => {
   })
 
   it('operator role: returns empty requests array', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
@@ -577,7 +574,7 @@ describe('myDashboard', () => {
   })
 
   it('resource role: returns calendar bookings from confirmed assignments', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
       await seedInventoryUnit(ctx, { ownerId: 'instructor-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'instructor-1 unit' })
@@ -592,7 +589,7 @@ describe('myDashboard', () => {
   })
 
   it('resource role: returns pending reservations as requests', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId } = await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
@@ -647,7 +644,7 @@ describe('myDashboard', () => {
   })
 
   it('resource role: deduplicates dates across multiple sessions on same day', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
@@ -693,7 +690,7 @@ describe('myDashboard', () => {
   })
 
   it('resource role: skips requests for non-existent bookings', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
@@ -727,7 +724,7 @@ describe('myDashboard', () => {
   })
 
   it('resource role: only surfaces PendingAcceptance reservations (not Confirmed)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'instructor-1', 'Instructor')
@@ -761,7 +758,7 @@ describe('myDashboard', () => {
   })
 
   it('DiveMaster role: uses by_instructorId index same as Instructor', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dm-1', 'DiveMaster')
       await seedInventoryUnit(ctx, { ownerId: 'dm-1', resourceType: 'Instructor', ownerType: 'Instructor', displayName: 'dm-1 unit' })

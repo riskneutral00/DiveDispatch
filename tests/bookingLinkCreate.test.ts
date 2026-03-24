@@ -5,17 +5,10 @@
  * a customerProfiles row alongside the link.
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { seedUser, seedBooking, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 

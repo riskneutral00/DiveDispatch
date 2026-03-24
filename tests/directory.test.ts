@@ -1,13 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { getBannedSlugSet } from '../convex/directory'
-
-const modules = import.meta.glob('../convex/**/*.ts')
-
 import type { Id } from '../convex/_generated/dataModel'
 import { type SeedCtx } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -61,7 +57,7 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
 
 describe('getBannedSlugSet', () => {
   it('returns empty set when no bans exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const result = await t.run(async (ctx) => {
       const set = await getBannedSlugSet(ctx.db, 'some-slug')
       return [...set]
@@ -70,7 +66,7 @@ describe('getBannedSlugSet', () => {
   })
 
   it('includes slugs where caller is the banner', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await ctx.db.insert('bans', { bannerSlug: 'caller', bannedSlug: 'target-a', createdAt: 1 })
     })
@@ -83,7 +79,7 @@ describe('getBannedSlugSet', () => {
   })
 
   it('includes slugs where caller is the banned party', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await ctx.db.insert('bans', { bannerSlug: 'aggressor', bannedSlug: 'caller', createdAt: 1 })
     })
@@ -96,7 +92,7 @@ describe('getBannedSlugSet', () => {
   })
 
   it('unions both directions and deduplicates', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await ctx.db.insert('bans', { bannerSlug: 'caller', bannedSlug: 'a', createdAt: 1 })
       await ctx.db.insert('bans', { bannerSlug: 'b', bannedSlug: 'caller', createdAt: 2 })
@@ -115,7 +111,7 @@ describe('getBannedSlugSet', () => {
 
 describe('listByRole basic listing', () => {
   it('returns all instructors with display fields when caller has no bans', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -142,14 +138,14 @@ describe('listByRole basic listing', () => {
   })
 
   it('returns empty array when no users exist for the role', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(0)
   })
 
   it('skips users whose profile row does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorUser(ctx, 'jane-def')
@@ -163,7 +159,7 @@ describe('listByRole basic listing', () => {
   })
 
   it('works unauthenticated — no ban filtering applied', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -180,7 +176,7 @@ describe('listByRole basic listing', () => {
 
 describe('listByRole ban filtering', () => {
   it('hides a stakeholder that the caller has banned', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -199,7 +195,7 @@ describe('listByRole ban filtering', () => {
   })
 
   it('hides a stakeholder who has banned the caller (bidirectional)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -219,7 +215,7 @@ describe('listByRole ban filtering', () => {
   })
 
   it('hides all banned stakeholders when multiple bans exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
@@ -246,7 +242,7 @@ describe('listByRole ban filtering', () => {
 
 describe('listByRole location filter', () => {
   it('filters by placeName (case-insensitive)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -260,7 +256,7 @@ describe('listByRole location filter', () => {
   })
 
   it('filters by country', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -276,7 +272,7 @@ describe('listByRole location filter', () => {
   })
 
   it('filters by both placeName and country', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -292,7 +288,7 @@ describe('listByRole location filter', () => {
   })
 
   it('returns empty when no match for placeName', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
@@ -307,7 +303,7 @@ describe('listByRole location filter', () => {
 
 describe('listByRole language filter', () => {
   it('filters by language (case-insensitive)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -323,7 +319,7 @@ describe('listByRole language filter', () => {
   })
 
   it('returns only stakeholders that speak German', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
@@ -339,7 +335,7 @@ describe('listByRole language filter', () => {
   })
 
   it('returns empty when no stakeholder speaks the requested language', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')

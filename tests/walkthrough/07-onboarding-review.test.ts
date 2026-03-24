@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { MutationCtx } from '../../convex/_generated/server'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -32,7 +29,7 @@ async function seedUser(
 
 describe('07: onboarding review — completeOnboarding mutation', () => {
   it('completeOnboarding sets onboardingComplete to true', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const userId = await t.run(async (ctx) =>
       seedUser(ctx, 'dc-complete-review', { name: 'Review DC' }),
     )
@@ -46,7 +43,7 @@ describe('07: onboarding review — completeOnboarding mutation', () => {
   })
 
   it('completeOnboarding rejects unauthenticated caller', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.mutation(api.users.completeOnboarding, {}),
@@ -54,7 +51,7 @@ describe('07: onboarding review — completeOnboarding mutation', () => {
   })
 
   it('completeOnboarding rejects user with blank name', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) =>
       seedUser(ctx, 'dc-blank-name', { name: '' }),
     )

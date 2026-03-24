@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -15,12 +16,26 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return NextResponse.next()
 
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
 
   if (!userId) {
     const signInUrl = new URL('/sign-in', req.url)
     signInUrl.searchParams.set('redirect_url', req.url)
     return NextResponse.redirect(signInUrl)
+  }
+
+  // Server-side redirect: /dashboard → /{slug}/{roleSlug}/dashboard
+  // Eliminates the client-side Convex query that hangs when tokenIdentifiers are out of sync.
+  if (req.nextUrl.pathname === '/dashboard') {
+    const meta = sessionClaims?.publicMetadata as { slug?: string; role?: string } | undefined
+    const slug = meta?.slug
+    const role = meta?.role as ClerkRole | undefined
+    const roleConfig = role ? ROLE_BY_CLERK_ROLE[role] : undefined
+
+    if (slug && roleConfig) {
+      return NextResponse.redirect(new URL(`/${slug}/${roleConfig.key}/dashboard`, req.url))
+    }
+    // No metadata — fall through to client-side trampoline as fallback
   }
 
   return NextResponse.next()

@@ -1,8 +1,7 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate } from '../helpers/dates'
+import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import {
   seedUser as _seedUser,
   seedBooking as _seedBooking,
@@ -11,20 +10,6 @@ import {
 } from '../fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
-}
 
 async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'DiveCenter') {
   await _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })

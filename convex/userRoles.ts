@@ -3,21 +3,7 @@ import { mutation, query } from './_generated/server'
 import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-
-const stakeholderType = v.union(
-  v.literal('DiveCenter'),
-  v.literal('Agent'),
-  v.literal('Instructor'),
-  v.literal('Boat'),
-  v.literal('Equipment'),
-  v.literal('Pool'),
-  v.literal('Compressor'),
-  v.literal('DiveMaster'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
-  v.literal('DiveSite'),
-)
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 // ─── Helpers (importable by other modules) ──────────────────────────────────
 

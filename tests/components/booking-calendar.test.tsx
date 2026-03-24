@@ -117,3 +117,35 @@ describe('BookingCalendar — past vs today/future click behavior', () => {
     expect(spy).toHaveBeenCalledWith(FUTURE_DATE)
   })
 })
+
+describe('BookingCalendar — droppable conditional rendering', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(anchorDate)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('renders without crash when droppableEnabled=false (no DndContext)', () => {
+    // This is the critical test — PlainDateCell must not call useDroppable
+    const { getByTestId } = render(
+      <BookingCalendar onDateClick={vi.fn()} droppableEnabled={false} />,
+    )
+    // Calendar renders normally — date cells exist
+    expect(getByTestId(`cell-${ANCHOR}`)).toBeTruthy()
+    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeTruthy()
+  })
+
+  it('renders without crash when droppableEnabled=true inside DndContext', async () => {
+    const { DndContext } = await import('@dnd-kit/core')
+    const { getByTestId } = render(
+      <DndContext>
+        <BookingCalendar onDateClick={vi.fn()} droppableEnabled={true} />
+      </DndContext>,
+    )
+    expect(getByTestId(`cell-${ANCHOR}`)).toBeTruthy()
+    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeTruthy()
+  })
+})

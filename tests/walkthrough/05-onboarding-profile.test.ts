@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { MutationCtx } from '../../convex/_generated/server'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -35,7 +32,7 @@ async function seedUser(ctx: MutationCtx, slug: string) {
 
 describe('05: onboarding profile step — save mutation', () => {
   it('save mutation persists associations array', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'dc-assoc'))
 
     await t
@@ -62,7 +59,7 @@ describe('05: onboarding profile step — save mutation', () => {
   })
 
   it('save mutation persists languages', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'dc-langs'))
 
     await t
@@ -89,7 +86,7 @@ describe('05: onboarding profile step — save mutation', () => {
   })
 
   it('save mutation persists OW/AOW day defaults', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'dc-days'))
 
     await t

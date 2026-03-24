@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-
 import { seedUser } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 describe('users.me query', () => {
   it('returns null when authenticated but no user record exists', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     // Auth identity set, but no user row inserted
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|ghost-user' })
@@ -19,7 +15,7 @@ describe('users.me query', () => {
   })
 
   it('returns user when record exists with matching tokenIdentifier', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, { slug: 'existing-dc', tokenIdentifier: 'clerk|existing-dc', role: 'DiveCenter' }))
 
     const result = await t
@@ -32,7 +28,7 @@ describe('users.me query', () => {
   })
 
   it('returns null when unauthenticated', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     // No identity at all
     const result = await t.query(api.users.me, {})
 

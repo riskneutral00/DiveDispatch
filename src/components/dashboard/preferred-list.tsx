@@ -4,36 +4,46 @@ import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
+import type { DirectoryEntry } from '../../../convex/directory'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { Spinner } from '@/components/common/spinner'
 
-interface Props {
-  slugs: string[]
-  onChange: (slugs: string[]) => void
+// ─── Badge helper ────────────────────────────────────────────────────────────
+
+const badgeStyle = {
+  background: 'var(--color-glass-bg-elevated)',
+  color: 'var(--color-text-secondary)',
+} as const
+
+function Badge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="ml-2 text-xs px-1.5 py-0.5 rounded shrink-0" style={badgeStyle}>
+      {children}
+    </span>
+  )
 }
 
-export function PreferredVenueList({ slugs, onChange }: Props) {
+// ─── Core list (data-driven — no hooks) ──────────────────────────────────────
+
+interface CoreProps {
+  slugs: string[]
+  onChange: (slugs: string[]) => void
+  entries: DirectoryEntry[]
+  label: string
+  emptyNoun: string
+  renderBadge?: (entry: DirectoryEntry) => React.ReactNode
+}
+
+function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderBadge }: CoreProps) {
   const [search, setSearch] = useState('')
 
-  const pools = useQuery(api.directory.listByRole, { role: 'Pool' })
-  const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' })
-
-  if (pools === undefined || diveSites === undefined) {
-    return (
-      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
-        <Spinner />
-      </div>
-    )
-  }
-
-  const allVenues = [...(pools ?? []), ...(diveSites ?? [])]
-  const slugToEntry = Object.fromEntries(allVenues.map((e) => [e.slug, e]))
+  const slugToEntry = Object.fromEntries(entries.map((e) => [e.slug, e]))
 
   const trimmed = search.trim().toLowerCase()
   const searchResults = trimmed
-    ? allVenues.filter(
+    ? entries.filter(
         (e) =>
           !slugs.includes(e.slug) &&
           (e.name.toLowerCase().includes(trimmed) ||
@@ -70,7 +80,7 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
     <div className="space-y-3">
       <div className="relative">
         <GlassInput
-          label="Add venue"
+          label={label}
           placeholder="Search by name or city…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -97,12 +107,7 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
                 <span className="ml-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                   {entry.placeName}
                 </span>
-                <span
-                  className="ml-2 text-xs px-1.5 py-0.5 rounded"
-                  style={{ background: 'var(--color-glass-bg-elevated)', color: 'var(--color-text-secondary)' }}
-                >
-                  {entry.role === 'Pool' ? 'Pool' : 'Dive Site'}
-                </span>
+                {renderBadge?.(entry)}
               </button>
             ))}
           </div>
@@ -111,7 +116,7 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
 
       {slugs.length === 0 ? (
         <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          No preferred venues added yet.
+          No preferred {emptyNoun} added yet.
         </p>
       ) : (
         <div className="space-y-2">
@@ -131,14 +136,7 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
                       <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
                         {entry?.name ?? slug}
                       </p>
-                      {entry && (
-                        <span
-                          className="text-xs px-1.5 py-0.5 rounded shrink-0"
-                          style={{ background: 'var(--color-glass-bg-elevated)', color: 'var(--color-text-secondary)' }}
-                        >
-                          {entry.role === 'Pool' ? 'Pool' : 'Dive Site'}
-                        </span>
-                      )}
+                      {entry && renderBadge?.(entry)}
                     </div>
                     {entry?.placeName && (
                       <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
@@ -153,7 +151,7 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
                     <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
                       <ChevronDown size={16} />
                     </GlassButton>
-                    <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label="Remove venue">
+                    <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label={`Remove ${emptyNoun.replace(/s$/, '')}`}>
                       <Trash2 size={16} />
                     </GlassButton>
                   </div>
@@ -164,5 +162,103 @@ export function PreferredVenueList({ slugs, onChange }: Props) {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Single-role wrapper (4 of 5 use cases) ─────────────────────────────────
+
+interface SingleRoleProps {
+  slugs: string[]
+  onChange: (slugs: string[]) => void
+  role: string
+  label: string
+  emptyNoun: string
+  renderBadge?: (entry: DirectoryEntry) => React.ReactNode
+}
+
+function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, renderBadge }: SingleRoleProps) {
+  const entries = useQuery(api.directory.listByRole, { role })
+
+  if (entries === undefined) {
+    return (
+      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+        <Spinner />
+      </div>
+    )
+  }
+
+  return (
+    <PreferredListCore
+      slugs={slugs}
+      onChange={onChange}
+      entries={entries ?? []}
+      label={label}
+      emptyNoun={emptyNoun}
+      renderBadge={renderBadge}
+    />
+  )
+}
+
+// ─── Exported pre-configured variants ────────────────────────────────────────
+
+interface ListProps {
+  slugs: string[]
+  onChange: (slugs: string[]) => void
+}
+
+export function PreferredInstructorList(props: ListProps) {
+  return <PreferredSingleRoleList {...props} role="Instructor" label="Add instructor" emptyNoun="instructors" />
+}
+
+export function PreferredEquipmentList(props: ListProps) {
+  return <PreferredSingleRoleList {...props} role="Equipment" label="Add equipment provider" emptyNoun="equipment providers" />
+}
+
+export function PreferredBoatList(props: ListProps) {
+  return (
+    <PreferredSingleRoleList
+      {...props}
+      role="Boat"
+      label="Add boat"
+      emptyNoun="boats"
+      renderBadge={(e) => e.boatType ? <Badge>{e.boatType}</Badge> : null}
+    />
+  )
+}
+
+export function PreferredCompressorList(props: ListProps) {
+  return (
+    <PreferredSingleRoleList
+      {...props}
+      role="Compressor"
+      label="Add compressor"
+      emptyNoun="compressors"
+      renderBadge={(e) => e.gasMixes?.length ? <Badge>{e.gasMixes.join(', ')}</Badge> : null}
+    />
+  )
+}
+
+export function PreferredVenueList(props: ListProps) {
+  const pools = useQuery(api.directory.listByRole, { role: 'Pool' })
+  const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' })
+
+  if (pools === undefined || diveSites === undefined) {
+    return (
+      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+        <Spinner />
+      </div>
+    )
+  }
+
+  const allVenues = [...(pools ?? []), ...(diveSites ?? [])]
+
+  return (
+    <PreferredListCore
+      {...props}
+      entries={allVenues}
+      label="Add venue"
+      emptyNoun="venues"
+      renderBadge={(e) => <Badge>{e.role === 'Pool' ? 'Pool' : 'Dive Site'}</Badge>}
+    />
   )
 }

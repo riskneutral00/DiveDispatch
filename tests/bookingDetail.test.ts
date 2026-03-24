@@ -1,6 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { logBookingChange } from '../convex/bookingAuditLog'
 import { testDate, testToken } from './helpers/dates'
@@ -15,8 +13,7 @@ import {
   seedCustomerProfile,
   type SeedCtx,
 } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Local thin wrapper ──────────────────────────────────────────────────────
 // The shared seedReservation requires a sessionId; this wrapper auto-creates
@@ -64,7 +61,7 @@ async function seedTestUser(
 describe('getBookingDetail', () => {
   // ── test 1: returns all stakeholder names (in-system) ──────────────────────
   it('returns all stakeholder names for in-system IDs', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -122,7 +119,7 @@ describe('getBookingDetail', () => {
 
   // ── test 2: returns external stakeholder names ─────────────────────────────
   it('returns external stakeholder names with isExternal=true', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -175,7 +172,7 @@ describe('getBookingDetail', () => {
 
   // ── test 3: returns all customer profiles with portal completion status ─────
   it('returns all customer profiles with portal completion status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -209,7 +206,7 @@ describe('getBookingDetail', () => {
 
   // ── test 4: returns sessions with inventory info ───────────────────────────
   it('returns sessions with date, time, and inventory unit display name', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -261,7 +258,7 @@ describe('getBookingDetail', () => {
 
   // ── test 5: returns reservations with status and stakeholder name ──────────
   it('returns reservations with status, resource name, and stakeholder name', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -309,7 +306,7 @@ describe('getBookingDetail', () => {
 
   // ── test 6: returns audit log ──────────────────────────────────────────────
   it('returns audit log entries sorted by timestamp descending', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -363,7 +360,7 @@ describe('getBookingDetail', () => {
 
   // ── test 7: overview fields present ───────────────────────────────────────
   it('returns overview fields: status, dates, activityType, operatorName', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -400,7 +397,7 @@ describe('getBookingDetail', () => {
 
   // ── test 8: stakeholders include isExternal flag ──────────────────────────
   it('stakeholders have isExternal flag distinguishing in-system vs external', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -446,7 +443,7 @@ describe('getBookingDetail', () => {
 
   // ── test 9: reservation status values ────────────────────────────────────
   it('returns reservation with PendingAcceptance status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -490,7 +487,7 @@ describe('getBookingDetail', () => {
 
   // ── test 10: customer portal status shown via submittedAt ─────────────────
   it('customer profiles reflect portal completion via submittedAt', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     const submittedTime = Date.now()
     await t.run(async (ctx) => {
@@ -524,7 +521,7 @@ describe('getBookingDetail', () => {
 
   // ── test 11: auditLog array present ──────────────────────────────────────
   it('auditLog field is always present (empty if no entries)', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')
@@ -557,7 +554,7 @@ describe('getBookingDetail', () => {
 
   // ── test 12: stakeholder reservation status propagated ────────────────────
   it('stakeholder reservationStatus reflects their inventory unit status', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     let bookingId: Id<'bookings'>
     await t.run(async (ctx) => {
       await seedTestUser(ctx, 'dc-1')

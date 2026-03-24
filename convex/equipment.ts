@@ -1,7 +1,11 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, getAuthUser } from './lib/auth'
-import { checkHasRole } from './userRoles'
+import {
+  profileMine,
+  profileByUserId,
+  profileUpdate,
+  profileCreate,
+} from './lib/profileHelpers'
 
 export const create = mutation({
   args: {
@@ -16,18 +20,8 @@ export const create = mutation({
     focusedLanguages: v.array(v.string()),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
-  handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) throw new ConvexError({ code: 'FORBIDDEN' })
-
-    const existing = await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-    if (existing) return existing._id
-
-    return await ctx.db.insert('equipment', { ...args, userId: user._id, verified: false })
-  },
+  handler: async (ctx, args) =>
+    profileCreate(ctx, args, 'equipment', 'Equipment', { verified: false }),
 })
 
 export const update = mutation({
@@ -43,38 +37,16 @@ export const update = mutation({
     focusedLanguages: v.optional(v.array(v.string())),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
-  handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-
-    const profile = await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
-
-    await ctx.db.patch(profile._id, args)
-  },
+  handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment'),
 })
 
 export const byUserId = query({
   args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
-      .unique()
-  },
+  handler: async (ctx, args) =>
+    profileByUserId(ctx, args.userId, 'equipment'),
 })
 
 export const mine = query({
   args: {},
-  handler: async (ctx) => {
-    const user = await getAuthUser(ctx)
-    if (!user) return null
-
-    return await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-  },
+  handler: async (ctx) => profileMine(ctx, 'equipment'),
 })

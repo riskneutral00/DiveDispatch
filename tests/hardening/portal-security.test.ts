@@ -1,27 +1,12 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../../convex/lib/portal'
 import { Id } from '../../convex/_generated/dataModel'
 import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
 import { passportExpiry, dob } from '../helpers/dates'
+import { makeT, expectConvexError } from '../helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
-}
 
 // ─── L9-08: Token Lifecycle ──────────────────────────────────────────────────
 

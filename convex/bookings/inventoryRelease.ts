@@ -7,7 +7,7 @@
 import { ConvexError } from 'convex/values'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
-import type { VacatedReason } from './state-machine'
+import type { VacatedReason } from './stateMachine'
 
 /** Restore availability snapshot when a reservation is released. */
 export async function restoreSnapshotUnits(

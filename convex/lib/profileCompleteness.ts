@@ -1,9 +1,8 @@
-// Shared profile completeness check — used by getOnboardingStatus query
-// and createDraftShell mutation for server-side booking gate.
+// Shared profile completeness check — used by getOnboardingStatus query,
+// createDraftShell mutation, and getAllRolesCompleteness query.
 
-const OPERATOR_ROLES = new Set([
-  'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel',
-])
+import type { Id } from '../_generated/dataModel'
+import { OPERATOR_ROLE_SET as OPERATOR_ROLES } from './auth'
 
 export async function checkProfileCompleteness(
   ctx: { db: any },
@@ -99,4 +98,41 @@ export async function checkProfileCompleteness(
   const percentage = Math.round((filled / total) * 100)
 
   return { percentage, incomplete }
+}
+
+/**
+ * Checks profile completeness across ALL of a user's roles.
+ * Returns allComplete: true only when every role is at 100%.
+ * Used by the booking gate and the profile completion banner.
+ */
+export async function checkAllRolesCompleteness(
+  ctx: { db: any },
+  userId: Id<'users'>,
+): Promise<{
+  allComplete: boolean
+  roles: Array<{ role: string; percentage: number; incomplete: string[] }>
+}> {
+  const user = await ctx.db.get(userId)
+  if (!user) return { allComplete: true, roles: [] }
+
+  const userRoles = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId', (q: any) => q.eq('userId', userId))
+    .collect()
+
+  // Fall back to primary role if no userRoles rows exist
+  const rolesToCheck = userRoles.length > 0
+    ? userRoles.map((r: any) => r.role as string)
+    : [user.role as string]
+
+  const roles: Array<{ role: string; percentage: number; incomplete: string[] }> = []
+  let allComplete = true
+
+  for (const role of rolesToCheck) {
+    const result = await checkProfileCompleteness(ctx, { _id: user._id, slug: user.slug, role })
+    roles.push({ role, ...result })
+    if (result.percentage < 100) allComplete = false
+  }
+
+  return { allComplete, roles }
 }

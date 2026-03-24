@@ -11,36 +11,141 @@ Run this before ending a session. No questions, no prompts — just execute all 
 
 ---
 
+## Performance Rules
+
+**Minimize tool-call rounds.** Every round adds LLM thinking latency. Target ≤ 5 rounds total.
+
+1. **Batch bash commands** with `&&` — never run `git status`, `git diff`, `git log` as separate tool calls.
+2. **Parallel tool calls** — Jobs 2/3/4 write to different files. Fire all writes in ONE response after Job 1.
+3. **Skip reads when overwriting** — Session file is always overwritten. Don't read it first.
+4. **Single NLM call** — chain all `nlm source add` with `&&` in one Bash call.
+
+### Ideal execution shape (6 rounds max, usually 5)
+
+```
+Round 0: Bash(git status --porcelain + git log --diff-filter=D --name-only -20) → classify untracked
+         If ambiguous files exist, prompt once. Otherwise silent.
+Round 1: Bash(git status && git diff && git diff --cached && git log --oneline -5)
+         + Read(MEMORY.md) + Read(active thread) + Read(TODO.md)
+         + Read(Lessons.md tail) ← only if lesson needed
+Round 2: Bash(rm -rf [ghosts/stale] && git add <bucket1> && git commit ... && git add <bucket2> && git commit ...)
+Round 3: Bash(session file heredoc) + Bash(lessons append) + Bash(TODO sed) + Write(thread) + Edit(MEMORY.md)
+         ← all parallel, all write different files
+Round 4: Bash(nlm source add ... && nlm source add ...)
+Round 5: Print output
+```
+
+If no untracked files, skip Round 0. If no git changes, skip Round 1's diff and Round 2 entirely. If no lessons, drop that from Round 3.
+
+---
+
 ## Instructions
 
-Run all five jobs in order. Each job is independent — skip silently if nothing to do.
+### Job 0: Untracked File Triage
 
-### Job 1: Git Commit (DiveDispatch)
+Run before Job 1. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`), skip this job entirely.
+
+**Round 0** — single Bash call:
+```bash
+git status --porcelain | grep '^??' | cut -c4- && echo '---RECENT-DELS---' && git log --diff-filter=D --name-only --pretty=format: -20 | sort -u
+```
+
+**Classify each untracked path** (first match wins):
+
+| Bucket | Detection | Action | Prompt? |
+|--------|-----------|--------|---------|
+| **Ghost** | Path (or parent dir) appears in recent deletions list | `rm -rf` | No |
+| **Rename** | Same dir has a `D`-status tracked file with similar name (e.g., `auto-advance.ts` → `autoAdvance.ts`) | Stage normally — git detects rename | No |
+| **Convention** | Matches project patterns: `src/**/*.tsx`, `src/lib/**/*.ts`, `tests/**/*.test.*`, `convex/**/*.ts`, `e2e/**/*.spec.ts`, `.claude/skills/*/SKILL.md` | Stage normally | No |
+| **Ephemeral** | Matches .gitignore patterns that somehow leaked | Skip + note in output | No |
+| **Stale duplicate** | Numbered suffix alongside canonical file (e.g., `skill 2.md` next to `SKILL.md`) | `rm -f` | No |
+| **Ambiguous** | None of the above | Prompt once | **Yes** |
+
+**If Bucket F (Ambiguous) is non-empty** — one prompt:
+```
+⚠ N untracked files need triage:
+  path/file.ts — [reason it's ambiguous]
+  path/other.ts — [reason]
+Commit all / Delete all / Let me specify?
+```
+Then execute the user's choice.
+
+**Merge deletions into Round 2** — the `rm -rf` calls go at the start of the commit Bash call.
+
+### Job 1: Smart-Batch Git Commit (DiveDispatch)
 
 Working directory: `~/Desktop/DiveDispatch`
 
-1. `git status` — if no changes (staged, unstaged, or untracked), skip this job entirely.
-2. `git diff` + `git diff --cached` to understand what changed.
-3. `git add -A` to stage everything.
-4. Unstage secrets and ephemeral files — run `git reset HEAD` on any of these if present:
-   - `playwright-report/`
-   - `test-results/`
-   - `.env*`
-   - `credentials*.json`
-   - `*.pem`
-   - `*.key`
-5. `git log --oneline -10` to match the repo's commit message style (conventional commits: `feat:`, `fix:`, `refactor:`, etc.).
-6. Generate a commit message: conventional prefix, concise "why" not "what", 1-2 sentences.
-7. Commit with `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>` trailer. Use HEREDOC format.
-8. Record the short hash, message, and file count for output.
+Matt works across multiple terminals on different tickets. **Never lump unrelated changes into one commit.** Classify files into logical groups and commit each group separately.
+
+**Round 1** — single Bash call:
+```bash
+git status && git diff --stat && git diff --cached --stat && git log --oneline -5
+```
+If no changes, skip to Jobs 2–5.
+
+**Round 2** — classify → chain commits in a single Bash call.
+
+#### Phase A: Classify into domain buckets
+
+Read `git status --porcelain` output. Assign each file to exactly one bucket. **First match wins.**
+
+| Pri | Bucket | Path patterns | Default prefix |
+|-----|--------|--------------|----------------|
+| 0 | **Renames** | `D` + `??` pair in same dir, similar basename | `refactor:` |
+| 1 | **Tooling** | `.claude/**`, `.gitignore`, `scripts/**` | `chore:` |
+| 2 | **Infra** | `package.json`, `package-lock.json`, `convex/_generated/**` | `chore:` |
+| 3 | **Booking backend** | `convex/bookings/**`, `convex/availability.ts`, `convex/bookingDraftMutations.ts` | varies |
+| 4 | **Backend (other)** | `convex/**` (everything else) | varies |
+| 5 | **Booking UI** | `src/components/booking/**`, `src/lib/booking/**` | varies |
+| 6 | **Dashboard UI** | `src/components/dashboard/**`, `src/components/dashboards/**` | varies |
+| 7 | **UI (other)** | `src/components/**`, `src/lib/**`, `src/app/**` | varies |
+| 8 | **E2E** | `e2e/**` | `test:` |
+| 9 | **Tests** | `tests/**`, `src/**/__tests__/**` | `test:` |
+
+**Always exclude** from staging: `.env*`, `credentials*.json`, `*.pem`, `*.key`, `playwright-report/`, `test-results/`
+
+#### Phase B: Merge & pair
+
+1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename. If exactly one bucket has the match, merge the test there. Unpaired tests stay in Tests bucket.
+2. **Cross-cutting files:**
+   - `convex/_generated/api.d.ts` → first backend bucket
+   - `package.json` / `package-lock.json` → Infra, unless only 1 other bucket exists (merge there)
+   - Seed cluster (`seed.ts`, `seedFixture.ts`, `seed-clerk.ts`, `e2e/helpers/seed.ts`) → merge into a backend bucket if one exists, otherwise own bucket
+3. **Tiny buckets** — if a bucket has only 1 modified (not new) file, merge into nearest same-domain bucket (`convex/` → any backend, `src/` → any UI)
+4. **Cap at 5 buckets** — if more, merge smallest into nearest neighbor until ≤5
+5. **If only 1 bucket remains** — single commit, same as legacy behavior
+
+#### Phase C: Commit chain
+
+Commit order: **Tooling → Infra → Backend → UI → Tests**
+
+Never `git add -A`. Stage specific files per bucket. All commits in **one Bash call**, chained with `&&`:
+
+```bash
+git add <bucket1-files> && git commit -m "$(cat <<'EOF'
+type: scope description
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)" && \
+git add <bucket2-files> && git commit -m "$(cat <<'EOF'
+type: scope description
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+Commit message per bucket: conventional prefix, concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
 
 ### Job 2: Vault Observations + Session File (DiveVault)
 
 Vault path: `~/Desktop/DiveVault/`
 
-> **Important:** DiveVault is outside the project directory. The `Write` and `Edit` tools may fail on external paths. For ALL file operations under `~/Desktop/DiveVault/`, use `Bash` with heredoc writes (`cat <<'EOF' > path`) instead of the Write tool, and `sed -i ''` or full rewrites via Bash instead of the Edit tool.
+> **Important:** DiveVault is outside the project directory. Use `Bash` with heredoc writes for ALL vault file operations.
 
-1. Scan the conversation for vault-worthy items. Categories per the global CLAUDE.md routing table:
+1. Scan conversation for vault-worthy items per the routing table:
 
    | What | Where |
    |---|---|
@@ -53,84 +158,68 @@ Vault path: `~/Desktop/DiveVault/`
    | Risk Neutral strategy/vision | `RiskNeutral/Strategy/*.md` (update) |
    | Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
 
-2. If nothing vault-worthy was discussed (besides the session file), skip observations but still write the session file.
-3. For each observation:
-   - Read the target file first to preserve existing structure and check for duplicates.
-   - If the observation already exists (same idea, same location), skip it.
-   - Match sibling file conventions:
-     - **Lessons:** Dated subsection (`## Title — YYYY-MM-DD`), with cross-ref line (`*→ RULES.md Phase N, Rule N · PatternLibrary: slug*`), then subsections: what happened, root cause, the fix, rule.
-     - **Patterns:** Sections: `## The smell`, `## Why it's a problem`, `## The fix`, `## Prevention checklist`, `## Where this came from`.
-4. Always write today's session file (`Sessions/YYYY-MM-DD.md`) — this is the minimum vault output. Overwrite if exists (same-day idempotency). Use this format:
+2. Session file is always written (overwrite). **Do NOT read it first.**
+3. For observations that append (Lessons, Patterns): read the tail in Round 1 to check for duplicates and match format.
+4. Fire all vault writes as **parallel Bash calls** in Round 3.
 
-   ```
-   # Session: YYYY-MM-DD — <Title>
-   **Date:** YYYY-MM-DD
+   - **Lessons format:** `## Title — YYYY-MM-DD` with subsections: what happened, root cause, the fix, rule. Cross-ref line.
+   - **Patterns format:** `## The smell`, `## Why it's a problem`, `## The fix`, `## Prevention checklist`, `## Where this came from`.
+   - **Session format:**
+     ```
+     # Session: YYYY-MM-DD — <Title>
+     **Date:** YYYY-MM-DD
 
-   ## What Happened
-   [2-3 paragraph summary — replace previous content entirely]
+     ## What Happened
+     [2-3 paragraph summary]
 
-   ## Key Decisions
-   [Bulleted list]
+     ## Key Decisions
+     [Bulleted list]
 
-   ## Files Modified
-   [Full paths]
+     ## Files Modified
+     [Full paths]
 
-   ## Resume Point
-   **Next action:** [Specific enough for a fresh session to execute]
-   ```
-
-5. Record count and locations for output.
+     ## Resume Point
+     **Next action:** [Specific enough for a fresh session to execute]
+     ```
 
 ### Job 3: TODO Update
 
 Path: `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
 
-1. Read the current TODO.
-2. If nothing was completed this session AND no new gaps were discovered AND no position change needed, skip this job entirely.
-3. Check off `[x]` any items completed this session.
-4. Update `### Current Position:` section with:
-   - What was done
-   - What's next
-   - Any blockers or discoveries
-5. Add new items or gaps discovered during the session to the correct phase/section.
-6. If an entire phase is fully checked off, collapse to: `## Phase N: [Name] — DONE`
-7. The next action from the session file's Resume Point should match the first unchecked item.
-8. Record a brief summary for output.
+1. Read in Round 1 (parallel with other reads).
+2. If nothing completed, no gaps discovered, no position change needed — skip.
+3. Otherwise: check off `[x]` completed items, update `### Current Position:` section, add new items/gaps.
+4. If entire phase fully checked off, collapse to: `## Phase N: [Name] — DONE`
+5. Session file's Resume Point should match the first unchecked TODO item.
+6. Write via `sed -i ''` or Bash heredoc in Round 3 (parallel with other writes).
 
 ### Job 4: Memory Management
 
-1. Read `~/.claude/projects/-Users-matthewlee-Desktop-DiveDispatch/memory/MEMORY.md` and find the active thread file.
-2. Update the active thread file — it is a **pointer to TODO.md**, not a state tracker. Only update:
-   - Test baseline numbers (unit/integration count, E2E count, type errors)
+1. Read MEMORY.md + active thread file in Round 1 (parallel with other reads).
+2. Update active thread — it's a **pointer to TODO.md**, only update:
+   - Test baseline numbers
    - Recent commits list (last 5)
    - Date stamp
 3. Update MEMORY.md:
-   - Update the active thread description with bold **NEXT:** tag and the exact next action.
-   - Add entries for genuinely new memory files created this session.
-   - **Remove** entries for memory files that are no longer relevant (delete the file too).
-   - **Merge** memory files that overlap (combine into one, delete the other).
-   - Keep MEMORY.md under 50 lines — if it's longer, consolidate.
-4. Save new memory files only for information that:
-   - Is NOT already captured in an existing memory file
-   - Will be useful in future sessions (not just this one)
-   - Cannot be derived from reading the codebase or vault
-   - Update existing memory files instead of creating new ones when possible.
-5. Record summary for output (updated/cleaned/no changes).
+   - Bold **NEXT:** tag with exact next action on active thread line.
+   - Add/remove/merge memory file entries as needed.
+   - Keep under 50 lines.
+4. New memory files only for info that isn't already captured, will be useful in future sessions, and can't be derived from code/vault.
+5. Write via Write/Edit tools in Round 3 (parallel with other writes).
 
 ### Job 5: NotebookLM Sync
 
-If vault files were created or modified in Job 2, push them to the correct NotebookLM notebook:
+If vault files were created/modified in Job 2, sync in **one Bash call**:
+
+```bash
+nlm source add <alias1> --file "<path1>" && nlm source add <alias2> --file "<path2>"
+```
 
 | Vault path prefix | Notebook alias |
 |-------------------|---------------|
 | `RiskNeutral/` | `rn-strategy` |
 | `DiveDispatch/` (Product, Architecture, Legal, Reviews) | `dd-product` |
 | `Sessions/`, `Ideas/`, `DiveDispatch/Architecture/Lessons.md` | `sessions` |
-
-For each changed file, run: `nlm source add <alias> --file "<vault-path>"`
-If a source already exists for that file, it will be updated.
-
-If no vault files were modified, skip this job entirely.
 
 ---
 
@@ -139,7 +228,10 @@ If no vault files were modified, skip this job entirely.
 Print exactly this format, omitting any line whose job was skipped:
 
 ```
-Committed: <short-hash> <message> (N files)
+Triage: deleted N ghosts, N stale; staged N renames, N new
+Committed:
+  <short-hash> <message> (N files)
+  <short-hash> <message> (N files)
 Vault: N observations → [locations]
 TODO: [brief summary of position update]
 Memory: [updated/cleaned/no changes]
@@ -147,24 +239,11 @@ NotebookLM: N sources synced
 Saved. Next session: /continue → [exact next action]
 ```
 
-The final `Saved.` line is always present — it comes from the session file's Resume Point.
+If only 1 commit, use single-line format: `Committed: <short-hash> <message> (N files)`
 
-Examples:
-```
-Committed: a1b2c3d feat: booking wizard inventory unit mapping (7 files)
-Vault: 3 observations → Sessions/2026-03-20.md, DiveDispatch/Architecture/Lessons.md, PatternLibrary/slug-is-not-id.md
-TODO: Step 8 done → Step 9 (Customer Portal)
-Memory: updated thread, cleaned 2 stale entries
-NotebookLM: 3 sources synced
-Saved. Next session: /continue → Write Customer Portal token validation tests
-```
+The `Saved.` line is always present — from session file's Resume Point.
 
-```
-Vault: 1 observation → Sessions/2026-03-20.md
-Saved. Next session: /continue → Resume inventory mapping
-```
-
-If all five jobs are skipped (no code changes, nothing to vault, no TODO updates, no memory changes, no sync needed), output:
+If all five jobs are skipped:
 ```
 Nothing to vault.
 ```

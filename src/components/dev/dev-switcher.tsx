@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation } from 'convex/react'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
@@ -44,6 +44,26 @@ function DevSwitcherInner() {
   const [open, setOpen] = useState(false)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Close on Escape key or click outside panel
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    const handleClickOutside = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open])
 
   const [selections, setSelections] = useState<Map<RoleKey, string>>(() => {
     const m = new Map<RoleKey, string>()
@@ -115,7 +135,7 @@ function DevSwitcherInner() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-12 right-4 z-50 w-80">
+        <div ref={panelRef} className="fixed bottom-12 right-4 z-50 w-80">
           <GlassCard padding="none" className="overflow-hidden">
             <div
               className="px-4 py-2 text-xs font-semibold border-b"

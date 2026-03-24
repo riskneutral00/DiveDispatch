@@ -9,30 +9,16 @@
  * Plus: full-day blocking and lazy snapshot creation.
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { WithoutSystemFields } from 'convex/server'
 import type { Doc } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { isFullDayResource } from '../convex/bookings/_shared'
 import { testDate } from './helpers/dates'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
-}
 
 function makeDCUser() {
   return {

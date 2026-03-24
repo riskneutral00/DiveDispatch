@@ -9,11 +9,14 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
-import { PreferredInstructorList } from '@/components/dashboard/preferred-instructor-list'
-import { PreferredVenueList } from '@/components/dashboard/preferred-venue-list'
-import { PreferredEquipmentList } from '@/components/dashboard/preferred-equipment-list'
-import { PreferredBoatList } from '@/components/dashboard/preferred-boat-list'
-import { PreferredCompressorList } from '@/components/dashboard/preferred-compressor-list'
+import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
+import {
+  PreferredInstructorList,
+  PreferredVenueList,
+  PreferredEquipmentList,
+  PreferredBoatList,
+  PreferredCompressorList,
+} from '@/components/dashboard/preferred-list'
 import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 
@@ -78,57 +81,6 @@ const defaultFormData = (): PrefsFormData => ({
 
 // ── Sub-components ────────────────────────────────────────────────────
 
-interface CheckboxGroupProps {
-  label: string
-  items: { value: string; label: string }[]
-  selected: string[]
-  onChange: (values: string[]) => void
-  error?: string
-}
-
-function CheckboxGroup({ label, items, selected, onChange, error }: CheckboxGroupProps) {
-  const toggle = (value: string) => {
-    onChange(
-      selected.includes(value)
-        ? selected.filter((v) => v !== value)
-        : [...selected, value],
-    )
-  }
-
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-        {label}
-      </span>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {items.map(({ value, label: itemLabel }) => {
-          const checked = selected.includes(value)
-          return (
-            <label
-              key={value}
-              className="flex items-center gap-2 cursor-pointer select-none text-sm"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              <input
-                type="checkbox"
-                checked={checked}
-                onChange={() => toggle(value)}
-                className="rounded"
-                style={{ accentColor: 'var(--color-primary)' }}
-              />
-              <span>{itemLabel}</span>
-            </label>
-          )
-        })}
-      </div>
-      {error && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {error}
-        </p>
-      )}
-    </div>
-  )
-}
 
 // ── Coverage Status ──────────────────────────────────────────────────
 
@@ -426,12 +378,13 @@ export function PreferencesEditor() {
               >
                 Language Preferences
               </h2>
-              <CheckboxGroup
+              <GlassCheckboxGroup
                 label="Languages you work in"
                 items={langItems}
                 selected={form.commonLanguageCodes}
                 onChange={(values) => setField('commonLanguageCodes', values)}
                 error={errors.commonLanguageCodes}
+                columns={3}
               />
             </GlassCard>
           </>

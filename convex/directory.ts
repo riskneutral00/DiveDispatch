@@ -1,23 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getAuthUser, requireAuth } from './lib/auth'
-
-const stakeholderTypeValidator = v.union(
-  v.literal('DiveCenter'),
-  v.literal('Agent'),
-  v.literal('Instructor'),
-  v.literal('Boat'),
-  v.literal('Equipment'),
-  v.literal('Pool'),
-  v.literal('Compressor'),
-  v.literal('DiveMaster'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
-  v.literal('DiveSite'),
-)
-
-type StakeholderRole = typeof stakeholderTypeValidator['type']
+import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 
 export type DirectoryEntry = {
   slug: string

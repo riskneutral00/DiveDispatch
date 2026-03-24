@@ -1,6 +1,4 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import {
   canBookingTransition,
@@ -8,8 +6,7 @@ import {
 } from '../convex/bookings/_shared'
 import { testDate, testToken } from './helpers/dates'
 import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures/seedFixture'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -81,7 +78,7 @@ describe('canReservationTransition', () => {
 
 describe('cancelBooking', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
@@ -93,7 +90,7 @@ describe('cancelBooking', () => {
   })
 
   it('throws NOT_FOUND when booking does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     // Insert user but no booking — grab a fake id from a dummy insert then delete it
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -109,7 +106,7 @@ describe('cancelBooking', () => {
   })
 
   it('throws FORBIDDEN when caller does not own the booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'other-slug', tokenIdentifier: 'clerk|other-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
@@ -122,7 +119,7 @@ describe('cancelBooking', () => {
   })
 
   it('throws INVALID_STATUS when booking is already Cancelled', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
@@ -135,7 +132,7 @@ describe('cancelBooking', () => {
   })
 
   it('cancels a Draft booking — status becomes Cancelled', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
@@ -149,7 +146,7 @@ describe('cancelBooking', () => {
   })
 
   it('cancels an Upcoming booking and vacates active reservations', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -208,7 +205,7 @@ describe('cancelBooking', () => {
   })
 
   it('cancels a Completed booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
@@ -222,7 +219,7 @@ describe('cancelBooking', () => {
   })
 
   it('skips Vacated reservations during cancel', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -276,7 +273,7 @@ describe('cancelBooking', () => {
 
 describe('editBooking', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
@@ -288,7 +285,7 @@ describe('editBooking', () => {
   })
 
   it('throws INVALID_STATUS when booking is Draft', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
@@ -301,7 +298,7 @@ describe('editBooking', () => {
   })
 
   it('throws INVALID_STATUS when booking is Cancelled', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Cancelled' })
@@ -314,7 +311,7 @@ describe('editBooking', () => {
   })
 
   it('resets Upcoming booking to Draft and deletes its sessions', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, sessionId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -355,7 +352,7 @@ describe('editBooking', () => {
   })
 
   it('resets Completed booking to Draft', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
@@ -370,7 +367,7 @@ describe('editBooking', () => {
   })
 
   it('vacates Confirmed reservations with reason operator_edit', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -425,7 +422,7 @@ describe('editBooking', () => {
   })
 
   it('throws FORBIDDEN when caller does not own the booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'other-slug', tokenIdentifier: 'clerk|other-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
@@ -440,7 +437,7 @@ describe('editBooking', () => {
   // ─── H2: Edit vacates with correct reason + vacatedAt timestamp ──────────
 
   it('edit vacates all reservations with operator_edit reason and vacatedAt timestamp', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, res1Id, res2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -537,7 +534,7 @@ describe('editBooking', () => {
   // ─── H2: Multi-resource edit — Instructor (exclusive) + Boat (pooled) ────
 
   it('multi-resource edit restores both exclusive and pooled snapshots correctly', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, instructorSnapshotId, boatSnapshotId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -641,7 +638,7 @@ describe('editBooking', () => {
   // ─── H2: Edit clears TTL ─────────────────────────────────────────────────
 
   it('edit clears expiresAt on the booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -664,7 +661,7 @@ describe('editBooking', () => {
   // ─── H2: Edit Upcoming calls releaseBookingReservations ──────────────────
 
   it('edit Upcoming releases reservations and restores snapshot in same mutation', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, reservationId, snapshotId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -732,7 +729,7 @@ describe('editBooking', () => {
 
 describe('discardDraft', () => {
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Draft' })
@@ -744,7 +741,7 @@ describe('discardDraft', () => {
   })
 
   it('throws INVALID_STATUS when booking is Upcoming', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Upcoming' })
@@ -759,7 +756,7 @@ describe('discardDraft', () => {
   // ─── H7: Snapshot restoration on discard ─────────────────────────────────
 
   it('restores both snapshots when discarding a Draft with 2 active reservations', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, snapshot1Id, snapshot2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -862,7 +859,7 @@ describe('discardDraft', () => {
   // ─── H7: Session cleanup ─────────────────────────────────────────────────
 
   it('deletes all sessions when discarding a Draft with 3 sessions', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, s1, s2, s3 } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -923,7 +920,7 @@ describe('discardDraft', () => {
   // ─── H7: Link cleanup ────────────────────────────────────────────────────
 
   it('deletes all portal links when discarding a Draft with 2 links', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, link1Id, link2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -963,7 +960,7 @@ describe('discardDraft', () => {
   // ─── H7: Error atomicity — MISSING_SNAPSHOT aborts entire mutation ───────
 
   it('does not delete booking when releaseBookingReservations throws MISSING_SNAPSHOT', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -1016,7 +1013,7 @@ describe('discardDraft', () => {
 
 describe('cancelBooking — snapshot restoration', () => {
   it('vacates all reservations and restores snapshots end-to-end', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, res1Id, res2Id, snap1Id, snap2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -1138,7 +1135,7 @@ describe('cancelBooking — snapshot restoration', () => {
 
 describe('discardDraft orphan cleanup', () => {
   it('deletes all customerProfiles linked to the booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, profile1Id, profile2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -1176,7 +1173,7 @@ describe('discardDraft orphan cleanup', () => {
   })
 
   it('deletes all equipmentBags assigned to the booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, bag1Id, bag2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
@@ -1220,7 +1217,7 @@ describe('discardDraft orphan cleanup', () => {
   })
 
   it('hard-deletes vacated reservations left from a prior edit cycle', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { bookingId, res1Id, res2Id } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })

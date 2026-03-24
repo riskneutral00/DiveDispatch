@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassBadge, GlassButton } from '@/components/glass'
+import { Spinner } from '@/components/common/spinner'
 import {
   suggestGearSizes,
   type DiverMeasurements,
@@ -421,6 +422,7 @@ export interface DiverEquipmentWidgetProps {
 export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps) {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
   const [isActing, setIsActing] = useState(false)
+  const [mutationError, setMutationError] = useState<string | null>(null)
 
   const data = useQuery(api.equipmentWidget.getDiverEquipmentData, {
     dateRangeStart: visibleRange.start,
@@ -432,9 +434,12 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
 
   const handlePickUp = async (bagId: string) => {
     setIsActing(true)
+    setMutationError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await markPickedUp({ bagId: bagId as any })
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as picked up')
     } finally {
       setIsActing(false)
     }
@@ -442,9 +447,12 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
 
   const handleReturn = async (bagId: string) => {
     setIsActing(true)
+    setMutationError(null)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await markReturned({ bagId: bagId as any })
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as returned')
     } finally {
       setIsActing(false)
     }
@@ -454,9 +462,9 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data === undefined) {
     return (
       <GlassCard padding="md">
-        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
-          Loading equipment data…
-        </p>
+        <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+          <Spinner />
+        </div>
       </GlassCard>
     )
   }
@@ -490,6 +498,23 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
 
   return (
     <div className="space-y-4">
+      {/* Mutation error banner */}
+      {mutationError && (
+        <div
+          className="flex items-center justify-between gap-2 px-3 py-2 rounded-md text-xs"
+          style={{
+            background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent)',
+            color: 'var(--color-destructive)',
+          }}
+        >
+          <span>{mutationError}</span>
+          <button onClick={() => setMutationError(null)} className="font-medium">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Booking filter tabs (shown only when multiple bookings) */}
       {data.bookings.length > 1 && (
         <div className="flex flex-wrap gap-1.5">

@@ -12,22 +12,16 @@
  * 16:    Availability snapshot restored on EM release
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
 import type { Id } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
 import { seedUser, type SeedCtx } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
 
 async function seedBooking(
   ctx: SeedCtx,

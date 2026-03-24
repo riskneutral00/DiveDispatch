@@ -35,8 +35,16 @@ case "$LNAME" in
   *scuba*deep*equip*)              SLUG=h3cp6n-eq; EMAIL="scuba-deep-equipment+clerk_test@divedispatch.dev"; MATCH="Scuba Deep Equipment" ;;
   *scuba*deep*)                    SLUG=h3cp6n;    EMAIL="scuba-deep+clerk_test@divedispatch.dev";           MATCH="Scuba Deep" ;;
   *pray*)                          SLUG=t7gw1k;    EMAIL="pray-dive-center+clerk_test@divedispatch.dev";    MATCH="Pray Dive Center" ;;
+  *sirolo*)                        SLUG=sirolo;    EMAIL="sirolo+clerk_test@divedispatch.dev";               MATCH="Sirolo" ;;
+  *ryan*clarke*|*ryan*)            SLUG=ryan-clarke; EMAIL="ryan-clarke+clerk_test@divedispatch.dev";       MATCH="Ryan Clarke" ;;
+  *arisa*)                         SLUG=arisa-kanchanaburi; EMAIL="arisa-kanchanaburi+clerk_test@divedispatch.dev"; MATCH="Arisa" ;;
   *amanda*)                        SLUG=r5yz4q;    EMAIL="amanda+clerk_test@divedispatch.dev";               MATCH="Amanda" ;;
   *)                               exit 0 ;;
 esac
 PASS="REDACTED"
-printf '{"user_message":"[Hook] Matched %s -> slug: %s. If already signed in as someone else, sign out via the UI first (user menu → Sign out), then navigate to /sign-in. Email: %s | Password: %s | OTP (if prompted): 424242"}' "$MATCH" "$SLUG" "$EMAIL" "$PASS"
+
+# Delete all @divedispatch.dev Clerk accounts and recreate seed users fresh
+# --force prunes orphaned accounts + updates existing ones → avoids hitting Clerk account limits
+cd /Users/matthewlee/Desktop/DiveDispatch && npm run seed:clerk -- --force >/dev/null 2>&1 || true
+
+printf '{"user_message":"[Hook] Matched %s -> slug: %s (Clerk users synced). Use dev:token to sign in: npm run dev:token -- %s | Email: %s | Password: %s | OTP (if prompted): 424242"}' "$MATCH" "$SLUG" "$SLUG" "$EMAIL" "$PASS"

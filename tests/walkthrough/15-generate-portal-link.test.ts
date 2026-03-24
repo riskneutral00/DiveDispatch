@@ -1,17 +1,14 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate, testToken } from '../helpers/dates'
 import { seedUser, seedBooking, seedBookingLink, type SeedCtx } from '../fixtures/seedFixture'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ── Tests: createBookingLink ──────────────────────────────────────────────────
 
 describe('createBookingLink', () => {
   it('creates link + customerProfile atomically', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { bookingId } = await t.run(async (ctx: SeedCtx) => {
       await seedUser(ctx, { slug: 'link-dc-01', tokenIdentifier: 'clerk|link-dc-01' })
       const bookingId = await seedBooking(ctx, {
@@ -69,7 +66,7 @@ describe('createBookingLink', () => {
   })
 
   it('is idempotent — returns existing token for same booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { bookingId } = await t.run(async (ctx: SeedCtx) => {
       await seedUser(ctx, { slug: 'link-dc-02', tokenIdentifier: 'clerk|link-dc-02' })
       const bookingId = await seedBooking(ctx, {
@@ -121,7 +118,7 @@ describe('createBookingLink', () => {
   })
 
   it('excludes used tokens from idempotency check — creates new token', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { bookingId } = await t.run(async (ctx: SeedCtx) => {
       await seedUser(ctx, { slug: 'link-dc-03', tokenIdentifier: 'clerk|link-dc-03' })
       const bookingId = await seedBooking(ctx, {
@@ -179,7 +176,7 @@ describe('createBookingLink', () => {
 
 describe('getByToken', () => {
   it('returns valid status with correct fields', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const token = await t.run(async (ctx: SeedCtx) => {
       const bookingId = await seedBooking(ctx, {
         ownerId: 'dc-getby-01',
@@ -225,7 +222,7 @@ describe('getByToken', () => {
   })
 
   it('returns not_found for unknown token', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const result = await t.query(api.bookingLinks.getByToken, {
       token: 'does-not-exist-tok',
     })

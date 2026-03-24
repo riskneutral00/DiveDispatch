@@ -112,14 +112,23 @@ export function SendPortalLink({
     }
   }
 
-  function handleOpen() {
-    setOpen(true)
+  function resetState() {
     setLinkUrl(null)
     setExpiresAt(null)
     setBusy(null)
     setCopyDone(false)
     setEmailDone(false)
     setError(null)
+  }
+
+  function handleOpen() {
+    resetState()
+    setOpen(true)
+  }
+
+  function handleClose() {
+    resetState()
+    setOpen(false)
   }
 
   const expiryLabel = resolvedExpiry
@@ -139,7 +148,7 @@ export function SendPortalLink({
 
       <GlassDialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         title="Send Portal Link"
         size="sm"
       >

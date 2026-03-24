@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -7,7 +8,8 @@ import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/common/spinner'
-import { RadialProgress } from '@/components/onboarding/radial-progress'
+import { ProfileCompletionPill } from './profile-completion-pill'
+import { ProfileOverlay, type ProfileOverlayTab } from './profile-overlay'
 import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
@@ -24,12 +26,25 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const { user, isLoading } = useCurrentUser()
-  const onboardingStatus = useQuery(api.users.getOnboardingStatus)
+  const profileCompletion = useQuery(api.users.getLowestProfileCompletion)
   const managedChildren = useQuery(
     api.stakeholderHierarchy.getManagedChildren,
     user ? { parentSlug: user.slug } : 'skip',
   )
   const router = useRouter()
+
+  // ── Profile overlay state ──────────────────────────────────────────────────
+  const [overlayOpen, setOverlayOpen] = useState(false)
+  const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
+
+  const openProfileOverlay = useCallback((tab: ProfileOverlayTab = 'profile') => {
+    setOverlayTab(tab)
+    setOverlayOpen(true)
+  }, [])
+
+  const closeProfileOverlay = useCallback(() => {
+    setOverlayOpen(false)
+  }, [])
 
   useEffect(() => {
     if (isLoading) return
@@ -64,20 +79,29 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         className="hidden md:flex items-center justify-end gap-2 px-4 py-2 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
-        {onboardingStatus && onboardingStatus.percentage < 100 && (
-          <RadialProgress
-            percentage={onboardingStatus.percentage}
-            incomplete={onboardingStatus.incomplete}
+        {profileCompletion && profileCompletion.percentage < 100 && (
+          <ProfileCompletionPill
+            percentage={profileCompletion.percentage}
+            onOpenOverlay={() => openProfileOverlay('profile')}
           />
         )}
         <ThemeSwitcher />
         <BgSwitcher />
         <NotificationBell />
-        <UserMenu roleSlug={roleSlug} slug={slug} />
+        <UserMenu
+          roleSlug={roleSlug}
+          slug={slug}
+          onOpenOverlay={openProfileOverlay}
+        />
       </header>
 
       {/* Mobile: sticky top header — visible on mobile only */}
-      <MobileTopNav roleSlug={roleSlug} slug={slug} />
+      <MobileTopNav
+        roleSlug={roleSlug}
+        slug={slug}
+        onOpenOverlay={openProfileOverlay}
+        profileCompletion={profileCompletion}
+      />
 
       {/* Hierarchy sub-bar — DC icon + managed resources, or back nav on resource dashboards */}
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
@@ -87,6 +111,15 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
       {/* Mobile: fixed bottom nav (thumb-zone navigation) */}
       <MobileBottomNav roleSlug={roleSlug} slug={slug} />
+
+      {/* Unified profile/preferences/account overlay */}
+      <ProfileOverlay
+        open={overlayOpen}
+        onClose={closeProfileOverlay}
+        initialTab={overlayTab}
+        roleSlug={roleSlug}
+        slug={slug}
+      />
     </>
   )
 }

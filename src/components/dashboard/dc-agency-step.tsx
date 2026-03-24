@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
@@ -37,7 +37,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   }
 
   function removeRow(idx: number) {
-    setAssociations((prev) => prev.filter((_, i) => i !== idx))
+    setAssociations((prev) => prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx))
   }
 
   function updateRow(idx: number, field: keyof Association, value: string) {
@@ -112,15 +112,17 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
               />
             </div>
             {associations.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeRow(idx)}
-                className="mb-0.5 flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 transition-colors"
-                style={{ color: 'var(--color-destructive)' }}
-                aria-label="Remove affiliation"
-              >
-                <Minus size={14} />
-              </button>
+              <div className="mb-0.5 flex-shrink-0">
+                <GlassButton
+                  variant="destructive-ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => removeRow(idx)}
+                  aria-label="Remove affiliation"
+                >
+                  <Trash2 size={16} />
+                </GlassButton>
+              </div>
             )}
           </div>
         ))}

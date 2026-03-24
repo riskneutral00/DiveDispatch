@@ -209,13 +209,11 @@ export function isBookingExpired(booking: {
 // ─── Past-date guard ─────────────────────────────────────────────────────
 
 /**
- * Throws ConvexError if any session date is before today (server-side, timezone-aware).
- * Uses the same Intl.DateTimeFormat pattern as isSessionEnded.
+ * Returns today's date as an ISO string (YYYY-MM-DD), timezone-aware.
+ * Uses Intl.DateTimeFormat so the server computes "today" in the operator's
+ * local timezone rather than UTC.
  */
-export function assertNoPastDates(
-  sessions: { date: string; timezone?: string }[],
-  timezone = 'Asia/Bangkok',
-): void {
+export function todayISO(timezone = 'Asia/Bangkok'): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
@@ -223,10 +221,20 @@ export function assertNoPastDates(
     day: '2-digit',
   })
   const parts = Object.fromEntries(formatter.formatToParts(Date.now()).map((p) => [p.type, p.value]))
-  const todayISO = `${parts.year}-${parts.month}-${parts.day}`
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+/**
+ * Throws ConvexError if any session date is before today (server-side, timezone-aware).
+ */
+export function assertNoPastDates(
+  sessions: { date: string; timezone?: string }[],
+  timezone = 'Asia/Bangkok',
+): void {
+  const today = todayISO(timezone)
 
   for (const session of sessions) {
-    if (session.date < todayISO) {
+    if (session.date < today) {
       throw new ConvexError({ code: 'PAST_DATE', date: session.date })
     }
   }

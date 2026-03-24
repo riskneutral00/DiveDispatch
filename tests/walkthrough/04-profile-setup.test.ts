@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { seedUser as _seedUser, type SeedCtx } from '../fixtures/seedFixture'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -16,7 +13,7 @@ async function seedUser(ctx: SeedCtx, slug: string) {
 
 describe('diveCenters.create (profile setup)', () => {
   it('writes all required fields to diveCenters', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'profile-dc-01'))
 
     const id = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-01' })
@@ -43,7 +40,7 @@ describe('diveCenters.create (profile setup)', () => {
   })
 
   it('is idempotent — returns existing record ID on second call', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'profile-dc-02'))
 
     const args = {
@@ -68,7 +65,7 @@ describe('diveCenters.create (profile setup)', () => {
   })
 
   it('rejects callers who are not DiveCenter role', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) =>
       _seedUser(ctx, {
         tokenIdentifier: 'clerk|profile-inst-01',

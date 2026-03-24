@@ -2,26 +2,13 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
+import { Lock } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
 import { LanguagePicker } from '@/components/common/language-picker'
 import type { Language } from '@/lib/types/language'
-
-const AOW_SPECIALTIES = [
-  'Peak Performance Buoyancy',
-  'Underwater Navigation',
-  'Wreck Diver',
-  'Deep Diver',
-  'Night Diver',
-  'Underwater Photography',
-  'Boat Diver',
-  'Drift Diver',
-  'Dry Suit Diver',
-  'Fish Identification',
-  'Search and Recovery',
-  'Digital Underwater Photography',
-]
 
 interface DcLanguagesStepProps {
   onSaved: () => void
@@ -37,10 +24,11 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
   const [owDays, setOwDays] = useState('')
   const [aowDays, setAowDays] = useState('')
   const [oaDays, setOaDays] = useState('')
-  const [aowSpecialties, setAowSpecialties] = useState<string[]>([])
+  const [aowSpecialties, setAowSpecialties] = useState<string[]>([...MANDATORY_AOW_SPECIALTIES])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
+  const [showMore, setShowMore] = useState(false)
 
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
@@ -54,12 +42,13 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       setOwDays(existing?.bookingPreferences?.owDays?.toString() ?? '')
       setAowDays(existing?.bookingPreferences?.aowDays?.toString() ?? '')
       setOaDays(existing?.bookingPreferences?.oaDays?.toString() ?? '')
-      setAowSpecialties(existing?.bookingPreferences?.aowSpecialties ?? [])
+      setAowSpecialties([...new Set([...MANDATORY_AOW_SPECIALTIES, ...(existing?.bookingPreferences?.aowSpecialties ?? [])])])
       setInitialized(true)
     }
   }, [existing, me, initialized])
 
   function toggleSpecialty(s: string) {
+    if (MANDATORY_AOW_SPECIALTIES.has(s)) return
     setAowSpecialties((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     )
@@ -162,13 +151,54 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
           <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
             AOW Specialties Offered <span style={{ fontWeight: 400 }}>(optional)</span>
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            {AOW_SPECIALTIES.map((s) => {
-              const checked = aowSpecialties.includes(s)
+          <div className="flex flex-wrap gap-1.5">
+            {AOW_MAIN.map(({ value, label }) => {
+              const checked = aowSpecialties.includes(value)
+              const locked = MANDATORY_AOW_SPECIALTIES.has(value)
               return (
                 <label
-                  key={s}
-                  className="flex items-center gap-2 px-3 py-2 rounded-[var(--border-radius)] cursor-pointer transition-all"
+                  key={value}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${locked ? 'cursor-default' : 'cursor-pointer'}`}
+                  style={{
+                    background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
+                    color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
+                    border: `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
+                    transitionDuration: 'var(--transition-speed)',
+                  }}
+                  aria-disabled={locked || undefined}
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={checked}
+                    disabled={locked}
+                    onChange={() => toggleSpecialty(value)}
+                  />
+                  {label}
+                  {locked && <Lock size={10} style={{ opacity: 0.7 }} />}
+                </label>
+              )
+            })}
+            {!showMore && (
+              <button
+                type="button"
+                onClick={() => setShowMore(true)}
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px dashed var(--color-glass-border)',
+                }}
+              >
+                More…
+              </button>
+            )}
+            {showMore && AOW_OVERFLOW.map(({ value, label }) => {
+              const checked = aowSpecialties.includes(value)
+              return (
+                <label
+                  key={value}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all"
                   style={{
                     background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
                     color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
@@ -180,9 +210,9 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
                     type="checkbox"
                     className="sr-only"
                     checked={checked}
-                    onChange={() => toggleSpecialty(s)}
+                    onChange={() => toggleSpecialty(value)}
                   />
-                  <span className="text-sm">{s}</span>
+                  {label}
                 </label>
               )
             })}

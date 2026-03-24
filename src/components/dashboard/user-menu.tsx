@@ -2,26 +2,42 @@
 
 import { useClerk, useUser } from '@clerk/nextjs'
 import { LogOut, Settings, User, SlidersHorizontal } from 'lucide-react'
-import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import type { ProfileOverlayTab } from './profile-overlay'
 
 interface UserMenuProps {
   roleSlug: RoleKey
   slug: string
+  onOpenOverlay?: (tab: ProfileOverlayTab) => void
 }
 
-export function UserMenu({ roleSlug, slug }: UserMenuProps) {
+export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
   const { user: clerkUser } = useUser()
   const { user: convexUser } = useCurrentUser()
   const { signOut } = useClerk()
   const [open, setOpen] = useState(false)
 
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open])
+
   const displayName =
     convexUser?.businessName || clerkUser?.fullName || clerkUser?.username || '…'
   const initials = displayName.slice(0, 2).toUpperCase()
   const email = clerkUser?.primaryEmailAddress?.emailAddress ?? null
+
+  function handleMenuAction(tab: ProfileOverlayTab) {
+    setOpen(false)
+    onOpenOverlay?.(tab)
+  }
 
   return (
     <div className="relative">
@@ -70,35 +86,32 @@ export function UserMenu({ roleSlug, slug }: UserMenuProps) {
               )}
             </div>
 
-            <Link
-              href={`/${slug}/${roleSlug}/profile`}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
+            <button
+              onClick={() => handleMenuAction('profile')}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <User size={14} />
               Profile
-            </Link>
+            </button>
 
-            <Link
-              href={`/${slug}/${roleSlug}/settings`}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
+            <button
+              onClick={() => handleMenuAction('preferences')}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <Settings size={14} />
-              Settings
-            </Link>
+              Preferences
+            </button>
 
-            <Link
-              href="/account"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
+            <button
+              onClick={() => handleMenuAction('account')}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               <SlidersHorizontal size={14} />
               Account
-            </Link>
+            </button>
 
             <div
               className="mt-1"
@@ -109,7 +122,7 @@ export function UserMenu({ roleSlug, slug }: UserMenuProps) {
                   setOpen(false)
                   signOut({ redirectUrl: '/' })
                 }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all"
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
                 style={{ color: 'var(--color-text-secondary)' }}
               >
                 <LogOut size={14} />

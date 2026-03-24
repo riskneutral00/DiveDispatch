@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 // ── Typed Unions ────────────────────────────────────────────────────
 
@@ -75,20 +76,6 @@ const acceptanceMode = v.union(
   v.literal('PostPayAllowed'),
 )
 
-const stakeholderType = v.union(
-  v.literal('DiveCenter'),
-  v.literal('Agent'),
-  v.literal('Instructor'),
-  v.literal('Boat'),
-  v.literal('Equipment'),
-  v.literal('Pool'),
-  v.literal('Compressor'),
-  v.literal('DiveMaster'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
-  v.literal('DiveSite'),
-)
 
 const notificationType = v.union(
   v.literal('hold_placed'),

@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { convexTest } from 'convex-test'
 import { readFileSync } from 'node:fs'
-import schema from '../convex/schema'
 import { restoreSnapshotUnits } from '../convex/bookings/_shared'
 import type { Doc } from '../convex/_generated/dataModel'
 import {
@@ -9,11 +7,11 @@ import {
   seedInventoryUnit,
   seedSnapshot,
 } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
-const modules = import.meta.glob('../convex/**/*.ts')
-let t = convexTest(schema, modules)
+let t = makeT()
 beforeEach(() => {
-  t = convexTest(schema, modules)
+  t = makeT()
 })
 
 // ─── Unit tests ──────────────────────────────────────────────────────────────

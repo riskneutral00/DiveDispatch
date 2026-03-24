@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { _markNoShowHandler, _revertNoShowHandler } from '../convex/reservationsMutations'
 import {
   TEST_TOKENS,
@@ -13,11 +11,11 @@ import {
   seedSnapshot,
 } from './fixtures/seedFixture'
 import { testDate } from './helpers/dates'
+import { makeT } from './helpers/convex-helpers'
 
-const modules = import.meta.glob('../convex/**/*.ts')
-let t = convexTest(schema, modules)
+let t = makeT()
 beforeEach(() => {
-  t = convexTest(schema, modules)
+  t = makeT()
 })
 
 // ─── Helper: seed a full booking with Confirmed reservation ──────────────────

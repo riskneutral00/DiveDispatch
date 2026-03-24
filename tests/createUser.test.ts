@@ -1,13 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 describe('createUser mutation', () => {
   it('persists phone and preferredChannel', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|phone-user' })
@@ -27,7 +24,7 @@ describe('createUser mutation', () => {
   })
 
   it('persists explicit firstName, lastName, nickname', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|named-user' })
@@ -49,7 +46,7 @@ describe('createUser mutation', () => {
   })
 
   it('defaults phone and preferredChannel to undefined when omitted', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
       .withIdentity({ tokenIdentifier: 'clerk|no-phone' })
@@ -67,7 +64,7 @@ describe('createUser mutation', () => {
   })
 
   it('patches existing user with new fields on idempotent call', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const identity = { tokenIdentifier: 'clerk|idem-user' }
 
     // First call creates the user
@@ -106,7 +103,7 @@ describe('createUser mutation', () => {
 
 describe('updateBusinessInfo mutation', () => {
   it('patches businessName and customerLanguages on existing user', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const identity = { tokenIdentifier: 'clerk|biz-user' }
 
     // Create user first
@@ -131,7 +128,7 @@ describe('updateBusinessInfo mutation', () => {
   })
 
   it('rejects unauthenticated calls', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await expect(
       t.mutation(api.users.updateBusinessInfo, {
         businessName: 'Hacker',
@@ -141,7 +138,7 @@ describe('updateBusinessInfo mutation', () => {
   })
 
   it('rejects when no user record exists', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await expect(
       t
         .withIdentity({ tokenIdentifier: 'clerk|ghost' })

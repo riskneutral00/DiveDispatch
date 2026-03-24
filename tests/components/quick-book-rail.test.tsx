@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '../helpers/render'
+import { render, fireEvent } from '../helpers/render'
 import userEvent from '@testing-library/user-event'
+import { DndContext } from '@dnd-kit/core'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -104,6 +106,69 @@ describe('QuickBookRail', () => {
       const { getByRole } = render(<QuickBookRail onSelect={onSelect} />)
 
       expect(getByRole('button', { name: /\+ Booking/i })).toBeDisabled()
+    })
+  })
+
+  describe('drag-to-date behavior', () => {
+    beforeEach(() => {
+      mockCurrentUser.mockReturnValue({
+        user: { onboardingComplete: true, role: 'DiveCenter', slug: 'test' },
+        isLoading: false,
+      })
+      mockUseQuery.mockReturnValue({ percentage: 100, incomplete: [] })
+    })
+
+    it('pills have cursor-grab class when canBook=true', () => {
+      const { getByRole } = render(
+        <DndContext>
+          <QuickBookRail onSelect={vi.fn()} />
+        </DndContext>,
+      )
+      const pill = getByRole('button', { name: 'DSD' })
+      expect(pill.className).toContain('cursor-grab')
+    })
+
+    it('armed pill receives glow box-shadow', () => {
+      const { getByRole } = render(
+        <DndContext>
+          <QuickBookRail onSelect={vi.fn()} armedPillId="dsd" onArmPill={vi.fn()} />
+        </DndContext>,
+      )
+      const pill = getByRole('button', { name: 'DSD' })
+      expect(pill.style.boxShadow).toContain('var(--color-primary)')
+    })
+
+    it('tapping armed pill disarms it', () => {
+      const onArmPill = vi.fn()
+      const { getByRole } = render(
+        <DndContext>
+          <QuickBookRail onSelect={vi.fn()} armedPillId="ow" onArmPill={onArmPill} />
+        </DndContext>,
+      )
+      // Use fireEvent.click (not userEvent) — dnd-kit pointer listeners intercept userEvent's pointer sequence
+      fireEvent.click(getByRole('button', { name: 'OWC' }))
+      expect(onArmPill).toHaveBeenCalledWith(null)
+    })
+
+    it('tapping unarmed pill arms it', () => {
+      const onArmPill = vi.fn()
+      const { getByRole } = render(
+        <DndContext>
+          <QuickBookRail onSelect={vi.fn()} armedPillId={null} onArmPill={onArmPill} />
+        </DndContext>,
+      )
+      fireEvent.click(getByRole('button', { name: 'DSD' }))
+      expect(onArmPill).toHaveBeenCalledWith('dsd')
+    })
+
+    it('+ Booking pill also supports armed state', () => {
+      const { getByRole } = render(
+        <DndContext>
+          <QuickBookRail onSelect={vi.fn()} armedPillId="plus" onArmPill={vi.fn()} />
+        </DndContext>,
+      )
+      const pill = getByRole('button', { name: '+ Booking' })
+      expect(pill.style.boxShadow).toContain('var(--color-primary)')
     })
   })
 })

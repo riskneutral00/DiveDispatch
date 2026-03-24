@@ -1,26 +1,11 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
+import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate, testToken } from '../helpers/dates'
+import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures/seedFixture'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
-
-async function expectConvexError(promise: Promise<unknown>, code: string) {
-  await expect(promise).rejects.toSatisfy((err: unknown) => {
-    const e = err as { data: unknown }
-    const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-    return (data as Record<string, unknown>)?.code === code
-  })
-}
 
 async function seedBooking(ctx: SeedCtx, ownerId: string, overrides: Parameters<typeof _seedBooking>[1] = {}) {
   return _seedBooking(ctx, { ownerId, bookingFormComplete: false, ...overrides })

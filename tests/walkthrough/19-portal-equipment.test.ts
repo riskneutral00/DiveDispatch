@@ -1,17 +1,10 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { testDate, testToken, passportExpiry, dob } from '../helpers/dates'
 import { seedPortalFixture, seedBooking, seedBookingLink, seedCustomerProfile, type SeedCtx } from '../fixtures/seedFixture'
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
-
-const modules = import.meta.glob('../../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
 
 /** Seed a customer record and link it to the profile (contact step complete). */
 async function seedCustomerForProfile(ctx: SeedCtx, profileId: Awaited<ReturnType<typeof seedPortalFixture>>['profileId']) {

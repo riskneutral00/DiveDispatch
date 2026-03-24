@@ -322,17 +322,39 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
   const allWarnings = [...prereqWarnings, ...comboWarnings, ...instructorRatioWarnings, ...referralWarnings]
 
   // Auto-generate days when courses + dates change
+  const preFillAppliedRef = useRef(false)
   useEffect(() => {
     const key = `${[...allCourseCodes].sort().join(',')}|${state.startDate}|${state.endDate}`
     if (key === prevCoursesRef.current) return
     if (!state.startDate || !state.endDate || allCourseCodes.length === 0) return
     prevCoursesRef.current = key
 
-    const newDays = generateDays(allCourseCodes, state.startDate, 3, state.endDate)
+    let newDays = generateDays(allCourseCodes, state.startDate, 3, state.endDate)
+
+    // Apply pre-fill resource hints to generated days (first generation only)
+    if (!preFillAppliedRef.current && newDays.length > 0) {
+      const { preFillInstructorSlug, preFillVenueSlug, preFillBoatSlug } = state
+      if (preFillInstructorSlug || preFillVenueSlug || preFillBoatSlug) {
+        preFillAppliedRef.current = true
+        newDays = newDays.map((day) => ({
+          ...day,
+          instructorSlug: preFillInstructorSlug || day.instructorSlug,
+          dives: day.dives.map((dive) => {
+            const venueType = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
+            // Pool/shore → use venue slug, boat → use boat slug
+            const resourceSlug = venueType === 'boat'
+              ? (preFillBoatSlug || dive.resourceSlug)
+              : (preFillVenueSlug || dive.resourceSlug)
+            return { ...dive, resourceSlug }
+          }),
+        }))
+      }
+    }
+
     if (newDays.length > 0) {
       dispatch({ type: 'SET_DAYS', days: newDays })
     }
-  }, [allCourseCodes, state.startDate, state.endDate, dispatch])
+  }, [allCourseCodes, state.startDate, state.endDate, state.preFillInstructorSlug, state.preFillVenueSlug, state.preFillBoatSlug, dispatch])
 
   function handleRebuild() {
     if (!hasDateRange) return

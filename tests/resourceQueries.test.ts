@@ -1,14 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import { testDate } from './helpers/dates'
-
-const modules = import.meta.glob('../convex/**/*.ts')
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-type Ctx = Parameters<Parameters<ReturnType<typeof convexTest>['run']>[0]>[0]
+type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
 async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
   return ctx.db.insert('users', {
@@ -66,7 +63,7 @@ async function seedBooking(ctx: Ctx) {
 
 describe('getOpenRequests', () => {
   it('returns PendingAcceptance reservations with booking context', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const result = await (async () => {
       const { unitId, bookingId, reservationId } = await t.run(async (ctx) => {
@@ -113,7 +110,7 @@ describe('getOpenRequests', () => {
   })
 
   it('returns empty array when no pending reservations exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       await seedUnit(ctx, 'instructor-slug')
@@ -126,7 +123,7 @@ describe('getOpenRequests', () => {
   })
 
   it('returns empty array when caller owns no inventory units', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       // Seed a booking + reservation but NO unit for instructor-slug
@@ -156,7 +153,7 @@ describe('getOpenRequests', () => {
   })
 
   it('sorts by createdAt descending', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -194,7 +191,7 @@ describe('getOpenRequests', () => {
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.resourceQueries.getOpenRequests),
@@ -202,7 +199,7 @@ describe('getOpenRequests', () => {
   })
 
   it('throws NOT_FOUND when caller user record does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'user|nobody' })
@@ -211,7 +208,7 @@ describe('getOpenRequests', () => {
   })
 
   it('skips reservation when booking record is missing', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -242,7 +239,7 @@ describe('getOpenRequests', () => {
   })
 
   it('excludes Confirmed and Vacated reservations — only PendingAcceptance returned', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -283,7 +280,7 @@ describe('getOpenRequests', () => {
   })
 
   it('groups multi-day reservations by booking+unit into a single OpenRequest', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { bookingId, unitId } = await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -334,7 +331,7 @@ describe('getOpenRequests', () => {
   })
 
   it('returns separate OpenRequests for different bookings', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { booking1Id, booking2Id } = await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -414,7 +411,7 @@ describe('getOpenRequests', () => {
   })
 
   it('sorts newest booking first when multiple bookings exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { booking1Id, booking2Id } = await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -485,7 +482,7 @@ describe('getOpenRequests', () => {
   })
 
   it('aggregates requests across multiple owned inventory units', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       // Instructor owns two units (e.g. instructor unit + equipment unit)
@@ -544,7 +541,7 @@ describe('getOpenRequests', () => {
   })
 
   it('uses max createdAt when grouping multi-day reservations', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -592,7 +589,7 @@ describe('getOpenRequests', () => {
   })
 
   it('returns correct diverCount from booking divers array length', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -646,7 +643,7 @@ describe('getOpenRequests', () => {
   })
 
   it('mixes PendingAcceptance with other statuses on same unit — only returns pending', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     const { pendingBookingId } = await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')
@@ -721,7 +718,7 @@ describe('getOpenRequests', () => {
 
 describe('getConfirmedSchedule', () => {
   it('returns Confirmed reservations with booking context and sessions', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     const { unitId, bookingId } = await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
@@ -774,7 +771,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('sorts sessions by date ascending within a booking', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
@@ -815,7 +812,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('filters sessions to only those belonging to this inventory unit', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
@@ -866,7 +863,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('sorts results by earliest session date ascending', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
@@ -938,7 +935,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('returns empty array when no confirmed reservations exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       await seedUnit(ctx, 'instructor-slug')
@@ -951,7 +948,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.query(api.resourceQueries.getConfirmedSchedule),
@@ -959,7 +956,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('throws NOT_FOUND when caller user record does not exist', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'user|nobody' })
@@ -968,7 +965,7 @@ describe('getConfirmedSchedule', () => {
   })
 
   it('skips reservation when booking record is missing', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => {
       await seedInstructorUser(ctx)
       const unitId = await seedUnit(ctx, 'instructor-slug')

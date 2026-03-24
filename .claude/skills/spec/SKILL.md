@@ -1,11 +1,12 @@
 ---
-description: "Write an Overstory spec via structured interview. Enforces data-first thinking, universality across roles, supersession, and risk checks — all derived from Lessons.md. TRIGGER when: user describes a new feature, says 'make a ticket', 'write a ticket', 'new ticket', 'spec this', 'add a feature', or describes UI/behavior that should go through the spec workflow instead of direct implementation."
+name: spec
+description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to TODO.md for /status to pick up."
 user-invocable: true
 ---
 
 # /spec — Spec Builder
 
-You are writing an Overstory spec for DiveDispatch. Conduct a structured interview — one question at a time, with a recommended answer, a second option, and free-form. Between answers, silently run lesson checks and codebase research. Only surface a flag if a check fails.
+You are writing a feature spec for DiveDispatch. Conduct a structured interview — one question at a time, with a recommended answer, a second option, and free-form. Between answers, silently run lesson checks and codebase research. Only surface a flag if a check fails.
 
 **Do not skip questions. Do not batch questions. One at a time.**
 
@@ -15,14 +16,14 @@ You are writing an Overstory spec for DiveDispatch. Conduct a structured intervi
 
 Before asking anything, read the user's description carefully. Then search in parallel:
 - `convex/schema.ts` — relevant tables
-- `.overstory/specs/` — related or overlapping specs
+- `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` — related or overlapping items
 - `src/components/` and `src/lib/constants/` — existing shared components and configs
 
 Use this research to make informed recommendations in every question.
 
 ---
 
-## Phase 2: Interview (6 questions)
+## Phase 2: Interview (7 questions)
 
 ### Q1: Classify
 
@@ -32,7 +33,7 @@ Options:
 - **New pattern** — creates new component, page, or flow (recommend if nothing similar exists in codebase)
 - **Extension** — adds behavior to an existing component or page
 
-**Silent check:** If the feature is cross-cutting (touches language matching, course catalog, session builder, or another foundational concern), search `.overstory/specs/` for a spec that covers that concern. If none exists, flag: "This depends on [X] which doesn't have its own spec yet. Should we write that first?"
+**Silent check:** If the feature is cross-cutting (touches language matching, course catalog, session builder, or another foundational concern), search TODO.md for an item that covers that concern. If none exists, flag: "This depends on [X] which doesn't have its own spec yet. Should we write that first?"
 
 ### Q2: Data model
 
@@ -46,6 +47,30 @@ Present what you found in `convex/schema.ts` — relevant tables, fields, indexe
 **If the user describes UI interactions** ("when I click this...", "there should be a button that..."), gently redirect: "Got it — let me map that to the data model first, then we'll spec the UI." Do not proceed to UI details until the data model is settled.
 
 **Silent check (UI-First Without Guardrails):** Is the data model thought through before UI? If not, keep asking data questions.
+
+### Q2.5: Test plan
+
+Ask: "What should the tests verify?"
+
+Based on the data model answer, recommend test types using CLAUDE.md's test type selection rules (cheapest test that catches the bug):
+
+| Data model change | Test type | Template |
+|---|---|---|
+| Schema change (new table/field) | Integration (convex-test) | `seedUser`, relevant seed helpers, assert data written correctly |
+| New mutation | Behavioral | Assert the outcome (what changed), not the implementation |
+| New pure function (validation, calculation) | Unit | Direct import, `testDate()`, edge cases |
+| New component calling useMutation | Component + Contract | Component renders correctly, contract test verifies data transformation |
+| State machine change | Hardening | Every valid transition tested, every invalid rejected |
+
+Present a recommended test plan:
+```
+Test plan:
+- Unit: tests/{module}.test.ts — {function} returns {expected} when {input}
+- Integration: tests/{feature}.test.ts — {mutation} creates {outcome}
+- Component: tests/components/{component}.test.tsx — renders {state}, calls {mutation}
+```
+
+The user can adjust. The test plan goes into the final spec output.
 
 ### Q3: Universality
 
@@ -61,63 +86,51 @@ Recommend based on feature type:
 - Request handling → resources only
 - Profile feature → check which role types have the relevant profile fields
 
-**If multiple roles:** Search the codebase for existing shared components and config files that already serve this pattern. Surface what you find: "Found `BookingCalendar` already serves all roles via `dashboard-config.ts`. This should extend that pattern — not create a new component."
+**If multiple roles:** Search the codebase for existing shared components and config files that already serve this pattern. Surface what you find.
 
-**Silent check (Specs Must Enforce Universality):** If Affected Roles > 1, the spec MUST:
-1. Name the ONE component (not one per role)
-2. Reference the config file driving role-specific behavior
-3. List every role explicitly
-
-If the user says "build the agent [X]" for something that should apply to all roles, flag it: "Should this be one shared component that all [organizer/resource] roles use, configured per role? That's how the dashboard and calendar work."
+**Silent check (Specs Must Enforce Universality):** If Affected Roles > 1, the spec MUST name the ONE component and reference the config file driving role-specific behavior.
 
 ### Q4: Dependencies & platform
 
 Ask: "Anything this depends on?"
 
-Present what you found in `.overstory/specs/`:
-- Specs this clearly depends on
-- Specs that overlap or conflict
+Present what you found in TODO.md — items this depends on or conflicts with.
 
 Check platform features:
 - **Clerk**: auth, user management, roles, webhooks — don't rebuild these
 - **Convex**: real-time queries, mutations, file storage, cron jobs — use native features
 - **Resend**: email — use the MCP integration
 
-Recommend: "This depends on [spec ID]" or "No dependencies found."
-
-**Silent check (Don't rebuild what the platform gives you):** If the feature duplicates something Clerk/Convex provides natively, flag it.
+**Silent check (Don't rebuild what the platform gives you).**
 
 ### Q5: Risk assessment
 
 Assess based on everything learned so far. Ask only if there are flags to raise:
 
-- **Novel interaction** (no reference in codebase or prototype) → "This has no reference implementation. Recommend building a throwaway prototype first to prove the interaction works."
-- **High domain complexity** (dive course rules, certification requirements) → "This needs real dive course knowledge. Want to walk through the rules before I spec it?"
-- **Shared component collision** (another spec also modifies this component) → "L5-[XX] also touches [component]. These can't run in parallel — I'll add a concurrency lock."
-- **Batch operations** → "This could touch >1,000 rows. Spec needs to mandate batched mutations via actions (4,096 read / 8,192 write limit)."
+- **Novel interaction** → "Recommend building a throwaway prototype first."
+- **High domain complexity** → "This needs real dive course knowledge."
+- **Shared component collision** → "Another TODO also touches [component]."
+- **Batch operations** → "Spec needs batched mutations (Convex limits)."
 
-If no flags: Say "No risk flags" and move on. Do not ask a question if there's nothing to flag.
+If no flags: Say "No risk flags" and move on.
 
 ### Q6: Supersession
 
 Ask: "Does this replace anything existing?"
 
-Present overlapping specs you found in Phase 1. Recommend:
-- "This supersedes [spec ID]. We should list [files] for deletion." or
+Present overlapping items from TODO.md. Recommend:
+- "This supersedes #[N]. Files to delete: [list]." or
 - "No overlap found."
-
-**Silent check (Specs Must Enforce Universality):** If superseding, the spec must explicitly list every file to delete. Don't leave orphans.
 
 ---
 
 ## Phase 3: Vault enrichment
 
 Before writing, search the full vault for relevant content:
-- `~/Desktop/DiveVault/Inspirations/` — design references
+- `~/Desktop/DiveVault/DiveDispatch/Architecture/Lessons.md` — mistakes to avoid
+- `~/Desktop/DiveVault/DiveDispatch/Architecture/Architecture.md` — architectural decisions
 - `~/Desktop/DiveVault/PatternLibrary/` — reusable patterns
-- `~/Desktop/DiveVault/DiveDispatch/Lessons.md` — mistakes to avoid
-- `~/Desktop/DiveVault/DiveDispatch/Architecture.md` — architectural decisions
-- `~/Desktop/DiveVault/Sessions/` — recent session context
+- `~/Desktop/DiveVault/Inspirations/` — design references
 
 Add anything relevant to Implementation Notes.
 
@@ -125,115 +138,61 @@ Add anything relevant to Implementation Notes.
 
 ## Phase 4: Validation checklist (run silently)
 
-Before writing the spec, verify each check passes. If any fail, raise it with the user before proceeding.
+Before writing, verify each check passes. If any fail, raise it with the user.
 
 | # | Check | If fails |
 |---|---|---|
-| 1 | Vision settled for this area? | "We haven't mapped the full user journey for [X] yet. Writing this spec now risks churn." |
+| 1 | Vision settled for this area? | "Writing this spec now risks churn." |
 | 2 | Data model before UI? | Redirect to Q2 |
-| 3 | Cross-cutting concerns have their own specs? | "This depends on [X] — should we spec that first?" |
-| 4 | Platform feature checked? | "Clerk/Convex already handles [X]" |
-| 5 | Widget earns its spot? | "Does this help the user make a decision, or is it just data?" |
-| 6 | Multi-role → ONE component named? | "The spec needs to name the shared component and config" |
-| 7 | Existing components referenced, not duplicated? | "Found [component] — extend it, don't create a new one" |
-| 8 | Batch ops within Convex limits? | "Add batching pattern to Implementation Notes" |
-| 9 | DESIGN_SYSTEM.md referenced? | Add reference to UI/Design section |
+| 3 | Test plan defined? | Redirect to Q2.5 |
+| 4 | Cross-cutting concerns have their own specs? | "Should we spec [X] first?" |
+| 5 | Platform feature checked? | "Clerk/Convex already handles [X]" |
+| 6 | Multi-role → ONE component named? | Name the shared component and config |
+| 7 | Existing components referenced, not duplicated? | "Extend [component], don't create new" |
 
 ---
 
-## Phase 5: Write the spec
+## Phase 5: Write to TODO.md
 
-Use this template. Every field is required unless marked optional.
+Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`. Find the appropriate tier for this feature. Assign the next number.
+
+Append the new item to the tier table, then write the spec block below it:
 
 ```markdown
-# <TIER>-<NN>: <title>
-
-## Description
-[What + why — 2-4 sentences]
-
-## Domain Knowledge Reference
-[Section of docs/DOMAIN_KNOWLEDGE.md, or "N/A"]
-
-## Affected Roles
-[`all` | explicit list | `role-agnostic`]
-
-## Shared Component
-[Required if Affected Roles has more than one role]
-[Name the ONE component + reference the config file]
-[Use "N/A" if single-role or role-agnostic]
-
-## Data Model
-[Schema changes | new queries/mutations | state transitions | "No changes"]
-
-## File Scope
-[Exhaustive list of files to create or modify]
-
-## Dependencies
-[Spec IDs, or "None"]
-
-## Supersedes
-[Spec IDs this replaces + files to delete, or "None"]
-
-## Concurrency Lock
-[Required if modifying a shared component — spec IDs that must not run in parallel]
-[Use "None" if no conflicts]
-
-## Acceptance Criteria
-- [Specific, testable bullets]
-- npm test passes
-
-## Complexity
-[Low | Medium | High]
-
-## Risk Flags
-[Optional: novel pattern, domain expertise needed, batch operation, prototype recommended]
-
-## Implementation Notes
-[Edge cases, vault observations, transaction order, etc.]
-
-## UI / Design
-[Reference DESIGN_SYSTEM.md. Layout constraints before visual treatment.]
+| {N} | **{Title}** — {one-line description} | §{slug} |
+**Spec:** {What to change, which files, what the outcome looks like.}
+**Acceptance:** {Specific, testable bullets. Include "npm test passes".}
+**Test plan:**
+- {Type}: `{file}` — {what it tests}
+- {Type}: `{file}` — {what it tests}
+**Blocked by:** {#N prerequisite items, or "None".}
 ```
 
-### Spec naming
-
-Check the highest existing number in `.overstory/specs/` for the target tier, then increment.
+### Tier selection
 
 | Tier | Use when |
 |---|---|
-| L5 | New post-v1 features (default) |
-| POST | Deferred / not scheduled yet |
-
-File name: `<TIER>-<NN>-<kebab-slug>.md`
-
----
-
-## Phase 6: Parallel Safety Check
-
-Run this immediately after writing the spec file. Do not prompt the user — execute silently and report results.
-
-1. **Collect open specs.** Read all `L*-*.md` files in `.overstory/specs/`. Cross-reference `.seeds/issues.jsonl` — a spec is "open" if it has a non-closed issue entry OR no entry yet (newly written specs count as open).
-
-2. **Parse File Scope.** For each open spec (including the one just written), extract backtick-wrapped file paths from `## File Scope`. Normalize: strip any leading `./`.
-
-3. **Compare file sets.** For each file in the new spec's File Scope, check if it appears in any other open spec's File Scope.
-
-4. **Classify each overlap.** For every overlapping file, read both specs' File Scope descriptions and determine:
-   - **Same file, different concerns** (e.g., `schema.ts` but different tables; `dashboard-config.ts` but different role sections) → add the other spec's ID to the new spec's `## Concurrency Lock`
-   - **Same file, same logic** (e.g., both modify the same function in `_shared.ts`, both alter the same table definition) → add to both `## Dependencies` AND `## Concurrency Lock` on the new spec
-
-5. **Auto-update the new spec only.** Edit the just-written spec's `## Concurrency Lock` and `## Dependencies` fields. Do NOT auto-edit other specs — output a suggestion instead:
-   > "Suggestion: Consider adding `<new-spec-id>` to `## Concurrency Lock` in `<other-spec-file>`."
-
-6. **Report to user:**
-   - If overlaps found: "Parallel safety: `<new-spec-id>` overlaps with `<other-spec-id>` on [`file1`, `file2`]. Added concurrency lock: [`<ids>`]."
-   - If no overlaps: "Parallel safety: no file overlaps with open specs."
+| Tier 3 (Prod Hardening) | Error handling, monitoring, CI/CD |
+| Tier 4 (Core UX) | Features users need before launch |
+| Tier 7 (Frontend Polish) | Visual quality, a11y, performance |
+| Tier 8 (Performance) | Scale, N+1, indexes |
+| Tier 11 (Post-Launch) | Deferred features |
 
 ---
 
-### After writing
+## Phase 6: Confirm
 
-1. Write the file to `.overstory/specs/<filename>`
-2. Confirm: "Spec written: `<TIER>-<NN>-<slug>` — [one-line summary]"
-3. If the spec supersedes others, remind: "Remember to archive [spec IDs] before the next Overstory run."
-4. **Close the loop with Matt:** Summarize how this changes the current app experience. Walk through the before → after from the user's perspective: what does each affected role see/do today vs. after this spec is built? Keep it concrete — reference specific screens, interactions, and flows. This is the final gut-check that the spec matches Matt's intent.
+1. Report: "Added #{N} to Tier {X}: {title}"
+2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
+3. Note: "/status will pick this up next session as the next work item (if it's the highest-priority unchecked item)."
+
+---
+
+## Rules
+
+- **One question at a time.** Never batch.
+- **Data before UI.** Always.
+- **Tests before code.** The test plan is mandatory, not optional.
+- **TODO.md is the output.** Not a standalone file. /status reads it, /check updates it.
+- **Cheapest test wins.** Don't spec a component test for something a unit test catches.
+- **Edge cases over happy paths.** The test plan should focus on what could go wrong.

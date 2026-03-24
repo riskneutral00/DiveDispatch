@@ -5,9 +5,7 @@
  * when called by an authorized operator, and rejects unauthorized callers.
  */
 
-import { convexTest } from 'convex-test'
 import { describe, it, expect, vi } from 'vitest'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 import { testDate } from '../helpers/dates'
@@ -19,12 +17,9 @@ import {
   seedStakeholderPreferences,
   type SeedCtx,
 } from '../fixtures/seedFixture'
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../../convex/**/*.ts'))
-}
 
 async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'DiveCenter') {
   return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', businessName: `${slug} Business`, role })

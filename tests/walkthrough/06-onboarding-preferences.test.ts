@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { convexTest } from 'convex-test'
-import schema from '../../convex/schema'
 import { api } from '../../convex/_generated/api'
 import { seedUser as _seedUser, type SeedCtx } from '../fixtures/seedFixture'
-
-const modules = import.meta.glob('../../convex/**/*.ts')
+import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -16,7 +13,7 @@ async function seedUser(ctx: SeedCtx, slug: string) {
 
 describe('saveBookingTemplates', () => {
   it('creates records for selected pills', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'pref-dc-01'))
 
     // Simulate the preferences step: user selects DSD and OW, each becomes a pill
@@ -35,7 +32,7 @@ describe('saveBookingTemplates', () => {
   })
 
   it('with no pills creates no records', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'pref-dc-02'))
 
     // Skip path: user clicks Continue without adding any pills
@@ -46,7 +43,7 @@ describe('saveBookingTemplates', () => {
   })
 
   it('rejects duplicate pill types', async () => {
-    const t = convexTest(schema, modules)
+    const t = makeT()
     await t.run(async (ctx) => seedUser(ctx, 'pref-dc-03'))
 
     // Pass duplicate activityType codes in a single template.

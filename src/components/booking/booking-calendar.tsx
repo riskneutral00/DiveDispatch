@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useDroppable } from '@dnd-kit/core'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
@@ -33,6 +34,8 @@ interface BookingCalendarProps {
   viewerRole?: string
   footerAction?: React.ReactNode
   className?: string
+  /** Whether drag-and-drop is active (enables droppable targets on date cells) */
+  droppableEnabled?: boolean
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -43,6 +46,36 @@ function buildBarLabel(booking: CalendarBooking): string {
     return 'O + A'
   }
   return types.map(courseLabel).join(', ') || 'Booking'
+}
+
+/** Plain date cell wrapper — no dnd-kit hooks, safe outside DndContext */
+function PlainDateCell({ children }: { children: (isOver: boolean) => React.ReactNode }) {
+  return <div>{children(false)}</div>
+}
+
+/** Droppable date cell wrapper — requires DndContext ancestor */
+function DroppableDateCell({
+  dateString,
+  isBlocked,
+  isPast,
+  children,
+}: {
+  dateString: string
+  isBlocked: boolean
+  isPast: boolean
+  children: (isOver: boolean) => React.ReactNode
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `date-${dateString}`,
+    data: { type: 'calendar-date', date: dateString },
+    disabled: isBlocked || isPast,
+  })
+
+  return (
+    <div ref={setNodeRef}>
+      {children(isOver && !isBlocked && !isPast)}
+    </div>
+  )
 }
 
 export function BookingCalendar({
@@ -58,6 +91,7 @@ export function BookingCalendar({
   viewerRole,
   footerAction,
   className,
+  droppableEnabled = false,
 }: BookingCalendarProps) {
   const { range, shiftRange, jumpToDate, resetRange, weeks, headerLabel, todayCol } =
     useCalendarRange()
@@ -375,9 +409,8 @@ export function BookingCalendar({
                 const isBlocked = !blockedHidden && blockedDatesSet.has(day.dateString)
                 const dayBars = packed.filter((b) => b.startCol <= di && b.endCol >= di)
 
-                return (
+                const cellContent = (isOver: boolean) => (
                   <div
-                    key={day.dateString}
                     data-testid={`cell-${day.dateString}`}
                     className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-lg ${
                       isLocked
@@ -389,9 +422,13 @@ export function BookingCalendar({
                     style={{
                       background: isBlocked
                         ? 'var(--color-blocked-bg)'
-                        : day.isToday
-                          ? 'var(--color-status-active-bg)'
-                          : undefined,
+                        : isOver
+                          ? 'var(--color-primary-glow)'
+                          : day.isToday
+                            ? 'var(--color-status-active-bg)'
+                            : undefined,
+                      outline: isOver ? '2px solid var(--color-primary)' : undefined,
+                      outlineOffset: isOver ? '-2px' : undefined,
                     }}
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
                   >
@@ -482,6 +519,21 @@ export function BookingCalendar({
                     })}
                     </div>
                   </div>
+                )
+
+                return droppableEnabled ? (
+                  <DroppableDateCell
+                    key={day.dateString}
+                    dateString={day.dateString}
+                    isBlocked={isBlocked || isLocked}
+                    isPast={isPast}
+                  >
+                    {cellContent}
+                  </DroppableDateCell>
+                ) : (
+                  <PlainDateCell key={day.dateString}>
+                    {cellContent}
+                  </PlainDateCell>
                 )
               })}
             </div>

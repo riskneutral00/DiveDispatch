@@ -1,8 +1,7 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect } from 'vitest'
-import schema from '../convex/schema'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate, testToken, dob } from './helpers/dates'
 import {
   seedPortalFixture as _seedPortalFixture,
@@ -11,15 +10,9 @@ import {
   seedCustomerProfile,
   type SeedCtx,
 } from './fixtures/seedFixture'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-const modules = import.meta.glob('../convex/**/*.ts')
-
-function makeT() {
-  return convexTest(schema, modules)
-}
 
 async function seedPortalFixture(
   ctx: SeedCtx,

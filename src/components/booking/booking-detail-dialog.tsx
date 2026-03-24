@@ -475,10 +475,16 @@ function DiscardDraftDialog({
     }
   }
 
+  function handleClose() {
+    if (submitting) return
+    setError(null)
+    onClose()
+  }
+
   return (
     <GlassDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title="Discard draft?"
       description="This will permanently delete the draft and release all resource holds."
       size="sm"
@@ -489,7 +495,7 @@ function DiscardDraftDialog({
         </p>
       )}
       <div className="flex justify-end gap-3">
-        <GlassButton variant="secondary" size="sm" onClick={onClose} disabled={submitting}>
+        <GlassButton variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
           Keep draft
         </GlassButton>
         <GlassButton variant="destructive" size="sm" onClick={handleDiscard} loading={submitting}>

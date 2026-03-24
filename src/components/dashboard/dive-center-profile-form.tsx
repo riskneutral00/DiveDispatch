@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Minus, Plus, Save } from 'lucide-react'
+import { Lock, Plus, Save, Trash2 } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassInput } from '@/components/glass'
@@ -10,21 +11,7 @@ import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { LanguagePicker } from '@/components/common/language-picker'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-
-const AOW_SPECIALTIES = [
-  'Peak Performance Buoyancy',
-  'Underwater Navigation',
-  'Wreck Diver',
-  'Deep Diver',
-  'Night Diver',
-  'Underwater Photography',
-  'Boat Diver',
-  'Drift Diver',
-  'Dry Suit Diver',
-  'Fish Identification',
-  'Search and Recovery',
-  'Digital Underwater Photography',
-]
+import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -71,7 +58,7 @@ const INITIAL_FORM: FormState = {
   owDays: '',
   aowDays: '',
   oaDays: '',
-  aowSpecialties: [],
+  aowSpecialties: [...MANDATORY_AOW_SPECIALTIES],
 }
 
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
@@ -103,7 +90,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       owDays: p.bookingPreferences?.owDays?.toString() ?? '',
       aowDays: p.bookingPreferences?.aowDays?.toString() ?? '',
       oaDays: p.bookingPreferences?.oaDays?.toString() ?? '',
-      aowSpecialties: p.bookingPreferences?.aowSpecialties ?? [],
+      aowSpecialties: [...new Set([...MANDATORY_AOW_SPECIALTIES, ...(p.bookingPreferences?.aowSpecialties ?? [])])],
     }),
     fromMe: (u, defaults) => ({
       ...defaults,
@@ -142,6 +129,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   }
 
   function removeAssociation(idx: number) {
+    if (form.associations.length <= 1) return
     setField('associations', form.associations.filter((_, i) => i !== idx))
   }
 
@@ -149,7 +137,10 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     setField('associations', form.associations.map((a, i) => i === idx ? { ...a, [field]: value } : a))
   }
 
+  const [showMore, setShowMore] = useState(false)
+
   function toggleSpecialty(s: string) {
+    if (MANDATORY_AOW_SPECIALTIES.has(s)) return
     setField(
       'aowSpecialties',
       form.aowSpecialties.includes(s)
@@ -286,15 +277,19 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                     error={errors[`associations.${idx}.number`]}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeAssociation(idx)}
-                  className="mt-7 flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0 transition-colors"
-                  style={{ color: 'var(--color-destructive)' }}
-                  aria-label="Remove affiliation"
-                >
-                  <Minus size={14} />
-                </button>
+                {form.associations.length > 1 && (
+                  <div className="mt-7 flex-shrink-0">
+                    <GlassButton
+                      variant="destructive-ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => removeAssociation(idx)}
+                      aria-label="Remove affiliation"
+                    >
+                      <Trash2 size={16} />
+                    </GlassButton>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -371,13 +366,54 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           >
             AOW Specialties Offered
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {AOW_SPECIALTIES.map((s) => {
-              const checked = form.aowSpecialties.includes(s)
+          <div className="flex flex-wrap gap-1.5">
+            {AOW_MAIN.map(({ value, label }) => {
+              const checked = form.aowSpecialties.includes(value)
+              const locked = MANDATORY_AOW_SPECIALTIES.has(value)
               return (
                 <label
-                  key={s}
-                  className="flex items-center gap-2 px-3 py-2 rounded-[var(--border-radius)] cursor-pointer transition-all"
+                  key={value}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${locked ? 'cursor-default' : 'cursor-pointer'}`}
+                  style={{
+                    background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
+                    color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
+                    border: `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
+                    transitionDuration: 'var(--transition-speed)',
+                  }}
+                  aria-disabled={locked || undefined}
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={checked}
+                    disabled={locked}
+                    onChange={() => toggleSpecialty(value)}
+                  />
+                  {label}
+                  {locked && <Lock size={10} style={{ opacity: 0.7 }} />}
+                </label>
+              )
+            })}
+            {!showMore && (
+              <button
+                type="button"
+                onClick={() => setShowMore(true)}
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
+                style={{
+                  background: 'var(--color-surface-elevated)',
+                  color: 'var(--color-text-secondary)',
+                  border: '1px dashed var(--color-glass-border)',
+                }}
+              >
+                More…
+              </button>
+            )}
+            {showMore && AOW_OVERFLOW.map(({ value, label }) => {
+              const checked = form.aowSpecialties.includes(value)
+              return (
+                <label
+                  key={value}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-all"
                   style={{
                     background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
                     color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
@@ -389,9 +425,9 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                     type="checkbox"
                     className="sr-only"
                     checked={checked}
-                    onChange={() => toggleSpecialty(s)}
+                    onChange={() => toggleSpecialty(value)}
                   />
-                  <span className="text-sm">{s}</span>
+                  {label}
                 </label>
               )
             })}

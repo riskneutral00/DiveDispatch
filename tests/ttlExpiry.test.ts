@@ -1,20 +1,14 @@
-import { convexTest } from 'convex-test'
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import schema from '../convex/schema'
 import { api, internal } from '../convex/_generated/api'
 import { isSessionEnded, isBookingExpired } from '../convex/bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../convex/lib/portal'
 import type { MutationCtx } from '../convex/_generated/server'
 import { Id } from '../convex/_generated/dataModel'
+import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate, testToken } from './helpers/dates'
+import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const HOLD_TTL = 43_200_000
-
-function makeT() {
-  return convexTest(schema, import.meta.glob('../convex/**/*.ts'))
-}
 
 // ─── isSessionEnded ────────────────────────────────────────────────────────────
 

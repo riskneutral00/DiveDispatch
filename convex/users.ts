@@ -1,23 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
-import { getAuthUser } from './lib/auth'
-import { checkProfileCompleteness } from './lib/profileCompleteness'
-
-const stakeholderType = v.union(
-  v.literal('DiveCenter'),
-  v.literal('Agent'),
-  v.literal('Instructor'),
-  v.literal('Boat'),
-  v.literal('Equipment'),
-  v.literal('Pool'),
-  v.literal('Compressor'),
-  v.literal('DiveMaster'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
-  v.literal('DiveSite'),
-)
+import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function generateUniqueSlug(db: any): Promise<string> {
@@ -114,8 +100,7 @@ export const createUser = mutation({
     })
 
     // Schedule demo bookings for operator roles
-    const DEMO_OPERATOR_ROLES = new Set(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
-    if (DEMO_OPERATOR_ROLES.has(args.role)) {
+    if (OPERATOR_ROLE_SET.has(args.role)) {
       await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
         slug,
         role: args.role,
@@ -253,6 +238,45 @@ export const getOnboardingStatus = query({
     const user = await getAuthUser(ctx)
     if (!user) return { percentage: 0, incomplete: ['Profile not created'] }
     return checkProfileCompleteness(ctx, user)
+  },
+})
+
+// Returns the lowest profile completion percentage across ALL of the user's roles.
+// For multi-role users (e.g. DiveCenter + Boat + Pool), this surfaces the worst
+// completion so the dashboard indicator reflects outstanding work on any role.
+export const getLowestProfileCompletion = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return { percentage: 0 }
+
+    const roles = await ctx.db
+      .query('userRoles')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .collect()
+
+    if (roles.length === 0) {
+      const result = await checkProfileCompleteness(ctx, user)
+      return { percentage: result.percentage }
+    }
+
+    let min = 100
+    for (const r of roles) {
+      const result = await checkProfileCompleteness(ctx, { ...user, role: r.role })
+      if (result.percentage < min) min = result.percentage
+    }
+    return { percentage: min }
+  },
+})
+
+// Returns per-role completeness breakdown. Used by the profile completion banner
+// and booking gate to know WHICH roles have WHICH fields missing.
+export const getAllRolesCompleteness = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return { allComplete: true, roles: [] }
+    return checkAllRolesCompleteness(ctx, user._id)
   },
 })
 

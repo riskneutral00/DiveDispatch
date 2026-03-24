@@ -10,6 +10,7 @@ import { GlassInput } from '../glass/glass-input'
 import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { toggleInArray } from '@/lib/utils/arrays'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -181,12 +182,7 @@ export function BoatProfileForm() {
   })
 
   function toggleLanguage(lang: string) {
-    setField(
-      'focusedLanguages',
-      form.focusedLanguages.includes(lang)
-        ? form.focusedLanguages.filter((l) => l !== lang)
-        : [...form.focusedLanguages, lang],
-    )
+    setField('focusedLanguages', toggleInArray(form.focusedLanguages, lang))
   }
 
   function addFleet() { setField('fleet', [...form.fleet, emptyFleet()]) }
@@ -373,10 +369,9 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
           Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
         </span>
         {canRemove && (
-          <button type="button" onClick={onRemove} className="flex items-center gap-1 text-sm px-2 py-1 rounded transition-opacity hover:opacity-80" style={{ color: 'var(--color-destructive)' }} aria-label={`Remove vessel ${fi + 1}`}>
-            <Trash2 size={13} />
-            Remove
-          </button>
+          <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label={`Remove vessel ${fi + 1}`}>
+            <Trash2 size={16} />
+          </GlassButton>
         )}
       </div>
 
@@ -442,9 +437,11 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
         <div className="flex-1">
           <GlassInput value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
         </div>
-        <button type="button" onClick={onRemove} aria-label="Remove route" className="mt-2 flex-shrink-0 transition-opacity hover:opacity-80" style={{ color: 'var(--color-destructive)' }}>
-          <Trash2 size={14} />
-        </button>
+        <div className="mt-2 flex-shrink-0">
+          <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label="Remove route">
+            <Trash2 size={16} />
+          </GlassButton>
+        </div>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {DAYS.map((d) => {

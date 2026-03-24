@@ -15,3 +15,5 @@ export type { GlassSelectOption } from "./glass-select";
 export { RoleIcon } from "./role-icon";
 export { GlassSimpleSelect } from "./glass-simple-select";
 export { GlassErrorCard } from "./glass-error-card";
+export { GlassCheckboxGroup } from "./glass-checkbox-group";
+export type { GlassCheckboxGroupProps } from "./glass-checkbox-group";
