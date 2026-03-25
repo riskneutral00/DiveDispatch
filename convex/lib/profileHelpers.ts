@@ -45,7 +45,7 @@ export async function profileByUserId<T extends TableNames>(
 export async function profileUpdate(
   ctx: MutationCtx,
   args: Record<string, unknown>,
-  tableName: string,
+  tableName: TableNames,
 ) {
   const { user } = await requireAuth(ctx)
 
@@ -69,7 +69,7 @@ export async function profileUpdate(
 export async function profileCreate(
   ctx: MutationCtx,
   args: Record<string, unknown>,
-  tableName: string,
+  tableName: TableNames,
   roleName: string | string[],
   extraDefaults?: Record<string, unknown>,
 ) {

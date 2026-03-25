@@ -6,25 +6,13 @@
  * assertion. These helpers centralise the assertion so call sites never
  * use `as any`.
  *
- * Two tiers:
- *  - `queryTable(db, 'literal')` — preserves full Doc<T> / index types.
- *  - `queryDynamicTable(db, variable)` — returns a generic query that
- *    accepts any index name and yields `GenericDocument`.
+ * `queryDynamicTable(db, variable)` returns a generic query that accepts
+ * any index name and yields `GenericDocument`. Companion helpers
+ * `insertDynamicTable`, `deleteDynamic`, and `patchDynamic` cover writes.
  */
 import type { GenericTableInfo, GenericDatabaseReader, GenericDatabaseWriter, GenericDataModel, QueryInitializer } from 'convex/server'
 import type { GenericId, Value } from 'convex/values'
-import type { TableNames } from '../_generated/dataModel'
 import type { DatabaseReader, DatabaseWriter } from '../_generated/server'
-
-// ── Literal table name (full type safety) ─────────────────────────────
-
-/**
- * Query a table by literal name. TypeScript narrows the return to the
- * exact `Doc<T>` and its indexes.
- */
-export function queryTable<T extends TableNames>(db: DatabaseReader, table: T) {
-  return db.query(table)
-}
 
 // ── Dynamic table name (runtime string) ───────────────────────────────
 

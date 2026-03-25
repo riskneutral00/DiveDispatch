@@ -220,8 +220,8 @@ async function toCalendarBooking(
 }
 
 async function resolveCallerBookings(ctx: QueryCtx, user: Doc<'users'>): Promise<Doc<'bookings'>[]> {
-  const role = user.role as string
-  const slug = user.slug as string
+  const role = user.role
+  const slug = user.slug
 
   // Operator roles: query bookings by ownerId index
   if (role === 'DiveCenter' || role === 'Liveaboard' || role === 'DiveResort' || role === 'DiveHostel') {
