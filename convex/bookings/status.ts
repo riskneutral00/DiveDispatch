@@ -152,6 +152,52 @@ export const clearMedicalBlock = mutation({
   },
 })
 
+// ─── Shared completion logic ─────────────────────────────────────────────────
+
+import type { MutationCtx } from '../_generated/server'
+
+async function runCompletionBatch(
+  ctx: MutationCtx,
+): Promise<{ completed: number; more: boolean }> {
+  const upcoming = await ctx.db
+    .query('bookings')
+    .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
+    .take(101)
+
+  const batch = upcoming.slice(0, 100)
+  const more = upcoming.length > 100
+  let completed = 0
+
+  for (const booking of batch) {
+    const sessions = await ctx.db
+      .query('bookingSessions')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
+      .collect()
+
+    if (sessions.length === 0) continue
+
+    // Last session = max date, then max endTime (both YYYY-MM-DD / HH:MM are lex-sortable)
+    const last = sessions.reduce((latest, s) => {
+      if (s.date > latest.date) return s
+      if (s.date === latest.date && s.endTime > latest.endTime) return s
+      return latest
+    })
+
+    if (isSessionEnded(last.date, last.endTime, last.timezone)) {
+      await ctx.db.patch(booking._id, { status: 'Completed' })
+      await logBookingChange(ctx, {
+        bookingId: booking._id,
+        action: 'completed',
+        actorSlug: 'system',
+        actorType: 'system',
+      })
+      completed++
+    }
+  }
+
+  return { completed, more }
+}
+
 // ─── completeBookings ────────────────────────────────────────────────────────
 
 /**
@@ -162,43 +208,7 @@ export const clearMedicalBlock = mutation({
 export const completeBookings = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ completed: number; more: boolean }> => {
-    const upcoming = await ctx.db
-      .query('bookings')
-      .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
-      .take(101)
-
-    const batch = upcoming.slice(0, 100)
-    const more = upcoming.length > 100
-    let completed = 0
-
-    for (const booking of batch) {
-      const sessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-        .collect()
-
-      if (sessions.length === 0) continue
-
-      // Last session = max date, then max endTime (both YYYY-MM-DD / HH:MM are lex-sortable)
-      const last = sessions.reduce((latest, s) => {
-        if (s.date > latest.date) return s
-        if (s.date === latest.date && s.endTime > latest.endTime) return s
-        return latest
-      })
-
-      if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-        await ctx.db.patch(booking._id, { status: 'Completed' })
-        await logBookingChange(ctx, {
-          bookingId: booking._id,
-          action: 'completed',
-          actorSlug: 'system',
-          actorType: 'system',
-        })
-        completed++
-      }
-    }
-
-    return { completed, more }
+    return runCompletionBatch(ctx)
   },
 })
 
@@ -213,40 +223,7 @@ export const completeBookingsWithMonitoring = internalMutation({
   args: {},
   handler: async (ctx): Promise<void> => {
     try {
-      // Run the actual completion logic inline (same transaction)
-      const upcoming = await ctx.db
-        .query('bookings')
-        .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
-        .take(101)
-
-      const batch = upcoming.slice(0, 100)
-      let completed = 0
-
-      for (const booking of batch) {
-        const sessions = await ctx.db
-          .query('bookingSessions')
-          .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-          .collect()
-
-        if (sessions.length === 0) continue
-
-        const last = sessions.reduce((latest, s) => {
-          if (s.date > latest.date) return s
-          if (s.date === latest.date && s.endTime > latest.endTime) return s
-          return latest
-        })
-
-        if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-          await ctx.db.patch(booking._id, { status: 'Completed' })
-          await logBookingChange(ctx, {
-            bookingId: booking._id,
-            action: 'completed',
-            actorSlug: 'system',
-            actorType: 'system',
-          })
-          completed++
-        }
-      }
+      await runCompletionBatch(ctx)
 
       // Log success
       await ctx.db.insert('cronRunLog', {
