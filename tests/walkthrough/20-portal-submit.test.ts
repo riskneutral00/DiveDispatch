@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { testDate } from '../helpers/dates'
 import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
-import { makeT } from '../helpers/convex-helpers'
+import { makeT, expectConvexError } from '../helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -141,8 +141,9 @@ describe('submitPortal', () => {
       }),
     )
 
-    await expect(
+    await expectConvexError(
       t.mutation(api.portalSubmission.submitPortal, { token }),
-    ).rejects.toBeDefined()
+      'FORMS_INCOMPLETE',
+    )
   })
 })

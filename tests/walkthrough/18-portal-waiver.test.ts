@@ -70,6 +70,6 @@ describe('savePortalWaiver', () => {
         // @ts-expect-error - testing that missing required arg throws
         { token },
       ),
-    ).rejects.toBeDefined()
+    ).rejects.toThrow()
   })
 })

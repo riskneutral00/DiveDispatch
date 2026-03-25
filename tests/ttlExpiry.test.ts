@@ -6,7 +6,7 @@ import type { MutationCtx } from '../convex/_generated/server'
 import { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate, testToken } from './helpers/dates'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1557,7 +1557,9 @@ describe('token invalidation', () => {
     const { token } = await t.run(async (ctx) =>
       makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
     )
-    await expect(t.run(async (ctx) => resolvePortalToken(ctx, token))).rejects.toBeDefined()
+    await expect(
+      t.run(async (ctx) => resolvePortalToken(ctx, token)),
+    ).rejects.toThrow('TOKEN_EXPIRED')
   })
 
   // 5. resolvePortalTokenSoft returns null for used token
@@ -1623,7 +1625,10 @@ describe('token invalidation', () => {
     const { token } = await t.run(async (ctx) =>
       makePortalFixture(ctx, { usedAt: Date.now() - 1000 }),
     )
-    await expect(t.mutation(api.portalSubmission.submitPortal, { token })).rejects.toBeDefined()
+    await expectConvexError(
+      t.mutation(api.portalSubmission.submitPortal, { token }),
+      'TOKEN_EXPIRED',
+    )
   })
 
   // 10. operator can regenerate token after use

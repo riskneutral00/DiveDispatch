@@ -170,7 +170,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
         token,
         signatureStorageId: 'kg2b0e2rfvbnmqqz88h9mwtxas7b0v2j' as Id<'_storage'>,
       }),
-    ).rejects.toBeDefined()
+    ).rejects.toThrow()
   })
 
   it('savePortalEquipment rejects expired token', async () => {
