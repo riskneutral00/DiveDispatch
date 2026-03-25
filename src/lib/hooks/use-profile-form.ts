@@ -12,7 +12,7 @@ export interface UseProfileFormOptions<TForm extends Record<string, unknown>> {
   /** Convex query result — undefined while loading, null if no profile exists */
   profile: AnyProfile | null | undefined
   /** Optional user record for pre-filling defaults on first create */
-  me?: { businessName?: string; email?: string; customerLanguages?: string[] } | null | undefined
+  me?: { businessName?: string; email?: string; customerLanguages?: string[]; defaultLocation?: string; defaultContactEmail?: string; defaultContactPhone?: string } | null | undefined
   /** Zod schema for validation */
   schema: z.ZodType<unknown>
   /** Default form values */

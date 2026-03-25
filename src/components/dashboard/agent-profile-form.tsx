@@ -135,11 +135,13 @@ export type AgentProfileSection = 'contact' | 'associations'
 
 export function AgentProfileForm({ section }: { section?: AgentProfileSection } = {}) {
   const profile = useQuery(api.agents.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
 
   const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
     profile,
+    me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p: Record<string, unknown>) => {
@@ -161,6 +163,11 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         defaultReferralMode: prof.defaultReferralMode,
       } as ProfileFormData
     },
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
+    }),
     toPayload: (f) => {
       const validLocations = f.locations.filter((l): l is LocationValue => l !== null)
       return {

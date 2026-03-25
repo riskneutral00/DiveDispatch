@@ -53,11 +53,13 @@ const INITIAL_FORM: FormState = {
 
 export function EquipmentProfileForm() {
   const profile = useQuery(api.equipment.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.equipment.create)
   const update = useMutation(api.equipment.update)
 
   const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
+    me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
@@ -82,6 +84,11 @@ export function EquipmentProfileForm() {
         manufacturersByGearType: parsed,
       }
     },
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
+    }),
     toPayload: (f) => {
       const loc = f.location!
       const mbt: Record<string, string[]> = {}

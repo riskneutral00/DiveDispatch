@@ -24,11 +24,15 @@ interface AccountFormValues {
   preferredLocale: string
   preferredChannel: ChannelKey | null
   customerLanguages: string[]
+  defaultLocation: string
+  defaultContactEmail: string
+  defaultContactPhone: string
 }
 
 export function AccountForm() {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
+  const updateDefaults = useMutation(api.users.updateAccountDefaults)
 
   const [values, setValues] = useState<AccountFormValues>({
     firstName: '',
@@ -40,6 +44,9 @@ export function AccountForm() {
     preferredLocale: 'en',
     preferredChannel: null,
     customerLanguages: [],
+    defaultLocation: '',
+    defaultContactEmail: '',
+    defaultContactPhone: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -57,6 +64,9 @@ export function AccountForm() {
         preferredLocale: user.preferredLocale ?? 'en',
         preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
         customerLanguages: user.customerLanguages ?? [],
+        defaultLocation: user.defaultLocation ?? '',
+        defaultContactEmail: user.defaultContactEmail ?? '',
+        defaultContactPhone: user.defaultContactPhone ?? '',
       })
     }
   }, [user])
@@ -102,6 +112,12 @@ export function AccountForm() {
         phone: values.phone.trim() || undefined,
         preferredLocale: values.preferredLocale,
         preferredChannel: values.preferredChannel ?? undefined,
+        customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
+      })
+      await updateDefaults({
+        defaultLocation: values.defaultLocation.trim() || undefined,
+        defaultContactEmail: values.defaultContactEmail.trim() || undefined,
+        defaultContactPhone: values.defaultContactPhone.trim() || undefined,
         customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
       setSaved(true)
@@ -177,6 +193,46 @@ export function AccountForm() {
               type="tel"
               value={values.phone}
               onChange={(e) => set('phone', e.target.value)}
+              placeholder="+66 81 234 5678"
+              autoComplete="tel"
+            />
+          </div>
+        </div>
+      </GlassCard>
+
+      <GlassCard>
+        <div className="flex flex-col gap-4">
+          <p
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Shared Defaults
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            These values pre-fill new role profiles. Each role can override them.
+          </p>
+
+          <GlassInput
+            label="Default location"
+            value={values.defaultLocation}
+            onChange={(e) => set('defaultLocation', e.target.value)}
+            placeholder="e.g. Koh Tao, Thailand"
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <GlassInput
+              label="Default contact email"
+              type="email"
+              value={values.defaultContactEmail}
+              onChange={(e) => set('defaultContactEmail', e.target.value)}
+              placeholder="your@business.com"
+              autoComplete="email"
+            />
+            <GlassInput
+              label="Default contact phone"
+              type="tel"
+              value={values.defaultContactPhone}
+              onChange={(e) => set('defaultContactPhone', e.target.value)}
               placeholder="+66 81 234 5678"
               autoComplete="tel"
             />

@@ -6,7 +6,7 @@ import { OPERATOR_ROLE_SET as OPERATOR_ROLES } from './auth'
 
 export async function checkProfileCompleteness(
   ctx: { db: any },
-  user: { _id: any; slug: string; role: string },
+  user: { _id: any; slug: string; role: string; defaultContactEmail?: string; defaultContactPhone?: string; defaultLocation?: string },
 ): Promise<{ percentage: number; incomplete: string[] }> {
   const role = user.role
   const incomplete: string[] = []
@@ -51,8 +51,8 @@ export async function checkProfileCompleteness(
     if (!str(profile?.placeName)) incomplete.push('Location')
     if (!str(profile?.country)) incomplete.push('Country')
   }
-  if (!str(profile?.contactEmail)) incomplete.push('Contact email')
-  if (!str(profile?.contactPhone)) incomplete.push('Contact phone')
+  if (!str(profile?.contactEmail) && !str(user.defaultContactEmail)) incomplete.push('Contact email')
+  if (!str(profile?.contactPhone) && !str(user.defaultContactPhone)) incomplete.push('Contact phone')
 
   // Role-specific list field
   if (role === 'DiveCenter' || role === 'Agent' || role === 'Liveaboard') {
@@ -122,7 +122,14 @@ export async function checkAllRolesCompleteness(
   let allComplete = true
 
   for (const role of rolesToCheck) {
-    const result = await checkProfileCompleteness(ctx, { _id: user._id, slug: user.slug, role })
+    const result = await checkProfileCompleteness(ctx, {
+      _id: user._id,
+      slug: user.slug,
+      role,
+      defaultContactEmail: user.defaultContactEmail,
+      defaultContactPhone: user.defaultContactPhone,
+      defaultLocation: user.defaultLocation,
+    })
     roles.push({ role, ...result })
     if (result.percentage < 100) allComplete = false
   }

@@ -120,11 +120,13 @@ export type InstructorProfileSection = 'contact' | 'credentials'
 
 export function InstructorProfileForm({ section }: { section?: InstructorProfileSection } = {}) {
   const profile = useQuery(api.instructors.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.instructors.create)
   const update = useMutation(api.instructors.update)
 
   const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
     profile,
+    me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
@@ -139,6 +141,11 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       credential: p.credential.length > 0 ? p.credential : [emptyCredential()],
+    }),
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!

@@ -124,6 +124,9 @@ export default defineSchema({
     preferredLocale: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
     onboardingComplete: v.optional(v.boolean()),
+    defaultLocation: v.optional(v.string()),
+    defaultContactEmail: v.optional(v.string()),
+    defaultContactPhone: v.optional(v.string()),
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])

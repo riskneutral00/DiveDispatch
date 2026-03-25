@@ -62,11 +62,13 @@ const INITIAL_FORM: FormState = {
 
 export function CompressorProfileForm() {
   const profile = useQuery(api.compressors.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.compressors.create)
   const update = useMutation(api.compressors.update)
 
   const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
+    me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
@@ -81,6 +83,11 @@ export function CompressorProfileForm() {
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       gasMixes: (p.gasMixes ?? []) as GasMix[],
+    }),
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!

@@ -281,6 +281,47 @@ export const getAllRolesCompleteness = query({
   },
 })
 
+// Updates account-level default fields (location, contact email, contact phone).
+// These act as fallbacks for role-specific profiles.
+export const updateAccountDefaults = mutation({
+  args: {
+    defaultLocation: v.optional(v.string()),
+    defaultContactEmail: v.optional(v.string()),
+    defaultContactPhone: v.optional(v.string()),
+    customerLanguages: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+
+    const patch: Record<string, unknown> = {}
+    if (args.defaultLocation !== undefined) patch.defaultLocation = args.defaultLocation
+    if (args.defaultContactEmail !== undefined) patch.defaultContactEmail = args.defaultContactEmail
+    if (args.defaultContactPhone !== undefined) patch.defaultContactPhone = args.defaultContactPhone
+    if (args.customerLanguages !== undefined) patch.customerLanguages = args.customerLanguages
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(user._id, patch)
+    }
+  },
+})
+
+// Returns the current account-level defaults for the authenticated user.
+export const getAccountDefaults = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return null
+
+    return {
+      defaultLocation: user.defaultLocation,
+      defaultContactEmail: user.defaultContactEmail,
+      defaultContactPhone: user.defaultContactPhone,
+      customerLanguages: user.customerLanguages,
+    }
+  },
+})
+
 // Marks onboarding as complete. Requires at minimum that name and email are set on the profile.
 export const completeOnboarding = mutation({
   args: {},

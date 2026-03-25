@@ -61,6 +61,7 @@ export type DiveCenterProfileSection = 'contact' | 'associations'
 export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
   const existing = useQuery(api.diveCenters.mine)
   const me = useQuery(api.users.me)
+  const accountDefaults = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
@@ -89,7 +90,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     fromMe: (u, defaults) => ({
       ...defaults,
       name: u.businessName ?? '',
-      contactEmail: u.email ?? '',
+      contactEmail: accountDefaults?.defaultContactEmail ?? u.email ?? '',
+      contactPhone: accountDefaults?.defaultContactPhone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!

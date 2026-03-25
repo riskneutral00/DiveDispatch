@@ -118,11 +118,13 @@ const INITIAL_FORM: FormState = {
 
 export function BoatProfileForm() {
   const profile = useQuery(api.boats.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.boats.create)
   const update = useMutation(api.boats.update)
 
   const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
+    me: me ?? undefined,
     schema: profileZod,
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
@@ -147,6 +149,11 @@ export function BoatProfileForm() {
               cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
             }))
           : [emptyFleet()],
+    }),
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!

@@ -53,11 +53,13 @@ function parseNumber(raw: string, isInt: boolean): number {
 
 export function PoolProfileForm() {
   const profile = useQuery(api.venues.mine)
+  const me = useQuery(api.users.getAccountDefaults)
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
   const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
+    me: me ?? undefined,
     schema: poolSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
@@ -73,6 +75,11 @@ export function PoolProfileForm() {
       contactPhone: p.contactPhone ?? '',
       maxDepth: p.maxDepth ?? 0,
       maxCapacity: p.maxCapacity ?? 0,
+    }),
+    fromMe: (defaults, initial) => ({
+      ...initial,
+      contactEmail: defaults.defaultContactEmail ?? '',
+      contactPhone: defaults.defaultContactPhone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
