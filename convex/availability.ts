@@ -452,10 +452,15 @@ export async function _toggleBlockedDate(
       for (const session of sessions) {
         const confirmed = await ctx.db
           .query('reservations')
-          .withIndex('by_inventoryUnitId_status', (q) =>
-            q.eq('inventoryUnitId', unit._id).eq('status', 'Confirmed'),
+          .withIndex('by_bookingSessionId', (q) =>
+            q.eq('bookingSessionId', session._id),
           )
-          .filter((q) => q.eq(q.field('bookingSessionId'), session._id))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field('inventoryUnitId'), unit._id),
+              q.eq(q.field('status'), 'Confirmed'),
+            ),
+          )
           .collect()
 
         if (confirmed.length > 0) {
@@ -484,10 +489,15 @@ export async function _toggleBlockedDate(
 
         const pending = await ctx.db
           .query('reservations')
-          .withIndex('by_inventoryUnitId_status', (q) =>
-            q.eq('inventoryUnitId', unit._id).eq('status', 'PendingAcceptance'),
+          .withIndex('by_bookingSessionId', (q) =>
+            q.eq('bookingSessionId', session._id),
           )
-          .filter((q) => q.eq(q.field('bookingSessionId'), session._id))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field('inventoryUnitId'), unit._id),
+              q.eq(q.field('status'), 'PendingAcceptance'),
+            ),
+          )
           .collect()
 
         for (const reservation of pending) {
