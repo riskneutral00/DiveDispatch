@@ -17,8 +17,7 @@ describe('GitHub Actions workflows', () => {
   describe('ci.yml', () => {
     it('exists and is valid YAML', () => {
       const { parsed } = loadWorkflow('ci.yml')
-      expect(parsed).toBeDefined()
-      expect(parsed.name).toBeTruthy()
+      expect(parsed.name).toBe('CI')
     })
 
     it('triggers on pull requests to main', () => {
@@ -36,8 +35,7 @@ describe('GitHub Actions workflows', () => {
 
     it('runs on ubuntu-latest', () => {
       const { parsed } = loadWorkflow('ci.yml')
-      const jobs = Object.values(parsed.jobs) as Array<{ 'runs-on': string }>
-      expect(jobs.some((j) => j['runs-on'] === 'ubuntu-latest')).toBe(true)
+      expect(parsed.jobs.ci['runs-on']).toBe('ubuntu-latest')
     })
 
     it('uses Node.js 20', () => {
@@ -49,8 +47,7 @@ describe('GitHub Actions workflows', () => {
   describe('deploy.yml', () => {
     it('exists and is valid YAML', () => {
       const { parsed } = loadWorkflow('deploy.yml')
-      expect(parsed).toBeDefined()
-      expect(parsed.name).toBeTruthy()
+      expect(parsed.name).toBe('Deploy')
     })
 
     it('triggers on push to main', () => {
@@ -72,20 +69,14 @@ describe('GitHub Actions workflows', () => {
   describe('rollback.yml', () => {
     it('exists and is valid YAML', () => {
       const { parsed } = loadWorkflow('rollback.yml')
-      expect(parsed).toBeDefined()
-      expect(parsed.name).toBeTruthy()
+      expect(parsed.name).toBe('Rollback')
     })
 
-    it('supports manual workflow_dispatch trigger', () => {
+    it('supports manual workflow_dispatch with required commit SHA input', () => {
       const { parsed } = loadWorkflow('rollback.yml')
-      expect(parsed.on?.workflow_dispatch).toBeDefined()
-    })
-
-    it('accepts a commit SHA input', () => {
-      const { parsed } = loadWorkflow('rollback.yml')
-      const inputs = parsed.on?.workflow_dispatch?.inputs
-      expect(inputs?.commit_sha).toBeDefined()
-      expect(inputs?.commit_sha?.required).toBe(true)
+      const inputs = parsed.on.workflow_dispatch.inputs
+      expect(inputs.commit_sha.required).toBe(true)
+      expect(inputs.commit_sha.type).toBe('string')
     })
 
     it('checks out the specified commit and deploys', () => {
