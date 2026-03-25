@@ -771,6 +771,15 @@ export default defineSchema({
     createdAt: v.number(),
   }).index('by_userId', ['userId']),
 
+  // ── L6: Cron Monitoring ────────────────────────────────────────────────────────
+
+  cronRunLog: defineTable({
+    jobName: v.string(),
+    status: v.union(v.literal('success'), v.literal('failure')),
+    error: v.optional(v.string()),
+    runAt: v.number(),
+  }).index('by_jobName_runAt', ['jobName', 'runAt']),
+
   // ── L7: Audit Trail ──────────────────────────────────────────────────────────
 
   bookingAuditLog: defineTable({

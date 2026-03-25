@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation } from '../_generated/server'
+import { internal } from '../_generated/api'
 import { requireAuth } from '../lib/auth'
 import {
   canBookingTransition,
@@ -198,5 +199,80 @@ export const completeBookings = internalMutation({
     }
 
     return { completed, more }
+  },
+})
+
+// ─── completeBookingsWithMonitoring ──────────────────────────────────────────
+
+/**
+ * Monitored wrapper for completeBookings.
+ * Logs every execution to cronRunLog; alerts on failure.
+ * Called by the cron scheduler instead of completeBookings directly.
+ */
+export const completeBookingsWithMonitoring = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    try {
+      // Run the actual completion logic inline (same transaction)
+      const upcoming = await ctx.db
+        .query('bookings')
+        .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
+        .take(101)
+
+      const batch = upcoming.slice(0, 100)
+      let completed = 0
+
+      for (const booking of batch) {
+        const sessions = await ctx.db
+          .query('bookingSessions')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
+          .collect()
+
+        if (sessions.length === 0) continue
+
+        const last = sessions.reduce((latest, s) => {
+          if (s.date > latest.date) return s
+          if (s.date === latest.date && s.endTime > latest.endTime) return s
+          return latest
+        })
+
+        if (isSessionEnded(last.date, last.endTime, last.timezone)) {
+          await ctx.db.patch(booking._id, { status: 'Completed' })
+          await logBookingChange(ctx, {
+            bookingId: booking._id,
+            action: 'completed',
+            actorSlug: 'system',
+            actorType: 'system',
+          })
+          completed++
+        }
+      }
+
+      // Log success
+      await ctx.db.insert('cronRunLog', {
+        jobName: 'complete-bookings',
+        status: 'success',
+        runAt: Date.now(),
+      })
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+
+      // Log failure
+      await ctx.db.insert('cronRunLog', {
+        jobName: 'complete-bookings',
+        status: 'failure',
+        error: errorMessage,
+        runAt: Date.now(),
+      })
+
+      // Schedule alert email
+      await ctx.scheduler.runAfter(0, internal.lib.alerts.sendAlertEmail, {
+        jobName: 'complete-bookings',
+        error: errorMessage,
+      })
+
+      // Re-throw so Convex marks the run as failed
+      throw err
+    }
   },
 })
