@@ -10,7 +10,7 @@ import type { Language } from '@/lib/types/language'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
 import { StepBusinessInfo, type BusinessInfoValues } from './step-business-info'
-import { buildOnboardingSteps, roleLabelForClerkRole, hasOperatorRole } from './onboarding-steps'
+import { buildOnboardingSteps, roleLabelForClerkRole } from './onboarding-steps'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
@@ -55,7 +55,6 @@ export function OnboardingWizard() {
   const router = useRouter()
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [stepInitialized, setStepInitialized] = useState(false)
   const [dcSubStep, setDcSubStep] = useState<DcSubStep>('dc-basic')
   const [completing, setCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -85,14 +84,6 @@ export function OnboardingWizard() {
 
   const currentStep = onboardingSteps[currentStepIndex]
 
-  // Set initial step once user loads (resources skip business-info)
-  useEffect(() => {
-    if (user && onboardingSteps.length > 0 && !stepInitialized) {
-      setCurrentStepIndex(0)
-      setStepInitialized(true)
-    }
-  }, [user, onboardingSteps.length, stepInitialized])
-
   // Pre-fill business name from user record
   const [prefilled, setPrefilled] = useState(false)
   useEffect(() => {
@@ -115,8 +106,6 @@ export function OnboardingWizard() {
         .map((rn) => ROLES.find((r) => r.clerkRole === rn))
         .filter((r): r is NonNullable<typeof r> => r !== undefined)
     : []
-
-  const isOperator = hasOperatorRole(roleNames)
 
   // Parse the current step key
   const stepKey = currentStep?.key ?? ''

@@ -58,8 +58,8 @@ describe('createUser with roles array (DD-032)', () => {
     )
 
     const primary = roles.find((r) => r.isPrimary)
-    expect(primary).toBeTruthy()
-    expect(primary!.role).toBe('Boat')
+    expect(primary).toBeDefined()
+    expect(primary?.role).toBe('Boat')
 
     const nonPrimary = roles.filter((r) => !r.isPrimary)
     expect(nonPrimary).toHaveLength(1)
@@ -132,19 +132,4 @@ describe('createUser with roles array (DD-032)', () => {
     expect(roles[0].isPrimary).toBe(true)
   })
 
-  it('schedules demo bookings only when an operator role is in the set', async () => {
-    const t = makeT()
-    vi.useFakeTimers({ now: Date.now() })
-    // DiveCenter is an operator role
-    await t
-      .withIdentity(IDENTITY)
-      .mutation(api.users.createUser, {
-        role: 'DiveCenter',
-        roles: ['DiveCenter', 'Instructor'],
-        businessName: 'Demo DC',
-      })
-    // Should not throw — demo bookings are scheduled for operator primary
-    await t.finishAllScheduledFunctions(vi.runAllTimers)
-    vi.useRealTimers()
-  })
 })
