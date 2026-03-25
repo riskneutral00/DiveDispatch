@@ -3,19 +3,40 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
+import dynamic from 'next/dynamic'
 import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '../../../../../convex/_generated/api'
 import { GlassCard } from '../../../../components/glass/glass-card'
 import { GlassBadge } from '../../../../components/glass/glass-badge'
 import { StepContact } from '../../../../components/portal/step-contact'
-import { StepMedical } from '../../../../components/portal/step-medical'
-import { StepWaiver } from '../../../../components/portal/step-waiver'
-import { StepEquipment } from '../../../../components/portal/step-equipment'
 import type { EquipmentData } from '../../../../components/portal/step-equipment'
-import { StepSafety } from '../../../../components/portal/step-safety'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
-import { PortalSubmit } from '../../../../components/portal/portal-submit'
+
+const StepMedical = dynamic(
+  () => import('../../../../components/portal/step-medical').then((m) => m.StepMedical),
+  { loading: () => <Spinner />, ssr: false },
+)
+
+const StepWaiver = dynamic(
+  () => import('../../../../components/portal/step-waiver').then((m) => m.StepWaiver),
+  { loading: () => <Spinner />, ssr: false },
+)
+
+const StepEquipment = dynamic(
+  () => import('../../../../components/portal/step-equipment').then((m) => m.StepEquipment),
+  { loading: () => <Spinner />, ssr: false },
+)
+
+const StepSafety = dynamic(
+  () => import('../../../../components/portal/step-safety').then((m) => m.StepSafety),
+  { loading: () => <Spinner />, ssr: false },
+)
+
+const PortalSubmit = dynamic(
+  () => import('../../../../components/portal/portal-submit').then((m) => m.PortalSubmit),
+  { loading: () => <Spinner />, ssr: false },
+)
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
