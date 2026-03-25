@@ -9,6 +9,7 @@ import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
 import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
 import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
+import { ManageRolesConnected } from '@/components/settings/manage-roles-connected'
 
 function SettingsProfileForm({ roleSlug }: { roleSlug: RoleKey }) {
   switch (roleSlug) {
@@ -38,6 +39,7 @@ export default function RoleSettingsPage({
 
   return (
     <>
+      <ManageRolesConnected />
       {config?.settingsIncludesProfile && (
         <SettingsProfileForm roleSlug={roleSlug as RoleKey} />
       )}
