@@ -8,6 +8,7 @@ import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
 import { effectiveResourceType } from './lib/validators'
+import { ErrorCode } from './lib/errorCodes'
 
 export type InventoryListItem = {
   id: string
@@ -374,7 +375,7 @@ export async function _toggleBlockedDate(
     // Not blocked → block (add)
     // Past-date guard: only applies to the block path
     if (args.date < todayISO()) {
-      throw new ConvexError({ code: 'PAST_DATE', date: args.date })
+      throw new ConvexError({ code: ErrorCode.PAST_DATE, date: args.date })
     }
     if (existing) {
       await ctx.db.patch(existing._id, { dates: [...current, args.date] })
@@ -419,7 +420,7 @@ export async function _toggleBlockedDate(
 
         if (confirmed.length > 0) {
           throw new ConvexError({
-            code: 'CONFIRMED_RESERVATION_EXISTS' as const,
+            code: ErrorCode.CONFIRMED_RESERVATION_EXISTS,
             message: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
           })
         }

@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser } from './lib/auth'
 import { checkHasRole } from './userRoles'
+import { ErrorCode } from './lib/errorCodes'
 
 export const create = mutation({
   args: {
@@ -25,7 +26,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
     if (!await checkHasRole(ctx, user._id, 'Pool') && !await checkHasRole(ctx, user._id, 'DiveSite'))
-      throw new ConvexError({ code: 'FORBIDDEN' })
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     const existing = await ctx.db
       .query('venues')
@@ -68,7 +69,7 @@ export const update = mutation({
       .query('venues')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     const { venueType, ...rest } = args
     const patch: Record<string, unknown> = { ...rest }

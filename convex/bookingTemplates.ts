@@ -4,6 +4,7 @@ import type { Doc } from './_generated/dataModel'
 import { getAuthUser } from './lib/auth'
 import { checkHasAnyOperatorRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
+import { ErrorCode } from './lib/errorCodes'
 
 export const list = query({
   args: {},
@@ -27,10 +28,10 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     if (!await checkHasAnyOperatorRole(ctx, user._id)) {
-      throw new ConvexError({ code: 'FORBIDDEN', message: 'Only organizer roles can create booking templates.' })
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only organizer roles can create booking templates.' })
     }
 
     return ctx.db.insert('bookingTemplates', {
@@ -47,11 +48,11 @@ export const remove = mutation({
   args: { id: v.id('bookingTemplates') },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     const template = await ctx.db.get(args.id)
-    if (!template) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (template.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!template) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (template.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     await ctx.db.delete(args.id)
   },

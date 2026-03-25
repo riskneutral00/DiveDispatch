@@ -5,6 +5,7 @@
 
 import { ConvexError, v } from 'convex/values'
 import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
+import { ErrorCode } from '../lib/errorCodes'
 export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -235,7 +236,7 @@ export function assertNoPastDates(
 
   for (const session of sessions) {
     if (session.date < today) {
-      throw new ConvexError({ code: 'PAST_DATE', date: session.date })
+      throw new ConvexError({ code: ErrorCode.PAST_DATE, date: session.date })
     }
   }
 }

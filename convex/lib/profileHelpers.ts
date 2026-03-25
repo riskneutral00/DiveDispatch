@@ -3,6 +3,7 @@ import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { requireAuth, getAuthUser } from './auth'
 import { checkHasRole } from '../userRoles'
+import { ErrorCode } from './errorCodes'
 
 /**
  * Shared CRUD helpers for profile-style resource tables (instructors,
@@ -53,7 +54,7 @@ export async function profileUpdate(
     .query(tableName as any)
     .withIndex('by_userId', (q: any) => q.eq('userId', user._id))
     .unique()
-  if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   await ctx.db.patch(profile._id, args)
 }
@@ -82,7 +83,7 @@ export async function profileCreate(
     roles.map((r) => checkHasRole(ctx, user._id, r)),
   )
   if (!hasAny.some(Boolean)) {
-    throw new ConvexError({ code: 'FORBIDDEN' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
 
   const existing = await ctx.db

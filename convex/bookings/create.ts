@@ -15,6 +15,7 @@ import {
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
+import { ErrorCode } from '../lib/errorCodes'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
 
@@ -38,8 +39,8 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // 2. Load booking + verify caller owns it
   // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
-  if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-  if ((booking as Doc<"bookings">).ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  if ((booking as Doc<"bookings">).ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
   // A resource with externalName (no resourceSlug) is outside the system.
@@ -60,7 +61,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const allBlocked = new Set<string>(blockedDateDocs.flatMap((d) => d.dates as string[]))
   if (allBlocked.size > 0) {
     for (const session of args.sessions) {
-      if (allBlocked.has(session.date)) throw new ConvexError({ code: 'BLOCKED_DATE' })
+      if (allBlocked.has(session.date)) throw new ConvexError({ code: ErrorCode.BLOCKED_DATE })
     }
   }
 
@@ -80,7 +81,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   }
   for (const [date, count] of nonConfinedPerDate) {
     if (count > 3) {
-      throw new ConvexError({ code: 'MAX_DIVES_EXCEEDED', date, count })
+      throw new ConvexError({ code: ErrorCode.MAX_DIVES_EXCEEDED, date, count })
     }
   }
 
@@ -115,7 +116,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   for (const session of args.sessions) {
     const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as Doc<"inventoryUnits"> | null
-    if (!inventoryUnit) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!inventoryUnit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     // External resource — no inventory check or reservation row needed
     if (externalResourceTypes.has(inventoryUnit.resourceType as string)) continue
@@ -130,7 +131,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
         )
         .collect()
       for (const daySnap of allDaySnapshots) {
-        if (daySnap.availableUnits <= 0) throw new ConvexError({ code: 'CONFLICT' })
+        if (daySnap.availableUnits <= 0) throw new ConvexError({ code: ErrorCode.CONFLICT })
       }
     }
 
@@ -150,12 +151,12 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     // STEP 2: Any conflict aborts the entire mutation
     if (inventoryUnit.capacityModel === 'Exclusive') {
       if (session.unitsRequested !== 1) {
-        throw new ConvexError({ code: 'INVALID_INPUT', reason: 'Exclusive units require exactly 1 unit' })
+        throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'Exclusive units require exactly 1 unit' })
       }
-      if (currentAvailable < 1) throw new ConvexError({ code: 'CONFLICT' })
+      if (currentAvailable < 1) throw new ConvexError({ code: ErrorCode.CONFLICT })
     } else {
       // Pooled — check requested units are available
-      if (currentAvailable < session.unitsRequested) throw new ConvexError({ code: 'CONFLICT' })
+      if (currentAvailable < session.unitsRequested) throw new ConvexError({ code: ErrorCode.CONFLICT })
     }
 
     plans.push({ session, inventoryUnit, snapshot: snapshot ?? null, currentAvailable })

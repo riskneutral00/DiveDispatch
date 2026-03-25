@@ -4,6 +4,7 @@ import { mutation, query } from './_generated/server'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken } from './lib/portal'
 import { validateOrThrow } from './lib/validate'
+import { ErrorCode } from './lib/errorCodes'
 
 // Inline medical schema — mirrors medicalAnswersSchema from src/lib/validation/schemas.ts.
 // Defined inline to avoid importing across the convex/ → src/ boundary.
@@ -91,19 +92,19 @@ export const submitPortal = mutation({
     // Validate required forms are complete
     if (booking.portalContact && !profile.customerId) {
       throw new ConvexError({
-        code: 'FORMS_INCOMPLETE',
+        code: ErrorCode.FORMS_INCOMPLETE,
         reason: 'Contact form not submitted',
       })
     }
     if (booking.portalMedical && Object.keys(profile.medicalAnswers ?? {}).length === 0) {
       throw new ConvexError({
-        code: 'FORMS_INCOMPLETE',
+        code: ErrorCode.FORMS_INCOMPLETE,
         reason: 'Medical questionnaire not submitted',
       })
     }
     if (booking.portalWaiver && !profile.waiverSignedAt) {
       throw new ConvexError({
-        code: 'FORMS_INCOMPLETE',
+        code: ErrorCode.FORMS_INCOMPLETE,
         reason: 'Liability waiver not signed',
       })
     }

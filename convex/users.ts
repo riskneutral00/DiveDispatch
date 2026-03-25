@@ -4,6 +4,7 @@ import { internal } from './_generated/api'
 import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
+import { ErrorCode } from './lib/errorCodes'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function generateUniqueSlug(db: any): Promise<string> {
@@ -46,7 +47,7 @@ export const createUser = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     const existing = await ctx.db
       .query('users')
@@ -165,7 +166,7 @@ export const updateBusinessInfo = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     await ctx.db.patch(user._id, {
       businessName: args.businessName,
@@ -182,7 +183,7 @@ export const setRole = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     const user = await ctx.db
       .query('users')
@@ -191,7 +192,7 @@ export const setRole = mutation({
       )
       .unique()
 
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     await ctx.db.patch(user._id, {
       role: args.role,
@@ -285,11 +286,11 @@ export const completeOnboarding = mutation({
   args: {},
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     // Require name is set (basic guard — profile form should have saved it already)
     if (!user.name || user.name.trim() === '') {
-      throw new ConvexError({ code: 'VALIDATION', message: 'Profile must be completed before finishing onboarding.' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'Profile must be completed before finishing onboarding.' })
     }
 
     await ctx.db.patch(user._id, { onboardingComplete: true })

@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser } from './lib/auth'
 import { checkHasRole } from './userRoles'
+import { ErrorCode } from './lib/errorCodes'
 
 const locationValidator = v.object({ placeName: v.string(), country: v.string(), lat: v.number(), lng: v.number(), placeId: v.optional(v.string()) })
 
@@ -19,7 +20,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     const existing = await ctx.db
       .query('agents')
@@ -50,7 +51,7 @@ export const update = mutation({
       .query('agents')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
-    if (!profile) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     await ctx.db.patch(profile._id, args)
   },

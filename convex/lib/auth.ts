@@ -2,6 +2,7 @@ import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
+import { ErrorCode } from './errorCodes'
 
 /**
  * Shared context type for functions that need db + auth but work in both
@@ -28,7 +29,7 @@ export const HOLD_TTL_MS = 43200000
  */
 export async function requireAuth(ctx: DbCtx): Promise<{ identity: UserIdentity; user: Doc<'users'> }> {
   const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+  if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
   const user = await ctx.db
     .query('users')
@@ -36,7 +37,7 @@ export async function requireAuth(ctx: DbCtx): Promise<{ identity: UserIdentity;
       q.eq('tokenIdentifier', identity.tokenIdentifier),
     )
     .unique()
-  if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   return { identity, user }
 }

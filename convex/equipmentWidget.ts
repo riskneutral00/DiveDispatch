@@ -3,6 +3,7 @@ import type { Id, Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { getBookingIdsForResourceType } from './bookingResources'
+import { ErrorCode } from './lib/errorCodes'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -265,10 +266,10 @@ export const markBagPickedUp = mutation({
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
     const bag = await ctx.db.get(args.bagId)
-    if (!bag) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     if (bag.status !== 'Assigned') {
-      throw new ConvexError({ code: 'INVALID_STATE', reason: 'Bag must be Assigned to mark as picked up' })
+      throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be Assigned to mark as picked up' })
     }
     await ctx.db.patch(args.bagId, { status: 'InUse' })
   },
@@ -283,10 +284,10 @@ export const markBagReturned = mutation({
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
     const bag = await ctx.db.get(args.bagId)
-    if (!bag) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     if (bag.status !== 'InUse') {
-      throw new ConvexError({ code: 'INVALID_STATE', reason: 'Bag must be InUse to mark as returned' })
+      throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be InUse to mark as returned' })
     }
     await ctx.db.patch(args.bagId, { status: 'Returned', returnedAt: Date.now() })
   },

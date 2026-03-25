@@ -3,6 +3,7 @@ import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
+import { ErrorCode } from './lib/errorCodes'
 
 type NotificationType =
   | 'hold_placed'
@@ -50,7 +51,7 @@ export async function _createNotificationHandler(
 ): Promise<void> {
   const { user } = await requireAuth(ctx)
   if (args.userId !== user.slug) {
-    throw new ConvexError({ code: 'FORBIDDEN' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
   await notify(ctx, args)
 }
@@ -85,9 +86,9 @@ export async function _markAsReadHandler(
 
   const notifId = args.notificationId as Id<'notifications'>
   const notification = await ctx.db.get(notifId)
-  if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (notification.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (notification.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   await ctx.db.patch(notifId, { readAt: Date.now() })
 }
@@ -107,9 +108,9 @@ export async function _deleteNotificationHandler(
 
   const notifId = args.notificationId as Id<'notifications'>
   const notification = await ctx.db.get(notifId)
-  if (!notification) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (notification.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (notification.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   await ctx.db.delete(notifId)
 }
@@ -127,7 +128,7 @@ export async function _clearAllHandler(
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
 
-  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const all = await ctx.db
     .query('notifications')
@@ -153,7 +154,7 @@ export async function _getUnreadCountHandler(
   args: { userId: string },
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
-  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const notifications = await ctx.db
     .query('notifications')
@@ -177,7 +178,7 @@ export async function _listNotificationsHandler(
   args: { userId: string; limit?: number },
 ): Promise<unknown[]> {
   const { user: caller } = await requireAuth(ctx)
-  if (args.userId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const limit = args.limit ?? DEFAULT_LIMIT
 

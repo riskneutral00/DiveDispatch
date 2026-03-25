@@ -9,6 +9,7 @@ import { deleteResourceByType } from './bookingResources'
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
 import { notify } from './notifications'
 import { logBookingChange } from './bookingAuditLog'
+import { ErrorCode } from './lib/errorCodes'
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -90,18 +91,18 @@ export async function _acceptHandler(
   const { user: caller } = await requireAuth(ctx)
 
   const reservation = await ctx.db.get(args.reservationId as Id<"reservations">)
-  if (!reservation) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!reservation) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   const unit = await ctx.db.get(reservation.inventoryUnitId)
-  if (!unit) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   // Idempotent: already confirmed is a no-op
   if (reservation.status === 'Confirmed') return
 
   if (reservation.status !== 'PendingAcceptance') {
-    throw new ConvexError({ code: 'INVALID_STATUS' })
+    throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
   await ctx.db.patch(args.reservationId as Id<"reservations">, {
@@ -138,8 +139,8 @@ export async function _acceptBookingHandler(
   const { user: caller } = await requireAuth(ctx)
 
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
-  if (!unit) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const reservations = await ctx.db
     .query('reservations')
@@ -193,15 +194,15 @@ export async function _declineHandler(
   const { user: caller } = await requireAuth(ctx)
 
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
-  if (!unit) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
-  if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   // Guard: cannot decline on a finalized booking
   if (booking.status === 'Completed' || booking.status === 'Cancelled') {
-    throw new ConvexError({ code: 'INVALID_STATUS' })
+    throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
   // Collect all active reservations for this unit on this booking
@@ -229,7 +230,7 @@ export async function _declineHandler(
     const session = await ctx.db.get(reservation.bookingSessionId)
     if (!session) {
       throw new ConvexError({
-        code: 'ORPHANED_RESERVATION',
+        code: ErrorCode.ORPHANED_RESERVATION,
         reason: `Reservation ${reservation._id} references missing session ${reservation.bookingSessionId}. Inventory cannot be restored — aborting to prevent capacity leak.`,
       })
     }
@@ -247,7 +248,7 @@ export async function _declineHandler(
 
     if (!snapshot) {
       throw new ConvexError({
-        code: 'MISSING_SNAPSHOT',
+        code: ErrorCode.MISSING_SNAPSHOT,
         reason: `No availability snapshot found for unit ${args.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
       })
     }
@@ -365,7 +366,7 @@ export const declineByBookingForCaller = mutation({
       .collect()
 
     if (units.length === 0) {
-      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No inventory units found for caller.' })
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
     }
 
     const reservations = await ctx.db
@@ -381,7 +382,7 @@ export const declineByBookingForCaller = mutation({
     )
 
     if (activeForCaller.length === 0) {
-      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No active reservations found for this booking.' })
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No active reservations found for this booking.' })
     }
 
     // Decline via each distinct inventory unit
@@ -414,7 +415,7 @@ export const acceptByBookingForCaller = mutation({
       .collect()
 
     if (units.length === 0) {
-      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No inventory units found for caller.' })
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
     }
 
     const reservations = await ctx.db
@@ -429,7 +430,7 @@ export const acceptByBookingForCaller = mutation({
     )
 
     if (pendingForCaller.length === 0) {
-      throw new ConvexError({ code: 'NOT_FOUND', reason: 'No pending reservations found for this booking.' })
+      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No pending reservations found for this booking.' })
     }
 
     for (const res of pendingForCaller) {
@@ -462,20 +463,20 @@ export async function _markNoShowHandler(
 
   const reservation = await ctx.db.get(args.reservationId as Id<'reservations'>)
   if (!reservation) {
-    throw new ConvexError({ code: 'NOT_FOUND', message: 'Reservation not found.' })
+    throw new ConvexError({ code: ErrorCode.NOT_FOUND, message: 'Reservation not found.' })
   }
 
   // Ownership check: only booking owner can mark NoShow
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: 'FORBIDDEN', message: 'Only the booking owner can mark NoShow.' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only the booking owner can mark NoShow.' })
   }
 
   // State guard
   const status = reservation.status as 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
   if (!canReservationTransition(status, 'mark_noshow')) {
     throw new ConvexError({
-      code: 'INVALID_TRANSITION',
+      code: ErrorCode.INVALID_TRANSITION,
       message: `Cannot mark NoShow from ${reservation.status}.`,
     })
   }
@@ -484,7 +485,7 @@ export async function _markNoShowHandler(
   const session = await ctx.db.get(reservation.bookingSessionId)
   if (!session || !hasSessionStarted(session)) {
     throw new ConvexError({
-      code: 'TOO_EARLY',
+      code: ErrorCode.TOO_EARLY,
       message: 'Cannot mark NoShow before session start time.',
     })
   }
@@ -522,20 +523,20 @@ export async function _revertNoShowHandler(
 
   const reservation = await ctx.db.get(args.reservationId as Id<'reservations'>)
   if (!reservation) {
-    throw new ConvexError({ code: 'NOT_FOUND', message: 'Reservation not found.' })
+    throw new ConvexError({ code: ErrorCode.NOT_FOUND, message: 'Reservation not found.' })
   }
 
   // Ownership check
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: 'FORBIDDEN', message: 'Only the booking owner can revert NoShow.' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only the booking owner can revert NoShow.' })
   }
 
   // State guard
   const status = reservation.status as 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
   if (!canReservationTransition(status, 'revert_noshow')) {
     throw new ConvexError({
-      code: 'INVALID_TRANSITION',
+      code: ErrorCode.INVALID_TRANSITION,
       message: `Cannot revert from ${reservation.status}.`,
     })
   }
@@ -543,7 +544,7 @@ export async function _revertNoShowHandler(
   // 24h window check
   if (!reservation.noShowAt || Date.now() - reservation.noShowAt > NOSHOW_REVERT_WINDOW_MS) {
     throw new ConvexError({
-      code: 'REVERT_WINDOW_EXPIRED',
+      code: ErrorCode.REVERT_WINDOW_EXPIRED,
       message: 'NoShow can only be reverted within 24 hours.',
     })
   }

@@ -8,6 +8,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
 import { tryAutoAdvance } from './autoAdvance'
+import { ErrorCode } from '../lib/errorCodes'
 
 /**
  * DEV-ONLY: Marks a booking's customer form as complete and triggers auto-advance.
@@ -18,14 +19,14 @@ export const forceCustomerFormComplete = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
     if (process.env.ENVIRONMENT !== 'development') {
-      throw new ConvexError({ code: 'FORBIDDEN', message: 'Dev-only mutation' })
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Dev-only mutation' })
     }
 
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     if (booking.customerFormComplete) return // already done
 

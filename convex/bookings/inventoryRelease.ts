@@ -8,6 +8,7 @@ import { ConvexError } from 'convex/values'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import type { VacatedReason } from './stateMachine'
+import { ErrorCode } from '../lib/errorCodes'
 
 /** Restore availability snapshot when a reservation is released. */
 export async function restoreSnapshotUnits(
@@ -53,7 +54,7 @@ export async function releaseBookingReservations(
     const session = await ctx.db.get(res.bookingSessionId)
     if (!session) {
       throw new ConvexError({
-        code: 'ORPHANED_RESERVATION',
+        code: ErrorCode.ORPHANED_RESERVATION,
         reason: `Reservation ${res._id} references missing session ${res.bookingSessionId}. Inventory cannot be restored — aborting to prevent capacity leak.`,
       })
     }
@@ -70,7 +71,7 @@ export async function releaseBookingReservations(
 
     if (!snapshot) {
       throw new ConvexError({
-        code: 'MISSING_SNAPSHOT',
+        code: ErrorCode.MISSING_SNAPSHOT,
         reason: `No availability snapshot found for unit ${res.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
       })
     }

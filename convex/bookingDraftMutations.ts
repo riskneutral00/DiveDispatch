@@ -11,6 +11,7 @@ import {
   type VenueCapabilities,
   type BoatCapabilities,
 } from '../src/lib/booking/coverage-validation'
+import { ErrorCode } from './lib/errorCodes'
 
 type OperatorType =
   | 'DiveCenter'
@@ -35,7 +36,7 @@ export const createDraftShell = mutation({
   },
   handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
-    if (!await checkHasAnyOperatorRole(ctx, user._id)) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasAnyOperatorRole(ctx, user._id)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     // ── Profile completeness gate — ALL roles must be 100% to create bookings ──
     const allRolesStatus = await checkAllRolesCompleteness(ctx, user._id)
@@ -43,7 +44,7 @@ export const createDraftShell = mutation({
       const allMissing = allRolesStatus.roles
         .filter(r => r.percentage < 100)
         .flatMap(r => r.incomplete.map(field => `${r.role}: ${field}`))
-      throw new ConvexError({ code: 'PROFILE_INCOMPLETE', missing: allMissing })
+      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: allMissing })
     }
 
     // Past dates — reject if optional startDate is before today
@@ -116,7 +117,7 @@ export const createDraftShell = mutation({
     }
     const coverage = checkPreferenceCoverage(coverageInput)
     if (!coverage.isComplete) {
-      throw new ConvexError({ code: 'COVERAGE_INCOMPLETE', missing: coverage.missing })
+      throw new ConvexError({ code: ErrorCode.COVERAGE_INCOMPLETE, missing: coverage.missing })
     }
 
     // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
@@ -163,15 +164,15 @@ export const createReferralDraftShell = mutation({
   },
   handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     const dcUser = await ctx.db
       .query('users')
       .withIndex('by_slug', (q) => q.eq('slug', args.referralDcSlug))
       .unique()
-    if (!dcUser) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!dcUser) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (!await checkHasAnyOperatorRole(ctx, dcUser._id)) {
-      throw new ConvexError({ code: 'FORBIDDEN' })
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
 
     const bookingId = await ctx.db.insert('bookings', {
@@ -215,9 +216,9 @@ export const saveDraftState = mutation({
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'INVALID_STATUS' })
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await ctx.db.patch(args.bookingId, { draftState: args.draftState })
   },
@@ -254,9 +255,9 @@ export const discardDraft = mutation({
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: 'INVALID_STATUS' })
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
 

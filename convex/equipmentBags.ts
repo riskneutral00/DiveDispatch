@@ -1,6 +1,7 @@
 import { ConvexError } from 'convex/values'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
+import { ErrorCode } from './lib/errorCodes'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
 
@@ -8,7 +9,7 @@ import type { Id } from './_generated/dataModel'
  * Assigns the lowest-bag-numbered available bags to the booking.
  * Picks exactly `diverCount` bags — one per diver.
  *
- * Throws `ConvexError({ code: 'CONFLICT', reason: 'Insufficient equipment bags' })`
+ * Throws `ConvexError({ code: ErrorCode.CONFLICT, reason: 'Insufficient equipment bags' })`
  * if fewer than `diverCount` bags are available.
  *
  * Must be called from within a mutation so the patch writes are part of the
@@ -34,7 +35,7 @@ export async function assignBagsForBooking(
     .sort((a, b) => String(a.bagNumber).localeCompare(String(b.bagNumber)))
 
   if (available.length < diverCount) {
-    throw new ConvexError({ code: 'CONFLICT', reason: 'Insufficient equipment bags' })
+    throw new ConvexError({ code: ErrorCode.CONFLICT, reason: 'Insufficient equipment bags' })
   }
 
   const now = Date.now()

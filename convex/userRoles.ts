@@ -4,6 +4,7 @@ import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
+import { ErrorCode } from './lib/errorCodes'
 
 // ─── Helpers (importable by other modules) ──────────────────────────────────
 
@@ -100,7 +101,7 @@ export const addRole = mutation({
         q.eq('userId', user._id).eq('role', role),
       )
       .unique()
-    if (existing) throw new ConvexError({ code: 'DUPLICATE_ROLE' })
+    if (existing) throw new ConvexError({ code: ErrorCode.DUPLICATE_ROLE })
 
     return ctx.db.insert('userRoles', {
       userId: user._id,

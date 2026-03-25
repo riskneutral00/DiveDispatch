@@ -2,16 +2,17 @@ import { mutation } from './_generated/server'
 import type { GenericMutationCtx } from 'convex/server'
 import { v, ConvexError } from 'convex/values'
 import type { DataModel } from './_generated/dataModel'
+import { ErrorCode } from './lib/errorCodes'
 
 type MutCtx = GenericMutationCtx<DataModel>
 
 async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
   if (process.env.DEV_MODE !== 'true') {
-    throw new ConvexError({ code: 'FORBIDDEN', reason: 'Dev-only endpoint' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev-only endpoint' })
   }
 
   const identity = await ctx.auth.getUserIdentity()
-  if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+  if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
   const realToken = identity.tokenIdentifier
 
@@ -25,9 +26,9 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
     .withIndex('by_slug', (q) => q.eq('slug', targetSlug))
     .first()
 
-  if (!target) throw new ConvexError({ code: 'NOT_FOUND', reason: 'Target user not found' })
+  if (!target) throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Target user not found' })
   if (!target.isSeeded) {
-    throw new ConvexError({ code: 'FORBIDDEN', reason: 'Can only switch to seed users' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Can only switch to seed users' })
   }
 
   // No-op if already this user

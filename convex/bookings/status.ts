@@ -10,6 +10,7 @@ import {
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
 import { notify } from '../notifications'
+import { ErrorCode } from '../lib/errorCodes'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
@@ -23,12 +24,12 @@ export const cancelBooking = mutation({
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     if (!canBookingTransition(booking.status, 'cancel')) {
       throw new ConvexError({
-        code: 'INVALID_STATUS',
+        code: ErrorCode.INVALID_STATUS,
         reason: `Cannot cancel booking in status '${booking.status}'`,
       })
     }
@@ -96,8 +97,8 @@ export const clearMedicalBlock = mutation({
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     // Idempotent: already cleared — nothing to do
     if (!booking.medicalHardBlock) return

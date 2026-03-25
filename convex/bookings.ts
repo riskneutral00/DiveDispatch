@@ -8,6 +8,7 @@ import {
   getBookingIdsForResource,
   type BookingResource,
 } from './bookingResources'
+import { ErrorCode } from './lib/errorCodes'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -265,7 +266,7 @@ export async function _listByOwner(
   args: { ownerId: string; ownerType: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
-  if (user.slug !== args.ownerId) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (user.slug !== args.ownerId) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   const bookings = await ctx.db
     .query('bookings')
@@ -321,7 +322,7 @@ export async function _listByResource(
   args: { resourceId: string; resourceType: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
-  if (user.slug !== args.resourceId) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (user.slug !== args.resourceId) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   // Query via bookingResources junction table
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
@@ -471,7 +472,7 @@ export async function _getBookingDetail(
       .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
       .collect()
     const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
-    if (!hasReservation) throw new ConvexError({ code: 'FORBIDDEN' })
+    if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
 
   // Fetch related rows in parallel

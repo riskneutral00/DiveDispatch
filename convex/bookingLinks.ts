@@ -3,6 +3,7 @@ import { type MutationCtx, type QueryCtx, mutation, query } from './_generated/s
 import type { Id } from './_generated/dataModel'
 import { requireAuth, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
+import { ErrorCode } from './lib/errorCodes'
 
 /** 30-day TTL for portal booking links. */
 const BOOKING_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000
@@ -44,8 +45,8 @@ async function requireAuthAndOwnership(
   const { user } = await requireAuth(ctx)
 
   const booking = await ctx.db.get(bookingId as Id<"bookings">)
-  if (!booking) throw new ConvexError({ code: 'NOT_FOUND' })
-  if (booking.ownerId !== user.slug) throw new ConvexError({ code: 'FORBIDDEN' })
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   return booking
 }

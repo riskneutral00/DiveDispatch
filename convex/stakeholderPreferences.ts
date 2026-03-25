@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { ErrorCode } from './lib/errorCodes'
 
 const acceptanceModeValidator = v.union(
   v.literal('Auto'),
@@ -44,13 +45,13 @@ export const upsert = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
+    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
     if (args.maxHoursPerDay < 1 || args.maxHoursPerDay > 16) {
-      throw new ConvexError({ code: 'VALIDATION', reason: 'maxHoursPerDay must be between 1 and 16' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'maxHoursPerDay must be between 1 and 16' })
     }
     if (args.postJobBlockDuration < 0 || args.postJobBlockDuration > 480) {
-      throw new ConvexError({ code: 'VALIDATION', reason: 'postJobBlockDuration must be between 0 and 480' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'postJobBlockDuration must be between 0 and 480' })
     }
 
     const user = await ctx.db
@@ -59,7 +60,7 @@ export const upsert = mutation({
         q.eq('tokenIdentifier', identity.tokenIdentifier),
       )
       .unique()
-    if (!user) throw new ConvexError({ code: 'NOT_FOUND' })
+    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     const existing = await ctx.db
       .query('stakeholderPreferences')
