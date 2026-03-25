@@ -108,7 +108,6 @@ export function CompressorProfileForm() {
     )
   }
 
-
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -186,7 +185,6 @@ export function CompressorProfileForm() {
         />
       </GlassCard>
 
-      {/* Languages */}
       {serverError && (
         <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
           {serverError}

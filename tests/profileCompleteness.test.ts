@@ -178,7 +178,7 @@ describe('getLowestProfileCompletion', () => {
     expect(result.percentage).toBe(100)
   })
 
-  it('single role at 75% returns percentage: 78', async () => {
+  it('single role at 75% returns percentage: 75', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
       await seedDiveCenterProfile(ctx, userId)

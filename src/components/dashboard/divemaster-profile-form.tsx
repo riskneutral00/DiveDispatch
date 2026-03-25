@@ -8,9 +8,7 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
-import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -47,7 +45,6 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   credential: CredentialData[]
-
 }
 
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '' })

@@ -22,7 +22,7 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
   })
 }
 
-async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, _languages: string[], verified = false) {
+async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
   return ctx.db.insert('instructors', {
     userId,
     name,
@@ -115,8 +115,8 @@ describe('listByRole basic listing', () => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en', 'th'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en', 'zh'], false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|divecentre-phuket' })
@@ -148,7 +148,7 @@ describe('listByRole basic listing', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorUser(ctx, 'jane-def')
       // Only create profile for john-abc
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
@@ -161,8 +161,8 @@ describe('listByRole basic listing', () => {
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
@@ -179,8 +179,8 @@ describe('listByRole ban filtering', () => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
       await ctx.db.insert('bans', { bannerSlug: 'divecentre-phuket', bannedSlug: 'john-abc', createdAt: 1 })
     })
 
@@ -198,8 +198,8 @@ describe('listByRole ban filtering', () => {
       await seedCallerUser(ctx, 'divecentre-phuket')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
       // jane-def banned the caller
       await ctx.db.insert('bans', { bannerSlug: 'jane-def', bannedSlug: 'divecentre-phuket', createdAt: 1 })
     })
@@ -219,9 +219,9 @@ describe('listByRole ban filtering', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'tom-ghi')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
-      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', ['de', 'en'], true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
+      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', true)
       await ctx.db.insert('bans', { bannerSlug: 'divecentre-phuket', bannedSlug: 'john-abc', createdAt: 1 })
       await ctx.db.insert('bans', { bannerSlug: 'tom-ghi', bannedSlug: 'divecentre-phuket', createdAt: 2 })
     })
@@ -244,8 +244,8 @@ describe('listByRole location filter', () => {
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'phuket' })
@@ -259,9 +259,9 @@ describe('listByRole location filter', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'bali-guide')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
-      await seedInstructorProfile(ctx, u3, 'Bali Guide', 'Denpasar', 'Indonesia', ['id', 'en'], true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
+      await seedInstructorProfile(ctx, u3, 'Bali Guide', 'Denpasar', 'Indonesia', true)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor', country: 'Thailand' })
@@ -275,9 +275,9 @@ describe('listByRole location filter', () => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'tom-ghi')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en'], false)
-      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', ['de', 'en'], true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
+      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
+      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', true)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'Thailand' })
@@ -289,7 +289,7 @@ describe('listByRole location filter', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
+      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
     })
 
     const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Bangkok' })

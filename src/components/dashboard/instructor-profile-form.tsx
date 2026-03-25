@@ -176,7 +176,6 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
     )
   }
 
-
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {!section && (
