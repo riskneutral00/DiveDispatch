@@ -22,7 +22,27 @@ LOG_DIR=.jira/logs/       # Log output directory
 MAX_MERGE_RETRY=1         # Auto-retry merge failures (0 = disable)
 MAX_DURATION_MIN=120      # Stop spawning new workers after N minutes
 MAX_BATCH_TICKETS=20      # Stop after processing N tickets (safety cap)
+BATCH_BRANCH_PREFIX=jira/batch-   # Staging branch prefix
 ```
+
+---
+
+## Step 0 — Batch Branch Setup
+
+All ticket merges target a staging branch, not main. Matt reviews the combined result before finalizing.
+
+1. Check for an existing batch branch:
+   ```bash
+   git branch --list 'jira/batch-*' | tr -d ' *'
+   ```
+2. **If a branch exists:** resume onto it. Set `BATCH_BRANCH={existing branch}`. Log: `Resuming existing batch branch: {BATCH_BRANCH}`
+3. **If no branch exists:** create one from current main:
+   ```bash
+   git branch jira/batch-$(date '+%Y-%m-%d') main
+   ```
+   Set `BATCH_BRANCH=jira/batch-{date}`. Log: `Created batch branch: {BATCH_BRANCH}`
+
+Store `BATCH_BRANCH` for use in all merge steps below.
 
 ---
 
@@ -33,7 +53,10 @@ mkdir -p .jira/logs
 ```
 
 1. Read all `.tickets/DD-*.md` files (NOT in `done/`). Parse YAML frontmatter from each.
-2. Classify every ticket into exactly one bucket:
+
+2. **Validate frontmatter.** Before classifying, check each ticket has required fields (`id`, `title`, `priority`, `status`, `category`, `size`) with valid values (`priority` in P0-P3, `size` in S/M/L, `status` in known set). If invalid: skip ticket, log: `SKIP: DD-{NNN} — malformed frontmatter ({reason})`
+
+3. Classify every valid ticket into exactly one bucket:
 
 | Bucket | Criteria |
 |--------|----------|
@@ -43,31 +66,32 @@ mkdir -p .jira/logs
 | **human** | `human_required: true` (regardless of status) |
 | **stale** | `status: in_progress` (leftover from a prior crashed run) |
 
-3. **Stale claim recovery:** For each stale ticket, auto-release:
+4. **Stale claim recovery:** For each stale ticket, auto-release:
    - Set `status: ready`, `assigned_to: null`, `branch: null`
    - If a worktree exists at `WORKTREE_PREFIX{NNN}`, remove it: `git worktree remove --force`
    - If branch `ticket/DD-{NNN}` exists, delete it: `git branch -D ticket/DD-{NNN}`
    - Log: `Recovered stale claim: DD-{NNN}`
    - Re-classify as eligible
 
-4. **If no eligible tickets:** Print summary and exit:
+5. **If no eligible tickets:** Print summary and exit:
    ```
    /jira — No eligible tickets.
    Blocked: {N}, Human-required: {N}, Spec-missing: {N}, Done: {N}
    ```
 
-5. **Score eligible tickets** (same algorithm as `/board pick`):
+6. **Score eligible tickets** (same algorithm as `/board pick`):
    - Priority: P0=40, P1=30, P2=20, P3=10
    - Unblock bonus: +15 per other ticket that lists this one in its `blocked_by`
    - Size: S=+5, M=0, L=-5
    - Sort descending by score, break ties by lower ID number
 
-6. Read current swap: `sysctl vm.swapusage` → parse used swap in GB.
+7. Read current swap: `sysctl vm.swapusage` → parse used swap in GB.
 
-7. Print pre-flight:
+8. Print pre-flight:
    ```
    /jira — Batch Runner
    ─────────────────────
+   Batch branch: {BATCH_BRANCH}
    Pre-flight: {N} eligible, {N} blocked, {N} human-skipped, {N} spec-missing
    Swap baseline: {N} GB (pause at {SPAWN_PAUSE_SWAP_GB} GB, ceiling: {MAX_CONCURRENT})
    ```
@@ -106,6 +130,8 @@ When a ticket is merged (or flagged for review), remove its entries from `locks`
 ## Step 4 — Spawn Workers
 
 Record `batch_start_time = now()` and `tickets_processed = 0`.
+
+Initialize tracking state: `completed_tickets = []`, `failed_tickets = []`, `deslop_stats = {assertions: 0, casts: 0, dead_code: 0}`, `review_findings = {CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0}`.
 
 Iterate through scored eligible tickets. Before each spawn, run the **swap gate check**:
 
@@ -214,8 +240,11 @@ The agent prompt must include:
 - Run `npx vitest run` to confirm nothing breaks
 - If changes made: commit with `refactor(DD-{NNN}): de-sloppify`
 - If no slop found: report "clean" and move on
+- **Return counts:** number of weak assertions removed, `as any` casts fixed, lines of dead code removed
 
 Print: `  [{HH:MM}] DD-{NNN} de-sloppify: {N changes | clean}`
+
+Update `deslop_stats` with the returned counts.
 
 #### Stage 2: Category-Routed Review (size M and L only)
 
@@ -251,25 +280,29 @@ The review agent must:
 - If still CRITICAL after fix attempt → return NO-GO with findings
 - If only HIGH/MEDIUM/LOW → return GO with advisory notes
 
+Update `review_findings` counts with the returned severity tallies.
+
 **On NO-GO verdict:**
 1. Update ticket: `status: review`
-2. Append review findings to the ticket body under `**Review findings:**`
+2. Append review findings to the ticket body under `**Review findings ({today}):**` with severity and source skill for each finding
 3. Release locks
 4. Keep worktree for manual inspection
-5. Print: `  [{HH:MM}] DD-{NNN} ✗ review NO-GO — {N} CRITICAL findings — worktree preserved`
-6. Skip to Step 5e (do not merge)
+5. Add to `failed_tickets`: `{id, reason: "review NO-GO", findings: [...]}`
+6. Print: `  [{HH:MM}] DD-{NNN} ✗ review NO-GO — {N} CRITICAL findings — worktree preserved`
+7. Skip to Step 5e (do not merge)
 
 **On GO verdict:**
-- Print: `  [{HH:MM}] DD-{NNN} review GO ({N} advisory)`
-- Proceed to merge
+1. If any HIGH/MEDIUM/LOW findings: append them to ticket body under `**Review findings ({today}):**` as advisory
+2. Print: `  [{HH:MM}] DD-{NNN} review GO ({N} advisory)`
+3. Proceed to merge
 
 #### Stage 3: Merge
 
-Run the merge script from the project root:
+Run the merge script from the project root, targeting the batch branch:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
-bash scripts/jira-merge.sh ticket/DD-{NNN}
+bash scripts/jira-merge.sh ticket/DD-{NNN} "$BATCH_BRANCH"
 ```
 
 **Exit 0 (success):**
@@ -282,7 +315,8 @@ bash scripts/jira-merge.sh ticket/DD-{NNN}
    - If `blocked_by` is now empty AND `status: blocked` → set `status: ready`
    - Print: `  [{HH:MM}] DD-{XXX} unblocked → eligible`
 6. Clean up: `git worktree remove ../DD-worktree-{NNN} && git branch -d ticket/DD-{NNN}`
-7. Print: `  [{HH:MM}] DD-{NNN} ✓ merged (tests: {pass}/{total})`
+7. Add to `completed_tickets`: `{id, size, category, retries}`
+8. Print: `  [{HH:MM}] DD-{NNN} ✓ merged to {BATCH_BRANCH} (tests: {pass}/{total})`
 
 **Exit 1 (merge conflict) or Exit 2 (test failure) — Auto-Retry:**
 
@@ -307,14 +341,16 @@ If `merge_attempts < MAX_MERGE_RETRY`:
 1. Update ticket: `status: review`
 2. Release locks
 3. Keep worktree for manual inspection
-4. Print: `  [{HH:MM}] DD-{NNN} ✗ {conflict|test failure} — worktree preserved (retries: {N}/{MAX_MERGE_RETRY})`
+4. Add to `failed_tickets`: `{id, reason: "merge conflict"|"test failure", worktree: path}`
+5. Print: `  [{HH:MM}] DD-{NNN} ✗ {conflict|test failure} — worktree preserved (retries: {N}/{MAX_MERGE_RETRY})`
 
 ### 5c. If blocked — Flag for review
 
 1. Update ticket: `status: review`
 2. Release locks
 3. Clean up worktree: `git worktree remove ../DD-worktree-{NNN}`
-4. Print: `  [{HH:MM}] DD-{NNN} ✗ agent blocked — {reason}`
+4. Add to `failed_tickets`: `{id, reason: "agent blocked — {reason}"}`
+5. Print: `  [{HH:MM}] DD-{NNN} ✗ agent blocked — {reason}`
 
 ### 5d. Recycle
 
@@ -371,9 +407,41 @@ The monitor loop ends when:
 
    Worktrees preserved for review:
      ../DD-worktree-{NNN} (ticket/DD-{NNN}) — {reason}
+
+   Batch branch: {BATCH_BRANCH}
+   Commits on batch: {N} (ahead of main)
+
+   Next steps:
+     Review:   git diff main...{BATCH_BRANCH}
+     Finalize: ./scripts/jira-finalize.sh
+     Reject:   ./scripts/jira-finalize.sh --reject
    ```
 
-4. **MANDATORY — Vault mirror sync** (run even if zero tickets completed, since stale state may exist):
+4. **Write batch log** to `.jira/logs/batch-{date}.md`:
+
+   ```markdown
+   # Batch: {BATCH_BRANCH}
+
+   Started: {HH:MM} | Duration: {N} min | Peak workers: {N}
+
+   ## Completed ({N})
+   | Ticket | Size | Category | Retries |
+   |--------|------|----------|---------|
+   | DD-{NNN} | {size} | {category} | {retries} |
+
+   ## Failed ({N})
+   | Ticket | Reason | Worktree |
+   |--------|--------|----------|
+   | DD-{NNN} | {reason} | {worktree path or "cleaned up"} |
+
+   ## De-sloppify
+   Weak assertions removed: {N} | as-any casts: {N} | Dead code: {N} lines
+
+   ## Review Findings
+   CRITICAL: {N} | HIGH: {N} | MEDIUM: {N} | LOW: {N}
+   ```
+
+5. **MANDATORY — Vault mirror sync** (run even if zero tickets completed, since stale state may exist):
    - Read all `.tickets/DD-*.md` (active) and `.tickets/done/DD-*.md` (completed)
    - Parse YAML frontmatter from each file
    - Regenerate `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` with the same table format as `/board sync`:
@@ -381,6 +449,13 @@ The monitor loop ends when:
      - Sort each group by priority (P0 first), then by ID
      - Update the `Last updated:` timestamp
    - Print: `Vault mirror synced — {N} active, {N} done`
+
+6. **Update MEMORY.md** active thread (`project_thread_dd_present.md`):
+   - Set `NEXT:` to the most urgent next action:
+     - If tickets completed: `NEXT: Finalize batch — ./scripts/jira-finalize.sh`
+     - If tickets failed: `NEXT: Fix DD-{NNN} ({reason}), then finalize batch`
+     - If no tickets completed: `NEXT: Investigate batch failure — see .jira/logs/batch-{date}.md`
+   - Include batch branch name
 
 ---
 
@@ -406,13 +481,15 @@ On second Ctrl+C (within 10s of first):
 ## Rules
 
 - **Execute immediately.** No preamble, no methodology explanation.
+- **Batch branch is the merge target.** All ticket merges go to `BATCH_BRANCH`, never directly to main. Matt finalizes via `./scripts/jira-finalize.sh`.
 - **Side-effect locks are mandatory.** Never spawn two agents whose tickets share a `side_effects` entry.
 - **Merges are sequential.** Never run two `jira-merge.sh` calls simultaneously.
-- **Workers never touch `.tickets/` or main.** Only the orchestrator modifies ticket status and merges branches.
+- **Workers never touch `.tickets/` or the batch branch.** Only the orchestrator modifies ticket status and merges branches.
 - **Double Ctrl+C = hard stop.** First is graceful, second is immediate.
 - **Stale claims are auto-recovered.** Any `in_progress` ticket at startup is assumed to be from a crashed prior run.
 - **Empty `side_effects` = no conflicts.** Tickets with `side_effects: []` can always run in parallel.
 - **Log everything.** Every spawn, merge, failure, de-sloppify, review, and unblock goes to `.jira/logs/`.
+- **Persist review findings.** Always append review findings to the ticket body — never lose context about why a ticket was flagged.
 - **Separate context windows.** De-sloppify, review, and merge-fix agents each run in their own agent (fresh context). The reviewer never shares context with the implementer — this eliminates author bias.
 - **Pipeline is sequential per ticket.** When a worker completes, the orchestrator runs de-sloppify → review → merge synchronously before processing the next completion. This means simultaneous worker completions queue. Known limitation — acceptable because merge itself must be sequential anyway.
 - **Tier gating.** Size S tickets skip review (de-sloppify → merge). Size M and L get the full pipeline (de-sloppify → review → merge).
@@ -420,3 +497,4 @@ On second Ctrl+C (within 10s of first):
 - **Swap-gated spawning.** Before every spawn, check `sysctl vm.swapusage`. If swap >= `SPAWN_PAUSE_SWAP_GB`, skip the spawn. The watchdog remains as emergency backstop (kill at 6GB, all-kill at 8GB). This replaces the old static `MAX_CONCURRENT=3` with adaptive concurrency.
 - **Limits are soft stops.** Duration, ticket, and swap limits prevent new worker spawns but never kill running workers. Running pipelines always complete.
 - **Auto-retry is bounded.** Merge failures get at most MAX_MERGE_RETRY fix attempts. After exhaustion, the ticket is flagged for human review — never infinite retry loops.
+- **Batch log is mandatory.** Every run writes `.jira/logs/batch-{date}.md` — failures that aren't logged are failures that repeat.
