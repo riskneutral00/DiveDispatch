@@ -123,7 +123,7 @@ For each `blocker` or `gap` finding NOT already covered by an existing ticket:
 id: DD-{NNN}
 title: "{Title}"
 priority: {P0|P1|P2|P3}
-status: ready
+status: backlog
 category: {slug}
 blocked_by: []
 assigned_to: null
@@ -143,6 +143,8 @@ updated: {YYYY-MM-DD}
 - `npm test` passes
 **Blocked by:** {DD-NNN prerequisites, or "None".}
 ```
+
+**Auto-promote:** After creating each ticket, check if both `**Spec:**` has non-whitespace text and `**Acceptance:**` has at least one `- ` bullet. If yes → set `status: ready`. If no → leave as `backlog`.
 
 ### 3c. Field classification
 

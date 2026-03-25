@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# memory-watchdog.sh — System-level swap watchdog for Overstory runs
+# memory-watchdog.sh — System-level swap watchdog for batch agent runs
 # Monitors macOS swap usage and kills runaway claude CLI processes before
 # the system locks up from SSD thrashing.
 #
-# Usage: ./scripts/memory-watchdog.sh
+# Usage: ./scripts/memory-watchdog.sh [log-dir]
+#   log-dir defaults to .jira/logs (relative to project root)
 # Stop:  Ctrl+C
 
 set -euo pipefail
@@ -14,7 +15,8 @@ KILL_SWAP_GB=6            # SIGTERM oldest claude CLI process
 EMERGENCY_SWAP_GB=8       # SIGTERM all claude CLI processes
 KILL_WAIT=10              # seconds to wait before SIGKILL
 
-LOG_DIR="$(cd "$(dirname "$0")/../.overstory/logs" && pwd)"
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+LOG_DIR="${1:-$PROJECT_DIR/.jira/logs}"
 LOG_FILE="$LOG_DIR/watchdog-memory.log"
 
 mkdir -p "$LOG_DIR"

@@ -78,4 +78,5 @@ playwright-report/
 # Internal AI tooling (keep locally, not public)
 .mulch/
 .overstory/
+.jira/
 docs/LLM_HANDOFF.md
