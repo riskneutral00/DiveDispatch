@@ -1,0 +1,47 @@
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { isUrgentDraft, urgentCountdown } from '../src/lib/utils/booking-urgency'
+
+describe('urgentCountdown', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('returns null for non-Draft bookings', () => {
+    expect(urgentCountdown({ status: 'Upcoming', startDate: '2026-03-25' })).toBeNull()
+  })
+
+  it('returns null for Draft bookings far in the future', () => {
+    // A date 30 days from now is not urgent
+    const farFuture = new Date()
+    farFuture.setDate(farFuture.getDate() + 30)
+    const dateStr = farFuture.toISOString().split('T')[0]
+    expect(urgentCountdown({ status: 'Draft', startDate: dateStr })).toBeNull()
+  })
+
+  it('returns "Started" when start date has passed', () => {
+    vi.useFakeTimers()
+    // Set now to 2026-03-25 at noon
+    vi.setSystemTime(new Date(2026, 2, 25, 12, 0, 0))
+    // Start date is today (midnight) — already past
+    expect(urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })).toBe('Started')
+    vi.useRealTimers()
+  })
+
+  it('returns hours countdown when within 12 hours', () => {
+    vi.useFakeTimers()
+    // Set now to 2026-03-24 at 8pm — start is midnight 2026-03-25 = 4 hours away
+    vi.setSystemTime(new Date(2026, 2, 24, 20, 0, 0))
+    const result = urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })
+    expect(result).toBe('Starts in 4h')
+    vi.useRealTimers()
+  })
+
+  it('returns minutes countdown when under 1 hour', () => {
+    vi.useFakeTimers()
+    // Set now to 2026-03-24 at 23:30 — start is midnight = 30 minutes away
+    vi.setSystemTime(new Date(2026, 2, 24, 23, 30, 0))
+    const result = urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })
+    expect(result).toBe('Starts in 30m')
+    vi.useRealTimers()
+  })
+})
