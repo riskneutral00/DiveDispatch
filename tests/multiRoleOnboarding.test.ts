@@ -58,7 +58,7 @@ describe('createUser with roles array (DD-032)', () => {
     )
 
     const primary = roles.find((r) => r.isPrimary)
-    expect(primary).not.toBeUndefined()
+    expect(primary).toBeDefined()
     expect(primary!.role).toBe('Boat')
 
     const nonPrimary = roles.filter((r) => !r.isPrimary)
