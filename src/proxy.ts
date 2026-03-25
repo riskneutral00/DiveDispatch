@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/portal(.*)',   // Customer portal is tokenized, no auth required
   '/api/webhooks(.*)',
+  '/api/health',
 ])
 
 // sign-in and sign-up are public routes — the page components handle
