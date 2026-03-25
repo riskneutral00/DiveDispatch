@@ -40,5 +40,3 @@ export const ErrorCode = {
   COVERAGE_INCOMPLETE: 'COVERAGE_INCOMPLETE',
   DUPLICATE_ROLE: 'DUPLICATE_ROLE',
 } as const;
-
-export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];
