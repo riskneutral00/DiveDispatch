@@ -7,10 +7,8 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../glass/glass-button'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { toggleInArray } from '@/lib/utils/arrays'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -35,7 +33,6 @@ type FormState = {
   location: LocationValue | null
   contactEmail: string
   contactPhone: string
-  focusedLanguages: string[]
   fleet: FleetState[]
 }
 
@@ -91,7 +88,6 @@ const profileZod = z.object({
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location required' }),
   contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone required'),
-  focusedLanguages: z.array(z.string()).min(1, 'Select at least one language'),
   fleet: z.array(fleetZod),
 })
 
@@ -115,7 +111,6 @@ const INITIAL_FORM: FormState = {
   location: null,
   contactEmail: '',
   contactPhone: '',
-  focusedLanguages: [],
   fleet: [emptyFleet()],
 }
 
@@ -141,7 +136,6 @@ export function BoatProfileForm() {
       } as LocationValue,
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
-      focusedLanguages: p.focusedLanguages,
       fleet:
         p.fleet.length > 0
           ? p.fleet.map((f: Record<string, unknown>) => ({
@@ -173,17 +167,12 @@ export function BoatProfileForm() {
         placeId: loc.placeId,
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
-        focusedLanguages: f.focusedLanguages,
         fleet: fleetParsed,
       }
     },
     create,
     update,
   })
-
-  function toggleLanguage(lang: string) {
-    setField('focusedLanguages', toggleInArray(form.focusedLanguages, lang))
-  }
 
   function addFleet() { setField('fleet', [...form.fleet, emptyFleet()]) }
   function removeFleet(i: number) { setField('fleet', form.fleet.filter((_, idx) => idx !== i)) }
@@ -256,42 +245,6 @@ export function BoatProfileForm() {
               placeholder="+66 81 234 5678"
             />
           </div>
-        </div>
-      </GlassCard>
-
-      {/* Languages */}
-      <GlassCard>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-3"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Languages
-        </h2>
-        {errors['focusedLanguages'] && (
-          <p className="text-sm mb-2" style={{ color: 'var(--color-destructive)' }}>
-            {errors['focusedLanguages']}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          {LANGUAGE_OPTIONS.map(({ code, label }) => {
-            const active = form.focusedLanguages.includes(code)
-            return (
-              <button
-                key={code}
-                type="button"
-                onClick={() => toggleLanguage(code)}
-                className="px-3 py-1.5 text-sm rounded-full border transition-all"
-                style={{
-                  background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                  color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
-                  borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                  transitionDuration: 'var(--transition-speed)',
-                }}
-              >
-                {label}
-              </button>
-            )
-          })}
         </div>
       </GlassCard>
 

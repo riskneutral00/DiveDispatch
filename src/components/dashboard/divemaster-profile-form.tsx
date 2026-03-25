@@ -37,7 +37,6 @@ const profileSchema = z.object({
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
-  languages: z.array(z.string()).min(1, 'Select at least one language'),
 })
 
 type CredentialData = z.infer<typeof credentialSchema>
@@ -48,7 +47,7 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   credential: CredentialData[]
-  languages: string[]
+
 }
 
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '' })
@@ -59,7 +58,6 @@ const INITIAL_FORM: ProfileFormData = {
   contactEmail: '',
   contactPhone: '',
   credential: [emptyCredential()],
-  languages: [],
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -103,7 +101,7 @@ function CredentialRow({ index, credential, errors, onChange, onRemove, canRemov
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type DiveMasterProfileSection = 'contact' | 'languages' | 'credentials'
+export type DiveMasterProfileSection = 'contact' | 'credentials'
 
 export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfileSection } = {}) {
   const profile = useQuery(api.diveMasters.mine)
@@ -126,7 +124,6 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       credential: p.credential.length > 0 ? p.credential : [emptyCredential()],
-      languages: p.languages,
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -140,7 +137,6 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         credential: f.credential,
-        languages: f.languages,
       }
     },
     create,
@@ -164,8 +160,6 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
       </div>
     )
   }
-
-  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -193,15 +187,6 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
               <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
             </div>
           </div>
-        </GlassCard>
-      )}
-
-      {(!section || section === 'languages') && (
-        <GlassCard padding="md">
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            Guiding Languages
-          </h2>
-          <GlassCheckboxGroup label="Languages you guide in" items={langItems} selected={form.languages} onChange={(values) => setField('languages', values)} error={errors.languages} columns={3} />
         </GlassCard>
       )}
 

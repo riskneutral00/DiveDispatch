@@ -17,7 +17,6 @@ export const create = mutation({
     placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    focusedLanguages: v.array(v.string()),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
   handler: async (ctx, args) =>
@@ -34,7 +33,6 @@ export const update = mutation({
     placeId: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
-    focusedLanguages: v.optional(v.array(v.string())),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'equipment'),

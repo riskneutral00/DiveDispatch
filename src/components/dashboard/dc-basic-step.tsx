@@ -77,7 +77,6 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           contactEmail,
           contactPhone,
           associations: [],
-          focusedLanguages: [],
         })
       }
       onSaved()

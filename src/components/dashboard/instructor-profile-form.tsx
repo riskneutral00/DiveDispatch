@@ -11,7 +11,6 @@ import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -51,7 +50,6 @@ const profileSchema = z.object({
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
-  languages: z.array(z.string()).min(1, 'Select at least one language'),
 })
 
 type CredentialData = z.infer<typeof credentialSchema>
@@ -63,7 +61,6 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   credential: CredentialData[]
-  languages: string[]
 }
 
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '', courses: [] })
@@ -74,7 +71,6 @@ const INITIAL_FORM: ProfileFormData = {
   contactEmail: '',
   contactPhone: '',
   credential: [emptyCredential()],
-  languages: [],
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -120,7 +116,7 @@ function CredentialRow({ index, credential, errors, onChange, onRemove, canRemov
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type InstructorProfileSection = 'contact' | 'languages' | 'credentials'
+export type InstructorProfileSection = 'contact' | 'credentials'
 
 export function InstructorProfileForm({ section }: { section?: InstructorProfileSection } = {}) {
   const profile = useQuery(api.instructors.mine)
@@ -143,7 +139,6 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       credential: p.credential.length > 0 ? p.credential : [emptyCredential()],
-      languages: p.languages,
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -157,7 +152,6 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         credential: f.credential,
-        languages: f.languages,
       }
     },
     create,
@@ -182,7 +176,6 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
     )
   }
 
-  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -210,15 +203,6 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
               <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
             </div>
           </div>
-        </GlassCard>
-      )}
-
-      {(!section || section === 'languages') && (
-        <GlassCard padding="md">
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            Teaching Languages
-          </h2>
-          <GlassCheckboxGroup label="Languages you teach in" items={langItems} selected={form.languages} onChange={(values) => setField('languages', values)} error={errors.languages} columns={3} />
         </GlassCard>
       )}
 

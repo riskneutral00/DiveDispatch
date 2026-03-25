@@ -46,7 +46,6 @@ describe('05: onboarding profile step — save mutation', () => {
         contactEmail: 'assoc@test.com',
         contactPhone: '+66891234567',
         associations: [{ agency: 'PADI', number: 'TH-00123' }],
-        focusedLanguages: ['en'],
       })
 
     const profile = await t
@@ -73,7 +72,6 @@ describe('05: onboarding profile step — save mutation', () => {
         contactEmail: 'langs@test.com',
         contactPhone: '+66891234568',
         associations: [],
-        focusedLanguages: ['en', 'th'],
       })
 
     const profile = await t
@@ -81,8 +79,6 @@ describe('05: onboarding profile step — save mutation', () => {
       .query(api.diveCenters.mine, {})
 
     expect(profile).not.toBeNull()
-    expect(profile!.focusedLanguages).toContain('en')
-    expect(profile!.focusedLanguages).toContain('th')
   })
 
   it('save mutation persists OW/AOW day defaults', async () => {
@@ -100,7 +96,6 @@ describe('05: onboarding profile step — save mutation', () => {
         contactEmail: 'days@test.com',
         contactPhone: '+66891234569',
         associations: [],
-        focusedLanguages: ['en'],
         bookingPreferences: { owDays: 4, aowDays: 2 },
       })
 

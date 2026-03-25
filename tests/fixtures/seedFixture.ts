@@ -424,7 +424,6 @@ export async function seedDiveCenterProfile(
     contactEmail?: string
     contactPhone?: string
     associations?: Array<{ agency: string; number: string }>
-    focusedLanguages?: string[]
     verified?: boolean
   } = {},
 ) {
@@ -438,7 +437,6 @@ export async function seedDiveCenterProfile(
     contactEmail: overrides.contactEmail ?? 'dc@test.com',
     contactPhone: overrides.contactPhone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
-    focusedLanguages: overrides.focusedLanguages ?? ['en'],
     verified: overrides.verified ?? true,
   })
 }
@@ -451,7 +449,6 @@ export async function seedAgent(
     contactEmail?: string
     contactPhone?: string
     associations?: Array<{ agency: string; number: string }>
-    focusedLanguages?: string[]
     defaultReferralMode?: Doc<'agents'>['defaultReferralMode']
     verified?: boolean
   } = {},
@@ -463,7 +460,6 @@ export async function seedAgent(
     contactEmail: overrides.contactEmail ?? 'agent@test.com',
     contactPhone: overrides.contactPhone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
-    focusedLanguages: overrides.focusedLanguages ?? ['en'],
     defaultReferralMode: overrides.defaultReferralMode ?? 'independent',
     verified: overrides.verified ?? false,
   })
@@ -479,7 +475,6 @@ export async function seedVenue(
     lat?: number
     lng?: number
     venueType?: Doc<'venues'>['venueType']
-    focusedLanguages?: string[]
     verified?: boolean
     isPublic?: boolean
     confinedCapable?: boolean
@@ -494,7 +489,6 @@ export async function seedVenue(
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
     venueType: overrides.venueType ?? 'Pool',
-    focusedLanguages: overrides.focusedLanguages ?? ['en'],
     verified: overrides.verified ?? true,
     isPublic: overrides.isPublic ?? true,
     confinedCapable: overrides.confinedCapable ?? true,
@@ -514,7 +508,6 @@ export async function seedInstructorProfile(
     contactEmail?: string
     contactPhone?: string
     credential?: Array<{ agency: string; level: string; agencyID: string; courses: string[] }>
-    languages?: string[]
     verified?: boolean
   } = {},
 ) {
@@ -530,7 +523,6 @@ export async function seedInstructorProfile(
     credential: overrides.credential ?? [
       { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
     ],
-    languages: overrides.languages ?? ['en'],
     verified: overrides.verified ?? true,
   })
 }
@@ -545,7 +537,6 @@ export async function seedBoatProfile(
     contactEmail?: string
     contactPhone?: string
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
-    focusedLanguages?: string[]
     verified?: boolean
   } = {},
 ) {
@@ -559,7 +550,6 @@ export async function seedBoatProfile(
     contactEmail: overrides.contactEmail ?? 'boat@test.com',
     contactPhone: overrides.contactPhone ?? '+66123456789',
     fleet: overrides.fleet ?? [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-    focusedLanguages: overrides.focusedLanguages ?? ['en'],
     hasCompressor: false,
     verified: overrides.verified ?? true,
   })
@@ -574,7 +564,6 @@ export async function seedEquipmentProfile(
     country?: string
     contactEmail?: string
     contactPhone?: string
-    focusedLanguages?: string[]
     verified?: boolean
   } = {},
 ) {
@@ -587,7 +576,6 @@ export async function seedEquipmentProfile(
     lng: 99.8408,
     contactEmail: overrides.contactEmail ?? 'equip@test.com',
     contactPhone: overrides.contactPhone ?? '+66123456789',
-    focusedLanguages: overrides.focusedLanguages ?? ['en'],
     verified: overrides.verified ?? true,
   })
 }

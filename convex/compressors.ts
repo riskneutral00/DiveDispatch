@@ -24,7 +24,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     gasMixes: v.optional(v.array(gasMixValidator)),
-    focusedLanguages: v.array(v.string()),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'compressors', 'Compressor', {
@@ -43,7 +42,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     gasMixes: v.optional(v.array(gasMixValidator)),
-    focusedLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'compressors'),
 })

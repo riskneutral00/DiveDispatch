@@ -32,7 +32,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
 
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
-      const langCodes: string[] = existing?.focusedLanguages ?? me?.customerLanguages ?? []
+      const langCodes: string[] = me?.customerLanguages ?? []
       setFocusedLanguages(
         langCodes
           .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
@@ -65,7 +65,6 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       const hasPrefs = owDaysNum !== undefined || aowDaysNum !== undefined || oaDaysNum !== undefined || specialties !== undefined
 
       await update({
-        focusedLanguages: focusedLanguages.map((l) => l.code),
         bookingPreferences: hasPrefs
           ? { owDays: owDaysNum, aowDays: aowDaysNum, oaDays: oaDaysNum, aowSpecialties: specialties }
           : undefined,

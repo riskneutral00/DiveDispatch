@@ -9,7 +9,6 @@ export type DirectoryEntry = {
   name: string
   placeName: string
   country: string
-  languages: string[]
   verified: boolean
   role: StakeholderRole
   // Role-specific extras
@@ -27,7 +26,6 @@ type ProfileData = {
   name: string
   placeName: string
   country: string
-  languages: string[]
   verified: boolean
   // Extras (populated per-role)
   agencies?: string[]
@@ -71,7 +69,6 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
         name: p.name,
         placeName: p.placeName,
         country: p.country,
-        languages: p.languages,
         verified: p.verified,
         agencies: (p.credential ?? []).map((c: { agency: string }) => c.agency),
       }
@@ -79,12 +76,12 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
     case 'DiveMaster': {
       const p = await byUser('diveMasters')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.languages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveCenter': {
       const p = await byUser('diveCenters')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'Agent': {
       const p = await byUser('agents')
@@ -94,7 +91,6 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
         name: p.name,
         placeName: loc.placeName,
         country: loc.country,
-        languages: p.focusedLanguages,
         verified: p.verified,
         association: (p.associations ?? [])[0]?.agency,
       }
@@ -112,7 +108,6 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
         name: p.name,
         placeName: p.placeName,
         country: p.country,
-        languages: p.focusedLanguages,
         verified: p.verified,
         boatCapacity: largest?.maxPax,
         boatType: largest?.boatType,
@@ -121,7 +116,7 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
     case 'Equipment': {
       const p = await byUser('equipment')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'Pool': {
       const p = await byUser('venues')
@@ -130,7 +125,6 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
         name: p.name,
         placeName: p.placeName,
         country: p.country,
-        languages: p.focusedLanguages,
         verified: p.verified,
         maxDepth: p.maxDepth,
         maxCapacity: p.maxCapacity,
@@ -143,7 +137,6 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
         name: p.name,
         placeName: p.placeName,
         country: p.country,
-        languages: p.focusedLanguages,
         verified: p.verified,
         gasMixes: p.gasMixes ?? [],
       }
@@ -151,22 +144,22 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
     case 'Liveaboard': {
       const p = await byUser('liveaboards')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveResort': {
       const p = await byUser('diveResorts')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveHostel': {
       const p = await byUser('diveHostels')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveSite': {
       const p = await byUser('venues')
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, languages: p.focusedLanguages, verified: p.verified }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
   }
 }
@@ -179,7 +172,6 @@ export const listByRole = query({
     role: stakeholderTypeValidator,
     placeName: v.optional(v.string()),
     country: v.optional(v.string()),
-    language: v.optional(v.string()),
     // Role-specific filter args
     agency: v.optional(v.string()),          // Instructor: filter by credential agency
     minCapacity: v.optional(v.number()),     // Boat: min fleet maxPax
@@ -218,8 +210,6 @@ export const listByRole = query({
           // ── Text filters ──────────────────────────────────────────────
           if (args.placeName && profile.placeName.toLowerCase() !== args.placeName.toLowerCase()) return null
           if (args.country && profile.country.toLowerCase() !== args.country.toLowerCase()) return null
-          if (args.language && !profile.languages.some((l) => l.toLowerCase() === args.language!.toLowerCase())) return null
-
           // ── Role-specific filters ─────────────────────────────────────
           if (args.agency && args.agency !== 'all') {
             const agencies = profile.agencies ?? []
@@ -240,7 +230,6 @@ export const listByRole = query({
             name: profile.name,
             placeName: profile.placeName,
             country: profile.country,
-            languages: profile.languages,
             verified: profile.verified,
             role: args.role,
             agencies: profile.agencies,

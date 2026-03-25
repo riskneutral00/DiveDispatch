@@ -61,13 +61,6 @@ export async function checkProfileCompleteness(
     if (!arr(profile?.credential)) incomplete.push('Credentials')
   }
 
-  // Language field
-  if (role === 'Instructor' || role === 'DiveMaster') {
-    if (!arr(profile?.languages)) incomplete.push('Languages')
-  } else {
-    if (!arr(profile?.focusedLanguages)) incomplete.push('Languages')
-  }
-
   // Quick Book pill (organizers only)
   if (OPERATOR_ROLES.has(role)) {
     const template = await ctx.db
@@ -93,7 +86,7 @@ export async function checkProfileCompleteness(
   const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
   const hasTemplateSlot = OPERATOR_ROLES.has(role)
   const hasPreferredInstructors = OPERATOR_ROLES.has(role)
-  const total = baseCount + (hasListField ? 1 : 0) + 1 + (hasTemplateSlot ? 1 : 0) + (hasPreferredInstructors ? 1 : 0)
+  const total = baseCount + (hasListField ? 1 : 0) + (hasTemplateSlot ? 1 : 0) + (hasPreferredInstructors ? 1 : 0)
   const filled = total - incomplete.length
   const percentage = Math.round((filled / total) * 100)
 

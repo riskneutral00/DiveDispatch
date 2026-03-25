@@ -51,7 +51,7 @@ async function seedFullProfile(ctx: SeedCtx, slug: string) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('booking gate: profile completeness', () => {
-  it('getOnboardingStatus returns 78% when missing template + preferred instructors', async () => {
+  it('getOnboardingStatus returns 75% when missing template + preferred instructors', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
@@ -82,7 +82,7 @@ describe('booking gate: profile completeness', () => {
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-78' })
       .query(api.users.getOnboardingStatus, {})
 
-    expect(status.percentage).toBe(78)
+    expect(status.percentage).toBe(75)
     expect(status.incomplete).toContain('Quick Book pill')
     expect(status.incomplete).toContain('Preferred instructors')
   })
@@ -100,7 +100,7 @@ describe('booking gate: profile completeness', () => {
     expect(status.incomplete).toHaveLength(0)
   })
 
-  it('createDraftShell rejects with PROFILE_INCOMPLETE at 78%', async () => {
+  it('createDraftShell rejects with PROFILE_INCOMPLETE at 75%', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
@@ -198,7 +198,6 @@ describe('booking gate: profile completeness', () => {
         country: 'Thailand',
         lat: 10.0,
         lng: 99.8,
-        focusedLanguages: ['en'],
         verified: false,
         confinedCapable: true,
         openWaterCapable: true,
@@ -294,7 +293,6 @@ async function seedFullAgentProfile(ctx: SeedCtx, slug: string) {
     contactEmail: 'agent@test.com',
     contactPhone: '+66987654321',
     associations: [{ agency: 'PADI', number: '99999' }],
-    focusedLanguages: ['en'],
   })
   await seedBookingTemplate(ctx, {
     ownerId: slug,
@@ -334,7 +332,6 @@ describe('booking gate: non-DiveCenter operator', () => {
         contactEmail: 'agent@test.com',
         contactPhone: '+66111111111',
         associations: [{ agency: 'PADI', number: '11111' }],
-        focusedLanguages: ['en'],
       })
     })
 

@@ -27,7 +27,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(associationValidator),
-    focusedLanguages: v.array(v.string()),
     bookingPreferences: v.optional(bookingPreferencesValidator),
   },
   handler: async (ctx, args) =>
@@ -47,7 +46,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     associations: v.optional(v.array(associationValidator)),
-    focusedLanguages: v.optional(v.array(v.string())),
     bookingPreferences: v.optional(bookingPreferencesValidator),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'diveCenters'),

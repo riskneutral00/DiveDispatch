@@ -21,7 +21,6 @@ const COMMON_LOCATION = {
   lng: 99.84,
   contactEmail: 'test@test.com',
   contactPhone: '+66123456789',
-  focusedLanguages: ['en'],
 }
 
 // Each entry: { apiModule, role, createArgs, updateArgs, uniqueField }
@@ -80,7 +79,6 @@ const RESOURCE_CONFIGS: Array<{
       lng: 99.84,
       contactEmail: 'instr@test.com',
       contactPhone: '+66123456789',
-      languages: ['en'],
       credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', courses: ['OW', 'AOW'] }],
     },
     updateArgs: { name: 'Updated Instructor' },
@@ -98,7 +96,6 @@ const RESOURCE_CONFIGS: Array<{
       lng: 99.84,
       contactEmail: 'dm@test.com',
       contactPhone: '+66123456789',
-      languages: ['en'],
       credential: [{ agency: 'PADI', level: 'DM', agencyID: '456' }],
     },
     updateArgs: { name: 'Updated DM' },

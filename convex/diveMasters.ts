@@ -24,7 +24,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     credential: v.array(credentialValidator),
-    languages: v.array(v.string()),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'diveMasters', 'DiveMaster', {
@@ -43,7 +42,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     credential: v.optional(v.array(credentialValidator)),
-    languages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'diveMasters'),
 })

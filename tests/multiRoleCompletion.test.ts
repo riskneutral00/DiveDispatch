@@ -100,7 +100,6 @@ describe('getLowestProfileCompletion', () => {
         contactEmail: 'boat@test.com',
         contactPhone: '+66111111111',
         fleet: [{ boatName: 'Dive Boat 1', maxPax: 12, boatType: 'day_boat' }],
-        focusedLanguages: ['en'],
         hasCompressor: false,
         verified: false,
       })
@@ -157,7 +156,6 @@ describe('getAllRolesCompleteness', () => {
     expect(dc!.percentage).toBe(100)
     expect(boat!.percentage).toBe(0)
     expect(boat!.incomplete).toContain('Business name')
-    expect(boat!.incomplete).toContain('Languages')
   })
 
   it('multi-role user all complete returns allComplete: true', async () => {
@@ -183,7 +181,6 @@ describe('getAllRolesCompleteness', () => {
         contactEmail: 'boat@test.com',
         contactPhone: '+66111111111',
         fleet: [{ boatName: 'Dive Boat 1', maxPax: 12, boatType: 'day_boat' }],
-        focusedLanguages: ['en'],
         hasCompressor: false,
         verified: false,
       })

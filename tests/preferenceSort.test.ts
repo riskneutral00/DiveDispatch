@@ -3,7 +3,7 @@ import { sortByPreference } from '../src/lib/booking/sort-by-preference'
 import type { ResourcePickerEntry } from '../src/lib/types/booking'
 
 function makeEntry(slug: string, name: string): ResourcePickerEntry {
-  return { slug, name, placeName: 'Bangkok', country: 'TH', languages: [], verified: false }
+  return { slug, name, placeName: 'Bangkok', country: 'TH', verified: false }
 }
 
 describe('sortByPreference', () => {

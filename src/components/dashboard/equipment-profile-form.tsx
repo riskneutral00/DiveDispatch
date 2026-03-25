@@ -33,7 +33,6 @@ const profileSchema = z.object({
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone is required').max(30),
-  focusedLanguages: z.array(z.string()).min(1, 'At least one language is required'),
 })
 
 type FormState = {
@@ -41,7 +40,6 @@ type FormState = {
   location: LocationValue | null
   contactEmail: string
   contactPhone: string
-  focusedLanguages: string[]
   manufacturersByGearType: Partial<Record<GearType, string[]>>
 }
 
@@ -50,7 +48,6 @@ const INITIAL_FORM: FormState = {
   location: null,
   contactEmail: '',
   contactPhone: '',
-  focusedLanguages: [],
   manufacturersByGearType: {},
 }
 
@@ -82,7 +79,6 @@ export function EquipmentProfileForm() {
         } as LocationValue,
         contactEmail: p.contactEmail,
         contactPhone: p.contactPhone,
-        focusedLanguages: p.focusedLanguages,
         manufacturersByGearType: parsed,
       }
     },
@@ -102,7 +98,6 @@ export function EquipmentProfileForm() {
         placeId: loc.placeId,
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
-        focusedLanguages: f.focusedLanguages,
         manufacturersByGearType: Object.keys(mbt).length > 0 ? mbt : undefined,
       }
     },
@@ -111,19 +106,7 @@ export function EquipmentProfileForm() {
   })
 
   // Local UI state for tag inputs (not part of form/schema)
-  const [langInput, setLangInput] = useState('')
   const [mfrInputs, setMfrInputs] = useState<Partial<Record<GearType, string>>>({})
-
-  function addLanguage() {
-    const lang = langInput.trim()
-    if (!lang || form.focusedLanguages.includes(lang)) return
-    setField('focusedLanguages', [...form.focusedLanguages, lang])
-    setLangInput('')
-  }
-
-  function removeLanguage(lang: string) {
-    setField('focusedLanguages', form.focusedLanguages.filter((l) => l !== lang))
-  }
 
   function toggleGearType(gt: GearType) {
     setForm((prev) => {
@@ -210,47 +193,6 @@ export function EquipmentProfileForm() {
             />
           </div>
         </div>
-      </GlassCard>
-
-      {/* Languages */}
-      <GlassCard padding="lg">
-        <h2
-          className="text-base font-semibold mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          Languages
-        </h2>
-        <p className="text-xs mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-          Languages your team communicates in with dive centers and instructors.
-        </p>
-        <div className="flex gap-2 mb-3">
-          <GlassInput
-            value={langInput}
-            onChange={(e) => setLangInput(e.target.value)}
-            placeholder="e.g. English, Thai, Chinese"
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLanguage() } }}
-          />
-          <GlassButton type="button" variant="secondary" size="sm" onClick={addLanguage}>
-            <Plus size={14} />
-          </GlassButton>
-        </div>
-        {form.focusedLanguages.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {form.focusedLanguages.map((lang) => (
-              <span key={lang} className="inline-flex items-center gap-1.5 px-2.5 py-1 text-sm rounded-full border" style={{ background: 'var(--color-glass-bg)', color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)' }}>
-                {lang}
-                <button type="button" aria-label={`Remove ${lang}`} onClick={() => removeLanguage(lang)} style={{ color: 'var(--color-text-secondary)' }}>
-                  <X size={12} />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        {errors.focusedLanguages && (
-          <p className="mt-2 text-sm" style={{ color: 'var(--color-destructive)' }}>
-            {errors.focusedLanguages}
-          </p>
-        )}
       </GlassCard>
 
       {/* Gear Catalog */}
