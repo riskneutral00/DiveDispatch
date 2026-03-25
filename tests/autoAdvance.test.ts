@@ -14,7 +14,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { tryAutoAdvance } from '../convex/bookings/_shared'
+import { tryAutoAdvance, restoreSnapshotUnits } from '../convex/bookings/_shared'
 import type { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
@@ -875,5 +875,107 @@ describe('H18: EM auto-release snapshot restoration', () => {
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking!.status).toBe('Draft')
+  })
+})
+
+// ─── 20-22. TOCTOU fresh-read guards (DD-017) ────────────────────────────────
+
+describe('tryAutoAdvance — TOCTOU fresh-read guards (DD-017)', () => {
+  it('20 — skips already-Vacated reservation in EM auto-release loop', async () => {
+    const t = makeT()
+
+    const { bookingId, resId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      // Pre-vacate the reservation (simulating concurrent caller already released it)
+      const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Vacated')
+      // Snapshot already restored: 1 available, 0 reserved
+      await seedSnapshot(ctx, unitId, { reservedUnits: 0 })
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      return { bookingId, resId }
+    })
+
+    // tryAutoAdvance should see the reservation is already Vacated and not double-restore
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const res = await t.run(async (ctx) => ctx.db.get(resId))
+    expect(res!.status).toBe('Vacated')
+  })
+
+  it('21 — re-reads booking after EM auto-release, skips if no longer Draft', async () => {
+    const t = makeT()
+
+    const { bookingId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      return { bookingId }
+    })
+
+    // Simulate concurrent caller already advanced the booking to Cancelled
+    await t.run(async (ctx) => {
+      await ctx.db.patch(bookingId, { status: 'Cancelled' })
+    })
+
+    // tryAutoAdvance should re-read booking after EM release and see it's no longer Draft
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    // Must remain Cancelled — not overwritten to Upcoming
+    expect(booking!.status).toBe('Cancelled')
+  })
+
+  it('22 — restoreSnapshotUnits reads fresh snapshot from DB, not stale parameters', async () => {
+    const t = makeT()
+
+    const { snapshotId } = await t.run(async (ctx) => {
+      // Create a snapshot with known values
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const snapshotId = await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
+      return { snapshotId }
+    })
+
+    // Externally modify the snapshot to simulate concurrent mutation
+    await t.run(async (ctx) => {
+      await ctx.db.patch(snapshotId, { availableUnits: 5, reservedUnits: 3 })
+    })
+
+    // Call restoreSnapshotUnits with stale values (0 available, 1 reserved)
+    // If it reads fresh from DB, it should use (5 available, 3 reserved) instead
+    await t.run(async (ctx) => {
+      await restoreSnapshotUnits(ctx, snapshotId, 0, 1, 1)
+    })
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    // Fresh read: available=5+1=6, reserved=max(0, 3-1)=2
+    // Stale read would give: available=0+1=1, reserved=max(0, 1-1)=0
+    expect(snapshot!.availableUnits).toBe(6)
+    expect(snapshot!.reservedUnits).toBe(2)
   })
 })

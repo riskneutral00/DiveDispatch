@@ -10,17 +10,20 @@ import type { Id } from '../_generated/dataModel'
 import type { VacatedReason } from './stateMachine'
 import { ErrorCode } from '../lib/errorCodes'
 
-/** Restore availability snapshot when a reservation is released. */
+/** Restore availability snapshot when a reservation is released.
+ * Re-reads snapshot from DB to avoid TOCTOU stale-parameter bugs (DD-017). */
 export async function restoreSnapshotUnits(
   ctx: MutationCtx,
   snapshotId: Id<"availabilitySnapshots">,
-  currentAvailable: number,
-  currentReserved: number,
+  _currentAvailable: number,
+  _currentReserved: number,
   unitsRequested: number,
 ) {
+  const fresh = await ctx.db.get(snapshotId)
+  if (!fresh) return
   await ctx.db.patch(snapshotId, {
-    availableUnits: currentAvailable + unitsRequested,
-    reservedUnits: Math.max(0, currentReserved - unitsRequested),
+    availableUnits: fresh.availableUnits + unitsRequested,
+    reservedUnits: Math.max(0, fresh.reservedUnits - unitsRequested),
   })
 }
 

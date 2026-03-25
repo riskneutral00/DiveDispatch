@@ -64,6 +64,9 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
 
       for (const res of allReservations) {
         if (res.status === 'Vacated' || res.status === 'NoShow') continue
+        // DD-017: re-read reservation to guard against concurrent vacate
+        const fresh = await ctx.db.get(res._id)
+        if (!fresh || fresh.status === 'Vacated') continue
         const unit = await ctx.db.get(res.inventoryUnitId)
         if (!unit || unit.resourceType !== 'Equipment') continue
 
@@ -92,6 +95,10 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
       }
     }
   }
+
+  // DD-017: re-read booking after EM auto-release to guard against concurrent status change
+  const freshBooking = await ctx.db.get(bookingId as Id<'bookings'>)
+  if (!freshBooking || freshBooking.status !== 'Draft') return
 
   // ─── Reservation check ────────────────────────────────────────────────────
   const reservations = await ctx.db
