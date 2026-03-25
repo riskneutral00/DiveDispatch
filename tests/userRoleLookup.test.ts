@@ -83,13 +83,13 @@ describe('users.upsertUser', () => {
       role: 'Instructor',
     })
 
-    expect(userId).toBeTruthy()
+    expect(typeof userId).toBe('string')
 
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId)
       expect(user!.email).toBe('new@test.com')
       expect(user!.role).toBe('Instructor')
-      expect(user!.slug).toBeTruthy()
+      expect(typeof user!.slug).toBe('string')
     })
   })
 
@@ -128,7 +128,7 @@ describe('users.bySlug', () => {
     })
 
     const user = await t.query(api.users.bySlug, { slug: TEST_SLUGS.diveCenter })
-    expect(user).toBeTruthy()
+    expect(user).not.toBeNull()
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
   })
 
@@ -150,7 +150,7 @@ describe('users.byId', () => {
     })
 
     const user = await t.query(api.users.byId, { id: userId })
-    expect(user).toBeTruthy()
+    expect(user).not.toBeNull()
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
   })
 })

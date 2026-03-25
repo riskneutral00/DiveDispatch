@@ -134,8 +134,8 @@ describe('BookingCalendar — droppable conditional rendering', () => {
       <BookingCalendar onDateClick={vi.fn()} droppableEnabled={false} />,
     )
     // Calendar renders normally — date cells exist
-    expect(getByTestId(`cell-${ANCHOR}`)).toBeTruthy()
-    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeTruthy()
+    expect(getByTestId(`cell-${ANCHOR}`)).toBeInstanceOf(HTMLElement)
+    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeInstanceOf(HTMLElement)
   })
 
   it('renders without crash when droppableEnabled=true inside DndContext', async () => {
@@ -145,7 +145,7 @@ describe('BookingCalendar — droppable conditional rendering', () => {
         <BookingCalendar onDateClick={vi.fn()} droppableEnabled={true} />
       </DndContext>,
     )
-    expect(getByTestId(`cell-${ANCHOR}`)).toBeTruthy()
-    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeTruthy()
+    expect(getByTestId(`cell-${ANCHOR}`)).toBeInstanceOf(HTMLElement)
+    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeInstanceOf(HTMLElement)
   })
 })

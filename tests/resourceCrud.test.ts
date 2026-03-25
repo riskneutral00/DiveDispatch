@@ -163,11 +163,11 @@ for (const config of RESOURCE_CONFIGS) {
         const id = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
           .mutation(config.apiModule.create, config.createArgs)
 
-        expect(id).toBeTruthy()
+        expect(typeof id).toBe('string')
 
         await t.run(async (ctx) => {
           const record = await ctx.db.get(id) as Record<string, unknown> | null
-          expect(record).toBeTruthy()
+          expect(record).not.toBeNull()
           expect(record![config.uniqueField]).toBe(config.createArgs.name)
           expect(record!.verified).toBe(false)
         })
@@ -269,7 +269,7 @@ for (const config of RESOURCE_CONFIGS) {
 
         const result = await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
           .query(config.apiModule.mine, {})
-        expect(result).toBeTruthy()
+        expect(result).not.toBeNull()
         expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
       })
     })
@@ -289,7 +289,7 @@ for (const config of RESOURCE_CONFIGS) {
           .mutation(config.apiModule.create, config.createArgs)
 
         const result = await t.query(config.apiModule.byUserId, { userId })
-        expect(result).toBeTruthy()
+        expect(result).not.toBeNull()
         expect((result as Record<string, unknown>).name).toBe(config.createArgs.name)
       })
 
