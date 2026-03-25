@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import schema from '../convex/schema'
 import { _listInventoryByType } from '../convex/availability'
 import { makeT } from './helpers/convex-helpers'
 import {
@@ -10,42 +9,14 @@ import {
   seedBooking,
   seedSession,
   seedReservation,
-  seedSnapshot,
 } from './fixtures'
-import { testDate } from './helpers/dates'
 
 let t = makeT()
 beforeEach(() => {
   t = makeT()
 })
 
-// ─── Schema index existence ──────────────────────────────────────────────────
-
-describe('DB index definitions', () => {
-  const tables = schema.tables
-
-  it('inventoryUnits has by_ownerId_resourceType compound index', () => {
-    const indexes = tables.inventoryUnits.indexes
-    const idx = indexes.find(
-      (i: { indexDescriptor: string }) => i.indexDescriptor === 'by_ownerId_resourceType',
-    )
-    expect(idx).toBeDefined()
-    expect(idx!.fields).toContain('ownerId')
-    expect(idx!.fields).toContain('resourceType')
-  })
-
-  it('reservations has by_bookingId_inventoryUnitId compound index', () => {
-    const indexes = tables.reservations.indexes
-    const idx = indexes.find(
-      (i: { indexDescriptor: string }) => i.indexDescriptor === 'by_bookingId_inventoryUnitId',
-    )
-    expect(idx).toBeDefined()
-    expect(idx!.fields).toContain('bookingId')
-    expect(idx!.fields).toContain('inventoryUnitId')
-  })
-})
-
-// ─── Query uses new indexes (behavioral) ─────────────────────────────────────
+// ─── Compound-index behavioral tests ─────────────────────────────────────────
 
 describe('_listInventoryByType with ownerSlug uses compound index', () => {
   it('returns only units matching both type and owner', async () => {
@@ -75,10 +46,10 @@ describe('_listInventoryByType with ownerSlug uses compound index', () => {
   })
 })
 
-describe('decline query uses by_bookingId_inventoryUnitId', () => {
-  it('filters reservations by both bookingId and inventoryUnitId', async () => {
+describe('by_bookingId_inventoryUnitId index', () => {
+  it('returns only reservations for the queried unit, not sibling units on same booking', async () => {
     await t.run(async (ctx) => {
-      const dcUser = await seedUser(ctx, {
+      await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.diveCenter,
         slug: TEST_SLUGS.diveCenter,
         role: 'DiveCenter',
@@ -105,16 +76,22 @@ describe('decline query uses by_bookingId_inventoryUnitId', () => {
         ownerId: TEST_SLUGS.diveCenter,
       })
 
-      // Query reservations by bookingId + inventoryUnitId using new index
+      const sessionA = await seedSession(ctx, bookingId, unitA)
+      const sessionB = await seedSession(ctx, bookingId, unitB)
+
+      await seedReservation(ctx, bookingId, unitA, sessionA)
+      await seedReservation(ctx, bookingId, unitB, sessionB)
+
+      // Query with compound index — should return only unitA's reservation
       const reservations = await ctx.db
         .query('reservations')
-        .withIndex('by_bookingId_inventoryUnitId', (q: any) =>
+        .withIndex('by_bookingId_inventoryUnitId', (q) =>
           q.eq('bookingId', bookingId).eq('inventoryUnitId', unitA),
         )
         .collect()
 
-      // No reservations seeded yet, just verifying the index works
-      expect(reservations).toHaveLength(0)
+      expect(reservations).toHaveLength(1)
+      expect(reservations[0].inventoryUnitId).toBe(unitA)
     })
   })
 })
