@@ -757,7 +757,7 @@ describe('submitToDraft', () => {
     await t.run(async (ctx) => {
       const reservations = await ctx.db.query('reservations').collect()
       expect(reservations[0].status).toBe('Confirmed')
-      expect(reservations[0].confirmedAt).toBeDefined()
+      expect(typeof reservations[0].confirmedAt).toBe('number')
     })
   })
 
@@ -1297,9 +1297,7 @@ describe('submitToDraft', () => {
 
       const internalRow = junctionRows.find((r) => r.resourceSlug === 'instructor-mix')
       const externalRow = junctionRows.find((r) => r.externalName === 'External Boat')
-      expect(internalRow).toBeDefined()
       expect(internalRow?.resourceType).toBe('Instructor')
-      expect(externalRow).toBeDefined()
       expect(externalRow?.resourceType).toBe('Boat')
     })
   })

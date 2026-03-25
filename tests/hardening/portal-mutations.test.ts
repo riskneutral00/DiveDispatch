@@ -71,7 +71,7 @@ describe('savePortalContact — all required fields', () => {
     })
 
     // Profile links to customer
-    expect(profile!.customerId).toBeDefined()
+    expect(typeof profile!.customerId).toBe('string')
 
     // All required fields present on customer record
     expect(customer).not.toBeNull()
@@ -88,7 +88,7 @@ describe('savePortalContact — all required fields', () => {
     expect(customer!.email).toBe('test@example.com')
     expect(customer!.phone).toBe('+61 412 345 678')
     expect(customer!.gender).toBe('M')
-    expect(customer!.createdAt).toBeDefined()
+    expect(typeof customer!.createdAt).toBe('number')
   })
 })
 
@@ -173,7 +173,7 @@ describe('savePortalWaiver — waiverSignedAt timestamp', () => {
     const after = Date.now()
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    expect(profile?.waiverSignedAt).toBeDefined()
+    expect(typeof profile?.waiverSignedAt).toBe('number')
     expect(profile!.waiverSignedAt as number).toBeGreaterThanOrEqual(before)
     expect(profile!.waiverSignedAt as number).toBeLessThanOrEqual(after)
     expect(profile?.signatureFileId).toBe(signatureStorageId)
@@ -210,7 +210,13 @@ describe('savePortalEquipment — rentalChecklist persistence', () => {
     })
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    expect(profile?.rentalChecklist).toBeDefined()
+    expect(profile?.rentalChecklist).toMatchObject({
+      mask: 'rent',
+      bcd: 'own',
+      wetsuit: 'rent',
+      fins: 'own',
+      regulator: 'rent',
+    })
     expect(profile!.rentalChecklist!.mask).toBe('rent')
     expect(profile!.rentalChecklist!.bcd).toBe('own')
     expect(profile!.rentalChecklist!.wetsuit).toBe('rent')
@@ -259,7 +265,7 @@ describe('submitPortal — medical block TTL extension wiring', () => {
 
     const booking = await t.run(async (ctx: SeedCtx) => ctx.db.get(bookingId))
     expect(booking?.medicalHardBlock).toBe(true)
-    expect(booking?.expiresAt).toBeDefined()
+    expect(typeof booking?.expiresAt).toBe('number')
     // Medical TTL is 36h — extension must exceed original 12h hold
     expect(booking!.expiresAt as number).toBeGreaterThan(originalExpiresAt)
   })
@@ -376,11 +382,11 @@ describe('submitPortal — full submission', () => {
 
     expect(booking?.customerFormComplete).toBe(true)
 
-    expect(profile?.submittedAt).toBeDefined()
+    expect(typeof profile?.submittedAt).toBe('number')
     expect(profile!.submittedAt as number).toBeGreaterThanOrEqual(before)
     expect(profile!.submittedAt as number).toBeLessThanOrEqual(after)
 
-    expect(link?.usedAt).toBeDefined()
+    expect(typeof link?.usedAt).toBe('number')
     expect(link!.usedAt as number).toBeGreaterThanOrEqual(before)
     expect(link!.usedAt as number).toBeLessThanOrEqual(after)
   })

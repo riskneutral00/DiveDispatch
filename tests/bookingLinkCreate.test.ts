@@ -68,8 +68,8 @@ describe('createBookingLink', () => {
         email: 'alice@test.com',
       })
 
-    expect(token).toBeTruthy()
     expect(typeof token).toBe('string')
+    expect((token as string).length).toBeGreaterThan(0)
 
     // Verify link record exists
     await t.run(async (ctx) => {
@@ -77,7 +77,7 @@ describe('createBookingLink', () => {
         .query('bookingLinks')
         .withIndex('by_token', (q) => q.eq('token', token as string))
         .unique()
-      expect(link).toBeTruthy()
+      expect(link).not.toBeNull()
       expect(link!.customerName).toBe('Alice')
       expect(link!.email).toBe('alice@test.com')
       expect(link!.expiresAt).toBeGreaterThan(Date.now())
@@ -87,7 +87,7 @@ describe('createBookingLink', () => {
         .query('customerProfiles')
         .filter((q) => q.eq(q.field('linkToken'), token))
         .unique()
-      expect(profile).toBeTruthy()
+      expect(profile).not.toBeNull()
       expect(profile!.bookingId).toEqual(bookingId)
     })
   })

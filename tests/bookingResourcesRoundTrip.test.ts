@@ -260,14 +260,14 @@ describe('bookingResources round-trip lifecycle', () => {
       expect(detail!.stakeholders).toHaveLength(2)
 
       const instStakeholder = detail!.stakeholders.find((s) => s.role === 'Instructor')
-      expect(instStakeholder).toBeDefined()
+      expect(instStakeholder?.role).toBe('Instructor')
       expect(instStakeholder!.slug).toBe('inst-1')
       expect(instStakeholder!.name).toBe('inst-1 Display')
       expect(instStakeholder!.isExternal).toBe(false)
       expect(instStakeholder!.reservationStatus).toBe('PendingAcceptance')
 
       const emStakeholder = detail!.stakeholders.find((s) => s.role === 'Equipment')
-      expect(emStakeholder).toBeDefined()
+      expect(emStakeholder?.role).toBe('Equipment')
       expect(emStakeholder!.slug).toBe('em-1')
       expect(emStakeholder!.name).toBe('em-1 Display')
       expect(emStakeholder!.isExternal).toBe(false)
@@ -598,8 +598,7 @@ describe('bookingResources round-trip lifecycle', () => {
 
         // Instructor row should still exist
         const instRow = brRows.find((r) => r.resourceType === 'Instructor')
-        expect(instRow).toBeDefined()
-        expect(instRow!.resourceSlug).toBe('inst-1')
+        expect(instRow?.resourceSlug).toBe('inst-1')
       })
 
       // Verify: availability snapshot for equipment unit is restored
@@ -627,8 +626,7 @@ describe('bookingResources round-trip lifecycle', () => {
           .withIndex('by_userId', (q) => q.eq('userId', 'dc-test'))
           .collect()
         const declineNotif = notifications.find((n) => n.type === 'hold_declined')
-        expect(declineNotif).toBeDefined()
-        expect(declineNotif!.bookingId).toBe(bookingId)
+        expect(declineNotif?.bookingId).toBe(bookingId)
       })
     })
   })

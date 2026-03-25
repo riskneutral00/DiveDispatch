@@ -227,8 +227,8 @@ describe('booking gate: profile completeness', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
     expect(typeof bookingId).toBe('string')
+    expect((bookingId as string).length).toBeGreaterThan(0)
   })
 })
 
@@ -416,8 +416,8 @@ describe('booking gate: non-DiveCenter operator', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
     expect(typeof bookingId).toBe('string')
+    expect((bookingId as string).length).toBeGreaterThan(0)
   })
 })
 
@@ -503,7 +503,7 @@ describe('booking gate: multi-role profile completeness', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
     expect(typeof bookingId).toBe('string')
+    expect((bookingId as string).length).toBeGreaterThan(0)
   })
 })

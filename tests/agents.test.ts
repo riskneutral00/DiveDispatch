@@ -53,11 +53,11 @@ describe('agents.create', () => {
     const agentId = await t.withIdentity({ tokenIdentifier: 'clerk|new-agent' })
       .mutation(api.agents.create, VALID_AGENT_ARGS)
 
-    expect(agentId).toBeTruthy()
+    expect(typeof agentId).toBe('string')
 
     await t.run(async (ctx) => {
       const agent = await ctx.db.get(agentId) as Doc<'agents'> | null
-      expect(agent).toBeTruthy()
+      expect(agent).not.toBeNull()
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.userId).toEqual(userId)
       expect(agent!.verified).toBe(false)
@@ -164,7 +164,7 @@ describe('agents.mine', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|my-agent' })
       .query(api.agents.mine, {})
 
-    expect(result).toBeTruthy()
+    expect(result).not.toBeNull()
     expect(result!.name).toBe('Test Agent')
     // Normalized flat fields from locations[0]
     expect(result!.placeName).toBe('Koh Tao')

@@ -96,7 +96,7 @@ describe('generateDays', () => {
   it('distributeDives places confined on pool day, open on boat days', () => {
     const days = distributeDives(generateDays(['OW'], testDate(5)), ['OW'])
     const poolDay = days.find((d) => d.venueType === 'pool')
-    expect(poolDay).toBeDefined()
+    expect(poolDay?.venueType).toBe('pool')
     expect(poolDay!.dives.some((d) => d.isConfined)).toBe(true)
 
     const boatDays = days.filter((d) => d.venueType === 'boat')
@@ -177,14 +177,14 @@ describe('generateDays', () => {
         d.dives.some((dv) => dv.courseCode === 'OW') &&
         d.dives.some((dv) => dv.courseCode === 'AOW'),
     )
-    expect(transitionDay).toBeDefined()
+    expect(transitionDay?.venueType).toBe('boat')
   })
 
   // Pool day starts empty (operator fills via ghost pills)
   it('pool day starts empty', () => {
     const days = generateDays(['OW'], testDate(5))
     const poolDay = days.find((d) => d.venueType === 'pool')
-    expect(poolDay).toBeDefined()
+    expect(poolDay?.venueType).toBe('pool')
     expect(poolDay!.dives.length).toBe(0)
   })
 
@@ -579,11 +579,10 @@ describe('getAvailableDives', () => {
     const available = getAvailableDives(0, days, ['OW'])
     // OW-4 should be capped (day already has 3 non-confined)
     const ow4 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 4)
-    expect(ow4).toBeDefined()
-    expect(ow4!.capped).toBe(true)
+    expect(ow4).toMatchObject({ courseCode: 'OW', diveNumber: 4, capped: true })
     // Already-selected dives should NOT be capped
     const ow1 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 1)
-    expect(ow1).toBeDefined()
+    expect(ow1?.courseCode).toBe('OW')
     expect(ow1!.capped).toBeUndefined()
   })
 
@@ -617,7 +616,7 @@ describe('getAvailableDives', () => {
     ]
     const available = getAvailableDives(0, days, ['OW'])
     const ow3 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 3)
-    expect(ow3).toBeDefined()
+    expect(ow3?.courseCode).toBe('OW')
     expect(ow3!.capped).toBeUndefined()
   })
 
@@ -633,8 +632,7 @@ describe('getAvailableDives', () => {
     ]
     const available = getAvailableDives(0, days, ['OW'])
     const ow3 = available.find((s) => s.courseCode === 'OW' && s.diveNumber === 3)
-    expect(ow3).toBeDefined()
-    expect(ow3!.capped).toBe(true)
+    expect(ow3).toMatchObject({ courseCode: 'OW', diveNumber: 3, capped: true })
   })
 
   it('already-selected dives are never capped', () => {

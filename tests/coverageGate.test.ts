@@ -184,7 +184,7 @@ describe('createDraftShell — coverage gate', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
+    expect(typeof bookingId).toBe('string')
 
     // Verify the booking was actually created
     const booking = await t.run(async (ctx) =>
@@ -220,7 +220,7 @@ describe('createDraftShell — coverage gate', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
+    expect(typeof bookingId).toBe('string')
   })
 
   it('succeeds without startDate arg (optional dates)', async () => {
@@ -252,6 +252,6 @@ describe('createDraftShell — coverage gate', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(bookingId).toBeTruthy()
+    expect(typeof bookingId).toBe('string')
   })
 })
