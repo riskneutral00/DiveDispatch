@@ -36,6 +36,7 @@ const preferredChannelValidator = v.optional(
 export const createUser = mutation({
   args: {
     role: stakeholderType,
+    roles: v.optional(v.array(stakeholderType)),
     businessName: v.optional(v.string()),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
@@ -99,6 +100,20 @@ export const createUser = mutation({
       isSeeded: false,
       preferredLocale: args.preferredLocale ?? 'en',
     })
+
+    // Create userRoles entries when roles array is provided
+    if (args.roles && args.roles.length > 0) {
+      const now = Date.now()
+      for (let i = 0; i < args.roles.length; i++) {
+        await ctx.db.insert('userRoles', {
+          userId,
+          role: args.roles[i],
+          isPrimary: i === 0,
+          createdAt: now,
+          profileComplete: false,
+        })
+      }
+    }
 
     // Schedule demo bookings for operator roles
     if (OPERATOR_ROLE_SET.has(args.role)) {

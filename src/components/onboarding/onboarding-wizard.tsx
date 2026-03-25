@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
 import { ROLE_BY_CLERK_ROLE, ROLES } from '@/lib/constants/roles'
@@ -10,6 +10,7 @@ import type { Language } from '@/lib/types/language'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
 import { StepBusinessInfo, type BusinessInfoValues } from './step-business-info'
+import { buildOnboardingSteps, roleLabelForClerkRole, hasOperatorRole } from './onboarding-steps'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
@@ -21,21 +22,6 @@ import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-f
 import { InstructorProfileForm } from '@/components/dashboard/instructor-profile-form'
 import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
 import { StepPreferences } from './step-preferences'
-// Operator roles get 4 onboarding steps; resource roles get 2.
-// Numbering restarts fresh from 1 (not continuing from sign-up).
-const OPERATOR_STEPS = [
-  { key: 'business-info', label: 'Business' },
-  { key: 'profile', label: 'Profile' },
-  { key: 'preferences', label: 'Preferences' },
-  { key: 'review', label: 'Review' },
-] as const
-
-const RESOURCE_STEPS = [
-  { key: 'profile', label: 'Profile' },
-  { key: 'review', label: 'Review' },
-] as const
-
-type OnboardingStep = (typeof OPERATOR_STEPS)[number]['key']
 
 // DiveCenter profile has internal sub-steps
 type DcSubStep = 'dc-basic' | 'dc-agency' | 'dc-languages'
@@ -62,22 +48,14 @@ function ProfileFormForRole({ role, onSaved }: { role: string; onSaved: () => vo
 
 export function OnboardingWizard() {
   const user = useQuery(api.users.me)
+  const userRoles = useQuery(api.userRoles.myRoles)
   const onboardingStatus = useQuery(api.users.getOnboardingStatus)
   const updateBusinessInfo = useMutation(api.users.updateBusinessInfo)
   const completeOnboarding = useMutation(api.users.completeOnboarding)
   const router = useRouter()
 
-  const [step, setStep] = useState<OnboardingStep>('business-info')
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [stepInitialized, setStepInitialized] = useState(false)
-
-  // Set first step based on role once user loads (resources skip business-info)
-  useEffect(() => {
-    if (user && !stepInitialized) {
-      const isOp = ROLES.find((r) => r.clerkRole === user.role)?.displayGroup === 'operator'
-      setStep(isOp ? 'business-info' : 'profile')
-      setStepInitialized(true)
-    }
-  }, [user, stepInitialized])
   const [dcSubStep, setDcSubStep] = useState<DcSubStep>('dc-basic')
   const [completing, setCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,7 +65,35 @@ export function OnboardingWizard() {
     customerLanguages: [],
   })
 
-  // Pre-fill business name from user record (set during createUser as firstName + lastName)
+  // Derive the role names from userRoles (multi-role) or fall back to user.role (single-role)
+  const roleNames = useMemo(() => {
+    if (userRoles && userRoles.length > 0) {
+      // Primary first, then the rest in creation order
+      const sorted = [...userRoles].sort((a, b) => {
+        if (a.isPrimary && !b.isPrimary) return -1
+        if (!a.isPrimary && b.isPrimary) return 1
+        return a.createdAt - b.createdAt
+      })
+      return sorted.map((r) => r.role)
+    }
+    if (user) return [user.role]
+    return []
+  }, [userRoles, user])
+
+  // Build dynamic steps
+  const onboardingSteps = useMemo(() => buildOnboardingSteps(roleNames), [roleNames])
+
+  const currentStep = onboardingSteps[currentStepIndex]
+
+  // Set initial step once user loads (resources skip business-info)
+  useEffect(() => {
+    if (user && onboardingSteps.length > 0 && !stepInitialized) {
+      setCurrentStepIndex(0)
+      setStepInitialized(true)
+    }
+  }, [user, onboardingSteps.length, stepInitialized])
+
+  // Pre-fill business name from user record
   const [prefilled, setPrefilled] = useState(false)
   useEffect(() => {
     if (user && !prefilled) {
@@ -104,16 +110,33 @@ export function OnboardingWizard() {
   }, [user, prefilled])
 
   // Resolve selected roles from user record for StepBusinessInfo
-  const selectedRoles = user
-    ? ROLES.filter((r) => r.clerkRole === user.role)
+  const selectedRolesConfig = user
+    ? roleNames
+        .map((rn) => ROLES.find((r) => r.clerkRole === rn))
+        .filter((r): r is NonNullable<typeof r> => r !== undefined)
     : []
 
-  const isDiveCenter = user?.role === 'DiveCenter'
-  const isOperator = user ? (ROLES.find((r) => r.clerkRole === user.role)?.displayGroup === 'operator') : false
-  const onboardingSteps = isOperator ? OPERATOR_STEPS : RESOURCE_STEPS
+  const isOperator = hasOperatorRole(roleNames)
 
-  // Fresh step index starting at 0 (not offset from sign-up)
-  const onboardingStepIndex = onboardingSteps.findIndex((s) => s.key === step)
+  // Parse the current step key
+  const stepKey = currentStep?.key ?? ''
+  const isProfileStep = stepKey.startsWith('profile:')
+  const profileRole = isProfileStep ? stepKey.split(':')[1] : null
+  const isDiveCenterProfile = profileRole === 'DiveCenter'
+
+  function goNext() {
+    if (currentStepIndex < onboardingSteps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1)
+      setDcSubStep('dc-basic') // reset DC sub-steps for next profile
+    }
+  }
+
+  function goBack() {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex(currentStepIndex - 1)
+      setDcSubStep('dc-basic')
+    }
+  }
 
   async function handleBusinessInfoContinue() {
     try {
@@ -121,7 +144,7 @@ export function OnboardingWizard() {
         businessName: businessInfo.businessName.trim(),
         customerLanguages: businessInfo.customerLanguages.map((l) => l.code),
       })
-      setStep('profile')
+      goNext()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save business info.')
     }
@@ -148,30 +171,20 @@ export function OnboardingWizard() {
     }
   }
 
-  function goNext() {
-    const next = onboardingSteps[onboardingStepIndex + 1]
-    if (next) setStep(next.key)
-  }
-
-  function goBack() {
-    const prev = onboardingSteps[onboardingStepIndex - 1]
-    if (prev) setStep(prev.key)
-  }
-
   // DC profile sub-step navigation
   function dcGoNext() {
     if (dcSubStep === 'dc-basic') setDcSubStep('dc-agency')
     else if (dcSubStep === 'dc-agency') setDcSubStep('dc-languages')
-    else goNext() // dc-languages → preferences
+    else goNext() // dc-languages -> next step
   }
 
   function dcGoBack() {
     if (dcSubStep === 'dc-languages') setDcSubStep('dc-agency')
     else if (dcSubStep === 'dc-agency') setDcSubStep('dc-basic')
-    else goBack() // dc-basic → business-info
+    else goBack() // dc-basic -> previous step
   }
 
-  if (!user || !onboardingStatus) {
+  if (!user || !onboardingStatus || userRoles === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--color-text-secondary)' }}>
         <Spinner />
@@ -205,16 +218,16 @@ export function OnboardingWizard() {
           </h1>
         </div>
 
-        {/* Step indicator — role-appropriate steps, fresh 1-N numbering */}
+        {/* Step indicator — dynamic per-role profile steps */}
         <div style={{ marginBottom: 32 }}>
-          <StepIndicator steps={onboardingSteps} currentIndex={onboardingStepIndex} />
+          <StepIndicator steps={onboardingSteps} currentIndex={currentStepIndex} />
         </div>
 
         {/* Step content */}
         <div>
-          {step === 'business-info' && (
+          {stepKey === 'business-info' && (
             <StepBusinessInfo
-              selectedRoles={selectedRoles}
+              selectedRoles={selectedRolesConfig}
               values={businessInfo}
               onChange={setBusinessInfo}
               onBack={goBack}
@@ -222,31 +235,31 @@ export function OnboardingWizard() {
             />
           )}
 
-          {step === 'profile' && (
-            isDiveCenter ? (
-              <>
-                {dcSubStep === 'dc-basic' && (
-                  <DcBasicStep onSaved={dcGoNext} onBack={dcGoBack} />
-                )}
-                {dcSubStep === 'dc-agency' && (
-                  <DcAgencyStep onSaved={dcGoNext} onBack={dcGoBack} />
-                )}
-                {dcSubStep === 'dc-languages' && (
-                  <DcLanguagesStep onSaved={dcGoNext} onBack={dcGoBack} />
-                )}
-              </>
-            ) : (
-              <ProfileFormForRole role={user.role} onSaved={goNext} />
-            )
+          {isProfileStep && isDiveCenterProfile && (
+            <>
+              {dcSubStep === 'dc-basic' && (
+                <DcBasicStep onSaved={dcGoNext} onBack={dcGoBack} />
+              )}
+              {dcSubStep === 'dc-agency' && (
+                <DcAgencyStep onSaved={dcGoNext} onBack={dcGoBack} />
+              )}
+              {dcSubStep === 'dc-languages' && (
+                <DcLanguagesStep onSaved={dcGoNext} onBack={dcGoBack} />
+              )}
+            </>
           )}
 
-          {step === 'preferences' && (
+          {isProfileStep && !isDiveCenterProfile && profileRole && (
+            <ProfileFormForRole role={profileRole} onSaved={goNext} />
+          )}
+
+          {stepKey === 'preferences' && (
             <GlassCard padding="lg">
               <StepPreferences userRole={user.role} />
             </GlassCard>
           )}
 
-          {step === 'review' && (
+          {stepKey === 'review' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
                 <h2
@@ -267,9 +280,11 @@ export function OnboardingWizard() {
               <GlassCard padding="md">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Role</span>
+                    <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                      {roleNames.length > 1 ? 'Roles' : 'Role'}
+                    </span>
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                      {user.role}
+                      {roleNames.map((r) => roleLabelForClerkRole(r)).join(', ')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -297,7 +312,7 @@ export function OnboardingWizard() {
                         key={item}
                         style={{ fontSize: 12, color: 'var(--color-text-secondary)', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}
                       >
-                        <span style={{ color: 'var(--color-warning)', fontSize: 10 }}>●</span>
+                        <span style={{ color: 'var(--color-warning)', fontSize: 10 }}>&#9679;</span>
                         {item}
                       </li>
                     ))}
@@ -312,7 +327,7 @@ export function OnboardingWizard() {
         </div>
 
         {/* Navigation — preferences and review steps only */}
-        {(step === 'preferences' || step === 'review') && (
+        {(stepKey === 'preferences' || stepKey === 'review') && (
           <div
             style={{
               display: 'flex',
@@ -324,7 +339,7 @@ export function OnboardingWizard() {
             <GlassButton variant="secondary" onClick={goBack}>
               Back
             </GlassButton>
-            {step !== 'review' ? (
+            {stepKey !== 'review' ? (
               <GlassButton variant="primary" onClick={goNext}>
                 Next
               </GlassButton>

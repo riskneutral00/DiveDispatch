@@ -50,7 +50,10 @@ export default function SignUpPage() {
     setError('')
 
     try {
-      await createUser({ role: primaryRole.clerkRole })
+      await createUser({
+        role: primaryRole.clerkRole,
+        roles: selectedRoles.map((r) => r.clerkRole),
+      })
       // The user useEffect above will redirect to dashboard once the record appears
     } catch (err) {
       setError(
