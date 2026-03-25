@@ -54,7 +54,6 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
     contactEmail: `${slug}@test.com`,
     contactPhone: '+66123456789',
     fleet: [],
-    focusedLanguages: ['en'],
     hasCompressor,
     verified: true,
   })

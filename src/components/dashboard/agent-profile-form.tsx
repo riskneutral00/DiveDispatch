@@ -9,11 +9,9 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { toggleInArray } from '@/lib/utils/arrays'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -36,7 +34,6 @@ const profileSchema = z.object({
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   associations: z.array(associationSchema),
-  focusedLanguages: z.array(z.string()).min(1, 'Select at least one language'),
   defaultReferralMode: z.enum(['independent', 'referral']),
 })
 
@@ -48,7 +45,6 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   associations: AssociationData[]
-  focusedLanguages: string[]
   defaultReferralMode: 'independent' | 'referral'
 }
 
@@ -60,7 +56,6 @@ const INITIAL_FORM: ProfileFormData = {
   contactEmail: '',
   contactPhone: '',
   associations: [],
-  focusedLanguages: [],
   defaultReferralMode: 'independent',
 }
 
@@ -136,7 +131,7 @@ function AssociationRow({ index, association, errors, onChange, onRemove }: Asso
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type AgentProfileSection = 'contact' | 'languages' | 'associations'
+export type AgentProfileSection = 'contact' | 'associations'
 
 export function AgentProfileForm({ section }: { section?: AgentProfileSection } = {}) {
   const profile = useQuery(api.agents.mine)
@@ -148,7 +143,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p: Record<string, unknown>) => {
-      const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; contactEmail: string; contactPhone: string; associations: AssociationData[]; focusedLanguages: string[]; defaultReferralMode: 'independent' | 'referral' }
+      const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; contactEmail: string; contactPhone: string; associations: AssociationData[]; defaultReferralMode: 'independent' | 'referral' }
       return {
         name: prof.name,
         locations: prof.locations.length > 0
@@ -163,7 +158,6 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         contactEmail: prof.contactEmail,
         contactPhone: prof.contactPhone,
         associations: prof.associations,
-        focusedLanguages: prof.focusedLanguages,
         defaultReferralMode: prof.defaultReferralMode,
       } as ProfileFormData
     },
@@ -175,7 +169,6 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         associations: f.associations,
-        focusedLanguages: f.focusedLanguages,
         defaultReferralMode: f.defaultReferralMode,
       }
     },
@@ -205,10 +198,6 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
 
   const removeAssociation = (index: number) => {
     setForm((prev) => ({ ...prev, associations: prev.associations.filter((_, i) => i !== index) }))
-  }
-
-  const toggleLanguage = (code: string) => {
-    setField('focusedLanguages', toggleInArray(form.focusedLanguages, code))
   }
 
   if (loading) {
@@ -306,38 +295,6 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
             {errors.defaultReferralMode && <p className="text-sm mt-1" style={{ color: 'var(--color-destructive)' }}>{errors.defaultReferralMode}</p>}
           </GlassCard>
         </>
-      )}
-
-      {/* Languages */}
-      {(!section || section === 'languages') && (
-        <GlassCard padding="md">
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            Languages
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {LANGUAGE_OPTIONS.map(({ code, label }) => {
-              const selected = form.focusedLanguages.includes(code)
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => toggleLanguage(code)}
-                  className="px-3 py-1.5 text-sm rounded-[var(--border-radius)] border transition-all"
-                  style={{
-                    background: selected ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                    borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                    color: selected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                    backdropFilter: selected ? undefined : 'blur(var(--glass-blur))',
-                    transitionDuration: 'var(--transition-speed)',
-                  }}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-          {errors.focusedLanguages && <p className="text-sm mt-2" style={{ color: 'var(--color-destructive)' }}>{errors.focusedLanguages}</p>}
-        </GlassCard>
       )}
 
       {/* Agency associations */}

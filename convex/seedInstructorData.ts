@@ -8,7 +8,6 @@ const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.
 interface InstructorDef {
   firstName: string
   lastName: string
-  languages: string[]
   credentials: { agency: string; level: string }[]
   courses: string[]
   role?: 'Instructor' | 'DiveMaster'
@@ -52,7 +51,6 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
       contactEmail: email,
       contactPhone: phone,
       credential,
-      languages: def.languages,
       verified: true,
     },
   }
@@ -65,7 +63,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Ryan',
     lastName: 'Clarke',
-    languages: ['GB', 'TH'],
     credentials: [{ agency: 'PADI', level: 'OWSI' }],
     courses: [],
   },
@@ -74,7 +71,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Nattaya',
     lastName: 'Srisuk',
-    languages: ['TH', 'GB'],
     credentials: [{ agency: 'PADI', level: 'OWSI' }],
     courses: [],
   },
@@ -83,7 +79,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Wei',
     lastName: 'Chen',
-    languages: ['CN', 'GB'],
     credentials: [{ agency: 'PADI', level: 'MSDT' }],
     courses: ['Nitrox', 'Deep', 'Wreck'],
   },
@@ -92,7 +87,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Li',
     lastName: 'Ming',
-    languages: ['CN', 'GB'],
     credentials: [{ agency: 'SSI', level: 'OWI' }],
     courses: [],
   },
@@ -101,7 +95,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Zhang',
     lastName: 'Yong',
-    languages: ['CN', 'TW', 'GB'],
     credentials: [{ agency: 'PADI', level: 'OWSI' }],
     courses: ['Deep'],
   },
@@ -110,7 +103,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Nicole',
     lastName: 'Tam',
-    languages: ['TW', 'GB'],
     credentials: [{ agency: 'PADI', level: 'OWSI' }],
     courses: ['PPB'],
   },
@@ -119,7 +111,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Pierre',
     lastName: 'Dubois',
-    languages: ['FR', 'GB'],
     credentials: [{ agency: 'PADI', level: 'MSDT' }],
     courses: ['Deep', 'Wreck', 'Nitrox'],
   },
@@ -128,7 +119,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Stefan',
     lastName: 'Braun',
-    languages: ['DE', 'GB', 'TH'],
     credentials: [{ agency: 'SSI', level: 'OWI' }],
     courses: ['Deep'],
   },
@@ -137,7 +127,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Somphon',
     lastName: 'Kaew',
-    languages: ['TH', 'CN', 'GB'],
     credentials: [{ agency: 'PADI', level: 'OWSI' }],
     courses: [],
   },
@@ -146,7 +135,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Mike',
     lastName: 'Chen',
-    languages: ['GB', 'CN', 'TW'],
     credentials: [
       { agency: 'PADI', level: 'MSDT' },
       { agency: 'SSI', level: 'OWI' },
@@ -158,7 +146,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Rachel',
     lastName: 'Nguyen',
-    languages: ['GB', 'CN'],
     credentials: [
       { agency: 'PADI', level: 'MSDT' },
       { agency: 'SSI', level: 'OWI' },
@@ -170,7 +157,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Lee',
     lastName: 'Min-Ho',
-    languages: ['GB', 'KR', 'CN'],
     credentials: [
       { agency: 'PADI', level: 'OWSI' },
       { agency: 'SSI', level: 'Advanced OWI' },
@@ -182,7 +168,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'David',
     lastName: 'Schmidt',
-    languages: ['DE', 'GB'],
     credentials: [
       { agency: 'PADI', level: 'OWSI' },
       { agency: 'SSI', level: 'OWI' },
@@ -194,7 +179,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Yuki',
     lastName: 'Tanaka',
-    languages: ['JP', 'GB'],
     credentials: [
       { agency: 'PADI', level: 'OWSI' },
       { agency: 'SSI', level: 'OWI' },
@@ -206,7 +190,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Maria',
     lastName: 'Santos',
-    languages: ['GB', 'FR', 'TH'],
     credentials: [
       { agency: 'PADI', level: 'MSDT' },
       { agency: 'SSI', level: 'Advanced OWI' },
@@ -220,7 +203,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Arisa',
     lastName: 'Kanchanaburi',
-    languages: ['TH', 'GB'],
     credentials: [{ agency: 'PADI', level: 'Divemaster' }],
     courses: [],
     role: 'DiveMaster',
@@ -230,7 +212,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Kittipong',
     lastName: 'Jaidee',
-    languages: ['TH', 'GB'],
     credentials: [{ agency: 'SSI', level: 'Dive Guide' }],
     courses: [],
     role: 'DiveMaster',
@@ -240,7 +221,6 @@ const ROSTER: InstructorDef[] = [
   {
     firstName: 'Prasit',
     lastName: 'Rattana',
-    languages: ['TH', 'GB'],
     credentials: [{ agency: 'PADI', level: 'Divemaster' }],
     courses: [],
     role: 'DiveMaster',

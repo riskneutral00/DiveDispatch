@@ -82,12 +82,11 @@ function InstructorBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('full name', 'phone', 'certifications', 'languages')
+    missing.push('full name', 'phone', 'certifications')
   } else {
     if (!profile.name) missing.push('full name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.credential?.length) missing.push('certifications')
-    if (!profile.languages?.length) missing.push('languages')
   }
 
   return (
@@ -101,12 +100,11 @@ function DiveMasterBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('full name', 'phone', 'certifications', 'languages')
+    missing.push('full name', 'phone', 'certifications')
   } else {
     if (!profile.name) missing.push('full name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.credential?.length) missing.push('certifications')
-    if (!profile.languages?.length) missing.push('languages')
   }
 
   return (
@@ -120,11 +118,10 @@ function DiveCenterBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('business name', 'phone', 'languages')
+    missing.push('business name', 'phone')
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.contactPhone) missing.push('phone')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (
@@ -138,12 +135,11 @@ function AgentBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('business name', 'phone', 'location', 'languages')
+    missing.push('business name', 'phone', 'location')
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.locations?.length) missing.push('location')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (
@@ -157,12 +153,11 @@ function BoatBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('business name', 'phone', 'vessel', 'languages')
+    missing.push('business name', 'phone', 'vessel')
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.fleet?.length) missing.push('vessel')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (
@@ -176,11 +171,10 @@ function EquipmentBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('business name', 'phone', 'languages')
+    missing.push('business name', 'phone')
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.contactPhone) missing.push('phone')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (
@@ -194,13 +188,12 @@ function PoolBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('name', 'phone', 'pool depth', 'pool capacity', 'languages')
+    missing.push('name', 'phone', 'pool depth', 'pool capacity')
   } else {
     if (!profile.name) missing.push('name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.maxDepth) missing.push('pool depth')
     if (!profile.maxCapacity) missing.push('pool capacity')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (
@@ -214,12 +207,11 @@ function CompressorBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('name', 'phone', 'gas mixes', 'languages')
+    missing.push('name', 'phone', 'gas mixes')
   } else {
     if (!profile.name) missing.push('name')
     if (!profile.contactPhone) missing.push('phone')
     if (!profile.gasMixes?.length) missing.push('gas mixes')
-    if (!profile.focusedLanguages?.length) missing.push('languages')
   }
 
   return (

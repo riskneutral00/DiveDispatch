@@ -26,7 +26,6 @@ describe('diveCenters.create (profile setup)', () => {
         contactEmail: 'matt@divedispatch.dev',
         contactPhone: '+66812345678',
         associations: [{ agency: 'PADI', number: '12345' }],
-        focusedLanguages: ['en'],
       })
 
     const profile = await t.run(async (ctx) => ctx.db.get(id))
@@ -52,7 +51,6 @@ describe('diveCenters.create (profile setup)', () => {
       contactEmail: 'idem@dc.com',
       contactPhone: '+66800000000',
       associations: [] as { agency: string; number: string }[],
-      focusedLanguages: ['en'],
     }
 
     const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-02' })
@@ -90,7 +88,6 @@ describe('diveCenters.create (profile setup)', () => {
           contactEmail: 'bad@test.com',
           contactPhone: '+66800000000',
           associations: [],
-          focusedLanguages: [],
         }),
     ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })
   })

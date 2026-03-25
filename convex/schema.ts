@@ -106,6 +106,7 @@ export default defineSchema({
     lastName: v.string(),
     nickname: v.optional(v.string()),
     businessName: v.string(),
+    appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
     phone: v.optional(v.string()),
     preferredChannel: v.optional(
@@ -414,7 +415,6 @@ export default defineSchema({
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
     bookingPreferences: v.optional(
       v.object({
@@ -444,7 +444,6 @@ export default defineSchema({
         courses: v.array(v.string()),
       }),
     ),
-    languages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -476,7 +475,6 @@ export default defineSchema({
         cutoffHours: v.optional(v.number()),
       }),
     ),
-    focusedLanguages: v.array(v.string()),
     hasCompressor: v.boolean(),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
@@ -491,7 +489,6 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    focusedLanguages: v.array(v.string()),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
@@ -506,7 +503,6 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
     venueType: venueType,
     isPublic: v.boolean(),
@@ -528,7 +524,6 @@ export default defineSchema({
     contactEmail: v.string(),
     contactPhone: v.string(),
     gasMixes: v.optional(v.array(gasMix)),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -643,7 +638,6 @@ export default defineSchema({
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
-    focusedLanguages: v.array(v.string()),
     defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
@@ -667,7 +661,6 @@ export default defineSchema({
         agencyID: v.string(),
       }),
     ),
-    languages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -683,7 +676,6 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -729,7 +721,6 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -760,7 +751,6 @@ export default defineSchema({
     contactPhone: v.string(),
     bedCount: v.number(),
     dormCount: v.number(),
-    focusedLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 

@@ -49,7 +49,7 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
-  it('DiveCenter missing template + prefs returns 78%', async () => {
+  it('DiveCenter missing template + prefs returns 75%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
       await seedDiveCenterProfile(ctx, userId)
@@ -58,7 +58,7 @@ describe('checkProfileCompleteness', () => {
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
       const result = await checkProfileCompleteness(ctx, user!)
 
-      expect(result.percentage).toBe(78)
+      expect(result.percentage).toBe(75)
       expect(result.incomplete).toContain('Quick Book pill')
       expect(result.incomplete).toContain('Preferred instructors')
     })
@@ -81,7 +81,7 @@ describe('checkProfileCompleteness', () => {
     })
   })
 
-  it('Instructor missing credentials + languages returns correct %', async () => {
+  it('Instructor missing credentials returns correct %', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
         tokenIdentifier: TEST_TOKENS.instructor,
@@ -90,7 +90,6 @@ describe('checkProfileCompleteness', () => {
       })
       await seedInstructorProfile(ctx, userId, {
         credential: [],
-        languages: [],
       })
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.instructor)).unique()
@@ -98,7 +97,6 @@ describe('checkProfileCompleteness', () => {
 
       expect(result.percentage).toBeLessThan(100)
       expect(result.incomplete).toContain('Credentials')
-      expect(result.incomplete).toContain('Languages')
     })
   })
 
@@ -180,17 +178,17 @@ describe('getLowestProfileCompletion', () => {
     expect(result.percentage).toBe(100)
   })
 
-  it('single role at 78% returns percentage: 78', async () => {
+  it('single role at 75% returns percentage: 78', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
       await seedDiveCenterProfile(ctx, userId)
-      // No template + no prefs → 78%
+      // No template + no prefs → 75%
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
       .query(api.users.getLowestProfileCompletion, {})
 
-    expect(result.percentage).toBe(78)
+    expect(result.percentage).toBe(75)
   })
 
   it('multi-role (DC 100% + Boat 0%) returns the minimum (0)', async () => {
@@ -270,8 +268,8 @@ describe('getLowestProfileCompletion', () => {
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
       .query(api.users.getLowestProfileCompletion, {})
 
-    // Falls back to user.role (DiveCenter), profile exists but no template/prefs → 78%
-    expect(result.percentage).toBe(78)
+    // Falls back to user.role (DiveCenter), profile exists but no template/prefs → 75%
+    expect(result.percentage).toBe(75)
   })
 })
 

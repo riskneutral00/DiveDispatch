@@ -22,7 +22,7 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
   })
 }
 
-async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, languages: string[], verified = false) {
+async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, _languages: string[], verified = false) {
   return ctx.db.insert('instructors', {
     userId,
     name,
@@ -33,7 +33,6 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
     contactEmail: `${userId}@test.com`,
     contactPhone: '+66000000000',
     credential: [],
-    languages,
     verified,
   })
 }
@@ -131,7 +130,6 @@ describe('listByRole basic listing', () => {
       name: expect.any(String),
       placeName: expect.any(String),
       country: expect.any(String),
-      languages: expect.any(Array),
       verified: expect.any(Boolean),
       role: 'Instructor',
     })
@@ -299,51 +297,4 @@ describe('listByRole location filter', () => {
   })
 })
 
-// ─── listByRole: language filter ─────────────────────────────────────────────
-
-describe('listByRole language filter', () => {
-  it('filters by language (case-insensitive)', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const u1 = await seedInstructorUser(ctx, 'john-abc')
-      const u2 = await seedInstructorUser(ctx, 'jane-def')
-      const u3 = await seedInstructorUser(ctx, 'tom-ghi')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en', 'th'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en', 'zh'], false)
-      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', ['de', 'en'], true)
-    })
-
-    // All three speak 'en'
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', language: 'EN' })
-    expect(result).toHaveLength(3)
-  })
-
-  it('returns only stakeholders that speak German', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const u1 = await seedInstructorUser(ctx, 'john-abc')
-      const u2 = await seedInstructorUser(ctx, 'jane-def')
-      const u3 = await seedInstructorUser(ctx, 'tom-ghi')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en', 'th'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en', 'zh'], false)
-      await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', ['de', 'en'], true)
-    })
-
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', language: 'de' })
-    expect(result).toHaveLength(1)
-    expect(result[0].slug).toBe('tom-ghi')
-  })
-
-  it('returns empty when no stakeholder speaks the requested language', async () => {
-    const t = makeT()
-    await t.run(async (ctx) => {
-      const u1 = await seedInstructorUser(ctx, 'john-abc')
-      const u2 = await seedInstructorUser(ctx, 'jane-def')
-      await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', ['en'], true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', ['en', 'zh'], false)
-    })
-
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', language: 'ja' })
-    expect(result).toHaveLength(0)
-  })
-})
+// Language filter removed — languages consolidated to users table (DD-068)

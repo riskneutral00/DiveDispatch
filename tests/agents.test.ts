@@ -16,7 +16,6 @@ const VALID_AGENT_ARGS = {
   contactEmail: 'agent@test.com',
   contactPhone: '+66123456789',
   associations: [{ agency: 'PADI', number: '12345' }],
-  focusedLanguages: ['en'],
   defaultReferralMode: 'independent' as const,
 }
 

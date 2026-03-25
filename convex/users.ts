@@ -231,7 +231,7 @@ export const byId = query({
 
 // Returns the completion percentage and list of incomplete fields for onboarding.
 // Profile fields checked: name, placeName, country, contactEmail, contactPhone,
-// role-specific list field (associations / credentials / languages), focusedLanguages/languages.
+// role-specific list field (associations / credentials).
 // Organizer roles also check: bookingTemplate configured.
 export const getOnboardingStatus = query({
   args: {},

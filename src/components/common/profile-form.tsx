@@ -3,10 +3,7 @@
 import React from 'react'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
-import { LanguagePicker } from '@/components/common/language-picker'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
-import type { Language } from '@/lib/types/language'
 import { Save } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -16,7 +13,6 @@ export interface ProfileFormSharedValue {
   location: LocationValue | null
   contactEmail: string
   contactPhone: string
-  focusedLanguages: string[]
 }
 
 export interface ProfileFormErrors {
@@ -24,7 +20,6 @@ export interface ProfileFormErrors {
   location?: string
   contactEmail?: string
   contactPhone?: string
-  focusedLanguages?: string
 }
 
 interface ProfileFormProps {
@@ -37,8 +32,6 @@ interface ProfileFormProps {
   errors?: ProfileFormErrors
   isLoading?: boolean
   submitLabel?: string
-  /** Defaults to "Operating Languages" */
-  languageLabel?: string
   /** Pass false to hide the LocationPicker (e.g. for agents with multiple locations) */
   showLocation?: boolean
   /** Stakeholder-specific sections rendered after the shared fields */
@@ -67,7 +60,6 @@ export const sharedProfileSchema = z.object({
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone is required'),
-  focusedLanguages: z.array(z.string()),
 })
 
 // ── Section header helper ─────────────────────────────────────────────────────
@@ -92,17 +84,11 @@ export function ProfileForm({
   errors = {},
   isLoading = false,
   submitLabel,
-  languageLabel = 'Operating Languages',
   showLocation = true,
   children,
   serverError,
   savedMessage,
 }: ProfileFormProps) {
-  const selectedLanguages: Language[] = value.focusedLanguages
-    .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-    .filter((l): l is NonNullable<typeof l> => l !== undefined)
-    .map((l) => ({ code: l.code, label: l.label }))
-
   return (
     <form onSubmit={onSubmit} className="max-w-2xl mx-auto space-y-8">
       {/* Basic Information */}
@@ -144,20 +130,6 @@ export function ProfileForm({
             error={errors.contactPhone}
           />
         </div>
-      </div>
-
-      {/* Languages */}
-      <div className="space-y-4">
-        <SectionHeader>{languageLabel}</SectionHeader>
-        <LanguagePicker
-          value={selectedLanguages}
-          onChange={(langs) => onChange('focusedLanguages', langs.map((l) => l.code))}
-        />
-        {errors.focusedLanguages && (
-          <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-            {errors.focusedLanguages}
-          </p>
-        )}
       </div>
 
       {/* Stakeholder-specific sections */}

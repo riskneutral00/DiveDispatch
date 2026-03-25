@@ -44,7 +44,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     fleet: v.array(fleetEntryValidator),
-    focusedLanguages: v.array(v.string()),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'boats', 'Boat', {
@@ -64,7 +63,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     fleet: v.optional(v.array(fleetEntryValidator)),
-    focusedLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'boats'),
 })

@@ -15,7 +15,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(associationValidator),
-    focusedLanguages: v.array(v.string()),
     defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
   },
   handler: async (ctx, args) => {
@@ -39,7 +38,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     associations: v.optional(v.array(associationValidator)),
-    focusedLanguages: v.optional(v.array(v.string())),
     defaultReferralMode: v.optional(
       v.union(v.literal('independent'), v.literal('referral')),
     ),

@@ -5,7 +5,6 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -38,7 +37,6 @@ const profileSchema = z.object({
   contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
-  focusedLanguages: z.array(z.string()).min(1, 'Select at least one language'),
 })
 
 type FormState = {
@@ -47,7 +45,6 @@ type FormState = {
   contactEmail: string
   contactPhone: string
   gasMixes: GasMix[]
-  focusedLanguages: string[]
 }
 
 const INITIAL_FORM: FormState = {
@@ -56,7 +53,6 @@ const INITIAL_FORM: FormState = {
   contactEmail: '',
   contactPhone: '',
   gasMixes: [],
-  focusedLanguages: [],
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -85,7 +81,6 @@ export function CompressorProfileForm() {
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       gasMixes: (p.gasMixes ?? []) as GasMix[],
-      focusedLanguages: p.focusedLanguages,
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -99,7 +94,6 @@ export function CompressorProfileForm() {
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         gasMixes: f.gasMixes,
-        focusedLanguages: f.focusedLanguages,
       }
     },
     create,
@@ -114,7 +108,6 @@ export function CompressorProfileForm() {
     )
   }
 
-  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">
@@ -194,23 +187,6 @@ export function CompressorProfileForm() {
       </GlassCard>
 
       {/* Languages */}
-      <GlassCard padding="md">
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Languages
-        </h2>
-        <GlassCheckboxGroup
-          label="Languages you operate in"
-          items={langItems}
-          selected={form.focusedLanguages}
-          onChange={(values) => setField('focusedLanguages', values)}
-          error={errors.focusedLanguages}
-          columns={3}
-        />
-      </GlassCard>
-
       {serverError && (
         <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
           {serverError}

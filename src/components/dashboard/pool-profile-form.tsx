@@ -1,17 +1,14 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import { Check } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { toggleInArray } from '@/lib/utils/arrays'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -28,7 +25,6 @@ const poolSchema = z.object({
   contactPhone: z.string().min(1, 'Phone is required'),
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
-  focusedLanguages: z.array(z.string()).refine((a) => a.length > 0, 'Select at least one language'),
 })
 
 type FormState = {
@@ -38,7 +34,6 @@ type FormState = {
   contactPhone: string
   maxDepth: number
   maxCapacity: number
-  focusedLanguages: string[]
 }
 
 const INITIAL_FORM: FormState = {
@@ -48,7 +43,6 @@ const INITIAL_FORM: FormState = {
   contactPhone: '',
   maxDepth: 0,
   maxCapacity: 0,
-  focusedLanguages: [],
 }
 
 function parseNumber(raw: string, isInt: boolean): number {
@@ -79,7 +73,6 @@ export function PoolProfileForm() {
       contactPhone: p.contactPhone ?? '',
       maxDepth: p.maxDepth ?? 0,
       maxCapacity: p.maxCapacity ?? 0,
-      focusedLanguages: p.focusedLanguages,
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -94,7 +87,6 @@ export function PoolProfileForm() {
         contactPhone: f.contactPhone,
         maxDepth: f.maxDepth,
         maxCapacity: f.maxCapacity,
-        focusedLanguages: f.focusedLanguages,
       }
     },
     create: (payload) =>
@@ -108,10 +100,6 @@ export function PoolProfileForm() {
       } as Parameters<typeof createMutation>[0]),
     update,
   })
-
-  function toggleLanguage(lang: string) {
-    setField('focusedLanguages', toggleInArray(form.focusedLanguages, lang))
-  }
 
   if (loading) {
     return (
@@ -188,46 +176,6 @@ export function PoolProfileForm() {
               placeholder="15"
             />
           </div>
-        </div>
-
-        {/* Languages */}
-        <div className="mt-5">
-          <p
-            className="text-sm font-medium mb-2"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Languages Spoken
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {LANGUAGE_OPTIONS.map(({ code, label }) => {
-              const selected = form.focusedLanguages.includes(code)
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => toggleLanguage(code)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-[var(--border-radius)] border transition-all"
-                  style={{
-                    background: selected ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                    borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                    color: selected
-                      ? 'var(--color-text-on-primary)'
-                      : 'var(--color-text-secondary)',
-                    backdropFilter: selected ? undefined : 'blur(var(--glass-blur))',
-                    transitionDuration: 'var(--transition-speed)',
-                  }}
-                >
-                  {selected && <Check size={12} />}
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-          {errors.focusedLanguages && (
-            <p className="text-sm mt-2" style={{ color: 'var(--color-destructive)' }}>
-              {errors.focusedLanguages}
-            </p>
-          )}
         </div>
 
         {serverError && (

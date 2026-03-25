@@ -20,7 +20,6 @@ async function seedDiveCenterProfile(
     contactEmail: 'info@testdc.com',
     contactPhone: '+66123456789',
     associations: [{ agency: 'PADI', number: '12345' }],
-    focusedLanguages: ['en'],
     verified: false,
     ...overrides,
   } as Parameters<typeof ctx.db.insert<'diveCenters'>>[1])
@@ -55,7 +54,7 @@ describe('getOnboardingStatus', () => {
     expect(status.incomplete.length).toBeGreaterThan(0)
   })
 
-  it('returns ~33% when DiveCenter user has 3 of 9 fields filled', async () => {
+  it('returns ~38% when DiveCenter user has 3 of 8 fields filled', async () => {
     const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-partial', tokenIdentifier: 'clerk|dc-partial', role: 'DiveCenter' }))
 
@@ -70,7 +69,6 @@ describe('getOnboardingStatus', () => {
         contactEmail: '',       // missing
         contactPhone: '',       // missing
         associations: [],       // missing
-        focusedLanguages: [],   // missing
       }),
     )
     // No bookingTemplate — missing Quick Book pill
@@ -79,12 +77,11 @@ describe('getOnboardingStatus', () => {
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-partial' })
       .query(api.users.getOnboardingStatus, {})
 
-    // 3 of 9 filled → Math.round(3/9 * 100) = Math.round(33.3) = 33
-    expect(status.percentage).toBe(33)
+    // 3 of 8 filled → Math.round(3/8 * 100) = Math.round(37.5) = 38
+    expect(status.percentage).toBe(38)
     expect(status.incomplete).toContain('Contact email')
     expect(status.incomplete).toContain('Contact phone')
     expect(status.incomplete).toContain('Agency associations')
-    expect(status.incomplete).toContain('Languages')
     expect(status.incomplete).toContain('Quick Book pill')
     expect(status.incomplete).toContain('Preferred instructors')
   })

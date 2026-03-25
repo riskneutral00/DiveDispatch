@@ -39,7 +39,6 @@ interface DiveCenterProfile {
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
-  focusedLanguages: string[]
   verified: boolean
   bookingPreferences?: {
     owDays?: number
@@ -67,7 +66,6 @@ interface BoatProfile {
     routes?: { diveSite: string; daysOfWeek: number[] }[]
     cutoffHours?: number
   }[]
-  focusedLanguages: string[]
   hasCompressor: boolean
   verified: boolean
 }
@@ -81,7 +79,6 @@ interface VenueProfile {
   placeId?: string
   contactEmail: string
   contactPhone: string
-  focusedLanguages: string[]
   verified: boolean
   venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
   isPublic: boolean
@@ -101,7 +98,6 @@ interface EquipmentProfile {
   placeId?: string
   contactEmail: string
   contactPhone: string
-  focusedLanguages: string[]
   manufacturersByGearType?: Record<string, string[]>
   verified: boolean
 }
@@ -116,7 +112,6 @@ interface CompressorProfile {
   contactEmail: string
   contactPhone: string
   gasMixes?: GasMixType[]
-  focusedLanguages: string[]
   verified: boolean
 }
 
@@ -126,7 +121,6 @@ interface AgentProfile {
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
-  focusedLanguages: string[]
   defaultReferralMode: 'independent' | 'referral'
   verified: boolean
 }
@@ -146,7 +140,6 @@ interface InstructorProfile {
     agencyID: string
     courses: string[]
   }[]
-  languages: string[]
   verified: boolean
 }
 
@@ -201,7 +194,6 @@ export const HUG_OCEAN: SeedStakeholder = {
     contactEmail: 'hug-ocean@divedispatch.dev',
     contactPhone: '+66-76-381-100',
     associations: [{ agency: 'PADI', number: 'S-34782' }],
-    focusedLanguages: ['CN', 'TH'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -218,7 +210,6 @@ export const HUG_OCEAN: SeedStakeholder = {
         routes: [{ diveSite: RACHA, daysOfWeek: ALL_DAYS }],
       },
     ],
-    focusedLanguages: ['CN', 'TH'],
     hasCompressor: true,
     verified: VERIFIED,
   },
@@ -229,7 +220,6 @@ export const HUG_OCEAN: SeedStakeholder = {
     contactPhone: '+66-76-381-102',
     maxDepth: 3,
     maxCapacity: 15,
-    focusedLanguages: ['CN', 'TH'],
     verified: VERIFIED,
     venueType: 'Pool',
     isPublic: false,
@@ -242,7 +232,6 @@ export const HUG_OCEAN: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'hug-ocean@divedispatch.dev',
     contactPhone: '+66-76-381-103',
-    focusedLanguages: ['CN', 'TH'],
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
@@ -272,7 +261,6 @@ export const NEPTUNE: SeedStakeholder = {
     contactEmail: 'neptune@divedispatch.dev',
     contactPhone: '+66-76-383-001',
     associations: [{ agency: 'PADI', number: 'S-41256' }],
-    focusedLanguages: ['CN'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -283,7 +271,6 @@ export const NEPTUNE: SeedStakeholder = {
     contactPhone: '+66-76-383-002',
     maxDepth: 2.5,
     maxCapacity: 6,
-    focusedLanguages: ['CN'],
     verified: VERIFIED,
     venueType: 'Pool',
     isPublic: false,
@@ -296,7 +283,6 @@ export const NEPTUNE: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'neptune@divedispatch.dev',
     contactPhone: '+66-76-383-003',
-    focusedLanguages: ['CN'],
     manufacturersByGearType: { wetsuit: ['Aqua Lung'], bcd: ['Aqua Lung'] },
     verified: VERIFIED,
   },
@@ -326,7 +312,6 @@ export const PHUKET_DC: SeedStakeholder = {
     contactEmail: 'phuket-dive-center@divedispatch.dev',
     contactPhone: '+66-76-385-001',
     associations: [{ agency: 'PADI', number: 'S-29815' }],
-    focusedLanguages: ['GB', 'TH', 'CN'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -357,7 +342,6 @@ export const PHUKET_DC: SeedStakeholder = {
         ],
       },
     ],
-    focusedLanguages: ['GB', 'TH', 'CN'],
     hasCompressor: false,
     verified: VERIFIED,
   },
@@ -366,7 +350,6 @@ export const PHUKET_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'phuket-dive-center@divedispatch.dev',
     contactPhone: '+66-76-385-003',
-    focusedLanguages: ['GB', 'TH', 'CN'],
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -395,7 +378,6 @@ export const NICOLE_DC: SeedStakeholder = {
     contactEmail: 'nicole-dive-center@divedispatch.dev',
     contactPhone: '+66-76-386-001',
     associations: [{ agency: 'PADI', number: 'S-55198' }],
-    focusedLanguages: ['GB', 'TW'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -404,7 +386,6 @@ export const NICOLE_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'nicole-dive-center@divedispatch.dev',
     contactPhone: '+66-76-386-002',
-    focusedLanguages: ['GB', 'TW'],
     manufacturersByGearType: {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
@@ -435,7 +416,6 @@ export const MANTA_DC: SeedStakeholder = {
     contactEmail: 'manta-dive-center@divedispatch.dev',
     contactPhone: '+66-76-387-001',
     associations: [{ agency: 'SSI', number: 'DC-80234' }],
-    focusedLanguages: ['GB', 'FR'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -464,7 +444,6 @@ export const SCUBANICKS: SeedStakeholder = {
     contactEmail: 'scubanicks@divedispatch.dev',
     contactPhone: '+66-76-388-001',
     associations: [{ agency: 'SSI', number: 'DC-91547' }],
-    focusedLanguages: ['GB'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -473,7 +452,6 @@ export const SCUBANICKS: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'scubanicks@divedispatch.dev',
     contactPhone: '+66-76-388-002',
-    focusedLanguages: ['GB'],
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
@@ -505,7 +483,6 @@ export const SCUBA_DEEP: SeedStakeholder = {
       { agency: 'SSI', number: 'DC-72019' },
       { agency: 'PADI', number: 'S-61834' },
     ],
-    focusedLanguages: ['GB'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -514,7 +491,6 @@ export const SCUBA_DEEP: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'scuba-deep@divedispatch.dev',
     contactPhone: '+66-76-389-003',
-    focusedLanguages: ['GB'],
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -544,7 +520,6 @@ export const SIROLO: SeedStakeholder = {
     contactEmail: 'sirolo@divedispatch.dev',
     contactPhone: '+66-76-391-001',
     associations: [{ agency: 'PADI', number: 'S-70123' }],
-    focusedLanguages: ['GB', 'CN', 'TW'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -565,7 +540,6 @@ export const SIROLO: SeedStakeholder = {
         ],
       },
     ],
-    focusedLanguages: ['GB', 'CN', 'TW'],
     hasCompressor: false,
     verified: VERIFIED,
   },
@@ -574,7 +548,6 @@ export const SIROLO: SeedStakeholder = {
     ...CHALONG,
     contactEmail: 'sirolo@divedispatch.dev',
     contactPhone: '+66-76-391-003',
-    focusedLanguages: ['GB', 'CN', 'TW'],
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -602,7 +575,6 @@ export const PRAY_DC: SeedStakeholder = {
     contactEmail: 'pray-dive-center@divedispatch.dev',
     contactPhone: '+66-76-390-001',
     associations: [{ agency: 'PADI', number: 'S-48203' }],
-    focusedLanguages: ['DE', 'FR', 'TH', 'GB'],
     verified: VERIFIED,
     bookingPreferences: DC_BOOKING_PREFS,
   },
@@ -630,7 +602,6 @@ export const AMANDA: SeedStakeholder = {
     contactEmail: 'amanda@divedispatch.dev',
     contactPhone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
-    focusedLanguages: ['CN'],
     defaultReferralMode: 'independent',
     verified: VERIFIED,
   },

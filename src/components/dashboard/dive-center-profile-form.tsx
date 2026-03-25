@@ -7,8 +7,6 @@ import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassInput } from '@/components/glass'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
-import { LanguagePicker } from '@/components/common/language-picker'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
@@ -32,7 +30,6 @@ const formSchema = z.object({
       number: z.string().min(1, 'Member number is required'),
     }),
   ),
-  focusedLanguages: z.array(z.string()),
 })
 
 type FormState = {
@@ -41,7 +38,6 @@ type FormState = {
   contactEmail: string
   contactPhone: string
   associations: { agency: string; number: string }[]
-  focusedLanguages: string[]
   owDays: string
   aowDays: string
   oaDays: string
@@ -54,14 +50,13 @@ const INITIAL_FORM: FormState = {
   contactEmail: '',
   contactPhone: '',
   associations: [],
-  focusedLanguages: [],
   owDays: '',
   aowDays: '',
   oaDays: '',
   aowSpecialties: [...MANDATORY_AOW_SPECIALTIES],
 }
 
-export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
+export type DiveCenterProfileSection = 'contact' | 'associations'
 
 export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
   const existing = useQuery(api.diveCenters.mine)
@@ -86,7 +81,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       contactEmail: p.contactEmail,
       contactPhone: p.contactPhone,
       associations: p.associations,
-      focusedLanguages: p.focusedLanguages,
       owDays: p.bookingPreferences?.owDays?.toString() ?? '',
       aowDays: p.bookingPreferences?.aowDays?.toString() ?? '',
       oaDays: p.bookingPreferences?.oaDays?.toString() ?? '',
@@ -96,7 +90,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       ...defaults,
       name: u.businessName ?? '',
       contactEmail: u.email ?? '',
-      focusedLanguages: u.customerLanguages ?? [],
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -115,7 +108,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         associations: f.associations,
-        focusedLanguages: f.focusedLanguages,
         bookingPreferences: hasPrefs ? { owDays, aowDays, oaDays, aowSpecialties } : undefined,
       }
     },
@@ -294,25 +286,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             ))}
           </div>
         )}
-      </div>
-      )}
-
-      {/* Languages */}
-      {(!section || section === 'languages') && (
-      <div className="space-y-4">
-        <h2
-          className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Languages Offered
-        </h2>
-        <LanguagePicker
-          value={form.focusedLanguages
-            .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-            .filter((l): l is NonNullable<typeof l> => l !== undefined)
-            .map((l) => ({ code: l.code, label: l.label }))}
-          onChange={(langs) => setField('focusedLanguages', langs.map((l) => l.code))}
-        />
       </div>
       )}
 
