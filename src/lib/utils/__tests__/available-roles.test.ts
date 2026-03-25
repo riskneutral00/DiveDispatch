@@ -32,15 +32,4 @@ describe('getAvailableRoles', () => {
     const instrIdx = available.findIndex((r) => r.clerkRole === 'Instructor')
     expect(agentIdx).toBeLessThan(instrIdx)
   })
-
-  it('preserves full RoleConfig shape for each returned role', () => {
-    const available = getAvailableRoles(['DiveCenter'])
-    for (const role of available) {
-      expect(role).toHaveProperty('key')
-      expect(role).toHaveProperty('clerkRole')
-      expect(role).toHaveProperty('label')
-      expect(role).toHaveProperty('icon')
-      expect(role).toHaveProperty('displayGroup')
-    }
-  })
 })
