@@ -485,7 +485,10 @@ describe('declineReservation', () => {
 
       // But hold_declined notification should still be sent
       const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
-      expect(holdDeclined).toBeDefined()
+      expect(holdDeclined).toMatchObject({
+        type: 'hold_declined',
+        bookingId,
+      })
     })
   })
 
