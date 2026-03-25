@@ -294,15 +294,12 @@ export const updateAccountDefaults = mutation({
     const user = await getAuthUser(ctx)
     if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
-    const patch: Record<string, unknown> = {}
-    if (args.defaultLocation !== undefined) patch.defaultLocation = args.defaultLocation
-    if (args.defaultContactEmail !== undefined) patch.defaultContactEmail = args.defaultContactEmail
-    if (args.defaultContactPhone !== undefined) patch.defaultContactPhone = args.defaultContactPhone
-    if (args.customerLanguages !== undefined) patch.customerLanguages = args.customerLanguages
-
-    if (Object.keys(patch).length > 0) {
-      await ctx.db.patch(user._id, patch)
-    }
+    await ctx.db.patch(user._id, {
+      ...(args.defaultLocation !== undefined && { defaultLocation: args.defaultLocation }),
+      ...(args.defaultContactEmail !== undefined && { defaultContactEmail: args.defaultContactEmail }),
+      ...(args.defaultContactPhone !== undefined && { defaultContactPhone: args.defaultContactPhone }),
+      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
+    })
   },
 })
 
