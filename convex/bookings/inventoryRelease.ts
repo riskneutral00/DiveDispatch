@@ -15,8 +15,6 @@ import { ErrorCode } from '../lib/errorCodes'
 export async function restoreSnapshotUnits(
   ctx: MutationCtx,
   snapshotId: Id<"availabilitySnapshots">,
-  _currentAvailable: number,
-  _currentReserved: number,
   unitsRequested: number,
 ) {
   const fresh = await ctx.db.get(snapshotId)
@@ -79,6 +77,6 @@ export async function releaseBookingReservations(
       })
     }
 
-    await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, res.unitsRequested)
+    await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
   }
 }

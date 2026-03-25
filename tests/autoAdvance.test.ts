@@ -966,15 +966,13 @@ describe('tryAutoAdvance — TOCTOU fresh-read guards (DD-017)', () => {
       await ctx.db.patch(snapshotId, { availableUnits: 5, reservedUnits: 3 })
     })
 
-    // Call restoreSnapshotUnits with stale values (0 available, 1 reserved)
-    // If it reads fresh from DB, it should use (5 available, 3 reserved) instead
+    // Restore 1 unit — should use fresh DB values (5 available, 3 reserved)
     await t.run(async (ctx) => {
-      await restoreSnapshotUnits(ctx, snapshotId, 0, 1, 1)
+      await restoreSnapshotUnits(ctx, snapshotId, 1)
     })
 
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     // Fresh read: available=5+1=6, reserved=max(0, 3-1)=2
-    // Stale read would give: available=0+1=1, reserved=max(0, 1-1)=0
     expect(snapshot!.availableUnits).toBe(6)
     expect(snapshot!.reservedUnits).toBe(2)
   })

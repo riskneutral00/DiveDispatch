@@ -27,7 +27,7 @@ describe('restoreSnapshotUnits', () => {
         reservedUnits: 2,
       })
 
-      await restoreSnapshotUnits(ctx, snapshotId, 3, 2, 1)
+      await restoreSnapshotUnits(ctx, snapshotId, 1)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(4)
@@ -46,7 +46,7 @@ describe('restoreSnapshotUnits', () => {
       })
 
       // Release 3 units when only 1 is reserved — should clamp to 0
-      await restoreSnapshotUnits(ctx, snapshotId, 4, 1, 3)
+      await restoreSnapshotUnits(ctx, snapshotId, 3)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(7)
@@ -64,7 +64,7 @@ describe('restoreSnapshotUnits', () => {
         reservedUnits: 2,
       })
 
-      await restoreSnapshotUnits(ctx, snapshotId, 3, 2, 0)
+      await restoreSnapshotUnits(ctx, snapshotId, 0)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(3)
@@ -82,7 +82,7 @@ describe('restoreSnapshotUnits', () => {
         reservedUnits: 6,
       })
 
-      await restoreSnapshotUnits(ctx, snapshotId, 4, 6, 3)
+      await restoreSnapshotUnits(ctx, snapshotId, 3)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(7)

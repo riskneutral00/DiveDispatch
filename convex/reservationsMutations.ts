@@ -253,7 +253,7 @@ export async function _declineHandler(
       })
     }
 
-    await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, reservation.unitsRequested)
+    await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested)
   }
 
   // Delete from bookingResources junction table

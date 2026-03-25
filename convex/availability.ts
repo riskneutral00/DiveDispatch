@@ -508,7 +508,7 @@ export async function _toggleBlockedDate(
             )
           }
 
-          await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, reservation.unitsRequested)
+          await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested)
         }
       }
     }

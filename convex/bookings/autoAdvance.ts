@@ -89,7 +89,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
             )
             .unique()
           if (snapshot) {
-            await restoreSnapshotUnits(ctx, snapshot._id, snapshot.availableUnits, snapshot.reservedUnits, res.unitsRequested)
+            await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
           }
         }
       }
