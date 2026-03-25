@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
 import { ConvexClerkProvider } from "../lib/convex"
+import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
 import "./globals.css"
 
@@ -35,7 +36,9 @@ export default async function RootLayout({
           <ConvexClerkProvider>
             <ThemeProvider>
               <NextIntlClientProvider messages={messages}>
-                {children}
+                <LocaleSyncProvider>
+                  {children}
+                </LocaleSyncProvider>
               </NextIntlClientProvider>
             </ThemeProvider>
           </ConvexClerkProvider>

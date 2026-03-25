@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DiveDispatch",
+    "tagline": "다이빙을 계획하고, 계획대로 다이빙하세요. 언제 어디서나."
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "bookings": "예약",
+    "directory": "디렉토리",
+    "resources": "리소스",
+    "settings": "설정",
+    "signIn": "로그인",
+    "signOut": "로그아웃"
+  },
+  "auth": {
+    "signIn": "로그인",
+    "signUp": "회원가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "noAccount": "계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "selectRole": "역할을 선택하세요",
+    "roleOrganizer": "다이빙 예약을 만듭니다",
+    "roleResource": "다이빙 서비스를 제공합니다"
+  },
+  "booking": {
+    "new": "새 예약",
+    "edit": "예약 수정",
+    "status": {
+      "draft": "임시저장",
+      "upcoming": "예정",
+      "completed": "완료",
+      "cancelled": "취소됨"
+    },
+    "reservation": {
+      "pending": "대기 중",
+      "confirmed": "확인됨",
+      "vacated": "해제됨"
+    },
+    "actions": {
+      "confirm": "확인",
+      "decline": "거절",
+      "cancel": "예약 취소",
+      "save": "저장",
+      "submit": "제출"
+    }
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "문제가 발생했습니다",
+    "retry": "다시 시도",
+    "cancel": "취소",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "수정",
+    "view": "보기",
+    "back": "뒤로",
+    "next": "다음",
+    "confirm": "확인",
+    "close": "닫기",
+    "search": "검색",
+    "filter": "필터",
+    "noResults": "결과를 찾을 수 없습니다"
+  }
+}

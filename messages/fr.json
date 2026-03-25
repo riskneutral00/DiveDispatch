@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DiveDispatch",
+    "tagline": "Planifiez votre plongée, plongez selon votre plan. Partout, à chaque fois."
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "bookings": "Réservations",
+    "directory": "Répertoire",
+    "resources": "Ressources",
+    "settings": "Paramètres",
+    "signIn": "Connexion",
+    "signOut": "Déconnexion"
+  },
+  "auth": {
+    "signIn": "Connexion",
+    "signUp": "Inscription",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "selectRole": "Sélectionnez votre rôle",
+    "roleOrganizer": "Je crée des réservations de plongée",
+    "roleResource": "Je fournis des services de plongée"
+  },
+  "booking": {
+    "new": "Nouvelle réservation",
+    "edit": "Modifier la réservation",
+    "status": {
+      "draft": "Brouillon",
+      "upcoming": "À venir",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "reservation": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "vacated": "Libérée"
+    },
+    "actions": {
+      "confirm": "Confirmer",
+      "decline": "Refuser",
+      "cancel": "Annuler la réservation",
+      "save": "Enregistrer",
+      "submit": "Soumettre"
+    }
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "view": "Voir",
+    "back": "Retour",
+    "next": "Suivant",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "noResults": "Aucun résultat trouvé"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DiveDispatch",
+    "tagline": "计划您的潜水，随时随地畅潜无忧。"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "bookings": "预订",
+    "directory": "目录",
+    "resources": "资源",
+    "settings": "设置",
+    "signIn": "登录",
+    "signOut": "退出"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signUp": "注册",
+    "email": "电子邮箱",
+    "password": "密码",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "还没有账户？",
+    "hasAccount": "已有账户？",
+    "selectRole": "选择您的角色",
+    "roleOrganizer": "我创建潜水预订",
+    "roleResource": "我提供潜水服务"
+  },
+  "booking": {
+    "new": "新建预订",
+    "edit": "编辑预订",
+    "status": {
+      "draft": "草稿",
+      "upcoming": "即将开始",
+      "completed": "已完成",
+      "cancelled": "已取消"
+    },
+    "reservation": {
+      "pending": "待确认",
+      "confirmed": "已确认",
+      "vacated": "已释放"
+    },
+    "actions": {
+      "confirm": "确认",
+      "decline": "拒绝",
+      "cancel": "取消预订",
+      "save": "保存",
+      "submit": "提交"
+    }
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "出了点问题",
+    "retry": "重试",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "view": "查看",
+    "back": "返回",
+    "next": "下一步",
+    "confirm": "确认",
+    "close": "关闭",
+    "search": "搜索",
+    "filter": "筛选",
+    "noResults": "未找到结果"
+  }
+}

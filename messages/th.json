@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "DiveDispatch",
+    "tagline": "วางแผนการดำน้ำ ดำน้ำตามแผน ทุกที่ ทุกเวลา"
+  },
+  "nav": {
+    "dashboard": "แดชบอร์ด",
+    "bookings": "การจอง",
+    "directory": "ไดเรกทอรี",
+    "resources": "ทรัพยากร",
+    "settings": "ตั้งค่า",
+    "signIn": "เข้าสู่ระบบ",
+    "signOut": "ออกจากระบบ"
+  },
+  "auth": {
+    "signIn": "เข้าสู่ระบบ",
+    "signUp": "สมัครสมาชิก",
+    "email": "อีเมล",
+    "password": "รหัสผ่าน",
+    "forgotPassword": "ลืมรหัสผ่าน?",
+    "noAccount": "ยังไม่มีบัญชี?",
+    "hasAccount": "มีบัญชีอยู่แล้ว?",
+    "selectRole": "เลือกบทบาทของคุณ",
+    "roleOrganizer": "ฉันสร้างการจองดำน้ำ",
+    "roleResource": "ฉันให้บริการดำน้ำ"
+  },
+  "booking": {
+    "new": "จองใหม่",
+    "edit": "แก้ไขการจอง",
+    "status": {
+      "draft": "ฉบับร่าง",
+      "upcoming": "กำลังจะมาถึง",
+      "completed": "เสร็จสิ้น",
+      "cancelled": "ยกเลิกแล้ว"
+    },
+    "reservation": {
+      "pending": "รอดำเนินการ",
+      "confirmed": "ยืนยันแล้ว",
+      "vacated": "ปล่อยแล้ว"
+    },
+    "actions": {
+      "confirm": "ยืนยัน",
+      "decline": "ปฏิเสธ",
+      "cancel": "ยกเลิกการจอง",
+      "save": "บันทึก",
+      "submit": "ส่ง"
+    }
+  },
+  "common": {
+    "loading": "กำลังโหลด...",
+    "error": "เกิดข้อผิดพลาด",
+    "retry": "ลองอีกครั้ง",
+    "cancel": "ยกเลิก",
+    "save": "บันทึก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "view": "ดู",
+    "back": "กลับ",
+    "next": "ถัดไป",
+    "confirm": "ยืนยัน",
+    "close": "ปิด",
+    "search": "ค้นหา",
+    "filter": "กรอง",
+    "noResults": "ไม่พบผลลัพธ์"
+  }
+}
