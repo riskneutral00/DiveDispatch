@@ -137,17 +137,6 @@ export type RequestItem = {
 
 // ─── Role → query strategy ────────────────────────────────────────────────────
 
-// Operator roles query bookings by ownerId index.
-// Resource roles query bookingResources junction table by slug, then batch-fetch bookings.
-// Agent queries by agentId index (agent is not an operational resource).
-const OPERATOR_BOOKING_INDEX: Record<string, { index: string; field: string }> = {
-  DiveCenter: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  Liveaboard: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  DiveResort: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  DiveHostel: { index: 'by_ownerId_ownerType', field: 'ownerId' },
-  Agent: { index: 'by_agentId', field: 'agentId' },
-}
-
 // Resource roles that use the bookingResources junction table
 const RESOURCE_ROLES = new Set([
   'Instructor', 'DiveMaster', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
@@ -232,20 +221,27 @@ async function toCalendarBooking(
 
 async function resolveCallerBookings(ctx: QueryCtx, user: Doc<'users'>): Promise<Doc<'bookings'>[]> {
   const role = user.role as string
+  const slug = user.slug as string
 
-  // Operator and agent roles: use direct booking indexes
-  const operatorConfig = OPERATOR_BOOKING_INDEX[role]
-  if (operatorConfig) {
+  // Operator roles: query bookings by ownerId index
+  if (role === 'DiveCenter' || role === 'Liveaboard' || role === 'DiveResort' || role === 'DiveHostel') {
     return ctx.db
       .query('bookings')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex(operatorConfig.index as any, (q: any) => q.eq(operatorConfig.field, user.slug))
+      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))
+      .collect()
+  }
+
+  // Agent: query bookings by agentId index
+  if (role === 'Agent') {
+    return ctx.db
+      .query('bookings')
+      .withIndex('by_agentId', (q) => q.eq('agentId', slug))
       .collect()
   }
 
   // Resource roles: query bookingResources junction table
   if (RESOURCE_ROLES.has(role)) {
-    const bookingIds = await getBookingIdsForResource(ctx, user.slug as string)
+    const bookingIds = await getBookingIdsForResource(ctx, slug)
     const bookings = await Promise.all(
       bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)),
     )

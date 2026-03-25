@@ -3,6 +3,8 @@ import { mutation, query } from './_generated/server'
 import type { DatabaseReader } from './_generated/server'
 import { getAuthUser, requireAuth } from './lib/auth'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
+import type { Doc, Id } from './_generated/dataModel'
+import { queryDynamicTable } from './lib/typedDb'
 
 /**
  * Maximum number of users returned per role in listByRole.
@@ -64,13 +66,29 @@ export async function getBannedSlugSet(db: DatabaseReader, mySlug: string): Prom
 
 // Returns profile display fields (including role-specific extras) for a user.
 // Returns null if no profile row exists yet.
-async function fetchProfile(db: DatabaseReader, userId: string, role: StakeholderRole): Promise<ProfileData | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byUser = (table: string) => (db as any).query(table).withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+/** Profile tables that have a `by_userId` index with userId: Id<'users'>. */
+type ProfileTable =
+  | 'instructors' | 'diveMasters' | 'diveCenters' | 'agents'
+  | 'boats' | 'equipment' | 'venues' | 'compressors'
+  | 'liveaboards' | 'diveResorts' | 'diveHostels'
 
+/** Query a single profile table by its `by_userId` index. */
+async function queryProfileByUser<T extends ProfileTable>(
+  db: DatabaseReader, table: T, userId: Id<'users'>,
+): Promise<Doc<T> | null> {
+  // All profile tables share `userId: v.id('users')` + `by_userId` index.
+  // queryDynamicTable accepts any index/field; the generic `T` narrows the
+  // return type to the correct Doc<T> via the cast below.
+  const result = await queryDynamicTable(db, table)
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .unique()
+  return result as Doc<T> | null
+}
+
+async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole): Promise<ProfileData | null> {
   switch (role) {
     case 'Instructor': {
-      const p = await byUser('instructors')
+      const p = await queryProfileByUser(db, 'instructors', userId)
       if (!p) return null
       return {
         name: p.name,
@@ -81,17 +99,17 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
       }
     }
     case 'DiveMaster': {
-      const p = await byUser('diveMasters')
+      const p = await queryProfileByUser(db, 'diveMasters', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveCenter': {
-      const p = await byUser('diveCenters')
+      const p = await queryProfileByUser(db, 'diveCenters', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'Agent': {
-      const p = await byUser('agents')
+      const p = await queryProfileByUser(db, 'agents', userId)
       if (!p) return null
       const loc = p.locations?.[0] ?? { placeName: '', country: '' }
       return {
@@ -103,7 +121,7 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
       }
     }
     case 'Boat': {
-      const p = await byUser('boats')
+      const p = await queryProfileByUser(db, 'boats', userId)
       if (!p) return null
       // Represent capacity as the max pax of the largest vessel in fleet.
       const fleet: Array<{ boatName: string; maxPax: number; boatType: string }> = p.fleet ?? []
@@ -121,12 +139,12 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
       }
     }
     case 'Equipment': {
-      const p = await byUser('equipment')
+      const p = await queryProfileByUser(db, 'equipment', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'Pool': {
-      const p = await byUser('venues')
+      const p = await queryProfileByUser(db, 'venues', userId)
       if (!p) return null
       return {
         name: p.name,
@@ -138,7 +156,7 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
       }
     }
     case 'Compressor': {
-      const p = await byUser('compressors')
+      const p = await queryProfileByUser(db, 'compressors', userId)
       if (!p) return null
       return {
         name: p.name,
@@ -149,22 +167,22 @@ async function fetchProfile(db: DatabaseReader, userId: string, role: Stakeholde
       }
     }
     case 'Liveaboard': {
-      const p = await byUser('liveaboards')
+      const p = await queryProfileByUser(db, 'liveaboards', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveResort': {
-      const p = await byUser('diveResorts')
+      const p = await queryProfileByUser(db, 'diveResorts', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveHostel': {
-      const p = await byUser('diveHostels')
+      const p = await queryProfileByUser(db, 'diveHostels', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }
     case 'DiveSite': {
-      const p = await byUser('venues')
+      const p = await queryProfileByUser(db, 'venues', userId)
       if (!p) return null
       return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
     }

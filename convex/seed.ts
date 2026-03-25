@@ -1,7 +1,9 @@
 import { v } from 'convex/values'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
+import type { MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
+import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, HIERARCHY_LINKS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
@@ -157,9 +159,9 @@ const TABLES_TO_WIPE = [
 export const wipeBatch = internalMutation({
   args: { table: v.string() },
   handler: async (ctx, { table }) => {
-    const rows = await ctx.db.query(table as any).take(500)
+    const rows = await queryDynamicTable(ctx.db, table).take(500)
     for (const row of rows) {
-      await ctx.db.delete(row._id)
+      await deleteDynamic(ctx.db, row._id)
     }
     return rows.length
   },
@@ -167,8 +169,7 @@ export const wipeBatch = internalMutation({
 
 // ── Seed Stakeholders (non-instructor) ──────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function insertUser(ctx: { db: { insert: (...args: any[]) => any } }, s: SeedStakeholder) {
+async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
   return ctx.db.insert('users', {
     tokenIdentifier: `seed|${s.user.slug}`,
     slug: s.user.slug,
@@ -604,7 +605,7 @@ const VERIFY_TABLES = [
 export const countTable = internalQuery({
   args: { table: v.string() },
   handler: async (ctx, { table }) => {
-    const rows = await ctx.db.query(table as any).collect()
+    const rows = await queryDynamicTable(ctx.db, table).collect()
     return rows.length
   },
 })
