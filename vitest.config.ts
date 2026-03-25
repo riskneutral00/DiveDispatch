@@ -12,6 +12,7 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/.overstory/worktrees/**',
+      '**/.worktrees/**',
       'e2e/**',
     ],
     coverage: {
