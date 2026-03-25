@@ -158,7 +158,7 @@ export const upsertUser = mutation({
     }
 
     const slug = await generateUniqueSlug(ctx.db)
-    return await ctx.db.insert('users', {
+    const userId = await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
       slug,
       email: args.email,
@@ -170,6 +170,17 @@ export const upsertUser = mutation({
       isSeeded: false,
       preferredLocale: 'en',
     })
+
+    // Seed default userRoles entry so getLowestProfileCompletion works
+    await ctx.db.insert('userRoles', {
+      userId,
+      role: args.role,
+      isPrimary: true,
+      createdAt: Date.now(),
+      profileComplete: false,
+    })
+
+    return userId
   },
 })
 
@@ -380,7 +391,7 @@ export const upsertFromWebhook = internalMutation({
     }
 
     const slug = await generateUniqueSlug(ctx.db)
-    return await ctx.db.insert('users', {
+    const userId = await ctx.db.insert('users', {
       tokenIdentifier: args.tokenIdentifier,
       slug,
       email: args.email,
@@ -392,6 +403,17 @@ export const upsertFromWebhook = internalMutation({
       isSeeded: false,
       preferredLocale: 'en',
     })
+
+    // Seed default userRoles entry so getLowestProfileCompletion works
+    await ctx.db.insert('userRoles', {
+      userId,
+      role: 'DiveCenter',
+      isPrimary: true,
+      createdAt: Date.now(),
+      profileComplete: false,
+    })
+
+    return userId
   },
 })
 

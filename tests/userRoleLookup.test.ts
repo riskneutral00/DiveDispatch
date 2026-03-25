@@ -118,6 +118,62 @@ describe('users.upsertUser', () => {
   })
 })
 
+// ─── upsertUser — userRoles seeding ─────────────────────────────────────────
+
+describe('users.upsertUser — userRoles', () => {
+  it('seeds a userRoles entry when creating a new user', async () => {
+    const t = makeT()
+
+    const userId = await t.mutation(api.users.upsertUser, {
+      tokenIdentifier: 'clerk|roles-test',
+      email: 'roles@test.com',
+      name: 'Roles User',
+      firstName: 'Roles',
+      lastName: 'User',
+      role: 'Instructor',
+    })
+
+    await t.run(async (ctx) => {
+      const roles = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .collect()
+      expect(roles).toHaveLength(1)
+      expect(roles[0].role).toBe('Instructor')
+      expect(roles[0].isPrimary).toBe(true)
+      expect(roles[0].profileComplete).toBe(false)
+    })
+  })
+
+  it('does NOT create userRoles when upserting an existing user', async () => {
+    const t = makeT()
+    let userId: any
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, { tokenIdentifier: 'clerk|existing-roles' })
+    })
+
+    // Upsert same user — should only patch, not insert new userRoles
+    await t.mutation(api.users.upsertUser, {
+      tokenIdentifier: 'clerk|existing-roles',
+      email: 'updated@test.com',
+      name: 'Updated',
+      firstName: 'Up',
+      lastName: 'Dated',
+      role: 'Boat',
+    })
+
+    await t.run(async (ctx) => {
+      const roles = await ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .collect()
+      // Should still have only the original seeded role, not a second one
+      expect(roles).toHaveLength(1)
+      expect(roles[0].role).toBe('DiveCenter')
+    })
+  })
+})
+
 // ─── bySlug ──────────────────────────────────────────────────────────────────
 
 describe('users.bySlug', () => {
