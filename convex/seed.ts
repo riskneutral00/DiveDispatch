@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { log } from './lib/logger'
 import { internalAction, internalMutation, internalQuery } from './_generated/server'
 import type { MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
@@ -630,9 +631,11 @@ export const seedVerify = internalAction({
     // Check tokenIdentifier linkage
     const tokenCheck = await ctx.runQuery(internal.seed.checkTokenIdentifiers)
     if (tokenCheck.unlinked > 0) {
-      console.warn(
-        `⚠ ${tokenCheck.unlinked}/${tokenCheck.total} users still have seed| tokenIdentifiers. Run: npm run seed:clerk -- --force`,
-      )
+      log.warn('Users still have seed| tokenIdentifiers', {
+        unlinked: tokenCheck.unlinked,
+        total: tokenCheck.total,
+        action: 'Run: npm run seed:clerk -- --force',
+      })
     }
 
     return { ...counts, _tokenCheck: tokenCheck }

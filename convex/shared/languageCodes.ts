@@ -6,6 +6,8 @@
  * test in tests/language-flags.test.ts will catch drift.
  */
 
+import { log } from '../lib/logger'
+
 /** All valid language codes (country-code format). */
 export const VALID_LANGUAGE_CODES = new Set([
   // TOP languages
@@ -31,10 +33,9 @@ export const VALID_LANGUAGE_CODES = new Set([
 export function validateLanguageCodes(codes: string[]): void {
   const invalid = codes.filter((c) => !VALID_LANGUAGE_CODES.has(c))
   if (invalid.length > 0) {
-    console.warn(
-      `[languageCodes] Non-canonical language codes stored: ${invalid.join(', ')}. ` +
-      `Expected country codes (e.g. 'GB', 'TH', 'CN'). ` +
-      `Labels and ISO-639 codes still resolve via languageToCode() but are deprecated.`,
-    )
+    log.warn('Non-canonical language codes stored', {
+      codes: invalid,
+      hint: "Expected country codes (e.g. 'GB', 'TH', 'CN'). Labels and ISO-639 codes still resolve via languageToCode() but are deprecated.",
+    })
   }
 }
