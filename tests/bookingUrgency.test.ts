@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { isUrgentDraft, urgentCountdown } from '../src/lib/utils/booking-urgency'
+import { urgentCountdown } from '../src/lib/utils/booking-urgency'
 
 describe('urgentCountdown', () => {
   afterEach(() => {
@@ -24,7 +24,6 @@ describe('urgentCountdown', () => {
     vi.setSystemTime(new Date(2026, 2, 25, 12, 0, 0))
     // Start date is today (midnight) — already past
     expect(urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })).toBe('Started')
-    vi.useRealTimers()
   })
 
   it('returns hours countdown when within 12 hours', () => {
@@ -33,7 +32,6 @@ describe('urgentCountdown', () => {
     vi.setSystemTime(new Date(2026, 2, 24, 20, 0, 0))
     const result = urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })
     expect(result).toBe('Starts in 4h')
-    vi.useRealTimers()
   })
 
   it('returns minutes countdown when under 1 hour', () => {
@@ -42,6 +40,5 @@ describe('urgentCountdown', () => {
     vi.setSystemTime(new Date(2026, 2, 24, 23, 30, 0))
     const result = urgentCountdown({ status: 'Draft', startDate: '2026-03-25' })
     expect(result).toBe('Starts in 30m')
-    vi.useRealTimers()
   })
 })

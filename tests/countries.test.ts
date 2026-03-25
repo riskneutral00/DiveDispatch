@@ -32,11 +32,10 @@ describe('COUNTRIES', () => {
     expect(COUNTRIES.length).toBeGreaterThan(0)
   })
 
-  it('each entry has code and label', () => {
+  it('each entry has a 2-char code and non-empty label', () => {
     for (const c of COUNTRIES) {
-      expect(c.code).toBeTruthy()
-      expect(c.label).toBeTruthy()
-      expect(c.code.length).toBe(2)
+      expect(c.code).toMatch(/^[A-Z]{2}$/)
+      expect(c.label.length).toBeGreaterThan(0)
     }
   })
 
