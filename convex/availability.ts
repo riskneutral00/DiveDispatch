@@ -7,6 +7,7 @@ import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } f
 import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
+import { effectiveResourceType } from './lib/validators'
 
 export type InventoryListItem = {
   id: string
@@ -135,6 +136,7 @@ export async function _getCapacityForDates(
     const blockedLookup = new Map<string, Set<string>>()
     for (const doc of blockedDocs) {
       const resourceType = effectiveResourceType(doc.roleType)
+      if (!resourceType) continue // non-resource roles don't own inventory
       const key = `${doc.ownerSlug}|${resourceType}`
       const existing = blockedLookup.get(key)
       if (existing) {
@@ -339,14 +341,6 @@ export const checkPreferredAvailability = query({
 })
 
 /**
- * DiveMaster shares the Instructor reservation path (resourceType: 'Instructor').
- * All other roles map 1:1 to their resourceType.
- */
-function effectiveResourceType(roleType: string): string {
-  return roleType === 'DiveMaster' ? 'Instructor' : roleType
-}
-
-/**
  * Toggles a date in the stakeholderBlockedDates table for the given role.
  * Idempotent: blocking an already-blocked date is a no-op (returns false).
  * Returns true if the date is now blocked, false if it is now unblocked.
@@ -394,6 +388,10 @@ export async function _toggleBlockedDate(
 
     // Gate: reject if any Confirmed reservations exist on this date for caller's units
     const resourceType = effectiveResourceType(args.roleType)
+
+    // Non-resource roles don't own inventory — skip auto-decline
+    if (!resourceType) return true
+
     const allUnits = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))

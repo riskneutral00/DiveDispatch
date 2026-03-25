@@ -18,3 +18,24 @@ export const stakeholderTypeValidator = v.union(
 
 /** TypeScript type derived from the validator. */
 export type StakeholderRole = typeof stakeholderTypeValidator['type']
+
+/**
+ * DiveMaster shares the Instructor reservation path (resourceType: 'Instructor').
+ * All other resource-owning roles map 1:1 to their resourceType.
+ * Non-resource roles (DiveCenter, Agent, DiveResort, DiveHostel) return null.
+ */
+export function effectiveResourceType(roleType: string): string | null {
+  if (roleType === 'DiveMaster') return 'Instructor'
+
+  const RESOURCE_TYPES: ReadonlySet<string> = new Set([
+    'Boat',
+    'Equipment',
+    'Pool',
+    'Compressor',
+    'Instructor',
+    'Liveaboard',
+    'DiveSite',
+  ])
+
+  return RESOURCE_TYPES.has(roleType) ? roleType : null
+}
