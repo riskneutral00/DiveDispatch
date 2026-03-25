@@ -52,7 +52,7 @@ export function ProfileCompletionPill({ percentage, onOpenOverlay }: ProfileComp
             WebkitBackdropFilter: 'blur(var(--glass-blur, 12px))',
             border: '2px solid var(--color-warning, #fbbf24)',
             color: 'var(--color-warning, #fbbf24)',
-            boxShadow: '0 0 12px rgba(251, 191, 36, 0.3), 0 4px 12px var(--color-glass-shadow, rgba(0, 0, 0, 0.2))',
+            boxShadow: '0 0 12px var(--color-warning-glow, var(--color-warning)), 0 4px 12px var(--color-glass-shadow)',
           }}
         >
           Complete your profile

@@ -154,8 +154,8 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                           fontSize: 13,
                           cursor: 'pointer',
                           transition: 'all var(--transition-speed) ease',
-                          backdropFilter: 'blur(var(--color-glass-blur))',
-                          WebkitBackdropFilter: 'blur(var(--color-glass-blur))',
+                          backdropFilter: 'blur(var(--glass-blur))',
+                          WebkitBackdropFilter: 'blur(var(--glass-blur))',
                         }}
                       >
                         {opt.label}
@@ -175,8 +175,8 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                     background: 'var(--color-glass-bg)',
                     border: '1px solid var(--color-glass-border)',
                     borderRadius: 'var(--border-radius-sm)',
-                    backdropFilter: 'blur(var(--color-glass-blur))',
-                    WebkitBackdropFilter: 'blur(var(--color-glass-blur))',
+                    backdropFilter: 'blur(var(--glass-blur))',
+                    WebkitBackdropFilter: 'blur(var(--glass-blur))',
                     outline: 'none',
                   }}
                 />
