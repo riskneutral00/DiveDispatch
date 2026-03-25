@@ -6,7 +6,7 @@ import {
   _getUnreadCountHandler,
   _listNotificationsHandler,
 } from '../convex/notifications'
-import { TEST_TOKENS, TEST_SLUGS, seedUser, seedNotification } from './fixtures/seedFixture'
+import { TEST_TOKENS, TEST_SLUGS, seedUser, seedNotification } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()

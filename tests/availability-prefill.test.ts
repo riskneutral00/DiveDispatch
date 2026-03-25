@@ -4,7 +4,7 @@ import {
   seedUser,
   seedInventoryUnit,
   seedSnapshot,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { testDate } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT } from './helpers/convex-helpers'

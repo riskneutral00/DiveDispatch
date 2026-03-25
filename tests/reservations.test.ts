@@ -13,7 +13,7 @@ import {
   seedSnapshot,
   seedBookingResource,
   type SeedCtx,
-} from './fixtures/seedFixture'
+} from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

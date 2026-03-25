@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
-import { seedUser as _seedUser, seedAgent, type SeedCtx } from './fixtures/seedFixture'
+import { seedUser as _seedUser, seedAgent, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────

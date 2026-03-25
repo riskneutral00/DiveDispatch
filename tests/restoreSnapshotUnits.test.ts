@@ -6,7 +6,7 @@ import {
   seedUser,
   seedInventoryUnit,
   seedSnapshot,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()

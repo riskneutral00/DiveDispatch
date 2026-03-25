@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { getBannedSlugSet } from '../convex/directory'
 import type { Id } from '../convex/_generated/dataModel'
-import { type SeedCtx } from './fixtures/seedFixture'
+import { type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────

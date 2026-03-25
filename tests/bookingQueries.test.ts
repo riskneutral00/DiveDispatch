@@ -9,7 +9,7 @@ import {
   seedInventoryUnit,
   seedBookingResource,
   type SeedCtx,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Local thin wrapper for positional seedUser ─────────────────────────────

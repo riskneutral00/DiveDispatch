@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, seedStakeholderHierarchy, TEST_TOKENS, TEST_SLUGS } from './fixtures/seedFixture'
+import { seedUser, seedStakeholderHierarchy, TEST_TOKENS, TEST_SLUGS } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 

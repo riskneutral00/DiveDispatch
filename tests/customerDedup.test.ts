@@ -5,7 +5,7 @@ import {
   TEST_SLUGS,
   seedUser,
   seedBooking,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { testDate, passportExpiry, dob } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT } from './helpers/convex-helpers'

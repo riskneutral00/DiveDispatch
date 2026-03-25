@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser } from './fixtures/seedFixture'
+import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 describe('users.me query', () => {

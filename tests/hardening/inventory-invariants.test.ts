@@ -7,7 +7,7 @@ import {
   seedBooking as _seedBooking,
   seedInventoryUnit,
   type SeedCtx,
-} from '../fixtures/seedFixture'
+} from '../fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

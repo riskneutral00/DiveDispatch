@@ -18,7 +18,7 @@ import {
   seedBookingLink,
   seedCustomerProfile,
   type SeedCtx,
-} from './fixtures/seedFixture'
+} from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

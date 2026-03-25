@@ -3,7 +3,7 @@ import { api } from '../../convex/_generated/api'
 import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate, testToken } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
-import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures/seedFixture'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

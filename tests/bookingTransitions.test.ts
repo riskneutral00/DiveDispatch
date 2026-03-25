@@ -5,7 +5,7 @@ import {
   canReservationTransition,
 } from '../convex/bookings/_shared'
 import { testDate, testToken } from './helpers/dates'
-import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures/seedFixture'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────

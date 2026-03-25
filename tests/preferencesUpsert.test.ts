@@ -10,7 +10,7 @@ import { api } from '../convex/_generated/api'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-import { seedUser } from './fixtures/seedFixture'
+import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 /** Base args with all required fields filled in for the upsert mutation. */

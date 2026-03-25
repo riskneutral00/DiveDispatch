@@ -3,7 +3,7 @@ import {
   _generateUploadUrlHandler,
   _submitSupportRequestHandler,
 } from '../convex/support'
-import { TEST_TOKENS, TEST_SLUGS, seedUser } from './fixtures/seedFixture'
+import { TEST_TOKENS, TEST_SLUGS, seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()

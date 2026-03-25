@@ -19,7 +19,7 @@ import { COMBO_COURSES } from '../src/lib/constants/course-catalog'
 import type { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
-import { seedUser, type SeedCtx } from './fixtures/seedFixture'
+import { seedUser, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

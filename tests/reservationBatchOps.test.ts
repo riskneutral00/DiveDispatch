@@ -18,7 +18,7 @@ import {
   seedSnapshot,
   TEST_TOKENS,
   TEST_SLUGS,
-} from './fixtures/seedFixture'
+} from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

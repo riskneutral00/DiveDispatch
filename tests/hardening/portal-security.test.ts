@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { resolvePortalToken, resolvePortalTokenSoft } from '../../convex/lib/portal'
 import { Id } from '../../convex/_generated/dataModel'
-import { seedPortalFixture, type SeedCtx } from '../fixtures/seedFixture'
+import { seedPortalFixture, type SeedCtx } from '../fixtures'
 import { passportExpiry, dob } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 

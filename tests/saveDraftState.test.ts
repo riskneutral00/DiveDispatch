@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
-import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures/seedFixture'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from './fixtures'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT } from './helpers/convex-helpers'
 

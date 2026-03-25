@@ -9,7 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser } from './fixtures/seedFixture'
+import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Resource configs ─────────────────────────────────────────────────────────

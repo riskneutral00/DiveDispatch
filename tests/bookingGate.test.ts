@@ -10,7 +10,7 @@ import {
   seedStakeholderPreferences,
   seedVenue,
   type SeedCtx,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Composite helper ────────────────────────────────────────────────────────

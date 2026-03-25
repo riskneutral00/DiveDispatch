@@ -16,7 +16,7 @@ import {
   TEST_SLUGS,
   seedUser,
   seedBooking,
-} from '../fixtures/seedFixture'
+} from '../fixtures'
 import { testDate } from '../helpers/dates'
 import { makeT } from '../helpers/convex-helpers'
 

@@ -12,7 +12,7 @@ import {
   seedEquipmentProfile,
   seedBookingTemplate,
   seedStakeholderPreferences,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()

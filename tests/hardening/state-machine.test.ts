@@ -10,7 +10,7 @@ import {
   canBookingTransition,
   canReservationTransition,
 } from '../../convex/bookings/stateMachine'
-import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures/seedFixture'
+import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────

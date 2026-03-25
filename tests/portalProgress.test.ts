@@ -9,7 +9,7 @@ import {
   seedBookingLink,
   seedCustomerProfile,
   type SeedCtx,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { testDate, testToken } from '../helpers/dates'
-import { seedUser, seedBooking, seedBookingLink, type SeedCtx } from '../fixtures/seedFixture'
+import { seedUser, seedBooking, seedBookingLink, type SeedCtx } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
 
 // ── Tests: createBookingLink ──────────────────────────────────────────────────

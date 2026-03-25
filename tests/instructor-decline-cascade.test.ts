@@ -22,7 +22,7 @@ import {
   seedBooking,
   seedSession,
   seedReservation,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { testDate } from './helpers/dates'
 
 const modules = import.meta.glob('../convex/**/*.ts')

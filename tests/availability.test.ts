@@ -17,7 +17,7 @@ import {
   seedBooking,
   seedSession,
   seedReservation,
-} from './fixtures/seedFixture'
+} from './fixtures'
 import { testDate, malformedDate } from './helpers/dates'
 import { todayISO } from '../convex/bookings/stateMachine'
 import { makeT } from './helpers/convex-helpers'
