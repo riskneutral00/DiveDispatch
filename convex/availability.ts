@@ -6,7 +6,7 @@ import type { Id } from './_generated/dataModel'
 import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } from './bookings/_shared'
 import { todayISO } from './bookings/stateMachine'
 
-import { type ResourceOwnerType, resourceOwnerTypeValidator } from './shared/resourceOwnerTypes'
+import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
 import { effectiveResourceType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 
@@ -90,8 +90,16 @@ export async function _getCapacityForDates(
 ): Promise<Record<string, Record<string, { available: number; total: number }>>> {
   if (dates.length === 0) return {}
 
-  // Fetch all inventory units
-  const allUnits = await ctx.db.query('inventoryUnits').collect()
+  // Fetch all inventory units via parallel index-scoped queries (one per resource type)
+  const unitsByType = await Promise.all(
+    RESOURCE_OWNER_TYPES.map((rt) =>
+      ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_resourceType', (q) => q.eq('resourceType', rt))
+        .collect(),
+    ),
+  )
+  const allUnits = unitsByType.flat()
   if (allUnits.length === 0) return {}
 
   // Build result with defaults (full capacity for every unit on every date)
@@ -131,7 +139,17 @@ export async function _getCapacityForDates(
   // Override with blocked-date data: set available=0 for units whose owner
   // has blocked the date for the matching resourceType.
   // Privacy: blocked-date info never leaves the server — client only sees available=0.
-  const blockedDocs = await ctx.db.query('stakeholderBlockedDates').collect()
+  // Derive unique owner slugs from fetched units, then query blocked dates via index prefix.
+  const uniqueOwnerSlugs = [...new Set(allUnits.map((u) => u.ownerId))]
+  const blockedDocArrays = await Promise.all(
+    uniqueOwnerSlugs.map((slug) =>
+      ctx.db
+        .query('stakeholderBlockedDates')
+        .withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', slug))
+        .collect(),
+    ),
+  )
+  const blockedDocs = blockedDocArrays.flat()
   if (blockedDocs.length > 0) {
     // Build lookup: Map<"ownerSlug|resourceType", Set<blockedDate>>
     const blockedLookup = new Map<string, Set<string>>()
