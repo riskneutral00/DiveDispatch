@@ -41,7 +41,7 @@ async function seedBoat(
   opts: {
     ownerSlug?: string
     totalUnits?: number
-    boatType?: string
+    boatType?: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
     capacityModel?: 'Exclusive' | 'Pooled'
   } = {},
 ) {
@@ -51,16 +51,15 @@ async function seedBoat(
     boatType = 'speedboat',
     capacityModel = 'Pooled',
   } = opts
-  return ctx.db.insert('inventoryUnits', {
+  return seedInventoryUnit(ctx, {
     resourceType: 'Boat',
-    resourceId: ownerSlug,
     displayName: 'MV Test Boat',
     capacityModel,
     totalUnits,
     ownerId: ownerSlug,
     ownerType: 'Boat',
     boatType,
-  } as never)
+  })
 }
 
 // ─── L9-01: Exclusive Unit — No Double Hold ──────────────────────────────────
@@ -610,12 +609,11 @@ describe('L9-03: Snapshot Atomicity', () => {
       return { reservation: reservations[0], snapshot }
     })
 
-    // Both must exist
-    expect(reservation).toBeDefined()
+    // Both must exist — reservation from array index, snapshot from .unique()
+    expect(reservation).toEqual(expect.objectContaining({ inventoryUnitId: unitId }))
     expect(snapshot).not.toBeNull()
 
     // And they agree on the unit
-    expect(reservation.inventoryUnitId).toBe(unitId)
     expect(snapshot!.inventoryUnitId).toBe(unitId)
     expect(snapshot!.reservedUnits).toBe(1)
     expect(snapshot!.availableUnits).toBe(0)

@@ -16,6 +16,7 @@ export async function seedInventoryUnit(
     totalUnits?: number
     ownerId?: string
     ownerType?: Doc<'inventoryUnits'>['ownerType']
+    boatType?: Doc<'inventoryUnits'>['boatType']
   } = {},
 ) {
   const resourceType = overrides.resourceType ?? 'Instructor'
@@ -29,6 +30,7 @@ export async function seedInventoryUnit(
     totalUnits: overrides.totalUnits ?? 1,
     ownerId,
     ownerType,
+    ...(overrides.boatType !== undefined ? { boatType: overrides.boatType } : {}),
   })
 }
 
