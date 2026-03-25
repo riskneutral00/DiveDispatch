@@ -113,12 +113,20 @@ Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`.
 For the next **1-3 unchecked TODO items** by priority order:
 
 1. Read the relevant source files to understand current state
-2. Write a spec block directly in TODO.md under the item:
+2. Write a spec block directly in TODO.md under the item.
+
+   Classify the new fields by analyzing the source files:
+   - **Side effects:** Check if the item touches shared utilities, state machines, or test fixtures
+   - **Human required:** Set to Yes if the item needs design input, domain knowledge not in docs, or a contradiction resolution
+   - **Size:** Count affected files and estimate scope
 
 ```markdown
 **Spec:** What to change, which files, what the outcome looks like.
 **Acceptance:** How to verify it's done (test assertion, visual check, behavior).
 **Blocked by:** Any prerequisite that must be done first, or "None".
+**Side effects:** Shared modules/areas this touches beyond its primary scope, or "None".
+**Human required:** Yes/No — Yes if this needs a design decision, domain input, or spec interview before an agent can start.
+**Size:** S/M/L — S=single file <30min, M=2-5 files 30min-2hr, L=5+ files or architectural 2hr+.
 ```
 
 3. If a spec already exists for the item, verify it's still accurate:

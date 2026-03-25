@@ -112,6 +112,15 @@ Assess based on everything learned so far. Ask only if there are flags to raise:
 - **Shared component collision** → "Another TODO also touches [component]."
 - **Batch operations** → "Spec needs batched mutations (Convex limits)."
 
+**Always ask:** "What shared modules or areas does this touch beyond its own scope?"
+
+Map answers to the `side_effects` field. Common areas:
+- Shared validation utils (`src/lib/`)
+- Booking state machine (`convex/bookings/`)
+- Auth boundary (`convex/lib/auth.ts`, `src/proxy.ts`)
+- Seed fixtures (`tests/helpers/`)
+- Design system (`design-system/`)
+
 If no flags: Say "No risk flags" and move on.
 
 ### Q6: Supersession
@@ -166,6 +175,9 @@ Append the new item to the tier table, then write the spec block below it:
 - {Type}: `{file}` — {what it tests}
 - {Type}: `{file}` — {what it tests}
 **Blocked by:** {#N prerequisite items, or "None".}
+**Side effects:** {Modules/areas touched beyond primary scope, or "None".}
+**Human required:** No — spec interview completed.
+**Size:** {S|M|L}
 ```
 
 ### Tier selection

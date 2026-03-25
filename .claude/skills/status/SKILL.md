@@ -38,6 +38,8 @@ For each active (unchecked) TODO:
 
 ### Verify priority
 - The first unchecked item in the lowest active tier is the next thing to work on
+- **Skip items marked `Human required: Yes`** — print: `Skipped #{N} (human required)`
+- If ALL remaining unchecked items are human-required, print: `All remaining items need Matt's input. Listing them:` followed by the list, then STOP — do not auto-start work
 - If the `NEXT:` tag in memory points to a different item, note the discrepancy
 
 Write any changes back to TODO.md.
@@ -66,6 +68,7 @@ Print exactly this format:
 Status — {YYYY-MM-DD}
 ───────────────────
 TODO: {action taken — e.g., "Pruned 3 done items. 14 active across Tiers 3–11."}
+{Skipped: #{N} {title} (human required) — for each skipped item, if any}
 Next: #{number} {title} (Tier {N}) — {one-line description}
 Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation components
 {Conflict: {description} OR Conflict: None}
