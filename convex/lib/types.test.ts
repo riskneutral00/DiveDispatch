@@ -1,0 +1,113 @@
+import { describe, it, expect } from 'vitest'
+import type {
+  UserDoc,
+  ThemeDoc,
+  BookingResourceDoc,
+  BookingDoc,
+  BookingSessionDoc,
+  CustomerDoc,
+  CustomerProfileDoc,
+  BookingLinkDoc,
+  InventoryUnitDoc,
+  ReservationDoc,
+  AvailabilitySnapshotDoc,
+  StakeholderBlockedDateDoc,
+  StakeholderPreferenceDoc,
+  NotificationDoc,
+  DiveCenterDoc,
+  InstructorDoc,
+  BoatDoc,
+  EquipmentDoc,
+  VenueDoc,
+  CompressorDoc,
+  EquipmentBagDoc,
+  GearSizingLookupDoc,
+  EquipmentInventoryDoc,
+  UserRoleDoc,
+  StakeholderHierarchyDoc,
+  BanDoc,
+  BookingTemplateDoc,
+  AgentDoc,
+  DiveMasterDoc,
+  LiveaboardDoc,
+  CabinDoc,
+  TripScheduleDoc,
+  DiveResortDoc,
+  RoomDoc,
+  DiveHostelDoc,
+  SupportRequestDoc,
+  CronRunLogDoc,
+  BookingAuditLogDoc,
+  BookingId,
+  InventoryUnitId,
+  BookingSessionId,
+  ReservationId,
+  CustomerProfileId,
+  UserId,
+} from './types'
+
+/**
+ * Compile-time type assertions: if any type resolves to `never`,
+ * the conditional type below produces `true` instead of `false`
+ * and the `satisfies false` constraint fails at compile time.
+ */
+type IsNever<T> = [T] extends [never] ? true : false
+
+describe('convex/lib/types — Doc exports', () => {
+  it('all document types are not never (compile-time check)', () => {
+    // These lines exist purely for the TypeScript compiler.
+    // If any type is `never`, `satisfies false` will fail at compile time.
+    false satisfies IsNever<UserDoc>
+    false satisfies IsNever<ThemeDoc>
+    false satisfies IsNever<BookingResourceDoc>
+    false satisfies IsNever<BookingDoc>
+    false satisfies IsNever<BookingSessionDoc>
+    false satisfies IsNever<CustomerDoc>
+    false satisfies IsNever<CustomerProfileDoc>
+    false satisfies IsNever<BookingLinkDoc>
+    false satisfies IsNever<InventoryUnitDoc>
+    false satisfies IsNever<ReservationDoc>
+    false satisfies IsNever<AvailabilitySnapshotDoc>
+    false satisfies IsNever<StakeholderBlockedDateDoc>
+    false satisfies IsNever<StakeholderPreferenceDoc>
+    false satisfies IsNever<NotificationDoc>
+    false satisfies IsNever<DiveCenterDoc>
+    false satisfies IsNever<InstructorDoc>
+    false satisfies IsNever<BoatDoc>
+    false satisfies IsNever<EquipmentDoc>
+    false satisfies IsNever<VenueDoc>
+    false satisfies IsNever<CompressorDoc>
+    false satisfies IsNever<EquipmentBagDoc>
+    false satisfies IsNever<GearSizingLookupDoc>
+    false satisfies IsNever<EquipmentInventoryDoc>
+    false satisfies IsNever<UserRoleDoc>
+    false satisfies IsNever<StakeholderHierarchyDoc>
+    false satisfies IsNever<BanDoc>
+    false satisfies IsNever<BookingTemplateDoc>
+    false satisfies IsNever<AgentDoc>
+    false satisfies IsNever<DiveMasterDoc>
+    false satisfies IsNever<LiveaboardDoc>
+    false satisfies IsNever<CabinDoc>
+    false satisfies IsNever<TripScheduleDoc>
+    false satisfies IsNever<DiveResortDoc>
+    false satisfies IsNever<RoomDoc>
+    false satisfies IsNever<DiveHostelDoc>
+    false satisfies IsNever<SupportRequestDoc>
+    false satisfies IsNever<CronRunLogDoc>
+    false satisfies IsNever<BookingAuditLogDoc>
+
+    // Runtime assertion so the test actually passes
+    expect(true).toBe(true)
+  })
+
+  it('all Id types are not never (compile-time check)', () => {
+    false satisfies IsNever<BookingId>
+    false satisfies IsNever<InventoryUnitId>
+    false satisfies IsNever<BookingSessionId>
+    false satisfies IsNever<ReservationId>
+    false satisfies IsNever<CustomerProfileId>
+    false satisfies IsNever<UserId>
+
+    expect(true).toBe(true)
+  })
+})

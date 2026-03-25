@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
-import type { Doc, Id } from './_generated/dataModel'
+import type { Id } from './_generated/dataModel'
+import type { UserDoc, BookingDoc, InventoryUnitDoc } from './lib/types'
 import { requireAuth } from './lib/auth'
 import { checkHasAnyOperatorRole } from './userRoles'
 import {
@@ -183,7 +184,7 @@ function buildCalendarResources(
 
 async function toCalendarBooking(
   ctx: QueryCtx,
-  b: Doc<'bookings'>,
+  b: BookingDoc,
   nameMap: Map<string, string>,
 ): Promise<CalendarBooking> {
   const divers = b.divers as Array<{ name: string }>
@@ -219,7 +220,7 @@ async function toCalendarBooking(
   }
 }
 
-async function resolveCallerBookings(ctx: QueryCtx, user: Doc<'users'>): Promise<Doc<'bookings'>[]> {
+async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc): Promise<BookingDoc[]> {
   const role = user.role
   const slug = user.slug
 
@@ -245,7 +246,7 @@ async function resolveCallerBookings(ctx: QueryCtx, user: Doc<'users'>): Promise
     const bookings = await Promise.all(
       bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)),
     )
-    return bookings.filter(Boolean) as Doc<"bookings">[]
+    return bookings.filter(Boolean) as BookingDoc[]
   }
 
   return []
@@ -322,7 +323,7 @@ export async function _listByResource(
 
   // Query via bookingResources junction table
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
-  const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as Doc<"bookings">[]
+  const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as BookingDoc[]
 
   const allResources: BookingResource[] = []
   for (const b of bookings) {
@@ -362,7 +363,7 @@ export async function _myDashboard(
 
   // Fetch caller's inventory units upfront (used for both reservationStatus and requests)
   let callerUnitIds = new Set<string>()
-  let inventoryUnits: Doc<'inventoryUnits'>[] = []
+  let inventoryUnits: InventoryUnitDoc[] = []
   if (isResourceRole) {
     inventoryUnits = await ctx.db
       .query('inventoryUnits')
@@ -454,7 +455,7 @@ export async function _getBookingDetail(
   const bookingId = args.bookingId as Id<"bookings">
   const booking = await ctx.db.get(bookingId)
   if (!booking) return null
-  const b = booking as Doc<"bookings">
+  const b = booking as BookingDoc
 
   // Allow access if caller owns the booking OR has a reservation on it
   if (b.ownerId !== user.slug) {
@@ -499,11 +500,11 @@ export async function _getBookingDetail(
       ...reservations.map((r) => r.inventoryUnitId as string),
     ]),
   ]
-  const iuMap = new Map<string, Doc<'inventoryUnits'>>()
+  const iuMap = new Map<string, InventoryUnitDoc>()
   await Promise.all(
     allIuIds.map(async (iuId) => {
       const iu = await ctx.db.get(iuId as Id<"inventoryUnits">)
-      if (iu) iuMap.set(iuId, iu as Doc<"inventoryUnits">)
+      if (iu) iuMap.set(iuId, iu as InventoryUnitDoc)
     }),
   )
 

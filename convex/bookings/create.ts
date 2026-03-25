@@ -2,7 +2,8 @@ import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
 import type { MutationCtx } from '../_generated/server'
-import type { Id, Doc } from '../_generated/dataModel'
+import type { Id } from '../_generated/dataModel'
+import type { BookingDoc, InventoryUnitDoc, AvailabilitySnapshotDoc } from '../lib/types'
 import {
   type SessionInput,
   type SubmitToDraftArgs,
@@ -40,7 +41,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  if ((booking as Doc<"bookings">).ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  if ((booking as BookingDoc).ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
   // A resource with externalName (no resourceSlug) is outside the system.
@@ -107,15 +108,15 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // STEP 1: Read-only pass — build plans or throw CONFLICT (zero writes so far)
   type SessionPlan = {
     session: SessionInput
-    inventoryUnit: Doc<"inventoryUnits">
-    snapshot: Doc<"availabilitySnapshots"> | null
+    inventoryUnit: InventoryUnitDoc
+    snapshot: AvailabilitySnapshotDoc | null
     currentAvailable: number
   }
 
   const plans: SessionPlan[] = []
 
   for (const session of args.sessions) {
-    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as Doc<"inventoryUnits"> | null
+    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null
     if (!inventoryUnit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     // External resource — no inventory check or reservation row needed
@@ -164,7 +165,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   // STEP 3: No conflicts detected — write everything atomically
   const now = Date.now()
-  const expiresAt = now + ((booking as Doc<"bookings">).holdTTL as number)
+  const expiresAt = now + ((booking as BookingDoc).holdTTL as number)
 
   for (const { session, inventoryUnit, snapshot, currentAvailable } of plans) {
     const newAvailable = currentAvailable - session.unitsRequested
@@ -212,7 +213,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       .withIndex('by_slug', (q) => q.eq('slug', inventoryUnit.ownerId))
       .unique()
 
-    const isSelfBooking = inventoryUnit.ownerId === (booking as Doc<"bookings">).ownerId
+    const isSelfBooking = inventoryUnit.ownerId === (booking as BookingDoc).ownerId
     const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? 'Confirmed' : 'PendingAcceptance'
 

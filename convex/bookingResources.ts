@@ -4,11 +4,12 @@
  */
 
 import type { MutationCtx } from './_generated/server'
-import type { Id, Doc } from './_generated/dataModel'
+import type { Id } from './_generated/dataModel'
+import type { BookingResourceDoc } from './lib/types'
 import type { DbCtx } from './lib/auth'
 import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
 
-export type BookingResource = Doc<'bookingResources'>
+export type BookingResource = BookingResourceDoc
 
 // ─── Read helpers ─────────────────────────────────────────────────────────────
 
