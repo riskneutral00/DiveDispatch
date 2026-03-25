@@ -1,6 +1,9 @@
+import { resolve, dirname } from 'path'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { log } from './logger'
 import { execFileSync } from 'child_process'
+
+const CONVEX_ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..')
 
 describe('structured logger', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>
@@ -24,26 +27,23 @@ describe('structured logger', () => {
     const output = getLastLoggedJson()
     expect(output.level).toBe('info')
     expect(output.message).toBe('test message')
-    expect(typeof output.timestamp).toBe('string')
-    // timestamp should be ISO format
-    expect(() => new Date(output.timestamp as string)).not.toThrow()
     expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
   })
 
-  it('log.warn emits level "warn"', () => {
+  it('log.warn emits level "warn" with ISO timestamp', () => {
     log.warn('warning message')
     const output = getLastLoggedJson()
     expect(output.level).toBe('warn')
     expect(output.message).toBe('warning message')
-    expect(typeof output.timestamp).toBe('string')
+    expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
   })
 
-  it('log.error emits level "error"', () => {
+  it('log.error emits level "error" with ISO timestamp', () => {
     log.error('error message')
     const output = getLastLoggedJson()
     expect(output.level).toBe('error')
     expect(output.message).toBe('error message')
-    expect(typeof output.timestamp).toBe('string')
+    expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
   })
 
   it('spreads context fields into the JSON output', () => {
@@ -72,11 +72,6 @@ describe('structured logger', () => {
     expect(Object.keys(output).sort()).toEqual(['level', 'message', 'timestamp'])
   })
 
-  it('output is valid JSON (parseable string)', () => {
-    log.info('json test', { nested: { a: 1 } })
-    const raw = consoleSpy.mock.calls[0][0] as string
-    expect(() => JSON.parse(raw)).not.toThrow()
-  })
 })
 
 describe('no raw console.warn/console.log in convex/', () => {
@@ -87,7 +82,7 @@ describe('no raw console.warn/console.log in convex/', () => {
       result = execFileSync('grep', [
         '-rn', 'console\\.\\(log\\|warn\\)',
         '--include=*.ts', 'convex/',
-      ], { cwd: '/Users/matthewlee/Desktop/DD-worktree-088', encoding: 'utf-8' })
+      ], { cwd: resolve(CONVEX_ROOT, '..'), encoding: 'utf-8' })
     } catch {
       // grep exits 1 when no matches — that's the success case
       result = ''
