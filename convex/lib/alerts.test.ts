@@ -24,29 +24,3 @@ describe('buildAlertEmailHtml', () => {
   })
 })
 
-describe('cronRunLog entry shape', () => {
-  it('validates expected fields for a success entry', () => {
-    const entry = {
-      jobName: 'complete-bookings',
-      status: 'success' as const,
-      runAt: Date.now(),
-    }
-    expect(entry.jobName).toBe('complete-bookings')
-    expect(entry.status).toBe('success')
-    expect(typeof entry.runAt).toBe('number')
-    expect(entry).not.toHaveProperty('error')
-  })
-
-  it('validates expected fields for a failure entry', () => {
-    const entry = {
-      jobName: 'complete-bookings',
-      status: 'failure' as const,
-      error: 'Something went wrong',
-      runAt: Date.now(),
-    }
-    expect(entry.jobName).toBe('complete-bookings')
-    expect(entry.status).toBe('failure')
-    expect(entry.error).toBe('Something went wrong')
-    expect(typeof entry.runAt).toBe('number')
-  })
-})

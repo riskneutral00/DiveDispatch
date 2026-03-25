@@ -19,7 +19,9 @@ describe('structured logger', () => {
   function getLastLoggedJson(): Record<string, unknown> {
     expect(consoleSpy).toHaveBeenCalled()
     const lastCall = consoleSpy.mock.calls[consoleSpy.mock.calls.length - 1]
-    return JSON.parse(lastCall[0] as string)
+    const raw = lastCall[0]
+    if (typeof raw !== 'string') throw new Error('Expected string log output')
+    return JSON.parse(raw)
   }
 
   it('log.info emits valid JSON with level, message, timestamp', () => {
@@ -27,7 +29,7 @@ describe('structured logger', () => {
     const output = getLastLoggedJson()
     expect(output.level).toBe('info')
     expect(output.message).toBe('test message')
-    expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
+    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
   })
 
   it('log.warn emits level "warn" with ISO timestamp', () => {
@@ -35,7 +37,7 @@ describe('structured logger', () => {
     const output = getLastLoggedJson()
     expect(output.level).toBe('warn')
     expect(output.message).toBe('warning message')
-    expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
+    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
   })
 
   it('log.error emits level "error" with ISO timestamp', () => {
@@ -43,7 +45,7 @@ describe('structured logger', () => {
     const output = getLastLoggedJson()
     expect(output.level).toBe('error')
     expect(output.message).toBe('error message')
-    expect(new Date(output.timestamp as string).toISOString()).toBe(output.timestamp)
+    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
   })
 
   it('spreads context fields into the JSON output', () => {

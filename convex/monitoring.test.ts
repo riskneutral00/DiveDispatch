@@ -1,37 +1,20 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'fs'
+import { resolve, dirname } from 'path'
 
-describe('monitoring.lastCronRun', () => {
-  it('query returns null shape when no entries exist', () => {
-    // Pure shape test — the actual Convex query returns null when no entries
-    const result = null
-    expect(result).toBeNull()
+const SCHEMA_PATH = resolve(
+  dirname(new URL(import.meta.url).pathname),
+  'schema.ts',
+)
+
+describe('monitoring schema', () => {
+  it('cronRunLog table is defined in schema.ts', () => {
+    const schema = readFileSync(SCHEMA_PATH, 'utf-8')
+    expect(schema).toContain('cronRunLog: defineTable')
   })
 
-  it('result shape includes expected fields when entry exists', () => {
-    // Validates the expected return shape
-    const mockEntry = {
-      _id: 'fake-id',
-      _creationTime: Date.now(),
-      jobName: 'complete-bookings',
-      status: 'success' as const,
-      runAt: Date.now(),
-    }
-    expect(mockEntry).toHaveProperty('jobName')
-    expect(mockEntry).toHaveProperty('status')
-    expect(mockEntry).toHaveProperty('runAt')
-    expect(['success', 'failure']).toContain(mockEntry.status)
-  })
-
-  it('failure entry includes error field', () => {
-    const mockEntry = {
-      _id: 'fake-id',
-      _creationTime: Date.now(),
-      jobName: 'complete-bookings',
-      status: 'failure' as const,
-      error: 'DB timeout',
-      runAt: Date.now(),
-    }
-    expect(mockEntry.error).toBe('DB timeout')
-    expect(mockEntry.status).toBe('failure')
+  it('cronRunLog has by_jobName_runAt index', () => {
+    const schema = readFileSync(SCHEMA_PATH, 'utf-8')
+    expect(schema).toContain("by_jobName_runAt")
   })
 })
