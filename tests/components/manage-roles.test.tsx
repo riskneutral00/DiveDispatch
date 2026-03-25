@@ -56,17 +56,17 @@ describe('ManageRoles', () => {
 
   it('renders a heading for the section', () => {
     render(<ManageRoles {...defaultProps} />)
-    expect(screen.getByText('Manage Roles')).toBeTruthy()
+    expect(screen.getByText('Manage Roles')).toBeInTheDocument()
   })
 
   it('displays current roles with their labels', () => {
     render(<ManageRoles {...defaultProps} />)
-    expect(screen.getByText('Dive Center')).toBeTruthy()
+    expect(screen.getByText('Dive Center')).toBeInTheDocument()
   })
 
   it('shows "Primary" badge on the primary role', () => {
     render(<ManageRoles {...defaultProps} />)
-    expect(screen.getByText('Primary')).toBeTruthy()
+    expect(screen.getByText('Primary')).toBeInTheDocument()
   })
 
   it('shows completion status for each role', () => {
@@ -79,13 +79,13 @@ describe('ManageRoles', () => {
         ]}
       />,
     )
-    expect(screen.getByText('Complete')).toBeTruthy()
-    expect(screen.getByText('Incomplete')).toBeTruthy()
+    expect(screen.getByText('Complete')).toBeInTheDocument()
+    expect(screen.getByText('Incomplete')).toBeInTheDocument()
   })
 
   it('renders an "Add Role" button', () => {
     render(<ManageRoles {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /add role/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /add role/i })).toBeInTheDocument()
   })
 
   it('shows multiple roles when user holds several', () => {
@@ -99,8 +99,8 @@ describe('ManageRoles', () => {
         ]}
       />,
     )
-    expect(screen.getByText('Dive Center')).toBeTruthy()
-    expect(screen.getByText('Instructor')).toBeTruthy()
-    expect(screen.getByText('Boat')).toBeTruthy()
+    expect(screen.getByText('Dive Center')).toBeInTheDocument()
+    expect(screen.getByText('Instructor')).toBeInTheDocument()
+    expect(screen.getByText('Boat')).toBeInTheDocument()
   })
 })

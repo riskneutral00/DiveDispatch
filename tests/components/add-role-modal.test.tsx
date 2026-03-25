@@ -51,7 +51,7 @@ describe('AddRoleModal', () => {
 
   it('renders the dialog title when open', () => {
     render(<AddRoleModal {...defaultProps} />)
-    expect(screen.getByText('Add a Role')).toBeTruthy()
+    expect(screen.getByText('Add a Role')).toBeInTheDocument()
   })
 
   it('does not show already-held roles in the grid', () => {
@@ -61,7 +61,7 @@ describe('AddRoleModal', () => {
     expect(screen.queryByRole('button', { name: /dive center/i, hidden: true })).toBeNull()
     expect(screen.queryByRole('button', { name: /^instructor$/i, hidden: true })).toBeNull()
     // But others should
-    expect(screen.getByRole('button', { name: /^agent$/i, hidden: true })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^agent$/i, hidden: true })).toBeInTheDocument()
   })
 
   it('calls onSelectRole with the chosen role clerkRole', async () => {
@@ -75,13 +75,13 @@ describe('AddRoleModal', () => {
 
   it('displays error message when error prop is set', () => {
     render(<AddRoleModal {...defaultProps} error="That role already exists." />)
-    expect(screen.getByText('That role already exists.')).toBeTruthy()
+    expect(screen.getByText('That role already exists.')).toBeInTheDocument()
   })
 
   it('shows no available roles message when all roles are held', () => {
     const allRoles = ROLES.map((r) => r.clerkRole)
     render(<AddRoleModal {...defaultProps} heldRoles={allRoles} />)
-    expect(screen.getByText(/all roles/i)).toBeTruthy()
+    expect(screen.getByText(/all roles/i)).toBeInTheDocument()
   })
 
   it('disables role buttons when loading', () => {
