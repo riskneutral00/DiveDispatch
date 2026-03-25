@@ -102,19 +102,25 @@ describe('getBookingDetail', () => {
     expect(result!.boatName).toBe('boat-1 Name')
 
     // New: stakeholders array
-    expect(result!.stakeholders).toBeDefined()
+    expect(Array.isArray(result!.stakeholders)).toBe(true)
     const instructorStakeholder = result!.stakeholders.find(
       (s) => s.role === 'Instructor',
     )
-    expect(instructorStakeholder).toBeDefined()
-    expect(instructorStakeholder!.name).toBe('instructor-1 Name')
+    expect(instructorStakeholder).toMatchObject({
+      role: 'Instructor',
+      name: 'instructor-1 Name',
+      isExternal: false,
+      slug: 'instructor-1',
+    })
     expect(instructorStakeholder!.isExternal).toBe(false)
     expect(instructorStakeholder!.slug).toBe('instructor-1')
 
     const boatStakeholder = result!.stakeholders.find((s) => s.role === 'Boat')
-    expect(boatStakeholder).toBeDefined()
-    expect(boatStakeholder!.name).toBe('boat-1 Name')
-    expect(boatStakeholder!.isExternal).toBe(false)
+    expect(boatStakeholder).toMatchObject({
+      role: 'Boat',
+      name: 'boat-1 Name',
+      isExternal: false,
+    })
   })
 
   // ── test 2: returns external stakeholder names ─────────────────────────────
@@ -154,20 +160,24 @@ describe('getBookingDetail', () => {
       .query(api.bookings.getBookingDetail, { bookingId: bookingId! as never })
 
     expect(result).not.toBeNull()
-    expect(result!.stakeholders).toBeDefined()
+    expect(Array.isArray(result!.stakeholders)).toBe(true)
 
     const extInstructor = result!.stakeholders.find(
       (s) => s.role === 'Instructor',
     )
-    expect(extInstructor).toBeDefined()
-    expect(extInstructor!.name).toBe('External Instructor Joe')
-    expect(extInstructor!.isExternal).toBe(true)
+    expect(extInstructor).toMatchObject({
+      role: 'Instructor',
+      name: 'External Instructor Joe',
+      isExternal: true,
+    })
     expect(extInstructor!.slug).toBeUndefined()
 
     const extBoat = result!.stakeholders.find((s) => s.role === 'Boat')
-    expect(extBoat).toBeDefined()
-    expect(extBoat!.name).toBe('External Boat Sally')
-    expect(extBoat!.isExternal).toBe(true)
+    expect(extBoat).toMatchObject({
+      role: 'Boat',
+      name: 'External Boat Sally',
+      isExternal: true,
+    })
   })
 
   // ── test 3: returns all customer profiles with portal completion status ─────
@@ -351,8 +361,8 @@ describe('getBookingDetail', () => {
       .query(api.bookings.getBookingDetail, { bookingId: bookingId! as never })
 
     expect(result).not.toBeNull()
-    expect(result!.auditLog).toBeDefined()
-    expect(result!.auditLog.length).toBeGreaterThanOrEqual(2)
+    expect(Array.isArray(result!.auditLog)).toBe(true)
+    expect(result!.auditLog).toHaveLength(2)
     // Sorted descending: most recent first
     expect(result!.auditLog[0].action).toBe('edited')
     expect(result!.auditLog[1].action).toBe('created')
@@ -596,7 +606,9 @@ describe('getBookingDetail', () => {
     const instructorStakeholder = result!.stakeholders.find(
       (s) => s.slug === 'instructor-1',
     )
-    expect(instructorStakeholder).toBeDefined()
-    expect(instructorStakeholder!.reservationStatus).toBe('Confirmed')
+    expect(instructorStakeholder).toMatchObject({
+      slug: 'instructor-1',
+      reservationStatus: 'Confirmed',
+    })
   })
 })

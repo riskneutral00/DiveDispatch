@@ -138,8 +138,7 @@ describe('acceptReservation', () => {
     await t.run(async (ctx) => {
       const res = await ctx.db.get(resId)
       expect(res?.status).toBe('Confirmed')
-      expect(res?.confirmedAt).toBeDefined()
-      expect(typeof res?.confirmedAt).toBe('number')
+      expect(res?.confirmedAt).toEqual(expect.any(Number))
 
       // H15: audit log entry
       const logs = await ctx.db.query('bookingAuditLog').collect()
@@ -260,7 +259,7 @@ describe('declineReservation', () => {
       const res = await ctx.db.get(resId)
       expect(res?.status).toBe('Vacated')
       expect(res?.vacatedBy).toBe('stakeholder_declined')
-      expect(res?.vacatedAt).toBeDefined()
+      expect(res?.vacatedAt).toEqual(expect.any(Number))
 
       // unitsRequested=1 returned to snapshot (0 → 1 available, 1 → 0 reserved)
       const snap = await ctx.db.get(snapshotId)
@@ -300,9 +299,11 @@ describe('declineReservation', () => {
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
-      expect(holdDeclined).toBeDefined()
-      expect(holdDeclined?.userId).toBe('dc-slug')
-      expect(holdDeclined?.bookingId).toBe(bookingId)
+      expect(holdDeclined).toMatchObject({
+        type: 'hold_declined',
+        userId: 'dc-slug',
+        bookingId,
+      })
       expect(holdDeclined?.message).toContain('declined')
     })
   })
@@ -332,9 +333,11 @@ describe('declineReservation', () => {
     await t.run(async (ctx) => {
       const notifications = await ctx.db.query('notifications').collect()
       const noBackup = notifications.find((n) => n.type === 'no_backup_available')
-      expect(noBackup).toBeDefined()
-      expect(noBackup?.userId).toBe('dc-slug')
-      expect(noBackup?.bookingId).toBe(bookingId)
+      expect(noBackup).toMatchObject({
+        type: 'no_backup_available',
+        userId: 'dc-slug',
+        bookingId,
+      })
     })
   })
 
@@ -443,8 +446,7 @@ describe('acceptBookingReservations', () => {
       for (const resId of resIds) {
         const res = await ctx.db.get(resId)
         expect(res?.status).toBe('Confirmed')
-        expect(res?.confirmedAt).toBeDefined()
-        expect(typeof res?.confirmedAt).toBe('number')
+        expect(res?.confirmedAt).toEqual(expect.any(Number))
       }
 
       // Booking should auto-advance to Upcoming (all conditions met)
@@ -796,7 +798,7 @@ describe('decline cascade side effects', () => {
       expect(booking?.status).toBe('Draft')
       expect(booking?.bookingFormComplete).toBe(false)
       // expiresAt must be set to a future timestamp (now + holdTTL)
-      expect(booking?.expiresAt).toBeDefined()
+      expect(booking?.expiresAt).toEqual(expect.any(Number))
       expect(booking?.expiresAt).toBeGreaterThan(beforeDecline)
     })
   })
@@ -837,11 +839,12 @@ describe('decline cascade side effects', () => {
       const notifications = await ctx.db.query('notifications').collect()
       const declined = notifications.find((n) => n.type === 'hold_declined') as Doc<'notifications'> | undefined
 
-      expect(declined).toBeDefined()
       // Recipient must be the booking owner (DiveCenter), NOT the resource stakeholder
-      expect(declined?.userId).toBe('notif-dc')
-      // bookingId must match the affected booking
-      expect(declined?.bookingId).toBe(bookingId)
+      expect(declined).toMatchObject({
+        type: 'hold_declined',
+        userId: 'notif-dc',
+        bookingId,
+      })
       // Message must contain the unit's displayName so the operator knows who declined
       expect(declined?.message).toContain('Marie Curie')
     })
@@ -879,10 +882,12 @@ describe('decline cascade side effects', () => {
       const notifications = await ctx.db.query('notifications').collect()
       const noshow = notifications.find((n) => n.type === 'noshow_marked') as Doc<'notifications'> | undefined
 
-      expect(noshow).toBeDefined()
       // Recipient must be the resource stakeholder (Instructor), NOT the booking owner
-      expect(noshow?.userId).toBe('ns-instructor')
-      expect(noshow?.bookingId).toBe(bookingId)
+      expect(noshow).toMatchObject({
+        type: 'noshow_marked',
+        userId: 'ns-instructor',
+        bookingId,
+      })
     })
   })
 })

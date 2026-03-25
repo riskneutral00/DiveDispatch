@@ -250,9 +250,11 @@ describe('cancel creates audit entry', () => {
     const cancelEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'cancelled',
     )
-    expect(cancelEntry).toBeDefined()
-    expect(cancelEntry!.actorSlug).toBe('dc-test')
-    expect(cancelEntry!.actorType).toBe('operator')
+    expect(cancelEntry).toMatchObject({
+      action: 'cancelled',
+      actorSlug: 'dc-test',
+      actorType: 'operator',
+    })
   })
 })
 
@@ -284,9 +286,11 @@ describe('expire creates audit entry', () => {
     const expiredEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'expired',
     )
-    expect(expiredEntry).toBeDefined()
-    expect(expiredEntry!.actorSlug).toBe('system')
-    expect(expiredEntry!.actorType).toBe('system')
+    expect(expiredEntry).toMatchObject({
+      action: 'expired',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
   })
 })
 
@@ -326,9 +330,11 @@ describe('complete creates audit entry', () => {
     const completedEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'completed',
     )
-    expect(completedEntry).toBeDefined()
-    expect(completedEntry!.actorSlug).toBe('system')
-    expect(completedEntry!.actorType).toBe('system')
+    expect(completedEntry).toMatchObject({
+      action: 'completed',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
   })
 })
 
@@ -397,16 +403,12 @@ describe('edit creates audit entry with diff', () => {
     const editedEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'edited',
     )
-    expect(editedEntry).toBeDefined()
-    expect(editedEntry!.diff).toBeDefined()
+    expect(editedEntry).toMatchObject({ action: 'edited' })
+    expect(typeof editedEntry!.diff).toBe('string')
 
     const diff = JSON.parse(editedEntry!.diff as string) as Record<string, { old: string; new: string }>
-    expect(diff.startDate).toBeDefined()
-    expect(diff.startDate.old).toBe(testDate(5))
-    expect(diff.startDate.new).toBe(testDate(10))
-    expect(diff.endDate).toBeDefined()
-    expect(diff.endDate.old).toBe(testDate(7))
-    expect(diff.endDate.new).toBe(testDate(12))
+    expect(diff.startDate).toEqual({ old: testDate(5), new: testDate(10) })
+    expect(diff.endDate).toEqual({ old: testDate(7), new: testDate(12) })
   })
 })
 
@@ -475,9 +477,9 @@ describe('diff captures changed fields only', () => {
     const editedEntry = (entries as Array<Record<string, unknown>>).find(
       (e) => e.action === 'edited',
     )
-    expect(editedEntry).toBeDefined()
+    expect(editedEntry).toMatchObject({ action: 'edited' })
     const diff = JSON.parse(editedEntry!.diff as string) as Record<string, unknown>
-    expect(diff.startDate).toBeDefined()
+    expect(diff.startDate).toEqual({ old: testDate(5), new: testDate(10) })
     expect(diff.endDate).toBeUndefined()
   })
 })
@@ -504,7 +506,7 @@ describe('audit entries are immutable', () => {
     })
 
     // Verify getAuditLog is the only public-facing API
-    expect(api.bookingAuditLog.getAuditLog).toBeDefined()
+    expect(typeof api.bookingAuditLog.getAuditLog).toBe('object')
 
     // Verify the entry cannot be mutated via the public api (no patch/delete exposed)
     // Structural assertion: bookingAuditLog module has only getAuditLog in public api
