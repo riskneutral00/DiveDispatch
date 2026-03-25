@@ -22,27 +22,15 @@ LOG_DIR=.jira/logs/       # Log output directory
 MAX_MERGE_RETRY=1         # Auto-retry merge failures (0 = disable)
 MAX_DURATION_MIN=120      # Stop spawning new workers after N minutes
 MAX_BATCH_TICKETS=20      # Stop after processing N tickets (safety cap)
-BATCH_BRANCH_PREFIX=jira/batch-   # Staging branch prefix
 ```
 
 ---
 
-## Step 0 — Batch Branch Setup
+## Step 0 — Merge Target
 
-All ticket merges target a staging branch, not main. Matt reviews the combined result before finalizing.
+All ticket merges target `main` directly. No staging branch.
 
-1. Check for an existing batch branch:
-   ```bash
-   git branch --list 'jira/batch-*' | tr -d ' *'
-   ```
-2. **If a branch exists:** resume onto it. Set `BATCH_BRANCH={existing branch}`. Log: `Resuming existing batch branch: {BATCH_BRANCH}`
-3. **If no branch exists:** create one from current main:
-   ```bash
-   git branch jira/batch-$(date '+%Y-%m-%d') main
-   ```
-   Set `BATCH_BRANCH=jira/batch-{date}`. Log: `Created batch branch: {BATCH_BRANCH}`
-
-Store `BATCH_BRANCH` for use in all merge steps below.
+Set `BATCH_BRANCH=main` for use in all merge steps below.
 
 ---
 
@@ -408,13 +396,11 @@ The monitor loop ends when:
    Worktrees preserved for review:
      ../DD-worktree-{NNN} (ticket/DD-{NNN}) — {reason}
 
-   Batch branch: {BATCH_BRANCH}
-   Commits on batch: {N} (ahead of main)
+   Commits added to main: {N} (not pushed)
 
    Next steps:
-     Review:   git diff main...{BATCH_BRANCH}
-     Finalize: ./scripts/jira-finalize.sh
-     Reject:   ./scripts/jira-finalize.sh --reject
+     Review: git log --oneline origin/main..main
+     Push:   git push
    ```
 
 4. **Write batch log** to `.jira/logs/batch-{date}.md`:
@@ -452,10 +438,9 @@ The monitor loop ends when:
 
 6. **Update MEMORY.md** active thread (`project_thread_dd_present.md`):
    - Set `NEXT:` to the most urgent next action:
-     - If tickets completed: `NEXT: Finalize batch — ./scripts/jira-finalize.sh`
-     - If tickets failed: `NEXT: Fix DD-{NNN} ({reason}), then finalize batch`
+     - If tickets completed: `NEXT: Push main — git push`
+     - If tickets failed: `NEXT: Fix DD-{NNN} ({reason}), then push`
      - If no tickets completed: `NEXT: Investigate batch failure — see .jira/logs/batch-{date}.md`
-   - Include batch branch name
 
 ---
 
@@ -481,10 +466,10 @@ On second Ctrl+C (within 10s of first):
 ## Rules
 
 - **Execute immediately.** No preamble, no methodology explanation.
-- **Batch branch is the merge target.** All ticket merges go to `BATCH_BRANCH`, never directly to main. Matt finalizes via `./scripts/jira-finalize.sh`.
+- **Main is the merge target.** All ticket merges go directly to `main`. No staging branch.
 - **Side-effect locks are mandatory.** Never spawn two agents whose tickets share a `side_effects` entry.
 - **Merges are sequential.** Never run two `jira-merge.sh` calls simultaneously.
-- **Workers never touch `.tickets/` or the batch branch.** Only the orchestrator modifies ticket status and merges branches.
+- **Workers never touch `.tickets/` or `main`.** Only the orchestrator modifies ticket status and merges branches.
 - **Double Ctrl+C = hard stop.** First is graceful, second is immediate.
 - **Stale claims are auto-recovered.** Any `in_progress` ticket at startup is assumed to be from a crashed prior run.
 - **Empty `side_effects` = no conflicts.** Tickets with `side_effects: []` can always run in parallel.
