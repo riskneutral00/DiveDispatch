@@ -206,13 +206,19 @@ export async function _listInventoryByType(
   ctx: DbCtx,
   args: { type: ResourceOwnerType; ownerSlug?: string },
 ): Promise<InventoryListItem[]> {
-  let units = await ctx.db
-    .query('inventoryUnits')
-    .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
-    .collect()
-
+  let units: Awaited<ReturnType<typeof ctx.db.query<'inventoryUnits'>['collect']>>
   if (args.ownerSlug !== undefined) {
-    units = units.filter((u) => u.ownerId === args.ownerSlug)
+    units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_resourceType', (q) =>
+        q.eq('ownerId', args.ownerSlug!).eq('resourceType', args.type),
+      )
+      .collect()
+  } else {
+    units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
+      .collect()
   }
 
   // Batch-fetch all unique owners in parallel
@@ -427,12 +433,12 @@ export async function _toggleBlockedDate(
     // Non-resource roles don't own inventory — skip auto-decline
     if (!resourceType) return true
 
-    const allUnits = await ctx.db
+    const units = await ctx.db
       .query('inventoryUnits')
-      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
+      .withIndex('by_ownerId_resourceType', (q) =>
+        q.eq('ownerId', user.slug).eq('resourceType', resourceType),
+      )
       .collect()
-
-    const units = allUnits.filter((u) => u.resourceType === resourceType)
 
     // First pass: check for Confirmed reservations — block the entire operation if any exist
     for (const unit of units) {

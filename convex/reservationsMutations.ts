@@ -142,14 +142,15 @@ export async function _acceptBookingHandler(
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
   if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-  const reservations = await ctx.db
+  const unitReservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
+    .withIndex('by_bookingId_inventoryUnitId', (q) =>
+      q.eq('bookingId', args.bookingId as Id<"bookings">).eq('inventoryUnitId', args.inventoryUnitId as Id<"inventoryUnits">),
+    )
     .collect()
 
-  const pending = reservations.filter(
-    (r) =>
-      r.inventoryUnitId === args.inventoryUnitId && r.status === 'PendingAcceptance',
+  const pending = unitReservations.filter(
+    (r) => r.status === 'PendingAcceptance',
   )
 
   if (pending.length === 0) return // idempotent
@@ -206,15 +207,15 @@ export async function _declineHandler(
   }
 
   // Collect all active reservations for this unit on this booking
-  const allBookingReservations = await ctx.db
+  const unitReservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
+    .withIndex('by_bookingId_inventoryUnitId', (q) =>
+      q.eq('bookingId', args.bookingId as Id<"bookings">).eq('inventoryUnitId', args.inventoryUnitId as Id<"inventoryUnits">),
+    )
     .collect()
 
-  const activeForUnit = allBookingReservations.filter(
-    (r) =>
-      r.inventoryUnitId === args.inventoryUnitId &&
-      (r.status === 'PendingAcceptance' || r.status === 'Confirmed'),
+  const activeForUnit = unitReservations.filter(
+    (r) => r.status === 'PendingAcceptance' || r.status === 'Confirmed',
   )
 
   const now = Date.now()

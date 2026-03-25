@@ -322,6 +322,7 @@ export default defineSchema({
     boatType: v.optional(boatTypeUnion),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
+    .index('by_ownerId_resourceType', ['ownerId', 'resourceType'])
     .index('by_resourceType', ['resourceType'])
     .index('by_resourceId', ['resourceId']),
 
@@ -347,6 +348,7 @@ export default defineSchema({
     ),
   })
     .index('by_bookingId', ['bookingId'])
+    .index('by_bookingId_inventoryUnitId', ['bookingId', 'inventoryUnitId'])
     .index('by_inventoryUnitId_status', ['inventoryUnitId', 'status'])
     .index('by_expiresAt_status', ['expiresAt', 'status']),
 
