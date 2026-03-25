@@ -31,7 +31,7 @@ export function BgSwitcher() {
     <button
       aria-label={`Switch skin (current: ${SKINS[index].name})`}
       onClick={cycle}
-      className="flex items-center justify-center w-8 h-8 rounded-full transition-all"
+      className="flex items-center justify-center w-11 h-11 rounded-full transition-all"
       style={{
         background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',

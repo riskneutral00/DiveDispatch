@@ -44,7 +44,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
       <button
         aria-label="User menu"
         onClick={() => setOpen((o) => !o)}
-        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
         style={{
           background: 'var(--color-primary)',
           color: 'var(--color-text-on-primary)',
