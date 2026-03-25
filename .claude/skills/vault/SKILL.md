@@ -236,7 +236,7 @@ Vault: N observations → [locations]
 TODO: [brief summary of position update]
 Memory: [updated/cleaned/no changes]
 NotebookLM: N sources synced
-Saved. Next session: /continue → [exact next action]
+Saved. Next session: /first → [exact next action]
 ```
 
 If only 1 commit, use single-line format: `Committed: <short-hash> <message> (N files)`

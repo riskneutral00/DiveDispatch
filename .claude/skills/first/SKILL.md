@@ -1,5 +1,5 @@
 ---
-name: status
+name: first
 description: >
   Session opener. Resumes context from memory, prunes completed TODOs, detects stale/conflicting items,
   runs test health snapshot, identifies next work item, then starts working immediately.

@@ -1,6 +1,6 @@
 ---
 name: spec
-description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to TODO.md for /status to pick up."
+description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to TODO.md for /first to pick up."
 user-invocable: true
 ---
 
@@ -196,7 +196,7 @@ Append the new item to the tier table, then write the spec block below it:
 
 1. Report: "Added #{N} to Tier {X}: {title}"
 2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
-3. Note: "/status will pick this up next session as the next work item (if it's the highest-priority unchecked item)."
+3. Note: "/first will pick this up next session as the next work item (if it's the highest-priority unchecked item)."
 
 ---
 
@@ -205,6 +205,6 @@ Append the new item to the tier table, then write the spec block below it:
 - **One question at a time.** Never batch.
 - **Data before UI.** Always.
 - **Tests before code.** The test plan is mandatory, not optional.
-- **TODO.md is the output.** Not a standalone file. /status reads it, /check updates it.
+- **TODO.md is the output.** Not a standalone file. /first reads it, /last updates it.
 - **Cheapest test wins.** Don't spec a component test for something a unit test catches.
 - **Edge cases over happy paths.** The test plan should focus on what could go wrong.

@@ -1,5 +1,5 @@
 ---
-name: check
+name: last
 description: >
   Pre-vault quality check. Runs tests, generates missing tests for changed files,
   reconciles TODO.md (mark done, write specs for next items), prepares vault observations.
@@ -92,7 +92,7 @@ Review: 4 changed files checked
 
 Do NOT block on warnings — just report them. Fixing is optional (note in vault observations if significant).
 
-Reference: The full audit rules are documented in `.claude/skills/review-backend-auth/SKILL.md`, `.claude/skills/review-backend-mutations/SKILL.md`, `.claude/skills/review-frontend/SKILL.md`, and `.claude/skills/review-tests/SKILL.md`. These skills are reference documentation — `/check` executes their key checks inline.
+Reference: The full audit rules are documented in `.claude/skills/review-backend-auth/SKILL.md`, `.claude/skills/review-backend-mutations/SKILL.md`, `.claude/skills/review-frontend/SKILL.md`, and `.claude/skills/review-tests/SKILL.md`. These skills are reference documentation — `/last` executes their key checks inline.
 
 ---
 
@@ -138,7 +138,7 @@ For the next **1-3 unchecked TODO items** by priority order:
 
 ### Set up next session
 - Update the active memory thread with a `NEXT:` tag pointing to the first specced item
-- This is what `/status` reads to know what to work on
+- This is what `/first` reads to know what to work on
 
 ---
 
