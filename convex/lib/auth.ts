@@ -1,5 +1,7 @@
 import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
+import type { Doc } from '../_generated/dataModel'
+import type { UserIdentity } from 'convex/server'
 
 /**
  * Shared context type for functions that need db + auth but work in both
@@ -24,7 +26,7 @@ export const HOLD_TTL_MS = 43200000
  * Resolves the authenticated user. Throws UNAUTHENTICATED or NOT_FOUND.
  * Use in mutations where auth is mandatory.
  */
-export async function requireAuth(ctx: DbCtx) {
+export async function requireAuth(ctx: DbCtx): Promise<{ identity: UserIdentity; user: Doc<'users'> }> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
 
@@ -43,7 +45,7 @@ export async function requireAuth(ctx: DbCtx) {
  * Resolves the authenticated user, returning null if unauthenticated or unprovisioned.
  * Use in queries where unauthenticated callers should get null.
  */
-export async function getAuthUser(ctx: DbCtx) {
+export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) return null
 

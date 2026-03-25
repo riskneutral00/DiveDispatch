@@ -520,7 +520,7 @@ export const listDiveSites = query({
   handler: async (ctx) => {
     const units = await ctx.db
       .query('inventoryUnits')
-      .filter((q) => q.eq(q.field('resourceType'), 'DiveSite'))
+      .withIndex('by_resourceType', (q) => q.eq('resourceType', 'DiveSite'))
       .collect()
     return units.map((u) => ({ id: u.resourceId, label: u.displayName }))
   },

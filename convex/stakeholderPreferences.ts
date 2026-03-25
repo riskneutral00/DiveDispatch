@@ -47,10 +47,10 @@ export const upsert = mutation({
     if (!identity) throw new ConvexError({ code: 'UNAUTHENTICATED' })
 
     if (args.maxHoursPerDay < 1 || args.maxHoursPerDay > 16) {
-      throw new ConvexError({ code: 'VALIDATION_ERROR', reason: 'maxHoursPerDay must be between 1 and 16' })
+      throw new ConvexError({ code: 'VALIDATION', reason: 'maxHoursPerDay must be between 1 and 16' })
     }
     if (args.postJobBlockDuration < 0 || args.postJobBlockDuration > 480) {
-      throw new ConvexError({ code: 'VALIDATION_ERROR', reason: 'postJobBlockDuration must be between 0 and 480' })
+      throw new ConvexError({ code: 'VALIDATION', reason: 'postJobBlockDuration must be between 0 and 480' })
     }
 
     const user = await ctx.db

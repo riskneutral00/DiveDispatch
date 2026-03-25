@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
 import type { QueryCtx, MutationCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
+import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 // ─── Helpers (importable by other modules) ──────────────────────────────────
@@ -16,7 +16,7 @@ export async function checkHasRole(
   const entry = await ctx.db
     .query('userRoles')
     .withIndex('by_userId_role', (q) =>
-      q.eq('userId', userId).eq('role', role as any),
+      q.eq('userId', userId).eq('role', role as Doc<'userRoles'>['role']),
     )
     .unique()
   return entry !== null

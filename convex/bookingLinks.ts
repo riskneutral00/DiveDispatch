@@ -4,6 +4,9 @@ import type { Id } from './_generated/dataModel'
 import { requireAuth, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 
+/** 30-day TTL for portal booking links. */
+const BOOKING_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 // Discriminated union returned by getByToken so the client can route
@@ -99,7 +102,7 @@ export async function _createLink(
 
   // Create new link — 30-day TTL
   const token = crypto.randomUUID()
-  const expiresAt = now + 30 * 24 * 60 * 60 * 1000
+  const expiresAt = now + BOOKING_LINK_TTL_MS
 
   await ctx.db.insert('bookingLinks', {
     bookingId: args.bookingId as Id<"bookings">,
@@ -215,7 +218,7 @@ export const createBookingLink = mutation({
     } else {
       // Create new link — 30-day TTL
       token = crypto.randomUUID()
-      const expiresAt = now + 30 * 24 * 60 * 60 * 1000
+      const expiresAt = now + BOOKING_LINK_TTL_MS
 
       await ctx.db.insert('bookingLinks', {
         bookingId: args.bookingId,

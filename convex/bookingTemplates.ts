@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { Doc } from './_generated/dataModel'
 import { getAuthUser } from './lib/auth'
 import { checkHasAnyOperatorRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
@@ -13,8 +14,7 @@ export const list = query({
     return ctx.db
       .query('bookingTemplates')
       .withIndex('by_ownerId_ownerType', (q) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        q.eq('ownerId', user.slug).eq('ownerType', user.role as any),
+        q.eq('ownerId', user.slug).eq('ownerType', user.role as Doc<'bookingTemplates'>['ownerType']),
       )
       .collect()
   },

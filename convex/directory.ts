@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import type { DatabaseReader } from './_generated/server'
 import { getAuthUser, requireAuth } from './lib/auth'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 
@@ -40,33 +41,27 @@ type ProfileData = {
 
 // Queries the bans table in both directions for mySlug, returning the union
 // of all slugs that share a ban relationship with the caller.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getBannedSlugSet(db: any, mySlug: string): Promise<Set<string>> {
+export async function getBannedSlugSet(db: DatabaseReader, mySlug: string): Promise<Set<string>> {
   const [asBanner, asBanned] = await Promise.all([
     db
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .query('bans').withIndex('by_bannerSlug', (q: any) => q.eq('bannerSlug', mySlug))
+      .query('bans').withIndex('by_bannerSlug', (q) => q.eq('bannerSlug', mySlug))
       .collect(),
     db
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .query('bans').withIndex('by_bannedSlug', (q: any) => q.eq('bannedSlug', mySlug))
+      .query('bans').withIndex('by_bannedSlug', (q) => q.eq('bannedSlug', mySlug))
       .collect(),
   ])
 
   const result = new Set<string>()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const ban of asBanner) result.add((ban as any).bannedSlug)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const ban of asBanned) result.add((ban as any).bannerSlug)
+  for (const ban of asBanner) result.add(ban.bannedSlug)
+  for (const ban of asBanned) result.add(ban.bannerSlug)
   return result
 }
 
 // Returns profile display fields (including role-specific extras) for a user.
 // Returns null if no profile row exists yet.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchProfile(db: any, userId: string, role: StakeholderRole): Promise<ProfileData | null> {
+async function fetchProfile(db: DatabaseReader, userId: string, role: StakeholderRole): Promise<ProfileData | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const byUser = (table: string) => db.query(table).withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  const byUser = (table: string) => (db as any).query(table).withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
 
   switch (role) {
     case 'Instructor': {

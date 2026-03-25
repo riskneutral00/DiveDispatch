@@ -1,5 +1,6 @@
 import { ConvexError } from 'convex/values'
 import type { DbCtx } from './auth'
+import type { Doc } from '../_generated/dataModel'
 import { isBookingExpired } from '../bookings/_shared'
 
 /**
@@ -7,7 +8,7 @@ import { isBookingExpired } from '../bookings/_shared'
  * Throws on invalid/expired token, missing booking, non-Draft status, or missing profile.
  * Use in mutations where token failure should abort.
  */
-export async function resolvePortalToken(ctx: DbCtx, token: string) {
+export async function resolvePortalToken(ctx: DbCtx, token: string): Promise<{ link: Doc<'bookingLinks'>; booking: Doc<'bookings'>; profile: Doc<'customerProfiles'> }> {
   const link = await ctx.db
     .query('bookingLinks')
     .withIndex('by_token', (q) => q.eq('token', token))
@@ -34,7 +35,7 @@ export async function resolvePortalToken(ctx: DbCtx, token: string) {
  * Validates a portal token, returning null on any failure instead of throwing.
  * Use in queries where invalid tokens should yield null.
  */
-export async function resolvePortalTokenSoft(ctx: DbCtx, token: string) {
+export async function resolvePortalTokenSoft(ctx: DbCtx, token: string): Promise<{ link: Doc<'bookingLinks'>; booking: Doc<'bookings'>; profile: Doc<'customerProfiles'> } | null> {
   const link = await ctx.db
     .query('bookingLinks')
     .withIndex('by_token', (q) => q.eq('token', token))

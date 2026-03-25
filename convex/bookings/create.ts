@@ -149,6 +149,9 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
     // STEP 2: Any conflict aborts the entire mutation
     if (inventoryUnit.capacityModel === 'Exclusive') {
+      if (session.unitsRequested !== 1) {
+        throw new ConvexError({ code: 'INVALID_INPUT', reason: 'Exclusive units require exactly 1 unit' })
+      }
       if (currentAvailable < 1) throw new ConvexError({ code: 'CONFLICT' })
     } else {
       // Pooled — check requested units are available

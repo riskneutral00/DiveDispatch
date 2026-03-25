@@ -17,6 +17,7 @@ import type {
   GearInventoryItem,
   GearSizingRow,
 } from '../../../convex/equipmentWidget'
+import type { Id } from '../../../convex/_generated/dataModel'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -436,8 +437,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     setIsActing(true)
     setMutationError(null)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await markPickedUp({ bagId: bagId as any })
+      await markPickedUp({ bagId: bagId as Id<'equipmentBags'> })
     } catch (err) {
       setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as picked up')
     } finally {
@@ -449,8 +449,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     setIsActing(true)
     setMutationError(null)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await markReturned({ bagId: bagId as any })
+      await markReturned({ bagId: bagId as Id<'equipmentBags'> })
     } catch (err) {
       setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as returned')
     } finally {

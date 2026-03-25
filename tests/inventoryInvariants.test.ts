@@ -131,6 +131,49 @@ describe('Invariant 1 — Exclusive unit double-hold prevention', () => {
   })
 })
 
+// ─── Invariant 1b: Exclusive rejects unitsRequested > 1 ──────────────────────
+
+describe('Invariant 1b — Exclusive unit rejects unitsRequested > 1', () => {
+  it('H3-1b: Exclusive unit with unitsRequested=2 throws INVALID_INPUT', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', makeDCUser())
+      const bookingId = await ctx.db.insert('bookings', makeBooking('dc-inv'))
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instructor-excl-guard',
+        displayName: 'Exclusive Guard Test',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instructor-excl-guard',
+        ownerType: 'Instructor',
+      })
+      return { bookingId, unitId }
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-inv' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId,
+          sessions: [
+            {
+              inventoryUnitId: unitId,
+              date: testDate(5),
+              startTime: '09:00',
+              endTime: '11:00',
+              timezone: 'Asia/Bangkok',
+              unitsRequested: 2,
+            },
+          ],
+        },
+      ),
+      'INVALID_INPUT',
+    )
+  })
+})
+
 // ─── Invariant 2: Pooled at zero + partial ──────────────────────────────────
 
 describe('Invariant 2 — Pooled inventory zero-blocking', () => {
