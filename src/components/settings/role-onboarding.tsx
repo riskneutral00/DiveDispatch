@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ROLE_BY_CLERK_ROLE, ROLES, type ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
