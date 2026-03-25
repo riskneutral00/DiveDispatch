@@ -374,6 +374,238 @@ describe('declineReservation', () => {
       'FORBIDDEN',
     )
   })
+
+  it('H26: skips no_backup_available when an alternative unit has availability on all booking dates', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      // DC + declining instructor
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26-inst',
+        slug: 'h26-instructor',
+        email: 'h26@test.com',
+        name: 'H26 Instructor',
+        firstName: 'H26',
+        lastName: 'Instructor',
+        businessName: 'H26 Co',
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26-dc',
+        slug: 'h26-dc',
+        email: 'h26dc@test.com',
+        name: 'H26 DC',
+        firstName: 'H26',
+        lastName: 'DC',
+        businessName: 'H26 DC Co',
+        role: 'DiveCenter',
+      })
+
+      // Declining unit
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'H26 Instructor',
+        ownerId: 'h26-instructor',
+        ownerType: 'Instructor',
+      })
+
+      // Alternative unit (same resource type, different owner)
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26-alt',
+        slug: 'h26-alt-instructor',
+        email: 'h26alt@test.com',
+        name: 'Alt Instructor',
+        firstName: 'Alt',
+        lastName: 'Instructor',
+        businessName: 'Alt Co',
+        role: 'Instructor',
+      })
+      const altUnitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Alt Instructor',
+        ownerId: 'h26-alt-instructor',
+        ownerType: 'Instructor',
+      })
+
+      // Multi-day booking (3 days)
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'h26-dc',
+        startDate: testDate(5),
+        endDate: testDate(7),
+        operatorName: 'H26 DC Co',
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'h26-instructor',
+      })
+
+      // Sessions + reservations + snapshots for the declining unit (3 days)
+      for (let day = 5; day <= 7; day++) {
+        const sessionId = await seedSession(ctx, bookingId, unitId, {
+          date: testDate(day),
+          startTime: '08:00',
+          endTime: '16:00',
+        })
+        await seedSnapshot(ctx, unitId, {
+          date: testDate(day),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        })
+        await seedReservation(ctx, bookingId, unitId, sessionId)
+      }
+
+      // Alternative unit has availability on ALL 3 booking dates
+      for (let day = 5; day <= 7; day++) {
+        await seedSnapshot(ctx, altUnitId, {
+          date: testDate(day),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 1,
+          reservedUnits: 0,
+          availableUnits: 1,
+        })
+      }
+
+      return { bookingId, unitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'user|h26-inst' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // Alternative exists → should NOT send no_backup_available
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const noBackup = notifications.find((n) => n.type === 'no_backup_available')
+      expect(noBackup).toBeUndefined()
+
+      // But hold_declined notification should still be sent
+      const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
+      expect(holdDeclined).toBeDefined()
+    })
+  })
+
+  it('H26: sends no_backup_available when alternative lacks availability on one of the booking dates', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26b-inst',
+        slug: 'h26b-instructor',
+        email: 'h26b@test.com',
+        name: 'H26b Instructor',
+        firstName: 'H26b',
+        lastName: 'Instructor',
+        businessName: 'H26b Co',
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26b-dc',
+        slug: 'h26b-dc',
+        email: 'h26bdc@test.com',
+        name: 'H26b DC',
+        firstName: 'H26b',
+        lastName: 'DC',
+        businessName: 'H26b DC Co',
+        role: 'DiveCenter',
+      })
+
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'H26b Instructor',
+        ownerId: 'h26b-instructor',
+        ownerType: 'Instructor',
+      })
+
+      // Alternative unit — available on day 5 and 6, but NOT day 7
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|h26b-alt',
+        slug: 'h26b-alt-instructor',
+        email: 'h26balt@test.com',
+        name: 'Alt2 Instructor',
+        firstName: 'Alt2',
+        lastName: 'Instructor',
+        businessName: 'Alt2 Co',
+        role: 'Instructor',
+      })
+      const altUnitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Alt2 Instructor',
+        ownerId: 'h26b-alt-instructor',
+        ownerType: 'Instructor',
+      })
+
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'h26b-dc',
+        startDate: testDate(5),
+        endDate: testDate(7),
+        operatorName: 'H26b DC Co',
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'h26b-instructor',
+      })
+
+      for (let day = 5; day <= 7; day++) {
+        const sessionId = await seedSession(ctx, bookingId, unitId, {
+          date: testDate(day),
+          startTime: '08:00',
+          endTime: '16:00',
+        })
+        await seedSnapshot(ctx, unitId, {
+          date: testDate(day),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 1,
+          reservedUnits: 1,
+          availableUnits: 0,
+        })
+        await seedReservation(ctx, bookingId, unitId, sessionId)
+      }
+
+      // Alt available on days 5-6, fully booked on day 7
+      for (let day = 5; day <= 6; day++) {
+        await seedSnapshot(ctx, altUnitId, {
+          date: testDate(day),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 1,
+          reservedUnits: 0,
+          availableUnits: 1,
+        })
+      }
+      await seedSnapshot(ctx, altUnitId, {
+        date: testDate(7),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      return { bookingId, unitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'user|h26b-inst' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // No alternative covers all dates → should send no_backup_available
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const noBackup = notifications.find((n) => n.type === 'no_backup_available')
+      expect(noBackup).toMatchObject({
+        type: 'no_backup_available',
+        userId: 'h26b-dc',
+        bookingId,
+      })
+    })
+  })
 })
 
 // ─── acceptBookingReservations (bulk accept) ─────────────────────────────────

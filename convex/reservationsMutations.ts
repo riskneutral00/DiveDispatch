@@ -297,6 +297,28 @@ export async function _declineHandler(
 
   const candidates = allSameTypeUnits.filter((u) => u._id !== args.inventoryUnitId)
 
+  // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates)
+  const snapshotsByUnitAndDate = new Map<string, boolean>()
+  const dateSnapshots = await Promise.all(
+    bookingDates.map((date) =>
+      ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_date', (q) => q.eq('date', date))
+        .collect(),
+    ),
+  )
+  for (let i = 0; i < bookingDates.length; i++) {
+    for (const snap of dateSnapshots[i]) {
+      const key = `${snap.inventoryUnitId}:${bookingDates[i]}`
+      // Mark as available if ANY window on that date has capacity
+      if (snap.availableUnits > 0) {
+        snapshotsByUnitAndDate.set(key, true)
+      } else if (!snapshotsByUnitAndDate.has(key)) {
+        snapshotsByUnitAndDate.set(key, false)
+      }
+    }
+  }
+
   let hasAlternative = false
 
   for (const candidate of candidates) {
@@ -310,17 +332,11 @@ export async function _declineHandler(
     // Only skip when both cities are known and differ
     if (declinedCity && candidateCity && candidateCity !== declinedCity) continue
 
-    // Candidate must have available capacity on every booking date
+    // Candidate must have available capacity on every booking date (from pre-fetched map)
     let availableOnAll = true
     for (const date of bookingDates) {
-      const snaps = await ctx.db
-        .query('availabilitySnapshots')
-        .withIndex('by_inventoryUnitId_date', (q) =>
-          q.eq('inventoryUnitId', candidate._id).eq('date', date),
-        )
-        .collect()
-
-      if (!snaps.some((s) => s.availableUnits > 0)) {
+      const key = `${candidate._id}:${date}`
+      if (!snapshotsByUnitAndDate.get(key)) {
         availableOnAll = false
         break
       }
