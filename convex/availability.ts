@@ -10,6 +10,20 @@ import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPE
 import { effectiveResourceType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 
+/**
+ * Maximum number of inventoryUnit rows fetched in _getCapacityForDates.
+ * Safe bound: a regional market rarely exceeds 500 inventory units across all
+ * resource types. 1 000 provides headroom without risking unbounded scans.
+ */
+export const INVENTORY_UNITS_LIMIT = 1000
+
+/**
+ * Maximum number of stakeholderBlockedDates docs fetched in _getCapacityForDates.
+ * Safe bound: one doc per stakeholder-role pair — a market with 500 stakeholders
+ * across all role types is a generous upper bound. 1 000 provides headroom.
+ */
+export const BLOCKED_DATES_LIMIT = 1000
+
 export type InventoryListItem = {
   id: string
   name: string
@@ -91,12 +105,13 @@ export async function _getCapacityForDates(
   if (dates.length === 0) return {}
 
   // Fetch all inventory units via parallel index-scoped queries (one per resource type)
+  // Bounded — see INVENTORY_UNITS_LIMIT
   const unitsByType = await Promise.all(
     RESOURCE_OWNER_TYPES.map((rt) =>
       ctx.db
         .query('inventoryUnits')
         .withIndex('by_resourceType', (q) => q.eq('resourceType', rt))
-        .collect(),
+        .take(INVENTORY_UNITS_LIMIT),
     ),
   )
   const allUnits = unitsByType.flat()
@@ -140,13 +155,14 @@ export async function _getCapacityForDates(
   // has blocked the date for the matching resourceType.
   // Privacy: blocked-date info never leaves the server — client only sees available=0.
   // Derive unique owner slugs from fetched units, then query blocked dates via index prefix.
+  // Bounded — see BLOCKED_DATES_LIMIT
   const uniqueOwnerSlugs = [...new Set(allUnits.map((u) => u.ownerId))]
   const blockedDocArrays = await Promise.all(
     uniqueOwnerSlugs.map((slug) =>
       ctx.db
         .query('stakeholderBlockedDates')
         .withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', slug))
-        .collect(),
+        .take(BLOCKED_DATES_LIMIT),
     ),
   )
   const blockedDocs = blockedDocArrays.flat()

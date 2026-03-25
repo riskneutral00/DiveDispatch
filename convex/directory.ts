@@ -4,6 +4,13 @@ import type { DatabaseReader } from './_generated/server'
 import { getAuthUser, requireAuth } from './lib/auth'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 
+/**
+ * Maximum number of users returned per role in listByRole.
+ * Safe bound: a single dive destination rarely exceeds 200 stakeholders of one
+ * role type. 500 provides ample headroom without risking unbounded memory use.
+ */
+export const DIRECTORY_LIST_LIMIT = 500
+
 export type DirectoryEntry = {
   slug: string
   name: string
@@ -206,7 +213,7 @@ export const listByRole = query({
       .query('users')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .withIndex('by_role', (q: any) => q.eq('role', args.role))
-      .collect()
+      .take(DIRECTORY_LIST_LIMIT)
 
     const results = await Promise.all(
       users

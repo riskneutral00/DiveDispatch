@@ -5,6 +5,8 @@ import {
   _getBlockedDatesForStakeholder,
   _listInventoryByType,
   _toggleBlockedDate,
+  INVENTORY_UNITS_LIMIT,
+  BLOCKED_DATES_LIMIT,
 } from '../convex/availability'
 import { isFullDayResource, releaseBookingReservations } from '../convex/bookings/_shared'
 import {
@@ -25,6 +27,22 @@ import { makeT } from './helpers/convex-helpers'
 let t = makeT()
 beforeEach(() => {
   t = makeT()
+})
+
+// ─── Pagination bounds ───────────────────────────────────────────────────────
+
+describe('pagination limit constants', () => {
+  it('INVENTORY_UNITS_LIMIT is a positive bounded integer', () => {
+    expect(INVENTORY_UNITS_LIMIT).toBeGreaterThan(0)
+    expect(Number.isInteger(INVENTORY_UNITS_LIMIT)).toBe(true)
+    expect(INVENTORY_UNITS_LIMIT).toBeLessThanOrEqual(2000)
+  })
+
+  it('BLOCKED_DATES_LIMIT is a positive bounded integer', () => {
+    expect(BLOCKED_DATES_LIMIT).toBeGreaterThan(0)
+    expect(Number.isInteger(BLOCKED_DATES_LIMIT)).toBe(true)
+    expect(BLOCKED_DATES_LIMIT).toBeLessThanOrEqual(2000)
+  })
 })
 
 // ─── getUnavailableUnitIdsForDates ────────────────────────────────────────────

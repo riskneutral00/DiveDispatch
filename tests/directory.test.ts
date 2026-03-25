@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { getBannedSlugSet } from '../convex/directory'
+import { getBannedSlugSet, DIRECTORY_LIST_LIMIT } from '../convex/directory'
 import type { Id } from '../convex/_generated/dataModel'
 import { type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -52,6 +52,17 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     preferredLocale: 'en',
   })
 }
+
+// ─── Pagination bounds ───────────────────────────────────────────────────────
+
+describe('DIRECTORY_LIST_LIMIT', () => {
+  it('is a positive integer providing a safe upper bound for listByRole', () => {
+    expect(DIRECTORY_LIST_LIMIT).toBeGreaterThan(0)
+    expect(Number.isInteger(DIRECTORY_LIST_LIMIT)).toBe(true)
+    // Must be large enough for any realistic directory page, but bounded
+    expect(DIRECTORY_LIST_LIMIT).toBeLessThanOrEqual(1000)
+  })
+})
 
 // ─── getBannedSlugSet ─────────────────────────────────────────────────────────
 
