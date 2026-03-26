@@ -7,14 +7,10 @@ import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { GlassTooltip } from '@/components/glass/glass-tooltip'
 import type { CourseCode } from '@/lib/constants/course-catalog'
+import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
+import type { QuickBookTemplate, PillDragData } from '@/lib/booking/quick-book-templates'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-interface QuickBookTemplate {
-  id: string
-  label: string
-  courses: CourseCode[]
-}
 
 export interface QuickBookRailProps {
   onSelect: (courses: CourseCode[]) => void
@@ -23,23 +19,6 @@ export interface QuickBookRailProps {
   /** Called when a pill is tapped (mobile) to arm/disarm it */
   onArmPill?: (pillId: string | null) => void
 }
-
-/** Data attached to a draggable pill — read on drop by the calendar */
-export interface PillDragData {
-  type: 'quick-book-pill'
-  courses: CourseCode[]
-  label: string
-}
-
-// ── Templates ─────────────────────────────────────────────────────────────────
-
-export const COURSE_TEMPLATES: QuickBookTemplate[] = [
-  { id: 'dsd', label: 'DSD', courses: ['DSD'] },
-  { id: 'ow', label: 'OWC', courses: ['OW'] },
-  { id: 'aow', label: 'AOWC', courses: ['AOW'] },
-  { id: 'ow-aow', label: 'O+A', courses: ['OW', 'AOW'] },
-  { id: 'fd', label: 'FD', courses: ['FD'] },
-]
 
 const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all focus:outline-none focus-visible:ring-2'
 

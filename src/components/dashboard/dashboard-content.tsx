@@ -82,7 +82,11 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const handleDateClick = useCallback(
     (date: string) => {
       if (isOrganizer) {
-        quickBook.handleArmedDateClick(date, requestToggle, drag.setDropConfirmation, drag.setAvailCheckDates)
+        quickBook.handleArmedDateClick(date, {
+          requestToggle,
+          setDropConfirmation: drag.setDropConfirmation,
+          setAvailCheckDates: drag.setAvailCheckDates,
+        })
       } else {
         requestToggle(date)
       }

@@ -2,12 +2,18 @@
 
 import { useCallback, useState } from 'react'
 import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
-import { COURSE_TEMPLATES } from '@/components/booking/quick-book-rail'
+import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
 import { buildPreFill, expandDateRange } from '@/lib/booking/compute-date-range'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 import type { DropConfirmation } from '@/lib/hooks/use-drag-to-date'
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+export interface DragActions {
+  requestToggle: (date: string) => void
+  setDropConfirmation: (info: DropConfirmation | null) => void
+  setAvailCheckDates: (dates: string[]) => void
+}
 
 interface UseQuickBookFlowReturn {
   // Overlay state
@@ -21,12 +27,7 @@ interface UseQuickBookFlowReturn {
   // Armed pill (mobile tap-to-date flow)
   armedPillId: string | null
   setArmedPillId: (id: string | null) => void
-  handleArmedDateClick: (
-    date: string,
-    requestToggle: (date: string) => void,
-    setDropConfirmation: (info: DropConfirmation | null) => void,
-    setAvailCheckDates: (dates: string[]) => void,
-  ) => void
+  handleArmedDateClick: (date: string, dragActions: DragActions) => void
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -55,9 +56,7 @@ export function useQuickBookFlow(defaults: OperatorDefaults): UseQuickBookFlowRe
 
   const handleArmedDateClick = useCallback((
     date: string,
-    requestToggle: (date: string) => void,
-    setDropConfirmation: (info: DropConfirmation | null) => void,
-    setAvailCheckDates: (dates: string[]) => void,
+    { requestToggle, setDropConfirmation, setAvailCheckDates }: DragActions,
   ) => {
     if (!armedPillId) {
       // No pill armed -- normal date click (block/unblock)
