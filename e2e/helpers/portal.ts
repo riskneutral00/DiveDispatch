@@ -1,22 +1,35 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
-import { signInAsDiveCenter } from './auth'
-import { futureDateString } from './seed'
+import { signInAs, signInAsDiveCenter } from './auth'
+import { NICOLE, RYAN_CLARKE, futureDateString } from './seed'
+
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 
 // ── Booking creation ────────────────────────────────────────────────────────
 
 /**
- * Create a minimal all-external DSD booking via the dashboard overlay.
+ * Instructor option for booking creation.
+ * - `external` (default): uses "External (not in system)" with a placeholder name
+ * - `{ name: string }`: selects a named in-system instructor (e.g. "Ryan Clarke")
+ */
+type InstructorOption = 'external' | { name: string }
+
+/**
+ * Create a minimal DSD booking via the dashboard overlay.
+ * By default uses an external instructor. Pass `instructor: { name: 'Ryan Clarke' }`
+ * to assign an in-system instructor instead.
+ *
  * Waits for submit mutation to fire. Caller should wait for overlay close
  * or next-step visibility after calling this.
  */
 export async function createExternalBooking(
   page: Page,
   startDate: string,
-  options?: { name?: string; email?: string },
+  options?: { name?: string; email?: string; instructor?: InstructorOption },
 ): Promise<void> {
   const name = options?.name ?? 'Test Diver'
   const email = options?.email ?? 'test.diver@test.com'
+  const instructor = options?.instructor ?? 'external'
 
   // Open booking overlay
   await page.getByRole('button', { name: /Booking/i }).click()
@@ -28,7 +41,7 @@ export async function createExternalBooking(
   await page.getByRole('button', { name: 'English' }).click()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
 
-  // Step 2: Itinerary -- DSD with external instructor
+  // Step 2: Itinerary -- DSD with selected instructor
   await page.locator('[data-testid="course-activity-select"]').first().selectOption('DSD')
   await page.locator('[data-testid="course-start-date"]').first().fill(startDate)
   await expect(page.getByText(/Day 1/)).toBeVisible({ timeout: 5_000 })
@@ -36,13 +49,40 @@ export async function createExternalBooking(
   const instructorSelect = page.locator('[data-testid="instructor-select"]')
   await expect(instructorSelect).toBeVisible({ timeout: 10_000 })
   await instructorSelect.click()
-  await page.getByRole('option', { name: 'External (not in system)' }).click()
-  await page.getByLabel('Instructor (external)').fill('External Instructor')
+
+  if (instructor === 'external') {
+    await page.getByRole('option', { name: 'External (not in system)' }).click()
+    await page.getByLabel('Instructor (external)').fill('External Instructor')
+  } else {
+    await page.getByRole('option', { name: instructor.name }).click()
+  }
 
   await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   // Step 3: Review -- submit
   await page.getByRole('button', { name: 'Submit Booking' }).click()
+}
+
+// ── Calendar navigation ──────────────────────────────────────────────────────
+
+/**
+ * Navigate the dashboard calendar forward (up to `maxClicks` times)
+ * until at least one booking bar is visible.
+ */
+export async function navigateToBookingDate(
+  page: Page,
+  maxClicks = 3,
+): Promise<void> {
+  const nextBtn = page.locator('button[aria-label="Next 2 weeks"]')
+
+  for (let i = 0; i < maxClicks; i++) {
+    const count = await page.locator('[data-booking-id]').count()
+    if (count > 0) break
+    await nextBtn.click()
+    await expect(page.locator('[data-testid^="cell-"]').first()).toBeVisible({ timeout: 5_000 })
+  }
+
+  await expect(page.locator('[data-booking-id]').first()).toBeVisible({ timeout: 10_000 })
 }
 
 // ── Portal token ────────────────────────────────────────────────────────────
@@ -173,4 +213,82 @@ export async function completeWaiverStep(page: Page): Promise<void> {
 export async function completeEquipmentStep(page: Page): Promise<void> {
   await expect(page.getByText(/Equipment/i).first()).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: 'Continue' }).click()
+}
+
+// ── Upcoming sequence ──────────────────────────────────────────────────────
+
+/**
+ * Create a booking with Ryan Clarke as instructor, complete the customer
+ * portal, have Ryan accept, then return to Nicole's dashboard with the
+ * booking bar visible. After this function the booking is in Upcoming status.
+ *
+ * @param email — unique customer email for parallel safety (required)
+ */
+export async function runFullUpcomingSequence(
+  page: Page,
+  startDate: string,
+  email?: string,
+): Promise<void> {
+  const customerEmail = email ?? `upcoming-${Date.now()}@test.com`
+
+  // 1. Nicole creates booking with Ryan → get portal token
+  await signInAs(page, NICOLE.email)
+
+  await createExternalBooking(page, startDate, {
+    name: 'Upcoming Test Diver',
+    email: customerEmail,
+    instructor: { name: 'Ryan Clarke' },
+  })
+
+  // Dashboard auto-navigates to show the booking bar
+  const bookingBar = page.locator('[data-booking-id]').first()
+  await expect(bookingBar).toBeVisible({ timeout: 10_000 })
+  await bookingBar.click()
+
+  // Send Portal Link → Copy Link → extract token
+  const sendPortalBtn = page.getByRole('button', { name: 'Send Portal Link' })
+  await expect(sendPortalBtn).toBeVisible({ timeout: 8_000 })
+  await sendPortalBtn.click()
+
+  await page.getByRole('button', { name: 'Copy Link' }).click()
+
+  const urlDiv = page.locator('[data-testid="portal-link-url"]')
+  await expect(urlDiv).toBeVisible({ timeout: 10_000 })
+  const urlText = await urlDiv.textContent()
+  if (!urlText?.includes('/portal/')) throw new Error('Portal URL not found')
+
+  const token = urlText.split('/portal/')[1]?.trim()
+  if (!token) throw new Error('Could not extract portal token')
+
+  // 2. Customer completes all portal steps
+  await page.goto(`${BASE_URL}/portal/${token}`)
+  await expect(page).not.toHaveURL(/expired|not_found/, { timeout: 10_000 })
+
+  await completeContactStep(page)
+  await completeMedicalStep(page)
+  await completeWaiverStep(page)
+  await completeEquipmentStep(page)
+
+  await expect(
+    page.getByRole('button', { name: /Submit My Forms/i }),
+  ).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: /Submit My Forms/i }).click()
+
+  await expect(
+    page.getByText(/Thank you|Submitted|Complete|Success/i).first(),
+  ).toBeVisible({ timeout: 10_000 })
+
+  // 3. Ryan accepts the pending request
+  await signInAs(page, RYAN_CLARKE.email)
+  await expect(page.getByText('Pending Requests')).toBeVisible({ timeout: 10_000 })
+
+  const acceptBtn = page.getByRole('button', { name: 'Accept' }).first()
+  await expect(acceptBtn).toBeVisible({ timeout: 10_000 })
+  await acceptBtn.click()
+
+  await expect(page.getByText('Confirmed Schedule')).toBeVisible({ timeout: 10_000 })
+
+  // 4. Return to Nicole's dashboard and find the booking
+  await signInAs(page, NICOLE.email)
+  await navigateToBookingDate(page)
 }
