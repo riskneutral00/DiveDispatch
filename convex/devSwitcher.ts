@@ -3,6 +3,7 @@ import type { GenericMutationCtx } from 'convex/server'
 import { v, ConvexError } from 'convex/values'
 import type { DataModel } from './_generated/dataModel'
 import { requireDevEnvironment } from './lib/devGuard'
+import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 
 type MutCtx = GenericMutationCtx<DataModel>
