@@ -52,6 +52,7 @@ export function BookingBar({
         width: `calc(${(span / 7) * 100}% - 4px)`,
         top: `${topVal}px`,
         height: `${BAR_ROW_HEIGHT - 2}px`,
+        minHeight: '44px',
         opacity,
         background: status === 'Urgent'
           ? 'var(--color-status-urgent)'

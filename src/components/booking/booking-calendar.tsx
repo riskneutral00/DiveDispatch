@@ -483,6 +483,7 @@ export function BookingCalendar({
                           className={`w-full rounded-r-[6px] px-1.5 text-left transition-[filter] duration-150 ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
                             height: `${BAR_ROW_HEIGHT - 2}px`,
+                            minHeight: '44px',
                             opacity,
                             background: bar.status === 'Urgent'
                               ? 'var(--color-status-urgent)'

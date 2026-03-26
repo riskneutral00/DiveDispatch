@@ -8,6 +8,7 @@ import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '../../../../../convex/_generated/api'
 import { GlassCard } from '../../../../components/glass/glass-card'
 import { GlassBadge } from '../../../../components/glass/glass-badge'
+import { GlassButton } from '../../../../components/glass/glass-button'
 import { StepContact } from '../../../../components/portal/step-contact'
 import type { EquipmentData } from '../../../../components/portal/step-equipment'
 import { Spinner } from '@/components/common/spinner'
@@ -101,17 +102,9 @@ export default function PortalTokenPage() {
             Your submission is complete.{result.operatorName ? ` ${result.operatorName}` : ''} will be
             in touch before your activity{result.startDate ? ` on ${result.startDate}` : ''}.
           </p>
-          <button
-            type="button"
-            onClick={() => window.close()}
-            className="px-6 py-2.5 rounded-[var(--border-radius)] text-sm font-medium transition-all focus:outline-none focus-visible:ring-2"
-            style={{
-              background: 'var(--color-primary)',
-              color: 'var(--color-text-on-primary)',
-            }}
-          >
+          <GlassButton variant="primary" size="md" onClick={() => window.close()}>
             Close
-          </button>
+          </GlassButton>
         </GlassCard>
       </div>
     )
@@ -209,17 +202,9 @@ export default function PortalTokenPage() {
           <div className="space-y-4">
             <StepEquipment onChange={(data) => setEquipmentData(data)} />
             <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setCurrentStep('safety')}
-                className="px-6 py-2.5 rounded-[var(--border-radius)] text-sm font-medium transition-all focus:outline-none focus-visible:ring-2"
-                style={{
-                  background: 'var(--color-primary)',
-                  color: 'var(--color-text-on-primary)',
-                }}
-              >
+              <GlassButton variant="primary" size="md" onClick={() => setCurrentStep('safety')}>
                 Continue
-              </button>
+              </GlassButton>
             </div>
           </div>
         )
