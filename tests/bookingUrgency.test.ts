@@ -12,11 +12,7 @@ describe('urgentCountdown', () => {
   })
 
   it('returns null for Draft bookings far in the future', () => {
-    // A date 30 days from now is not urgent
-    const farFuture = new Date()
-    farFuture.setDate(farFuture.getDate() + 30)
-    const dateStr = farFuture.toISOString().split('T')[0]
-    expect(urgentCountdown({ status: 'Draft', startDate: dateStr })).toBeNull()
+    expect(urgentCountdown({ status: 'Draft', startDate: testDate(30) })).toBeNull()
   })
 
   it('returns "Started" when start date has passed', () => {
