@@ -2,22 +2,37 @@
 
 import {
   AlertTriangle,
+  ArrowRightLeft,
   Ban,
   Bell,
   CheckCircle,
   Clock,
+  FileText,
+  RotateCcw,
+  ShieldCheck,
   Trash2,
   UserCheck,
+  UserX,
+  UsersRound,
   XCircle,
 } from 'lucide-react'
+import type { IconName } from '@/lib/notifications/notification-config'
+import { getNotificationStyle } from '@/lib/notifications/notification-config'
 
-const TYPE_ICON: Record<string, React.ElementType> = {
-  hold_placed: Clock,
-  hold_accepted: CheckCircle,
-  hold_declined: XCircle,
-  booking_cancelled: Ban,
-  portal_complete: UserCheck,
-  medical_hard_block: AlertTriangle,
+const ICON_MAP: Record<IconName, React.ElementType> = {
+  AlertTriangle,
+  ArrowRightLeft,
+  Ban,
+  Bell,
+  CheckCircle,
+  Clock,
+  FileText,
+  RotateCcw,
+  ShieldCheck,
+  UserCheck,
+  UserX,
+  UsersRound,
+  XCircle,
 }
 
 function timeAgo(ts: number): string {
@@ -32,8 +47,9 @@ function timeAgo(ts: number): string {
 
 // Static component — declared outside render to preserve reference identity.
 function NotificationIcon({ type, isUnread }: { type: string; isUnread: boolean }) {
-  const Icon = TYPE_ICON[type] ?? Bell
-  return <Icon size={16} style={{ color: isUnread ? 'var(--color-primary)' : 'var(--color-text-secondary)' }} />
+  const { icon, color } = getNotificationStyle(type, isUnread)
+  const Icon = ICON_MAP[icon] ?? Bell
+  return <Icon size={16} style={{ color }} />
 }
 
 export interface NotificationDoc {
