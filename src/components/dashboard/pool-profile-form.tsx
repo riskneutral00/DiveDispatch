@@ -18,31 +18,37 @@ const locationSchema = z.object({
   placeId: z.string().optional(),
 })
 
-const poolSchema = z.object({
+export const poolSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   contactEmail: z.string().email('Invalid email'),
   contactPhone: z.string().min(1, 'Phone is required'),
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+  confinedCapable: z.boolean(),
+  openWaterCapable: z.boolean(),
 })
 
-type FormState = {
+export type PoolFormState = {
   name: string
   location: LocationValue | null
   contactEmail: string
   contactPhone: string
   maxDepth: number
   maxCapacity: number
+  confinedCapable: boolean
+  openWaterCapable: boolean
 }
 
-const INITIAL_FORM: FormState = {
+export const INITIAL_POOL_FORM: PoolFormState = {
   name: '',
   location: null,
   contactEmail: '',
   contactPhone: '',
   maxDepth: 0,
   maxCapacity: 0,
+  confinedCapable: false,
+  openWaterCapable: false,
 }
 
 function parseNumber(raw: string, isInt: boolean): number {
@@ -51,60 +57,75 @@ function parseNumber(raw: string, isInt: boolean): number {
   return isNaN(parsed) ? 0 : parsed
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function poolFromProfile(p: Record<string, any>): PoolFormState {
+  return {
+    name: p.name,
+    location: {
+      placeName: p.placeName,
+      country: p.country,
+      lat: p.lat,
+      lng: p.lng,
+      placeId: p.placeId ?? undefined,
+    } as LocationValue,
+    contactEmail: p.contactEmail ?? '',
+    contactPhone: p.contactPhone ?? '',
+    maxDepth: p.maxDepth ?? 0,
+    maxCapacity: p.maxCapacity ?? 0,
+    confinedCapable: p.confinedCapable ?? false,
+    openWaterCapable: p.openWaterCapable ?? false,
+  }
+}
+
+export function poolToPayload(f: PoolFormState): Record<string, unknown> {
+  const loc = f.location!
+  return {
+    name: f.name,
+    placeName: loc.placeName,
+    country: loc.country,
+    lat: loc.lat,
+    lng: loc.lng,
+    placeId: loc.placeId,
+    contactEmail: f.contactEmail,
+    contactPhone: f.contactPhone,
+    maxDepth: f.maxDepth,
+    maxCapacity: f.maxCapacity,
+    confinedCapable: f.confinedCapable,
+    openWaterCapable: f.openWaterCapable,
+  }
+}
+
+export function buildPoolCreatePayload(payload: Record<string, unknown>) {
+  return {
+    ...payload,
+    venueType: 'Pool' as const,
+    isPublic: false,
+    hasCompressor: false,
+  }
+}
+
 export function PoolProfileForm() {
   const profile = useQuery(api.venues.mine)
   const me = useQuery(api.users.getAccountDefaults)
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<PoolFormState>({
     profile,
     me: me ?? undefined,
     schema: poolSchema,
-    defaults: INITIAL_FORM,
-    fromProfile: (p) => ({
-      name: p.name,
-      location: {
-        placeName: p.placeName,
-        country: p.country,
-        lat: p.lat,
-        lng: p.lng,
-        placeId: p.placeId ?? undefined,
-      } as LocationValue,
-      contactEmail: p.contactEmail ?? '',
-      contactPhone: p.contactPhone ?? '',
-      maxDepth: p.maxDepth ?? 0,
-      maxCapacity: p.maxCapacity ?? 0,
-    }),
+    defaults: INITIAL_POOL_FORM,
+    fromProfile: poolFromProfile,
     fromMe: (defaults, initial) => ({
       ...initial,
       contactEmail: defaults.defaultContactEmail ?? '',
       contactPhone: defaults.defaultContactPhone ?? '',
     }),
-    toPayload: (f) => {
-      const loc = f.location!
-      return {
-        name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
-        contactEmail: f.contactEmail,
-        contactPhone: f.contactPhone,
-        maxDepth: f.maxDepth,
-        maxCapacity: f.maxCapacity,
-      }
-    },
+    toPayload: poolToPayload,
     create: (payload) =>
-      createMutation({
-        ...payload,
-        venueType: 'Pool',
-        isPublic: false,
-        confinedCapable: true,
-        openWaterCapable: false,
-        hasCompressor: false,
-      } as Parameters<typeof createMutation>[0]),
+      createMutation(
+        buildPoolCreatePayload(payload) as Parameters<typeof createMutation>[0],
+      ),
     update,
   })
 
@@ -162,6 +183,43 @@ export function PoolProfileForm() {
               placeholder="+66 81 234 5678"
               autoComplete="tel"
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+              Venue Capabilities
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                className="flex items-center gap-2 cursor-pointer select-none text-sm"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.confinedCapable}
+                  onChange={(e) => setField('confinedCapable', e.target.checked)}
+                  className="rounded"
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                <span>Confined Water Capable</span>
+              </label>
+              <label
+                className="flex items-center gap-2 cursor-pointer select-none text-sm"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.openWaterCapable}
+                  onChange={(e) => setField('openWaterCapable', e.target.checked)}
+                  className="rounded"
+                  style={{ accentColor: 'var(--color-primary)' }}
+                />
+                <span>Open Water Capable</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
               label="Max Depth (m)"
               type="number"
