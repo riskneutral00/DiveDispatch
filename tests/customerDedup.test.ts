@@ -5,6 +5,8 @@ import {
   TEST_SLUGS,
   seedUser,
   seedBooking,
+  seedPortalFixture,
+  type SeedCtx,
 } from './fixtures'
 import { testDate, passportExpiry, dob } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
@@ -17,29 +19,7 @@ beforeEach(() => {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function seedPortalFixture(ctx: Parameters<typeof seedUser>[0]) {
-  await seedUser(ctx)
-  const bookingId = await seedBooking(ctx, { status: 'Draft' })
-
-  // Create booking link
-  const linkId = await ctx.db.insert('bookingLinks', {
-    bookingId,
-    token: 'test-token-1',
-    customerName: 'Alice Smith',
-    email: 'alice@example.com',
-    expiresAt: Date.now() + 86400000,
-  })
-
-  // Create customer profile
-  const profileId = await ctx.db.insert('customerProfiles', {
-    bookingId,
-    linkToken: 'test-token-1',
-  })
-
-  return { bookingId, linkId, profileId }
-}
-
-async function seedExistingCustomer(ctx: Parameters<typeof seedUser>[0]) {
+async function seedExistingCustomer(ctx: SeedCtx) {
   return ctx.db.insert('customers', {
     legalFirstName: 'Alice',
     legalLastName: 'Smith',
@@ -65,21 +45,47 @@ async function seedExistingCustomer(ctx: Parameters<typeof seedUser>[0]) {
   })
 }
 
-// ─── checkReturningCustomer ──────────────────────────────────────────────────
+// ─── checkReturningCustomer — token gating (DD-131) ─────────────────────────
 
-describe('checkReturningCustomer', () => {
-  it('returns null when no customer with that email exists', async () => {
-    await t.run(async (ctx) => {
-      const result = await _checkReturningCustomerHandler(ctx, { email: 'nobody@example.com' })
+describe('checkReturningCustomer — token gating', () => {
+  it('returns null when no token provided', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      await seedExistingCustomer(ctx)
+
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token: '',
+      })
       expect(result).toBeNull()
     })
   })
 
-  it('returns customer data when email matches', async () => {
-    await t.run(async (ctx) => {
+  it('returns null when token is invalid', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
       await seedExistingCustomer(ctx)
 
-      const result = await _checkReturningCustomerHandler(ctx, { email: 'alice@example.com' })
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token: 'totally-bogus-token',
+      })
+      expect(result).toBeNull()
+    })
+  })
+
+  it('returns customer data when valid token + matching email', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      await seedExistingCustomer(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
+
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token,
+      })
       expect(result).not.toBeNull()
       expect(result!.legalFirstName).toBe('Alice')
       expect(result!.legalLastName).toBe('Smith')
@@ -88,11 +94,33 @@ describe('checkReturningCustomer', () => {
     })
   })
 
-  it('returns equipment sizing data for pre-fill', async () => {
-    await t.run(async (ctx) => {
-      await seedExistingCustomer(ctx)
+  it('returns null when no customer with that email exists (valid token)', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
 
-      const result = await _checkReturningCustomerHandler(ctx, { email: 'alice@example.com' })
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'nobody@example.com',
+        token,
+      })
+      expect(result).toBeNull()
+    })
+  })
+
+  it('returns equipment sizing data for pre-fill', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      await seedExistingCustomer(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
+
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token,
+      })
       expect(result!.heightCm).toBe(165)
       expect(result!.weightKg).toBe(60)
       expect(result!.shoeSize).toBe(38)
@@ -100,22 +128,53 @@ describe('checkReturningCustomer', () => {
   })
 
   it('returns certifications for pre-fill', async () => {
-    await t.run(async (ctx) => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
       await seedExistingCustomer(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
 
-      const result = await _checkReturningCustomerHandler(ctx, { email: 'alice@example.com' })
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token,
+      })
       expect(result!.agency).toBe('PADI')
       expect(result!.agencyID).toBe('PADI-12345')
     })
   })
 
-  it('is case-insensitive on email match', async () => {
-    await t.run(async (ctx) => {
+  it('is case-insensitive on email match via normalized index', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
       await seedExistingCustomer(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
 
-      const result = await _checkReturningCustomerHandler(ctx, { email: 'Alice@Example.COM' })
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'Alice@Example.COM',
+        token,
+      })
       expect(result).not.toBeNull()
       expect(result!.legalFirstName).toBe('Alice')
+    })
+  })
+
+  it('returns null for expired portal token', async () => {
+    await t.run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      await seedExistingCustomer(ctx)
+      const { token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+        link: { expiresAt: Date.now() - 1000 },
+      })
+
+      const result = await _checkReturningCustomerHandler(ctx, {
+        email: 'alice@example.com',
+        token,
+      })
+      expect(result).toBeNull()
     })
   })
 })
@@ -124,11 +183,14 @@ describe('checkReturningCustomer', () => {
 
 describe('savePortalContact — returning customer', () => {
   it('creates new customer when no existingCustomerId provided (first-time)', async () => {
-    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
-      const { profileId } = await seedPortalFixture(ctx)
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      const { profileId, token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
 
       await _savePortalContactHandler(ctx, {
-        token: 'test-token-1',
+        token,
         legalFirstName: 'Alice',
         legalLastName: 'Smith',
         email: 'alice@example.com',
@@ -154,12 +216,15 @@ describe('savePortalContact — returning customer', () => {
   })
 
   it('reuses existing customer when existingCustomerId provided', async () => {
-    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
-      const { profileId } = await seedPortalFixture(ctx)
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx: SeedCtx) => {
+      await seedUser(ctx)
+      const { profileId, token } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
+      })
       const existingId = await seedExistingCustomer(ctx)
 
       await _savePortalContactHandler(ctx, {
-        token: 'test-token-1',
+        token,
         existingCustomerId: existingId as string,
         legalFirstName: 'Alice',
         legalLastName: 'Johnson', // Name changed
@@ -192,36 +257,18 @@ describe('savePortalContact — returning customer', () => {
   })
 
   it('links multiple bookings to same customerId', async () => {
-    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx: SeedCtx) => {
       await seedUser(ctx)
       const existingId = await seedExistingCustomer(ctx)
 
       // Booking 1
-      const booking1 = await seedBooking(ctx)
-      await ctx.db.insert('bookingLinks', {
-        bookingId: booking1,
-        token: 'token-b1',
-        customerName: 'Alice',
-        email: 'alice@example.com',
-        expiresAt: Date.now() + 86400000,
-      })
-      const profile1 = await ctx.db.insert('customerProfiles', {
-        bookingId: booking1,
-        linkToken: 'token-b1',
+      const { token: token1, profileId: profile1 } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
       })
 
       // Booking 2
-      const booking2 = await seedBooking(ctx)
-      await ctx.db.insert('bookingLinks', {
-        bookingId: booking2,
-        token: 'token-b2',
-        customerName: 'Alice',
-        email: 'alice@example.com',
-        expiresAt: Date.now() + 86400000,
-      })
-      const profile2 = await ctx.db.insert('customerProfiles', {
-        bookingId: booking2,
-        linkToken: 'token-b2',
+      const { token: token2, profileId: profile2 } = await seedPortalFixture(ctx, {
+        booking: { bookingFormComplete: false },
       })
 
       // Save contact for both bookings, linking to existing customer
@@ -241,8 +288,8 @@ describe('savePortalContact — returning customer', () => {
         emergencyContactRelation: 'Spouse',
       }
 
-      await _savePortalContactHandler(ctx, { token: 'token-b1', existingCustomerId: existingId as string, ...contactData })
-      await _savePortalContactHandler(ctx, { token: 'token-b2', existingCustomerId: existingId as string, ...contactData })
+      await _savePortalContactHandler(ctx, { token: token1, existingCustomerId: existingId as string, ...contactData })
+      await _savePortalContactHandler(ctx, { token: token2, existingCustomerId: existingId as string, ...contactData })
 
       // Both profiles link to same customer
       const p1 = await ctx.db.get(profile1)

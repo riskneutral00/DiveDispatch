@@ -10,27 +10,25 @@ import { checkRateLimit } from './lib/rateLimiter'
 /**
  * Checks if a customer with the given email already exists.
  * Returns contact + equipment data for pre-fill (NOT medical/waiver).
- * Case-insensitive email match.
+ * Requires a valid portal token — no PII without auth.
+ * Case-insensitive email match via normalized lowercase index lookup.
  */
 export async function _checkReturningCustomerHandler(
   ctx: QueryCtx,
-  args: { email: string },
+  args: { email: string; token: string },
 ) {
+  // Gate: require valid portal token before returning any PII
+  if (!args.token) return null
+  const resolved = await resolvePortalTokenSoft(ctx, args.token)
+  if (!resolved) return null
+
   const normalizedEmail = args.email.toLowerCase().trim()
 
-  // by_email index stores as-entered; scan and compare lowercase
-  const allByEmail = await ctx.db
+  // Index lookup using normalized email (emails stored lowercase on insert)
+  const match = await ctx.db
     .query('customers')
-    .withIndex('by_email', (q) => q.eq('email', args.email))
-    .collect()
-
-  // Also try lowercase match across all if exact didn't work
-  let match: (typeof allByEmail)[number] | null = allByEmail[0] ?? null
-  if (!match) {
-    // Fallback: scan for case-insensitive match
-    const recent = await ctx.db.query('customers').order('desc').take(500)
-    match = recent.find((c) => c.email.toLowerCase() === normalizedEmail) ?? null
-  }
+    .withIndex('by_email', (q) => q.eq('email', normalizedEmail))
+    .first()
 
   if (!match) return null
 
@@ -66,7 +64,7 @@ export async function _checkReturningCustomerHandler(
 }
 
 export const checkReturningCustomer = query({
-  args: { email: v.string() },
+  args: { email: v.string(), token: v.string() },
   handler: _checkReturningCustomerHandler,
 })
 
@@ -177,6 +175,8 @@ export async function _savePortalContactHandler(
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { token: _token, existingCustomerId: _existingId, ...contactData } = args
+  // Normalize email to lowercase for consistent index lookups
+  contactData.email = contactData.email.toLowerCase().trim()
 
   if (profile.customerId) {
     // Already linked — update existing record

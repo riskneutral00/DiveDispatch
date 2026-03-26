@@ -102,7 +102,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   const checkReturning = useQuery(
     api.customers.checkReturningCustomer,
     form.email && form.email.includes('@') && !returningDismissed
-      ? { email: form.email }
+      ? { email: form.email, token }
       : 'skip',
   )
 
