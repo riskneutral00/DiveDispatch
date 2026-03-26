@@ -9,4 +9,7 @@ crons.interval('complete-bookings', { hours: 1 }, internal.bookings.status.compl
 // Purge stale rate limit entries to prevent unbounded table growth from portal token keys
 crons.interval('purge-rate-limits', { hours: 24 }, internal.lib.rateLimiter.purgeStaleRateLimits)
 
+// Prune past dates from stakeholderBlockedDates to prevent unbounded array growth
+crons.interval('prune-blocked-dates', { hours: 168 }, internal.availability.pruneBlockedDates)
+
 export default crons

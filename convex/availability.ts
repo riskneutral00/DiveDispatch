@@ -1,5 +1,5 @@
 import { ConvexError, v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { requireAuth, type DbCtx } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
@@ -569,5 +569,34 @@ export const listDiveSites = query({
       .withIndex('by_resourceType', (q) => q.eq('resourceType', 'DiveSite'))
       .collect()
     return units.map((u) => ({ id: u.resourceId, label: u.displayName }))
+  },
+})
+
+// ─── Cron: Prune Past Blocked Dates ──────────────────────────────────────────
+
+/**
+ * Removes dates older than today from all stakeholderBlockedDates rows.
+ * Prevents unbounded array growth (Convex 1 MB document limit).
+ * Runs weekly via cron — see convex/crons.ts.
+ *
+ * Returns the number of rows that were actually pruned (had past dates removed).
+ */
+export const pruneBlockedDates = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<number> => {
+    const today = todayISO()
+    const allDocs = await ctx.db.query('stakeholderBlockedDates').collect()
+
+    let prunedCount = 0
+
+    for (const doc of allDocs) {
+      const filtered = doc.dates.filter((d) => d >= today)
+      if (filtered.length < doc.dates.length) {
+        await ctx.db.patch(doc._id, { dates: filtered })
+        prunedCount++
+      }
+    }
+
+    return prunedCount
   },
 })
