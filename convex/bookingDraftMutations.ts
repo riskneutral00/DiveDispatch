@@ -316,6 +316,24 @@ export const discardDraft = mutation({
       await ctx.db.delete(r._id)
     }
 
+    // Delete audit log entries for this booking (DD-157)
+    const auditLogs = await ctx.db
+      .query('bookingAuditLog')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const a of auditLogs) {
+      await ctx.db.delete(a._id)
+    }
+
+    // Delete booking resource assignments for this booking (DD-157)
+    const resources = await ctx.db
+      .query('bookingResources')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    for (const br of resources) {
+      await ctx.db.delete(br._id)
+    }
+
     await ctx.db.delete(args.bookingId)
   },
 })
