@@ -184,9 +184,9 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
 ### Job 2.5: Skeleton Update
 
-Path: `SKELETON.md` (project root)
+Path: `.SKELETON.md` (project root)
 
-1. Read `SKELETON.md` in Round 1 (parallel with other reads).
+1. Read `.SKELETON.md` in Round 1 (parallel with other reads).
 2. If any launch checklist items changed status this session (tickets fixed, coverage improved, deploy configured), update their status.
 3. If no checklist items changed — skip.
 4. Write via `sed -i ''` or Edit in Round 3 (parallel with other writes).
