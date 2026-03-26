@@ -10,10 +10,11 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import type { StakeholderRole } from '../convex/lib/validators'
 
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
-async function seedUser(ctx: Ctx, slug: string, role = 'Agent') {
+async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent') {
   const userId = await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
@@ -22,14 +23,13 @@ async function seedUser(ctx: Ctx, slug: string, role = 'Agent') {
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    role: role as any,
+    role,
     isSeeded: false,
     preferredLocale: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,
-    role: role as any,
+    role,
     isPrimary: true,
     createdAt: Date.now(),
     profileComplete: false,
