@@ -270,11 +270,10 @@ describe('submitPortal — medical block TTL extension wiring', () => {
     expect(booking!.expiresAt as number).toBeGreaterThan(originalExpiresAt)
   })
 
-  it('normal flow: saveMedicalAnswers then submitPortal does NOT extend TTL (gap)', async () => {
-    // KNOWN GAP: saveMedicalAnswers sets medicalHardBlock=true but does NOT
-    // extend expiresAt. submitPortal re-derives the same value, sees no drift,
-    // and skips the extension. In normal flow, TTL is never extended for
-    // medical blocks. The extension code only fires on drift.
+  it('normal flow: saveMedicalAnswers then submitPortal extends TTL (DD-170 fix)', async () => {
+    // DD-170 FIX: saveMedicalAnswers now extends expiresAt when hard block
+    // is detected. submitPortal sees flags already in sync and does not
+    // re-extend, but the extension from saveMedicalAnswers persists.
     const t = makeT()
 
     const originalExpiresAt = Date.now() + HOLD_TTL
@@ -299,7 +298,7 @@ describe('submitPortal — medical block TTL extension wiring', () => {
       return fixture
     })
 
-    // Normal flow: saveMedicalAnswers sets medicalHardBlock=true on booking
+    // Normal flow: saveMedicalAnswers sets medicalHardBlock=true AND extends TTL
     await t.mutation(api.customerProfiles.saveMedicalAnswers, {
       token,
       answers: { ...ALL_NO, medical_q3: true },
@@ -309,8 +308,8 @@ describe('submitPortal — medical block TTL extension wiring', () => {
 
     const booking = await t.run(async (ctx: SeedCtx) => ctx.db.get(bookingId))
     expect(booking?.medicalHardBlock).toBe(true)
-    // TTL NOT extended — the flags were already in sync
-    expect(booking!.expiresAt as number).toBe(originalExpiresAt)
+    // TTL extended by saveMedicalAnswers — exceeds original 12h hold
+    expect(booking!.expiresAt as number).toBeGreaterThan(originalExpiresAt)
   })
 
   it('does NOT extend expiresAt when all medical answers are "no"', async () => {

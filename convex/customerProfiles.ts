@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
-import { tryAutoAdvance } from './bookings/_shared'
+import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
@@ -51,10 +51,35 @@ export const saveMedicalAnswers = mutation({
       physicianClearanceRequired: hasYes,
     })
 
-    await ctx.db.patch(link.bookingId, {
+    const bookingPatch: Record<string, unknown> = {
       medicalHardBlock: hasYes,
       portalMedical: true,
-    })
+    }
+
+    // DD-170: Extend hold TTL when medical hard block detected (36h + 8pm ceiling)
+    if (hasYes) {
+      const sessions = await ctx.db
+        .query('bookingSessions')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', link.bookingId))
+        .collect()
+
+      if (sessions.length > 0) {
+        const earliest = sessions.reduce((min, s) =>
+          s.date < min.date ? s : min,
+        )
+        const newExpiresAt = computeMedicalDeadline(
+          booking._creationTime,
+          earliest.date,
+          earliest.timezone ?? 'Asia/Bangkok',
+        )
+        // Only extend, never shorten
+        if (newExpiresAt > ((booking.expiresAt as number) ?? 0)) {
+          bookingPatch.expiresAt = newExpiresAt
+        }
+      }
+    }
+
+    await ctx.db.patch(link.bookingId, bookingPatch)
 
     if (hasYes) {
       // Persist cross-DC visibility flag on the customer record (if contact step complete)
