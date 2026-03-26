@@ -32,7 +32,7 @@ describe('users.setRole', () => {
 
   it('updates businessName (role no longer written to users table)', async () => {
     const t = makeT()
-    let userId: any
+    let userId: Doc<'users'>['_id']
     await t.run(async (ctx) => {
       userId = await seedUser(ctx)
     })
@@ -41,7 +41,7 @@ describe('users.setRole', () => {
       .mutation(api.users.setRole, { role: 'Instructor', businessName: 'New Biz' })
 
     await t.run(async (ctx) => {
-      const user = await ctx.db.get(userId) as Doc<'users'> | null
+      const user = await ctx.db.get(userId!) as Doc<'users'> | null
       expect(user!.businessName).toBe('New Biz')
     })
   })
@@ -92,12 +92,13 @@ describe('users.upsertFromWebhook', () => {
       lastName: 'User',
     })
 
-    expect(typeof userId).toBe('string')
+    expect(userId).toBeTruthy()
 
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId)
+      expect(user).not.toBeNull()
       expect(user!.email).toBe('new@test.com')
-      expect(typeof user!.slug).toBe('string')
+      expect(user!.slug).toBeTruthy()
     })
   })
 
@@ -202,12 +203,12 @@ describe('users.bySlug', () => {
 describe('users.byId', () => {
   it('returns user by ID', async () => {
     const t = makeT()
-    let userId: any
+    let userId: Doc<'users'>['_id']
     await t.run(async (ctx) => {
       userId = await seedUser(ctx)
     })
 
-    const user = await t.query(api.users.byId, { id: userId })
+    const user = await t.query(api.users.byId, { id: userId! })
     expect(user).not.toBeNull()
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
   })
