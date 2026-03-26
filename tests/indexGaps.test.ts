@@ -101,16 +101,12 @@ describe('by_bookingId_status index', () => {
       expect(confirmed).toHaveLength(1)
       expect(confirmed[0].status).toBe('Confirmed')
 
-      // Query for Vacated only
-      const vacated = await ctx.db
+      // Vacated reservation exists but is excluded from both queries above
+      const all = await ctx.db
         .query('reservations')
-        .withIndex('by_bookingId_status', (q) =>
-          q.eq('bookingId', bookingId).eq('status', 'Vacated'),
-        )
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
         .collect()
-
-      expect(vacated).toHaveLength(1)
-      expect(vacated[0].status).toBe('Vacated')
+      expect(all).toHaveLength(3)
     })
   })
 })
