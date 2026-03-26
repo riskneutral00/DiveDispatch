@@ -149,12 +149,12 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
    | What | Where |
    |---|---|
-   | Design/UX observation | `Inspirations/<source>/<slug>.md` |
-   | Reusable pattern | `PatternLibrary/<slug>.md` |
-   | New app idea | `Ideas/Parallel Apps.md` (append) |
-   | Project architecture/schema | `DiveDispatch/*.md` (update) |
+   | Reusable pattern | `DiveDispatch/PatternLibrary/<slug>.md` |
+   | New app idea | `RiskNeutral/Ideas/Ideas.md` (append) |
+   | Project architecture/schema | `DiveDispatch/Architecture/*.md` (update) |
    | Lesson / mistake to avoid | `DiveDispatch/Architecture/Lessons.md` (append dated section) |
-   | Session summary | `Sessions/YYYY-MM-DD.md` (overwrite) |
+   | Session summary | `DiveDispatch/Sessions/YYYY-MM-DD.md` (overwrite) |
+   | Code review | `DiveDispatch/Reviews/<slug>.md` |
    | Risk Neutral strategy/vision | `RiskNeutral/Strategy/*.md` (update) |
    | Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
 

@@ -45,20 +45,21 @@ Non-obvious rules:
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
 - Medical block, auto-advance conditions → `Vaults/DiveDispatch/Architecture/Architecture.md`
 
-## Obsidian Vaults (`~/Desktop/RiskNeutral/Vaults/RiskNeutral/`)
+## Obsidian Vaults
 
-Risk Neutral is the parent entity; DiveDispatch is the active product.
+DiveDispatch vault: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
+RiskNeutral vault: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
 | What | Where |
 |---|---|
-| Design/UX observation | `Inspirations/<source>/<slug>.md` |
-| Reusable pattern | `PatternLibrary/<slug>.md` |
-| New app idea | `Ideas/Parallel Apps.md` (append) |
-| Project architecture/schema | `<project>/*.md` (update) |
-| Lesson / mistake to avoid | `<project>/Lessons.md` |
-| Session summary | `Sessions/YYYY-MM-DD.md` |
-| Risk Neutral strategy/vision observation | `RiskNeutral/Strategy/*.md` (update) |
-| Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
+| Reusable pattern | `Vaults/DiveDispatch/PatternLibrary/<slug>.md` |
+| Project architecture/schema | `Vaults/DiveDispatch/Architecture/*.md` (update) |
+| Lesson / mistake to avoid | `Vaults/DiveDispatch/Architecture/Lessons.md` |
+| Session summary | `Vaults/DiveDispatch/Sessions/YYYY-MM-DD.md` |
+| Code review | `Vaults/DiveDispatch/Reviews/<slug>.md` |
+| New app idea | `Vaults/RiskNeutral/Ideas/Ideas.md` (append) |
+| Risk Neutral strategy/vision | `Vaults/RiskNeutral/Strategy/*.md` (update) |
+| Founder insight/background | `Vaults/RiskNeutral/Founder/Matt.md` (update) |
 
 ## Design Workflow
 

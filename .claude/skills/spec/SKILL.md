@@ -138,8 +138,7 @@ Present overlapping items from TODO.md. Recommend:
 Before writing, search the full vault for relevant content:
 - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — mistakes to avoid
 - `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — architectural decisions
-- `~/Desktop/RiskNeutral/Vaults/RiskNeutral/PatternLibrary/` — reusable patterns
-- `~/Desktop/RiskNeutral/Vaults/RiskNeutral/Inspirations/` — design references
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/PatternLibrary/` — reusable patterns
 
 Add anything relevant to Implementation Notes.
 

@@ -148,7 +148,7 @@ Stage observations for the vault. For each of these that applies to this session
 
 - **Lessons learned** → will go to `Vaults/DiveDispatch/Architecture/Lessons.md`
 - **Decisions made** → will go to `Vaults/DiveDispatch/Architecture/Architecture.md`
-- **Patterns discovered** → will go to `Vaults/RiskNeutral/PatternLibrary/`
+- **Patterns discovered** → will go to `Vaults/DiveDispatch/PatternLibrary/`
 - **Product observations** → will go to `Vaults/DiveDispatch/Product/`
 
 Don't write these yet — `/vault` handles the actual writes. Just prepare the content so `/vault` can capture it.
