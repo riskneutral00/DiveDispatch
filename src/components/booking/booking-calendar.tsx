@@ -1,9 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useDroppable } from '@dnd-kit/core'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
+import { Spinner } from '@/components/common/spinner'
+
+const DroppableDateCell = dynamic(
+  () => import('@/components/booking/droppable-date-cell').then((m) => ({ default: m.DroppableDateCell })),
+  { ssr: false, loading: () => <Spinner /> },
+)
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
@@ -51,31 +57,6 @@ function buildBarLabel(booking: CalendarBooking): string {
 /** Plain date cell wrapper — no dnd-kit hooks, safe outside DndContext */
 function PlainDateCell({ children }: { children: (isOver: boolean) => React.ReactNode }) {
   return <div>{children(false)}</div>
-}
-
-/** Droppable date cell wrapper — requires DndContext ancestor */
-function DroppableDateCell({
-  dateString,
-  isBlocked,
-  isPast,
-  children,
-}: {
-  dateString: string
-  isBlocked: boolean
-  isPast: boolean
-  children: (isOver: boolean) => React.ReactNode
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: `date-${dateString}`,
-    data: { type: 'calendar-date', date: dateString },
-    disabled: isBlocked || isPast,
-  })
-
-  return (
-    <div ref={setNodeRef}>
-      {children(isOver && !isBlocked && !isPast)}
-    </div>
-  )
 }
 
 export function BookingCalendar({

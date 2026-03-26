@@ -53,6 +53,20 @@ vi.mock('@/lib/hooks/use-calendar-range', async () => {
   }
 })
 
+// Mock next/dynamic — replace with synchronous passthrough for tests.
+// The loader calls import() which returns a thenable; we intercept and
+// resolve it synchronously by caching the module at mock-registration time.
+// Mock next/dynamic — resolve the component path and return it directly.
+// We mock the droppable-date-cell module eagerly so it's available for the
+// calendar component when droppableEnabled=true.
+vi.mock('next/dynamic', async () => {
+  const { DroppableDateCell } = await import('@/components/booking/droppable-date-cell')
+  return {
+    __esModule: true,
+    default: () => DroppableDateCell,
+  }
+})
+
 // Stub child components that aren't relevant to this test
 vi.mock('@/components/booking/calendar-legend', () => ({
   CalendarLegend: () => null,

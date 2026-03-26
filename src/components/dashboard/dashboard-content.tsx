@@ -1,8 +1,14 @@
 'use client'
 
 import { useCallback } from 'react'
-import { DndContext, DragOverlay } from '@dnd-kit/core'
+import dynamic from 'next/dynamic'
 import { Anchor } from 'lucide-react'
+import { Spinner } from '@/components/common/spinner'
+
+const DndCalendarWrapper = dynamic(
+  () => import('@/components/booking/dnd-calendar-wrapper').then((m) => ({ default: m.DndCalendarWrapper })),
+  { ssr: false, loading: () => <Spinner /> },
+)
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { DASHBOARD_CONFIGS } from '@/lib/constants/dashboard-config'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -146,19 +152,14 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   return (
     <div className="max-w-4xl mx-auto space-y-3">
       {isOrganizer ? (
-        <DndContext onDragStart={drag.handleDragStart} onDragEnd={drag.handleDragEnd} onDragCancel={drag.handleDragCancel}>
+        <DndCalendarWrapper
+          onDragStart={drag.handleDragStart}
+          onDragEnd={drag.handleDragEnd}
+          onDragCancel={drag.handleDragCancel}
+          dragLabel={drag.dragLabel}
+        >
           {calendarContent}
-          <DragOverlay>
-            {drag.dragLabel && (
-              <div
-                className="rounded-full px-3 py-1 font-medium text-xs shadow-lg"
-                style={{ color: 'var(--color-text-primary)', background: 'var(--color-primary-glow)', border: '2px solid var(--color-glass-border-hover)', opacity: 0.9 }}
-              >
-                {drag.dragLabel}
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
+        </DndCalendarWrapper>
       ) : (
         calendarContent
       )}

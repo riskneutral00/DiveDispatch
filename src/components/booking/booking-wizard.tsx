@@ -2,6 +2,7 @@
 
 import { useReducer, useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
 import {
@@ -15,8 +16,18 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { GlassCard, GlassButton } from "@/components/glass";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
-import { ItineraryStep } from "./itinerary-step";
-import { ReviewStep } from "./review-step";
+import { Spinner } from "@/components/common/spinner";
+
+const ItineraryStep = dynamic(
+  () => import("./itinerary-step").then((m) => ({ default: m.ItineraryStep })),
+  { ssr: false, loading: () => <Spinner /> },
+);
+
+const ReviewStep = dynamic(
+  () => import("./review-step").then((m) => ({ default: m.ReviewStep })),
+  { ssr: false, loading: () => <Spinner /> },
+);
+
 import {
   wizardReducer,
   makeInitialState,
@@ -29,7 +40,6 @@ import {
   type BookingPreFill,
 } from "@/lib/booking/wizard-state";
 import { useBookingDraftAutoSave } from "@/lib/hooks/use-booking-draft-auto-save";
-import { Spinner } from "@/components/common/spinner";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
