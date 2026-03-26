@@ -127,60 +127,6 @@ export const createUser = mutation({
   },
 })
 
-// Called by Clerk webhook or on first authenticated page load.
-// Idempotent: returns existing user if tokenIdentifier already exists.
-export const upsertUser = mutation({
-  args: {
-    tokenIdentifier: v.string(),
-    email: v.string(),
-    name: v.string(),
-    firstName: v.string(),
-    lastName: v.string(),
-    role: stakeholderType,
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', args.tokenIdentifier),
-      )
-      .unique()
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        email: args.email,
-        name: args.name,
-        firstName: args.firstName,
-        lastName: args.lastName,
-      })
-      return existing._id
-    }
-
-    const slug = await generateUniqueSlug(ctx.db)
-    const userId = await ctx.db.insert('users', {
-      tokenIdentifier: args.tokenIdentifier,
-      slug,
-      email: args.email,
-      name: args.name,
-      firstName: args.firstName,
-      lastName: args.lastName,
-      businessName: '',
-      isSeeded: false,
-      preferredLocale: 'en',
-    })
-
-    // Seed default userRoles entry so getLowestProfileCompletion works
-    await ctx.db.insert('userRoles', {
-      userId,
-      role: args.role,
-      createdAt: Date.now(),
-      profileComplete: false,
-    })
-
-    return userId
-  },
-})
-
 // Patches businessName and customerLanguages during onboarding step 4 (Business Info).
 export const updateBusinessInfo = mutation({
   args: {

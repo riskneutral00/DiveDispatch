@@ -1,12 +1,12 @@
 /**
  * User Role & Lookup — Integration Tests
  *
- * Tests setRole, upsertUser, bySlug, and byId mutations/queries.
+ * Tests setRole, upsertFromWebhook, bySlug, and byId mutations/queries.
  * These are foundational to the auth model.
  */
 
 import { describe, it, expect } from 'vitest'
-import { api } from '../convex/_generated/api'
+import { api, internal } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
 import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -66,19 +66,30 @@ describe('users.setRole', () => {
   })
 })
 
-// ─── upsertUser ──────────────────────────────────────────────────────────────
+// ─── DD-132: upsertUser removed (security) ─────────────────────────────────
 
-describe('users.upsertUser', () => {
+describe('users.upsertUser — removed', () => {
+  it('is not exposed on the public API', () => {
+    // upsertUser was a public mutation accepting caller-supplied tokenIdentifier
+    // with no auth check. It has been deleted; upsertFromWebhook (internalMutation)
+    // is the only user-creation-via-webhook path.
+    const userKeys = Object.getOwnPropertyNames(api.users)
+    expect(userKeys).not.toContain('upsertUser')
+  })
+})
+
+// ─── upsertFromWebhook ─────────────────────────────────────────────────────
+
+describe('users.upsertFromWebhook', () => {
   it('creates new user when none exists', async () => {
     const t = makeT()
 
-    const userId = await t.mutation(api.users.upsertUser, {
+    const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|brand-new',
       email: 'new@test.com',
       name: 'New User',
       firstName: 'New',
       lastName: 'User',
-      role: 'Instructor',
     })
 
     expect(typeof userId).toBe('string')
@@ -96,13 +107,12 @@ describe('users.upsertUser', () => {
       await seedUser(ctx, { tokenIdentifier: 'clerk|existing' })
     })
 
-    const userId = await t.mutation(api.users.upsertUser, {
+    const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|existing',
       email: 'updated@test.com',
       name: 'Updated Name',
       firstName: 'Updated',
       lastName: 'Name',
-      role: 'Instructor', // role should NOT be updated on existing user
     })
 
     await t.run(async (ctx) => {
@@ -113,19 +123,18 @@ describe('users.upsertUser', () => {
   })
 })
 
-// ─── upsertUser — userRoles seeding ─────────────────────────────────────────
+// ─── upsertFromWebhook — userRoles seeding ─────────────────────────────────
 
-describe('users.upsertUser — userRoles', () => {
-  it('seeds a userRoles entry when creating a new user', async () => {
+describe('users.upsertFromWebhook — userRoles', () => {
+  it('seeds a default DiveCenter userRoles entry when creating a new user', async () => {
     const t = makeT()
 
-    const userId = await t.mutation(api.users.upsertUser, {
+    const userId = await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|roles-test',
       email: 'roles@test.com',
       name: 'Roles User',
       firstName: 'Roles',
       lastName: 'User',
-      role: 'Instructor',
     })
 
     await t.run(async (ctx) => {
@@ -134,32 +143,31 @@ describe('users.upsertUser — userRoles', () => {
         .withIndex('by_userId', (q) => q.eq('userId', userId))
         .collect()
       expect(roles).toHaveLength(1)
-      expect(roles[0].role).toBe('Instructor')
+      expect(roles[0].role).toBe('DiveCenter')
       expect(roles[0].profileComplete).toBe(false)
     })
   })
 
   it('does NOT create userRoles when upserting an existing user', async () => {
     const t = makeT()
-    let userId: any
+    let userId: Doc<'users'>['_id']
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { tokenIdentifier: 'clerk|existing-roles' })
     })
 
     // Upsert same user — should only patch, not insert new userRoles
-    await t.mutation(api.users.upsertUser, {
+    await t.mutation(internal.users.upsertFromWebhook, {
       tokenIdentifier: 'clerk|existing-roles',
       email: 'updated@test.com',
       name: 'Updated',
       firstName: 'Up',
       lastName: 'Dated',
-      role: 'Boat',
     })
 
     await t.run(async (ctx) => {
       const roles = await ctx.db
         .query('userRoles')
-        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .withIndex('by_userId', (q) => q.eq('userId', userId!))
         .collect()
       // Should still have only the original seeded role, not a second one
       expect(roles).toHaveLength(1)
