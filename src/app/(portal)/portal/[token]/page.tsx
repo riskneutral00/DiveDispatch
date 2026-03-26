@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import dynamic from 'next/dynamic'
@@ -51,6 +51,7 @@ export default function PortalTokenPage() {
   const token = typeof params.token === 'string' ? params.token : ''
 
   const result = useQuery(api.bookingLinks.getByToken, token ? { token } : 'skip')
+  const progress = useQuery(api.portalDraft.getPortalProgress, token ? { token } : 'skip')
 
   const [currentStep, setCurrentStep] = useState<PortalStep>('contact')
   const [contactDone, setContactDone] = useState(false)
@@ -59,6 +60,18 @@ export default function PortalTokenPage() {
   // Equipment data held locally until submit step
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_equipmentData, setEquipmentData] = useState<EquipmentData | null>(null)
+
+  // Restore step progress from server on mount so browser refresh
+  // does not lose completed steps.
+  const hasInitialized = useRef(false)
+  useEffect(() => {
+    if (!progress || hasInitialized.current) return
+    hasInitialized.current = true
+    setContactDone(progress.contactComplete)
+    setMedicalDone(progress.medicalComplete)
+    setWaiverDone(progress.waiverComplete)
+    setCurrentStep(progress.firstIncompleteStep as PortalStep)
+  }, [progress])
 
   // Redirect expired/not-found tokens to the expired page.
   useEffect(() => {
