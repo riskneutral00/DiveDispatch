@@ -46,6 +46,75 @@ describe('_listInventoryByType with ownerSlug uses compound index', () => {
   })
 })
 
+describe('by_bookingId_status index', () => {
+  it('returns only reservations matching both bookingId and status', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.diveCenter,
+        slug: TEST_SLUGS.diveCenter,
+        role: 'DiveCenter',
+        businessName: 'Blue Ocean DC',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+
+      const unit = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        ownerId: TEST_SLUGS.instructor,
+        displayName: 'Instructor Unit',
+      })
+
+      const bookingId = await seedBooking(ctx, {
+        ownerId: TEST_SLUGS.diveCenter,
+      })
+
+      const sessionA = await seedSession(ctx, bookingId, unit)
+      const sessionB = await seedSession(ctx, bookingId, unit, { date: '2025-07-02' })
+      const sessionC = await seedSession(ctx, bookingId, unit, { date: '2025-07-03' })
+
+      await seedReservation(ctx, bookingId, unit, sessionA, { status: 'PendingAcceptance' })
+      await seedReservation(ctx, bookingId, unit, sessionB, { status: 'Confirmed' })
+      await seedReservation(ctx, bookingId, unit, sessionC, { status: 'Vacated' })
+
+      // Query for PendingAcceptance only
+      const pending = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_status', (q) =>
+          q.eq('bookingId', bookingId).eq('status', 'PendingAcceptance'),
+        )
+        .collect()
+
+      expect(pending).toHaveLength(1)
+      expect(pending[0].status).toBe('PendingAcceptance')
+
+      // Query for Confirmed only
+      const confirmed = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_status', (q) =>
+          q.eq('bookingId', bookingId).eq('status', 'Confirmed'),
+        )
+        .collect()
+
+      expect(confirmed).toHaveLength(1)
+      expect(confirmed[0].status).toBe('Confirmed')
+
+      // Query for Vacated only
+      const vacated = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_status', (q) =>
+          q.eq('bookingId', bookingId).eq('status', 'Vacated'),
+        )
+        .collect()
+
+      expect(vacated).toHaveLength(1)
+      expect(vacated[0].status).toBe('Vacated')
+    })
+  })
+})
+
 describe('by_bookingId_inventoryUnitId index', () => {
   it('returns only reservations for the queried unit, not sibling units on same booking', async () => {
     await t.run(async (ctx) => {

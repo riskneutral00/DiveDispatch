@@ -35,14 +35,22 @@ export async function releaseBookingReservations(
   bookingId: string,
   reason: VacatedReason,
 ): Promise<void> {
-  const reservations = await ctx.db
-    .query('reservations')
-    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+  const [pending, confirmed] = await Promise.all([
+    ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId_status', (q) =>
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', 'PendingAcceptance'),
+      )
+      .collect(),
+    ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId_status', (q) =>
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', 'Confirmed'),
+      )
+      .collect(),
+  ])
 
-  const active = reservations.filter(
-    (r) => r.status === 'PendingAcceptance' || r.status === 'Confirmed',
-  )
+  const active = [...pending, ...confirmed]
 
   for (const res of active) {
     await ctx.db.patch(res._id, {

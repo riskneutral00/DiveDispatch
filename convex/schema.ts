@@ -346,6 +346,7 @@ export default defineSchema({
     ),
   })
     .index('by_bookingId', ['bookingId'])
+    .index('by_bookingId_status', ['bookingId', 'status'])
     .index('by_bookingId_inventoryUnitId', ['bookingId', 'inventoryUnitId'])
     .index('by_inventoryUnitId_status', ['inventoryUnitId', 'status'])
     .index('by_bookingSessionId', ['bookingSessionId'])

@@ -437,13 +437,14 @@ export const acceptByBookingForCaller = mutation({
 
     const reservations = await ctx.db
       .query('reservations')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .withIndex('by_bookingId_status', (q) =>
+        q.eq('bookingId', args.bookingId).eq('status', 'PendingAcceptance'),
+      )
       .collect()
 
     const callerUnitIds = new Set(units.map((u) => u._id))
-    const pendingForCaller = reservations.filter(
-      (r) =>
-        callerUnitIds.has(r.inventoryUnitId) && r.status === 'PendingAcceptance',
+    const pendingForCaller = reservations.filter((r) =>
+      callerUnitIds.has(r.inventoryUnitId),
     )
 
     if (pendingForCaller.length === 0) {
