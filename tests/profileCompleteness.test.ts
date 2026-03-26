@@ -41,7 +41,7 @@ describe('checkProfileCompleteness', () => {
         preferredInstructorSlugs: ['test-inst'],
       })
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
 
       expect(result.percentage).toBe(100)
@@ -55,7 +55,7 @@ describe('checkProfileCompleteness', () => {
       await seedDiveCenterProfile(ctx, userId)
       // No template, no preferences → missing "Quick Book pill" + "Preferred instructors"
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
 
       expect(result.percentage).toBe(75)
@@ -73,7 +73,7 @@ describe('checkProfileCompleteness', () => {
       })
       await seedInstructorProfile(ctx, userId)
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.instructor)).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.instructor)).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.percentage).toBe(100)
@@ -92,7 +92,7 @@ describe('checkProfileCompleteness', () => {
         credential: [],
       })
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.instructor)).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.instructor)).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.percentage).toBeLessThan(100)
@@ -108,7 +108,7 @@ describe('checkProfileCompleteness', () => {
         role: 'Boat',
       })
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'boat-owner')).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'boat-owner')).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Boat' })
 
       expect(result.percentage).toBe(0)
@@ -139,7 +139,7 @@ describe('checkProfileCompleteness', () => {
         preferredInstructorSlugs: ['test-inst'],
       })
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'agent-loc')).unique()
+      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'agent-loc')).unique()
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Agent' })
 
       // Agent uses locations[0].placeName and locations[0].country instead of flat placeName/country
@@ -426,7 +426,7 @@ describe('getAllRolesCompleteness query', () => {
       .query(api.users.getAllRolesCompleteness, {})
 
     expect(result.allComplete).toBe(false)
-    const boatRole = result.roles.find((r: any) => r.role === 'Boat')
+    const boatRole = result.roles.find((r) => r.role === 'Boat')
     expect(boatRole).toBeDefined()
     expect(boatRole?.incomplete.length).toBeGreaterThan(0)
   })

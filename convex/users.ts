@@ -1,5 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
+import type { DatabaseWriter } from './_generated/server'
 import { internal } from './_generated/api'
 import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
@@ -7,14 +8,12 @@ import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function generateUniqueSlug(db: any): Promise<string> {
+async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
   for (let i = 0; i < 10; i++) {
     const slug = Math.random().toString(36).slice(2, 8)
     const existing = await db
       .query('users')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_slug', (q: any) => q.eq('slug', slug))
+      .withIndex('by_slug', (q) => q.eq('slug', slug))
       .unique()
     if (!existing) return slug
   }

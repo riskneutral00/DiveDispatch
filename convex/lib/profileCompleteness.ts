@@ -2,11 +2,12 @@
 // createDraftShell mutation, and getAllRolesCompleteness query.
 
 import type { Id } from '../_generated/dataModel'
+import type { QueryCtx } from '../_generated/server'
 import { OPERATOR_ROLE_SET as OPERATOR_ROLES } from './auth'
 
 export async function checkProfileCompleteness(
-  ctx: { db: any },
-  user: { _id: any; slug: string; role: string; defaultContactEmail?: string; defaultContactPhone?: string; defaultLocation?: string },
+  ctx: Pick<QueryCtx, 'db'>,
+  user: { _id: Id<'users'>; slug: string; role: string; defaultContactEmail?: string; defaultContactPhone?: string; defaultLocation?: string },
 ): Promise<{ percentage: number; incomplete: string[] }> {
   const role = user.role
   const incomplete: string[] = []
@@ -32,7 +33,7 @@ export async function checkProfileCompleteness(
   if (table) {
     profile = await ctx.db
       .query(table)
-      .withIndex('by_userId', (q: { eq: (f: string, v: unknown) => unknown }) =>
+      .withIndex('by_userId', (q) =>
         q.eq('userId', user._id),
       )
       .unique()
@@ -65,7 +66,7 @@ export async function checkProfileCompleteness(
   if (OPERATOR_ROLES.has(role)) {
     const template = await ctx.db
       .query('bookingTemplates')
-      .withIndex('by_ownerId_ownerType', (q: any) =>
+      .withIndex('by_ownerId_ownerType', (q) =>
         q.eq('ownerId', user.slug).eq('ownerType', role),
       )
       .first()
@@ -76,7 +77,7 @@ export async function checkProfileCompleteness(
   if (OPERATOR_ROLES.has(role)) {
     const prefs = await ctx.db
       .query('stakeholderPreferences')
-      .withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user.slug))
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
       .unique()
     if (!prefs?.preferredInstructorSlugs?.length) incomplete.push('Preferred instructors')
   }
@@ -99,7 +100,7 @@ export async function checkProfileCompleteness(
  * Used by the booking gate and the profile completion banner.
  */
 export async function checkAllRolesCompleteness(
-  ctx: { db: any },
+  ctx: Pick<QueryCtx, 'db'>,
   userId: Id<'users'>,
 ): Promise<{
   allComplete: boolean
@@ -110,10 +111,10 @@ export async function checkAllRolesCompleteness(
 
   const userRoles = await ctx.db
     .query('userRoles')
-    .withIndex('by_userId', (q: any) => q.eq('userId', userId))
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
     .collect()
 
-  const rolesToCheck = userRoles.map((r: any) => r.role as string)
+  const rolesToCheck = userRoles.map((r) => r.role)
 
   const roles: Array<{ role: string; percentage: number; incomplete: string[] }> = []
   let allComplete = true
