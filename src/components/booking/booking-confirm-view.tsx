@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Check, Send, Users, Calendar } from 'lucide-react'
 import { GlassCard, GlassButton } from '@/components/glass'
 import { countryCodeToEmoji } from '@/components/common/flag-emoji'
+import { formatDateRange } from '@/lib/booking/booking-display'
 import type { WizardState } from '@/lib/booking/wizard-state'
 
 interface BookingConfirmViewProps {
@@ -13,12 +14,6 @@ interface BookingConfirmViewProps {
 export function BookingConfirmView({ state }: BookingConfirmViewProps) {
   const router = useRouter()
   const { customers, days, startDate, endDate } = state
-
-  function formatDateRange(a: string, b: string): string {
-    if (!a && !b) return '–'
-    if (a === b || !b) return a
-    return `${a} – ${b}`
-  }
 
   return (
     <div className="flex flex-col gap-4">

@@ -11,6 +11,7 @@ import { countryCodeToEmoji } from '@/components/common/flag-emoji'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { deriveActivityType } from '@/lib/booking/wizard-state'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
+import { formatDateRange } from '@/lib/booking/booking-display'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { Dispatch } from 'react'
 
@@ -29,12 +30,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
       {children}
     </p>
   )
-}
-
-function formatDateRange(a: string, b: string): string {
-  if (!a && !b) return '–'
-  if (a === b || !b) return a
-  return `${a} – ${b}`
 }
 
 export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepProps) {
