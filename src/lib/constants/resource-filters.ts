@@ -9,16 +9,41 @@ export type FilterDef = {
   label: string
   placeholder: string
   options: FilterOption[]
+  /** When true, the filter bar renders a multi-select (comma-separated values). */
+  multiSelect?: boolean
 }
 
 // ── Per-role filter definitions ──────────────────────────────────────────────
 // id values must match the filter args accepted by the listByRole query.
+
+export const LANGUAGE_FILTER: FilterDef = {
+  id: 'language',
+  label: 'Language',
+  placeholder: 'All Languages',
+  multiSelect: true,
+  options: [
+    { label: 'All Languages', value: 'all' },
+    { label: 'English', value: 'GB' },
+    { label: 'Thai', value: 'TH' },
+    { label: 'Mandarin', value: 'CN' },
+    { label: 'Cantonese', value: 'HK' },
+    { label: 'Japanese', value: 'JP' },
+    { label: 'Korean', value: 'KR' },
+    { label: 'French', value: 'FR' },
+    { label: 'German', value: 'DE' },
+    { label: 'Russian', value: 'RU' },
+    { label: 'Spanish', value: 'ES' },
+    { label: 'Italian', value: 'IT' },
+    { label: 'Indonesian', value: 'ID' },
+  ],
+}
 
 export const INSTRUCTOR_FILTERS: FilterDef[] = [
   {
     id: 'agency',
     label: 'Agency',
     placeholder: 'All Agencies',
+    multiSelect: true,
     options: [
       { label: 'All Agencies', value: 'all' },
       { label: 'PADI', value: 'PADI' },
@@ -32,8 +57,7 @@ export const INSTRUCTOR_FILTERS: FilterDef[] = [
       { label: 'BSAC', value: 'BSAC' },
     ],
   },
-  // Language picker (id: 'language') is rendered separately by the L5-41
-  // LanguagePicker component using the caller's commonLanguageCodes.
+  LANGUAGE_FILTER,
 ]
 
 export const BOAT_FILTERS: FilterDef[] = [
@@ -55,6 +79,7 @@ export const COMPRESSOR_FILTERS: FilterDef[] = [
     id: 'gasMix',
     label: 'Gas Mix',
     placeholder: 'All Gas Mixes',
+    multiSelect: true,
     options: [
       { label: 'All', value: 'all' },
       { label: 'Air', value: 'air' },
@@ -107,7 +132,7 @@ export const ROLE_FILTERS: Record<StakeholderRole, FilterDef[]> = {
   DiveCenter: NO_FILTERS,
   Agent: NO_FILTERS,
   Pool: NO_FILTERS,
-  DiveMaster: NO_FILTERS,
+  DiveMaster: [LANGUAGE_FILTER],
   Liveaboard: NO_FILTERS,
   DiveResort: NO_FILTERS,
   DiveHostel: NO_FILTERS,

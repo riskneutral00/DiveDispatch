@@ -1,13 +1,14 @@
 'use client'
 
 import { useQuery } from 'convex/react'
-import { Search, Waves } from 'lucide-react'
+import { Search, ShieldCheck, Waves } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassInput } from '@/components/glass/glass-input'
 import { ROLE_FILTERS } from '@/lib/constants/resource-filters'
 import { useDebounce } from '@/lib/hooks/use-debounce'
+import { filterDirectoryEntries } from '@/lib/utils/directory-filters'
 import type { RichDirectoryEntry } from './stakeholder-card'
 import { FilterBar } from './filter-bar'
 import { StakeholderGrid } from './stakeholder-grid'
@@ -24,6 +25,7 @@ type RoleFilter =
   | 'Compressor'
   | 'Liveaboard'
   | 'DiveResort'
+  | 'DiveHostel'
   | 'DiveSite'
 
 const TABS: { key: RoleFilter; label: string }[] = [
@@ -38,6 +40,7 @@ const TABS: { key: RoleFilter; label: string }[] = [
   { key: 'DiveMaster', label: 'Dive Masters' },
   { key: 'Liveaboard', label: 'Liveaboards' },
   { key: 'DiveResort', label: 'Dive Resorts' },
+  { key: 'DiveHostel', label: 'Dive Hostels' },
   { key: 'DiveSite', label: 'Dive Sites' },
 ]
 
@@ -53,6 +56,7 @@ function useAllRoleResults() {
   const diveMasters = useQuery(api.directory.listByRole, { role: 'DiveMaster' })
   const liveaboards = useQuery(api.directory.listByRole, { role: 'Liveaboard' })
   const diveResorts = useQuery(api.directory.listByRole, { role: 'DiveResort' })
+  const diveHostels = useQuery(api.directory.listByRole, { role: 'DiveHostel' })
   const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' })
 
   const isLoading =
@@ -66,6 +70,7 @@ function useAllRoleResults() {
     diveMasters === undefined ||
     liveaboards === undefined ||
     diveResorts === undefined ||
+    diveHostels === undefined ||
     diveSites === undefined
 
   const all: RichDirectoryEntry[] = [
@@ -79,6 +84,7 @@ function useAllRoleResults() {
     ...(diveMasters ?? []),
     ...(liveaboards ?? []),
     ...(diveResorts ?? []),
+    ...(diveHostels ?? []),
     ...(diveSites ?? []),
   ]
 
@@ -94,6 +100,7 @@ function useAllRoleResults() {
     DiveMaster: (diveMasters ?? []) as RichDirectoryEntry[],
     Liveaboard: (liveaboards ?? []) as RichDirectoryEntry[],
     DiveResort: (diveResorts ?? []) as RichDirectoryEntry[],
+    DiveHostel: (diveHostels ?? []) as RichDirectoryEntry[],
     DiveSite: (diveSites ?? []) as RichDirectoryEntry[],
   }
 
@@ -104,6 +111,7 @@ export function DirectoryShell() {
   const [selectedRole, setSelectedRole] = useState<RoleFilter>('All')
   const [searchRaw, setSearchRaw] = useState('')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
   const search = useDebounce(searchRaw, 300)
 
   const { byRole, isLoading } = useAllRoleResults()
@@ -119,54 +127,18 @@ export function DirectoryShell() {
 
   const activeFilters = selectedRole !== 'All' ? (ROLE_FILTERS[selectedRole] ?? []) : []
 
-  const entries = useMemo(() => {
-    let base = byRole[selectedRole]
-
-    // Text search: name, placeName, country
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      base = base.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.placeName.toLowerCase().includes(q) ||
-          e.country.toLowerCase().includes(q),
-      )
-    }
-
-    // Role-specific client-side filters.
-    // Filter IDs match the backend listByRole args (agency, minCapacity, gasMix).
-
-    const agencyFilter = filterValues['agency']
-    if (agencyFilter && agencyFilter !== 'all') {
-      base = base.filter((e) =>
-        e.agencies?.some((a) => a.toLowerCase() === agencyFilter.toLowerCase()),
-      )
-    }
-
-    const minCapacityFilter = filterValues['minCapacity']
-    if (minCapacityFilter && minCapacityFilter !== 'any') {
-      const min = parseInt(minCapacityFilter, 10)
-      base = base.filter((e) => (e.boatCapacity ?? 0) >= min)
-    }
-
-    const gasMixFilter = filterValues['gasMix']
-    if (gasMixFilter && gasMixFilter !== 'all') {
-      base = base.filter((e) =>
-        e.gasMixes?.some((m) => m.toLowerCase() === gasMixFilter.toLowerCase()),
-      )
-    }
-
-    // Sort preferred instructors to top
-    if (selectedRole === 'Instructor' || selectedRole === 'All') {
-      base = [...base].sort((a, b) => {
-        const aP = preferredSlugs.includes(a.slug) ? 0 : 1
-        const bP = preferredSlugs.includes(b.slug) ? 0 : 1
-        return aP - bP
-      })
-    }
-
-    return base
-  }, [byRole, selectedRole, search, filterValues, preferredSlugs])
+  const entries = useMemo(
+    () =>
+      filterDirectoryEntries({
+        entries: byRole[selectedRole],
+        search,
+        filterValues,
+        verifiedOnly,
+        preferredSlugs,
+        selectedRole,
+      }),
+    [byRole, selectedRole, search, filterValues, verifiedOnly, preferredSlugs],
+  )
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -199,6 +171,26 @@ export function DirectoryShell() {
             aria-label="Search directory"
           />
         </div>
+
+        {/* Verified-only toggle */}
+        <button
+          type="button"
+          onClick={() => setVerifiedOnly((v) => !v)}
+          aria-pressed={verifiedOnly}
+          aria-label="Show verified only"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus-visible:ring-2 flex-shrink-0"
+          style={{
+            background: verifiedOnly ? 'var(--color-primary)' : 'var(--color-glass-bg)',
+            color: verifiedOnly
+              ? 'var(--color-text-on-primary)'
+              : 'var(--color-text-secondary)',
+            border: `1px solid ${verifiedOnly ? 'transparent' : 'var(--color-glass-border)'}`,
+            transitionDuration: 'var(--transition-speed)',
+          }}
+        >
+          <ShieldCheck size={14} />
+          <span className="hidden sm:inline">Verified</span>
+        </button>
       </header>
 
       {/* Page content */}
@@ -226,6 +218,7 @@ export function DirectoryShell() {
                 onClick={() => {
                   setSelectedRole(tab.key)
                   setFilterValues({})
+                  setVerifiedOnly(false)
                 }}
                 className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus-visible:ring-2"
                 style={{

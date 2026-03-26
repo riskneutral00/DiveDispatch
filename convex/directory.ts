@@ -29,6 +29,7 @@ export type DirectoryEntry = {
   maxCapacity?: number      // Pool: max capacity in pax
   association?: string      // Agent: primary association agency name
   isPreferred?: boolean     // Instructor: starred by the authenticated caller
+  languages?: string[]      // Country codes the stakeholder speaks (from users.customerLanguages)
 }
 
 type ProfileData = {
@@ -265,6 +266,7 @@ export const listByRole = query({
             maxCapacity: profile.maxCapacity,
             association: profile.association,
             isPreferred,
+            languages: u.customerLanguages,
           }
         }),
     )
