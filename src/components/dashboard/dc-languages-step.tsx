@@ -7,6 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
+import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
 import { LanguagePicker } from '@/components/common/language-picker'
 import type { Language } from '@/lib/types/language'
 
@@ -120,7 +121,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
               label="Open Water Days"
               type="number"
               min={1}
-              max={14}
+              max={MAX_COURSE_DAYS}
               value={owDays}
               onChange={(e) => setOwDays(e.target.value)}
               placeholder="4"
@@ -129,7 +130,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
               label="Advanced OW Days"
               type="number"
               min={1}
-              max={14}
+              max={MAX_COURSE_DAYS}
               value={aowDays}
               onChange={(e) => setAowDays(e.target.value)}
               placeholder="2"
@@ -138,7 +139,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
               label="Adventure Days"
               type="number"
               min={1}
-              max={14}
+              max={MAX_COURSE_DAYS}
               value={oaDays}
               onChange={(e) => setOaDays(e.target.value)}
               placeholder="1"

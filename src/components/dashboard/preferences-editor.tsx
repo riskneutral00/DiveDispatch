@@ -8,6 +8,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
+import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
@@ -369,7 +370,7 @@ export function PreferencesEditor() {
                   label="Post-job block (minutes)"
                   type="number"
                   min={0}
-                  max={480}
+                  max={MAX_SESSION_MINUTES}
                   value={form.postJobBlockDuration}
                   onChange={(e) => setField('postJobBlockDuration', Number(e.target.value))}
                   error={errors.postJobBlockDuration}

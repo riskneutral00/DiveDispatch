@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
+import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { Spinner } from '@/components/common/spinner'
 
 // ── Blood type options ────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
               placeholder="e.g., penicillin, shellfish"
-              rows={3}
+              rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
               className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
               style={{
@@ -156,7 +157,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
               value={medications}
               onChange={(e) => setMedications(e.target.value)}
               placeholder="e.g., aspirin, blood thinners"
-              rows={3}
+              rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
               className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
               style={{

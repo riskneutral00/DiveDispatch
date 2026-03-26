@@ -7,6 +7,8 @@ import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
+import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
+import { COUNTRY_NAMES } from '@/lib/constants/countries'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
@@ -16,21 +18,7 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
 
-const COUNTRIES = [
-  'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria',
-  'Bahrain', 'Bangladesh', 'Belgium', 'Bolivia', 'Brazil', 'Cambodia',
-  'Canada', 'Chile', 'China', 'Colombia', 'Croatia', 'Czech Republic',
-  'Denmark', 'Ecuador', 'Egypt', 'Ethiopia', 'Finland', 'France',
-  'Germany', 'Ghana', 'Greece', 'Hong Kong', 'Hungary', 'India',
-  'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
-  'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait', 'Malaysia',
-  'Mexico', 'Morocco', 'Myanmar', 'Netherlands', 'New Zealand', 'Nigeria',
-  'Norway', 'Oman', 'Pakistan', 'Peru', 'Philippines', 'Poland',
-  'Portugal', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia', 'Singapore',
-  'South Africa', 'South Korea', 'Spain', 'Sri Lanka', 'Sweden',
-  'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'Ukraine',
-  'United Arab Emirates', 'United Kingdom', 'United States', 'Vietnam',
-] as const
+const COUNTRIES = COUNTRY_NAMES
 
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
@@ -523,7 +511,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           </label>
           <textarea
             id="allergies"
-            rows={3}
+            rows={DEFAULT_TEXTAREA_ROWS}
             placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
             value={form.allergies ?? ''}
             onChange={(e) => setField('allergies', e.target.value)}

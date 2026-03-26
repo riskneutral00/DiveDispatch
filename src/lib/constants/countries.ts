@@ -268,3 +268,6 @@ export const COUNTRIES: Country[] = [
   { code: 'ZM', label: 'Zambia' },
   { code: 'ZW', label: 'Zimbabwe' },
 ]
+
+/** Flat list of country names derived from COUNTRIES — for use in simple string selects. */
+export const COUNTRY_NAMES = COUNTRIES.map((c) => c.label) as readonly string[]

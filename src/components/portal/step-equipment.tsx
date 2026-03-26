@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
 import { GlassButton } from '../glass/glass-button'
+import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -478,7 +479,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               placeholder="e.g. Left: −2.00, Right: −2.50"
-              rows={3}
+              rows={DEFAULT_TEXTAREA_ROWS}
               className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
               style={{
                 color: 'var(--color-text-primary)',

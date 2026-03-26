@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassInput } from '@/components/glass'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
+import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
@@ -310,7 +311,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             label="Open Water Days"
             type="number"
             min={1}
-            max={14}
+            max={MAX_COURSE_DAYS}
             value={form.owDays}
             onChange={(e) => setField('owDays', e.target.value)}
             placeholder="4"
@@ -319,7 +320,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             label="Advanced OW Days"
             type="number"
             min={1}
-            max={14}
+            max={MAX_COURSE_DAYS}
             value={form.aowDays}
             onChange={(e) => setField('aowDays', e.target.value)}
             placeholder="2"
@@ -328,7 +329,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             label="Open Adventure Days"
             type="number"
             min={1}
-            max={14}
+            max={MAX_COURSE_DAYS}
             value={form.oaDays}
             onChange={(e) => setField('oaDays', e.target.value)}
             placeholder="1"

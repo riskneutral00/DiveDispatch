@@ -8,6 +8,7 @@ import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '../../../convex/lib/validators'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
+import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { GlassButton } from '@/components/glass/glass-button'
 import { Spinner } from '@/components/common/spinner'
 
@@ -96,7 +97,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
               borderColor: 'var(--color-glass-border)',
             }}
           >
-            {searchResults.slice(0, 6).map((entry) => (
+            {searchResults.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
               <button
                 key={entry.slug}
                 type="button"
