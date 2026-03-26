@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { urgentCountdown } from '../src/lib/utils/booking-urgency'
+import { testDate } from './helpers/dates'
 
 describe('urgentCountdown', () => {
   afterEach(() => {
@@ -7,7 +8,7 @@ describe('urgentCountdown', () => {
   })
 
   it('returns null for non-Draft bookings', () => {
-    expect(urgentCountdown({ status: 'Upcoming', startDate: '2026-03-25' })).toBeNull()
+    expect(urgentCountdown({ status: 'Upcoming', startDate: testDate(7) })).toBeNull()
   })
 
   it('returns null for Draft bookings far in the future', () => {

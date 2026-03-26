@@ -5,6 +5,7 @@ import {
   INSTRUCTOR_REQUIRED_CODES,
   CONFINED_ACTIVITY_CODES,
 } from '../src/lib/validation/bookingSchemas'
+import { testDate } from './helpers/dates'
 
 describe('INSTRUCTOR_REQUIRED_CODES', () => {
   it('includes DSD and OW', () => {
@@ -28,7 +29,7 @@ describe('CONFINED_ACTIVITY_CODES', () => {
 describe('bookingSessionsSchema', () => {
   const validSession = {
     inventoryUnitId: 'unit-1',
-    date: '2026-04-15',
+    date: testDate(20),
     startTime: '08:00',
     endTime: '12:00',
     timezone: 'Asia/Bangkok',
@@ -72,15 +73,17 @@ describe('bookingSessionsSchema', () => {
 })
 
 describe('makeBookingDiversSchema', () => {
+  const bookingStart = testDate(10)
+  const bookingEnd = testDate(15)
   const bookingActivities = ['OW', 'FD'] as const
-  const schema = makeBookingDiversSchema(bookingActivities, '2026-04-10', '2026-04-15')
+  const schema = makeBookingDiversSchema(bookingActivities, bookingStart, bookingEnd)
 
   const validDiver = {
     name: 'Alice',
     abbrev: 'AL',
     flag: { code: 'US', label: 'United States' },
-    startDate: '2026-04-10',
-    endDate: '2026-04-12',
+    startDate: testDate(10),
+    endDate: testDate(12),
     activityType: ['OW'],
   }
 
@@ -96,21 +99,21 @@ describe('makeBookingDiversSchema', () => {
 
   it('rejects diver with end date before start date', () => {
     const result = schema.safeParse([
-      { ...validDiver, startDate: '2026-04-12', endDate: '2026-04-10' },
+      { ...validDiver, startDate: testDate(12), endDate: testDate(10) },
     ])
     expect(result.success).toBe(false)
   })
 
   it('rejects diver start date before booking start', () => {
     const result = schema.safeParse([
-      { ...validDiver, startDate: '2026-04-05' },
+      { ...validDiver, startDate: testDate(5) },
     ])
     expect(result.success).toBe(false)
   })
 
   it('rejects diver end date after booking end', () => {
     const result = schema.safeParse([
-      { ...validDiver, endDate: '2026-04-20' },
+      { ...validDiver, endDate: testDate(20) },
     ])
     expect(result.success).toBe(false)
   })

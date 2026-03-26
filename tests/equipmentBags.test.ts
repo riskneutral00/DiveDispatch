@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest'
 import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import { assignBagsForBooking, releaseBagsForBooking } from '../convex/equipmentBags'
+import { testDate } from './helpers/dates'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -45,8 +46,8 @@ describe('assignBagsForBooking', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-03',
+        startDate: testDate(7),
+        endDate: testDate(9),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -93,8 +94,8 @@ describe('assignBagsForBooking', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-03',
+        startDate: testDate(7),
+        endDate: testDate(9),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -127,8 +128,8 @@ describe('assignBagsForBooking', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-03',
+        startDate: testDate(7),
+        endDate: testDate(9),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -173,8 +174,8 @@ describe('releaseBagsForBooking', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-03',
+        startDate: testDate(7),
+        endDate: testDate(9),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
@@ -217,8 +218,8 @@ describe('releaseBagsForBooking', () => {
         holdTTL: 43200000,
         paid: false,
         activityType: ['OW'],
-        startDate: '2026-04-01',
-        endDate: '2026-04-03',
+        startDate: testDate(7),
+        endDate: testDate(9),
         divers: [],
         operatorName: 'Test DC',
         portalContact: false,
