@@ -24,11 +24,11 @@ Build the backend map:
 5. Read `convex/lib/auth.ts`, `convex/lib/portal.ts`, `convex/lib/validate.ts` — auth and validation patterns
 6. Read `convex/bookings/_shared.ts` — state machine guards, shared helpers
 7. Read `CLAUDE.md` — invariants, dependency direction
-8. Read `~/Desktop/DiveVault/DiveDispatch/Architecture/Architecture.md` — state machines, transition rules
-9. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
-10. Find most recent vault review: `ls ~/Desktop/DiveVault/DiveDispatch/Reviews/review-backend-mutations-*.md | sort | tail -1`
+8. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, transition rules
+9. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
+10. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-mutations-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
-    - If not found: check `ls ~/Desktop/DiveVault/DiveDispatch/Reviews/backend-*.md | sort | tail -1` for legacy review
+    - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/backend-*.md | sort | tail -1` for legacy review
     - If neither found: note "baseline review, no delta"
 
 **Do not output anything yet.**
@@ -117,7 +117,7 @@ Assign each finding a tier:
 
 ### Write vault review
 
-Write to `~/Desktop/DiveVault/DiveDispatch/Reviews/review-backend-mutations-YYYY-MM-DD.md`:
+Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-mutations-YYYY-MM-DD.md`:
 
 ```markdown
 # Mutations Review — YYYY-MM-DD
@@ -187,7 +187,7 @@ Performance, side effects, and test quality audit.
 
 For each **CRITICAL** and **HIGH** finding that can be tested:
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
 2. Find `### Code Health Hardening` section
 3. Find the highest existing H-number (e.g., H12)
 4. For each finding, append a new spec continuing the numbering:
@@ -209,7 +209,7 @@ For each **CRITICAL** and **HIGH** finding that can be tested:
 
 ## Phase 5: Update Audit Baseline
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Architecture/Lessons.md` — find the "Audit Baseline" table
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — find the "Audit Baseline" table
 2. Check if any row's status has changed (e.g., DRY improved, new debt introduced)
 3. If changed: update the row. If unchanged: skip silently.
 

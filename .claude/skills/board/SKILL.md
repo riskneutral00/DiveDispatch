@@ -153,7 +153,7 @@ updated: {today}
 
 1. Read all `.tickets/DD-*.md` and `.tickets/done/DD-*.md`
 2. Parse frontmatter from each
-3. Generate the vault mirror at `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` (auto-generated board view):
+3. Generate the vault mirror at `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` (auto-generated board view):
 
 ```markdown
 # DiveDispatch — Board

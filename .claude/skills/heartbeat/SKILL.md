@@ -18,7 +18,7 @@ Launch 3 Explore agents in parallel. Each returns a structured list of findings.
 
 ### Agent 1: Schema & Backend
 
-Investigate `/Users/matthewlee/Desktop/DiveDispatch/convex/`:
+Investigate `/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/convex/`:
 
 1. **Schema health** — Read `schema.ts`. Count tables, indexes. Check for missing indexes on foreign keys or common query paths. Flag tables with no indexes.
 2. **3 non-negotiable invariants** — Verify implementation in mutation code:
@@ -39,7 +39,7 @@ DETAILS: {what's wrong, which files, what should change}
 
 ### Agent 2: Tests & CI
 
-Investigate `/Users/matthewlee/Desktop/DiveDispatch/tests/` and `/Users/matthewlee/Desktop/DiveDispatch/e2e/`:
+Investigate `/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/tests/` and `/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/e2e/`:
 
 1. **Test inventory** — Count test files (unit, behavioral, E2E). List files with no corresponding source coverage.
 2. **Duplicate files** — Search for files matching `* 2.ts`, `* 2.tsx`, or any space-before-number pattern. Count them. These are sync artifacts that inflate coverage.

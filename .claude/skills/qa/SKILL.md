@@ -16,14 +16,14 @@ When this skill is invoked, execute all phases in order — no questions, no pro
 |------|----------|
 | *(none)* | Auto-detect changes from `git diff --name-only` + `git status --short` |
 | `<file paths>` | Generate tests for specific files only |
-| `--from-assessment` | Read H-specs from `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` and generate tests for each gap found by `/review-tests` |
+| `--from-assessment` | Read H-specs from `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` and generate tests for each gap found by `/review-tests` |
 | `--dry-run` | Classify and plan tests but don't write files |
 
 ## Bridge: `--from-assessment`
 
 When `--from-assessment` is used:
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
 2. Find `### Code Health Hardening` section
 3. For each unchecked H-spec (lines starting with `- [ ]`):
    - Parse the gap description, file path, and function name

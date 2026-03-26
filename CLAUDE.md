@@ -6,7 +6,7 @@ Multi-stakeholder booking platform for scuba diving. Operator stakeholder create
 
 ## Product Knowledge
 
-All product decisions, domain rules, and business logic: `~/Desktop/DiveVault/DiveDispatch/`
+All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
 
 ## Dependency Direction
 
@@ -43,5 +43,35 @@ Non-obvious rules:
 
 - **TTL is lazy expiry** — checked when a booking is read, not by scheduled cron. Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
-- Medical block, auto-advance conditions → `DiveVault/DiveDispatch/Architecture/Architecture.md`
+- Medical block, auto-advance conditions → `Vaults/DiveDispatch/Architecture/Architecture.md`
 
+## Obsidian Vaults (`~/Desktop/RiskNeutral/Vaults/RiskNeutral/`)
+
+Risk Neutral is the parent entity; DiveDispatch is the active product.
+
+| What | Where |
+|---|---|
+| Design/UX observation | `Inspirations/<source>/<slug>.md` |
+| Reusable pattern | `PatternLibrary/<slug>.md` |
+| New app idea | `Ideas/Parallel Apps.md` (append) |
+| Project architecture/schema | `<project>/*.md` (update) |
+| Lesson / mistake to avoid | `<project>/Lessons.md` |
+| Session summary | `Sessions/YYYY-MM-DD.md` |
+| Risk Neutral strategy/vision observation | `RiskNeutral/Strategy/*.md` (update) |
+| Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
+
+## Design Workflow
+
+Two tools, two phases — never mix phases in one pass:
+
+- **`ui-ux-pro-max` = Design phase.** Generates the design system (`design-system/MASTER.md`)
+  and page-specific overrides (`design-system/pages/*.md`). Use when creating new pages,
+  evolving the design system, or questioning whether a design decision is right.
+  Run BEFORE building, not after.
+- **`/design-review` = Evaluation phase.** Checks built pages against `design-system/MASTER.md`
+  + page overrides. Use AFTER building to verify compliance. This is the single evaluation tool —
+  don't follow it with ui-ux-pro-max fixes (that's mixing phases).
+- **Layout before aesthetics.** Programmatic layout checks (centering, bg layers, z-index, overflow)
+  run BEFORE screenshot analysis. Always.
+- **Glass needs a background.** Glass without a background image is just a bordered box.
+  Every page must have the full background layer stack.

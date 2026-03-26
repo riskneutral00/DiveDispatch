@@ -27,11 +27,11 @@ Build the frontend map:
 8. Glob `e2e/**/*.spec.ts` — collect all E2E test files
 9. For each component/hook from steps 3-5: Grep test + E2E files for references → build tested/untested map
 10. Read `CLAUDE.md` — dependency direction, auth boundary
-11. Read `~/Desktop/DiveVault/DiveDispatch/Architecture/Architecture.md` — state machines, business constraints
-12. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
-13. Find most recent vault review: `ls ~/Desktop/DiveVault/DiveDispatch/Reviews/review-frontend-*.md | sort | tail -1`
+11. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, business constraints
+12. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
+13. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-frontend-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
-    - If not found: check `ls ~/Desktop/DiveVault/DiveDispatch/Reviews/frontend-*.md | sort | tail -1` for legacy review
+    - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/frontend-*.md | sort | tail -1` for legacy review
     - If neither found: note "baseline review, no delta"
 
 **Do not output anything yet.**
@@ -141,7 +141,7 @@ Assign each finding a tier:
 
 ### Write vault review
 
-Write to `~/Desktop/DiveVault/DiveDispatch/Reviews/review-frontend-YYYY-MM-DD.md`:
+Write to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-frontend-YYYY-MM-DD.md`:
 
 ```markdown
 # Frontend Review — YYYY-MM-DD
@@ -214,7 +214,7 @@ Components, design system compliance, a11y, performance, responsive, error state
 
 For each **CRITICAL** and **HIGH** finding that can be tested:
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
 2. Find `### Code Health Hardening` section
 3. Find the highest existing H-number (e.g., H12)
 4. For each finding, append a new spec continuing the numbering:
@@ -236,7 +236,7 @@ For each **CRITICAL** and **HIGH** finding that can be tested:
 
 ## Phase 6: Update Audit Baseline
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Architecture/Lessons.md` — find the "Audit Baseline" table
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — find the "Audit Baseline" table
 2. Check if any row's status has changed (e.g., a11y improved, new design drift)
 3. If changed: update the row. If unchanged: skip silently.
 

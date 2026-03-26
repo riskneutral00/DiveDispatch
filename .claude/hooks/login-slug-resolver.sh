@@ -45,6 +45,6 @@ PASS="REDACTED"
 
 # Delete all @divedispatch.dev Clerk accounts and recreate seed users fresh
 # --force prunes orphaned accounts + updates existing ones → avoids hitting Clerk account limits
-cd /Users/matthewlee/Desktop/DiveDispatch && npm run seed:clerk -- --force >/dev/null 2>&1 || true
+cd /Users/matthewlee/Desktop/RiskNeutral/DiveDispatch && npm run seed:clerk -- --force >/dev/null 2>&1 || true
 
 printf '{"user_message":"[Hook] Matched %s -> slug: %s (Clerk users synced). Use dev:token to sign in: npm run dev:token -- %s | Email: %s | Password: %s | OTP (if prompted): 424242"}' "$MATCH" "$SLUG" "$SLUG" "$EMAIL" "$PASS"

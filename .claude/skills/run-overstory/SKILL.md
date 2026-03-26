@@ -55,7 +55,7 @@ Generate the id as `DiveDispatch-` + 4 random hex chars. Never add POST-tier spe
 **Step 2 — Launch the runner**
 
 ```bash
-cd /Users/matthewlee/Desktop/DiveDispatch && ./scripts/overstory-runner.sh
+cd /Users/matthewlee/Desktop/RiskNeutral/DiveDispatch && ./scripts/overstory-runner.sh
 ```
 
 Run in the background.

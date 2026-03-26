@@ -430,7 +430,7 @@ The monitor loop ends when:
 5. **MANDATORY — Vault mirror sync** (run even if zero tickets completed, since stale state may exist):
    - Read all `.tickets/DD-*.md` (active) and `.tickets/done/DD-*.md` (completed)
    - Parse YAML frontmatter from each file
-   - Regenerate `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` with the same table format as `/board sync`:
+   - Regenerate `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` with the same table format as `/board sync`:
      - Group by status: In Progress → Ready → Blocked → In Review → Backlog → Done (last 20)
      - Sort each group by priority (P0 first), then by ID
      - Update the `Last updated:` timestamp

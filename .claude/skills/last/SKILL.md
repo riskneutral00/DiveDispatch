@@ -98,7 +98,7 @@ Reference: The full audit rules are documented in `.claude/skills/review-backend
 
 ## Step 3 — TODO Reconciliation + Spec Writing
 
-Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`.
+Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`.
 
 ### Mark completed work
 - For each item in the current working tier: check if the session's work completed it
@@ -144,12 +144,12 @@ For the next **1-3 unchecked TODO items** by priority order:
 
 ## Step 4 — Vault Write Prep
 
-Stage observations for DiveVault. For each of these that applies to this session, prepare a note:
+Stage observations for the vault. For each of these that applies to this session, prepare a note:
 
-- **Lessons learned** → will go to `DiveVault/DiveDispatch/Architecture/Lessons.md`
-- **Decisions made** → will go to `DiveVault/DiveDispatch/Architecture/Architecture.md`
-- **Patterns discovered** → will go to `DiveVault/DiveDispatch/PatternLibrary/`
-- **Product observations** → will go to `DiveVault/DiveDispatch/Product/`
+- **Lessons learned** → will go to `Vaults/DiveDispatch/Architecture/Lessons.md`
+- **Decisions made** → will go to `Vaults/DiveDispatch/Architecture/Architecture.md`
+- **Patterns discovered** → will go to `Vaults/RiskNeutral/PatternLibrary/`
+- **Product observations** → will go to `Vaults/DiveDispatch/Product/`
 
 Don't write these yet — `/vault` handles the actual writes. Just prepare the content so `/vault` can capture it.
 

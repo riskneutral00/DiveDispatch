@@ -24,7 +24,7 @@ Do not output anything yet.
 
 ## Step 2 — TODO Hygiene
 
-Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`.
+Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`.
 
 ### Prune completed items
 - Any item with ~~strikethrough~~ or "✓ Done" that appears to have been completed in a prior session → remove from the tier table

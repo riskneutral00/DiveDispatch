@@ -124,12 +124,12 @@ This enables querying across multiple videos in the same category later.
 
 ### Step 8 — Vault cross-post (conditional)
 
-If the video's category maps to a DiveVault domain, append a summary to the relevant Research.md:
+If the video's category maps to a vault domain, append a summary to the relevant Research.md:
 
 | Category | Vault target |
 |---|---|
-| Diving/Marine | `~/Desktop/DiveVault/DiveDispatch/Product/Research.md` |
-| Business/Strategy | `~/Desktop/DiveVault/RiskNeutral/Strategy/Research.md` |
+| Diving/Marine | `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/Research.md` |
+| Business/Strategy | `~/Desktop/RiskNeutral/Vaults/Funding/Strategy/Research.md` |
 | AI/Tech | Skip |
 | Other categories | Skip |
 
@@ -156,7 +156,7 @@ Notebook: <notebook title> (source + note added)
 
 If a vault cross-post occurred, also print:
 ```
-Vault: cross-posted to ~/Desktop/DiveVault/.../Research.md
+Vault: cross-posted to ~/Desktop/RiskNeutral/Vaults/RiskNeutral/.../Research.md
 ```
 
 If multiple videos were processed, repeat Steps 2–8 for each, then show all outputs together.

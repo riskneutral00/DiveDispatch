@@ -1,6 +1,6 @@
 ---
 name: vault
-description: "End-of-session closer. Commits code, captures observations to DiveVault, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
+description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
 user-invocable: true
 ---
@@ -74,7 +74,7 @@ Then execute the user's choice.
 
 ### Job 1: Smart-Batch Git Commit (DiveDispatch)
 
-Working directory: `~/Desktop/DiveDispatch`
+Working directory: `~/Desktop/RiskNeutral/DiveDispatch`
 
 Matt works across multiple terminals on different tickets. **Never lump unrelated changes into one commit.** Classify files into logical groups and commit each group separately.
 
@@ -139,11 +139,11 @@ EOF
 
 Commit message per bucket: conventional prefix, concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
 
-### Job 2: Vault Observations + Session File (DiveVault)
+### Job 2: Vault Observations + Session File
 
-Vault path: `~/Desktop/DiveVault/`
+Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
-> **Important:** DiveVault is outside the project directory. Use `Bash` with heredoc writes for ALL vault file operations.
+> **Important:** The vault is outside the project directory. Use `Bash` with heredoc writes for ALL vault file operations.
 
 1. Scan conversation for vault-worthy items per the routing table:
 
@@ -184,7 +184,7 @@ Vault path: `~/Desktop/DiveVault/`
 
 ### Job 3: TODO Update
 
-Path: `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
+Path: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
 
 1. Read in Round 1 (parallel with other reads).
 2. If nothing completed, no gaps discovered, no position change needed — skip.

@@ -76,7 +76,7 @@ lsof -ti:3000
 
 If not running, start it:
 ```bash
-mkdir -p screenshots && tmux new-session -d -s dev "cd /Users/matthewlee/Desktop/DiveDispatch && npm run dev"
+mkdir -p screenshots && tmux new-session -d -s dev "cd /Users/matthewlee/Desktop/RiskNeutral/DiveDispatch && npm run dev"
 ```
 
 Wait for the server to be ready by polling `curl -s -o /dev/null -w '%{http_code}' http://localhost:3000` until it returns 200 (max 30s).

@@ -16,7 +16,7 @@ You are writing a feature spec for DiveDispatch. Conduct a structured interview 
 
 Before asking anything, read the user's description carefully. Then search in parallel:
 - `convex/schema.ts` — relevant tables
-- `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md` — related or overlapping items
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — related or overlapping items
 - `src/components/` and `src/lib/constants/` — existing shared components and configs
 
 Use this research to make informed recommendations in every question.
@@ -136,10 +136,10 @@ Present overlapping items from TODO.md. Recommend:
 ## Phase 3: Vault enrichment
 
 Before writing, search the full vault for relevant content:
-- `~/Desktop/DiveVault/DiveDispatch/Architecture/Lessons.md` — mistakes to avoid
-- `~/Desktop/DiveVault/DiveDispatch/Architecture/Architecture.md` — architectural decisions
-- `~/Desktop/DiveVault/PatternLibrary/` — reusable patterns
-- `~/Desktop/DiveVault/Inspirations/` — design references
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md` — mistakes to avoid
+- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — architectural decisions
+- `~/Desktop/RiskNeutral/Vaults/RiskNeutral/PatternLibrary/` — reusable patterns
+- `~/Desktop/RiskNeutral/Vaults/RiskNeutral/Inspirations/` — design references
 
 Add anything relevant to Implementation Notes.
 
@@ -163,7 +163,7 @@ Before writing, verify each check passes. If any fail, raise it with the user.
 
 ## Phase 5: Write to TODO.md
 
-Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`. Find the appropriate tier for this feature. Assign the next number.
+Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`. Find the appropriate tier for this feature. Assign the next number.
 
 Append the new item to the tier table, then write the spec block below it:
 

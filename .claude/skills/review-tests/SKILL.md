@@ -27,7 +27,7 @@ Skip this phase if `--quality` flag is set.
 ### 1a: Vitest (skip if `--e2e` only)
 
 ```bash
-cd ~/Desktop/DiveDispatch && npm test 2>&1
+cd ~/Desktop/RiskNeutral/DiveDispatch && npm test 2>&1
 ```
 
 Capture: total test count, pass count, fail count, skip count, duration.
@@ -36,7 +36,7 @@ If any tests fail, record every failing test name + error message verbatim.
 ### 1b: Coverage (skip if `--e2e` only)
 
 ```bash
-cd ~/Desktop/DiveDispatch && npm run test:coverage 2>&1
+cd ~/Desktop/RiskNeutral/DiveDispatch && npm run test:coverage 2>&1
 ```
 
 Capture: statement %, branch %, function %. Threshold is **40% statements** (from `vitest.config.ts`).
@@ -44,7 +44,7 @@ Capture: statement %, branch %, function %. Threshold is **40% statements** (fro
 ### 1c: Playwright (only if `--full` or `--e2e`)
 
 ```bash
-cd ~/Desktop/DiveDispatch && npx playwright test 2>&1
+cd ~/Desktop/RiskNeutral/DiveDispatch && npx playwright test 2>&1
 ```
 
 Capture: total spec count, pass count, fail count, duration.
@@ -258,7 +258,7 @@ Last assessment: {date from most recent vault report, or 'never'}
 
 For each **CRITICAL** and **HIGH** finding that is actionable (fixable, not just reportable):
 
-1. Read `~/Desktop/DiveVault/DiveDispatch/Product/TODO.md`
+1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
 2. Find `### Code Health Hardening` section
 3. Find the highest existing H-number
 4. For each finding, append a new spec:
@@ -339,13 +339,13 @@ Structural Health
 ### Vault report
 
 Write the full report (same structure, with all findings listed per rule) to:
-`~/Desktop/DiveVault/DiveDispatch/Reviews/test-health-{YYYY-MM-DD}.md`
+`~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/test-health-{YYYY-MM-DD}.md`
 
 ### Delta tracking
 
 Check for a previous report:
 ```bash
-ls ~/Desktop/DiveVault/DiveDispatch/Reviews/test-health-*.md | sort | tail -2
+ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/test-health-*.md | sort | tail -2
 ```
 
 If a previous report exists, compare quality score, finding counts by tier, and coverage. Append a `## Delta` section to the vault report showing changes since last scan.

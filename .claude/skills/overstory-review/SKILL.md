@@ -12,7 +12,7 @@ When this skill is invoked, execute all steps in order — no questions, no prom
 
 ## Step 0 — Pre-flight
 
-1. Read the baseline file: `~/Desktop/DiveVault/DiveDispatch/Reviews/overstory-baseline.md`
+1. Read the baseline file: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/overstory-baseline.md`
 2. Extract the **baseline commit hash** (the HEAD commit recorded before the run).
 3. If the baseline file doesn't exist or has no commit hash, STOP and tell Matt to run Step 1 of the plan first.
 
@@ -20,7 +20,7 @@ Set `BASELINE` = the extracted commit hash for all subsequent commands.
 
 ## Step 1 — Check if `/overstory-walkthrough` was run
 
-Look for screenshots in `/Users/matthewlee/Desktop/DiveDispatch/screenshots/`. If the directory is empty or missing, tell Matt:
+Look for screenshots in `/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/screenshots/`. If the directory is empty or missing, tell Matt:
 > "No walkthrough screenshots found. Run `/overstory-walkthrough` first if you want screenshots in the review doc. Continuing without them."
 
 ## Step 2 — Collect Post-Run Metrics
@@ -125,7 +125,7 @@ For each of the 5 "Before" problems, evaluate whether it recurred:
 
 ## Step 4 — Rewrite the Review Document
 
-Read the current review doc: `~/Desktop/DiveVault/DiveDispatch/Reviews/Overstory Usage Review 2026-03-17.md`
+Read the current review doc: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/Overstory Usage Review 2026-03-17.md`
 
 Rewrite it with this structure (target: under 200 lines, ~60% shorter than current). Use the data collected above to fill in every cell and claim.
 
