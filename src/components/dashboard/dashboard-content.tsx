@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { DndContext, DragOverlay, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core'
 import { Anchor } from 'lucide-react'
@@ -167,9 +167,11 @@ export function DashboardContent({
   )
 
   // When availability result comes back, update the confirmation overlay
-  if (dropConfirmation && !dropConfirmation.conflicts && availabilityResult) {
-    setDropConfirmation({ ...dropConfirmation, conflicts: availabilityResult })
-  }
+  useEffect(() => {
+    if (dropConfirmation && !dropConfirmation.conflicts && availabilityResult) {
+      setDropConfirmation({ ...dropConfirmation, conflicts: availabilityResult })
+    }
+  }, [availabilityResult, dropConfirmation])
 
   function computeDateRange(courses: string[], startDate: string): { startDate: string; endDate: string } {
     if (courses.length === 0) return { startDate, endDate: startDate }
