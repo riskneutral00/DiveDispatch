@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { Anchor } from 'lucide-react'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
@@ -61,8 +61,6 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
     useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole ?? '' })
 
-  const [, setHiddenStatuses] = useState<Set<CalendarDisplayStatus>>(new Set(['Completed']))
-  const handleRangeChange = useCallback((_start: string, _end: string) => {}, [])
 
   // ── Extracted hooks ────────────────────────────────────────────────────────
 
@@ -130,8 +128,6 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
         blockedDates={blockedDates}
         onDateClick={handleDateClick}
         onBookingClick={handleBookingClick}
-        onRangeChange={handleRangeChange}
-        onHiddenStatusesChange={setHiddenStatuses}
         onUrgentCancel={handleUrgentCancel}
         legendStatuses={legendStatuses as CalendarDisplayStatus[]}
         allDraftsUrgent={isResourceOnly}

@@ -18,26 +18,21 @@ describe('computeDateRange', () => {
   })
 
   it('computes correct end date for a single multi-day course', () => {
-    // OW is 4 days → start + 3
+    // OW: PADI catalog minDays=3 → start + 2 days
     const result = computeDateRange(['OW'], '2026-04-01')
-    expect(result.startDate).toBe('2026-04-01')
-    // End should be after start (exact value depends on course catalog minDays)
-    expect(result.endDate >= result.startDate).toBe(true)
+    expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-03' })
   })
 
   it('computes O+A combo using calculateComboDates', () => {
+    // OW ends 04-03 (minDays 3), AOW starts there and ends 04-04 (minDays 2)
     const result = computeDateRange(['OW', 'AOW'], '2026-04-01')
-    expect(result.startDate).toBe('2026-04-01')
-    // O+A combo should span OW + AOW days
-    expect(result.endDate > result.startDate).toBe(true)
+    expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-04' })
   })
 
   it('chains sequential courses — each starts after the previous ends', () => {
-    // Two single-course entries should chain
-    const single = computeDateRange(['OW'], '2026-04-01')
-    const double = computeDateRange(['OW', 'RESCUE'], '2026-04-01')
-    // Double should end on or after the single course
-    expect(double.endDate >= single.endDate).toBe(true)
+    // OW: 04-01→04-03, RESCUE chains from 04-03: minDays 2 → 04-04
+    const result = computeDateRange(['OW', 'RESCUE'], '2026-04-01')
+    expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-04' })
   })
 
   it('handles single-day course (DSD)', () => {
@@ -53,7 +48,7 @@ describe('buildPreFill', () => {
     const result = buildPreFill(['OW'], '2026-04-01', MOCK_DEFAULTS)
     expect(result.courses).toEqual(['OW'])
     expect(result.startDate).toBe('2026-04-01')
-    expect(result.endDate >= '2026-04-01').toBe(true)
+    expect(result.endDate).toBe('2026-04-03')
     expect(result.agency).toBe('PADI')
     expect(result.instructorSlug).toBe('inst-1')
     expect(result.venueSlug).toBe('venue-1')
