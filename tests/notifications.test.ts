@@ -3,6 +3,8 @@ import {
   notify,
   _createNotificationHandler,
   _markAsReadHandler,
+  _deleteNotificationHandler,
+  _clearAllHandler,
   _getUnreadCountHandler,
   _listNotificationsHandler,
 } from '../convex/notifications'
@@ -269,6 +271,129 @@ describe('listNotifications', () => {
       await expect(
         _listNotificationsHandler(ctx, { userId: 'someone-else' }),
       ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
+    })
+  })
+})
+
+// ─── deleteNotification ──────────────────────────────────────────────────────
+
+describe('deleteNotification', () => {
+  it('deletes the notification when caller owns it', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      const notifId = await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
+
+      await _deleteNotificationHandler(ctx, { notificationId: notifId })
+
+      const notif = await ctx.db.get(notifId)
+      expect(notif).toBeNull()
+    })
+  })
+
+  it('throws NOT_FOUND when notification does not exist', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      // Insert then delete to get a valid-format but non-existent ID
+      const notifId = await seedNotification(ctx)
+      await ctx.db.delete(notifId)
+
+      await expect(
+        _deleteNotificationHandler(ctx, { notificationId: notifId }),
+      ).rejects.toMatchObject({ data: { code: 'NOT_FOUND' } })
+    })
+  })
+
+  it('throws FORBIDDEN when caller does not own the notification', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.other }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.other,
+        slug: TEST_SLUGS.other,
+        email: 'other@test.com',
+      })
+      const notifId = await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
+
+      await expect(
+        _deleteNotificationHandler(ctx, { notificationId: notifId }),
+      ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
+
+      // Notification should still exist
+      const notif = await ctx.db.get(notifId)
+      expect(notif).not.toBeNull()
+    })
+  })
+
+  it('throws UNAUTHENTICATED when there is no identity', async () => {
+    await t.run(async (ctx) => {
+      await expect(
+        _deleteNotificationHandler(ctx, { notificationId: 'irrelevant' }),
+      ).rejects.toMatchObject({ data: { code: 'UNAUTHENTICATED' } })
+    })
+  })
+})
+
+// ─── clearAll ────────────────────────────────────────────────────────────────
+
+describe('clearAll', () => {
+  it('deletes all notifications for the caller and returns count', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
+      await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
+      await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter, readAt: Date.now() })
+
+      const count = await _clearAllHandler(ctx, { userId: TEST_SLUGS.diveCenter })
+      expect(count).toBe(3)
+
+      const remaining = await ctx.db
+        .query('notifications')
+        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .collect()
+      expect(remaining).toHaveLength(0)
+    })
+  })
+
+  it('returns 0 when user has no notifications', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      const count = await _clearAllHandler(ctx, { userId: TEST_SLUGS.diveCenter })
+      expect(count).toBe(0)
+    })
+  })
+
+  it('only deletes notifications belonging to the caller, not others', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+      await seedNotification(ctx, { userId: TEST_SLUGS.diveCenter })
+      await seedNotification(ctx, { userId: 'someone-else' })
+
+      const count = await _clearAllHandler(ctx, { userId: TEST_SLUGS.diveCenter })
+      expect(count).toBe(1)
+
+      // The other user's notification should still exist
+      const otherNotifs = await ctx.db
+        .query('notifications')
+        .withIndex('by_userId', (q) => q.eq('userId', 'someone-else'))
+        .collect()
+      expect(otherNotifs).toHaveLength(1)
+    })
+  })
+
+  it('throws FORBIDDEN when userId does not match caller slug', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      await expect(
+        _clearAllHandler(ctx, { userId: 'someone-else' }),
+      ).rejects.toMatchObject({ data: { code: 'FORBIDDEN' } })
+    })
+  })
+
+  it('throws UNAUTHENTICATED when there is no identity', async () => {
+    await t.run(async (ctx) => {
+      await expect(
+        _clearAllHandler(ctx, { userId: TEST_SLUGS.diveCenter }),
+      ).rejects.toMatchObject({ data: { code: 'UNAUTHENTICATED' } })
     })
   })
 })
