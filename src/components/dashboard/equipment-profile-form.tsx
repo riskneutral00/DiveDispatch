@@ -57,7 +57,7 @@ export function EquipmentProfileForm() {
   const create = useMutation(api.equipment.create)
   const update = useMutation(api.equipment.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -272,7 +272,7 @@ export function EquipmentProfileForm() {
 
       {serverError && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm" style={{ color: 'var(--color-success)' }}>Profile saved.</p>}
-      <GlassButton type="submit" loading={saving} fullWidth>
+      <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving} fullWidth>
         {isUpdate ? 'Save Changes' : 'Create Profile'}
       </GlassButton>
     </form>

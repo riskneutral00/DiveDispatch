@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
+import { useParams } from 'next/navigation'
 import { SettingsTabBar } from '@/components/common/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { api } from '../../../convex/_generated/api'
+import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
@@ -153,6 +155,9 @@ function CoverageStatus({
 // ── Main Component ────────────────────────────────────────────────────
 
 export function PreferencesEditor() {
+  const params = useParams()
+  const roleSlug = params?.roleSlug as string | undefined
+  const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
   const prefs = useQuery(api.stakeholderPreferences.mine)
   const me = useQuery(api.users.me)
   const upsert = useMutation(api.stakeholderPreferences.upsert)
@@ -163,10 +168,11 @@ export function PreferencesEditor() {
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState('booking')
+  const baselineRef = useRef<PrefsFormData | null>(null)
 
   useEffect(() => {
     if (prefs) {
-      setForm({
+      const loaded: PrefsFormData = {
         acceptanceMode: prefs.acceptanceMode as AcceptanceMode,
         maxHoursPerDay: prefs.maxHoursPerDay,
         postJobBlockDuration: prefs.postJobBlockDuration,
@@ -178,9 +184,13 @@ export function PreferencesEditor() {
         preferredEquipmentSlugs: prefs.preferredEquipmentSlugs ?? [],
         preferredBoatSlugs: prefs.preferredBoatSlugs ?? [],
         preferredCompressorSlugs: prefs.preferredCompressorSlugs ?? [],
-      })
+      }
+      setForm(loaded)
+      baselineRef.current = loaded
     }
   }, [prefs])
+
+  const isDirty = baselineRef.current !== null && JSON.stringify(form) !== JSON.stringify(baselineRef.current)
 
   const setField = <K extends keyof PrefsFormData>(key: K, value: PrefsFormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -208,7 +218,8 @@ export function PreferencesEditor() {
 
     setSubmitting(true)
     try {
-      await upsert(result.data)
+      await upsert({ ...result.data, activeRole: activeRole! })
+      baselineRef.current = { ...form }
       setSaved(true)
     } catch (err) {
       if (err instanceof ConvexError) {
@@ -230,7 +241,7 @@ export function PreferencesEditor() {
     )
   }
 
-  const showResourcePrefs = me?.role != null && ORGANIZER_ROLES.has(me.role)
+  const showResourcePrefs = activeRole != null && ORGANIZER_ROLES.has(activeRole)
   const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   const tabs = useMemo(() => {
@@ -502,7 +513,7 @@ export function PreferencesEditor() {
           variant="primary"
           size="md"
           loading={submitting}
-          disabled={submitting}
+          disabled={!isDirty || submitting}
         >
           Save
         </GlassButton>

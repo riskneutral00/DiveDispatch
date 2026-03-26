@@ -139,7 +139,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -327,7 +327,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
       <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={saving}>
+        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
           {isUpdate ? 'Save Changes' : 'Create Profile'}
         </GlassButton>
       </div>

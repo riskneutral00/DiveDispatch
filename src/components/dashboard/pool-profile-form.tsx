@@ -57,7 +57,7 @@ export function PoolProfileForm() {
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
-  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
     me: me ?? undefined,
     schema: poolSchema,
@@ -197,7 +197,7 @@ export function PoolProfileForm() {
         )}
 
         <div className="mt-6">
-          <GlassButton type="submit" loading={saving} disabled={saving}>
+          <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
             {isUpdate ? 'Save Changes' : 'Create Profile'}
           </GlassButton>
         </div>

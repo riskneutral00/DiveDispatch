@@ -66,7 +66,7 @@ export function CompressorProfileForm() {
   const create = useMutation(api.compressors.create)
   const update = useMutation(api.compressors.update)
 
-  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -204,7 +204,7 @@ export function CompressorProfileForm() {
       )}
 
       <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={saving}>
+        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
           {isUpdate ? 'Save Changes' : 'Create Profile'}
         </GlassButton>
       </div>

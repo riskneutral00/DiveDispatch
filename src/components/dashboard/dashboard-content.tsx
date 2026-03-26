@@ -107,7 +107,7 @@ export function DashboardContent({
 
   const { data: dashboardData } = useStableQuery(
     api.bookings.myDashboard,
-    isResourceOnly && !isSwitching ? {} : 'skip',
+    isResourceOnly && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
 
   const resourceBookings = dashboardData?.bookings ?? []

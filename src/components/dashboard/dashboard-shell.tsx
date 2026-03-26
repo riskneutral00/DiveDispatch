@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
-import { ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
+import { type RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/common/spinner'
 import { ProfileCompletionPill } from './profile-completion-pill'
@@ -27,10 +27,6 @@ interface DashboardShellProps {
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const { user, isLoading } = useCurrentUser()
   const profileCompletion = useQuery(api.users.getLowestProfileCompletion)
-  const managedChildren = useQuery(
-    api.stakeholderHierarchy.getManagedChildren,
-    user ? { parentSlug: user.slug } : 'skip',
-  )
   const router = useRouter()
 
   // ── Profile overlay state ──────────────────────────────────────────────────
@@ -53,16 +49,11 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       return
     }
     if (user.slug !== slug) {
-      // Allow access if slug belongs to a managed child resource
-      const isManagedChild = managedChildren?.some((c) => c.childSlug === slug)
-      if (!isManagedChild) {
-        const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
-        if (config) {
-          router.replace(`/${user.slug}/${config.key}/dashboard`)
-        }
-      }
+      // Post-unification: all roles share the user's slug.
+      // If the URL slug doesn't match, redirect to the user's primary dashboard.
+      router.replace(`/${user.slug}/${roleSlug}/dashboard`)
     }
-  }, [user, isLoading, router, slug, managedChildren])
+  }, [user, isLoading, router, slug, roleSlug])
 
   if (isLoading || !user) {
     return (
@@ -103,7 +94,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         profileCompletion={profileCompletion}
       />
 
-      {/* Hierarchy sub-bar — DC icon + managed resources, or back nav on resource dashboards */}
+      {/* Role switcher — shows all user roles as icon pills */}
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 
       {/* Page content — pb-20 on mobile clears the fixed bottom nav */}

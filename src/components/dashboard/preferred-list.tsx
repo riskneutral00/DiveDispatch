@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react'
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { DirectoryEntry } from '../../../convex/directory'
+import type { StakeholderRole } from '../../../convex/lib/validators'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
@@ -177,7 +178,7 @@ interface SingleRoleProps {
 }
 
 function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, renderBadge }: SingleRoleProps) {
-  const entries = useQuery(api.directory.listByRole, { role })
+  const entries = useQuery(api.directory.listByRole, { role: role as StakeholderRole })
 
   if (entries === undefined) {
     return (

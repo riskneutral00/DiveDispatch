@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { deriveDefaultRole } from '../../../convex/lib/rolePrecedence'
 import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { LanguagePicker } from '@/components/common/language-picker'
@@ -31,6 +32,7 @@ interface AccountFormValues {
 
 export function AccountForm() {
   const user = useQuery(api.users.me)
+  const userRoles = useQuery(api.userRoles.myRoles)
   const createUser = useMutation(api.users.createUser)
   const updateDefaults = useMutation(api.users.updateAccountDefaults)
 
@@ -51,10 +53,11 @@ export function AccountForm() {
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const baselineRef = useRef<AccountFormValues | null>(null)
 
   useEffect(() => {
     if (user) {
-      setValues({
+      const loaded: AccountFormValues = {
         firstName: user.firstName ?? '',
         lastName: user.lastName ?? '',
         nickname: user.nickname ?? '',
@@ -67,9 +70,13 @@ export function AccountForm() {
         defaultLocation: user.defaultLocation ?? '',
         defaultContactEmail: user.defaultContactEmail ?? '',
         defaultContactPhone: user.defaultContactPhone ?? '',
-      })
+      }
+      setValues(loaded)
+      baselineRef.current = loaded
     }
   }, [user])
+
+  const isDirty = baselineRef.current !== null && JSON.stringify(values) !== JSON.stringify(baselineRef.current)
 
   if (user === undefined) {
     return (
@@ -81,7 +88,10 @@ export function AccountForm() {
 
   if (!user) return null
 
-  const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
+  const defaultRole = userRoles && userRoles.length > 0
+    ? deriveDefaultRole(userRoles.map((r) => r.role))
+    : null
+  const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
   const hasPersonalOnlyRole = roleConfig && PERSONAL_ROLE_KEYS.has(roleConfig.key)
   const showBusinessName = !hasPersonalOnlyRole
 
@@ -104,7 +114,7 @@ export function AccountForm() {
     try {
       const businessName = values.businessName.trim() || `${values.firstName} ${values.lastName}`
       await createUser({
-        role: user!.role,
+        role: (defaultRole ?? 'DiveCenter') as ClerkRole,
         businessName,
         firstName: values.firstName.trim() || undefined,
         lastName: values.lastName.trim() || undefined,
@@ -120,6 +130,7 @@ export function AccountForm() {
         defaultContactPhone: values.defaultContactPhone.trim() || undefined,
         customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
+      baselineRef.current = { ...values }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
@@ -317,7 +328,7 @@ export function AccountForm() {
         <GlassButton
           type="submit"
           variant="primary"
-          disabled={!isComplete || submitting}
+          disabled={!isComplete || !isDirty || submitting}
           loading={submitting}
         >
           {saved ? 'Saved' : 'Save Changes'}

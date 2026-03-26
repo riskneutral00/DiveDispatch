@@ -122,7 +122,7 @@ export function BoatProfileForm() {
   const create = useMutation(api.boats.create)
   const update = useMutation(api.boats.update)
 
-  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile,
     me: me ?? undefined,
     schema: profileZod,
@@ -299,7 +299,7 @@ export function BoatProfileForm() {
         </p>
       )}
 
-      <GlassButton type="submit" loading={saving} fullWidth>
+      <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving} fullWidth>
         {isUpdate ? 'Save Changes' : 'Create Profile'}
       </GlassButton>
     </form>

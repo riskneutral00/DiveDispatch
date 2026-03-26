@@ -124,7 +124,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
   const create = useMutation(api.instructors.create)
   const update = useMutation(api.instructors.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -234,7 +234,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
       <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={saving}>
+        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
           {isUpdate ? 'Save Changes' : 'Create Profile'}
         </GlassButton>
       </div>

@@ -55,7 +55,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" role="presentation" onClick={() => setOpen(false)} />
           <div
             className="absolute right-0 top-10 z-50 min-w-[180px] py-1 shadow-xl"
             style={{

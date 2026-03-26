@@ -65,7 +65,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const { form, setField, errors, serverError, saving, saved, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
     profile: existing,
     me,
     schema: formSchema,
@@ -421,7 +421,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       )}
 
       <div className="flex justify-end">
-        <GlassButton type="submit" loading={saving}>
+        <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
           <Save size={16} />
           {isUpdate ? 'Save Changes' : 'Create Profile'}
         </GlassButton>
