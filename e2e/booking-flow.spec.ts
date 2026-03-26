@@ -71,10 +71,18 @@ async function fillItineraryStep(
   }
 }
 
-/** Advance the wizard to the next step. */
+/** Advance the wizard to the next step. Waits for the step transition to settle. */
 async function clickNext(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Next', exact: true }).click()
-  await page.waitForTimeout(1_500)
+  // Step transition: wait for the itinerary step's course select OR the review step's submit
+  // button to appear — these are reliable signals that the next step has rendered.
+  await expect(
+    page.locator('[data-testid="course-activity-select"], [data-testid="review-summary"]')
+      .first(),
+  ).toBeVisible({ timeout: 10_000 }).catch(() => {
+    // On the last step (review), neither selector may match the exact pattern —
+    // callers always follow with their own assertions, so this is best-effort.
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -103,8 +111,8 @@ test.describe('booking-flow', () => {
 
     await page.getByRole('button', { name: 'Submit Booking' }).click()
 
-    // Overlay closes after submission — dashboard should still be visible
-    await page.waitForTimeout(2_000)
+    // Overlay closes after submission — wait for it to close, then verify dashboard
+    await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 15_000 })
     await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({ timeout: 10_000 })
   })
 
@@ -129,7 +137,8 @@ test.describe('booking-flow', () => {
 
     // Step 3: Review — submit
     await page.getByRole('button', { name: 'Submit Booking' }).click()
-    await page.waitForTimeout(2_000)
+    // Wait for overlay to close
+    await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 15_000 })
 
     // Dashboard should show DSD booking
     await expect(page.getByText('DSD').first()).toBeVisible({ timeout: 10_000 })
@@ -148,7 +157,8 @@ test.describe('booking-flow', () => {
     await fillItineraryStep(page, startDate, { instructorName: 'Ryan Clarke' })
     await clickNext(page)
     await page.getByRole('button', { name: 'Submit Booking' }).click()
-    await page.waitForTimeout(3_000)
+    // Wait for overlay to close after first booking
+    await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 15_000 })
 
     // Create SECOND booking with same instructor and same date — should conflict
     await openBookingOverlay(page)

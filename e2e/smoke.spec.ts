@@ -16,15 +16,15 @@ import { captureConsoleErrors } from './helpers/console'
 test.describe('smoke: public pages', () => {
   test('landing page accessibility', async ({ page }) => {
     await page.goto(PUBLIC_ROUTES.landing)
-    await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1_000) // let styles settle
+    await page.waitForLoadState('networkidle')
     await checkAccessibility(page)
   })
 
   test('sign-in page accessibility', async ({ page }) => {
     await page.goto(PUBLIC_ROUTES.signIn)
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(2_000) // let Clerk render
+    // Wait for Clerk to render its root box before running accessibility checks
+    await expect(page.locator('.cl-rootBox')).toBeVisible({ timeout: 10_000 })
     // Exclude Clerk's internal elements — we can't control their DOM
     await checkAccessibility(page, { exclude: ['.cl-rootBox'] })
   })

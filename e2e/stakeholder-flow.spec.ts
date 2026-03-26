@@ -22,7 +22,8 @@ async function createBookingWithRyanClarke(
   await page.locator('[data-testid="customer-email"]').first().fill(`${diverName.toLowerCase().replace(/\s/g, '')}@test.com`)
   await page.getByRole('button', { name: 'English' }).click()
   await page.getByRole('button', { name: 'Next', exact: true }).click()
-  await page.waitForTimeout(1_500)
+  // Wait for itinerary step to render
+  await expect(page.locator('[data-testid="course-activity-select"]').first()).toBeVisible({ timeout: 10_000 })
 
   // Step 2: Itinerary — DSD with Ryan Clarke
   await page.locator('[data-testid="course-activity-select"]').first().selectOption('DSD')
@@ -36,12 +37,13 @@ async function createBookingWithRyanClarke(
   await page.getByRole('option', { name: 'Ryan Clarke' }).click()
 
   await page.getByRole('button', { name: 'Next', exact: true }).click()
-  await page.waitForTimeout(1_500)
+  // Wait for review step to render
+  await expect(page.getByRole('button', { name: 'Submit Booking' })).toBeVisible({ timeout: 10_000 })
 
   // Step 3: Review — submit
   await page.getByRole('button', { name: 'Submit Booking' }).click()
   // Wait for overlay to close
-  await page.waitForTimeout(3_000)
+  await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 15_000 })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -68,9 +70,7 @@ test.describe('stakeholder-flow', () => {
     await acceptBtn.click()
 
     // After accepting, the request should appear in Confirmed Schedule
-    await expect(page.getByText('Confirmed Schedule')).toBeVisible({ timeout: 5_000 })
-    await page.waitForTimeout(1_000)
-    await expect(page.getByText('Confirmed Schedule')).toBeVisible()
+    await expect(page.getByText('Confirmed Schedule')).toBeVisible({ timeout: 10_000 })
   })
 
   test('instructor declines a booking request', async ({ page }) => {
@@ -97,8 +97,8 @@ test.describe('stakeholder-flow', () => {
     await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
     await confirmDialog.getByRole('button', { name: 'Decline' }).click()
 
-    // After declining, no error alert should appear
-    await page.waitForTimeout(1_000)
+    // After declining, the confirm dialog should close and no error alert should appear
+    await expect(confirmDialog).not.toBeVisible({ timeout: 5_000 })
     await expect(page.locator('[role="alert"]')).not.toBeVisible()
   })
 })

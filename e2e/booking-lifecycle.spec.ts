@@ -18,10 +18,18 @@ async function openBookingOverlay(
   await expect(page.getByLabel('Full name *')).toBeVisible({ timeout: 10_000 })
 }
 
-/** Advance the wizard to the next step. */
+/** Advance the wizard to the next step. Waits for the step transition to settle. */
 async function clickNext(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Next', exact: true }).click()
-  await page.waitForTimeout(1_500)
+  // Step transition: wait for the itinerary step's course select OR the review step's submit
+  // button to appear — these are reliable signals that the next step has rendered.
+  await expect(
+    page.locator('[data-testid="course-activity-select"], [data-testid="review-summary"]')
+      .first(),
+  ).toBeVisible({ timeout: 10_000 }).catch(() => {
+    // On the last step (review), neither selector may match the exact pattern —
+    // callers always follow with their own assertions, so this is best-effort.
+  })
 }
 
 /** Fill a single customer in the customer step. */
@@ -55,7 +63,8 @@ async function fillMultipleCustomers(
   // Add remaining customers
   for (let i = 1; i < customers.length; i++) {
     await page.getByRole('button', { name: /Add Customer/i }).click()
-    await page.waitForTimeout(300)
+    // Wait for the new customer's name input to appear
+    await expect(page.getByLabel('Full name *').nth(i)).toBeVisible({ timeout: 5_000 })
     await fillOneCustomer(page, customers[i].name, customers[i].email, i)
   }
 }
@@ -80,7 +89,10 @@ async function discardDraft(page: import('@playwright/test').Page) {
       : null
   if (target) {
     await target.click()
-    await page.waitForTimeout(500)
+    // Wait for the overlay to close
+    await expect(page.getByLabel('Full name *')).not.toBeVisible({ timeout: 5_000 }).catch(() => {
+      // Overlay may already be closed
+    })
   }
 }
 
@@ -180,7 +192,8 @@ test.describe('2 — Itinerary step', () => {
 
     // Add another course entry
     await page.getByRole('button', { name: /Add activity/i }).click()
-    await page.waitForTimeout(300)
+    // Wait for second activity dropdown to appear
+    await expect(page.locator('[data-testid="course-activity-select"]').nth(1)).toBeVisible({ timeout: 5_000 })
 
     // Select OW for the second entry — but AOW requires OW, and OW has no date
     // The prerequisite warning should mention OW required
@@ -190,7 +203,8 @@ test.describe('2 — Itinerary step', () => {
   test('2h — no schedule visible when no courses selected', async ({ page }) => {
     // QUICK BOOK pre-fills DSD — clear it to test empty state
     await page.locator('[data-testid="course-activity-select"]').first().selectOption('')
-    await page.waitForTimeout(300)
+    // Wait for the select to reflect the empty value
+    await expect(page.locator('[data-testid="course-activity-select"]').first()).toHaveValue('')
 
     // With no course selected, day rows should not appear.
     // (Don't match /Schedule/ — it hits the step label "Program & Schedule".)
@@ -312,7 +326,8 @@ test.describe('1e — Draft persistence', () => {
 
     // Close overlay via X button (NOT Cancel — X preserves the draft)
     await page.getByLabel('Close dialog').click()
-    await page.waitForTimeout(1_000)
+    // Wait for overlay to close
+    await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 5_000 })
 
     // The draft booking should appear as a bar on the calendar
     const draftBar = page.locator('button.glass-surface.absolute').filter({ hasText: 'DSD' })
@@ -334,7 +349,8 @@ test.describe('1e — Draft persistence', () => {
 
     // Close overlay via X on step 2 — no draft should exist
     await page.getByLabel('Close dialog').click()
-    await page.waitForTimeout(500)
+    // Wait for overlay to close
+    await expect(page.getByLabel('Close dialog')).not.toBeVisible({ timeout: 5_000 })
 
     // Quick Book cards visible again
     await expect(page.getByRole('button', { name: /^DSD\s/ }).first()).toBeVisible({ timeout: 5_000 })
@@ -370,16 +386,18 @@ test.describe('2c — Second activity date constraint', () => {
     await courseSelect.selectOption('OW')
     const owStart = futureDateString(20)
     await page.locator('[data-testid="course-start-date"]').first().fill(owStart)
-    await page.waitForTimeout(500)
+    // Wait for the schedule to generate after date entry
+    await expect(page.getByText(/Day 1/).first()).toBeVisible({ timeout: 5_000 })
 
     // Add a second activity
     await page.getByRole('button', { name: /Add activity/i }).click()
-    await page.waitForTimeout(300)
+    // Wait for the second activity dropdown to appear
+    await expect(page.locator('[data-testid="course-activity-select"]').nth(1)).toBeVisible({ timeout: 5_000 })
 
     // Select AOW for the second entry
     const secondCourseSelect = page.locator('[data-testid="course-activity-select"]').nth(1)
     await secondCourseSelect.selectOption('AOW')
-    await page.waitForTimeout(300)
+    await expect(secondCourseSelect).toHaveValue('AOW')
 
     // The second date input should have min attribute >= OW end date
     // Each course entry has a data-testid="course-start-date"; the second is AOW's start
@@ -462,22 +480,17 @@ test.describe('4b/4e — Active and Completed badges', () => {
     // Simulate customer portal completion → auto-advance Draft → Upcoming
     await completeCustomerPortal(NICOLE.slug)
 
-    // Wait for Convex to push the status update
-    await page.waitForTimeout(3_000)
-
-    // A booking bar should appear on the calendar (DSD label)
+    // A booking bar should appear on the calendar (DSD label) — Convex reactivity will push the update
     const bookingBar = page.locator('button.glass-surface.absolute').filter({ hasText: 'DSD' })
     await expect(bookingBar.first()).toBeVisible({ timeout: 10_000 })
 
     // Toggle Active filter OFF — the bar should disappear
     const activeFilter = page.getByRole('button', { name: 'Active' })
     await activeFilter.click()
-    await page.waitForTimeout(500)
     await expect(bookingBar).not.toBeVisible({ timeout: 5_000 })
 
     // Toggle Active filter ON — the bar reappears
     await activeFilter.click()
-    await page.waitForTimeout(500)
     await expect(bookingBar.first()).toBeVisible({ timeout: 5_000 })
   })
 
@@ -495,7 +508,10 @@ test.describe('4b/4e — Active and Completed badges', () => {
 
     // Simulate customer portal completion → auto-advance Draft → Upcoming
     await completeCustomerPortal(NICOLE.slug)
-    await page.waitForTimeout(2_000)
+
+    // Wait for Convex reactivity to push the status update before manipulating the clock
+    const bookingBarPreClock = page.locator('button.glass-surface.absolute').filter({ hasText: 'DSD' })
+    await expect(bookingBarPreClock.first()).toBeVisible({ timeout: 15_000 })
 
     // Advance the browser clock by 2 days so endDate < "today"
     const twoDaysLater = new Date()
@@ -509,7 +525,6 @@ test.describe('4b/4e — Active and Completed badges', () => {
     // Completed is hidden by default — toggle it ON
     const completedFilter = page.getByRole('button', { name: 'Completed' })
     await completedFilter.click()
-    await page.waitForTimeout(500)
 
     // The booking bar should now be visible as Completed
     const bookingBar = page.locator('button.glass-surface.absolute').filter({ hasText: 'DSD' })
@@ -517,7 +532,6 @@ test.describe('4b/4e — Active and Completed badges', () => {
 
     // Toggle Completed OFF — should disappear
     await completedFilter.click()
-    await page.waitForTimeout(500)
     await expect(bookingBar).not.toBeVisible({ timeout: 5_000 })
   })
 })
@@ -537,8 +551,9 @@ test.describe('dropdown filter — activity unavailability rules', () => {
 
   async function getSecondDropdownValues(page: import('@playwright/test').Page): Promise<string[]> {
     await page.getByRole('button', { name: /Add activity/i }).click()
-    await page.waitForTimeout(300)
     const secondSelect = page.locator('[data-testid="course-activity-select"]').nth(1)
+    // Wait for the second activity dropdown to appear
+    await expect(secondSelect).toBeVisible({ timeout: 5_000 })
     // Read option VALUES (course codes like 'AOW') not text — avoids false matches
     // from the O+A combo label "O+A (OW + AOW)" which contains "AOW" as text.
     return secondSelect.locator('option').evaluateAll((opts) =>
