@@ -2,15 +2,13 @@ import { mutation } from './_generated/server'
 import type { GenericMutationCtx } from 'convex/server'
 import { v, ConvexError } from 'convex/values'
 import type { DataModel } from './_generated/dataModel'
-import { ErrorCode } from './lib/errorCodes'
+import { requireDevEnvironment } from './lib/devGuard'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 
 type MutCtx = GenericMutationCtx<DataModel>
 
 async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
-  if (process.env.DEV_MODE !== 'true') {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev-only endpoint' })
-  }
+  requireDevEnvironment()
 
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })

@@ -2,6 +2,7 @@ import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
 import { isTimestampFresh } from './lib/webhookTimestamp'
+import { isDevEnvironment } from './lib/devGuard'
 
 const http = httpRouter()
 
@@ -134,7 +135,7 @@ http.route({
   path: '/dev/signin-token',
   method: 'POST',
   handler: httpAction(async (_ctx, request) => {
-    if (process.env.ENVIRONMENT !== 'development') {
+    if (!isDevEnvironment()) {
       return new Response('Forbidden', { status: 403 })
     }
 
@@ -195,7 +196,7 @@ http.route({
   path: '/dev/delete-user',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
-    if (process.env.ENVIRONMENT !== 'development') {
+    if (!isDevEnvironment()) {
       return new Response('Forbidden', { status: 403 })
     }
 
@@ -222,7 +223,7 @@ http.route({
   path: '/dev/complete-customer-form',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
-    if (process.env.ENVIRONMENT !== 'development') {
+    if (!isDevEnvironment()) {
       return new Response('Forbidden', { status: 403 })
     }
 

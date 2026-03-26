@@ -9,6 +9,7 @@ import { mutation } from '../_generated/server'
 import { requireAuth } from '../lib/auth'
 import { tryAutoAdvance } from './autoAdvance'
 import { ErrorCode } from '../lib/errorCodes'
+import { requireDevEnvironment } from '../lib/devGuard'
 
 /**
  * DEV-ONLY: Marks a booking's customer form as complete and triggers auto-advance.
@@ -18,9 +19,7 @@ import { ErrorCode } from '../lib/errorCodes'
 export const forceCustomerFormComplete = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    if (process.env.ENVIRONMENT !== 'development') {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev-only mutation' })
-    }
+    requireDevEnvironment()
 
     const { user } = await requireAuth(ctx)
 
