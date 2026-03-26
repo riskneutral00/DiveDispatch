@@ -921,7 +921,7 @@ describe('checkAndExpireBooking', () => {
     )
   })
 
-  it('schedules expiry when caller owns the expired booking', async () => {
+  it('expires booking inline when caller owns the expired booking', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
