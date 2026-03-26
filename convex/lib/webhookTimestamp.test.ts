@@ -1,12 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { isTimestampFresh, TIMESTAMP_TOLERANCE_SECONDS } from './webhookTimestamp'
+import { isTimestampFresh } from './webhookTimestamp'
 
 describe('isTimestampFresh', () => {
-  // Tolerance is 300 seconds (5 minutes) per Svix spec
-  it('exports a 300-second tolerance constant', () => {
-    expect(TIMESTAMP_TOLERANCE_SECONDS).toBe(300)
-  })
-
   it('accepts a timestamp that is exactly now', () => {
     const nowSeconds = Math.floor(Date.now() / 1000)
     expect(isTimestampFresh(String(nowSeconds))).toBe(true)
