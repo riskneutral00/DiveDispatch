@@ -2,7 +2,7 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance } from './bookings/_shared'
-import { resolvePortalToken } from './lib/portal'
+import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 
@@ -209,12 +209,10 @@ export const getSafetyInfoByToken = query({
     medications: string
     insurancePolicyNumber: string
   } | null> => {
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
-      .unique()
+    const resolved = await resolvePortalTokenSoft(ctx, args.token)
+    if (!resolved) return null
 
-    if (!profile) return null
+    const { profile } = resolved
 
     return {
       bloodType: profile.bloodType ?? '',
@@ -241,12 +239,10 @@ export const getMedicalByToken = query({
     answers: Record<string, boolean | string>
     physicianClearanceRequired: boolean
   } | null> => {
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
-      .unique()
+    const resolved = await resolvePortalTokenSoft(ctx, args.token)
+    if (!resolved) return null
 
-    if (!profile) return null
+    const { profile } = resolved
 
     return {
       answers: profile.medicalAnswers ?? {},
