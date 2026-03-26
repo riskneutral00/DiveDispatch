@@ -123,7 +123,7 @@ For each `blocker` or `gap` finding NOT already covered by an existing ticket:
 id: DD-{NNN}
 title: "{Title}"
 priority: {P0|P1|P2|P3}
-status: backlog
+status: ready
 category: {slug}
 blocked_by: []
 assigned_to: null
@@ -144,7 +144,7 @@ updated: {YYYY-MM-DD}
 **Blocked by:** {DD-NNN prerequisites, or "None".}
 ```
 
-**Auto-promote:** After creating each ticket, check if both `**Spec:**` has non-whitespace text and `**Acceptance:**` has at least one `- ` bullet. If yes → set `status: ready`. If no → leave as `backlog`.
+**Status defaults to `ready`** since heartbeat always writes full specs. If for some reason a ticket lacks spec text or acceptance bullets, downgrade to `backlog`.
 
 ### 3c. Field classification
 

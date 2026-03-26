@@ -13,6 +13,19 @@ You are a senior architect reviewing uncommitted changes before they reach `git 
 
 ---
 
+## Phase 0: Test Verification
+
+Run the test suite first. If tests fail, nothing else matters.
+
+```bash
+npx vitest run 2>&1
+```
+
+- If **any tests fail** → immediate **NO-GO**. Output the failure summary and stop. Do not proceed to Phase 1.
+- If all tests pass → capture pass count and continue.
+
+---
+
 ## Phase 1: Diff Classification (silent)
 
 1. Run `git diff --name-only` + `git diff --cached --name-only` → deduplicated changed file list.
@@ -156,4 +169,8 @@ Ready for /vault: {YES or NO}
 - **Test gaps are informational.** They appear in the verdict but never block (MEDIUM at most). Changing code without changing tests is sometimes intentional.
 - **Config-only changes skip review.** If only config files changed, report them and skip to the verdict with "Config changes only — no review skills applicable."
 - **The gate is read-only.** It does not write files itself. The dispatched skills handle their own vault writes, H-specs, and baseline updates.
+- **Write sentinel after verdict.** After printing the verdict, write `.gate-ran` so `/vault` knows the gate ran:
+  ```bash
+  echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{GO|NO-GO}","critical":{N},"high":{N}}' > .gate-ran
+  ```
 - **Execute immediately.** No preamble, no methodology explanation. Classify, dispatch, verdict.

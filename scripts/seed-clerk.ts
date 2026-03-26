@@ -17,7 +17,7 @@ import { spawnSync } from 'child_process'
 import { ALL_STAKEHOLDERS, type SeedUser } from '../convex/seedData'
 import { ALL_INSTRUCTORS } from '../convex/seedInstructorData'
 
-const SEED_PASSWORD = 'REDACTED'
+const SEED_PASSWORD = 'divedispatch123'
 const DELAY_MS = 500 // spacing between Clerk API calls to avoid rate limits
 const MAX_RETRIES = 3
 

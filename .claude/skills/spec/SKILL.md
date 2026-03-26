@@ -1,6 +1,6 @@
 ---
 name: spec
-description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to TODO.md for /first to pick up."
+description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to .tickets/DD-*.md for /board to pick up."
 user-invocable: true
 ---
 
@@ -16,7 +16,7 @@ You are writing a feature spec for DiveDispatch. Conduct a structured interview 
 
 Before asking anything, read the user's description carefully. Then search in parallel:
 - `convex/schema.ts` — relevant tables
-- `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — related or overlapping items
+- `.tickets/DD-*.md` — related or overlapping tickets (read YAML frontmatter for status, priority, side_effects)
 - `src/components/` and `src/lib/constants/` — existing shared components and configs
 
 Use this research to make informed recommendations in every question.
@@ -94,7 +94,7 @@ Recommend based on feature type:
 
 Ask: "Anything this depends on?"
 
-Present what you found in TODO.md — items this depends on or conflicts with.
+Present what you found in `.tickets/` — tickets this depends on or conflicts with.
 
 Check platform features:
 - **Clerk**: auth, user management, roles, webhooks — don't rebuild these
@@ -127,7 +127,7 @@ If no flags: Say "No risk flags" and move on.
 
 Ask: "Does this replace anything existing?"
 
-Present overlapping items from TODO.md. Recommend:
+Present overlapping tickets from `.tickets/`. Recommend:
 - "This supersedes #[N]. Files to delete: [list]." or
 - "No overlap found."
 
@@ -160,42 +160,69 @@ Before writing, verify each check passes. If any fail, raise it with the user.
 
 ---
 
-## Phase 5: Write to TODO.md
+## Phase 5: Write to .tickets/
 
-Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`. Find the appropriate tier for this feature. Assign the next number.
+`.tickets/` is the single source of truth for all work items. Read `.tickets/.counter` for the next ticket number. Increment the counter.
 
-Append the new item to the tier table, then write the spec block below it:
+Create `.tickets/DD-{NNN}.md` with YAML frontmatter + spec body:
 
 ```markdown
-| {N} | **{Title}** — {one-line description} | §{slug} |
+---
+id: DD-{NNN}
+title: "{Title}"
+status: backlog
+priority: {P0|P1|P2|P3}
+category: {feature|bugfix|security|performance|tooling|ux}
+assigned_to: null
+branch: null
+blocked_by: [{DD-NNN dependencies, or empty}]
+pr: null
+side_effects: [{areas from Q5, or empty}]
+human_required: false
+size: {S|M|L}
+created: {YYYY-MM-DD}
+updated: {YYYY-MM-DD}
+---
+
 **Spec:** {What to change, which files, what the outcome looks like.}
-**Acceptance:** {Specific, testable bullets. Include "npm test passes".}
+
+**Acceptance:**
+- {Specific, testable bullets. Include "npm test passes".}
+
 **Test plan:**
 - {Type}: `{file}` — {what it tests}
 - {Type}: `{file}` — {what it tests}
-**Blocked by:** {#N prerequisite items, or "None".}
-**Side effects:** {Modules/areas touched beyond primary scope, or "None".}
-**Human required:** No — spec interview completed.
-**Size:** {S|M|L}
 ```
 
-### Tier selection
+### Priority selection
 
-| Tier | Use when |
+| Priority | Use when |
 |---|---|
-| Tier 3 (Prod Hardening) | Error handling, monitoring, CI/CD |
-| Tier 4 (Core UX) | Features users need before launch |
-| Tier 7 (Frontend Polish) | Visual quality, a11y, performance |
-| Tier 8 (Performance) | Scale, N+1, indexes |
-| Tier 11 (Post-Launch) | Deferred features |
+| P0 | Blocks launch, data corruption, security vulnerability |
+| P1 | Core UX, production hardening, error handling |
+| P2 | Polish, a11y, performance, post-launch features |
+| P3 | Nice-to-have, deferred, low-impact |
+
+### Category selection
+
+| Category | Use when |
+|---|---|
+| `feature` | New capability or flow |
+| `bugfix` | Fixing broken behavior |
+| `security` | Auth, ownership, PII exposure |
+| `performance` | N+1, indexes, bundle size |
+| `tooling` | Skills, hooks, CI/CD, dev experience |
+| `ux` | Visual polish, a11y, responsive |
+
+After writing the ticket file, update `.tickets/.counter` with the new number.
 
 ---
 
 ## Phase 6: Confirm
 
-1. Report: "Added #{N} to Tier {X}: {title}"
+1. Report: "Created DD-{NNN}: {title} (P{X}, {category})"
 2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
-3. Note: "/first will pick this up next session as the next work item (if it's the highest-priority unchecked item)."
+3. Note: "`/board pick` will claim this ticket when ready. Use `/board promote DD-{NNN}` to move from backlog to ready."
 
 ---
 
@@ -204,6 +231,6 @@ Append the new item to the tier table, then write the spec block below it:
 - **One question at a time.** Never batch.
 - **Data before UI.** Always.
 - **Tests before code.** The test plan is mandatory, not optional.
-- **TODO.md is the output.** Not a standalone file. /first reads it, /last updates it.
+- **`.tickets/` is the output.** One ticket file per spec. `/board` manages lifecycle, `/board sync` mirrors to vault TODO.md.
 - **Cheapest test wins.** Don't spec a component test for something a unit test catches.
 - **Edge cases over happy paths.** The test plan should focus on what could go wrong.

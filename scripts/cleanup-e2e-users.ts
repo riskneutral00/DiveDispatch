@@ -10,7 +10,7 @@
  *   CLERK_SECRET_KEY=sk_test_xxx npx tsx scripts/cleanup-e2e-users.ts
  *   npx tsx scripts/cleanup-e2e-users.ts          # uses .env.local
  *
- * Called automatically by /run-overstory before each batch.
+ * Can be run manually or as part of batch processing.
  */
 
 import { createClerkClient } from '@clerk/backend'

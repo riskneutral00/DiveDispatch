@@ -64,80 +64,34 @@ Deduplicate. Filter to source files (`.ts`, `.tsx` in `convex/` or `src/`). Excl
 
 ---
 
-## Step 2.5 — Review Changed Code (diff-scoped)
+## Step 3 — Ticket Reconciliation
 
-Run review checks ONLY on files changed this session — not a full codebase scan.
-
-```bash
-git diff --name-only HEAD 2>/dev/null
-```
-
-For each changed file, apply the relevant checks:
-
-| Changed file pattern | Checks |
-|---|---|
-| `convex/schema.ts` | Verify 3 invariants (exclusive overlap, pooled blocking, snapshot atomicity) are not violated by schema changes. Check new tables have appropriate indexes. |
-| `convex/**/*.ts` | Verify `requireAuth()` present in mutations (not `getAuthUser` alone). Check ownership comparisons use auth context. Verify ConvexError codes are consistent (UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, INVALID_STATUS, CONFLICT). |
-| `src/components/**/*.tsx` | Check for `useMutation` calls without error handling. Check for missing loading/error states on data-fetching components. Verify new components follow design system (CSS variables, not hardcoded colors — hooks catch most of this). |
-| `tests/**/*.test.*` | Check for hardcoded date strings (should use `testDate()`). Check for `as any` (should use typed fixtures). Check for weak assertions (`.toBeDefined()` alone). Check for empty test blocks (no `expect()`). |
-
-Report findings inline:
-
-```
-Review: 4 changed files checked
-  convex/bookings/create.ts — OK (requireAuth present, ConvexError consistent)
-  src/components/dashboard/profile-overlay.tsx — WARN: no error boundary for mutation failure
-  tests/frontend/wizard-data-contracts.test.ts — OK (no hardcoded dates, no as any)
-```
-
-Do NOT block on warnings — just report them. Fixing is optional (note in vault observations if significant).
-
-Reference: The full audit rules are documented in `.claude/skills/review-backend-auth/SKILL.md`, `.claude/skills/review-backend-mutations/SKILL.md`, `.claude/skills/review-frontend/SKILL.md`, and `.claude/skills/review-tests/SKILL.md`. These skills are reference documentation — `/last` executes their key checks inline.
-
----
-
-## Step 3 — TODO Reconciliation + Spec Writing
-
-Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`.
+`.tickets/` is the single source of truth. Read all `.tickets/DD-*.md` YAML frontmatter.
 
 ### Mark completed work
-- For each item in the current working tier: check if the session's work completed it
-- If completed → add ✓ Done with today's date
-- If partially completed → note progress inline
+- For each `in_progress` ticket: check if the session's work completed it
+- If completed → move to `.tickets/done/`, auto-unblock dependents (scan `blocked_by` fields)
+- If partially completed → update the spec body with progress notes
 
 ### Re-prioritize
-- If the session revealed a new issue more urgent than existing TODOs → insert it at the correct tier
-- If an existing TODO is now blocked by something discovered this session → note the blocker
+- If the session revealed a new issue more urgent than existing tickets → create a new `.tickets/DD-*.md` (read `.tickets/.counter`, increment)
+- If an existing ticket is now blocked by something discovered this session → add to its `blocked_by` field
 
-### Write specs for next items
-For the next **1-3 unchecked TODO items** by priority order:
+### Enrich next tickets
+For the next **1-3 ready tickets** by priority order:
 
 1. Read the relevant source files to understand current state
-2. Write a spec block directly in TODO.md under the item.
+2. If the ticket spec is thin, enrich it with:
+   - Specific file paths and functions to modify
+   - Updated `side_effects` if the code has changed since ticket creation
+   - Updated `size` based on current codebase state
 
-   Classify the new fields by analyzing the source files:
-   - **Side effects:** Check if the item touches shared utilities, state machines, or test fixtures
-   - **Human required:** Set to Yes if the item needs design input, domain knowledge not in docs, or a contradiction resolution
-   - **Size:** Count affected files and estimate scope
-
-```markdown
-**Spec:** What to change, which files, what the outcome looks like.
-**Acceptance:** How to verify it's done (test assertion, visual check, behavior).
-**Blocked by:** Any prerequisite that must be done first, or "None".
-**Side effects:** Shared modules/areas this touches beyond its primary scope, or "None".
-**Human required:** Yes/No — Yes if this needs a design decision, domain input, or spec interview before an agent can start.
-**Size:** S/M/L — S=single file <30min, M=2-5 files 30min-2hr, L=5+ files or architectural 2hr+.
-```
-
-3. If a spec already exists for the item, verify it's still accurate:
-   - Code may have changed since the spec was written
-   - If the spec references deleted files or completed work → rewrite it
-   - If the approach is no longer valid → rewrite it
-
-4. If a TODO conflicts with current code state (already done, approach invalid) → flag for removal or rewrite
+3. If a spec references deleted files or completed work → rewrite it
+4. If the approach is no longer valid → rewrite it
+5. If a ticket describes work already done → move to `.tickets/done/`
 
 ### Set up next session
-- Update the active memory thread with a `NEXT:` tag pointing to the first specced item
+- Update the active memory thread with a `NEXT:` tag pointing to the first ready ticket (e.g., `NEXT: DD-131`)
 - This is what `/first` reads to know what to work on
 
 ---
@@ -166,11 +120,17 @@ Tests: {pass}/{total} passing {(+N new) if generated}
 {Generated: N tests across M files
   {file}: +N ({category})
   ...}
-TODO: {Marked #N done. | No items completed this session.}
-Next session specs written:
-  #{N} {title} — Spec: {one-line summary}. Accept: {one-line acceptance}.
-  #{N} {title} — Spec: {one-line summary}. Accept: {one-line acceptance}.
+Board: {Completed DD-NNN. | No tickets completed this session.}
+Next session tickets enriched:
+  DD-{NNN} {title} — {one-line spec summary}
+  DD-{NNN} {title} — {one-line spec summary}
 Ready for /vault: {YES | NO — fix failing tests first}
+```
+
+After printing, write a sentinel file so `/vault` knows `/last` ran:
+
+```bash
+echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","tests":"'${pass}'/'${total}' passing","status":"'${ready_status}'"}' > .last-ran
 ```
 
 ---
@@ -182,5 +142,6 @@ Ready for /vault: {YES | NO — fix failing tests first}
 - **Cheapest test wins.** Don't write a component test when a unit test catches the bug.
 - **One function, one test home.** Search before creating. Extend before duplicating.
 - **Specs must be actionable.** Not "fix the bug" but "fix TOKEN_EXPIRED in convex/bookingLinks.ts by checking status !== 'Cancelled' before expiry check. Assert: portal works after booking advances to Upcoming."
-- **Never skip Step 3.** Even if no TODOs were completed, still spec the next items and verify existing specs.
+- **`.tickets/` is the source of truth.** All ticket state lives in YAML frontmatter. `/board sync` mirrors to vault TODO.md.
+- **Never skip Step 3.** Even if no tickets were completed, still enrich the next tickets and verify existing specs.
 - **The output is for Matt.** Keep it concise. He reads it, then calls `/vault`.

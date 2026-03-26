@@ -22,27 +22,22 @@ Do not output anything yet.
 
 ---
 
-## Step 2 — TODO Hygiene
+## Step 2 — Ticket Board Hygiene
 
-Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`.
+Read all `.tickets/DD-*.md` files (YAML frontmatter). `.tickets/` is the single source of truth for work items.
 
-### Prune completed items
-- Any item with ~~strikethrough~~ or "✓ Done" that appears to have been completed in a prior session → remove from the tier table
-- Keep the tier headers even if all items are done (shows progress)
+### Detect stale tickets
+For each ticket with `status: ready` or `status: backlog`:
+- If the spec says "add X to Y" → grep the codebase to check if X already exists in Y → if so, move to `.tickets/done/`
+- If the spec references a file path that no longer exists → flag for review
+- If two tickets target the same file with contradictory changes → flag the conflict
 
-### Detect stale TODOs
-For each active (unchecked) TODO:
-- If the TODO says "add X to Y" → grep the codebase to check if X already exists in Y → if so, mark done
-- If the TODO references a file path that no longer exists → flag for removal
-- If two TODOs target the same file with contradictory changes → flag the conflict
-
-### Verify priority
-- The first unchecked item in the lowest active tier is the next thing to work on
-- **Skip items marked `Human required: Yes`** — print: `Skipped #{N} (human required)`
-- If ALL remaining unchecked items are human-required, print: `All remaining items need Matt's input. Listing them:` followed by the list, then STOP — do not auto-start work
-- If the `NEXT:` tag in memory points to a different item, note the discrepancy
-
-Write any changes back to TODO.md.
+### Select next ticket
+- Sort `ready` tickets by priority (P0 > P1 > P2 > P3), then by ID (lower = older = first)
+- **Skip tickets marked `human_required: true`** — print: `Skipped DD-{NNN} (human required)`
+- If ALL remaining ready tickets are human-required, print: `All ready tickets need Matt's input. Listing them:` followed by the list, then STOP
+- If the `NEXT:` tag in memory points to a different ticket, note the discrepancy
+- Claim the ticket: set `status: in_progress`, `assigned_to: claude`, `branch: ticket/DD-{NNN}`
 
 ---
 
@@ -67,15 +62,15 @@ Print exactly this format:
 ```
 Status — {YYYY-MM-DD}
 ───────────────────
-TODO: {action taken — e.g., "Pruned 3 done items. 14 active across Tiers 3–11."}
-{Skipped: #{N} {title} (human required) — for each skipped item, if any}
-Next: #{number} {title} (Tier {N}) — {one-line description}
+Board: {action taken — e.g., "3 stale tickets archived. 14 active (5 ready, 9 backlog)."}
+{Skipped: DD-{NNN} {title} (human required) — for each skipped ticket, if any}
+Next: DD-{NNN} {title} (P{N}, {category}) — {one-line description}
 Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation components
 {Conflict: {description} OR Conflict: None}
-Starting #{number} now.
+Starting DD-{NNN} now.
 ```
 
-Then immediately begin working on the identified next item. Read the spec from TODO.md if one exists. Read the relevant source files. Follow CLAUDE.md rules. No further prompts — just start coding.
+Then immediately begin working on the identified ticket. Read the spec from `.tickets/DD-{NNN}.md`. Read the relevant source files. Follow CLAUDE.md rules. No further prompts — just start coding.
 
 ---
 
@@ -84,6 +79,6 @@ Then immediately begin working on the identified next item. Read the spec from T
 - **Execute immediately.** No preamble, no recap of what the skill does.
 - **30 seconds max** for Steps 1–3. The user wants to start working, not wait for an audit.
 - **If tests are failing**, that becomes the next item — fix failing tests before anything else.
-- **If no active thread or NEXT tag**, pick the first unchecked item from the lowest active tier.
-- **If TODO.md doesn't exist**, create it with a single entry: "Initialize TODO structure."
+- **If no active thread or NEXT tag**, pick the highest-priority ready ticket from `.tickets/`.
+- **If `.tickets/` is empty**, report "No tickets. Use /spec to create one." and stop.
 - **Never ask which item to work on.** Pick the highest-priority unchecked item and start.

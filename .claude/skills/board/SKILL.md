@@ -93,7 +93,8 @@ Read and display the full ticket file.
    - Remove `DD-{NNN}` from the `blocked_by` array
    - If `blocked_by` is now empty AND `status: blocked` → set `status: ready`
    - Print: `Unblocked: DD-{XXX} {title} → ready`
-5. Print: `Done: DD-{NNN} archived.`
+5. **Auto-sync vault mirror:** Run the same logic as `/board sync` — regenerate `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` from current `.tickets/` state.
+6. Print: `Done: DD-{NNN} archived. Vault mirror synced.`
 
 ### `/board block DD-{NNN}` — Mark ticket blocked
 

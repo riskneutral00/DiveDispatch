@@ -41,6 +41,22 @@ If no untracked files, skip Round 0. If no git changes, skip Round 1's diff and 
 
 ## Instructions
 
+### Pre-flight: Lifecycle Check
+
+Before anything else, check for sentinel files:
+
+1. **`.last-ran`** — If missing, warn: `⚠ /last was not run this session. Tests may not have been verified and tickets may not be reconciled. Continue anyway? (y/n)` If the user says no, stop.
+2. **`.gate-ran`** — If missing, warn: `⚠ /gate was not run this session. Code quality was not reviewed. Continue anyway? (y/n)` If the user says no, stop.
+3. If `.gate-ran` exists, read it. If `verdict` is `NO-GO`, block: `❌ /gate returned NO-GO. Fix CRITICAL findings before vaulting.` Stop.
+4. If both sentinels exist and gate is GO → proceed silently.
+
+After Job 1 (commit) succeeds, clean up sentinels:
+```bash
+rm -f .last-ran .gate-ran
+```
+
+---
+
 ### Job 0: Untracked File Triage
 
 Run before Job 1. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`), skip this job entirely.
@@ -191,16 +207,16 @@ Path: `.SKELETON.md` (project root)
 3. If no checklist items changed — skip.
 4. Write via `sed -i ''` or Edit in Round 3 (parallel with other writes).
 
-### Job 3: TODO Update
+### Job 3: Ticket Board Update + Vault Mirror Sync
 
-Path: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
+Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` (auto-generated, never edit directly).
 
-1. Read in Round 1 (parallel with other reads).
-2. If nothing completed, no gaps discovered, no position change needed — skip.
-3. Otherwise: check off `[x]` completed items, update `### Current Position:` section, add new items/gaps.
-4. If entire phase fully checked off, collapse to: `## Phase N: [Name] — DONE`
-5. Session file's Resume Point should match the first unchecked TODO item.
-6. Write via `sed -i ''` or Bash heredoc in Round 3 (parallel with other writes).
+1. Read `.tickets/` in Round 1 (parallel with other reads).
+2. If nothing completed, no status changes needed — skip.
+3. Otherwise: update ticket YAML frontmatter (status, assigned_to, updated date). Move completed tickets to `.tickets/done/`.
+4. Run vault mirror sync: regenerate TODO.md from `.tickets/` state (same logic as `/board sync`).
+5. Session file's Resume Point should match the first ready ticket.
+6. Write ticket updates via Edit in Round 3 (parallel with other writes). Vault mirror sync via Bash heredoc.
 
 ### Job 4: Memory Management
 
@@ -242,7 +258,7 @@ Committed:
   <short-hash> <message> (N files)
   <short-hash> <message> (N files)
 Vault: N observations → [locations]
-TODO: [brief summary of position update]
+Board: [brief summary of ticket updates + vault mirror synced]
 Memory: [updated/cleaned/no changes]
 NotebookLM: N sources synced
 Saved. Next session: /first → [exact next action]

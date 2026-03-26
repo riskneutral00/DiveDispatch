@@ -3,6 +3,10 @@
 # tickets (working items for parallel Claude terminals)
 .tickets/
 
+# lifecycle sentinel files (written by /last and /gate, consumed by /vault)
+.last-ran
+.gate-ran
+
 # dependencies
 /node_modules
 /.pnp
@@ -80,3 +84,6 @@ playwright-report/
 .overstory/
 .jira/
 docs/LLM_HANDOFF.md
+
+# clerk configuration (can include secrets)
+/.clerk/

@@ -8,6 +8,20 @@ cd "$(dirname "$0")/.."
 
 FAIL=0
 
+# ── 0. Environment variables ─────────────────────────────────────────
+echo "── Environment variables ──"
+
+if bash scripts/env-check.sh 2>&1 | tail -1 | grep -q "✓"; then
+  echo "[PASS] All required env vars present"
+else
+  echo "[FAIL] Missing required environment variables:"
+  bash scripts/env-check.sh 2>&1 | grep '\[MISSING\]' | sed 's/^/  /'
+  if [ -L .env.local ]; then
+    echo "  .env.local is a symlink — DD needs its own file. See .env.example."
+  fi
+  FAIL=1
+fi
+
 # ── 1. Process cleanup ──────────────────────────────────────────────
 echo "── Process cleanup ──"
 
@@ -94,8 +108,7 @@ fi
 # ── 3. Convex deployment ────────────────────────────────────────────
 echo "── Convex deployment ──"
 
-CONVEX_OUTPUT=$(npx convex status 2>&1) || true
-if echo "$CONVEX_OUTPUT" | grep -qiE 'deployment.*active|functions.*synced|URL:'; then
+if npx convex function-spec 2>/dev/null | head -3 | grep -q '"url"'; then
   echo "[PASS] Convex deployment active"
 else
   echo "[FIXING] Convex not deployed — running convex dev --once..."
