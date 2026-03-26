@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { DatabaseReader } from './_generated/server'
-import { getAuthUser, requireAuth } from './lib/auth'
+import { requireAuth } from './lib/auth'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 import type { Doc, Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
@@ -204,21 +204,18 @@ export const listByRole = query({
     gasMix: v.optional(v.string()),          // Compressor: required gas mix
   },
   handler: async (ctx, args): Promise<DirectoryEntry[]> => {
-    // Resolve caller for ban filtering and preferred-instructor sorting.
-    let bannedSlugs = new Set<string>()
-    let preferredSlugs = new Set<string>()
-    const caller = await getAuthUser(ctx)
-    if (caller) {
-      const [bans, prefs] = await Promise.all([
-        getBannedSlugSet(ctx.db, caller.slug),
-        ctx.db
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
-          .unique(),
-      ])
-      bannedSlugs = bans
-      preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
-    }
+    // Auth required — unauthenticated callers must not access the directory.
+    const { user: caller } = await requireAuth(ctx)
+
+    // Resolve caller's ban list and preferred-instructor set.
+    const [bannedSlugs, prefs] = await Promise.all([
+      getBannedSlugSet(ctx.db, caller.slug),
+      ctx.db
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
+        .unique(),
+    ])
+    const preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
 
     // Query userRoles by role, then point-read the user docs
     const roleEntries = await ctx.db

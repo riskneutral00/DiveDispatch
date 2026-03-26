@@ -3,7 +3,7 @@ import { api } from '../convex/_generated/api'
 import { getBannedSlugSet } from '../convex/directory'
 import type { Id } from '../convex/_generated/dataModel'
 import { type SeedCtx } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
@@ -149,36 +149,42 @@ describe('listByRole basic listing', () => {
 
   it('returns empty array when no users exist for the role', async () => {
     const t = makeT()
+    await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-empty')
+    })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-empty' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(0)
   })
 
   it('skips users whose profile row does not exist', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-skip')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorUser(ctx, 'jane-def')
       // Only create profile for john-abc
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-skip' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('john-abc')
   })
 
-  it('works unauthenticated — no ban filtering applied', async () => {
+  it('rejects unauthenticated callers with UNAUTHENTICATED error', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const u1 = await seedInstructorUser(ctx, 'john-abc')
-      const u2 = await seedInstructorUser(ctx, 'jane-def')
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
-      await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor' })
-    expect(result).toHaveLength(2)
+    await expectConvexError(
+      t.query(api.directory.listByRole, { role: 'Instructor' }),
+      'UNAUTHENTICATED',
+    )
   })
 })
 
@@ -254,13 +260,15 @@ describe('listByRole location filter', () => {
   it('filters by placeName (case-insensitive)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-place')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
       await seedInstructorProfile(ctx, u2, 'Jane Lee', 'Krabi', 'Thailand', false)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'phuket' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-place' })
+      .query(api.directory.listByRole, { role: 'Instructor', placeName: 'phuket' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('john-abc')
   })
@@ -268,6 +276,7 @@ describe('listByRole location filter', () => {
   it('filters by country', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-country')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'bali-guide')
@@ -276,7 +285,8 @@ describe('listByRole location filter', () => {
       await seedInstructorProfile(ctx, u3, 'Bali Guide', 'Denpasar', 'Indonesia', true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', country: 'Thailand' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-country' })
+      .query(api.directory.listByRole, { role: 'Instructor', country: 'Thailand' })
     expect(result).toHaveLength(2)
     expect(result.every((r) => r.country === 'Thailand')).toBe(true)
   })
@@ -284,6 +294,7 @@ describe('listByRole location filter', () => {
   it('filters by both placeName and country', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-both')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       const u2 = await seedInstructorUser(ctx, 'jane-def')
       const u3 = await seedInstructorUser(ctx, 'tom-ghi')
@@ -292,7 +303,8 @@ describe('listByRole location filter', () => {
       await seedInstructorProfile(ctx, u3, 'Tom Müller', 'Phuket', 'Thailand', true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'Thailand' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-both' })
+      .query(api.directory.listByRole, { role: 'Instructor', placeName: 'Krabi', country: 'Thailand' })
     expect(result).toHaveLength(1)
     expect(result[0].slug).toBe('jane-def')
   })
@@ -300,11 +312,13 @@ describe('listByRole location filter', () => {
   it('returns empty when no match for placeName', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-nomatch')
       const u1 = await seedInstructorUser(ctx, 'john-abc')
       await seedInstructorProfile(ctx, u1, 'John Smith', 'Phuket', 'Thailand', true)
     })
 
-    const result = await t.query(api.directory.listByRole, { role: 'Instructor', placeName: 'Bangkok' })
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-nomatch' })
+      .query(api.directory.listByRole, { role: 'Instructor', placeName: 'Bangkok' })
     expect(result).toHaveLength(0)
   })
 })
