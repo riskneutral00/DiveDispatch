@@ -112,7 +112,10 @@ describe('checkProfileCompleteness', () => {
       const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Boat' })
 
       expect(result.percentage).toBe(0)
-      expect(result.incomplete.length).toBeGreaterThan(0)
+      expect(result.incomplete).toContain('Business name')
+      expect(result.incomplete).toContain('Location')
+      expect(result.incomplete).toContain('Contact email')
+      expect(result.incomplete).toContain('Contact phone')
     })
   })
 
@@ -330,7 +333,8 @@ describe('checkAllRolesCompleteness', () => {
       expect(result.roles).toHaveLength(2)
       const boatRole = result.roles.find(r => r.role === 'Boat')
       expect(boatRole?.percentage).toBe(0)
-      expect(boatRole?.incomplete.length).toBeGreaterThan(0)
+      expect(boatRole?.incomplete).toContain('Business name')
+      expect(boatRole?.incomplete).toContain('Contact email')
     })
   })
 
@@ -428,6 +432,7 @@ describe('getAllRolesCompleteness query', () => {
     expect(result.allComplete).toBe(false)
     const boatRole = result.roles.find((r) => r.role === 'Boat')
     expect(boatRole).toBeDefined()
-    expect(boatRole?.incomplete.length).toBeGreaterThan(0)
+    expect(boatRole?.incomplete).toContain('Business name')
+    expect(boatRole?.incomplete).toContain('Contact email')
   })
 })

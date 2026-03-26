@@ -58,10 +58,8 @@ export const createUser = mutation({
       .unique()
 
     // Explicit args override Clerk identity values; businessName falls back to Clerk name
-    const identityFirstName =
-      (identity as Record<string, unknown>).givenName as string ?? ''
-    const identityLastName =
-      (identity as Record<string, unknown>).familyName as string ?? ''
+    const identityFirstName = identity.givenName ?? ''
+    const identityLastName = identity.familyName ?? ''
     const firstName = args.firstName ?? identityFirstName
     const lastName = args.lastName ?? identityLastName
     const name = identity.name ?? ''
@@ -195,7 +193,6 @@ export const byId = query({
     return await ctx.db.get(args.id)
   },
 })
-
 
 // Returns the completion percentage and list of incomplete fields for onboarding.
 // Profile fields checked: name, placeName, country, contactEmail, contactPhone,

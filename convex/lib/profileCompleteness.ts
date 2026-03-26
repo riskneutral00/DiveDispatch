@@ -1,9 +1,11 @@
 // Shared profile completeness check — used by getOnboardingStatus query,
 // createDraftShell mutation, and getAllRolesCompleteness query.
 
-import type { Id } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { OPERATOR_ROLE_SET as OPERATOR_ROLES } from './auth'
+
+type OperatorType = Doc<'bookingTemplates'>['ownerType']
 
 export async function checkProfileCompleteness(
   ctx: Pick<QueryCtx, 'db'>,
@@ -67,7 +69,7 @@ export async function checkProfileCompleteness(
     const template = await ctx.db
       .query('bookingTemplates')
       .withIndex('by_ownerId_ownerType', (q) =>
-        q.eq('ownerId', user.slug).eq('ownerType', role),
+        q.eq('ownerId', user.slug).eq('ownerType', role as OperatorType),
       )
       .first()
     if (!template) incomplete.push('Quick Book pill')
