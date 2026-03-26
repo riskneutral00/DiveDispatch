@@ -3,11 +3,11 @@
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { GlassCard, GlassButton, GlassBadge } from '@/components/glass'
 import { RoleIcon } from '@/components/glass/role-icon'
+import { deriveDefaultRole } from '../../../convex/lib/rolePrecedence'
 
 interface RoleEntry {
   _id: string
   role: ClerkRole
-  isPrimary: boolean
   profileComplete: boolean
   createdAt: number
 }
@@ -19,6 +19,10 @@ interface ManageRolesProps {
 }
 
 export function ManageRoles({ roles, onAddRole, onNavigateToOnboarding }: ManageRolesProps) {
+  const primaryRoleStr = roles.length > 0
+    ? deriveDefaultRole(roles.map((r) => r.role))
+    : null
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -57,7 +61,7 @@ export function ManageRoles({ roles, onAddRole, onNavigateToOnboarding }: Manage
                     >
                       {config.label}
                     </span>
-                    {entry.isPrimary && (
+                    {entry.role === primaryRoleStr && (
                       <GlassBadge variant="info" size="sm">
                         Primary
                       </GlassBadge>

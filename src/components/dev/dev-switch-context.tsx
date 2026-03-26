@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 
 interface DevSwitchContextValue {
   isSwitching: boolean
@@ -20,8 +20,10 @@ export function DevSwitchProvider({ children }: { children: React.ReactNode }) {
   const [isSwitching, setIsSwitching] = useState(false)
   const setSwitching = useCallback((v: boolean) => setIsSwitching(v), [])
 
+  const value = useMemo(() => ({ isSwitching, setSwitching }), [isSwitching, setSwitching])
+
   return (
-    <DevSwitchContext.Provider value={{ isSwitching, setSwitching }}>
+    <DevSwitchContext.Provider value={value}>
       {children}
     </DevSwitchContext.Provider>
   )

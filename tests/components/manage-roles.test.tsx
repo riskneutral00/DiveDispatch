@@ -27,7 +27,6 @@ vi.mock('@/lib/icons/role-icons', () => {
 interface MockRole {
   _id: string
   role: ClerkRole
-  isPrimary: boolean
   profileComplete: boolean
   createdAt: number
 }
@@ -36,7 +35,6 @@ function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
   return {
     _id: `role_${role}`,
     role,
-    isPrimary: false,
     profileComplete: false,
     createdAt: Date.now(),
     ...opts,
@@ -45,7 +43,7 @@ function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
 
 describe('ManageRoles', () => {
   const defaultProps = {
-    roles: [makeRole('DiveCenter', { isPrimary: true, profileComplete: true })],
+    roles: [makeRole('DiveCenter', { profileComplete: true })],
     onAddRole: vi.fn(),
     onNavigateToOnboarding: vi.fn(),
   }
@@ -64,7 +62,7 @@ describe('ManageRoles', () => {
     expect(screen.getByText('Dive Center')).toBeInTheDocument()
   })
 
-  it('shows "Primary" badge on the primary role', () => {
+  it('shows "Primary" badge on the highest-precedence role', () => {
     render(<ManageRoles {...defaultProps} />)
     expect(screen.getByText('Primary')).toBeInTheDocument()
   })
@@ -74,7 +72,7 @@ describe('ManageRoles', () => {
       <ManageRoles
         {...defaultProps}
         roles={[
-          makeRole('DiveCenter', { isPrimary: true, profileComplete: true }),
+          makeRole('DiveCenter', { profileComplete: true }),
           makeRole('Boat', { profileComplete: false }),
         ]}
       />,
@@ -93,7 +91,7 @@ describe('ManageRoles', () => {
       <ManageRoles
         {...defaultProps}
         roles={[
-          makeRole('DiveCenter', { isPrimary: true, profileComplete: true }),
+          makeRole('DiveCenter', { profileComplete: true }),
           makeRole('Instructor', { profileComplete: false }),
           makeRole('Boat', { profileComplete: true }),
         ]}

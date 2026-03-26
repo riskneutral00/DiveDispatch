@@ -23,13 +23,15 @@ import { type CourseCode } from '@/lib/constants/course-catalog'
 
 const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel']
 
+import type { StakeholderRole } from '../../../convex/lib/validators'
+
 interface StepPreferencesProps {
   userRole: string
   onComplete?: () => void
 }
 
 export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) {
-  const templates = useQuery(api.bookingTemplates.list)
+  const templates = useQuery(api.bookingTemplates.list, { activeRole: userRole as StakeholderRole })
   const createTemplate = useMutation(api.bookingTemplates.create)
   const removeTemplate = useMutation(api.bookingTemplates.remove)
 
@@ -54,7 +56,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
     const name = pillName.trim() || Array.from(selectedCodes).join(', ')
     setAdding(true)
     try {
-      await createTemplate({ name, activityType: Array.from(selectedCodes) })
+      await createTemplate({ activeRole: userRole as StakeholderRole, name, activityType: Array.from(selectedCodes) })
       setSelectedCodes(new Set())
       setPillName('')
       setShowForm(false)

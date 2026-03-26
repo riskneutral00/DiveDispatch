@@ -28,22 +28,25 @@ const EMPTY_DEFAULTS: OperatorDefaults = {
  * default values for pre-filling bookings. Loaded once on dashboard mount.
  */
 export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: boolean } {
-  const { user, isLoading: userLoading } = useCurrentUser()
-  const role = user?.role
+  const { isLoading: userLoading } = useCurrentUser()
+  const userRoles = useQuery(api.userRoles.myRoles)
+  const roleNames = userRoles?.map((r) => r.role) ?? []
+  const hasDC = roleNames.includes('DiveCenter')
+  const hasAgent = roleNames.includes('Agent')
 
   const prefs = useQuery(api.stakeholderPreferences.mine)
   const dcProfile = useQuery(
     api.diveCenters.mine,
-    role === 'DiveCenter' ? {} : 'skip',
+    hasDC ? {} : 'skip',
   )
   const agentProfile = useQuery(
     api.agents.mine,
-    role === 'Agent' ? {} : 'skip',
+    hasAgent ? {} : 'skip',
   )
 
-  const isLoading = userLoading || prefs === undefined ||
-    (role === 'DiveCenter' && dcProfile === undefined) ||
-    (role === 'Agent' && agentProfile === undefined)
+  const isLoading = userLoading || userRoles === undefined || prefs === undefined ||
+    (hasDC && dcProfile === undefined) ||
+    (hasAgent && agentProfile === undefined)
 
   const defaults = useMemo<OperatorDefaults>(() => {
     if (!prefs) return EMPTY_DEFAULTS

@@ -76,6 +76,8 @@ function actionLabel(action: AuditAction): string {
       return 'Medical block applied'
     case 'medical_cleared':
       return 'Medical block cleared'
+    default:
+      return action
   }
 }
 
@@ -106,6 +108,8 @@ function ActionIcon({ action }: { action: AuditAction }) {
       return <AlertCircle size={size} />
     case 'medical_cleared':
       return <Shield size={size} />
+    default:
+      return null
   }
 }
 
@@ -126,6 +130,8 @@ function iconColor(action: AuditAction): string {
     case 'edited':
     case 'portal_submitted':
       return 'var(--color-status-upcoming-icon, var(--color-info, #60a5fa))'
+    default:
+      return 'var(--color-text-secondary)'
   }
 }
 

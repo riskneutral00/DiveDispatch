@@ -34,7 +34,7 @@ function RoleTileButton({
         borderColor: 'var(--color-glass-border)',
         background: 'var(--color-glass-bg)',
         color: 'var(--color-text-primary)',
-        outlineColor: 'var(--color-accent)',
+        outlineColor: 'var(--color-primary-glow)',
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
     >

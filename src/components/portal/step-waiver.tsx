@@ -211,7 +211,7 @@ export function StepWaiver({
           <label className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
-              className="mt-0.5 h-5 w-5 rounded shrink-0 cursor-pointer"
+              className="mt-0.5 h-6 w-6 rounded shrink-0 cursor-pointer"
               style={{ accentColor: 'var(--color-primary)' }}
               checked={acknowledged}
               onChange={(e) => {

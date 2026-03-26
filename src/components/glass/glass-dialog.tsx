@@ -84,6 +84,7 @@ export function GlassDialog({
             ]
               .filter(Boolean)
               .join(" ")}
+            style={{ backgroundColor: "var(--color-surface-elevated)", backdropFilter: "blur(var(--glass-blur-elevated))", WebkitBackdropFilter: "blur(var(--glass-blur-elevated))" }}
           >
             <div
               className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-b"
@@ -140,6 +141,7 @@ export function GlassDialog({
           ]
             .filter(Boolean)
             .join(" ")}
+          style={{ backgroundColor: "var(--color-surface-elevated)", backdropFilter: "blur(var(--glass-blur-elevated))", WebkitBackdropFilter: "blur(var(--glass-blur-elevated))" }}
         >
           {(title || description) && (
             <div

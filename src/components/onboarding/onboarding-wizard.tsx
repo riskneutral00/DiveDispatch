@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
 import { ROLE_BY_CLERK_ROLE, ROLES } from '@/lib/constants/roles'
+import { ROLE_PRECEDENCE } from '../../../convex/lib/rolePrecedence'
 import type { Language } from '@/lib/types/language'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
@@ -64,20 +65,16 @@ export function OnboardingWizard() {
     customerLanguages: [],
   })
 
-  // Derive the role names from userRoles (multi-role) or fall back to user.role (single-role)
+  // Derive the role names from userRoles sorted by precedence
   const roleNames = useMemo(() => {
     if (userRoles && userRoles.length > 0) {
-      // Primary first, then the rest in creation order
-      const sorted = [...userRoles].sort((a, b) => {
-        if (a.isPrimary && !b.isPrimary) return -1
-        if (!a.isPrimary && b.isPrimary) return 1
-        return a.createdAt - b.createdAt
-      })
+      const sorted = [...userRoles].sort(
+        (a, b) => (ROLE_PRECEDENCE[a.role] ?? Infinity) - (ROLE_PRECEDENCE[b.role] ?? Infinity),
+      )
       return sorted.map((r) => r.role)
     }
-    if (user) return [user.role]
     return []
-  }, [userRoles, user])
+  }, [userRoles])
 
   // Build dynamic steps
   const onboardingSteps = useMemo(() => buildOnboardingSteps(roleNames), [roleNames])
@@ -144,8 +141,8 @@ export function OnboardingWizard() {
     setCompleting(true)
     try {
       await completeOnboarding()
-      if (user) {
-        const config = ROLE_BY_CLERK_ROLE[user.role as keyof typeof ROLE_BY_CLERK_ROLE]
+      if (user && roleNames.length > 0) {
+        const config = ROLE_BY_CLERK_ROLE[roleNames[0] as keyof typeof ROLE_BY_CLERK_ROLE]
         if (config) {
           router.replace(`/${user.slug}/${config.key}`)
           return
@@ -244,7 +241,7 @@ export function OnboardingWizard() {
 
           {stepKey === 'preferences' && (
             <GlassCard padding="lg">
-              <StepPreferences userRole={user.role} />
+              <StepPreferences userRole={roleNames[0] ?? 'DiveCenter'} />
             </GlassCard>
           )}
 

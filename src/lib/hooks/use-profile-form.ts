@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -48,6 +48,8 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
   saving: boolean
   /** Whether the last save succeeded */
   saved: boolean
+  /** Whether the form has unsaved changes relative to the loaded state */
+  isDirty: boolean
   /** Whether the profile is still loading from Convex */
   loading: boolean
   /** Whether an existing profile was found */
@@ -70,14 +72,24 @@ export function useProfileForm<TForm extends Record<string, unknown>>(
   const [saved, setSaved] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
+  // Baseline snapshot for dirty-checking — updated on init and after save
+  const baselineRef = useRef<TForm>(defaults)
+
+  const isDirty = useCallback(() => {
+    return JSON.stringify(form) !== JSON.stringify(baselineRef.current)
+  }, [form])
+
   // Initialize form from profile (once)
   useEffect(() => {
     if (profile !== undefined && !initialized) {
+      let initial = defaults
       if (profile) {
-        setForm(fromProfile(profile))
+        initial = fromProfile(profile)
       } else if (me && fromMe) {
-        setForm(fromMe(me, defaults))
+        initial = fromMe(me, defaults)
       }
+      setForm(initial)
+      baselineRef.current = initial
       setInitialized(true)
     }
   }, [profile, me, initialized, fromProfile, fromMe, defaults])
@@ -119,6 +131,7 @@ export function useProfileForm<TForm extends Record<string, unknown>>(
       } else {
         await create(payload)
       }
+      baselineRef.current = form
       setSaved(true)
       onSaved?.()
     } catch (err: unknown) {
@@ -140,6 +153,7 @@ export function useProfileForm<TForm extends Record<string, unknown>>(
     serverError,
     saving,
     saved,
+    isDirty: isDirty(),
     loading: profile === undefined,
     isUpdate: !!profile,
     handleSubmit,

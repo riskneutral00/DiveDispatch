@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -99,7 +100,7 @@ export function ThemeProvider({
   const setMode = useCallback((next: ThemeMode) => setModeState(next), []);
 
   return (
-    <ThemeContext.Provider value={{ theme, mode, setTheme, setMode }}>
+    <ThemeContext.Provider value={useMemo(() => ({ theme, mode, setTheme, setMode }), [theme, mode, setTheme, setMode])}>
       {children}
     </ThemeContext.Provider>
   );

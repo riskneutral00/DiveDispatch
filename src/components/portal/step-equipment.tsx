@@ -94,7 +94,7 @@ function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasErr
                 ? 'var(--color-text-on-primary)'
                 : 'var(--color-text-secondary)',
               transitionDuration: 'var(--transition-speed)',
-              outlineColor: 'var(--color-accent)',
+              outlineColor: 'var(--color-primary-glow)',
             }}
           >
             {opt}
@@ -485,7 +485,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                 caretColor: 'var(--color-accent)',
                 outlineColor: displayErrors.prescriptionStrength
                   ? 'var(--color-destructive)'
-                  : 'var(--color-accent)',
+                  : 'var(--color-primary-glow)',
                 borderRadius: 'var(--border-radius)',
                 ...(displayErrors.prescriptionStrength
                   ? { boxShadow: '0 0 0 2px var(--color-destructive)' }

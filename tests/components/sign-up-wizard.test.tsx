@@ -12,7 +12,9 @@ vi.mock('next/navigation', () => ({
 
 // Convex auth + query/mutation
 const mockConvexAuth = vi.fn<() => { isLoading: boolean; isAuthenticated: boolean }>()
-const mockQuery = vi.fn()
+let mockUserMe: unknown = undefined
+let mockUserRoles: unknown = undefined
+let queryCallIndex = 0
 const mockMutate = vi.fn()
 
 vi.mock('convex/react', async (importOriginal) => {
@@ -20,7 +22,11 @@ vi.mock('convex/react', async (importOriginal) => {
   return {
     ...actual,
     useConvexAuth: () => mockConvexAuth(),
-    useQuery: () => mockQuery(),
+    useQuery: () => {
+      const idx = queryCallIndex++
+      if (idx === 0) return mockUserMe
+      return mockUserRoles
+    },
     useMutation: () => mockMutate,
   }
 })
@@ -59,12 +65,14 @@ import SignUpPage from '@/app/(auth)/sign-up/[[...sign-up]]/page'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  queryCallIndex = 0
+  mockUserMe = undefined
+  mockUserRoles = undefined
 })
 
 describe('Sign-up wizard (2-step: Clerk + Role)', () => {
   it('shows spinner while auth is loading', () => {
     mockConvexAuth.mockReturnValue({ isLoading: true, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByText } = render(<SignUpPage />)
     expect(getByText('Loading…')).toBeInTheDocument()
@@ -72,18 +80,15 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('shows Clerk SignUp + 2-step indicator when not authenticated', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByTestId, getByText } = render(<SignUpPage />)
     expect(getByTestId('clerk-signup')).toBeInTheDocument()
-    // 2-step indicator visible
     expect(getByText('Sign Up')).toBeInTheDocument()
     expect(getByText('Role')).toBeInTheDocument()
   })
 
   it('does NOT show About You, Business, Profile, Preferences, Review steps in indicator', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { queryByText } = render(<SignUpPage />)
     expect(queryByText('About You')).toBeNull()
@@ -95,7 +100,6 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('shows spinner while waiting for Convex user query', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByText } = render(<SignUpPage />)
     expect(getByText('Loading…')).toBeInTheDocument()
@@ -103,7 +107,8 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('shows Role selection step when authenticated with no Convex user', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(null) // no Convex user
+    mockUserMe = null
+    mockUserRoles = []
 
     const { getByText } = render(<SignUpPage />)
     expect(getByText("What's your role?")).toBeInTheDocument()
@@ -111,7 +116,8 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('does NOT show resume prompt — role selection is shown directly', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(null) // no Convex user
+    mockUserMe = null
+    mockUserRoles = []
 
     const { queryByText } = render(<SignUpPage />)
     expect(queryByText('Sign up in progress')).toBeNull()
@@ -120,41 +126,39 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('redirects fully completed users to dashboard', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue({
+    mockUserMe = {
       onboardingComplete: true,
       businessName: 'Deep Blue Diving',
-      role: 'DiveCenter',
       slug: 'deep-blue-diving',
-    })
+    }
+    mockUserRoles = [{ role: 'DiveCenter' }]
 
     render(<SignUpPage />)
-
     expect(mockReplace).toHaveBeenCalledWith('/deep-blue-diving/dive-center')
   })
 
   it('redirects partial users (role set, onboarding not complete) to dashboard — no /onboarding detour', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue({
+    mockUserMe = {
       onboardingComplete: undefined,
       businessName: 'Mike Smith',
-      role: 'DiveCenter',
       slug: 'mike-smith',
-    })
+    }
+    mockUserRoles = [{ role: 'DiveCenter' }]
 
     render(<SignUpPage />)
-
     expect(mockReplace).toHaveBeenCalledWith('/mike-smith/dive-center')
     expect(mockReplace).not.toHaveBeenCalledWith('/onboarding')
   })
 
   it('shows Redirecting… for any user with an existing record', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue({
+    mockUserMe = {
       onboardingComplete: true,
       businessName: 'Deep Blue Diving',
-      role: 'DiveCenter',
       slug: 'deep-blue-diving',
-    })
+    }
+    mockUserRoles = [{ role: 'DiveCenter' }]
 
     const { getByText } = render(<SignUpPage />)
     expect(getByText('Redirecting…')).toBeInTheDocument()
@@ -162,7 +166,6 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
 
   it('renders StepIndicator with 2 steps', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByLabelText } = render(<SignUpPage />)
     const nav = getByLabelText('Progress')

@@ -20,7 +20,7 @@ export function useLocaleSync() {
 
     // appLanguage takes priority over preferredLocale (post DD-068)
     const rawLocale =
-      (user as Record<string, unknown>).appLanguage as string | undefined
+      user.appLanguage
       ?? user.preferredLocale
       ?? DEFAULT_LOCALE;
 

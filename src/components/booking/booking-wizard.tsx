@@ -1,8 +1,9 @@
 "use client";
 
 import { useReducer, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
+import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
 import {
   AlertTriangle,
   ChevronLeft,
@@ -55,6 +56,9 @@ export function BookingWizard({
   initialPreFill,
 }: BookingWizardProps) {
   const router = useRouter();
+  const params = useParams();
+  const roleSlug = params?.roleSlug as string | undefined;
+  const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined;
   const isEditMode = !!initialBookingId;
   const isOverlay = mode === "overlay";
 
@@ -270,6 +274,7 @@ export function BookingWizard({
       let currentBookingId = state.bookingId;
       if (!currentBookingId && !isEditMode && state.step === "itinerary" && targetStep === "review") {
         currentBookingId = await createDraftShell({
+          activeRole: activeRole!,
           startDate: state.startDate,
           endDate: state.endDate,
         });

@@ -480,7 +480,7 @@ export function BookingCalendar({
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
                           }}
-                          className={`w-full rounded-r-[6px] px-1.5 text-left transition-[transform,filter] duration-150 ease-out hover:scale-[1.01] hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
+                          className={`w-full rounded-r-[6px] px-1.5 text-left transition-[filter] duration-150 ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
                             height: `${BAR_ROW_HEIGHT - 2}px`,
                             opacity,

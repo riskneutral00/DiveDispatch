@@ -13,8 +13,8 @@ export default function HelpPage() {
           <div className="flex items-center gap-3 mb-1">
             <HelpCircle size={26} style={{ color: 'var(--color-primary)' }} />
             <h1
-              className="text-2xl font-bold"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+              className="font-bold"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-page-title)' }}
             >
               Help &amp; Support
             </h1>

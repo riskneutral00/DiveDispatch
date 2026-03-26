@@ -31,7 +31,7 @@ export function ManageRolesConnected() {
       setError(null)
       setLoading(true)
       try {
-        await addRole({ role, isPrimary: false })
+        await addRole({ role })
         setModalOpen(false)
         setOnboardingRole(role)
       } catch (e: unknown) {

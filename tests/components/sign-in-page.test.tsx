@@ -10,14 +10,23 @@ vi.mock('next/navigation', () => ({
 }))
 
 const mockConvexAuth = vi.fn<() => { isLoading: boolean; isAuthenticated: boolean }>()
-const mockQuery = vi.fn()
+
+// The sign-in page calls useQuery twice: users.me then userRoles.myRoles
+// Track by call index per render
+let queryCallIndex = 0
+let mockUserMe: unknown = undefined
+let mockUserRoles: unknown = undefined
 
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
   return {
     ...actual,
     useConvexAuth: () => mockConvexAuth(),
-    useQuery: () => mockQuery(),
+    useQuery: () => {
+      const idx = queryCallIndex++
+      if (idx === 0) return mockUserMe
+      return mockUserRoles
+    },
     useMutation: () => vi.fn(),
   }
 })
@@ -36,12 +45,14 @@ import SignInPage from '@/app/(auth)/sign-in/[[...sign-in]]/page'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  queryCallIndex = 0
+  mockUserMe = undefined
+  mockUserRoles = undefined
 })
 
 describe('Sign-in page routing', () => {
   it('shows spinner while loading', () => {
     mockConvexAuth.mockReturnValue({ isLoading: true, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByText } = render(<SignInPage />)
     expect(getByText('Loading…')).toBeInTheDocument()
@@ -49,7 +60,6 @@ describe('Sign-in page routing', () => {
 
   it('shows Clerk SignIn form when not authenticated', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: false })
-    mockQuery.mockReturnValue(undefined)
 
     const { getByTestId } = render(<SignInPage />)
     expect(getByTestId('clerk-signin')).toBeInTheDocument()
@@ -57,12 +67,12 @@ describe('Sign-in page routing', () => {
 
   it('redirects completed user to dashboard', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue({
+    mockUserMe = {
       onboardingComplete: true,
-      role: 'DiveCenter',
       slug: 'deep-blue',
       businessName: 'Deep Blue',
-    })
+    }
+    mockUserRoles = [{ role: 'DiveCenter' }]
 
     const { getByText } = render(<SignInPage />)
     expect(mockReplace).toHaveBeenCalledWith('/deep-blue/dive-center')
@@ -71,12 +81,12 @@ describe('Sign-in page routing', () => {
 
   it('redirects partial user (record exists, onboarding not complete) directly to dashboard — no /onboarding', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue({
+    mockUserMe = {
       onboardingComplete: undefined,
-      role: 'DiveCenter',
       slug: 'partial-user',
       businessName: 'Mike Smith',
-    })
+    }
+    mockUserRoles = [{ role: 'DiveCenter' }]
 
     render(<SignInPage />)
     expect(mockReplace).toHaveBeenCalledWith('/partial-user/dive-center')
@@ -85,7 +95,8 @@ describe('Sign-in page routing', () => {
 
   it('redirects authenticated user with no Convex record to /sign-up', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(null) // no Convex record
+    mockUserMe = null
+    mockUserRoles = []
 
     const { getByText } = render(<SignInPage />)
     expect(mockReplace).toHaveBeenCalledWith('/sign-up')
@@ -94,7 +105,6 @@ describe('Sign-in page routing', () => {
 
   it('shows spinner while Convex query is loading', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(undefined) // loading
 
     const { getByText } = render(<SignInPage />)
     expect(getByText('Loading…')).toBeInTheDocument()
@@ -102,7 +112,8 @@ describe('Sign-in page routing', () => {
 
   it('never shows "Sign up in progress" interstitial on sign-in page', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
-    mockQuery.mockReturnValue(null)
+    mockUserMe = null
+    mockUserRoles = []
 
     const { queryByText } = render(<SignInPage />)
     expect(queryByText('Sign up in progress')).toBeNull()

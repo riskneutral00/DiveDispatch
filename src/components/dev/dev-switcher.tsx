@@ -7,7 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useDevSwitching } from './dev-switch-context'
 import { ROLES, ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
-import { ALL_STAKEHOLDERS, type SeedUser } from '../../../convex/seedData'
+import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
 import { GlassCard } from '@/components/glass/glass-card'
 
@@ -17,19 +17,22 @@ export function DevSwitcher() {
   return <DevSwitcherInner />
 }
 
-// Flatten all seed stakeholders into SeedUser[]
-const ALL_SEED_USERS: SeedUser[] = [
-  ...ALL_STAKEHOLDERS.map((s) => s.user),
-  ...ALL_INSTRUCTORS.map((s) => s.user),
+// All seed stakeholders
+const ALL_SEED: SeedStakeholder[] = [
+  ...ALL_STAKEHOLDERS,
+  ...ALL_INSTRUCTORS,
 ]
 
 function groupByRole(): Map<RoleKey, SeedUser[]> {
   const groups = new Map<RoleKey, SeedUser[]>()
-  for (const user of ALL_SEED_USERS) {
-    const config = ROLE_BY_CLERK_ROLE[user.role]
+  for (const s of ALL_SEED) {
+    // Use first role from the stakeholder's roles array
+    const primaryRole = s.roles?.[0]?.role
+    if (!primaryRole) continue
+    const config = ROLE_BY_CLERK_ROLE[primaryRole]
     if (!config) continue
     const list = groups.get(config.key) ?? []
-    list.push(user)
+    list.push(s.user)
     groups.set(config.key, list)
   }
   return groups

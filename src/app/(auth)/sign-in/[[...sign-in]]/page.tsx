@@ -8,19 +8,22 @@ import { api } from '../../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { Spinner } from '@/components/common/spinner'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
+import { deriveDefaultRole } from '../../../../../convex/lib/rolePrecedence'
 
 export default function SignInPage() {
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
   const user = useQuery(api.users.me)
+  const userRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
 
   // Any user with a record → dashboard (banner handles incomplete profile)
   useEffect(() => {
-    if (user) {
-      const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
+    if (user && userRoles && userRoles.length > 0) {
+      const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
+      const roleConfig = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
       router.replace(roleConfig ? `/${user.slug}/${roleConfig.key}` : '/dashboard')
     }
-  }, [user, router])
+  }, [user, userRoles, router])
 
   // Authenticated but no Convex record → pick a role
   useEffect(() => {

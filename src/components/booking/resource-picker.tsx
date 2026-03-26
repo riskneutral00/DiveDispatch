@@ -5,7 +5,6 @@ import { Check, ChevronDown } from 'lucide-react'
 import { GlassButton, GlassInput, GlassBadge } from '@/components/glass'
 import { Spinner } from '@/components/common/spinner'
 import type { ResourcePickerEntry } from '@/lib/types/booking'
-import { LanguageFlags } from '@/components/common/language-flags'
 
 export type { ResourcePickerEntry }
 
@@ -119,8 +118,6 @@ export function ResourcePicker({
               background: 'var(--color-glass-bg)',
               border: '1px solid var(--color-glass-border)',
               color: selectedEntry ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
             }}
           >
             <span className="truncate">
@@ -143,8 +140,6 @@ export function ResourcePicker({
               style={{
                 background: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-glass-border)',
-                backdropFilter: 'blur(var(--glass-blur))',
-                WebkitBackdropFilter: 'blur(var(--glass-blur))',
                 maxHeight: '18rem',
                 overflowY: 'auto',
               }}
@@ -244,9 +239,6 @@ export function ResourcePicker({
               Verified
             </GlassBadge>
           )}
-          {selectedEntry.languages.length > 0 && (
-            <LanguageFlags languages={selectedEntry.languages} className="text-sm" />
-          )}
           {selectedEntry.subItems?.map((item) => (
             <GlassBadge key={item} variant="info" size="sm">
               {item}
@@ -329,9 +321,6 @@ function PickerRow({
           <span className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
             {entry.placeName}, {entry.country}
           </span>
-          {entry.languages.length > 0 && (
-            <LanguageFlags languages={entry.languages} className="text-xs" />
-          )}
         </div>
 
         {/* Sub-items (vessel names, pool names, etc.) */}

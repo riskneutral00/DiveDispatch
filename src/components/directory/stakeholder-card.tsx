@@ -171,8 +171,8 @@ export function StakeholderCard({
 
         {/* Instructor / DiveMaster: language flags */}
         {(entry.role === 'Instructor' || entry.role === 'DiveMaster') &&
-          entry.languages.length > 0 && (
-            <LanguageFlags languages={entry.languages} className="mt-2 text-base leading-none" />
+          (entry.languages?.length ?? 0) > 0 && (
+            <LanguageFlags languages={entry.languages!} className="mt-2 text-base leading-none" />
           )}
 
         {/* Boat: capacity + type */}

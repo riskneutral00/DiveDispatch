@@ -6,6 +6,7 @@ import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { api } from '../../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
+import { deriveDefaultRole } from '../../../../../convex/lib/rolePrecedence'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
@@ -19,6 +20,7 @@ export const SIGNUP_STEPS = [
 export default function SignUpPage() {
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
   const user = useQuery(api.users.me)
+  const userRoles = useQuery(api.userRoles.myRoles)
   const createUser = useMutation(api.users.createUser)
   const router = useRouter()
 
@@ -28,11 +30,12 @@ export default function SignUpPage() {
 
   // Any user with a record → dashboard (banner handles incomplete state)
   useEffect(() => {
-    if (user) {
-      const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
+    if (user && userRoles && userRoles.length > 0) {
+      const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
+      const roleConfig = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
       router.replace(roleConfig ? `/${user.slug}/${roleConfig.key}` : '/dashboard')
     }
-  }, [user, router])
+  }, [user, userRoles, router])
 
   function toggleRole(role: RoleConfig) {
     setSelectedRoles((prev) =>

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { api } from '../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { deriveDefaultRole } from '../../../../convex/lib/rolePrecedence'
 import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { LanguagePicker } from '@/components/common/language-picker'
@@ -38,6 +39,7 @@ interface AccountFormValues {
 
 export default function AccountPage() {
   const user = useQuery(api.users.me)
+  const userRoles = useQuery(api.userRoles.myRoles)
   const { user: convexUser } = useCurrentUser()
   const router = useRouter()
   const createUser = useMutation(api.users.createUser)
@@ -90,7 +92,10 @@ export default function AccountPage() {
     )
   }
 
-  const roleConfig = ROLE_BY_CLERK_ROLE[user.role as ClerkRole]
+  const defaultRole = userRoles && userRoles.length > 0
+    ? deriveDefaultRole(userRoles.map((r) => r.role))
+    : null
+  const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
   const hasPersonalOnlyRole = roleConfig && PERSONAL_ROLE_KEYS.has(roleConfig.key)
   const showBusinessName = !hasPersonalOnlyRole
 
@@ -123,7 +128,7 @@ export default function AccountPage() {
     try {
       const businessName = values.businessName.trim() || `${values.firstName} ${values.lastName}`
       await createUser({
-        role: user!.role,
+        role: (defaultRole ?? 'DiveCenter') as ClerkRole,
         businessName,
         firstName: values.firstName.trim() || undefined,
         lastName: values.lastName.trim() || undefined,
@@ -178,8 +183,8 @@ export default function AccountPage() {
         <div className="w-full max-w-lg mx-auto">
           <div className="mb-6">
             <h1
-              className="text-2xl font-bold mb-1"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+              className="font-bold mb-1"
+              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-page-title)' }}
             >
               Account
             </h1>
