@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { testDate } from './helpers/dates'
+import type { Id, Doc } from '../convex/_generated/dataModel'
 import { seedUser, seedBooking, seedBookingResource, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -15,18 +15,18 @@ import { makeT } from './helpers/convex-helpers'
 
 async function seedAuditLog(
   ctx: SeedCtx,
-  bookingId: Parameters<typeof seedBooking> extends [SeedCtx, ...infer _] ? Awaited<ReturnType<typeof seedBooking>> : never,
+  bookingId: Id<'bookings'>,
   overrides: {
-    action?: string
+    action?: Doc<'bookingAuditLog'>['action']
     actorSlug?: string
-    actorType?: string
+    actorType?: Doc<'bookingAuditLog'>['actorType']
   } = {},
 ) {
   return ctx.db.insert('bookingAuditLog', {
     bookingId,
-    action: (overrides.action ?? 'created') as 'created',
+    action: overrides.action ?? 'created',
     actorSlug: overrides.actorSlug ?? 'dc-discard',
-    actorType: (overrides.actorType ?? 'operator') as 'operator',
+    actorType: overrides.actorType ?? 'operator',
     timestamp: Date.now(),
   })
 }
