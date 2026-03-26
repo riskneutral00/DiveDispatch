@@ -18,8 +18,6 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
 
-const COUNTRIES = COUNTRY_NAMES
-
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
   legalLastName: '',
@@ -384,7 +382,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             data-testid="portal-nationality-select"
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
-            options={COUNTRIES}
+            options={COUNTRY_NAMES}
             placeholder="Select country…"
             error={errors.nationality}
             required
@@ -408,7 +406,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             data-testid="portal-issuing-country-select"
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
-            options={COUNTRIES}
+            options={COUNTRY_NAMES}
             placeholder="Select country…"
             error={errors.passportIssuingCountry}
             required
