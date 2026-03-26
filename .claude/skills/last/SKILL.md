@@ -153,6 +153,8 @@ Stage observations for the vault. For each of these that applies to this session
 
 Don't write these yet — `/vault` handles the actual writes. Just prepare the content so `/vault` can capture it.
 
+- **Skeleton updates** → if any `SKELETON.md` checklist items changed status this session (tickets fixed, coverage thresholds met, blockers resolved), note them so `/vault` can update the skeleton.
+
 ---
 
 ## Step 5 — Output

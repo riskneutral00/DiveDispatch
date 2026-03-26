@@ -129,7 +129,7 @@ If the video's category maps to a vault domain, append a summary to the relevant
 | Category | Vault target |
 |---|---|
 | Diving/Marine | `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/Research.md` |
-| Business/Strategy | `~/Desktop/RiskNeutral/Vaults/Funding/Strategy/Research.md` |
+| Business/Strategy | `~/Desktop/RiskNeutral/Vaults/Grants and Accelerators/Strategy/Research.md` |
 | AI/Tech | Skip |
 | Other categories | Skip |
 
