@@ -2,11 +2,19 @@ import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation, query } from './_generated/server'
 import type { DatabaseWriter } from './_generated/server'
 import { internal } from './_generated/api'
+import type { Doc } from './_generated/dataModel'
 import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole } from './lib/rolePrecedence'
+
+/** Strip sensitive fields from a user document for public consumption. */
+function publicUser(user: Doc<'users'>) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { tokenIdentifier, email, ...rest } = user
+  return rest
+}
 
 async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
   for (let i = 0; i < 10; i++) {
@@ -176,21 +184,25 @@ export const me = query({
 })
 
 // Returns a user by slug. Used for resource owner lookups.
+// Omits tokenIdentifier and email — these are sensitive fields not needed by public callers.
 export const bySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const user = await ctx.db
       .query('users')
       .withIndex('by_slug', (q) => q.eq('slug', args.slug))
       .unique()
+    return user ? publicUser(user) : null
   },
 })
 
 // Returns a user by ID.
+// Omits tokenIdentifier and email — these are sensitive fields not needed by public callers.
 export const byId = query({
   args: { id: v.id('users') },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id)
+    const user = await ctx.db.get(args.id)
+    return user ? publicUser(user) : null
   },
 })
 

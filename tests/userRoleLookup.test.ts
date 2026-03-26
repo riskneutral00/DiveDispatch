@@ -196,6 +196,42 @@ describe('users.bySlug', () => {
     const user = await t.query(api.users.bySlug, { slug: 'does-not-exist' })
     expect(user).toBeNull()
   })
+
+  it('omits tokenIdentifier from response', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+    })
+
+    const user = await t.query(api.users.bySlug, { slug: TEST_SLUGS.diveCenter })
+    expect(user).not.toBeNull()
+    expect('tokenIdentifier' in user!).toBe(false)
+  })
+
+  it('omits email from response', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+    })
+
+    const user = await t.query(api.users.bySlug, { slug: TEST_SLUGS.diveCenter })
+    expect(user).not.toBeNull()
+    expect('email' in user!).toBe(false)
+  })
+
+  it('still includes public fields (name, businessName, slug)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { name: 'Visible Name', businessName: 'Visible Biz' })
+    })
+
+    const user = await t.query(api.users.bySlug, { slug: TEST_SLUGS.diveCenter })
+    expect(user).not.toBeNull()
+    expect(user!.name).toBe('Visible Name')
+    expect(user!.businessName).toBe('Visible Biz')
+    expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
+    expect(user!._id).toBeDefined()
+  })
 })
 
 // ─── byId ────────────────────────────────────────────────────────────────────
@@ -211,5 +247,29 @@ describe('users.byId', () => {
     const user = await t.query(api.users.byId, { id: userId! })
     expect(user).not.toBeNull()
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
+  })
+
+  it('omits tokenIdentifier from response', async () => {
+    const t = makeT()
+    let userId: Doc<'users'>['_id']
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx)
+    })
+
+    const user = await t.query(api.users.byId, { id: userId! })
+    expect(user).not.toBeNull()
+    expect('tokenIdentifier' in user!).toBe(false)
+  })
+
+  it('omits email from response', async () => {
+    const t = makeT()
+    let userId: Doc<'users'>['_id']
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx)
+    })
+
+    const user = await t.query(api.users.byId, { id: userId! })
+    expect(user).not.toBeNull()
+    expect('email' in user!).toBe(false)
   })
 })
