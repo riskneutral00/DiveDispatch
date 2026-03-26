@@ -46,22 +46,64 @@ export const cancelBooking = mutation({
   },
 })
 
-// ─── TTL expiry (lazy, client-triggered) ──────────────────────────────────────
+// ─── TTL expiry (lazy, server-side) ───────────────────────────────────────────
 
 /**
  * Expires a single Draft booking whose holdTTL has lapsed.
- * Called by the client (via useBookingWithExpiry hook) on lazy read.
+ * Internal only — not callable from the client.
  * Idempotent: no-op if the booking is already Cancelled or not expired.
  * Preserves sessions, links, and customerProfiles for audit trail.
  * Transaction order: vacate reservations → restore snapshots → set status Cancelled.
  */
-export const expireBooking = mutation({
+export const expireBooking = internalMutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args): Promise<void> => {
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) return
     if (!isBookingExpired(booking)) return
 
+    await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
+    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'expired',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
+  },
+})
+
+/**
+ * Authenticated lazy-expiry trigger.
+ * Called by the client (via useBookingWithExpiry hook) when it detects an expired Draft.
+ * Validates caller ownership or reservation access, then performs the expiry inline.
+ * Idempotent: no-op if booking is not expired.
+ */
+export const checkAndExpireBooking = mutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, args): Promise<void> => {
+    const { user } = await requireAuth(ctx)
+
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) return
+    if (!isBookingExpired(booking)) return
+
+    // Verify caller has access: owns the booking or has a reservation on it
+    if (booking.ownerId !== user.slug) {
+      const callerUnits = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
+        .collect()
+      const callerUnitIds = new Set(callerUnits.map((u) => u._id))
+      const bookingReservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+        .collect()
+      const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
+      if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
+    // Perform expiry inline (same logic as internalMutation expireBooking)
     await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
     await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
     await logBookingChange(ctx, {

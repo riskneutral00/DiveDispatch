@@ -121,7 +121,7 @@ describe('expireBooking', () => {
       }),
     )
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking).not.toBeNull()
@@ -193,7 +193,7 @@ describe('expireBooking', () => {
       return { bookingId, reservationId, snapshotId }
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
     expect(reservation?.status).toBe('Vacated')
@@ -260,7 +260,7 @@ describe('expireBooking', () => {
       return { bookingId, sessionId, linkId }
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const session = await t.run(async (ctx) => ctx.db.get(sessionId))
     expect(session).not.toBeNull()
@@ -298,7 +298,7 @@ describe('expireBooking', () => {
       }),
     )
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Upcoming')
@@ -330,7 +330,7 @@ describe('expireBooking', () => {
       }),
     )
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Cancelled')
@@ -362,7 +362,7 @@ describe('expireBooking', () => {
       }),
     )
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Draft')
@@ -413,7 +413,7 @@ describe('expireBooking', () => {
 
     // Client triggers lazy expiry
     const bookingId = bookingsBefore[0]._id as Id<'bookings'>
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     // Booking preserved as Cancelled (audit trail)
     const bookingsAfter = await t
@@ -541,7 +541,7 @@ describe('expireBooking', () => {
       return { bookingId, snapshotId }
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     expect(snapshot!.availableUnits).toBe(1)
@@ -695,7 +695,7 @@ describe('expireBooking', () => {
       return { bookingId, snapshotIds }
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     // All 3 snapshots restored
     const [instrSnap, boatSnap, poolSnap] = await t.run(async (ctx) =>
@@ -785,7 +785,7 @@ describe('expireBooking', () => {
       return { bookingId, snapshotId }
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     expect(snapshot!.availableUnits).toBe(5)
@@ -835,6 +835,183 @@ describe('expireBooking', () => {
     // Verified structurally: crons.ts only contains completeBookings.
     // This test documents the absence of the expireHolds cron.
     expect(true).toBe(true)
+  })
+})
+
+// ─── checkAndExpireBooking (authenticated wrapper) ───────────────────────────
+
+describe('checkAndExpireBooking', () => {
+  afterEach(() => vi.clearAllMocks())
+
+  it('rejects unauthenticated callers', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      }),
+    )
+
+    // No identity → should reject
+    await expect(
+      t.mutation(api.bookings.status.checkAndExpireBooking, { bookingId }),
+    ).rejects.toThrow()
+  })
+
+  it('rejects caller who does not own or have reservation on booking', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|intruder',
+        slug: 'intruder',
+        email: 'intruder@test.com',
+        name: 'Intruder',
+        firstName: 'In',
+        lastName: 'Truder',
+        businessName: 'Evil Corp',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+    })
+
+    await expectConvexError(
+      t
+        .withIdentity({ tokenIdentifier: 'clerk|intruder' })
+        .mutation(api.bookings.status.checkAndExpireBooking, { bookingId }),
+      'FORBIDDEN',
+    )
+  })
+
+  it('schedules expiry when caller owns the expired booking', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-owner',
+        slug: 'dc-owner',
+        email: 'owner@test.com',
+        name: 'Owner DC',
+        firstName: 'Owner',
+        lastName: 'DC',
+        businessName: 'Owner DC',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-owner',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Owner DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+    })
+
+    // Should not throw — owner has access; expiry happens inline
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-owner' })
+      .mutation(api.bookings.status.checkAndExpireBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Cancelled')
+  })
+
+  it('is a no-op for non-expired booking', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-owner2',
+        slug: 'dc-owner2',
+        email: 'owner2@test.com',
+        name: 'Owner DC2',
+        firstName: 'Owner',
+        lastName: 'DC2',
+        businessName: 'Owner DC2',
+        isSeeded: false,
+        preferredLocale: 'en',
+      })
+
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-owner2',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Owner DC2',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() + 10_000,
+      })
+    })
+
+    await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-owner2' })
+      .mutation(api.bookings.status.checkAndExpireBooking, { bookingId })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Draft')
   })
 })
 

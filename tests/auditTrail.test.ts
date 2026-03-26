@@ -276,7 +276,7 @@ describe('expire creates audit entry', () => {
       })
     })
 
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     const entries = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { api } from '../../convex/_generated/api'
+import { api, internal } from '../../convex/_generated/api'
 import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate, testToken } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
@@ -110,7 +110,7 @@ describe('L9-14: Expire booking → portal submit → rejected', () => {
     })
 
     // Expire the booking
-    await t.mutation(api.bookings.status.expireBooking, { bookingId })
+    await t.mutation(internal.bookings.status.expireBooking, { bookingId })
 
     // Verify booking is now Cancelled
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
