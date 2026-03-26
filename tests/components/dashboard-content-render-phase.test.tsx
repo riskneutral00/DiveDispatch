@@ -4,44 +4,46 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 /**
- * DD-136: Verify that DashboardContent does not call setState during the render phase.
+ * DD-136: Verify that the drop-confirmation availability sync does not call
+ * setState during the render phase.
  *
- * The bug: a bare `if (...) { setDropConfirmation(...) }` at the top level of the
- * component body runs during every render, violating React rules and causing
- * infinite loops under React 19's compiler.
+ * The bug: a bare `if (...) { setDropConfirmation(...) }` at the top level of
+ * a component/hook body runs during every render, violating React rules and
+ * causing infinite loops under React 19's compiler.
  *
  * The fix: wrap such logic in a useEffect.
  *
- * This test reads the source and asserts the problematic pattern is gone.
+ * After DD-148, this logic lives in useDragToDate (extracted hook).
+ * This test reads both sources and asserts the problematic pattern is gone.
  */
 describe('DashboardContent render-phase safety (DD-136)', () => {
-  const sourcePath = resolve(
+  const dashboardPath = resolve(
     __dirname,
     '../../src/components/dashboard/dashboard-content.tsx',
   )
-  const source = readFileSync(sourcePath, 'utf-8')
+  const dragHookPath = resolve(
+    __dirname,
+    '../../src/lib/hooks/use-drag-to-date.ts',
+  )
+  const dashboardSource = readFileSync(dashboardPath, 'utf-8')
+  const dragHookSource = readFileSync(dragHookPath, 'utf-8')
 
   it('does not call setDropConfirmation in a bare if-block outside useEffect', () => {
-    const componentStart = source.indexOf('export function DashboardContent')
-    expect(componentStart).toBeGreaterThan(-1)
-
-    const afterExport = source.slice(componentStart)
-
-    // The banned pattern: a bare if-block at the component top level that
-    // calls setDropConfirmation — this causes setState during render.
-    const hasBareRenderPhaseSetState =
-      /\/\/ When availability.*\n\s*if \(dropConfirmation && !dropConfirmation\.conflicts && availabilityResult\) \{\n\s*setDropConfirmation/.test(
-        afterExport,
-      )
-
-    expect(hasBareRenderPhaseSetState).toBe(false)
+    // Check both the component and the hook for the banned pattern
+    for (const source of [dashboardSource, dragHookSource]) {
+      const hasBareRenderPhaseSetState =
+        /\/\/ When availability.*\n\s*if \(dropConfirmation && !dropConfirmation\.conflicts && availabilityResult\) \{\n\s*setDropConfirmation/.test(
+          source,
+        )
+      expect(hasBareRenderPhaseSetState).toBe(false)
+    }
   })
 
   it('wraps the availability-to-confirmation sync in a useEffect with setDropConfirmation', () => {
-    // The fix must place setDropConfirmation inside a useEffect, not at the top
-    // level of the component body. Check that a useEffect exists containing the call.
+    // The fix must place setDropConfirmation inside a useEffect. After DD-148,
+    // this logic lives in useDragToDate hook, not in the component itself.
     const useEffectWithSetDrop =
-      /useEffect\(\s*\(\)\s*=>\s*\{[^}]*setDropConfirmation/s.test(source)
+      /useEffect\(\s*\(\)\s*=>\s*\{[^}]*setDropConfirmation/s.test(dragHookSource)
 
     expect(useEffectWithSetDrop).toBe(true)
   })
