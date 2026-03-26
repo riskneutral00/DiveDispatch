@@ -13,7 +13,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { internal } from '../convex/_generated/api'
-import { testDate, today } from './helpers/dates'
+import { testDate } from './helpers/dates'
 import { makeT } from './helpers/convex-helpers'
 import { seedBlockedDates } from './fixtures'
 
