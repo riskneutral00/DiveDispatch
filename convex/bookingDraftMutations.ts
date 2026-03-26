@@ -12,6 +12,7 @@ import {
   type BoatCapabilities,
 } from '../src/lib/booking/coverage-validation'
 import { ErrorCode } from './lib/errorCodes'
+import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
 
 type OperatorType =
   | 'DiveCenter'
@@ -135,7 +136,7 @@ export const createDraftShell = mutation({
       endDate: args.endDate ?? '',
       divers: [],
       agentId,
-      operatorName: user.businessName,
+      operatorName: sanitizeString(user.businessName ?? '', NAME_MAX),
       portalContact: true,
       portalMedical: true,
       portalWaiver: true,
@@ -189,7 +190,7 @@ export const createReferralDraftShell = mutation({
       agentId: user.slug as string,
       agentIsReferral: true,
       // operatorName is the DC's business name since they own the booking
-      operatorName: dcUser.businessName as string,
+      operatorName: sanitizeString(dcUser.businessName ?? '', NAME_MAX),
       portalContact: true,
       portalMedical: true,
       portalWaiver: true,
@@ -220,7 +221,7 @@ export const saveDraftState = mutation({
     if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
-    await ctx.db.patch(args.bookingId, { draftState: args.draftState })
+    await ctx.db.patch(args.bookingId, { draftState: sanitizeString(args.draftState, DRAFT_STATE_MAX) })
   },
 })
 

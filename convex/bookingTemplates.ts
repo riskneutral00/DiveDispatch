@@ -5,6 +5,7 @@ import { getAuthUser } from './lib/auth'
 import { checkHasAnyOperatorRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
+import { sanitizeFields, BOOKING_TEMPLATE_FIELDS } from './lib/sanitize'
 
 export const list = query({
   args: {},
@@ -34,10 +35,11 @@ export const create = mutation({
       throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only organizer roles can create booking templates.' })
     }
 
+    const sanitized = sanitizeFields(args, BOOKING_TEMPLATE_FIELDS)
     return ctx.db.insert('bookingTemplates', {
       ownerId: user.slug,
       ownerType: user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
-      name: args.name,
+      name: sanitized.name,
       activityType: args.activityType,
       createdAt: Date.now(),
     })

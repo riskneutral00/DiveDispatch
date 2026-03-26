@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
+import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS, SHORT_TEXT_MAX } from './lib/sanitize'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -218,11 +219,12 @@ export const saveWaiver = mutation({
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
 
+    const sanitized = sanitizeFields(args, PORTAL_WAIVER_FIELDS)
     const patch: Record<string, unknown> = {
       waiverSignedAt: Date.now(),
     }
-    if (args.insurancePolicyNumber !== undefined) {
-      patch.insurancePolicyNumber = args.insurancePolicyNumber
+    if (sanitized.insurancePolicyNumber !== undefined) {
+      patch.insurancePolicyNumber = sanitized.insurancePolicyNumber
     }
 
     await ctx.db.patch(profile._id, patch)
@@ -264,6 +266,7 @@ export const saveEquipmentData = mutation({
   },
   handler: async (ctx, args): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
+    const sanitized = sanitizeFields(args, PORTAL_EQUIPMENT_FIELDS)
 
     // Save body measurements to customers record if contact step is complete
     if (profile.customerId) {
@@ -274,16 +277,17 @@ export const saveEquipmentData = mutation({
       if (args.shoeSizeUnit !== undefined) customerPatch.shoeSizeUnit = args.shoeSizeUnit
       if (args.needsPoweredLenses !== undefined)
         customerPatch.needsPoweredLenses = args.needsPoweredLenses
-      if (args.prescriptionStrength !== undefined)
-        customerPatch.prescriptionStrength = args.prescriptionStrength
+      if (sanitized.prescriptionStrength !== undefined)
+        customerPatch.prescriptionStrength = sanitized.prescriptionStrength
       if (Object.keys(customerPatch).length > 0) {
         await ctx.db.patch(profile.customerId, customerPatch)
       }
     }
 
-    // Save rentalChecklist to customerProfiles
+    // Save rentalChecklist to customerProfiles (sanitize maskPrescription if present)
     if (args.rentalChecklist !== undefined) {
-      await ctx.db.patch(profile._id, { rentalChecklist: args.rentalChecklist })
+      const sanitizedChecklist = sanitizeFields(args.rentalChecklist, PORTAL_EQUIPMENT_CHECKLIST_FIELDS)
+      await ctx.db.patch(profile._id, { rentalChecklist: sanitizedChecklist })
     }
   },
 })

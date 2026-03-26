@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance } from './bookings/_shared'
 import { resolvePortalToken } from './lib/portal'
+import { sanitizeFields, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
 
@@ -143,8 +144,9 @@ export const savePortalEquipment = mutation({
     args,
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
+    const sanitizedChecklist = sanitizeFields(args.rentalChecklist, PORTAL_EQUIPMENT_CHECKLIST_FIELDS)
 
-    await ctx.db.patch(profile._id, { rentalChecklist: args.rentalChecklist })
+    await ctx.db.patch(profile._id, { rentalChecklist: sanitizedChecklist })
   },
 })
 
@@ -169,13 +171,14 @@ export const saveSafetyInfo = mutation({
     args,
   ): Promise<void> => {
     const { profile } = await resolvePortalToken(ctx, args.token)
+    const sanitized = sanitizeFields(args, PORTAL_SAFETY_FIELDS)
 
     const patch: Record<string, string | undefined> = {}
-    if (args.bloodType !== undefined) patch.bloodType = args.bloodType
-    if (args.allergies !== undefined) patch.allergies = args.allergies
-    if (args.medications !== undefined) patch.medications = args.medications
-    if (args.insurancePolicyNumber !== undefined)
-      patch.insurancePolicyNumber = args.insurancePolicyNumber
+    if (sanitized.bloodType !== undefined) patch.bloodType = sanitized.bloodType as string
+    if (sanitized.allergies !== undefined) patch.allergies = sanitized.allergies as string
+    if (sanitized.medications !== undefined) patch.medications = sanitized.medications as string
+    if (sanitized.insurancePolicyNumber !== undefined)
+      patch.insurancePolicyNumber = sanitized.insurancePolicyNumber as string
 
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(profile._id, patch)

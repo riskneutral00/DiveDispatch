@@ -19,6 +19,10 @@ import {
 } from '../fixtures'
 import { testDate } from '../helpers/dates'
 import { makeT } from '../helpers/convex-helpers'
+import {
+  sanitizeString,
+  sanitizeFields,
+} from '../../convex/lib/sanitize'
 
 let t = makeT()
 beforeEach(() => {
@@ -140,3 +144,199 @@ describe('Input sanitization — field length boundaries', () => {
     })
   })
 })
+
+// ── sanitizeString / sanitizeFields unit tests ────────────────────────────────
+
+describe('sanitizeString — whitespace trimming', () => {
+  it('trims leading and trailing whitespace', () => {
+    expect(sanitizeString(' hello ')).toBe('hello')
+  })
+
+  it('trims tabs and newlines', () => {
+    expect(sanitizeString('\t hello \n')).toBe('hello')
+  })
+
+  it('preserves internal whitespace', () => {
+    expect(sanitizeString(' hello world ')).toBe('hello world')
+  })
+
+  it('returns empty string for whitespace-only input', () => {
+    expect(sanitizeString('   ')).toBe('')
+  })
+})
+
+describe('sanitizeString — zero-width / invisible character stripping', () => {
+  it('strips zero-width space (U+200B)', () => {
+    expect(sanitizeString('a\u200Bb')).toBe('ab')
+  })
+
+  it('strips null bytes (U+0000)', () => {
+    expect(sanitizeString('a\u0000b')).toBe('ab')
+  })
+
+  it('strips right-to-left override (U+202E)', () => {
+    expect(sanitizeString('a\u202Eb')).toBe('ab')
+  })
+
+  it('preserves zero-width joiner (U+200D) — required for compound emoji', () => {
+    // ZWJ is used to compose family emoji like 👨‍👩‍👧‍👦
+    expect(sanitizeString('a\u200Db')).toBe('a\u200Db')
+    // Compound emoji: family (man + ZWJ + woman + ZWJ + girl + ZWJ + boy)
+    const familyEmoji = '👨\u200D👩\u200D👧\u200D👦'
+    expect(sanitizeString(familyEmoji)).toBe(familyEmoji)
+  })
+
+  it('strips soft hyphen (U+00AD)', () => {
+    expect(sanitizeString('hel\u00ADlo')).toBe('hello')
+  })
+
+  it('preserves zero-width non-joiner (U+200C) — required for Farsi/Indic scripts', () => {
+    // ZWNJ is essential in Farsi/Persian for correct word rendering
+    expect(sanitizeString('a\u200Cb')).toBe('a\u200Cb')
+  })
+
+  it('preserves variation selectors (U+FE0F) — controls emoji presentation', () => {
+    // FE0F forces emoji presentation (❤️ vs ❤)
+    expect(sanitizeString('❤\uFE0F')).toBe('❤\uFE0F')
+  })
+
+  it('strips BOM / FEFF', () => {
+    expect(sanitizeString('\uFEFFhello')).toBe('hello')
+  })
+})
+
+describe('sanitizeString — length capping', () => {
+  it('truncates strings exceeding maxLength', () => {
+    const input = 'x'.repeat(1000)
+    expect(sanitizeString(input, 500)).toBe('x'.repeat(500))
+    expect(sanitizeString(input, 500).length).toBe(500)
+  })
+
+  it('does not truncate strings within maxLength', () => {
+    expect(sanitizeString('hello', 500)).toBe('hello')
+  })
+
+  it('truncates after stripping (so final length is accurate)', () => {
+    // 5 visible chars + 3 zero-width = 8 raw. After stripping = 5, which is <= 10
+    const input = 'a\u200Bb\u200Bc\u200Bde'
+    expect(sanitizeString(input, 10)).toBe('abcde')
+  })
+
+  it('truncates to exact maxLength when stripped content is longer', () => {
+    const input = 'x'.repeat(300)
+    const result = sanitizeString(input, 200)
+    expect(result.length).toBe(200)
+  })
+
+  it('does not split surrogate pairs when truncating (grapheme-safe)', () => {
+    // 🤿 is U+1F93F — a surrogate pair in UTF-16 (2 code units)
+    const input = '🤿'.repeat(10) // 10 emoji, 20 code units
+    const result = sanitizeString(input, 5) // cap at 5 codepoints
+    // Should produce exactly 5 complete emoji, no broken surrogates
+    expect(Array.from(result).length).toBe(5)
+    expect(result).toBe('🤿🤿🤿🤿🤿')
+  })
+})
+
+describe('sanitizeString — NFC normalization', () => {
+  it('normalizes decomposed accents to NFC', () => {
+    // é as e + combining acute (NFD) → é as single codepoint (NFC)
+    const nfd = 'e\u0301' // NFD: e + combining acute accent
+    const nfc = '\u00E9'  // NFC: é
+    expect(sanitizeString(nfd)).toBe(nfc)
+  })
+})
+
+describe('sanitizeString — international characters preserved', () => {
+  it('preserves Thai characters', () => {
+    const thai = 'สวัสดีครับ'
+    expect(sanitizeString(thai)).toBe(thai)
+  })
+
+  it('preserves Chinese characters', () => {
+    const chinese = '你好世界'
+    expect(sanitizeString(chinese)).toBe(chinese)
+  })
+
+  it('preserves Arabic characters', () => {
+    const arabic = 'مرحبا'
+    expect(sanitizeString(arabic)).toBe(arabic)
+  })
+
+  it('preserves emoji', () => {
+    expect(sanitizeString('🤿🐠🦈')).toBe('🤿🐠🦈')
+  })
+
+  it('preserves Farsi text with ZWNJ', () => {
+    // "می‌خواهم" — ZWNJ between می and خواهم is essential
+    const farsi = 'می\u200Cخواهم'
+    expect(sanitizeString(farsi)).toBe(farsi)
+  })
+
+  it('preserves compound emoji with ZWJ sequences', () => {
+    const familyEmoji = '👨\u200D👩\u200D👧\u200D👦'
+    expect(sanitizeString(familyEmoji)).toBe(familyEmoji)
+  })
+
+  it("preserves O'Brien (apostrophe in names)", () => {
+    expect(sanitizeString("O'Brien")).toBe("O'Brien")
+  })
+
+  it('preserves hyphenated names', () => {
+    expect(sanitizeString('Mary-Jane')).toBe('Mary-Jane')
+  })
+
+  it('preserves accented Latin characters', () => {
+    expect(sanitizeString('José García')).toBe('José García')
+  })
+})
+
+describe('sanitizeFields — object sanitization', () => {
+  it('sanitizes configured string fields', () => {
+    const input = { name: ' hello ', email: ' test@example.com ', age: 30 }
+    const config = { name: 200, email: 254 }
+    const result = sanitizeFields(input, config)
+    expect(result.name).toBe('hello')
+    expect(result.email).toBe('test@example.com')
+    expect(result.age).toBe(30) // non-string untouched
+  })
+
+  it('does not mutate the original object', () => {
+    const input = { name: ' hello ' }
+    const config = { name: 200 }
+    sanitizeFields(input, config)
+    expect(input.name).toBe(' hello ')
+  })
+
+  it('skips fields not in config', () => {
+    const input = { name: ' hello ', extra: ' world ' }
+    const config = { name: 200 }
+    const result = sanitizeFields(input, config)
+    expect(result.extra).toBe(' world ') // not in config, untouched
+  })
+
+  it('skips config fields not in object', () => {
+    const input = { name: ' hello ' }
+    const config = { name: 200, email: 254 }
+    const result = sanitizeFields(input, config)
+    expect(result.name).toBe('hello')
+    expect('email' in result).toBe(false)
+  })
+
+  it('applies maxLength from config', () => {
+    const input = { name: 'x'.repeat(300) }
+    const config = { name: 200 }
+    const result = sanitizeFields(input, config)
+    expect(result.name).toBe('x'.repeat(200))
+  })
+
+  it('handles undefined string values gracefully', () => {
+    const input = { name: undefined as unknown as string, email: 'test@test.com' }
+    const config = { name: 200, email: 254 }
+    const result = sanitizeFields(input, config)
+    // undefined is not a string, so it passes through
+    expect(result.name).toBeUndefined()
+    expect(result.email).toBe('test@test.com')
+  })
+})
+

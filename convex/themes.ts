@@ -1,5 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 
 // Returns all active themes (for theme picker UI)
 export const listActive = query({
@@ -40,24 +41,26 @@ export const upsert = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const sanitized = sanitizeFields(args, THEME_FIELDS)
+
     const existing = await ctx.db
       .query('themes')
-      .withIndex('by_slug', (q) => q.eq('slug', args.slug))
+      .withIndex('by_slug', (q) => q.eq('slug', sanitized.slug))
       .unique()
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        name: args.name,
-        config: args.config,
+        name: sanitized.name,
+        config: sanitized.config,
         isActive: args.isActive,
       })
       return existing._id
     }
 
     return await ctx.db.insert('themes', {
-      slug: args.slug,
-      name: args.name,
-      config: args.config,
+      slug: sanitized.slug,
+      name: sanitized.name,
+      config: sanitized.config,
       isActive: args.isActive,
       createdAt: Date.now(),
     })
