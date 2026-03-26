@@ -28,5 +28,5 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
-      - name: Test
-        run: npm test
+      - name: Test + Coverage
+        run: npm run test:coverage
