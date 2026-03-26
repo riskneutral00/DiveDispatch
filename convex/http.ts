@@ -1,6 +1,7 @@
 import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
+import { isTimestampFresh } from './lib/webhookTimestamp'
 
 const http = httpRouter()
 
@@ -77,6 +78,10 @@ http.route({
 
     if (!svixId || !svixTimestamp || !svixSignature) {
       return new Response('Missing svix headers', { status: 400 })
+    }
+
+    if (!isTimestampFresh(svixTimestamp)) {
+      return new Response('Timestamp too old or too new', { status: 400 })
     }
 
     const payload = await request.text()
