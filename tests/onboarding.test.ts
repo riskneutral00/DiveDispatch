@@ -168,12 +168,12 @@ describe('Quick Book pills (bookingTemplates)', () => {
 
     // Create two Quick Book pills
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-pills' })
-      .mutation(api.bookingTemplates.create, { name: 'DSD', activityType: ['DSD'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'DSD', activityType: ['DSD'] })
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-pills' })
-      .mutation(api.bookingTemplates.create, { name: 'OW', activityType: ['OW'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'OW', activityType: ['OW'] })
 
     const templates = await t.withIdentity({ tokenIdentifier: 'clerk|dc-pills' })
-      .query(api.bookingTemplates.list, {})
+      .query(api.bookingTemplates.list, { activeRole: 'DiveCenter' })
 
     expect(templates).toHaveLength(2)
     const names = templates.map((t: { name: string }) => t.name)
@@ -211,7 +211,7 @@ describe('Quick Book pills (bookingTemplates)', () => {
 
     // Add template
     await t.withIdentity({ tokenIdentifier: 'clerk|dc-pill-check' })
-      .mutation(api.bookingTemplates.create, { name: 'FD', activityType: ['FD'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'FD', activityType: ['FD'] })
 
     const after = await t.withIdentity({ tokenIdentifier: 'clerk|dc-pill-check' })
       .query(api.users.getOnboardingStatus, {})

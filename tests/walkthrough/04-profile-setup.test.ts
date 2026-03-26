@@ -28,7 +28,7 @@ describe('diveCenters.create (profile setup)', () => {
         associations: [{ agency: 'PADI', number: '12345' }],
       })
 
-    const profile = await t.run(async (ctx) => ctx.db.get(id))
+    const profile = await t.run(async (ctx) => ctx.db.get(id as any) as any)
     expect(profile?.name).toBe("Matt & Miss Mermaid's DC")
     expect(profile?.placeName).toBe('Phuket')
     expect(profile?.country).toBe('Thailand')

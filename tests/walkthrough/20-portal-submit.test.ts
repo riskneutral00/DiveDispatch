@@ -29,7 +29,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-1', customerName: 'Dana Diver', email: 'dana@example.com' },
+        link: { token: 'tok-submit-1', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
         profile: { linkToken: 'tok-submit-1' },
       }),
     )
@@ -60,7 +60,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-2', customerName: 'Dana Diver', email: 'dana@example.com' },
+        link: { token: 'tok-submit-2', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
         profile: { linkToken: 'tok-submit-2' },
       }),
     )
@@ -95,7 +95,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-3', customerName: 'Dana Diver', email: 'dana@example.com' },
+        link: { token: 'tok-submit-3', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
         profile: { linkToken: 'tok-submit-3' },
       }),
     )
@@ -136,7 +136,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-req-1', customerName: 'Evan Diver', email: 'evan@example.com' },
+        link: { token: 'tok-req-1', customerName: 'Evan Diver', email: 'evan@example.com' } as any,
         profile: { linkToken: 'tok-req-1' },
       }),
     )

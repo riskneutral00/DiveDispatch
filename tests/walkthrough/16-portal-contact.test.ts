@@ -48,7 +48,7 @@ describe('getPortalContext', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
       }),
     )
 
@@ -84,7 +84,7 @@ describe('getPortalContext', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
       })
 
       // Insert a customer and link it to the profile
@@ -153,7 +153,7 @@ describe('savePortalContact', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
       }),
     )
 
@@ -198,7 +198,7 @@ describe('savePortalContact', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
       }),
     )
 

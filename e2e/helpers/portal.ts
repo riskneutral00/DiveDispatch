@@ -224,6 +224,29 @@ export async function completeEquipmentStep(page: Page): Promise<void> {
  *
  * @param email — unique customer email for parallel safety (required)
  */
+/**
+ * Navigate to the portal URL for the given token and complete all steps
+ * (contact, medical, waiver, equipment, submit).
+ */
+export async function completeAllPortalSteps(page: Page, token: string): Promise<void> {
+  await page.goto(`${BASE_URL}/portal/${token}`)
+  await expect(page).not.toHaveURL(/expired|not_found/, { timeout: 10_000 })
+
+  await completeContactStep(page)
+  await completeMedicalStep(page)
+  await completeWaiverStep(page)
+  await completeEquipmentStep(page)
+
+  await expect(
+    page.getByRole('button', { name: /Submit My Forms/i }),
+  ).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: /Submit My Forms/i }).click()
+
+  await expect(
+    page.getByText(/Thank you|Submitted|Complete|Success/i).first(),
+  ).toBeVisible({ timeout: 10_000 })
+}
+
 export async function runFullUpcomingSequence(
   page: Page,
   startDate: string,

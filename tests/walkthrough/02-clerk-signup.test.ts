@@ -15,7 +15,6 @@ describe('createUser (post sign-up)', () => {
     vi.useRealTimers()
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.role).toBe('DiveCenter')
     expect(user?.businessName).toBe('Test DC')
     expect(user?.tokenIdentifier).toBe('clerk|signup-dc-01')
   })

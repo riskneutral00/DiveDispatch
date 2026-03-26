@@ -18,12 +18,12 @@ describe('saveBookingTemplates', () => {
 
     // Simulate the preferences step: user selects DSD and OW, each becomes a pill
     await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-01' })
-      .mutation(api.bookingTemplates.create, { name: 'DSD', activityType: ['DSD'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'DSD', activityType: ['DSD'] })
     await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-01' })
-      .mutation(api.bookingTemplates.create, { name: 'OW', activityType: ['OW'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'OW', activityType: ['OW'] })
 
     const templates = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-01' })
-      .query(api.bookingTemplates.list, {})
+      .query(api.bookingTemplates.list, { activeRole: 'DiveCenter' })
 
     expect(templates).toHaveLength(2)
     const names = templates.map((tmpl: { name: string }) => tmpl.name)
@@ -37,7 +37,7 @@ describe('saveBookingTemplates', () => {
 
     // Skip path: user clicks Continue without adding any pills
     const templates = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-02' })
-      .query(api.bookingTemplates.list, {})
+      .query(api.bookingTemplates.list, { activeRole: 'DiveCenter' })
 
     expect(templates).toHaveLength(0)
   })
@@ -49,12 +49,12 @@ describe('saveBookingTemplates', () => {
     // Pass duplicate activityType codes in a single template.
     // The create mutation accepts the array as-is (no server-side dedup or rejection).
     const id = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-03' })
-      .mutation(api.bookingTemplates.create, { name: 'Dupes', activityType: ['DSD', 'DSD'] })
+      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'Dupes', activityType: ['DSD', 'DSD'] })
 
     expect(id).toBeDefined()
 
     const templates = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-03' })
-      .query(api.bookingTemplates.list, {})
+      .query(api.bookingTemplates.list, { activeRole: 'DiveCenter' })
 
     // One template record is created regardless of duplicate codes in the array
     expect(templates).toHaveLength(1)

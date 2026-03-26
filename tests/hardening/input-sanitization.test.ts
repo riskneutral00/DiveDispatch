@@ -89,7 +89,8 @@ describe('Input sanitization — XSS payloads in booking fields', () => {
       const t = makeT()
       await t.run(async (ctx) => {
         await seedUser(ctx)
-        const bookingId = await seedBooking(ctx, TEST_SLUGS.diveCenter, {
+        const bookingId = await seedBooking(ctx, {
+          ownerId: TEST_SLUGS.diveCenter,
           status: 'Draft',
         })
         // Store payload in draftState (JSON string field)

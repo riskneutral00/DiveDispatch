@@ -824,7 +824,7 @@ describe('getAvailableDives', () => {
     expect(countNonConfined(days[1].dives)).toBe(3)
     // OW 4 should be capped on Day 2 (already at 3), NOT a 4th non-confined
     const day2Available = getAvailableDives(1, days, ['OW', 'AOW'])
-    const uncapped = day2Available.filter(s => !s.isConfined && !('capped' in s && (s as Record<string, unknown>).capped))
+    const uncapped = day2Available.filter(s => !s.isConfined && !('capped' in s && (s as unknown as Record<string, unknown>).capped))
     // All non-selected dives should be capped since day is at limit
     const unselectedUncapped = uncapped.filter(s => {
       return !days[1].dives.some(d => d.courseCode === s.courseCode && d.diveNumber === s.diveNumber)

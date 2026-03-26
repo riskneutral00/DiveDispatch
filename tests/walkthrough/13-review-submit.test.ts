@@ -29,7 +29,6 @@ async function seedDcUser(ctx: Ctx, slug: string) {
     firstName: slug,
     lastName: 'DC',
     businessName: `${slug} Business`,
-    role: 'DiveCenter',
     isSeeded: false,
     preferredLocale: 'en',
   })
@@ -44,7 +43,6 @@ async function seedInstructorUser(ctx: Ctx, slug: string) {
     firstName: slug,
     lastName: 'Instructor',
     businessName: `${slug} Teaching`,
-    role: 'Instructor',
     isSeeded: false,
     preferredLocale: 'en',
   })

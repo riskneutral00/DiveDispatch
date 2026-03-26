@@ -51,7 +51,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-1', customerName: 'Carlos Diver', email: 'carlos@example.com' },
+        link: { token: 'tok-equip-1', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
         profile: { linkToken: 'tok-equip-1' },
       })
       await seedCustomerForProfile(ctx, fixture.profileId)
@@ -98,7 +98,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-2', customerName: 'Carlos Diver', email: 'carlos@example.com' },
+        link: { token: 'tok-equip-2', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
         profile: { linkToken: 'tok-equip-2' },
       }),
     )
@@ -148,7 +148,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-a', customerName: 'Carlos Diver', email: 'carlos@example.com' },
+        link: { token: 'tok-equip-a', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
         profile: { linkToken: 'tok-equip-a' },
       })
       await seedCustomerForProfile(ctx, fixture.profileId)

@@ -21,7 +21,7 @@ import { makeT } from '../helpers/convex-helpers'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'DiveCenter') {
+async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<Parameters<typeof _seedUser>[1]>['role'] = 'DiveCenter') {
   return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', businessName: `${slug} Business`, role })
 }
 
@@ -64,7 +64,7 @@ describe('createDraftShell', () => {
     vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-shell-1' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
+      .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
@@ -87,6 +87,7 @@ describe('createDraftShell', () => {
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-shell-2' })
       .mutation(api.bookingDraftMutations.createDraftShell, {
+        activeRole: 'DiveCenter',
         startDate: testDate(5),
         endDate: testDate(5),
       })
@@ -119,11 +120,12 @@ describe('createDraftShell', () => {
     await expect(
       t
         .withIdentity({ tokenIdentifier: 'clerk|instructor-shell' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' }),
     ).rejects.toSatisfy((err: unknown) => {
       const e = err as { data: unknown }
       const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
-      return (data as Record<string, unknown>)?.code === 'FORBIDDEN'
+      // Instructor doesn't hold DiveCenter → ROLE_NOT_HELD (fires before FORBIDDEN)
+      return (data as Record<string, unknown>)?.code === 'ROLE_NOT_HELD'
     })
   })
 })

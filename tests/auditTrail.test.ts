@@ -18,7 +18,6 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     firstName: 'Test',
     lastName: 'User',
     businessName: 'Test DC',
-    role: 'DiveCenter',
     isSeeded: false,
     preferredLocale: 'en',
   })

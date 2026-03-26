@@ -14,14 +14,12 @@ async function seedUser(ctx: MutationCtx, slug: string) {
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
-    role: 'DiveCenter',
     isSeeded: false,
     preferredLocale: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,
     role: 'DiveCenter',
-    isPrimary: true,
     createdAt: Date.now(),
     profileComplete: false,
   })

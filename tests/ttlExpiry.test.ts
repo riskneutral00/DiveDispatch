@@ -380,7 +380,6 @@ describe('expireBooking', () => {
         firstName: 'DC',
         lastName: 'One',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -428,7 +427,7 @@ describe('expireBooking', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await ctx.db.insert('users', {
+      const userId = await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|dc-1',
         slug: 'dc-1',
         email: 'dc1@test.com',
@@ -436,9 +435,14 @@ describe('expireBooking', () => {
         firstName: 'DC',
         lastName: 'One',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
+      })
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'DiveCenter',
+        createdAt: Date.now(),
+        profileComplete: false,
       })
       await ctx.db.insert('bookings', {
         ownerId: 'dc-1',
@@ -465,7 +469,7 @@ describe('expireBooking', () => {
     // Dashboard shows Upcoming + Completed only — Cancelled not shown
     const result = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'DiveCenter' })
     expect(result.bookings).toHaveLength(0)
     expect(result.requests).toHaveLength(0)
   })
@@ -1110,7 +1114,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           firstName: 'Instructor',
           lastName: 'One',
           businessName: 'Inst One Diving',
-          role: 'Instructor',
           isSeeded: false,
           preferredLocale: 'en',
         })
@@ -1254,7 +1257,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         firstName: 'Instructor',
         lastName: 'Two',
         businessName: 'Inst Two Diving',
-        role: 'Instructor',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1366,7 +1368,6 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         firstName: 'DC',
         lastName: 'One',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1594,7 +1595,6 @@ describe('token invalidation', () => {
         firstName: 'Test',
         lastName: 'DC',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1645,7 +1645,6 @@ describe('token invalidation', () => {
         firstName: 'Regen',
         lastName: 'DC',
         businessName: 'Regen DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })

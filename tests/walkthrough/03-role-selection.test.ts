@@ -12,7 +12,7 @@ async function seedUser(ctx: SeedCtx, slug: string) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('setRole', () => {
-  it('sets users.role to DiveCenter', async () => {
+  it('sets businessName (role no longer written to users table)', async () => {
     const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, 'role-dc-01'))
 
@@ -20,19 +20,18 @@ describe('setRole', () => {
       .mutation(api.users.setRole, { role: 'DiveCenter', businessName: 'Test DC' })
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.role).toBe('DiveCenter')
     expect(user?.businessName).toBe('Test DC')
   })
 
-  it('sets users.role to Instructor', async () => {
+  it('sets businessName for Instructor role', async () => {
     const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, 'role-inst-01'))
 
     await t.withIdentity({ tokenIdentifier: 'clerk|role-inst-01' })
-      .mutation(api.users.setRole, { role: 'Instructor', businessName: '' })
+      .mutation(api.users.setRole, { role: 'Instructor', businessName: 'Instructor Biz' })
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.role).toBe('Instructor')
+    expect(user?.businessName).toBe('Instructor Biz')
   })
 
   it('throws UNAUTHENTICATED when no identity', async () => {

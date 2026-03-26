@@ -57,7 +57,7 @@ describe('markNoShow', () => {
         sessionDate: testDate(0),
       })
 
-      await _markNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _markNoShowHandler(ctx, { reservationId })
 
       const res = await ctx.db.get(reservationId)
       expect(res!.status).toBe('NoShow')
@@ -82,7 +82,7 @@ describe('markNoShow', () => {
       })
 
       await expect(
-        _markNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _markNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'TOO_EARLY' },
       })
@@ -105,7 +105,7 @@ describe('markNoShow', () => {
       })
 
       await expect(
-        _markNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _markNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'INVALID_TRANSITION' },
       })
@@ -128,7 +128,7 @@ describe('markNoShow', () => {
       })
 
       await expect(
-        _markNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _markNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'INVALID_TRANSITION' },
       })
@@ -142,7 +142,7 @@ describe('markNoShow', () => {
         sessionDate: testDate(0),
       })
 
-      await _markNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _markNoShowHandler(ctx, { reservationId })
 
       // Snapshot should be unchanged — still 0 available
       const snapshots = await ctx.db.query('availabilitySnapshots').collect()
@@ -158,7 +158,7 @@ describe('markNoShow', () => {
         sessionDate: testDate(0),
       })
 
-      await _markNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _markNoShowHandler(ctx, { reservationId })
 
       const notifications = await ctx.db.query('notifications').collect()
       const noShowNotif = notifications.find((n) => n.type === 'noshow_marked')
@@ -190,7 +190,7 @@ describe('markNoShow', () => {
       })
 
       await expect(
-        _markNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _markNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'FORBIDDEN' },
       })
@@ -209,10 +209,10 @@ describe('revertNoShow', () => {
       })
 
       // Mark as NoShow first
-      await _markNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _markNoShowHandler(ctx, { reservationId })
 
       // Revert
-      await _revertNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _revertNoShowHandler(ctx, { reservationId })
 
       const res = await ctx.db.get(reservationId)
       expect(res!.status).toBe('Confirmed')
@@ -242,7 +242,7 @@ describe('revertNoShow', () => {
       })
 
       await expect(
-        _revertNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _revertNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'REVERT_WINDOW_EXPIRED' },
       })
@@ -257,7 +257,7 @@ describe('revertNoShow', () => {
       })
 
       await expect(
-        _revertNoShowHandler(ctx, { reservationId: reservationId as string }),
+        _revertNoShowHandler(ctx, { reservationId }),
       ).rejects.toMatchObject({
         data: { code: 'INVALID_TRANSITION' },
       })
@@ -271,8 +271,8 @@ describe('revertNoShow', () => {
         sessionDate: testDate(0),
       })
 
-      await _markNoShowHandler(ctx, { reservationId: reservationId as string })
-      await _revertNoShowHandler(ctx, { reservationId: reservationId as string })
+      await _markNoShowHandler(ctx, { reservationId })
+      await _revertNoShowHandler(ctx, { reservationId })
 
       const notifications = await ctx.db.query('notifications').collect()
       const revertNotif = notifications.find((n) => n.type === 'noshow_reverted')

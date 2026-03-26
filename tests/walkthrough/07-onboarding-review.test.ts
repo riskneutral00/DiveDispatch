@@ -18,7 +18,6 @@ async function seedUser(
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
-    role: 'DiveCenter',
     isSeeded: false,
     preferredLocale: 'en',
     ...overrides,

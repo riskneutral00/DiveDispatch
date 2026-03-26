@@ -58,7 +58,7 @@ describe('savePortalContact — all required fields', () => {
             },
           ],
         },
-        link: { customerName: 'Test Diver', email: 'test@example.com' },
+        link: { customerName: 'Test Diver', email: 'test@example.com' } as any,
       }),
     )
 
@@ -248,7 +248,7 @@ describe('submitPortal — medical block TTL extension wiring', () => {
         profile: {
           medicalAnswers: { ...ALL_NO, medical_q3: true },
           medicalSchemaVersion: '1',
-        },
+        } as any,
       })
 
       const unitId = await seedInventoryUnit(ctx, {

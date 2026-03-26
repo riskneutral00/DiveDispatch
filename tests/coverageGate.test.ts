@@ -23,7 +23,7 @@ import {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Thin wrapper: adapts positional (ctx, slug, role?) to shared seedUser overrides format */
-async function seedUserBySlug(ctx: SeedCtx, slug: string, role: Parameters<typeof seedUser>[1]['role'] = 'DiveCenter') {
+async function seedUserBySlug(ctx: SeedCtx, slug: string, role: NonNullable<NonNullable<Parameters<typeof seedUser>[1]>['role']> = 'DiveCenter') {
   return seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
 }
 
@@ -82,7 +82,7 @@ describe('createDraftShell — coverage gate', () => {
     await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-noprofs' }).mutation(
         api.bookingDraftMutations.createDraftShell,
-        { startDate: testDate(5) },
+        { activeRole: 'DiveCenter', startDate: testDate(5) },
       ),
       'COVERAGE_INCOMPLETE',
     )
@@ -106,7 +106,7 @@ describe('createDraftShell — coverage gate', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-empty' }).mutation(
         api.bookingDraftMutations.createDraftShell,
-        { startDate: testDate(5) },
+        { activeRole: 'DiveCenter', startDate: testDate(5) },
       ),
     ).rejects.toSatisfy((err: unknown) => {
       const e = err as { data: unknown }
@@ -138,7 +138,7 @@ describe('createDraftShell — coverage gate', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-partial' }).mutation(
         api.bookingDraftMutations.createDraftShell,
-        { startDate: testDate(5) },
+        { activeRole: 'DiveCenter', startDate: testDate(5) },
       ),
     ).rejects.toSatisfy((err: unknown) => {
       const e = err as { data: unknown }
@@ -177,6 +177,7 @@ describe('createDraftShell — coverage gate', () => {
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-full' })
       .mutation(api.bookingDraftMutations.createDraftShell, {
+        activeRole: 'DiveCenter',
         startDate: testDate(5),
       })
 
@@ -213,6 +214,7 @@ describe('createDraftShell — coverage gate', () => {
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-boat' })
       .mutation(api.bookingDraftMutations.createDraftShell, {
+        activeRole: 'DiveCenter',
         startDate: testDate(5),
       })
 
@@ -246,7 +248,7 @@ describe('createDraftShell — coverage gate', () => {
     vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-nodate' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
+      .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
 
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()

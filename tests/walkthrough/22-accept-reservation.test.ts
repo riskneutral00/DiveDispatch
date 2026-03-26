@@ -33,7 +33,6 @@ async function seedUser(
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
-    role,
     isSeeded: false,
     preferredLocale: 'en',
   })
