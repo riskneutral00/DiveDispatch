@@ -34,13 +34,6 @@ describe('Portal page GlassButton compliance (DD-162)', () => {
   })
 
   it('"Close" action uses GlassButton', () => {
-    // The completed state should use <GlassButton for the close action
-    // Search for window.close in proximity to GlassButton, not raw <button>
-    const closeSection = source.slice(
-      source.indexOf('window.close'),
-      source.indexOf('window.close') + 200,
-    )
-    // Should NOT be wrapped in a raw <button
     const precedingChunk = source.slice(
       Math.max(0, source.indexOf('window.close') - 300),
       source.indexOf('window.close'),
