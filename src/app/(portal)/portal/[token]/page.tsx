@@ -43,6 +43,10 @@ const PortalSubmit = dynamic(
 
 type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'safety' | 'submit'
 
+function isPortalStep(value: string): value is PortalStep {
+  return ['contact', 'medical', 'waiver', 'equipment', 'safety', 'submit'].includes(value)
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PortalTokenPage() {
@@ -70,7 +74,8 @@ export default function PortalTokenPage() {
     setContactDone(progress.contactComplete)
     setMedicalDone(progress.medicalComplete)
     setWaiverDone(progress.waiverComplete)
-    setCurrentStep(progress.firstIncompleteStep as PortalStep)
+    const step = progress.firstIncompleteStep
+    setCurrentStep(isPortalStep(step) ? step : 'contact')
   }, [progress])
 
   // Redirect expired/not-found tokens to the expired page.
