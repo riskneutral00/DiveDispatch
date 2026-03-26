@@ -14,7 +14,7 @@ export async function seedUser(
   overrides: {
     tokenIdentifier?: string
     slug?: string
-    role?: Doc<'users'>['role']
+    role?: Doc<'userRoles'>['role']
     email?: string
     name?: string
     firstName?: string
@@ -32,7 +32,6 @@ export async function seedUser(
     firstName: overrides.firstName ?? 'Test',
     lastName: overrides.lastName ?? 'User',
     businessName: overrides.businessName ?? 'Test Business',
-    role,
     isSeeded: true,
     preferredLocale: 'en',
   })
@@ -41,7 +40,6 @@ export async function seedUser(
     await ctx.db.insert('userRoles', {
       userId,
       role,
-      isPrimary: true,
       createdAt: Date.now(),
       profileComplete: false,
     })

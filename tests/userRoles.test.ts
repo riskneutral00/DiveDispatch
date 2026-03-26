@@ -40,21 +40,18 @@ describe('userRoles.myRoles', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: now,
         profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: now,
         profileComplete: false,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Equipment',
-        isPrimary: false,
         createdAt: now,
         profileComplete: false,
       })
@@ -81,14 +78,12 @@ describe('userRoles.myRoles', () => {
       await ctx.db.insert('userRoles', {
         userId: dcUserId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: now,
         profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId: instrUserId,
         role: 'Instructor',
-        isPrimary: true,
         createdAt: now,
         profileComplete: true,
       })
@@ -113,7 +108,6 @@ describe('userRoles.hasRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: Date.now(),
         profileComplete: true,
       })
@@ -132,7 +126,6 @@ describe('userRoles.hasRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: Date.now(),
         profileComplete: true,
       })
@@ -162,14 +155,13 @@ describe('userRoles.addRole', () => {
 
     await t
       .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .mutation(api.userRoles.addRole, { role: 'Boat', isPrimary: false })
+      .mutation(api.userRoles.addRole, { role: 'Boat' })
 
     const roles = await t
       .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
       .query(api.userRoles.myRoles, {})
     expect(roles).toHaveLength(1)
     expect(roles[0].role).toBe('Boat')
-    expect(roles[0].isPrimary).toBe(false)
     expect(roles[0].profileComplete).toBe(false)
   })
 
@@ -180,7 +172,6 @@ describe('userRoles.addRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: Date.now(),
         profileComplete: true,
       })
@@ -188,13 +179,13 @@ describe('userRoles.addRole', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-        .mutation(api.userRoles.addRole, { role: 'DiveCenter', isPrimary: true }),
+        .mutation(api.userRoles.addRole, { role: 'DiveCenter' }),
     ).rejects.toThrow(/DUPLICATE_ROLE/)
   })
 
   it('rejects unauthenticated caller', async () => {
     await expect(
-      makeT().mutation(api.userRoles.addRole, { role: 'Boat', isPrimary: false }),
+      makeT().mutation(api.userRoles.addRole, { role: 'Boat' }),
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
 })
@@ -209,7 +200,6 @@ describe('userRoles.hasAnyOperatorRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: Date.now(),
         profileComplete: true,
       })
@@ -228,7 +218,6 @@ describe('userRoles.hasAnyOperatorRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
-        isPrimary: true,
         createdAt: Date.now(),
         profileComplete: true,
       })
@@ -252,14 +241,12 @@ describe('userRoles.primaryRole', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: now,
         profileComplete: true,
       })
       await ctx.db.insert('userRoles', {
         userId,
         role: 'DiveCenter',
-        isPrimary: true,
         createdAt: now,
         profileComplete: true,
       })
@@ -270,7 +257,7 @@ describe('userRoles.primaryRole', () => {
       .query(api.userRoles.primaryRole, {})
     expect(primary).toBeTruthy()
     expect(primary!.role).toBe('DiveCenter')
-    expect(primary!.isPrimary).toBe(true)
+    // primaryRole now derived via precedence, not isPrimary flag
   })
 
   it('returns null for unauthenticated caller', async () => {

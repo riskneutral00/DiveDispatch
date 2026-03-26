@@ -8,7 +8,7 @@ import { makeT } from './helpers/convex-helpers'
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
 async function seedInstructorUser(ctx: SeedCtx, slug: string) {
-  return ctx.db.insert('users', {
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -16,10 +16,16 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Test',
     businessName: 'Test',
-    role: 'Instructor',
     isSeeded: false,
     preferredLocale: 'en',
   })
+  await ctx.db.insert('userRoles', {
+    userId,
+    role: 'Instructor',
+    createdAt: Date.now(),
+    profileComplete: false,
+  })
+  return userId
 }
 
 async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: string, placeName: string, country: string, verified = false) {
@@ -38,7 +44,7 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
 }
 
 async function seedCallerUser(ctx: SeedCtx, slug: string) {
-  return ctx.db.insert('users', {
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -46,10 +52,16 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     firstName: slug,
     lastName: 'Caller',
     businessName: 'Dive Center',
-    role: 'DiveCenter',
     isSeeded: false,
     preferredLocale: 'en',
   })
+  await ctx.db.insert('userRoles', {
+    userId,
+    role: 'DiveCenter',
+    createdAt: Date.now(),
+    profileComplete: false,
+  })
+  return userId
 }
 
 // ─── getBannedSlugSet ─────────────────────────────────────────────────────────

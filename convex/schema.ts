@@ -119,7 +119,6 @@ export default defineSchema({
         v.literal('Instagram'),
       ),
     ),
-    role: stakeholderType,
     isSeeded: v.boolean(),
     preferredLocale: v.string(),
     selectedThemeId: v.optional(v.id('themes')),
@@ -130,8 +129,7 @@ export default defineSchema({
   })
     .index('by_tokenIdentifier', ['tokenIdentifier'])
     .index('by_slug', ['slug'])
-    .index('by_email', ['email'])
-    .index('by_role', ['role']),
+    .index('by_email', ['email']),
 
   themes: defineTable({
     name: v.string(),
@@ -591,7 +589,6 @@ export default defineSchema({
   userRoles: defineTable({
     userId: v.id('users'),
     role: stakeholderType,
-    isPrimary: v.boolean(),
     createdAt: v.number(),
     profileComplete: v.boolean(),
   })

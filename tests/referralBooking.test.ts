@@ -90,7 +90,7 @@ describe('createReferralDraftShell', () => {
 
     // Verify ownership fields
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId)
+      const booking = await ctx.db.get(bookingId as Id<'bookings'>) as any
       expect(booking).toBeTruthy()
 
       // DC is the owner
@@ -125,7 +125,7 @@ describe('createReferralDraftShell', () => {
       })
 
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId)
+      const booking = await ctx.db.get(bookingId as Id<'bookings'>) as any
       expect(booking!.ownerId).toBe('target-lb')
       expect(booking!.ownerType).toBe('Liveaboard')
       expect(booking!.agentId).toBe('agent-lb')

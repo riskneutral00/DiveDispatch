@@ -24,7 +24,6 @@ describe('users.me query', () => {
 
     expect(result).not.toBeNull()
     expect(result!.slug).toBe('existing-dc')
-    expect(result!.role).toBe('DiveCenter')
   })
 
   it('returns null when unauthenticated', async () => {

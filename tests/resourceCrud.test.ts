@@ -30,7 +30,7 @@ type CrudApi = { create: any; update: any; mine: any; byUserId: any }
 const RESOURCE_CONFIGS: Array<{
   name: string
   apiModule: CrudApi
-  role: Doc<'users'>['role']
+  role: Doc<'userRoles'>['role']
   createArgs: Record<string, unknown>
   updateArgs: Record<string, unknown>
   uniqueField: string
@@ -141,7 +141,7 @@ for (const config of RESOURCE_CONFIGS) {
         const t = makeT()
         const wrongRole = config.role === 'Instructor' ? 'Equipment' : 'Instructor'
         await t.run(async (ctx) => {
-          await seedUser(ctx, { slug: 'wrong-role', tokenIdentifier: 'clerk|wrong-role', role: wrongRole as Doc<'users'>['role'] })
+          await seedUser(ctx, { slug: 'wrong-role', tokenIdentifier: 'clerk|wrong-role', role: wrongRole as Doc<'userRoles'>['role'] })
         })
 
         await expect(

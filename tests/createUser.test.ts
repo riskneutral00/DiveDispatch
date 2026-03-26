@@ -93,7 +93,6 @@ describe('createUser mutation', () => {
     const user = await t
       .withIdentity(identity)
       .query(api.users.me, {})
-    expect(user?.role).toBe('Agent')
     expect(user?.businessName).toBe('New Biz')
     expect(user?.phone).toBe('+1234567890')
     expect(user?.preferredChannel).toBe('LINE')

@@ -1,8 +1,9 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import type { QueryCtx } from './_generated/server'
+import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
+import { checkRateLimit } from './lib/rateLimiter'
 
 // ── Returning customer lookup ────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export const savePortalContact = mutation({
 })
 
 export async function _savePortalContactHandler(
-  ctx: Parameters<typeof resolvePortalToken>[0] & { db: { patch: Function; insert: Function } },
+  ctx: MutationCtx,
   args: {
     token: string
     existingCustomerId?: string
@@ -171,6 +172,7 @@ export async function _savePortalContactHandler(
     allergies?: string
   },
 ): Promise<void> {
+  await checkRateLimit(ctx, 'savePortalContact', args.token)
   const { profile } = await resolvePortalToken(ctx, args.token)
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

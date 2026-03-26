@@ -1,22 +1,25 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { Doc } from './_generated/dataModel'
-import { getAuthUser } from './lib/auth'
-import { checkHasAnyOperatorRole } from './userRoles'
+import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { requireActiveRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeFields, BOOKING_TEMPLATE_FIELDS } from './lib/sanitize'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { activeRole: stakeholderType },
+  handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
     if (!user) return []
+
+    await requireActiveRole(ctx, user._id, args.activeRole)
 
     return ctx.db
       .query('bookingTemplates')
       .withIndex('by_ownerId_ownerType', (q) =>
-        q.eq('ownerId', user.slug).eq('ownerType', user.role as Doc<'bookingTemplates'>['ownerType']),
+        q.eq('ownerId', user.slug).eq('ownerType', args.activeRole as Doc<'bookingTemplates'>['ownerType']),
       )
       .collect()
   },
@@ -24,6 +27,7 @@ export const list = query({
 
 export const create = mutation({
   args: {
+    activeRole: stakeholderType,
     name: v.string(),
     activityType: v.array(courseCode),
   },
@@ -31,14 +35,15 @@ export const create = mutation({
     const user = await getAuthUser(ctx)
     if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
 
-    if (!await checkHasAnyOperatorRole(ctx, user._id)) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only organizer roles can create booking templates.' })
+    await requireActiveRole(ctx, user._id, args.activeRole)
+    if (!OPERATOR_ROLE_SET.has(args.activeRole)) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only organizer roles can create booking templates.' })
     }
 
     const sanitized = sanitizeFields(args, BOOKING_TEMPLATE_FIELDS)
     return ctx.db.insert('bookingTemplates', {
       ownerId: user.slug,
-      ownerType: user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
+      ownerType: args.activeRole as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
       name: sanitized.name,
       activityType: args.activityType,
       createdAt: Date.now(),

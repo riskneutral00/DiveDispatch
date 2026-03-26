@@ -206,20 +206,17 @@ export async function _listInventoryByType(
   ctx: DbCtx,
   args: { type: ResourceOwnerType; ownerSlug?: string },
 ): Promise<InventoryListItem[]> {
-  let units: Awaited<ReturnType<typeof ctx.db.query<'inventoryUnits'>['collect']>>
-  if (args.ownerSlug !== undefined) {
-    units = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_ownerId_resourceType', (q) =>
-        q.eq('ownerId', args.ownerSlug!).eq('resourceType', args.type),
-      )
-      .collect()
-  } else {
-    units = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
-      .collect()
-  }
+  const units = args.ownerSlug !== undefined
+    ? await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_resourceType', (q) =>
+          q.eq('ownerId', args.ownerSlug!).eq('resourceType', args.type),
+        )
+        .collect()
+    : await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
+        .collect()
 
   // Batch-fetch all unique owners in parallel
   const uniqueOwnerIds = [...new Set(units.map((u) => u.ownerId as string))]

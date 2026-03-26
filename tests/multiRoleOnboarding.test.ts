@@ -37,7 +37,7 @@ describe('createUser with roles array (DD-032)', () => {
     expect(roleNames).toEqual(['Boat', 'DiveCenter', 'Equipment'])
   })
 
-  it('marks the first role as primary', async () => {
+  it('creates entries for both roles in specified order', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
@@ -57,16 +57,12 @@ describe('createUser with roles array (DD-032)', () => {
         .collect(),
     )
 
-    const primary = roles.find((r) => r.isPrimary)
-    expect(primary).toBeDefined()
-    expect(primary!.role).toBe('Boat')
-
-    const nonPrimary = roles.filter((r) => !r.isPrimary)
-    expect(nonPrimary).toHaveLength(1)
-    expect(nonPrimary[0].role).toBe('Instructor')
+    expect(roles).toHaveLength(2)
+    const roleNames = roles.map((r) => r.role).sort()
+    expect(roleNames).toEqual(['Boat', 'Instructor'])
   })
 
-  it('sets user.role to the first/primary role', async () => {
+  it('creates userRoles entries without writing role to users table', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
@@ -79,8 +75,15 @@ describe('createUser with roles array (DD-032)', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.role).toBe('Equipment')
+    const roles = await t.run(async (ctx) =>
+      ctx.db
+        .query('userRoles')
+        .withIndex('by_userId', (q) => q.eq('userId', userId))
+        .collect(),
+    )
+    expect(roles).toHaveLength(2)
+    const roleNames = roles.map((r) => r.role).sort()
+    expect(roleNames).toEqual(['Compressor', 'Equipment'])
   })
 
   it('single-role selection still works identically (no roles array)', async () => {
@@ -94,9 +97,6 @@ describe('createUser with roles array (DD-032)', () => {
       })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
-
-    const user = await t.run(async (ctx) => ctx.db.get(userId))
-    expect(user?.role).toBe('DiveCenter')
 
     // No userRoles entries created when roles array is absent
     const roles = await t.run(async (ctx) =>
@@ -129,7 +129,7 @@ describe('createUser with roles array (DD-032)', () => {
     )
     expect(roles).toHaveLength(1)
     expect(roles[0].role).toBe('Instructor')
-    expect(roles[0].isPrimary).toBe(true)
+    expect(roles[0].profileComplete).toBe(false)
   })
 
 })

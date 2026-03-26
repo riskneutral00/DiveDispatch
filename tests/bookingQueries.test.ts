@@ -17,7 +17,7 @@ import { makeT } from './helpers/convex-helpers'
 async function seedTestUser(
   ctx: SeedCtx,
   slug: string,
-  role: Doc<'users'>['role'] = 'DiveCenter',
+  role: Doc<'userRoles'>['role'] = 'DiveCenter',
 ) {
   return seedUser(ctx, {
     slug,
@@ -303,7 +303,7 @@ describe('listByStatus', () => {
     const t = makeT()
 
     await expect(
-      t.query(api.bookings.listByStatus, { status: 'Draft' }),
+      t.query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Draft' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -312,7 +312,7 @@ describe('listByStatus', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-        .query(api.bookings.listByStatus, { status: 'Draft' }),
+        .query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Draft' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
@@ -324,7 +324,7 @@ describe('listByStatus', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.listByStatus, { status: 'Draft' })
+      .query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Draft' })
 
     expect(result).toHaveLength(0)
   })
@@ -338,7 +338,7 @@ describe('listByStatus', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.listByStatus, { status: 'Draft' })
+      .query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Draft' })
 
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe('Draft')
@@ -353,7 +353,7 @@ describe('listByStatus', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.listByStatus, { status: 'Upcoming' })
+      .query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Upcoming' })
 
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe('Upcoming')
@@ -368,7 +368,7 @@ describe('listByStatus', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.listByStatus, { status: 'Upcoming' })
+      .query(api.bookings.listByStatus, { activeRole: 'Instructor', status: 'Upcoming' })
 
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe('Upcoming')
@@ -383,7 +383,7 @@ describe('listByStatus', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.listByStatus, { status: 'Completed' })
+      .query(api.bookings.listByStatus, { activeRole: 'DiveCenter', status: 'Completed' })
 
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe('Completed')
@@ -519,7 +519,7 @@ describe('myDashboard', () => {
     const t = makeT()
 
     await expect(
-      t.query(api.bookings.myDashboard),
+      t.query(api.bookings.myDashboard, { activeRole: 'DiveCenter' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -528,7 +528,7 @@ describe('myDashboard', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-        .query(api.bookings.myDashboard),
+        .query(api.bookings.myDashboard, { activeRole: 'DiveCenter' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
@@ -537,7 +537,7 @@ describe('myDashboard', () => {
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'DiveCenter' })
 
     expect(result).toEqual({ bookings: [], requests: [] })
   })
@@ -553,7 +553,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'DiveCenter' })
 
     expect(result.bookings).toHaveLength(3)
     const statuses = result.bookings.map((b) => b.status)
@@ -568,7 +568,7 @@ describe('myDashboard', () => {
     await t.run(async (ctx) => seedTestUser(ctx, 'dc-1', 'DiveCenter'))
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'DiveCenter' })
 
     expect(result.requests).toEqual([])
   })
@@ -583,7 +583,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.bookings).toHaveLength(2)
   })
@@ -631,7 +631,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.requests).toHaveLength(1)
     const req = result.requests[0]
@@ -684,7 +684,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.requests[0].dates).toEqual([testDate(10)])
   })
@@ -718,7 +718,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.requests).toHaveLength(0)
   })
@@ -751,7 +751,7 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
 
     expect(result.bookings).toHaveLength(1)
     expect(result.requests).toHaveLength(0)
@@ -766,8 +766,38 @@ describe('myDashboard', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dm-1' })
-      .query(api.bookings.myDashboard)
+      .query(api.bookings.myDashboard, { activeRole: 'DiveMaster' })
 
     expect(result.bookings).toHaveLength(1)
+  })
+})
+
+// ─── activeRole validation (requireActiveRole gate) ─────────────────────────
+
+describe('listByStatus — activeRole validation', () => {
+  it('rejects with ROLE_NOT_HELD when caller claims a role they do not hold', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedTestUser(ctx, 'dc-role-gate')
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-role-gate' })
+        .query(api.bookings.listByStatus, { activeRole: 'Agent', status: 'Draft' }),
+    ).rejects.toThrow(/ROLE_NOT_HELD/)
+  })
+})
+
+describe('myDashboard — activeRole validation', () => {
+  it('rejects with ROLE_NOT_HELD when caller claims a role they do not hold', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedTestUser(ctx, 'dc-dash-gate')
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-dash-gate' })
+        .query(api.bookings.myDashboard, { activeRole: 'Instructor' }),
+    ).rejects.toThrow(/ROLE_NOT_HELD/)
   })
 })

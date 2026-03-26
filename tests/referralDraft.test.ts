@@ -23,14 +23,12 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
-    role,
     isSeeded: false,
     preferredLocale: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,
     role,
-    isPrimary: true,
     createdAt: Date.now(),
     profileComplete: false,
   })

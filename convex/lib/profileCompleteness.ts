@@ -113,10 +113,7 @@ export async function checkAllRolesCompleteness(
     .withIndex('by_userId', (q: any) => q.eq('userId', userId))
     .collect()
 
-  // Fall back to primary role if no userRoles rows exist
-  const rolesToCheck = userRoles.length > 0
-    ? userRoles.map((r: any) => r.role as string)
-    : [user.role as string]
+  const rolesToCheck = userRoles.map((r: any) => r.role as string)
 
   const roles: Array<{ role: string; percentage: number; incomplete: string[] }> = []
   let allComplete = true

@@ -16,6 +16,7 @@ import { makeT } from './helpers/convex-helpers'
 /** Base args with all required fields filled in for the upsert mutation. */
 function baseArgs(overrides: Record<string, unknown> = {}) {
   return {
+    activeRole: 'DiveCenter' as const,
     acceptanceMode: 'Auto' as const,
     maxHoursPerDay: 8,
     postJobBlockDuration: 30,
@@ -173,5 +174,38 @@ describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
     expect(prefs!.preferredVenueSlugs).toEqual(['venue-2', 'venue-3'])
     // Others passed as undefined in second call — Convex patch sets them to undefined
     expect(prefs!.preferredInstructorSlugs).toBeUndefined()
+  })
+})
+
+// ─── activeRole validation ──────────────────────────────────────────────────
+
+describe('preferences upsert — activeRole validation', () => {
+  it('rejects with ROLE_NOT_HELD when caller claims a role they do not hold', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'test|dc-user' })
+        .mutation(api.stakeholderPreferences.upsert, baseArgs({ activeRole: 'Agent' })),
+    ).rejects.toThrow(/ROLE_NOT_HELD/)
+  })
+
+  it('validates activeRole before patching existing preferences', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+    })
+
+    // First call: create preferences with valid role
+    await t.withIdentity({ tokenIdentifier: 'test|dc-user' })
+      .mutation(api.stakeholderPreferences.upsert, baseArgs())
+
+    // Second call: attempt to patch with an unheld role — must reject
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'test|dc-user' })
+        .mutation(api.stakeholderPreferences.upsert, baseArgs({ activeRole: 'Instructor' })),
+    ).rejects.toThrow(/ROLE_NOT_HELD/)
   })
 })

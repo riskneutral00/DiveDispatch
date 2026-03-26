@@ -24,7 +24,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -36,7 +35,6 @@ describe('submitToDraft', () => {
         firstName: 'Instructor',
         lastName: 'One',
         businessName: 'Instructor Biz',
-        role: 'Instructor',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -117,7 +115,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -194,7 +191,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -272,7 +268,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -352,7 +347,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -500,7 +494,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -573,7 +566,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -585,7 +577,6 @@ describe('submitToDraft', () => {
         firstName: 'Instructor',
         lastName: 'One',
         businessName: 'Instructor Biz',
-        role: 'Instructor',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -691,7 +682,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -773,7 +763,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -854,7 +843,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -958,7 +946,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1024,7 +1011,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1131,7 +1117,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1202,7 +1187,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1214,7 +1198,6 @@ describe('submitToDraft', () => {
         firstName: 'Mix',
         lastName: 'Instructor',
         businessName: 'Mix Instructor Co',
-        role: 'Instructor',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1314,7 +1297,6 @@ describe('submitToDraft', () => {
         firstName: 'DC',
         lastName: 'Test',
         businessName: 'Test DC',
-        role: 'DiveCenter',
         isSeeded: false,
         preferredLocale: 'en',
       })
@@ -1715,7 +1697,6 @@ function makeBoatDcUser(slug: string) {
     firstName: 'DC',
     lastName: 'Test',
     businessName: `${slug} Business`,
-    role: 'DiveCenter' as const,
     isSeeded: false,
     preferredLocale: 'en',
   }

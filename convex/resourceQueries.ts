@@ -1,8 +1,11 @@
+import { v } from 'convex/values'
 import { query } from './_generated/server'
 import type { QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { requireAuth } from './lib/auth'
+import { requireActiveRole } from './userRoles'
 import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 // ─── Return types ─────────────────────────────────────────────────────────────
 
@@ -49,13 +52,14 @@ export type ConfirmedScheduleItem = {
  * authenticated caller, enriched with booking context. Sorted by creation time
  * descending (newest first) so the most urgent request appears at the top.
  */
-export async function _getOpenRequestsHandler(ctx: QueryCtx): Promise<OpenRequest[]> {
+export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string): Promise<OpenRequest[]> {
   const { user: caller } = await requireAuth(ctx)
+  await requireActiveRole(ctx, caller._id, activeRole)
 
   const units = await ctx.db
     .query('inventoryUnits')
     .withIndex('by_ownerId_ownerType', (q) =>
-      q.eq('ownerId', caller.slug).eq('ownerType', caller.role as ResourceOwnerType),
+      q.eq('ownerId', caller.slug).eq('ownerType', activeRole as ResourceOwnerType),
     )
     .collect()
 
@@ -119,8 +123,8 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx): Promise<OpenReques
 }
 
 export const getOpenRequests = query({
-  args: {},
-  handler: _getOpenRequestsHandler,
+  args: { activeRole: stakeholderType },
+  handler: (ctx, args) => _getOpenRequestsHandler(ctx, args.activeRole),
 })
 
 // ─── getConfirmedSchedule ─────────────────────────────────────────────────────
@@ -132,13 +136,15 @@ export const getOpenRequests = query({
  */
 export async function _getConfirmedScheduleHandler(
   ctx: QueryCtx,
+  activeRole: string,
 ): Promise<ConfirmedScheduleItem[]> {
   const { user: caller } = await requireAuth(ctx)
+  await requireActiveRole(ctx, caller._id, activeRole)
 
   const units = await ctx.db
     .query('inventoryUnits')
     .withIndex('by_ownerId_ownerType', (q) =>
-      q.eq('ownerId', caller.slug).eq('ownerType', caller.role as ResourceOwnerType),
+      q.eq('ownerId', caller.slug).eq('ownerType', activeRole as ResourceOwnerType),
     )
     .collect()
 
@@ -216,6 +222,6 @@ export async function _getConfirmedScheduleHandler(
 }
 
 export const getConfirmedSchedule = query({
-  args: {},
-  handler: _getConfirmedScheduleHandler,
+  args: { activeRole: stakeholderType },
+  handler: (ctx, args) => _getConfirmedScheduleHandler(ctx, args.activeRole),
 })

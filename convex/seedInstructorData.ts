@@ -30,7 +30,6 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     firstName: def.firstName,
     lastName: def.lastName,
     businessName: `${def.firstName} ${def.lastName}`,
-    role,
     preferredLocale: 'en',
   }
 
@@ -44,7 +43,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 
   return {
     user,
-    roles: [{ role, isPrimary: true }],
+    roles: [{ role }],
     instructor: {
       name: `${def.firstName} ${def.lastName}`,
       ...PHUKET,

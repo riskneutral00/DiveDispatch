@@ -25,7 +25,6 @@ export interface SeedUser {
   firstName: string
   lastName: string
   businessName: string
-  role: StakeholderRole
   preferredLocale: string
 }
 
@@ -145,7 +144,7 @@ interface InstructorProfile {
 
 export interface SeedStakeholder {
   user: SeedUser
-  roles?: { role: StakeholderRole; isPrimary: boolean }[]
+  roles?: { role: StakeholderRole }[]
   diveCenter?: DiveCenterProfile
   boat?: BoatProfile
   pool?: VenueProfile
@@ -179,14 +178,13 @@ export const HUG_OCEAN: SeedStakeholder = {
     firstName: 'Hug',
     lastName: 'Ocean',
     businessName: 'Hug Ocean',
-    role: 'DiveCenter',
     preferredLocale: 'zh-CN',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Boat', isPrimary: false },
-    { role: 'Pool', isPrimary: false },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Boat' },
+    { role: 'Pool' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Hug Ocean',
@@ -247,13 +245,12 @@ export const NEPTUNE: SeedStakeholder = {
     firstName: 'Neptune',
     lastName: 'Dive',
     businessName: 'Neptune',
-    role: 'DiveCenter',
     preferredLocale: 'zh-CN',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Pool', isPrimary: false },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Pool' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Neptune',
@@ -298,13 +295,12 @@ export const PHUKET_DC: SeedStakeholder = {
     firstName: 'Phuket',
     lastName: 'Dive Center',
     businessName: 'Phuket Dive Center',
-    role: 'DiveCenter',
     preferredLocale: 'th',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Boat', isPrimary: false },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Boat' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Phuket Dive Center',
@@ -365,12 +361,11 @@ export const NICOLE_DC: SeedStakeholder = {
     firstName: 'Nicole',
     lastName: 'Dive Center',
     businessName: 'Nicole Dive Center',
-    role: 'DiveCenter',
     preferredLocale: 'zh-TW',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Nicole Dive Center',
@@ -404,11 +399,10 @@ export const MANTA_DC: SeedStakeholder = {
     firstName: 'Manta',
     lastName: 'Dive Center',
     businessName: 'Manta Dive Center',
-    role: 'DiveCenter',
     preferredLocale: 'fr',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
+    { role: 'DiveCenter' },
   ],
   diveCenter: {
     name: 'Manta Dive Center',
@@ -431,12 +425,11 @@ export const SCUBANICKS: SeedStakeholder = {
     firstName: 'Nick',
     lastName: 'ScubaNicks',
     businessName: 'ScubaNicks',
-    role: 'DiveCenter',
     preferredLocale: 'en',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'ScubaNicks',
@@ -467,12 +460,11 @@ export const SCUBA_DEEP: SeedStakeholder = {
     firstName: 'Scuba',
     lastName: 'Deep',
     businessName: 'Scuba Deep',
-    role: 'DiveCenter',
     preferredLocale: 'en',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Scuba Deep',
@@ -506,13 +498,12 @@ export const SIROLO: SeedStakeholder = {
     firstName: 'Prasit',
     lastName: 'Wongsawat',
     businessName: 'Sirolo',
-    role: 'DiveCenter',
     preferredLocale: 'th',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
-    { role: 'Boat', isPrimary: false },
-    { role: 'Equipment', isPrimary: false },
+    { role: 'DiveCenter' },
+    { role: 'Boat' },
+    { role: 'Equipment' },
   ],
   diveCenter: {
     name: 'Sirolo',
@@ -563,11 +554,10 @@ export const PRAY_DC: SeedStakeholder = {
     firstName: 'Pray',
     lastName: 'Dive Center',
     businessName: 'Pray Dive Center',
-    role: 'DiveCenter',
     preferredLocale: 'en',
   },
   roles: [
-    { role: 'DiveCenter', isPrimary: true },
+    { role: 'DiveCenter' },
   ],
   diveCenter: {
     name: 'Pray Dive Center',
@@ -590,11 +580,10 @@ export const AMANDA: SeedStakeholder = {
     firstName: 'Amanda',
     lastName: 'Chen',
     businessName: 'Amanda',
-    role: 'Agent',
     preferredLocale: 'zh-CN',
   },
   roles: [
-    { role: 'Agent', isPrimary: true },
+    { role: 'Agent' },
   ],
   agent: {
     name: 'Amanda',

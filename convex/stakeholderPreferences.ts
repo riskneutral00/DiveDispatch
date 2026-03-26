@@ -1,6 +1,8 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { ErrorCode } from './lib/errorCodes'
+import { requireActiveRole } from './userRoles'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 const acceptanceModeValidator = v.union(
   v.literal('Auto'),
@@ -31,6 +33,7 @@ export const mine = query({
 
 export const upsert = mutation({
   args: {
+    activeRole: stakeholderType,
     acceptanceMode: acceptanceModeValidator,
     maxHoursPerDay: v.number(),
     postJobBlockDuration: v.number(),
@@ -61,6 +64,7 @@ export const upsert = mutation({
       )
       .unique()
     if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    await requireActiveRole(ctx, user._id, args.activeRole)
 
     const existing = await ctx.db
       .query('stakeholderPreferences')
@@ -88,7 +92,7 @@ export const upsert = mutation({
 
     return await ctx.db.insert('stakeholderPreferences', {
       stakeholderId: user.slug,
-      stakeholderType: user.role,
+      stakeholderType: args.activeRole,
       useNamedUnits: false,
       ...payload,
     })

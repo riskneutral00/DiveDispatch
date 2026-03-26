@@ -346,7 +346,7 @@ describe('bookingResources round-trip lifecycle', () => {
       // Instructor should see this in their open requests
       const openRequests = await t
         .withIdentity({ tokenIdentifier: 'clerk|inst-1' })
-        .query(api.resourceQueries.getOpenRequests)
+        .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
       expect(openRequests).toHaveLength(1)
       expect(openRequests[0].bookingId).toBe(bookingId)

@@ -5,8 +5,23 @@ import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
+import { deriveDefaultRole } from './lib/rolePrecedence'
 
 // ─── Helpers (importable by other modules) ──────────────────────────────────
+
+/**
+ * Validate that a user holds the claimed active role.
+ * Throws ROLE_NOT_HELD if the user does not have the role in userRoles.
+ * Use this to validate the activeRole parameter on mutations.
+ */
+export async function requireActiveRole(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<'users'>,
+  activeRole: string,
+): Promise<void> {
+  const hasIt = await checkHasRole(ctx, userId, activeRole)
+  if (!hasIt) throw new ConvexError({ code: ErrorCode.ROLE_NOT_HELD })
+}
 
 /** Check whether a user holds a specific role. */
 export async function checkHasRole(
@@ -80,7 +95,9 @@ export const primaryRole = query({
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .collect()
-    return roles.find((r) => r.isPrimary) ?? null
+    if (roles.length === 0) return null
+    const primaryRoleStr = deriveDefaultRole(roles.map((r) => r.role))
+    return roles.find((r) => r.role === primaryRoleStr) ?? null
   },
 })
 
@@ -90,9 +107,8 @@ export const primaryRole = query({
 export const addRole = mutation({
   args: {
     role: stakeholderType,
-    isPrimary: v.boolean(),
   },
-  handler: async (ctx, { role, isPrimary }) => {
+  handler: async (ctx, { role }) => {
     const { user } = await requireAuth(ctx)
 
     const existing = await ctx.db
@@ -106,7 +122,6 @@ export const addRole = mutation({
     return ctx.db.insert('userRoles', {
       userId: user._id,
       role,
-      isPrimary,
       createdAt: Date.now(),
       profileComplete: false,
     })

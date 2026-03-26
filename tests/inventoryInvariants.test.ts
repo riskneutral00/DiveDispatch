@@ -29,7 +29,6 @@ function makeDCUser() {
     firstName: 'DC',
     lastName: 'Inv',
     businessName: 'Invariant DC',
-    role: 'DiveCenter' as const,
     isSeeded: false,
     preferredLocale: 'en',
   }

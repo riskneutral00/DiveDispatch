@@ -18,7 +18,7 @@ describe('togglePreferredInstructor', () => {
   it('rejects unauthenticated caller', async () => {
     const t = makeT()
     await expect(
-      t.mutation(api.directory.togglePreferredInstructor, { instructorSlug: 'any' }),
+      t.mutation(api.directory.togglePreferredInstructor, { activeRole: 'DiveCenter', instructorSlug: 'any' }),
     ).rejects.toThrow(/UNAUTHENTICATED/)
   })
 
@@ -30,7 +30,7 @@ describe('togglePreferredInstructor', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .mutation(api.directory.togglePreferredInstructor, { instructorSlug: 'instr-1' })
+      .mutation(api.directory.togglePreferredInstructor, { activeRole: 'DiveCenter', instructorSlug: 'instr-1' })
 
     expect(result.starred).toBe(true)
 
@@ -52,7 +52,7 @@ describe('togglePreferredInstructor', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .mutation(api.directory.togglePreferredInstructor, { instructorSlug: 'instr-1' })
+      .mutation(api.directory.togglePreferredInstructor, { activeRole: 'DiveCenter', instructorSlug: 'instr-1' })
 
     expect(result.starred).toBe(false)
 
@@ -73,7 +73,7 @@ describe('togglePreferredInstructor', () => {
     })
 
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .mutation(api.directory.togglePreferredInstructor, { instructorSlug: 'instr-2' })
+      .mutation(api.directory.togglePreferredInstructor, { activeRole: 'DiveCenter', instructorSlug: 'instr-2' })
 
     await t.run(async (ctx) => {
       const prefs = await ctx.db
@@ -93,7 +93,7 @@ describe('togglePreferredInstructor', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .mutation(api.directory.togglePreferredInstructor, { instructorSlug: 'instr-new' })
+      .mutation(api.directory.togglePreferredInstructor, { activeRole: 'DiveCenter', instructorSlug: 'instr-new' })
 
     expect(result.starred).toBe(true)
 

@@ -30,7 +30,7 @@ describe('users.setRole', () => {
     ).rejects.toThrow(/NOT_FOUND/)
   })
 
-  it('updates role and businessName', async () => {
+  it('updates businessName (role no longer written to users table)', async () => {
     const t = makeT()
     let userId: any
     await t.run(async (ctx) => {
@@ -42,7 +42,6 @@ describe('users.setRole', () => {
 
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId) as Doc<'users'> | null
-      expect(user!.role).toBe('Instructor')
       expect(user!.businessName).toBe('New Biz')
     })
   })
@@ -63,7 +62,6 @@ describe('users.setRole', () => {
         .unique()
       expect(user!.email).toBe('keep@test.com')
       expect(user!.firstName).toBe('Keep')
-      expect(user!.role).toBe('Boat')
     })
   })
 })
@@ -88,7 +86,6 @@ describe('users.upsertUser', () => {
     await t.run(async (ctx) => {
       const user = await ctx.db.get(userId)
       expect(user!.email).toBe('new@test.com')
-      expect(user!.role).toBe('Instructor')
       expect(typeof user!.slug).toBe('string')
     })
   })
@@ -112,8 +109,6 @@ describe('users.upsertUser', () => {
       const user = await ctx.db.get(userId)
       expect(user!.email).toBe('updated@test.com')
       expect(user!.name).toBe('Updated Name')
-      // Role is NOT updated on existing users
-      expect(user!.role).toBe('DiveCenter')
     })
   })
 })
@@ -140,7 +135,6 @@ describe('users.upsertUser — userRoles', () => {
         .collect()
       expect(roles).toHaveLength(1)
       expect(roles[0].role).toBe('Instructor')
-      expect(roles[0].isPrimary).toBe(true)
       expect(roles[0].profileComplete).toBe(false)
     })
   })

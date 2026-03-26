@@ -3,7 +3,8 @@ import { type QueryCtx, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { UserDoc, BookingDoc, InventoryUnitDoc } from './lib/types'
 import { requireAuth } from './lib/auth'
-import { checkHasAnyOperatorRole } from './userRoles'
+import { checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import {
   getResourcesForBooking,
   getBookingIdsForResource,
@@ -220,8 +221,8 @@ async function toCalendarBooking(
   }
 }
 
-async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc): Promise<BookingDoc[]> {
-  const role = user.role
+async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: string): Promise<BookingDoc[]> {
+  const role = activeRole
   const slug = user.slug
 
   // Operator roles: query bookings by ownerId index
@@ -292,11 +293,12 @@ export async function _listByOwner(
  */
 export async function _listByStatus(
   ctx: QueryCtx,
-  args: { status: string },
+  args: { status: string; activeRole: string },
 ): Promise<CalendarBooking[]> {
   const { user } = await requireAuth(ctx)
+  await requireActiveRole(ctx, user._id, args.activeRole)
 
-  const allBookings = await resolveCallerBookings(ctx, user)
+  const allBookings = await resolveCallerBookings(ctx, user, args.activeRole)
   const filtered = allBookings.filter((b) => b.status === args.status)
 
   const allResources: BookingResource[] = []
@@ -345,10 +347,12 @@ export async function _listByResource(
  */
 export async function _myDashboard(
   ctx: QueryCtx,
+  activeRole: string,
 ): Promise<{ bookings: CalendarBooking[]; requests: RequestItem[] }> {
   const { user } = await requireAuth(ctx)
+  await requireActiveRole(ctx, user._id, activeRole)
 
-  const allBookings = await resolveCallerBookings(ctx, user)
+  const allBookings = await resolveCallerBookings(ctx, user, activeRole)
 
   // Collect resource slugs from bookingResources for name resolution
   const allResources: BookingResource[] = []
@@ -515,7 +519,7 @@ export async function _getBookingDetail(
     .map((r: BookingResource) => r.resourceSlug)
     .filter(Boolean) as string[]
 
-  const userProfileMap = new Map<string, { name: string; email: string; role: string }>()
+  const userProfileMap = new Map<string, { name: string; email: string }>()
   await Promise.all(
     [...new Set(resourceSlugs)].map(async (slug) => {
       const u = await ctx.db
@@ -526,7 +530,6 @@ export async function _getBookingDetail(
         userProfileMap.set(slug, {
           name: u.name as string,
           email: u.email as string,
-          role: u.role as string,
         })
       }
     }),
@@ -676,6 +679,7 @@ export const listByOwner = query({
 
 export const listByStatus = query({
   args: {
+    activeRole: stakeholderType,
     status: v.union(
       v.literal('Draft'),
       v.literal('Upcoming'),
@@ -702,8 +706,8 @@ export const listByResource = query({
 })
 
 export const myDashboard = query({
-  args: {},
-  handler: _myDashboard,
+  args: { activeRole: stakeholderType },
+  handler: (ctx, args) => _myDashboard(ctx, args.activeRole),
 })
 
 export const getBookingDetail = query({

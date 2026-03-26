@@ -8,7 +8,7 @@ import { makeT } from './helpers/convex-helpers'
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
 
 async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
-  return ctx.db.insert('users', {
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: `user|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -16,10 +16,16 @@ async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
     firstName: 'John',
     lastName: 'Doe',
     businessName: 'Dive Pro',
-    role: 'Instructor',
     isSeeded: false,
     preferredLocale: 'en',
   })
+  await ctx.db.insert('userRoles', {
+    userId,
+    role: 'Instructor',
+    createdAt: Date.now(),
+    profileComplete: false,
+  })
+  return userId
 }
 
 async function seedUnit(ctx: Ctx, ownerId: string) {
@@ -91,7 +97,7 @@ describe('getOpenRequests', () => {
     })()
 
     const items = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(items).toHaveLength(1)
     expect(items[0]).toMatchObject({
@@ -117,7 +123,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })
@@ -147,7 +153,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })
@@ -184,7 +190,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
     expect(result[0].reservationIds).toHaveLength(2)
@@ -194,7 +200,7 @@ describe('getOpenRequests', () => {
     const t = makeT()
 
     await expect(
-      t.query(api.resourceQueries.getOpenRequests),
+      t.query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -203,7 +209,7 @@ describe('getOpenRequests', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'user|nobody' })
-        .query(api.resourceQueries.getOpenRequests),
+        .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
@@ -233,7 +239,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })
@@ -274,7 +280,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })
@@ -321,7 +327,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     // Two reservations on the same booking+unit should group into one OpenRequest
     expect(result).toHaveLength(1)
@@ -393,7 +399,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(2)
     const bookingIds = result.map(r => r.bookingId)
@@ -473,7 +479,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     // Newest (booking2) should appear first (descending createdAt sort)
     expect(result).toHaveLength(2)
@@ -532,7 +538,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     // Same booking but different units → two separate OpenRequests
     expect(result).toHaveLength(2)
@@ -580,7 +586,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
     // createdAt should be set (the max of both _creationTimes)
@@ -635,7 +641,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
     expect(result[0].diverCount).toBe(3)
@@ -706,7 +712,7 @@ describe('getOpenRequests', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getOpenRequests)
+      .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
     expect(result[0].bookingId).toBe(pendingBookingId)
@@ -753,7 +759,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
@@ -805,7 +811,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     const dates = result[0].sessions.map((s) => s.date)
     expect(dates).toEqual([testDate(5), testDate(6)])
@@ -856,7 +862,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result[0].sessions).toHaveLength(1)
     expect(result[0].sessions[0].date).toBe(testDate(6))
@@ -927,7 +933,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     // booking2 (May 1) should sort before booking1 (June 1)
     expect(result[0].startDate).toBe(testDate(3))
@@ -942,7 +948,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })
@@ -951,7 +957,7 @@ describe('getConfirmedSchedule', () => {
     const t = makeT()
 
     await expect(
-      t.query(api.resourceQueries.getConfirmedSchedule),
+      t.query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
   })
 
@@ -960,7 +966,7 @@ describe('getConfirmedSchedule', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'user|nobody' })
-        .query(api.resourceQueries.getConfirmedSchedule),
+        .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' }),
     ).rejects.toMatchObject({ data: expect.stringContaining('NOT_FOUND') })
   })
 
@@ -990,7 +996,7 @@ describe('getConfirmedSchedule', () => {
     })
 
     const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
-      .query(api.resourceQueries.getConfirmedSchedule)
+      .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
   })

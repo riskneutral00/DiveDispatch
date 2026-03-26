@@ -2,7 +2,8 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { requireAuth, getAuthUser, HOLD_TTL_MS } from './lib/auth'
-import { checkHasRole, checkHasAnyOperatorRole } from './userRoles'
+import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
+import { OPERATOR_ROLE_SET } from './lib/auth'
 import { checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
 import {
@@ -13,6 +14,7 @@ import {
 } from '../src/lib/booking/coverage-validation'
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
+import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
 type OperatorType =
   | 'DiveCenter'
@@ -32,12 +34,14 @@ type OperatorType =
  */
 export const createDraftShell = mutation({
   args: {
+    activeRole: stakeholderType,
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
     const { user } = await requireAuth(ctx)
-    if (!await checkHasAnyOperatorRole(ctx, user._id)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    await requireActiveRole(ctx, user._id, args.activeRole)
+    if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     // ── Profile completeness gate — ALL roles must be 100% to create bookings ──
     const allRolesStatus = await checkAllRolesCompleteness(ctx, user._id)
@@ -126,7 +130,7 @@ export const createDraftShell = mutation({
 
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
-      ownerType: user.role as OperatorType,
+      ownerType: args.activeRole as OperatorType,
       status: 'Draft' as const,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,
@@ -172,13 +176,18 @@ export const createReferralDraftShell = mutation({
       .withIndex('by_slug', (q) => q.eq('slug', args.referralDcSlug))
       .unique()
     if (!dcUser) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (!await checkHasAnyOperatorRole(ctx, dcUser._id)) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+
+    // Determine the DC's operator role from their assigned roles
+    const dcRoles = await ctx.db
+      .query('userRoles')
+      .withIndex('by_userId', (q) => q.eq('userId', dcUser._id))
+      .collect()
+    const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
+    if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,
-      ownerType: dcUser.role as OperatorType,
+      ownerType: dcOperatorRole.role as OperatorType,
       status: 'Draft' as const,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,

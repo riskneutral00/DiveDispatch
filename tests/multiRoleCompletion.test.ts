@@ -63,7 +63,6 @@ describe('getLowestProfileCompletion', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -85,7 +84,6 @@ describe('getLowestProfileCompletion', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -139,7 +137,6 @@ describe('getAllRolesCompleteness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -166,7 +163,6 @@ describe('getAllRolesCompleteness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -194,7 +190,7 @@ describe('getAllRolesCompleteness', () => {
     expect(result.roles.every((r: { percentage: number }) => r.percentage === 100)).toBe(true)
   })
 
-  it('falls back to primary role when no userRoles rows exist', async () => {
+  it('returns empty roles when no userRoles rows exist', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedCompleteDC(ctx, 'dc-no-roles')
@@ -213,7 +209,7 @@ describe('getAllRolesCompleteness', () => {
     const result = await t.withIdentity({ tokenIdentifier: 'clerk|dc-no-roles' })
       .query(api.users.getAllRolesCompleteness, {})
 
-    expect(result.roles).toHaveLength(1)
-    expect(result.roles[0].role).toBe('DiveCenter')
+    expect(result.allComplete).toBe(true)
+    expect(result.roles).toHaveLength(0)
   })
 })

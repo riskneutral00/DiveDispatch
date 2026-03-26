@@ -13,8 +13,8 @@ import type { MutationCtx } from '../_generated/server'
 import { internalMutation } from '../_generated/server'
 import { ErrorCode } from './errorCodes'
 
-/** Needs only db access from MutationCtx. */
-type RateLimitCtx = Pick<MutationCtx, 'db'>
+/** Needs db write access — accepts MutationCtx or any superset with a compatible db. */
+type RateLimitCtx = { db: MutationCtx['db'] }
 
 // ── Limit Definitions ─────────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ export const purgeStaleRateLimits = internalMutation({
     const stale = await ctx.db
       .query('rateLimits')
       .filter((q) => q.lt(q.field('lastRefill'), cutoff))
-      .collect()
+      .take(1000)
 
     for (const entry of stale) {
       await ctx.db.delete(entry._id)

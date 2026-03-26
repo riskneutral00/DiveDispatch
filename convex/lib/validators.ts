@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { RESOURCE_OWNER_TYPES } from '../shared/resourceOwnerTypes'
+import { RESOURCE_OWNER_TYPES, type ResourceOwnerType } from '../shared/resourceOwnerTypes'
 
 /** Canonical stakeholder type validator — use this everywhere instead of redefining. */
 export const stakeholderTypeValidator = v.union(
@@ -27,7 +27,7 @@ export type StakeholderRole = typeof stakeholderTypeValidator['type']
  */
 const RESOURCE_TYPES: ReadonlySet<string> = new Set(RESOURCE_OWNER_TYPES)
 
-export function effectiveResourceType(roleType: string): string | null {
+export function effectiveResourceType(roleType: string): ResourceOwnerType | null {
   if (roleType === 'DiveMaster') return 'Instructor'
-  return RESOURCE_TYPES.has(roleType) ? roleType : null
+  return RESOURCE_TYPES.has(roleType) ? (roleType as ResourceOwnerType) : null
 }

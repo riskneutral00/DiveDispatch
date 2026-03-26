@@ -179,7 +179,6 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     firstName: s.user.firstName,
     lastName: s.user.lastName,
     businessName: s.user.businessName,
-    role: s.user.role,
     isSeeded: true,
     preferredLocale: s.user.preferredLocale,
     onboardingComplete: true,
@@ -240,7 +239,6 @@ export const seedUserRoles = internalMutation({
         await ctx.db.insert('userRoles', {
           userId: user._id,
           role: r.role,
-          isPrimary: r.isPrimary,
           createdAt: Date.now(),
           profileComplete: true,
         })
@@ -284,7 +282,8 @@ export const seedInstructors = internalMutation({
 
     for (const s of ALL_INSTRUCTORS) {
       const userId = await insertUser(ctx, s)
-      if (s.user.role === 'DiveMaster' && s.instructor) {
+      const primaryRole = s.roles?.[0]?.role
+      if (primaryRole === 'DiveMaster' && s.instructor) {
         // DiveMasters use diveMasters table — credential has no courses
         const { courses: _ignored, ...credNoCourses } = s.instructor.credential[0] ?? {}
         await ctx.db.insert('diveMasters', {
@@ -473,8 +472,8 @@ export const seedStakeholderPreferences = internalMutation({
     }
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
-      ...ALL_STAKEHOLDERS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
-      ...ALL_INSTRUCTORS.map((s) => ({ slug: s.user.slug, role: s.user.role })),
+      ...ALL_STAKEHOLDERS.map((s) => ({ slug: s.user.slug, role: s.roles?.[0]?.role ?? 'DiveCenter' })),
+      ...ALL_INSTRUCTORS.map((s) => ({ slug: s.user.slug, role: s.roles?.[0]?.role ?? 'Instructor' })),
     ]
 
     for (const { slug, role } of allStakeholders) {
@@ -505,11 +504,12 @@ export const seedBookingTemplates = internalMutation({
   args: {},
   handler: async (ctx) => {
     for (const s of ALL_STAKEHOLDERS) {
-      if (!OPERATOR_ROLES.has(s.user.role)) continue
+      const primaryRole = s.roles?.[0]?.role
+      if (!primaryRole || !OPERATOR_ROLES.has(primaryRole)) continue
 
       await ctx.db.insert('bookingTemplates', {
         ownerId: s.user.slug,
-        ownerType: s.user.role as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
+        ownerType: primaryRole as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
         name: 'DSD',
         activityType: ['DSD'],
         createdAt: Date.now(),

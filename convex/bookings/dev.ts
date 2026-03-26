@@ -19,7 +19,7 @@ export const forceCustomerFormComplete = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
     if (process.env.ENVIRONMENT !== 'development') {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Dev-only mutation' })
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Dev-only mutation' })
     }
 
     const { user } = await requireAuth(ctx)

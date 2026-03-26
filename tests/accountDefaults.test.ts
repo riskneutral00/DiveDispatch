@@ -153,7 +153,7 @@ describe('profileCompleteness with account defaults', () => {
       })
 
       const user = await ctx.db.get(userId)
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       // contactEmail and contactPhone should be considered filled via defaults
       expect(result.incomplete).not.toContain('Contact email')
@@ -178,7 +178,7 @@ describe('profileCompleteness with account defaults', () => {
       await seedInstructorProfile(ctx, userId)
 
       const user = await ctx.db.get(userId)
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.incomplete).not.toContain('Contact email')
       expect(result.incomplete).not.toContain('Contact phone')
@@ -201,7 +201,7 @@ describe('profileCompleteness with account defaults', () => {
       })
 
       const user = await ctx.db.get(userId)
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.incomplete).toContain('Contact email')
       expect(result.incomplete).toContain('Contact phone')

@@ -42,7 +42,7 @@ describe('checkProfileCompleteness', () => {
       })
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
 
       expect(result.percentage).toBe(100)
       expect(result.incomplete).toHaveLength(0)
@@ -56,7 +56,7 @@ describe('checkProfileCompleteness', () => {
       // No template, no preferences → missing "Quick Book pill" + "Preferred instructors"
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
 
       expect(result.percentage).toBe(75)
       expect(result.incomplete).toContain('Quick Book pill')
@@ -74,7 +74,7 @@ describe('checkProfileCompleteness', () => {
       await seedInstructorProfile(ctx, userId)
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.instructor)).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.percentage).toBe(100)
       expect(result.incomplete).toHaveLength(0)
@@ -93,7 +93,7 @@ describe('checkProfileCompleteness', () => {
       })
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.instructor)).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
 
       expect(result.percentage).toBeLessThan(100)
       expect(result.incomplete).toContain('Credentials')
@@ -109,7 +109,7 @@ describe('checkProfileCompleteness', () => {
       })
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'boat-owner')).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Boat' })
 
       expect(result.percentage).toBe(0)
       expect(result.incomplete.length).toBeGreaterThan(0)
@@ -140,7 +140,7 @@ describe('checkProfileCompleteness', () => {
       })
 
       const user = await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', 'agent-loc')).unique()
-      const result = await checkProfileCompleteness(ctx, user!)
+      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Agent' })
 
       // Agent uses locations[0].placeName and locations[0].country instead of flat placeName/country
       expect(result.incomplete).not.toContain('Location')
@@ -212,7 +212,6 @@ describe('getLowestProfileCompletion', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -245,7 +244,6 @@ describe('getLowestProfileCompletion', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -258,18 +256,17 @@ describe('getLowestProfileCompletion', () => {
     expect(result.percentage).toBe(100)
   })
 
-  it('user with no userRoles falls back to primary role check', async () => {
+  it('user with no userRoles returns 0%', async () => {
     await t.run(async (ctx) => {
       // seedUser creates a userRoles entry by default. Use skipUserRoles to test fallback.
       await seedUser(ctx, { skipUserRoles: true })
-      await seedDiveCenterProfile(ctx, await ctx.db.query('users').withIndex('by_slug', (q: any) => q.eq('slug', TEST_SLUGS.diveCenter)).unique().then((u: any) => u!._id))
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
       .query(api.users.getLowestProfileCompletion, {})
 
-    // Falls back to user.role (DiveCenter), profile exists but no template/prefs → 75%
-    expect(result.percentage).toBe(75)
+    // No userRoles → 0%
+    expect(result.percentage).toBe(0)
   })
 })
 
@@ -323,7 +320,6 @@ describe('checkAllRolesCompleteness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -359,7 +355,6 @@ describe('checkAllRolesCompleteness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -422,7 +417,6 @@ describe('getAllRolesCompleteness query', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })

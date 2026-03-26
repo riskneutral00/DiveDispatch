@@ -6,7 +6,7 @@ import { makeT } from './helpers/convex-helpers'
 
 // ─── Seed helpers ─────────────────────────────────────────────────────────────
 
-async function seedUser(ctx: SeedCtx, slug: string, role: Parameters<typeof _seedUser>[1]['role'] = 'Agent') {
+async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<NonNullable<Parameters<typeof _seedUser>[1]>['role']> = 'Agent') {
   return _seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role })
 }
 

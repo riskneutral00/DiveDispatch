@@ -5,6 +5,7 @@ import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
+import { deriveDefaultRole } from './lib/rolePrecedence'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function generateUniqueSlug(db: any): Promise<string> {
@@ -70,7 +71,6 @@ export const createUser = mutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        role: args.role,
         businessName,
         ...(args.firstName !== undefined && { firstName: args.firstName }),
         ...(args.lastName !== undefined && { lastName: args.lastName }),
@@ -96,19 +96,18 @@ export const createUser = mutation({
       ...(args.preferredChannel !== undefined && { preferredChannel: args.preferredChannel }),
       businessName,
       customerLanguages: args.customerLanguages,
-      role: args.role,
       isSeeded: false,
       preferredLocale: args.preferredLocale ?? 'en',
     })
 
     // Create userRoles entries when roles array is provided
     if (args.roles && args.roles.length > 0) {
+      const uniqueRoles = [...new Set(args.roles)]
       const now = Date.now()
-      for (let i = 0; i < args.roles.length; i++) {
+      for (let i = 0; i < uniqueRoles.length; i++) {
         await ctx.db.insert('userRoles', {
           userId,
-          role: args.roles[i],
-          isPrimary: i === 0,
+          role: uniqueRoles[i],
           createdAt: now,
           profileComplete: false,
         })
@@ -166,7 +165,6 @@ export const upsertUser = mutation({
       firstName: args.firstName,
       lastName: args.lastName,
       businessName: '',
-      role: args.role,
       isSeeded: false,
       preferredLocale: 'en',
     })
@@ -175,7 +173,6 @@ export const upsertUser = mutation({
     await ctx.db.insert('userRoles', {
       userId,
       role: args.role,
-      isPrimary: true,
       createdAt: Date.now(),
       profileComplete: false,
     })
@@ -201,7 +198,8 @@ export const updateBusinessInfo = mutation({
   },
 })
 
-// Sets the role during account setup.
+// Sets the business name during account setup.
+// (Previously also wrote users.role, now removed — role lives in userRoles.)
 export const setRole = mutation({
   args: {
     role: stakeholderType,
@@ -221,7 +219,6 @@ export const setRole = mutation({
     if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     await ctx.db.patch(user._id, {
-      role: args.role,
       businessName: args.businessName,
     })
   },
@@ -264,7 +261,15 @@ export const getOnboardingStatus = query({
   handler: async (ctx) => {
     const user = await getAuthUser(ctx)
     if (!user) return { percentage: 0, incomplete: ['Profile not created'] }
-    return checkProfileCompleteness(ctx, user)
+
+    const roles = await ctx.db
+      .query('userRoles')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .collect()
+    const defaultRole = roles.length > 0
+      ? deriveDefaultRole(roles.map((r) => r.role))
+      : 'DiveCenter'
+    return checkProfileCompleteness(ctx, { ...user, role: defaultRole })
   },
 })
 
@@ -283,8 +288,7 @@ export const getLowestProfileCompletion = query({
       .collect()
 
     if (roles.length === 0) {
-      const result = await checkProfileCompleteness(ctx, user)
-      return { percentage: result.percentage }
+      return { percentage: 0 }
     }
 
     let min = 100
@@ -354,7 +358,7 @@ export const completeOnboarding = mutation({
 
     // Require name is set (basic guard — profile form should have saved it already)
     if (!user.name || user.name.trim() === '') {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'Profile must be completed before finishing onboarding.' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Profile must be completed before finishing onboarding.' })
     }
 
     await ctx.db.patch(user._id, { onboardingComplete: true })
@@ -362,8 +366,8 @@ export const completeOnboarding = mutation({
 })
 
 // Internal: called by Clerk webhook to create or update a user record.
-// Role defaults to 'DiveCenter' for new users; overwritten when user selects
-// their role in the onboarding UI via setRole/createUser.
+// Role is set via userRoles when the user selects their role in the
+// onboarding UI via createUser.
 export const upsertFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
@@ -399,7 +403,6 @@ export const upsertFromWebhook = internalMutation({
       firstName: args.firstName,
       lastName: args.lastName,
       businessName: '',
-      role: 'DiveCenter',
       isSeeded: false,
       preferredLocale: 'en',
     })
@@ -408,7 +411,6 @@ export const upsertFromWebhook = internalMutation({
     await ctx.db.insert('userRoles', {
       userId,
       role: 'DiveCenter',
-      isPrimary: true,
       createdAt: Date.now(),
       profileComplete: false,
     })

@@ -474,19 +474,19 @@ const NOSHOW_REVERT_WINDOW_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 export async function _markNoShowHandler(
   ctx: MutationCtx,
-  args: { reservationId: string },
+  args: { reservationId: Id<'reservations'> },
 ): Promise<void> {
   const { user } = await requireAuth(ctx)
 
-  const reservation = await ctx.db.get(args.reservationId as Id<'reservations'>)
+  const reservation = await ctx.db.get(args.reservationId)
   if (!reservation) {
-    throw new ConvexError({ code: ErrorCode.NOT_FOUND, message: 'Reservation not found.' })
+    throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Reservation not found.' })
   }
 
   // Ownership check: only booking owner can mark NoShow
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only the booking owner can mark NoShow.' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only the booking owner can mark NoShow.' })
   }
 
   // State guard
@@ -494,7 +494,7 @@ export async function _markNoShowHandler(
   if (!canReservationTransition(status, 'mark_noshow')) {
     throw new ConvexError({
       code: ErrorCode.INVALID_TRANSITION,
-      message: `Cannot mark NoShow from ${reservation.status}.`,
+      reason: `Cannot mark NoShow from ${reservation.status}.`,
     })
   }
 
@@ -503,12 +503,12 @@ export async function _markNoShowHandler(
   if (!session || !hasSessionStarted(session)) {
     throw new ConvexError({
       code: ErrorCode.TOO_EARLY,
-      message: 'Cannot mark NoShow before session start time.',
+      reason: 'Cannot mark NoShow before session start time.',
     })
   }
 
   // Mark NoShow — do NOT restore snapshot (capacity stays consumed)
-  await ctx.db.patch(args.reservationId as Id<'reservations'>, {
+  await ctx.db.patch(args.reservationId, {
     status: 'NoShow',
     noShowAt: Date.now(),
   })
@@ -534,19 +534,19 @@ export async function _markNoShowHandler(
 
 export async function _revertNoShowHandler(
   ctx: MutationCtx,
-  args: { reservationId: string },
+  args: { reservationId: Id<'reservations'> },
 ): Promise<void> {
   const { user } = await requireAuth(ctx)
 
-  const reservation = await ctx.db.get(args.reservationId as Id<'reservations'>)
+  const reservation = await ctx.db.get(args.reservationId)
   if (!reservation) {
-    throw new ConvexError({ code: ErrorCode.NOT_FOUND, message: 'Reservation not found.' })
+    throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Reservation not found.' })
   }
 
   // Ownership check
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, message: 'Only the booking owner can revert NoShow.' })
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only the booking owner can revert NoShow.' })
   }
 
   // State guard
@@ -554,7 +554,7 @@ export async function _revertNoShowHandler(
   if (!canReservationTransition(status, 'revert_noshow')) {
     throw new ConvexError({
       code: ErrorCode.INVALID_TRANSITION,
-      message: `Cannot revert from ${reservation.status}.`,
+      reason: `Cannot revert from ${reservation.status}.`,
     })
   }
 
@@ -562,12 +562,12 @@ export async function _revertNoShowHandler(
   if (!reservation.noShowAt || Date.now() - reservation.noShowAt > NOSHOW_REVERT_WINDOW_MS) {
     throw new ConvexError({
       code: ErrorCode.REVERT_WINDOW_EXPIRED,
-      message: 'NoShow can only be reverted within 24 hours.',
+      reason: 'NoShow can only be reverted within 24 hours.',
     })
   }
 
   // Revert to Confirmed
-  await ctx.db.patch(args.reservationId as Id<'reservations'>, {
+  await ctx.db.patch(args.reservationId, {
     status: 'Confirmed',
     noShowAt: undefined,
   })
@@ -593,14 +593,14 @@ export async function _revertNoShowHandler(
 }
 
 export const markNoShow = mutation({
-  args: { reservationId: v.string() },
+  args: { reservationId: v.id('reservations') },
   handler: async (ctx, args) => {
     await _markNoShowHandler(ctx, args)
   },
 })
 
 export const revertNoShow = mutation({
-  args: { reservationId: v.string() },
+  args: { reservationId: v.id('reservations') },
   handler: async (ctx, args) => {
     await _revertNoShowHandler(ctx, args)
   },

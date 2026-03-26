@@ -63,7 +63,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx, 'em-001', bookingId, 3)
+      await seedBags(ctx as any, 'em-001', bookingId, 3)
       return { bookingId }
     })
 
@@ -72,8 +72,8 @@ describe('assignBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_equipmentManagerId', (q: { eq: (field: string, value: string) => unknown }) =>
-          q.eq('equipmentManagerId', 'em-001'),
+        .withIndex('by_equipmentManagerId', ((q: any) =>
+          q.eq('equipmentManagerId', 'em-001')) as any,
         )
         .collect()
 
@@ -111,7 +111,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx, 'em-002', bookingId, 1)
+      await seedBags(ctx as any, 'em-002', bookingId, 1)
       return { bookingId }
     })
 
@@ -145,7 +145,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx, 'em-003', bookingId, 3)
+      await seedBags(ctx as any, 'em-003', bookingId, 3)
       return { bookingId }
     })
 
@@ -154,8 +154,8 @@ describe('assignBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_equipmentManagerId', (q: { eq: (field: string, value: string) => unknown }) =>
-          q.eq('equipmentManagerId', 'em-003'),
+        .withIndex('by_equipmentManagerId', ((q: any) =>
+          q.eq('equipmentManagerId', 'em-003')) as any,
         )
         .collect()
 
@@ -191,7 +191,7 @@ describe('releaseBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx, 'em-004', bookingId, 2)
+      await seedBags(ctx as any, 'em-004', bookingId, 2)
       // Assign the bags first
       await assignBagsForBooking(ctx, bookingId, 'em-004', 2)
       return { bookingId }
@@ -202,8 +202,8 @@ describe('releaseBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_bookingId', (q: { eq: (field: string, value: unknown) => unknown }) =>
-          q.eq('bookingId', bookingId),
+        .withIndex('by_bookingId', ((q: any) =>
+          q.eq('bookingId', bookingId)) as any,
         )
         .collect()
 
@@ -260,8 +260,8 @@ describe('releaseBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_bookingId', (q: { eq: (field: string, value: unknown) => unknown }) =>
-          q.eq('bookingId', bookingId),
+        .withIndex('by_bookingId', ((q: any) =>
+          q.eq('bookingId', bookingId)) as any,
         )
         .collect()
 

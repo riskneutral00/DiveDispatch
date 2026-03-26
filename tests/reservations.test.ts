@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
-import type { Doc } from '../convex/_generated/dataModel'
+import type { Doc, Id } from '../convex/_generated/dataModel'
 import { getDateRange } from '../convex/reservationsMutations'
 import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
@@ -679,7 +679,7 @@ describe('acceptBookingReservations', () => {
     // All 3 reservations confirmed
     await t.run(async (ctx) => {
       for (const resId of resIds) {
-        const res = await ctx.db.get(resId)
+        const res = await ctx.db.get(resId as Id<'reservations'>) as any
         expect(res?.status).toBe('Confirmed')
         expect(res?.confirmedAt).toEqual(expect.any(Number))
       }
@@ -945,7 +945,7 @@ describe('decline cascade side effects', () => {
 
     await t.run(async (ctx) => {
       for (const snapshotId of snapshotIds) {
-        const snap = await ctx.db.get(snapshotId)
+        const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>) as any
         expect(snap?.availableUnits).toBe(1)
         expect(snap?.reservedUnits).toBe(0)
       }

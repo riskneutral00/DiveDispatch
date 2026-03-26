@@ -130,7 +130,7 @@ describe('booking gate: profile completeness', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-gate-fail' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {})
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
     ).rejects.toThrow(/PROFILE_INCOMPLETE/)
   })
 
@@ -222,7 +222,7 @@ describe('booking gate: profile completeness', () => {
     // This should succeed — passes both profile gate (100%) and coverage gate
     vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|dc-gate-pass' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
+      .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
@@ -250,7 +250,7 @@ describe('booking gate: role enforcement', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|inst-gate' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Instructor' }),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 
@@ -270,7 +270,7 @@ describe('booking gate: role enforcement', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|boat-gate' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Boat' }),
     ).rejects.toThrow(/FORBIDDEN/)
   })
 })
@@ -337,7 +337,7 @@ describe('booking gate: non-DiveCenter operator', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|agent-incomplete' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Agent' }),
     ).rejects.toThrow(/PROFILE_INCOMPLETE/)
   })
 
@@ -409,7 +409,7 @@ describe('booking gate: non-DiveCenter operator', () => {
 
     vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|agent-complete' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
+      .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Agent' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
@@ -429,7 +429,6 @@ describe('booking gate: multi-role profile completeness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Boat',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -456,7 +455,7 @@ describe('booking gate: multi-role profile completeness', () => {
 
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-multi-fail' })
-        .mutation(api.bookingDraftMutations.createDraftShell, {}),
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' }),
     ).rejects.toThrow(/PROFILE_INCOMPLETE/)
   })
 
@@ -468,7 +467,6 @@ describe('booking gate: multi-role profile completeness', () => {
       await ctx.db.insert('userRoles', {
         userId,
         role: 'Instructor',
-        isPrimary: false,
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -496,7 +494,7 @@ describe('booking gate: multi-role profile completeness', () => {
 
     vi.useFakeTimers({ now: Date.now() })
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|dc-multi-pass' })
-      .mutation(api.bookingDraftMutations.createDraftShell, {})
+      .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 

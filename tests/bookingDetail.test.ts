@@ -23,7 +23,7 @@ async function seedReservationWithAutoSession(
   ctx: SeedCtx,
   bookingId: Id<'bookings'>,
   inventoryUnitId: Id<'inventoryUnits'>,
-  status: 'PendingAcceptance' | 'Confirmed' | 'Declined' | 'Released',
+  status: 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow',
   bookingSessionId?: Id<'bookingSessions'>,
 ) {
   const sessionId =

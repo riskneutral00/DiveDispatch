@@ -220,11 +220,13 @@ export const listByRole = query({
       preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
     }
 
-    const users = await ctx.db
-      .query('users')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_role', (q: any) => q.eq('role', args.role))
+    // Query userRoles by role, then point-read the user docs
+    const roleEntries = await ctx.db
+      .query('userRoles')
+      .withIndex('by_role', (q) => q.eq('role', args.role as any))
       .take(DIRECTORY_LIST_LIMIT)
+    const userDocs = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
+    const users = userDocs.filter(Boolean) as NonNullable<(typeof userDocs)[number]>[]
 
     const results = await Promise.all(
       users
@@ -286,6 +288,7 @@ export const listByRole = query({
 // in their stakeholderPreferences.preferredInstructorSlugs.
 export const togglePreferredInstructor = mutation({
   args: {
+    activeRole: stakeholderTypeValidator,
     instructorSlug: v.string(),
   },
   handler: async (ctx, args) => {
@@ -300,7 +303,7 @@ export const togglePreferredInstructor = mutation({
       // Create a minimal prefs row so the preferred slug can be stored.
       await ctx.db.insert('stakeholderPreferences', {
         stakeholderId: user.slug,
-        stakeholderType: user.role,
+        stakeholderType: args.activeRole,
         acceptanceMode: 'Auto',
         maxHoursPerDay: 8,
         postJobBlockDuration: 0,
