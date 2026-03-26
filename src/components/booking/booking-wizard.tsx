@@ -28,7 +28,7 @@ import {
   type WizardStep,
   type BookingPreFill,
 } from "@/lib/booking/wizard-state";
-import { useBookingDraftAutoSave } from "@/hooks/useBookingDraftAutoSave";
+import { useBookingDraftAutoSave } from "@/lib/hooks/use-booking-draft-auto-save";
 import { Spinner } from "@/components/common/spinner";
 
 // ── Component ─────────────────────────────────────────────────────────────────

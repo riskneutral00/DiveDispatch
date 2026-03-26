@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
-import type { Id } from '../../convex/_generated/dataModel'
-import type { BookingDetail } from '../../convex/bookings'
+import { api } from '../../../convex/_generated/api'
+import type { Id } from '../../../convex/_generated/dataModel'
+import type { BookingDetail } from '../../../convex/bookings'
 
 // Mirrors convex/bookings/_shared.ts:isBookingExpired — pure client-side check.
 function isExpiredBooking(
