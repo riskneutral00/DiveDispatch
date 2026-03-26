@@ -24,12 +24,9 @@ async function clickNext(page: import('@playwright/test').Page) {
   // Step transition: wait for the itinerary step's course select OR the review step's submit
   // button to appear — these are reliable signals that the next step has rendered.
   await expect(
-    page.locator('[data-testid="course-activity-select"], [data-testid="review-summary"]')
-      .first(),
-  ).toBeVisible({ timeout: 10_000 }).catch(() => {
-    // On the last step (review), neither selector may match the exact pattern —
-    // callers always follow with their own assertions, so this is best-effort.
-  })
+    page.locator('[data-testid="course-activity-select"]').first()
+      .or(page.getByRole('button', { name: 'Submit Booking' })),
+  ).toBeVisible({ timeout: 10_000 })
 }
 
 /** Fill a single customer in the customer step. */
@@ -90,9 +87,7 @@ async function discardDraft(page: import('@playwright/test').Page) {
   if (target) {
     await target.click()
     // Wait for the overlay to close
-    await expect(page.getByLabel('Full name *')).not.toBeVisible({ timeout: 5_000 }).catch(() => {
-      // Overlay may already be closed
-    })
+    await expect(page.getByLabel('Full name *')).not.toBeVisible({ timeout: 5_000 })
   }
 }
 

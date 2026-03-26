@@ -77,12 +77,9 @@ async function clickNext(page: import('@playwright/test').Page) {
   // Step transition: wait for the itinerary step's course select OR the review step's submit
   // button to appear — these are reliable signals that the next step has rendered.
   await expect(
-    page.locator('[data-testid="course-activity-select"], [data-testid="review-summary"]')
-      .first(),
-  ).toBeVisible({ timeout: 10_000 }).catch(() => {
-    // On the last step (review), neither selector may match the exact pattern —
-    // callers always follow with their own assertions, so this is best-effort.
-  })
+    page.locator('[data-testid="course-activity-select"]').first()
+      .or(page.getByRole('button', { name: 'Submit Booking' })),
+  ).toBeVisible({ timeout: 10_000 })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
