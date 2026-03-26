@@ -4,6 +4,7 @@ import { notify } from './notifications'
 import { tryAutoAdvance } from './bookings/_shared'
 import { resolvePortalToken } from './lib/portal'
 import { sanitizeFields, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
+import { checkRateLimit } from './lib/rateLimiter'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
 
@@ -38,6 +39,7 @@ export const saveMedicalAnswers = mutation({
     ctx,
     args,
   ): Promise<{ medicalHardBlock: boolean }> => {
+    await checkRateLimit(ctx, 'saveMedicalAnswers', args.token)
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
     // Any "Yes" triggers physician referral
@@ -102,6 +104,7 @@ export const savePortalWaiver = mutation({
     ctx,
     args,
   ): Promise<void> => {
+    await checkRateLimit(ctx, 'savePortalWaiver', args.token)
     const { link, profile } = await resolvePortalToken(ctx, args.token)
 
     const patch: Record<string, unknown> = {
@@ -143,6 +146,7 @@ export const savePortalEquipment = mutation({
     ctx,
     args,
   ): Promise<void> => {
+    await checkRateLimit(ctx, 'savePortalEquipment', args.token)
     const { profile } = await resolvePortalToken(ctx, args.token)
     const sanitizedChecklist = sanitizeFields(args.rentalChecklist, PORTAL_EQUIPMENT_CHECKLIST_FIELDS)
 
@@ -170,6 +174,7 @@ export const saveSafetyInfo = mutation({
     ctx,
     args,
   ): Promise<void> => {
+    await checkRateLimit(ctx, 'saveSafetyInfo', args.token)
     const { profile } = await resolvePortalToken(ctx, args.token)
     const sanitized = sanitizeFields(args, PORTAL_SAFETY_FIELDS)
 

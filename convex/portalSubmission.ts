@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { mutation, query } from './_generated/server'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken } from './lib/portal'
+import { checkRateLimit } from './lib/rateLimiter'
 import { validateOrThrow } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
 
@@ -87,6 +88,8 @@ export const submitPortal = mutation({
     ctx,
     args,
   ): Promise<{ medicalHardBlock: boolean }> => {
+    await checkRateLimit(ctx, 'submitPortal', args.token)
+
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
     // Validate required forms are complete

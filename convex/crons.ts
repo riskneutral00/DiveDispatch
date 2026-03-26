@@ -4,7 +4,9 @@ import { internal } from './_generated/api'
 const crons = cronJobs()
 
 // Auto-complete Upcoming bookings after their last session ends — runs hourly
-// Wrapped version logs every run to cronRunLog and alerts on failure
-crons.interval('complete-bookings', { hours: 1 }, internal.bookings.status.completeBookingsWithMonitoring)
+crons.interval('complete-bookings', { hours: 1 }, internal.bookings.status.completeBookings)
+
+// Purge stale rate limit entries to prevent unbounded table growth from portal token keys
+crons.interval('purge-rate-limits', { hours: 24 }, internal.lib.rateLimiter.purgeStaleRateLimits)
 
 export default crons

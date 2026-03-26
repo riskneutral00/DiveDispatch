@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS, SHORT_TEXT_MAX } from './lib/sanitize'
+import { checkRateLimit } from './lib/rateLimiter'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -217,6 +218,7 @@ export const saveWaiver = mutation({
     ctx,
     args,
   ): Promise<void> => {
+    await checkRateLimit(ctx, 'saveWaiver', args.token)
     const { profile } = await resolvePortalToken(ctx, args.token)
 
     const sanitized = sanitizeFields(args, PORTAL_WAIVER_FIELDS)
@@ -265,6 +267,7 @@ export const saveEquipmentData = mutation({
     ),
   },
   handler: async (ctx, args): Promise<void> => {
+    await checkRateLimit(ctx, 'saveEquipmentData', args.token)
     const { profile } = await resolvePortalToken(ctx, args.token)
     const sanitized = sanitizeFields(args, PORTAL_EQUIPMENT_FIELDS)
 

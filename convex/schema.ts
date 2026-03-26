@@ -783,6 +783,14 @@ export default defineSchema({
     runAt: v.number(),
   }).index('by_jobName_runAt', ['jobName', 'runAt']),
 
+  // ── L7: Rate Limiting ──────────────────────────────────────────────────────
+
+  rateLimits: defineTable({
+    key: v.string(),
+    tokens: v.number(),
+    lastRefill: v.number(),
+  }).index('by_key', ['key']),
+
   // ── L7: Audit Trail ──────────────────────────────────────────────────────────
 
   bookingAuditLog: defineTable({
