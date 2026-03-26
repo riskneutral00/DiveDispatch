@@ -51,7 +51,11 @@ export const saveMedicalAnswers = mutation({
       physicianClearanceRequired: hasYes,
     })
 
-    const bookingPatch: Record<string, unknown> = {
+    const bookingPatch: {
+      medicalHardBlock: boolean
+      portalMedical: boolean
+      expiresAt?: number
+    } = {
       medicalHardBlock: hasYes,
       portalMedical: true,
     }
@@ -73,7 +77,7 @@ export const saveMedicalAnswers = mutation({
           earliest.timezone ?? 'Asia/Bangkok',
         )
         // Only extend, never shorten
-        if (newExpiresAt > ((booking.expiresAt as number) ?? 0)) {
+        if (newExpiresAt > (booking.expiresAt ?? 0)) {
           bookingPatch.expiresAt = newExpiresAt
         }
       }

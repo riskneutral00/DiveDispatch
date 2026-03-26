@@ -151,7 +151,7 @@ describe('DD-170: saveMedicalAnswers TTL extension on hard block', () => {
 
     // 36h from creation would be ~36h from now. But with session in 2 days,
     // 8pm the night before (day+1) is the ceiling. Verify expiresAt <= 36h from creation.
-    const creationBased36h = (booking!._creationTime as number) + MEDICAL_TTL_MS
+    const creationBased36h = booking!._creationTime + MEDICAL_TTL_MS
     expect(booking!.expiresAt as number).toBeLessThanOrEqual(creationBased36h)
   })
 
