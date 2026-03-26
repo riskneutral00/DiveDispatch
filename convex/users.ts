@@ -7,6 +7,7 @@ import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
+import { checkRateLimit } from './lib/rateLimiter'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 
 /** Strip sensitive fields from a user document for public consumption. */
@@ -57,6 +58,8 @@ export const createUser = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+
+    await checkRateLimit(ctx, 'createUser', identity.tokenIdentifier)
 
     const existing = await ctx.db
       .query('users')

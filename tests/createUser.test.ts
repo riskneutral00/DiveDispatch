@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { ConvexError } from 'convex/values'
 import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 
@@ -97,6 +98,70 @@ describe('createUser mutation', () => {
     expect(user?.phone).toBe('+1234567890')
     expect(user?.preferredChannel).toBe('LINE')
     expect(user?.nickname).toBe('Updated Nick')
+  })
+})
+
+describe('createUser rate limiting', () => {
+  it('rejects the 4th call within a minute with RATE_LIMITED', async () => {
+    const t = makeT()
+    const identity = { tokenIdentifier: 'clerk|rate-limit-user' }
+
+    // createUser allows 3 per minute — exhaust all 3 (idempotent re-calls still consume tokens)
+    for (let i = 0; i < 3; i++) {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity(identity).mutation(api.users.createUser, {
+        role: 'DiveCenter',
+        businessName: 'Rate Test DC',
+      })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+    }
+
+    // 4th call should throw RATE_LIMITED
+    try {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity(identity).mutation(api.users.createUser, {
+        role: 'DiveCenter',
+        businessName: 'Rate Test DC',
+      })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+      expect.fail('Expected ConvexError to be thrown')
+    } catch (err) {
+      vi.useRealTimers()
+      expect(err).toBeInstanceOf(ConvexError)
+      const raw = (err as ConvexError<unknown>).data
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw
+      expect(data.code).toBe('RATE_LIMITED')
+    }
+  })
+
+  it('allows calls from a different identity after one is exhausted', async () => {
+    const t = makeT()
+    const identityA = { tokenIdentifier: 'clerk|rate-a' }
+    const identityB = { tokenIdentifier: 'clerk|rate-b' }
+
+    // Exhaust limit for identity A (3 calls)
+    for (let i = 0; i < 3; i++) {
+      vi.useFakeTimers({ now: Date.now() })
+      await t.withIdentity(identityA).mutation(api.users.createUser, {
+        role: 'DiveCenter',
+        businessName: 'DC A',
+      })
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+      vi.useRealTimers()
+    }
+
+    // Identity B should still work
+    vi.useFakeTimers({ now: Date.now() })
+    const userId = await t.withIdentity(identityB).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'DC B',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    expect(userId).toBeDefined()
   })
 })
 
