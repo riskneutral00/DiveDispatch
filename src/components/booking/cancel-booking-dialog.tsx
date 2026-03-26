@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
-import { ConvexError } from 'convex/values'
+import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -48,17 +48,13 @@ export function CancelBookingDialog({
       onSuccess?.()
       onClose()
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string }
-        if (data.code === 'INVALID_STATUS') {
-          setError('This booking cannot be cancelled in its current status.')
-        } else if (data.code === 'FORBIDDEN') {
-          setError('You do not have permission to cancel this booking.')
-        } else {
-          setError(data.reason ?? data.code ?? 'Cancellation failed. Please try again.')
-        }
+      const code = getConvexErrorCode(err)
+      if (code === 'INVALID_STATUS') {
+        setError('This booking cannot be cancelled in its current status.')
+      } else if (code === 'FORBIDDEN') {
+        setError('You do not have permission to cancel this booking.')
       } else {
-        setError('An unexpected error occurred. Please try again.')
+        setError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
       }
     } finally {
       setSubmitting(false)

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ConvexError } from 'convex/values'
+import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { api } from '../../../convex/_generated/api'
 import { ManageRoles } from './manage-roles'
 import { AddRoleModal } from './add-role-modal'
@@ -35,13 +35,9 @@ export function ManageRolesConnected() {
         setModalOpen(false)
         setOnboardingRole(role)
       } catch (e: unknown) {
-        if (e instanceof ConvexError) {
-          const data = e.data as { code?: string }
-          if (data?.code === ErrorCode.DUPLICATE_ROLE) {
-            setError('You already hold this role.')
-          } else {
-            setError('Failed to add role. Please try again.')
-          }
+        const code = getConvexErrorCode(e)
+        if (code === ErrorCode.DUPLICATE_ROLE) {
+          setError('You already hold this role.')
         } else {
           setError(e instanceof Error ? e.message : 'Failed to add role.')
         }

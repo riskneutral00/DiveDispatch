@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ConvexError } from 'convex/values'
+import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -253,17 +253,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       })
       onComplete()
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string }
-        if (data.code === 'TOKEN_EXPIRED') {
-          setServerError('This link has expired. Please contact your dive center for a new link.')
-        } else if (data.code === 'BOOKING_CLOSED') {
-          setServerError('This booking is no longer accepting submissions.')
-        } else {
-          setServerError(data.reason ?? data.code ?? 'An error occurred. Please try again.')
-        }
+      const code = getConvexErrorCode(err)
+      if (code === 'TOKEN_EXPIRED') {
+        setServerError('This link has expired. Please contact your dive center for a new link.')
+      } else if (code === 'BOOKING_CLOSED') {
+        setServerError('This booking is no longer accepting submissions.')
       } else {
-        setServerError('An unexpected error occurred. Please try again.')
+        setServerError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
       }
     } finally {
       setSubmitting(false)

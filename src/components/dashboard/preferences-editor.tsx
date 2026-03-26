@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { SettingsTabBar } from '@/components/common/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { ConvexError } from 'convex/values'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -222,12 +222,7 @@ export function PreferencesEditor() {
       baselineRef.current = { ...form }
       setSaved(true)
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string }
-        setServerError(data.reason ?? data.code ?? 'An error occurred')
-      } else {
-        setServerError('An unexpected error occurred')
-      }
+      setServerError(parseConvexError(err, 'An unexpected error occurred'))
     } finally {
       setSubmitting(false)
     }

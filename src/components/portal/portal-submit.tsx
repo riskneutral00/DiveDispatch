@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { ConvexError } from 'convex/values'
+import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -148,23 +148,20 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
       setMedicalHardBlock(result.medicalHardBlock)
       setSubmitted(true)
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string; reason?: string }
-        if (data.code === 'TOKEN_EXPIRED') {
-          setError('This link has expired. Please contact your dive center for a new link.')
-        } else if (data.code === 'BOOKING_CLOSED') {
-          setError('This booking is no longer accepting submissions.')
-        } else if (data.code === 'FORMS_INCOMPLETE') {
-          setError(
-            data.reason
-              ? `Incomplete: ${data.reason}`
-              : 'Please complete all required steps before submitting.',
-          )
-        } else {
-          setError(data.reason ?? data.code ?? 'An error occurred. Please try again.')
-        }
+      const code = getConvexErrorCode(err)
+      if (code === 'TOKEN_EXPIRED') {
+        setError('This link has expired. Please contact your dive center for a new link.')
+      } else if (code === 'BOOKING_CLOSED') {
+        setError('This booking is no longer accepting submissions.')
+      } else if (code === 'FORMS_INCOMPLETE') {
+        const reason = parseConvexError(err, '')
+        setError(
+          reason && reason !== 'FORMS_INCOMPLETE'
+            ? `Incomplete: ${reason}`
+            : 'Please complete all required steps before submitting.',
+        )
       } else {
-        setError('An unexpected error occurred. Please try again.')
+        setError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
       }
     } finally {
       setSubmitting(false)

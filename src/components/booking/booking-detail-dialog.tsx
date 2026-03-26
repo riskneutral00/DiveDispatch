@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation } from 'convex/react'
 import { Edit2, Play, Trash2 } from 'lucide-react'
-import { ConvexError } from 'convex/values'
+import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog } from '@/components/glass'
@@ -87,12 +87,8 @@ function DiscardDraftDialog({
       onSuccess()
       onClose()
     } catch (err) {
-      if (err instanceof ConvexError) {
-        const data = err.data as { code?: string }
-        setError(data.code === 'INVALID_STATUS' ? 'This booking is no longer a draft.' : 'Failed to discard. Please try again.')
-      } else {
-        setError('An unexpected error occurred.')
-      }
+      const code = getConvexErrorCode(err)
+      setError(code === 'INVALID_STATUS' ? 'This booking is no longer a draft.' : 'Failed to discard. Please try again.')
     } finally {
       setSubmitting(false)
     }
