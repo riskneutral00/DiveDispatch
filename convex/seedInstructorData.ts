@@ -31,6 +31,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     lastName: def.lastName,
     businessName: `${def.firstName} ${def.lastName}`,
     appLanguage: 'en',
+    phone,
   }
 
   const credential = def.credentials.map((c, i) => ({

@@ -25,6 +25,7 @@ export interface SeedUser {
   lastName: string
   businessName: string
   appLanguage: string
+  phone: string
 }
 
 interface DiveCenterProfile {
@@ -44,6 +45,7 @@ interface DiveCenterProfile {
     oaDays?: number
     selectedSpecialties?: string[]
   }[]
+  customerLanguages: string[]
   verified: boolean
 }
 
@@ -173,11 +175,12 @@ export const HUG_OCEAN: SeedStakeholder = {
   user: {
     slug: 'n7rq5j',
     email: 'hug-ocean+clerk_test@divedispatch.dev',
-    name: 'Hug Ocean',
-    firstName: 'Hug',
-    lastName: 'Ocean',
+    name: 'Somchai Prasert',
+    firstName: 'Somchai',
+    lastName: 'Prasert',
     businessName: 'Hug Ocean',
     appLanguage: 'zh-CN',
+    phone: '+66-81-234-5001',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -191,6 +194,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     email: 'hug-ocean@divedispatch.dev',
     phone: '+66-76-381-100',
     associations: [{ agencyCode: 'PADI', memberId: 'S-34782', ...PADI_PREFS }],
+    customerLanguages: ['zh-CN', 'zh-TW', 'th', 'en', 'ko'],
     verified: VERIFIED,
   },
   boat: {
@@ -239,11 +243,12 @@ export const NEPTUNE: SeedStakeholder = {
   user: {
     slug: 'z8mv4c',
     email: 'neptune+clerk_test@divedispatch.dev',
-    name: 'Neptune',
-    firstName: 'Neptune',
-    lastName: 'Dive',
+    name: 'Wei Lin',
+    firstName: 'Wei',
+    lastName: 'Lin',
     businessName: 'Neptune',
     appLanguage: 'zh-CN',
+    phone: '+66-81-234-5002',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -256,6 +261,7 @@ export const NEPTUNE: SeedStakeholder = {
     email: 'neptune@divedispatch.dev',
     phone: '+66-76-383-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-41256', ...PADI_PREFS }],
+    customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
     verified: VERIFIED,
   },
   pool: {
@@ -288,11 +294,12 @@ export const PHUKET_DC: SeedStakeholder = {
   user: {
     slug: 'p5ky3w',
     email: 'phuket-dive-center+clerk_test@divedispatch.dev',
-    name: 'Phuket Dive Center',
-    firstName: 'Phuket',
-    lastName: 'Dive Center',
+    name: 'Kittisak Charoen',
+    firstName: 'Kittisak',
+    lastName: 'Charoen',
     businessName: 'Phuket Dive Center',
     appLanguage: 'th',
+    phone: '+66-81-234-5003',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -305,6 +312,7 @@ export const PHUKET_DC: SeedStakeholder = {
     email: 'phuket-dive-center@divedispatch.dev',
     phone: '+66-76-385-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-29815', ...PADI_PREFS }],
+    customerLanguages: ['th', 'en', 'zh-CN', 'ko'],
     verified: VERIFIED,
   },
   boat: {
@@ -353,11 +361,12 @@ export const NICOLE_DC: SeedStakeholder = {
   user: {
     slug: 'q9bz7r',
     email: 'nicole-dive-center+clerk_test@divedispatch.dev',
-    name: 'Nicole Dive Center',
+    name: 'Nicole Huang',
     firstName: 'Nicole',
-    lastName: 'Dive Center',
+    lastName: 'Huang',
     businessName: 'Nicole Dive Center',
     appLanguage: 'zh-TW',
+    phone: '+66-81-234-5004',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -369,6 +378,7 @@ export const NICOLE_DC: SeedStakeholder = {
     email: 'nicole-dive-center@divedispatch.dev',
     phone: '+66-76-386-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-55198', ...PADI_PREFS }],
+    customerLanguages: ['zh-TW', 'zh-CN', 'en', 'th'],
     verified: VERIFIED,
   },
   equipment: {
@@ -390,11 +400,12 @@ export const MANTA_DC: SeedStakeholder = {
   user: {
     slug: 'v6js2t',
     email: 'manta-dive-center+clerk_test@divedispatch.dev',
-    name: 'Manta Dive Center',
-    firstName: 'Manta',
-    lastName: 'Dive Center',
+    name: 'Pierre Duval',
+    firstName: 'Pierre',
+    lastName: 'Duval',
     businessName: 'Manta Dive Center',
     appLanguage: 'fr',
+    phone: '+66-81-234-5005',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -405,6 +416,7 @@ export const MANTA_DC: SeedStakeholder = {
     email: 'manta-dive-center@divedispatch.dev',
     phone: '+66-76-387-001',
     associations: [{ agencyCode: 'SSI', memberId: 'DC-80234', ...SSI_PREFS }],
+    customerLanguages: ['fr', 'en', 'th'],
     verified: VERIFIED,
   },
 }
@@ -415,11 +427,12 @@ export const SCUBANICKS: SeedStakeholder = {
   user: {
     slug: 'm4fx8d',
     email: 'scubanicks+clerk_test@divedispatch.dev',
-    name: 'ScubaNicks',
+    name: 'Nick Harrison',
     firstName: 'Nick',
-    lastName: 'ScubaNicks',
+    lastName: 'Harrison',
     businessName: 'ScubaNicks',
     appLanguage: 'en',
+    phone: '+66-81-234-5006',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -431,6 +444,7 @@ export const SCUBANICKS: SeedStakeholder = {
     email: 'scubanicks@divedispatch.dev',
     phone: '+66-76-388-001',
     associations: [{ agencyCode: 'SSI', memberId: 'DC-91547', ...SSI_PREFS }],
+    customerLanguages: ['en', 'th', 'zh-CN'],
     verified: VERIFIED,
   },
   equipment: {
@@ -449,11 +463,12 @@ export const SCUBA_DEEP: SeedStakeholder = {
   user: {
     slug: 'h3cp6n',
     email: 'scuba-deep+clerk_test@divedispatch.dev',
-    name: 'Scuba Deep',
-    firstName: 'Scuba',
-    lastName: 'Deep',
+    name: 'James Mitchell',
+    firstName: 'James',
+    lastName: 'Mitchell',
     businessName: 'Scuba Deep',
     appLanguage: 'en',
+    phone: '+66-81-234-5007',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -468,6 +483,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
       { agencyCode: 'SSI', memberId: 'DC-72019', ...SSI_PREFS },
       { agencyCode: 'PADI', memberId: 'S-61834', ...PADI_PREFS },
     ],
+    customerLanguages: ['en', 'th', 'zh-CN', 'fr'],
     verified: VERIFIED,
   },
   equipment: {
@@ -486,11 +502,12 @@ export const SIROLO: SeedStakeholder = {
   user: {
     slug: 'sirolo',
     email: 'sirolo+clerk_test@divedispatch.dev',
-    name: 'Sirolo',
+    name: 'Prasit Wongsawat',
     firstName: 'Prasit',
     lastName: 'Wongsawat',
     businessName: 'Sirolo',
     appLanguage: 'th',
+    phone: '+66-81-234-5008',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -503,6 +520,7 @@ export const SIROLO: SeedStakeholder = {
     email: 'sirolo@divedispatch.dev',
     phone: '+66-76-391-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-70123', ...PADI_PREFS }],
+    customerLanguages: ['th', 'en', 'zh-CN', 'zh-TW'],
     verified: VERIFIED,
   },
   boat: {
@@ -541,11 +559,12 @@ export const PRAY_DC: SeedStakeholder = {
   user: {
     slug: 't7gw1k',
     email: 'pray-dive-center+clerk_test@divedispatch.dev',
-    name: 'Pray Dive Center',
-    firstName: 'Pray',
-    lastName: 'Dive Center',
+    name: 'Anong Srisuk',
+    firstName: 'Anong',
+    lastName: 'Srisuk',
     businessName: 'Pray Dive Center',
     appLanguage: 'en',
+    phone: '+66-81-234-5009',
   },
   roles: [
     { role: 'DiveCenter' },
@@ -556,6 +575,7 @@ export const PRAY_DC: SeedStakeholder = {
     email: 'pray-dive-center@divedispatch.dev',
     phone: '+66-76-390-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-48203', ...PADI_PREFS }],
+    customerLanguages: ['en', 'th'],
     verified: VERIFIED,
   },
 }
@@ -566,11 +586,12 @@ export const AMANDA: SeedStakeholder = {
   user: {
     slug: 'r5yz4q',
     email: 'amanda+clerk_test@divedispatch.dev',
-    name: 'Amanda',
+    name: 'Amanda Chen',
     firstName: 'Amanda',
     lastName: 'Chen',
     businessName: 'Amanda',
     appLanguage: 'zh-CN',
+    phone: '+66-81-234-5010',
   },
   roles: [
     { role: 'Agent' },

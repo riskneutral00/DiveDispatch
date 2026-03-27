@@ -181,6 +181,8 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     businessName: s.user.businessName,
     isSeeded: true,
     appLanguage: s.user.appLanguage,
+    phone: s.user.phone,
+    ...(s.diveCenter?.customerLanguages ? { customerLanguages: s.diveCenter.customerLanguages } : {}),
     onboardingComplete: true,
   })
 }
