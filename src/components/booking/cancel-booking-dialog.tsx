@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
-import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassDialog } from '@/components/glass/glass-dialog'
 import { GlassButton } from '@/components/glass/glass-button'
+import { ErrorAlert } from '@/components/glass/error-alert'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -97,20 +97,7 @@ export function CancelBookingDialog({
         </div>
 
         {/* Inline error */}
-        {error && (
-          <div
-            className="flex items-start gap-2 p-3 rounded-[var(--border-radius)] text-sm"
-            style={{
-              background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent)',
-              color: 'var(--color-destructive)',
-            }}
-            role="alert"
-          >
-            <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" aria-hidden />
-            <span>{error}</span>
-          </div>
-        )}
+        {error && <ErrorAlert>{error}</ErrorAlert>}
 
         {/* Actions */}
         <div className="flex justify-end gap-3 mt-1">

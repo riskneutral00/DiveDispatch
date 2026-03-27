@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
-import { AlertTriangle, Calendar, Users, Send, ChevronLeft } from 'lucide-react'
+import { Calendar, Users, Send, ChevronLeft } from 'lucide-react'
+import { ErrorAlert } from '@/components/glass/error-alert'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassCard, GlassButton } from '@/components/glass'
@@ -305,20 +306,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       )}
 
       {/* Error */}
-      {submitError && (
-        <div
-          className="flex items-start gap-3 p-3 rounded-[var(--border-radius)] text-sm"
-          role="alert"
-          style={{
-            background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent)',
-            color: 'var(--color-destructive)',
-          }}
-        >
-          <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" aria-hidden />
-          <span>{submitError}</span>
-        </div>
-      )}
+      {submitError && <ErrorAlert>{submitError}</ErrorAlert>}
 
       {/* Navigation */}
       <div className="flex justify-between items-center gap-4 mt-2">

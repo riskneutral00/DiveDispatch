@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
+import { LoadingCard } from '@/components/glass/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 
 type Association = { agency: string; number: string }
@@ -62,15 +63,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   }
 
   if (existing === undefined) {
-    return (
-      <GlassCard padding="lg">
-        <div className="flex items-center justify-center py-8">
-          <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
-            Loading…
-          </span>
-        </div>
-      </GlassCard>
-    )
+    return <LoadingCard />
   }
 
   return (

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Lock } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
+import { LoadingCard } from '@/components/glass/loading-card'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
@@ -79,15 +80,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
   }
 
   if (existing === undefined || me === undefined) {
-    return (
-      <GlassCard padding="lg">
-        <div className="flex items-center justify-center py-8">
-          <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
-            Loading…
-          </span>
-        </div>
-      </GlassCard>
-    )
+    return <LoadingCard />
   }
 
   return (

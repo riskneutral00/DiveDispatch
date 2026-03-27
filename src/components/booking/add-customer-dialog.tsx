@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassDialog, GlassButton, GlassInput } from '@/components/glass'
+import { GlassDialog, GlassButton, GlassInput, GlassButtonGroup } from '@/components/glass'
+import type { GlassButtonGroupOption } from '@/components/glass'
 import { LanguagePicker } from '@/components/common/language-picker'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
@@ -84,29 +85,17 @@ export function AddCustomerDialog({
           >
             Contact (optional)
           </p>
-          <div
-            className="inline-flex rounded-[var(--border-radius)] overflow-hidden border"
-            style={{ borderColor: 'var(--color-glass-border)' }}
-            role="group"
+          <GlassButtonGroup
+            variant="segment"
+            value={contactType}
+            onChange={(v) => setContactType(v as ContactType)}
             aria-label="Contact type"
-          >
-            {(['email', 'whatsapp', 'line'] as ContactType[]).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setContactType(type)}
-                className="px-3 py-1.5 text-xs font-medium capitalize transition-all border-l first:border-l-0"
-                style={{
-                  background: contactType === type ? 'var(--color-accent)' : 'var(--color-glass-bg)',
-                  color: contactType === type ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                  borderColor: 'var(--color-glass-border)',
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                {type === 'email' ? 'Email' : type === 'whatsapp' ? 'WhatsApp' : 'LINE'}
-              </button>
-            ))}
-          </div>
+            options={[
+              { value: 'email', label: 'Email' },
+              { value: 'whatsapp', label: 'WhatsApp' },
+              { value: 'line', label: 'LINE' },
+            ] satisfies GlassButtonGroupOption[]}
+          />
           <GlassInput
             value={contactValue}
             onChange={(e) => setContactValue(e.target.value)}

@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
+import { LoadingCard } from '@/components/glass/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { GlassInput } from '@/components/glass/glass-input'
 
@@ -88,15 +89,7 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
   }
 
   if (existing === undefined || me === undefined) {
-    return (
-      <GlassCard padding="lg">
-        <div className="flex items-center justify-center py-8">
-          <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
-            Loading…
-          </span>
-        </div>
-      </GlassCard>
-    )
+    return <LoadingCard />
   }
 
   return (
