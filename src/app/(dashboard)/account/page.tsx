@@ -9,6 +9,7 @@ import { ChevronLeft } from 'lucide-react'
 import { api } from '../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '../../../../convex/lib/rolePrecedence'
+import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/common/language-field'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -30,8 +31,10 @@ interface AccountFormValues {
   lastName: string
   nickname: string
   businessName: string
+  email: string
   phone: string
-  appLanguage: string
+  preferredLocale: string
+  preferredChannel: ChannelKey | null
 }
 
 export default function AccountPage() {
@@ -46,8 +49,10 @@ export default function AccountPage() {
     lastName: '',
     nickname: '',
     businessName: '',
+    email: '',
     phone: '',
-    appLanguage: 'en',
+    preferredLocale: 'en',
+    preferredChannel: null,
   })
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -60,8 +65,10 @@ export default function AccountPage() {
         lastName: user.lastName ?? '',
         nickname: user.nickname ?? '',
         businessName: user.businessName ?? '',
+        email: user.email ?? '',
         phone: user.phone ?? '',
-        appLanguage: user.appLanguage ?? 'en',
+        preferredLocale: user.preferredLocale ?? 'en',
+        preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
       })
     }
   }, [user])
@@ -125,7 +132,8 @@ export default function AccountPage() {
         lastName: values.lastName.trim() || undefined,
         nickname: values.nickname.trim() || undefined,
         phone: values.phone.trim() || undefined,
-        appLanguage: values.appLanguage,
+        preferredLocale: values.preferredLocale,
+        preferredChannel: values.preferredChannel ?? undefined,
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -136,7 +144,7 @@ export default function AccountPage() {
     }
   }
 
-  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === values.appLanguage)
+  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === values.preferredLocale)
   const selectedLocale = selectedLocaleObj
     ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
     : []

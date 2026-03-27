@@ -3,7 +3,6 @@
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
-import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassInput, GlassSelect } from '@/components/glass'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
@@ -31,27 +30,14 @@ const locationSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactPhone: z.string().refine((val) => isValidPhoneNumber(val), 'Invalid international phone number'),
-  customerLanguages: z.array(z.object({ code: z.string(), label: z.string() })).min(1, 'At least one language is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Contact phone is required'),
   associations: z.array(
     z.object({
       agencyCode: z.string().min(1, 'Agency is required'),
       memberId: z.string().min(1, 'Member ID is required'),
-      owDays: z.number().min(1, 'Required'),
-      aowDays: z.number().min(1, 'Required'),
-      oaDays: z.number().min(1, 'Required'),
-      selectedSpecialties: z.array(z.string()),
-    }).refine(
-      (a) => {
-        const required = AGENCIES[a.agencyCode]?.specialtyCount ?? 5
-        return a.selectedSpecialties.length >= required
-      },
-      (a) => {
-        const required = AGENCIES[a.agencyCode]?.specialtyCount ?? 5
-        return { message: `Select at least ${required} specialties`, path: ['selectedSpecialties'] }
-      },
-    ),
-  ).min(1, 'At least one affiliation is required'),
+    }),
+  ),
 })
 
 interface AssociationForm {
@@ -66,8 +52,8 @@ interface AssociationForm {
 type FormState = {
   name: string
   location: LocationValue | null
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   associations: AssociationForm[]
   customerLanguages: Language[]
 }
@@ -86,13 +72,13 @@ function makeDefaultAssociation(): AssociationForm {
 const INITIAL_FORM: FormState = {
   name: '',
   location: null,
-  contactEmail: '',
-  contactPhone: '',
+  email: '',
+  phone: '',
   associations: [],
   customerLanguages: [],
 }
 
-export type DiveCenterProfileSection = 'contact' | 'associations'
+export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 
 export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
   const existing = useQuery(api.diveCenters.mine)
@@ -101,7 +87,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile: existing,
     me,
     schema: formSchema,
@@ -121,8 +107,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           lng: p.lng,
           placeId: (p.placeId ?? undefined) as string | undefined,
         } as LocationValue,
-        contactEmail: p.contactEmail as string,
-        contactPhone: p.contactPhone as string,
+        email: p.email as string,
+        phone: p.phone as string,
         associations: assocs.map((a) => ({
           agencyCode: a.agencyCode,
           memberId: a.memberId,
@@ -145,8 +131,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     fromMe: (u, defaults) => ({
       ...defaults,
       name: u.businessName ?? '',
-      contactEmail: accountDefaults?.defaultContactEmail ?? u.email ?? '',
-      contactPhone: accountDefaults?.defaultContactPhone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -157,8 +143,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         lat: loc.lat,
         lng: loc.lng,
         placeId: loc.placeId,
-        contactEmail: f.contactEmail,
-        contactPhone: f.contactPhone,
+        email: f.email,
+        phone: f.phone,
         associations: f.associations.map((a) => ({
           agencyCode: a.agencyCode,
           memberId: a.memberId,
@@ -204,10 +190,9 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     const mandatory = getMandatorySpecialties(assoc.agencyCode)
     if (mandatory.has(specialtyCode)) return
     const current = assoc.selectedSpecialties
-    const maxCount = AGENCIES[assoc.agencyCode]?.specialtyCount ?? 5
     const updated = current.includes(specialtyCode)
       ? current.filter((s) => s !== specialtyCode)
-      : current.length >= maxCount ? current : [...current, specialtyCode]
+      : [...current, specialtyCode]
     updateAssociation(assocIdx, { selectedSpecialties: updated })
   }
 
@@ -223,34 +208,55 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {!section && (
+        <div>
+          <h1
+            className="text-2xl font-bold"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          >
+            {isUpdate ? 'Profile Settings' : 'Complete Your Profile'}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            {isUpdate
+              ? 'Update your dive center information.'
+              : 'Tell us about your dive center to get started.'}
+          </p>
+        </div>
+      )}
+
       {/* Basic Information */}
       {(!section || section === 'contact') && (
       <div className="space-y-4">
+        <FormSectionHeader label="Basic Information" />
         <ProfileBasicInfo
           nameValue={form.name}
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
-          nameLabel="Dive Center Name"
+          nameLabel="Business Name"
           namePlaceholder="e.g. Ocean Explorer Dive Center"
-          nameRequired
           locationValue={form.location}
           onLocationChange={(loc) => setField('location', loc)}
           locationError={errors.location}
-          locationRequired
-          phoneValue={form.contactPhone}
-          onPhoneChange={(val) => setField('contactPhone', val)}
-          phoneError={errors.contactPhone}
-          phoneRequired
-        >
-          <LanguageField
-            label="Customer Languages"
-            value={form.customerLanguages}
-            onChange={(langs) => setField('customerLanguages', langs)}
-            max={4}
-            required
-          />
-        </ProfileBasicInfo>
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+        />
       </div>
+      )}
+
+      {(!section) && <hr className="form-divider" />}
+
+      {/* Languages */}
+      {(!section || section === 'languages') && (
+        <LanguageField
+          label="Customer Languages"
+          value={form.customerLanguages}
+          onChange={(langs) => setField('customerLanguages', langs)}
+          max={4}
+        />
       )}
 
       {(!section) && <hr className="form-divider" />}
@@ -278,13 +284,12 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
               const agency = AGENCIES[assoc.agencyCode]
               const specialties = agency?.specialties ?? AGENCIES.PADI.specialties
               const mandatory = getMandatorySpecialties(assoc.agencyCode || 'PADI')
-              const mainSpecialties = specialties.slice(0, 7)
-              const overflowSpecialties = specialties.slice(7)
+              const mainSpecialties = specialties.slice(0, 9)
+              const overflowSpecialties = specialties.slice(9)
 
               return (
-                <div key={idx}>
-                  {idx > 0 && <hr className="form-divider mb-6" />}
                 <ItemCard
+                  key={idx}
                   onRemove={() => removeAssociation(idx)}
                   canRemove={form.associations.length > 1}
                   aria-label="Remove affiliation"
@@ -298,7 +303,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                         onChange={(v) => updateAssociation(idx, { agencyCode: v })}
                         options={AGENCY_CODES.map((code) => ({ id: code, label: AGENCIES[code].name }))}
                         placeholder="Select agency"
-                        required
                       />
                     </div>
                     <div className="flex-1">
@@ -307,78 +311,71 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                         value={assoc.memberId}
                         onChange={(e) => updateAssociation(idx, { memberId: e.target.value })}
                         placeholder={agency?.memberIdLabel ?? 'Member ID'}
-                        required
                       />
                     </div>
                   </div>
 
-                  {/* Course days + Specialties */}
-                  <div className="flex gap-2 items-start">
-                    <div className="flex-1">
-                      <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                        Default course days <span style={{ color: 'var(--color-destructive)' }}>*</span>
-                      </p>
-                      <div className="flex gap-2">
-                        <DayPicker
-                          label={agency?.courses.find((c) => c.code === 'OW')?.label ?? 'OW'}
-                          value={assoc.owDays}
-                          min={COURSE_DAY_RANGES.OW.min}
-                          max={COURSE_DAY_RANGES.OW.max}
-                          onChange={(v) => updateAssociation(idx, { owDays: v })}
-                        />
-                        <DayPicker
-                          label={agency?.courses.find((c) => c.code === 'AOW')?.label ?? 'AOW'}
-                          value={assoc.aowDays}
-                          min={COURSE_DAY_RANGES.AOW.min}
-                          max={COURSE_DAY_RANGES.AOW.max}
-                          onChange={(v) => updateAssociation(idx, { aowDays: v })}
-                        />
-                        <DayPicker
-                          label={agency?.combinedLabel ?? 'O+A'}
-                          value={assoc.oaDays}
-                          min={COURSE_DAY_RANGES.combined.min}
-                          max={COURSE_DAY_RANGES.combined.max}
-                          onChange={(v) => updateAssociation(idx, { oaDays: v })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex-1">
-                      <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                        Default specialties{' '}
-                        <span style={{ color: assoc.selectedSpecialties.length >= (agency?.specialtyCount ?? 5) ? 'var(--color-success)' : 'var(--color-destructive)' }}>
-                          {assoc.selectedSpecialties.length} / {agency?.specialtyCount ?? 5}
-                        </span>
-                      </p>
-                      <PillToggleGroup
-                        className="grid grid-cols-4 gap-1.5"
-                        overflowItems={overflowSpecialties.length > 0 ? (
-                          <>
-                            {overflowSpecialties.map(({ code, label }) => (
-                              <PillToggle
-                                key={code}
-                                label={label}
-                                checked={assoc.selectedSpecialties.includes(code)}
-                                onChange={() => toggleSpecialty(idx, code)}
-                              />
-                            ))}
-                          </>
-                        ) : undefined}
-                      >
-                        {mainSpecialties.map(({ code, label, mandatory: isMandatory }) => (
-                          <PillToggle
-                            key={code}
-                            label={label}
-                            checked={assoc.selectedSpecialties.includes(code)}
-                            locked={isMandatory || mandatory.has(code)}
-                            onChange={() => toggleSpecialty(idx, code)}
-                          />
-                        ))}
-                      </PillToggleGroup>
+                  {/* Default course #days */}
+                  <div>
+                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      Default course #days
+                    </p>
+                    <div className="flex gap-2">
+                      <DayPicker
+                        label={agency?.courses.find((c) => c.code === 'OW')?.label ?? 'OW'}
+                        value={assoc.owDays}
+                        min={COURSE_DAY_RANGES.OW.min}
+                        max={COURSE_DAY_RANGES.OW.max}
+                        onChange={(v) => updateAssociation(idx, { owDays: v })}
+                      />
+                      <DayPicker
+                        label={agency?.courses.find((c) => c.code === 'AOW')?.label ?? 'AOW'}
+                        value={assoc.aowDays}
+                        min={COURSE_DAY_RANGES.AOW.min}
+                        max={COURSE_DAY_RANGES.AOW.max}
+                        onChange={(v) => updateAssociation(idx, { aowDays: v })}
+                      />
+                      <DayPicker
+                        label={agency?.combinedLabel ?? 'O+A'}
+                        value={assoc.oaDays}
+                        min={COURSE_DAY_RANGES.combined.min}
+                        max={COURSE_DAY_RANGES.combined.max}
+                        onChange={(v) => updateAssociation(idx, { oaDays: v })}
+                      />
                     </div>
                   </div>
+
+                  {/* Default specialties */}
+                  <div>
+                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      Default specialties
+                    </p>
+                    <PillToggleGroup
+                      overflowItems={overflowSpecialties.length > 0 ? (
+                        <>
+                          {overflowSpecialties.map(({ code, label }) => (
+                            <PillToggle
+                              key={code}
+                              label={label}
+                              checked={assoc.selectedSpecialties.includes(code)}
+                              onChange={() => toggleSpecialty(idx, code)}
+                            />
+                          ))}
+                        </>
+                      ) : undefined}
+                    >
+                      {mainSpecialties.map(({ code, label, mandatory: isMandatory }) => (
+                        <PillToggle
+                          key={code}
+                          label={label}
+                          checked={assoc.selectedSpecialties.includes(code)}
+                          locked={isMandatory || mandatory.has(code)}
+                          onChange={() => toggleSpecialty(idx, code)}
+                        />
+                      ))}
+                    </PillToggleGroup>
+                  </div>
                 </ItemCard>
-                </div>
               )
             })}
           </div>
@@ -390,7 +387,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
       )}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

@@ -12,8 +12,8 @@ export const create = mutation({
   args: {
     name: v.string(),
     locations: v.array(locationValidator),
-    contactEmail: v.string(),
-    contactPhone: v.string(),
+    email: v.string(),
+    phone: v.string(),
     associations: v.array(associationValidator),
     defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
   },
@@ -35,8 +35,8 @@ export const update = mutation({
   args: {
     name: v.optional(v.string()),
     locations: v.optional(v.array(locationValidator)),
-    contactEmail: v.optional(v.string()),
-    contactPhone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
     associations: v.optional(v.array(associationValidator)),
     defaultReferralMode: v.optional(
       v.union(v.literal('independent'), v.literal('referral')),

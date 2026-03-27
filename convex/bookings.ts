@@ -42,7 +42,7 @@ export type BookingDetailStakeholder = {
   name: string
   role: string
   isExternal: boolean
-  contactEmail: string | undefined
+  email: string | undefined
   reservationStatus: string | undefined
 }
 
@@ -554,7 +554,7 @@ export async function _getBookingDetail(
         name: profile?.name ?? br.resourceSlug,
         role: br.resourceType,
         isExternal: false,
-        contactEmail: profile?.email,
+        email: profile?.email,
         reservationStatus: stakeholderRes?.status as string | undefined,
       })
     } else if (br.externalName) {
@@ -563,7 +563,7 @@ export async function _getBookingDetail(
         name: br.externalName,
         role: br.resourceType,
         isExternal: true,
-        contactEmail: undefined,
+        email: undefined,
         reservationStatus: undefined,
       })
     }

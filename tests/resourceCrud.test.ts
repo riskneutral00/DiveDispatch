@@ -19,8 +19,8 @@ const COMMON_LOCATION = {
   country: 'Thailand',
   lat: 10.09,
   lng: 99.84,
-  contactEmail: 'test@test.com',
-  contactPhone: '+66123456789',
+  email: 'test@test.com',
+  phone: '+66123456789',
 }
 
 // Each entry: { apiModule, role, createArgs, updateArgs, uniqueField }
@@ -77,8 +77,8 @@ const RESOURCE_CONFIGS: Array<{
       country: 'Thailand',
       lat: 10.09,
       lng: 99.84,
-      contactEmail: 'instr@test.com',
-      contactPhone: '+66123456789',
+      email: 'instr@test.com',
+      phone: '+66123456789',
       credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', courses: ['OW', 'AOW'] }],
     },
     updateArgs: { name: 'Updated Instructor' },
@@ -94,8 +94,8 @@ const RESOURCE_CONFIGS: Array<{
       country: 'Thailand',
       lat: 10.09,
       lng: 99.84,
-      contactEmail: 'dm@test.com',
-      contactPhone: '+66123456789',
+      email: 'dm@test.com',
+      phone: '+66123456789',
       credential: [{ agency: 'PADI', level: 'DM', agencyID: '456' }],
     },
     updateArgs: { name: 'Updated DM' },

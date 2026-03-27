@@ -4,7 +4,7 @@ import { internal } from './_generated/api'
 import { requireAuth, getAuthUser, HOLD_TTL_MS } from './lib/auth'
 import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
-import { checkAllRolesCompleteness } from './lib/profileCompleteness'
+import { checkProfileCompleteness } from './lib/profileCompleteness'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
 import {
   checkPreferenceCoverage,
@@ -43,13 +43,10 @@ export const createDraftShell = mutation({
     await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    // ── Profile completeness gate — ALL roles must be 100% to create bookings ──
-    const allRolesStatus = await checkAllRolesCompleteness(ctx, user._id)
-    if (!allRolesStatus.allComplete) {
-      const allMissing = allRolesStatus.roles
-        .filter(r => r.percentage < 100)
-        .flatMap(r => r.incomplete.map(field => `${r.role}: ${field}`))
-      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: allMissing })
+    // ── Profile completeness gate — operator's active role must be 100% ──
+    const activeRoleStatus = await checkProfileCompleteness(ctx, { _id: user._id }, args.activeRole)
+    if (activeRoleStatus.percentage < 100) {
+      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: activeRoleStatus.incomplete })
     }
 
     // Past dates — reject if optional startDate is before today

@@ -34,7 +34,8 @@ const associationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   locations: z.array(locationSchema).min(1, 'Add at least one location'),
-  contactPhone: z.string().min(1, 'Phone number is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Phone number is required'),
   associations: z.array(associationSchema),
   defaultReferralMode: z.enum(['independent', 'referral']),
 })
@@ -44,8 +45,8 @@ type AssociationData = z.infer<typeof associationSchema>
 type ProfileFormData = {
   name: string
   locations: (LocationValue | null)[]
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   associations: AssociationData[]
   defaultReferralMode: 'independent' | 'referral'
 }
@@ -55,8 +56,8 @@ const emptyAssociation = (): AssociationData => ({ agency: '', number: '' })
 const INITIAL_FORM: ProfileFormData = {
   name: '',
   locations: [null],
-  contactEmail: '',
-  contactPhone: '',
+  email: '',
+  phone: '',
   associations: [],
   defaultReferralMode: 'independent',
 }
@@ -123,13 +124,13 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
-      const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; contactEmail: string; contactPhone: string; associations: AssociationData[]; defaultReferralMode: 'independent' | 'referral' }
+      const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; email: string; phone: string; associations: AssociationData[]; defaultReferralMode: 'independent' | 'referral' }
       return {
         name: prof.name,
         locations: prof.locations.length > 0
@@ -141,24 +142,24 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
               placeId: loc.placeId ?? undefined,
             }))
           : [null],
-        contactEmail: prof.contactEmail,
-        contactPhone: prof.contactPhone,
+        email: prof.email,
+        phone: prof.phone,
         associations: prof.associations,
         defaultReferralMode: prof.defaultReferralMode,
       } as ProfileFormData
     },
     fromMe: (defaults, initial) => ({
       ...initial,
-      contactEmail: defaults.defaultContactEmail ?? '',
-      contactPhone: defaults.defaultContactPhone ?? '',
+      email: defaults.email ?? '',
+      phone: defaults.phone ?? '',
     }),
     toPayload: (f) => {
       const validLocations = f.locations.filter((l): l is LocationValue => l !== null)
       return {
         name: f.name,
         locations: validLocations,
-        contactEmail: f.contactEmail,
-        contactPhone: f.contactPhone,
+        email: f.email,
+        phone: f.phone,
         associations: f.associations,
         defaultReferralMode: f.defaultReferralMode,
       }
@@ -201,13 +202,26 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      {!section && (
+        <div>
+          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
+            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            {isUpdate ? 'Keep your profile current so dive operators can find you.' : 'Set up your agent profile to start creating and referring bookings.'}
+          </p>
+        </div>
+      )}
+
       {/* Contact info */}
       {(!section || section === 'contact') && (
         <>
           <GlassCard padding="md">
-            <div className="space-y-4">
-              <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
-              <GlassInput label="Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
+            <FormSectionHeader label="Contact Information" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} className="sm:col-span-2" />
+              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setField('email', e.target.value)} error={errors.email} />
+              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.phone} onChange={(e) => setField('phone', e.target.value)} error={errors.phone} />
             </div>
           </GlassCard>
 
@@ -282,7 +296,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

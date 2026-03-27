@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
-import { type RoleKey } from '@/lib/constants/roles'
+import { type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/common/spinner'
 import { ProfileCompletionPill } from './profile-completion-pill'
@@ -26,7 +26,8 @@ interface DashboardShellProps {
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
   const { user, isLoading } = useCurrentUser()
-  const profileCompletion = useQuery(api.users.getLowestProfileCompletion)
+  const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
+  const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
   const router = useRouter()
 
   // ── Profile overlay state ──────────────────────────────────────────────────

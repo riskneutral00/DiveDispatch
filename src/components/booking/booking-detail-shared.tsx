@@ -185,7 +185,7 @@ export function StakeholderList({
               </div>
               <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                 {s.role}
-                {s.contactEmail && <> · {s.contactEmail}</>}
+                {s.email && <> · {s.email}</>}
               </p>
             </div>
           </div>

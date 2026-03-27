@@ -51,17 +51,22 @@ async function seedBoatUser(ctx: SeedCtx, slug: string, hasCompressor: boolean) 
     country: 'Thailand',
     lat: 10.0957,
     lng: 99.8408,
-    contactEmail: `${slug}@test.com`,
-    contactPhone: '+66123456789',
+    email: `${slug}@test.com`,
+    phone: '+66123456789',
     fleet: [],
     hasCompressor,
     verified: true,
   })
 }
 
-/** Seed diveCenters profile + bookingTemplates so profileCompleteness gate passes */
+/** Seed diveCenters profile + bookingTemplates + user fields so profileCompleteness gate passes */
 async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
-  await seedDiveCenterProfile(ctx, userId, { contactEmail: `${slug}@test.com` })
+  // Profile + settings layer on users table
+  await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+  await seedDiveCenterProfile(ctx, userId, { email: `${slug}@test.com` })
+  // customerLanguages is a DiveCenter ROLE_REQUIRED field
+  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, { ownerId: slug, activityType: ['DSD'] })
 }
 

@@ -36,8 +36,8 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
     country,
     lat: 7.8804,
     lng: 98.3923,
-    contactEmail: `${userId}@test.com`,
-    contactPhone: '+66000000000',
+    email: `${userId}@test.com`,
+    phone: '+66000000000',
     credential: [],
     verified,
   })

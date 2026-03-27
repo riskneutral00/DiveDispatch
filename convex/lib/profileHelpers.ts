@@ -89,8 +89,17 @@ export async function profileCreate(
     .unique()
   if (existing) return existing._id
 
+  // Auto-populate email/phone from user record if not provided or empty
+  const mergedArgs = { ...args }
+  if (!mergedArgs.email || (typeof mergedArgs.email === 'string' && mergedArgs.email.trim() === '')) {
+    mergedArgs.email = user.email ?? ''
+  }
+  if (!mergedArgs.phone || (typeof mergedArgs.phone === 'string' && mergedArgs.phone.trim() === '')) {
+    mergedArgs.phone = user.phone ?? ''
+  }
+
   return await insertDynamicTable(ctx.db, tableName, {
-    ...args,
+    ...mergedArgs,
     userId: user._id,
     ...extraDefaults,
   })

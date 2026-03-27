@@ -41,8 +41,8 @@ describe('05: onboarding profile step — save mutation', () => {
         lat: 7.8804,
         lng: 98.3923,
         country: 'Thailand',
-        contactEmail: 'assoc@test.com',
-        contactPhone: '+66891234567',
+        email: 'assoc@test.com',
+        phone: '+66891234567',
         associations: [{ agencyCode: 'PADI', memberId: 'TH-00123' }],
       })
 
@@ -67,8 +67,8 @@ describe('05: onboarding profile step — save mutation', () => {
         lat: 10.0957,
         lng: 99.8408,
         country: 'Thailand',
-        contactEmail: 'langs@test.com',
-        contactPhone: '+66891234568',
+        email: 'langs@test.com',
+        phone: '+66891234568',
         associations: [],
       })
 
@@ -91,8 +91,8 @@ describe('05: onboarding profile step — save mutation', () => {
         lat: 7.8804,
         lng: 98.3923,
         country: 'Thailand',
-        contactEmail: 'days@test.com',
-        contactPhone: '+66891234569',
+        email: 'days@test.com',
+        phone: '+66891234569',
         associations: [{ agencyCode: 'PADI', memberId: 'TEST', owDays: 4, aowDays: 2 }],
       })
 

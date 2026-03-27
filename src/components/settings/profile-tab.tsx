@@ -40,7 +40,7 @@ interface ProfileValues {
   lastName: string
   nickname: string
   businessName: string
-  contactEmail: string
+  email: string
   phone: string
   dobMonth: string
   dobDay: string
@@ -56,7 +56,7 @@ export function ProfileTab() {
     lastName: '',
     nickname: '',
     businessName: '',
-    contactEmail: '',
+    email: '',
     phone: '',
     dobMonth: '',
     dobDay: '',
@@ -74,7 +74,7 @@ export function ProfileTab() {
         lastName: user.lastName ?? '',
         nickname: user.nickname ?? '',
         businessName: user.businessName ?? '',
-        contactEmail: user.email ?? '',
+        email: user.email ?? '',
         phone: user.phone ?? '',
         dobMonth: user.dateOfBirth?.split('-')[1] ?? '',
         dobDay: user.dateOfBirth?.split('-')[2] ?? '',
@@ -86,8 +86,8 @@ export function ProfileTab() {
   }, [user])
 
   const isDirty = baselineRef.current !== null && JSON.stringify(values) !== JSON.stringify(baselineRef.current)
-  
-  const isValidEmail = z.string().email().safeParse(values.contactEmail).success
+
+  const isValidEmail = z.string().email().safeParse(values.email).success
   const isValidPhone = isValidPhoneNumber(values.phone)
   const isValid = values.firstName.trim() !== '' && values.lastName.trim() !== '' && values.businessName.trim() !== '' && isValidEmail && isValidPhone
 
@@ -98,7 +98,7 @@ export function ProfileTab() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!values.businessName.trim() || !values.contactEmail.trim() || !values.phone.trim()) return
+    if (!values.businessName.trim() || !values.email.trim() || !values.phone.trim()) return
     setError('')
     setSaved(false)
     setSaving(true)
@@ -110,7 +110,8 @@ export function ProfileTab() {
         nickname: values.nickname.trim() || undefined,
         businessName: values.businessName.trim(),
         phone: values.phone.trim() || undefined,
-        email: values.contactEmail.trim(),
+        email: values.email.trim(),
+        appLanguage: user?.appLanguage ?? 'en',
         dateOfBirth: values.dobYear && values.dobMonth && values.dobDay
           ? `${values.dobYear}-${values.dobMonth}-${values.dobDay}`
           : undefined,
@@ -176,8 +177,8 @@ export function ProfileTab() {
           <GlassInput
             label="Email"
             type="email"
-            value={values.contactEmail}
-            onChange={(e) => set('contactEmail', e.target.value)}
+            value={values.email}
+            onChange={(e) => set('email', e.target.value)}
             required
           />
         </div>

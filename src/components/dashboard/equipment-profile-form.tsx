@@ -6,8 +6,7 @@ import { Plus, X } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
-import { type LocationValue } from '@/components/common/location-picker'
-import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
+import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
@@ -35,22 +34,23 @@ const locationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactPhone: z.string().min(1, 'Phone is required').max(30),
+  email: z.string().email('Valid email required'),
+  phone: z.string().min(1, 'Phone is required').max(30),
 })
 
 type FormState = {
   name: string
   location: LocationValue | null
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   manufacturersByGearType: Partial<Record<GearType, string[]>>
 }
 
 const INITIAL_FORM: FormState = {
   name: '',
   location: null,
-  contactEmail: '',
-  contactPhone: '',
+  email: '',
+  phone: '',
   manufacturersByGearType: {},
 }
 
@@ -60,7 +60,7 @@ export function EquipmentProfileForm() {
   const create = useMutation(api.equipment.create)
   const update = useMutation(api.equipment.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -83,15 +83,15 @@ export function EquipmentProfileForm() {
           lng: p.lng,
           placeId: (p.placeId ?? undefined) as string | undefined,
         } as LocationValue,
-        contactEmail: p.contactEmail as string,
-        contactPhone: p.contactPhone as string,
+        email: p.email as string,
+        phone: p.phone as string,
         manufacturersByGearType: parsed,
       }
     },
     fromMe: (defaults, initial) => ({
       ...initial,
-      contactEmail: defaults.defaultContactEmail ?? '',
-      contactPhone: defaults.defaultContactPhone ?? '',
+      email: defaults.email ?? '',
+      phone: defaults.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -107,8 +107,8 @@ export function EquipmentProfileForm() {
         lat: loc.lat,
         lng: loc.lng,
         placeId: loc.placeId,
-        contactEmail: f.contactEmail,
-        contactPhone: f.contactPhone,
+        email: f.email,
+        phone: f.phone,
         manufacturersByGearType: Object.keys(mbt).length > 0 ? mbt : undefined,
       }
     },
@@ -165,20 +165,43 @@ export function EquipmentProfileForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Business Details */}
       <GlassCard padding="lg">
+        <FormSectionHeader label="Business Details" />
         <div className="space-y-4">
-          <ProfileBasicInfo
-            nameLabel="Business Name"
-            namePlaceholder="e.g. Phuket Gear Rental"
-            nameValue={form.name}
-            onNameChange={(val) => setField('name', val)}
-            nameError={errors.name}
-            locationValue={form.location}
-            onLocationChange={(loc) => setField('location', loc)}
-            locationError={errors.location}
-            phoneValue={form.contactPhone}
-            onPhoneChange={(val) => setField('contactPhone', val)}
-            phoneError={errors.contactPhone}
-          />
+          <div className="max-w-sm">
+            <GlassInput
+              label="Business Name"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+              placeholder="e.g. Phuket Gear Rental"
+              error={errors.name}
+            />
+          </div>
+          <div className="max-w-md">
+            <LocationPicker
+              label="Location"
+              value={form.location}
+              onChange={(loc) => setField('location', loc)}
+              error={errors.location}
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <GlassInput
+              label="Contact Email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setField('email', e.target.value)}
+              placeholder="you@example.com"
+              error={errors.email}
+            />
+            <GlassInput
+              label="Contact Phone"
+              type="tel"
+              value={form.phone}
+              onChange={(e) => setField('phone', e.target.value)}
+              placeholder="+66 81 234 5678"
+              error={errors.phone}
+            />
+          </div>
         </div>
       </GlassCard>
 
@@ -237,7 +260,7 @@ export function EquipmentProfileForm() {
       </GlassCard>
 
       {serverError && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

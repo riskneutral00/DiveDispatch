@@ -99,8 +99,8 @@ export const PROFILE_FIELDS: FieldConfig = {
   name: NAME_MAX,
   placeName: NAME_MAX,
   country: SHORT_TEXT_MAX,
-  contactEmail: EMAIL_MAX,
-  contactPhone: PHONE_MAX,
+  email: EMAIL_MAX,
+  phone: PHONE_MAX,
 }
 
 export const CUSTOMER_FIELDS: FieldConfig = {
