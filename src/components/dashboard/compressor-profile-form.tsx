@@ -66,22 +66,22 @@ export function CompressorProfileForm() {
   const create = useMutation(api.compressors.create)
   const update = useMutation(api.compressors.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
-      name: p.name,
+      name: p.name as string,
       location: {
         placeName: p.placeName,
         country: p.country,
         lat: p.lat,
         lng: p.lng,
-        placeId: p.placeId ?? undefined,
+        placeId: (p.placeId ?? undefined) as string | undefined,
       } as LocationValue,
-      contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
+      contactEmail: p.contactEmail as string,
+      contactPhone: p.contactPhone as string,
       gasMixes: (p.gasMixes ?? []) as GasMix[],
     }),
     fromMe: (defaults, initial) => ({

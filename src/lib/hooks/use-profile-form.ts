@@ -5,12 +5,14 @@ import type { z } from 'zod'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyProfile = Record<string, any>
+type ProfileRecord = Record<string, unknown>
 
-export interface UseProfileFormOptions<TForm extends Record<string, unknown>> {
+export interface UseProfileFormOptions<
+  TForm extends Record<string, unknown>,
+  TPayload = Record<string, unknown>,
+> {
   /** Convex query result — undefined while loading, null if no profile exists */
-  profile: AnyProfile | null | undefined
+  profile: ProfileRecord | null | undefined
   /** Optional user record for pre-filling defaults on first create */
   me?: { businessName?: string; email?: string; customerLanguages?: string[]; defaultLocation?: string; defaultContactEmail?: string; defaultContactPhone?: string } | null | undefined
   /** Zod schema for validation */
@@ -18,19 +20,17 @@ export interface UseProfileFormOptions<TForm extends Record<string, unknown>> {
   /** Default form values */
   defaults: TForm
   /** Map profile data → form state (called once when profile loads) */
-  fromProfile: (profile: AnyProfile) => TForm
+  fromProfile: (profile: ProfileRecord) => TForm
   /** Map form state → mutation payload (called on submit) */
-  toPayload: (form: TForm) => Record<string, unknown>
+  toPayload: (form: TForm) => TPayload
   /** Create mutation */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  create: (payload: any) => Promise<unknown>
+  create: (payload: TPayload) => Promise<unknown>
   /** Update mutation */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  update: (payload: any) => Promise<unknown>
+  update: (payload: TPayload) => Promise<unknown>
   /** Called after successful save */
   onSaved?: () => void
   /** Optional: pre-fill from `me` when no profile exists */
-  fromMe?: (me: NonNullable<UseProfileFormOptions<TForm>['me']>, defaults: TForm) => TForm
+  fromMe?: (me: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>, defaults: TForm) => TForm
 }
 
 export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
@@ -60,8 +60,11 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 
-export function useProfileForm<TForm extends Record<string, unknown>>(
-  options: UseProfileFormOptions<TForm>,
+export function useProfileForm<
+  TForm extends Record<string, unknown>,
+  TPayload = Record<string, unknown>,
+>(
+  options: UseProfileFormOptions<TForm, TPayload>,
 ): UseProfileFormReturn<TForm> {
   const { profile, me, schema, defaults, fromProfile, toPayload, create, update, onSaved, fromMe } = options
 

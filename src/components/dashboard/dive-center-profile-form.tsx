@@ -66,28 +66,31 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile: existing,
     me,
     schema: formSchema,
     defaults: INITIAL_FORM,
-    fromProfile: (p) => ({
-      name: p.name,
-      location: {
-        placeName: p.placeName,
-        country: p.country,
-        lat: p.lat,
-        lng: p.lng,
-        placeId: p.placeId ?? undefined,
-      } as LocationValue,
-      contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
-      associations: p.associations,
-      owDays: p.bookingPreferences?.owDays?.toString() ?? '',
-      aowDays: p.bookingPreferences?.aowDays?.toString() ?? '',
-      oaDays: p.bookingPreferences?.oaDays?.toString() ?? '',
-      aowSpecialties: [...new Set([...MANDATORY_AOW_SPECIALTIES, ...(p.bookingPreferences?.aowSpecialties ?? [])])],
-    }),
+    fromProfile: (p) => {
+      const prefs = p.bookingPreferences as { owDays?: number; aowDays?: number; oaDays?: number; aowSpecialties?: string[] } | undefined
+      return {
+        name: p.name as string,
+        location: {
+          placeName: p.placeName,
+          country: p.country,
+          lat: p.lat,
+          lng: p.lng,
+          placeId: (p.placeId ?? undefined) as string | undefined,
+        } as LocationValue,
+        contactEmail: p.contactEmail as string,
+        contactPhone: p.contactPhone as string,
+        associations: p.associations as { agency: string; number: string }[],
+        owDays: prefs?.owDays?.toString() ?? '',
+        aowDays: prefs?.aowDays?.toString() ?? '',
+        oaDays: prefs?.oaDays?.toString() ?? '',
+        aowSpecialties: [...new Set([...MANDATORY_AOW_SPECIALTIES, ...(prefs?.aowSpecialties ?? [])])],
+      }
+    },
     fromMe: (u, defaults) => ({
       ...defaults,
       name: u.businessName ?? '',

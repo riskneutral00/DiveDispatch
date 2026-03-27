@@ -124,24 +124,27 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
   const create = useMutation(api.instructors.create)
   const update = useMutation(api.instructors.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
-    fromProfile: (p) => ({
-      name: p.name,
-      location: {
-        placeName: p.placeName,
-        country: p.country,
-        lat: p.lat,
-        lng: p.lng,
-        placeId: p.placeId ?? undefined,
-      } as LocationValue,
-      contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
-      credential: p.credential.length > 0 ? p.credential : [emptyCredential()],
-    }),
+    fromProfile: (p) => {
+      const cred = p.credential as { agency: string; level: string; agencyID: string; courses: string[] }[]
+      return {
+        name: p.name as string,
+        location: {
+          placeName: p.placeName,
+          country: p.country,
+          lat: p.lat,
+          lng: p.lng,
+          placeId: (p.placeId ?? undefined) as string | undefined,
+        } as LocationValue,
+        contactEmail: p.contactEmail as string,
+        contactPhone: p.contactPhone as string,
+        credential: cred.length > 0 ? cred : [emptyCredential()],
+      }
+    },
     fromMe: (defaults, initial) => ({
       ...initial,
       contactEmail: defaults.defaultContactEmail ?? '',

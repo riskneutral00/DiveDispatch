@@ -6,7 +6,8 @@
  * state and the baseline snapshot taken when the form initializes.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, expectTypeOf } from 'vitest'
+import type { UseProfileFormOptions } from '../use-profile-form'
 
 // ── Simulate the isDirty logic from the hook ─────────────────────────────────
 
@@ -79,5 +80,33 @@ describe('useProfileForm isDirty', () => {
   it('returns false when field is changed back to original value', () => {
     const current = { ...baseline, contactEmail: 'hug@ocean.com' }
     expect(computeIsDirty(current, baseline)).toBe(false)
+  })
+})
+
+// ── Type-safety tests ─────────────────────────────────────────────────────────
+
+describe('useProfileForm type safety', () => {
+  type TestForm = { name: string; age: number }
+  type TestPayload = { name: string; age: number; slug: string }
+
+  it('profile type is Record<string, unknown>, not Record<string, any>', () => {
+    type Opts = UseProfileFormOptions<TestForm, TestPayload>
+    expectTypeOf<Opts['profile']>().toEqualTypeOf<Record<string, unknown> | null | undefined>()
+  })
+
+  it('create and update accept TPayload, not any', () => {
+    type Opts = UseProfileFormOptions<TestForm, TestPayload>
+    expectTypeOf<Opts['create']>().toEqualTypeOf<(payload: TestPayload) => Promise<unknown>>()
+    expectTypeOf<Opts['update']>().toEqualTypeOf<(payload: TestPayload) => Promise<unknown>>()
+  })
+
+  it('toPayload returns TPayload, tying it to create/update', () => {
+    type Opts = UseProfileFormOptions<TestForm, TestPayload>
+    expectTypeOf<Opts['toPayload']>().toEqualTypeOf<(form: TestForm) => TestPayload>()
+  })
+
+  it('fromProfile receives Record<string, unknown>, not Record<string, any>', () => {
+    type Opts = UseProfileFormOptions<TestForm, TestPayload>
+    expectTypeOf<Opts['fromProfile']>().toEqualTypeOf<(profile: Record<string, unknown>) => TestForm>()
   })
 })

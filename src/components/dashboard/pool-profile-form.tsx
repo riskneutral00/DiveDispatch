@@ -58,22 +58,22 @@ function parseNumber(raw: string, isInt: boolean): number {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function poolFromProfile(p: Record<string, any>): PoolFormState {
+export function poolFromProfile(p: Record<string, unknown>): PoolFormState {
   return {
-    name: p.name,
+    name: p.name as string,
     location: {
       placeName: p.placeName,
       country: p.country,
       lat: p.lat,
       lng: p.lng,
-      placeId: p.placeId ?? undefined,
+      placeId: (p.placeId ?? undefined) as string | undefined,
     } as LocationValue,
-    contactEmail: p.contactEmail ?? '',
-    contactPhone: p.contactPhone ?? '',
-    maxDepth: p.maxDepth ?? 0,
-    maxCapacity: p.maxCapacity ?? 0,
-    confinedCapable: p.confinedCapable ?? false,
-    openWaterCapable: p.openWaterCapable ?? false,
+    contactEmail: (p.contactEmail as string) ?? '',
+    contactPhone: (p.contactPhone as string) ?? '',
+    maxDepth: (p.maxDepth as number) ?? 0,
+    maxCapacity: (p.maxCapacity as number) ?? 0,
+    confinedCapable: (p.confinedCapable as boolean) ?? false,
+    openWaterCapable: (p.openWaterCapable as boolean) ?? false,
   }
 }
 
@@ -110,7 +110,7 @@ export function PoolProfileForm() {
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<PoolFormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: poolSchema,

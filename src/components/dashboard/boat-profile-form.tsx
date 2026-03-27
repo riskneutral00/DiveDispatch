@@ -122,34 +122,37 @@ export function BoatProfileForm() {
   const create = useMutation(api.boats.create)
   const update = useMutation(api.boats.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileZod,
     defaults: INITIAL_FORM,
-    fromProfile: (p) => ({
-      name: p.name,
-      location: {
-        placeName: p.placeName,
-        country: p.country,
-        lat: p.lat,
-        lng: p.lng,
-        placeId: p.placeId ?? undefined,
-      } as LocationValue,
-      contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
-      fleet:
-        p.fleet.length > 0
-          ? p.fleet.map((f: Record<string, unknown>) => ({
-              boatName: f.boatName as string,
-              maxPax: String(f.maxPax),
-              minPax: f.minPax != null ? String(f.minPax) : '',
-              boatType: f.boatType as BoatType,
-              routes: (f.routes as RouteState[] | undefined) ?? [],
-              cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
-            }))
-          : [emptyFleet()],
-    }),
+    fromProfile: (p) => {
+      const fleet = p.fleet as Record<string, unknown>[]
+      return {
+        name: p.name as string,
+        location: {
+          placeName: p.placeName,
+          country: p.country,
+          lat: p.lat,
+          lng: p.lng,
+          placeId: (p.placeId ?? undefined) as string | undefined,
+        } as LocationValue,
+        contactEmail: p.contactEmail as string,
+        contactPhone: p.contactPhone as string,
+        fleet:
+          fleet.length > 0
+            ? fleet.map((f) => ({
+                boatName: f.boatName as string,
+                maxPax: String(f.maxPax),
+                minPax: f.minPax != null ? String(f.minPax) : '',
+                boatType: f.boatType as BoatType,
+                routes: (f.routes as RouteState[] | undefined) ?? [],
+                cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
+              }))
+            : [emptyFleet()],
+      }
+    },
     fromMe: (defaults, initial) => ({
       ...initial,
       contactEmail: defaults.defaultContactEmail ?? '',
@@ -161,7 +164,7 @@ export function BoatProfileForm() {
         boatName: v.boatName,
         maxPax: parseOptionalInt(v.maxPax) ?? 0,
         minPax: parseOptionalInt(v.minPax),
-        boatType: v.boatType,
+        boatType: v.boatType as BoatType,
         routes: v.routes.length > 0 ? v.routes : undefined,
         cutoffHours: parseOptionalInt(v.cutoffHours),
       }))

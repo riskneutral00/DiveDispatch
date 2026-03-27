@@ -57,30 +57,31 @@ export function EquipmentProfileForm() {
   const create = useMutation(api.equipment.create)
   const update = useMutation(api.equipment.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<FormState>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
       const parsed: Partial<Record<GearType, string[]>> = {}
-      if (p.manufacturersByGearType) {
+      const mbt = p.manufacturersByGearType as Record<string, string[]> | undefined
+      if (mbt) {
         for (const gt of GEAR_TYPES) {
-          const mfrs = p.manufacturersByGearType[gt]
+          const mfrs = mbt[gt]
           if (mfrs && mfrs.length > 0) parsed[gt] = mfrs
         }
       }
       return {
-        name: p.name,
+        name: p.name as string,
         location: {
           placeName: p.placeName,
           country: p.country,
           lat: p.lat,
           lng: p.lng,
-          placeId: p.placeId ?? undefined,
+          placeId: (p.placeId ?? undefined) as string | undefined,
         } as LocationValue,
-        contactEmail: p.contactEmail,
-        contactPhone: p.contactPhone,
+        contactEmail: p.contactEmail as string,
+        contactPhone: p.contactPhone as string,
         manufacturersByGearType: parsed,
       }
     },

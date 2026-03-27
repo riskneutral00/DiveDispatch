@@ -139,12 +139,12 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm<ProfileFormData>({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
-    fromProfile: (p: Record<string, unknown>) => {
+    fromProfile: (p) => {
       const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; contactEmail: string; contactPhone: string; associations: AssociationData[]; defaultReferralMode: 'independent' | 'referral' }
       return {
         name: prof.name,
@@ -179,8 +179,8 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         defaultReferralMode: f.defaultReferralMode,
       }
     },
-    create: create as unknown as (payload: Record<string, unknown>) => Promise<unknown>,
-    update: update as unknown as (payload: Record<string, unknown>) => Promise<unknown>,
+    create,
+    update,
   })
 
   const updateLocation = (index: number, updated: LocationValue | null) => {
