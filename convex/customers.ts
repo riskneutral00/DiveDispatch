@@ -1,10 +1,11 @@
-import { v } from 'convex/values'
+import { v, ConvexError } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, sanitizePassport, PORTAL_CONTACT_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
+import { ErrorCode } from './lib/errorCodes'
 
 // ── Returning customer lookup ────────────────────────────────────────────────
 
@@ -189,6 +190,18 @@ export async function _savePortalContactHandler(
   } else if (args.existingCustomerId) {
     // Returning customer confirmed — reuse existing record, update with latest data
     const existingId = args.existingCustomerId as Id<'customers'>
+
+    // DD-151: Validate existingCustomerId ownership to prevent IDOR
+    const existingCustomer = await ctx.db.get(existingId)
+    if (!existingCustomer) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+    // Verify the customer's email matches the contact data being submitted
+    // (the returning-customer flow is triggered by email match in checkReturningCustomer)
+    if (existingCustomer.email.toLowerCase() !== contactData.email.toLowerCase()) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
     await ctx.db.patch(existingId, contactData)
     await ctx.db.patch(profile._id, { customerId: existingId })
   } else {
