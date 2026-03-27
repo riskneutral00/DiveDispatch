@@ -17,7 +17,7 @@ async function seedInstructorUser(ctx: SeedCtx, slug: string) {
     lastName: 'Test',
     businessName: 'Test',
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,
@@ -53,7 +53,7 @@ async function seedCallerUser(ctx: SeedCtx, slug: string) {
     lastName: 'Caller',
     businessName: 'Dive Center',
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,

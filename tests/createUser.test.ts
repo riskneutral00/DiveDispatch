@@ -4,7 +4,7 @@ import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 
 describe('createUser mutation', () => {
-  it('persists phone and preferredChannel', async () => {
+  it('persists phone', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
@@ -13,7 +13,6 @@ describe('createUser mutation', () => {
         role: 'DiveCenter',
         businessName: 'Test DC',
         phone: '+66123456789',
-        preferredChannel: 'WhatsApp',
       })
 
     await t.finishAllScheduledFunctions(vi.runAllTimers)
@@ -21,7 +20,6 @@ describe('createUser mutation', () => {
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.phone).toBe('+66123456789')
-    expect(user?.preferredChannel).toBe('WhatsApp')
   })
 
   it('persists explicit firstName, lastName, nickname', async () => {
@@ -46,7 +44,7 @@ describe('createUser mutation', () => {
     expect(user?.nickname).toBe('Captain Mike')
   })
 
-  it('defaults phone and preferredChannel to undefined when omitted', async () => {
+  it('defaults phone to undefined when omitted', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
     const userId = await t
@@ -61,7 +59,6 @@ describe('createUser mutation', () => {
 
     const user = await t.run(async (ctx) => ctx.db.get(userId))
     expect(user?.phone).toBeUndefined()
-    expect(user?.preferredChannel).toBeUndefined()
   })
 
   it('patches existing user with new fields on idempotent call', async () => {
@@ -84,7 +81,6 @@ describe('createUser mutation', () => {
       role: 'Agent',
       businessName: 'New Biz',
       phone: '+1234567890',
-      preferredChannel: 'LINE',
       nickname: 'Updated Nick',
     })
 
@@ -96,7 +92,6 @@ describe('createUser mutation', () => {
       .query(api.users.me, {})
     expect(user?.businessName).toBe('New Biz')
     expect(user?.phone).toBe('+1234567890')
-    expect(user?.preferredChannel).toBe('LINE')
     expect(user?.nickname).toBe('Updated Nick')
   })
 })

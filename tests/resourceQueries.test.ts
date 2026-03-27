@@ -17,7 +17,7 @@ async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
     lastName: 'Doe',
     businessName: 'Dive Pro',
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,

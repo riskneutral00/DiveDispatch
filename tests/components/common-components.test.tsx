@@ -77,7 +77,8 @@ describe('PillToggleGroup', () => {
     )
     fireEvent.click(screen.getByText('More…'))
     expect(screen.getByRole('checkbox', { name: 'Hidden' })).toBeTruthy()
-    expect(screen.queryByText('More…')).toBeNull()
+    // More… button stays visible (dropdown toggle, not inline expansion)
+    expect(screen.getByText('More…')).toBeTruthy()
   })
 })
 
@@ -114,10 +115,10 @@ describe('ItemCard', () => {
 // ── SaveButton ──────────────────────────────────────────────────────────────
 
 describe('SaveButton', () => {
-  it('shows Save Changes for update mode', async () => {
+  it('shows Save for update mode', async () => {
     const { SaveButton } = await import('@/components/common/save-button')
     render(<SaveButton saving={false} saved={false} isDirty={true} isUpdate={true} />)
-    expect(screen.getByText('Save Changes')).toBeTruthy()
+    expect(screen.getByText('Save')).toBeTruthy()
   })
 
   it('shows Create Profile for create mode', async () => {

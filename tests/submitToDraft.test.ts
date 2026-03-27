@@ -25,7 +25,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|instructor-1',
@@ -36,7 +36,7 @@ describe('submitToDraft', () => {
         lastName: 'One',
         businessName: 'Instructor Biz',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -116,7 +116,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -192,7 +192,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -269,7 +269,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -348,7 +348,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -495,7 +495,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('stakeholderBlockedDates', {
         ownerSlug: 'dc-test',
@@ -567,7 +567,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|instructor-1',
@@ -578,7 +578,7 @@ describe('submitToDraft', () => {
         lastName: 'One',
         businessName: 'Instructor Biz',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -683,7 +683,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -764,7 +764,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -844,7 +844,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -947,7 +947,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -1012,7 +1012,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const boatUnitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Boat',
@@ -1118,7 +1118,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const bookingId = await ctx.db.insert('bookings', {
         ownerId: 'dc-test',
@@ -1188,7 +1188,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('users', {
         tokenIdentifier: 'clerk|instructor-mix',
@@ -1199,7 +1199,7 @@ describe('submitToDraft', () => {
         lastName: 'Instructor',
         businessName: 'Mix Instructor Co',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const instructorUnitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Instructor',
@@ -1298,7 +1298,7 @@ describe('submitToDraft', () => {
         lastName: 'Test',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       const instructorUnitId = await ctx.db.insert('inventoryUnits', {
         resourceType: 'Instructor',
@@ -1698,7 +1698,7 @@ function makeBoatDcUser(slug: string) {
     lastName: 'Test',
     businessName: `${slug} Business`,
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   }
 }
 

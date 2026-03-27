@@ -83,7 +83,7 @@ describe('StepBusinessInfo', () => {
           onChange={onChange}
         />,
       )
-      fireEvent.change(getByLabelText('Business name'), {
+      fireEvent.change(getByLabelText(/^Business name/), {
         target: { value: 'Scuba World' },
       })
       expect(onChange).toHaveBeenCalledWith({

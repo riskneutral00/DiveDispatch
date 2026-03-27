@@ -19,7 +19,7 @@ async function seedUser(ctx: unknown, slug = 'dc-test') {
     lastName: 'User',
     businessName: 'Test DC',
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
 }
 

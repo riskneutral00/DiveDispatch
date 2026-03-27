@@ -34,7 +34,7 @@ async function seedUser(
     lastName: 'Test',
     businessName: `${slug} Business`,
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
 }
 

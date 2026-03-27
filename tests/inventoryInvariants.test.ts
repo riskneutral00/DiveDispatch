@@ -30,7 +30,7 @@ function makeDCUser() {
     lastName: 'Inv',
     businessName: 'Invariant DC',
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   }
 }
 

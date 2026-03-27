@@ -19,7 +19,6 @@ const emptyValues: AboutYouValues = {
   lastName: '',
   nickname: '',
   phone: '',
-  preferredChannel: null,
 }
 
 describe('StepAboutYou', () => {
@@ -92,38 +91,10 @@ describe('StepAboutYou', () => {
     const { getByLabelText } = render(
       <StepAboutYou {...defaultProps} onChange={onChange} />,
     )
-    fireEvent.change(getByLabelText('First name'), { target: { value: 'Mike' } })
+    fireEvent.change(getByLabelText(/^First name/), { target: { value: 'Mike' } })
     expect(onChange).toHaveBeenCalledWith({
       ...emptyValues,
       firstName: 'Mike',
-    })
-  })
-
-  it('toggles communication channel selection', () => {
-    const onChange = vi.fn()
-    const { getByText } = render(
-      <StepAboutYou {...defaultProps} onChange={onChange} />,
-    )
-    fireEvent.click(getByText('LINE'))
-    expect(onChange).toHaveBeenCalledWith({
-      ...emptyValues,
-      preferredChannel: 'LINE',
-    })
-  })
-
-  it('deselects communication channel when clicked again', () => {
-    const onChange = vi.fn()
-    const { getByText } = render(
-      <StepAboutYou
-        {...defaultProps}
-        values={{ ...emptyValues, preferredChannel: 'LINE' }}
-        onChange={onChange}
-      />,
-    )
-    fireEvent.click(getByText('LINE'))
-    expect(onChange).toHaveBeenCalledWith({
-      ...emptyValues,
-      preferredChannel: null,
     })
   })
 })

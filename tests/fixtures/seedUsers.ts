@@ -33,7 +33,7 @@ export async function seedUser(
     lastName: overrides.lastName ?? 'User',
     businessName: overrides.businessName ?? 'Test Business',
     isSeeded: true,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
   // Seed matching userRoles entry so checkHasRole() works
   if (!overrides.skipUserRoles) {

@@ -39,23 +39,14 @@ afterEach(() => {
 describe('useLocaleSync', () => {
   it('sets cookie from user.appLanguage when supported', () => {
     mockCurrentUser.mockReturnValue({
-      user: { appLanguage: 'th', preferredLocale: 'fr' },
+      user: { appLanguage: 'th' },
       isLoading: false,
     })
     renderHook(() => useLocaleSync())
     expect(getCookie('dd-locale')).toBe('th')
   })
 
-  it('falls back to preferredLocale when appLanguage is absent', () => {
-    mockCurrentUser.mockReturnValue({
-      user: { preferredLocale: 'fr' },
-      isLoading: false,
-    })
-    renderHook(() => useLocaleSync())
-    expect(getCookie('dd-locale')).toBe('fr')
-  })
-
-  it('falls back to DEFAULT_LOCALE when both are absent', () => {
+  it('falls back to DEFAULT_LOCALE when appLanguage is absent', () => {
     mockCurrentUser.mockReturnValue({
       user: { slug: 'test-user' },
       isLoading: false,

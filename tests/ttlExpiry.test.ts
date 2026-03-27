@@ -381,7 +381,7 @@ describe('expireBooking', () => {
         lastName: 'One',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('bookings', {
         ownerId: 'dc-1',
@@ -436,7 +436,7 @@ describe('expireBooking', () => {
         lastName: 'One',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       await ctx.db.insert('userRoles', {
         userId,
@@ -888,7 +888,7 @@ describe('checkAndExpireBooking', () => {
         lastName: 'Truder',
         businessName: 'Evil Corp',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       return ctx.db.insert('bookings', {
@@ -934,7 +934,7 @@ describe('checkAndExpireBooking', () => {
         lastName: 'DC',
         businessName: 'Owner DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       return ctx.db.insert('bookings', {
@@ -981,7 +981,7 @@ describe('checkAndExpireBooking', () => {
         lastName: 'DC2',
         businessName: 'Owner DC2',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       return ctx.db.insert('bookings', {
@@ -1292,7 +1292,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
           lastName: 'One',
           businessName: 'Inst One Diving',
           isSeeded: false,
-          preferredLocale: 'en',
+          appLanguage: 'en',
         })
 
         // Inventory unit owned by instructor
@@ -1435,7 +1435,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         lastName: 'Two',
         businessName: 'Inst Two Diving',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       const unitId = await ctx.db.insert('inventoryUnits', {
@@ -1546,7 +1546,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
         lastName: 'One',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       // Inventory unit owned by a different stakeholder (instructor)
@@ -1773,7 +1773,7 @@ describe('token invalidation', () => {
         lastName: 'DC',
         businessName: 'Test DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
       return makePortalFixture(ctx, { usedAt: Date.now() - 1000 })
     })
@@ -1823,7 +1823,7 @@ describe('token invalidation', () => {
         lastName: 'DC',
         businessName: 'Regen DC',
         isSeeded: false,
-        preferredLocale: 'en',
+        appLanguage: 'en',
       })
 
       const bookingId = await ctx.db.insert('bookings', {

@@ -15,7 +15,7 @@ async function seedUser(ctx: MutationCtx, slug: string) {
     lastName: 'Test',
     businessName: `${slug} Business`,
     isSeeded: false,
-    preferredLocale: 'en',
+    appLanguage: 'en',
   })
   await ctx.db.insert('userRoles', {
     userId,
