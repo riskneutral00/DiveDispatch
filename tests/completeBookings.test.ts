@@ -411,10 +411,8 @@ describe('completeBookings', () => {
         }
       })
 
-      const result = await t.mutation(internal.bookings.status.completeBookings, {})
-      expect(result).toEqual({ completed: 100, more: true })
-
-      // The continuation should complete the remaining 1
+      // Use monitored wrapper which handles continuation scheduling (DD-158)
+      await t.mutation(internal.bookings.status.completeBookingsWithMonitoring, {})
       await t.finishAllScheduledFunctions(vi.runAllTimers)
 
       const remaining = await t.run(async (ctx) =>
@@ -470,10 +468,8 @@ describe('completeBookings', () => {
         }
       })
 
-      const result = await t.mutation(internal.bookings.status.completeBookings, {})
-      expect(result).toEqual({ completed: 100, more: true })
-
-      // Let continuations run to completion
+      // Use monitored wrapper which handles continuation scheduling (DD-158)
+      await t.mutation(internal.bookings.status.completeBookingsWithMonitoring, {})
       await t.finishAllScheduledFunctions(vi.runAllTimers)
 
       const completed = await t.run(async (ctx) =>
@@ -539,7 +535,7 @@ describe('completeBookings', () => {
         }
       })
 
-      await t.mutation(internal.bookings.status.completeBookings, {})
+      await t.mutation(internal.bookings.status.completeBookingsWithMonitoring, {})
       await t.finishAllScheduledFunctions(vi.runAllTimers)
 
       // After completion, calling again should find nothing

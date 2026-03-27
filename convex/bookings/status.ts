@@ -250,11 +250,7 @@ async function runCompletionBatch(
 export const completeBookings = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ completed: number; more: boolean }> => {
-    const result = await runCompletionBatch(ctx)
-    if (result.more) {
-      await ctx.scheduler.runAfter(0, internal.bookings.status.completeBookings, {})
-    }
-    return result
+    return runCompletionBatch(ctx)
   },
 })
 
@@ -269,7 +265,12 @@ export const completeBookingsWithMonitoring = internalMutation({
   args: {},
   handler: async (ctx): Promise<void> => {
     try {
-      await runCompletionBatch(ctx)
+      const result = await runCompletionBatch(ctx)
+
+      // Schedule continuation if more bookings remain (DD-158)
+      if (result.more) {
+        await ctx.scheduler.runAfter(0, internal.bookings.status.completeBookingsWithMonitoring, {})
+      }
 
       // Log success
       await ctx.db.insert('cronRunLog', {
