@@ -106,14 +106,14 @@ export function LanguagePicker({
   return (
     <div className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}>
       {/* Search input with counter */}
-      <div className="relative">
+      <div className="relative max-w-[284px]">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
           placeholder="Search languages…"
-          className="glass glass-field w-full text-sm py-2.5 pl-3 pr-12 placeholder:opacity-50"
+          className="glass glass-field w-full text-sm py-2 pl-3 pr-12 placeholder:opacity-50"
           style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
         />
         <span

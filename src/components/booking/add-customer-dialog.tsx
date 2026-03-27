@@ -65,17 +65,21 @@ export function AddCustomerDialog({
     <GlassDialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
         {/* Name */}
-        <GlassInput
-          label="Full name"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value)
-            if (nameError) setNameError('')
-          }}
-          placeholder="e.g. Sara Kim"
-          error={nameError}
-          autoFocus
-        />
+        <div className="max-w-sm">
+          <GlassInput
+            label="Full name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (nameError) setNameError('')
+            }}
+            placeholder="e.g. Sara Kim"
+            error={nameError}
+            autoFocus
+          />
+        </div>
+
+        <hr className="form-divider" />
 
         {/* Contact method */}
         <div className="flex flex-col gap-2">
@@ -109,6 +113,8 @@ export function AddCustomerDialog({
             type={contactType === 'email' ? 'email' : 'text'}
           />
         </div>
+
+        <hr className="form-divider" />
 
         {/* Languages */}
         <div className="flex flex-col gap-2">

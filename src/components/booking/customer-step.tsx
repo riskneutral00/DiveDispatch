@@ -156,6 +156,8 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
           )}
         </div>
 
+        <hr className="form-divider" />
+
         {/* Contact method */}
         <div className="flex flex-col gap-1.5">
           <label
@@ -194,6 +196,8 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
           </div>
           <ContactValidationHint contactType={contactType} value={getContactValue()} />
         </div>
+
+        <hr className="form-divider" />
 
         {/* Languages */}
         <div className="flex flex-col gap-1.5">

@@ -312,6 +312,8 @@ export function PreferencesEditor() {
               </div>
             </GlassCard>
 
+            <hr className="form-divider" />
+
             <GlassCard padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -378,6 +380,8 @@ export function PreferencesEditor() {
               </div>
             </GlassCard>
 
+            <hr className="form-divider" />
+
             <GlassCard padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -408,6 +412,8 @@ export function PreferencesEditor() {
               compressorSlugs={form.preferredCompressorSlugs ?? []}
             />
 
+            <hr className="form-divider" />
+
             <GlassCard padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -423,6 +429,8 @@ export function PreferencesEditor() {
                 onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
               />
             </GlassCard>
+
+            <hr className="form-divider" />
 
             <GlassCard padding="md">
               <h2
@@ -440,6 +448,8 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
+            <hr className="form-divider" />
+
             <GlassCard padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -456,6 +466,8 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
+            <hr className="form-divider" />
+
             <GlassCard padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4"
@@ -471,6 +483,8 @@ export function PreferencesEditor() {
                 onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
               />
             </GlassCard>
+
+            <hr className="form-divider" />
 
             <GlassCard padding="md">
               <h2

@@ -173,23 +173,25 @@ export function AccountForm() {
             />
           </div>
 
-          <GlassInput
-            label="Nickname"
-            value={values.nickname}
-            onChange={(e) => set('nickname', e.target.value)}
-            placeholder="What people call you"
-            autoComplete="nickname"
-          />
-
-          {showBusinessName && (
+          <div className={showBusinessName ? 'grid grid-cols-2 gap-4' : undefined}>
             <GlassInput
-              label="Business name"
-              value={values.businessName}
-              onChange={(e) => set('businessName', e.target.value)}
-              autoComplete="organization"
-              required
+              label="Nickname"
+              value={values.nickname}
+              onChange={(e) => set('nickname', e.target.value)}
+              placeholder="What people call you"
+              autoComplete="nickname"
             />
-          )}
+
+            {showBusinessName && (
+              <GlassInput
+                label="Business name"
+                value={values.businessName}
+                onChange={(e) => set('businessName', e.target.value)}
+                autoComplete="organization"
+                required
+              />
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
@@ -211,6 +213,8 @@ export function AccountForm() {
         </div>
       </GlassCard>
 
+      <hr className="form-divider" />
+
       <GlassCard>
         <div className="flex flex-col gap-4">
           <p
@@ -223,12 +227,14 @@ export function AccountForm() {
             These values pre-fill new role profiles. Each role can override them.
           </p>
 
-          <GlassInput
-            label="Default location"
-            value={values.defaultLocation}
-            onChange={(e) => set('defaultLocation', e.target.value)}
-            placeholder="e.g. Koh Tao, Thailand"
-          />
+          <div className="max-w-md">
+            <GlassInput
+              label="Default location"
+              value={values.defaultLocation}
+              onChange={(e) => set('defaultLocation', e.target.value)}
+              placeholder="e.g. Koh Tao, Thailand"
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
@@ -250,6 +256,8 @@ export function AccountForm() {
           </div>
         </div>
       </GlassCard>
+
+      <hr className="form-divider" />
 
       <GlassCard>
         <div className="flex flex-col gap-5">

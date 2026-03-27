@@ -41,10 +41,11 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
           .filter((l): l is NonNullable<typeof l> => l !== undefined)
           .map((l) => ({ code: l.code, label: l.label }))
       )
-      setOwDays(existing?.bookingPreferences?.owDays?.toString() ?? '')
-      setAowDays(existing?.bookingPreferences?.aowDays?.toString() ?? '')
-      setOaDays(existing?.bookingPreferences?.oaDays?.toString() ?? '')
-      setAowSpecialties([...new Set([...MANDATORY_AOW_SPECIALTIES, ...(existing?.bookingPreferences?.aowSpecialties ?? [])])])
+      const firstAssoc = existing?.associations?.[0]
+      setOwDays(firstAssoc?.owDays?.toString() ?? '')
+      setAowDays(firstAssoc?.aowDays?.toString() ?? '')
+      setOaDays(firstAssoc?.oaDays?.toString() ?? '')
+      setAowSpecialties([...new Set([...MANDATORY_AOW_SPECIALTIES, ...(firstAssoc?.selectedSpecialties ?? [])])])
       setInitialized(true)
     }
   }, [existing, me, initialized])
@@ -66,10 +67,18 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
       const hasPrefs = owDaysNum !== undefined || aowDaysNum !== undefined || oaDaysNum !== undefined || specialties !== undefined
 
+      // Patch the first association with updated preferences
+      const currentAssocs = existing?.associations ?? []
+      const firstAssoc = currentAssocs[0] ?? { agencyCode: 'PADI', memberId: '' }
+      const patchedFirst = {
+        ...firstAssoc,
+        ...(owDaysNum !== undefined ? { owDays: owDaysNum } : {}),
+        ...(aowDaysNum !== undefined ? { aowDays: aowDaysNum } : {}),
+        ...(oaDaysNum !== undefined ? { oaDays: oaDaysNum } : {}),
+        ...(specialties !== undefined ? { selectedSpecialties: specialties } : {}),
+      }
       await update({
-        bookingPreferences: hasPrefs
-          ? { owDays: owDaysNum, aowDays: aowDaysNum, oaDays: oaDaysNum, aowSpecialties: specialties }
-          : undefined,
+        associations: [patchedFirst, ...currentAssocs.slice(1)],
       })
       onSaved()
     } catch (err) {

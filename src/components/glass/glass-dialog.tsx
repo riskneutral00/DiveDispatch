@@ -3,6 +3,27 @@
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
+// ── Ref-counted backdrop content fade ────────────────────────────────────────
+// When any GlassDialog is open, [data-dialog-open] is set on <html> so CSS can
+// fade .app-shell content to zero, revealing the brand background (Glass Air).
+// Ref-counted so nested dialogs don't flash content on inner close.
+
+let dialogOpenCount = 0;
+
+function incrementDialogOpen() {
+  dialogOpenCount++;
+  document.documentElement.setAttribute("data-dialog-open", "");
+}
+
+function decrementDialogOpen() {
+  dialogOpenCount = Math.max(0, dialogOpenCount - 1);
+  if (dialogOpenCount === 0) {
+    document.documentElement.removeAttribute("data-dialog-open");
+  }
+}
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
 interface GlassDialogProps {
   open: boolean;
   onClose: () => void;
@@ -36,6 +57,7 @@ export function GlassDialog({
   const titleId = useId();
   const descId = useId();
 
+  // Manage native <dialog> open/close
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -44,6 +66,13 @@ export function GlassDialog({
     } else if (!open && dialog.open) {
       dialog.close();
     }
+  }, [open]);
+
+  // Ref-counted backdrop content fade
+  useEffect(() => {
+    if (!open) return;
+    incrementDialogOpen();
+    return () => decrementDialogOpen();
   }, [open]);
 
   // Close on backdrop click

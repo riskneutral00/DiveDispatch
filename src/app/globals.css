@@ -229,6 +229,22 @@ body {
 .app-shell {
   position: relative;
   z-index: 2;
+  transition: opacity 0.25s ease;
+}
+
+/* Glass Air: fade page content when a dialog is open, revealing the brand background */
+html[data-dialog-open] .app-shell {
+  opacity: 0;
+}
+
+/* ── Form divider ────────────────────────────────────────────────────────────
+   Thin 1px line between form sections (Apple Settings style).
+   ──────────────────────────────────────────────────────────────────────────── */
+.form-divider {
+  border: none;
+  border-top: 1px solid var(--color-glass-border);
+  opacity: 0.5;
+  margin: 0;
 }
 
 /* ── Glass utility classes ───────────────────────────────────────────────────
