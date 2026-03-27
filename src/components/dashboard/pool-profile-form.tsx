@@ -57,7 +57,6 @@ function parseNumber(raw: string, isInt: boolean): number {
   return isNaN(parsed) ? 0 : parsed
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function poolFromProfile(p: Record<string, unknown>): PoolFormState {
   return {
     name: p.name as string,
