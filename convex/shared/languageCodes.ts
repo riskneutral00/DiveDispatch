@@ -8,21 +8,23 @@
 
 import { log } from '../lib/logger'
 
-/** All valid language codes (country-code format). */
+/** All valid language codes (ISO locale format). */
 export const VALID_LANGUAGE_CODES = new Set([
   // TOP languages
-  'GB', 'FR', 'DE', 'ES', 'IT', 'NO', 'RU', 'CN', 'HK', 'TH',
-  'JP', 'KR', 'ID', 'SA', 'IL',
+  'en-GB', 'fr-FR', 'de-DE', 'es-ES', 'it-IT', 'nb-NO', 'ru-RU', 'zh-CN',
+  'th-TH', 'ja-JP', 'ko-KR', 'id-ID', 'ar-SA', 'he-IL',
   // OTHER languages
-  'TW', 'BR', 'NL', 'SE', 'IN', 'MY', 'VN', 'PL', 'DK', 'FI',
-  'IS', 'CZ', 'TR', 'GR', 'HU', 'RO', 'UA', 'PH', 'MM', 'KH',
-  'BD', 'KE', 'ZA', 'HR', 'RS', 'SI', 'IR', 'PK', 'JM',
-  'LT', 'LV', 'EE', 'SK', 'BG', 'AL', 'BY', 'MK', 'MT', 'IE',
-  'CY', 'AD', 'FO', 'LU', 'EU',
-  'ET', 'SO', 'ZW', 'RW', 'CD', 'SN', 'MG', 'ER',
-  'NP', 'LK', 'LA', 'MN', 'UZ', 'KZ', 'AZ', 'GE', 'AM', 'AF',
-  'IQ', 'MR', 'ML',
-  'HT', 'PE', 'PY', 'NZ', 'WS', 'TO',
+  'zh-TW', 'pt-BR', 'nl-NL', 'sv-SE', 'hi-IN', 'ms-MY', 'vi-VN', 'pl-PL',
+  'da-DK', 'fi-FI', 'is-IS', 'cs-CZ', 'tr-TR', 'el-GR', 'hu-HU', 'ro-RO',
+  'uk-UA', 'fil-PH', 'my-MM', 'km-KH', 'bn-BD', 'sw-KE', 'af-ZA', 'hr-HR',
+  'sr-RS', 'sl-SI', 'fa-IR', 'ur-PK', 'jam-JM',
+  'lt-LT', 'lv-LV', 'et-EE', 'sk-SK', 'bg-BG', 'sq-AL', 'be-BY', 'mk-MK',
+  'mt-MT', 'ga-IE', 'cy-CY', 'ca-AD', 'fo-FO', 'lb-LU', 'eu-EU',
+  'am-ET', 'so-SO', 'sn-ZW', 'rw-RW', 'ln-CD', 'wo-SN', 'mg-MG', 'ti-ER',
+  'ne-NP', 'si-LK', 'lo-LA', 'mn-MN', 'uz-UZ', 'kk-KZ', 'az-AZ', 'ka-GE',
+  'hy-AM', 'ps-AF', 'ku-IQ', 'mr-MR', 'ml-ML',
+  'ht-HT', 'qu-PE', 'gn-PY', 'mi-NZ', 'sm-WS', 'to-TO',
+  'dv-MV',
 ])
 
 /**
@@ -35,7 +37,7 @@ export function validateLanguageCodes(codes: string[]): void {
   if (invalid.length > 0) {
     log.warn('Non-canonical language codes stored', {
       codes: invalid,
-      hint: "Expected country codes (e.g. 'GB', 'TH', 'CN'). Labels and ISO-639 codes still resolve via languageToCode() but are deprecated.",
+      hint: "Expected ISO locale codes (e.g. 'en-GB', 'th-TH', 'zh-CN'). Labels and ISO-639 codes still resolve via languageToCode() but are deprecated.",
     })
   }
 }

@@ -1,101 +1,101 @@
 const TOP_LANGUAGE_ENTRIES = [
-  { code: 'GB', label: 'English' },
-  { code: 'FR', label: 'French' },
-  { code: 'DE', label: 'German' },
-  { code: 'ES', label: 'Spanish' },
-  { code: 'IT', label: 'Italian' },
-  { code: 'NO', label: 'Norwegian' },
-  { code: 'RU', label: 'Russian' },
-  { code: 'CN', label: 'Mandarin' },
-  { code: 'TH', label: 'Thai' },
-  { code: 'JP', label: 'Japanese' },
-  { code: 'KR', label: 'Korean' },
-  { code: 'ID', label: 'Indonesian' },
-  { code: 'SA', label: 'Arabic' },
-  { code: 'IL', label: 'Hebrew' },
+  { code: 'en-GB', label: 'English' },
+  { code: 'fr-FR', label: 'French' },
+  { code: 'de-DE', label: 'German' },
+  { code: 'es-ES', label: 'Spanish' },
+  { code: 'it-IT', label: 'Italian' },
+  { code: 'nb-NO', label: 'Norwegian' },
+  { code: 'ru-RU', label: 'Russian' },
+  { code: 'zh-CN', label: 'Mandarin' },
+  { code: 'th-TH', label: 'Thai' },
+  { code: 'ja-JP', label: 'Japanese' },
+  { code: 'ko-KR', label: 'Korean' },
+  { code: 'id-ID', label: 'Indonesian' },
+  { code: 'ar-SA', label: 'Arabic' },
+  { code: 'he-IL', label: 'Hebrew' },
 ] as const
 
 const OTHER_LANGUAGE_ENTRIES = [
-  { code: 'TW', label: 'Chinese (Traditional)' },
-  { code: 'BR', label: 'Portuguese' },
-  { code: 'NL', label: 'Dutch' },
-  { code: 'SE', label: 'Swedish' },
-  { code: 'IN', label: 'Hindi' },
-  { code: 'MY', label: 'Malay' },
-  { code: 'VN', label: 'Vietnamese' },
-  { code: 'MV', label: 'Dhivehi' },
-  { code: 'PL', label: 'Polish' },
-  { code: 'DK', label: 'Danish' },
-  { code: 'FI', label: 'Finnish' },
-  { code: 'IS', label: 'Icelandic' },
-  { code: 'CZ', label: 'Czech' },
-  { code: 'TR', label: 'Turkish' },
-  { code: 'GR', label: 'Greek' },
-  { code: 'HU', label: 'Hungarian' },
-  { code: 'RO', label: 'Romanian' },
-  { code: 'UA', label: 'Ukrainian' },
-  { code: 'PH', label: 'Filipino' },
-  { code: 'MM', label: 'Burmese' },
-  { code: 'KH', label: 'Khmer' },
-  { code: 'BD', label: 'Bengali' },
-  { code: 'KE', label: 'Swahili' },
-  { code: 'ZA', label: 'Afrikaans' },
-  { code: 'HR', label: 'Croatian' },
-  { code: 'RS', label: 'Serbian' },
-  { code: 'SI', label: 'Slovenian' },
-  { code: 'IR', label: 'Farsi' },
-  { code: 'PK', label: 'Urdu' },
-  { code: 'JM', label: 'Jamaican Patois' },
+  { code: 'zh-TW', label: 'Chinese (Traditional)' },
+  { code: 'pt-BR', label: 'Portuguese' },
+  { code: 'nl-NL', label: 'Dutch' },
+  { code: 'sv-SE', label: 'Swedish' },
+  { code: 'hi-IN', label: 'Hindi' },
+  { code: 'ms-MY', label: 'Malay' },
+  { code: 'vi-VN', label: 'Vietnamese' },
+  { code: 'dv-MV', label: 'Dhivehi' },
+  { code: 'pl-PL', label: 'Polish' },
+  { code: 'da-DK', label: 'Danish' },
+  { code: 'fi-FI', label: 'Finnish' },
+  { code: 'is-IS', label: 'Icelandic' },
+  { code: 'cs-CZ', label: 'Czech' },
+  { code: 'tr-TR', label: 'Turkish' },
+  { code: 'el-GR', label: 'Greek' },
+  { code: 'hu-HU', label: 'Hungarian' },
+  { code: 'ro-RO', label: 'Romanian' },
+  { code: 'uk-UA', label: 'Ukrainian' },
+  { code: 'fil-PH', label: 'Filipino' },
+  { code: 'my-MM', label: 'Burmese' },
+  { code: 'km-KH', label: 'Khmer' },
+  { code: 'bn-BD', label: 'Bengali' },
+  { code: 'sw-KE', label: 'Swahili' },
+  { code: 'af-ZA', label: 'Afrikaans' },
+  { code: 'hr-HR', label: 'Croatian' },
+  { code: 'sr-RS', label: 'Serbian' },
+  { code: 'sl-SI', label: 'Slovenian' },
+  { code: 'fa-IR', label: 'Farsi' },
+  { code: 'ur-PK', label: 'Urdu' },
+  { code: 'jam-JM', label: 'Jamaican Patois' },
 
   // European
-  { code: 'LT', label: 'Lithuanian' },
-  { code: 'LV', label: 'Latvian' },
-  { code: 'EE', label: 'Estonian' },
-  { code: 'SK', label: 'Slovak' },
-  { code: 'BG', label: 'Bulgarian' },
-  { code: 'AL', label: 'Albanian' },
-  { code: 'BY', label: 'Belarusian' },
-  { code: 'MK', label: 'Macedonian' },
-  { code: 'MT', label: 'Maltese' },
-  { code: 'IE', label: 'Irish' },
-  { code: 'CY', label: 'Welsh' },
-  { code: 'AD', label: 'Catalan' },
-  { code: 'FO', label: 'Faroese' },
-  { code: 'LU', label: 'Luxembourgish' },
-  { code: 'EU', label: 'Basque' },
+  { code: 'lt-LT', label: 'Lithuanian' },
+  { code: 'lv-LV', label: 'Latvian' },
+  { code: 'et-EE', label: 'Estonian' },
+  { code: 'sk-SK', label: 'Slovak' },
+  { code: 'bg-BG', label: 'Bulgarian' },
+  { code: 'sq-AL', label: 'Albanian' },
+  { code: 'be-BY', label: 'Belarusian' },
+  { code: 'mk-MK', label: 'Macedonian' },
+  { code: 'mt-MT', label: 'Maltese' },
+  { code: 'ga-IE', label: 'Irish' },
+  { code: 'cy-CY', label: 'Welsh' },
+  { code: 'ca-AD', label: 'Catalan' },
+  { code: 'fo-FO', label: 'Faroese' },
+  { code: 'lb-LU', label: 'Luxembourgish' },
+  { code: 'eu-EU', label: 'Basque' },
 
   // African
-  { code: 'ET', label: 'Amharic' },
-  { code: 'SO', label: 'Somali' },
-  { code: 'ZW', label: 'Shona' },
-  { code: 'RW', label: 'Kinyarwanda' },
-  { code: 'CD', label: 'Lingala' },
-  { code: 'SN', label: 'Wolof' },
-  { code: 'MG', label: 'Malagasy' },
-  { code: 'ER', label: 'Tigrinya' },
+  { code: 'am-ET', label: 'Amharic' },
+  { code: 'so-SO', label: 'Somali' },
+  { code: 'sn-ZW', label: 'Shona' },
+  { code: 'rw-RW', label: 'Kinyarwanda' },
+  { code: 'ln-CD', label: 'Lingala' },
+  { code: 'wo-SN', label: 'Wolof' },
+  { code: 'mg-MG', label: 'Malagasy' },
+  { code: 'ti-ER', label: 'Tigrinya' },
 
   // Asian / Central Asian
-  { code: 'NP', label: 'Nepali' },
-  { code: 'LK', label: 'Sinhala' },
-  { code: 'LA', label: 'Lao' },
-  { code: 'MN', label: 'Mongolian' },
-  { code: 'UZ', label: 'Uzbek' },
-  { code: 'KZ', label: 'Kazakh' },
-  { code: 'AZ', label: 'Azerbaijani' },
-  { code: 'GE', label: 'Georgian' },
-  { code: 'AM', label: 'Armenian' },
-  { code: 'AF', label: 'Pashto' },
-  { code: 'IQ', label: 'Kurdish' },
-  { code: 'MR', label: 'Marathi' },
-  { code: 'ML', label: 'Malayalam' },
+  { code: 'ne-NP', label: 'Nepali' },
+  { code: 'si-LK', label: 'Sinhala' },
+  { code: 'lo-LA', label: 'Lao' },
+  { code: 'mn-MN', label: 'Mongolian' },
+  { code: 'uz-UZ', label: 'Uzbek' },
+  { code: 'kk-KZ', label: 'Kazakh' },
+  { code: 'az-AZ', label: 'Azerbaijani' },
+  { code: 'ka-GE', label: 'Georgian' },
+  { code: 'hy-AM', label: 'Armenian' },
+  { code: 'ps-AF', label: 'Pashto' },
+  { code: 'ku-IQ', label: 'Kurdish' },
+  { code: 'mr-MR', label: 'Marathi' },
+  { code: 'ml-ML', label: 'Malayalam' },
 
   // Americas / Pacific
-  { code: 'HT', label: 'Haitian Creole' },
-  { code: 'PE', label: 'Quechua' },
-  { code: 'PY', label: 'Guaraní' },
-  { code: 'NZ', label: 'Māori' },
-  { code: 'WS', label: 'Samoan' },
-  { code: 'TO', label: 'Tongan' },
+  { code: 'ht-HT', label: 'Haitian Creole' },
+  { code: 'qu-PE', label: 'Quechua' },
+  { code: 'gn-PY', label: 'Guaraní' },
+  { code: 'mi-NZ', label: 'Māori' },
+  { code: 'sm-WS', label: 'Samoan' },
+  { code: 'to-TO', label: 'Tongan' },
 ] as const
 
 export type LanguageCode =
@@ -109,18 +109,18 @@ export interface DiveLanguage {
 }
 
 const SEARCH_TERMS: Partial<Record<LanguageCode, string>> = {
-  CN: 'chinese mandarin simplified',
-  TW: 'chinese traditional taiwan',
+  'zh-CN': 'chinese mandarin simplified',
+  'zh-TW': 'chinese traditional taiwan',
 
-  MV: 'maldives maldivian divehi',
-  JM: 'jamaican',
-  PH: 'tagalog filipino philippines',
-  CY: 'cymraeg uk britain',
-  ET: 'ethiopian',
-  ER: 'eritrean ethiopian',
-  NZ: 'new zealand',
-  PY: 'guarani paraguay',
-  ML: 'kerala india',
+  'dv-MV': 'maldives maldivian divehi',
+  'jam-JM': 'jamaican',
+  'fil-PH': 'tagalog filipino philippines',
+  'cy-CY': 'cymraeg uk britain',
+  'am-ET': 'ethiopian',
+  'ti-ER': 'eritrean ethiopian',
+  'mi-NZ': 'new zealand',
+  'gn-PY': 'guarani paraguay',
+  'ml-ML': 'kerala india',
 }
 
 const withSearchTerms = (
@@ -137,42 +137,76 @@ export const ALL_LANGUAGES: DiveLanguage[] = [...TOP_LANGUAGES, ...OTHER_LANGUAG
 
 export const VALID_LANGUAGE_CODE_SET = new Set<string>(ALL_LANGUAGES.map((l) => l.code))
 
-// Build reverse lookup: language label → country code (case-insensitive)
+// Build reverse lookup: language label → ISO locale code (case-insensitive)
 const _labelToCode = new Map<string, string>(
   ALL_LANGUAGES.map((l) => [l.label.toLowerCase(), l.code]),
 )
 
-// ISO-639 language codes → country codes for backward compatibility
+// ISO-639 language codes → ISO locale codes for backward compatibility
 // Profile forms historically stored ISO-639 ('en', 'th', 'zh'), but the
-// canonical format is country codes ('GB', 'TH', 'CN').
-const ISO_TO_COUNTRY: Record<string, string> = {
-  en: 'GB', th: 'TH', zh: 'CN', ja: 'JP', ko: 'KR',
-  fr: 'FR', de: 'DE', ru: 'RU', it: 'IT', es: 'ES', pt: 'BR',
-  nl: 'NL', ar: 'SA', he: 'IL', sv: 'SE', pl: 'PL',
+// canonical format is now ISO locales ('en-GB', 'th-TH', 'zh-CN').
+const ISO_TO_LOCALE: Record<string, string> = {
+  en: 'en-GB', th: 'th-TH', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR',
+  fr: 'fr-FR', de: 'de-DE', ru: 'ru-RU', it: 'it-IT', es: 'es-ES', pt: 'pt-BR',
+  nl: 'nl-NL', ar: 'ar-SA', he: 'he-IL', sv: 'sv-SE', pl: 'pl-PL',
 }
 
-/** Convert a language name/label/code to its country code for flag rendering.
- *  Handles all formats: "English" → "GB", "GB" → "GB", "en" → "GB". */
+// Old country codes → ISO locale codes for backward compatibility
+// DB records may still contain bare country codes ('GB', 'TH', 'CN').
+const COUNTRY_TO_LOCALE: Record<string, string> = Object.fromEntries(
+  ALL_LANGUAGES.map((l) => [localeToCountryCode(l.code), l.code]),
+)
+
+/** Extract the country/region code from an ISO locale code.
+ *  'en-GB' → 'GB', 'zh-CN' → 'CN', 'GB' → 'GB' (passthrough). */
+export function localeToCountryCode(locale: string): string {
+  if (locale.includes('-')) {
+    const parts = locale.split('-')
+    return parts[parts.length - 1].toUpperCase()
+  }
+  return locale.toUpperCase()
+}
+
+/** Convert a language name/label/code to its ISO locale code.
+ *  Handles all formats: "English" → "en-GB", "en-GB" → "en-GB",
+ *  "GB" → "en-GB" (backward compat), "en" → "en-GB". */
 export function languageToCode(input: string): string {
   if (!input) return ''
-  const upper = input.toUpperCase()
-  if (upper.length === 2 && VALID_LANGUAGE_CODE_SET.has(upper)) return upper
+
+  // Direct match: already an ISO locale code
+  if (VALID_LANGUAGE_CODE_SET.has(input)) return input
+
+  // Case-insensitive direct match
+  const candidates = ALL_LANGUAGES.filter((l) => l.code.toLowerCase() === input.toLowerCase())
+  if (candidates.length > 0) return candidates[0].code
+
   const lower = input.toLowerCase()
-  const isoHit = ISO_TO_COUNTRY[lower]
+
+  // ISO-639 bare language code: 'en' → 'en-GB'
+  const isoHit = ISO_TO_LOCALE[lower]
   if (isoHit) return isoHit
-  // Handle locale codes like 'zh-CN', 'zh-TW', 'en-US'
+
+  // Old country code format: 'GB' → 'en-GB'
+  const upper = input.toUpperCase()
+  const countryHit = COUNTRY_TO_LOCALE[upper]
+  if (countryHit) return countryHit
+
+  // Handle locale codes like 'zh-CN', 'en-US', 'fr-CA'
   if (lower.includes('-')) {
-    const region = lower.split('-')[1].toUpperCase()
-    if (VALID_LANGUAGE_CODE_SET.has(region)) return region
+    const region = lower.split('-').pop()!.toUpperCase()
+    const regionHit = COUNTRY_TO_LOCALE[region]
+    if (regionHit) return regionHit
     const lang = lower.split('-')[0]
-    const localeHit = ISO_TO_COUNTRY[lang]
+    const localeHit = ISO_TO_LOCALE[lang]
     if (localeHit) return localeHit
   }
+
+  // Label lookup: "English" → "en-GB"
   return _labelToCode.get(lower) ?? ''
 }
 
 /** Resolve an array of raw DB language codes to Language objects.
- *  Handles country codes ('CN'), ISO-639 ('zh'), and locales ('zh-CN'). */
+ *  Handles ISO locales ('zh-CN'), country codes ('CN'), ISO-639 ('zh'), and locales ('en-US'). */
 export function resolveLanguages(codes: string[]): { code: string; label: string }[] {
   return (codes ?? [])
     .map((code) => ALL_LANGUAGES.find((l) => l.code === languageToCode(code)))
@@ -182,33 +216,33 @@ export function resolveLanguages(codes: string[]): { code: string; label: string
 
 /** Curated list for profile forms — matches the original 17-language set. */
 export const PROFILE_LANGUAGE_OPTIONS = [
-  { code: 'GB' as LanguageCode, label: 'English' },
-  { code: 'TH' as LanguageCode, label: 'Thai' },
-  { code: 'CN' as LanguageCode, label: 'Mandarin' },
-  { code: 'JP' as LanguageCode, label: 'Japanese' },
-  { code: 'KR' as LanguageCode, label: 'Korean' },
-  { code: 'FR' as LanguageCode, label: 'French' },
-  { code: 'DE' as LanguageCode, label: 'German' },
-  { code: 'RU' as LanguageCode, label: 'Russian' },
-  { code: 'IT' as LanguageCode, label: 'Italian' },
-  { code: 'ES' as LanguageCode, label: 'Spanish' },
-  { code: 'BR' as LanguageCode, label: 'Portuguese' },
-  { code: 'NL' as LanguageCode, label: 'Dutch' },
-  { code: 'SA' as LanguageCode, label: 'Arabic' },
-  { code: 'IL' as LanguageCode, label: 'Hebrew' },
-  { code: 'SE' as LanguageCode, label: 'Swedish' },
-  { code: 'PL' as LanguageCode, label: 'Polish' },
+  { code: 'en-GB' as LanguageCode, label: 'English' },
+  { code: 'th-TH' as LanguageCode, label: 'Thai' },
+  { code: 'zh-CN' as LanguageCode, label: 'Mandarin' },
+  { code: 'ja-JP' as LanguageCode, label: 'Japanese' },
+  { code: 'ko-KR' as LanguageCode, label: 'Korean' },
+  { code: 'fr-FR' as LanguageCode, label: 'French' },
+  { code: 'de-DE' as LanguageCode, label: 'German' },
+  { code: 'ru-RU' as LanguageCode, label: 'Russian' },
+  { code: 'it-IT' as LanguageCode, label: 'Italian' },
+  { code: 'es-ES' as LanguageCode, label: 'Spanish' },
+  { code: 'pt-BR' as LanguageCode, label: 'Portuguese' },
+  { code: 'nl-NL' as LanguageCode, label: 'Dutch' },
+  { code: 'ar-SA' as LanguageCode, label: 'Arabic' },
+  { code: 'he-IL' as LanguageCode, label: 'Hebrew' },
+  { code: 'sv-SE' as LanguageCode, label: 'Swedish' },
+  { code: 'pl-PL' as LanguageCode, label: 'Polish' },
 ] as const
 
 /** Row 1: Asian languages (Chinese Simplified leads) */
-export const POPULAR_ROW1_CODES: LanguageCode[] = ['CN', 'TH', 'JP', 'KR', 'ID', 'RU', 'MV', 'VN']
+export const POPULAR_ROW1_CODES: LanguageCode[] = ['zh-CN', 'th-TH', 'ja-JP', 'ko-KR', 'id-ID', 'ru-RU', 'dv-MV', 'vi-VN']
 /** Row 2: European languages (Chinese Traditional leads) */
-export const POPULAR_ROW2_CODES: LanguageCode[] = ['TW', 'GB', 'FR', 'DE', 'ES', 'IT', 'NL', 'NO']
+export const POPULAR_ROW2_CODES: LanguageCode[] = ['zh-TW', 'en-GB', 'fr-FR', 'de-DE', 'es-ES', 'it-IT', 'nl-NL', 'nb-NO']
 
 export const POPULAR_LANGUAGE_CODES: LanguageCode[] = [...POPULAR_ROW1_CODES, ...POPULAR_ROW2_CODES]
 
 /** Chinese codes render native script labels instead of flag emoji */
 export const CHINESE_SCRIPT_LABELS: Partial<Record<LanguageCode, string>> = {
-  CN: '简体',
-  TW: '繁體',
+  'zh-CN': '简体',
+  'zh-TW': '繁體',
 }
