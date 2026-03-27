@@ -8,13 +8,6 @@ export interface QuickBookTemplate {
   courses: CourseCode[]
 }
 
-/** Data attached to a draggable pill — read on drop by the calendar */
-export interface PillDragData {
-  type: 'quick-book-pill'
-  courses: CourseCode[]
-  label: string
-}
-
 // ── Templates ─────────────────────────────────────────────────────────────────
 
 export const COURSE_TEMPLATES: QuickBookTemplate[] = [

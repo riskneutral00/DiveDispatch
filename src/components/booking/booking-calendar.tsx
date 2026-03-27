@@ -1,15 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
-import { Spinner } from '@/components/common/spinner'
-
-const DroppableDateCell = dynamic(
-  () => import('@/components/booking/droppable-date-cell').then((m) => ({ default: m.DroppableDateCell })),
-  { ssr: false, loading: () => <Spinner /> },
-)
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
@@ -40,8 +33,6 @@ interface BookingCalendarProps {
   viewerRole?: string
   footerAction?: React.ReactNode
   className?: string
-  /** Whether drag-and-drop is active (enables droppable targets on date cells) */
-  droppableEnabled?: boolean
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -52,11 +43,6 @@ function buildBarLabel(booking: CalendarBooking): string {
     return 'O + A'
   }
   return types.map(courseLabel).join(', ') || 'Booking'
-}
-
-/** Plain date cell wrapper — no dnd-kit hooks, safe outside DndContext */
-function PlainDateCell({ children }: { children: (isOver: boolean) => React.ReactNode }) {
-  return <div>{children(false)}</div>
 }
 
 export function BookingCalendar({
@@ -72,7 +58,6 @@ export function BookingCalendar({
   viewerRole,
   footerAction,
   className,
-  droppableEnabled = false,
 }: BookingCalendarProps) {
   const { range, shiftRange, jumpToDate, resetRange, weeks, headerLabel, todayCol } =
     useCalendarRange()
@@ -390,7 +375,7 @@ export function BookingCalendar({
                 const isBlocked = !blockedHidden && blockedDatesSet.has(day.dateString)
                 const dayBars = packed.filter((b) => b.startCol <= di && b.endCol >= di)
 
-                const cellContent = (isOver: boolean) => (
+                const cellContent = (
                   <div
                     data-testid={`cell-${day.dateString}`}
                     className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-lg ${
@@ -403,13 +388,9 @@ export function BookingCalendar({
                     style={{
                       background: isBlocked
                         ? 'var(--color-blocked-bg)'
-                        : isOver
-                          ? 'var(--color-primary-glow)'
-                          : day.isToday
+                        : day.isToday
                             ? 'var(--color-status-active-bg)'
                             : undefined,
-                      outline: isOver ? '2px solid var(--color-primary)' : undefined,
-                      outlineOffset: isOver ? '-2px' : undefined,
                     }}
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
                   >
@@ -503,19 +484,10 @@ export function BookingCalendar({
                   </div>
                 )
 
-                return droppableEnabled ? (
-                  <DroppableDateCell
-                    key={day.dateString}
-                    dateString={day.dateString}
-                    isBlocked={isBlocked || isLocked}
-                    isPast={isPast}
-                  >
+                return (
+                  <div key={day.dateString}>
                     {cellContent}
-                  </DroppableDateCell>
-                ) : (
-                  <PlainDateCell key={day.dateString}>
-                    {cellContent}
-                  </PlainDateCell>
+                  </div>
                 )
               })}
             </div>

@@ -53,16 +53,6 @@ vi.mock('@/lib/hooks/use-calendar-range', async () => {
   }
 })
 
-// Mock next/dynamic — eagerly resolve DroppableDateCell so it's available
-// synchronously when the calendar renders with droppableEnabled=true.
-vi.mock('next/dynamic', async () => {
-  const { DroppableDateCell } = await import('@/components/booking/droppable-date-cell')
-  return {
-    __esModule: true,
-    default: () => DroppableDateCell,
-  }
-})
-
 // Stub child components that aren't relevant to this test
 vi.mock('@/components/booking/calendar-legend', () => ({
   CalendarLegend: () => null,
@@ -128,34 +118,3 @@ describe('BookingCalendar — past vs today/future click behavior', () => {
   })
 })
 
-describe('BookingCalendar — droppable conditional rendering', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(anchorDate)
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('renders without crash when droppableEnabled=false (no DndContext)', () => {
-    // This is the critical test — PlainDateCell must not call useDroppable
-    const { getByTestId } = render(
-      <BookingCalendar onDateClick={vi.fn()} droppableEnabled={false} />,
-    )
-    // Calendar renders normally — date cells exist
-    expect(getByTestId(`cell-${ANCHOR}`)).toBeInstanceOf(HTMLElement)
-    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeInstanceOf(HTMLElement)
-  })
-
-  it('renders without crash when droppableEnabled=true inside DndContext', async () => {
-    const { DndContext } = await import('@dnd-kit/core')
-    const { getByTestId } = render(
-      <DndContext>
-        <BookingCalendar onDateClick={vi.fn()} droppableEnabled={true} />
-      </DndContext>,
-    )
-    expect(getByTestId(`cell-${ANCHOR}`)).toBeInstanceOf(HTMLElement)
-    expect(getByTestId(`cell-${FUTURE_DATE}`)).toBeInstanceOf(HTMLElement)
-  })
-})

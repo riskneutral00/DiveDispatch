@@ -1,30 +1,20 @@
 'use client'
 
-import { useCallback } from 'react'
-import dynamic from 'next/dynamic'
+import { useCallback, useState } from 'react'
 import { Anchor } from 'lucide-react'
-import { Spinner } from '@/components/common/spinner'
 
-const DndCalendarWrapper = dynamic(
-  () => import('@/components/booking/dnd-calendar-wrapper').then((m) => ({ default: m.DndCalendarWrapper })),
-  { ssr: false, loading: () => <Spinner /> },
-)
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { DASHBOARD_CONFIGS } from '@/lib/constants/dashboard-config'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { useOperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import { useBlockedDateToggle } from '@/lib/hooks/use-blocked-date-toggle'
 import { useDevSwitching } from '@/components/dev/dev-switch-context'
-import { useDragToDate } from '@/lib/hooks/use-drag-to-date'
 import { useBookingActions } from '@/lib/hooks/use-booking-actions'
-import { useQuickBookFlow } from '@/lib/hooks/use-quick-book-flow'
 import { BookingCalendar } from '@/components/booking/booking-calendar'
 import { BookingQuickDetail } from '@/components/booking/booking-quick-detail'
 import { BookingOverlay } from '@/components/booking/booking-overlay'
 import { QuickBookRail } from '@/components/booking/quick-book-rail'
 import { CancelBookingDialog } from '@/components/booking/cancel-booking-dialog'
-import { DropConfirmOverlay } from '@/components/booking/drop-confirm-overlay'
 import { BlockDateDialog } from '@/components/booking/block-date-dialog'
 import { api } from '../../../convex/_generated/api'
 import type { CalendarDisplayStatus } from '@/lib/constants/status-colors'
@@ -46,7 +36,6 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const dashConfig = DASHBOARD_CONFIGS[roleSlug]
   const isOperator = clerkRole ? OPERATOR_TYPES.has(clerkRole) : false
 
-  const { defaults } = useOperatorDefaults()
   const { isSwitching } = useDevSwitching()
 
   // ── Data queries ─────────────────────────────────────────────────────────
@@ -67,15 +56,20 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
     useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole ?? '' })
 
+  // ── Booking overlay state ────────────────────────────────────────────────
+
+  const [overlayOpen, setOverlayOpen] = useState(false)
+  const [overlayCourses, setOverlayCourses] = useState<string[]>([])
+  const [wizardKey, setWizardKey] = useState(0)
+
+  function openBookingOverlay(courses: string[] = []) {
+    setOverlayCourses(courses)
+    setWizardKey((k) => k + 1)
+    setOverlayOpen(true)
+  }
 
   // ── Extracted hooks ────────────────────────────────────────────────────────
 
-  const quickBook = useQuickBookFlow(defaults)
-  const drag = useDragToDate(
-    defaults,
-    (courses, preFill) => quickBook.openBookingOverlay(courses, preFill),
-    () => quickBook.setArmedPillId(null),
-  )
   const actions = useBookingActions()
 
   // ── Derived callbacks ──────────────────────────────────────────────────────
@@ -85,30 +79,15 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
     [actions.handleBookingClick, calendarBookings],
   )
 
-  const handleDateClick = useCallback(
-    (date: string) => {
-      if (isOrganizer) {
-        quickBook.handleArmedDateClick(date, {
-          requestToggle,
-          setDropConfirmation: drag.setDropConfirmation,
-          setAvailCheckDates: drag.setAvailCheckDates,
-        })
-      } else {
-        requestToggle(date)
-      }
-    },
-    [isOrganizer, quickBook.handleArmedDateClick, requestToggle, drag.setDropConfirmation, drag.setAvailCheckDates],
-  )
-
   const handleUrgentCancel = useCallback(
     (bookingId: string) => actions.handleUrgentCancel(bookingId, isOperator),
     [actions.handleUrgentCancel, isOperator],
   )
 
-  // ── Calendar content (shared between DnD and non-DnD paths) ───────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
-  const calendarContent = (
-    <>
+  return (
+    <div className="max-w-4xl mx-auto space-y-3">
       <div>
         <div className="flex items-center gap-3 mb-1">
           <RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />
@@ -118,51 +97,21 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
         </div>
         {isOrganizer && (
           <div className="mt-3">
-            <QuickBookRail
-              onSelect={(courses) => quickBook.openBookingOverlay(courses as string[])}
-              armedPillId={quickBook.armedPillId}
-              onArmPill={quickBook.setArmedPillId}
-            />
+            <QuickBookRail onSelect={(courses) => openBookingOverlay(courses as string[])} />
           </div>
         )}
       </div>
 
-      {drag.dropConfirmation && (
-        <div className="flex justify-center">
-          <DropConfirmOverlay info={drag.dropConfirmation} />
-        </div>
-      )}
-
       <BookingCalendar
         bookings={calendarBookings}
         blockedDates={blockedDates}
-        onDateClick={handleDateClick}
+        onDateClick={requestToggle}
         onBookingClick={handleBookingClick}
         onUrgentCancel={handleUrgentCancel}
         legendStatuses={legendStatuses as CalendarDisplayStatus[]}
         allDraftsUrgent={isResourceOnly}
         viewerRole={clerkRole}
-        droppableEnabled={isOrganizer && drag.isDragging}
       />
-    </>
-  )
-
-  // ── Render ─────────────────────────────────────────────────────────────────
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-3">
-      {isOrganizer ? (
-        <DndCalendarWrapper
-          onDragStart={drag.handleDragStart}
-          onDragEnd={drag.handleDragEnd}
-          onDragCancel={drag.handleDragCancel}
-          dragLabel={drag.dragLabel}
-        >
-          {calendarContent}
-        </DndCalendarWrapper>
-      ) : (
-        calendarContent
-      )}
 
       <BookingQuickDetail
         booking={actions.detailBooking}
@@ -189,11 +138,10 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
 
       {isOrganizer && (
         <BookingOverlay
-          open={quickBook.overlayOpen}
-          onClose={quickBook.closeOverlay}
-          initialCourses={quickBook.overlayPreFill ? undefined : quickBook.overlayCourses}
-          initialPreFill={quickBook.overlayPreFill}
-          wizardKey={quickBook.wizardKey}
+          open={overlayOpen}
+          onClose={() => setOverlayOpen(false)}
+          initialCourses={overlayCourses}
+          wizardKey={wizardKey}
         />
       )}
     </div>
