@@ -183,12 +183,10 @@ describe('updateBusinessInfo mutation', () => {
     // Patch business info
     await t.withIdentity(identity).mutation(api.users.updateBusinessInfo, {
       businessName: 'Real Dive Shop',
-      customerLanguages: ['en', 'th', 'ja'],
     })
 
     const user = await t.withIdentity(identity).query(api.users.me, {})
     expect(user?.businessName).toBe('Real Dive Shop')
-    expect(user?.customerLanguages).toEqual(['en', 'th', 'ja'])
   })
 
   it('rejects unauthenticated calls', async () => {
@@ -196,7 +194,6 @@ describe('updateBusinessInfo mutation', () => {
     await expect(
       t.mutation(api.users.updateBusinessInfo, {
         businessName: 'Hacker',
-        customerLanguages: [],
       }),
     ).rejects.toThrow()
   })
@@ -208,7 +205,6 @@ describe('updateBusinessInfo mutation', () => {
         .withIdentity({ tokenIdentifier: 'clerk|ghost' })
         .mutation(api.users.updateBusinessInfo, {
           businessName: 'Ghost Biz',
-          customerLanguages: [],
         }),
     ).rejects.toThrow()
   })

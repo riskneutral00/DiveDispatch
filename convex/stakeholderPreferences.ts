@@ -37,7 +37,7 @@ export const upsert = mutation({
     acceptanceMode: acceptanceModeValidator,
     maxHoursPerDay: v.number(),
     postJobBlockDuration: v.number(),
-    commonLanguageCodes: v.array(v.string()),
+    commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
     preferredVenueSlugs: v.optional(v.array(v.string())),
     preferredEquipmentSlugs: v.optional(v.array(v.string())),

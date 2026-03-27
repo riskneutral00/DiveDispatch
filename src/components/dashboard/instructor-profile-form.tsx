@@ -5,6 +5,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -16,6 +17,9 @@ import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { CredentialRow } from '@/components/common/credential-row'
+import { LanguageField } from '@/components/common/language-field'
+import type { Language } from '@/lib/types/language'
+import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const COURSE_LABELS: Record<string, string> = {
@@ -64,6 +68,7 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   credential: CredentialData[]
+  teachingLanguages: Language[]
 }
 
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '', courses: [] })
@@ -74,6 +79,7 @@ const INITIAL_FORM: ProfileFormData = {
   contactEmail: '',
   contactPhone: '',
   credential: [emptyCredential()],
+  teachingLanguages: [],
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -102,7 +108,7 @@ function InstructorCredentialFields({ index, credential, errors, onChange }: {
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type InstructorProfileSection = 'contact' | 'credentials'
+export type InstructorProfileSection = 'contact' | 'languages' | 'credentials'
 
 export function InstructorProfileForm({ section }: { section?: InstructorProfileSection } = {}) {
   const profile = useQuery(api.instructors.mine)
@@ -129,6 +135,10 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         contactEmail: p.contactEmail as string,
         contactPhone: p.contactPhone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
+        teachingLanguages: ((p.teachingLanguages as string[]) ?? [])
+          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
+          .filter((l): l is NonNullable<typeof l> => l !== undefined)
+          .map((l) => ({ code: l.code, label: l.label })),
       }
     },
     fromMe: (defaults, initial) => ({
@@ -148,6 +158,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         credential: f.credential,
+        teachingLanguages: f.teachingLanguages.map((l) => l.code),
       }
     },
     create,
@@ -189,18 +200,35 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         <GlassCard padding="md">
           <FormSectionHeader label="Contact Information" />
           <div className="space-y-4">
-            <div className="max-w-sm">
-              <GlassInput label="Full Name" placeholder="Your name" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
-            </div>
-            <div className="max-w-md">
-              <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} error={errors.contactEmail} />
-              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
-            </div>
+            <ProfileBasicInfo
+              nameValue={form.name}
+              onNameChange={(val) => setField('name', val)}
+              nameError={errors.name}
+              nameLabel="Full Name"
+              namePlaceholder="Your name"
+              locationValue={form.location}
+              onLocationChange={(loc) => setField('location', loc)}
+              locationError={errors.location}
+              emailValue={form.contactEmail}
+              onEmailChange={(val) => setField('contactEmail', val)}
+              emailError={errors.contactEmail}
+              phoneValue={form.contactPhone}
+              onPhoneChange={(val) => setField('contactPhone', val)}
+              phoneError={errors.contactPhone}
+            />
           </div>
         </GlassCard>
+      )}
+
+      {(!section) && <hr className="form-divider" />}
+
+      {(!section || section === 'languages') && (
+        <LanguageField
+          label="Teaching Languages"
+          value={form.teachingLanguages}
+          onChange={(langs) => setField('teachingLanguages', langs)}
+          max={4}
+        />
       )}
 
       {(!section) && <hr className="form-divider" />}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { GlassDialog, GlassButton, GlassInput, GlassButtonGroup } from '@/components/glass'
 import type { GlassButtonGroupOption } from '@/components/glass'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
 
@@ -117,19 +117,13 @@ export function AddCustomerDialog({
         <hr className="form-divider" />
 
         {/* Languages */}
-        <div className="flex flex-col gap-2">
-          <p
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-          >
-            Languages
-          </p>
-          <LanguagePicker
-            value={languages}
-            onChange={setLanguages}
-            commonLanguageCodes={commonLanguageCodes as import('@/lib/constants/dive-languages').LanguageCode[]}
-          />
-        </div>
+        <LanguageField
+          label="Languages"
+          value={languages}
+          onChange={setLanguages}
+          max={4}
+          commonLanguageCodes={commonLanguageCodes as import('@/lib/constants/dive-languages').LanguageCode[]}
+        />
 
         {/* Actions */}
         <div className="flex gap-2 justify-end">

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { Language } from '@/lib/types/language'
 import type { RoleConfig } from '@/lib/constants/roles'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 
@@ -80,16 +80,12 @@ export function StepBusinessInfo({
         required
       />
 
-      <div>
-        <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-          Customer languages
-        </p>
-        <LanguagePicker
-          value={values.customerLanguages}
-          onChange={(langs) => onChange({ ...values, customerLanguages: langs })}
-          max={4}
-        />
-      </div>
+      <LanguageField
+        label="Customer languages"
+        value={values.customerLanguages}
+        onChange={(langs) => onChange({ ...values, customerLanguages: langs })}
+        max={4}
+      />
 
       <div className="flex gap-3 mt-2" data-testid="wizard-nav">
         <GlassButton type="button" variant="secondary" fullWidth onClick={onBack}>

@@ -9,7 +9,7 @@ import { LoadingCard } from '@/components/glass/loading-card'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import type { Language } from '@/lib/types/language'
 
 interface DcLanguagesStepProps {
@@ -34,7 +34,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
 
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
-      const langCodes: string[] = me?.customerLanguages ?? []
+      const langCodes: string[] = (existing?.customerLanguages as string[]) ?? me?.customerLanguages ?? []
       setFocusedLanguages(
         langCodes
           .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
@@ -79,6 +79,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       }
       await update({
         associations: [patchedFirst, ...currentAssocs.slice(1)],
+        customerLanguages: focusedLanguages.map((l) => l.code),
       })
       onSaved()
     } catch (err) {
@@ -104,12 +105,12 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       </div>
 
       <div className="flex flex-col gap-6">
-        <div>
-          <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-            Languages Offered
-          </p>
-          <LanguagePicker value={focusedLanguages} onChange={setFocusedLanguages} />
-        </div>
+        <LanguageField
+          label="Customer Languages"
+          value={focusedLanguages}
+          onChange={setFocusedLanguages}
+          max={4}
+        />
 
         <div>
           <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>

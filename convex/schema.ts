@@ -383,7 +383,7 @@ export default defineSchema({
     noWorkAfterTime: v.optional(v.string()),
     postJobBlockDuration: v.number(),
     useNamedUnits: v.boolean(),
-    commonLanguageCodes: v.array(v.string()),
+    commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
     preferredVenueSlugs: v.optional(v.array(v.string())),
     preferredEquipmentSlugs: v.optional(v.array(v.string())),
@@ -427,6 +427,7 @@ export default defineSchema({
       oaDays: v.optional(v.number()),
       selectedSpecialties: v.optional(v.array(v.string())),
     })),
+    customerLanguages: v.optional(v.array(v.string())),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -448,6 +449,7 @@ export default defineSchema({
         courses: v.array(v.string()),
       }),
     ),
+    teachingLanguages: v.optional(v.array(v.string())),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -664,6 +666,7 @@ export default defineSchema({
         agencyID: v.string(),
       }),
     ),
+    teachingLanguages: v.optional(v.array(v.string())),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 

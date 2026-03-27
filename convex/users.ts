@@ -139,7 +139,6 @@ export const createUser = mutation({
 export const updateBusinessInfo = mutation({
   args: {
     businessName: v.string(),
-    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
@@ -147,7 +146,6 @@ export const updateBusinessInfo = mutation({
 
     await ctx.db.patch(user._id, {
       businessName: args.businessName,
-      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
     })
   },
 })
@@ -275,7 +273,6 @@ export const updateAccountDefaults = mutation({
     defaultLocation: v.optional(v.string()),
     defaultContactEmail: v.optional(v.string()),
     defaultContactPhone: v.optional(v.string()),
-    customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
@@ -285,7 +282,6 @@ export const updateAccountDefaults = mutation({
       ...(args.defaultLocation !== undefined && { defaultLocation: args.defaultLocation }),
       ...(args.defaultContactEmail !== undefined && { defaultContactEmail: args.defaultContactEmail }),
       ...(args.defaultContactPhone !== undefined && { defaultContactPhone: args.defaultContactPhone }),
-      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
     })
   },
 })

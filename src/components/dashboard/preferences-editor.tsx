@@ -55,7 +55,7 @@ const prefsSchema = z.object({
   acceptanceMode: z.enum(['Auto', 'PrePayRequired', 'PostPayAllowed']),
   maxHoursPerDay: z.number().int().min(1).max(16),
   postJobBlockDuration: z.number().int().min(0).max(480),
-  commonLanguageCodes: z.array(z.string()).min(1, 'Select at least one language'),
+  commonLanguageCodes: z.array(z.string()).optional(),
   confirmOnAccept: z.boolean(),
   confirmOnDecline: z.boolean(),
   preferredInstructorSlugs: z.array(z.string()).optional(),
@@ -382,22 +382,6 @@ export function PreferencesEditor() {
 
             <hr className="form-divider" />
 
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
-                Language Preferences
-              </h2>
-              <GlassCheckboxGroup
-                label="Languages you work in"
-                items={langItems}
-                selected={form.commonLanguageCodes}
-                onChange={(values) => setField('commonLanguageCodes', values)}
-                error={errors.commonLanguageCodes}
-                columns={3}
-              />
-            </GlassCard>
           </>
         )}
 

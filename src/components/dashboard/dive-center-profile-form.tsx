@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
@@ -8,8 +7,9 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassInput, GlassSelect } from '@/components/glass'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { FormGrid, FormField } from '@/components/common/form-grid'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { FormSectionHeader } from '@/components/common/form-section-header'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 import { PillToggle, PillToggleGroup } from '@/components/common/pill-toggle'
 import { ItemCard } from '@/components/common/item-card'
 import { DayPicker } from '@/components/common/day-picker'
@@ -55,6 +55,7 @@ type FormState = {
   contactEmail: string
   contactPhone: string
   associations: AssociationForm[]
+  customerLanguages: Language[]
 }
 
 function makeDefaultAssociation(): AssociationForm {
@@ -74,6 +75,7 @@ const INITIAL_FORM: FormState = {
   contactEmail: '',
   contactPhone: '',
   associations: [],
+  customerLanguages: [],
 }
 
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
@@ -85,9 +87,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const updateAccountDefaults = useMutation(api.users.updateAccountDefaults)
-
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit: handleProfileSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile: existing,
     me,
     schema: formSchema,
@@ -122,6 +122,10 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             ]),
           ],
         })),
+        customerLanguages: ((p.customerLanguages as string[]) ?? [])
+          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
+          .filter((l): l is NonNullable<typeof l> => l !== undefined)
+          .map((l) => ({ code: l.code, label: l.label })),
       }
     },
     fromMe: (u, defaults) => ({
@@ -149,40 +153,13 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           oaDays: a.oaDays,
           selectedSpecialties: a.selectedSpecialties,
         })),
+        customerLanguages: f.customerLanguages.map((l) => l.code),
       }
     },
     create,
     update,
     onSaved,
   })
-
-  // Languages — stored on user record, separate from dive center
-  const [languages, setLanguages] = useState<Language[]>([])
-  const [languagesInitialized, setLanguagesInitialized] = useState(false)
-
-  useEffect(() => {
-    if (me && !languagesInitialized) {
-      const langCodes: string[] = me.customerLanguages ?? []
-      setLanguages(
-        langCodes
-          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-          .filter((l): l is NonNullable<typeof l> => l !== undefined)
-          .map((l) => ({ code: l.code, label: l.label }))
-      )
-      setLanguagesInitialized(true)
-    }
-  }, [me, languagesInitialized])
-
-  async function handleSubmit(e: React.FormEvent) {
-    const langCodes = languages.map((l) => l.code)
-    const currentLangCodes = me?.customerLanguages ?? []
-    const languagesChanged = JSON.stringify(langCodes) !== JSON.stringify(currentLangCodes)
-
-    if (languagesChanged) {
-      await updateAccountDefaults({ customerLanguages: langCodes })
-    }
-    await handleProfileSubmit(e)
-  }
 
   function addAssociation() {
     const firstAssoc = form.associations[0]
@@ -251,45 +228,22 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       {(!section || section === 'contact') && (
       <div className="space-y-4">
         <FormSectionHeader label="Basic Information" />
-        <FormGrid>
-          <FormField size="lg">
-            <GlassInput
-              label="Business Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              placeholder="e.g. Ocean Explorer Dive Center"
-              error={errors.name}
-            />
-          </FormField>
-          <FormField size="lg">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </FormField>
-          <FormField size="md">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              value={form.contactEmail}
-              onChange={(e) => setField('contactEmail', e.target.value)}
-              placeholder="dive@example.com"
-              error={errors.contactEmail}
-            />
-          </FormField>
-          <FormField size="sm">
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              value={form.contactPhone}
-              onChange={(e) => setField('contactPhone', e.target.value)}
-              placeholder="+66 81 234 5678"
-              error={errors.contactPhone}
-            />
-          </FormField>
-        </FormGrid>
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Business Name"
+          namePlaceholder="e.g. Ocean Explorer Dive Center"
+          locationValue={form.location}
+          onLocationChange={(loc) => setField('location', loc)}
+          locationError={errors.location}
+          emailValue={form.contactEmail}
+          onEmailChange={(val) => setField('contactEmail', val)}
+          emailError={errors.contactEmail}
+          phoneValue={form.contactPhone}
+          onPhoneChange={(val) => setField('contactPhone', val)}
+          phoneError={errors.contactPhone}
+        />
       </div>
       )}
 
@@ -297,10 +251,12 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
 
       {/* Languages */}
       {(!section || section === 'languages') && (
-      <div className="space-y-3">
-        <FormSectionHeader label="Languages" />
-        <LanguagePicker value={languages} onChange={setLanguages} />
-      </div>
+        <LanguageField
+          label="Customer Languages"
+          value={form.customerLanguages}
+          onChange={(langs) => setField('customerLanguages', langs)}
+          max={4}
+        />
       )}
 
       {(!section) && <hr className="form-divider" />}

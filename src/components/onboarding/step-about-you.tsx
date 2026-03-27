@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Language } from '@/lib/types/language'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 import {
@@ -53,18 +53,14 @@ export function StepAboutYou({
         </p>
       </div>
 
-      <div>
-        <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-          App language
-        </p>
-        <LanguagePicker
-          value={values.operatingLanguage ? [values.operatingLanguage] : []}
-          onChange={(langs) => {
-            if (langs[0]) set('operatingLanguage', langs[0])
-          }}
-          max={1}
-        />
-      </div>
+      <LanguageField
+        label="App language"
+        value={values.operatingLanguage ? [values.operatingLanguage] : []}
+        onChange={(langs) => {
+          if (langs[0]) set('operatingLanguage', langs[0])
+        }}
+        max={1}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <GlassInput

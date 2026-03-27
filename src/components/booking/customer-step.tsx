@@ -5,7 +5,7 @@ import { Plus, Trash2, ChevronDown } from 'lucide-react'
 import { ErrorAlert } from '@/components/glass/error-alert'
 import { GlassButton, GlassButtonGroup, GlassCard, GlassInput } from '@/components/glass'
 import type { GlassButtonGroupOption } from '@/components/glass'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { countryCodeToEmoji } from '@/components/common/flag-emoji'
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
 import { canAdvanceFromCustomers, isValidEmail, isValidWhatsApp, isValidLine } from '@/lib/booking/wizard-state'
@@ -200,22 +200,12 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         <hr className="form-divider" />
 
         {/* Languages */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            className="text-xs font-medium"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-          >
-            Language{flags.length !== 1 ? 's' : ''} * {flags.length > 0 && (
-              <span className="font-normal opacity-60">
-                ({flags.map((f) => f.label).join(', ')})
-              </span>
-            )}
-          </label>
-          <LanguagePicker
-            value={flags.map((f) => ({ code: f.code, label: f.label }))}
-            onChange={handleLanguagesChange}
-          />
-        </div>
+        <LanguageField
+          label={`Language${flags.length !== 1 ? 's' : ''} *${flags.length > 0 ? ` (${flags.map((f) => f.label).join(', ')})` : ''}`}
+          value={flags.map((f) => ({ code: f.code, label: f.label }))}
+          onChange={handleLanguagesChange}
+          max={4}
+        />
       </div>
     </GlassCard>
   )

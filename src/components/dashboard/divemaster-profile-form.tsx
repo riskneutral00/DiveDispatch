@@ -14,7 +14,10 @@ import { LocationPicker, type LocationValue } from '@/components/common/location
 import { CredentialRow } from '@/components/common/credential-row'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
+import { LanguageField } from '@/components/common/language-field'
 import { SaveButton } from '@/components/common/save-button'
+import type { Language } from '@/lib/types/language'
+import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -48,6 +51,7 @@ type ProfileFormData = {
   contactEmail: string
   contactPhone: string
   credential: CredentialData[]
+  teachingLanguages: Language[]
 }
 
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '' })
@@ -58,6 +62,7 @@ const INITIAL_FORM: ProfileFormData = {
   contactEmail: '',
   contactPhone: '',
   credential: [emptyCredential()],
+  teachingLanguages: [],
 }
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -82,7 +87,7 @@ function DmCredentialFields({ index, credential, errors, onChange }: {
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type DiveMasterProfileSection = 'contact' | 'credentials'
+export type DiveMasterProfileSection = 'contact' | 'languages' | 'credentials'
 
 export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfileSection } = {}) {
   const profile = useQuery(api.diveMasters.mine)
@@ -109,6 +114,10 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
         contactEmail: p.contactEmail as string,
         contactPhone: p.contactPhone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
+        teachingLanguages: ((p.teachingLanguages as string[]) ?? [])
+          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
+          .filter((l): l is NonNullable<typeof l> => l !== undefined)
+          .map((l) => ({ code: l.code, label: l.label })),
       }
     },
     fromMe: (defaults, initial) => ({
@@ -128,6 +137,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
         contactEmail: f.contactEmail,
         contactPhone: f.contactPhone,
         credential: f.credential,
+        teachingLanguages: f.teachingLanguages.map((l) => l.code),
       }
     },
     create,
@@ -181,6 +191,17 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
             </div>
           </div>
         </GlassCard>
+      )}
+
+      {(!section) && <hr className="form-divider" />}
+
+      {(!section || section === 'languages') && (
+        <LanguageField
+          label="Teaching Languages"
+          value={form.teachingLanguages}
+          onChange={(langs) => setField('teachingLanguages', langs)}
+          max={4}
+        />
       )}
 
       {(!section) && <hr className="form-divider" />}

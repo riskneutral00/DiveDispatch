@@ -128,7 +128,6 @@ export function OnboardingWizard() {
     try {
       await updateBusinessInfo({
         businessName: businessInfo.businessName.trim(),
-        customerLanguages: businessInfo.customerLanguages.map((l) => l.code),
       })
       goNext()
     } catch (e) {
