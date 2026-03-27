@@ -155,5 +155,62 @@ export const THEME_FIELDS: FieldConfig = {
   config: LONG_TEXT_MAX,
 }
 
+export const PORTAL_CONTACT_FIELDS: FieldConfig = {
+  legalFirstName: NAME_MAX,
+  legalLastName: NAME_MAX,
+  preferredName: NAME_MAX,
+  email: EMAIL_MAX,
+  phone: PHONE_MAX,
+  nationality: SHORT_TEXT_MAX,
+  passportNumber: SHORT_TEXT_MAX,
+  passportIssuingCountry: SHORT_TEXT_MAX,
+  emergencyContactName: NAME_MAX,
+  emergencyContactPhone: PHONE_MAX,
+  emergencyContactRelation: SHORT_TEXT_MAX,
+  agency: SHORT_TEXT_MAX,
+  agencyID: SHORT_TEXT_MAX,
+  allergies: LONG_TEXT_MAX,
+}
+
+/** Max length for medical answer string values (detail/notes fields). */
+export const MEDICAL_ANSWER_MAX = LONG_TEXT_MAX
+
+/**
+ * Sanitize a passport number:
+ * 1. NFC normalize + strip invisible chars (via sanitizeString)
+ * 2. Strip everything except A-Z, 0-9, and hyphen
+ * 3. Uppercase
+ * 4. Truncate to 20 characters
+ */
+export function sanitizePassport(input: string): string {
+  let s = sanitizeString(input)
+  s = s.toUpperCase()
+  s = s.replace(/[^A-Z0-9-]/g, '')
+  if (s.length > 20) {
+    s = s.slice(0, 20)
+  }
+  return s
+}
+
+/**
+ * Sanitize medical questionnaire answers:
+ * - Boolean values pass through untouched
+ * - String values get sanitizeString() with MEDICAL_ANSWER_MAX length cap
+ * Returns a new object (does not mutate).
+ */
+export function sanitizeMedicalAnswers(
+  answers: Record<string, boolean | string>,
+): Record<string, boolean | string> {
+  const result: Record<string, boolean | string> = {}
+  for (const [key, value] of Object.entries(answers)) {
+    if (typeof value === 'string') {
+      result[key] = sanitizeString(value, MEDICAL_ANSWER_MAX)
+    } else {
+      result[key] = value
+    }
+  }
+  return result
+}
+
 /** Draft state is a JSON blob — cap at a generous limit */
 export const DRAFT_STATE_MAX = 50_000

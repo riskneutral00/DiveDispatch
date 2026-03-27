@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
+import { sanitizeFields, sanitizePassport, PORTAL_CONTACT_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 
 // ── Returning customer lookup ────────────────────────────────────────────────
@@ -174,7 +175,11 @@ export async function _savePortalContactHandler(
   const { profile } = await resolvePortalToken(ctx, args.token)
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { token: _token, existingCustomerId: _existingId, ...contactData } = args
+  const { token: _token, existingCustomerId: _existingId, ...rawContactData } = args
+  // Sanitize all string fields (trim, strip invisible chars, cap lengths)
+  const contactData = sanitizeFields(rawContactData, PORTAL_CONTACT_FIELDS)
+  // Passport: strip to alphanumeric + hyphen, uppercase, max 20 chars
+  contactData.passportNumber = sanitizePassport(contactData.passportNumber)
   // Normalize email to lowercase for consistent index lookups
   contactData.email = contactData.email.toLowerCase().trim()
 

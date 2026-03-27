@@ -3,7 +3,7 @@ import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
-import { sanitizeFields, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
+import { sanitizeFields, sanitizeMedicalAnswers, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
@@ -42,11 +42,14 @@ export const saveMedicalAnswers = mutation({
     await checkRateLimit(ctx, 'saveMedicalAnswers', args.token)
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
+    // Sanitize string values in answers (booleans pass through)
+    const sanitizedAnswers = sanitizeMedicalAnswers(args.answers)
+
     // Any "Yes" triggers physician referral
-    const hasYes = MEDICAL_QUESTION_KEYS.some((key) => args.answers[key] === true)
+    const hasYes = MEDICAL_QUESTION_KEYS.some((key) => sanitizedAnswers[key] === true)
 
     await ctx.db.patch(profile._id, {
-      medicalAnswers: args.answers,
+      medicalAnswers: sanitizedAnswers,
       medicalSchemaVersion: MEDICAL_SCHEMA_VERSION,
       physicianClearanceRequired: hasYes,
     })
