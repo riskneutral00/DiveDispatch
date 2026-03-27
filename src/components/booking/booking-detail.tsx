@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation } from 'convex/react'
-import { ArrowLeft, Edit2, X } from 'lucide-react'
+import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/glass'
@@ -20,6 +20,11 @@ import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { PortalProgressCard } from './portal-progress-card'
 import { AuditTrailTable } from './audit-trail-table'
+import { ROLES } from '@/lib/constants/roles'
+
+const OPERATOR_CLERK_ROLES = new Set(
+  ROLES.filter((r) => r.isOrganizer).map((r) => r.clerkRole),
+)
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -62,7 +67,10 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     booking != null ? { bookingId: bookingId as Id<'bookings'> } : 'skip',
   )
 
+  const userRoles = useQuery(api.userRoles.myRoles)
+
   const cancelBooking = useMutation(api.bookings.status.cancelBooking)
+  const clearMedicalBlock = useMutation(api.bookings.status.clearMedicalBlock)
 
   const ttlLabel = useTTLCountdown(
     booking?.status === 'Draft' ? booking.expiresAt : undefined,
@@ -94,6 +102,8 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
   const canEdit = booking.status !== 'Cancelled'
   const canCancel = booking.status !== 'Cancelled'
+  const isOperator = (userRoles ?? []).some((r) => OPERATOR_CLERK_ROLES.has(r.role))
+  const canClearMedical = booking.medicalHardBlock && isOperator
 
   async function handleCancel() {
     setCancelError(null)
@@ -167,6 +177,16 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
               >
                 <Edit2 size={14} />
                 Edit
+              </GlassButton>
+            )}
+            {canClearMedical && (
+              <GlassButton
+                variant="secondary"
+                size="sm"
+                onClick={() => clearMedicalBlock({ bookingId: bookingId as Id<'bookings'> })}
+              >
+                <ShieldCheck size={14} />
+                Clear Medical Block
               </GlassButton>
             )}
             {canCancel && (
