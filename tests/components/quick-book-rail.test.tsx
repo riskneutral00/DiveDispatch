@@ -6,6 +6,18 @@ import userEvent from '@testing-library/user-event'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+// dnd-kit uses ResizeObserver at module scope — mock the React layer
+vi.mock('@dnd-kit/react', () => ({
+  useDraggable: () => ({
+    ref: () => {},
+    isDragging: false,
+    isDragSource: false,
+    isDropping: false,
+    handleRef: () => {},
+    draggable: {},
+  }),
+}))
+
 const mockCurrentUser = vi.fn<() => { user: Record<string, unknown> | null; isLoading: boolean }>()
 vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockCurrentUser(),

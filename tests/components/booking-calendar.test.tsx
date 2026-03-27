@@ -1,4 +1,14 @@
 // @vitest-environment jsdom
+
+// dnd-kit uses ResizeObserver at module scope — mock the React layer
+vi.mock('@dnd-kit/react', () => ({
+  useDroppable: () => ({
+    ref: () => {},
+    isDropTarget: false,
+    droppable: {},
+  }),
+}))
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '../helpers/render'
 import type { CalendarDay } from '@/lib/hooks/use-calendar-range'
