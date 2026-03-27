@@ -19,7 +19,7 @@ import { LocationPicker, type LocationValue } from '@/components/common/location
 import { CredentialRow } from '@/components/common/credential-row'
 import { LanguageField } from '@/components/common/language-field'
 import type { Language } from '@/lib/types/language'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const COURSE_LABELS: Record<string, string> = {
@@ -135,10 +135,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         email: p.email as string,
         phone: p.phone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
-        teachingLanguages: ((p.teachingLanguages as string[]) ?? [])
-          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-          .filter((l): l is NonNullable<typeof l> => l !== undefined)
-          .map((l) => ({ code: l.code, label: l.label })),
+        teachingLanguages: resolveLanguages((p.teachingLanguages as string[]) ?? []),
       }
     },
     fromMe: (defaults, initial) => ({
@@ -224,10 +221,9 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
 
       {(!section || section === 'languages') && (
         <LanguageField
-          label="Teaching Languages"
+          variant="teaching"
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
-          max={4}
         />
       )}
 

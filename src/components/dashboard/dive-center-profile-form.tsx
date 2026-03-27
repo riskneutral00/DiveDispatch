@@ -1,5 +1,6 @@
 'use client'
 
+import { Fragment } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
@@ -10,14 +11,14 @@ import { FormGrid, FormField } from '@/components/common/form-grid'
 import { LanguageField } from '@/components/common/language-field'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
-import { PillToggle, PillToggleGroup } from '@/components/common/pill-toggle'
 import { ItemCard } from '@/components/common/item-card'
 import { DayPicker } from '@/components/common/day-picker'
+import { SpecialtyField } from '@/components/common/specialty-field'
 import { SaveButton } from '@/components/common/save-button'
 import type { Language } from '@/lib/types/language'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { AGENCIES, AGENCY_CODES, COURSE_DAY_RANGES, getMandatorySpecialties, getDefaultSpecialties } from '@/lib/constants/agencies'
+import { AGENCIES, AGENCY_CODES, COURSE_DAY_RANGES, getDefaultSpecialties } from '@/lib/constants/agencies'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -32,13 +33,23 @@ const formSchema = z.object({
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Contact phone is required'),
+  customerLanguages: z.array(z.object({ code: z.string(), label: z.string() })).min(1, 'At least one language required'),
   associations: z.array(
     z.object({
       agencyCode: z.string().min(1, 'Agency is required'),
       memberId: z.string().min(1, 'Member ID is required'),
+      owDays: z.number().min(1),
+      aowDays: z.number().min(1),
+      oaDays: z.number().min(1),
+      selectedSpecialties: z.array(z.string()),
     }),
   ),
-})
+}).refine((data) => {
+  return data.associations.every((a) => {
+    const required = AGENCIES[a.agencyCode]?.specialtyCount ?? 5
+    return a.selectedSpecialties.length >= required
+  })
+}, { message: 'Not enough specialties selected', path: ['associations'] })
 
 interface AssociationForm {
   agencyCode: string
@@ -87,7 +98,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile: existing,
     me,
     schema: formSchema,
@@ -122,10 +133,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
             ]),
           ],
         })),
-        customerLanguages: ((p.customerLanguages as string[]) ?? [])
-          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-          .filter((l): l is NonNullable<typeof l> => l !== undefined)
-          .map((l) => ({ code: l.code, label: l.label })),
+        customerLanguages: resolveLanguages((p.customerLanguages as string[]) ?? []),
       }
     },
     fromMe: (u, defaults) => ({
@@ -185,17 +193,6 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     }))
   }
 
-  function toggleSpecialty(assocIdx: number, specialtyCode: string) {
-    const assoc = form.associations[assocIdx]
-    const mandatory = getMandatorySpecialties(assoc.agencyCode)
-    if (mandatory.has(specialtyCode)) return
-    const current = assoc.selectedSpecialties
-    const updated = current.includes(specialtyCode)
-      ? current.filter((s) => s !== specialtyCode)
-      : [...current, specialtyCode]
-    updateAssociation(assocIdx, { selectedSpecialties: updated })
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -234,15 +231,30 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           nameError={errors.name}
           nameLabel="Business Name"
           namePlaceholder="e.g. Ocean Explorer Dive Center"
+          nameRequired
           locationValue={form.location}
-          onLocationChange={(loc) => setField('location', loc)}
+          onLocationChange={(loc) => {
+            setField('location', loc)
+            if (loc && isUpdate) {
+              update({
+                placeName: loc.placeName,
+                country: loc.country,
+                lat: loc.lat,
+                lng: loc.lng,
+                placeId: loc.placeId,
+              })
+            }
+          }}
           locationError={errors.location}
+          locationRequired
           emailValue={form.email}
           onEmailChange={(val) => setField('email', val)}
           emailError={errors.email}
+          emailRequired
           phoneValue={form.phone}
           onPhoneChange={(val) => setField('phone', val)}
           phoneError={errors.phone}
+          phoneRequired
         />
       </div>
       )}
@@ -252,10 +264,9 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       {/* Languages */}
       {(!section || section === 'languages') && (
         <LanguageField
-          label="Customer Languages"
+          variant="customer"
           value={form.customerLanguages}
           onChange={(langs) => setField('customerLanguages', langs)}
-          max={4}
         />
       )}
 
@@ -282,14 +293,11 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           <div className="space-y-6">
             {form.associations.map((assoc, idx) => {
               const agency = AGENCIES[assoc.agencyCode]
-              const specialties = agency?.specialties ?? AGENCIES.PADI.specialties
-              const mandatory = getMandatorySpecialties(assoc.agencyCode || 'PADI')
-              const mainSpecialties = specialties.slice(0, 9)
-              const overflowSpecialties = specialties.slice(9)
 
               return (
+                <Fragment key={idx}>
+                  {idx > 0 && <hr className="form-divider" />}
                 <ItemCard
-                  key={idx}
                   onRemove={() => removeAssociation(idx)}
                   canRemove={form.associations.length > 1}
                   aria-label="Remove affiliation"
@@ -301,8 +309,11 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                         label="Agency"
                         value={assoc.agencyCode}
                         onChange={(v) => updateAssociation(idx, { agencyCode: v })}
-                        options={AGENCY_CODES.map((code) => ({ id: code, label: AGENCIES[code].name }))}
+                        options={AGENCY_CODES
+                          .filter((code) => code === assoc.agencyCode || !form.associations.some((a, i) => i !== idx && a.agencyCode === code))
+                          .map((code) => ({ id: code, label: AGENCIES[code].name }))}
                         placeholder="Select agency"
+                        required
                       />
                     </div>
                     <div className="flex-1">
@@ -311,71 +322,51 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                         value={assoc.memberId}
                         onChange={(e) => updateAssociation(idx, { memberId: e.target.value })}
                         placeholder={agency?.memberIdLabel ?? 'Member ID'}
+                        required
                       />
                     </div>
                   </div>
 
-                  {/* Default course #days */}
-                  <div>
-                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      Default course #days
-                    </p>
-                    <div className="flex gap-2">
-                      <DayPicker
-                        label={agency?.courses.find((c) => c.code === 'OW')?.label ?? 'OW'}
-                        value={assoc.owDays}
-                        min={COURSE_DAY_RANGES.OW.min}
-                        max={COURSE_DAY_RANGES.OW.max}
-                        onChange={(v) => updateAssociation(idx, { owDays: v })}
-                      />
-                      <DayPicker
-                        label={agency?.courses.find((c) => c.code === 'AOW')?.label ?? 'AOW'}
-                        value={assoc.aowDays}
-                        min={COURSE_DAY_RANGES.AOW.min}
-                        max={COURSE_DAY_RANGES.AOW.max}
-                        onChange={(v) => updateAssociation(idx, { aowDays: v })}
-                      />
-                      <DayPicker
-                        label={agency?.combinedLabel ?? 'O+A'}
-                        value={assoc.oaDays}
-                        min={COURSE_DAY_RANGES.combined.min}
-                        max={COURSE_DAY_RANGES.combined.max}
-                        onChange={(v) => updateAssociation(idx, { oaDays: v })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Default specialties */}
-                  <div>
-                    <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                      Default specialties
-                    </p>
-                    <PillToggleGroup
-                      overflowItems={overflowSpecialties.length > 0 ? (
-                        <>
-                          {overflowSpecialties.map(({ code, label }) => (
-                            <PillToggle
-                              key={code}
-                              label={label}
-                              checked={assoc.selectedSpecialties.includes(code)}
-                              onChange={() => toggleSpecialty(idx, code)}
-                            />
-                          ))}
-                        </>
-                      ) : undefined}
-                    >
-                      {mainSpecialties.map(({ code, label, mandatory: isMandatory }) => (
-                        <PillToggle
-                          key={code}
-                          label={label}
-                          checked={assoc.selectedSpecialties.includes(code)}
-                          locked={isMandatory || mandatory.has(code)}
-                          onChange={() => toggleSpecialty(idx, code)}
+                  {/* Course days + Specialties */}
+                  <div className="flex gap-6 items-start">
+                    {/* Default course #days — fixed width */}
+                    <div className="shrink-0">
+                      <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                        Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
+                      </p>
+                      <div className="flex gap-2">
+                        <DayPicker
+                          label={agency?.courses.find((c) => c.code === 'OW')?.label ?? 'OW'}
+                          value={assoc.owDays}
+                          min={COURSE_DAY_RANGES.OW.min}
+                          max={COURSE_DAY_RANGES.OW.max}
+                          onChange={(v) => updateAssociation(idx, { owDays: v })}
                         />
-                      ))}
-                    </PillToggleGroup>
+                        <DayPicker
+                          label={agency?.courses.find((c) => c.code === 'AOW')?.label ?? 'AOW'}
+                          value={assoc.aowDays}
+                          min={COURSE_DAY_RANGES.AOW.min}
+                          max={COURSE_DAY_RANGES.AOW.max}
+                          onChange={(v) => updateAssociation(idx, { aowDays: v })}
+                        />
+                        <DayPicker
+                          label={agency?.combinedLabel ?? 'O+A'}
+                          value={assoc.oaDays}
+                          min={COURSE_DAY_RANGES.combined.min}
+                          max={COURSE_DAY_RANGES.combined.max}
+                          onChange={(v) => updateAssociation(idx, { oaDays: v })}
+                        />
+                      </div>
+                    </div>
+
+                    <SpecialtyField
+                      agencyCode={assoc.agencyCode}
+                      value={assoc.selectedSpecialties}
+                      onChange={(specialties) => updateAssociation(idx, { selectedSpecialties: specialties })}
+                    />
                   </div>
                 </ItemCard>
+                </Fragment>
               )
             })}
           </div>
@@ -387,7 +378,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
       )}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

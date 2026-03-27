@@ -50,6 +50,7 @@ import type * as lib_portal from "../lib/portal.js";
 import type * as lib_profileCompleteness from "../lib/profileCompleteness.js";
 import type * as lib_profileHelpers from "../lib/profileHelpers.js";
 import type * as lib_rateLimiter from "../lib/rateLimiter.js";
+import type * as lib_requiredFields from "../lib/requiredFields.js";
 import type * as lib_rolePrecedence from "../lib/rolePrecedence.js";
 import type * as lib_sanitize from "../lib/sanitize.js";
 import type * as lib_typedDb from "../lib/typedDb.js";
@@ -132,6 +133,7 @@ declare const fullApi: ApiFromModules<{
   "lib/profileCompleteness": typeof lib_profileCompleteness;
   "lib/profileHelpers": typeof lib_profileHelpers;
   "lib/rateLimiter": typeof lib_rateLimiter;
+  "lib/requiredFields": typeof lib_requiredFields;
   "lib/rolePrecedence": typeof lib_rolePrecedence;
   "lib/sanitize": typeof lib_sanitize;
   "lib/typedDb": typeof lib_typedDb;

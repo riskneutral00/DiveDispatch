@@ -16,9 +16,14 @@ interface ProfileBasicInfoProps {
   phoneError?: string
   onPhoneChange: (value: string) => void
 
+  emailValue?: string
+  emailError?: string
+  onEmailChange?: (value: string) => void
+
   nameRequired?: boolean
   locationRequired?: boolean
   phoneRequired?: boolean
+  emailRequired?: boolean
 
   children?: React.ReactNode
 }
@@ -35,9 +40,13 @@ export function ProfileBasicInfo({
   phoneValue,
   phoneError,
   onPhoneChange,
+  emailValue,
+  emailError,
+  onEmailChange,
   nameRequired,
   locationRequired,
   phoneRequired,
+  emailRequired,
   children,
 }: ProfileBasicInfoProps) {
   return (
@@ -68,6 +77,18 @@ export function ProfileBasicInfo({
         autoComplete="tel"
         required={phoneRequired}
       />
+      {onEmailChange !== undefined && (
+        <GlassInput
+          label="Email"
+          type="email"
+          placeholder="info@example.com"
+          value={emailValue ?? ''}
+          onChange={(e) => onEmailChange(e.target.value)}
+          error={emailError}
+          autoComplete="email"
+          required={emailRequired}
+        />
+      )}
       {children}
     </div>
   )

@@ -28,7 +28,6 @@ export const poolSchema = z.object({
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
   confinedCapable: z.boolean(),
-  openWaterCapable: z.boolean(),
 })
 
 export type PoolFormState = {
@@ -39,7 +38,6 @@ export type PoolFormState = {
   maxDepth: number
   maxCapacity: number
   confinedCapable: boolean
-  openWaterCapable: boolean
 }
 
 export const INITIAL_POOL_FORM: PoolFormState = {
@@ -50,7 +48,6 @@ export const INITIAL_POOL_FORM: PoolFormState = {
   maxDepth: 0,
   maxCapacity: 0,
   confinedCapable: false,
-  openWaterCapable: false,
 }
 
 function parseNumber(raw: string, isInt: boolean): number {
@@ -74,7 +71,6 @@ export function poolFromProfile(p: Record<string, unknown>): PoolFormState {
     maxDepth: (p.maxDepth as number) ?? 0,
     maxCapacity: (p.maxCapacity as number) ?? 0,
     confinedCapable: (p.confinedCapable as boolean) ?? false,
-    openWaterCapable: (p.openWaterCapable as boolean) ?? false,
   }
 }
 
@@ -92,11 +88,10 @@ export function poolToPayload(f: PoolFormState): Record<string, unknown> {
     maxDepth: f.maxDepth,
     maxCapacity: f.maxCapacity,
     confinedCapable: f.confinedCapable,
-    openWaterCapable: f.openWaterCapable,
   }
 }
 
-export function buildPoolCreatePayload(payload: Record<string, unknown>) {
+export function buildPoolCreatePayload<T extends Record<string, unknown>>(payload: T) {
   return {
     ...payload,
     venueType: 'Pool' as const,
@@ -180,19 +175,6 @@ export function PoolProfileForm() {
                   style={{ accentColor: 'var(--color-primary)' }}
                 />
                 <span>Confined Water Capable</span>
-              </label>
-              <label
-                className="flex items-center gap-2 cursor-pointer select-none text-sm"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.openWaterCapable}
-                  onChange={(e) => setField('openWaterCapable', e.target.checked)}
-                  className="rounded"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-                <span>Open Water Capable</span>
               </label>
             </div>
           </div>

@@ -8,7 +8,7 @@ import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 
-type Association = { agency: string; number: string }
+type Association = { agencyCode: string; memberId: string }
 
 interface DcAgencyStepProps {
   onSaved: () => void
@@ -19,7 +19,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   const existing = useQuery(api.diveCenters.mine)
   const update = useMutation(api.diveCenters.update)
 
-  const [associations, setAssociations] = useState<Association[]>([{ agency: '', number: '' }])
+  const [associations, setAssociations] = useState<Association[]>([{ agencyCode: '', memberId: '' }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
@@ -34,7 +34,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   }, [existing, initialized])
 
   function addRow() {
-    setAssociations((prev) => [...prev, { agency: '', number: '' }])
+    setAssociations((prev) => [...prev, { agencyCode: '', memberId: '' }])
   }
 
   function removeRow(idx: number) {
@@ -45,11 +45,11 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
     setAssociations((prev) => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a))
   }
 
-  const isComplete = associations.some((a) => a.agency.trim() && a.number.trim())
+  const isComplete = associations.some((a) => a.agencyCode.trim() && a.memberId.trim())
 
   async function handleNext() {
     if (!isComplete) return
-    const valid = associations.filter((a) => a.agency.trim() && a.number.trim())
+    const valid = associations.filter((a) => a.agencyCode.trim() && a.memberId.trim())
     setSaving(true)
     setError(null)
     try {
@@ -79,15 +79,16 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
 
       <div className="flex flex-col gap-4">
         {associations.map((assoc, idx) => (
-          <div key={idx} className="flex gap-2 items-end">
-            <div className="flex-1 grid grid-cols-2 gap-3">
+          <div key={idx}>
+            {idx > 0 && <hr className="form-divider mb-4" />}
+            <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                   Agency
                 </label>
                 <select
-                  value={assoc.agency}
-                  onChange={(e) => updateRow(idx, 'agency', e.target.value)}
+                  value={assoc.agencyCode}
+                  onChange={(e) => updateRow(idx, 'agencyCode', e.target.value)}
                   className="glass w-full text-sm px-3 py-2.5 focus:outline-none"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -99,22 +100,25 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
               </div>
               <GlassInput
                 label="Member Number"
-                value={assoc.number}
-                onChange={(e) => updateRow(idx, 'number', e.target.value)}
+                value={assoc.memberId}
+                onChange={(e) => updateRow(idx, 'memberId', e.target.value)}
                 placeholder="e.g. TH-0012345"
               />
             </div>
             {associations.length > 1 && (
-              <div className="mb-0.5 flex-shrink-0">
-                <GlassButton
-                  variant="destructive-ghost"
-                  size="sm"
+              <div className="flex justify-end mt-2">
+                <button
                   type="button"
                   onClick={() => removeRow(idx)}
                   aria-label="Remove affiliation"
+                  className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
                 >
-                  <Trash2 size={16} />
-                </GlassButton>
+                  <Trash2 size={14} />
+                  Remove
+                </button>
               </div>
             )}
           </div>

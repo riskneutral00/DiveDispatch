@@ -6,7 +6,7 @@ import { Lock } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constants/aow-specialties'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
 import { LanguageField } from '@/components/common/language-field'
@@ -35,12 +35,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
       const langCodes: string[] = (existing?.customerLanguages as string[]) ?? me?.customerLanguages ?? []
-      setFocusedLanguages(
-        langCodes
-          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-          .filter((l): l is NonNullable<typeof l> => l !== undefined)
-          .map((l) => ({ code: l.code, label: l.label }))
-      )
+      setFocusedLanguages(resolveLanguages(langCodes))
       const firstAssoc = existing?.associations?.[0]
       setOwDays(firstAssoc?.owDays?.toString() ?? '')
       setAowDays(firstAssoc?.aowDays?.toString() ?? '')
@@ -107,11 +102,9 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <LanguageField
-            label="Customer Languages"
+            variant="customer"
             value={focusedLanguages}
             onChange={setFocusedLanguages}
-            max={4}
-            required
           />
         </div>
 

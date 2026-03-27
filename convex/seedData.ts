@@ -82,7 +82,6 @@ interface VenueProfile {
   venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
   isPublic: boolean
   confinedCapable: boolean
-  openWaterCapable: boolean
   hasCompressor: boolean
   maxDepth?: number
   maxCapacity?: number
@@ -221,7 +220,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     venueType: 'Pool',
     isPublic: false,
     confinedCapable: true,
-    openWaterCapable: false,
+
     hasCompressor: false,
   },
   equipment: {
@@ -270,7 +269,7 @@ export const NEPTUNE: SeedStakeholder = {
     venueType: 'Pool',
     isPublic: false,
     confinedCapable: true,
-    openWaterCapable: false,
+
     hasCompressor: false,
   },
   equipment: {

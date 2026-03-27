@@ -202,11 +202,9 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         {/* Languages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <LanguageField
-            label={`Language${flags.length !== 1 ? 's' : ''}${flags.length > 0 ? ` (${flags.map((f) => f.label).join(', ')})` : ''}`}
+            variant="customer"
             value={flags.map((f) => ({ code: f.code, label: f.label }))}
             onChange={handleLanguagesChange}
-            max={4}
-            required
           />
         </div>
       </div>

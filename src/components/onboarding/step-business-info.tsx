@@ -81,11 +81,9 @@ export function StepBusinessInfo({
           required
         />
         <LanguageField
-          label="Customer languages"
+          variant="customer"
           value={values.customerLanguages}
           onChange={(langs) => onChange({ ...values, customerLanguages: langs })}
-          max={4}
-          required
         />
       </div>
 

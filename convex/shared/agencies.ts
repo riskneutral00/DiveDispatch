@@ -78,7 +78,7 @@ export const AGENCIES: Record<string, AgencyDefinition> = {
       { code: 'Enriched Air', label: 'Enriched Air Nitrox' },
     ],
     specialtyGroupLabel: 'Specialty Programs',
-    specialtyCount: 4,
+    specialtyCount: 5,
   },
 }
 

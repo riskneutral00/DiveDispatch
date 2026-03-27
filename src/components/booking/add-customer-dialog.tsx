@@ -11,7 +11,6 @@ interface AddCustomerDialogProps {
   open: boolean
   onClose: () => void
   onAdd: (name: string, contact: CustomerContact, flags: Language[]) => void
-  commonLanguageCodes?: string[]
 }
 
 type ContactType = 'email' | 'whatsapp' | 'line'
@@ -20,7 +19,6 @@ export function AddCustomerDialog({
   open,
   onClose,
   onAdd,
-  commonLanguageCodes = [],
 }: AddCustomerDialogProps) {
   const [name, setName] = useState('')
   const [contactType, setContactType] = useState<ContactType>('email')
@@ -119,12 +117,9 @@ export function AddCustomerDialog({
         {/* Languages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <LanguageField
-            label="Languages"
+            variant="customer"
             value={languages}
             onChange={setLanguages}
-            max={4}
-            commonLanguageCodes={commonLanguageCodes as import('@/lib/constants/dive-languages').LanguageCode[]}
-            required
           />
         </div>
 

@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/common/language-field'
 import { FormSectionHeader } from '@/components/common/form-section-header'
+import { toast } from 'sonner'
 import { SaveButton } from '@/components/common/save-button'
 
 interface SettingsValues {
@@ -49,8 +50,11 @@ export function PreferencesTab() {
       baselineRef.current = { ...values }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+      toast.success('Preferences saved', { duration: 3000 })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      const message = err instanceof Error ? err.message : 'Something went wrong.'
+      setError(message)
+      toast.error('Save failed', { description: message, duration: 5000 })
     } finally {
       setSaving(false)
     }
@@ -66,7 +70,7 @@ export function PreferencesTab() {
     )
   }
 
-  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === values.appLanguage)
+  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(values.appLanguage))
   const selectedLocale = selectedLocaleObj
     ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
     : []
@@ -76,18 +80,14 @@ export function PreferencesTab() {
       <div className="space-y-4">
         <FormSectionHeader label="App Preferences" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <LanguageField
-            label="App language"
-            value={selectedLocale}
-            onChange={(langs) => {
-              if (langs[0]) setValues((v) => ({ ...v, appLanguage: langs[0].code }))
-              setSaved(false)
-            }}
-            max={1}
-            required
-          />
-        </div>
+        <LanguageField
+          variant="app"
+          value={selectedLocale}
+          onChange={(langs) => {
+            if (langs[0]) setValues((v) => ({ ...v, appLanguage: langs[0].code }))
+            setSaved(false)
+          }}
+        />
       </div>
 
       {error && (

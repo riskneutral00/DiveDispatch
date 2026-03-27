@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
+import { toast } from 'sonner'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { SaveButton } from '@/components/common/save-button'
@@ -30,8 +31,8 @@ const DAYS = Array.from({ length: 31 }, (_, i) => {
 })
 
 const currentYear = new Date().getFullYear()
-const YEARS = Array.from({ length: 100 }, (_, i) => {
-  const y = String(currentYear - i)
+const YEARS = Array.from({ length: 83 }, (_, i) => {
+  const y = String(currentYear - 18 - i)
   return { value: y, label: y }
 })
 
@@ -119,8 +120,11 @@ export function ProfileTab() {
       baselineRef.current = { ...values }
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+      toast.success('Profile saved', { duration: 3000 })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      const message = err instanceof Error ? err.message : 'Something went wrong.'
+      setError(message)
+      toast.error('Save failed', { description: message, duration: 5000 })
     } finally {
       setSaving(false)
     }

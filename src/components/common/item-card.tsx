@@ -10,25 +10,24 @@ interface ItemCardProps {
 
 export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': ariaLabel = 'Remove item' }: ItemCardProps) {
   return (
-    <div className="relative space-y-4">
-      {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={ariaLabel}
-          aria-hidden={!canRemove}
-          tabIndex={canRemove ? 0 : -1}
-          className={`absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded transition-opacity duration-150 cursor-pointer ${
-            canRemove ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          style={{ color: 'var(--color-destructive, var(--color-text-secondary))' }}
-        >
-          <Trash2 size={16} />
-        </button>
+    <div className="space-y-4">
+      {children}
+      {onRemove && canRemove && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={ariaLabel}
+            className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150"
+            style={{ color: 'var(--color-text-secondary)' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
+          >
+            <Trash2 size={14} />
+            Remove
+          </button>
+        </div>
       )}
-      <div className={`space-y-4${onRemove ? ' pr-10' : ''}`}>
-        {children}
-      </div>
     </div>
   )
 }

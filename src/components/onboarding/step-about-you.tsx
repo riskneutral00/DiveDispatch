@@ -49,13 +49,11 @@ export function StepAboutYou({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
         <LanguageField
-          label="App language"
+          variant="app"
           value={values.operatingLanguage ? [values.operatingLanguage] : []}
           onChange={(langs) => {
             if (langs[0]) set('operatingLanguage', langs[0])
           }}
-          max={1}
-          required
         />
       </div>
 

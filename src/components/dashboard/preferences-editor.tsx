@@ -104,7 +104,7 @@ function CoverageStatus({
   compressorSlugs,
 }: CoverageStatusProps) {
   // Simplified client-side check: "has at least one" for each resource type.
-  // The detailed capability check (confinedCapable, openWaterCapable, hasCompressor)
+  // The detailed capability check (confinedCapable, venueType, hasCompressor)
   // happens server-side at booking time via createDraftShell.
   // A boat satisfies venue needs; a boat or venue with compressor satisfies compressor needs.
   const hasBoat = boatSlugs.length > 0

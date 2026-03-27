@@ -80,8 +80,8 @@ export const createDraftShell = mutation({
           .unique()
         if (venue) {
           venueCapabilities[slug] = {
+            venueType: venue.venueType,
             confinedCapable: venue.confinedCapable,
-            openWaterCapable: venue.openWaterCapable,
             hasCompressor: venue.hasCompressor,
           }
         }

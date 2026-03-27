@@ -10,8 +10,8 @@
  */
 
 export interface VenueCapabilities {
+  venueType: string
   confinedCapable: boolean
-  openWaterCapable: boolean
   hasCompressor: boolean
 }
 
@@ -51,6 +51,8 @@ export function checkPreferenceCoverage(input: CoverageInput): CoverageResult {
   const hasBoat = input.preferredBoatSlugs.length > 0
 
   // Scan venue capabilities
+  // Confined water: boat OR venue with confinedCapable
+  // Open water: boat OR dive site (always open water) OR confined-capable pool
   let hasConfinedVenue = hasBoat
   let hasOpenWaterVenue = hasBoat
   let hasCompressorAnywhere =
@@ -59,8 +61,11 @@ export function checkPreferenceCoverage(input: CoverageInput): CoverageResult {
   for (const slug of input.preferredVenueSlugs) {
     const caps = input.venueCapabilities[slug]
     if (!caps) continue
-    if (caps.confinedCapable) hasConfinedVenue = true
-    if (caps.openWaterCapable) hasOpenWaterVenue = true
+    if (caps.confinedCapable) {
+      hasConfinedVenue = true
+      hasOpenWaterVenue = true
+    }
+    if (caps.venueType !== 'Pool') hasOpenWaterVenue = true
     if (caps.hasCompressor) hasCompressorAnywhere = true
   }
 

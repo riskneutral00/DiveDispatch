@@ -22,18 +22,14 @@ interface LanguagePickerProps {
   value: Language[]
   onChange: (languages: Language[]) => void
   max?: number
-  commonLanguageCodes?: LanguageCode[]
   disabled?: boolean
-  className?: string
 }
 
 export function LanguagePicker({
   value,
   onChange,
   max = 4,
-  commonLanguageCodes = [],
   disabled = false,
-  className,
 }: LanguagePickerProps) {
   const [query, setQuery] = useState('')
   const gridRef = useRef<HTMLDivElement>(null)
@@ -41,8 +37,6 @@ export function LanguagePicker({
 
   const selectedCodes = new Set<string>(value.map((l) => l.code))
   const atMax = value.length >= max
-  const favoriteCodes: string[] = []
-
   function toggle(lang: Language) {
     if (max === 1) {
       onChange([{ code: lang.code, label: lang.label }])
@@ -58,17 +52,7 @@ export function LanguagePicker({
     setQuery('')
   }
 
-  const commonSet = new Set<string>(commonLanguageCodes)
-
-  // Row 1: common codes, then any favorites not already in common
-  const row1Codes = [
-    ...commonLanguageCodes,
-    ...favoriteCodes.filter((code) => !commonSet.has(code)),
-  ]
-  const row1Set = new Set(row1Codes)
-  const row1Languages = row1Codes
-    .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-    .filter((l): l is DiveLanguage => Boolean(l))
+  const row1Set = new Set<string>()
 
   // Popular row A (Asian): popular codes minus anything already in row 1
   const popRowALanguages = POPULAR_ROW1_CODES.filter((code) => !row1Set.has(code))
@@ -104,7 +88,7 @@ export function LanguagePicker({
   })
 
   return (
-    <div className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}>
+    <div className="flex flex-col gap-2">
       {/* Search input with counter */}
       <div className="relative w-full">
         <input
@@ -112,8 +96,8 @@ export function LanguagePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
-          placeholder="Search languages…"
-          className="glass glass-field w-full text-sm py-2.5 pl-3 pr-12 placeholder:opacity-50"
+          placeholder={value.length > 0 ? value.map((l) => CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label).join(', ') : 'Search languages…'}
+          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
           style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
         />
         <span
@@ -154,19 +138,6 @@ export function LanguagePicker({
               <div className="flex flex-wrap gap-1">
                 {overflowLanguages.map((lang) => (
                   <FlagPill key={lang.code} lang={lang} active={true} disabled={disabled} onToggle={() => toggle(lang)} />
-                ))}
-              </div>
-            )}
-            {row1Languages.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {row1Languages.map((lang) => (
-                  <FlagPill
-                    key={lang.code}
-                    lang={lang}
-                    active={selectedCodes.has(lang.code)}
-                    disabled={disabled || (max !== 1 && atMax && !selectedCodes.has(lang.code))}
-                    onToggle={() => toggle(lang)}
-                  />
                 ))}
               </div>
             )}

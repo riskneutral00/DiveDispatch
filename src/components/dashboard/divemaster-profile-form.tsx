@@ -17,7 +17,7 @@ import { FormSectionHeader } from '@/components/common/form-section-header'
 import { LanguageField } from '@/components/common/language-field'
 import { SaveButton } from '@/components/common/save-button'
 import type { Language } from '@/lib/types/language'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
+import { resolveLanguages } from '@/lib/constants/dive-languages'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -114,10 +114,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
         email: p.email as string,
         phone: p.phone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
-        teachingLanguages: ((p.teachingLanguages as string[]) ?? [])
-          .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-          .filter((l): l is NonNullable<typeof l> => l !== undefined)
-          .map((l) => ({ code: l.code, label: l.label })),
+        teachingLanguages: resolveLanguages((p.teachingLanguages as string[]) ?? []),
       }
     },
     fromMe: (defaults, initial) => ({
@@ -197,10 +194,9 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
 
       {(!section || section === 'languages') && (
         <LanguageField
-          label="Teaching Languages"
+          variant="teaching"
           value={form.teachingLanguages}
           onChange={(langs) => setField('teachingLanguages', langs)}
-          max={4}
         />
       )}
 

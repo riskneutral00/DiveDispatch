@@ -157,9 +157,27 @@ export function languageToCode(input: string): string {
   if (!input) return ''
   const upper = input.toUpperCase()
   if (upper.length === 2 && VALID_LANGUAGE_CODE_SET.has(upper)) return upper
-  const isoHit = ISO_TO_COUNTRY[input.toLowerCase()]
+  const lower = input.toLowerCase()
+  const isoHit = ISO_TO_COUNTRY[lower]
   if (isoHit) return isoHit
-  return _labelToCode.get(input.toLowerCase()) ?? ''
+  // Handle locale codes like 'zh-CN', 'zh-TW', 'en-US'
+  if (lower.includes('-')) {
+    const region = lower.split('-')[1].toUpperCase()
+    if (VALID_LANGUAGE_CODE_SET.has(region)) return region
+    const lang = lower.split('-')[0]
+    const localeHit = ISO_TO_COUNTRY[lang]
+    if (localeHit) return localeHit
+  }
+  return _labelToCode.get(lower) ?? ''
+}
+
+/** Resolve an array of raw DB language codes to Language objects.
+ *  Handles country codes ('CN'), ISO-639 ('zh'), and locales ('zh-CN'). */
+export function resolveLanguages(codes: string[]): { code: string; label: string }[] {
+  return (codes ?? [])
+    .map((code) => ALL_LANGUAGES.find((l) => l.code === languageToCode(code)))
+    .filter((l): l is DiveLanguage => l !== undefined)
+    .map((l) => ({ code: l.code, label: CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label }))
 }
 
 /** Curated list for profile forms — matches the original 17-language set. */

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useId } from 'react'
+import { useState, useCallback, useEffect, useId, useRef } from 'react'
 import { APIProvider, Map, useApiIsLoaded, useMap } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
@@ -60,6 +60,9 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   )
   const [gpsLoading, setGpsLoading] = useState(false)
   const [suggestionsOpen, setSuggestionsOpen] = useState(false)
+  const poiClickRef = useRef(false)
+  const initialLoadRef = useRef(!!value)
+  const [poiSelected, setPoiSelected] = useState(false)
 
   // Auto-trigger GPS if no value set yet
   useEffect(() => {
@@ -96,7 +99,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
 
     const service = new google.maps.places.PlacesService(document.createElement('div'))
     service.getDetails(
-      { placeId: suggestion.place_id, fields: ['geometry', 'address_components', 'name'] },
+      { placeId: suggestion.place_id, fields: ['geometry', 'formatted_address'] },
       (result, status) => {
         if (
           status !== google.maps.places.PlacesServiceStatus.OK ||
@@ -105,12 +108,39 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
           return
         const lat = result.geometry.location.lat()
         const lng = result.geometry.location.lng()
-        const country =
-          result.address_components?.find((c) => c.types.includes('country'))?.long_name ?? ''
         setFlyTarget({ lat, lng })
-        setDisplayAddress(
-          `${suggestion.structured_formatting.main_text}${country ? ', ' + country : ''}`,
+        setDisplayAddress(result.formatted_address ?? suggestion.description)
+      },
+    )
+  }
+
+  // ── POI click: tap a place on the map to use its address ──────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function handleMapClick(e: any) {
+    const placeId = e?.detail?.placeId
+    if (!placeId) return
+    e.stop?.() // Prevent default Google info window
+
+    poiClickRef.current = true
+    setPoiSelected(true)
+    const service = new google.maps.places.PlacesService(document.createElement('div'))
+    service.getDetails(
+      { placeId, fields: ['geometry', 'formatted_address', 'name'] },
+      (result, detailStatus) => {
+        if (
+          detailStatus !== google.maps.places.PlacesServiceStatus.OK ||
+          !result?.geometry?.location
         )
+          return
+        const lat = result.geometry.location.lat()
+        const lng = result.geometry.location.lng()
+        // Update center for confirm without moving the map view
+
+        const name = result.name ?? ''
+        const addr = result.formatted_address ?? ''
+        const display =
+          name && addr && !addr.startsWith(name) ? `${name}, ${addr}` : addr || name
+        setDisplayAddress(display)
       },
     )
   }
@@ -124,21 +154,45 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       const lng = c.lng()
       setCenter({ lat, lng })
 
-      new google.maps.Geocoder().geocode({ location: { lat, lng } }, (results, status) => {
-        if (status === 'OK' && results?.[0]) {
-          const r = results[0]
-          const locality =
-            r.address_components?.find((c) => c.types.includes('locality'))?.long_name ??
-            r.address_components?.find((c) =>
-              c.types.includes('administrative_area_level_1'),
-            )?.long_name ??
-            ''
-          const country =
-            r.address_components?.find((c) => c.types.includes('country'))?.long_name ?? ''
-          if (locality || country) {
-            setDisplayAddress([locality, country].filter(Boolean).join(', '))
-          }
-        }
+      // Skip reverse geocoding on initial load (preserve saved address) or after POI click
+      if (initialLoadRef.current || poiClickRef.current) {
+        initialLoadRef.current = false
+        poiClickRef.current = false
+        return
+      }
+
+      // User dragged the map — back to manual pin mode
+      setPoiSelected(false)
+
+      // Reverse geocode for area address + country
+      new google.maps.Geocoder().geocode({ location: { lat, lng } }, (geoResults, geoStatus) => {
+        const best = geoStatus === 'OK' && geoResults?.length
+          ? geoResults.find(
+              (r) => !r.types.includes('plus_code') && !/^[A-Z0-9]{4}\+/.test(r.formatted_address),
+            ) ?? geoResults[0]
+          : null
+        const fallbackAddress = best?.formatted_address ?? ''
+        const country =
+          best?.address_components?.find((c) => c.types.includes('country'))?.long_name ?? ''
+
+        // Nearby search for POI-level precision (differentiates gas station from 7-Eleven)
+        const service = new google.maps.places.PlacesService(e.map)
+        service.nearbySearch(
+          { location: { lat, lng }, radius: 50 },
+          (places, placeStatus) => {
+            if (placeStatus === 'OK' && places?.[0]?.name) {
+              const place = places[0]
+              const parts = [place.name, place.vicinity, country].filter((p): p is string => Boolean(p))
+              // Deduplicate: vicinity sometimes already ends with country
+              const deduped = parts.filter(
+                (part, i) => i === 0 || !parts[i - 1]?.endsWith(part),
+              )
+              setDisplayAddress(deduped.join(', '))
+            } else if (fallbackAddress) {
+              setDisplayAddress(fallbackAddress)
+            }
+          },
+        )
       })
     },
     [],
@@ -172,7 +226,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
               id={inputId}
               type="text"
               value={query}
-              placeholder="Search address…"
+              placeholder={value ? `${value.placeName}, ${value.country}` : 'Search address…'}
               autoComplete="off"
               onChange={(e) => {
                 setQuery(e.target.value)
@@ -244,6 +298,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
           gestureHandling="greedy"
           disableDefaultUI
           mapId="dd-location-picker"
+          onClick={handleMapClick}
           onIdle={handleIdle}
           style={{ width: '100%', height: '100%' }}
         >
@@ -252,17 +307,15 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
 
         {/* Crosshair overlay — stays centered while map moves */}
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
           aria-hidden
         >
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="map-crosshair">
             <line x1="18" y1="4"  x2="18" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="18" y1="23" x2="18" y2="32" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="4"  y1="18" x2="13" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             <line x1="23" y1="18" x2="32" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
             <circle cx="18" cy="18" r="3.5" stroke="white" strokeWidth="2.5" fill="none" />
-            {/* Drop shadow lines for contrast */}
-            <line x1="18" y1="4"  x2="18" y2="13" stroke="var(--color-text-secondary)" strokeWidth="4" strokeLinecap="round" style={{ mixBlendMode: 'multiply' }} />
           </svg>
         </div>
       </div>

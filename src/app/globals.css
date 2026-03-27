@@ -260,6 +260,11 @@ html[data-dialog-open] .app-shell {
   border-left: 3px solid var(--color-destructive) !important;
 }
 
+/* Map crosshair shadow — visible on light roads, dark water, and satellite */
+.map-crosshair {
+  filter: drop-shadow(0 1px 2px var(--color-glass-shadow)) drop-shadow(0 0 4px var(--color-glass-shadow));
+}
+
 /* ── Glass utility classes ───────────────────────────────────────────────────
    Shared backdrop-filter composites. Components import these via cn().
    ──────────────────────────────────────────────────────────────────────────── */

@@ -501,7 +501,6 @@ export default defineSchema({
     venueType: venueType,
     isPublic: v.boolean(),
     confinedCapable: v.boolean(),
-    openWaterCapable: v.boolean(),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
