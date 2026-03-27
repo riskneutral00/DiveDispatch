@@ -24,6 +24,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
+    "@dnd-kit/abstract": "^0.3.2",
+    "@dnd-kit/dom": "^0.3.2",
+    "@dnd-kit/react": "^0.3.2",
+    "@dnd-kit/state": "^0.3.2",
     "@vis.gl/react-google-maps": "^1.7.1",
     "convex": "^1.32.0",
     "lucide-react": "^0.577.0",
