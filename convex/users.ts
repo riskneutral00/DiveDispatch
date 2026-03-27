@@ -31,17 +31,6 @@ async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
 
 // Auth-aware registration. Called from UI after Clerk sign-up + role selection.
 // Idempotent: returns existing user._id if already created.
-const preferredChannelValidator = v.optional(
-  v.union(
-    v.literal('WhatsApp'),
-    v.literal('LINE'),
-    v.literal('Messenger'),
-    v.literal('WeChat'),
-    v.literal('KakaoTalk'),
-    v.literal('Instagram'),
-  ),
-)
-
 export const createUser = mutation({
   args: {
     role: stakeholderType,
@@ -51,8 +40,9 @@ export const createUser = mutation({
     lastName: v.optional(v.string()),
     nickname: v.optional(v.string()),
     phone: v.optional(v.string()),
-    preferredChannel: preferredChannelValidator,
-    preferredLocale: v.optional(v.string()),
+    email: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    appLanguage: v.string(),
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -84,8 +74,9 @@ export const createUser = mutation({
         ...(args.lastName !== undefined && { lastName: args.lastName }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
-        ...(args.preferredChannel !== undefined && { preferredChannel: args.preferredChannel }),
-        ...(args.preferredLocale !== undefined && { preferredLocale: args.preferredLocale }),
+        ...(args.email !== undefined && { email: args.email }),
+        ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
+        appLanguage: args.appLanguage,
         ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
       })
       return existing._id
@@ -95,17 +86,17 @@ export const createUser = mutation({
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
       slug,
-      email,
+      email: args.email ?? email,
       name,
       firstName,
       lastName,
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      ...(args.preferredChannel !== undefined && { preferredChannel: args.preferredChannel }),
+      ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       businessName,
       customerLanguages: args.customerLanguages,
       isSeeded: false,
-      preferredLocale: args.preferredLocale ?? 'en',
+      appLanguage: args.appLanguage,
     })
 
     // Create userRoles entries when roles array is provided
@@ -357,7 +348,7 @@ export const upsertFromWebhook = internalMutation({
       lastName: args.lastName,
       businessName: '',
       isSeeded: false,
-      preferredLocale: 'en',
+      appLanguage: 'en',
     })
 
     // Seed default userRoles entry so getLowestProfileCompletion works

@@ -180,7 +180,7 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     lastName: s.user.lastName,
     businessName: s.user.businessName,
     isSeeded: true,
-    preferredLocale: s.user.preferredLocale,
+    appLanguage: s.user.appLanguage,
     onboardingComplete: true,
   })
 }
