@@ -11,6 +11,7 @@ interface LanguageFieldProps {
   max?: number
   commonLanguageCodes?: LanguageCode[]
   disabled?: boolean
+  required?: boolean
 }
 
 export function LanguageField({
@@ -20,6 +21,7 @@ export function LanguageField({
   max = 4,
   commonLanguageCodes,
   disabled,
+  required,
 }: LanguageFieldProps) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -28,6 +30,7 @@ export function LanguageField({
         style={{ color: 'var(--color-text-secondary)' }}
       >
         {label}
+        {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
       </label>
       <LanguagePicker
         value={value}

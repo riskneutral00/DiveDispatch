@@ -247,6 +247,19 @@ html[data-dialog-open] .app-shell {
   margin: 0;
 }
 
+/* ── Glass toast accents ────────────────────────────────────────────────────
+   Left border accent for sonner toasts to match Glass Air design.
+   ──────────────────────────────────────────────────────────────────────────── */
+.glass-toast-success [data-content] {
+  /* parent toast gets the accent via border-left */
+}
+.glass-toast-success {
+  border-left: 3px solid var(--color-active-fg) !important;
+}
+.glass-toast-error {
+  border-left: 3px solid var(--color-destructive) !important;
+}
+
 /* ── Glass utility classes ───────────────────────────────────────────────────
    Shared backdrop-filter composites. Components import these via cn().
    ──────────────────────────────────────────────────────────────────────────── */

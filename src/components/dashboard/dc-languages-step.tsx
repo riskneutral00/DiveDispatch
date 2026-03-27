@@ -105,12 +105,15 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       </div>
 
       <div className="flex flex-col gap-6">
-        <LanguageField
-          label="Customer Languages"
-          value={focusedLanguages}
-          onChange={setFocusedLanguages}
-          max={4}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <LanguageField
+            label="Customer Languages"
+            value={focusedLanguages}
+            onChange={setFocusedLanguages}
+            max={4}
+            required
+          />
+        </div>
 
         <div>
           <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>

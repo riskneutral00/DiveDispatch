@@ -129,10 +129,11 @@ role-specific profile.
 
 ## Section: Credentials (Instructor / DiveMaster)
 
-Add/remove rows. Each row: agency name + certification level + ID number.
+Add/remove rows. No card wrapper — fields sit directly on the page. Multiple credentials
+separated by `<hr className="form-divider">` between each row (not before first).
 
 - "Add credential" button: `GlassButton` variant secondary, full-width on mobile, left-aligned on desktop.
-- Remove: `Trash2` icon button, top-right of each card. 44px touch target.
+- Remove: `Trash2` icon button, top-right of each row. 44px touch target.
 - Empty state: "No credentials added yet" in secondary text, centered.
 - No maximum row count enforced in UI (backend validates).
 
@@ -140,7 +141,8 @@ Add/remove rows. Each row: agency name + certification level + ID number.
 
 ## Section: Associations (Operator roles)
 
-Add/remove card pattern. Each card contains:
+Add/remove pattern. No card wrapper — fields sit directly on the page. Multiple
+affiliations separated by `<hr className="form-divider">` between each group (not before first).
 
 ```
 Agency (GlassSelect)     Member ID (GlassInput)    — side-by-side, pr-10 for remove button
@@ -149,9 +151,8 @@ Default specialties      Toggle pill chips          — with "More..." overflow
 ```
 
 - "+ Add" button: right-aligned, secondary text with Plus icon. 44px touch target.
-- Remove: `Trash2` icon, absolute top-right of card. 44px touch target.
-- Card background: `var(--color-glass-bg)` with `var(--color-glass-border)`.
-- Card internal spacing: `space-y-3`.
+- Remove: `Trash2` icon, absolute top-right of each group. 44px touch target.
+- Internal spacing: `space-y-4` within each affiliation, `space-y-6` between groups.
 - Empty state: "No affiliations added. Click Add to register one." in secondary text.
 - Mandatory specialties show lock icon, cannot be toggled.
 

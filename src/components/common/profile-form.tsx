@@ -18,7 +18,6 @@ export interface ProfileFormSharedValue {
 export interface ProfileFormErrors {
   name?: string
   location?: string
-  contactEmail?: string
   contactPhone?: string
 }
 
@@ -58,7 +57,6 @@ export const locationSchema = z.object({
 export const sharedProfileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone is required'),
 })
 
@@ -93,36 +91,26 @@ export function ProfileForm({
     <form onSubmit={onSubmit} className="max-w-2xl mx-auto space-y-8">
       {/* Basic Information */}
       <div className="space-y-4">
-        <SectionHeader>Basic Information</SectionHeader>
-
-        <GlassInput
-          label="Business Name"
-          value={value.name}
-          onChange={(e) => onChange('name', e.target.value)}
-          placeholder="e.g. Ocean Explorer Dive Center"
-          error={errors.name}
-        />
-
-        {showLocation && (
-          <LocationPicker
-            label="Location"
-            value={value.location}
-            onChange={(loc) => onChange('location', loc)}
-            error={errors.location}
-          />
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <GlassInput
-            label="Contact Email"
-            type="email"
-            value={value.contactEmail}
-            onChange={(e) => onChange('contactEmail', e.target.value)}
-            placeholder="dive@example.com"
-            error={errors.contactEmail}
+            label="Business Name"
+            value={value.name}
+            onChange={(e) => onChange('name', e.target.value)}
+            placeholder="e.g. Ocean Explorer Dive Center"
+            error={errors.name}
           />
+
+          {showLocation && (
+            <LocationPicker
+              label="Location"
+              value={value.location}
+              onChange={(loc) => onChange('location', loc)}
+              error={errors.location}
+            />
+          )}
+
           <GlassInput
-            label="Contact Phone"
+            label="Phone"
             type="tel"
             value={value.contactPhone}
             onChange={(e) => onChange('contactPhone', e.target.value)}
@@ -145,7 +133,7 @@ export function ProfileForm({
       <div className="flex justify-end">
         <GlassButton type="submit" loading={isLoading}>
           <Save size={16} />
-          {submitLabel ?? 'Save Changes'}
+          {submitLabel ?? 'Save'}
         </GlassButton>
       </div>
     </form>

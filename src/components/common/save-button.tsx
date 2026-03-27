@@ -6,15 +6,17 @@ interface SaveButtonProps {
   saved: boolean
   isDirty: boolean
   isUpdate: boolean
+  disabled?: boolean
+  label?: string
 }
 
-export function SaveButton({ saving, saved, isDirty, isUpdate }: SaveButtonProps) {
+export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }: SaveButtonProps) {
   return (
     <div className="flex justify-end">
       <GlassButton
         type="submit"
         loading={saving}
-        disabled={isUpdate ? (!isDirty || saving) : saving}
+        disabled={disabled || (isUpdate ? (!isDirty || saving) : saving)}
         style={saved ? { background: 'var(--color-active-fg)', borderColor: 'var(--color-active-fg)' } : undefined}
       >
         {saved ? (
@@ -25,7 +27,7 @@ export function SaveButton({ saving, saved, isDirty, isUpdate }: SaveButtonProps
         ) : (
           <>
             <Save size={16} />
-            {isUpdate ? 'Save Changes' : 'Create Profile'}
+            {label ?? (isUpdate ? 'Save' : 'Create Profile')}
           </>
         )}
       </GlassButton>

@@ -16,7 +16,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
     label: 'Dive Center',
     tabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
     ],
     settingsIncludesProfile: false,
@@ -25,7 +24,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
     label: 'Agent',
     tabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Memberships' },
     ],
     settingsIncludesProfile: false,
@@ -34,7 +32,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
     label: 'Instructor',
     tabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
     ],
     settingsIncludesProfile: false,
@@ -43,7 +40,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
     label: 'Divemaster',
     tabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
     ],
     settingsIncludesProfile: false,

@@ -231,7 +231,7 @@ export const profileFieldsSchema = z.object({
   lastName: z.string().min(1, 'Required'),
   nickname: z.string().optional(),
   businessName: z.string().min(1, 'Required'),
-  preferredLocale: z.string().min(1, 'Required'),
+  appLanguage: z.string().min(1, 'Required'),
 })
 
 export type ProfileFieldsData = z.infer<typeof profileFieldsSchema>

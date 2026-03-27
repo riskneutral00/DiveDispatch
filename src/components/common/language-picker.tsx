@@ -16,7 +16,7 @@ import type { Language } from '@/lib/types/language'
 
 // h-8 w-8 rounded-[6px] flex items-center justify-center text-[1.1rem] leading-none transition-colors border
 const FLAG_TILE =
-  'h-8 w-8 rounded-[6px] flex items-center justify-center text-[1.1rem] leading-none transition-colors border'
+  'h-9 w-9 rounded-[6px] flex items-center justify-center text-[1.2rem] leading-none transition-colors border'
 
 interface LanguagePickerProps {
   value: Language[]
@@ -106,14 +106,14 @@ export function LanguagePicker({
   return (
     <div className={['flex flex-col gap-2', className].filter(Boolean).join(' ')}>
       {/* Search input with counter */}
-      <div className="relative max-w-[284px]">
+      <div className="relative w-full">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
           placeholder="Search languages…"
-          className="glass glass-field w-full text-sm py-2 pl-3 pr-12 placeholder:opacity-50"
+          className="glass glass-field w-full text-sm py-2.5 pl-3 pr-12 placeholder:opacity-50"
           style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
         />
         <span
@@ -221,8 +221,9 @@ function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
       title={lang.label}
       aria-label={lang.label}
       aria-pressed={active}
+      translate="no"
       className={isText
-        ? 'h-8 px-2 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border'
+        ? 'h-9 px-1.5 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border'
         : FLAG_TILE}
       style={{
         background: active ? 'var(--color-primary-muted)' : 'transparent',

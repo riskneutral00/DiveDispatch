@@ -98,7 +98,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="glass glass-field w-full text-sm py-2 pl-3 pr-8 appearance-none"
+          className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 appearance-none"
           style={{ color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
         >
           <option value="">{placeholder}</option>

@@ -72,20 +72,22 @@ export function StepBusinessInfo({
         </p>
       </div>
 
-      <GlassInput
-        label="Business name"
-        value={values.businessName}
-        onChange={(e) => onChange({ ...values, businessName: e.target.value })}
-        autoComplete="organization"
-        required
-      />
-
-      <LanguageField
-        label="Customer languages"
-        value={values.customerLanguages}
-        onChange={(langs) => onChange({ ...values, customerLanguages: langs })}
-        max={4}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <GlassInput
+          label="Business name"
+          value={values.businessName}
+          onChange={(e) => onChange({ ...values, businessName: e.target.value })}
+          autoComplete="organization"
+          required
+        />
+        <LanguageField
+          label="Customer languages"
+          value={values.customerLanguages}
+          onChange={(langs) => onChange({ ...values, customerLanguages: langs })}
+          max={4}
+          required
+        />
+      </div>
 
       <div className="flex gap-3 mt-2" data-testid="wizard-nav">
         <GlassButton type="button" variant="secondary" fullWidth onClick={onBack}>

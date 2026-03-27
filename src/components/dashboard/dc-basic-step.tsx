@@ -49,7 +49,7 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
   }, [existing, me, initialized])
 
   const isComplete =
-    name.trim() && location && contactEmail.trim() && contactPhone.trim()
+    name.trim() && location && contactPhone.trim()
 
   async function handleNext() {
     if (!isComplete || !location) return
@@ -117,15 +117,7 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           onChange={setLocation}
         />
         <GlassInput
-          label="Contact Email"
-          type="email"
-          value={contactEmail}
-          onChange={(e) => setContactEmail(e.target.value)}
-          placeholder="dive@example.com"
-          required
-        />
-        <GlassInput
-          label="Contact Phone"
+          label="Phone"
           type="tel"
           value={contactPhone}
           onChange={(e) => setContactPhone(e.target.value)}

@@ -21,6 +21,7 @@ interface LocationPickerProps {
   onChange: (location: LocationValue | null) => void
   error?: string
   label?: string
+  required?: boolean
 }
 
 // ── FlyEffect: child of <Map> that imperatively pans/zooms ────────────────────
@@ -323,9 +324,10 @@ interface TriggerProps {
   onClear: () => void
   error?: string
   label?: string
+  required?: boolean
 }
 
-function LocationPickerTrigger({ value, onOpen, onClear, error, label }: TriggerProps) {
+function LocationPickerTrigger({ value, onOpen, onClear, error, label, required }: TriggerProps) {
   const inputId = useId()
   return (
     <div className="flex flex-col gap-1.5 w-full">
@@ -336,6 +338,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label }: Trigger
           style={{ color: 'var(--color-text-secondary)' }}
         >
           {label}
+          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
         </label>
       )}
       <div className="relative">
@@ -395,7 +398,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label }: Trigger
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 
-export function LocationPicker({ value, onChange, error, label }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, error, label, required }: LocationPickerProps) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -405,6 +408,7 @@ export function LocationPicker({ value, onChange, error, label }: LocationPicker
         onClear={() => onChange(null)}
         error={error}
         label={label}
+        required={required}
       />
       <GlassDialog open={open} onClose={() => setOpen(false)} title="Set Location" fullScreen>
         <APIProvider apiKey={API_KEY} libraries={['places']}>

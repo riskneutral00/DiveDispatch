@@ -8,7 +8,7 @@ const COOKIE_NAME = "dd-locale";
 
 /**
  * Syncs the authenticated user's preferred locale to the dd-locale cookie.
- * Reads appLanguage (preferred) or preferredLocale from the Convex user record.
+ * Reads appLanguage from the Convex user record.
  * When the cookie changes, the next server request picks up the new locale
  * via getRequestConfig in src/i18n/request.ts.
  */
@@ -18,11 +18,7 @@ export function useLocaleSync() {
   useEffect(() => {
     if (!user) return;
 
-    // appLanguage takes priority over preferredLocale (post DD-068)
-    const rawLocale =
-      user.appLanguage
-      ?? user.preferredLocale
-      ?? DEFAULT_LOCALE;
+    const rawLocale = user.appLanguage ?? DEFAULT_LOCALE;
 
     const supported: ReadonlyArray<string> = SUPPORTED_LOCALES;
     const locale = supported.includes(rawLocale) ? rawLocale : DEFAULT_LOCALE;

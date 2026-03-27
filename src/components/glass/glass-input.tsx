@@ -34,6 +34,7 @@ export function GlassInput({
           style={{ color: "var(--color-text-secondary)" }}
         >
           {label}
+          {props.required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
         </label>
       )}
 

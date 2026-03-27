@@ -1,9 +1,5 @@
-'use client'
-
 import type { ReactNode } from 'react'
 import { Trash2 } from 'lucide-react'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
 
 interface CredentialRowProps {
   index: number
@@ -13,25 +9,26 @@ interface CredentialRowProps {
 }
 
 /**
- * Shared credential row shell — header with "Credential N" title,
- * optional remove button, and a GlassCard wrapper.
- * Inner fields (agency, level, courses, etc.) are passed as children.
+ * Shared credential row shell — trash button + children layout.
+ * No card wrapper; parent handles dividers between rows.
  */
 export function CredentialRow({ index, canRemove, onRemove, children }: CredentialRowProps) {
   return (
-    <GlassCard padding="md">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-          Credential {index + 1}
-        </h3>
-        {canRemove && (
-          <GlassButton variant="destructive" size="sm" type="button" onClick={() => onRemove(index)} aria-label={`Remove credential ${index + 1}`}>
-            <Trash2 size={14} />
-            Remove
-          </GlassButton>
-        )}
+    <div className="relative space-y-4">
+      {canRemove && (
+        <button
+          type="button"
+          onClick={() => onRemove(index)}
+          aria-label={`Remove credential ${index + 1}`}
+          className="absolute top-0 right-0 min-h-[44px] min-w-[44px] flex items-center justify-center rounded transition-opacity duration-150 cursor-pointer"
+          style={{ color: 'var(--color-destructive, var(--color-text-secondary))' }}
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
+      <div className={canRemove ? 'pr-10' : ''}>
+        {children}
       </div>
-      {children}
-    </GlassCard>
+    </div>
   )
 }

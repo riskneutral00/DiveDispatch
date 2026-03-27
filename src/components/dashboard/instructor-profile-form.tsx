@@ -1,6 +1,7 @@
 'use client'
 
 import { z } from 'zod'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { FormSectionHeader } from '@/components/common/form-section-header'
@@ -54,8 +55,7 @@ const locationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Invalid email address'),
-  contactPhone: z.string().min(1, 'Phone number is required'),
+  contactPhone: z.string().refine((val) => isValidPhoneNumber(val), 'Invalid international phone number'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
 })
 
@@ -108,7 +108,7 @@ function InstructorCredentialFields({ index, credential, errors, onChange }: {
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type InstructorProfileSection = 'contact' | 'languages' | 'credentials'
+export type InstructorProfileSection = 'contact' | 'credentials'
 
 export function InstructorProfileForm({ section }: { section?: InstructorProfileSection } = {}) {
   const profile = useQuery(api.instructors.mine)
@@ -116,7 +116,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
   const create = useMutation(api.instructors.create)
   const update = useMutation(api.instructors.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -185,20 +185,8 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {!section && (
-        <div>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
-            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {isUpdate ? 'Keep your profile current so dive centers can find you.' : 'Set up your instructor profile to start receiving booking requests.'}
-          </p>
-        </div>
-      )}
-
       {(!section || section === 'contact') && (
         <GlassCard padding="md">
-          <FormSectionHeader label="Contact Information" />
           <div className="space-y-4">
             <ProfileBasicInfo
               nameValue={form.name}
@@ -209,26 +197,20 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
               locationValue={form.location}
               onLocationChange={(loc) => setField('location', loc)}
               locationError={errors.location}
-              emailValue={form.contactEmail}
-              onEmailChange={(val) => setField('contactEmail', val)}
-              emailError={errors.contactEmail}
               phoneValue={form.contactPhone}
               onPhoneChange={(val) => setField('contactPhone', val)}
               phoneError={errors.contactPhone}
-            />
+            >
+              <LanguageField
+                label="Teaching Languages"
+                value={form.teachingLanguages}
+                onChange={(langs) => setField('teachingLanguages', langs)}
+                max={4}
+                required
+              />
+            </ProfileBasicInfo>
           </div>
         </GlassCard>
-      )}
-
-      {(!section) && <hr className="form-divider" />}
-
-      {(!section || section === 'languages') && (
-        <LanguageField
-          label="Teaching Languages"
-          value={form.teachingLanguages}
-          onChange={(langs) => setField('teachingLanguages', langs)}
-          max={4}
-        />
       )}
 
       {(!section) && <hr className="form-divider" />}
@@ -246,9 +228,12 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
           />
           {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
           {form.credential.map((cred, index) => (
-            <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
-              <InstructorCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
-            </CredentialRow>
+            <div key={index}>
+              {index > 0 && <hr className="form-divider mb-4" />}
+              <CredentialRow index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
+                <InstructorCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
+              </CredentialRow>
+            </div>
           ))}
         </div>
       )}
@@ -256,7 +241,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

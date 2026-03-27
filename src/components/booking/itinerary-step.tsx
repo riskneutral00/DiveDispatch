@@ -147,7 +147,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               value={entry.activityCode}
               onChange={(e) => handleCourseChange(e.target.value)}
               data-testid="course-activity-select"
-              className="glass glass-field w-full text-sm py-2 pl-3 pr-8 appearance-none"
+              className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 appearance-none"
               style={{ color: entry.activityCode ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
             >
               <option value="">Select activity…</option>
@@ -173,7 +173,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             onChange={(e) => handleStartDateChange(e.target.value)}
             onClick={(e) => e.currentTarget.showPicker()}
             data-testid="course-start-date"
-            className="glass glass-field w-full text-sm py-2 px-3 cursor-pointer"
+            className="glass glass-field w-full text-sm py-2.5 px-3 cursor-pointer"
             style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
           />
         </div>
@@ -190,7 +190,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               min={entry.dates[0]}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              className="glass glass-field flex-1 text-sm py-2 px-3 cursor-pointer"
+              className="glass glass-field flex-1 text-sm py-2.5 px-3 cursor-pointer"
               style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (

@@ -72,11 +72,7 @@ enough context.
 ```
 App language    GlassSelect   label="App language"
                               Options: same language list as sign-up wizard (flag + native name)
-                              Current value: user.preferredLocale
-
-Notifications   GlassSelect   label="Preferred channel"
-                              Options: WhatsApp, LINE, Messenger, WeChat, KakaoTalk, Instagram, None
-                              Current value: user.preferredChannel
+                              Current value: user.appLanguage
 
 Theme           [ThemeSwitcher inline or GlassSelect]
                               Already accessible via header icon — surface here too for discoverability.

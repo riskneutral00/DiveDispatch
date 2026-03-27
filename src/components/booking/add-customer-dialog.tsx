@@ -65,7 +65,7 @@ export function AddCustomerDialog({
     <GlassDialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
         {/* Name */}
-        <div className="max-w-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <GlassInput
             label="Full name"
             value={name}
@@ -117,13 +117,16 @@ export function AddCustomerDialog({
         <hr className="form-divider" />
 
         {/* Languages */}
-        <LanguageField
-          label="Languages"
-          value={languages}
-          onChange={setLanguages}
-          max={4}
-          commonLanguageCodes={commonLanguageCodes as import('@/lib/constants/dive-languages').LanguageCode[]}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <LanguageField
+            label="Languages"
+            value={languages}
+            onChange={setLanguages}
+            max={4}
+            commonLanguageCodes={commonLanguageCodes as import('@/lib/constants/dive-languages').LanguageCode[]}
+            required
+          />
+        </div>
 
         {/* Actions */}
         <div className="flex gap-2 justify-end">

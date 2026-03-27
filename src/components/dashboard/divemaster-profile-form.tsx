@@ -10,7 +10,8 @@ import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { type LocationValue } from '@/components/common/location-picker'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 import { CredentialRow } from '@/components/common/credential-row'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
@@ -38,7 +39,6 @@ const locationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
 })
@@ -87,7 +87,7 @@ function DmCredentialFields({ index, credential, errors, onChange }: {
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export type DiveMasterProfileSection = 'contact' | 'languages' | 'credentials'
+export type DiveMasterProfileSection = 'contact' | 'credentials'
 
 export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfileSection } = {}) {
   const profile = useQuery(api.diveMasters.mine)
@@ -95,7 +95,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
   const create = useMutation(api.diveMasters.create)
   const update = useMutation(api.diveMasters.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -164,44 +164,32 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {!section && (
-        <div>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
-            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {isUpdate ? 'Keep your profile current so dive centers can find you.' : 'Set up your divemaster profile to start receiving booking requests.'}
-          </p>
-        </div>
-      )}
-
       {(!section || section === 'contact') && (
         <GlassCard padding="md">
-          <FormSectionHeader label="Contact Information" />
           <div className="space-y-4">
-            <div className="max-w-sm">
-              <GlassInput label="Full Name" placeholder="Your name" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
-            </div>
-            <div className="max-w-md">
-              <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} error={errors.contactEmail} />
-              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
-            </div>
+            <ProfileBasicInfo
+              nameLabel="Full Name"
+              namePlaceholder="Your name"
+              nameValue={form.name}
+              onNameChange={(val) => setField('name', val)}
+              nameError={errors.name}
+              locationValue={form.location}
+              onLocationChange={(loc) => setField('location', loc)}
+              locationError={errors.location}
+              phoneValue={form.contactPhone}
+              onPhoneChange={(val) => setField('contactPhone', val)}
+              phoneError={errors.contactPhone}
+            >
+              <LanguageField
+                label="Teaching Languages"
+                value={form.teachingLanguages}
+                onChange={(langs) => setField('teachingLanguages', langs)}
+                max={4}
+                required
+              />
+            </ProfileBasicInfo>
           </div>
         </GlassCard>
-      )}
-
-      {(!section) && <hr className="form-divider" />}
-
-      {(!section || section === 'languages') && (
-        <LanguageField
-          label="Teaching Languages"
-          value={form.teachingLanguages}
-          onChange={(langs) => setField('teachingLanguages', langs)}
-          max={4}
-        />
       )}
 
       {(!section) && <hr className="form-divider" />}
@@ -219,9 +207,12 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
           />
           {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
           {form.credential.map((cred, index) => (
-            <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
-              <DmCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
-            </CredentialRow>
+            <div key={index}>
+              {index > 0 && <hr className="form-divider mb-4" />}
+              <CredentialRow index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
+                <DmCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
+              </CredentialRow>
+            </div>
           ))}
         </div>
       )}
@@ -229,7 +220,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

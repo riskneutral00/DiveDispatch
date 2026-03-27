@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import { Lock } from 'lucide-react'
 
 // ── PillToggle ──────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ interface PillToggleProps {
 export function PillToggle({ label, checked, onChange, locked, disabled }: PillToggleProps) {
   return (
     <label
-      className={`inline-flex items-center gap-1 px-2.5 min-h-[44px] rounded-full text-xs font-medium transition-all ${locked ? 'cursor-default' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${locked ? 'cursor-default' : 'cursor-pointer'}`}
       style={{
         background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
@@ -44,29 +44,57 @@ interface PillToggleGroupProps {
   children: ReactNode
   /** Items beyond this threshold are hidden behind "More..." */
   overflowItems?: ReactNode
+  /** Override container layout (default: flex flex-wrap gap-1.5) */
+  className?: string
 }
 
-export function PillToggleGroup({ children, overflowItems }: PillToggleGroupProps) {
-  const [showMore, setShowMore] = useState(false)
+export function PillToggleGroup({ children, overflowItems, className }: PillToggleGroupProps) {
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className={className ?? "flex flex-wrap gap-1.5"}>
       {children}
-      {overflowItems && !showMore && (
-        <button
-          type="button"
-          onClick={() => setShowMore(true)}
-          className="inline-flex items-center px-2.5 min-h-[44px] rounded-full text-xs font-medium cursor-pointer"
-          style={{
-            background: 'var(--color-surface-elevated)',
-            color: 'var(--color-text-secondary)',
-            border: '1px dashed var(--color-glass-border)',
-          }}
-        >
-          More…
-        </button>
+      {overflowItems && (
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="inline-flex items-center justify-center px-2 py-1.5 rounded-full text-xs font-medium cursor-pointer"
+            style={{
+              background: open ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
+              color: open ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
+              border: `1px ${open ? 'solid' : 'dashed'} ${open ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
+            }}
+          >
+            More…
+          </button>
+          {open && (
+            <div
+              className="absolute top-full right-0 mt-1 z-50 rounded-lg p-2 flex flex-wrap gap-1.5"
+              style={{
+                backgroundColor: 'var(--color-surface-elevated)',
+                border: '1px solid var(--color-glass-border)',
+                boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
+                minWidth: '200px',
+              }}
+            >
+              {overflowItems}
+            </div>
+          )}
+        </div>
       )}
-      {showMore && overflowItems}
     </div>
   )
 }

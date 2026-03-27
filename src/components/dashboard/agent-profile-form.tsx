@@ -34,7 +34,6 @@ const associationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   locations: z.array(locationSchema).min(1, 'Add at least one location'),
-  contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   associations: z.array(associationSchema),
   defaultReferralMode: z.enum(['independent', 'referral']),
@@ -124,7 +123,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -202,26 +201,13 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {!section && (
-        <div>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
-            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            {isUpdate ? 'Keep your profile current so dive operators can find you.' : 'Set up your agent profile to start creating and referring bookings.'}
-          </p>
-        </div>
-      )}
-
       {/* Contact info */}
       {(!section || section === 'contact') && (
         <>
           <GlassCard padding="md">
-            <FormSectionHeader label="Contact Information" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} className="sm:col-span-2" />
-              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} error={errors.contactEmail} />
-              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
+            <div className="space-y-4">
+              <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
+              <GlassInput label="Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
             </div>
           </GlassCard>
 
@@ -296,7 +282,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

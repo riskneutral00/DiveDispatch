@@ -12,13 +12,15 @@ interface ProfileBasicInfoProps {
   locationError?: string
   onLocationChange: (value: LocationValue | null) => void
 
-  emailValue: string
-  emailError?: string
-  onEmailChange: (value: string) => void
-
   phoneValue: string
   phoneError?: string
   onPhoneChange: (value: string) => void
+
+  nameRequired?: boolean
+  locationRequired?: boolean
+  phoneRequired?: boolean
+
+  children?: React.ReactNode
 }
 
 export function ProfileBasicInfo({
@@ -30,53 +32,43 @@ export function ProfileBasicInfo({
   locationValue,
   locationError,
   onLocationChange,
-  emailValue,
-  emailError,
-  onEmailChange,
   phoneValue,
   phoneError,
   onPhoneChange,
+  nameRequired,
+  locationRequired,
+  phoneRequired,
+  children,
 }: ProfileBasicInfoProps) {
   return (
-    <>
-      <div className="max-w-sm">
-        <GlassInput
-          label={nameLabel}
-          placeholder={namePlaceholder}
-          value={nameValue}
-          onChange={(e) => onNameChange(e.target.value)}
-          error={nameError}
-          autoComplete="organization"
-        />
-      </div>
-      <div className="max-w-md">
-        <LocationPicker
-          label="Location"
-          value={locationValue}
-          onChange={onLocationChange}
-          error={locationError}
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <GlassInput
-          label="Contact Email"
-          type="email"
-          placeholder="you@example.com"
-          value={emailValue}
-          onChange={(e) => onEmailChange(e.target.value)}
-          error={emailError}
-          autoComplete="email"
-        />
-        <GlassInput
-          label="Contact Phone"
-          type="tel"
-          placeholder="+66 81 234 5678"
-          value={phoneValue}
-          onChange={(e) => onPhoneChange(e.target.value)}
-          error={phoneError}
-          autoComplete="tel"
-        />
-      </div>
-    </>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <GlassInput
+        label={nameLabel}
+        placeholder={namePlaceholder}
+        value={nameValue}
+        onChange={(e) => onNameChange(e.target.value)}
+        error={nameError}
+        autoComplete="organization"
+        required={nameRequired}
+      />
+      <LocationPicker
+        label="Location"
+        value={locationValue}
+        onChange={onLocationChange}
+        error={locationError}
+        required={locationRequired}
+      />
+      <GlassInput
+        label="Phone"
+        type="tel"
+        placeholder="+66 81 234 5678"
+        value={phoneValue}
+        onChange={(e) => onPhoneChange(e.target.value)}
+        error={phoneError}
+        autoComplete="tel"
+        required={phoneRequired}
+      />
+      {children}
+    </div>
   )
 }

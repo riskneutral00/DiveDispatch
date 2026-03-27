@@ -7,7 +7,8 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { Spinner } from '@/components/common/spinner'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { type LocationValue } from '@/components/common/location-picker'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -35,7 +36,6 @@ const locationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Invalid email address'),
   contactPhone: z.string().min(1, 'Phone number is required'),
   gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
 })
@@ -67,7 +67,7 @@ export function CompressorProfileForm() {
   const create = useMutation(api.compressors.create)
   const update = useMutation(api.compressors.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -118,59 +118,22 @@ export function CompressorProfileForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1
-          className="text-2xl font-bold mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-        </h1>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {isUpdate
-            ? 'Keep your profile current so dive centers can find you.'
-            : 'Set up your compressor profile to start receiving booking requests.'}
-        </p>
-      </div>
-
       {/* Basic info */}
       <GlassCard padding="md">
-        <FormSectionHeader label="Contact Information" />
         <div className="space-y-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Business Name"
-              placeholder="e.g. Phuket Gas Services"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              error={errors.name}
-            />
-          </div>
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.contactEmail}
-              onChange={(e) => setField('contactEmail', e.target.value)}
-              error={errors.contactEmail}
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              placeholder="+66 81 234 5678"
-              value={form.contactPhone}
-              onChange={(e) => setField('contactPhone', e.target.value)}
-              error={errors.contactPhone}
-            />
-          </div>
+          <ProfileBasicInfo
+            nameLabel="Business Name"
+            namePlaceholder="e.g. Phuket Gas Services"
+            nameValue={form.name}
+            onNameChange={(val) => setField('name', val)}
+            nameError={errors.name}
+            locationValue={form.location}
+            onLocationChange={(loc) => setField('location', loc)}
+            locationError={errors.location}
+            phoneValue={form.contactPhone}
+            onPhoneChange={(val) => setField('contactPhone', val)}
+            phoneError={errors.contactPhone}
+          />
         </div>
       </GlassCard>
 
@@ -200,7 +163,7 @@ export function CompressorProfileForm() {
         </p>
       )}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

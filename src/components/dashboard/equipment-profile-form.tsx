@@ -6,7 +6,8 @@ import { Plus, X } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { type LocationValue } from '@/components/common/location-picker'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
@@ -34,7 +35,6 @@ const locationSchema = z.object({
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Valid email required'),
   contactPhone: z.string().min(1, 'Phone is required').max(30),
 })
 
@@ -60,7 +60,7 @@ export function EquipmentProfileForm() {
   const create = useMutation(api.equipment.create)
   const update = useMutation(api.equipment.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -165,43 +165,20 @@ export function EquipmentProfileForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Business Details */}
       <GlassCard padding="lg">
-        <FormSectionHeader label="Business Details" />
         <div className="space-y-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Business Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              placeholder="e.g. Phuket Gear Rental"
-              error={errors.name}
-            />
-          </div>
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              value={form.contactEmail}
-              onChange={(e) => setField('contactEmail', e.target.value)}
-              placeholder="you@example.com"
-              error={errors.contactEmail}
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              value={form.contactPhone}
-              onChange={(e) => setField('contactPhone', e.target.value)}
-              placeholder="+66 81 234 5678"
-              error={errors.contactPhone}
-            />
-          </div>
+          <ProfileBasicInfo
+            nameLabel="Business Name"
+            namePlaceholder="e.g. Phuket Gear Rental"
+            nameValue={form.name}
+            onNameChange={(val) => setField('name', val)}
+            nameError={errors.name}
+            locationValue={form.location}
+            onLocationChange={(loc) => setField('location', loc)}
+            locationError={errors.location}
+            phoneValue={form.contactPhone}
+            onPhoneChange={(val) => setField('contactPhone', val)}
+            phoneError={errors.contactPhone}
+          />
         </div>
       </GlassCard>
 
@@ -260,7 +237,7 @@ export function EquipmentProfileForm() {
       </GlassCard>
 
       {serverError && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
     </form>
   )
 }

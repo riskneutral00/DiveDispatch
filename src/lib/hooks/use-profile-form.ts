@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
+import { toast } from 'sonner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,8 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
   saved: boolean
   /** Whether the form has unsaved changes relative to the loaded state */
   isDirty: boolean
+  /** Whether all required fields pass schema validation */
+  isValid: boolean
   /** Whether the profile is still loading from Convex */
   loading: boolean
   /** Whether an existing profile was found */
@@ -136,17 +139,18 @@ export function useProfileForm<
       }
       baselineRef.current = form
       setSaved(true)
+      toast.success('Profile saved', { duration: 3000 })
       onSaved?.()
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setServerError(err.message)
-      } else {
-        setServerError('Save failed')
-      }
+      const message = err instanceof Error ? err.message : 'Save failed'
+      setServerError(message)
+      toast.error('Save failed', { description: message, duration: 5000 })
     } finally {
       setSaving(false)
     }
   }
+
+  const isValid = schema.safeParse(form).success
 
   return {
     form,
@@ -157,6 +161,7 @@ export function useProfileForm<
     saving,
     saved,
     isDirty: isDirty(),
+    isValid,
     loading: profile === undefined,
     isUpdate: !!profile,
     handleSubmit,

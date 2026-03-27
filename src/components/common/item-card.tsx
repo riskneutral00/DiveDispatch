@@ -9,28 +9,24 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': ariaLabel = 'Remove item' }: ItemCardProps) {
-  const showRemove = canRemove && onRemove
-
   return (
-    <div
-      className="relative rounded-[var(--border-radius,12px)] p-4 space-y-3"
-      style={{
-        background: 'var(--color-glass-bg)',
-        border: '1px solid var(--color-glass-border)',
-      }}
-    >
-      {showRemove && (
+    <div className="relative space-y-4">
+      {onRemove && (
         <button
           type="button"
           onClick={onRemove}
           aria-label={ariaLabel}
-          className="absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded transition-colors cursor-pointer"
+          aria-hidden={!canRemove}
+          tabIndex={canRemove ? 0 : -1}
+          className={`absolute top-2 right-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded transition-opacity duration-150 cursor-pointer ${
+            canRemove ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
           style={{ color: 'var(--color-destructive, var(--color-text-secondary))' }}
         >
           <Trash2 size={16} />
         </button>
       )}
-      <div className={showRemove ? 'pr-10' : undefined}>
+      <div className={`space-y-4${onRemove ? ' pr-10' : ''}`}>
         {children}
       </div>
     </div>

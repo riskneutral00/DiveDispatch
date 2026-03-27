@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { SettingsTabBar } from '@/components/common/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
+import { toast } from 'sonner'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
@@ -222,8 +223,11 @@ export function PreferencesEditor() {
       await upsert({ ...result.data, activeRole: activeRole! })
       baselineRef.current = { ...form }
       setSaved(true)
+      toast.success('Preferences saved', { duration: 3000 })
     } catch (err) {
-      setServerError(parseConvexError(err, 'An unexpected error occurred'))
+      const message = parseConvexError(err, 'An unexpected error occurred')
+      setServerError(message)
+      toast.error('Save failed', { description: message, duration: 5000 })
     } finally {
       setSubmitting(false)
     }

@@ -1,14 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import type { Language } from '@/lib/types/language'
 import { LanguageField } from '@/components/common/language-field'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
-import {
-  COMMUNICATION_CHANNELS,
-  type ChannelKey,
-} from '@/lib/constants/communication-channels'
 
 export interface AboutYouValues {
   operatingLanguage: Language | null
@@ -16,7 +11,6 @@ export interface AboutYouValues {
   lastName: string
   nickname: string
   phone: string
-  preferredChannel: ChannelKey | null
 }
 
 interface StepAboutYouProps {
@@ -53,16 +47,19 @@ export function StepAboutYou({
         </p>
       </div>
 
-      <LanguageField
-        label="App language"
-        value={values.operatingLanguage ? [values.operatingLanguage] : []}
-        onChange={(langs) => {
-          if (langs[0]) set('operatingLanguage', langs[0])
-        }}
-        max={1}
-      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <LanguageField
+          label="App language"
+          value={values.operatingLanguage ? [values.operatingLanguage] : []}
+          onChange={(langs) => {
+            if (langs[0]) set('operatingLanguage', langs[0])
+          }}
+          max={1}
+          required
+        />
+      </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
         <GlassInput
           label="First name"
           value={values.firstName}
@@ -77,52 +74,19 @@ export function StepAboutYou({
           autoComplete="family-name"
           required
         />
-      </div>
-
-      <GlassInput
-        label="Nickname / display name"
-        value={values.nickname}
-        onChange={(e) => set('nickname', e.target.value)}
-        placeholder='e.g. "Captain Mike"'
-      />
-
-      <GlassInput
-        label="Phone"
-        value={values.phone}
-        onChange={(e) => set('phone', e.target.value)}
-        autoComplete="tel"
-        type="tel"
-      />
-
-      <div>
-        <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-          Preferred communication channel
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {COMMUNICATION_CHANNELS.map((ch) => (
-            <button
-              key={ch.key}
-              type="button"
-              onClick={() =>
-                set('preferredChannel', values.preferredChannel === ch.key ? null : ch.key)
-              }
-              className="px-3 py-1.5 rounded-full text-sm transition-colors border"
-              style={{
-                background:
-                  values.preferredChannel === ch.key
-                    ? 'var(--color-primary-muted)'
-                    : 'transparent',
-                borderColor:
-                  values.preferredChannel === ch.key
-                    ? 'var(--color-primary-border)'
-                    : 'var(--color-glass-border)',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              {ch.label}
-            </button>
-          ))}
-        </div>
+        <GlassInput
+          label="Nickname / display name"
+          value={values.nickname}
+          onChange={(e) => set('nickname', e.target.value)}
+          placeholder='e.g. "Captain Mike"'
+        />
+        <GlassInput
+          label="Phone"
+          value={values.phone}
+          onChange={(e) => set('phone', e.target.value)}
+          autoComplete="tel"
+          type="tel"
+        />
       </div>
 
       <GlassButton

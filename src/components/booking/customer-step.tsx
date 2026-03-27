@@ -190,7 +190,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
               }
               type={contactType === 'email' ? 'email' : 'text'}
               data-testid={contactType === 'email' ? 'customer-email' : undefined}
-              className="glass glass-field flex-1 text-sm py-2 px-3"
+              className="glass glass-field flex-1 text-sm py-2.5 px-3"
               style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
             />
           </div>
@@ -200,12 +200,15 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         <hr className="form-divider" />
 
         {/* Languages */}
-        <LanguageField
-          label={`Language${flags.length !== 1 ? 's' : ''} *${flags.length > 0 ? ` (${flags.map((f) => f.label).join(', ')})` : ''}`}
-          value={flags.map((f) => ({ code: f.code, label: f.label }))}
-          onChange={handleLanguagesChange}
-          max={4}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+          <LanguageField
+            label={`Language${flags.length !== 1 ? 's' : ''}${flags.length > 0 ? ` (${flags.map((f) => f.label).join(', ')})` : ''}`}
+            value={flags.map((f) => ({ code: f.code, label: f.label }))}
+            onChange={handleLanguagesChange}
+            max={4}
+            required
+          />
+        </div>
       </div>
     </GlassCard>
   )

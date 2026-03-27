@@ -8,7 +8,6 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
 import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 
@@ -23,7 +22,6 @@ const locationSchema = z.object({
 export const poolSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactEmail: z.string().email('Invalid email'),
   contactPhone: z.string().min(1, 'Phone is required'),
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
@@ -111,7 +109,7 @@ export function PoolProfileForm() {
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: poolSchema,
@@ -141,7 +139,6 @@ export function PoolProfileForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <GlassCard padding="lg">
-        <FormSectionHeader label="Pool Profile" />
 
         <div className="space-y-4">
           <ProfileBasicInfo
@@ -153,9 +150,6 @@ export function PoolProfileForm() {
             locationValue={form.location}
             onLocationChange={(loc) => setField('location', loc)}
             locationError={errors.location}
-            emailValue={form.contactEmail}
-            onEmailChange={(val) => setField('contactEmail', val)}
-            emailError={errors.contactEmail}
             phoneValue={form.contactPhone}
             onPhoneChange={(val) => setField('contactPhone', val)}
             phoneError={errors.contactPhone}
@@ -233,7 +227,7 @@ export function PoolProfileForm() {
         )}
 
         <div className="mt-6">
-          <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
+          <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
         </div>
       </GlassCard>
     </form>

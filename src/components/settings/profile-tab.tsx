@@ -2,20 +2,49 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
+import { z } from 'zod'
+import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
-import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
-import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
-import { LanguageField } from '@/components/common/language-field'
-import { FormSectionHeader } from '@/components/common/form-section-header'
 import { GlassInput } from '@/components/glass/glass-input'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { SaveButton } from '@/components/common/save-button'
 
+const MONTHS = [
+  { value: '01', label: 'January' },
+  { value: '02', label: 'February' },
+  { value: '03', label: 'March' },
+  { value: '04', label: 'April' },
+  { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
+  { value: '07', label: 'July' },
+  { value: '08', label: 'August' },
+  { value: '09', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+]
+
+const DAYS = Array.from({ length: 31 }, (_, i) => {
+  const d = String(i + 1).padStart(2, '0')
+  return { value: d, label: String(i + 1) }
+})
+
+const currentYear = new Date().getFullYear()
+const YEARS = Array.from({ length: 100 }, (_, i) => {
+  const y = String(currentYear - i)
+  return { value: y, label: y }
+})
+
 interface ProfileValues {
+  firstName: string
+  lastName: string
+  nickname: string
   businessName: string
   contactEmail: string
   phone: string
-  preferredLocale: string
-  preferredChannel: ChannelKey | null
+  dobMonth: string
+  dobDay: string
+  dobYear: string
 }
 
 export function ProfileTab() {
@@ -23,11 +52,15 @@ export function ProfileTab() {
   const createUser = useMutation(api.users.createUser)
 
   const [values, setValues] = useState<ProfileValues>({
+    firstName: '',
+    lastName: '',
+    nickname: '',
     businessName: '',
     contactEmail: '',
     phone: '',
-    preferredLocale: 'en',
-    preferredChannel: null,
+    dobMonth: '',
+    dobDay: '',
+    dobYear: '',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -37,11 +70,15 @@ export function ProfileTab() {
   useEffect(() => {
     if (user) {
       const loaded: ProfileValues = {
+        firstName: user.firstName ?? '',
+        lastName: user.lastName ?? '',
+        nickname: user.nickname ?? '',
         businessName: user.businessName ?? '',
         contactEmail: user.email ?? '',
         phone: user.phone ?? '',
-        preferredLocale: user.preferredLocale ?? 'en',
-        preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
+        dobMonth: user.dateOfBirth?.split('-')[1] ?? '',
+        dobDay: user.dateOfBirth?.split('-')[2] ?? '',
+        dobYear: user.dateOfBirth?.split('-')[0] ?? '',
       }
       setValues(loaded)
       baselineRef.current = loaded
@@ -49,6 +86,10 @@ export function ProfileTab() {
   }, [user])
 
   const isDirty = baselineRef.current !== null && JSON.stringify(values) !== JSON.stringify(baselineRef.current)
+  
+  const isValidEmail = z.string().email().safeParse(values.contactEmail).success
+  const isValidPhone = isValidPhoneNumber(values.phone)
+  const isValid = values.firstName.trim() !== '' && values.lastName.trim() !== '' && values.businessName.trim() !== '' && isValidEmail && isValidPhone
 
   function set<K extends keyof ProfileValues>(field: K, value: ProfileValues[K]) {
     setValues((v) => ({ ...v, [field]: value }))
@@ -57,17 +98,22 @@ export function ProfileTab() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!values.businessName.trim()) return
+    if (!values.businessName.trim() || !values.contactEmail.trim() || !values.phone.trim()) return
     setError('')
     setSaved(false)
     setSaving(true)
     try {
       await createUser({
         role: 'DiveCenter',
+        firstName: values.firstName.trim(),
+        lastName: values.lastName.trim(),
+        nickname: values.nickname.trim() || undefined,
         businessName: values.businessName.trim(),
         phone: values.phone.trim() || undefined,
-        preferredLocale: values.preferredLocale,
-        preferredChannel: values.preferredChannel ?? undefined,
+        email: values.contactEmail.trim(),
+        dateOfBirth: values.dobYear && values.dobMonth && values.dobDay
+          ? `${values.dobYear}-${values.dobMonth}-${values.dobDay}`
+          : undefined,
       })
       baselineRef.current = { ...values }
       setSaved(true)
@@ -89,92 +135,75 @@ export function ProfileTab() {
     )
   }
 
-  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === values.preferredLocale)
-  const selectedLocale = selectedLocaleObj
-    ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
-    : []
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <h1
-          className="text-2xl font-bold"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          Profile Settings
-        </h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Your public identity across all roles.
-        </p>
-      </div>
-
       <div className="space-y-4">
-        <FormSectionHeader label="Identity" />
-        <div className="max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <GlassInput
-            label="Name"
-            value={values.businessName}
-            onChange={(e) => set('businessName', e.target.value)}
-            placeholder="Your name or business name"
+            label="First name"
+            value={values.firstName}
+            onChange={(e) => set('firstName', e.target.value)}
+            autoComplete="given-name"
             required
+          />
+          <GlassInput
+            label="Last name"
+            value={values.lastName}
+            onChange={(e) => set('lastName', e.target.value)}
+            autoComplete="family-name"
+            required
+          />
+          <GlassInput
+            label="Nickname"
+            value={values.nickname}
+            onChange={(e) => set('nickname', e.target.value)}
+            autoComplete="nickname"
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
-            label="Contact Email"
-            type="email"
-            value={values.contactEmail}
-            onChange={(e) => set('contactEmail', e.target.value)}
-            disabled
-          />
-          <GlassInput
             label="Phone"
             type="tel"
             value={values.phone}
-            onChange={(e) => set('phone', e.target.value)}
-            placeholder="+66 81 234 5678"
+            onChange={(e) => {
+              const filtered = e.target.value.replace(/[^+\d\s\-()]/g, '')
+              set('phone', filtered)
+            }}
+            autoComplete="tel"
+            maxLength={16}
+            required
+          />
+          <GlassInput
+            label="Email"
+            type="email"
+            value={values.contactEmail}
+            onChange={(e) => set('contactEmail', e.target.value)}
+            required
           />
         </div>
-      </div>
-
-      <hr className="form-divider" />
-
-      <div className="space-y-4">
-        <FormSectionHeader label="App Preferences" />
-        <LanguageField
-          label="App language"
-          value={selectedLocale}
-          onChange={(langs) => {
-            if (langs[0]) set('preferredLocale', langs[0].code)
-          }}
-          max={1}
-        />
-
-        <div>
-          <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-            Preferred communication channel
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {COMMUNICATION_CHANNELS.map((ch) => {
-              const active = values.preferredChannel === ch.key
-              return (
-                <button
-                  key={ch.key}
-                  type="button"
-                  onClick={() => set('preferredChannel', active ? null : ch.key)}
-                  className="px-3 py-1.5 rounded-full text-sm transition-colors border cursor-pointer"
-                  style={{
-                    background: active ? 'var(--color-glass-bg-elevated)' : 'transparent',
-                    borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                    transitionDuration: 'var(--transition-speed)',
-                  }}
-                >
-                  {ch.label}
-                </button>
-              )
-            })}
-          </div>
+        <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Date of birth</p>
+        <div className="grid grid-cols-3 gap-4">
+          <GlassSimpleSelect
+            label="Month"
+            value={values.dobMonth}
+            onChange={(v) => set('dobMonth', v)}
+            options={MONTHS}
+            placeholder="Month"
+          />
+          <GlassSimpleSelect
+            label="Day"
+            value={values.dobDay}
+            onChange={(v) => set('dobDay', v)}
+            options={DAYS}
+            placeholder="Day"
+          />
+          <GlassSimpleSelect
+            label="Year"
+            value={values.dobYear}
+            onChange={(v) => set('dobYear', v)}
+            options={YEARS}
+            placeholder="Year"
+          />
         </div>
       </div>
 
@@ -182,7 +211,7 @@ export function ProfileTab() {
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
       )}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={true} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={true} disabled={!isValid} label="Save" />
     </form>
   )
 }

@@ -22,6 +22,7 @@ interface GlassSelectProps {
   customerLanguages?: string[]
   /** Pass-through for E2E test selectors */
   'data-testid'?: string
+  required?: boolean
 }
 
 const DEFAULT_VISIBLE = 2
@@ -56,7 +57,9 @@ const OptionRow = memo(function OptionRow({
       }}
     >
       <span className="flex items-center gap-2 min-w-0">
-        {isSelected && <Check size={14} className="flex-shrink-0" style={{ color: 'var(--color-accent)' }} />}
+        <span className="w-3.5 flex-shrink-0">
+          {isSelected && <Check size={14} style={{ color: 'var(--color-accent)' }} />}
+        </span>
         <span className="truncate">{opt.label}</span>
       </span>
       {opt.languages && opt.languages.length > 0 && (
@@ -138,7 +141,7 @@ function TierSection({
   )
 }
 
-export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages, 'data-testid': testId }: GlassSelectProps) {
+export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages, 'data-testid': testId, required }: GlassSelectProps) {
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -210,14 +213,15 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
   }
 
   return (
-    <div className="flex flex-col gap-1" ref={containerRef}>
+    <div className="relative flex flex-col gap-1.5" ref={containerRef}>
       {label && (
         <label
           htmlFor={id}
-          className="text-xs font-medium"
+          className="text-sm font-medium"
           style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
         >
           {label}
+          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
         </label>
       )}
 
@@ -231,7 +235,7 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
-        className="glass glass-field w-full text-sm py-2 pl-3 pr-8 text-left relative"
+        className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 text-left relative"
         style={{
           color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
           fontFamily: 'var(--font-body)',
@@ -259,9 +263,10 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
           ref={listRef}
           role="listbox"
           aria-activedescendant={focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
-          className="glass-container rounded-lg overflow-auto z-50 py-1"
+          className="absolute top-full left-0 w-full mt-1 rounded-lg overflow-auto z-50 py-1"
           style={{
             maxHeight: '280px',
+            backgroundColor: 'var(--color-surface-elevated)',
             border: '1px solid var(--color-glass-border)',
             boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
           }}

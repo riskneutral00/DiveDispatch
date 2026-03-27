@@ -18,7 +18,7 @@ export function DayPicker({ label, value, min, max, onChange }: DayPickerProps) 
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="glass glass-field text-sm text-center px-3 py-2 w-16 focus:outline-none"
+        className="glass glass-field text-sm text-center px-3 py-2.5 w-16 focus:outline-none"
         style={{ color: 'var(--color-text-primary)' }}
       >
         {options.map((n) => (
