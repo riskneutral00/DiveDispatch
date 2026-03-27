@@ -1,7 +1,7 @@
 'use client'
 
 import { useClerk, useUser } from '@clerk/nextjs'
-import { LogOut, Settings, User, SlidersHorizontal } from 'lucide-react'
+import { LogOut, Settings, User, SlidersHorizontal, Shield } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -93,6 +93,15 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
             >
               <User size={14} />
               Profile
+            </button>
+
+            <button
+              onClick={() => handleMenuAction('roles')}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              <Shield size={14} />
+              Roles
             </button>
 
             <button

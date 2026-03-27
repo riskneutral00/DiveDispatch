@@ -7,7 +7,7 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '../../../convex/lib/rolePrecedence'
 import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -24,13 +24,20 @@ interface AccountFormValues {
   phone: string
   preferredLocale: string
   preferredChannel: ChannelKey | null
-  customerLanguages: string[]
   defaultLocation: string
   defaultContactEmail: string
   defaultContactPhone: string
 }
 
-export function AccountForm() {
+interface AccountFormProps {
+  showSharedDefaults?: boolean
+  showAppPreferences?: boolean
+}
+
+export function AccountForm({
+  showSharedDefaults = true,
+  showAppPreferences = true,
+}: AccountFormProps = {}) {
   const user = useQuery(api.users.me)
   const userRoles = useQuery(api.userRoles.myRoles)
   const createUser = useMutation(api.users.createUser)
@@ -45,7 +52,6 @@ export function AccountForm() {
     phone: '',
     preferredLocale: 'en',
     preferredChannel: null,
-    customerLanguages: [],
     defaultLocation: '',
     defaultContactEmail: '',
     defaultContactPhone: '',
@@ -66,7 +72,6 @@ export function AccountForm() {
         phone: user.phone ?? '',
         preferredLocale: user.preferredLocale ?? 'en',
         preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
-        customerLanguages: user.customerLanguages ?? [],
         defaultLocation: user.defaultLocation ?? '',
         defaultContactEmail: user.defaultContactEmail ?? '',
         defaultContactPhone: user.defaultContactPhone ?? '',
@@ -122,13 +127,11 @@ export function AccountForm() {
         phone: values.phone.trim() || undefined,
         preferredLocale: values.preferredLocale,
         preferredChannel: values.preferredChannel ?? undefined,
-        customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
       await updateDefaults({
         defaultLocation: values.defaultLocation.trim() || undefined,
         defaultContactEmail: values.defaultContactEmail.trim() || undefined,
         defaultContactPhone: values.defaultContactPhone.trim() || undefined,
-        customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
       baselineRef.current = { ...values }
       setSaved(true)
@@ -213,118 +216,107 @@ export function AccountForm() {
         </div>
       </GlassCard>
 
-      <hr className="form-divider" />
+      {showSharedDefaults && (
+        <>
+          <hr className="form-divider" />
+          <GlassCard>
+            <div className="flex flex-col gap-4">
+              <p
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                Shared Defaults
+              </p>
+              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                These values pre-fill new role profiles. Each role can override them.
+              </p>
 
-      <GlassCard>
-        <div className="flex flex-col gap-4">
-          <p
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Shared Defaults
-          </p>
-          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            These values pre-fill new role profiles. Each role can override them.
-          </p>
+              <div className="max-w-md">
+                <GlassInput
+                  label="Default location"
+                  value={values.defaultLocation}
+                  onChange={(e) => set('defaultLocation', e.target.value)}
+                  placeholder="e.g. Koh Tao, Thailand"
+                />
+              </div>
 
-          <div className="max-w-md">
-            <GlassInput
-              label="Default location"
-              value={values.defaultLocation}
-              onChange={(e) => set('defaultLocation', e.target.value)}
-              placeholder="e.g. Koh Tao, Thailand"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassInput
-              label="Default contact email"
-              type="email"
-              value={values.defaultContactEmail}
-              onChange={(e) => set('defaultContactEmail', e.target.value)}
-              placeholder="your@business.com"
-              autoComplete="email"
-            />
-            <GlassInput
-              label="Default contact phone"
-              type="tel"
-              value={values.defaultContactPhone}
-              onChange={(e) => set('defaultContactPhone', e.target.value)}
-              placeholder="+66 81 234 5678"
-              autoComplete="tel"
-            />
-          </div>
-        </div>
-      </GlassCard>
-
-      <hr className="form-divider" />
-
-      <GlassCard>
-        <div className="flex flex-col gap-5">
-          <p
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            App Preferences
-          </p>
-
-          <div>
-            <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              App language
-            </p>
-            <LanguagePicker
-              value={selectedLocale}
-              onChange={(langs) => {
-                if (langs[0]) set('preferredLocale', langs[0].code)
-              }}
-              max={1}
-            />
-          </div>
-
-          <div>
-            <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              Preferred communication channel
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {COMMUNICATION_CHANNELS.map((ch) => {
-                const active = values.preferredChannel === ch.key
-                return (
-                  <button
-                    key={ch.key}
-                    type="button"
-                    onClick={() => set('preferredChannel', active ? null : ch.key)}
-                    className="px-3 py-1.5 rounded-full text-sm transition-colors border cursor-pointer"
-                    style={{
-                      background: active ? 'var(--color-glass-bg-elevated)' : 'transparent',
-                      borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                      color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                      transitionDuration: 'var(--transition-speed)',
-                    }}
-                  >
-                    {ch.label}
-                  </button>
-                )
-              })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <GlassInput
+                  label="Default contact email"
+                  type="email"
+                  value={values.defaultContactEmail}
+                  onChange={(e) => set('defaultContactEmail', e.target.value)}
+                  placeholder="your@business.com"
+                  autoComplete="email"
+                />
+                <GlassInput
+                  label="Default contact phone"
+                  type="tel"
+                  value={values.defaultContactPhone}
+                  onChange={(e) => set('defaultContactPhone', e.target.value)}
+                  placeholder="+66 81 234 5678"
+                  autoComplete="tel"
+                />
+              </div>
             </div>
-          </div>
+          </GlassCard>
+        </>
+      )}
 
-          <div>
-            <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              Customer languages
-            </p>
-            <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              Languages you can serve customers in.
-            </p>
-            <LanguagePicker
-              value={values.customerLanguages
-                .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-                .filter((l): l is NonNullable<typeof l> => l !== undefined)
-                .map((l) => ({ code: l.code, label: l.label }))}
-              onChange={(langs) => set('customerLanguages', langs.map((l) => l.code))}
-            />
-          </div>
-        </div>
-      </GlassCard>
+      <hr className="form-divider" />
+
+      {showAppPreferences && (
+        <>
+          <hr className="form-divider" />
+          <GlassCard>
+            <div className="flex flex-col gap-5">
+              <p
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                App Preferences
+              </p>
+
+              <LanguageField
+                label="App language"
+                value={selectedLocale}
+                onChange={(langs) => {
+                  if (langs[0]) set('preferredLocale', langs[0].code)
+                }}
+                max={1}
+              />
+
+              <div>
+                <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                  Preferred communication channel
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {COMMUNICATION_CHANNELS.map((ch) => {
+                    const active = values.preferredChannel === ch.key
+                    return (
+                      <button
+                        key={ch.key}
+                        type="button"
+                        onClick={() => set('preferredChannel', active ? null : ch.key)}
+                        className="px-3 py-1.5 rounded-full text-sm transition-colors border cursor-pointer"
+                        style={{
+                          background: active ? 'var(--color-glass-bg-elevated)' : 'transparent',
+                          borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
+                          color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                          transitionDuration: 'var(--transition-speed)',
+                        }}
+                      >
+                        {ch.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </GlassCard>
+        </>
+      )}
 
       {error && (
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>

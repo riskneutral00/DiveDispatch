@@ -1,5 +1,6 @@
 'use client'
 
+import { AccountForm } from '@/components/dashboard/account-form'
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { useRouter } from 'next/navigation'
@@ -10,7 +11,7 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '../../../../convex/lib/rolePrecedence'
 import { COMMUNICATION_CHANNELS, type ChannelKey } from '@/lib/constants/communication-channels'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguageField } from '@/components/common/language-field'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -34,7 +35,6 @@ interface AccountFormValues {
   phone: string
   preferredLocale: string
   preferredChannel: ChannelKey | null
-  customerLanguages: string[]
 }
 
 export default function AccountPage() {
@@ -53,7 +53,6 @@ export default function AccountPage() {
     phone: '',
     preferredLocale: 'en',
     preferredChannel: null,
-    customerLanguages: [],
   })
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -70,7 +69,6 @@ export default function AccountPage() {
         phone: user.phone ?? '',
         preferredLocale: user.preferredLocale ?? 'en',
         preferredChannel: (user.preferredChannel as ChannelKey | null) ?? null,
-        customerLanguages: user.customerLanguages ?? [],
       })
     }
   }, [user])
@@ -136,7 +134,6 @@ export default function AccountPage() {
         phone: values.phone.trim() || undefined,
         preferredLocale: values.preferredLocale,
         preferredChannel: values.preferredChannel ?? undefined,
-        customerLanguages: values.customerLanguages.length > 0 ? values.customerLanguages : undefined,
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
@@ -195,155 +192,7 @@ export default function AccountPage() {
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <GlassCard>
-              <div className="flex flex-col gap-4">
-                <p
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  Identity
-                </p>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <GlassInput
-                    label="First name"
-                    value={values.firstName}
-                    onChange={(e) => set('firstName', e.target.value)}
-                    autoComplete="given-name"
-                    required
-                  />
-                  <GlassInput
-                    label="Last name"
-                    value={values.lastName}
-                    onChange={(e) => set('lastName', e.target.value)}
-                    autoComplete="family-name"
-                    required
-                  />
-                </div>
-
-                <GlassInput
-                  label="Nickname"
-                  value={values.nickname}
-                  onChange={(e) => set('nickname', e.target.value)}
-                  placeholder="What people call you"
-                  autoComplete="nickname"
-                />
-
-                {showBusinessName && (
-                  <GlassInput
-                    label="Business name"
-                    value={values.businessName}
-                    onChange={(e) => set('businessName', e.target.value)}
-                    autoComplete="organization"
-                    required
-                  />
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <GlassInput
-                    label="Contact email"
-                    type="email"
-                    value={values.contactEmail}
-                    onChange={(e) => set('contactEmail', e.target.value)}
-                    autoComplete="email"
-                  />
-                  <GlassInput
-                    label="Phone"
-                    type="tel"
-                    value={values.phone}
-                    onChange={(e) => set('phone', e.target.value)}
-                    placeholder="+66 81 234 5678"
-                    autoComplete="tel"
-                  />
-                </div>
-              </div>
-            </GlassCard>
-
-            <GlassCard>
-              <div className="flex flex-col gap-5">
-                <p
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  App Preferences
-                </p>
-
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    App language
-                  </p>
-                  <LanguagePicker
-                    value={selectedLocale}
-                    onChange={(langs) => {
-                      if (langs[0]) set('preferredLocale', langs[0].code)
-                    }}
-                    max={1}
-                  />
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    Preferred communication channel
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {COMMUNICATION_CHANNELS.map((ch) => {
-                      const active = values.preferredChannel === ch.key
-                      return (
-                        <button
-                          key={ch.key}
-                          type="button"
-                          onClick={() => set('preferredChannel', active ? null : ch.key)}
-                          className="px-3 py-1.5 rounded-full text-sm transition-colors border cursor-pointer"
-                          style={{
-                            background: active ? 'var(--color-glass-bg-elevated)' : 'transparent',
-                            borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                            color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                            transitionDuration: 'var(--transition-speed)',
-                          }}
-                        >
-                          {ch.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    Customer languages
-                  </p>
-                  <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                    Languages you can serve customers in.
-                  </p>
-                  <LanguagePicker
-                    value={values.customerLanguages
-                      .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-                      .filter((l): l is NonNullable<typeof l> => l !== undefined)
-                      .map((l) => ({ code: l.code, label: l.label }))}
-                    onChange={(langs) => set('customerLanguages', langs.map((l) => l.code))}
-                  />
-                </div>
-              </div>
-            </GlassCard>
-
-            {error && (
-              <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-                {error}
-              </p>
-            )}
-
-            <div className="flex justify-end">
-              <GlassButton
-                type="submit"
-                variant="primary"
-                disabled={!isComplete || submitting}
-                loading={submitting}
-              >
-                {saved ? 'Saved ✓' : 'Save Changes'}
-              </GlassButton>
-            </div>
-          </form>
+          <AccountForm showSharedDefaults={false} showAppPreferences={true} />
         </div>
       </main>
 

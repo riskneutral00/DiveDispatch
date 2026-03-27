@@ -10,6 +10,7 @@ import { LocationPicker, type LocationValue } from '@/components/common/location
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
+import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -143,46 +144,22 @@ export function PoolProfileForm() {
         <FormSectionHeader label="Pool Profile" />
 
         <div className="space-y-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Pool Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              error={errors.name}
-              placeholder="Blue Lagoon Training Pool"
-              autoComplete="organization"
-            />
-          </div>
-
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              value={form.contactEmail}
-              onChange={(e) => setField('contactEmail', e.target.value)}
-              error={errors.contactEmail}
-              placeholder="pool@example.com"
-              autoComplete="email"
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              value={form.contactPhone}
-              onChange={(e) => setField('contactPhone', e.target.value)}
-              error={errors.contactPhone}
-              placeholder="+66 81 234 5678"
-              autoComplete="tel"
-            />
-          </div>
+          <ProfileBasicInfo
+            nameValue={form.name}
+            onNameChange={(val) => setField('name', val)}
+            nameError={errors.name}
+            nameLabel="Pool Name"
+            namePlaceholder="Blue Lagoon Training Pool"
+            locationValue={form.location}
+            onLocationChange={(loc) => setField('location', loc)}
+            locationError={errors.location}
+            emailValue={form.contactEmail}
+            onEmailChange={(val) => setField('contactEmail', val)}
+            emailError={errors.contactEmail}
+            phoneValue={form.contactPhone}
+            onPhoneChange={(val) => setField('contactPhone', val)}
+            phoneError={errors.contactPhone}
+          />
 
           <hr className="form-divider" />
 
