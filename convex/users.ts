@@ -42,7 +42,7 @@ export const createUser = mutation({
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
-    appLanguage: v.string(),
+    appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -76,7 +76,7 @@ export const createUser = mutation({
         ...(args.phone !== undefined && { phone: args.phone }),
         ...(args.email !== undefined && { email: args.email }),
         ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
-        appLanguage: args.appLanguage,
+        ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
         ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
       })
       return existing._id
@@ -96,7 +96,7 @@ export const createUser = mutation({
       businessName,
       customerLanguages: args.customerLanguages,
       isSeeded: false,
-      appLanguage: args.appLanguage,
+      appLanguage: args.appLanguage ?? 'en',
     })
 
     // Create userRoles entries when roles array is provided

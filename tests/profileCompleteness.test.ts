@@ -69,8 +69,7 @@ describe('checkProfileCompleteness', () => {
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
-      await ctx.db.patch(userId, { phone: '+66123456789' })
-      // Don't set appLanguage
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: '' })
       await seedEquipmentProfile(ctx, userId)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
@@ -107,7 +106,8 @@ describe('checkProfileCompleteness', () => {
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
-      // Don't set appLanguage or phone
+      // Clear appLanguage and don't set phone
+      await ctx.db.patch(userId, { appLanguage: '' })
       await seedEquipmentProfile(ctx, userId)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
