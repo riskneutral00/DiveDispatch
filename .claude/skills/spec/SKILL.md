@@ -1,6 +1,7 @@
 ---
 name: spec
 description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to .tickets/DD-*.md for /board to pick up."
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 user-invocable: true
 ---
 

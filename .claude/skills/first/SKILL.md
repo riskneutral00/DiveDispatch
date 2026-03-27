@@ -13,7 +13,7 @@ When this skill is invoked, execute all steps in order — no questions, no prea
 
 ## Step 1 — Resume Context (silent)
 
-1. Read `~/.claude/projects/-Users-matthewlee-Desktop-DiveDispatch/memory/MEMORY.md`
+1. Read `~/.claude/projects/-Users-matthewlee-Desktop-RiskNeutral-DiveDispatch/memory/MEMORY.md`
 2. Find the active thread entry (look for `NEXT:` tag or the Active Threads section)
 3. Read the thread file to get the exact next action + key file paths
 4. Read `CLAUDE.md` to refresh architectural constraints and rules

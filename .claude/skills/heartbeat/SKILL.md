@@ -174,7 +174,7 @@ Before adding any ticket, search `.tickets/DD-*.md` for:
 - Same issue description (fuzzy match)
 - Same slug/category
 
-If a match is found, skip the finding. Note in output: "Skipped: already tracked as DD-{NNN}."
+If a match is found, skip the finding. Note in output: "Skipped: already tracked as DD-{NNN}." Collect all skipped ticket IDs and include them in the Step 4 output under the "New tickets added" section as: `Skipped (already tracked): DD-{NNN}, DD-{NNN}, ...`
 
 ---
 

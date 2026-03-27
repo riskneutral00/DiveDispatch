@@ -2,17 +2,17 @@
 # PostToolUse hook: Design validation reminder
 # Non-blocking reminder when design system files are modified
 
-read -r INPUT
-FILE_PATH=$(echo "$INPUT" | sed -n 's/.*"file_path": *"\([^"]*\)".*/\1/p')
+FILE_PATH="${TOOL_INPUT_FILE_PATH:-}"
 [ -z "$FILE_PATH" ] && exit 0
 
 # Check if this is a design system file
 IS_DESIGN=false
 case "$FILE_PATH" in
-  */skins.ts) IS_DESIGN=true ;;
-  */default-theme.ts) IS_DESIGN=true ;;
-  */glass-*.tsx) IS_DESIGN=true ;;
-  */src/*.css) IS_DESIGN=true ;;
+  */themes/skins.ts) IS_DESIGN=true ;;
+  */themes/default-theme.ts) IS_DESIGN=true ;;
+  */components/glass/glass-*.tsx) IS_DESIGN=true ;;
+  */src/app/globals.css) IS_DESIGN=true ;;
+  */design-system/*.md) IS_DESIGN=true ;;
 esac
 [ "$IS_DESIGN" = false ] && exit 0
 

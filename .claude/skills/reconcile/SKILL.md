@@ -214,6 +214,11 @@ Unblocked: {N} tickets
 Vault mirror synced.
 ```
 
+After printing the summary, write the sentinel file:
+```bash
+touch .reconcile-ran
+```
+
 ---
 
 ## Rules

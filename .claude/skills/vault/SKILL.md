@@ -123,7 +123,7 @@ Read `git status --porcelain` output. Assign each file to exactly one bucket. **
 
 #### Phase B: Merge & pair
 
-1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename. If exactly one bucket has the match, merge the test there. Unpaired tests stay in Tests bucket.
+1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename AND parent directory path (e.g., `tests/components/booking/quick-book.test.tsx` matches `src/components/booking/`, not `convex/bookings/`). If exactly one bucket has a path-level match, merge the test there. If multiple buckets match by basename alone, prefer the one whose source path shares the most directory segments. Unpaired tests stay in Tests bucket.
 2. **Cross-cutting files:**
    - `convex/_generated/api.d.ts` → first backend bucket
    - `package.json` / `package-lock.json` → Infra, unless only 1 other bucket exists (merge there)
