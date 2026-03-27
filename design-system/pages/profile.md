@@ -1,6 +1,7 @@
 # Profile Page — Design Override
 
-> Route: `/{role}/{slug}/profile`
+> Route: `/{slug}/{roleSlug}/profile`
+> Also rendered inside: `ProfileOverlay` (fullscreen GlassDialog from dashboard)
 > Overrides: MASTER.md
 > Purpose: Public role identity — location, contact, credentials/associations, languages.
 
@@ -16,28 +17,49 @@ Tone: calm, authoritative. Not an onboarding form. A professional's record.
 
 ---
 
-## Layout
+## Two Rendering Contexts
+
+### 1. Profile Page (dedicated route)
 
 ```
 DashboardShell (bg-image + bg-overlay already handled by shell)
-└── page container  max-w-2xl mx-auto px-4 pt-6 pb-28 (mobile) / pb-10 (desktop)
+└── page container  max-w-3xl mx-auto px-4 pt-6 pb-28 (mobile) / pb-10 (desktop)
     ├── Page title          "Profile"  — 28px / 700 / -0.03em
     ├── Page subtitle       Role label (e.g. "Dive Center") — 13px / secondary text
-    ├── SettingsTabBar      horizontal tab strip (see Tab Bar section)
-    └── Tab content pane    GlassCard wrapping the active tab's fields
-        └── Save row        right-aligned GlassButton "Save" + saved confirmation
+    ├── SettingsTabBar      horizontal tab strip (Contact | Languages | Affiliations)
+    └── Tab content pane    Active tab's section from the profile form
+        └── Save row        right-aligned GlassButton "Save Changes" + saved confirmation
 ```
+
+Each tab renders one `section` of the profile form. Tabs defined in `PROFILE_REGISTRY`.
+
+### 2. Profile Overlay (slide-out panel)
+
+```
+GlassDialog fullScreen
+├── Tab bar             Profile | Preferences | Account (overlay-level tabs)
+└── Scrollable panel    max-w-3xl mx-auto px-4 py-6
+    └── Profile tab     Full profile form (all sections in one scroll, no section filter)
+```
+
+The overlay renders the entire profile form as a single scroll — no sub-tabs.
+Section headers (BASIC INFORMATION, LANGUAGES, AFFILIATIONS) and `<hr>` dividers
+provide visual separation between groups.
+
+---
+
+## Layout Details
 
 Mobile: the Save row becomes a **sticky footer strip** pinned above the mobile nav bar.
 `position: fixed; bottom: 60px; left: 0; right: 0; padding: 12px 16px;`
 Background: `var(--color-surface-elevated)` with top border `var(--color-glass-border)`.
 The Save button inside is full-width on screens < 480px.
 
-Desktop (≥ 768px): Save stays inside the GlassCard, right-aligned, no sticky behaviour.
+Desktop (≥ 768px): Save stays at the end of the form, right-aligned, no sticky behaviour.
 
 ---
 
-## Tab Bar (`SettingsTabBar` component)
+## Tab Bar (`SettingsTabBar` component — profile page only)
 
 Horizontal strip of text tabs. **Not** numbered steps — no forward/back dependency.
 Each tab saves independently. User can jump between tabs freely.
@@ -64,12 +86,6 @@ Each tab saves independently. User can jump between tabs freely.
 - Tab strip has NO glass background of its own — it floats above the page background.
 - Transition: color 0.3s ease (MASTER constraint — no other animations).
 
-### Tab content pane
-
-`GlassCard` — uses `.glass-container` class (no blur, no shadow — just the ghost border).
-Padding: 24px desktop / 16px mobile.
-Full width within the page container.
-
 ### Tabs by role
 
 **All human roles** always get Contact + Languages.
@@ -85,56 +101,67 @@ These roles are redirected to Settings if they navigate here.
 
 ---
 
-## Tab Content: Contact
+## Section: Contact (Basic Information)
 
-Fields rendered as a single-column stack, 16px gap between each field group.
+Fields rendered in a 2-column `FormGrid`, responsive — collapses to single column on mobile.
 
 ```
-Location          LocationPicker (Google Places + draggable pin)
-Contact email     GlassInput  type="email"   label="Contact email"
-Contact phone     GlassInput  type="tel"     label="Phone"
+Business Name (lg)     Location (lg)           — FormField size="lg" (full row each)
+Contact Email (md)     Contact Phone (sm)      — side-by-side on desktop
 ```
 
-LocationPicker renders at full width. It's already the most complex widget on the page —
-give it breathing room. No field is hidden behind a disclosure; all three are always visible.
+Uses `GlassInput` for text fields, `LocationPicker` for location.
 
 ---
 
-## Tab Content: Languages
+## Section: Languages
 
-Checkbox grid. Languages the stakeholder works in (teaches, guides, operates in).
+Flag-pill picker using `LanguagePicker` component. Languages the stakeholder works in
+(teaches, guides, operates in). Stored on user record (`customerLanguages`), not on the
+role-specific profile.
 
-- 2-column grid on desktop, 1-column on mobile (< 480px).
-- Each row: checkbox + language name. 44px minimum touch target height.
-- No "Select all" affordance — deliberate choice per language.
-- If zero checked on save: show inline error "Select at least one language" in
-  `var(--color-urgent-fg)` directly below the grid.
+- Search input with counter (e.g. "2 / 4")
+- Rows of flag pills grouped by region (Asian, European)
+- 44px minimum touch target height per pill
+- Max 4 languages by default
 
 ---
 
-## Tab Content: Credentials (Instructor / DiveMaster)
+## Section: Credentials (Instructor / DiveMaster)
 
 Add/remove rows. Each row: agency name + certification level + ID number.
 
 - "Add credential" button: `GlassButton` variant secondary, full-width on mobile, left-aligned on desktop.
-- Remove: small `×` button on the right of each row. 44px touch target.
+- Remove: `Trash2` icon button, top-right of each card. 44px touch target.
 - Empty state: "No credentials added yet" in secondary text, centered.
 - No maximum row count enforced in UI (backend validates).
 
 ---
 
-## Tab Content: Associations (Operator roles)
+## Section: Associations (Operator roles)
 
-Same add/remove pattern as Credentials.
-Each row: agency name + membership number.
+Add/remove card pattern. Each card contains:
+
+```
+Agency (GlassSelect)     Member ID (GlassInput)    — side-by-side, pr-10 for remove button
+Default course #days     OW / AOW / O+A            — DayPicker selects
+Default specialties      Toggle pill chips          — with "More..." overflow
+```
+
+- "+ Add" button: right-aligned, secondary text with Plus icon. 44px touch target.
+- Remove: `Trash2` icon, absolute top-right of card. 44px touch target.
+- Card background: `var(--color-glass-bg)` with `var(--color-glass-border)`.
+- Card internal spacing: `space-y-3`.
+- Empty state: "No affiliations added. Click Add to register one." in secondary text.
+- Mandatory specialties show lock icon, cannot be toggled.
 
 ---
 
 ## Save Feedback
 
 After successful save: button label changes to "Saved ✓" for 2 seconds, then reverts.
-Use `var(--color-active-fg)` (green) for the "Saved ✓" state.
-On error: show a toast or inline error message below the Save button.
+Button background changes to `var(--color-active-fg)` (green) for the "Saved ✓" state.
+On error: show inline error message below the form.
 Button is disabled (and shows spinner) while the mutation is in-flight.
 
 ---
@@ -155,6 +182,7 @@ Button is disabled (and shows spinner) while the mutation is in-flight.
 - Keyboard: arrow keys navigate between tabs (standard tab widget pattern).
 - All form inputs have `<label>` — never placeholder-only.
 - Save button: `aria-busy="true"` when in-flight.
+- Remove buttons: `aria-label="Remove affiliation"` or `aria-label="Remove credential"`.
 - Sticky footer on mobile: `z-index: 30` (above content, below DashboardShell header at z-40).
 
 ---
@@ -166,3 +194,4 @@ Button is disabled (and shows spinner) while the mutation is in-flight.
 - No auto-advance on save — user decides when to switch tabs.
 - No confirmation modal before saving — profile edits are low-risk, can be re-edited.
 - No collapsible sections within a tab — if a tab has enough content to need collapse, split it into another tab.
+- No raw `<select>` or `<input>` elements — use Glass components for consistency.

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import { Anchor, Plus, Trash2 } from 'lucide-react'
+import { Anchor, Plus } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../glass/glass-button'
@@ -9,6 +9,9 @@ import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
+import { ItemCard } from '@/components/common/item-card'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -217,26 +220,25 @@ export function BoatProfileForm() {
 
       {/* Contact info */}
       <GlassCard>
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Contact Information
-        </h2>
-        <div className="space-y-4">
-          <GlassInput
-            label="Business Name"
-            value={form.name}
-            onChange={(e) => setField('name', e.target.value)}
-            error={errors['name']}
-            placeholder="Phuket Boat Co."
-          />
-          <LocationPicker
-            label="Location"
-            value={form.location}
-            onChange={(loc) => setField('location', loc)}
-            error={errors['location']}
-          />
+        <FormSectionHeader label="Contact Information" />
+        <div className="space-y-4 mt-4">
+          <div className="max-w-sm">
+            <GlassInput
+              label="Business Name"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+              error={errors['name']}
+              placeholder="Phuket Boat Co."
+            />
+          </div>
+          <div className="max-w-md">
+            <LocationPicker
+              label="Location"
+              value={form.location}
+              onChange={(loc) => setField('location', loc)}
+              error={errors['location']}
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
               label="Contact Email"
@@ -258,21 +260,20 @@ export function BoatProfileForm() {
         </div>
       </GlassCard>
 
+      <hr className="form-divider" />
+
       {/* Fleet */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2
-            className="text-sm font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
-            Fleet
-          </h2>
-          <GlassButton type="button" size="sm" variant="secondary" onClick={addFleet}>
-            <Plus size={14} />
-            Add Vessel
-          </GlassButton>
-        </div>
-        <div className="space-y-4">
+        <FormSectionHeader
+          label="Fleet"
+          action={
+            <GlassButton type="button" size="sm" variant="secondary" onClick={addFleet}>
+              <Plus size={14} />
+              Add Vessel
+            </GlassButton>
+          }
+        />
+        <div className="space-y-4 mt-3">
           {form.fleet.map((vessel, fi) => (
             <FleetEntryCard
               key={fi}
@@ -302,9 +303,7 @@ export function BoatProfileForm() {
         </p>
       )}
 
-      <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving} fullWidth>
-        {isUpdate ? 'Save Changes' : 'Create Profile'}
-      </GlassButton>
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }
@@ -326,16 +325,11 @@ interface FleetEntryCardProps {
 
 function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onRemove, onAddRoute, onRemoveRoute, onUpdateRoute, onToggleDay }: FleetEntryCardProps) {
   return (
-    <GlassCard>
-      <div className="flex items-center justify-between mb-4">
+    <ItemCard onRemove={onRemove} canRemove={canRemove} aria-label={`Remove vessel ${fi + 1}`}>
+      <div className="mb-4">
         <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
           Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
         </span>
-        {canRemove && (
-          <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label={`Remove vessel ${fi + 1}`}>
-            <Trash2 size={16} />
-          </GlassButton>
-        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -361,13 +355,15 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>Routes</span>
-          <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80" style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
-            <Plus size={11} />
-            Add Route
-          </button>
-        </div>
+        <FormSectionHeader
+          label="Routes"
+          action={
+            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80" style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
+              <Plus size={11} />
+              Add Route
+            </button>
+          }
+        />
         {vessel.routes.length === 0 && (
           <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             No routes added. Routes define which dive sites this vessel visits and on which days.
@@ -379,7 +375,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
           ))}
         </div>
       </div>
-    </GlassCard>
+    </ItemCard>
   )
 }
 
@@ -395,16 +391,9 @@ interface RouteRowProps {
 
 function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
   return (
-    <div className="p-3 rounded-[var(--border-radius)] space-y-2" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-glass-border)' }}>
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <GlassInput value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
-        </div>
-        <div className="mt-2 flex-shrink-0">
-          <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label="Remove route">
-            <Trash2 size={16} />
-          </GlassButton>
-        </div>
+    <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
+      <div className="flex-1">
+        <GlassInput value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
       </div>
       <div className="flex flex-wrap gap-1.5">
         {DAYS.map((d) => {
@@ -420,6 +409,6 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
       {errors[`fleet.${fi}.routes.${ri}.daysOfWeek`] && (
         <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>{errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}</p>
       )}
-    </div>
+    </ItemCard>
   )
 }

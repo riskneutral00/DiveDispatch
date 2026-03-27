@@ -41,19 +41,10 @@ const defaultForm = (): CustomerContactData => ({
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 
-interface SectionHeadingProps {
-  children: React.ReactNode
-}
+import { FormSectionHeader } from '@/components/common/form-section-header'
 
-function SectionHeading({ children }: SectionHeadingProps) {
-  return (
-    <h2
-      className="text-sm font-semibold uppercase tracking-wider mb-4"
-      style={{ color: 'var(--color-text-secondary)' }}
-    >
-      {children}
-    </h2>
-  )
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return <FormSectionHeader label={children} />
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────

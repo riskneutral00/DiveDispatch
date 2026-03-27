@@ -15,6 +15,7 @@ import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import { formatDateRange } from '@/lib/booking/booking-display'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { Dispatch } from 'react'
+import { FormSectionHeader } from '@/components/common/form-section-header'
 
 interface ReviewStepProps {
   state: WizardState
@@ -23,14 +24,7 @@ interface ReviewStepProps {
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-xs font-semibold uppercase tracking-wider mb-2"
-      style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
-    >
-      {children}
-    </p>
-  )
+  return <FormSectionHeader label={children} />
 }
 
 export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepProps) {

@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -12,6 +12,9 @@ import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
+import { ItemCard } from '@/components/common/item-card'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -75,24 +78,14 @@ interface LocationRowProps {
 
 function LocationRow({ index, location, error, onChange, onRemove, canRemove }: LocationRowProps) {
   return (
-    <GlassCard padding="md">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-          Location {index + 1}
-        </h3>
-        {canRemove && (
-          <GlassButton variant="destructive" size="sm" type="button" onClick={() => onRemove(index)} aria-label={`Remove location ${index + 1}`}>
-            <Trash2 size={14} />
-            Remove
-          </GlassButton>
-        )}
-      </div>
+    <ItemCard onRemove={() => onRemove(index)} canRemove={canRemove} aria-label={`Remove location ${index + 1}`}>
+      <FormSectionHeader label={`Location ${index + 1}`} />
       <LocationPicker
         value={location}
         onChange={(loc) => onChange(index, loc)}
         error={error}
       />
-    </GlassCard>
+    </ItemCard>
   )
 }
 
@@ -111,21 +104,13 @@ function AssociationRow({ index, association, errors, onChange, onRemove }: Asso
     onChange(index, { ...association, [field]: value })
   }
   return (
-    <GlassCard padding="md">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-          Membership {index + 1}
-        </h3>
-        <GlassButton variant="destructive" size="sm" type="button" onClick={() => onRemove(index)} aria-label={`Remove membership ${index + 1}`}>
-          <Trash2 size={14} />
-          Remove
-        </GlassButton>
-      </div>
+    <ItemCard onRemove={() => onRemove(index)} aria-label={`Remove membership ${index + 1}`}>
+      <FormSectionHeader label={`Membership ${index + 1}`} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <GlassSimpleSelect label="Agency" value={association.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`associations.${index}.agency`]} />
         <GlassInput label="Membership Number" placeholder="e.g. PADI-12345" value={association.number} onChange={(e) => update('number', e.target.value)} error={errors[`associations.${index}.number`]} />
       </div>
-    </GlassCard>
+    </ItemCard>
   )
 }
 
@@ -232,9 +217,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       {(!section || section === 'contact') && (
         <>
           <GlassCard padding="md">
-            <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-              Contact Information
-            </h2>
+            <FormSectionHeader label="Contact Information" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} className="sm:col-span-2" />
               <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} error={errors.contactEmail} />
@@ -242,17 +225,11 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
             </div>
           </GlassCard>
 
+          <hr className="form-divider" />
+
           {/* Locations */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-                Locations
-              </h2>
-              <GlassButton variant="secondary" size="sm" type="button" onClick={addLocation}>
-                <Plus size={14} />
-                Add Location
-              </GlassButton>
-            </div>
+            <FormSectionHeader label="Locations" action={<GlassButton variant="secondary" size="sm" type="button" onClick={addLocation}><Plus size={14} />Add Location</GlassButton>} />
             {errors.locations && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.locations}</p>}
             {form.locations.map((loc, index) => (
               <LocationRow
@@ -267,11 +244,11 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
             ))}
           </div>
 
+          <hr className="form-divider" />
+
           {/* Referral mode */}
           <GlassCard padding="md">
-            <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-              Default Booking Mode
-            </h2>
+            <FormSectionHeader label="Default Booking Mode" />
             <div className="flex gap-3">
               {(['independent', 'referral'] as const).map((mode) => {
                 const active = form.defaultReferralMode === mode
@@ -304,19 +281,12 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         </>
       )}
 
+      {(!section) && <hr className="form-divider" />}
+
       {/* Agency associations */}
       {(!section || section === 'associations') && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-              Agency Memberships
-              <span className="ml-2 font-normal normal-case" style={{ color: 'var(--color-text-secondary)', opacity: 0.6 }}>(optional)</span>
-            </h2>
-            <GlassButton variant="secondary" size="sm" type="button" onClick={addAssociation}>
-              <Plus size={14} />
-              Add Membership
-            </GlassButton>
-          </div>
+          <FormSectionHeader label="Agency Memberships (optional)" action={<GlassButton variant="secondary" size="sm" type="button" onClick={addAssociation}><Plus size={14} />Add Membership</GlassButton>} />
           {form.associations.map((assoc, index) => (
             <AssociationRow key={index} index={index} association={assoc} errors={errors} onChange={updateAssociation} onRemove={removeAssociation} />
           ))}
@@ -326,11 +296,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
-          {isUpdate ? 'Save Changes' : 'Create Profile'}
-        </GlassButton>
-      </div>
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

@@ -3,12 +3,13 @@
 import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
-import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),
@@ -139,29 +140,28 @@ export function PoolProfileForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <GlassCard padding="lg">
-        <h2
-          className="text-lg font-semibold mb-6"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          Pool Profile
-        </h2>
+        <FormSectionHeader label="Pool Profile" />
 
         <div className="space-y-4">
-          <GlassInput
-            label="Pool Name"
-            value={form.name}
-            onChange={(e) => setField('name', e.target.value)}
-            error={errors.name}
-            placeholder="Blue Lagoon Training Pool"
-            autoComplete="organization"
-          />
+          <div className="max-w-sm">
+            <GlassInput
+              label="Pool Name"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+              error={errors.name}
+              placeholder="Blue Lagoon Training Pool"
+              autoComplete="organization"
+            />
+          </div>
 
-          <LocationPicker
-            label="Location"
-            value={form.location}
-            onChange={(loc) => setField('location', loc)}
-            error={errors.location}
-          />
+          <div className="max-w-md">
+            <LocationPicker
+              label="Location"
+              value={form.location}
+              onChange={(loc) => setField('location', loc)}
+              error={errors.location}
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
@@ -183,6 +183,8 @@ export function PoolProfileForm() {
               autoComplete="tel"
             />
           </div>
+
+          <hr className="form-divider" />
 
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
@@ -254,9 +256,7 @@ export function PoolProfileForm() {
         )}
 
         <div className="mt-6">
-          <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
-            {isUpdate ? 'Save Changes' : 'Create Profile'}
-          </GlassButton>
+          <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
         </div>
       </GlassCard>
     </form>

@@ -8,6 +8,9 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
+import { PillToggle } from '@/components/common/pill-toggle'
 
 const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
 type GearType = (typeof GEAR_TYPES)[number]
@@ -162,26 +165,25 @@ export function EquipmentProfileForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Business Details */}
       <GlassCard padding="lg">
-        <h2
-          className="text-base font-semibold mb-4"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          Business Details
-        </h2>
+        <FormSectionHeader label="Business Details" />
         <div className="space-y-4">
-          <GlassInput
-            label="Business Name"
-            value={form.name}
-            onChange={(e) => setField('name', e.target.value)}
-            placeholder="e.g. Phuket Gear Rental"
-            error={errors.name}
-          />
-          <LocationPicker
-            label="Location"
-            value={form.location}
-            onChange={(loc) => setField('location', loc)}
-            error={errors.location}
-          />
+          <div className="max-w-sm">
+            <GlassInput
+              label="Business Name"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+              placeholder="e.g. Phuket Gear Rental"
+              error={errors.name}
+            />
+          </div>
+          <div className="max-w-md">
+            <LocationPicker
+              label="Location"
+              value={form.location}
+              onChange={(loc) => setField('location', loc)}
+              error={errors.location}
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
               label="Contact Email"
@@ -203,37 +205,23 @@ export function EquipmentProfileForm() {
         </div>
       </GlassCard>
 
+      <hr className="form-divider" />
+
       {/* Gear Catalog */}
       <GlassCard padding="lg">
-        <h2
-          className="text-base font-semibold mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
-        >
-          Gear Catalog
-        </h2>
+        <FormSectionHeader label="Gear Catalog" />
         <p className="text-xs mb-4" style={{ color: 'var(--color-text-secondary)' }}>
           Select the gear types you stock and add manufacturer brands per type.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
-          {GEAR_TYPES.map((gt) => {
-            const active = gt in form.manufacturersByGearType
-            return (
-              <button
-                key={gt}
-                type="button"
-                onClick={() => toggleGearType(gt)}
-                className="px-3 py-1.5 text-sm font-medium rounded-full border transition-all"
-                style={{
-                  background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                  color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                  borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                  transitionDuration: 'var(--transition-speed)',
-                }}
-              >
-                {GEAR_TYPE_LABELS[gt]}
-              </button>
-            )
-          })}
+          {GEAR_TYPES.map((gt) => (
+            <PillToggle
+              key={gt}
+              label={GEAR_TYPE_LABELS[gt]}
+              checked={gt in form.manufacturersByGearType}
+              onChange={() => toggleGearType(gt)}
+            />
+          ))}
         </div>
         {activeGearTypes.length > 0 && (
           <div className="space-y-3">
@@ -272,10 +260,7 @@ export function EquipmentProfileForm() {
       </GlassCard>
 
       {serverError && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
-      {saved && <p className="text-sm" style={{ color: 'var(--color-success)' }}>Profile saved.</p>}
-      <GlassButton type="submit" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving} fullWidth>
-        {isUpdate ? 'Save Changes' : 'Create Profile'}
-      </GlassButton>
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

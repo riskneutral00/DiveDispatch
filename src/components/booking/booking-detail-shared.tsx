@@ -61,15 +61,11 @@ export function PortalPills({ pills }: { pills: PortalPill[] }) {
 
 // ── Section heading ─────────────────────────────────────────────────────────
 
+import { FormSectionHeader } from '@/components/common/form-section-header'
+
+/** @deprecated Use FormSectionHeader directly. Re-exported for backward compat. */
 export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-xs font-semibold uppercase tracking-wider mb-3"
-      style={{ color: 'var(--color-text-secondary)' }}
-    >
-      {children}
-    </p>
-  )
+  return <FormSectionHeader label={children} />
 }
 
 // ── Customer table ──────────────────────────────────────────────────────────

@@ -3,6 +3,8 @@
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -185,12 +187,14 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
 
       {(!section || section === 'contact') && (
         <GlassCard padding="md">
-          <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            Contact Information
-          </h2>
+          <FormSectionHeader label="Contact Information" />
           <div className="space-y-4">
-            <GlassInput label="Full Name" placeholder="Your name" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
-            <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
+            <div className="max-w-sm">
+              <GlassInput label="Full Name" placeholder="Your name" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
+            </div>
+            <div className="max-w-md">
+              <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.contactEmail} onChange={(e) => setField('contactEmail', e.target.value)} error={errors.contactEmail} />
               <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.contactPhone} onChange={(e) => setField('contactPhone', e.target.value)} error={errors.contactPhone} />
@@ -199,17 +203,19 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         </GlassCard>
       )}
 
+      {(!section) && <hr className="form-divider" />}
+
       {(!section || section === 'credentials') && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-              Dive Credentials
-            </h2>
-            <GlassButton variant="secondary" size="sm" type="button" onClick={addCredential}>
-              <Plus size={14} />
-              Add Credential
-            </GlassButton>
-          </div>
+          <FormSectionHeader
+            label="Dive Credentials"
+            action={
+              <GlassButton variant="secondary" size="sm" type="button" onClick={addCredential}>
+                <Plus size={14} />
+                Add Credential
+              </GlassButton>
+            }
+          />
           {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
           {form.credential.map((cred, index) => (
             <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
@@ -222,11 +228,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
       {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
 
-      <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
-          {isUpdate ? 'Save Changes' : 'Create Profile'}
-        </GlassButton>
-      </div>
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }

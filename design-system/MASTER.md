@@ -376,6 +376,22 @@ All glass components live in `src/components/glass/`:
 | `GlassSelect` | `glass-select.tsx` | `.glass .glass-field` | N/A (focus ring) |
 | `GlassDialog` | `glass-dialog.tsx` | `.glass-container` (transparent, ghost border) | N/A |
 
+### Common Components (`src/components/common/`)
+
+Shared UI patterns used across profile forms, booking, portal, and dashboard.
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `FormSectionHeader` | `form-section-header.tsx` | Section headers (11px/600/uppercase/0.08em) with optional action slot |
+| `PillToggle` | `pill-toggle.tsx` | Semantic checkbox pill (label + sr-only input). 44px min touch target. Locked variant with Lock icon |
+| `PillToggleGroup` | `pill-toggle.tsx` | Flex-wrap container with "More..." overflow button |
+| `ItemCard` | `item-card.tsx` | Glass-bg card with destructive-ghost Trash2 remove button (44px touch target) |
+| `DayPicker` | `day-picker.tsx` | Compact number range selector (label + native select, glass-field) |
+| `SaveButton` | `save-button.tsx` | Primary submit with Saved/Check feedback state (2s green flash) |
+| `EmptyState` | `empty-state.tsx` | Centered secondary text with optional icon for "No X found" patterns |
+| `FormGrid` | `form-grid.tsx` | Responsive field grid with col-span helpers |
+| `FormField` | `form-grid.tsx` | Grid cell with size-based col-span (sm/md/lg) |
+
 ### Button Variants
 
 | Variant | Background | Hover |

@@ -52,7 +52,7 @@ export default function RoleProfilePage({
   const [activeTab, setActiveTab] = useState(config.tabs?.[0]?.id ?? '')
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10">
+    <div className="max-w-3xl mx-auto px-4 pt-6 pb-28 md:pb-10">
       <div className="mb-6">
         <h1
           className="font-bold mb-1"

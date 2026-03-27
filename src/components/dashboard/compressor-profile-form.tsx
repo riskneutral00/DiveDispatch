@@ -4,8 +4,9 @@ import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
 import { Spinner } from '@/components/common/spinner'
+import { FormSectionHeader } from '@/components/common/form-section-header'
+import { SaveButton } from '@/components/common/save-button'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
@@ -133,26 +134,25 @@ export function CompressorProfileForm() {
 
       {/* Basic info */}
       <GlassCard padding="md">
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Contact Information
-        </h2>
+        <FormSectionHeader label="Contact Information" />
         <div className="space-y-4">
-          <GlassInput
-            label="Business Name"
-            placeholder="e.g. Phuket Gas Services"
-            value={form.name}
-            onChange={(e) => setField('name', e.target.value)}
-            error={errors.name}
-          />
-          <LocationPicker
-            label="Location"
-            value={form.location}
-            onChange={(loc) => setField('location', loc)}
-            error={errors.location}
-          />
+          <div className="max-w-sm">
+            <GlassInput
+              label="Business Name"
+              placeholder="e.g. Phuket Gas Services"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+              error={errors.name}
+            />
+          </div>
+          <div className="max-w-md">
+            <LocationPicker
+              label="Location"
+              value={form.location}
+              onChange={(loc) => setField('location', loc)}
+              error={errors.location}
+            />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <GlassInput
               label="Contact Email"
@@ -174,14 +174,11 @@ export function CompressorProfileForm() {
         </div>
       </GlassCard>
 
+      <hr className="form-divider" />
+
       {/* Gas mixes */}
       <GlassCard padding="md">
-        <h2
-          className="text-sm font-semibold uppercase tracking-wider mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          Gas Mixes Available
-        </h2>
+        <FormSectionHeader label="Gas Mixes Available" />
         <GlassCheckboxGroup
           label="Select the gas mixes you supply"
           items={GAS_MIXES.map(({ value, label }) => ({ value, label }))}
@@ -203,11 +200,7 @@ export function CompressorProfileForm() {
         </p>
       )}
 
-      <div className="flex justify-end">
-        <GlassButton type="submit" variant="primary" size="md" loading={saving} disabled={isUpdate ? (!isDirty || saving) : saving}>
-          {isUpdate ? 'Save Changes' : 'Create Profile'}
-        </GlassButton>
-      </div>
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }
