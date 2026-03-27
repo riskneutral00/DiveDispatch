@@ -27,9 +27,14 @@ async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<Parameters
 
 /** Seed minimal resources + preferences so profile + coverage gates pass */
 async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: Id<'users'>) {
+  // Profile + settings layer on users table
+  await ctx.db.patch(operatorUserId, { phone: '+66123456789', appLanguage: 'en' })
   // DiveCenter profile record
-  await seedDiveCenterProfile(ctx, operatorUserId, { contactEmail: `${operatorSlug}@test.com` })
-  // Booking template (Quick Book pill)
+  await seedDiveCenterProfile(ctx, operatorUserId, { email: `${operatorSlug}@test.com` })
+  // customerLanguages is a DiveCenter ROLE_REQUIRED field
+  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', operatorUserId)).unique()
+  if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
+  // Booking template
   await seedBookingTemplate(ctx, { ownerId: operatorSlug, activityType: ['DSD'] })
   // Instructor user
   await _seedUser(ctx, { tokenIdentifier: 'clerk|instr-cov', slug: 'instr-cov', email: 'i@t.com', name: 'Instr', firstName: 'I', lastName: 'C', businessName: 'IC', role: 'Instructor' })

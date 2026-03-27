@@ -1,97 +1,103 @@
-// Shared profile completeness check — used by getOnboardingStatus query,
-// createDraftShell mutation, and getAllRolesCompleteness query.
+// Config-driven profile completeness check — used by getProfileCompletionForRole query,
+// getOnboardingStatus query, createDraftShell mutation, and profile completion banner.
 
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
-import { OPERATOR_ROLE_SET as OPERATOR_ROLES } from './auth'
+import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
 
-type OperatorType = Doc<'bookingTemplates'>['ownerType']
+const profileTable: Record<string, string> = {
+  DiveCenter: 'diveCenters',
+  Agent: 'agents',
+  Instructor: 'instructors',
+  DiveMaster: 'diveMasters',
+  Boat: 'boats',
+  Equipment: 'equipment',
+  Pool: 'venues',
+  Compressor: 'compressors',
+  Liveaboard: 'liveaboards',
+  DiveResort: 'diveResorts',
+  DiveHostel: 'diveHostels',
+  DiveSite: 'venues',
+}
 
+/**
+ * Check completeness for a single role. Three layers:
+ * 1. Profile layer: PROFILE_REQUIRED fields on users table
+ * 2. Settings layer: SETTINGS_REQUIRED fields on users table
+ * 3. Role layer: ROLE_REQUIRED[role] fields on role-specific profile table
+ */
 export async function checkProfileCompleteness(
   ctx: Pick<QueryCtx, 'db'>,
-  user: { _id: Id<'users'>; slug: string; role: string; defaultContactEmail?: string; defaultContactPhone?: string; defaultLocation?: string },
+  user: { _id: Id<'users'> },
+  role: string,
 ): Promise<{ percentage: number; incomplete: string[] }> {
-  const role = user.role
   const incomplete: string[] = []
+  const userDoc = await ctx.db.get(user._id)
+  if (!userDoc) return { percentage: 0, incomplete: ['User not found'] }
 
-  // Fetch role-specific profile record
-  let profile: Record<string, unknown> | null = null
-  const profileTable = {
-    DiveCenter: 'diveCenters',
-    Agent: 'agents',
-    Instructor: 'instructors',
-    DiveMaster: 'diveMasters',
-    Boat: 'boats',
-    Equipment: 'equipment',
-    Pool: 'venues',
-    Compressor: 'compressors',
-    Liveaboard: 'liveaboards',
-    DiveResort: 'diveResorts',
-    DiveHostel: 'diveHostels',
-    DiveSite: 'venues',
-  } as const
-
-  const table = profileTable[role as keyof typeof profileTable]
-  if (table) {
-    profile = await ctx.db
-      .query(table)
-      .withIndex('by_userId', (q) =>
-        q.eq('userId', user._id),
-      )
-      .unique()
-  }
-
-  // Core profile fields
   const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
   const arr = (v: unknown) => Array.isArray(v) && v.length > 0
 
-  if (!str(profile?.name)) incomplete.push('Business name')
-  if (role === 'Agent') {
-    const locations = profile?.locations as Array<{ placeName: string; country: string }> | undefined
-    if (!locations?.[0]?.placeName) incomplete.push('Location')
-    if (!locations?.[0]?.country) incomplete.push('Country')
-  } else {
-    if (!str(profile?.placeName)) incomplete.push('Location')
-    if (!str(profile?.country)) incomplete.push('Country')
-  }
-  if (!str(profile?.contactEmail) && !str(user.defaultContactEmail)) incomplete.push('Contact email')
-  if (!str(profile?.contactPhone) && !str(user.defaultContactPhone)) incomplete.push('Contact phone')
-
-  // Role-specific list field
-  if (role === 'DiveCenter' || role === 'Agent' || role === 'Liveaboard') {
-    if (!arr(profile?.associations)) incomplete.push('Agency associations')
-  } else if (role === 'Instructor' || role === 'DiveMaster') {
-    if (!arr(profile?.credential)) incomplete.push('Credentials')
+  // 1. Profile layer
+  for (const field of PROFILE_REQUIRED) {
+    const value = (userDoc as Record<string, unknown>)[field]
+    if (!str(value)) incomplete.push(field)
   }
 
-  // Quick Book pill (organizers only)
-  if (OPERATOR_ROLES.has(role)) {
-    const template = await ctx.db
-      .query('bookingTemplates')
-      .withIndex('by_ownerId_ownerType', (q) =>
-        q.eq('ownerId', user.slug).eq('ownerType', role as OperatorType),
-      )
-      .first()
-    if (!template) incomplete.push('Quick Book pill')
+  // 2. Settings layer
+  for (const field of SETTINGS_REQUIRED) {
+    const value = (userDoc as Record<string, unknown>)[field]
+    if (!str(value)) incomplete.push(field)
   }
 
-  // Preferred instructors (organizers only) — uses SLUG not _id
-  if (OPERATOR_ROLES.has(role)) {
-    const prefs = await ctx.db
-      .query('stakeholderPreferences')
-      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
+  // 3. Role layer
+  const table = profileTable[role]
+  let profile: Record<string, unknown> | null = null
+  if (table) {
+    profile = await ctx.db
+      .query(table as 'diveCenters')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
-    if (!prefs?.preferredInstructorSlugs?.length) incomplete.push('Preferred instructors')
   }
 
-  // Calculate total
-  const baseCount = 5
-  const hasListField = ['DiveCenter', 'Agent', 'Liveaboard', 'Instructor', 'DiveMaster'].includes(role)
-  const hasTemplateSlot = OPERATOR_ROLES.has(role)
-  const hasPreferredInstructors = OPERATOR_ROLES.has(role)
-  const total = baseCount + (hasListField ? 1 : 0) + (hasTemplateSlot ? 1 : 0) + (hasPreferredInstructors ? 1 : 0)
+  const roleFields = ROLE_REQUIRED[role] ?? []
+  for (const field of roleFields) {
+    if (!profile) {
+      incomplete.push(field)
+      continue
+    }
+
+    // Agent uses locations[0].placeName for 'placeName' and locations[0].country for 'country'
+    if (role === 'Agent' && field === 'placeName') {
+      const locations = profile.locations as Array<{ placeName: string; country: string }> | undefined
+      if (!locations?.[0]?.placeName) incomplete.push(field)
+      continue
+    }
+    if (role === 'Agent' && field === 'country') {
+      const locations = profile.locations as Array<{ placeName: string; country: string }> | undefined
+      if (!locations?.[0]?.country) incomplete.push(field)
+      continue
+    }
+
+    // Boat uses fleet for 'diveSite' — check if any fleet entry has routes with diveSite
+    if (role === 'Boat' && field === 'diveSite') {
+      const fleet = profile.fleet as Array<{ routes?: Array<{ diveSite: string }> }> | undefined
+      const hasDiveSite = fleet?.some(f => f.routes?.some(r => r.diveSite))
+      if (!hasDiveSite) incomplete.push(field)
+      continue
+    }
+
+    const value = profile[field]
+    if (Array.isArray(value)) {
+      if (!arr(value)) incomplete.push(field)
+    } else {
+      if (!str(value)) incomplete.push(field)
+    }
+  }
+
+  const total = PROFILE_REQUIRED.length + SETTINGS_REQUIRED.length + roleFields.length
   const filled = total - incomplete.length
-  const percentage = Math.round((filled / total) * 100)
+  const percentage = total === 0 ? 100 : Math.round((filled / total) * 100)
 
   return { percentage, incomplete }
 }
@@ -99,7 +105,6 @@ export async function checkProfileCompleteness(
 /**
  * Checks profile completeness across ALL of a user's roles.
  * Returns allComplete: true only when every role is at 100%.
- * Used by the booking gate and the profile completion banner.
  */
 export async function checkAllRolesCompleteness(
   ctx: Pick<QueryCtx, 'db'>,
@@ -122,14 +127,7 @@ export async function checkAllRolesCompleteness(
   let allComplete = true
 
   for (const role of rolesToCheck) {
-    const result = await checkProfileCompleteness(ctx, {
-      _id: user._id,
-      slug: user.slug,
-      role,
-      defaultContactEmail: user.defaultContactEmail,
-      defaultContactPhone: user.defaultContactPhone,
-      defaultLocation: user.defaultLocation,
-    })
+    const result = await checkProfileCompleteness(ctx, { _id: user._id }, role)
     roles.push({ role, ...result })
     if (result.percentage < 100) allComplete = false
   }

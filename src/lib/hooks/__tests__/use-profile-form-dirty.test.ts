@@ -20,7 +20,7 @@ function computeIsDirty<T>(current: T, baseline: T): boolean {
 describe('useProfileForm isDirty', () => {
   const baseline = {
     name: 'Hug Ocean',
-    contactEmail: 'hug@ocean.com',
+    email: 'hug@ocean.com',
     associations: [{ agency: 'PADI', number: 'S-34782' }],
     verified: true,
   }
@@ -56,7 +56,7 @@ describe('useProfileForm isDirty', () => {
   it('returns false when object is reconstructed with same values', () => {
     const current = {
       name: 'Hug Ocean',
-      contactEmail: 'hug@ocean.com',
+      email: 'hug@ocean.com',
       associations: [{ agency: 'PADI', number: 'S-34782' }],
       verified: true,
     }
@@ -73,12 +73,12 @@ describe('useProfileForm isDirty', () => {
   })
 
   it('returns true when field is changed then changed back to a different value', () => {
-    const current = { ...baseline, contactEmail: 'new@ocean.com' }
+    const current = { ...baseline, email: 'new@ocean.com' }
     expect(computeIsDirty(current, baseline)).toBe(true)
   })
 
   it('returns false when field is changed back to original value', () => {
-    const current = { ...baseline, contactEmail: 'hug@ocean.com' }
+    const current = { ...baseline, email: 'hug@ocean.com' }
     expect(computeIsDirty(current, baseline)).toBe(false)
   })
 })

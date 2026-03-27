@@ -14,8 +14,8 @@ export async function seedDiveCenterProfile(
     country?: string
     lat?: number
     lng?: number
-    contactEmail?: string
-    contactPhone?: string
+    email?: string
+    phone?: string
     associations?: Array<{ agencyCode: string; memberId: string; owDays?: number; aowDays?: number; oaDays?: number; selectedSpecialties?: string[] }>
     verified?: boolean
   } = {},
@@ -27,8 +27,8 @@ export async function seedDiveCenterProfile(
     country: overrides.country ?? 'Thailand',
     lat: overrides.lat ?? 10.0957,
     lng: overrides.lng ?? 99.8408,
-    contactEmail: overrides.contactEmail ?? 'dc@test.com',
-    contactPhone: overrides.contactPhone ?? '+66123456789',
+    email: overrides.email ?? 'dc@test.com',
+    phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agencyCode: 'PADI', memberId: '12345' }],
     verified: overrides.verified ?? true,
   })
@@ -39,8 +39,8 @@ export async function seedAgent(
   userId: Id<'users'>,
   overrides: {
     name?: string
-    contactEmail?: string
-    contactPhone?: string
+    email?: string
+    phone?: string
     associations?: Array<{ agency: string; number: string }>
     defaultReferralMode?: Doc<'agents'>['defaultReferralMode']
     verified?: boolean
@@ -50,8 +50,8 @@ export async function seedAgent(
     userId,
     name: overrides.name ?? 'Test Agent',
     locations: [{ placeName: 'Koh Tao', country: 'Thailand', lat: 10.09, lng: 99.84 }],
-    contactEmail: overrides.contactEmail ?? 'agent@test.com',
-    contactPhone: overrides.contactPhone ?? '+66123456789',
+    email: overrides.email ?? 'agent@test.com',
+    phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
     defaultReferralMode: overrides.defaultReferralMode ?? 'independent',
     verified: overrides.verified ?? false,
@@ -98,8 +98,8 @@ export async function seedInstructorProfile(
     name?: string
     placeName?: string
     country?: string
-    contactEmail?: string
-    contactPhone?: string
+    email?: string
+    phone?: string
     credential?: Array<{ agency: string; level: string; agencyID: string; courses: string[] }>
     verified?: boolean
   } = {},
@@ -111,8 +111,8 @@ export async function seedInstructorProfile(
     country: overrides.country ?? 'Thailand',
     lat: 10.0957,
     lng: 99.8408,
-    contactEmail: overrides.contactEmail ?? 'instructor@test.com',
-    contactPhone: overrides.contactPhone ?? '+66123456789',
+    email: overrides.email ?? 'instructor@test.com',
+    phone: overrides.phone ?? '+66123456789',
     credential: overrides.credential ?? [
       { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
     ],
@@ -127,8 +127,8 @@ export async function seedBoatProfile(
     name?: string
     placeName?: string
     country?: string
-    contactEmail?: string
-    contactPhone?: string
+    email?: string
+    phone?: string
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
     verified?: boolean
   } = {},
@@ -140,8 +140,8 @@ export async function seedBoatProfile(
     country: overrides.country ?? 'Thailand',
     lat: 10.0957,
     lng: 99.8408,
-    contactEmail: overrides.contactEmail ?? 'boat@test.com',
-    contactPhone: overrides.contactPhone ?? '+66123456789',
+    email: overrides.email ?? 'boat@test.com',
+    phone: overrides.phone ?? '+66123456789',
     fleet: overrides.fleet ?? [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
     hasCompressor: false,
     verified: overrides.verified ?? true,
@@ -155,8 +155,8 @@ export async function seedEquipmentProfile(
     name?: string
     placeName?: string
     country?: string
-    contactEmail?: string
-    contactPhone?: string
+    email?: string
+    phone?: string
     verified?: boolean
   } = {},
 ) {
@@ -167,8 +167,8 @@ export async function seedEquipmentProfile(
     country: overrides.country ?? 'Thailand',
     lat: 10.0957,
     lng: 99.8408,
-    contactEmail: overrides.contactEmail ?? 'equip@test.com',
-    contactPhone: overrides.contactPhone ?? '+66123456789',
+    email: overrides.email ?? 'equip@test.com',
+    phone: overrides.phone ?? '+66123456789',
     verified: overrides.verified ?? true,
   })
 }

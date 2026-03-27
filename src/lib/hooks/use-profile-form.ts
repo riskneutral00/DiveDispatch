@@ -15,7 +15,7 @@ export interface UseProfileFormOptions<
   /** Convex query result — undefined while loading, null if no profile exists */
   profile: ProfileRecord | null | undefined
   /** Optional user record for pre-filling defaults on first create */
-  me?: { businessName?: string; email?: string; customerLanguages?: string[]; defaultLocation?: string; defaultContactEmail?: string; defaultContactPhone?: string } | null | undefined
+  me?: { businessName?: string; email?: string; phone?: string; customerLanguages?: string[]; defaultLocation?: string } | null | undefined
   /** Zod schema for validation */
   schema: z.ZodType<unknown>
   /** Default form values */

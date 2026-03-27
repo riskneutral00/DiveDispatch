@@ -34,8 +34,8 @@ interface DiveCenterProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   associations: {
     agencyCode: string
     memberId: string
@@ -54,8 +54,8 @@ interface BoatProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   fleet: {
     boatName: string
     maxPax: number
@@ -76,8 +76,8 @@ interface VenueProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   verified: boolean
   venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
   isPublic: boolean
@@ -95,8 +95,8 @@ interface EquipmentProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   manufacturersByGearType?: Record<string, string[]>
   verified: boolean
 }
@@ -108,8 +108,8 @@ interface CompressorProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   gasMixes?: GasMixType[]
   verified: boolean
 }
@@ -117,8 +117,8 @@ interface CompressorProfile {
 interface AgentProfile {
   name: string
   locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   associations: { agency: string; number: string }[]
   defaultReferralMode: 'independent' | 'referral'
   verified: boolean
@@ -131,8 +131,8 @@ interface InstructorProfile {
   lat: number
   lng: number
   placeId?: string
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   credential: {
     agency: string
     level: string
@@ -189,16 +189,16 @@ export const HUG_OCEAN: SeedStakeholder = {
   diveCenter: {
     name: 'Hug Ocean',
     ...PHUKET,
-    contactEmail: 'hug-ocean@divedispatch.dev',
-    contactPhone: '+66-76-381-100',
+    email: 'hug-ocean@divedispatch.dev',
+    phone: '+66-76-381-100',
     associations: [{ agencyCode: 'PADI', memberId: 'S-34782', ...PADI_PREFS }],
     verified: VERIFIED,
   },
   boat: {
     name: 'M.V. Hug Ocean',
     ...PHUKET,
-    contactEmail: 'hug-ocean@divedispatch.dev',
-    contactPhone: '+66-76-381-101',
+    email: 'hug-ocean@divedispatch.dev',
+    phone: '+66-76-381-101',
     fleet: [
       {
         boatName: 'M.V. Hug Ocean',
@@ -213,8 +213,8 @@ export const HUG_OCEAN: SeedStakeholder = {
   pool: {
     name: 'Hug Ocean',
     ...PHUKET,
-    contactEmail: 'hug-ocean@divedispatch.dev',
-    contactPhone: '+66-76-381-102',
+    email: 'hug-ocean@divedispatch.dev',
+    phone: '+66-76-381-102',
     maxDepth: 3,
     maxCapacity: 15,
     verified: VERIFIED,
@@ -227,8 +227,8 @@ export const HUG_OCEAN: SeedStakeholder = {
   equipment: {
     name: 'Hug Ocean',
     ...PHUKET,
-    contactEmail: 'hug-ocean@divedispatch.dev',
-    contactPhone: '+66-76-381-103',
+    email: 'hug-ocean@divedispatch.dev',
+    phone: '+66-76-381-103',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
@@ -254,16 +254,16 @@ export const NEPTUNE: SeedStakeholder = {
   diveCenter: {
     name: 'Neptune',
     ...PHUKET,
-    contactEmail: 'neptune@divedispatch.dev',
-    contactPhone: '+66-76-383-001',
+    email: 'neptune@divedispatch.dev',
+    phone: '+66-76-383-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-41256', ...PADI_PREFS }],
     verified: VERIFIED,
   },
   pool: {
     name: 'Neptune',
     ...PHUKET,
-    contactEmail: 'neptune@divedispatch.dev',
-    contactPhone: '+66-76-383-002',
+    email: 'neptune@divedispatch.dev',
+    phone: '+66-76-383-002',
     maxDepth: 2.5,
     maxCapacity: 6,
     verified: VERIFIED,
@@ -276,8 +276,8 @@ export const NEPTUNE: SeedStakeholder = {
   equipment: {
     name: 'Neptune',
     ...PHUKET,
-    contactEmail: 'neptune@divedispatch.dev',
-    contactPhone: '+66-76-383-003',
+    email: 'neptune@divedispatch.dev',
+    phone: '+66-76-383-003',
     manufacturersByGearType: { wetsuit: ['Aqua Lung'], bcd: ['Aqua Lung'] },
     verified: VERIFIED,
   },
@@ -303,16 +303,16 @@ export const PHUKET_DC: SeedStakeholder = {
   diveCenter: {
     name: 'Phuket Dive Center',
     ...PHUKET,
-    contactEmail: 'phuket-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-385-001',
+    email: 'phuket-dive-center@divedispatch.dev',
+    phone: '+66-76-385-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-29815', ...PADI_PREFS }],
     verified: VERIFIED,
   },
   boat: {
     name: 'Phuket Dive Center',
     ...PHUKET,
-    contactEmail: 'phuket-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-385-002',
+    email: 'phuket-dive-center@divedispatch.dev',
+    phone: '+66-76-385-002',
     fleet: [
       {
         boatName: 'M.V.MQ5',
@@ -341,8 +341,8 @@ export const PHUKET_DC: SeedStakeholder = {
   equipment: {
     name: 'Phuket Dive Center',
     ...PHUKET,
-    contactEmail: 'phuket-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-385-003',
+    email: 'phuket-dive-center@divedispatch.dev',
+    phone: '+66-76-385-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -367,16 +367,16 @@ export const NICOLE_DC: SeedStakeholder = {
   diveCenter: {
     name: 'Nicole Dive Center',
     ...PHUKET,
-    contactEmail: 'nicole-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-386-001',
+    email: 'nicole-dive-center@divedispatch.dev',
+    phone: '+66-76-386-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-55198', ...PADI_PREFS }],
     verified: VERIFIED,
   },
   equipment: {
     name: 'Nicole Dive Center',
     ...PHUKET,
-    contactEmail: 'nicole-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-386-002',
+    email: 'nicole-dive-center@divedispatch.dev',
+    phone: '+66-76-386-002',
     manufacturersByGearType: {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
@@ -403,8 +403,8 @@ export const MANTA_DC: SeedStakeholder = {
   diveCenter: {
     name: 'Manta Dive Center',
     ...PHUKET,
-    contactEmail: 'manta-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-387-001',
+    email: 'manta-dive-center@divedispatch.dev',
+    phone: '+66-76-387-001',
     associations: [{ agencyCode: 'SSI', memberId: 'DC-80234', ...SSI_PREFS }],
     verified: VERIFIED,
   },
@@ -429,16 +429,16 @@ export const SCUBANICKS: SeedStakeholder = {
   diveCenter: {
     name: 'ScubaNicks',
     ...PHUKET,
-    contactEmail: 'scubanicks@divedispatch.dev',
-    contactPhone: '+66-76-388-001',
+    email: 'scubanicks@divedispatch.dev',
+    phone: '+66-76-388-001',
     associations: [{ agencyCode: 'SSI', memberId: 'DC-91547', ...SSI_PREFS }],
     verified: VERIFIED,
   },
   equipment: {
     name: 'ScubaNicks',
     ...PHUKET,
-    contactEmail: 'scubanicks@divedispatch.dev',
-    contactPhone: '+66-76-388-002',
+    email: 'scubanicks@divedispatch.dev',
+    phone: '+66-76-388-002',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
     verified: VERIFIED,
   },
@@ -463,8 +463,8 @@ export const SCUBA_DEEP: SeedStakeholder = {
   diveCenter: {
     name: 'Scuba Deep',
     ...PHUKET,
-    contactEmail: 'scuba-deep@divedispatch.dev',
-    contactPhone: '+66-76-389-001',
+    email: 'scuba-deep@divedispatch.dev',
+    phone: '+66-76-389-001',
     associations: [
       { agencyCode: 'SSI', memberId: 'DC-72019', ...SSI_PREFS },
       { agencyCode: 'PADI', memberId: 'S-61834', ...PADI_PREFS },
@@ -474,8 +474,8 @@ export const SCUBA_DEEP: SeedStakeholder = {
   equipment: {
     name: 'Scuba Deep',
     ...PHUKET,
-    contactEmail: 'scuba-deep@divedispatch.dev',
-    contactPhone: '+66-76-389-003',
+    email: 'scuba-deep@divedispatch.dev',
+    phone: '+66-76-389-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -501,16 +501,16 @@ export const SIROLO: SeedStakeholder = {
   diveCenter: {
     name: 'Sirolo',
     ...CHALONG,
-    contactEmail: 'sirolo@divedispatch.dev',
-    contactPhone: '+66-76-391-001',
+    email: 'sirolo@divedispatch.dev',
+    phone: '+66-76-391-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-70123', ...PADI_PREFS }],
     verified: VERIFIED,
   },
   boat: {
     name: 'Sirolo',
     ...CHALONG,
-    contactEmail: 'sirolo@divedispatch.dev',
-    contactPhone: '+66-76-391-002',
+    email: 'sirolo@divedispatch.dev',
+    phone: '+66-76-391-002',
     fleet: [
       {
         boatName: 'M.V. Sirolo',
@@ -529,8 +529,8 @@ export const SIROLO: SeedStakeholder = {
   equipment: {
     name: 'Sirolo',
     ...CHALONG,
-    contactEmail: 'sirolo@divedispatch.dev',
-    contactPhone: '+66-76-391-003',
+    email: 'sirolo@divedispatch.dev',
+    phone: '+66-76-391-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
     verified: VERIFIED,
   },
@@ -554,8 +554,8 @@ export const PRAY_DC: SeedStakeholder = {
   diveCenter: {
     name: 'Pray Dive Center',
     ...PHUKET,
-    contactEmail: 'pray-dive-center@divedispatch.dev',
-    contactPhone: '+66-76-390-001',
+    email: 'pray-dive-center@divedispatch.dev',
+    phone: '+66-76-390-001',
     associations: [{ agencyCode: 'PADI', memberId: 'S-48203', ...PADI_PREFS }],
     verified: VERIFIED,
   },
@@ -579,8 +579,8 @@ export const AMANDA: SeedStakeholder = {
   agent: {
     name: 'Amanda',
     locations: [{ placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 }],
-    contactEmail: 'amanda@divedispatch.dev',
-    contactPhone: '+66-81-555-0012',
+    email: 'amanda@divedispatch.dev',
+    phone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
     defaultReferralMode: 'independent',
     verified: VERIFIED,

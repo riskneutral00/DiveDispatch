@@ -21,8 +21,8 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
 
   const [name, setName] = useState('')
   const [location, setLocation] = useState<LocationValue | null>(null)
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
+  const [email, setContactEmail] = useState('')
+  const [phone, setContactPhone] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
@@ -38,8 +38,8 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           lng: existing.lng,
           placeId: existing.placeId ?? undefined,
         })
-        setContactEmail(existing.contactEmail)
-        setContactPhone(existing.contactPhone)
+        setContactEmail(existing.email)
+        setContactPhone(existing.phone)
       } else {
         setName(me?.businessName ?? '')
         setContactEmail(me?.email ?? '')
@@ -49,7 +49,7 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
   }, [existing, me, initialized])
 
   const isComplete =
-    name.trim() && location && contactPhone.trim()
+    name.trim() && location && email.trim() && phone.trim()
 
   async function handleNext() {
     if (!isComplete || !location) return
@@ -64,8 +64,8 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           lat: location.lat,
           lng: location.lng,
           placeId: location.placeId,
-          contactEmail,
-          contactPhone,
+          email,
+          phone,
         })
       } else {
         await create({
@@ -75,8 +75,8 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           lat: location.lat,
           lng: location.lng,
           placeId: location.placeId,
-          contactEmail,
-          contactPhone,
+          email,
+          phone,
           associations: [],
         })
       }
@@ -117,9 +117,17 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
           onChange={setLocation}
         />
         <GlassInput
-          label="Phone"
+          label="Contact Email"
+          type="email"
+          value={email}
+          onChange={(e) => setContactEmail(e.target.value)}
+          placeholder="dive@example.com"
+          required
+        />
+        <GlassInput
+          label="Contact Phone"
           type="tel"
-          value={contactPhone}
+          value={phone}
           onChange={(e) => setContactPhone(e.target.value)}
           placeholder="+66 81 234 5678"
           required

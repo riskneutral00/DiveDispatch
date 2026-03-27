@@ -47,8 +47,8 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     instructor: {
       name: `${def.firstName} ${def.lastName}`,
       ...PHUKET,
-      contactEmail: email,
-      contactPhone: phone,
+      email,
+      phone,
       credential,
       verified: true,
     },

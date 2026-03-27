@@ -23,8 +23,8 @@ describe('diveCenters.create (profile setup)', () => {
         lat: 7.8804,
         lng: 98.3923,
         country: 'Thailand',
-        contactEmail: 'matt@divedispatch.dev',
-        contactPhone: '+66812345678',
+        email: 'matt@divedispatch.dev',
+        phone: '+66812345678',
         associations: [{ agencyCode: 'PADI', memberId: '12345' }],
       })
 
@@ -32,8 +32,8 @@ describe('diveCenters.create (profile setup)', () => {
     expect(profile?.name).toBe("Matt & Miss Mermaid's DC")
     expect(profile?.placeName).toBe('Phuket')
     expect(profile?.country).toBe('Thailand')
-    expect(profile?.contactEmail).toBe('matt@divedispatch.dev')
-    expect(profile?.contactPhone).toBe('+66812345678')
+    expect(profile?.email).toBe('matt@divedispatch.dev')
+    expect(profile?.phone).toBe('+66812345678')
     expect(profile?.associations).toHaveLength(1)
     expect(profile?.associations[0].agencyCode).toBe('PADI')
   })
@@ -48,8 +48,8 @@ describe('diveCenters.create (profile setup)', () => {
         lat: 10.0957,
         lng: 99.8408,
       country: 'Thailand',
-      contactEmail: 'idem@dc.com',
-      contactPhone: '+66800000000',
+      email: 'idem@dc.com',
+      phone: '+66800000000',
       associations: [] as { agencyCode: string; memberId: string }[],
     }
 
@@ -85,8 +85,8 @@ describe('diveCenters.create (profile setup)', () => {
         lat: 7.8804,
         lng: 98.3923,
           country: 'Thailand',
-          contactEmail: 'bad@test.com',
-          contactPhone: '+66800000000',
+          email: 'bad@test.com',
+          phone: '+66800000000',
           associations: [],
         }),
     ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })

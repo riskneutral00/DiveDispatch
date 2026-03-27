@@ -8,6 +8,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { FormSectionHeader } from '@/components/common/form-section-header'
 import { SaveButton } from '@/components/common/save-button'
 import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
 
@@ -22,7 +23,8 @@ const locationSchema = z.object({
 export const poolSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactPhone: z.string().min(1, 'Phone is required'),
+  email: z.string().email('Invalid email'),
+  phone: z.string().min(1, 'Phone is required'),
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
   confinedCapable: z.boolean(),
@@ -32,8 +34,8 @@ export const poolSchema = z.object({
 export type PoolFormState = {
   name: string
   location: LocationValue | null
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
   maxDepth: number
   maxCapacity: number
   confinedCapable: boolean
@@ -43,8 +45,8 @@ export type PoolFormState = {
 export const INITIAL_POOL_FORM: PoolFormState = {
   name: '',
   location: null,
-  contactEmail: '',
-  contactPhone: '',
+  email: '',
+  phone: '',
   maxDepth: 0,
   maxCapacity: 0,
   confinedCapable: false,
@@ -67,8 +69,8 @@ export function poolFromProfile(p: Record<string, unknown>): PoolFormState {
       lng: p.lng,
       placeId: (p.placeId ?? undefined) as string | undefined,
     } as LocationValue,
-    contactEmail: (p.contactEmail as string) ?? '',
-    contactPhone: (p.contactPhone as string) ?? '',
+    email: (p.email as string) ?? '',
+    phone: (p.phone as string) ?? '',
     maxDepth: (p.maxDepth as number) ?? 0,
     maxCapacity: (p.maxCapacity as number) ?? 0,
     confinedCapable: (p.confinedCapable as boolean) ?? false,
@@ -85,8 +87,8 @@ export function poolToPayload(f: PoolFormState): Record<string, unknown> {
     lat: loc.lat,
     lng: loc.lng,
     placeId: loc.placeId,
-    contactEmail: f.contactEmail,
-    contactPhone: f.contactPhone,
+    email: f.email,
+    phone: f.phone,
     maxDepth: f.maxDepth,
     maxCapacity: f.maxCapacity,
     confinedCapable: f.confinedCapable,
@@ -109,7 +111,7 @@ export function PoolProfileForm() {
   const createMutation = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: poolSchema,
@@ -117,8 +119,8 @@ export function PoolProfileForm() {
     fromProfile: poolFromProfile,
     fromMe: (defaults, initial) => ({
       ...initial,
-      contactEmail: defaults.defaultContactEmail ?? '',
-      contactPhone: defaults.defaultContactPhone ?? '',
+      email: defaults.email ?? '',
+      phone: defaults.phone ?? '',
     }),
     toPayload: poolToPayload,
     create: (payload) =>
@@ -139,6 +141,7 @@ export function PoolProfileForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <GlassCard padding="lg">
+        <FormSectionHeader label="Pool Profile" />
 
         <div className="space-y-4">
           <ProfileBasicInfo
@@ -150,9 +153,12 @@ export function PoolProfileForm() {
             locationValue={form.location}
             onLocationChange={(loc) => setField('location', loc)}
             locationError={errors.location}
-            phoneValue={form.contactPhone}
-            onPhoneChange={(val) => setField('contactPhone', val)}
-            phoneError={errors.contactPhone}
+            emailValue={form.email}
+            onEmailChange={(val) => setField('email', val)}
+            emailError={errors.email}
+            phoneValue={form.phone}
+            onPhoneChange={(val) => setField('phone', val)}
+            phoneError={errors.phone}
           />
 
           <hr className="form-divider" />
@@ -227,7 +233,7 @@ export function PoolProfileForm() {
         )}
 
         <div className="mt-6">
-          <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
+          <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
         </div>
       </GlassCard>
     </form>

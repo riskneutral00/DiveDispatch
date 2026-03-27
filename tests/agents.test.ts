@@ -13,8 +13,8 @@ async function seedUser(ctx: SeedCtx, slug: string, role: NonNullable<NonNullabl
 const VALID_AGENT_ARGS = {
   name: 'Test Agent',
   locations: [{ placeName: 'Koh Tao', country: 'Thailand', lat: 10.09, lng: 99.84 }],
-  contactEmail: 'agent@test.com',
-  contactPhone: '+66123456789',
+  email: 'agent@test.com',
+  phone: '+66123456789',
   associations: [{ agency: 'PADI', number: '12345' }],
   defaultReferralMode: 'independent' as const,
 }
@@ -127,7 +127,7 @@ describe('agents.update', () => {
       expect(agent!.name).toBe('Updated Agent')
       expect(agent!.defaultReferralMode).toBe('referral')
       // Unchanged fields preserved
-      expect(agent!.contactEmail).toBe('agent@test.com')
+      expect(agent!.email).toBe('agent@test.com')
     })
   })
 })

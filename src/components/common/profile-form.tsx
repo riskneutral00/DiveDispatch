@@ -11,14 +11,15 @@ import { Save } from 'lucide-react'
 export interface ProfileFormSharedValue {
   name: string
   location: LocationValue | null
-  contactEmail: string
-  contactPhone: string
+  email: string
+  phone: string
 }
 
 export interface ProfileFormErrors {
   name?: string
   location?: string
-  contactPhone?: string
+  email?: string
+  phone?: string
 }
 
 interface ProfileFormProps {
@@ -57,7 +58,8 @@ export const locationSchema = z.object({
 export const sharedProfileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  contactPhone: z.string().min(1, 'Phone is required'),
+  email: z.string().email('Valid email required'),
+  phone: z.string().min(1, 'Phone is required'),
 })
 
 // ── Section header helper ─────────────────────────────────────────────────────
@@ -91,31 +93,41 @@ export function ProfileForm({
     <form onSubmit={onSubmit} className="max-w-2xl mx-auto space-y-8">
       {/* Basic Information */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <GlassInput
-            label="Business Name"
-            value={value.name}
-            onChange={(e) => onChange('name', e.target.value)}
-            placeholder="e.g. Ocean Explorer Dive Center"
-            error={errors.name}
+        <SectionHeader>Basic Information</SectionHeader>
+
+        <GlassInput
+          label="Business Name"
+          value={value.name}
+          onChange={(e) => onChange('name', e.target.value)}
+          placeholder="e.g. Ocean Explorer Dive Center"
+          error={errors.name}
+        />
+
+        {showLocation && (
+          <LocationPicker
+            label="Location"
+            value={value.location}
+            onChange={(loc) => onChange('location', loc)}
+            error={errors.location}
           />
+        )}
 
-          {showLocation && (
-            <LocationPicker
-              label="Location"
-              value={value.location}
-              onChange={(loc) => onChange('location', loc)}
-              error={errors.location}
-            />
-          )}
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <GlassInput
-            label="Phone"
+            label="Contact Email"
+            type="email"
+            value={value.email}
+            onChange={(e) => onChange('email', e.target.value)}
+            placeholder="dive@example.com"
+            error={errors.email}
+          />
+          <GlassInput
+            label="Contact Phone"
             type="tel"
-            value={value.contactPhone}
-            onChange={(e) => onChange('contactPhone', e.target.value)}
+            value={value.phone}
+            onChange={(e) => onChange('phone', e.target.value)}
             placeholder="+66 81 234 5678"
-            error={errors.contactPhone}
+            error={errors.phone}
           />
         </div>
       </div>
@@ -133,7 +145,7 @@ export function ProfileForm({
       <div className="flex justify-end">
         <GlassButton type="submit" loading={isLoading}>
           <Save size={16} />
-          {submitLabel ?? 'Save'}
+          {submitLabel ?? 'Save Changes'}
         </GlassButton>
       </div>
     </form>

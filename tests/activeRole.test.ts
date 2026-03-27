@@ -37,10 +37,15 @@ async function seedFullDc(ctx: SeedCtx, slug: string) {
     lastName: 'Test',
     businessName: 'Test Biz',
   })
+  // Set profile + settings layer fields
+  await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
   await seedDiveCenterProfile(ctx, userId, {
     name: 'Test Dive Center',
-    contactEmail: `${slug}@test.com`,
+    email: `${slug}@test.com`,
   })
+  // Set customerLanguages on diveCenters (required field)
+  const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique()
+  if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
   await seedBookingTemplate(ctx, {
     ownerId: slug,
     ownerType: 'DiveCenter',

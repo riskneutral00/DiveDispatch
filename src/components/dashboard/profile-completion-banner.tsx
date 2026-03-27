@@ -85,7 +85,7 @@ function InstructorBanner({ slug }: { slug: string }) {
     missing.push('full name', 'phone', 'certifications')
   } else {
     if (!profile.name) missing.push('full name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.credential?.length) missing.push('certifications')
   }
 
@@ -103,7 +103,7 @@ function DiveMasterBanner({ slug }: { slug: string }) {
     missing.push('full name', 'phone', 'certifications')
   } else {
     if (!profile.name) missing.push('full name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.credential?.length) missing.push('certifications')
   }
 
@@ -121,7 +121,7 @@ function DiveCenterBanner({ slug }: { slug: string }) {
     missing.push('business name', 'phone')
   } else {
     if (!profile.name) missing.push('business name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
   }
 
   return (
@@ -138,7 +138,7 @@ function AgentBanner({ slug }: { slug: string }) {
     missing.push('business name', 'phone', 'location')
   } else {
     if (!profile.name) missing.push('business name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.locations?.length) missing.push('location')
   }
 
@@ -156,7 +156,7 @@ function BoatBanner({ slug }: { slug: string }) {
     missing.push('business name', 'phone', 'vessel')
   } else {
     if (!profile.name) missing.push('business name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.fleet?.length) missing.push('vessel')
   }
 
@@ -174,7 +174,7 @@ function EquipmentBanner({ slug }: { slug: string }) {
     missing.push('business name', 'phone')
   } else {
     if (!profile.name) missing.push('business name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
   }
 
   return (
@@ -191,7 +191,7 @@ function PoolBanner({ slug }: { slug: string }) {
     missing.push('name', 'phone', 'pool depth', 'pool capacity')
   } else {
     if (!profile.name) missing.push('name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.maxDepth) missing.push('pool depth')
     if (!profile.maxCapacity) missing.push('pool capacity')
   }
@@ -210,7 +210,7 @@ function CompressorBanner({ slug }: { slug: string }) {
     missing.push('name', 'phone', 'gas mixes')
   } else {
     if (!profile.name) missing.push('name')
-    if (!profile.contactPhone) missing.push('phone')
+    if (!profile.phone) missing.push('phone')
     if (!profile.gasMixes?.length) missing.push('gas mixes')
   }
 

@@ -42,7 +42,7 @@ export const createUser = mutation({
     phone: v.optional(v.string()),
     email: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
-    appLanguage: v.string(),
+    appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
@@ -76,7 +76,7 @@ export const createUser = mutation({
         ...(args.phone !== undefined && { phone: args.phone }),
         ...(args.email !== undefined && { email: args.email }),
         ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
-        appLanguage: args.appLanguage,
+        ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
         ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
       })
       return existing._id
@@ -96,7 +96,7 @@ export const createUser = mutation({
       businessName,
       customerLanguages: args.customerLanguages,
       isSeeded: false,
-      appLanguage: args.appLanguage,
+      appLanguage: args.appLanguage ?? 'en',
     })
 
     // Create userRoles entries when roles array is provided
@@ -199,9 +199,6 @@ export const byId = query({
 })
 
 // Returns the completion percentage and list of incomplete fields for onboarding.
-// Profile fields checked: name, placeName, country, contactEmail, contactPhone,
-// role-specific list field (associations / credentials).
-// Organizer roles also check: bookingTemplate configured.
 export const getOnboardingStatus = query({
   args: {},
   handler: async (ctx) => {
@@ -215,7 +212,7 @@ export const getOnboardingStatus = query({
     const defaultRole = roles.length > 0
       ? deriveDefaultRole(roles.map((r) => r.role))
       : 'DiveCenter'
-    return checkProfileCompleteness(ctx, { ...user, role: defaultRole })
+    return checkProfileCompleteness(ctx, { _id: user._id }, defaultRole)
   },
 })
 
@@ -239,10 +236,21 @@ export const getLowestProfileCompletion = query({
 
     let min = 100
     for (const r of roles) {
-      const result = await checkProfileCompleteness(ctx, { ...user, role: r.role })
+      const result = await checkProfileCompleteness(ctx, { _id: user._id }, r.role)
       if (result.percentage < min) min = result.percentage
     }
     return { percentage: min }
+  },
+})
+
+// Returns profile completeness for a single active role.
+// Used by dashboard shell and booking gate.
+export const getProfileCompletionForRole = query({
+  args: { role: v.string() },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    if (!user) return { percentage: 0, incomplete: ['Profile not created'] }
+    return checkProfileCompleteness(ctx, { _id: user._id }, args.role)
   },
 })
 
@@ -257,13 +265,10 @@ export const getAllRolesCompleteness = query({
   },
 })
 
-// Updates account-level default fields (location, contact email, contact phone).
-// These act as fallbacks for role-specific profiles.
+// Updates account-level default fields (location).
 export const updateAccountDefaults = mutation({
   args: {
     defaultLocation: v.optional(v.string()),
-    defaultContactEmail: v.optional(v.string()),
-    defaultContactPhone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
@@ -271,8 +276,6 @@ export const updateAccountDefaults = mutation({
 
     await ctx.db.patch(user._id, {
       ...(args.defaultLocation !== undefined && { defaultLocation: args.defaultLocation }),
-      ...(args.defaultContactEmail !== undefined && { defaultContactEmail: args.defaultContactEmail }),
-      ...(args.defaultContactPhone !== undefined && { defaultContactPhone: args.defaultContactPhone }),
     })
   },
 })
@@ -286,8 +289,6 @@ export const getAccountDefaults = query({
 
     return {
       defaultLocation: user.defaultLocation,
-      defaultContactEmail: user.defaultContactEmail,
-      defaultContactPhone: user.defaultContactPhone,
       customerLanguages: user.customerLanguages,
     }
   },

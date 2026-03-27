@@ -6,12 +6,8 @@ import {
   TEST_SLUGS,
   seedUser,
   seedDiveCenterProfile,
-  seedAgent,
   seedInstructorProfile,
-  seedBoatProfile,
   seedEquipmentProfile,
-  seedBookingTemplate,
-  seedStakeholderPreferences,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -23,253 +19,121 @@ beforeEach(() => {
 // ─── checkProfileCompleteness per-role accuracy ──────────────────────────────
 
 describe('checkProfileCompleteness', () => {
-  it('DiveCenter with all 9 fields returns 100%', async () => {
+  it('Equipment with all fields and user profile/settings complete returns 100%', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
+      const userId = await seedUser(ctx, {
+        role: 'Equipment',
       })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
+      // Set profile-layer and settings-layer fields
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
       expect(result.percentage).toBe(100)
       expect(result.incomplete).toHaveLength(0)
     })
   })
 
-  it('DiveCenter missing template + prefs returns 75%', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      // No template, no preferences → missing "Quick Book pill" + "Preferred instructors"
-
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.diveCenter)).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'DiveCenter' })
-
-      expect(result.percentage).toBe(75)
-      expect(result.incomplete).toContain('Quick Book pill')
-      expect(result.incomplete).toContain('Preferred instructors')
-    })
-  })
-
-  it('Instructor with all 7 fields returns 100%', async () => {
+  it('missing firstName on users table makes profile incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
-        tokenIdentifier: TEST_TOKENS.instructor,
-        slug: TEST_SLUGS.instructor,
-        role: 'Instructor',
+        role: 'Equipment',
+        firstName: '',
       })
-      await seedInstructorProfile(ctx, userId)
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.instructor)).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      expect(result.percentage).toBe(100)
-      expect(result.incomplete).toHaveLength(0)
-    })
-  })
-
-  it('Instructor missing credentials returns correct %', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx, {
-        tokenIdentifier: TEST_TOKENS.instructor,
-        slug: TEST_SLUGS.instructor,
-        role: 'Instructor',
-      })
-      await seedInstructorProfile(ctx, userId, {
-        credential: [],
-      })
-
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', TEST_SLUGS.instructor)).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Instructor' })
-
+      expect(result.incomplete).toContain('firstName')
       expect(result.percentage).toBeLessThan(100)
-      expect(result.incomplete).toContain('Credentials')
     })
   })
 
-  it('Boat with no profile record returns 0%', async () => {
+  it('missing phone on users table makes profile incomplete', async () => {
     await t.run(async (ctx) => {
-      await seedUser(ctx, {
-        tokenIdentifier: TEST_TOKENS.diveCenter,
-        slug: 'boat-owner',
-        role: 'Boat',
-      })
+      const userId = await seedUser(ctx)
+      // Don't set phone
+      await ctx.db.patch(userId, { appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'boat-owner')).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Boat' })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      expect(result.percentage).toBe(0)
-      expect(result.incomplete).toContain('Business name')
-      expect(result.incomplete).toContain('Location')
-      expect(result.incomplete).toContain('Contact email')
-      expect(result.incomplete).toContain('Contact phone')
+      expect(result.incomplete).toContain('phone')
     })
   })
 
-  it('Agent location uses locations[0].placeName', async () => {
+  it('missing appLanguage on users table makes settings layer incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, {
-        tokenIdentifier: TEST_TOKENS.diveCenter,
-        slug: 'agent-loc',
-        role: 'Agent',
+        role: 'Equipment',
       })
-      // seedAgent sets locations: [{ placeName: 'Koh Tao', country: 'Thailand', ... }]
-      await seedAgent(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: 'agent-loc',
-        ownerType: 'Agent',
-      })
-      await seedStakeholderPreferences(ctx, 'agent-loc', {
-        stakeholderType: 'Agent',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: '' })
+      await seedEquipmentProfile(ctx, userId)
 
-      const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', 'agent-loc')).unique()
-      const result = await checkProfileCompleteness(ctx, { ...user!, role: 'Agent' })
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
 
-      // Agent uses locations[0].placeName and locations[0].country instead of flat placeName/country
-      expect(result.incomplete).not.toContain('Location')
-      expect(result.incomplete).not.toContain('Country')
-      expect(result.percentage).toBe(100)
+      expect(result.incomplete).toContain('appLanguage')
     })
   })
-})
 
-// ─── getLowestProfileCompletion query ────────────────────────────────────────
-
-describe('getLowestProfileCompletion', () => {
-  it('single role at 100% returns percentage: 100', async () => {
+  it('missing role-specific field (credential) makes role layer incomplete', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-    })
-
-    const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getLowestProfileCompletion, {})
-
-    expect(result.percentage).toBe(100)
-  })
-
-  it('single role at 75% returns percentage: 75', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      // No template + no prefs → 75%
-    })
-
-    const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getLowestProfileCompletion, {})
-
-    expect(result.percentage).toBe(75)
-  })
-
-  it('multi-role (DC 100% + Boat 0%) returns the minimum (0)', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-      // Add Boat role with no profile
-      await ctx.db.insert('userRoles', {
-        userId,
-        role: 'Boat',
-        createdAt: Date.now(),
-        profileComplete: false,
-      })
-    })
-
-    const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getLowestProfileCompletion, {})
-
-    expect(result.percentage).toBe(0)
-  })
-
-  it('multi-role (DC 100% + Instructor 100%) returns 100', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-      // Add Instructor role with complete profile
-      await ctx.db.insert('userRoles', {
-        userId,
+      const userId = await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
         role: 'Instructor',
-        createdAt: Date.now(),
-        profileComplete: false,
       })
-      await seedInstructorProfile(ctx, userId)
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      // Instructor with empty credential array
+      await seedInstructorProfile(ctx, userId, { credential: [] })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Instructor')
+
+      expect(result.incomplete).toContain('credential')
+      expect(result.percentage).toBeLessThan(100)
     })
-
-    const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getLowestProfileCompletion, {})
-
-    expect(result.percentage).toBe(100)
   })
 
-  it('user with no userRoles returns 0%', async () => {
+  it('percentage correct across all three layers', async () => {
     await t.run(async (ctx) => {
-      // seedUser creates a userRoles entry by default. Use skipUserRoles to test fallback.
-      await seedUser(ctx, { skipUserRoles: true })
+      // Equipment role required: name, placeName (2 role fields)
+      // Profile required: firstName, lastName, email, phone (4)
+      // Settings required: appLanguage (1)
+      // Total: 7
+      // Missing: appLanguage + phone = 2 missing -> 5/7 filled = 71%
+      const userId = await seedUser(ctx, {
+        role: 'Equipment',
+      })
+      // Clear appLanguage and don't set phone
+      await ctx.db.patch(userId, { appLanguage: '' })
+      await seedEquipmentProfile(ctx, userId)
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
+
+      expect(result.percentage).toBe(71)
+      expect(result.incomplete).toHaveLength(2)
+      expect(result.incomplete).toContain('appLanguage')
+      expect(result.incomplete).toContain('phone')
     })
+  })
 
-    const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getLowestProfileCompletion, {})
+  it('DiveCenter with no profile record marks role fields incomplete', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx)
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      // No dive center profile seeded
 
-    // No userRoles → 0%
-    expect(result.percentage).toBe(0)
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveCenter')
+
+      // Role fields: name, placeName, country, associations, customerLanguages = 5 missing
+      expect(result.incomplete).toContain('name')
+      expect(result.incomplete).toContain('placeName')
+      expect(result.incomplete).toContain('country')
+      expect(result.incomplete).toContain('associations')
+      expect(result.incomplete).toContain('customerLanguages')
+    })
   })
 })
 
@@ -278,21 +142,9 @@ describe('getLowestProfileCompletion', () => {
 describe('checkAllRolesCompleteness', () => {
   it('single role at 100% returns allComplete: true', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
+      const userId = await seedUser(ctx, { role: 'Equipment' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
 
       const result = await checkAllRolesCompleteness(ctx, userId)
 
@@ -302,27 +154,15 @@ describe('checkAllRolesCompleteness', () => {
     })
   })
 
-  it('multi-role (DC 100% + Boat 0%) returns allComplete: false', async () => {
+  it('multi-role with one incomplete returns allComplete: false', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-      // Add Boat role with no profile
+      const userId = await seedUser(ctx, { role: 'Equipment' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
+      // Add incomplete Instructor role (no profile)
       await ctx.db.insert('userRoles', {
         userId,
-        role: 'Boat',
+        role: 'Instructor',
         createdAt: Date.now(),
         profileComplete: false,
       })
@@ -331,108 +171,40 @@ describe('checkAllRolesCompleteness', () => {
 
       expect(result.allComplete).toBe(false)
       expect(result.roles).toHaveLength(2)
-      const boatRole = result.roles.find(r => r.role === 'Boat')
-      expect(boatRole?.percentage).toBe(0)
-      expect(boatRole?.incomplete).toContain('Business name')
-      expect(boatRole?.incomplete).toContain('Contact email')
-    })
-  })
-
-  it('multi-role all complete returns allComplete: true', async () => {
-    await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-      // Add Instructor role with complete profile
-      await ctx.db.insert('userRoles', {
-        userId,
-        role: 'Instructor',
-        createdAt: Date.now(),
-        profileComplete: false,
-      })
-      await seedInstructorProfile(ctx, userId)
-
-      const result = await checkAllRolesCompleteness(ctx, userId)
-
-      expect(result.allComplete).toBe(true)
-      expect(result.roles.every(r => r.percentage === 100)).toBe(true)
+      const instructorRole = result.roles.find(r => r.role === 'Instructor')
+      expect(instructorRole?.percentage).toBeLessThan(100)
     })
   })
 })
 
-// ─── getAllRolesCompleteness query ────────────────────────────────────────────
+// ─── getProfileCompletionForRole query ────────────────────────────────────────
 
-describe('getAllRolesCompleteness query', () => {
-  it('authenticated user with all roles complete returns allComplete: true', async () => {
+describe('getProfileCompletionForRole query', () => {
+  it('returns completeness for specified role', async () => {
     await t.run(async (ctx) => {
-      const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
+      const userId = await seedUser(ctx, { role: 'Equipment' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedEquipmentProfile(ctx, userId)
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getAllRolesCompleteness, {})
+      .query(api.users.getProfileCompletionForRole, { role: 'Equipment' })
 
-    expect(result.allComplete).toBe(true)
+    expect(result.percentage).toBe(100)
+    expect(result.incomplete).toHaveLength(0)
   })
 
-  it('authenticated user with one incomplete role returns allComplete: false', async () => {
+  it('returns incomplete fields when role profile missing', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
-      await seedDiveCenterProfile(ctx, userId)
-      await seedBookingTemplate(ctx, {
-        ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-      })
-      await seedStakeholderPreferences(ctx, TEST_SLUGS.diveCenter, {
-        stakeholderType: 'DiveCenter',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
-        commonLanguageCodes: [],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-        preferredInstructorSlugs: ['test-inst'],
-      })
-      // Add incomplete Boat role
-      await ctx.db.insert('userRoles', {
-        userId,
-        role: 'Boat',
-        createdAt: Date.now(),
-        profileComplete: false,
-      })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      // No DiveCenter profile seeded
     })
 
     const result = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
-      .query(api.users.getAllRolesCompleteness, {})
+      .query(api.users.getProfileCompletionForRole, { role: 'DiveCenter' })
 
-    expect(result.allComplete).toBe(false)
-    const boatRole = result.roles.find((r) => r.role === 'Boat')
-    expect(boatRole).toBeDefined()
-    expect(boatRole?.incomplete).toContain('Business name')
-    expect(boatRole?.incomplete).toContain('Contact email')
+    expect(result.percentage).toBeLessThan(100)
+    expect(result.incomplete).toContain('name')
   })
 })

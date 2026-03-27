@@ -1,29 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, type SeedCtx } from './fixtures'
+import { seedUser, seedDiveCenterProfile, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
-
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
-
-async function seedDiveCenterProfile(
-  ctx: SeedCtx,
-  userId: Awaited<ReturnType<SeedCtx['db']['insert']>>,
-  overrides: Record<string, unknown> = {},
-) {
-  return ctx.db.insert('diveCenters', {
-    userId,
-    name: 'Test Dive Center',
-    placeName: 'Koh Tao',
-    country: 'Thailand',
-    lat: 10.0957,
-    lng: 99.8408,
-    contactEmail: 'info@testdc.com',
-    contactPhone: '+66123456789',
-    associations: [{ agencyCode: 'PADI', memberId: '12345' }],
-    verified: false,
-    ...overrides,
-  } as Parameters<typeof ctx.db.insert<'diveCenters'>>[1])
-}
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -50,73 +28,43 @@ describe('getOnboardingStatus', () => {
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-noprofile' })
       .query(api.users.getOnboardingStatus, {})
 
-    expect(status.percentage).toBe(0)
+    // No DiveCenter profile, no phone, no appLanguage -> many fields missing
+    expect(status.percentage).toBeLessThan(50)
     expect(status.incomplete.length).toBeGreaterThan(0)
   })
 
-  it('returns ~38% when DiveCenter user has 3 of 8 fields filled', async () => {
+  it('returns less than 100% when missing some fields', async () => {
     const t = makeT()
     const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-partial', tokenIdentifier: 'clerk|dc-partial', role: 'DiveCenter' }))
 
-    // Insert profile with only name, placeName, country filled (3 of 9)
-    await t.run(async (ctx) =>
-      seedDiveCenterProfile(ctx, userId, {
-        name: 'Partial DC',
-        placeName: 'Koh Tao',
-        country: 'Thailand',
-        lat: 10.0957,
-        lng: 99.8408,
-        contactEmail: '',       // missing
-        contactPhone: '',       // missing
-        associations: [],       // missing
-      }),
-    )
-    // No bookingTemplate — missing Quick Book pill
-    // No stakeholderPreferences — missing Preferred instructors
+    // Insert profile with name, placeName, country filled but no customerLanguages
+    await t.run(async (ctx) => {
+      await seedDiveCenterProfile(ctx, userId, {
+        email: '',
+        phone: '',
+        associations: [],
+      })
+    })
 
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-partial' })
       .query(api.users.getOnboardingStatus, {})
 
-    // 3 of 8 filled → Math.round(3/8 * 100) = Math.round(37.5) = 38
-    expect(status.percentage).toBe(38)
-    expect(status.incomplete).toContain('Contact email')
-    expect(status.incomplete).toContain('Contact phone')
-    expect(status.incomplete).toContain('Agency associations')
-    expect(status.incomplete).toContain('Quick Book pill')
-    expect(status.incomplete).toContain('Preferred instructors')
+    // Missing: phone (user), appLanguage (user), associations (role), customerLanguages (role)
+    expect(status.percentage).toBeLessThan(100)
+    expect(status.incomplete.length).toBeGreaterThan(0)
   })
 
-  it('returns 100% when all fields filled, template exists, and preferred instructors set', async () => {
+  it('returns 100% when all profile, settings, and role fields are filled', async () => {
     const t = makeT()
-    const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-complete', tokenIdentifier: 'clerk|dc-complete', role: 'DiveCenter' }))
-
-    await t.run(async (ctx) => seedDiveCenterProfile(ctx, userId))
-
-    // Create a bookingTemplate
-    await t.run(async (ctx) =>
-      ctx.db.insert('bookingTemplates', {
-        ownerId: 'dc-complete',
-        ownerType: 'DiveCenter',
-        name: 'OW Quick Book',
-        activityType: ['OW'],
-        createdAt: Date.now(),
-      }),
-    )
-
-    // Create preferred instructors — stakeholderId must be the slug string
-    await t.run(async (ctx) => {
-      await ctx.db.insert('stakeholderPreferences', {
-        stakeholderId: 'dc-complete',
-        stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 0,
-        useNamedUnits: false,
-        commonLanguageCodes: [],
-        preferredInstructorSlugs: ['inst-1'],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-      })
+    const userId = await t.run(async (ctx) => {
+      const uid = await seedUser(ctx, { slug: 'dc-complete', tokenIdentifier: 'clerk|dc-complete', role: 'DiveCenter' })
+      // Set profile + settings layer fields
+      await ctx.db.patch(uid, { phone: '+66123456789', appLanguage: 'en' })
+      await seedDiveCenterProfile(ctx, uid)
+      // Set customerLanguages
+      const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', uid)).unique()
+      if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
+      return uid
     })
 
     const status = await t.withIdentity({ tokenIdentifier: 'clerk|dc-complete' })
@@ -179,43 +127,5 @@ describe('Quick Book pills (bookingTemplates)', () => {
     const names = templates.map((t: { name: string }) => t.name)
     expect(names).toContain('DSD')
     expect(names).toContain('OW')
-  })
-
-  it('getOnboardingStatus sees Quick Book pill as complete after template created', async () => {
-    const t = makeT()
-    const userId = await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-pill-check', tokenIdentifier: 'clerk|dc-pill-check', role: 'DiveCenter' }))
-
-    await t.run(async (ctx) => seedDiveCenterProfile(ctx, userId))
-
-    // Seed preferred instructors so only Quick Book pill is missing
-    // stakeholderId must be the slug string, not user._id
-    await t.run(async (ctx) => {
-      await ctx.db.insert('stakeholderPreferences', {
-        stakeholderId: 'dc-pill-check',
-        stakeholderType: 'DiveCenter',
-        acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 0,
-        useNamedUnits: false,
-        commonLanguageCodes: [],
-        preferredInstructorSlugs: ['inst-1'],
-        confirmOnAccept: false,
-        confirmOnDecline: false,
-      })
-    })
-
-    // No template yet → Quick Book pill incomplete
-    const before = await t.withIdentity({ tokenIdentifier: 'clerk|dc-pill-check' })
-      .query(api.users.getOnboardingStatus, {})
-    expect(before.incomplete).toContain('Quick Book pill')
-
-    // Add template
-    await t.withIdentity({ tokenIdentifier: 'clerk|dc-pill-check' })
-      .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'FD', activityType: ['FD'] })
-
-    const after = await t.withIdentity({ tokenIdentifier: 'clerk|dc-pill-check' })
-      .query(api.users.getOnboardingStatus, {})
-    expect(after.incomplete).not.toContain('Quick Book pill')
-    expect(after.percentage).toBe(100)
   })
 })

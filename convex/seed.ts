@@ -293,8 +293,8 @@ export const seedInstructors = internalMutation({
           country: s.instructor.country,
           lat: s.instructor.lat,
           lng: s.instructor.lng,
-          contactEmail: s.instructor.contactEmail,
-          contactPhone: s.instructor.contactPhone,
+          email: s.instructor.email,
+          phone: s.instructor.phone,
           credential: s.instructor.credential.map((c) => ({
             agency: c.agency,
             level: c.level,
