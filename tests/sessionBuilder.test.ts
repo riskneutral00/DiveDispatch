@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import {
-  getDeliveryLocation,
-  getDatesInRange,
-} from '../src/lib/booking/session-builder'
+import { getDeliveryLocation } from '../src/lib/booking/session-builder'
+import { getDatesInRange } from '../src/lib/utils/date'
 import { testDate } from './helpers/dates'
 
 describe('getDeliveryLocation', () => {

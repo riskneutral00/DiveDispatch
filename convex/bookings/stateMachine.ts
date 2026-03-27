@@ -196,16 +196,8 @@ export function isFullDayResource(inventoryUnit: {
 
 // ─── Expiry helper ────────────────────────────────────────────────────────────
 
-/**
- * Pure predicate: true when a Draft booking's hold TTL has lapsed.
- * Safe default: bookings without expiresAt never expire (treat as Upcoming-eligible).
- */
-export function isBookingExpired(booking: {
-  status: string
-  expiresAt?: number | null
-}): boolean {
-  return booking.status === 'Draft' && booking.expiresAt != null && booking.expiresAt < Date.now()
-}
+// Canonical implementation lives in convex/shared/bookingExpiry.ts
+export { isBookingExpired } from '../shared/bookingExpiry'
 
 // ─── Past-date guard ─────────────────────────────────────────────────────
 

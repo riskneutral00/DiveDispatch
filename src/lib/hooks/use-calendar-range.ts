@@ -130,11 +130,8 @@ export function formatRangeLabel(start: Date, end: Date): string {
   return `${startFmt} – ${endFmt}`
 }
 
-/** Parse "YYYY-MM-DD" as local midnight (avoids UTC-shift from `new Date(str)`). */
-export function parseDateLocal(dateStr: string): Date {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
+// parseDateLocal moved to @/lib/utils/date (canonical: convex/shared/dateRange.ts)
+export { parseDateLocal } from '@/lib/utils/date'
 
 export function getDaysOfWeek(): string[] {
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

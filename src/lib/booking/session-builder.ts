@@ -4,6 +4,7 @@
 // day-schedule.tsx). Also provides date range and delivery-location helpers.
 
 import { getCourseByCode, type CourseCode } from '@/lib/constants/course-catalog'
+import { getDatesInRange } from '@/lib/utils/date'
 import type { DayConfig } from '@/lib/booking/wizard-state'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -43,23 +44,6 @@ export function getDeliveryLocation(
 ): 'BoatPier' | 'Pool' | 'Beach' {
   if (isConfinedDay) return 'Pool'
   return venue === 'Shore' ? 'Beach' : 'BoatPier'
-}
-
-// ── Date Helpers ──────────────────────────────────────────────────────────────
-
-export function getDatesInRange(startDate: string, endDate: string): string[] {
-  if (!startDate || !endDate) return []
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return []
-
-  const dates: string[] = []
-  const current = new Date(start)
-  while (current <= end) {
-    dates.push(current.toISOString().split('T')[0])
-    current.setDate(current.getDate() + 1)
-  }
-  return dates
 }
 
 // ── Course Sequence Builder ───────────────────────────────────────────────────

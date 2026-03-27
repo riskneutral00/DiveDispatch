@@ -7,25 +7,13 @@ import { tryAutoAdvance, restoreSnapshotUnits, canReservationTransition } from '
 import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
+import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
 import { logBookingChange } from './bookingAuditLog'
 import { ErrorCode } from './lib/errorCodes'
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Generates an inclusive array of ISO date strings (YYYY-MM-DD) from startDate to endDate.
- */
-export function getDateRange(startDate: string, endDate: string): string[] {
-  const dates: string[] = []
-  const current = new Date(startDate)
-  const end = new Date(endDate)
-  while (current <= end) {
-    dates.push(current.toISOString().slice(0, 10))
-    current.setUTCDate(current.getUTCDate() + 1)
-  }
-  return dates
-}
+// Re-export for test backwards compatibility
+export { getDatesInRange as getDateRange } from './shared/dateRange'
 
 
 /**
@@ -289,7 +277,7 @@ export async function _declineHandler(
 
   // Check for same-location alternatives of the same resource type
   const declinedCity = await getOwnerCity(ctx, unit.ownerId, unit.resourceType as ResourceType)
-  const bookingDates = getDateRange(booking.startDate, booking.endDate)
+  const bookingDates = getDatesInRange(booking.startDate, booking.endDate)
 
   const allSameTypeUnits = await ctx.db
     .query('inventoryUnits')

@@ -2,6 +2,7 @@
 // Consumed by convex/seed.ts internal mutations.
 
 import type { StakeholderRole } from './lib/validators'
+import { AOW_SPECIALTY_VALUES } from './shared/aowSpecialties'
 export type { StakeholderRole }
 
 // ── Shared Defaults ─────────────────────────────────────────────────
@@ -11,8 +12,8 @@ const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98
 const VERIFIED = true
 const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
 
-// All DCs share the same AOW specialty set
-const DC_BOOKING_PREFS = { ...BOOKING_DAYS, aowSpecialties: ['Deep', 'Drift', 'Wreck'] }
+// All DCs share the same AOW specialty set — values from canonical source
+const DC_BOOKING_PREFS = { ...BOOKING_DAYS, aowSpecialties: AOW_SPECIALTY_VALUES.filter(v => ['Deep', 'Drift', 'Wreck'].includes(v)) }
 
 export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
 

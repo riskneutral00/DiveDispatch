@@ -1,5 +1,9 @@
 // ── Date Utilities ───────────────────────────────────────────────────────────
 // Pure date helpers — no framework deps.
+// getDatesInRange and parseDateLocal are canonical in convex/shared/dateRange.ts
+// and re-exported here for client convenience.
+
+export { getDatesInRange, parseDateLocal } from '../../../convex/shared/dateRange'
 
 export const MS_PER_DAY = 86_400_000
 
@@ -23,22 +27,6 @@ export function addDays(dateStr: string, days: number): string {
   const date = new Date(dateStr + 'T00:00:00')
   date.setDate(date.getDate() + days)
   return toISODateString(date)
-}
-
-/** Get all ISO date strings in a range (inclusive). */
-export function getDatesInRange(startDate: string, endDate: string): string[] {
-  if (!startDate || !endDate) return []
-  const start = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return []
-
-  const dates: string[] = []
-  const current = new Date(start)
-  while (current <= end) {
-    dates.push(toISODateString(current))
-    current.setDate(current.getDate() + 1)
-  }
-  return dates
 }
 
 /** Format ISO date string to short display (e.g. "Mon, Mar 16"). */

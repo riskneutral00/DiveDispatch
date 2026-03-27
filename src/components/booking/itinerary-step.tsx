@@ -11,7 +11,7 @@ import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, va
 import { toISODateString } from '@/lib/utils/date'
 import type { WizardState, WizardAction, CourseEntry, DiveSlot, DayConfig } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES } from '@/lib/constants/course-catalog'
+import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } from '@/lib/constants/course-catalog'
 import { addDays } from '@/lib/utils/date'
 import type { Dispatch } from 'react'
 import { AlertTriangle, ChevronDown, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
@@ -20,10 +20,6 @@ interface ItineraryStepProps {
   state: WizardState
   dispatch: Dispatch<WizardAction>
 }
-
-// ── Course Codes for selector ───────────────────────────────────────────────
-
-const COURSE_CODES: CourseCode[] = ['DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'FD', 'REFRESH', 'SPECIALTY']
 
 // ── O+A Combo Locks ─────────────────────────────────────────────────────────
 // When booking an O+A combo, OW-4 (must complete OW) and AOW-1 (must start AOW)

@@ -5,13 +5,14 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { BookingDetail } from '../../../convex/bookings'
+import { isBookingExpired } from '../../../convex/shared/bookingExpiry'
 
-// Mirrors convex/bookings/_shared.ts:isBookingExpired — pure client-side check.
+/** Null-safe wrapper around the shared expiry predicate. */
 function isExpiredBooking(
   booking: { status: string; expiresAt?: number | null } | null | undefined,
 ): boolean {
   if (!booking) return false
-  return booking.status === 'Draft' && booking.expiresAt != null && booking.expiresAt < Date.now()
+  return isBookingExpired(booking)
 }
 
 export type BookingWithExpiry = BookingDetail & { isExpired: boolean }

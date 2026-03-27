@@ -3,8 +3,12 @@
 // No React or Convex dependencies.
 
 import { getEndDateDefault, calculateComboDates } from '@/lib/booking/course-validation'
+import { getDatesInRange } from '@/lib/utils/date'
 import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
+
+// Re-export for backwards compatibility at existing import sites
+export { getDatesInRange as expandDateRange } from '@/lib/utils/date'
 
 /**
  * Compute the start/end date range for a set of courses starting on a given date.
@@ -55,16 +59,3 @@ export function buildPreFill(
   }
 }
 
-/**
- * Expand a date range into an array of ISO date strings (inclusive).
- */
-export function expandDateRange(startDate: string, endDate: string): string[] {
-  const dates: string[] = []
-  const cur = new Date(startDate + 'T00:00:00')
-  const end = new Date(endDate + 'T00:00:00')
-  while (cur <= end) {
-    dates.push(cur.toISOString().slice(0, 10))
-    cur.setDate(cur.getDate() + 1)
-  }
-  return dates
-}
