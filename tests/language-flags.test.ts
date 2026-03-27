@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { languageFlagText } from '../src/components/common/language-flags'
-import { languageToCode, PROFILE_LANGUAGE_OPTIONS } from '../src/lib/constants/dive-languages'
+import { languageToCode, resolveLanguages, PROFILE_LANGUAGE_OPTIONS } from '../src/lib/constants/dive-languages'
 
 describe('languageFlagText', () => {
   it('returns empty string for empty array', () => {
@@ -95,6 +95,14 @@ describe('languageToCode', () => {
     expect(languageToCode('sv')).toBe('SE')
   })
 
+  it('resolves locale codes like zh-CN to country codes', () => {
+    expect(languageToCode('zh-CN')).toBe('CN')
+    expect(languageToCode('zh-TW')).toBe('TW')
+    expect(languageToCode('en-US')).toBe('GB')
+    expect(languageToCode('fr-CA')).toBe('FR')
+    expect(languageToCode('pt-BR')).toBe('BR')
+  })
+
   it('resolves ISO-639 codes that coincidentally match country codes', () => {
     expect(languageToCode('th')).toBe('TH')
     expect(languageToCode('fr')).toBe('FR')
@@ -113,4 +121,49 @@ describe('PROFILE_LANGUAGE_OPTIONS round-trip', () => {
       expect(languageToCode(code)).toBe(code)
     })
   }
+})
+
+describe('resolveLanguages', () => {
+  it('resolves country codes to Language objects', () => {
+    expect(resolveLanguages(['CN', 'TH'])).toEqual([
+      { code: 'CN', label: '简体' },
+      { code: 'TH', label: 'Thai' },
+    ])
+  })
+
+  it('resolves simplified Chinese (zh-CN) with native script label', () => {
+    expect(resolveLanguages(['zh-CN'])).toEqual([
+      { code: 'CN', label: '简体' },
+    ])
+  })
+
+  it('resolves traditional Chinese (zh-TW) with native script label', () => {
+    expect(resolveLanguages(['zh-TW'])).toEqual([
+      { code: 'TW', label: '繁體' },
+    ])
+  })
+
+  it('resolves locale codes', () => {
+    expect(resolveLanguages(['en-US'])).toEqual([
+      { code: 'GB', label: 'English' },
+    ])
+  })
+
+  it('resolves ISO-639 codes', () => {
+    expect(resolveLanguages(['zh', 'fr'])).toEqual([
+      { code: 'CN', label: '简体' },
+      { code: 'FR', label: 'French' },
+    ])
+  })
+
+  it('filters out unrecognized codes', () => {
+    expect(resolveLanguages(['CN', 'XX', 'TH'])).toEqual([
+      { code: 'CN', label: '简体' },
+      { code: 'TH', label: 'Thai' },
+    ])
+  })
+
+  it('handles empty array', () => {
+    expect(resolveLanguages([])).toEqual([])
+  })
 })

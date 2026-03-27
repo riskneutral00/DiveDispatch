@@ -42,7 +42,7 @@ async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: 
   await _seedUser(ctx, { tokenIdentifier: 'clerk|em-cov', slug: 'em-cov', email: 'e@t.com', name: 'EM', firstName: 'E', lastName: 'M', businessName: 'EM', role: 'Equipment' })
   // Venue user + venue record (confined + open + compressor)
   const venueUser = await _seedUser(ctx, { tokenIdentifier: 'clerk|venue-cov', slug: 'venue-cov', email: 'v@t.com', name: 'Venue', firstName: 'V', lastName: 'C', businessName: 'VC', role: 'Pool' })
-  await seedVenue(ctx, { userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0, isPublic: false, confinedCapable: true, openWaterCapable: true, hasCompressor: true })
+  await seedVenue(ctx, { userId: venueUser, name: 'Test Venue', placeName: 'Test', country: 'TH', lat: 0, lng: 0, isPublic: false, confinedCapable: true, hasCompressor: true })
   // Preferences
   await seedStakeholderPreferences(ctx, operatorSlug, {
     confirmOnAccept: false,

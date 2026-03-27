@@ -71,7 +71,6 @@ export async function seedVenue(
     verified?: boolean
     isPublic?: boolean
     confinedCapable?: boolean
-    openWaterCapable?: boolean
     hasCompressor?: boolean
   } = {},
 ) {
@@ -85,7 +84,6 @@ export async function seedVenue(
     verified: overrides.verified ?? true,
     isPublic: overrides.isPublic ?? true,
     confinedCapable: overrides.confinedCapable ?? true,
-    openWaterCapable: overrides.openWaterCapable ?? false,
     hasCompressor: overrides.hasCompressor ?? false,
     ...(overrides.userId !== undefined ? { userId: overrides.userId } : {}),
   })

@@ -2,8 +2,7 @@
  * Pool profile form — capability fields unit tests
  *
  * Tests the schema validation, payload transformation, and profile-to-form
- * mapping for the venue capability fields (confinedCapable, openWaterCapable,
- * maxDepth, maxCapacity).
+ * mapping for the venue capability fields (confinedCapable, maxDepth, maxCapacity).
  */
 
 import { describe, it, expect } from 'vitest'
@@ -32,7 +31,6 @@ function validForm(overrides: Partial<PoolFormState> = {}): PoolFormState {
     maxDepth: 5,
     maxCapacity: 15,
     confinedCapable: true,
-    openWaterCapable: false,
     ...overrides,
   }
 }
@@ -40,18 +38,13 @@ function validForm(overrides: Partial<PoolFormState> = {}): PoolFormState {
 // ── Schema validation ─────────────────────────────────────────────────────────
 
 describe('poolSchema', () => {
-  it('accepts form with capability booleans', () => {
+  it('accepts form with confinedCapable true', () => {
     const result = poolSchema.safeParse(validForm())
     expect(result.success).toBe(true)
   })
 
-  it('accepts form with both capabilities enabled', () => {
-    const result = poolSchema.safeParse(validForm({ confinedCapable: true, openWaterCapable: true }))
-    expect(result.success).toBe(true)
-  })
-
-  it('accepts form with both capabilities disabled', () => {
-    const result = poolSchema.safeParse(validForm({ confinedCapable: false, openWaterCapable: false }))
+  it('accepts form with confinedCapable false', () => {
+    const result = poolSchema.safeParse(validForm({ confinedCapable: false }))
     expect(result.success).toBe(true)
   })
 
@@ -60,27 +53,20 @@ describe('poolSchema', () => {
     const result = poolSchema.safeParse(incomplete)
     expect(result.success).toBe(false)
   })
-
-  it('rejects form missing openWaterCapable', () => {
-    const { openWaterCapable: _, ...incomplete } = validForm()
-    const result = poolSchema.safeParse(incomplete)
-    expect(result.success).toBe(false)
-  })
 })
 
 // ── Initial form state ────────────────────────────────────────────────────────
 
 describe('INITIAL_POOL_FORM', () => {
-  it('includes capability fields with default values', () => {
+  it('includes confinedCapable with default false', () => {
     expect(INITIAL_POOL_FORM).toHaveProperty('confinedCapable', false)
-    expect(INITIAL_POOL_FORM).toHaveProperty('openWaterCapable', false)
   })
 })
 
 // ── fromProfile mapping ───────────────────────────────────────────────────────
 
 describe('poolFromProfile', () => {
-  it('maps confinedCapable and openWaterCapable from profile', () => {
+  it('maps confinedCapable from profile', () => {
     const profile = {
       name: 'Pool A',
       placeName: 'Bangkok',
@@ -92,14 +78,12 @@ describe('poolFromProfile', () => {
       maxDepth: 3,
       maxCapacity: 10,
       confinedCapable: true,
-      openWaterCapable: true,
     }
     const form = poolFromProfile(profile)
     expect(form.confinedCapable).toBe(true)
-    expect(form.openWaterCapable).toBe(true)
   })
 
-  it('defaults capability fields to false when missing from profile', () => {
+  it('defaults confinedCapable to false when missing from profile', () => {
     const profile = {
       name: 'Pool B',
       placeName: 'Phuket',
@@ -113,17 +97,15 @@ describe('poolFromProfile', () => {
     }
     const form = poolFromProfile(profile)
     expect(form.confinedCapable).toBe(false)
-    expect(form.openWaterCapable).toBe(false)
   })
 })
 
 // ── toPayload ─────────────────────────────────────────────────────────────────
 
 describe('poolToPayload', () => {
-  it('includes confinedCapable and openWaterCapable in payload', () => {
-    const payload = poolToPayload(validForm({ confinedCapable: true, openWaterCapable: false }))
+  it('includes confinedCapable in payload', () => {
+    const payload = poolToPayload(validForm({ confinedCapable: true }))
     expect(payload.confinedCapable).toBe(true)
-    expect(payload.openWaterCapable).toBe(false)
   })
 
   it('includes maxDepth and maxCapacity in payload', () => {
@@ -141,13 +123,6 @@ describe('buildPoolCreatePayload', () => {
       poolToPayload(validForm({ confinedCapable: false })),
     )
     expect(payload.confinedCapable).toBe(false)
-  })
-
-  it('uses form openWaterCapable value instead of hardcoded false', () => {
-    const payload = buildPoolCreatePayload(
-      poolToPayload(validForm({ openWaterCapable: true })),
-    )
-    expect(payload.openWaterCapable).toBe(true)
   })
 
   it('always sets venueType to Pool', () => {

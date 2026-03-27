@@ -61,7 +61,6 @@ const RESOURCE_CONFIGS: Array<{
       venueType: 'Pool',
       isPublic: true,
       confinedCapable: true,
-      openWaterCapable: false,
       hasCompressor: false,
     },
     updateArgs: { name: 'Updated Venue' },

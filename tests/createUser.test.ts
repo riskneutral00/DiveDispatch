@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { ConvexError } from 'convex/values'
+import { ConvexError, type Value } from 'convex/values'
 import { api } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 
@@ -125,7 +125,7 @@ describe('createUser rate limiting', () => {
     } catch (err) {
       vi.useRealTimers()
       expect(err).toBeInstanceOf(ConvexError)
-      const raw = (err as ConvexError<unknown>).data
+      const raw = (err as ConvexError<Value>).data
       const data = typeof raw === 'string' ? JSON.parse(raw) : raw
       expect(data.code).toBe('RATE_LIMITED')
     }

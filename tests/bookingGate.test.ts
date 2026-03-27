@@ -91,7 +91,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
     userId: venueUserId,
     name: 'Test Pool',
     confinedCapable: true,
-    openWaterCapable: true,
     hasCompressor: false,
     isPublic: false,
     venueType: 'Pool',

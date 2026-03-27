@@ -21,10 +21,19 @@ function makeInput(overrides: Partial<CoverageInput> = {}): CoverageInput {
   }
 }
 
-function venue(caps: Partial<VenueCapabilities> = {}): VenueCapabilities {
+function pool(caps: Partial<Omit<VenueCapabilities, 'venueType'>> = {}): VenueCapabilities {
   return {
+    venueType: 'Pool',
     confinedCapable: false,
-    openWaterCapable: false,
+    hasCompressor: false,
+    ...caps,
+  }
+}
+
+function diveSite(caps: Partial<Omit<VenueCapabilities, 'venueType'>> = {}): VenueCapabilities {
+  return {
+    venueType: 'Shore',
+    confinedCapable: false,
     hasCompressor: false,
     ...caps,
   }
@@ -80,33 +89,51 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).toContain('compressor')
   })
 
-  // ── Partial Venue Coverage ───────────────────────────────────────
+  // ── Pool Coverage ──────────────────────────────────────────────
 
-  it('fails when venue is confined-only (missing open water + compressor)', () => {
+  it('confined-capable pool satisfies both confined and open water', () => {
     const result = checkPreferenceCoverage(
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredVenueSlugs: ['pool-1'],
         venueCapabilities: {
-          'pool-1': venue({ confinedCapable: true }),
+          'pool-1': pool({ confinedCapable: true }),
         },
       }),
     )
     expect(result.isComplete).toBe(false)
-    expect(result.missing).toContain('openWater')
-    expect(result.missing).toContain('compressor')
     expect(result.missing).not.toContain('confinedWater')
+    expect(result.missing).not.toContain('openWater')
+    expect(result.missing).toContain('compressor')
   })
 
-  it('fails when venue is open-water-only (missing confined + compressor)', () => {
+  it('non-confined pool satisfies neither confined nor open water', () => {
+    const result = checkPreferenceCoverage(
+      makeInput({
+        preferredInstructorSlugs: ['inst-1'],
+        preferredEquipmentSlugs: ['equip-1'],
+        preferredVenueSlugs: ['pool-1'],
+        venueCapabilities: {
+          'pool-1': pool({ confinedCapable: false }),
+        },
+      }),
+    )
+    expect(result.isComplete).toBe(false)
+    expect(result.missing).toContain('confinedWater')
+    expect(result.missing).toContain('openWater')
+  })
+
+  // ── Dive Site Coverage ─────────────────────────────────────────
+
+  it('dive site satisfies open water but not confined', () => {
     const result = checkPreferenceCoverage(
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredVenueSlugs: ['reef-1'],
         venueCapabilities: {
-          'reef-1': venue({ openWaterCapable: true }),
+          'reef-1': diveSite(),
         },
       }),
     )
@@ -116,35 +143,16 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).not.toContain('openWater')
   })
 
-  it('fails when venue covers both water types but no compressor anywhere', () => {
+  // ── Full Coverage ──────────────────────────────────────────────
+
+  it('passes when confined pool also has compressor', () => {
     const result = checkPreferenceCoverage(
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
-        preferredVenueSlugs: ['lagoon-1'],
+        preferredVenueSlugs: ['pool-1'],
         venueCapabilities: {
-          'lagoon-1': venue({ confinedCapable: true, openWaterCapable: true }),
-        },
-      }),
-    )
-    expect(result.isComplete).toBe(false)
-    expect(result.missing).toEqual(['compressor'])
-  })
-
-  // ── Full Coverage via Single Venue ───────────────────────────────
-
-  it('passes when both-capable venue also has compressor', () => {
-    const result = checkPreferenceCoverage(
-      makeInput({
-        preferredInstructorSlugs: ['inst-1'],
-        preferredEquipmentSlugs: ['equip-1'],
-        preferredVenueSlugs: ['lagoon-1'],
-        venueCapabilities: {
-          'lagoon-1': venue({
-            confinedCapable: true,
-            openWaterCapable: true,
-            hasCompressor: true,
-          }),
+          'pool-1': pool({ confinedCapable: true, hasCompressor: true }),
         },
       }),
     )
@@ -152,7 +160,7 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).toEqual([])
   })
 
-  // ── Boat Satisfies All Venue Needs ───────────────────────────────
+  // ── Boat Satisfies All Venue Needs ─────────────────────────────
 
   it('passes when boat with compressor covers all venue + compressor needs', () => {
     const result = checkPreferenceCoverage(
@@ -200,9 +208,9 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).toEqual(['compressor'])
   })
 
-  // ── Mixed Venue + Boat Coverage ──────────────────────────────────
+  // ── Mixed Venue + Boat Coverage ────────────────────────────────
 
-  it('passes with confined-only pool + boat (covers open water) + compressor on pool', () => {
+  it('passes with confined pool + boat + compressor on pool', () => {
     const result = checkPreferenceCoverage(
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
@@ -210,7 +218,7 @@ describe('checkPreferenceCoverage', () => {
         preferredVenueSlugs: ['pool-1'],
         preferredBoatSlugs: ['boat-1'],
         venueCapabilities: {
-          'pool-1': venue({ confinedCapable: true, hasCompressor: true }),
+          'pool-1': pool({ confinedCapable: true, hasCompressor: true }),
         },
         boatCapabilities: {
           'boat-1': boat(),
@@ -221,7 +229,7 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).toEqual([])
   })
 
-  it('passes with pool (confined) + dive site (open water) + standalone compressor', () => {
+  it('passes with confined pool + dive site + standalone compressor', () => {
     const result = checkPreferenceCoverage(
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
@@ -229,8 +237,8 @@ describe('checkPreferenceCoverage', () => {
         preferredVenueSlugs: ['pool-1', 'reef-1'],
         preferredCompressorSlugs: ['comp-1'],
         venueCapabilities: {
-          'pool-1': venue({ confinedCapable: true }),
-          'reef-1': venue({ openWaterCapable: true }),
+          'pool-1': pool({ confinedCapable: true }),
+          'reef-1': diveSite(),
         },
       }),
     )
@@ -249,7 +257,7 @@ describe('checkPreferenceCoverage', () => {
           'boat-1': boat(),
         },
         venueCapabilities: {
-          'shop-1': venue({ hasCompressor: true }),
+          'shop-1': pool({ hasCompressor: true }),
         },
       }),
     )
@@ -257,7 +265,7 @@ describe('checkPreferenceCoverage', () => {
     expect(result.missing).toEqual([])
   })
 
-  // ── Edge Cases ───────────────────────────────────────────────────
+  // ── Edge Cases ─────────────────────────────────────────────────
 
   it('ignores venue slugs that have no matching capability data', () => {
     const result = checkPreferenceCoverage(
@@ -265,7 +273,6 @@ describe('checkPreferenceCoverage', () => {
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
         preferredVenueSlugs: ['ghost-venue'],
-        // No venueCapabilities entry for 'ghost-venue'
       }),
     )
     expect(result.isComplete).toBe(false)
@@ -279,11 +286,10 @@ describe('checkPreferenceCoverage', () => {
       makeInput({
         preferredInstructorSlugs: ['inst-1'],
         preferredEquipmentSlugs: ['equip-1'],
-        preferredVenueSlugs: ['pool-1', 'reef-1', 'shop-1'],
+        preferredVenueSlugs: ['pool-1', 'shop-1'],
         venueCapabilities: {
-          'pool-1': venue({ confinedCapable: true }),
-          'reef-1': venue({ openWaterCapable: true }),
-          'shop-1': venue({ hasCompressor: true }),
+          'pool-1': pool({ confinedCapable: true }),
+          'shop-1': pool({ hasCompressor: true }),
         },
       }),
     )

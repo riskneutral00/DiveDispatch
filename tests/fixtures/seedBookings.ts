@@ -232,8 +232,8 @@ export async function seedPortalFixture(
   ctx: SeedCtx,
   overrides: {
     booking?: Parameters<typeof seedBooking>[1]
-    link?: Omit<Parameters<typeof seedBookingLink>[2], 'token'> & { token?: string }
-    profile?: Omit<Parameters<typeof seedCustomerProfile>[2], 'linkToken'> & { linkToken?: string }
+    link?: Omit<NonNullable<Parameters<typeof seedBookingLink>[2]>, 'token'> & { token?: string }
+    profile?: Omit<NonNullable<Parameters<typeof seedCustomerProfile>[2]>, 'linkToken'> & { linkToken?: string }
   } = {},
 ) {
   const bookingId = await seedBooking(ctx, overrides.booking)

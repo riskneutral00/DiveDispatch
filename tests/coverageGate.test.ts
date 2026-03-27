@@ -30,14 +30,13 @@ async function seedUserBySlug(ctx: SeedCtx, slug: string, role: NonNullable<NonN
 async function seedVenueUser(
   ctx: SeedCtx,
   slug: string,
-  caps: { confinedCapable: boolean; openWaterCapable: boolean; hasCompressor: boolean },
+  caps: { confinedCapable: boolean; hasCompressor: boolean },
 ) {
   const userId = await seedUser(ctx, { tokenIdentifier: `clerk|${slug}`, slug, email: `${slug}@test.com`, name: `${slug} Display`, firstName: slug, lastName: 'Test', role: 'Pool' })
   await seedVenue(ctx, {
     userId,
     name: `${slug} Venue`,
     confinedCapable: caps.confinedCapable,
-    openWaterCapable: caps.openWaterCapable,
     hasCompressor: caps.hasCompressor,
   })
 }
@@ -167,7 +166,6 @@ describe('createDraftShell — coverage gate', () => {
       await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
-        openWaterCapable: true,
         hasCompressor: false,
       })
       await seedStakeholderPreferences(ctx, 'dc-full', {
@@ -239,7 +237,6 @@ describe('createDraftShell — coverage gate', () => {
       await seedUserBySlug(ctx, 'comp-1', 'Compressor')
       await seedVenueUser(ctx, 'venue-1', {
         confinedCapable: true,
-        openWaterCapable: true,
         hasCompressor: false,
       })
       await seedStakeholderPreferences(ctx, 'dc-nodate', {
