@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
+import { DroppableDateCell } from '@/components/booking/droppable-date-cell'
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
 import { CalendarLegend } from '@/components/booking/calendar-legend'
 import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
@@ -33,6 +34,7 @@ interface BookingCalendarProps {
   viewerRole?: string
   footerAction?: React.ReactNode
   className?: string
+  droppableEnabled?: boolean
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -58,6 +60,7 @@ export function BookingCalendar({
   viewerRole,
   footerAction,
   className,
+  droppableEnabled,
 }: BookingCalendarProps) {
   const { range, shiftRange, jumpToDate, resetRange, weeks, headerLabel, todayCol } =
     useCalendarRange()
@@ -483,6 +486,14 @@ export function BookingCalendar({
                     </div>
                   </div>
                 )
+
+                if (droppableEnabled) {
+                  return (
+                    <DroppableDateCell key={day.dateString} dateString={day.dateString} disabled={isPast || isLocked}>
+                      {cellContent}
+                    </DroppableDateCell>
+                  )
+                }
 
                 return (
                   <div key={day.dateString}>

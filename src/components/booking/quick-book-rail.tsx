@@ -4,6 +4,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { GlassTooltip } from '@/components/glass/glass-tooltip'
+import { DraggablePill } from '@/components/booking/draggable-pill'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
 
@@ -11,18 +12,19 @@ import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
 
 export interface QuickBookRailProps {
   onSelect: (courses: CourseCode[]) => void
+  dragEnabled?: boolean
 }
 
 const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all focus:outline-none focus-visible:ring-2'
 
-const PILL_STYLE: React.CSSProperties = {
+export const PILL_STYLE: React.CSSProperties = {
   fontSize: '12px',
   color: 'var(--color-text-primary)',
   background: 'var(--color-primary-glow)',
   border: '2px solid var(--color-glass-border-hover)',
 }
 
-const ACCENT_PILL_STYLE: React.CSSProperties = {
+export const ACCENT_PILL_STYLE: React.CSSProperties = {
   fontSize: '12px',
   color: 'var(--color-accent)',
   background: 'var(--color-glass-bg)',
@@ -35,7 +37,9 @@ const TOOLTIP_LABEL = 'Complete your profile to create bookings'
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function QuickBookRail({ onSelect }: QuickBookRailProps) {
+const PLUS_TEMPLATE = { id: 'plus', label: '+ Booking', courses: [] as CourseCode[] }
+
+export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
   const { isLoading } = useCurrentUser()
   const onboardingStatus = useQuery(api.users.getOnboardingStatus)
   const canBook = !isLoading && onboardingStatus?.percentage === 100
@@ -43,6 +47,28 @@ export function QuickBookRail({ onSelect }: QuickBookRailProps) {
   return (
     <div className="flex items-center gap-1.5">
       {COURSE_TEMPLATES.map((template) => {
+        if (dragEnabled) {
+          const pill = (
+            <DraggablePill
+              key={template.id}
+              template={template}
+              canBook={canBook}
+              onSelect={onSelect}
+              style={PILL_STYLE}
+            />
+          )
+
+          if (!canBook) {
+            return (
+              <GlassTooltip key={template.id} label={TOOLTIP_LABEL}>
+                {pill}
+              </GlassTooltip>
+            )
+          }
+
+          return <span key={template.id}>{pill}</span>
+        }
+
         const btn = (
           <button
             key={template.id}
@@ -69,14 +95,23 @@ export function QuickBookRail({ onSelect }: QuickBookRailProps) {
 
       {canBook ? (
         <span className="ml-auto">
-          <button
-            type="button"
-            className={`${PILL_BASE} cursor-pointer hover:brightness-125 hover:scale-105`}
-            style={ACCENT_PILL_STYLE}
-            onClick={() => onSelect([] as CourseCode[])}
-          >
-            + Booking
-          </button>
+          {dragEnabled ? (
+            <DraggablePill
+              template={PLUS_TEMPLATE}
+              canBook={canBook}
+              onSelect={onSelect}
+              style={ACCENT_PILL_STYLE}
+            />
+          ) : (
+            <button
+              type="button"
+              className={`${PILL_BASE} cursor-pointer hover:brightness-125 hover:scale-105`}
+              style={ACCENT_PILL_STYLE}
+              onClick={() => onSelect([] as CourseCode[])}
+            >
+              + Booking
+            </button>
+          )}
         </span>
       ) : (
         <GlassTooltip label={TOOLTIP_LABEL} className="ml-auto">
