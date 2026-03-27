@@ -3,9 +3,9 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassInput, GlassLink } from '@/components/glass'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
-import { ChevronDown } from 'lucide-react'
 
 interface ResourceStepProps {
   state: WizardState
@@ -19,48 +19,12 @@ interface ResourceOption {
   label: string
 }
 
-// ── SelectField ─────────────────────────────────────────────────────────────
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder = 'Select…',
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: ResourceOption[]
-  placeholder?: string
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-medium"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-      >
-        {label}
-      </label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="glass glass-field w-full text-sm py-2 pl-3 pr-8 appearance-none"
-          style={{ color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-        >
-          <option value="">{placeholder}</option>
-          <option value="__external__">External (not in system)</option>
-          {options.map((opt) => (
-            <option key={opt.id} value={opt.id}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-secondary)' }} />
-      </div>
-    </div>
-  )
+/** Prepend the "External" sentinel option to a list of resource options. */
+function withExternalOption(options: ResourceOption[]): { value: string; label: string }[] {
+  return [
+    { value: '__external__', label: 'External (not in system)' },
+    ...options.map((o) => ({ value: o.id, label: o.label })),
+  ]
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -100,7 +64,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <SelectField
+                <GlassSimpleSelect
                   label="Equipment Manager"
                   value={state.equipment}
                   onChange={(v) => {
@@ -111,7 +75,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                       dispatch({ type: 'SET_EQUIPMENT', value: v })
                     }
                   }}
-                  options={equipmentOptions}
+                  options={withExternalOption(equipmentOptions)}
                   placeholder="Select equipment manager…"
                 />
               </div>
@@ -134,7 +98,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <SelectField
+                <GlassSimpleSelect
                   label="Compressor"
                   value={state.compressor}
                   onChange={(v) => {
@@ -145,7 +109,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
                       dispatch({ type: 'SET_COMPRESSOR', value: v })
                     }
                   }}
-                  options={compressorOptions}
+                  options={withExternalOption(compressorOptions)}
                   placeholder="Select compressor…"
                 />
               </div>

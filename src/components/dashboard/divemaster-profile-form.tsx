@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -11,6 +11,7 @@ import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { CredentialRow } from '@/components/common/credential-row'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
@@ -59,40 +60,21 @@ const INITIAL_FORM: ProfileFormData = {
 
 // ── Sub-components ────────────────────────────────────────────────────
 
-
-
-interface CredentialRowProps {
+function DmCredentialFields({ index, credential, errors, onChange }: {
   index: number
   credential: CredentialData
   errors: Record<string, string>
   onChange: (index: number, updated: CredentialData) => void
-  onRemove: (index: number) => void
-  canRemove: boolean
-}
-
-function CredentialRow({ index, credential, errors, onChange, onRemove, canRemove }: CredentialRowProps) {
+}) {
   const update = (field: keyof CredentialData, value: string) => {
     onChange(index, { ...credential, [field]: value })
   }
   return (
-    <GlassCard padding="md">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
-          Credential {index + 1}
-        </h3>
-        {canRemove && (
-          <GlassButton variant="destructive" size="sm" type="button" onClick={() => onRemove(index)} aria-label={`Remove credential ${index + 1}`}>
-            <Trash2 size={14} />
-            Remove
-          </GlassButton>
-        )}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
-        <GlassInput label="Certification Level" placeholder="e.g. Divemaster" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
-        <GlassInput label="Agency Member ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-2" />
-      </div>
-    </GlassCard>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
+      <GlassInput label="Certification Level" placeholder="e.g. Divemaster" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
+      <GlassInput label="Agency Member ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-2" />
+    </div>
   )
 }
 
@@ -210,7 +192,9 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
           </div>
           {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
           {form.credential.map((cred, index) => (
-            <CredentialRow key={index} index={index} credential={cred} errors={errors} onChange={updateCredential} onRemove={removeCredential} canRemove={form.credential.length > 1} />
+            <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
+              <DmCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
+            </CredentialRow>
           ))}
         </div>
       )}
