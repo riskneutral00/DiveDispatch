@@ -43,7 +43,7 @@ describe('05: onboarding profile step — save mutation', () => {
         country: 'Thailand',
         contactEmail: 'assoc@test.com',
         contactPhone: '+66891234567',
-        associations: [{ agency: 'PADI', number: 'TH-00123' }],
+        associations: [{ agencyCode: 'PADI', memberId: 'TH-00123' }],
       })
 
     const profile = await t
@@ -52,7 +52,7 @@ describe('05: onboarding profile step — save mutation', () => {
 
     expect(profile).not.toBeNull()
     expect(profile!.associations).toHaveLength(1)
-    expect(profile!.associations[0]).toMatchObject({ agency: 'PADI', number: 'TH-00123' })
+    expect(profile!.associations[0]).toMatchObject({ agencyCode: 'PADI', memberId: 'TH-00123' })
   })
 
   it('save mutation persists languages', async () => {
@@ -93,8 +93,7 @@ describe('05: onboarding profile step — save mutation', () => {
         country: 'Thailand',
         contactEmail: 'days@test.com',
         contactPhone: '+66891234569',
-        associations: [],
-        bookingPreferences: { owDays: 4, aowDays: 2 },
+        associations: [{ agencyCode: 'PADI', memberId: 'TEST', owDays: 4, aowDays: 2 }],
       })
 
     const profile = await t
@@ -102,7 +101,7 @@ describe('05: onboarding profile step — save mutation', () => {
       .query(api.diveCenters.mine, {})
 
     expect(profile).not.toBeNull()
-    expect(profile!.bookingPreferences?.owDays).toBe(4)
-    expect(profile!.bookingPreferences?.aowDays).toBe(2)
+    expect(profile!.associations[0]?.owDays).toBe(4)
+    expect(profile!.associations[0]?.aowDays).toBe(2)
   })
 })

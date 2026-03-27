@@ -2,7 +2,6 @@
 // Consumed by convex/seed.ts internal mutations.
 
 import type { StakeholderRole } from './lib/validators'
-import { AOW_SPECIALTY_VALUES } from './shared/aowSpecialties'
 export type { StakeholderRole }
 
 // ── Shared Defaults ─────────────────────────────────────────────────
@@ -10,10 +9,9 @@ export type { StakeholderRole }
 const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
 const VERIFIED = true
-const BOOKING_DAYS = { owDays: 3, aowDays: 2, oaDays: 4 }
 
-// All DCs share the same AOW specialty set — values from canonical source
-const DC_BOOKING_PREFS = { ...BOOKING_DAYS, aowSpecialties: AOW_SPECIALTY_VALUES.filter(v => ['Deep', 'Drift', 'Wreck'].includes(v)) }
+const PADI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Drift', 'Wreck', 'Navigation'] }
+const SSI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Navigation', 'Wreck'] }
 
 export type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
 
@@ -38,14 +36,15 @@ interface DiveCenterProfile {
   placeId?: string
   contactEmail: string
   contactPhone: string
-  associations: { agency: string; number: string }[]
-  verified: boolean
-  bookingPreferences?: {
+  associations: {
+    agencyCode: string
+    memberId: string
     owDays?: number
     aowDays?: number
     oaDays?: number
-    aowSpecialties?: string[]
-  }
+    selectedSpecialties?: string[]
+  }[]
+  verified: boolean
 }
 
 interface BoatProfile {
@@ -192,9 +191,8 @@ export const HUG_OCEAN: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'hug-ocean@divedispatch.dev',
     contactPhone: '+66-76-381-100',
-    associations: [{ agency: 'PADI', number: 'S-34782' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-34782', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   boat: {
     name: 'M.V. Hug Ocean',
@@ -258,9 +256,8 @@ export const NEPTUNE: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'neptune@divedispatch.dev',
     contactPhone: '+66-76-383-001',
-    associations: [{ agency: 'PADI', number: 'S-41256' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-41256', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   pool: {
     name: 'Neptune',
@@ -308,9 +305,8 @@ export const PHUKET_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'phuket-dive-center@divedispatch.dev',
     contactPhone: '+66-76-385-001',
-    associations: [{ agency: 'PADI', number: 'S-29815' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-29815', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   boat: {
     name: 'Phuket Dive Center',
@@ -373,9 +369,8 @@ export const NICOLE_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'nicole-dive-center@divedispatch.dev',
     contactPhone: '+66-76-386-001',
-    associations: [{ agency: 'PADI', number: 'S-55198' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-55198', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   equipment: {
     name: 'Nicole Dive Center',
@@ -410,9 +405,8 @@ export const MANTA_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'manta-dive-center@divedispatch.dev',
     contactPhone: '+66-76-387-001',
-    associations: [{ agency: 'SSI', number: 'DC-80234' }],
+    associations: [{ agencyCode: 'SSI', memberId: 'DC-80234', ...SSI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
 }
 
@@ -437,9 +431,8 @@ export const SCUBANICKS: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'scubanicks@divedispatch.dev',
     contactPhone: '+66-76-388-001',
-    associations: [{ agency: 'SSI', number: 'DC-91547' }],
+    associations: [{ agencyCode: 'SSI', memberId: 'DC-91547', ...SSI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   equipment: {
     name: 'ScubaNicks',
@@ -473,11 +466,10 @@ export const SCUBA_DEEP: SeedStakeholder = {
     contactEmail: 'scuba-deep@divedispatch.dev',
     contactPhone: '+66-76-389-001',
     associations: [
-      { agency: 'SSI', number: 'DC-72019' },
-      { agency: 'PADI', number: 'S-61834' },
+      { agencyCode: 'SSI', memberId: 'DC-72019', ...SSI_PREFS },
+      { agencyCode: 'PADI', memberId: 'S-61834', ...PADI_PREFS },
     ],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   equipment: {
     name: 'Scuba Deep',
@@ -511,9 +503,8 @@ export const SIROLO: SeedStakeholder = {
     ...CHALONG,
     contactEmail: 'sirolo@divedispatch.dev',
     contactPhone: '+66-76-391-001',
-    associations: [{ agency: 'PADI', number: 'S-70123' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-70123', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
   boat: {
     name: 'Sirolo',
@@ -565,9 +556,8 @@ export const PRAY_DC: SeedStakeholder = {
     ...PHUKET,
     contactEmail: 'pray-dive-center@divedispatch.dev',
     contactPhone: '+66-76-390-001',
-    associations: [{ agency: 'PADI', number: 'S-48203' }],
+    associations: [{ agencyCode: 'PADI', memberId: 'S-48203', ...PADI_PREFS }],
     verified: VERIFIED,
-    bookingPreferences: DC_BOOKING_PREFS,
   },
 }
 

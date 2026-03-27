@@ -419,16 +419,15 @@ export default defineSchema({
     placeId: v.optional(v.string()),
     contactEmail: v.string(),
     contactPhone: v.string(),
-    associations: v.array(v.object({ agency: v.string(), number: v.string() })),
+    associations: v.array(v.object({
+      agencyCode: v.string(),
+      memberId: v.string(),
+      owDays: v.optional(v.number()),
+      aowDays: v.optional(v.number()),
+      oaDays: v.optional(v.number()),
+      selectedSpecialties: v.optional(v.array(v.string())),
+    })),
     verified: v.boolean(),
-    bookingPreferences: v.optional(
-      v.object({
-        owDays: v.optional(v.number()),
-        aowDays: v.optional(v.number()),
-        oaDays: v.optional(v.number()),
-        aowSpecialties: v.optional(v.array(v.string())),
-      }),
-    ),
   }).index('by_userId', ['userId']),
 
   instructors: defineTable({

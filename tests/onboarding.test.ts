@@ -19,7 +19,7 @@ async function seedDiveCenterProfile(
     lng: 99.8408,
     contactEmail: 'info@testdc.com',
     contactPhone: '+66123456789',
-    associations: [{ agency: 'PADI', number: '12345' }],
+    associations: [{ agencyCode: 'PADI', memberId: '12345' }],
     verified: false,
     ...overrides,
   } as Parameters<typeof ctx.db.insert<'diveCenters'>>[1])

@@ -7,14 +7,14 @@ import {
   profileCreate,
 } from './lib/profileHelpers'
 
-const bookingPreferencesValidator = v.object({
+const associationValidator = v.object({
+  agencyCode: v.string(),
+  memberId: v.string(),
   owDays: v.optional(v.number()),
   aowDays: v.optional(v.number()),
   oaDays: v.optional(v.number()),
-  aowSpecialties: v.optional(v.array(v.string())),
+  selectedSpecialties: v.optional(v.array(v.string())),
 })
-
-const associationValidator = v.object({ agency: v.string(), number: v.string() })
 
 export const create = mutation({
   args: {
@@ -27,7 +27,6 @@ export const create = mutation({
     contactEmail: v.string(),
     contactPhone: v.string(),
     associations: v.array(associationValidator),
-    bookingPreferences: v.optional(bookingPreferencesValidator),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'diveCenters', 'DiveCenter', {
@@ -46,7 +45,6 @@ export const update = mutation({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     associations: v.optional(v.array(associationValidator)),
-    bookingPreferences: v.optional(bookingPreferencesValidator),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'diveCenters'),
 })

@@ -6,6 +6,9 @@
  *
  * DIVE_AGENCIES_EXTENDED — the full 10-agency list used by dive centers,
  *   which may hold affiliations with smaller / technical agencies.
+ *
+ * Agency catalog (courses, specialties, labels) is in convex/shared/agencies.ts,
+ * re-exported below for client-side use.
  */
 
 export const DIVE_AGENCIES = ['PADI', 'SSI', 'NAUI', 'BSAC', 'CMAS'] as const
@@ -18,3 +21,14 @@ export const DIVE_AGENCIES_EXTENDED = [
   'GUE',
   'IANTD',
 ] as const
+
+export {
+  type AgencySpecialty,
+  type AgencyCourse,
+  type AgencyDefinition,
+  AGENCIES,
+  AGENCY_CODES,
+  COURSE_DAY_RANGES,
+  getMandatorySpecialties,
+  getDefaultSpecialties,
+} from '../../../convex/shared/agencies'
