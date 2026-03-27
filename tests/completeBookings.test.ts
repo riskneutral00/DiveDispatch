@@ -391,4 +391,162 @@ describe('completeBookings', () => {
     expect(auditEntries).toHaveLength(1)
     expect(auditEntries[0].action).toBe('completed')
   })
+
+  // ── Continuation mechanism (DD-158) ─────────────────────────────────────────
+
+  describe('continuation scheduling', () => {
+    it('schedules a follow-up when more than 100 Upcoming bookings exist', async () => {
+      vi.useFakeTimers()
+
+      const t = makeT()
+
+      await t.run(async (ctx) => {
+        const unitId = await seedUnit(ctx)
+        for (let i = 0; i < 101; i++) {
+          const bId = await seedBooking(ctx, {
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+      })
+
+      const result = await t.mutation(internal.bookings.status.completeBookings, {})
+      expect(result).toEqual({ completed: 100, more: true })
+
+      // The continuation should complete the remaining 1
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+      const remaining = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Upcoming')).collect(),
+      )
+      expect(remaining).toHaveLength(0)
+
+      const completed = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Completed')).collect(),
+      )
+      expect(completed).toHaveLength(101)
+
+      vi.useRealTimers()
+    })
+
+    it('does NOT schedule a follow-up when exactly 100 bookings exist', async () => {
+      const t = makeT()
+
+      await t.run(async (ctx) => {
+        const unitId = await seedUnit(ctx)
+        for (let i = 0; i < 100; i++) {
+          const bId = await seedBooking(ctx, {
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+      })
+
+      const result = await t.mutation(internal.bookings.status.completeBookings, {})
+      expect(result).toEqual({ completed: 100, more: false })
+
+      // No continuation scheduled — all bookings already processed
+      const remaining = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Upcoming')).collect(),
+      )
+      expect(remaining).toHaveLength(0)
+    })
+
+    it('processes all 150 bookings across multiple continuation runs', async () => {
+      vi.useFakeTimers()
+
+      const t = makeT()
+
+      await t.run(async (ctx) => {
+        const unitId = await seedUnit(ctx)
+        for (let i = 0; i < 150; i++) {
+          const bId = await seedBooking(ctx, {
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+      })
+
+      const result = await t.mutation(internal.bookings.status.completeBookings, {})
+      expect(result).toEqual({ completed: 100, more: true })
+
+      // Let continuations run to completion
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+      const completed = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Completed')).collect(),
+      )
+      expect(completed).toHaveLength(150)
+
+      const upcoming = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Upcoming')).collect(),
+      )
+      expect(upcoming).toHaveLength(0)
+
+      vi.useRealTimers()
+    })
+
+    it('only completes Upcoming bookings — Draft bookings do not count toward batch', async () => {
+      const t = makeT()
+
+      await t.run(async (ctx) => {
+        const unitId = await seedUnit(ctx)
+        // 51 Upcoming bookings with past sessions
+        for (let i = 0; i < 51; i++) {
+          const bId = await seedBooking(ctx, {
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+        // 50 Draft bookings with past sessions — should be ignored
+        for (let i = 0; i < 50; i++) {
+          const bId = await seedBooking(ctx, {
+            status: 'Draft',
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+      })
+
+      const result = await t.mutation(internal.bookings.status.completeBookings, {})
+      // Only 51 Upcoming, all fit in one batch, no continuation needed
+      expect(result).toEqual({ completed: 51, more: false })
+
+      const drafts = await t.run(async (ctx) =>
+        ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Draft')).collect(),
+      )
+      expect(drafts).toHaveLength(50)
+    })
+
+    it('no further scheduler calls after all bookings are completed', async () => {
+      vi.useFakeTimers()
+
+      const t = makeT()
+
+      await t.run(async (ctx) => {
+        const unitId = await seedUnit(ctx)
+        for (let i = 0; i < 101; i++) {
+          const bId = await seedBooking(ctx, {
+            startDate: testDate(-10),
+            endDate: testDate(-10),
+          })
+          await seedSession(ctx, bId, unitId, { date: testDate(-10), endTime: '17:00' })
+        }
+      })
+
+      await t.mutation(internal.bookings.status.completeBookings, {})
+      await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+      // After completion, calling again should find nothing
+      const finalResult = await t.mutation(internal.bookings.status.completeBookings, {})
+      expect(finalResult).toEqual({ completed: 0, more: false })
+
+      vi.useRealTimers()
+    })
+  })
 })

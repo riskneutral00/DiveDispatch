@@ -250,7 +250,11 @@ async function runCompletionBatch(
 export const completeBookings = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ completed: number; more: boolean }> => {
-    return runCompletionBatch(ctx)
+    const result = await runCompletionBatch(ctx)
+    if (result.more) {
+      await ctx.scheduler.runAfter(0, internal.bookings.status.completeBookings, {})
+    }
+    return result
   },
 })
 
