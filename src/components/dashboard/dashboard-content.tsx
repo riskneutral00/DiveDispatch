@@ -5,7 +5,7 @@ import { Anchor } from 'lucide-react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
 import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey } from '@/lib/constants/roles'
-import { DASHBOARD_CONFIGS } from '@/lib/constants/dashboard-config'
+import { DASHBOARD_CONFIGS, DEFAULT_LEGEND_STATUSES } from '@/lib/constants/dashboard-config'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import { useBlockedDateToggle } from '@/lib/hooks/use-blocked-date-toggle'
@@ -57,7 +57,7 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
     isResourceOnly && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
   const calendarBookings: CalendarBooking[] = isOperator ? (bookings ?? []) : (dashboardData?.bookings ?? [])
-  const legendStatuses = dashConfig?.legendStatuses ?? (['Active', 'Draft', 'Upcoming', 'Completed'] as CalendarDisplayStatus[])
+  const legendStatuses = dashConfig?.legendStatuses ?? DEFAULT_LEGEND_STATUSES
 
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
     useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole ?? '' })
