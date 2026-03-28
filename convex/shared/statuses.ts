@@ -67,6 +67,7 @@ export const NOTIFICATION_TYPE = {
   MinPaxNotMet: 'min_pax_not_met',
   NoshowMarked: 'noshow_marked',
   NoshowReverted: 'noshow_reverted',
+  PortalComplete: 'portal_complete',
 } as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE]
@@ -84,6 +85,7 @@ export const notificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.MinPaxNotMet),
   v.literal(NOTIFICATION_TYPE.NoshowMarked),
   v.literal(NOTIFICATION_TYPE.NoshowReverted),
+  v.literal(NOTIFICATION_TYPE.PortalComplete),
 )
 
 /** Restricted validator for the public createNotification mutation.

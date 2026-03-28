@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock, MapPin, Lock, Waves, Anchor, Footprints } from 'lucide-react'
-import { GlassCard, GlassBadge, GlassInput } from '@/components/glass'
+import { GlassCard, GlassBadge, GlassInput, GlassSimpleSelect } from '@/components/glass'
 import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
 import { VenueToggle } from './venue-toggle'
 
@@ -145,25 +145,14 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                 onChange={e => onUpdate(idx, 'endTime', e.target.value)}
                 leadingIcon={<Clock size={13} />}
               />
-              {/* Timezone selector styled to match glass inputs */}
-              <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
-                <label
-                  className="text-sm font-medium text-secondary"
-                >
-                  Timezone
-                </label>
-                <select
+              {/* Timezone selector */}
+              <div className="col-span-2 sm:col-span-1">
+                <GlassSimpleSelect
+                  label="Timezone"
                   value={session.timezone}
-                  onChange={e => onUpdate(idx, 'timezone', e.target.value)}
-                  className="glass text-sm px-3 py-2.5 w-full focus:outline-none focus:ring-2 rounded text-primary"
-                  style={TZ_SELECT_STYLE}
-                >
-                  {TIMEZONES.map(tz => (
-                    <option key={tz.value} value={tz.value}>
-                      {tz.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={v => onUpdate(idx, 'timezone', v)}
+                  options={TIMEZONES}
+                />
               </div>
             </div>
 

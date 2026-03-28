@@ -7,8 +7,10 @@
  * Adding a new agency = adding an entry here. No code changes needed.
  */
 
+import type { AowSpecialtyValue } from './aowSpecialties'
+
 export interface AgencySpecialty {
-  code: string
+  code: AowSpecialtyValue
   label: string
   mandatory?: true
 }

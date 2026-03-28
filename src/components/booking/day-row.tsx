@@ -1,7 +1,7 @@
 'use client'
 
-import { X, Anchor, Waves, Droplets, ChevronDown } from 'lucide-react'
-import { GlassCard, GlassInput, GlassSelect } from '@/components/glass'
+import { X, Anchor, Waves, Droplets } from 'lucide-react'
+import { GlassCard, GlassInput, GlassSelect, GlassSimpleSelect } from '@/components/glass'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
@@ -96,32 +96,21 @@ function SelectField({
   options: ResourceOption[]
   placeholder?: string
 }) {
+  const selectOptions = [
+    { value: '__external__', label: 'External (not in system)' },
+    ...options.map((opt) => ({
+      value: opt.id,
+      label: `${opt.label}${languageFlagText(opt.languages)}`,
+    })),
+  ]
   return (
-    <div className="flex flex-col gap-1">
-      <label
-        className="text-xs font-medium text-secondary"
-        style={BODY_FONT_STYLE}
-      >
-        {label}
-      </label>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 appearance-none"
-          style={{ color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-        >
-          <option value="">{placeholder}</option>
-          <option value="__external__">External (not in system)</option>
-          {options.map((opt) => (
-            <option key={opt.id} value={opt.id}>
-              {opt.label}{languageFlagText(opt.languages)}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary" />
-      </div>
-    </div>
+    <GlassSimpleSelect
+      label={label}
+      value={value}
+      onChange={onChange}
+      options={selectOptions}
+      placeholder={placeholder}
+    />
   )
 }
 
@@ -406,34 +395,31 @@ export function DayRow({
                       })}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <select
+                      <GlassSimpleSelect
                         value={dive.resourceSlug ?? ''}
-                        onChange={(e) => {
-                          const slug = e.target.value || undefined
+                        onChange={(slug) => {
+                          const val = slug || undefined
                           // Set this dive's resource
-                          dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceSlug: slug })
+                          dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceSlug: val })
                           // Waterfall: fill subsequent dives with same venue type (same day + later days)
-                          if (slug) {
+                          if (val) {
                             for (let j = diveIdx + 1; j < day.dives.length; j++) {
                               const nextDive = day.dives[j]
                               const nextVenue = nextDive.venueType ?? (nextDive.isConfined ? 'pool' : 'boat')
                               if (nextVenue === currentVenue && !nextDive.resourceSlug) {
-                                dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: j, venueType: nextVenue, resourceSlug: slug })
+                                dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: j, venueType: nextVenue, resourceSlug: val })
                               }
                             }
-                            dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceSlug: slug })
+                            dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceSlug: val })
                           }
                         }}
                         data-testid={`${currentVenue}-select`}
-                        className="glass glass-field w-full text-xs py-1 pl-2 pr-6 appearance-none"
-                        style={{ color: dive.resourceSlug ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-                      >
-                        <option value="">Select {VENUE_LABELS[currentVenue].toLowerCase()}…</option>
-                        <option value="__external__">External (not in system)</option>
-                        {resourceOpts.map((opt) => (
-                          <option key={opt.id} value={opt.id}>{opt.label}</option>
-                        ))}
-                      </select>
+                        options={[
+                          { value: '__external__', label: 'External (not in system)' },
+                          ...resourceOpts.map((opt) => ({ value: opt.id, label: opt.label })),
+                        ]}
+                        placeholder={`Select ${VENUE_LABELS[currentVenue].toLowerCase()}…`}
+                      />
                     </div>
                   </div>
                 </div>

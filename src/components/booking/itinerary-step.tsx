@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard, GlassButton } from '@/components/glass'
+import { GlassCard, GlassButton, GlassSimpleSelect } from '@/components/glass'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
@@ -14,7 +14,7 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } from '@/lib/constants/course-catalog'
 import { addDays } from '@/lib/utils/date'
 import type { Dispatch } from 'react'
-import { AlertTriangle, ChevronDown, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
+import { AlertTriangle, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
 
 interface ItineraryStepProps {
   state: WizardState
@@ -138,27 +138,19 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {/* Course picker */}
-        <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
-            Activity
-          </label>
-          <div className="relative">
-            <select
-              value={entry.activityCode}
-              onChange={(e) => handleCourseChange(e.target.value)}
-              data-testid="course-activity-select"
-              className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 appearance-none"
-              style={{ color: entry.activityCode ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
-            >
-              <option value="">Select activity…</option>
-              {uniqueCodes.map((code) => (
-                <option key={code} value={code}>{COURSE_DISPLAY_LABELS[code]}</option>
-              ))}
-              <option disabled>──────────</option>
-              <option value="O+A">{COMBO_COURSES['O+A'].label}</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary" />
-          </div>
+        <div className="min-w-0">
+          <GlassSimpleSelect
+            label="Activity"
+            value={entry.activityCode}
+            onChange={handleCourseChange}
+            data-testid="course-activity-select"
+            options={[
+              ...uniqueCodes.map((code) => ({ value: code, label: COURSE_DISPLAY_LABELS[code] })),
+              { value: '──────────', label: '──────────', disabled: true },
+              { value: 'O+A', label: COMBO_COURSES['O+A'].label },
+            ]}
+            placeholder="Select activity…"
+          />
         </div>
 
         {/* Start date */}
@@ -415,23 +407,21 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     <div className="flex flex-col gap-5">
       {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
-        <label
-          className="flex items-center gap-2 text-sm text-secondary"
-          style={{ fontFamily: 'var(--font-body)', opacity: 0.5, cursor: 'not-allowed' }}
-          title="Coming soon"
-        >
-          <input
-            type="checkbox"
+        <div title="Coming soon">
+          <GlassCheckbox
+            label={
+              <>
+                Same courses for all customers
+                <span className="text-xs px-1.5 py-0.5 rounded text-secondary" style={{ background: 'var(--color-glass-border)' }}>
+                  Coming soon
+                </span>
+              </>
+            }
             checked={false}
+            onChange={() => {}}
             disabled
-            className="accent-[var(--color-accent)]"
-            aria-label="Same courses for all customers (coming soon)"
           />
-          Same courses for all customers
-          <span className="text-xs px-1.5 py-0.5 rounded text-secondary" style={{ background: 'var(--color-glass-border)' }}>
-            Coming soon
-          </span>
-        </label>
+        </div>
       )}
 
       {/* Per-customer course entries */}
