@@ -679,7 +679,7 @@ describe('acceptBookingReservations', () => {
     // All 3 reservations confirmed
     await t.run(async (ctx) => {
       for (const resId of resIds) {
-        const res = await ctx.db.get(resId as Id<'reservations'>) as any
+        const res = await ctx.db.get(resId as Id<'reservations'>)
         expect(res?.status).toBe('Confirmed')
         expect(res?.confirmedAt).toEqual(expect.any(Number))
       }
@@ -945,7 +945,7 @@ describe('decline cascade side effects', () => {
 
     await t.run(async (ctx) => {
       for (const snapshotId of snapshotIds) {
-        const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>) as any
+        const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
         expect(snap?.availableUnits).toBe(1)
         expect(snap?.reservedUnits).toBe(0)
       }

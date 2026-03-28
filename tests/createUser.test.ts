@@ -156,7 +156,7 @@ describe('createUser rate limiting', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    expect(userId).toBeDefined()
+    expect(typeof userId).toBe('string')
   })
 })
 

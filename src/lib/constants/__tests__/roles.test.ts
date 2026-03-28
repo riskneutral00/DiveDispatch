@@ -136,7 +136,7 @@ describe('Lookup maps', () => {
   it('ROLE_BY_KEY has entry for every RoleKey', () => {
     const allKeys: RoleKey[] = ROLES.map((r) => r.key)
     for (const key of allKeys) {
-      expect(ROLE_BY_KEY[key], `ROLE_BY_KEY missing ${key}`).toBeDefined()
+      expect(ROLE_BY_KEY[key], `ROLE_BY_KEY missing ${key}`).not.toBeUndefined()
       expect(ROLE_BY_KEY[key].key).toBe(key)
     }
   })
@@ -144,7 +144,7 @@ describe('Lookup maps', () => {
   it('ROLE_BY_CLERK_ROLE has entry for every ClerkRole', () => {
     const allClerkRoles: ClerkRole[] = ROLES.map((r) => r.clerkRole)
     for (const cr of allClerkRoles) {
-      expect(ROLE_BY_CLERK_ROLE[cr], `ROLE_BY_CLERK_ROLE missing ${cr}`).toBeDefined()
+      expect(ROLE_BY_CLERK_ROLE[cr], `ROLE_BY_CLERK_ROLE missing ${cr}`).not.toBeUndefined()
       expect(ROLE_BY_CLERK_ROLE[cr].clerkRole).toBe(cr)
     }
   })

@@ -29,7 +29,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-1', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
+        link: { token: 'tok-submit-1', customerName: 'Dana Diver', email: 'dana@example.com' },
         profile: { linkToken: 'tok-submit-1' },
       }),
     )
@@ -60,7 +60,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-2', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
+        link: { token: 'tok-submit-2', customerName: 'Dana Diver', email: 'dana@example.com' },
         profile: { linkToken: 'tok-submit-2' },
       }),
     )
@@ -70,7 +70,7 @@ describe('submitPortal', () => {
     const after = Date.now()
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    expect(profile?.submittedAt).toBeDefined()
+    expect(typeof profile?.submittedAt).toBe('number')
     expect(profile!.submittedAt as number).toBeGreaterThanOrEqual(before)
     expect(profile!.submittedAt as number).toBeLessThanOrEqual(after)
   })
@@ -95,7 +95,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-submit-3', customerName: 'Dana Diver', email: 'dana@example.com' } as any,
+        link: { token: 'tok-submit-3', customerName: 'Dana Diver', email: 'dana@example.com' },
         profile: { linkToken: 'tok-submit-3' },
       }),
     )
@@ -105,7 +105,7 @@ describe('submitPortal', () => {
     const after = Date.now()
 
     const link = await t.run(async (ctx: SeedCtx) => ctx.db.get(linkId))
-    expect(link?.usedAt).toBeDefined()
+    expect(typeof link?.usedAt).toBe('number')
     expect(link!.usedAt as number).toBeGreaterThanOrEqual(before)
     expect(link!.usedAt as number).toBeLessThanOrEqual(after)
   })
@@ -136,7 +136,7 @@ describe('submitPortal', () => {
             },
           ],
         },
-        link: { token: 'tok-req-1', customerName: 'Evan Diver', email: 'evan@example.com' } as any,
+        link: { token: 'tok-req-1', customerName: 'Evan Diver', email: 'evan@example.com' },
         profile: { linkToken: 'tok-req-1' },
       }),
     )

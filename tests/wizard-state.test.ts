@@ -20,8 +20,8 @@ describe('wizard step definitions', () => {
 
   it('all steps have labels', () => {
     for (const step of WIZARD_STEPS) {
-      expect(WIZARD_STEP_LABELS[step]).toBeDefined()
       expect(typeof WIZARD_STEP_LABELS[step]).toBe('string')
+      expect(WIZARD_STEP_LABELS[step].length).toBeGreaterThan(0)
     }
   })
 })

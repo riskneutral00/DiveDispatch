@@ -230,7 +230,7 @@ describe('users.bySlug', () => {
     expect(user!.name).toBe('Visible Name')
     expect(user!.businessName).toBe('Visible Biz')
     expect(user!.slug).toBe(TEST_SLUGS.diveCenter)
-    expect(user!._id).toBeDefined()
+    expect(typeof user!._id).toBe('string')
   })
 })
 

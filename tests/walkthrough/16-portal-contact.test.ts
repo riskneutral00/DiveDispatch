@@ -48,7 +48,7 @@ describe('getPortalContext', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
       }),
     )
 
@@ -84,7 +84,7 @@ describe('getPortalContext', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
       })
 
       // Insert a customer and link it to the profile
@@ -153,7 +153,7 @@ describe('savePortalContact', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
       }),
     )
 
@@ -166,7 +166,7 @@ describe('savePortalContact', () => {
     })
 
     // Profile now has customerId set
-    expect(profile!.customerId).toBeDefined()
+    expect(typeof profile!.customerId).toBe('string')
 
     // Customer record has correct data
     expect(customer).not.toBeNull()
@@ -198,7 +198,7 @@ describe('savePortalContact', () => {
             },
           ],
         },
-        link: { customerName: 'Bob Diver', email: 'bob@example.com' } as any,
+        link: { customerName: 'Bob Diver', email: 'bob@example.com' },
       }),
     )
 
@@ -222,7 +222,7 @@ describe('savePortalContact', () => {
     })
 
     // Still only one customer (patched, not duplicated)
-    expect(profile!.customerId).toBeDefined()
+    expect(typeof profile!.customerId).toBe('string')
     expect(customer!.legalFirstName).toBe('Robert')
     expect(customer!.phone).toBe('+61 499 000 001')
     expect(customer!.emergencyContactRelation).toBe('Parent')

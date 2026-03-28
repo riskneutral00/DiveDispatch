@@ -216,7 +216,7 @@ describe('listByOwner', () => {
       status: 'Upcoming',
       diverCount: 1,
     })
-    expect(result[0]._id).toBeDefined()
+    expect(typeof result[0]._id).toBe('string')
   })
 
   it('scopes by ownerType — excludes mismatched ownerType', async () => {
@@ -640,7 +640,7 @@ describe('myDashboard', () => {
     expect(req.dates).toEqual([testDate(10), testDate(12)])
     expect(req.status).toBe('PendingAcceptance')
     expect(req.ownerName).toBe('Ocean DC')
-    expect(req._id).toBeDefined()
+    expect(typeof req._id).toBe('string')
   })
 
   it('resource role: deduplicates dates across multiple sessions on same day', async () => {

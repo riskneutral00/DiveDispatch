@@ -41,7 +41,7 @@ describe('STATUS_OPACITY', () => {
 
   it('has entries for all statuses', () => {
     for (const status of ALL_STATUSES) {
-      expect(STATUS_OPACITY[status]).toBeDefined()
+      expect(typeof STATUS_OPACITY[status]).toBe('number')
     }
   })
 })
@@ -64,7 +64,7 @@ describe('STATUS_BORDER_STYLE', () => {
 
   it('has entries for all statuses', () => {
     for (const status of ALL_STATUSES) {
-      expect(STATUS_BORDER_STYLE[status]).toBeDefined()
+      expect(typeof STATUS_BORDER_STYLE[status]).toBe('string')
     }
   })
 })
@@ -73,7 +73,7 @@ describe('STATUS_COLORS', () => {
   it('exports color vars for all statuses', () => {
     for (const status of ALL_STATUSES) {
       const colors = STATUS_COLORS[status]
-      expect(colors).toBeDefined()
+      expect(colors).not.toBeUndefined()
       expect(colors.bgVar).toBeTruthy()
       expect(colors.textVar).toBeTruthy()
       expect(colors.borderVar).toBeTruthy()

@@ -29,9 +29,9 @@ describe('savePortalWaiver', () => {
     const after = Date.now()
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    expect(profile?.waiverSignedAt).toBeDefined()
-    expect(profile?.waiverSignedAt as number).toBeGreaterThanOrEqual(before)
-    expect(profile?.waiverSignedAt as number).toBeLessThanOrEqual(after)
+    expect(typeof profile?.waiverSignedAt).toBe('number')
+    expect(profile!.waiverSignedAt as number).toBeGreaterThanOrEqual(before)
+    expect(profile!.waiverSignedAt as number).toBeLessThanOrEqual(after)
   })
 
   it('sets portalWaiver=true on the booking', async () => {

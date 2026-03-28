@@ -110,9 +110,8 @@ describe('getOpenRequests', () => {
       diverCount: 2,
       operatorName: 'Phuket Dive Center',
     })
-    expect(items[0].reservationIds).toBeDefined()
     expect(items[0].reservationIds).toHaveLength(1)
-    expect(items[0].createdAt).toBeDefined()
+    expect(typeof items[0].createdAt).toBe('number')
   })
 
   it('returns empty array when no pending reservations exist', async () => {

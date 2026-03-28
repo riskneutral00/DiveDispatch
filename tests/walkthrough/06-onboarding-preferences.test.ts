@@ -51,7 +51,7 @@ describe('saveBookingTemplates', () => {
     const id = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-03' })
       .mutation(api.bookingTemplates.create, { activeRole: 'DiveCenter', name: 'Dupes', activityType: ['DSD', 'DSD'] })
 
-    expect(id).toBeDefined()
+    expect(typeof id).toBe('string')
 
     const templates = await t.withIdentity({ tokenIdentifier: 'clerk|pref-dc-03' })
       .query(api.bookingTemplates.list, { activeRole: 'DiveCenter' })
