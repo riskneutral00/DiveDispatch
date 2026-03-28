@@ -5,10 +5,9 @@ import { SignIn } from '@clerk/nextjs'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { api } from '../../../../../convex/_generated/api'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { Spinner } from '@/components/common/spinner'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
-import { deriveDefaultRole } from '@/lib/utils/role'
+import { resolveSignInRedirect } from '@/lib/utils/sign-in-redirect'
 
 export default function SignInPage() {
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
@@ -16,21 +15,13 @@ export default function SignInPage() {
   const userRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
 
-  // Any user with a record → dashboard (banner handles incomplete profile)
+  // Post-auth redirect: user with roles → dashboard, no record → sign-up
   useEffect(() => {
-    if (user && userRoles && userRoles.length > 0) {
-      const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
-      const roleConfig = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
-      router.replace(roleConfig ? `/${user.slug}/${roleConfig.key}` : '/dashboard')
+    const result = resolveSignInRedirect({ isAuthenticated, user, userRoles })
+    if (result.action === 'redirect') {
+      router.replace(result.path)
     }
-  }, [user, userRoles, router])
-
-  // Authenticated but no Convex record → pick a role
-  useEffect(() => {
-    if (isAuthenticated && user === null) {
-      router.replace('/sign-up')
-    }
-  }, [isAuthenticated, user, router])
+  }, [user, userRoles, isAuthenticated, router])
 
   if (authLoading) {
     return <Spinner label="Loading…" />
