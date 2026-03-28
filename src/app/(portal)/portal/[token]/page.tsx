@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import dynamic from 'next/dynamic'
@@ -10,9 +10,9 @@ import { GlassCard } from '../../../../components/glass/glass-card'
 import { GlassBadge } from '../../../../components/glass/glass-badge'
 import { GlassButton } from '../../../../components/glass/glass-button'
 import { StepContact } from '../../../../components/portal/step-contact'
-import type { EquipmentData } from '../../../../components/portal/step-equipment'
 import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
+import { computeStep, type ClientPortalStep } from '@/lib/portal/compute-step'
 
 const StepMedical = dynamic(
   () => import('../../../../components/portal/step-medical').then((m) => m.StepMedical),
@@ -41,11 +41,7 @@ const PortalSubmit = dynamic(
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'safety' | 'submit'
-
-function isPortalStep(value: string): value is PortalStep {
-  return ['contact', 'medical', 'waiver', 'equipment', 'safety', 'submit'].includes(value)
-}
+type PortalStep = ClientPortalStep
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -57,26 +53,15 @@ export default function PortalTokenPage() {
   const result = useQuery(api.bookingLinks.getByToken, token ? { token } : 'skip')
   const progress = useQuery(api.portalDraft.getPortalProgress, token ? { token } : 'skip')
 
-  const [currentStep, setCurrentStep] = useState<PortalStep>('contact')
-  const [contactDone, setContactDone] = useState(false)
-  const [medicalDone, setMedicalDone] = useState(false)
-  const [waiverDone, setWaiverDone] = useState(false)
-  // Equipment data held locally until submit step
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_equipmentData, setEquipmentData] = useState<EquipmentData | null>(null)
+  // Derive completion booleans directly from server query
+  const contactDone = progress?.contactComplete ?? false
+  const medicalDone = progress?.medicalComplete ?? false
+  const waiverDone = progress?.waiverComplete ?? false
 
-  // Restore step progress from server on mount so browser refresh
-  // does not lose completed steps.
-  const hasInitialized = useRef(false)
-  useEffect(() => {
-    if (!progress || hasInitialized.current) return
-    hasInitialized.current = true
-    setContactDone(progress.contactComplete)
-    setMedicalDone(progress.medicalComplete)
-    setWaiverDone(progress.waiverComplete)
-    const step = progress.firstIncompleteStep
-    setCurrentStep(isPortalStep(step) ? step : 'contact')
-  }, [progress])
+  // Local step override allows user navigation; server-derived default used until override
+  const serverStep = computeStep(progress)
+  const [stepOverride, setStepOverride] = useState<PortalStep | null>(null)
+  const currentStep = stepOverride ?? serverStep
 
   // Redirect expired/not-found tokens to the expired page.
   useEffect(() => {
@@ -186,20 +171,14 @@ export default function PortalTokenPage() {
         return (
           <StepContact
             token={token}
-            onComplete={() => {
-              setContactDone(true)
-              setCurrentStep('medical')
-            }}
+            onComplete={() => setStepOverride('medical')}
           />
         )
       case 'medical':
         return (
           <StepMedical
             token={token}
-            onComplete={() => {
-              setMedicalDone(true)
-              setCurrentStep('waiver')
-            }}
+            onComplete={() => setStepOverride('waiver')}
           />
         )
       case 'waiver':
@@ -208,19 +187,16 @@ export default function PortalTokenPage() {
             operatorName={operatorName}
             participantName={customerName}
             dateOfBirth=""
-            onComplete={() => {
-              setWaiverDone(true)
-              setCurrentStep('equipment')
-            }}
-            onBack={() => setCurrentStep('medical')}
+            onComplete={() => setStepOverride('equipment')}
+            onBack={() => setStepOverride('medical')}
           />
         )
       case 'equipment':
         return (
           <div className="space-y-4">
-            <StepEquipment onChange={(data) => setEquipmentData(data)} />
+            <StepEquipment onChange={() => {}} />
             <div className="flex justify-end">
-              <GlassButton variant="primary" size="md" onClick={() => setCurrentStep('safety')}>
+              <GlassButton variant="primary" size="md" onClick={() => setStepOverride('safety')}>
                 Continue
               </GlassButton>
             </div>
@@ -230,8 +206,8 @@ export default function PortalTokenPage() {
         return (
           <StepSafety
             token={token}
-            onComplete={() => setCurrentStep('submit')}
-            onBack={() => setCurrentStep('equipment')}
+            onComplete={() => setStepOverride('submit')}
+            onBack={() => setStepOverride('equipment')}
           />
         )
       case 'submit':
