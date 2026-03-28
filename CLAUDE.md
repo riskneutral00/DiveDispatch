@@ -12,6 +12,14 @@ All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/
 
 `convex/ ← lib/ ← components/ ← app/` — Never import upstream. (PostToolUse hook enforces this.)
 
+## Core vs Adapters (within convex/)
+
+- **Core** (owns booking lifecycle -- changes can break invariants): `convex/bookings/` (state machine, create, status, autoAdvance, inventoryRelease, readiness, edit), `convex/availability.ts`, `convex/reservationsMutations.ts`, `convex/bookingResources.ts`, `convex/bookingAuditLog.ts`
+- **Adapters** (consume core state, safe to modify independently): `convex/notifications.ts`, `convex/bookingLinks.ts`, `convex/portalSubmission.ts`, `convex/portalDraft.ts`, `convex/email.ts`, `convex/equipment*.ts`, `convex/seed*.ts`
+- **Shared** (pure utilities, no business state): `convex/lib/`, `convex/shared/`
+
+Import direction: adapters import from core and shared. Core imports from shared and lib. The `notify()` call from core into `notifications.ts` is a deliberate fire-and-forget side effect, not a dependency on notification state.
+
 ## Proxy (not Middleware)
 
 Next.js 16 renamed `middleware.ts` → `proxy.ts`. Auth proxy lives at `src/proxy.ts`. **Never create `src/middleware.ts`** — it conflicts and crashes the dev server. `.gitignore` blocks it.
