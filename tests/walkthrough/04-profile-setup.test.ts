@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
 import { seedUser as _seedUser, type SeedCtx } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
 
@@ -28,7 +29,7 @@ describe('diveCenters.create (profile setup)', () => {
         associations: [{ agencyCode: 'PADI', memberId: '12345' }],
       })
 
-    const profile = await t.run(async (ctx) => ctx.db.get(id as any) as any)
+    const profile = await t.run(async (ctx) => ctx.db.get(id as Id<'diveCenters'>))
     expect(profile?.name).toBe("Matt & Miss Mermaid's DC")
     expect(profile?.placeName).toBe('Phuket')
     expect(profile?.country).toBe('Thailand')

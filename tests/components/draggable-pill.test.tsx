@@ -31,7 +31,7 @@ describe('DraggablePill', () => {
     const { getByRole } = render(
       <DraggablePill template={template} onSelect={onSelect} canBook />,
     )
-    expect(getByRole('button', { name: 'OWC' })).toBeDefined()
+    expect(getByRole('button', { name: 'OWC' })).toBeTruthy()
   })
 
   it('fires onSelect with courses on click', async () => {

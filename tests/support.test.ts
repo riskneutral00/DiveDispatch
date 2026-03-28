@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+import type { Id } from '../convex/_generated/dataModel'
 import {
   _generateUploadUrlHandler,
   _submitSupportRequestHandler,
@@ -47,7 +48,7 @@ describe('submitSupportRequest', () => {
       })
 
       expect(id).toBeTruthy()
-      const request = await ctx.db.get(id as any) as any
+      const request = await ctx.db.get(id as Id<'supportRequests'>)
       expect(request).toMatchObject({
         userId: TEST_SLUGS.diveCenter,
         subject: 'Test subject',
@@ -74,7 +75,7 @@ describe('submitSupportRequest', () => {
         screenshotFileId: fileId,
       })
 
-      const request = await ctx.db.get(id as any) as any
+      const request = await ctx.db.get(id as Id<'supportRequests'>)
       expect(request?.screenshotFileId).toBe(fileId)
     })
   })
@@ -89,7 +90,7 @@ describe('submitSupportRequest', () => {
         message: 'What is the status default?',
       })
 
-      const request = await ctx.db.get(id as any) as any
+      const request = await ctx.db.get(id as Id<'supportRequests'>)
       expect(request?.status).toBe('Open')
     })
   })

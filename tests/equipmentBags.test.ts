@@ -16,13 +16,13 @@ import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import { assignBagsForBooking, releaseBagsForBooking } from '../convex/equipmentBags'
 import { testDate } from './helpers/dates'
-import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking } from './fixtures'
+import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking, type SeedCtx } from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Insert N bags in 'Returned' status for a given equipment manager. */
 async function seedBags(
-  ctx: { db: { insert: (table: string, doc: Record<string, unknown>) => Promise<unknown> } },
+  ctx: SeedCtx,
   emId: string,
   bookingId: Id<'bookings'>,
   count: number,
@@ -63,7 +63,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx as any, 'em-001', bookingId, 3)
+      await seedBags(ctx, 'em-001', bookingId, 3)
       return { bookingId }
     })
 
@@ -72,8 +72,8 @@ describe('assignBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_equipmentManagerId', ((q: any) =>
-          q.eq('equipmentManagerId', 'em-001')) as any,
+        .withIndex('by_equipmentManagerId', (q) =>
+          q.eq('equipmentManagerId', 'em-001'),
         )
         .collect()
 
@@ -111,7 +111,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx as any, 'em-002', bookingId, 1)
+      await seedBags(ctx, 'em-002', bookingId, 1)
       return { bookingId }
     })
 
@@ -145,7 +145,7 @@ describe('assignBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx as any, 'em-003', bookingId, 3)
+      await seedBags(ctx, 'em-003', bookingId, 3)
       return { bookingId }
     })
 
@@ -154,8 +154,8 @@ describe('assignBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_equipmentManagerId', ((q: any) =>
-          q.eq('equipmentManagerId', 'em-003')) as any,
+        .withIndex('by_equipmentManagerId', (q) =>
+          q.eq('equipmentManagerId', 'em-003'),
         )
         .collect()
 
@@ -191,7 +191,7 @@ describe('releaseBagsForBooking', () => {
         bookingFormComplete: false,
         customerFormComplete: false,
       })
-      await seedBags(ctx as any, 'em-004', bookingId, 2)
+      await seedBags(ctx, 'em-004', bookingId, 2)
       // Assign the bags first
       await assignBagsForBooking(ctx, bookingId, 'em-004', 2)
       return { bookingId }
@@ -202,8 +202,8 @@ describe('releaseBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_bookingId', ((q: any) =>
-          q.eq('bookingId', bookingId)) as any,
+        .withIndex('by_bookingId', (q) =>
+          q.eq('bookingId', bookingId),
         )
         .collect()
 
@@ -260,8 +260,8 @@ describe('releaseBagsForBooking', () => {
 
       const bags = await ctx.db
         .query('equipmentBags')
-        .withIndex('by_bookingId', ((q: any) =>
-          q.eq('bookingId', bookingId)) as any,
+        .withIndex('by_bookingId', (q) =>
+          q.eq('bookingId', bookingId),
         )
         .collect()
 

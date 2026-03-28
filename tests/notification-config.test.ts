@@ -29,7 +29,7 @@ const ALL_SCHEMA_TYPES = [
 describe('NOTIFICATION_CONFIG', () => {
   it('has an entry for all 13 schema notification types', () => {
     for (const type of ALL_SCHEMA_TYPES) {
-      expect(NOTIFICATION_CONFIG[type], `missing config for "${type}"`).toBeDefined()
+      expect(NOTIFICATION_CONFIG[type], `missing config for "${type}"`).toHaveProperty('tier')
     }
   })
 

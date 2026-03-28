@@ -151,9 +151,8 @@ describe('acceptByBookingForCaller', () => {
 
     await t.run(async (ctx) => {
       const res = await ctx.db.get(resId)
-      expect(res?.confirmedAt).toBeDefined()
       expect(typeof res?.confirmedAt).toBe('number')
-      expect(res?.confirmedAt as number).toBeGreaterThanOrEqual(before)
+      expect(res!.confirmedAt as number).toBeGreaterThanOrEqual(before)
     })
   })
 

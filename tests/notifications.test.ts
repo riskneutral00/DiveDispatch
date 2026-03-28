@@ -258,7 +258,7 @@ describe('listNotifications', () => {
         message: 'second',
       })
 
-      const result = await _listNotificationsHandler(ctx, { userId: TEST_SLUGS.diveCenter }) as any
+      const result = await _listNotificationsHandler(ctx, { userId: TEST_SLUGS.diveCenter }) as Array<{ _id: string }>
       // Most recently inserted (n2) should come first in desc order
       expect(result[0]._id).toBe(n2)
       expect(result[1]._id).toBe(n1)

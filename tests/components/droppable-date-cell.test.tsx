@@ -22,7 +22,7 @@ describe('DroppableDateCell', () => {
         <span>Day Content</span>
       </DroppableDateCell>,
     )
-    expect(getByText('Day Content')).toBeDefined()
+    expect(getByText('Day Content')).toBeTruthy()
   })
 
   it('applies highlight style when isDropTarget is true', () => {

@@ -1725,8 +1725,8 @@ describe('token invalidation', () => {
     await t.mutation(api.portalSubmission.submitPortal, { token })
 
     const link = await t.run(async (ctx) => ctx.db.get(linkId))
-    expect(link?.usedAt).toBeDefined()
     expect(typeof link?.usedAt).toBe('number')
+    expect(link!.usedAt as number).toBeGreaterThan(0)
   })
 
   // 4. resolvePortalToken throws TOKEN_EXPIRED for used token

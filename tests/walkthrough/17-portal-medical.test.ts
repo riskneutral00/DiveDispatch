@@ -69,7 +69,7 @@ describe('saveMedicalAnswers', () => {
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
     const saved = profile?.medicalAnswers as Record<string, boolean> | undefined
-    expect(saved).toBeDefined()
+    expect(saved).not.toBeUndefined()
     expect(Object.keys(saved!)).toHaveLength(10)
     for (let i = 1; i <= 10; i++) {
       expect(saved![`medical_q${i}`]).toBe(false)

@@ -51,7 +51,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-1', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
+        link: { token: 'tok-equip-1', customerName: 'Carlos Diver', email: 'carlos@example.com' },
         profile: { linkToken: 'tok-equip-1' },
       })
       await seedCustomerForProfile(ctx, fixture.profileId)
@@ -98,7 +98,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-2', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
+        link: { token: 'tok-equip-2', customerName: 'Carlos Diver', email: 'carlos@example.com' },
         profile: { linkToken: 'tok-equip-2' },
       }),
     )
@@ -118,12 +118,13 @@ describe('saveEquipmentData', () => {
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
 
-    expect(profile?.rentalChecklist).toBeDefined()
-    expect(profile!.rentalChecklist!.mask).toBe('rent')
-    expect(profile!.rentalChecklist!.bcd).toBe('rent')
-    expect(profile!.rentalChecklist!.wetsuit).toBe('own')
-    expect(profile!.rentalChecklist!.fins).toBe('rent')
-    expect(profile!.rentalChecklist!.regulator).toBe('rent')
+    expect(profile!.rentalChecklist).toEqual({
+      mask: 'rent',
+      bcd: 'rent',
+      wetsuit: 'own',
+      fins: 'rent',
+      regulator: 'rent',
+    })
   })
 
   it('links equipment data to correct booking via token', async () => {
@@ -148,7 +149,7 @@ describe('saveEquipmentData', () => {
             },
           ],
         },
-        link: { token: 'tok-equip-a', customerName: 'Carlos Diver', email: 'carlos@example.com' } as any,
+        link: { token: 'tok-equip-a', customerName: 'Carlos Diver', email: 'carlos@example.com' },
         profile: { linkToken: 'tok-equip-a' },
       })
       await seedCustomerForProfile(ctx, fixture.profileId)

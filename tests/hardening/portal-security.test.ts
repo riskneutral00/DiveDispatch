@@ -22,7 +22,7 @@ describe('L9-08: Token Lifecycle — getByToken status mapping', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     const result = await t.query(api.bookingLinks.getByToken, { token })
@@ -75,7 +75,7 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     const code = await t.run(async (ctx: SeedCtx) => {
@@ -116,7 +116,7 @@ describe('L9-08: resolvePortalToken — rejection paths', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     const result = await t.run(async (ctx: SeedCtx) => resolvePortalTokenSoft(ctx, token))
@@ -143,7 +143,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -160,7 +160,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     // signatureStorageId needs to be a valid-looking ID for the validator
@@ -178,7 +178,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -195,7 +195,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -224,7 +224,7 @@ describe('L9-09: Portal Mutation Guards — expired token rejection', () => {
     const { token } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: { bookingFormComplete: false },
-        link: { expiresAt: Date.now() - 1000 } as any,
+        link: { expiresAt: Date.now() - 1000 },
       }),
     )
     await expectConvexError(
@@ -339,7 +339,7 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
             medical_q9: false,
             medical_q10: false,
           },
-        } as any,
+        },
       }),
     )
 
@@ -373,7 +373,7 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
             medical_q9: false,
             medical_q10: false,
           },
-        } as any,
+        },
       }),
     )
 
@@ -404,9 +404,9 @@ describe('L9-10: submitPortal — single-use enforcement', () => {
       ]
     })
 
-    expect(link!.usedAt).toBeDefined()
+    expect(typeof link!.usedAt).toBe('number')
     expect(booking!.customerFormComplete).toBe(true)
-    expect(profile!.submittedAt).toBeDefined()
+    expect(typeof profile!.submittedAt).toBe('number')
   })
 
   it('double-submit → second call rejected', async () => {
