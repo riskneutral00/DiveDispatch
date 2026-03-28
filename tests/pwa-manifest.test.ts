@@ -25,13 +25,12 @@ describe('PWA Web App Manifest', () => {
   })
 
   it('sets theme and background colors', () => {
-    expect(m.theme_color).toBeDefined()
-    expect(m.background_color).toBeDefined()
+    expect(m.theme_color).toBe('#0F172A')
+    expect(m.background_color).toBe('#0F172A')
   })
 
   it('has a description', () => {
-    expect(m.description).toBeDefined()
-    expect(m.description!.length).toBeGreaterThan(0)
+    expect(m.description).toBe('Multi-stakeholder booking platform for scuba diving')
   })
 
   it('icons have proper type declarations', () => {

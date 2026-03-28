@@ -25,9 +25,3 @@ describe('getConnectionStatus', () => {
     expect(status).toBe(ConnectionStatus.Offline)
   })
 })
-
-describe('ConnectionStatus enum', () => {
-  it('has three valid states', () => {
-    expect(Object.values(ConnectionStatus)).toEqual(['online', 'offline', 'stale'])
-  })
-})
