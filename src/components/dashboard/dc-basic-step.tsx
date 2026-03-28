@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
 import { GlassInput } from '@/components/glass/glass-input'
 import { parseConvexError } from '@/lib/utils/convex-error'
 

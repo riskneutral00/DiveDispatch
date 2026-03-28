@@ -3,7 +3,7 @@
 import React from 'react'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassButton } from '@/components/glass/glass-button'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
+import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
 import { Save } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
