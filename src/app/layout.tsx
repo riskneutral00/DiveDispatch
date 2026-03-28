@@ -7,6 +7,7 @@ import { ConvexClerkProvider } from "../lib/convex"
 import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
 import { GlassToaster } from "../components/glass/glass-toaster"
+import { OfflineIndicator } from "../components/pwa/offline-indicator"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -38,6 +39,7 @@ export default async function RootLayout({
             <ThemeProvider>
               <NextIntlClientProvider messages={messages}>
                 <LocaleSyncProvider>
+                  <OfflineIndicator />
                   {children}
                   <GlassToaster />
                 </LocaleSyncProvider>

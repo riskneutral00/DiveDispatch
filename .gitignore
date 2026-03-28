@@ -23,6 +23,11 @@
 # next.js
 /.next/
 /out/
+# Serwist service worker build output
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+public/swe-worker-*.js.map
 # Next.js 16 renamed middleware → proxy. Block the deprecated file.
 src/middleware.ts
 # Static role dirs replaced by dynamic [roleSlug] route (commit 0254168).

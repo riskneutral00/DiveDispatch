@@ -28,6 +28,7 @@
     "@dnd-kit/dom": "^0.3.2",
     "@dnd-kit/react": "^0.3.2",
     "@dnd-kit/state": "^0.3.2",
+    "@serwist/next": "^9.5.7",
     "@vis.gl/react-google-maps": "^1.7.1",
     "convex": "1.32.0",
     "libphonenumber-js": "^1.12.40",
@@ -36,6 +37,7 @@
     "next-intl": "4.8.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serwist": "^9.5.7",
     "sonner": "^2.0.7",
     "use-places-autocomplete": "^4.0.1",
     "zod": "^4.3.6"
