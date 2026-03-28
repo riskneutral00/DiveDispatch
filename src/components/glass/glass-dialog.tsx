@@ -57,15 +57,20 @@ export function GlassDialog({
   const titleId = useId();
   const descId = useId();
 
-  // Manage native <dialog> open/close
+  // Manage native <dialog> open/close + manual scroll lock
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
+      document.body.style.overflow = 'hidden';
     } else if (!open && dialog.open) {
       dialog.close();
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   // Ref-counted backdrop content fade
@@ -96,7 +101,8 @@ export function GlassDialog({
         onCancel={handleCancel}
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descId : undefined}
-        className="fixed inset-0 p-0 bg-transparent backdrop:bg-black/60 backdrop:backdrop-blur-md w-full max-w-none m-0 h-full"
+        aria-modal="true"
+        className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[9999]"
         style={{ border: "none" }}
       >
         <div
@@ -158,7 +164,8 @@ export function GlassDialog({
       onCancel={handleCancel}
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={description ? descId : undefined}
-      className="fixed inset-0 p-0 bg-transparent backdrop:bg-black/50 backdrop:backdrop-blur-md w-full max-w-none m-0 h-full"
+      aria-modal="true"
+      className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[9999]"
       style={{ border: "none" }}
     >
       <div className="flex min-h-full items-center justify-center p-4">

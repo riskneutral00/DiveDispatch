@@ -7,12 +7,16 @@
  * (e.g., booking detail > cancel confirmation) don't flash content on inner close.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { screen } from '@testing-library/react'
 import { render, cleanup } from '../helpers/render'
 import { GlassDialog } from '@/components/glass/glass-dialog'
 
-// jsdom doesn't implement HTMLDialogElement.showModal / .close
+// jsdom doesn't implement HTMLDialogElement.show / .showModal / .close
 beforeEach(() => {
+  HTMLDialogElement.prototype.show ??= function () {
+    this.setAttribute('open', '')
+  }
   HTMLDialogElement.prototype.showModal ??= function () {
     this.setAttribute('open', '')
   }
@@ -141,5 +145,65 @@ describe('GlassDialog backdrop content fade', () => {
       </>,
     )
     expect(document.documentElement).toHaveAttribute('data-dialog-open')
+  })
+})
+
+describe('GlassDialog a11y and scroll lock', () => {
+  it('has aria-modal="true" on the dialog element', () => {
+    render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
+  })
+
+  it('locks scroll on open', () => {
+    render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.body.style.overflow).toBe('hidden')
+  })
+
+  it('releases scroll lock on close', () => {
+    const { rerender } = render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.body.style.overflow).toBe('hidden')
+
+    rerender(
+      <GlassDialog open={false} onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.body.style.overflow).toBe('')
+  })
+
+  it('releases scroll lock on unmount while open', () => {
+    const { unmount } = render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.body.style.overflow).toBe('hidden')
+
+    unmount()
+    expect(document.body.style.overflow).toBe('')
+  })
+
+  it('calls onClose when Escape fires the cancel event', () => {
+    const onClose = vi.fn()
+    render(
+      <GlassDialog open onClose={onClose}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const dialog = screen.getByRole('dialog')
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true, bubbles: false }))
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

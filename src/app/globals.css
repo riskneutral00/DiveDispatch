@@ -132,6 +132,7 @@
      IMPORTANT: Do NOT add these to @theme inline. Tailwind's self-referential
      var() resolution overwrites these values at build time. */
   --color-status-active: #34d399;
+  --color-active-fg: var(--color-status-active); /* alias used by save-button and toast success */
   --color-status-active-bg: color-mix(in srgb, var(--color-status-active) calc(var(--opacity-subtle) * 100%), transparent);
   --color-status-active-border: color-mix(in srgb, var(--color-status-active) 50%, transparent);
   --color-status-draft: #fbbf24;
@@ -235,6 +236,13 @@ body {
 /* Glass Air: fade page content when a dialog is open, revealing the brand background */
 html[data-dialog-open] .app-shell {
   opacity: 0;
+}
+
+/* GlassDialog native backdrop — activated when dialog.showModal() is open */
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ── Form divider ────────────────────────────────────────────────────────────
