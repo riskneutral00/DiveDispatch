@@ -212,7 +212,7 @@ export const expireStaleBookings = internalMutation({
 
     const staleDrafts = await ctx.db
       .query('bookings')
-      .withIndex('by_status', (q) => q.eq('status', 'Draft'))
+      .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Draft))
       .filter((q) => q.and(
         q.neq(q.field('expiresAt'), undefined),
         q.lt(q.field('expiresAt'), now),

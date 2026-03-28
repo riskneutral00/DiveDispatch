@@ -12,7 +12,7 @@ import {
   type BookingResource,
 } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
-import { BOOKING_STATUS } from './shared/statuses'
+import { BOOKING_STATUS, RESERVATION_STATUS } from './shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -410,7 +410,7 @@ export async function _myDashboard(
           ctx.db
             .query('reservations')
             .withIndex('by_inventoryUnitId_status', (q) =>
-              q.eq('inventoryUnitId', iu._id).eq('status', 'PendingAcceptance'),
+              q.eq('inventoryUnitId', iu._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
             )
             .collect(),
         ),

@@ -86,6 +86,21 @@ export const notificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.NoshowReverted),
 )
 
+/** Restricted validator for the public createNotification mutation.
+ *  Server-only types (medical_cleared, noshow_marked, noshow_reverted) are
+ *  excluded — those should only originate from their respective mutations. */
+export const clientNotificationTypeValidator = v.union(
+  v.literal(NOTIFICATION_TYPE.HoldPlaced),
+  v.literal(NOTIFICATION_TYPE.HoldDeclined),
+  v.literal(NOTIFICATION_TYPE.BookingCancelled),
+  v.literal(NOTIFICATION_TYPE.BookingUpdated),
+  v.literal(NOTIFICATION_TYPE.BookingReferred),
+  v.literal(NOTIFICATION_TYPE.MedicalHardBlock),
+  v.literal(NOTIFICATION_TYPE.PhysicianClearanceSubmitted),
+  v.literal(NOTIFICATION_TYPE.NoBackupAvailable),
+  v.literal(NOTIFICATION_TYPE.MinPaxNotMet),
+)
+
 // ── Vacated Reasons ──────────────────────────────────────────────────
 
 export const VACATED_REASON = {

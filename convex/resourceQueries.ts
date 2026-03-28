@@ -6,6 +6,7 @@ import { requireAuth } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
+import { RESERVATION_STATUS } from './shared/statuses'
 
 // ─── Return types ─────────────────────────────────────────────────────────────
 
@@ -70,7 +71,7 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_inventoryUnitId_status', (q) =>
-        q.eq('inventoryUnitId', unit._id).eq('status', 'PendingAcceptance'),
+        q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
       .collect()
 
@@ -154,7 +155,7 @@ export async function _getConfirmedScheduleHandler(
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_inventoryUnitId_status', (q) =>
-        q.eq('inventoryUnitId', unit._id).eq('status', 'Confirmed'),
+        q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.Confirmed),
       )
       .collect()
     for (const reservation of reservations) {

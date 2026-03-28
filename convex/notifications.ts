@@ -4,7 +4,7 @@ import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
-import { type NotificationType, notificationTypeValidator } from './shared/statuses'
+import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator } from './shared/statuses'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
@@ -46,7 +46,7 @@ export async function _createNotificationHandler(
 export const createNotification = mutation({
   args: {
     userId: v.string(),
-    type: notificationTypeValidator,
+    type: clientNotificationTypeValidator,
     bookingId: v.optional(v.id('bookings')),
     message: v.string(),
   },

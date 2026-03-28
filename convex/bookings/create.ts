@@ -17,7 +17,7 @@ import {
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
-import { VACATED_REASON } from '../shared/statuses'
+import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
 
@@ -217,7 +217,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
     const isSelfBooking = inventoryUnit.ownerId === (booking as BookingDoc).ownerId
     const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
-    const reservationStatus = isAutoAccept ? 'Confirmed' : 'PendingAcceptance'
+    const reservationStatus = isAutoAccept ? RESERVATION_STATUS.Confirmed : RESERVATION_STATUS.PendingAcceptance
 
     await ctx.db.insert('reservations', {
       bookingId: args.bookingId as Id<"bookings">,

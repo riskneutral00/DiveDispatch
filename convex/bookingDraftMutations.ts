@@ -135,7 +135,7 @@ export const createDraftShell = mutation({
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
       ownerType: args.activeRole as OperatorType,
-      status: BOOKING_STATUS.Draft as const,
+      status: BOOKING_STATUS.Draft,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,
       paid: false,
@@ -192,7 +192,7 @@ export const createReferralDraftShell = mutation({
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,
       ownerType: dcOperatorRole.role as OperatorType,
-      status: BOOKING_STATUS.Draft as const,
+      status: BOOKING_STATUS.Draft,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,
       paid: false,
