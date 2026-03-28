@@ -26,7 +26,7 @@ In Progress ({count}):
   {⚠ Side-effect overlap with DD-{XXX} on [{areas}] — if any overlap detected}
 
 Ready ({count}):
-  {id} [{priority}] {title} ({category}) {size} {🧑 human | ⚡ auto}
+  {id} [{priority}] {title} ({category}) {size} {🧑 human | ⚡ auto} {⚠ non-standard format — if missing **Spec:** or **Acceptance:** headers}
 
 Blocked ({count}):
   {id} [{priority}] {title} — waiting: {blocked_by}
@@ -42,7 +42,7 @@ Done: {count} archived
 
 1. List all `.tickets/DD-*.md` where `status: ready` AND `assigned_to: null`
 2. **Skip** any ticket where `human_required: true` — print: `Skipped DD-{NNN} (human required)`
-3. **Spec guard** — For each candidate, read the ticket body (below the closing `---`). Skip any ticket where `**Spec:**` has no text after it or `**Acceptance:**` has no `- ` bullet lines — print: `Skipped DD-{NNN} (no spec)`
+3. **Spec guard** — For each candidate, read the ticket body (below the closing `---`). If body has <50 chars of content → skip: `Skipped DD-{NNN} (empty spec)`. If body has content but is missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format` but still include in scoring.
 4. **Score** remaining tickets:
    - **Priority:** P0=40, P1=30, P2=20, P3=10
    - **Unblock bonus:** +15 per other ticket that lists this one in its `blocked_by`
@@ -67,7 +67,7 @@ Done: {count} archived
 ### `/board pick DD-{NNN}` — Claim specific ticket
 
 Same as above but for the specified ticket (skip scoring).
-- **Spec guard** — Read the ticket body. If `**Spec:**` has no text after it or `**Acceptance:**` has no `- ` bullet lines → refuse: `Error: DD-{NNN} has no spec. Run /spec DD-{NNN} to add spec + acceptance before picking.`
+- **Spec guard** — Read the ticket body. If body has <50 chars of content → refuse: `Error: DD-{NNN} has no spec. Run /spec DD-{NNN} to add spec + acceptance before picking.` If body has content but missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format` but allow pick.
 - If `human_required: true`, warn: `Warning: DD-{NNN} requires human intervention. Pick anyway? (y/n)`
 - If any `side_effects` entry overlaps with an `in_progress` ticket, warn: `Warning: side-effect overlap with DD-{XXX} on [{overlapping areas}]. Pick anyway? (y/n)`
 Error if `status` is not `ready` OR `assigned_to` is not null.
@@ -145,9 +145,9 @@ updated: {today}
 
 1. Read the ticket file. Verify `status: backlog`.
 2. **Spec guard** — Read the ticket body (below the closing `---`):
-   - `**Spec:**` must have non-whitespace text after it (until the next `**` heading or EOF)
-   - `**Acceptance:**` must have at least one `- ` bullet line after it
-3. If either is missing/empty → refuse: `Error: DD-{NNN} has no spec. Run /spec DD-{NNN} to add spec + acceptance first.`
+   - Body must have >50 chars of content
+   - If missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format — recommend running /spec DD-{NNN}` but allow promotion
+3. If body is empty/trivial (<50 chars) → refuse: `Error: DD-{NNN} has no spec. Run /spec DD-{NNN} to add spec + acceptance first.`
 4. If valid → update: `status: ready`, `updated: {today}`
 5. Print: `Promoted DD-{NNN}: {title} → ready`
 

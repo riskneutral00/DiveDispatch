@@ -1,20 +1,20 @@
 ---
 name: ticket-pick
-description: "Read tickets, filter, score, return picked ticket ID or 'idle'."
+description: "Internal skill used by Driver agent. Reads tickets, filters, scores, returns picked ticket ID or 'idle'."
 allowed-tools: Read, Glob, Grep
 user-invocable: false
 ---
 
 # ticket-pick
 
-Called by Driver agent each loop iteration. Returns a ticket ID or "idle".
+Internal skill invoked by the Driver agent each loop iteration. Not user-facing — use `/board pick` instead. Returns a ticket ID or "idle".
 
 ## Filter
 
 Read all `.tickets/DD-*.md` (NOT in `done/`). Parse YAML frontmatter. Keep only:
 
 - `status: ready` AND `assigned_to: null` AND `human_required: false`
-- Has non-empty `**Spec:**` text and at least one `**Acceptance:**` bullet
+- Has non-empty body content below YAML frontmatter (>50 chars). If body has content but is missing `**Spec:**` or `**Acceptance:**` headers, print `⚠ DD-{NNN} has non-standard spec format` but still include in scoring. Only skip if body is truly empty (<50 chars).
 - `blocked_by` contains no IDs absent from `.tickets/done/`
 
 ## Score

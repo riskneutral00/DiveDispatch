@@ -33,11 +33,34 @@
             "command": "bash .claude/hooks/commit-message-gate.sh",
             "timeout": 5,
             "statusMessage": "Checking commit message…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/tsc-pre-commit.sh",
+            "timeout": 30,
+            "statusMessage": "Type-checking staged files…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/test-colocation-check.sh",
+            "timeout": 5,
+            "statusMessage": "Checking test co-location…"
           }
         ]
       },
       {
         "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/middleware-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking file path…"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
@@ -75,6 +98,12 @@
             "command": "bash .claude/hooks/provider-nesting.sh",
             "timeout": 5,
             "statusMessage": "Checking provider order…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/tsc-post-edit.sh",
+            "timeout": 30,
+            "statusMessage": "Type-checking edited file…"
           }
         ]
       }

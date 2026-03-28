@@ -224,7 +224,7 @@ After writing the ticket file, update `.tickets/.counter` with the new number.
 1. Report: "Created DD-{NNN}: {title} (P{X}, {category})"
 2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
 3. If `human_required: true`: Note that this ticket needs Matt's input before Driver will pick it up.
-   If `human_required: false`: Note that Driver/Jira will pick this up automatically.
+   If `human_required: false`: Note that Driver will pick this up automatically.
 
 ---
 

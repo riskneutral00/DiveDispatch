@@ -27,17 +27,20 @@ esac
 case "$LAYER" in
   convex)
     if grep -qE "from ['\"](@/|\.\./)*(src/|@/)(lib|components|app)/" "$FILE_PATH" 2>/dev/null; then
-      echo "[Hook] Dependency direction violation: convex/ must not import from src/. Direction: convex/ <- lib/ <- components/ <- app/"
+      echo '{"decision":"block","reason":"Dependency direction violation: convex/ must not import from src/. Direction: convex/ <- lib/ <- components/ <- app/"}'
+      exit 0
     fi
     ;;
   lib)
     if grep -qE "from ['\"](@/|\.\./)*(components|app)/" "$FILE_PATH" 2>/dev/null; then
-      echo "[Hook] Dependency direction violation: lib/ must not import from components/ or app/. Direction: convex/ <- lib/ <- components/ <- app/"
+      echo '{"decision":"block","reason":"Dependency direction violation: lib/ must not import from components/ or app/. Direction: convex/ <- lib/ <- components/ <- app/"}'
+      exit 0
     fi
     ;;
   components)
     if grep -qE "from ['\"](@/|\.\./)*(app)/" "$FILE_PATH" 2>/dev/null; then
-      echo "[Hook] Dependency direction violation: components/ must not import from app/. Direction: convex/ <- lib/ <- components/ <- app/"
+      echo '{"decision":"block","reason":"Dependency direction violation: components/ must not import from app/. Direction: convex/ <- lib/ <- components/ <- app/"}'
+      exit 0
     fi
     ;;
 esac

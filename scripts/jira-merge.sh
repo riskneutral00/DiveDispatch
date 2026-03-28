@@ -8,7 +8,7 @@ set -euo pipefail
 BRANCH="${1:?Usage: jira-merge.sh ticket/DD-NNN [target-branch]}"
 TARGET="${2:-main}"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-LOG_DIR="$PROJECT_DIR/.jira/logs"
+LOG_DIR="$PROJECT_DIR/.driver/logs"
 LOG="$LOG_DIR/merge.log"
 
 mkdir -p "$LOG_DIR"

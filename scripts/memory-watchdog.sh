@@ -4,7 +4,7 @@
 # the system locks up from SSD thrashing.
 #
 # Usage: ./scripts/memory-watchdog.sh [log-dir]
-#   log-dir defaults to .jira/logs (relative to project root)
+#   log-dir defaults to .driver/logs (relative to project root)
 # Stop:  Ctrl+C
 
 set -euo pipefail
@@ -16,7 +16,7 @@ EMERGENCY_SWAP_GB=8       # SIGTERM all claude CLI processes
 KILL_WAIT=10              # seconds to wait before SIGKILL
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-LOG_DIR="${1:-$PROJECT_DIR/.jira/logs}"
+LOG_DIR="${1:-$PROJECT_DIR/.driver/logs}"
 LOG_FILE="$LOG_DIR/watchdog-memory.log"
 
 mkdir -p "$LOG_DIR"

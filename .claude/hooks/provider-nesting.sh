@@ -26,15 +26,18 @@ COUNT=0
 
 # Check ordering (lower line number = outer/parent)
 if [ -n "$HAS_CLERK" ] && [ -n "$HAS_CONVEX" ] && [ "$HAS_CLERK" -gt "$HAS_CONVEX" ]; then
-  echo "[Hook] Provider nesting violation: ClerkProvider must wrap ConvexProviderWithClerk. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"
+  echo '{"decision":"block","reason":"Provider nesting violation: ClerkProvider must wrap ConvexProviderWithClerk. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"}'
+  exit 0
 fi
 
 if [ -n "$HAS_CONVEX" ] && [ -n "$HAS_THEME" ] && [ "$HAS_CONVEX" -gt "$HAS_THEME" ]; then
-  echo "[Hook] Provider nesting violation: ConvexProviderWithClerk must wrap ThemeProvider. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"
+  echo '{"decision":"block","reason":"Provider nesting violation: ConvexProviderWithClerk must wrap ThemeProvider. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"}'
+  exit 0
 fi
 
 if [ -n "$HAS_CLERK" ] && [ -n "$HAS_THEME" ] && [ "$HAS_CLERK" -gt "$HAS_THEME" ]; then
-  echo "[Hook] Provider nesting violation: ClerkProvider must wrap ThemeProvider. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"
+  echo '{"decision":"block","reason":"Provider nesting violation: ClerkProvider must wrap ThemeProvider. Required order: ClerkProvider > ConvexProviderWithClerk > ThemeProvider"}'
+  exit 0
 fi
 
 exit 0

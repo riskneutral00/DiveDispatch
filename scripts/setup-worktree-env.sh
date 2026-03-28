@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Symlinks .env.local from the main repo root into the current worktree.
-# Git worktrees (e.g. from /jira) don't have .env.local (gitignored) — this symlinks it in.
+# Git worktrees don't have .env.local (gitignored) — this symlinks it in.
 #
 # Usage:
 #   cd /path/to/worktree && bash scripts/setup-worktree-env.sh
