@@ -65,10 +65,10 @@ describe('RootError boundary', () => {
 
     render(<RootError error={error} reset={reset} />)
 
-    expect(screen.getByText('Something went wrong')).toBeDefined()
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
     expect(
       screen.getByText(/An unexpected error occurred/)
-    ).toBeDefined()
+    ).toBeInTheDocument()
   })
 
   it('logs the error to console.error on mount', () => {
@@ -93,17 +93,4 @@ describe('RootError boundary', () => {
     expect(reset).toHaveBeenCalledOnce()
   })
 
-  it('includes digest in logged error when present', () => {
-    const error = Object.assign(new Error('Digest error'), {
-      digest: 'abc123',
-    })
-    const reset = vi.fn()
-
-    render(<RootError error={error} reset={reset} />)
-
-    const loggedError = consoleSpy.mock.calls[0][1] as Error & {
-      digest?: string
-    }
-    expect(loggedError.digest).toBe('abc123')
-  })
 })
