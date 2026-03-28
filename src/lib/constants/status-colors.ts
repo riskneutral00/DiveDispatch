@@ -1,4 +1,6 @@
-export type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
+import type { BookingStatus } from './statuses'
+
+export type { BookingStatus }
 
 export type CalendarDisplayStatus = BookingStatus | 'Active' | 'Urgent'
 
