@@ -146,7 +146,36 @@ npx convex logs --success false
 - If a booking shows `Draft` with `expiresAt` in the past, the TTL lazy-expiry will cancel it on next read.
 - For truly inconsistent data, use the Convex dashboard to inspect and manually correct records, then investigate the root cause in logs.
 
-## 5. Escalation Contacts
+## 5. Observability Stack
+
+No third-party error tracking (Sentry, Datadog, etc.) is installed. Production visibility relies entirely on native tooling from Vercel and Convex.
+
+### 5.1 Client-Side Errors (Vercel)
+
+- **Global error boundary** (`src/app/error.tsx`) catches unhandled React errors and logs them via `console.error`. Vercel captures all console output from serverless and edge functions.
+- **Vercel Observability dashboard** shows function invocation counts, error rates, and latency. Go to Vercel > your project > **Observability**.
+- **Vercel Runtime Logs** capture `console.*` output from Next.js server components and API routes. Go to Vercel > **Logs** and filter by level or time range.
+
+### 5.2 Server-Side Errors (Convex)
+
+- **Structured logger** (`convex/lib/logger.ts`) emits JSON to stdout with `level`, `message`, `timestamp`, and arbitrary context fields. Convex captures all stdout.
+- **ConvexError with error codes** (`convex/lib/errorCodes.ts`) — all mutation error paths throw `ConvexError({ code })` using canonical codes. These appear as structured errors in the Convex dashboard logs.
+- **Convex dashboard** retains approximately the last 1000 function executions with full error details. Go to [dashboard.convex.dev](https://dashboard.convex.dev) > **Logs**.
+- **CLI log streaming:** `npx convex logs` for live tail, `npx convex logs --success false` for errors only.
+
+### 5.3 Cron Failure Alerts
+
+- `convex/lib/alerts.ts` logs cron failures to the `cronRunLog` table and sends alert emails via Resend to `alerts@divedispatch.dev`.
+- Check `cronRunLog` table in the Convex dashboard **Data** tab for historical cron run status.
+
+### 5.4 When to Add Third-Party Tracking
+
+Consider adding Sentry or equivalent when:
+- Error volume exceeds what Convex dashboard log retention can cover (> 1000 executions between checks).
+- You need error grouping, alerting thresholds, or release tracking.
+- Multiple team members need independent access to error dashboards.
+
+## 6. Escalation Contacts
 
 | Service | Where to get help |
 |---|---|
@@ -155,7 +184,7 @@ npx convex logs --success false
 | Clerk | [clerk.com/support](https://clerk.com/support) or status page: [status.clerk.com](https://status.clerk.com) |
 | Resend | [resend.com/docs](https://resend.com/docs) |
 
-## 6. Quick Reference
+## 7. Quick Reference
 
 ```bash
 # Stream Convex logs

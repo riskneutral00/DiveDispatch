@@ -1,0 +1,109 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import RootError from '../error'
+
+// ── Mocks ────────────────────────────────────────────────────────────────────
+
+// Mock lucide-react icon
+vi.mock('lucide-react', () => ({
+  AlertTriangle: (props: Record<string, unknown>) => (
+    <svg data-testid="alert-icon" {...props} />
+  ),
+}))
+
+// Mock glass components to avoid theme dependency
+vi.mock('@/components/glass/glass-error-card', () => ({
+  GlassErrorCard: ({
+    title,
+    message,
+    action,
+  }: {
+    icon: unknown
+    title: string
+    message: string
+    action?: React.ReactNode
+  }) => (
+    <div data-testid="glass-error-card">
+      <h2>{title}</h2>
+      <p>{message}</p>
+      {action && <div data-testid="action">{action}</div>}
+    </div>
+  ),
+}))
+
+vi.mock('@/components/glass/glass-button', () => ({
+  GlassButton: ({
+    children,
+    onClick,
+  }: {
+    children: React.ReactNode
+    onClick?: () => void
+  }) => (
+    <button data-testid="glass-button" onClick={onClick}>
+      {children}
+    </button>
+  ),
+}))
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
+describe('RootError boundary', () => {
+  let consoleSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleSpy.mockRestore()
+  })
+
+  it('renders fallback UI with title and message', () => {
+    const error = new Error('Test failure')
+    const reset = vi.fn()
+
+    render(<RootError error={error} reset={reset} />)
+
+    expect(screen.getByText('Something went wrong')).toBeDefined()
+    expect(
+      screen.getByText(/An unexpected error occurred/)
+    ).toBeDefined()
+  })
+
+  it('logs the error to console.error on mount', () => {
+    const error = new Error('Boom')
+    const reset = vi.fn()
+
+    render(<RootError error={error} reset={reset} />)
+
+    expect(consoleSpy).toHaveBeenCalledWith('[Root Error]', error)
+  })
+
+  it('renders a "Try again" button that calls reset', () => {
+    const error = new Error('Kaboom')
+    const reset = vi.fn()
+
+    render(<RootError error={error} reset={reset} />)
+
+    const button = screen.getByTestId('glass-button')
+    expect(button.textContent).toBe('Try again')
+
+    fireEvent.click(button)
+    expect(reset).toHaveBeenCalledOnce()
+  })
+
+  it('includes digest in logged error when present', () => {
+    const error = Object.assign(new Error('Digest error'), {
+      digest: 'abc123',
+    })
+    const reset = vi.fn()
+
+    render(<RootError error={error} reset={reset} />)
+
+    const loggedError = consoleSpy.mock.calls[0][1] as Error & {
+      digest?: string
+    }
+    expect(loggedError.digest).toBe('abc123')
+  })
+})
