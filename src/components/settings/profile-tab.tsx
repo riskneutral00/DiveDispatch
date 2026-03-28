@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
 import { toast } from 'sonner'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { SaveButton } from '@/components/common/save-button'
@@ -122,7 +123,7 @@ export function ProfileTab() {
       setTimeout(() => setSaved(false), 2000)
       toast.success('Profile saved', { duration: 3000 })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong.'
+      const message = parseConvexError(err, 'Something went wrong.')
       setError(message)
       toast.error('Save failed', { description: message, duration: 5000 })
     } finally {

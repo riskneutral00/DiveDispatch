@@ -7,6 +7,7 @@ import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/common/language-field'
 import { FormSectionHeader } from '@/components/common/form-section-header'
 import { toast } from 'sonner'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { SaveButton } from '@/components/common/save-button'
 
 interface SettingsValues {
@@ -52,7 +53,7 @@ export function PreferencesTab() {
       setTimeout(() => setSaved(false), 2000)
       toast.success('Preferences saved', { duration: 3000 })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong.'
+      const message = parseConvexError(err, 'Something went wrong.')
       setError(message)
       toast.error('Save failed', { description: message, duration: 5000 })
     } finally {

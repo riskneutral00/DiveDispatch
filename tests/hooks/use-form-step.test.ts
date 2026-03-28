@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { ConvexError } from 'convex/values'
 import { useFormStep } from '../../src/lib/hooks/use-form-step'
 
 describe('useFormStep', () => {
@@ -32,7 +33,7 @@ describe('useFormStep', () => {
     const { result } = renderHook(() => useFormStep())
     await act(async () => {
       await result.current.runSave(async () => {
-        throw new Error('boom')
+        throw new ConvexError({ reason: 'boom' })
       })
     })
     expect(result.current.error).toBe('boom')
@@ -43,7 +44,7 @@ describe('useFormStep', () => {
     const { result } = renderHook(() => useFormStep())
     // First: fail
     await act(async () => {
-      await result.current.runSave(async () => { throw new Error('first') })
+      await result.current.runSave(async () => { throw new ConvexError({ reason: 'first' }) })
     })
     expect(result.current.error).toBe('first')
     // Second: succeed

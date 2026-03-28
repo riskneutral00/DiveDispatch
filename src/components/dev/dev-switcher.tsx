@@ -10,6 +10,7 @@ import { ROLES, ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
 import { GlassCard } from '@/components/glass/glass-card'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 // Guard: dev-only component
 export function DevSwitcher() {
@@ -99,9 +100,7 @@ function DevSwitcherInner() {
       await new Promise((r) => setTimeout(r, 150))
       window.location.href = `/${result.slug}/${config.key}`
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Switch failed — check console'
-      setError(msg)
+      setError(parseConvexError(err, 'Switch failed — check console'))
     } finally {
       setSwitching(null)
     }

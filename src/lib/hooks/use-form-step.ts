@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 /**
  * Shared state + try/catch/finally pattern for multi-step form steps.
@@ -31,7 +32,7 @@ export function useFormStep(): UseFormStepReturn {
     try {
       await action()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
+      setError(parseConvexError(err, 'Save failed'))
     } finally {
       setSaving(false)
     }

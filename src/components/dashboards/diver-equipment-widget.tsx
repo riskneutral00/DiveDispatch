@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard, GlassBadge, GlassButton } from '@/components/glass'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/common/spinner'
 import {
   suggestGearSizes,
@@ -439,7 +440,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     try {
       await markPickedUp({ bagId: bagId as Id<'equipmentBags'> })
     } catch (err) {
-      setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as picked up')
+      setMutationError(parseConvexError(err, 'Failed to mark bag as picked up'))
     } finally {
       setIsActing(false)
     }
@@ -451,7 +452,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     try {
       await markReturned({ bagId: bagId as Id<'equipmentBags'> })
     } catch (err) {
-      setMutationError(err instanceof Error ? err.message : 'Failed to mark bag as returned')
+      setMutationError(parseConvexError(err, 'Failed to mark bag as returned'))
     } finally {
       setIsActing(false)
     }

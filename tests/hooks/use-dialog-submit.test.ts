@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { ConvexError } from 'convex/values'
 import { useDialogSubmit } from '../../src/lib/hooks/use-dialog-submit'
 
 describe('useDialogSubmit', () => {
@@ -24,7 +25,7 @@ describe('useDialogSubmit', () => {
     const { result } = renderHook(() => useDialogSubmit())
     await act(async () => {
       await result.current.runSubmit(async () => {
-        throw new Error('failed')
+        throw new ConvexError({ reason: 'failed' })
       })
     })
     expect(result.current.error).toBe('failed')
@@ -34,7 +35,7 @@ describe('useDialogSubmit', () => {
   it('runSubmit clears previous error on success', async () => {
     const { result } = renderHook(() => useDialogSubmit())
     await act(async () => {
-      await result.current.runSubmit(async () => { throw new Error('err') })
+      await result.current.runSubmit(async () => { throw new ConvexError({ reason: 'err' }) })
     })
     expect(result.current.error).toBe('err')
     await act(async () => {

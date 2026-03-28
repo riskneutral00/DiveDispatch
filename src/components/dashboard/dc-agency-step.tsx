@@ -7,6 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 type Association = { agencyCode: string; memberId: string }
 
@@ -56,7 +57,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
       await update({ associations: valid })
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
+      setError(parseConvexError(err, 'Save failed'))
     } finally {
       setSaving(false)
     }
