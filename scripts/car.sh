@@ -1,17 +1,16 @@
 #!/bin/bash
-# Car workflow launcher — Driver + Backseat + Patrol in tmux panes
+# Car workflow launcher — Driver + Backseat + Patrol in tmux windows
 # Usage: ./scripts/car.sh
 #
-# Pane layout:
-#   ┌─────────────┬──────────────┐
-#   │  Driver      │  Backseat     │
-#   ├─────────────┼──────────────┤
-#   │  Patrol      │  (shell)      │
-#   └─────────────┴──────────────┘
-#
-# Switch panes: Ctrl+B + arrow keys
-# Detach: Ctrl+B then d
-# Reattach: tmux attach -t car
+# Navigation:
+#   Ctrl+B n  — next window
+#   Ctrl+B p  — previous window
+#   Ctrl+B 0  — jump to Driver
+#   Ctrl+B 1  — jump to Backseat
+#   Ctrl+B 2  — jump to Patrol
+#   Ctrl+B 3  — jump to Shell
+#   Ctrl+B d  — detach (agents keep running)
+#   tmux attach -t car  — reattach
 
 set -euo pipefail
 
@@ -25,62 +24,81 @@ mkdir -p "$DIR/.car"/{merged,reviewed,fixes,processed}
 # Kill existing session if present
 tmux kill-session -t "$SESSION" 2>/dev/null || true
 
-# Start watchdog in background
-bash "$DIR/scripts/memory-watchdog.sh" "$DIR/.car" &
-WATCHDOG_PID=$!
-echo "$WATCHDOG_PID" > "$DIR/.car/watchdog.pid"
+# Watchdog runs inside tmux (not here — would block the terminal)
 
-# Create session — pane 0 is Driver
-tmux new-session -d -s "$SESSION" -c "$DIR" -x 220 -y 55
-
-# Pane 0: Driver
-tmux send-keys -t "$SESSION:0.0" "cd '$DIR' && claude \
-  --append-system-prompt-file .claude/agents/driver.md \
+# Write launcher scripts for each agent (avoids quoting nightmares in tmux send-keys)
+cat > "$DIR/.car/start-driver.sh" << 'AGENTEOF'
+#!/bin/bash
+cd "$(dirname "$0")/.."
+PROMPT=$(cat .claude/agents/driver.md)
+exec claude \
+  --append-system-prompt "$PROMPT" \
   --model sonnet \
   --permission-mode bypassPermissions \
   --name Driver \
-  'Start the Driver loop. Run preflight skill first, then process ready tickets sequentially. After each successful merge to main, write a JSON event file to .car/merged/DD-{NNN}.json with keys: ticket, sha, files, size, category, timestamp. Before picking the next ticket, check .car/fixes/ for backseat fix-ticket requests — those have priority. Keep going until the board is empty.'" Enter
+  "Start the Driver loop. Run preflight skill first, then process ready tickets sequentially. After each successful merge to main, write a JSON event file to .car/merged/DD-{NNN}.json with keys: ticket, sha, files, size, category, timestamp. Before picking the next ticket, check .car/fixes/ for backseat fix-ticket requests — those have priority. Keep going until the board is empty."
+AGENTEOF
 
-# Split right — pane 1 is Backseat
-tmux split-window -h -t "$SESSION:0.0" -c "$DIR"
-tmux send-keys -t "$SESSION:0.1" "cd '$DIR' && claude \
-  --append-system-prompt-file .claude/agents/backseat.md \
+cat > "$DIR/.car/start-backseat.sh" << 'AGENTEOF'
+#!/bin/bash
+cd "$(dirname "$0")/.."
+PROMPT=$(cat .claude/agents/backseat.md)
+exec claude \
+  --append-system-prompt "$PROMPT" \
   --model sonnet \
   --permission-mode bypassPermissions \
   --name Backseat \
-  'Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, and category. Run the category-routed review (diff-classify then the matching review skill). Write results to .car/reviewed/DD-{NNN}.json with keys: ticket, verdict (GO/NO-GO), findings ({CRITICAL,HIGH,MEDIUM,LOW} counts), details (array of strings), timestamp. If any CRITICAL findings: create a fix ticket in .tickets/ using the ticket-create skill and also write .car/fixes/DD-{NNN}.json so Driver picks it up. After processing, move the merged event to .car/processed/. Keep polling until you receive a shutdown message.'" Enter
+  "Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, and category. Run the category-routed review. Write results to .car/reviewed/DD-{NNN}.json. If any CRITICAL findings, create a fix ticket in .tickets/ and write .car/fixes/DD-{NNN}.json. After processing, move the merged event to .car/processed/. Keep polling."
+AGENTEOF
 
-# Split bottom-left — pane 2 is Patrol
-tmux split-window -v -t "$SESSION:0.0" -c "$DIR"
-tmux send-keys -t "$SESSION:0.2" "cd '$DIR' && claude \
-  --append-system-prompt-file .claude/agents/patrol.md \
+cat > "$DIR/.car/start-patrol.sh" << 'AGENTEOF'
+#!/bin/bash
+cd "$(dirname "$0")/.."
+PROMPT=$(cat .claude/agents/patrol.md)
+exec claude \
+  --append-system-prompt "$PROMPT" \
   --model sonnet \
   --permission-mode bypassPermissions \
   --name Patrol \
-  'Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, read the review results. Run the gate checks: tsc --noEmit, npx vitest run, and invariant grep (check the 3 non-negotiable invariants from CLAUDE.md). Write .patrol-ran with CLEAN or BLOCKED verdict plus details. Move the reviewed event to .car/processed/. If BLOCKED, print a clear warning. Keep polling until you receive a shutdown message.'" Enter
+  "Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN or BLOCKED verdict. Move the reviewed event to .car/processed/. Keep polling."
+AGENTEOF
 
-# Split bottom-right — pane 3 is empty shell for Matt
-tmux split-window -h -t "$SESSION:0.2" -c "$DIR"
+chmod +x "$DIR/.car/start-driver.sh" "$DIR/.car/start-backseat.sh" "$DIR/.car/start-patrol.sh"
 
-# Select Driver pane as default
-tmux select-pane -t "$SESSION:0.0"
+# Create session — window 0 is Driver
+tmux new-session -d -s "$SESSION" -c "$DIR" -n "Driver"
 
-# Set pane titles for identification
-tmux select-pane -t "$SESSION:0.0" -T "Driver"
-tmux select-pane -t "$SESSION:0.1" -T "Backseat"
-tmux select-pane -t "$SESSION:0.2" -T "Patrol"
-tmux select-pane -t "$SESSION:0.3" -T "Shell"
+# Keep windows alive if command exits (so you can see errors)
+tmux set-option -t "$SESSION" remain-on-exit on
 
-# Enable pane border status to show titles
-tmux set-option -t "$SESSION" pane-border-status top
-tmux set-option -t "$SESSION" pane-border-format " #{pane_title} "
+# Window 1: Backseat
+tmux new-window -t "$SESSION" -n "Backseat" -c "$DIR"
 
-echo "Car team launching in tmux session '$SESSION'..."
-echo "Watchdog PID: $WATCHDOG_PID"
+# Window 2: Patrol
+tmux new-window -t "$SESSION" -n "Patrol" -c "$DIR"
 
-# Attach
-tmux attach-session -t "$SESSION"
+# Window 3: Shell (free terminal)
+tmux new-window -t "$SESSION" -n "Shell" -c "$DIR"
 
-# Cleanup on detach/exit
-kill "$WATCHDOG_PID" 2>/dev/null || true
-rm -f "$DIR/.car/watchdog.pid"
+# Status bar — gate verdict + time
+tmux set-option -t "$SESSION" status on
+tmux set-option -t "$SESSION" status-interval 10
+tmux set-option -t "$SESSION" status-style "bg=black,fg=white"
+tmux set-option -t "$SESSION" status-left-length 30
+tmux set-option -t "$SESSION" status-right-length 80
+tmux set-option -t "$SESSION" status-left " #[bold]CAR#[default] "
+tmux set-option -t "$SESSION" status-right "#(cd '$DIR' && python3 -c \"import json,sys; d=json.load(open('.patrol-ran')); v=d.get('verdict','?'); print('✅ CLEAN — safe to push' if v=='CLEAN' else '❌ BLOCKED' if v=='BLOCKED' else '⏳ '+v)\" 2>/dev/null || echo '⏳ Waiting for Patrol') | %H:%M "
+
+# Launch agents via their wrapper scripts
+tmux send-keys -t "$SESSION:Driver" "bash .car/start-driver.sh" Enter
+tmux send-keys -t "$SESSION:Backseat" "bash .car/start-backseat.sh" Enter
+tmux send-keys -t "$SESSION:Patrol" "bash .car/start-patrol.sh" Enter
+
+# Run watchdog inside the Shell window (doesn't block anything)
+tmux send-keys -t "$SESSION:Shell" "bash scripts/memory-watchdog.sh .car" Enter
+
+# Start on Driver window
+tmux select-window -t "$SESSION:Driver"
+
+# Attach immediately — no output before this, no blocking
+exec tmux attach-session -t "$SESSION"

@@ -40,15 +40,19 @@ If no untracked files, skip Round 0. If no git changes after Round 2, skip Round
 
 ### Pre-flight: Patrol Verdict Check
 
-Before anything else, check Patrol's sentinel:
+Before anything else, check Patrol's sentinel and merge backlog:
 
 ```bash
-cat .patrol-ran 2>/dev/null
+PATROL=$(cat .patrol-ran 2>/dev/null)
+UNPROCESSED=$(ls .car/merged/*.json 2>/dev/null | wc -l | tr -d ' ')
 ```
 
-1. If `.patrol-ran` exists and `verdict` is `CLEAN` → proceed silently.
+**Verdict dispatch (4 cases):**
+
+1. If `.patrol-ran` exists and `verdict` is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently.
 2. If `.patrol-ran` exists and `verdict` is `BLOCKED` → block: `❌ Patrol reports build/test failure. Fix before vaulting.` Stop.
-3. If `.patrol-ran` is missing → warn: `⚠ Car agents didn't complete a review cycle this session. Continue anyway? (y/n)` If the user says no, stop.
+3. If `.patrol-ran` is missing AND `UNPROCESSED > 0` → warn: `⚠ {UNPROCESSED} tickets merged but not reviewed by Patrol. Run /gate to check safety, or /driver to process the backlog. Continue anyway? (y/n)` If the user says no, stop.
+4. If `.patrol-ran` is missing AND `UNPROCESSED = 0` → proceed silently (Car agents never ran or already fully completed).
 
 **Quick sanity** — even if Patrol says CLEAN, double-check:
 ```bash

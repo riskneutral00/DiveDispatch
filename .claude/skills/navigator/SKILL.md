@@ -3,9 +3,9 @@ name: navigator
 description: >
   QA + ticket creation mode. Matt browses the app via Playwright,
   describes issues, Claude creates tickets instantly with screenshots.
-  Joins the Car agent team as optional 4th teammate.
+  Works alongside the Car team via shared .tickets/ directory.
   Part of the Car workflow (navigator > driver > backseat > patrol).
-allowed-tools: Agent, Bash, SendMessage
+allowed-tools: Agent, Bash
 user-invocable: true
 ---
 
@@ -13,32 +13,18 @@ user-invocable: true
 
 **Execute immediately.** Spawn the Navigator agent.
 
-## Car Team Integration
-
-Check if the Car team is active:
-
-```bash
-cat ~/.claude/teams/car/config.json 2>/dev/null
-```
-
-If the Car team exists, pass the team context to the agent so it can notify Driver after creating tickets via `SendMessage(to: "driver", message: "NAV-TICKET DD-{NNN} | ...")`.
-
 ## Spawn Navigator Agent
 
 ```
 Agent(
   description: "Navigator: interactive QA + ticket creation",
   subagent_type: "navigator",
-  name: "navigator",
-  team_name: "car",   # only if Car team exists, omit otherwise
-  prompt: "Start Navigator. Authenticate as Hug Ocean, present dashboard, wait for Matt's instructions. {car_team_context}",
+  prompt: "Start Navigator. Authenticate as Hug Ocean, present dashboard, wait for Matt's instructions. You create tickets via the ticket-create skill which writes to .tickets/. If the Car team is running in tmux (./scripts/car.sh), Driver will automatically pick up new tickets on its next cycle — no notification needed.",
   run_in_background: false,
   mode: "auto"
 )
 ```
 
-Where `{car_team_context}` is:
-- If Car team active: `"You are a Car team teammate. After each ticket creation, SendMessage(to: 'driver', message: 'NAV-TICKET DD-{NNN} | title: {title} | priority: {P} | size: {S}')."`
-- If no Car team: `"Operating standalone — no team notifications needed."`
-
 **Note:** `run_in_background: false` — Navigator is interactive. Matt talks to it directly.
+
+Navigator creates tickets in `.tickets/` via the `/ticket-create` skill. Driver (running in the tmux Car session) picks them up automatically when it finishes its current ticket. No cross-process messaging needed.
