@@ -35,9 +35,8 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
       const idx = steps.indexOf(organizerSubStep)
       if (idx > 0) {
         setOrganizerSubStep(steps[idx - 1])
-      } else {
-        onComplete()
       }
+      // On first step, do nothing — there's no previous context to return to
     }
 
     return (
