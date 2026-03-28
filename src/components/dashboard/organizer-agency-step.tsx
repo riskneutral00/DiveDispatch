@@ -34,11 +34,15 @@ export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencySt
 
   // Shouldn't happen — agency step is only in the config for DiveCenter/Agent
   if (!roleApi) {
-    onSaved()
-    return null
+    return <AgencyStepSkip onSaved={onSaved} />
   }
 
   return <AgencyStepInner roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
+}
+
+function AgencyStepSkip({ onSaved }: { onSaved: () => void }) {
+  useEffect(() => { onSaved() }, [onSaved])
+  return null
 }
 
 interface AgencyStepInnerProps {
