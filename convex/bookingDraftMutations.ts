@@ -49,7 +49,13 @@ export const createDraftShell = mutation({
       throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: activeRoleStatus.incomplete })
     }
 
-    // Past dates — reject if optional startDate is before today
+    /**
+     * Past dates — reject if optional startDate is before today.
+     * Limitation: drafts have no session context yet, so we default to Asia/Bangkok.
+     * When expanding to non-Thailand markets, this call site should accept an
+     * explicit timezone from the operator's locale or the draft's target region.
+     * See bookingSessions.timezone (schema line 194) for the session-level field.
+     */
     if (args.startDate) {
       assertNoPastDates([{ date: args.startDate }])
     }

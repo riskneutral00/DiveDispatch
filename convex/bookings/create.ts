@@ -67,7 +67,8 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   }
 
   // 4b. Past dates — reject sessions starting before today
-  assertNoPastDates(args.sessions)
+  const tz = args.sessions[0]?.timezone ?? 'Asia/Bangkok'
+  assertNoPastDates(args.sessions, tz)
 
   // 5. Max non-confined dives per day — reject if any date exceeds 3
   const nonConfinedPerDate = new Map<string, number>()

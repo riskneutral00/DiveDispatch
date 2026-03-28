@@ -205,6 +205,11 @@ export { isBookingExpired } from '../shared/bookingExpiry'
  * Returns today's date as an ISO string (YYYY-MM-DD), timezone-aware.
  * Uses Intl.DateTimeFormat so the server computes "today" in the operator's
  * local timezone rather than UTC.
+ *
+ * Defaults to Asia/Bangkok for single-market operation. For multi-market
+ * expansion, callers should pass the session's timezone from the
+ * bookingSessions.timezone field (schema line 194) instead of relying
+ * on this default.
  */
 export function todayISO(timezone = 'Asia/Bangkok'): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
