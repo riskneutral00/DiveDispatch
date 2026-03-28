@@ -11,6 +11,7 @@ import { GlassButton, GlassBadge, RoleIcon } from '@/components/glass'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
+import { COPY_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 
 // ── TTL countdown hook ──────────────────────────────────────────────────────
 
@@ -230,7 +231,7 @@ export function PortalLinkSection({
     if (!portalUrl) return
     await navigator.clipboard.writeText(portalUrl)
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
   }
 
   async function handleCreate(e: React.FormEvent) {

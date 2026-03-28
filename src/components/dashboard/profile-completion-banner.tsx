@@ -6,10 +6,9 @@ import { useQuery } from 'convex/react'
 import { AlertCircle, X } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { RoleKey } from '@/lib/constants/roles'
+import { PROFILE_BANNER_WINDOW_MS } from '@/lib/constants/ui-timings'
 
 // ── localStorage helpers ──────────────────────────────────────────────
-
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
 function dismissalKey(slug: string): string {
   return `profile-banner-dismissed-${slug}`
@@ -31,7 +30,7 @@ function BannerDisplay({
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === 'undefined') return true
     const stored = localStorage.getItem(dismissalKey(slug))
-    return !!(stored && Date.now() - parseInt(stored, 10) < SEVEN_DAYS_MS)
+    return !!(stored && Date.now() - parseInt(stored, 10) < PROFILE_BANNER_WINDOW_MS)
   })
   const router = useRouter()
 

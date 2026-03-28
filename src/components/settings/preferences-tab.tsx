@@ -9,6 +9,7 @@ import { FormSectionHeader } from '@/components/common/form-section-header'
 import { toast } from 'sonner'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { SaveButton } from '@/components/common/save-button'
+import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 
 interface SettingsValues {
   appLanguage: string
@@ -50,7 +51,7 @@ export function PreferencesTab() {
       })
       baselineRef.current = { ...values }
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
       toast.success('Preferences saved', { duration: 3000 })
     } catch (err) {
       const message = parseConvexError(err, 'Something went wrong.')

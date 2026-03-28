@@ -11,6 +11,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { toast } from 'sonner'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/common/spinner'
+import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 
 const PERSONAL_ROLE_KEYS = new Set(['instructor', 'dive-master'])
 
@@ -80,7 +81,7 @@ export function AccountForm() {
       })
       baselineRef.current = { ...values }
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
       toast.success('Account saved', { duration: 3000 })
     } catch (err) {
       const message = parseConvexError(err, 'Something went wrong. Please try again.')

@@ -11,6 +11,7 @@ import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
 import { logBookingChange } from './bookingAuditLog'
 import { ErrorCode } from './lib/errorCodes'
+import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 
 // Re-export for test backwards compatibility
 export { getDatesInRange as getDateRange } from './shared/dateRange'
@@ -458,8 +459,6 @@ function hasSessionStarted(session: { date: string; startTime: string; timezone?
   const sessionStart = new Date(`${session.date}T${session.startTime}:00`)
   return now >= sessionStart
 }
-
-const NOSHOW_REVERT_WINDOW_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 export async function _markNoShowHandler(
   ctx: MutationCtx,

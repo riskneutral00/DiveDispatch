@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { TOUCH_TOOLTIP_MS } from '@/lib/constants/ui-timings'
 
 interface GlassTooltipProps {
   label: string
@@ -33,7 +34,7 @@ export function GlassTooltip({ label, children, className }: GlassTooltipProps) 
   // Auto-dismiss touch after 3s
   useEffect(() => {
     if (!showTouch) return
-    const timer = setTimeout(() => setShowTouch(false), 3000)
+    const timer = setTimeout(() => setShowTouch(false), TOUCH_TOOLTIP_MS)
     return () => clearTimeout(timer)
   }, [showTouch])
 

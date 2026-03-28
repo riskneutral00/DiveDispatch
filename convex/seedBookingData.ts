@@ -9,6 +9,7 @@
 // ── Constants ───────────────────────────────────────────────────────
 
 import { HOLD_TTL_MS } from './lib/auth'
+import { DAY_MS } from './lib/timeConstants'
 
 const HOLD_TTL = HOLD_TTL_MS
 const NOW = Date.now()
@@ -1195,9 +1196,9 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
       // CreatedAt timing
       let createdAt = NOW
       if (status === 'Completed') {
-        createdAt = NOW - 7 * 24 * 60 * 60 * 1000 // 7 days ago
+        createdAt = NOW - 7 * DAY_MS // 7 days ago
       } else if (status === 'Cancelled') {
-        createdAt = NOW - 5 * 24 * 60 * 60 * 1000 // 5 days ago
+        createdAt = NOW - 5 * DAY_MS // 5 days ago
       }
 
       // ExpiresAt for drafts

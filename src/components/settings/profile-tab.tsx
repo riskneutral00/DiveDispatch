@@ -10,6 +10,7 @@ import { parseConvexError } from '@/lib/utils/convex-error'
 import { GlassInput } from '@/components/glass/glass-input'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { SaveButton } from '@/components/common/save-button'
+import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 
 const MONTHS = [
   { value: '01', label: 'January' },
@@ -120,7 +121,7 @@ export function ProfileTab() {
       })
       baselineRef.current = { ...values }
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
       toast.success('Profile saved', { duration: 3000 })
     } catch (err) {
       const message = parseConvexError(err, 'Something went wrong.')

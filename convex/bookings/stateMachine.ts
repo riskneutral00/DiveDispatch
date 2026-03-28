@@ -6,6 +6,7 @@
 import { ConvexError, v } from 'convex/values'
 import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 import { ErrorCode } from '../lib/errorCodes'
+import { MEDICAL_TTL_MS } from '../lib/timeConstants'
 export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -250,7 +251,6 @@ export function computeMedicalDeadline(
   earliestDate: string,
   timezone: string,
 ): number {
-  const MEDICAL_TTL_MS = 36 * 60 * 60 * 1000
   const ttlDeadline = creationTime + MEDICAL_TTL_MS
 
   // 8pm night before the activity date in the session timezone.

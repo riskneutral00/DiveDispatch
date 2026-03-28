@@ -4,9 +4,7 @@ import type { Id } from './_generated/dataModel'
 import { requireAuth, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 import { ErrorCode } from './lib/errorCodes'
-
-/** 30-day TTL for portal booking links. */
-const BOOKING_LINK_TTL_MS = 30 * 24 * 60 * 60 * 1000
+import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

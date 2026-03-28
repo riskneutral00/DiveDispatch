@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassDialog, GlassButton } from '@/components/glass'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
 import { Link2, Mail, Copy, Check } from 'lucide-react'
 
 interface SendPortalLinkProps {
@@ -50,7 +51,7 @@ export function SendPortalLink({
       const token = await createLink({ bookingId, customerName, email })
       const url = `${window.location.origin}/portal/${token}`
       // 30-day TTL matches bookingLinks._createLink; estimate for display only
-      const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000
+      const expiry = Date.now() + PORTAL_LINK_EXPIRY_MS
       setLinkUrl(url)
       setExpiresAt(expiry)
       return url
@@ -81,7 +82,7 @@ export function SendPortalLink({
         document.body.removeChild(el)
       }
       setCopyDone(true)
-      setTimeout(() => setCopyDone(false), 2000)
+      setTimeout(() => setCopyDone(false), COPY_FEEDBACK_MS)
     } catch {
       setError('Clipboard access denied. Copy the link manually.')
     } finally {
@@ -103,7 +104,7 @@ export function SendPortalLink({
         customerName,
         operatorName,
         portalUrl: url,
-        expiresAt: resolvedExpiry ?? Date.now() + 30 * 24 * 60 * 60 * 1000,
+        expiresAt: resolvedExpiry ?? Date.now() + PORTAL_LINK_EXPIRY_MS,
       })
       setEmailDone(true)
     } catch (e) {
