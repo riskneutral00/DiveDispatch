@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../../../../convex/shared/aowSpecialties'
 
 describe('AOW specialties', () => {
-  it('has 12 total specialties', () => {
-    expect(AOW_SPECIALTIES).toHaveLength(12)
+  it('has 13 total specialties', () => {
+    expect(AOW_SPECIALTIES).toHaveLength(13)
   })
 
   it('main + overflow = total', () => {
@@ -27,9 +27,9 @@ describe('AOW specialties', () => {
     }
   })
 
-  it('overflow has 3 items: Photography, S&R, DUW Photo', () => {
+  it('overflow has 4 items: Photography, S&R, DUW Photo, Enriched Air', () => {
     const values = AOW_OVERFLOW.map((s) => s.value).sort()
-    expect(values).toEqual(['DUW Photo', 'Photography', 'S&R'])
+    expect(values).toEqual(['DUW Photo', 'Enriched Air', 'Photography', 'S&R'])
   })
 
   it('every specialty has a unique value', () => {

@@ -24,6 +24,7 @@ export const AOW_SPECIALTIES: AowSpecialty[] = [
   { value: 'Photography', label: 'Photography', overflow: true },
   { value: 'S&R', label: 'S&R', overflow: true },
   { value: 'DUW Photo', label: 'DUW Photo', overflow: true },
+  { value: 'Enriched Air', label: 'Enriched Air', overflow: true },
 ]
 
 export const AOW_MAIN = AOW_SPECIALTIES.filter((s) => !s.overflow)
