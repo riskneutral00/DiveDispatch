@@ -7,11 +7,11 @@ import { GlassButton } from '../glass/glass-button'
 import { GlassTextarea } from '../glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
+import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
+import { toHeightCm, toWeightKg, toShoeSizeNum } from '@/lib/utils/unit-conversion'
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type HeightUnit = 'cm' | 'in'
-type WeightUnit = 'kg' | 'lbs'
-type ShoeSizeUnit = 'EU' | 'US' | 'CM'
 type RentalChoice = 'own' | 'rent'
 
 type RentalChecklist = Record<
@@ -34,28 +34,6 @@ interface StepEquipmentProps {
   /** When provided, the component renders its own Continue button and
    * validates before calling this callback. */
   onComplete?: (data: EquipmentData) => void
-}
-
-// ── Unit conversion ──────────────────────────────────────────────────────────
-
-function toHeightCm(value: string, unit: HeightUnit): number | undefined {
-  const n = parseFloat(value)
-  if (!isFinite(n) || n <= 0) return undefined
-  return unit === 'cm' ? Math.round(n) : Math.round(n * 2.54)
-}
-
-function toWeightKg(value: string, unit: WeightUnit): number | undefined {
-  const n = parseFloat(value)
-  if (!isFinite(n) || n <= 0) return undefined
-  return unit === 'kg'
-    ? Math.round(n * 10) / 10
-    : Math.round(n * 0.453592 * 10) / 10
-}
-
-function toShoeSizeNum(value: string): number | undefined {
-  const n = parseFloat(value)
-  if (!isFinite(n) || n <= 0) return undefined
-  return Math.round(n * 10) / 10
 }
 
 // ── ToggleGroup ──────────────────────────────────────────────────────────────

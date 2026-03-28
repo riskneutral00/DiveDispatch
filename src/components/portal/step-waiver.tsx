@@ -8,17 +8,8 @@ import { GlassInput } from '../glass/glass-input'
 import { SignaturePad, SignaturePadHandle } from '../common/signature-pad'
 import { ShieldCheck } from 'lucide-react'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
+import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/waiver-text'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
-
-// ── Legal text constants ─────────────────────────────────────────────────────
-
-const NON_AGENCY_DISCLOSURE = `
-____________ is a PADI® Member dive business. As a PADI Member, it has met minimum standards for dive training; however, PADI does not supervise or control PADI Members' dive operations, nor is PADI liable for the inaccuracies or misrepresentations of any PADI Member in the conduct of its business. PADI is only responsible for those activities that PADI has specifically agreed to undertake in writing.
-`.trim()
-
-const LIABILITY_RELEASE_TEXT = `
-I understand that skin and SCUBA diving and/or snorkeling have inherent risks which may result in serious injury or death. I understand the need to comply with all rules and safe diving practices. I agree to assume those risks and agree that neither PADI, nor _____________ (PADI Member), nor their owners, employees, agents, or assigns shall be liable or responsible in any way for any injury, death, or other damages to me or my family, heirs, or assigns that may occur as a result of my participation in this activity or as a result of the negligence of any party including _____________ (PADI Member) and PADI, whether passive or active. I also agree that in the event I file a claim against PADI, the PADI Member, or their owners, employees, agents, or assigns, I will do so only in my home country and that the laws of my home country will be applied to any claim or lawsuit I might file.
-`.trim()
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

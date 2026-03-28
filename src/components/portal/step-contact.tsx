@@ -15,6 +15,7 @@ import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
+import { useReturningCustomer } from '@/lib/hooks/use-returning-customer'
 import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
@@ -75,20 +76,43 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   } = usePortalStep()
 
   // Returning customer dedup
-  const [returningCustomer, setReturningCustomer] = useState<{
-    _id: string
-    legalFirstName: string
-    legalLastName: string
-    email: string
-  } | null>(null)
-  const [returningConfirmed, setReturningConfirmed] = useState(false)
-  const [returningDismissed, setReturningDismissed] = useState(false)
+  const [returningDismissedLocal, setReturningDismissedLocal] = useState(false)
   const checkReturning = useQuery(
     api.customers.checkReturningCustomer,
-    form.email && form.email.includes('@') && !returningDismissed
+    form.email && form.email.includes('@') && !returningDismissedLocal
       ? { email: form.email, token }
       : 'skip',
   )
+
+  const {
+    returningCustomer,
+    returningConfirmed,
+    confirm: confirmReturningCustomer,
+    dismiss: dismissReturningCustomerHook,
+    showBanner: showReturningBanner,
+  } = useReturningCustomer(checkReturning, (data) => {
+    // Pre-fill everything except medical/waiver
+    setFormState((prev) => ({
+      ...prev,
+      legalFirstName: data.legalFirstName,
+      legalLastName: data.legalLastName,
+      preferredName: data.preferredName ?? '',
+      email: data.email,
+      phone: data.phone,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      nationality: data.nationality,
+      passportNumber: data.passportNumber,
+      passportIssuingCountry: data.passportIssuingCountry,
+      passportExpirationDate: data.passportExpirationDate,
+      emergencyContactName: data.emergencyContactName,
+      emergencyContactPhone: data.emergencyContactPhone,
+      emergencyContactRelation: data.emergencyContactRelation,
+      agency: data.agency ?? '',
+      agencyID: data.agencyID ?? '',
+      allergies: data.allergies ?? '',
+    }))
+  })
 
   // Cert-conditional schema: agency + agencyID required if any activity needs it.
   // Memoize on activity types to avoid hook churn.
@@ -135,43 +159,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     }
   }, [context])
 
-  // Show returning customer banner when match found
-  useEffect(() => {
-    if (checkReturning && !returningConfirmed && !returningDismissed) {
-      setReturningCustomer(checkReturning)
-    }
-  }, [checkReturning, returningConfirmed, returningDismissed])
-
-  function confirmReturningCustomer() {
-    if (!checkReturning) return
-    setReturningConfirmed(true)
-    setReturningCustomer(null)
-    // Pre-fill everything except medical/waiver
-    setFormState((prev) => ({
-      ...prev,
-      legalFirstName: checkReturning.legalFirstName,
-      legalLastName: checkReturning.legalLastName,
-      preferredName: checkReturning.preferredName ?? '',
-      email: checkReturning.email,
-      phone: checkReturning.phone,
-      dateOfBirth: checkReturning.dateOfBirth,
-      gender: checkReturning.gender,
-      nationality: checkReturning.nationality,
-      passportNumber: checkReturning.passportNumber,
-      passportIssuingCountry: checkReturning.passportIssuingCountry,
-      passportExpirationDate: checkReturning.passportExpirationDate,
-      emergencyContactName: checkReturning.emergencyContactName,
-      emergencyContactPhone: checkReturning.emergencyContactPhone,
-      emergencyContactRelation: checkReturning.emergencyContactRelation,
-      agency: checkReturning.agency ?? '',
-      agencyID: checkReturning.agencyID ?? '',
-      allergies: checkReturning.allergies ?? '',
-    }))
-  }
-
   function dismissReturningCustomer() {
-    setReturningDismissed(true)
-    setReturningCustomer(null)
+    setReturningDismissedLocal(true)
+    dismissReturningCustomerHook()
   }
 
   const requiresCert =
@@ -269,7 +259,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* Returning customer banner */}
-      {returningCustomer && !returningConfirmed && !returningDismissed && (
+      {showReturningBanner && returningCustomer && (
         <GlassCard padding="md">
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-primary">
