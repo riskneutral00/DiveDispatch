@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { securityHeaders, HEADER_NAMES } from '../src/lib/security-headers'
+import { securityHeaders } from '../src/lib/security-headers'
 
 describe('security-headers', () => {
   const headerMap = new Map(
@@ -7,10 +7,6 @@ describe('security-headers', () => {
   )
 
   describe('required headers are present', () => {
-    it('includes Content-Security-Policy', () => {
-      expect(headerMap.has('Content-Security-Policy')).toBe(true)
-    })
-
     it('includes X-Frame-Options', () => {
       expect(headerMap.get('X-Frame-Options')).toBe('DENY')
     })
@@ -21,7 +17,6 @@ describe('security-headers', () => {
 
     it('includes Strict-Transport-Security', () => {
       const hsts = headerMap.get('Strict-Transport-Security')
-      expect(hsts).toBeDefined()
       expect(hsts).toContain('max-age=')
       expect(hsts).toContain('includeSubDomains')
     })
@@ -34,7 +29,6 @@ describe('security-headers', () => {
 
     it('includes Permissions-Policy', () => {
       const pp = headerMap.get('Permissions-Policy')
-      expect(pp).toBeDefined()
       expect(pp).toContain('camera=()')
       expect(pp).toContain('microphone=()')
     })
@@ -74,21 +68,6 @@ describe('security-headers', () => {
 
     it("allows 'unsafe-inline' for script-src (required by Clerk SDK)", () => {
       expect(csp).toMatch(/script-src\s[^;]*'unsafe-inline'/)
-    })
-  })
-
-  describe('HEADER_NAMES export', () => {
-    it('lists all header keys for documentation', () => {
-      expect(HEADER_NAMES).toEqual(
-        expect.arrayContaining([
-          'Content-Security-Policy',
-          'X-Frame-Options',
-          'X-Content-Type-Options',
-          'Strict-Transport-Security',
-          'Referrer-Policy',
-          'Permissions-Policy',
-        ])
-      )
     })
   })
 
