@@ -5,6 +5,11 @@ import { useMutation, useQuery } from 'convex/react'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
+import {
+  TOKEN_EXPIRED_MESSAGE,
+  BOOKING_CLOSED_MESSAGE,
+  UNEXPECTED_ERROR_MESSAGE,
+} from '@/lib/constants/error-messages'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { Spinner } from '@/components/common/spinner'
@@ -81,7 +86,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     return (
       <GlassCard padding="lg">
         <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
-          This link has expired or is invalid. Please contact your dive center for a new link.
+          {TOKEN_EXPIRED_MESSAGE}
         </p>
       </GlassCard>
     )
@@ -150,9 +155,9 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     } catch (err) {
       const code = getConvexErrorCode(err)
       if (code === 'TOKEN_EXPIRED') {
-        setError('This link has expired. Please contact your dive center for a new link.')
+        setError(TOKEN_EXPIRED_MESSAGE)
       } else if (code === 'BOOKING_CLOSED') {
-        setError('This booking is no longer accepting submissions.')
+        setError(BOOKING_CLOSED_MESSAGE)
       } else if (code === 'FORMS_INCOMPLETE') {
         const reason = parseConvexError(err, '')
         setError(
@@ -161,7 +166,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
             : 'Please complete all required steps before submitting.',
         )
       } else {
-        setError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
+        setError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
       }
     } finally {
       setSubmitting(false)

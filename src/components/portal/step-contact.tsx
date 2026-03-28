@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
+import {
+  TOKEN_EXPIRED_MESSAGE,
+  BOOKING_CLOSED_MESSAGE,
+  UNEXPECTED_ERROR_MESSAGE,
+} from '@/lib/constants/error-messages'
 import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -232,11 +237,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     } catch (err) {
       const code = getConvexErrorCode(err)
       if (code === 'TOKEN_EXPIRED') {
-        setServerError('This link has expired. Please contact your dive center for a new link.')
+        setServerError(TOKEN_EXPIRED_MESSAGE)
       } else if (code === 'BOOKING_CLOSED') {
-        setServerError('This booking is no longer accepting submissions.')
+        setServerError(BOOKING_CLOSED_MESSAGE)
       } else {
-        setServerError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
+        setServerError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
       }
     } finally {
       setSubmitting(false)
@@ -255,7 +260,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     return (
       <GlassCard padding="lg">
         <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
-          This link has expired or is invalid. Please contact your dive center for a new link.
+          {TOKEN_EXPIRED_MESSAGE}
         </p>
       </GlassCard>
     )

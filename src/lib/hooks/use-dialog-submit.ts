@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 
 /**
  * Shared state + try/catch/finally pattern for dialog submissions.
@@ -31,7 +32,7 @@ export function useDialogSubmit(): UseDialogSubmitReturn {
     try {
       await action()
     } catch (err) {
-      setError(parseConvexError(err, 'An unexpected error occurred.'))
+      setError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
     } finally {
       setSubmitting(false)
       submittingRef.current = false

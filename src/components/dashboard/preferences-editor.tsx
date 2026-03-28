@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { toast } from 'sonner'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
@@ -225,7 +226,7 @@ export function PreferencesEditor() {
       setSaved(true)
       toast.success('Preferences saved', { duration: 3000 })
     } catch (err) {
-      const message = parseConvexError(err, 'An unexpected error occurred')
+      const message = parseConvexError(err, UNEXPECTED_ERROR_MESSAGE)
       setServerError(message)
       toast.error('Save failed', { description: message, duration: 5000 })
     } finally {

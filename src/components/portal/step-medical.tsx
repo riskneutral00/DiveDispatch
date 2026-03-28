@@ -8,6 +8,11 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { getConvexErrorCode } from '@/lib/utils/convex-error'
+import {
+  TOKEN_EXPIRED_MESSAGE,
+  BOOKING_CLOSED_MESSAGE,
+  UNEXPECTED_ERROR_MESSAGE,
+} from '@/lib/constants/error-messages'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -115,11 +120,11 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
     } catch (err) {
       const code = getConvexErrorCode(err)
       if (code === 'TOKEN_EXPIRED') {
-        setError('This portal link has expired. Please contact your dive center for a new link.')
+        setError(TOKEN_EXPIRED_MESSAGE)
       } else if (code === 'BOOKING_CLOSED') {
-        setError('This booking is no longer accepting submissions.')
+        setError(BOOKING_CLOSED_MESSAGE)
       } else {
-        setError('An error occurred. Please try again.')
+        setError(UNEXPECTED_ERROR_MESSAGE)
       }
     } finally {
       setSubmitting(false)

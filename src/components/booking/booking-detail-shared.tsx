@@ -12,6 +12,10 @@ import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
 import { COPY_FEEDBACK_MS } from '@/lib/constants/ui-timings'
+import {
+  LINK_EXPIRED_LABEL,
+  GENERATE_LINK_ERROR_MESSAGE,
+} from '@/lib/constants/error-messages'
 
 // ── TTL countdown hook ──────────────────────────────────────────────────────
 
@@ -246,7 +250,7 @@ export function PortalLinkSection({
       })
       setShowCreateForm(false)
     } catch {
-      setCreateError('Failed to generate link. Please try again.')
+      setCreateError(GENERATE_LINK_ERROR_MESSAGE)
     } finally {
       setCreating(false)
     }
@@ -273,7 +277,7 @@ export function PortalLinkSection({
         </div>
         {!compact && isExpired && (
           <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>
-            This link has expired.
+            {LINK_EXPIRED_LABEL}
           </p>
         )}
         <div className="flex gap-2 flex-wrap">

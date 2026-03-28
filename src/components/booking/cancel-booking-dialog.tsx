@@ -9,6 +9,7 @@ import { GlassDialog } from '@/components/glass/glass-dialog'
 import { GlassButton } from '@/components/glass/glass-button'
 import { ErrorAlert } from '@/components/glass/error-alert'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
+import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ export function CancelBookingDialog({
       } else if (code === 'FORBIDDEN') {
         setError('You do not have permission to cancel this booking.')
       } else {
-        setError(parseConvexError(err, 'An unexpected error occurred. Please try again.'))
+        setError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
       }
     } finally {
       setSubmitting(false)

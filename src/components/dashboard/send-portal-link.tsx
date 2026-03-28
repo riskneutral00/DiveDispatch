@@ -7,6 +7,7 @@ import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassDialog, GlassButton } from '@/components/glass'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
+import { GENERATE_LINK_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { Link2, Mail, Copy, Check } from 'lucide-react'
 
 interface SendPortalLinkProps {
@@ -56,7 +57,7 @@ export function SendPortalLink({
       setExpiresAt(expiry)
       return url
     } catch (e) {
-      setError(parseConvexError(e, 'Failed to generate link'))
+      setError(parseConvexError(e, GENERATE_LINK_ERROR_MESSAGE))
       return null
     }
   }

@@ -16,6 +16,7 @@ import {
   StakeholderList,
   PortalLinkSection,
 } from './booking-detail-shared'
+import { CANCEL_BOOKING_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { PortalProgressCard } from './portal-progress-card'
@@ -113,7 +114,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       setShowCancelDialog(false)
       router.push('/dashboard')
     } catch {
-      setCancelError('Failed to cancel booking. Please try again.')
+      setCancelError(CANCEL_BOOKING_ERROR_MESSAGE)
     } finally {
       setCancelling(false)
     }
