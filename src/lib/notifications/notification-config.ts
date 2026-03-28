@@ -47,11 +47,13 @@ export interface NotificationTypeConfig {
   tier: SeverityTier
 }
 
+import type { NotificationType } from '../../../convex/shared/statuses'
+
 /**
  * All 13 notification types from the schema, each with an icon and severity tier.
  * No hold_accepted -- it does not exist in the schema.
  */
-export const NOTIFICATION_CONFIG: Record<string, NotificationTypeConfig> = {
+export const NOTIFICATION_CONFIG = {
   // Action Required (urgent / red)
   medical_hard_block: { icon: 'AlertTriangle', tier: 'action' },
   no_backup_available: { icon: 'Ban', tier: 'action' },
@@ -70,7 +72,7 @@ export const NOTIFICATION_CONFIG: Record<string, NotificationTypeConfig> = {
   hold_placed: { icon: 'Clock', tier: 'info' },
   medical_cleared: { icon: 'ShieldCheck', tier: 'info' },
   portal_complete: { icon: 'CheckCircle', tier: 'info' },
-}
+} satisfies Record<NotificationType, NotificationTypeConfig>
 
 const FALLBACK_CONFIG: NotificationTypeConfig = { icon: 'Bell', tier: 'info' }
 

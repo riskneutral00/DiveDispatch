@@ -9,14 +9,24 @@
  * profile forms and portal step-contact.
  */
 
-interface GlassSimpleSelectProps {
+interface OptionItem {
+  value: string
   label: string
+  disabled?: boolean
+}
+
+interface GlassSimpleSelectProps {
+  label?: string
   value: string
   onChange: (value: string) => void
-  options: readonly string[] | readonly { value: string; label: string }[]
+  options: readonly string[] | readonly OptionItem[]
   error?: string
   placeholder?: string
   required?: boolean
+  disabled?: boolean
+  className?: string
+  /** Accessible label when no visible label is provided */
+  'aria-label'?: string
   /** Pass-through for E2E test selectors */
   'data-testid'?: string
 }
@@ -29,18 +39,25 @@ export function GlassSimpleSelect({
   error,
   placeholder,
   required,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
   'data-testid': testId,
 }: GlassSimpleSelectProps) {
   return (
-    <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-medium text-secondary">
-        {label}
-        {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-      </label>
+    <div className={`flex flex-col gap-1.5 w-full${className ? ` ${className}` : ''}`}>
+      {label && (
+        <label className="text-sm font-medium text-secondary">
+          {label}
+          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
+        </label>
+      )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
+        disabled={disabled}
+        aria-label={ariaLabel}
         data-testid={testId}
         className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 rounded-[var(--border-radius)]"
         style={{
@@ -57,8 +74,9 @@ export function GlassSimpleSelect({
         {options.map((opt) => {
           const optValue = typeof opt === 'string' ? opt : opt.value
           const optLabel = typeof opt === 'string' ? opt : opt.label
+          const optDisabled = typeof opt === 'string' ? false : opt.disabled
           return (
-            <option key={optValue} value={optValue}>
+            <option key={optValue} value={optValue} disabled={optDisabled}>
               {optLabel}
             </option>
           )

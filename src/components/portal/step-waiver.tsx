@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react'
 import { GlassCard } from '../glass/glass-card'
 import { GlassButton } from '../glass/glass-button'
+import { GlassCheckbox } from '../glass/glass-checkbox'
 import { GlassInput } from '../glass/glass-input'
 import { SignaturePad, SignaturePadHandle } from '../common/signature-pad'
 import { ShieldCheck } from 'lucide-react'
@@ -204,22 +205,19 @@ export function StepWaiver({
           />
 
           {/* Acknowledgment checkbox */}
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              className="mt-0.5 h-6 w-6 rounded shrink-0 cursor-pointer"
-              style={{ accentColor: 'var(--color-primary)' }}
-              checked={acknowledged}
-              onChange={(e) => {
-                setAcknowledged(e.target.checked)
-                if (e.target.checked) clearError('acknowledged')
-              }}
-            />
-            <span className="text-sm leading-snug text-secondary">
-              I have read and fully understand this Release of Liability / Assumption of Risk
-              Agreement. I am of lawful age and legally competent to sign it of my own free act.
-            </span>
-          </label>
+          <GlassCheckbox
+            label={
+              <span className="text-sm leading-snug text-secondary">
+                I have read and fully understand this Release of Liability / Assumption of Risk
+                Agreement. I am of lawful age and legally competent to sign it of my own free act.
+              </span>
+            }
+            checked={acknowledged}
+            onChange={(v) => {
+              setAcknowledged(v)
+              if (v) clearError('acknowledged')
+            }}
+          />
           {errors.acknowledged && (
             <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
               {errors.acknowledged}

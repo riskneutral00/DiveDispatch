@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { Spinner } from '@/components/common/spinner'
@@ -84,36 +85,13 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
         <div className="space-y-5">
           {/* Blood type */}
-          <div>
-            <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
-            >
-              Blood Type{' '}
-              <span className="font-normal text-secondary">
-                (Optional)
-              </span>
-            </label>
-            <select
-              value={bloodType}
-              onChange={(e) => setBloodType(e.target.value)}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2"
-              style={{
-                color: bloodType ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                caretColor: 'var(--color-accent)',
-                borderRadius: 'var(--border-radius)',
-                outlineColor: 'var(--color-accent)',
-                appearance: 'none',
-                backgroundImage: 'none',
-              }}
-            >
-              <option value="">Select blood type</option>
-              {BLOOD_TYPES.map((bt) => (
-                <option key={bt} value={bt}>
-                  {bt}
-                </option>
-              ))}
-            </select>
-          </div>
+          <GlassSimpleSelect
+            label="Blood Type (Optional)"
+            value={bloodType}
+            onChange={setBloodType}
+            options={BLOOD_TYPES}
+            placeholder="Select blood type"
+          />
 
           {/* Allergies */}
           <GlassTextarea

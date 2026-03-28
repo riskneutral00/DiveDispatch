@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FilterDef } from '@/lib/constants/resource-filters'
+import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 
 interface FilterBarProps {
   filters: FilterDef[]
@@ -239,34 +240,13 @@ export function FilterBar({ filters, values, onChange }: FilterBarProps) {
             onChange={onChange}
           />
         ) : (
-          <div key={filter.id} className="relative w-40">
-            <select
+          <div key={filter.id} className="w-40">
+            <GlassSimpleSelect
               value={values[filter.id] ?? filter.options[0]?.value ?? ''}
-              onChange={(e) => onChange(filter.id, e.target.value)}
+              onChange={(v) => onChange(filter.id, v)}
               aria-label={filter.label}
-              className="w-full appearance-none pl-3 pr-7 py-1.5 text-sm rounded-[var(--border-radius)] focus:outline-none focus-visible:ring-2 cursor-pointer"
-              style={glassStyle}
-            >
-              {filter.options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <span
-              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary"
-              aria-hidden
-            >
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path
-                  d="M2 3.5L5 6.5L8 3.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
+              options={filter.options}
+            />
           </div>
         ),
       )}
