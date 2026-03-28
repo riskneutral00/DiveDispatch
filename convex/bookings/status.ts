@@ -37,6 +37,25 @@ export const cancelBooking = mutation({
     }
 
     await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
+
+    // Notify resource stakeholders whose inventory was just released
+    const vacatedReservations = await ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
+      .collect()
+    const vacated = vacatedReservations.filter((r) => r.status === 'Vacated')
+    for (const res of vacated) {
+      const unit = await ctx.db.get(res.inventoryUnitId)
+      if (unit) {
+        await notify(ctx, {
+          userId: unit.ownerId,
+          type: NOTIFICATION_TYPE.BookingCancelled,
+          bookingId: args.bookingId as string,
+          message: `Booking cancelled — your ${unit.displayName} inventory has been released.`,
+        })
+      }
+    }
+
     await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
