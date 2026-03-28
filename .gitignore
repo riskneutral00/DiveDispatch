@@ -3,6 +3,9 @@
 # tickets (working items for parallel Claude terminals)
 .tickets/
 
+# car workflow event files (tmux inter-agent communication)
+.car/
+
 # lifecycle sentinel files (written by /last, /gate, /patrol, /vault, consumed by /first)
 .last-ran
 .last-session-ts

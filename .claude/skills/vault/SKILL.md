@@ -16,23 +16,23 @@ Run this before ending a session. No questions, no prompts — just execute all 
 **Minimize tool-call rounds.** Every round adds LLM thinking latency. Target ≤ 5 rounds total.
 
 1. **Batch bash commands** with `&&` — never run `git status`, `git diff`, `git log` as separate tool calls.
-2. **Parallel tool calls** — Jobs 2/3/4 write to different files. Fire all writes in ONE response after Job 1.
+2. **Parallel tool calls** — Jobs 1/2/3 write to different files. Fire all writes in ONE response.
 3. **Skip reads when overwriting** — Session file is always overwritten. Don't read it first.
 ### Ideal execution shape (5 rounds max, usually 4)
 
 ```
 Round 0: Bash(git status --porcelain + git log --diff-filter=D --name-only -20) → classify untracked
          If ambiguous files exist, prompt once. Otherwise silent.
-Round 1: Bash(git status && git diff && git diff --cached && git log --oneline -5)
-         + Read(MEMORY.md) + Read(active thread) + Read(TODO.md)
+Round 1: Read(MEMORY.md) + Read(active thread) + Read(TODO.md) + Read(.SKELETON.md)
          + Read(Lessons.md tail) ← only if lesson needed
-Round 2: Bash(rm -rf [ghosts/stale] && git add <bucket1> && git commit ... && git add <bucket2> && git commit ...)
-Round 3: Bash(session file heredoc) + Bash(lessons append) + Bash(TODO sed) + Write(thread) + Edit(MEMORY.md)
-         ← all parallel, all write different files
+Round 2: Bash(session file heredoc) + Bash(lessons append) + Bash(TODO mirror) + Write(thread) + Edit(MEMORY.md)
+         + Edit(.SKELETON.md) + Edit(.tickets/) ← all parallel, all write different files
+Round 3: Bash(rm -rf [ghosts/stale] && git status && git diff && git log --oneline -5)
+         → classify → Bash(git add <bucket1> && git commit ... && git add <bucket2> && git commit ...)
 Round 4: Print output
 ```
 
-If no untracked files, skip Round 0. If no git changes, skip Round 1's diff and Round 2 entirely. If no lessons, drop that from Round 3.
+If no untracked files, skip Round 0. If no git changes after Round 2, skip Round 3 entirely. If no lessons, drop that from Round 2.
 
 ---
 
@@ -56,7 +56,7 @@ grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status
 ```
 If any unresolved non-human_required backseat tickets exist → warn: `⚠ {N} backseat fix tickets still open. Driver may not have finished. Continue anyway? (y/n)` If the user says no, stop.
 
-After Job 1 (commit) succeeds, clean up sentinels and write session timestamp:
+After Job 4 (commit) succeeds, clean up sentinels and write session timestamp:
 ```bash
 rm -f .patrol-ran .patrol-observations.md
 date -u +%Y-%m-%dT%H:%M:%SZ > .last-session-ts
@@ -66,7 +66,7 @@ date -u +%Y-%m-%dT%H:%M:%SZ > .last-session-ts
 
 ### Job 0: Untracked File Triage
 
-Run before Job 1. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`), skip this job entirely.
+Run before all other jobs. Goal: ensure no ghost files, stale duplicates, or garbage get committed. If there are no untracked files (`??` in `git status --porcelain`), skip this job entirely.
 
 **Round 0** — single Bash call:
 ```bash
@@ -93,76 +93,9 @@ Commit all / Delete all / Let me specify?
 ```
 Then execute the user's choice.
 
-**Merge deletions into Round 2** — the `rm -rf` calls go at the start of the commit Bash call.
+**Merge deletions into Round 3** — the `rm -rf` calls go at the start of the commit Bash call.
 
-### Job 1: Smart-Batch Git Commit (DiveDispatch)
-
-Working directory: `~/Desktop/RiskNeutral/DiveDispatch`
-
-Matt works across multiple terminals on different tickets. **Never lump unrelated changes into one commit.** Classify files into logical groups and commit each group separately.
-
-**Round 1** — single Bash call:
-```bash
-git status && git diff --stat && git diff --cached --stat && git log --oneline -5
-```
-If no changes, skip to Jobs 2–5.
-
-**Round 2** — classify → chain commits in a single Bash call.
-
-#### Phase A: Classify into domain buckets
-
-Read `git status --porcelain` output. Assign each file to exactly one bucket. **First match wins.**
-
-| Pri | Bucket | Path patterns | Default prefix |
-|-----|--------|--------------|----------------|
-| 0 | **Renames** | `D` + `??` pair in same dir, similar basename | `refactor:` |
-| 1 | **Tooling** | `.claude/**`, `.gitignore`, `scripts/**` | `chore:` |
-| 2 | **Infra** | `package.json`, `package-lock.json`, `convex/_generated/**` | `chore:` |
-| 3 | **Booking backend** | `convex/bookings/**`, `convex/availability.ts`, `convex/bookingDraftMutations.ts` | varies |
-| 4 | **Backend (other)** | `convex/**` (everything else) | varies |
-| 5 | **Booking UI** | `src/components/booking/**`, `src/lib/booking/**` | varies |
-| 6 | **Dashboard UI** | `src/components/dashboard/**`, `src/components/dashboards/**` | varies |
-| 7 | **UI (other)** | `src/components/**`, `src/lib/**`, `src/app/**` | varies |
-| 8 | **E2E** | `e2e/**` | `test:` |
-| 9 | **Tests** | `tests/**`, `src/**/__tests__/**` | `test:` |
-
-**Always exclude** from staging: `.env*`, `credentials*.json`, `*.pem`, `*.key`, `playwright-report/`, `test-results/`
-
-#### Phase B: Merge & pair
-
-1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename AND parent directory path (e.g., `tests/components/booking/quick-book.test.tsx` matches `src/components/booking/`, not `convex/bookings/`). If exactly one bucket has a path-level match, merge the test there. If multiple buckets match by basename alone, prefer the one whose source path shares the most directory segments. Unpaired tests stay in Tests bucket.
-2. **Cross-cutting files:**
-   - `convex/_generated/api.d.ts` → first backend bucket
-   - `package.json` / `package-lock.json` → Infra, unless only 1 other bucket exists (merge there)
-   - Seed cluster (`seed.ts`, `seedFixture.ts`, `seed-clerk.ts`, `e2e/helpers/seed.ts`) → merge into a backend bucket if one exists, otherwise own bucket
-3. **Tiny buckets** — if a bucket has only 1 modified (not new) file, merge into nearest same-domain bucket (`convex/` → any backend, `src/` → any UI)
-4. **Cap at 5 buckets** — if more, merge smallest into nearest neighbor until ≤5
-5. **If only 1 bucket remains** — single commit, same as legacy behavior
-
-#### Phase C: Commit chain
-
-Commit order: **Tooling → Infra → Backend → UI → Tests**
-
-Never `git add -A`. Stage specific files per bucket. All commits in **one Bash call**, chained with `&&`:
-
-```bash
-git add <bucket1-files> && git commit -m "$(cat <<'EOF'
-type: scope description
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-EOF
-)" && \
-git add <bucket2-files> && git commit -m "$(cat <<'EOF'
-type: scope description
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
-EOF
-)"
-```
-
-Commit message per bucket: conventional prefix, concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
-
-### Job 2: Vault Observations + Session File
+### Job 1: Vault Observations + Session File
 
 Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
@@ -183,7 +116,7 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 
 2. Session file is always written (overwrite). **Do NOT read it first.**
 3. For observations that append (Lessons, Patterns): read the tail in Round 1 to check for duplicates and match format.
-4. Fire all vault writes as **parallel Bash calls** in Round 3.
+4. Fire all vault writes as **parallel Bash calls** in Round 2.
 
    - **Lessons format:** `## Title — YYYY-MM-DD` with subsections: what happened, root cause, the fix, rule. Cross-ref line.
    - **Patterns format:** `## The smell`, `## Why it's a problem`, `## The fix`, `## Prevention checklist`, `## Where this came from`.
@@ -205,16 +138,16 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
      **Next action:** [Specific enough for a fresh session to execute]
      ```
 
-### Job 2.5: Skeleton Update
+### Job 1.5: Skeleton Update
 
 Path: `.SKELETON.md` (project root)
 
 1. Read `.SKELETON.md` in Round 1 (parallel with other reads).
 2. If any launch checklist items changed status this session (tickets fixed, coverage improved, deploy configured), update their status.
 3. If no checklist items changed — skip.
-4. Write via `sed -i ''` or Edit in Round 3 (parallel with other writes).
+4. Write via `sed -i ''` or Edit in Round 2 (parallel with other writes).
 
-### Job 3: Ticket Board Update + Vault Mirror Sync
+### Job 2: Ticket Board Update + Vault Mirror Sync
 
 Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` (auto-generated, never edit directly).
 
@@ -223,9 +156,9 @@ Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/
 3. Otherwise: update ticket YAML frontmatter (status, assigned_to, updated date). Move completed tickets to `.tickets/done/`.
 4. Run vault mirror sync: regenerate TODO.md from `.tickets/` state (same logic as `/board sync`).
 5. Session file's Resume Point should match the first ready ticket.
-6. Write ticket updates via Edit in Round 3 (parallel with other writes). Vault mirror sync via Bash heredoc.
+6. Write ticket updates via Edit in Round 2 (parallel with other writes). Vault mirror sync via Bash heredoc.
 
-### Job 4: Memory Management
+### Job 3: Memory Management
 
 1. Read MEMORY.md + active thread file in Round 1 (parallel with other reads).
 2. Update active thread — it's a **pointer to TODO.md**, only update:
@@ -237,7 +170,77 @@ Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/
    - Add/remove/merge memory file entries as needed.
    - Keep under 50 lines.
 4. New memory files only for info that isn't already captured, will be useful in future sessions, and can't be derived from code/vault.
-5. Write via Write/Edit tools in Round 3 (parallel with other writes).
+5. Write via Write/Edit tools in Round 2 (parallel with other writes).
+
+### Job 4: Smart-Batch Git Commit (DiveDispatch)
+
+Working directory: `~/Desktop/RiskNeutral/DiveDispatch`
+
+This job runs **last** (after Jobs 1–3 have written all in-repo changes). This ensures ticket updates, skeleton edits, and `.claude/` changes are all captured in domain-bucketed commits — no orphaned files.
+
+Matt works across multiple terminals on different tickets. **Never lump unrelated changes into one commit.** Classify files into logical groups and commit each group separately.
+
+**Round 3** — single Bash call:
+```bash
+git status && git diff --stat && git diff --cached --stat && git log --oneline -5
+```
+If no changes, skip.
+
+Then classify → chain commits in a single Bash call.
+
+#### Phase A: Classify into domain buckets
+
+Read `git status --porcelain` output. Assign each file to exactly one bucket. **First match wins.**
+
+| Pri | Bucket | Path patterns | Default prefix |
+|-----|--------|--------------|----------------|
+| 0 | **Renames** | `D` + `??` pair in same dir, similar basename | `refactor:` |
+| 1 | **Tooling** | `.claude/**`, `.gitignore`, `scripts/**` | `chore:` |
+| 2 | **Infra** | `package.json`, `package-lock.json`, `convex/_generated/**` | `chore:` |
+| 3 | **Booking backend** | `convex/bookings/**`, `convex/availability.ts`, `convex/bookingDraftMutations.ts` | varies |
+| 4 | **Backend (other)** | `convex/**` (everything else) | varies |
+| 5 | **Booking UI** | `src/components/booking/**`, `src/lib/booking/**` | varies |
+| 6 | **Dashboard UI** | `src/components/dashboard/**`, `src/components/dashboards/**` | varies |
+| 7 | **UI (other)** | `src/components/**`, `src/lib/**`, `src/app/**` | varies |
+| 8 | **E2E** | `e2e/**` | `test:` |
+| 9 | **Tests** | `tests/**`, `src/**/__tests__/**` | `test:` |
+| 10 | **Board** | `.tickets/**` | `chore:` |
+
+**Always exclude** from staging: `.env*`, `credentials*.json`, `*.pem`, `*.key`, `playwright-report/`, `test-results/`
+
+#### Phase B: Merge & pair
+
+1. **Test pairing** — move test files to their source bucket if a matching source exists there. Strip `tests/`, `tests/components/`, `__tests__/` prefix and `.test.` suffix → compare basename AND parent directory path (e.g., `tests/components/booking/quick-book.test.tsx` matches `src/components/booking/`, not `convex/bookings/`). If exactly one bucket has a path-level match, merge the test there. If multiple buckets match by basename alone, prefer the one whose source path shares the most directory segments. Unpaired tests stay in Tests bucket.
+2. **Cross-cutting files:**
+   - `convex/_generated/api.d.ts` → first backend bucket
+   - `package.json` / `package-lock.json` → Infra, unless only 1 other bucket exists (merge there)
+   - Seed cluster (`seed.ts`, `seedFixture.ts`, `seed-clerk.ts`, `e2e/helpers/seed.ts`) → merge into a backend bucket if one exists, otherwise own bucket
+3. **Tiny buckets** — if a bucket has only 1 modified (not new) file, merge into nearest same-domain bucket (`convex/` → any backend, `src/` → any UI)
+4. **Cap at 5 buckets** — if more, merge smallest into nearest neighbor until ≤5
+5. **If only 1 bucket remains** — single commit, same as legacy behavior
+
+#### Phase C: Commit chain
+
+Commit order: **Tooling → Infra → Backend → UI → Tests → Board**
+
+Never `git add -A`. Stage specific files per bucket. All commits in **one Bash call**, chained with `&&`:
+
+```bash
+git add <bucket1-files> && git commit -m "$(cat <<'EOF'
+type: scope description
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)" && \
+git add <bucket2-files> && git commit -m "$(cat <<'EOF'
+type: scope description
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+Commit message per bucket: conventional prefix, concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
 
 ---
 
@@ -267,7 +270,7 @@ Nothing to vault.
 
 ---
 
-### Job 6: Shutdown Car Team
+### Job 5: Shutdown Car Team
 
 Run **after** all other jobs complete. Check if a Car agent team is active:
 

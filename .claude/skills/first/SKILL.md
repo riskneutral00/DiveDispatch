@@ -42,12 +42,12 @@ For each ticket with `status: ready` or `status: backlog`:
 - If the spec references a file path that no longer exists → flag for review
 - If two tickets target the same file with contradictory changes → flag the conflict
 
-### Select next ticket
+### Build ticket queue
 - Sort `ready` tickets by priority (P0 > P1 > P2 > P3), then by ID (lower = older = first)
-- **Skip tickets marked `human_required: true`** — print: `Skipped DD-{NNN} (human required)`
-- If ALL remaining ready tickets are human-required, print: `All ready tickets need Matt's input. Listing them:` followed by the list, then STOP
-- If the `NEXT:` tag in memory points to a different ticket, note the discrepancy
-- Claim the ticket: set `status: in_progress`, `assigned_to: claude`, `branch: ticket/DD-{NNN}`
+- **Flag tickets marked `human_required: true`** — these will be listed but skipped by Driver
+- If ALL remaining ready tickets are human-required, print: `All ready tickets need Matt's input. Listing them:` followed by the list, then STOP (do not launch Car team)
+- If the `NEXT:` tag in memory points to a different ticket than the top of the queue, note the discrepancy
+- Do NOT claim any tickets — Driver handles claiming in its own loop
 
 ---
 
@@ -65,7 +65,7 @@ From the JSON output, extract:
 
 ---
 
-## Step 4 — Output + Start Working
+## Step 4 — Output + Launch Car Team
 
 Print exactly this format:
 
@@ -77,80 +77,39 @@ Car flow: {N} tickets completed by Driver, {N} Backseat findings ({N} CRITICAL, 
   {New fix tickets: DD-{NNN}, DD-{NNN} — if any}
 Board: {action taken — e.g., "3 stale tickets archived. 14 active (5 ready, 9 backlog)."}
 {Skipped: DD-{NNN} {title} (human required) — for each skipped ticket, if any}
-Next: DD-{NNN} {title} (P{N}, {category}) — {one-line description}
+Queue: DD-{NNN}, DD-{NNN}, ... — {N} tickets for Driver to process
 Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation components
 {Conflict: {description} OR Conflict: None}
-Starting DD-{NNN} now.
+Launching Car team now.
 ```
 
 Omit the `Car flow:` line if no Driver/Backseat activity since last session.
 
-Then create the Car agent team and spawn teammates:
-
-```
-TeamCreate(team_name: "car", description: "Car workflow: Driver/Backseat/Patrol")
-```
-
-Spawn all 3 teammates (in a single response, all in parallel):
-
-```
-Agent(
-  description: "Driver: autonomous ticket processor",
-  subagent_type: "driver",
-  name: "driver",
-  team_name: "car",
-  prompt: "You are the Driver teammate in the Car agent team. Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. After each merge, SendMessage to backseat with merge details. Go idle when no tickets — TeammateIdle hook will wake you.",
-  run_in_background: true,
-  mode: "auto"
-)
-
-Agent(
-  description: "Backseat: post-merge reviewer",
-  subagent_type: "backseat",
-  name: "backseat",
-  team_name: "car",
-  prompt: "You are the Backseat teammate in the Car agent team. You are event-driven — wait for merge messages from Driver. When you receive a MERGED message, run diff-classify and dispatch reviews. After review, SendMessage to patrol with findings and to driver with any fix tickets.",
-  run_in_background: true,
-  mode: "auto"
-)
-
-Agent(
-  description: "Patrol: quality preparation",
-  subagent_type: "patrol",
-  name: "patrol",
-  team_name: "car",
-  prompt: "You are the Patrol teammate in the Car agent team. You are event-driven — wait for review-complete messages from Backseat. When you receive a REVIEW-DONE message, run post-merge validation, QA, review-tests, reconcile, and vault readiness check (tsc + tests + invariants + backseat queue drain). Write .patrol-ran with CLEAN/BLOCKED verdict. SendMessage to team-lead when observations are staged.",
-  run_in_background: true,
-  mode: "auto"
-)
-```
-
-**Fail-loud guard** — verify the team actually spawned:
+Then launch the Car team via tmux:
 
 ```bash
-cat ~/.claude/teams/car/config.json 2>/dev/null | grep -c '"name"'
+exec bash scripts/car.sh
 ```
 
-If the config file doesn't exist or has fewer than 3 members, **STOP immediately** and print:
+This opens a tmux session with 4 panes: Driver, Backseat, Patrol, and a free shell. Each agent runs as its own `claude` CLI instance. Matt can switch between panes with `Ctrl+B + arrow keys` to watch or interact with any agent.
+
+If `scripts/car.sh` doesn't exist or tmux isn't available, fall back to printing:
+
 ```
-CAR TEAM FAILED TO SPAWN. Do NOT proceed with ticket work inline.
-Check: ~/.claude/hooks/check-ticket-agent.sh
-Run: /driver to retry, or fix the hook first.
+Car team ready. Run this from your terminal:
+  ./scripts/car.sh
 ```
 
-Do NOT continue to work on tickets if the team failed to spawn. This prevents silent bypass of the review pipeline.
-
-If the team spawned successfully, print: `Car team created (Driver, Backseat, Patrol) — tmux panes active.`
-
-Then immediately begin working on the identified ticket. Read the spec from `.tickets/DD-{NNN}.md`. Read the relevant source files. Follow CLAUDE.md rules. No further prompts — just start coding.
+Then **stop**. Do NOT claim tickets or code inline — the Car team handles all ticket work autonomously.
 
 ---
 
 ## Rules
 
 - **Execute immediately.** No preamble, no recap of what the skill does.
-- **30 seconds max** for Steps 1–3. The user wants to start working, not wait for an audit.
-- **If tests are failing**, that becomes the next item — fix failing tests before anything else.
-- **If no active thread or NEXT tag**, pick the highest-priority ready ticket from `.tickets/`.
+- **30 seconds max** for Steps 1–3. The user wants the Car team running, not an audit.
+- **If tests are failing**, note it in the status block — Driver will handle it as top priority.
+- **If no active thread or NEXT tag**, queue the highest-priority ready tickets from `.tickets/`.
 - **If `.tickets/` is empty**, report "No tickets. Use /spec to create one." and stop.
-- **Never ask which item to work on.** Pick the highest-priority unchecked item and start.
+- **Never code inline.** All ticket work goes through the Car team (Driver → Backseat → Patrol).
+- **Never ask which item to work on.** Launch the Car team and let Driver pick by priority.
