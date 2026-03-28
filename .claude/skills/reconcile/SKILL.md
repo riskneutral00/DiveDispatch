@@ -302,4 +302,4 @@ touch .reconcile-ran
 - **Vault sync after every absorb, dismiss, or close.** Not batched — each action syncs immediately.
 - **Auto-unblock follows `/board done` logic exactly.** Scan `blocked_by` arrays, remove the ID, promote `blocked` → `ready` when `blocked_by` empties.
 - **Threshold is 6 for both dimensions.** A single keyword in the title alone (3 points) is not enough. Signal convergence required.
-- **Independent skill.** Does not depend on `/first`, `/last`, `/gate`, or `/vault` having run.
+- **Independent skill.** Does not depend on `/first` or `/vault` having run.

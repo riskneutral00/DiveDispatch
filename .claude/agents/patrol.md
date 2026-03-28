@@ -64,7 +64,7 @@ Agent(
 
 **Reconcile:** Invoke Skill("reconcile") to compare current state against open tickets. Mark completed tickets as done, enrich next ready tickets.
 
-**Vault Readiness Check (replaces /gate):** Patrol IS the gate. Run these checks inline:
+**Vault Readiness Check:** Run these checks inline:
 
 1. `npx tsc --noEmit --pretty` — TypeScript must compile
 2. `npx vitest run` — all tests must pass

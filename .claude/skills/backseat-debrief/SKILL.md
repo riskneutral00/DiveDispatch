@@ -38,10 +38,3 @@ Append to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/{YYYY-MM-DD}-backs
 - {skill}: {N} findings ({severity breakdown})
 ```
 
-## Write Sentinels
-
-```bash
-echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","tests":"backseat","status":"complete"}' > .last-ran
-VERDICT=$( [ "$CRITICAL_COUNT" -gt 0 ] && echo "NO-GO" || echo "GO" )
-echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"'"$VERDICT"'","critical":'"$CRITICAL_COUNT"',"high":'"$HIGH_COUNT"'}' > .gate-ran
-```

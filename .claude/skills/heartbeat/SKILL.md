@@ -223,4 +223,4 @@ Tickets: .tickets/
 - **Full reconciliation.** Mark done + add new + flag contradictions. Don't just append.
 - **DiveDispatch-specific.** Tickets: `.tickets/DD-*.md`. Schema: `convex/schema.ts`. Invariants: per CLAUDE.md.
 - **`watch` items don't create tickets.** They appear in output only — awareness, not action.
-- **This skill is independent.** Not part of status/last/gate/vault lifecycle. Can run at any time.
+- **This skill is independent.** Not part of the vault lifecycle. Can run at any time.
