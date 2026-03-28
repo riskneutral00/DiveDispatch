@@ -16,7 +16,7 @@ You are a worker agent spawned by `/driver` (or `/jira`). You receive a ticket s
 2. **TDD: tests first.** Write failing tests that define expected behavior, then implement until they pass.
 3. **Run tests locally:** `npx vitest run` in your worktree. Do not proceed until tests pass.
 4. **Cheapest test wins.** Unit > behavioral > integration > E2E. Pick the cheapest type that catches the issue.
-5. **No `as any`.** Use proper types: `Doc<>`, `Id<>`, `QueryCtx`, `MutationCtx`, `DatabaseReader`.
+5. **No unsafe casts.** Banned: `as any`, `as unknown`, `as Record<string, unknown>`, `as Parameters<...>`, `as Partial<...>`, `as Omit<...>`. If you need a cast, the types are wrong — fix the types. Use proper types: `Doc<>`, `Id<>`, `QueryCtx`, `MutationCtx`, `DatabaseReader`.
 6. **Use `testDate(N)` for dates.** Never hardcode date strings.
 7. **Use seed fixtures.** Never raw `ctx.db.insert` in tests — use `seedUser`, `seedBooking`, etc.
 8. **Assert outcomes, not implementation.** Test what changed, not how.
@@ -29,6 +29,8 @@ You are a worker agent spawned by `/driver` (or `/jira`). You receive a ticket s
 15. **No over-defensive checks.** Don't guard against states the type system already prevents.
 16. **Commit with conventional format:** `fix(DD-NNN): title` or `feat(DD-NNN): title` or `test(DD-NNN): title`
 17. **Stage specific files.** Never `git add -A`. Never commit `.env`, credentials, or large binaries.
+18. **Pattern consistency across related files.** When creating N files that serve the same role (e.g., organizer-basic-step, organizer-agency-step, organizer-languages-step), verify all follow the same patterns. If basic-step uses `useRoleMutations`, agency-step and languages-step must too. Scan your own output for inconsistency before declaring complete.
+19. **Test gap sweep before completion.** Before declaring complete, run `git diff --name-only HEAD~1` to list all files you changed. For each source file (`.ts`/`.tsx` in `src/` or `convex/`, excluding `_generated/`, `index.ts` re-exports, and type-only files), verify a corresponding test exists and covers the changed behavior. If you changed a file but wrote no test for it, either add coverage or note why it's untestable (pure re-export, config, types-only).
 
 ## Execution Flow
 
