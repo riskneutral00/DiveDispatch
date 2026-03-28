@@ -89,6 +89,7 @@ playwright-report/
 .mulch/
 .overstory/
 .jira/
+.backseat/
 docs/LLM_HANDOFF.md
 
 # clerk configuration (can include secrets)

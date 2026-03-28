@@ -26,6 +26,7 @@ TIMEOUT_S_MIN=5                # S-size ticket timeout
 TIMEOUT_M_MIN=15               # M-size ticket timeout
 TIMEOUT_L_MIN=30               # L-size ticket timeout
 MAX_MERGE_ATTEMPTS=3           # Auto-resolve merge conflicts
+MAX_BATCH_TICKETS=8            # Exit after N tickets to keep context under 50%
 ```
 
 ---
@@ -160,7 +161,28 @@ bash scripts/jira-merge.sh ticket/DD-{NNN} main
 
 ---
 
-## Step 6 — Idle
+## Step 6 — Batch Cap Check
+
+After each completed or blocked ticket, increment the batch counter. If `batch_count >= MAX_BATCH_TICKETS` (8):
+
+1. Print summary:
+   ```
+   Driver batch complete (context management).
+   ─────────────────────────────────────────────
+   Implemented: {N} tickets
+   Blocked: {N} tickets
+   Remaining: {N} ready tickets in queue
+   Duration: {HH:MM}
+
+   Run /driver again to continue.
+   ```
+2. Exit.
+
+This keeps context under 50%. Each `/driver` invocation starts fresh.
+
+---
+
+## Step 7 — Idle
 
 1. Print: `… No tickets. Polling every 2 min (exit after 15 min idle).`
 2. Track idle start time.
@@ -188,3 +210,4 @@ bash scripts/jira-merge.sh ticket/DD-{NNN} main
 - **Clean worktrees.** On success, worktree and branch are removed. On block, worktree is kept for inspection.
 - **No de-sloppify.** Quality rules are baked into the jira-worker prompt. First pass must be clean.
 - **Print status.** Every ticket gets a status line so Matt can see progress when he checks the terminal.
+- **Context discipline.** Keep under 50% context window. Worker agents return terse completion messages only (ID, status, test count, commit hash, file list — no full diffs or test output). Batch cap at 8 tickets forces exit and fresh restart.

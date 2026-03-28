@@ -189,3 +189,4 @@ Keep retrying — screenshots are essential for ticket quality.
 - **Never run seed commands.** Seed data is a prerequisite. If seed is broken, tell Matt.
 - **Lockfile on .counter.** Always acquire lock before reading/writing the counter.
 - **Source field.** Always set `source: navigator` so Driver can prioritize Navigator tickets over Backseat tickets.
+- **Context discipline.** Screenshots are the largest context consumers. After creating ~12-15 tickets, suggest Matt restart the session to keep context under 50%. Print: `Context getting full — consider starting a fresh /navigator session.` Track ticket count and warn at 12.

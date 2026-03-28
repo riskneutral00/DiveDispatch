@@ -171,7 +171,7 @@ Create `.tickets/DD-{NNN}.md` with YAML frontmatter + spec body:
 ---
 id: DD-{NNN}
 title: "{Title}"
-status: backlog
+status: ready          # backlog if human_required: true
 priority: {P0|P1|P2|P3}
 category: {feature|bugfix|security|performance|tooling|ux}
 assigned_to: null
@@ -223,7 +223,8 @@ After writing the ticket file, update `.tickets/.counter` with the new number.
 
 1. Report: "Created DD-{NNN}: {title} (P{X}, {category})"
 2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
-3. Note: "`/board pick` will claim this ticket when ready. Use `/board promote DD-{NNN}` to move from backlog to ready."
+3. If `human_required: true`: Note that this ticket needs Matt's input before Driver will pick it up.
+   If `human_required: false`: Note that Driver/Jira will pick this up automatically.
 
 ---
 

@@ -22,6 +22,7 @@ You are the Backseat in a pair-programming workflow. You watch the main branch f
 POLL_INTERVAL_SEC=120          # 2 minutes between polls
 IDLE_EXIT_MIN=25               # Exit after 25 minutes with no merges
 REVIEW_BACKLOG_BATCH=5         # Batch-review if >5 unreviewed merges
+MAX_BATCH_REVIEWS=10           # Exit after N reviews to keep context under 50%
 FINDINGS_LOG=.backseat/findings.md
 ```
 
@@ -30,7 +31,8 @@ FINDINGS_LOG=.backseat/findings.md
 ## Step 0 — Startup
 
 1. Record baseline: `git rev-parse HEAD` → store as `BASELINE_SHA`
-2. Ensure findings log exists:
+2. Initialize finding counters: `CRITICAL_COUNT=0`, `HIGH_COUNT=0`
+3. Ensure findings log exists:
    ```bash
    mkdir -p .backseat
    touch .backseat/findings.md
@@ -184,7 +186,8 @@ For each CRITICAL or HIGH finding:
    - Tests pass after fix
    ```
 
-5. Print: `🎫 DD-{NNN}: {title} [{priority}, from {original_ticket}]`
+5. Increment counters: if CRITICAL → `CRITICAL_COUNT+=1`, if HIGH → `HIGH_COUNT+=1`
+6. Print: `🎫 DD-{NNN}: {title} [{priority}, from {original_ticket}]`
 
 ### MEDIUM or LOW findings → Log only
 
@@ -207,12 +210,43 @@ Go to **Step 1** (poll again).
 
 ---
 
-## Step 6 — Idle
+## Step 6 — Batch Cap Check
+
+After each completed review, increment the review counter. If `review_count >= MAX_BATCH_REVIEWS` (10):
+
+1. Write sentinel files for `/vault`:
+   ```bash
+   echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","tests":"backseat","status":"complete"}' > .last-ran
+   VERDICT=$( [ "$CRITICAL_COUNT" -gt 0 ] && echo "NO-GO" || echo "GO" )
+   echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"'"$VERDICT"'","critical":'"$CRITICAL_COUNT"',"high":'"$HIGH_COUNT"'}' > .gate-ran
+   ```
+2. Print summary:
+   ```
+   Backseat batch complete (context management).
+   ───────────────────────────────────────────────
+   Reviewed: {N} merges
+   Tickets created: {N}
+   Findings logged: {N}
+   Duration: {HH:MM}
+
+   Run /backseat again to continue.
+   ```
+3. Exit.
+
+---
+
+## Step 7 — Idle
 
 1. Track idle start time.
 2. Wait 120 seconds.
 3. Go to **Step 1**.
 4. If idle for 25 minutes total:
+   - Write sentinel files for `/vault`:
+     ```bash
+     echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","tests":"backseat","status":"complete"}' > .last-ran
+     VERDICT=$( [ "$CRITICAL_COUNT" -gt 0 ] && echo "NO-GO" || echo "GO" )
+     echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"'"$VERDICT"'","critical":'"$CRITICAL_COUNT"',"high":'"$HIGH_COUNT"'}' > .gate-ran
+     ```
    - Print summary:
      ```
      Backseat session complete.
