@@ -3,7 +3,7 @@ name: first
 description: >
   Session opener. Resumes context from memory, prunes completed TODOs, detects stale/conflicting items,
   runs test health snapshot, identifies next work item, then starts working immediately.
-allowed-tools: Read, Bash, Grep, Glob, Write, Edit, Agent
+allowed-tools: Read, Bash, Grep, Glob, Write, Edit, Agent, Skill
 user-invocable: true
 ---
 
@@ -69,6 +69,36 @@ Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation compon
 {Conflict: {description} OR Conflict: None}
 Starting DD-{NNN} now.
 ```
+
+Then spawn the Car agents in background:
+
+```
+Agent(
+  description: "Driver: autonomous ticket processor",
+  subagent_type: "driver",
+  prompt: "Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. Run indefinitely.",
+  run_in_background: true,
+  mode: "auto"
+)
+
+Agent(
+  description: "Backseat: post-merge reviewer",
+  subagent_type: "backseat",
+  prompt: "Start the Backseat loop. Watch main for new merge commits, dispatch reviews, create tickets for findings. Run indefinitely.",
+  run_in_background: true,
+  mode: "auto"
+)
+
+Agent(
+  description: "Patrol: quality preparation",
+  subagent_type: "patrol",
+  prompt: "Start the Patrol loop. Watch for backseat-debrief completion, run gate/qa/review-tests/reconcile to prepare vault observations. Run indefinitely.",
+  run_in_background: true,
+  mode: "auto"
+)
+```
+
+Print: `Car agents spawned (Driver, Backseat, Patrol).`
 
 Then immediately begin working on the identified ticket. Read the spec from `.tickets/DD-{NNN}.md`. Read the relevant source files. Follow CLAUDE.md rules. No further prompts — just start coding.
 

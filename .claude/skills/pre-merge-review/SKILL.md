@@ -1,13 +1,13 @@
 ---
-name: driver-review
+name: pre-merge-review
 description: "Pre-merge review. S: tsc + invariant grep. M/L: full review agent. Returns GO/NO-GO."
 allowed-tools: Read, Bash, Grep, Glob, Agent
 user-invocable: false
 ---
 
-# driver-review
+# pre-merge-review
 
-Called by `/driver` after worker completes. Args: `{ticket_id} {size} {category} {worktree_path}`
+Called by Driver agent after worker completes. Args: `{ticket_id} {size} {category} {worktree_path}`
 
 ## Invariant Sweep (all sizes, if convex/ changed)
 

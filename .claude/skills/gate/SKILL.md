@@ -23,7 +23,7 @@ If Car flow active AND no uncommitted changes (`git diff --name-only` + `git dif
 
 1. Print: `Car flow detected — no local changes. GO.`
 2. Write sentinel: `echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"GO","critical":0,"high":0,"carflow":true}' > .gate-ran`
-3. Exit. (Driver's work was already reviewed by driver-review.)
+3. Exit. (Driver's work was already reviewed by pre-merge-review.)
 
 If Car flow active WITH local changes: continue below, scoped to uncommitted changes only.
 

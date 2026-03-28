@@ -1,13 +1,13 @@
 ---
-name: driver-scan
+name: ticket-pick
 description: "Read tickets, filter, score, return picked ticket ID or 'idle'."
 allowed-tools: Read, Glob, Grep
 user-invocable: false
 ---
 
-# driver-scan
+# ticket-pick
 
-Called by `/driver` orchestrator each loop iteration. Returns a ticket ID or "idle".
+Called by Driver agent each loop iteration. Returns a ticket ID or "idle".
 
 ## Filter
 
@@ -25,7 +25,7 @@ For each eligible ticket, compute:
 |--------|--------|
 | `weight` field (manual override) | raw value (default 0) |
 | `source: navigator` | +20 |
-| `source: backseat` | +10 |
+| `source: backseat` | +30 |
 | Priority: P0/P1/P2/P3 | 40/30/20/10 |
 | Unblock bonus | +15 per ticket listing this one in `blocked_by` |
 | Size: S/M/L | +5/0/-5 |

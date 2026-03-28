@@ -1,13 +1,13 @@
 ---
-name: backseat-poll
+name: merge-poll
 description: "Check git log for new merges since baseline. Returns commit list or 'idle'."
 allowed-tools: Bash
 user-invocable: false
 ---
 
-# backseat-poll
+# merge-poll
 
-Called by `/backseat` each loop iteration. Args: `{baseline_sha}`
+Called by Backseat agent each loop iteration. Args: `{baseline_sha}`
 
 ## Check for New Commits
 

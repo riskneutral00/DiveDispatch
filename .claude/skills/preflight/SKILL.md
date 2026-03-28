@@ -1,13 +1,13 @@
 ---
-name: driver-startup
+name: preflight
 description: "Reset stale claims, prune already-done tickets, capture test baseline."
 allowed-tools: Read, Edit, Bash, Grep, Glob
 user-invocable: false
 ---
 
-# driver-startup
+# preflight
 
-Called by `/driver` orchestrator at session start. Cleans up stale state and establishes baseline.
+Called by Driver agent at session start. Cleans up stale state and establishes baseline.
 
 ## Stale Claim Recovery
 

@@ -1,13 +1,13 @@
 ---
-name: backseat-act
+name: escalate
 description: "Create tickets from CRITICAL/HIGH findings. Lockfile counter for IDs."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 user-invocable: false
 ---
 
-# backseat-act
+# escalate
 
-Called by `/backseat` after reviews complete. Args: `{findings}` (severity, file, line, description, review skill, original ticket).
+Called by Backseat agent after reviews complete. Args: `{findings}` (severity, file, line, description, review skill, original ticket).
 
 ## For Each CRITICAL or HIGH Finding
 

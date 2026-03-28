@@ -1,13 +1,13 @@
 ---
-name: backseat-classify
+name: diff-classify
 description: "Map changed files from commits to review skill names."
 allowed-tools: Bash, Grep
 user-invocable: false
 ---
 
-# backseat-classify
+# diff-classify
 
-Called by `/backseat` after poll returns commits. Args: `{commit_list}`
+Called by Backseat agent after poll returns commits. Args: `{commit_list}`
 
 ## Classify Changed Files
 
