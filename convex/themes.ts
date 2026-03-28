@@ -1,6 +1,9 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
+import { requireAuth } from './lib/auth'
+import { checkHasAnyOperatorRole } from './userRoles'
+import { ErrorCode } from './lib/errorCodes'
 
 // Returns all active themes (for theme picker UI)
 export const listActive = query({
@@ -41,6 +44,10 @@ export const upsert = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const { user } = await requireAuth(ctx)
+    const isOperator = await checkHasAnyOperatorRole(ctx, user._id)
+    if (!isOperator) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+
     const sanitized = sanitizeFields(args, THEME_FIELDS)
 
     const existing = await ctx.db
