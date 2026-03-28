@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { getResourcesForBookings } from '../convex/bookingResources'
-import { testDate } from './helpers/dates'
-import type { Id } from '../convex/_generated/dataModel'
 import {
   seedUser,
   seedBooking,
