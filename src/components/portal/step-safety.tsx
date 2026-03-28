@@ -9,11 +9,28 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
+import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { Spinner } from '@/components/common/spinner'
 
 // ── Blood type options ────────────────────────────────────────────────────────
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+
+// ── Form state ────────────────────────────────────────────────────────────────
+
+interface SafetyForm {
+  bloodType: string
+  allergies: string
+  medications: string
+  insurancePolicyNumber: string
+}
+
+const defaultForm = (): SafetyForm => ({
+  bloodType: '',
+  allergies: '',
+  medications: '',
+  insurancePolicyNumber: '',
+})
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -27,35 +44,48 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
   const saved = useQuery(api.customerProfiles.getSafetyInfoByToken, { token })
   const saveSafetyInfo = useMutation(api.customerProfiles.saveSafetyInfo)
 
-  const [bloodType, setBloodType] = useState('')
-  const [allergies, setAllergies] = useState('')
-  const [medications, setMedications] = useState('')
-  const [insurancePolicyNumber, setInsurancePolicyNumber] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState<SafetyForm>(defaultForm())
+  const {
+    serverError,
+    clearServerError,
+    handleMutationError,
+    submitting,
+    setSubmitting,
+  } = usePortalStep()
 
   // Pre-fill from saved data once loaded
   useEffect(() => {
     if (saved) {
-      setBloodType(saved.bloodType)
-      setAllergies(saved.allergies)
-      setMedications(saved.medications)
-      setInsurancePolicyNumber(saved.insurancePolicyNumber)
+      setForm({
+        bloodType: saved.bloodType,
+        allergies: saved.allergies,
+        medications: saved.medications,
+        insurancePolicyNumber: saved.insurancePolicyNumber,
+      })
     }
   }, [saved])
 
+  const setField = <K extends keyof SafetyForm>(key: K, value: SafetyForm[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    clearServerError()
+  }
+
   async function handleContinue() {
-    setSaving(true)
+    setSubmitting(true)
+    clearServerError()
     try {
       await saveSafetyInfo({
         token,
-        ...(bloodType ? { bloodType } : {}),
-        ...(allergies ? { allergies } : {}),
-        ...(medications ? { medications } : {}),
-        ...(insurancePolicyNumber ? { insurancePolicyNumber } : {}),
+        ...(form.bloodType ? { bloodType: form.bloodType } : {}),
+        ...(form.allergies ? { allergies: form.allergies } : {}),
+        ...(form.medications ? { medications: form.medications } : {}),
+        ...(form.insurancePolicyNumber ? { insurancePolicyNumber: form.insurancePolicyNumber } : {}),
       })
       onComplete()
+    } catch (err) {
+      handleMutationError(err)
     } finally {
-      setSaving(false)
+      setSubmitting(false)
     }
   }
 
@@ -87,8 +117,8 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           {/* Blood type */}
           <GlassSimpleSelect
             label="Blood Type (Optional)"
-            value={bloodType}
-            onChange={setBloodType}
+            value={form.bloodType}
+            onChange={(v) => setField('bloodType', v)}
             options={BLOOD_TYPES}
             placeholder="Select blood type"
           />
@@ -96,8 +126,8 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           {/* Allergies */}
           <GlassTextarea
             label="Allergies (Optional)"
-            value={allergies}
-            onChange={(e) => setAllergies(e.target.value)}
+            value={form.allergies}
+            onChange={(e) => setField('allergies', e.target.value)}
             placeholder="e.g., penicillin, shellfish"
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
@@ -106,8 +136,8 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           {/* Medications */}
           <GlassTextarea
             label="Current Medications (Optional)"
-            value={medications}
-            onChange={(e) => setMedications(e.target.value)}
+            value={form.medications}
+            onChange={(e) => setField('medications', e.target.value)}
             placeholder="e.g., aspirin, blood thinners"
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
@@ -118,12 +148,19 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             label="Travel Insurance Policy Number"
             type="text"
             placeholder="Policy number"
-            value={insurancePolicyNumber}
-            onChange={(e) => setInsurancePolicyNumber(e.target.value)}
+            value={form.insurancePolicyNumber}
+            onChange={(e) => setField('insurancePolicyNumber', e.target.value)}
             helperText="Optional — enter your dive/travel insurance policy number."
           />
         </div>
       </GlassCard>
+
+      {/* Server error */}
+      {serverError && (
+        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
+          {serverError}
+        </p>
+      )}
 
       {/* Navigation */}
       <div className={`flex ${onBack ? 'justify-between' : 'justify-end'}`}>
@@ -137,9 +174,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           variant="primary"
           size="md"
           onClick={handleContinue}
-          disabled={saving}
+          loading={submitting}
+          disabled={submitting}
         >
-          {saving ? 'Saving…' : 'Continue'}
+          Continue
         </GlassButton>
       </div>
     </div>
