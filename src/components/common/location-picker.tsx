@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useCallback, useEffect, useId, useRef } from 'react'
+import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'react'
 import { APIProvider, Map, useApiIsLoaded, useMap } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
 import { GlassDialog } from '@/components/glass/glass-dialog'
+import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/common/autocomplete-keyboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -48,6 +49,8 @@ const DEFAULT_CENTER = { lat: 13.7563, lng: 100.5018 } // Bangkok fallback
 
 function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   const inputId = useId()
+  const listboxId = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const [center, setCenter] = useState<{ lat: number; lng: number }>(
     value ? { lat: value.lat, lng: value.lng } : DEFAULT_CENTER,
@@ -64,6 +67,8 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   const poiClickRef = useRef(false)
   const initialLoadRef = useRef(!!value)
   const [poiSelected, setPoiSelected] = useState(false)
+
+  const [kbState, kbDispatch] = useReducer(autocompleteKeyboardReducer, INITIAL_STATE)
 
   // Auto-trigger GPS if no value set yet
   useEffect(() => {
@@ -109,6 +114,34 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       setDisplayAddress(place.formattedAddress ?? suggestion.description)
     } catch {
       setDisplayAddress(suggestion.description)
+    }
+  }
+
+  // ── Keyboard navigation for autocomplete ───────────────────────────────────
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    const itemCount = data.length
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        kbDispatch({ type: 'ARROW_DOWN', itemCount })
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        kbDispatch({ type: 'ARROW_UP', itemCount })
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (kbState.highlightedIndex >= 0 && kbState.highlightedIndex < itemCount) {
+          handleSelect(data[kbState.highlightedIndex])
+          kbDispatch({ type: 'RESET' })
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        kbDispatch({ type: 'ESCAPE' })
+        setSuggestionsOpen(false)
+        inputRef.current?.focus()
+        break
     }
   }
 
@@ -217,19 +250,31 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
               <Search size={15} />
             </span>
             <input
+              ref={inputRef}
               id={inputId}
               type="text"
+              role="combobox"
+              aria-expanded={suggestionsOpen && status === 'OK'}
+              aria-controls={listboxId}
+              aria-activedescendant={
+                kbState.highlightedIndex >= 0 && suggestionsOpen && status === 'OK'
+                  ? `${listboxId}-option-${kbState.highlightedIndex}`
+                  : undefined
+              }
+              aria-autocomplete="list"
               value={query}
               placeholder={value ? `${value.placeName}, ${value.country}` : 'Search address…'}
               autoComplete="off"
               onChange={(e) => {
                 setQuery(e.target.value)
                 setSuggestionsOpen(true)
+                kbDispatch({ type: 'RESET' })
               }}
+              onKeyDown={handleKeyDown}
               onFocus={() => {
                 if (query) setSuggestionsOpen(true)
               }}
-              onBlur={() => setTimeout(() => setSuggestionsOpen(false), 150)}
+              onBlur={() => setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)}
               className="glass glass-field w-full text-sm py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
@@ -249,36 +294,51 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
         {/* Suggestions dropdown */}
         {suggestionsOpen && status === 'OK' && (
           <ul
+            id={listboxId}
             role="listbox"
+            aria-label="Address suggestions"
             className="rounded-[var(--border-radius)] border overflow-hidden shadow-lg"
             style={{
               background: 'var(--color-surface-elevated)',
               borderColor: 'var(--color-glass-border)',
             }}
           >
-            {data.map((s) => (
-              <li
-                key={s.place_id}
-                role="option"
-                aria-selected={false}
-                className="px-3 py-2.5 text-sm cursor-pointer text-primary"
-                onMouseDown={() => handleSelect(s)}
-                onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.background =
-                    'var(--color-glass-container-border)'
-                }}
-                onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.background = ''
-                }}
-              >
-                <span className="font-medium">{s.structured_formatting.main_text}</span>
-                {s.structured_formatting.secondary_text && (
-                  <span className="ml-1.5 opacity-60 text-xs">
-                    {s.structured_formatting.secondary_text}
-                  </span>
-                )}
-              </li>
-            ))}
+            {data.map((s, index) => {
+              const isHighlighted = index === kbState.highlightedIndex
+              return (
+                <li
+                  key={s.place_id}
+                  id={`${listboxId}-option-${index}`}
+                  role="option"
+                  aria-selected={isHighlighted}
+                  aria-posinset={index + 1}
+                  aria-setsize={data.length}
+                  className="px-3 py-2.5 text-sm cursor-pointer text-primary"
+                  style={{
+                    background: isHighlighted
+                      ? 'var(--color-glass-container-border)'
+                      : undefined,
+                  }}
+                  onMouseDown={() => {
+                    handleSelect(s)
+                    kbDispatch({ type: 'RESET' })
+                  }}
+                  onMouseEnter={() => {
+                    kbDispatch({ type: 'SET_INDEX', index })
+                  }}
+                  onMouseLeave={() => {
+                    kbDispatch({ type: 'SET_INDEX', index: -1 })
+                  }}
+                >
+                  <span className="font-medium">{s.structured_formatting.main_text}</span>
+                  {s.structured_formatting.secondary_text && (
+                    <span className="ml-1.5 opacity-60 text-xs">
+                      {s.structured_formatting.secondary_text}
+                    </span>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>
@@ -421,7 +481,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
               e.stopPropagation()
               onClear()
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full transition-opacity hover:opacity-70 cursor-pointer text-secondary"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-9 min-h-9 w-9 h-9 rounded-full transition-opacity hover:opacity-70 cursor-pointer text-secondary"
             aria-label="Clear location"
           >
             <X size={14} />
