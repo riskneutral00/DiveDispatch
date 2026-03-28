@@ -10,16 +10,26 @@ import { ROLE_PRECEDENCE } from '../../../convex/lib/rolePrecedence'
 interface HierarchySubBarProps {
   slug: string
   roleSlug: RoleKey
+  /** When provided, only show roles in this set (used when RoleSwitcher is active). */
+  filterRoles?: Set<string>
 }
 
-export function HierarchySubBar({ slug, roleSlug }: HierarchySubBarProps) {
+export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBarProps) {
   const roles = useQuery(api.userRoles.myRoles)
 
   // Don't render until loaded, or if user has only one role
   if (!roles || roles.length <= 1) return null
 
+  // When filterRoles is provided, only show roles in that set
+  const filtered = filterRoles
+    ? roles.filter((r) => filterRoles.has(r.role))
+    : roles
+
+  // Hide if filtering leaves 0 or 1 role (no switching needed within tree)
+  if (filtered.length <= 1) return null
+
   // Sort: highest precedence first
-  const sorted = [...roles].sort(
+  const sorted = [...filtered].sort(
     (a, b) => (ROLE_PRECEDENCE[a.role] ?? Infinity) - (ROLE_PRECEDENCE[b.role] ?? Infinity),
   )
 

@@ -13,6 +13,7 @@ import { ProfileOverlay, type ProfileOverlayTab } from './profile-overlay'
 import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
+import { RoleSwitcher } from './role-switcher'
 import { MobileBottomNav } from './mobile-bottom-nav'
 import { MobileTopNav } from './mobile-top-nav'
 import { NotificationBell } from './notification-bell'
@@ -95,7 +96,10 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         profileCompletion={profileCompletion}
       />
 
-      {/* Role switcher — shows all user roles as icon pills */}
+      {/* Cross-hierarchy role switcher — only visible for multi-tree users */}
+      <RoleSwitcher slug={slug} roleSlug={roleSlug} />
+
+      {/* Within-hierarchy role pills */}
       <HierarchySubBar slug={slug} roleSlug={roleSlug} />
 
       {/* Page content — pb-20 on mobile clears the fixed bottom nav */}
