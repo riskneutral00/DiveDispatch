@@ -5,6 +5,8 @@ import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, sanitizeMedicalAnswers, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
+import { rentalChecklistValidator } from './lib/validators'
+import { NOTIFICATION_TYPE } from './shared/statuses'
 
 const MEDICAL_SCHEMA_VERSION = '10346_v1'
 
@@ -45,11 +47,18 @@ export const saveMedicalAnswers = mutation({
     // Sanitize string values in answers (booleans pass through)
     const sanitizedAnswers = sanitizeMedicalAnswers(args.answers)
 
+    // Strip any keys not in the whitelist before storing
+    const filtered = Object.fromEntries(
+      Object.entries(sanitizedAnswers).filter(([key]) =>
+        (MEDICAL_QUESTION_KEYS as readonly string[]).includes(key)
+      )
+    )
+
     // Any "Yes" triggers physician referral
-    const hasYes = MEDICAL_QUESTION_KEYS.some((key) => sanitizedAnswers[key] === true)
+    const hasYes = MEDICAL_QUESTION_KEYS.some((key) => filtered[key] === true)
 
     await ctx.db.patch(profile._id, {
-      medicalAnswers: sanitizedAnswers,
+      medicalAnswers: filtered,
       medicalSchemaVersion: MEDICAL_SCHEMA_VERSION,
       physicianClearanceRequired: hasYes,
     })
@@ -104,7 +113,7 @@ export const saveMedicalAnswers = mutation({
 
       await notify(ctx, {
         userId: booking.ownerId,
-        type: 'medical_hard_block',
+        type: NOTIFICATION_TYPE.MedicalHardBlock,
         bookingId: link.bookingId,
         message: `Medical block: ${link.customerName} requires physician clearance before diving.`,
       })
@@ -165,14 +174,7 @@ export const savePortalWaiver = mutation({
 export const savePortalEquipment = mutation({
   args: {
     token: v.string(),
-    rentalChecklist: v.object({
-      mask: v.union(v.literal('own'), v.literal('rent')),
-      bcd: v.union(v.literal('own'), v.literal('rent')),
-      wetsuit: v.union(v.literal('own'), v.literal('rent')),
-      fins: v.union(v.literal('own'), v.literal('rent')),
-      regulator: v.union(v.literal('own'), v.literal('rent')),
-      maskPrescription: v.optional(v.string()),
-    }),
+    rentalChecklist: rentalChecklistValidator,
   },
   handler: async (
     ctx,

@@ -205,6 +205,80 @@ describe('saveMedicalAnswers', () => {
   })
 })
 
+// ─── saveMedicalAnswers — key filtering ──────────────────────────────────────
+
+describe('saveMedicalAnswers — key filtering', () => {
+  it('strips unknown keys — only whitelisted keys stored', async () => {
+    const t = makeT()
+    let token: string
+    let profileId: any
+
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+      profileId = fixture.profileId
+    })
+
+    await t.mutation(api.customerProfiles.saveMedicalAnswers, {
+      token: token!,
+      answers: { medical_q1: true, injected_key: 'payload' },
+    })
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
+      expect((profile!.medicalAnswers as Record<string, unknown>)['injected_key']).toBeUndefined()
+      expect((profile!.medicalAnswers as Record<string, unknown>)['medical_q1']).toBe(true)
+    })
+  })
+
+  it('all 10 valid keys pass through unchanged', async () => {
+    const t = makeT()
+    let token: string
+    let profileId: any
+
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+      profileId = fixture.profileId
+    })
+
+    await t.mutation(api.customerProfiles.saveMedicalAnswers, {
+      token: token!,
+      answers: VALID_MEDICAL,
+    })
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
+      expect(Object.keys(profile!.medicalAnswers ?? {})).toHaveLength(10)
+      for (let i = 1; i <= 10; i++) {
+        expect((profile!.medicalAnswers as Record<string, unknown>)[`medical_q${i}`]).toBe(false)
+      }
+    })
+  })
+
+  it('empty answers object stores empty', async () => {
+    const t = makeT()
+    let token: string
+    let profileId: any
+
+    await t.run(async (ctx) => {
+      const fixture = await seedPortalFixture(ctx)
+      token = fixture.token
+      profileId = fixture.profileId
+    })
+
+    await t.mutation(api.customerProfiles.saveMedicalAnswers, {
+      token: token!,
+      answers: {},
+    })
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
+      expect(profile!.medicalAnswers).toEqual({})
+    })
+  })
+})
+
 // ─── savePortalWaiver ────────────────────────────────────────────────────────
 
 describe('savePortalWaiver', () => {
