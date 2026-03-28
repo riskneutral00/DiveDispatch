@@ -26,14 +26,14 @@ interface LocationPickerProps {
 
 // ── FlyEffect: child of <Map> that imperatively pans/zooms ────────────────────
 
-function FlyEffect({ target }: { target: { lat: number; lng: number } | null }) {
+function FlyEffect({ target, zoom = 15 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
     if (target && map) {
       map.panTo(target)
-      map.setZoom(15)
+      map.setZoom(zoom)
     }
-  }, [target, map])
+  }, [target, map, zoom])
   return null
 }
 
@@ -58,6 +58,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(
     value ? { lat: value.lat, lng: value.lng } : null,
   )
+  const [flyZoom, setFlyZoom] = useState(15)
   const [gpsLoading, setGpsLoading] = useState(false)
   const [suggestionsOpen, setSuggestionsOpen] = useState(false)
   const poiClickRef = useRef(false)
@@ -92,57 +93,46 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   }
 
   // ── Autocomplete selection ─────────────────────────────────────────────────
-  function handleSelect(suggestion: google.maps.places.AutocompletePrediction) {
+  async function handleSelect(suggestion: google.maps.places.AutocompletePrediction) {
     setQuery(suggestion.description, false)
     clearSuggestions()
     setSuggestionsOpen(false)
 
-    const service = new google.maps.places.PlacesService(document.createElement('div'))
-    service.getDetails(
-      { placeId: suggestion.place_id, fields: ['geometry', 'formatted_address'] },
-      (result, status) => {
-        if (
-          status !== google.maps.places.PlacesServiceStatus.OK ||
-          !result?.geometry?.location
-        )
-          return
-        const lat = result.geometry.location.lat()
-        const lng = result.geometry.location.lng()
-        setFlyTarget({ lat, lng })
-        setDisplayAddress(result.formatted_address ?? suggestion.description)
-      },
-    )
+    try {
+      const place = new google.maps.places.Place({ id: suggestion.place_id })
+      await place.fetchFields({ fields: ['location', 'formattedAddress'] })
+      if (!place.location) return
+      poiClickRef.current = true
+      setPoiSelected(true)
+      setFlyZoom(20)
+      setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
+      setDisplayAddress(place.formattedAddress ?? suggestion.description)
+    } catch {
+      setDisplayAddress(suggestion.description)
+    }
   }
 
   // ── POI click: tap a place on the map to use its address ──────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function handleMapClick(e: any) {
+  async function handleMapClick(e: any) {
     const placeId = e?.detail?.placeId
     if (!placeId) return
     e.stop?.() // Prevent default Google info window
 
     poiClickRef.current = true
     setPoiSelected(true)
-    const service = new google.maps.places.PlacesService(document.createElement('div'))
-    service.getDetails(
-      { placeId, fields: ['geometry', 'formatted_address', 'name'] },
-      (result, detailStatus) => {
-        if (
-          detailStatus !== google.maps.places.PlacesServiceStatus.OK ||
-          !result?.geometry?.location
-        )
-          return
-        const lat = result.geometry.location.lat()
-        const lng = result.geometry.location.lng()
-        // Update center for confirm without moving the map view
-
-        const name = result.name ?? ''
-        const addr = result.formatted_address ?? ''
-        const display =
-          name && addr && !addr.startsWith(name) ? `${name}, ${addr}` : addr || name
-        setDisplayAddress(display)
-      },
-    )
+    try {
+      const place = new google.maps.places.Place({ id: placeId })
+      await place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] })
+      if (!place.location) return
+      const name = place.displayName ?? ''
+      const addr = place.formattedAddress ?? ''
+      const display =
+        name && addr && !addr.startsWith(name) ? `${name}, ${addr}` : addr || name
+      setDisplayAddress(display)
+    } catch {
+      // Silent fail — user can still drag the map
+    }
   }
 
   // ── Map idle: read center + reverse geocode ────────────────────────────────
@@ -154,36 +144,37 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       const lng = c.lng()
       setCenter({ lat, lng })
 
-      // Skip reverse geocoding on initial load (preserve saved address) or after POI click
-      if (initialLoadRef.current || poiClickRef.current) {
-        initialLoadRef.current = false
-        poiClickRef.current = false
-        return
-      }
+      // Skip reverse geocoding on initial load or after POI/autocomplete selection
+      if (initialLoadRef.current || poiClickRef.current) return
 
       // User dragged the map — back to manual pin mode
       setPoiSelected(false)
 
-      // Reverse geocode for area address + country
-      new google.maps.Geocoder().geocode({ location: { lat, lng } }, (geoResults, geoStatus) => {
-        const best = geoStatus === 'OK' && geoResults?.length
-          ? geoResults.find(
-              (r) => !r.types.includes('plus_code') && !/^[A-Z0-9]{4}\+/.test(r.formatted_address),
-            ) ?? geoResults[0]
-          : null
-        const fallbackAddress = best?.formatted_address ?? ''
-        const country =
-          best?.address_components?.find((c) => c.types.includes('country'))?.long_name ?? ''
+      // Reverse geocode for area address + country, then nearby search for POI name
+      ;(async () => {
+        try {
+          const geoResponse = await new google.maps.Geocoder().geocode({ location: { lat, lng } })
+          const geoResults = geoResponse?.results
+          const best = geoResults?.length
+            ? geoResults.find(
+                (r) => !r.types.includes('plus_code') && !/^[A-Z0-9]{4}\+/.test(r.formatted_address),
+              ) ?? geoResults[0]
+            : null
+          const fallbackAddress = best?.formatted_address ?? ''
+          const country =
+            best?.address_components?.find((ac) => ac.types.includes('country'))?.long_name ?? ''
 
-        // Nearby search for POI-level precision (differentiates gas station from 7-Eleven)
-        const service = new google.maps.places.PlacesService(e.map)
-        service.nearbySearch(
-          { location: { lat, lng }, radius: 50 },
-          (places, placeStatus) => {
-            if (placeStatus === 'OK' && places?.[0]?.name) {
-              const place = places[0]
-              const parts = [place.name, place.vicinity, country].filter((p): p is string => Boolean(p))
-              // Deduplicate: vicinity sometimes already ends with country
+          // Nearby search for POI-level precision (differentiates gas station from 7-Eleven)
+          try {
+            const { places } = await google.maps.places.Place.searchNearby({
+              locationRestriction: { center: { lat, lng }, radius: 50 },
+              fields: ['displayName', 'formattedAddress'],
+              maxResultCount: 1,
+            })
+            if (places?.length && places[0].displayName) {
+              const parts = [places[0].displayName, places[0].formattedAddress, country].filter(
+                (p): p is string => Boolean(p),
+              )
               const deduped = parts.filter(
                 (part, i) => i === 0 || !parts[i - 1]?.endsWith(part),
               )
@@ -191,9 +182,13 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
             } else if (fallbackAddress) {
               setDisplayAddress(fallbackAddress)
             }
-          },
-        )
-      })
+          } catch {
+            if (fallbackAddress) setDisplayAddress(fallbackAddress)
+          }
+        } catch {
+          // Geocoding failed — leave address as-is
+        }
+      })()
     },
     [],
   )
@@ -294,15 +289,16 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       <div className="flex-1 relative" style={{ minHeight: 0 }}>
         <Map
           defaultCenter={center}
-          defaultZoom={value ? 13 : 10}
+          defaultZoom={value ? 15 : 10}
           gestureHandling="greedy"
           disableDefaultUI
           mapId="dd-location-picker"
           onClick={handleMapClick}
+          onDragstart={() => { poiClickRef.current = false; initialLoadRef.current = false }}
           onIdle={handleIdle}
           style={{ width: '100%', height: '100%' }}
         >
-          <FlyEffect target={flyTarget} />
+          <FlyEffect target={flyTarget} zoom={flyZoom} />
         </Map>
 
         {/* Crosshair overlay — stays centered while map moves */}
