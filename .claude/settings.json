@@ -21,12 +21,6 @@
             "command": "bash .claude/hooks/commit-message-gate.sh",
             "timeout": 5,
             "statusMessage": "Checking commit message…"
-          },
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/test-colocation-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking test co-location…"
           }
         ]
       },

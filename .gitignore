@@ -6,6 +6,7 @@
 # lifecycle sentinel files (written by /last and /gate, consumed by /vault)
 .last-ran
 .gate-ran
+.vitest-last-pass
 
 # dependencies
 /node_modules

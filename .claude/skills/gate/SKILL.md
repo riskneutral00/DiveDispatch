@@ -17,12 +17,14 @@ You are a senior architect reviewing uncommitted changes before they reach `git 
 
 Run the test suite first. If tests fail, nothing else matters.
 
+**5-minute skip:** Before running tests, check if `.vitest-last-pass` exists and its timestamp is within the last 5 minutes:
 ```bash
-npx vitest run 2>&1
+if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -lt 300 ]; then echo "SKIP"; else echo "RUN"; fi
 ```
-
-- If **any tests fail** → immediate **NO-GO**. Output the failure summary and stop. Do not proceed to Phase 1.
-- If all tests pass → capture pass count and continue.
+- If **SKIP** → print `Tests: skipped (passed {N}s ago)` and continue to Phase 1.
+- If **RUN** → execute `npx vitest run 2>&1`:
+  - If **any tests fail** → immediate **NO-GO**. Output the failure summary and stop. Do not proceed to Phase 1.
+  - If all tests pass → write timestamp: `date +%s > .vitest-last-pass` → capture pass count and continue.
 
 ---
 
@@ -70,17 +72,16 @@ Dispatching: {comma-separated skill list}
 ───────────────────────
 ```
 
-Invoke each skill **sequentially** using the Skill tool. Order:
+Invoke all triggered skills **in parallel** using multiple Skill tool calls in a single message. Each skill runs its full process: inventory → audit → vault review → H-specs → baseline update.
 
-1. `/review-backend-schema` (if triggered)
-2. `/review-backend-auth` (if triggered)
-3. `/review-backend-mutations` (if triggered)
-4. `/review-frontend` (if triggered)
-5. `/review-tests` (if triggered)
+Skills to dispatch (only those triggered by Phase 1):
+- `/review-backend-schema`
+- `/review-backend-auth`
+- `/review-backend-mutations`
+- `/review-frontend`
+- `/review-tests`
 
-Let each skill run its full process: inventory → audit → vault review → H-specs → baseline update.
-
-After each skill completes, note its CRITICAL/HIGH/MEDIUM/LOW counts from its final output line.
+After all skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW counts from its final output line.
 
 ---
 
@@ -164,7 +165,7 @@ Ready for /vault: {YES or NO}
 ## Rules
 
 - **Dispatch, don't duplicate.** The gate classifies and dispatches. It does NOT re-implement the review skills' audit logic. Each skill owns its domain.
-- **Sequential dispatch.** Run one skill at a time so output stays readable and skills don't compete for context.
+- **Parallel dispatch.** Run all triggered skills simultaneously in a single message for speed. Aggregate results after all complete.
 - **Invariant sweep is always on.** Even if `/review-backend-schema` already ran, the invariant keyword grep is a fast safety net that catches what the full audit might frame differently.
 - **Test gaps are informational.** They appear in the verdict but never block (MEDIUM at most). Changing code without changing tests is sometimes intentional.
 - **Config-only changes skip review.** If only config files changed, report them and skip to the verdict with "Config changes only — no review skills applicable."

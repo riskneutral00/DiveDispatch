@@ -115,8 +115,9 @@ Read and display the full ticket file.
 1. Read `.tickets/.counter` for next number
 2. Increment counter, write back
 3. Ask for: priority (P0-P3), category (8 options), size (S/M/L), human_required (y/n), side_effects (comma-separated areas or "none")
-4. **Status defaults to `backlog`.** If the user explicitly requests `ready`, validate that the ticket body has non-empty `**Spec:**` text and at least one `**Acceptance:**` bullet. If not → override to `backlog` and warn: `Status set to backlog — spec + acceptance required for ready. Use /spec DD-{NNN} then /board promote DD-{NNN}.`
-5. Create `.tickets/DD-{NNN}.md` with frontmatter + empty spec body:
+4. **Duplicate check:** Before creating, scan all `.tickets/DD-*.md` titles. If any existing ticket's title has >60% word overlap with the new title, warn: `Possible duplicate: DD-{NNN} "{existing title}" — create anyway? (y/n)`. Also check if any ticket in the same `category` has matching keywords in its spec body (first 200 chars).
+5. **Status defaults to `backlog`.** If the user explicitly requests `ready`, validate that the ticket body has non-empty `**Spec:**` text and at least one `**Acceptance:**` bullet. If not → override to `backlog` and warn: `Status set to backlog — spec + acceptance required for ready. Use /spec DD-{NNN} then /board promote DD-{NNN}.`
+6. Create `.tickets/DD-{NNN}.md` with frontmatter + empty spec body:
 
 ```yaml
 ---
@@ -137,8 +138,8 @@ updated: {today}
 ---
 ```
 
-6. Print: `Created DD-{NNN}: {title}`
-7. If status is `backlog`, print: `Tip: run /spec DD-{NNN} to add spec + acceptance, then /board promote DD-{NNN} to mark ready.`
+7. Print: `Created DD-{NNN}: {title}`
+8. If status is `backlog`, print: `Tip: run /spec DD-{NNN} to add spec + acceptance, then /board promote DD-{NNN} to mark ready.`
 
 ### `/board promote DD-{NNN}` — Promote backlog to ready
 

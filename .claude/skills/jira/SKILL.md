@@ -119,7 +119,7 @@ When a ticket is merged (or flagged for review), remove its entries from `locks`
 
 Record `batch_start_time = now()` and `tickets_processed = 0`.
 
-Initialize tracking state: `completed_tickets = []`, `failed_tickets = []`, `deslop_stats = {assertions: 0, casts: 0, dead_code: 0}`, `review_findings = {CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0}`.
+Initialize tracking state: `completed_tickets = []`, `failed_tickets = []`, `review_findings = {CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0}`.
 
 Iterate through scored eligible tickets. Before each spawn, run the **swap gate check**:
 
@@ -206,37 +206,13 @@ Check if the worker reported completion or being blocked:
 
 ### 5b. If completed — Quality Pipeline
 
-The ticket passes through up to 3 stages before merge. Each stage runs in a **fresh agent** (separate context window — no author bias).
+The ticket passes through up to 2 stages before merge. Each stage runs in a **fresh agent** (separate context window — no author bias).
 
-#### Stage 1: De-Sloppify (all tickets)
+De-sloppify rules (no `as any`, no weak assertions, no dead imports, no hardcoded dates, no `console.log`) are baked into the jira-worker agent definition. Workers produce first-pass quality — no separate cleanup step.
 
-Spawn a cleanup agent in the same worktree (`../DD-worktree-{NNN}`):
+#### Stage 1: Category-Routed Review (size M and L only)
 
-```
-Agent(
-  description: "DD-{NNN}: de-sloppify",
-  subagent_type: "general-purpose",
-  prompt: "<de-sloppify instructions + worktree path>"
-)
-```
-
-The agent prompt must include:
-- Worktree path: `../DD-worktree-{NNN}`
-- Instruction to run `git diff main...HEAD` and review ALL changes
-- Remove: weak assertions (`.toBeDefined()` alone), `as any` casts, `console.log` in production code, commented-out code, tests that verify language/framework behavior instead of business logic, over-defensive checks for states the type system already prevents
-- Keep: all business logic tests, edge case handling, meaningful error boundaries
-- Run `npx vitest run` to confirm nothing breaks
-- If changes made: commit with `refactor(DD-{NNN}): de-sloppify`
-- If no slop found: report "clean" and move on
-- **Return counts:** number of weak assertions removed, `as any` casts fixed, lines of dead code removed
-
-Print: `  [{HH:MM}] DD-{NNN} de-sloppify: {N changes | clean}`
-
-Update `deslop_stats` with the returned counts.
-
-#### Stage 2: Category-Routed Review (size M and L only)
-
-**Skip this stage if ticket `size: S`.** S tickets proceed directly to merge after de-sloppify.
+**Skip this stage if ticket `size: S`.** S tickets proceed directly to merge.
 
 Read the ticket's `category` from frontmatter. Dispatch review skill(s) based on this mapping:
 
@@ -284,7 +260,7 @@ Update `review_findings` counts with the returned severity tallies.
 2. Print: `  [{HH:MM}] DD-{NNN} review GO ({N} advisory)`
 3. Proceed to merge
 
-#### Stage 3: Merge
+#### Stage 2: Merge
 
 Run the merge script from the project root, targeting the batch branch:
 
@@ -382,7 +358,6 @@ The monitor loop ends when:
    ```
    Summary:
      Completed: {N}
-     De-sloppified: {N changes across all tickets | all clean}
      Reviewed: {N} (M/L tickets only)
      Auto-retried: {N} merge failures ({N} recovered, {N} still failed)
      Failed: {N} (merge conflict, test failure, or review NO-GO)
@@ -419,9 +394,6 @@ The monitor loop ends when:
    | Ticket | Reason | Worktree |
    |--------|--------|----------|
    | DD-{NNN} | {reason} | {worktree path or "cleaned up"} |
-
-   ## De-sloppify
-   Weak assertions removed: {N} | as-any casts: {N} | Dead code: {N} lines
 
    ## Review Findings
    CRITICAL: {N} | HIGH: {N} | MEDIUM: {N} | LOW: {N}
@@ -473,11 +445,11 @@ On second Ctrl+C (within 10s of first):
 - **Double Ctrl+C = hard stop.** First is graceful, second is immediate.
 - **Stale claims are auto-recovered.** Any `in_progress` ticket at startup is assumed to be from a crashed prior run.
 - **Empty `side_effects` = no conflicts.** Tickets with `side_effects: []` can always run in parallel.
-- **Log everything.** Every spawn, merge, failure, de-sloppify, review, and unblock goes to `.jira/logs/`.
+- **Log everything.** Every spawn, merge, failure, review, and unblock goes to `.jira/logs/`.
 - **Persist review findings.** Always append review findings to the ticket body — never lose context about why a ticket was flagged.
-- **Separate context windows.** De-sloppify, review, and merge-fix agents each run in their own agent (fresh context). The reviewer never shares context with the implementer — this eliminates author bias.
-- **Pipeline is sequential per ticket.** When a worker completes, the orchestrator runs de-sloppify → review → merge synchronously before processing the next completion. This means simultaneous worker completions queue. Known limitation — acceptable because merge itself must be sequential anyway.
-- **Tier gating.** Size S tickets skip review (de-sloppify → merge). Size M and L get the full pipeline (de-sloppify → review → merge).
+- **Separate context windows.** Review and merge-fix agents each run in their own agent (fresh context). The reviewer never shares context with the implementer — this eliminates author bias.
+- **Pipeline is sequential per ticket.** When a worker completes, the orchestrator runs review → merge synchronously before processing the next completion. This means simultaneous worker completions queue. Known limitation — acceptable because merge itself must be sequential anyway.
+- **Tier gating.** Size S tickets skip review (straight to merge). Size M and L get the full pipeline (review → merge).
 - **Category routing.** Review agents dispatch the review skill(s) matching the ticket's `category` field. If no skill maps to the category, review is skipped.
 - **Swap-gated spawning.** Before every spawn, check `sysctl vm.swapusage`. If swap >= `SPAWN_PAUSE_SWAP_GB`, skip the spawn. The watchdog remains as emergency backstop (kill at 6GB, all-kill at 8GB). This replaces the old static `MAX_CONCURRENT=3` with adaptive concurrency.
 - **Limits are soft stops.** Duration, ticket, and swap limits prevent new worker spawns but never kill running workers. Running pipelines always complete.
