@@ -1,12 +1,13 @@
 import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import type { UserDoc, BookingDoc, InventoryUnitDoc } from './lib/types'
+import type { UserDoc, BookingDoc, InventoryUnitDoc, ReservationDoc } from './lib/types'
 import { requireAuth } from './lib/auth'
 import { checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import {
   getResourcesForBooking,
+  getResourcesForBookings,
   getBookingIdsForResource,
   type BookingResource,
 } from './bookingResources'
@@ -183,15 +184,15 @@ function buildCalendarResources(
   }))
 }
 
-async function toCalendarBooking(
-  ctx: QueryCtx,
+function toCalendarBooking(
   b: BookingDoc,
   nameMap: Map<string, string>,
-): Promise<CalendarBooking> {
+  resourceMap: Map<string, BookingResource[]>,
+): CalendarBooking {
   const divers = b.divers as Array<{ name: string }>
 
-  // Read from bookingResources junction table
-  const resources = await getResourcesForBooking(ctx, b._id as string)
+  // Look up pre-fetched resources from the batch map
+  const resources = resourceMap.get(b._id as string) ?? []
   const calendarResources = buildCalendarResources(resources, nameMap)
 
   // Extract instructor/boat names from resources for backward compat
@@ -273,18 +274,15 @@ export async function _listByOwner(
     )
     .collect()
 
-  // Collect resource slugs from bookingResources for name resolution
-  const allResources: BookingResource[] = []
-  for (const b of bookings) {
-    const res = await getResourcesForBooking(ctx, b._id as string)
-    allResources.push(...res)
-  }
+  // Batch-fetch all resources upfront
+  const resourceMap = await getResourcesForBookings(ctx, bookings.map((b) => b._id as string))
+  const allResources = [...resourceMap.values()].flat()
   const slugs = allResources
     .map((r) => r.resourceSlug)
     .filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(bookings.map((b) => toCalendarBooking(ctx, b, nameMap)))
+  return bookings.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
 
 /**
@@ -301,15 +299,12 @@ export async function _listByStatus(
   const allBookings = await resolveCallerBookings(ctx, user, args.activeRole)
   const filtered = allBookings.filter((b) => b.status === args.status)
 
-  const allResources: BookingResource[] = []
-  for (const b of filtered) {
-    const res = await getResourcesForBooking(ctx, b._id as string)
-    allResources.push(...res)
-  }
+  const resourceMap = await getResourcesForBookings(ctx, filtered.map((b) => b._id as string))
+  const allResources = [...resourceMap.values()].flat()
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(filtered.map((b) => toCalendarBooking(ctx, b, nameMap)))
+  return filtered.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
 
 /**
@@ -327,15 +322,12 @@ export async function _listByResource(
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
   const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as BookingDoc[]
 
-  const allResources: BookingResource[] = []
-  for (const b of bookings) {
-    const res = await getResourcesForBooking(ctx, b._id as string)
-    allResources.push(...res)
-  }
+  const resourceMap = await getResourcesForBookings(ctx, bookings.map((b) => b._id as string))
+  const allResources = [...resourceMap.values()].flat()
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return Promise.all(bookings.map((b) => toCalendarBooking(ctx, b, nameMap)))
+  return bookings.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
 
 /**
@@ -354,12 +346,9 @@ export async function _myDashboard(
 
   const allBookings = await resolveCallerBookings(ctx, user, activeRole)
 
-  // Collect resource slugs from bookingResources for name resolution
-  const allResources: BookingResource[] = []
-  for (const b of allBookings) {
-    const res = await getResourcesForBooking(ctx, b._id as string)
-    allResources.push(...res)
-  }
+  // Batch-fetch all resources upfront
+  const resourceMap = await getResourcesForBookings(ctx, allBookings.map((b) => b._id as string))
+  const allResources = [...resourceMap.values()].flat()
   const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
@@ -381,23 +370,34 @@ export async function _myDashboard(
   )
 
   // Build calendar bookings, attaching caller's reservation status for resource roles
-  const calendarBookings: CalendarBooking[] = []
-  for (const b of filteredBookings) {
-    const cb = await toCalendarBooking(ctx, b, nameMap)
+  // Batch-fetch reservations for all filtered bookings if resource role
+  let reservationMap = new Map<string, ReservationDoc[]>()
+  if (isResourceRole && callerUnitIds.size > 0) {
+    const entries = await Promise.all(
+      filteredBookings.map(async (b) => {
+        const reservations = await ctx.db
+          .query('reservations')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
+          .collect()
+        return [b._id as string, reservations] as const
+      }),
+    )
+    reservationMap = new Map(entries)
+  }
+
+  const calendarBookings: CalendarBooking[] = filteredBookings.map((b) => {
+    const cb = toCalendarBooking(b, nameMap, resourceMap)
 
     if (isResourceRole && callerUnitIds.size > 0) {
-      const reservations = await ctx.db
-        .query('reservations')
-        .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
-        .collect()
+      const reservations = reservationMap.get(b._id as string) ?? []
       const callerRes = reservations.find(
         (r) => callerUnitIds.has(r.inventoryUnitId as string) && r.status !== 'Vacated',
       )
       cb.reservationStatus = callerRes?.status as string | undefined
     }
 
-    calendarBookings.push(cb)
-  }
+    return cb
+  })
 
   let requests: RequestItem[] = []
 

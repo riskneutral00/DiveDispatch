@@ -24,6 +24,25 @@ export async function getResourcesForBooking(
     .collect()
 }
 
+/** All resources for multiple bookings, batched via Promise.all. */
+export async function getResourcesForBookings(
+  ctx: DbCtx,
+  bookingIds: string[],
+): Promise<Map<string, BookingResource[]>> {
+  const unique = [...new Set(bookingIds)]
+  const map = new Map<string, BookingResource[]>()
+  await Promise.all(
+    unique.map(async (id) => {
+      const rows = await ctx.db
+        .query('bookingResources')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
+        .collect()
+      if (rows.length > 0) map.set(id, rows)
+    }),
+  )
+  return map
+}
+
 /** All bookingIds where a given resource slug is assigned. */
 export async function getBookingIdsForResource(
   ctx: DbCtx,
