@@ -14,8 +14,8 @@ export function BookingStatusBadge({ status, size = 'sm', className }: BookingSt
 
   if (!colors) {
     return (
-      <span className="text-secondary"
-        className={`inline-flex items-center font-medium rounded-full ${
+      <span
+        className={`inline-flex items-center font-medium rounded-full text-secondary ${
           size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'
         }${className ? ` ${className}` : ''}`}
         style={{ background: 'var(--color-glass-bg)',

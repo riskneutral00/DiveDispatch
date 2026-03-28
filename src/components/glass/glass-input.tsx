@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useId } from "react";
 
 interface GlassInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -46,7 +48,7 @@ export function GlassInput({
           </span>
         )}
 
-        <input className="text-primary"
+        <input
           {...props}
           type={type}
           id={id}
@@ -58,7 +60,7 @@ export function GlassInput({
             onClick?.(e);
           }}
           className={[
-            "glass glass-field w-full text-sm",
+            "glass glass-field w-full text-sm text-primary",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "placeholder:opacity-50",
             leadingIcon ? "pl-9" : "pl-3",
