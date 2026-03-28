@@ -12,6 +12,7 @@ import { SpecialtyField } from '@/components/common/specialty-field'
 import type { Language } from '@/lib/types/language'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 
 function useRoleApi(role: ClerkRole) {
   switch (role) {
@@ -59,7 +60,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
   const me = useQuery(api.users.me)
   const update = useMutation(roleApi.update)
 
-  const isDiveCenter = role === 'DiveCenter'
+  const { supportsCoursePreferences } = getOrganizerRoleFlags(role)
 
   const [focusedLanguages, setFocusedLanguages] = useState<Language[]>([])
   const [owDays, setOwDays] = useState('')
@@ -74,7 +75,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
     if (existing !== undefined && me !== undefined && !initialized) {
       const langCodes: string[] = (existing?.customerLanguages as string[]) ?? me?.customerLanguages ?? []
       setFocusedLanguages(resolveLanguages(langCodes))
-      if (isDiveCenter) {
+      if (supportsCoursePreferences) {
         const firstAssoc = existing?.associations?.[0]
         setOwDays(firstAssoc?.owDays?.toString() ?? '')
         setAowDays(firstAssoc?.aowDays?.toString() ?? '')
@@ -83,13 +84,13 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
       }
       setInitialized(true)
     }
-  }, [existing, me, initialized, isDiveCenter])
+  }, [existing, me, initialized, supportsCoursePreferences])
 
   async function handleNext() {
     setSaving(true)
     setError(null)
     try {
-      if (isDiveCenter) {
+      if (supportsCoursePreferences) {
         const owDaysNum = owDays ? parseInt(owDays, 10) : undefined
         const aowDaysNum = aowDays ? parseInt(aowDays, 10) : undefined
         const oaDaysNum = oaDays ? parseInt(oaDays, 10) : undefined
@@ -135,7 +136,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
           Languages & Preferences
         </h2>
         <p className="text-sm text-secondary">
-          {isDiveCenter
+          {supportsCoursePreferences
             ? 'What languages do you teach in, and how long are your courses?'
             : 'What languages do your customers speak?'}
         </p>
@@ -150,7 +151,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
           />
         </div>
 
-        {isDiveCenter && (
+        {supportsCoursePreferences && (
           <>
             <div>
               <p className="text-sm font-medium mb-1 text-secondary">

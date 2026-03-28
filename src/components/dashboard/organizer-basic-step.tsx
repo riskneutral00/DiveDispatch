@@ -9,6 +9,7 @@ import { LocationPicker, type LocationValue } from '@/components/common/location
 import { GlassInput } from '@/components/glass/glass-input'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 
 interface OrganizerBasicStepProps {
   role: ClerkRole
@@ -140,11 +141,13 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         phone,
       }
 
+      const { locationModel } = getOrganizerRoleFlags(role)
+
       if (existing) {
         await update(basePayload)
-      } else if (role === 'DiveCenter') {
+      } else if (locationModel === 'single') {
         await create({ ...basePayload, associations: [] })
-      } else if (role === 'Agent') {
+      } else if (locationModel === 'multi') {
         await create({
           ...basePayload,
           locations: [{ placeName: location.placeName, country: location.country, lat: location.lat, lng: location.lng, placeId: location.placeId }],
@@ -166,7 +169,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     return <LoadingCard />
   }
 
-  const roleLabel = role === 'DiveCenter' ? 'dive center' : role.toLowerCase()
+  const { displayLabel: roleLabel } = getOrganizerRoleFlags(role)
 
   return (
     <GlassCard padding="lg">
