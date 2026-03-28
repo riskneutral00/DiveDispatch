@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import type { NotificationType } from '../convex/shared/statuses'
 import {
   NOTIFICATION_CONFIG,
   TIER_COLOR,
@@ -57,15 +58,15 @@ describe('tier assignments', () => {
   const INFO_TYPES = ['hold_placed', 'medical_cleared', 'portal_complete']
 
   it.each(ACTION_TYPES)('"%s" is tier action', (type) => {
-    expect(NOTIFICATION_CONFIG[type].tier).toBe('action')
+    expect(NOTIFICATION_CONFIG[type as NotificationType].tier).toBe('action')
   })
 
   it.each(ATTENTION_TYPES)('"%s" is tier attention', (type) => {
-    expect(NOTIFICATION_CONFIG[type].tier).toBe('attention')
+    expect(NOTIFICATION_CONFIG[type as NotificationType].tier).toBe('attention')
   })
 
   it.each(INFO_TYPES)('"%s" is tier info', (type) => {
-    expect(NOTIFICATION_CONFIG[type].tier).toBe('info')
+    expect(NOTIFICATION_CONFIG[type as NotificationType].tier).toBe('info')
   })
 })
 

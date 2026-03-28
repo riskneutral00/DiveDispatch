@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard, GlassButton, GlassSimpleSelect } from '@/components/glass'
+import { GlassCard, GlassButton, GlassCheckbox, GlassSimpleSelect } from '@/components/glass'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'

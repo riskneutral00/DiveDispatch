@@ -84,8 +84,10 @@ const FALLBACK_CONFIG: NotificationTypeConfig = { icon: 'Bell', tier: 'info' }
  * - Unknown types fall back to Bell + --color-text-secondary.
  */
 export function getNotificationStyle(type: string, isUnread: boolean): { icon: IconName; color: string } {
-  const config = NOTIFICATION_CONFIG[type] ?? FALLBACK_CONFIG
   const isKnownType = type in NOTIFICATION_CONFIG
+  const config = isKnownType
+    ? NOTIFICATION_CONFIG[type as NotificationType]
+    : FALLBACK_CONFIG
 
   let color: string
   if (!isUnread) {
