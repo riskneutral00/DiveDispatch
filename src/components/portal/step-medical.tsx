@@ -164,6 +164,22 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
         </p>
       </GlassCard>
 
+      {/* Privacy consent acknowledgment — informational, not a gate */}
+      <GlassCard padding="sm">
+        <p className="text-xs leading-relaxed text-secondary">
+          Your answers are shared with your dive center to ensure your safety, as required by
+          PADI medical standards.{' '}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline text-primary"
+          >
+            Privacy Policy
+          </a>
+        </p>
+      </GlassCard>
+
       {/* 10 yes/no questions — all required */}
       <div className="flex flex-col gap-3">
         {MEDICAL_QUESTIONS.map((q, idx) => {
