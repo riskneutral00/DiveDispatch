@@ -1,11 +1,12 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { api } from '../../../convex/_generated/api'
-import { type RoleKey, ROLE_BY_KEY } from '@/lib/constants/roles'
+import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
+import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/common/spinner'
 import { ProfileCompletionPill } from './profile-completion-pill'
@@ -29,7 +30,24 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const { user, isLoading } = useCurrentUser()
   const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
+  const myRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
+
+  // Compute the active hierarchy tree's roles for filtering HierarchySubBar
+  const activeTreeFilter = useMemo(() => {
+    if (!myRoles) return undefined
+    const clerkRoles = myRoles.map((r) => r.role as ClerkRole)
+    if (!hasMultipleHierarchies(clerkRoles)) return undefined
+    const trees = groupRolesByHierarchy(clerkRoles)
+    // Find the tree containing the current roleSlug
+    const activeTree = trees.find((tree) =>
+      tree.some((r) => {
+        const cfg = ROLE_BY_CLERK_ROLE[r]
+        return cfg && cfg.key === roleSlug
+      }),
+    )
+    return activeTree ? new Set(activeTree as string[]) : undefined
+  }, [myRoles, roleSlug])
 
   // ── Profile overlay state ──────────────────────────────────────────────────
   const [overlayOpen, setOverlayOpen] = useState(false)
@@ -99,8 +117,8 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       {/* Cross-hierarchy role switcher — only visible for multi-tree users */}
       <RoleSwitcher slug={slug} roleSlug={roleSlug} />
 
-      {/* Within-hierarchy role pills */}
-      <HierarchySubBar slug={slug} roleSlug={roleSlug} />
+      {/* Within-hierarchy role pills (scoped to active tree when role switcher is visible) */}
+      <HierarchySubBar slug={slug} roleSlug={roleSlug} filterRoles={activeTreeFilter} />
 
       {/* Page content — pb-20 on mobile clears the fixed bottom nav */}
       <main className="dashboard-enter flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">{children}</main>
