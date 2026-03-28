@@ -7,12 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { medicalAnswersSchema } from '@/lib/validation'
-import { getConvexErrorCode } from '@/lib/utils/convex-error'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-} from '@/lib/constants/error-messages'
+import { usePortalStep } from '@/lib/hooks/use-portal-step'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -75,9 +70,14 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
   const [answers, setAnswers] = useState<Answers>({})
   const [touched, setTouched] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [hardBlock, setHardBlock] = useState(false)
+  const {
+    serverError: error,
+    clearServerError,
+    handleMutationError,
+    submitting,
+    setSubmitting,
+  } = usePortalStep()
 
   // Pre-fill from saved state when returning to the portal; local answers take priority
   const effectiveAnswers: Answers =
@@ -103,7 +103,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
     if (!schemaResult.success) return
 
     setSubmitting(true)
-    setError(null)
+    clearServerError()
 
     try {
       const answersRecord: Record<string, boolean | string> = {}
@@ -118,14 +118,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
         onComplete()
       }
     } catch (err) {
-      const code = getConvexErrorCode(err)
-      if (code === 'TOKEN_EXPIRED') {
-        setError(TOKEN_EXPIRED_MESSAGE)
-      } else if (code === 'BOOKING_CLOSED') {
-        setError(BOOKING_CLOSED_MESSAGE)
-      } else {
-        setError(UNEXPECTED_ERROR_MESSAGE)
-      }
+      handleMutationError(err)
     } finally {
       setSubmitting(false)
     }

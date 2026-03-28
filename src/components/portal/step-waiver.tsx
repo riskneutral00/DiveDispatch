@@ -7,6 +7,7 @@ import { GlassInput } from '../glass/glass-input'
 import { SignaturePad, SignaturePadHandle } from '../common/signature-pad'
 import { ShieldCheck } from 'lucide-react'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
+import { usePortalStep } from '@/lib/hooks/use-portal-step'
 
 // ── Legal text constants ─────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ export function StepWaiver({
   const [guardianName, setGuardianName] = useState('')
   const [hasSig, setHasSig] = useState(false)
   const [hasGuardianSig, setHasGuardianSig] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const { errors, setErrors, clearError } = usePortalStep()
 
   const signatureRef = useRef<SignaturePadHandle>(null)
   const guardianSignatureRef = useRef<SignaturePadHandle>(null)
@@ -124,7 +125,7 @@ export function StepWaiver({
 
     const signatureBlob = await signatureRef.current?.getBlob()
     if (!signatureBlob) {
-      setErrors((prev) => ({ ...prev, signature: 'Participant signature is required.' }))
+      setErrors({ ...errors, signature: 'Participant signature is required.' })
       return
     }
 
@@ -132,7 +133,7 @@ export function StepWaiver({
     if (isUnder18) {
       const blob = await guardianSignatureRef.current?.getBlob()
       if (!blob) {
-        setErrors((prev) => ({ ...prev, guardianSignature: 'Guardian signature is required.' }))
+        setErrors({ ...errors, guardianSignature: 'Guardian signature is required.' })
         return
       }
       guardianSignatureBlob = blob
@@ -216,7 +217,7 @@ export function StepWaiver({
               checked={acknowledged}
               onChange={(e) => {
                 setAcknowledged(e.target.checked)
-                if (e.target.checked) setErrors((prev) => { const n = {...prev}; delete n.acknowledged; return n })
+                if (e.target.checked) clearError('acknowledged')
               }}
             />
             <span className="text-sm leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
@@ -251,7 +252,7 @@ export function StepWaiver({
                   checked={hasInsurance === val}
                   onChange={() => {
                     setHasInsurance(val)
-                    setErrors((prev) => { const n = {...prev}; delete n.hasInsurance; return n })
+                    clearError('hasInsurance')
                   }}
                   className="h-4 w-4 cursor-pointer"
                   style={{ accentColor: 'var(--color-primary)' }}
@@ -278,7 +279,7 @@ export function StepWaiver({
               value={insurancePolicyNumber}
               onChange={(e) => {
                 setInsurancePolicyNumber(e.target.value)
-                if (e.target.value.trim()) setErrors((prev) => { const n = {...prev}; delete n.insurancePolicyNumber; return n })
+                if (e.target.value.trim()) clearError('insurancePolicyNumber')
               }}
               placeholder="e.g. DAN-123456"
               error={errors.insurancePolicyNumber}
@@ -299,7 +300,7 @@ export function StepWaiver({
             label="Signature"
             onChange={(has) => {
               setHasSig(has)
-              if (has) setErrors((prev) => { const n = {...prev}; delete n.signature; return n })
+              if (has) clearError('signature')
             }}
             error={errors.signature}
           />
@@ -333,7 +334,7 @@ export function StepWaiver({
               value={guardianName}
               onChange={(e) => {
                 setGuardianName(e.target.value)
-                if (e.target.value.trim()) setErrors((prev) => { const n = {...prev}; delete n.guardianName; return n })
+                if (e.target.value.trim()) clearError('guardianName')
               }}
               placeholder="Full legal name"
               error={errors.guardianName}
@@ -344,7 +345,7 @@ export function StepWaiver({
               label="Guardian Signature"
               onChange={(has) => {
                 setHasGuardianSig(has)
-                if (has) setErrors((prev) => { const n = {...prev}; delete n.guardianSignature; return n })
+                if (has) clearError('guardianSignature')
               }}
               error={errors.guardianSignature}
             />

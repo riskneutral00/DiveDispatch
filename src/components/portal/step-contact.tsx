@@ -2,12 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-} from '@/lib/constants/error-messages'
 import { AlertTriangle } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
@@ -19,6 +13,8 @@ import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
+import { usePortalStep } from '@/lib/hooks/use-portal-step'
+import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/common/spinner'
@@ -68,9 +64,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   const save = useMutation(api.customers.savePortalContact)
 
   const [form, setFormState] = useState<CustomerContactData>(defaultForm())
-  const [serverError, setServerError] = useState<string | null>(null)
   const [ageError, setAgeError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const {
+    serverError,
+    clearServerError,
+    handleMutationError,
+    submitting,
+    setSubmitting,
+  } = usePortalStep()
 
   // Returning customer dedup
   const [returningCustomer, setReturningCustomer] = useState<{
@@ -186,7 +187,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setServerError(null)
+    clearServerError()
     setAgeError(null)
 
     const result = validate(form)
@@ -235,14 +236,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       })
       onComplete()
     } catch (err) {
-      const code = getConvexErrorCode(err)
-      if (code === 'TOKEN_EXPIRED') {
-        setServerError(TOKEN_EXPIRED_MESSAGE)
-      } else if (code === 'BOOKING_CLOSED') {
-        setServerError(BOOKING_CLOSED_MESSAGE)
-      } else {
-        setServerError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
-      }
+      handleMutationError(err)
     } finally {
       setSubmitting(false)
     }
