@@ -1,4 +1,4 @@
-import type { RichDirectoryEntry } from '@/components/directory/stakeholder-card'
+import type { RichDirectoryEntry } from '@/lib/types/directory'
 
 export type DirectoryFilterInput = {
   entries: RichDirectoryEntry[]

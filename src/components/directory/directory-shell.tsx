@@ -9,7 +9,7 @@ import { GlassInput } from '@/components/glass/glass-input'
 import { ROLE_FILTERS } from '@/lib/constants/resource-filters'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { filterDirectoryEntries } from '@/lib/utils/directory-filters'
-import type { RichDirectoryEntry } from './stakeholder-card'
+import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { FilterBar } from './filter-bar'
 import { StakeholderGrid } from './stakeholder-grid'
 

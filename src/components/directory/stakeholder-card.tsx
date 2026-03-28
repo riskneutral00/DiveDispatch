@@ -4,23 +4,9 @@ import Link from 'next/link'
 import { BadgeCheck, MapPin, Star } from 'lucide-react'
 import { GlassBadge } from '@/components/glass/glass-badge'
 import { GlassCard } from '@/components/glass/glass-card'
-import type { DirectoryEntry } from '../../../convex/directory'
+import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { LanguageFlags } from '@/components/common/language-flags'
-
-// Extends DirectoryEntry with role-specific fields returned by the enhanced
-// listByRole query (builder-directory-backend). Field names match the backend's
-// DirectoryEntry exactly so merging this branch drops the extension cleanly.
-export type RichDirectoryEntry = DirectoryEntry & {
-  agencies?: string[]    // Instructor: credential agencies (e.g. ['PADI', 'SSI'])
-  boatCapacity?: number  // Boat: max pax of largest vessel in fleet
-  boatType?: string      // Boat: type of largest vessel
-  gasMixes?: string[]    // Compressor: supported gas mixes
-  maxDepth?: number      // Pool: max depth in metres
-  maxCapacity?: number   // Pool: max capacity in pax
-  association?: string   // Agent: primary association agency name
-  isPreferred?: boolean  // Instructor: starred by the authenticated caller
-}
 
 
 const ROLE_PATH_PREFIX: Record<string, string> = {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { filterDirectoryEntries, type DirectoryFilterInput } from '../directory-filters'
-import type { RichDirectoryEntry } from '@/components/directory/stakeholder-card'
+import type { RichDirectoryEntry } from '@/lib/types/directory'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

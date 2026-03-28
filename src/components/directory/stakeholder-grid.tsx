@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react'
-import type { RichDirectoryEntry } from './stakeholder-card'
+import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { StakeholderCard } from './stakeholder-card'
 
 interface StakeholderGridProps {
