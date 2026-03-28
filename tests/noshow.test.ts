@@ -153,7 +153,7 @@ describe('markNoShow', () => {
 
   it('sends notification to resource stakeholder', async () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
-      const { reservationId } = await seedConfirmedBooking(ctx, {
+      const { reservationId, bookingId } = await seedConfirmedBooking(ctx, {
         sessionStartTime: '08:00',
         sessionDate: testDate(0),
       })
@@ -164,6 +164,9 @@ describe('markNoShow', () => {
       const noShowNotif = notifications.find((n) => n.type === 'noshow_marked')
       expect(noShowNotif).toBeTruthy()
       expect(noShowNotif!.userId).toBe(TEST_SLUGS.instructor)
+      expect(noShowNotif!.bookingId).toBe(bookingId)
+      expect(noShowNotif!.message).toContain('NoShow')
+      expect(noShowNotif!.createdAt).toBeTypeOf('number')
     })
   })
 
@@ -266,7 +269,7 @@ describe('revertNoShow', () => {
 
   it('sends notification to resource stakeholder on revert', async () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
-      const { reservationId } = await seedConfirmedBooking(ctx, {
+      const { reservationId, bookingId } = await seedConfirmedBooking(ctx, {
         sessionStartTime: '08:00',
         sessionDate: testDate(0),
       })
@@ -278,6 +281,9 @@ describe('revertNoShow', () => {
       const revertNotif = notifications.find((n) => n.type === 'noshow_reverted')
       expect(revertNotif).toBeTruthy()
       expect(revertNotif!.userId).toBe(TEST_SLUGS.instructor)
+      expect(revertNotif!.bookingId).toBe(bookingId)
+      expect(revertNotif!.message).toContain('reverted')
+      expect(revertNotif!.createdAt).toBeTypeOf('number')
     })
   })
 })

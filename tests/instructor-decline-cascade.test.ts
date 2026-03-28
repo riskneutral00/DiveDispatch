@@ -126,6 +126,20 @@ describe('instructor blocks date — booking cascade', () => {
       expect(reservation!.vacatedBy).toBe('stakeholder_declined')
     })
   })
+
+  it('4. booking marked needsAttention after instructor blocks date', async () => {
+    await t.run(async (ctx) => {
+      const { bookingId, instrToken, date } = await setupBookingWithInstructor(ctx)
+
+      await _toggleBlockedDate(
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as unknown as Parameters<typeof _toggleBlockedDate>[0],
+        { date, roleType: 'Instructor' },
+      )
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking!.needsAttention).toBe(true)
+    })
+  })
 })
 
 // ─── Auto-advance gate tests ──────────────────────────────────────────────────
