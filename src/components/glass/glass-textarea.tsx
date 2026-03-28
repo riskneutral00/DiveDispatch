@@ -31,13 +31,13 @@ export function GlassTextarea({
         </label>
       )}
 
-      <textarea className="text-primary"
+      <textarea
         {...props}
         id={id}
         rows={rows}
         disabled={disabled}
         className={[
-          "glass glass-field w-full text-sm px-3 py-2.5 resize-none",
+          "glass glass-field w-full text-sm text-primary px-3 py-2.5 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "placeholder:opacity-50",
           className,

@@ -116,42 +116,24 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           </div>
 
           {/* Allergies */}
-          <div>
-            <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
-            >
-              Allergies{' '}
-              <span className="font-normal text-secondary">
-                (Optional)
-              </span>
-            </label>
-            <GlassTextarea
-              value={allergies}
-              onChange={(e) => setAllergies(e.target.value)}
-              placeholder="e.g., penicillin, shellfish"
-              rows={DEFAULT_TEXTAREA_ROWS}
-              maxLength={500}
-            />
-          </div>
+          <GlassTextarea
+            label="Allergies (Optional)"
+            value={allergies}
+            onChange={(e) => setAllergies(e.target.value)}
+            placeholder="e.g., penicillin, shellfish"
+            rows={DEFAULT_TEXTAREA_ROWS}
+            maxLength={500}
+          />
 
           {/* Medications */}
-          <div>
-            <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
-            >
-              Current Medications{' '}
-              <span className="font-normal text-secondary">
-                (Optional)
-              </span>
-            </label>
-            <GlassTextarea
-              value={medications}
-              onChange={(e) => setMedications(e.target.value)}
-              placeholder="e.g., aspirin, blood thinners"
-              rows={DEFAULT_TEXTAREA_ROWS}
-              maxLength={500}
-            />
-          </div>
+          <GlassTextarea
+            label="Current Medications (Optional)"
+            value={medications}
+            onChange={(e) => setMedications(e.target.value)}
+            placeholder="e.g., aspirin, blood thinners"
+            rows={DEFAULT_TEXTAREA_ROWS}
+            maxLength={500}
+          />
 
           {/* Insurance */}
           <GlassInput

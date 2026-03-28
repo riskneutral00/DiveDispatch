@@ -463,26 +463,14 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
         {needsPoweredLenses === true && (
           <div className="mt-4">
-            <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
-            >
-              Prescription Details
-              {rentalChecklist.mask === 'rent' && (
-                <span style={{ color: 'var(--color-destructive)' }}> *</span>
-              )}
-            </label>
             <GlassTextarea
+              label={`Prescription Details${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               placeholder="e.g. Left: −2.00, Right: −2.50"
               rows={DEFAULT_TEXTAREA_ROWS}
               error={displayErrors.prescriptionStrength}
             />
-            {displayErrors.prescriptionStrength && (
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-                {displayErrors.prescriptionStrength}
-              </p>
-            )}
           </div>
         )}
       </GlassCard>
