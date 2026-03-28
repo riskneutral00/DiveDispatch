@@ -7,6 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../glass/glass-button'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
+import { GlassSimpleSelect } from '../glass/glass-simple-select'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { FormSectionHeader } from '@/components/common/form-section-header'
@@ -239,7 +240,7 @@ export function BoatProfileForm() {
               error={errors['location']}
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <GlassInput
               label="Contact Email"
               type="email"
@@ -332,21 +333,16 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
         <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-secondary">Boat Type</label>
-          <select
-            value={vessel.boatType}
-            onChange={(e) => onUpdate({ boatType: e.target.value as BoatType })}
-            className="glass w-full text-sm px-3 py-2.5 focus:outline-none rounded-[var(--border-radius)]"
-            style={{ color: vessel.boatType ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
-          >
-            <option value="">Select type…</option>
-            {BOAT_TYPE_OPTIONS.map((bt) => <option key={bt.value} value={bt.value}>{bt.label}</option>)}
-          </select>
-          {errors[`fleet.${fi}.boatType`] && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors[`fleet.${fi}.boatType`]}</p>}
-        </div>
+        <GlassSimpleSelect
+          label="Boat Type"
+          value={vessel.boatType}
+          onChange={(v) => onUpdate({ boatType: v as BoatType })}
+          options={BOAT_TYPE_OPTIONS}
+          placeholder="Select type…"
+          error={errors[`fleet.${fi}.boatType`]}
+        />
         <GlassInput label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
         <GlassInput label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
         <div className="sm:col-span-2">

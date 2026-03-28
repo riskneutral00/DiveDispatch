@@ -106,7 +106,7 @@ function AssociationRow({ index, association, errors, onChange, onRemove }: Asso
   return (
     <ItemCard onRemove={() => onRemove(index)} aria-label={`Remove membership ${index + 1}`}>
       <FormSectionHeader label={`Membership ${index + 1}`} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <GlassSimpleSelect label="Agency" value={association.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`associations.${index}.agency`]} />
         <GlassInput label="Membership Number" placeholder="e.g. PADI-12345" value={association.number} onChange={(e) => update('number', e.target.value)} error={errors[`associations.${index}.number`]} />
       </div>
@@ -218,7 +218,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
         <>
           <GlassCard padding="md">
             <FormSectionHeader label="Contact Information" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} className="sm:col-span-2" />
               <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setField('email', e.target.value)} error={errors.email} />
               <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.phone} onChange={(e) => setField('phone', e.target.value)} error={errors.phone} />

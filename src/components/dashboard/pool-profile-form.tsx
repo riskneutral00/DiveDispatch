@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
+import { GlassCheckbox } from '@/components/glass/glass-checkbox'
 import { GlassInput } from '@/components/glass/glass-input'
 import { Spinner } from '@/components/common/spinner'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
@@ -163,22 +164,15 @@ export function PoolProfileForm() {
               Venue Capabilities
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label
-                className="flex items-center gap-2 cursor-pointer select-none text-sm text-primary"
-              >
-                <input
-                  type="checkbox"
-                  checked={form.confinedCapable}
-                  onChange={(e) => setField('confinedCapable', e.target.checked)}
-                  className="rounded"
-                  style={{ accentColor: 'var(--color-primary)' }}
-                />
-                <span>Confined Water Capable</span>
-              </label>
+              <GlassCheckbox
+                label="Confined Water Capable"
+                checked={form.confinedCapable}
+                onChange={(v) => setField('confinedCapable', v)}
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <GlassInput
               label="Max Depth (m)"
               type="number"

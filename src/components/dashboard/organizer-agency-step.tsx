@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
+import { GlassButton, GlassCard, GlassInput, GlassSimpleSelect } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
@@ -118,21 +118,13 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
           <div key={idx}>
             {idx > 0 && <hr className="form-divider mb-4" />}
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-secondary">
-                  Agency
-                </label>
-                <select
-                  value={assoc.agency}
-                  onChange={(e) => updateRow(idx, 'agency', e.target.value)}
-                  className="glass w-full text-sm px-3 py-2.5 focus:outline-none text-primary"
-                >
-                  <option value="">Select agency…</option>
-                  {DIVE_AGENCIES_EXTENDED.map((a) => (
-                    <option key={a} value={a}>{a}</option>
-                  ))}
-                </select>
-              </div>
+              <GlassSimpleSelect
+                label="Agency"
+                value={assoc.agency}
+                onChange={(v) => updateRow(idx, 'agency', v)}
+                options={DIVE_AGENCIES_EXTENDED.map(a => a)}
+                placeholder="Select agency…"
+              />
               <GlassInput
                 label="Member Number"
                 value={assoc.number}

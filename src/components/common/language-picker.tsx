@@ -90,7 +90,7 @@ export function LanguagePicker({
   return (
     <div className="flex flex-col gap-2">
       {/* Search input with counter */}
-      <div className="relative w-full">
+      <div className="relative max-w-xs">
         <input
           type="text"
           value={query}

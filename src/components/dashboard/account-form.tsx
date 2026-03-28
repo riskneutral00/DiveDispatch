@@ -17,6 +17,7 @@ const PERSONAL_ROLE_KEYS = new Set(['instructor', 'dive-master'])
 
 interface AccountFormValues {
   businessName: string
+  nickname: string
 }
 
 export function AccountForm() {
@@ -26,6 +27,7 @@ export function AccountForm() {
 
   const [values, setValues] = useState<AccountFormValues>({
     businessName: '',
+    nickname: '',
   })
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -36,6 +38,7 @@ export function AccountForm() {
     if (user) {
       const loaded: AccountFormValues = {
         businessName: user.businessName ?? '',
+        nickname: user.nickname ?? '',
       }
       setValues(loaded)
       baselineRef.current = loaded
@@ -78,6 +81,7 @@ export function AccountForm() {
       await createUser({
         role: (defaultRole ?? 'DiveCenter') as ClerkRole,
         businessName: values.businessName.trim(),
+        nickname: values.nickname.trim() || undefined,
       })
       baselineRef.current = { ...values }
       setSaved(true)
@@ -99,8 +103,14 @@ export function AccountForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <GlassCard>
-        <div className="flex flex-col gap-4">
-          <div className="max-w-sm">
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <GlassInput
+              label="Nickname"
+              value={values.nickname}
+              onChange={(e) => set('nickname', e.target.value)}
+              autoComplete="nickname"
+            />
             <GlassInput
               label="Business name"
               value={values.businessName}

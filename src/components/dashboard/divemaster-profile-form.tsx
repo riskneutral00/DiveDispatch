@@ -77,7 +77,7 @@ function DmCredentialFields({ index, credential, errors, onChange }: {
     onChange(index, { ...credential, [field]: value })
   }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
       <GlassInput label="Certification Level" placeholder="e.g. Divemaster" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
       <GlassInput label="Agency Member ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-2" />
@@ -182,7 +182,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
             <div className="max-w-md">
               <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setField('email', e.target.value)} error={errors.email} />
               <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.phone} onChange={(e) => setField('phone', e.target.value)} error={errors.phone} />
             </div>
