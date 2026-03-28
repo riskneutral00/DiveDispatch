@@ -14,7 +14,7 @@ All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/
 
 ## Core vs Adapters (within convex/)
 
-- **Core** (owns booking lifecycle -- changes can break invariants): `convex/bookings/` (state machine, create, status, autoAdvance, inventoryRelease, readiness, edit), `convex/availability.ts`, `convex/reservationsMutations.ts`, `convex/bookingResources.ts`, `convex/bookingAuditLog.ts`
+- **Core** (owns booking lifecycle -- changes can break invariants): `convex/bookings/` (state machine, create, status, autoAdvance, inventoryRelease, edit), `convex/availability.ts`, `convex/reservationsMutations.ts`, `convex/bookingResources.ts`, `convex/bookingAuditLog.ts`
 - **Adapters** (consume core state, safe to modify independently): `convex/notifications.ts`, `convex/bookingLinks.ts`, `convex/portalSubmission.ts`, `convex/portalDraft.ts`, `convex/email.ts`, `convex/equipment*.ts`, `convex/seed*.ts`
 - **Shared** (pure utilities, no business state): `convex/lib/`, `convex/shared/`
 
