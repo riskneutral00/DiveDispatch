@@ -1,9 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { tryAutoAdvance, restoreSnapshotUnits, canReservationTransition } from './bookings/_shared'
+import { tryAutoAdvance, restoreSnapshotUnits, canReservationTransition, isActiveReservation, getAvailabilitySnapshot } from './bookings/_shared'
 import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
@@ -86,7 +86,7 @@ export async function _acceptHandler(
   const unit = await ctx.db.get(reservation.inventoryUnitId)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertOwnership(unit, caller)
 
   // Idempotent: already confirmed is a no-op
   if (reservation.status === RESERVATION_STATUS.Confirmed) return
@@ -130,7 +130,7 @@ export async function _acceptBookingHandler(
 
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertOwnership(unit, caller)
 
   const unitReservations = await ctx.db
     .query('reservations')
@@ -186,7 +186,7 @@ export async function _declineHandler(
 
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertOwnership(unit, caller)
 
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
@@ -204,9 +204,7 @@ export async function _declineHandler(
     )
     .collect()
 
-  const activeForUnit = unitReservations.filter(
-    (r) => r.status === RESERVATION_STATUS.PendingAcceptance || r.status === RESERVATION_STATUS.Confirmed,
-  )
+  const activeForUnit = unitReservations.filter(isActiveReservation)
 
   const now = Date.now()
 
@@ -227,15 +225,7 @@ export async function _declineHandler(
     }
 
     // Snapshot lookup uses windowStart to match the exact time window
-    const snapshot = await ctx.db
-      .query('availabilitySnapshots')
-      .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-        q
-          .eq('inventoryUnitId', args.inventoryUnitId as Id<"inventoryUnits">)
-          .eq('date', session.date)
-          .eq('windowStart', session.startTime),
-      )
-      .unique()
+    const snapshot = await getAvailabilitySnapshot(ctx, args.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
 
     if (!snapshot) {
       throw new ConvexError({
@@ -384,8 +374,7 @@ export const declineByBookingForCaller = mutation({
     const callerUnitIds = new Set(units.map((u) => u._id))
     const activeForCaller = reservations.filter(
       (r) =>
-        callerUnitIds.has(r.inventoryUnitId) &&
-        (r.status === RESERVATION_STATUS.PendingAcceptance || r.status === RESERVATION_STATUS.Confirmed),
+        callerUnitIds.has(r.inventoryUnitId) && isActiveReservation(r),
     )
 
     if (activeForCaller.length === 0) {

@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation } from '../_generated/server'
 import { internal } from '../_generated/api'
-import { requireAuth } from '../lib/auth'
+import { requireAuth, assertOwnership } from '../lib/auth'
 import {
   canBookingTransition,
   releaseBookingReservations,
@@ -27,7 +27,7 @@ export const cancelBooking = mutation({
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    assertOwnership(booking, user)
 
     if (!canBookingTransition(booking.status, 'cancel')) {
       throw new ConvexError({
@@ -142,7 +142,7 @@ export const clearMedicalBlock = mutation({
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    assertOwnership(booking, user)
 
     // Idempotent: already cleared — nothing to do
     if (!booking.medicalHardBlock) return

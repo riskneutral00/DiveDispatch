@@ -9,7 +9,7 @@ import { ConvexError, v } from 'convex/values'
 import { query } from '../_generated/server'
 import type { QueryCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
-import { requireAuth } from '../lib/auth'
+import { requireAuth, assertOwnership } from '../lib/auth'
 import { ErrorCode } from '../lib/errorCodes'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
@@ -134,9 +134,7 @@ export const getBookingReadiness = query({
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     // Ownership check: caller slug must match booking.ownerId
-    if (booking.ownerId !== user.slug) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    assertOwnership(booking, user)
 
     return computeReadiness(ctx, booking)
   },

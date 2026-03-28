@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
-import { requireAuth, getAuthUser, HOLD_TTL_MS } from './lib/auth'
+import { requireAuth, getAuthUser, HOLD_TTL_MS, assertOwnership } from './lib/auth'
 import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness } from './lib/profileCompleteness'
@@ -231,7 +231,7 @@ export const saveDraftState = mutation({
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    assertOwnership(booking, user)
     if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await ctx.db.patch(args.bookingId, { draftState: sanitizeString(args.draftState, DRAFT_STATE_MAX) })
@@ -270,7 +270,7 @@ export const discardDraft = mutation({
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    assertOwnership(booking, user)
     if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)

@@ -167,6 +167,17 @@ export function canReservationTransition(
   }
 }
 
+/**
+ * Returns true if the reservation is in an active state (PendingAcceptance or Confirmed).
+ * Replaces inline `r.status === 'PendingAcceptance' || r.status === 'Confirmed'` filters.
+ */
+export function isActiveReservation(reservation: { status: string }): boolean {
+  return (
+    reservation.status === RESERVATION_STATUS.PendingAcceptance ||
+    reservation.status === RESERVATION_STATUS.Confirmed
+  )
+}
+
 // ─── Overlap granularity ──────────────────────────────────────────────────────
 
 /**

@@ -7,7 +7,7 @@
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
-import { restoreSnapshotUnits } from './inventoryRelease'
+import { restoreSnapshotUnits, getAvailabilitySnapshot } from './inventoryRelease'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
 /**
@@ -80,15 +80,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
         // Restore availability snapshot — same pattern as releaseBookingReservations
         const session = await ctx.db.get(res.bookingSessionId)
         if (session) {
-          const snapshot = await ctx.db
-            .query('availabilitySnapshots')
-            .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-              q
-                .eq('inventoryUnitId', res.inventoryUnitId)
-                .eq('date', session.date)
-                .eq('windowStart', session.startTime),
-            )
-            .unique()
+          const snapshot = await getAvailabilitySnapshot(ctx, res.inventoryUnitId, session.date, session.startTime)
           if (snapshot) {
             await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
           }

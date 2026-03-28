@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { type MutationCtx, type QueryCtx, mutation, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { requireAuth, type DbCtx } from './lib/auth'
+import { requireAuth, assertOwnership, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
@@ -45,7 +45,7 @@ async function requireAuthAndOwnership(
 
   const booking = await ctx.db.get(bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertOwnership(booking, user)
 
   return booking
 }

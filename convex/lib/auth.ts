@@ -5,6 +5,25 @@ import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
 
 /**
+ * Asserts that a resource's ownerId matches the user's slug.
+ * Throws ConvexError with FORBIDDEN if ownership does not match.
+ * Replaces inline `if (resource.ownerId !== user.slug) throw ...` checks.
+ */
+export function assertOwnership(
+  resource: { ownerId: string },
+  user: { slug: string },
+  errorMessage?: string,
+): void {
+  if (resource.ownerId !== user.slug) {
+    throw new ConvexError(
+      errorMessage
+        ? { code: ErrorCode.FORBIDDEN, reason: errorMessage }
+        : { code: ErrorCode.FORBIDDEN },
+    )
+  }
+}
+
+/**
  * Shared context type for functions that need db + auth but work in both
  * query and mutation handlers. Prefer QueryCtx or MutationCtx directly
  * when the handler type is known.

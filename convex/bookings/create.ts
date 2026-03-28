@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
-import { requireAuth } from '../lib/auth'
+import { requireAuth, assertOwnership } from '../lib/auth'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import type { BookingDoc, InventoryUnitDoc, AvailabilitySnapshotDoc } from '../lib/types'
@@ -13,6 +13,7 @@ import {
   tryAutoAdvance,
   isFullDayResource,
   assertNoPastDates,
+  getAvailabilitySnapshot,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
@@ -42,7 +43,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  if ((booking as BookingDoc).ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertOwnership(booking as BookingDoc, user)
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
   // A resource with externalName (no resourceSlug) is outside the system.
@@ -139,15 +140,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
 
     // Lazy snapshot: if no snapshot exists, treat totalUnits as fully available
-    const snapshot = await ctx.db
-      .query('availabilitySnapshots')
-      .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-        q
-          .eq('inventoryUnitId', session.inventoryUnitId as Id<"inventoryUnits">)
-          .eq('date', session.date)
-          .eq('windowStart', session.startTime),
-      )
-      .unique()
+    const snapshot = await getAvailabilitySnapshot(ctx, session.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
 
     const currentAvailable: number = snapshot?.availableUnits ?? inventoryUnit.totalUnits
 

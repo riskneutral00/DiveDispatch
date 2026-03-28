@@ -5,11 +5,33 @@
  */
 
 import { ConvexError } from 'convex/values'
-import type { MutationCtx } from '../_generated/server'
-import type { Id } from '../_generated/dataModel'
+import type { MutationCtx, QueryCtx } from '../_generated/server'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { VacatedReason } from '../shared/statuses'
 import { RESERVATION_STATUS } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
+
+/**
+ * Looks up a single AvailabilitySnapshot by inventoryUnitId + date + windowStart.
+ * Returns the snapshot document or null if not found.
+ * Replaces 3+ identical inline queries across the booking domain.
+ */
+export async function getAvailabilitySnapshot(
+  ctx: QueryCtx | MutationCtx,
+  inventoryUnitId: Id<'inventoryUnits'>,
+  date: string,
+  windowStart: string,
+): Promise<Doc<'availabilitySnapshots'> | null> {
+  return ctx.db
+    .query('availabilitySnapshots')
+    .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
+      q
+        .eq('inventoryUnitId', inventoryUnitId)
+        .eq('date', date)
+        .eq('windowStart', windowStart),
+    )
+    .unique()
+}
 
 /** Restore availability snapshot when a reservation is released.
  * Re-reads snapshot from DB to avoid TOCTOU stale-parameter bugs (DD-017). */
@@ -69,15 +91,7 @@ export async function releaseBookingReservations(
       })
     }
 
-    const snapshot = await ctx.db
-      .query('availabilitySnapshots')
-      .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-        q
-          .eq('inventoryUnitId', res.inventoryUnitId)
-          .eq('date', session.date)
-          .eq('windowStart', session.startTime),
-      )
-      .unique()
+    const snapshot = await getAvailabilitySnapshot(ctx, res.inventoryUnitId, session.date, session.startTime)
 
     if (!snapshot) {
       throw new ConvexError({

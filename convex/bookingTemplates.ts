@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { Doc } from './_generated/dataModel'
-import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { getAuthUser, assertOwnership, OPERATOR_ROLE_SET } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
@@ -59,7 +59,7 @@ export const remove = mutation({
 
     const template = await ctx.db.get(args.id)
     if (!template) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (template.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    assertOwnership(template, user)
 
     await ctx.db.delete(args.id)
   },
