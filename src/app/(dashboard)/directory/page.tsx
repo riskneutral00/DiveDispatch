@@ -1,7 +1,7 @@
-import { DirectoryShell } from '@/components/directory/directory-shell'
+import { DirectoryPageClient } from '@/components/directory/directory-page-client'
 
 export const metadata = { title: 'Directory — DiveDispatch' }
 
 export default function DirectoryPage() {
-  return <DirectoryShell />
+  return <DirectoryPageClient />
 }

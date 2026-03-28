@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassInput } from '@/components/glass/glass-input'
+import { useSessionRoleContext } from '@/components/dashboard/session-dashboard-shell'
+import { PageTitle } from '@/components/common/page-title'
 import { ROLE_FILTERS } from '@/lib/constants/resource-filters'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { filterDirectoryEntries } from '@/lib/utils/directory-filters'
@@ -108,6 +110,11 @@ function useAllRoleResults() {
 }
 
 export function DirectoryShell() {
+  const sessionRole = useSessionRoleContext()
+  const homeHref = sessionRole
+    ? `/${sessionRole.slug}/${sessionRole.roleSlug}/dashboard`
+    : '/dashboard'
+
   const [selectedRole, setSelectedRole] = useState<RoleFilter>('All')
   const [searchRaw, setSearchRaw] = useState('')
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
@@ -141,7 +148,7 @@ export function DirectoryShell() {
   )
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col flex-1 min-h-0 w-full">
       {/* Top bar */}
       <header
         className="sticky top-0 z-20 flex items-center gap-4 px-4 py-3 sm:px-6"
@@ -152,7 +159,7 @@ export function DirectoryShell() {
           borderBottom: '1px solid var(--color-glass-border)',
         }}
       >
-        <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+        <Link href={homeHref} className="flex items-center gap-2 flex-shrink-0">
           <Waves size={20} style={{ color: 'var(--color-primary)' }} />
           <span
             className="font-bold text-sm leading-none hidden sm:block text-primary"
@@ -195,12 +202,7 @@ export function DirectoryShell() {
 
       {/* Page content */}
       <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
-        <h1
-          className="text-2xl font-bold mb-6 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          Directory
-        </h1>
+        <PageTitle title="Directory" className="mb-6" />
 
         {/* Role filter tabs — horizontally scrollable on mobile */}
         <div
