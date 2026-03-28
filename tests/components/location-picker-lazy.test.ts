@@ -50,7 +50,6 @@ const CONSUMER_FILES = [
   'src/components/dashboard/dive-center-profile-form.tsx',
   'src/components/dashboard/organizer-basic-step.tsx',
   'src/components/dashboard/agent-profile-form.tsx',
-  'src/components/common/profile-form.tsx',
   'src/components/common/profile-basic-info.tsx',
 ]
 
