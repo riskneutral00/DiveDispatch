@@ -52,10 +52,9 @@ export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: 
     if (!prefs) return EMPTY_DEFAULTS
 
     // Derive primary agency from operator profile associations
-    // diveCenters uses agencyCode, agents uses agency
     const firstDcAssoc = dcProfile?.associations?.[0]
     const firstAgentAssoc = agentProfile?.associations?.[0]
-    const primaryAgency = firstDcAssoc?.agencyCode ?? firstAgentAssoc?.agency ?? ''
+    const primaryAgency = firstDcAssoc?.agency ?? firstAgentAssoc?.agency ?? ''
 
     return {
       agency: primaryAgency,

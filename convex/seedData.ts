@@ -38,8 +38,8 @@ interface DiveCenterProfile {
   email: string
   phone: string
   associations: {
-    agencyCode: string
-    memberId: string
+    agency: string
+    number: string
     owDays?: number
     aowDays?: number
     oaDays?: number
@@ -193,7 +193,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     ...PHUKET,
     email: 'hug-ocean@divedispatch.dev',
     phone: '+66-76-381-100',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-34782', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-34782', ...PADI_PREFS }],
     customerLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
     verified: VERIFIED,
   },
@@ -260,7 +260,7 @@ export const NEPTUNE: SeedStakeholder = {
     ...PHUKET,
     email: 'neptune@divedispatch.dev',
     phone: '+66-76-383-001',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-41256', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-41256', ...PADI_PREFS }],
     customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
     verified: VERIFIED,
   },
@@ -311,7 +311,7 @@ export const PHUKET_DC: SeedStakeholder = {
     ...PHUKET,
     email: 'phuket-dive-center@divedispatch.dev',
     phone: '+66-76-385-001',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-29815', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-29815', ...PADI_PREFS }],
     customerLanguages: ['th', 'en', 'zh-CN', 'ko'],
     verified: VERIFIED,
   },
@@ -377,7 +377,7 @@ export const NICOLE_DC: SeedStakeholder = {
     ...PHUKET,
     email: 'nicole-dive-center@divedispatch.dev',
     phone: '+66-76-386-001',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-55198', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-55198', ...PADI_PREFS }],
     customerLanguages: ['zh-TW', 'zh-CN', 'en', 'th'],
     verified: VERIFIED,
   },
@@ -415,7 +415,7 @@ export const MANTA_DC: SeedStakeholder = {
     ...PHUKET,
     email: 'manta-dive-center@divedispatch.dev',
     phone: '+66-76-387-001',
-    associations: [{ agencyCode: 'SSI', memberId: 'DC-80234', ...SSI_PREFS }],
+    associations: [{ agency: 'SSI', number: 'DC-80234', ...SSI_PREFS }],
     customerLanguages: ['fr', 'en', 'th'],
     verified: VERIFIED,
   },
@@ -443,7 +443,7 @@ export const SCUBANICKS: SeedStakeholder = {
     ...PHUKET,
     email: 'scubanicks@divedispatch.dev',
     phone: '+66-76-388-001',
-    associations: [{ agencyCode: 'SSI', memberId: 'DC-91547', ...SSI_PREFS }],
+    associations: [{ agency: 'SSI', number: 'DC-91547', ...SSI_PREFS }],
     customerLanguages: ['en', 'th', 'zh-CN'],
     verified: VERIFIED,
   },
@@ -480,8 +480,8 @@ export const SCUBA_DEEP: SeedStakeholder = {
     email: 'scuba-deep@divedispatch.dev',
     phone: '+66-76-389-001',
     associations: [
-      { agencyCode: 'SSI', memberId: 'DC-72019', ...SSI_PREFS },
-      { agencyCode: 'PADI', memberId: 'S-61834', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-72019', ...SSI_PREFS },
+      { agency: 'PADI', number: 'S-61834', ...PADI_PREFS },
     ],
     customerLanguages: ['en', 'th', 'zh-CN', 'fr'],
     verified: VERIFIED,
@@ -519,7 +519,7 @@ export const SIROLO: SeedStakeholder = {
     ...CHALONG,
     email: 'sirolo@divedispatch.dev',
     phone: '+66-76-391-001',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-70123', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-70123', ...PADI_PREFS }],
     customerLanguages: ['th', 'en', 'zh-CN', 'zh-TW'],
     verified: VERIFIED,
   },
@@ -574,7 +574,7 @@ export const PRAY_DC: SeedStakeholder = {
     ...PHUKET,
     email: 'pray-dive-center@divedispatch.dev',
     phone: '+66-76-390-001',
-    associations: [{ agencyCode: 'PADI', memberId: 'S-48203', ...PADI_PREFS }],
+    associations: [{ agency: 'PADI', number: 'S-48203', ...PADI_PREFS }],
     customerLanguages: ['en', 'th'],
     verified: VERIFIED,
   },

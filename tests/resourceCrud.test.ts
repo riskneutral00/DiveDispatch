@@ -115,7 +115,7 @@ const RESOURCE_CONFIGS: Array<{
     createArgs: {
       name: 'Test DC',
       ...COMMON_LOCATION,
-      associations: [{ agencyCode: 'PADI', memberId: '12345' }],
+      associations: [{ agency: 'PADI', number: '12345' }],
     },
     updateArgs: { name: 'Updated DC' },
     uniqueField: 'name',

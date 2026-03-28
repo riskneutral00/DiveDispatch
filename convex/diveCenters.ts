@@ -8,8 +8,8 @@ import {
 } from './lib/profileHelpers'
 
 const associationValidator = v.object({
-  agencyCode: v.string(),
-  memberId: v.string(),
+  agency: v.string(),
+  number: v.string(),
   owDays: v.optional(v.number()),
   aowDays: v.optional(v.number()),
   oaDays: v.optional(v.number()),

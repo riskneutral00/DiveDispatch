@@ -6,30 +6,50 @@ import { GlassCard, GlassButton } from '@/components/glass'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
-import { DcBasicStep } from '@/components/dashboard/dc-basic-step'
-import { DcAgencyStep } from '@/components/dashboard/dc-agency-step'
-import { DcLanguagesStep } from '@/components/dashboard/dc-languages-step'
+import { OrganizerBasicStep } from '@/components/dashboard/organizer-basic-step'
+import { OrganizerAgencyStep } from '@/components/dashboard/organizer-agency-step'
+import { OrganizerLanguagesStep } from '@/components/dashboard/organizer-languages-step'
 import { DiveMasterProfileForm } from '@/components/dashboard/divemaster-profile-form'
 import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
 import { InstructorProfileForm } from '@/components/dashboard/instructor-profile-form'
 import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
-
-type DcSubStep = 'dc-basic' | 'dc-agency' | 'dc-languages'
+import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
 
 function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete: () => void }) {
-  const [dcSubStep, setDcSubStep] = useState<DcSubStep>('dc-basic')
+  const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
 
-  if (role === 'DiveCenter') {
+  // Config-driven organizer wizard
+  if (role in ORGANIZER_WIZARD_CONFIG) {
+    const steps = getOrganizerSteps(role)
+
+    function goNext() {
+      const idx = steps.indexOf(organizerSubStep)
+      if (idx < steps.length - 1) {
+        setOrganizerSubStep(steps[idx + 1])
+      } else {
+        onComplete()
+      }
+    }
+
+    function goBack() {
+      const idx = steps.indexOf(organizerSubStep)
+      if (idx > 0) {
+        setOrganizerSubStep(steps[idx - 1])
+      } else {
+        onComplete()
+      }
+    }
+
     return (
       <>
-        {dcSubStep === 'dc-basic' && (
-          <DcBasicStep onSaved={() => setDcSubStep('dc-agency')} onBack={() => onComplete()} />
+        {organizerSubStep === 'basic' && (
+          <OrganizerBasicStep role={role} onSaved={goNext} onBack={goBack} />
         )}
-        {dcSubStep === 'dc-agency' && (
-          <DcAgencyStep onSaved={() => setDcSubStep('dc-languages')} onBack={() => setDcSubStep('dc-basic')} />
+        {organizerSubStep === 'agency' && (
+          <OrganizerAgencyStep role={role} onSaved={goNext} onBack={goBack} />
         )}
-        {dcSubStep === 'dc-languages' && (
-          <DcLanguagesStep onSaved={onComplete} onBack={() => setDcSubStep('dc-agency')} />
+        {organizerSubStep === 'languages' && (
+          <OrganizerLanguagesStep role={role} onSaved={goNext} onBack={goBack} />
         )}
       </>
     )

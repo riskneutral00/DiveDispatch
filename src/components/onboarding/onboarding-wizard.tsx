@@ -16,17 +16,16 @@ import { buildOnboardingSteps, roleLabelForClerkRole } from './onboarding-steps'
 import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
 import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
 import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
-import { DcBasicStep } from '@/components/dashboard/dc-basic-step'
-import { DcAgencyStep } from '@/components/dashboard/dc-agency-step'
-import { DcLanguagesStep } from '@/components/dashboard/dc-languages-step'
+import { OrganizerBasicStep } from '@/components/dashboard/organizer-basic-step'
+import { OrganizerAgencyStep } from '@/components/dashboard/organizer-agency-step'
+import { OrganizerLanguagesStep } from '@/components/dashboard/organizer-languages-step'
 import { DiveMasterProfileForm } from '@/components/dashboard/divemaster-profile-form'
 import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
 import { InstructorProfileForm } from '@/components/dashboard/instructor-profile-form'
 import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
 import { StepPreferences } from './step-preferences'
-
-// DiveCenter profile has internal sub-steps
-type DcSubStep = 'dc-basic' | 'dc-agency' | 'dc-languages'
+import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
+import type { ClerkRole } from '@/lib/constants/roles'
 
 function ProfileFormForRole({ role, onSaved }: { role: string; onSaved: () => void }) {
   switch (role) {
@@ -57,7 +56,7 @@ export function OnboardingWizard() {
   const router = useRouter()
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [dcSubStep, setDcSubStep] = useState<DcSubStep>('dc-basic')
+  const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
   const [completing, setCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -108,20 +107,23 @@ export function OnboardingWizard() {
   // Parse the current step key
   const stepKey = currentStep?.key ?? ''
   const isProfileStep = stepKey.startsWith('profile:')
-  const profileRole = isProfileStep ? stepKey.split(':')[1] : null
-  const isDiveCenterProfile = profileRole === 'DiveCenter'
+  const profileRole = isProfileStep ? stepKey.split(':')[1] as ClerkRole : null
+  const isOrganizerProfile = profileRole !== null && profileRole in ORGANIZER_WIZARD_CONFIG
+
+  // Get organizer steps for the current profile role
+  const organizerSteps = profileRole ? getOrganizerSteps(profileRole) : ['basic']
 
   function goNext() {
     if (currentStepIndex < onboardingSteps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1)
-      setDcSubStep('dc-basic') // reset DC sub-steps for next profile
+      setOrganizerSubStep('basic') // reset sub-steps for next profile
     }
   }
 
   function goBack() {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1)
-      setDcSubStep('dc-basic')
+      setOrganizerSubStep('basic')
     }
   }
 
@@ -156,17 +158,23 @@ export function OnboardingWizard() {
     }
   }
 
-  // DC profile sub-step navigation
-  function dcGoNext() {
-    if (dcSubStep === 'dc-basic') setDcSubStep('dc-agency')
-    else if (dcSubStep === 'dc-agency') setDcSubStep('dc-languages')
-    else goNext() // dc-languages -> next step
+  // Organizer profile sub-step navigation
+  function organizerGoNext() {
+    const currentIdx = organizerSteps.indexOf(organizerSubStep)
+    if (currentIdx < organizerSteps.length - 1) {
+      setOrganizerSubStep(organizerSteps[currentIdx + 1] as OrganizerSubStep)
+    } else {
+      goNext() // last sub-step -> next main step
+    }
   }
 
-  function dcGoBack() {
-    if (dcSubStep === 'dc-languages') setDcSubStep('dc-agency')
-    else if (dcSubStep === 'dc-agency') setDcSubStep('dc-basic')
-    else goBack() // dc-basic -> previous step
+  function organizerGoBack() {
+    const currentIdx = organizerSteps.indexOf(organizerSubStep)
+    if (currentIdx > 0) {
+      setOrganizerSubStep(organizerSteps[currentIdx - 1] as OrganizerSubStep)
+    } else {
+      goBack() // first sub-step -> previous main step
+    }
   }
 
   if (!user || !onboardingStatus || userRoles === undefined) {
@@ -217,21 +225,21 @@ export function OnboardingWizard() {
             />
           )}
 
-          {isProfileStep && isDiveCenterProfile && (
+          {isProfileStep && isOrganizerProfile && profileRole && (
             <>
-              {dcSubStep === 'dc-basic' && (
-                <DcBasicStep onSaved={dcGoNext} onBack={dcGoBack} />
+              {organizerSubStep === 'basic' && (
+                <OrganizerBasicStep role={profileRole} onSaved={organizerGoNext} onBack={organizerGoBack} />
               )}
-              {dcSubStep === 'dc-agency' && (
-                <DcAgencyStep onSaved={dcGoNext} onBack={dcGoBack} />
+              {organizerSubStep === 'agency' && (
+                <OrganizerAgencyStep role={profileRole} onSaved={organizerGoNext} onBack={organizerGoBack} />
               )}
-              {dcSubStep === 'dc-languages' && (
-                <DcLanguagesStep onSaved={dcGoNext} onBack={dcGoBack} />
+              {organizerSubStep === 'languages' && (
+                <OrganizerLanguagesStep role={profileRole} onSaved={organizerGoNext} onBack={organizerGoBack} />
               )}
             </>
           )}
 
-          {isProfileStep && !isDiveCenterProfile && profileRole && (
+          {isProfileStep && !isOrganizerProfile && profileRole && (
             <ProfileFormForRole role={profileRole} onSaved={goNext} />
           )}
 

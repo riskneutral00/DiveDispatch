@@ -26,7 +26,7 @@ describe('diveCenters.create (profile setup)', () => {
         country: 'Thailand',
         email: 'matt@divedispatch.dev',
         phone: '+66812345678',
-        associations: [{ agencyCode: 'PADI', memberId: '12345' }],
+        associations: [{ agency: 'PADI', number: '12345' }],
       })
 
     const profile = await t.run(async (ctx) => ctx.db.get(id as Id<'diveCenters'>))
@@ -36,7 +36,7 @@ describe('diveCenters.create (profile setup)', () => {
     expect(profile?.email).toBe('matt@divedispatch.dev')
     expect(profile?.phone).toBe('+66812345678')
     expect(profile?.associations).toHaveLength(1)
-    expect(profile?.associations[0].agencyCode).toBe('PADI')
+    expect(profile?.associations[0].agency).toBe('PADI')
   })
 
   it('is idempotent — returns existing record ID on second call', async () => {
@@ -51,7 +51,7 @@ describe('diveCenters.create (profile setup)', () => {
       country: 'Thailand',
       email: 'idem@dc.com',
       phone: '+66800000000',
-      associations: [] as { agencyCode: string; memberId: string }[],
+      associations: [] as { agency: string; number: string }[],
     }
 
     const id1 = await t.withIdentity({ tokenIdentifier: 'clerk|profile-dc-02' })

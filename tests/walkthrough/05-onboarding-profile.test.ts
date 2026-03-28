@@ -43,7 +43,7 @@ describe('05: onboarding profile step — save mutation', () => {
         country: 'Thailand',
         email: 'assoc@test.com',
         phone: '+66891234567',
-        associations: [{ agencyCode: 'PADI', memberId: 'TH-00123' }],
+        associations: [{ agency: 'PADI', number: 'TH-00123' }],
       })
 
     const profile = await t
@@ -52,7 +52,7 @@ describe('05: onboarding profile step — save mutation', () => {
 
     expect(profile).not.toBeNull()
     expect(profile!.associations).toHaveLength(1)
-    expect(profile!.associations[0]).toMatchObject({ agencyCode: 'PADI', memberId: 'TH-00123' })
+    expect(profile!.associations[0]).toMatchObject({ agency: 'PADI', number: 'TH-00123' })
   })
 
   it('save mutation persists languages', async () => {
@@ -93,7 +93,7 @@ describe('05: onboarding profile step — save mutation', () => {
         country: 'Thailand',
         email: 'days@test.com',
         phone: '+66891234569',
-        associations: [{ agencyCode: 'PADI', memberId: 'TEST', owDays: 4, aowDays: 2 }],
+        associations: [{ agency: 'PADI', number: 'TEST', owDays: 4, aowDays: 2 }],
       })
 
     const profile = await t

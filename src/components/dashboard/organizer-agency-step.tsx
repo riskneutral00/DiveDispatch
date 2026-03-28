@@ -8,19 +8,50 @@ import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import type { ClerkRole } from '@/lib/constants/roles'
 
-type Association = { agencyCode: string; memberId: string }
+type Association = { agency: string; number: string }
 
-interface DcAgencyStepProps {
+interface OrganizerAgencyStepProps {
+  role: ClerkRole
   onSaved: () => void
   onBack: () => void
 }
 
-export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
-  const existing = useQuery(api.diveCenters.mine)
-  const update = useMutation(api.diveCenters.update)
+function useRoleApi(role: ClerkRole) {
+  switch (role) {
+    case 'DiveCenter':
+      return { mine: api.diveCenters.mine, update: api.diveCenters.update } as const
+    case 'Agent':
+      return { mine: api.agents.mine, update: api.agents.update } as const
+    default:
+      return null
+  }
+}
 
-  const [associations, setAssociations] = useState<Association[]>([{ agencyCode: '', memberId: '' }])
+export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencyStepProps) {
+  const roleApi = useRoleApi(role)
+
+  // Shouldn't happen — agency step is only in the config for DiveCenter/Agent
+  if (!roleApi) {
+    onSaved()
+    return null
+  }
+
+  return <AgencyStepInner roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
+}
+
+interface AgencyStepInnerProps {
+  roleApi: NonNullable<ReturnType<typeof useRoleApi>>
+  onSaved: () => void
+  onBack: () => void
+}
+
+function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
+  const existing = useQuery(roleApi.mine)
+  const update = useMutation(roleApi.update)
+
+  const [associations, setAssociations] = useState<Association[]>([{ agency: '', number: '' }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
@@ -35,7 +66,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   }, [existing, initialized])
 
   function addRow() {
-    setAssociations((prev) => [...prev, { agencyCode: '', memberId: '' }])
+    setAssociations((prev) => [...prev, { agency: '', number: '' }])
   }
 
   function removeRow(idx: number) {
@@ -46,11 +77,11 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
     setAssociations((prev) => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a))
   }
 
-  const isComplete = associations.some((a) => a.agencyCode.trim() && a.memberId.trim())
+  const isComplete = associations.some((a) => a.agency.trim() && a.number.trim())
 
   async function handleNext() {
     if (!isComplete) return
-    const valid = associations.filter((a) => a.agencyCode.trim() && a.memberId.trim())
+    const valid = associations.filter((a) => a.agency.trim() && a.number.trim())
     setSaving(true)
     setError(null)
     try {
@@ -88,8 +119,8 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
                   Agency
                 </label>
                 <select
-                  value={assoc.agencyCode}
-                  onChange={(e) => updateRow(idx, 'agencyCode', e.target.value)}
+                  value={assoc.agency}
+                  onChange={(e) => updateRow(idx, 'agency', e.target.value)}
                   className="glass w-full text-sm px-3 py-2.5 focus:outline-none text-primary"
                 >
                   <option value="">Select agency…</option>
@@ -100,8 +131,8 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
               </div>
               <GlassInput
                 label="Member Number"
-                value={assoc.memberId}
-                onChange={(e) => updateRow(idx, 'memberId', e.target.value)}
+                value={assoc.number}
+                onChange={(e) => updateRow(idx, 'number', e.target.value)}
                 placeholder="e.g. TH-0012345"
               />
             </div>

@@ -45,7 +45,7 @@ async function seedCompleteDC(ctx: SeedCtx, slug: string) {
   await seedDiveCenterProfile(ctx, userId, {
     name: 'Test DC',
     email: 'dc@test.com',
-    associations: [{ agencyCode: 'PADI', memberId: '12345' }],
+    associations: [{ agency: 'PADI', number: '12345' }],
   })
   // customerLanguages is a DiveCenter ROLE_REQUIRED field
   await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', userId)).unique().then(async (dc: any) => {

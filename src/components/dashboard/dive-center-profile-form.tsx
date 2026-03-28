@@ -36,8 +36,8 @@ const formSchema = z.object({
   customerLanguages: z.array(z.object({ code: z.string(), label: z.string() })).min(1, 'At least one language required'),
   associations: z.array(
     z.object({
-      agencyCode: z.string().min(1, 'Agency is required'),
-      memberId: z.string().min(1, 'Member ID is required'),
+      agency: z.string().min(1, 'Agency is required'),
+      number: z.string().min(1, 'Member ID is required'),
       owDays: z.number().min(1),
       aowDays: z.number().min(1),
       oaDays: z.number().min(1),
@@ -46,14 +46,14 @@ const formSchema = z.object({
   ),
 }).refine((data) => {
   return data.associations.every((a) => {
-    const required = AGENCIES[a.agencyCode]?.specialtyCount ?? 5
+    const required = AGENCIES[a.agency]?.specialtyCount ?? 5
     return a.selectedSpecialties.length >= required
   })
 }, { message: 'Not enough specialties selected', path: ['associations'] })
 
 interface AssociationForm {
-  agencyCode: string
-  memberId: string
+  agency: string
+  number: string
   owDays: number
   aowDays: number
   oaDays: number
@@ -71,8 +71,8 @@ type FormState = {
 
 function makeDefaultAssociation(): AssociationForm {
   return {
-    agencyCode: '',
-    memberId: '',
+    agency: '',
+    number: '',
     owDays: COURSE_DAY_RANGES.OW.min,
     aowDays: COURSE_DAY_RANGES.AOW.min,
     oaDays: COURSE_DAY_RANGES.combined.min,
@@ -105,7 +105,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
       const assocs = (p.associations as Array<{
-        agencyCode: string; memberId: string
+        agency: string; number: string
         owDays?: number; aowDays?: number; oaDays?: number
         selectedSpecialties?: string[]
       }>) ?? []
@@ -121,14 +121,14 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         email: p.email as string,
         phone: p.phone as string,
         associations: assocs.map((a) => ({
-          agencyCode: a.agencyCode,
-          memberId: a.memberId,
+          agency: a.agency,
+          number: a.number,
           owDays: a.owDays ?? COURSE_DAY_RANGES.OW.min,
           aowDays: a.aowDays ?? COURSE_DAY_RANGES.AOW.min,
           oaDays: a.oaDays ?? COURSE_DAY_RANGES.combined.min,
           selectedSpecialties: [
             ...new Set([
-              ...getDefaultSpecialties(a.agencyCode),
+              ...getDefaultSpecialties(a.agency),
               ...(a.selectedSpecialties ?? []),
             ]),
           ],
@@ -154,8 +154,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         email: f.email,
         phone: f.phone,
         associations: f.associations.map((a) => ({
-          agencyCode: a.agencyCode,
-          memberId: a.memberId,
+          agency: a.agency,
+          number: a.number,
           owDays: a.owDays,
           aowDays: a.aowDays,
           oaDays: a.oaDays,
@@ -172,7 +172,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   function addAssociation() {
     const firstAssoc = form.associations[0]
     const newAssoc = firstAssoc
-      ? { ...firstAssoc, agencyCode: '', memberId: '' }
+      ? { ...firstAssoc, agency: '', number: '' }
       : makeDefaultAssociation()
     setField('associations', [...form.associations, newAssoc])
   }
@@ -186,8 +186,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     setField('associations', form.associations.map((a, i) => {
       if (i !== idx) return a
       const updated = { ...a, ...patch }
-      if (patch.agencyCode && patch.agencyCode !== a.agencyCode) {
-        updated.selectedSpecialties = getDefaultSpecialties(patch.agencyCode)
+      if (patch.agency && patch.agency !== a.agency) {
+        updated.selectedSpecialties = getDefaultSpecialties(patch.agency)
       }
       return updated
     }))
@@ -292,7 +292,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         ) : (
           <div className="space-y-6">
             {form.associations.map((assoc, idx) => {
-              const agency = AGENCIES[assoc.agencyCode]
+              const agency = AGENCIES[assoc.agency]
 
               return (
                 <Fragment key={idx}>
@@ -307,10 +307,10 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                     <div className="flex-1">
                       <GlassSelect
                         label="Agency"
-                        value={assoc.agencyCode}
-                        onChange={(v) => updateAssociation(idx, { agencyCode: v })}
+                        value={assoc.agency}
+                        onChange={(v) => updateAssociation(idx, { agency: v })}
                         options={AGENCY_CODES
-                          .filter((code) => code === assoc.agencyCode || !form.associations.some((a, i) => i !== idx && a.agencyCode === code))
+                          .filter((code) => code === assoc.agency || !form.associations.some((a, i) => i !== idx && a.agency === code))
                           .map((code) => ({ id: code, label: AGENCIES[code].name }))}
                         placeholder="Select agency"
                         required
@@ -319,8 +319,8 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                     <div className="flex-1">
                       <GlassInput
                         label={agency?.memberIdLabel ?? 'Member ID'}
-                        value={assoc.memberId}
-                        onChange={(e) => updateAssociation(idx, { memberId: e.target.value })}
+                        value={assoc.number}
+                        onChange={(e) => updateAssociation(idx, { number: e.target.value })}
                         placeholder={agency?.memberIdLabel ?? 'Member ID'}
                         required
                       />
@@ -360,7 +360,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                     </div>
 
                     <SpecialtyField
-                      agencyCode={assoc.agencyCode}
+                      agencyCode={assoc.agency}
                       value={assoc.selectedSpecialties}
                       onChange={(specialties) => updateAssociation(idx, { selectedSpecialties: specialties })}
                     />

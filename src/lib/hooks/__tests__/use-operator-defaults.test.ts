@@ -70,7 +70,7 @@ describe('useOperatorDefaults', () => {
       preferredCompressorSlugs: [],
     }
     queryReturns[2] = {
-      associations: [{ agencyCode: 'PADI', memberId: '12345' }, { agencyCode: 'SSI', memberId: '999' }],
+      associations: [{ agency: 'PADI', number: '12345' }, { agency: 'SSI', number: '999' }],
     }
 
     const { result } = renderHook(() => useOperatorDefaults())

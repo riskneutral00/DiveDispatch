@@ -16,7 +16,7 @@ export async function seedDiveCenterProfile(
     lng?: number
     email?: string
     phone?: string
-    associations?: Array<{ agencyCode: string; memberId: string; owDays?: number; aowDays?: number; oaDays?: number; selectedSpecialties?: string[] }>
+    associations?: Array<{ agency: string; number: string; owDays?: number; aowDays?: number; oaDays?: number; selectedSpecialties?: string[] }>
     verified?: boolean
   } = {},
 ) {
@@ -29,7 +29,7 @@ export async function seedDiveCenterProfile(
     lng: overrides.lng ?? 99.8408,
     email: overrides.email ?? 'dc@test.com',
     phone: overrides.phone ?? '+66123456789',
-    associations: overrides.associations ?? [{ agencyCode: 'PADI', memberId: '12345' }],
+    associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
     verified: overrides.verified ?? true,
   })
 }
