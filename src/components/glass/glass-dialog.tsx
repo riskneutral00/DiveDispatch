@@ -119,7 +119,7 @@ export function GlassDialog({
             ]
               .filter(Boolean)
               .join(" ")}
-            style={{ backgroundColor: "var(--color-surface-elevated)", backdropFilter: "blur(var(--glass-blur-elevated))", WebkitBackdropFilter: "blur(var(--glass-blur-elevated))" }}
+            style={{ backgroundColor: "var(--color-surface-elevated)" }}
           >
             <div
               className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-b"
@@ -143,7 +143,7 @@ export function GlassDialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >
@@ -177,7 +177,7 @@ export function GlassDialog({
           ]
             .filter(Boolean)
             .join(" ")}
-          style={{ backgroundColor: "var(--color-surface-elevated)", backdropFilter: "blur(var(--glass-blur-elevated))", WebkitBackdropFilter: "blur(var(--glass-blur-elevated))" }}
+          style={{ backgroundColor: "var(--color-surface-elevated)" }}
         >
           {(title || description) && (
             <div
@@ -202,7 +202,7 @@ export function GlassDialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >

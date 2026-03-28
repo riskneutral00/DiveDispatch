@@ -207,3 +207,51 @@ describe('GlassDialog a11y and scroll lock', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 })
+
+describe('GlassDialog design compliance', () => {
+  it('standard dialog panel has no inline backdropFilter', () => {
+    render(
+      <GlassDialog open onClose={() => {}} title="Test">
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const panel = document.querySelector('.glass-container') as HTMLElement
+    expect(panel).toBeInTheDocument()
+    expect(panel.style.backdropFilter).toBe('')
+    expect(panel.style.getPropertyValue('-webkit-backdrop-filter')).toBe('')
+  })
+
+  it('fullScreen dialog panel has no inline backdropFilter', () => {
+    render(
+      <GlassDialog open onClose={() => {}} title="Test" fullScreen>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const panel = document.querySelector('.glass-container') as HTMLElement
+    expect(panel).toBeInTheDocument()
+    expect(panel.style.backdropFilter).toBe('')
+    expect(panel.style.getPropertyValue('-webkit-backdrop-filter')).toBe('')
+  })
+
+  it('close button has adequate touch target (p-2)', () => {
+    render(
+      <GlassDialog open onClose={() => {}} title="Test">
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const closeBtn = screen.getByLabelText('Close dialog')
+    expect(closeBtn.className).toContain('p-2')
+    expect(closeBtn.className).not.toContain('p-1')
+  })
+
+  it('fullScreen close button has adequate touch target (p-2)', () => {
+    render(
+      <GlassDialog open onClose={() => {}} title="Test" fullScreen>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const closeBtn = screen.getByLabelText('Close dialog')
+    expect(closeBtn.className).toContain('p-2')
+    expect(closeBtn.className).not.toContain('p-1')
+  })
+})

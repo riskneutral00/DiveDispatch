@@ -253,8 +253,8 @@ html[data-dialog-open] .app-shell {
 /* GlassDialog native backdrop — activated when dialog.showModal() is open */
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 /* ── Form divider ────────────────────────────────────────────────────────────
