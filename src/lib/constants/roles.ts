@@ -244,6 +244,9 @@ export const ROLE_BY_CLERK_ROLE = Object.fromEntries(
 export const ORGANIZER_ROLES = ROLES.filter((r) => r.isOrganizer)
 export const RESOURCE_ROLES = ROLES.filter((r) => r.isResource && !r.isOrganizer)
 
+/** Canonical set of ClerkRole strings where isOrganizer is true. Use instead of hardcoded role lists. */
+export const ORGANIZER_ROLE_KEYS = new Set<ClerkRole>(ORGANIZER_ROLES.map((r) => r.clerkRole))
+
 // Display grouping for sign-up two-column layout (Dive Site appears in operator column for balance)
 export const DISPLAY_OPERATOR_ROLES = ROLES.filter((r) => r.displayGroup === 'operator')
 export const DISPLAY_RESOURCE_ROLES = ROLES.filter((r) => r.displayGroup === 'resource')

@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
-import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -47,9 +47,7 @@ const ACCEPTANCE_MODES = [
 
 type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
 
-const ORGANIZER_ROLES = new Set([
-  'DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel', 'DiveSite',
-])
+const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
 
 // ── Validation ───────────────────────────────────────────────────────
 
@@ -241,7 +239,7 @@ export function PreferencesEditor() {
     )
   }
 
-  const showResourcePrefs = activeRole != null && ORGANIZER_ROLES.has(activeRole)
+  const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
   const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   const tabs = useMemo(() => {

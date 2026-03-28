@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Anchor } from 'lucide-react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
-import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey } from '@/lib/constants/roles'
 import { DASHBOARD_CONFIGS } from '@/lib/constants/dashboard-config'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useStableQuery } from '@/lib/hooks/use-stable-query'
@@ -26,7 +26,6 @@ import type { CalendarBooking } from '../../../convex/bookings'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
-const OPERATOR_TYPES = new Set<string>(['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel'])
 type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -39,7 +38,7 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const isResourceOnly = (roleConfig?.isResource ?? false) && !isOrganizer
   const clerkRole = roleConfig?.clerkRole
   const dashConfig = DASHBOARD_CONFIGS[roleSlug]
-  const isOperator = clerkRole ? OPERATOR_TYPES.has(clerkRole) : false
+  const isOperator = clerkRole ? ORGANIZER_ROLE_KEYS.has(clerkRole) : false
 
   const { defaults } = useOperatorDefaults()
   const { isSwitching } = useDevSwitching()

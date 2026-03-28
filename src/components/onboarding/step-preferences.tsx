@@ -20,8 +20,7 @@ const QUICK_BOOK_OPTIONS = [
 ]
 
 import { type CourseCode } from '@/lib/constants/course-catalog'
-
-const ORGANIZER_ROLES = ['DiveCenter', 'Agent', 'Liveaboard', 'DiveResort', 'DiveHostel']
+import { ORGANIZER_ROLE_KEYS } from '@/lib/constants/roles'
 
 import type { StakeholderRole } from '../../../convex/lib/validators'
 
@@ -35,7 +34,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
   const createTemplate = useMutation(api.bookingTemplates.create)
   const removeTemplate = useMutation(api.bookingTemplates.remove)
 
-  const isOrganizer = ORGANIZER_ROLES.includes(userRole)
+  const isOrganizer = ORGANIZER_ROLE_KEYS.has(userRole as import('@/lib/constants/roles').ClerkRole)
 
   const [selectedCodes, setSelectedCodes] = useState<Set<CourseCode>>(new Set())
   const [pillName, setPillName] = useState('')
