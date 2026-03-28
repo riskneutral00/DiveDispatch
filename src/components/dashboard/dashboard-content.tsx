@@ -26,6 +26,7 @@ import type { CalendarBooking } from '../../../convex/bookings'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
+// Mirrors the Convex listByOwner validator union — kept in sync with convex/bookings.ts:670
 type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
 
 // ── Main Component ──────────────────────────────────────────────────────────
