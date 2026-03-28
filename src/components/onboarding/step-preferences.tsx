@@ -72,18 +72,15 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div>
-        <h2
-          style={{
-            fontSize: 20,
+        <h2 className="text-primary"
+          style={{ fontSize: 20,
             fontWeight: 700,
             letterSpacing: '-0.01em',
-            color: 'var(--color-text-primary)',
-            marginBottom: 4,
-          }}
+            marginBottom: 4 }}
         >
           Preferences
         </h2>
-        <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+        <p className="text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
           {isOrganizer
             ? 'Set up Quick Book pills for your most common bookings. You can always add more later.'
             : 'Your preferences are ready. You can update your availability settings from the dashboard.'}
@@ -95,33 +92,27 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
           {/* Existing templates */}
           {templates && templates.length > 0 && (
             <div>
-              <p
-                style={{
-                  fontSize: 11,
+              <p className="text-secondary"
+                style={{ fontSize: 11,
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  color: 'var(--color-text-secondary)',
-                  marginBottom: 8,
-                }}
+                  marginBottom: 8 }}
               >
                 Quick Book pills
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {templates.map((t) => (
                   <GlassCard key={t._id} padding="sm" className="flex items-center gap-2" style={{ borderRadius: 'var(--border-radius-pill)' }}>
-                    <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{t.name}</span>
-                    <button
+                    <span className="text-primary" style={{ fontSize: 13 }}>{t.name}</span>
+                    <button className="text-secondary"
                       onClick={() => handleRemove(t._id)}
-                      style={{
-                        background: 'none',
+                      style={{ background: 'none',
                         border: 'none',
                         cursor: 'pointer',
                         padding: 0,
-                        color: 'var(--color-text-secondary)',
                         display: 'flex',
-                        alignItems: 'center',
-                      }}
+                        alignItems: 'center' }}
                       aria-label={`Remove ${t.name}`}
                     >
                       <Trash2 size={12} strokeWidth={1.75} />
@@ -136,7 +127,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
           {showForm ? (
             <GlassCard padding="md">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                <p className="text-primary" style={{ fontSize: 13, fontWeight: 500 }}>
                   Select activity types for this pill:
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -165,22 +156,19 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                     )
                   })}
                 </div>
-                <input
+                <input className="text-primary"
                   value={pillName}
                   onChange={(e) => setPillName(e.target.value)}
                   placeholder="Pill name (optional — defaults to activity codes)"
-                  style={{
-                    width: '100%',
+                  style={{ width: '100%',
                     padding: '10px 14px',
                     fontSize: 14,
-                    color: 'var(--color-text-primary)',
                     background: 'var(--color-glass-bg)',
                     border: '1px solid var(--color-glass-border)',
                     borderRadius: 'var(--border-radius-sm)',
                     backdropFilter: 'blur(var(--glass-blur))',
                     WebkitBackdropFilter: 'blur(var(--glass-blur))',
-                    outline: 'none',
-                  }}
+                    outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
                   <GlassButton

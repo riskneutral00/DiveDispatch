@@ -70,12 +70,12 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
       <GlassCard padding="md">
         <div className="mb-5">
           <h2
-            className="text-base font-semibold mb-1"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+            className="text-base font-semibold mb-1 text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Safety Information
           </h2>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             All fields are optional. This information helps your dive operator respond in an
             emergency.
           </p>
@@ -85,11 +85,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           {/* Blood type */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Blood Type{' '}
-              <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="font-normal text-secondary">
                 (Optional)
               </span>
             </label>
@@ -118,11 +117,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           {/* Allergies */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Allergies{' '}
-              <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="font-normal text-secondary">
                 (Optional)
               </span>
             </label>
@@ -132,24 +130,20 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
               placeholder="e.g., penicillin, shellfish"
               rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
-              style={{
-                color: 'var(--color-text-primary)',
-                caretColor: 'var(--color-accent)',
+              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
+              style={{ caretColor: 'var(--color-accent)',
                 borderRadius: 'var(--border-radius)',
-                outlineColor: 'var(--color-accent)',
-              }}
+                outlineColor: 'var(--color-accent)' }}
             />
           </div>
 
           {/* Medications */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Current Medications{' '}
-              <span className="font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="font-normal text-secondary">
                 (Optional)
               </span>
             </label>
@@ -159,13 +153,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
               placeholder="e.g., aspirin, blood thinners"
               rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
-              style={{
-                color: 'var(--color-text-primary)',
-                caretColor: 'var(--color-accent)',
+              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
+              style={{ caretColor: 'var(--color-accent)',
                 borderRadius: 'var(--border-radius)',
-                outlineColor: 'var(--color-accent)',
-              }}
+                outlineColor: 'var(--color-accent)' }}
             />
           </div>
 

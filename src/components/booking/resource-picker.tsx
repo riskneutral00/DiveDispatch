@@ -74,7 +74,7 @@ export function ResourcePicker({
     <div className="flex flex-col gap-2">
       {/* Label row */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm font-medium text-secondary">
           {label}
           {optional && (
             <span className="ml-1 text-xs font-normal opacity-60">(optional)</span>
@@ -95,12 +95,9 @@ export function ResourcePicker({
       ) : isLoading ? (
         /* Loading skeleton */
         <div
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
-          style={{
-            background: 'var(--color-glass-bg)',
-            border: '1px solid var(--color-glass-border)',
-            color: 'var(--color-text-secondary)',
-          }}
+          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-secondary"
+          style={{ background: 'var(--color-glass-bg)',
+            border: '1px solid var(--color-glass-border)' }}
         >
           <Spinner size="sm" />
           <span className="text-sm">
@@ -125,11 +122,8 @@ export function ResourcePicker({
             </span>
             <ChevronDown
               size={14}
-              className="flex-shrink-0 transition-transform"
-              style={{
-                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                color: 'var(--color-text-secondary)',
-              }}
+              className="flex-shrink-0 transition-transform text-secondary"
+              style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
           </button>
 
@@ -146,8 +140,7 @@ export function ResourcePicker({
             >
               {entries.length === 0 ? (
                 <div
-                  className="px-3 py-4 text-sm text-center"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="px-3 py-4 text-sm text-center text-secondary"
                 >
                   No {label.toLowerCase()}s found nearby
                 </div>
@@ -231,7 +224,7 @@ export function ResourcePicker({
           className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-md"
           style={{ background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)' }}
         >
-          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs text-secondary">
             {selectedEntry.placeName}, {selectedEntry.country}
           </span>
           {selectedEntry.verified && (
@@ -255,11 +248,8 @@ export function ResourcePicker({
 function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean }) {
   return (
     <div
-      className="px-3 py-1 text-xs font-semibold uppercase tracking-wider"
-      style={{
-        color: 'var(--color-text-secondary)',
-        borderTop: topBorder ? '1px solid var(--color-glass-border)' : undefined,
-      }}
+      className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-secondary"
+      style={{ borderTop: topBorder ? '1px solid var(--color-glass-border)' : undefined }}
     >
       {label}
     </div>
@@ -299,8 +289,7 @@ function PickerRow({
         {/* Name + badges */}
         <div className="flex items-center gap-2 flex-wrap">
           <span
-            className="text-sm font-medium truncate"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="text-sm font-medium truncate text-primary"
           >
             {entry.name}
           </span>
@@ -318,7 +307,7 @@ function PickerRow({
 
         {/* Location + languages */}
         <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs truncate text-secondary">
             {entry.placeName}, {entry.country}
           </span>
         </div>

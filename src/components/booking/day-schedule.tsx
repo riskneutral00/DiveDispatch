@@ -17,6 +17,15 @@ interface DayScheduleProps {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+/** Extracted from map-loop inline styles — one allocation, shared by all renders. */
+const HEADING_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-heading)' }
+const BODY_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-body)' }
+const TZ_SELECT_STYLE: React.CSSProperties = { outlineColor: 'var(--color-accent)', fontFamily: 'var(--font-body)' }
+const CHIP_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
+const CHIP_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)', fontFamily: 'var(--font-body)' }
+const CHIP_NAME_STYLE: React.CSSProperties = { fontWeight: 500 }
+const CHIP_CONFINED_STYLE: React.CSSProperties = { color: 'var(--color-secondary)', fontWeight: 600 }
+
 const TIMEZONES = [
   { value: 'Asia/Bangkok', label: 'ICT (UTC+7)' },
   { value: 'Asia/Singapore', label: 'SGT (UTC+8)' },
@@ -47,14 +56,14 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
       {/* Day header */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span
-          className="text-sm font-semibold"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          className="text-sm font-semibold text-primary"
+          style={HEADING_FONT_STYLE}
         >
           Day {dayNumber}
         </span>
         <span
-          className="text-sm"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+          className="text-sm text-secondary"
+          style={BODY_FONT_STYLE}
         >
           {formatDisplayDate(date)}
         </span>
@@ -86,8 +95,8 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                   <Anchor size={14} style={{ color: 'var(--color-accent)' }} />
                 )}
                 <span
-                  className="text-xs font-medium"
-                  style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}
+                  className="text-xs font-medium text-primary"
+                  style={BODY_FONT_STYLE}
                 >
                   {session.isConfinedDay
                     ? 'Pool / Confined'
@@ -96,8 +105,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                       : 'Boat / Open Water'}
                 </span>
                 <span
-                  className="flex items-center gap-1 text-xs"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="flex items-center gap-1 text-xs text-secondary"
                 >
                   <MapPin size={11} />
                   {session.deliveryLocation === 'BoatPier'
@@ -113,8 +121,8 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                   />
                 )}
                 <span
-                  className="text-xs"
-                  style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+                  className="text-xs text-secondary"
+                  style={BODY_FONT_STYLE}
                 >
                   {session.unitsRequested} diver{session.unitsRequested !== 1 ? 's' : ''}
                 </span>
@@ -140,20 +148,15 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
               {/* Timezone selector styled to match glass inputs */}
               <div className="col-span-2 sm:col-span-1 flex flex-col gap-1.5">
                 <label
-                  className="text-sm font-medium"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="text-sm font-medium text-secondary"
                 >
                   Timezone
                 </label>
                 <select
                   value={session.timezone}
                   onChange={e => onUpdate(idx, 'timezone', e.target.value)}
-                  className="glass text-sm px-3 py-2.5 w-full focus:outline-none focus:ring-2 rounded"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    outlineColor: 'var(--color-accent)',
-                    fontFamily: 'var(--font-body)',
-                  }}
+                  className="glass text-sm px-3 py-2.5 w-full focus:outline-none focus:ring-2 rounded text-primary"
+                  style={TZ_SELECT_STYLE}
                 >
                   {TIMEZONES.map(tz => (
                     <option key={tz.value} value={tz.value}>
@@ -168,26 +171,21 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
             {session.diveSlots.length > 0 && (
               <div
                 className="flex flex-wrap gap-1.5 pt-2 border-t"
-                style={{ borderColor: 'var(--color-glass-border)' }}
+                style={CHIP_BORDER_STYLE}
               >
                 {session.diveSlots.map((slot, si) => (
                   <span
                     key={si}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border"
-                    style={{
-                      background: 'var(--color-glass-bg)',
-                      borderColor: 'var(--color-glass-border)',
-                      color: 'var(--color-text-secondary)',
-                      fontFamily: 'var(--font-body)',
-                    }}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border text-secondary"
+                    style={CHIP_STYLE}
                   >
                     <Waves size={10} />
-                    <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
+                    <span className="text-primary" style={CHIP_NAME_STYLE}>
                       {slot.diverAbbrev}
                     </span>
                     &middot; Dive {slot.diveNumber}
                     {slot.isConfined && (
-                      <span style={{ color: 'var(--color-secondary)', fontWeight: 600 }}>
+                      <span style={CHIP_CONFINED_STYLE}>
                         {' '}
                         C
                       </span>

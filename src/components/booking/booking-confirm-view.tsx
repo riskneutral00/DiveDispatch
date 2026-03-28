@@ -35,10 +35,10 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       {/* Customer list */}
       <GlassCard padding="md">
         <div className="flex items-center gap-1.5 mb-3">
-          <Users size={13} style={{ color: 'var(--color-text-secondary)' }} />
+          <Users className="text-secondary" size={13} />
           <p
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+            className="text-xs font-semibold uppercase tracking-wider text-secondary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Customers ({customers.length})
           </p>
@@ -56,11 +56,11 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
                   {c.flags?.[0] && (
                     <span className="text-base leading-none">{countryCodeToEmoji(c.flags[0].code)}</span>
                   )}
-                  <span className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                  <span className="text-sm font-medium truncate text-primary">
                     {c.name || `Customer ${i + 1}`}
                   </span>
                   {contactLabel && (
-                    <span className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                    <span className="text-xs truncate text-secondary">
                       {contactLabel}
                     </span>
                   )}
@@ -90,15 +90,15 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       {/* Booking summary */}
       <GlassCard padding="md">
         <div className="flex items-center gap-1.5 mb-3">
-          <Calendar size={13} style={{ color: 'var(--color-text-secondary)' }} />
+          <Calendar className="text-secondary" size={13} />
           <p
-            className="text-xs font-semibold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+            className="text-xs font-semibold uppercase tracking-wider text-secondary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Summary
           </p>
         </div>
-        <div className="text-sm" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
+        <div className="text-sm text-primary" style={{ fontFamily: 'var(--font-body)' }}>
           <p>{formatDateRange(startDate, endDate)}</p>
           <p className="mt-1">
             {days.length} day{days.length !== 1 ? 's' : ''} ·{' '}
@@ -127,7 +127,7 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
           {/* Day breakdown */}
           <div className="flex flex-col gap-1.5 mt-3">
             {days.map((d, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <div key={i} className="flex items-center gap-2 text-xs text-secondary">
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0"
                   style={{ background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)' }}

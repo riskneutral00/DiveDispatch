@@ -362,20 +362,14 @@ export function BookingWizard({
               />
               <div>
                 <h2
-                  className="text-lg font-semibold"
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="text-lg font-semibold text-primary"
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   Edit this booking?
                 </h2>
                 <p
-                  className="text-sm mt-1"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontFamily: "var(--font-body)",
-                  }}
+                  className="text-sm mt-1 text-secondary"
+                  style={{ fontFamily: "var(--font-body)" }}
                 >
                   Editing will reset this booking to Draft and vacate all
                   resource reservations. All assigned resources will need to
@@ -416,8 +410,7 @@ export function BookingWizard({
   if (isInitializing) {
     return (
       <div
-        className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center text-secondary"
       >
         <Spinner label="Preparing booking…" />
       </div>
@@ -453,8 +446,7 @@ export function BookingWizard({
       <div className="px-4 py-4 sm:px-6">
         {bookingRef && (
           <p
-            className="text-xs font-mono mb-3"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="text-xs font-mono mb-3 text-secondary"
           >
             {bookingRef}
           </p>
@@ -473,7 +465,7 @@ export function BookingWizard({
           </p>
         )}
         {autoSaveError && !saveError && !isReviewStep && (
-          <p className="mt-3 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="mt-3 text-xs text-secondary">
             {autoSaveError}
           </p>
         )}
@@ -513,11 +505,8 @@ export function BookingWizard({
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1
-            className="text-2xl font-bold"
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--color-text-primary)",
-            }}
+            className="text-2xl font-bold text-primary"
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {isEditMode && bookingRef
               ? `Editing: ${bookingRef}`
@@ -537,8 +526,7 @@ export function BookingWizard({
         </div>
         {bookingRef && (
           <p
-            className="text-xs font-mono mt-1"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="text-xs font-mono mt-1 text-secondary"
           >
             {bookingRef}
           </p>
@@ -562,8 +550,7 @@ export function BookingWizard({
       )}
       {autoSaveError && !saveError && !isReviewStep && (
         <p
-          className="mt-3 text-xs"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="mt-3 text-xs text-secondary"
         >
           {autoSaveError}
         </p>

@@ -16,8 +16,7 @@ export default function AuthLayout({
       <div className="relative z-10 px-6 pt-5">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 text-secondary"
         >
           <ArrowLeft size={16} />
           Back to home

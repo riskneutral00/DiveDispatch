@@ -40,7 +40,7 @@ function ProfileFormForRole({ role, onSaved }: { role: string; onSaved: () => vo
     default:
       return (
         <GlassCard padding="md">
-          <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+          <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
             Profile setup for <strong>{role}</strong> is available from your dashboard settings.
           </p>
         </GlassCard>
@@ -171,7 +171,7 @@ export function OnboardingWizard() {
 
   if (!user || !onboardingStatus || userRoles === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--color-text-secondary)' }}>
+      <div className="min-h-screen flex items-center justify-center text-secondary">
         <Spinner />
       </div>
     )
@@ -190,14 +190,11 @@ export function OnboardingWizard() {
       <div style={{ width: '100%', maxWidth: 640 }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1
-            style={{
-              fontSize: 28,
+          <h1 className="text-primary"
+            style={{ fontSize: 28,
               fontWeight: 700,
               letterSpacing: '-0.03em',
-              color: 'var(--color-text-primary)',
-              marginBottom: 8,
-            }}
+              marginBottom: 8 }}
           >
             Welcome to DiveDispatch
           </h1>
@@ -247,33 +244,30 @@ export function OnboardingWizard() {
           {stepKey === 'review' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
-                <h2
-                  style={{
-                    fontSize: 20,
+                <h2 className="text-primary"
+                  style={{ fontSize: 20,
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 4,
-                  }}
+                    marginBottom: 4 }}
                 >
                   Ready to go!
                 </h2>
-                <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                <p className="text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
                   Your account is configured. Click below to open your dashboard.
                 </p>
               </div>
               <GlassCard padding="md">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+                    <span className="text-secondary" style={{ fontSize: 13 }}>
                       {roleNames.length > 1 ? 'Roles' : 'Role'}
                     </span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                    <span className="text-primary" style={{ fontSize: 13, fontWeight: 500 }}>
                       {roleNames.map((r) => roleLabelForClerkRole(r)).join(', ')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Profile completion</span>
+                    <span className="text-secondary" style={{ fontSize: 13 }}>Profile completion</span>
                     <span
                       style={{
                         fontSize: 13,
@@ -288,14 +282,14 @@ export function OnboardingWizard() {
               </GlassCard>
               {onboardingStatus.incomplete.length > 0 && (
                 <GlassCard padding="sm">
-                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+                  <p className="text-secondary" style={{ fontSize: 12, marginBottom: 6 }}>
                     You can complete these later from your profile settings:
                   </p>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                     {onboardingStatus.incomplete.map((item) => (
-                      <li
+                      <li className="text-secondary"
                         key={item}
-                        style={{ fontSize: 12, color: 'var(--color-text-secondary)', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}
+                        style={{ fontSize: 12, padding: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}
                       >
                         <span style={{ color: 'var(--color-warning)', fontSize: 10 }}>&#9679;</span>
                         {item}

@@ -114,22 +114,19 @@ function DevSwitcherInner() {
           className="fixed inset-0 z-[100] flex items-center justify-center"
           style={{ background: 'var(--body-bg, #0f172a)' }}
         >
-          <Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--color-text-secondary)' }} />
+          <Loader2 className="h-6 w-6 animate-spin text-secondary" />
         </div>
       )}
 
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg border"
-        style={{
-          background: 'var(--color-glass-bg)',
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg border text-primary"
+        style={{ background: 'var(--color-glass-bg)',
           backdropFilter: 'blur(var(--glass-blur))',
           WebkitBackdropFilter: 'blur(var(--glass-blur))',
           borderColor: 'var(--color-glass-border)',
-          color: 'var(--color-text-primary)',
-          transition: 'opacity var(--transition-speed)',
-        }}
+          transition: 'opacity var(--transition-speed)' }}
       >
         <Bug className="h-3.5 w-3.5" />
         <span>{user?.firstName ?? 'Dev'}</span>
@@ -140,11 +137,8 @@ function DevSwitcherInner() {
         <div ref={panelRef} className="fixed bottom-12 right-4 z-50 w-80">
           <GlassCard padding="none" className="overflow-hidden">
             <div
-              className="px-4 py-2 text-xs font-semibold border-b"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderColor: 'var(--color-glass-border)',
-              }}
+              className="px-4 py-2 text-xs font-semibold border-b text-secondary"
+              style={{ borderColor: 'var(--color-glass-border)' }}
             >
               Dev Switcher
             </div>
@@ -175,12 +169,10 @@ function DevSwitcherInner() {
                     style={{ borderColor: 'var(--color-glass-border)' }}
                   >
                     <Icon
-                      className="h-3.5 w-3.5 shrink-0"
-                      style={{ color: 'var(--color-text-secondary)' }}
+                      className="h-3.5 w-3.5 shrink-0 text-secondary"
                     />
                     <span
-                      className="text-[11px] w-20 shrink-0 truncate"
-                      style={{ color: 'var(--color-text-secondary)' }}
+                      className="text-[11px] w-20 shrink-0 truncate text-secondary"
                     >
                       {config.label}
                     </span>
@@ -188,12 +180,9 @@ function DevSwitcherInner() {
                       value={selectedSlug}
                       onChange={(e) => setSelected(config.key, e.target.value)}
                       disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border"
-                      style={{
-                        background: 'var(--color-surface)',
-                        color: 'var(--color-text-primary)',
-                        borderColor: 'var(--color-glass-border)',
-                      }}
+                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary"
+                      style={{ background: 'var(--color-surface)',
+                        borderColor: 'var(--color-glass-border)' }}
                     >
                       {users.map((u) => (
                         <option key={u.slug} value={u.slug}>
@@ -204,8 +193,7 @@ function DevSwitcherInner() {
                     <button
                       onClick={() => handleSwitch(selectedSlug)}
                       disabled={!!switching}
-                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded disabled:opacity-40"
-                      style={{ color: 'var(--color-text-primary)' }}
+                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded disabled:opacity-40 text-primary"
                       aria-label={`Switch to ${selectedSlug}`}
                     >
                       {isLoading ? (

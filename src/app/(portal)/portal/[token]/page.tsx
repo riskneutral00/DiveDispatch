@@ -108,15 +108,15 @@ export default function PortalTokenPage() {
             <CheckCircle2 size={40} style={{ color: 'var(--color-success)' }} />
           </div>
           <h1
-            className="text-xl font-semibold mb-2"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+            className="text-xl font-semibold mb-2 text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Submission Complete
           </h1>
-          <p className="text-sm font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="text-sm font-medium mb-3 text-primary">
             {result.customerName}
           </p>
-          <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm leading-relaxed mb-6 text-secondary">
             Your submission is complete.{result.operatorName ? ` ${result.operatorName}` : ''} will be
             in touch before your activity{result.startDate ? ` on ${result.startDate}` : ''}.
           </p>
@@ -137,12 +137,12 @@ export default function PortalTokenPage() {
             <Clock size={40} style={{ color: 'var(--color-warning)' }} />
           </div>
           <h1
-            className="text-xl font-semibold mb-3"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+            className="text-xl font-semibold mb-3 text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Booking Closed
           </h1>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm leading-relaxed text-secondary">
             This booking is no longer accepting submissions. Please contact your dive operator for
             assistance.
           </p>
@@ -245,18 +245,17 @@ export default function PortalTokenPage() {
         {/* Header */}
         <header className="text-center space-y-2">
           <p
-            className="text-sm font-medium uppercase tracking-widest"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm font-medium uppercase tracking-widest text-secondary"
           >
             {operatorName}
           </p>
           <h1
-            className="text-2xl sm:text-3xl font-bold"
-            style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+            className="text-2xl sm:text-3xl font-bold text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Welcome, {customerName}
           </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             Please complete your booking paperwork below
           </p>
         </header>
@@ -272,8 +271,7 @@ export default function PortalTokenPage() {
               ))}
             </div>
             <div
-              className="flex flex-col gap-1.5 text-sm"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex flex-col gap-1.5 text-sm text-secondary"
             >
               <div className="flex items-center gap-2">
                 <MapPin size={14} />

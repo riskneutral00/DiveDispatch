@@ -70,10 +70,10 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
   return (
     <GlassCard padding="lg">
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <h2 className="text-xl font-bold mb-1 text-primary">
           Agency Affiliations
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           Add your dive agency membership numbers.
         </p>
       </div>
@@ -84,14 +84,13 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
             {idx > 0 && <hr className="form-divider mb-4" />}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                <label className="text-sm font-medium text-secondary">
                   Agency
                 </label>
                 <select
                   value={assoc.agencyCode}
                   onChange={(e) => updateRow(idx, 'agencyCode', e.target.value)}
-                  className="glass w-full text-sm px-3 py-2.5 focus:outline-none"
-                  style={{ color: 'var(--color-text-primary)' }}
+                  className="glass w-full text-sm px-3 py-2.5 focus:outline-none text-primary"
                 >
                   <option value="">Select agency…</option>
                   {DIVE_AGENCIES_EXTENDED.map((a) => (
@@ -112,8 +111,7 @@ export function DcAgencyStep({ onSaved, onBack }: DcAgencyStepProps) {
                   type="button"
                   onClick={() => removeRow(idx)}
                   aria-label="Remove affiliation"
-                  className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150 text-secondary"
                   onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
                   onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
                 >

@@ -171,10 +171,10 @@ function BookingDetailContent({
   if (booking === null) {
     return (
       <div className="text-center py-4">
-        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <p className="text-sm font-semibold mb-1 text-primary">
           Booking not found
         </p>
-        <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs text-secondary">
           This booking does not exist or you do not have access.
         </p>
       </div>
@@ -231,14 +231,14 @@ function BookingDetailContent({
                   </span>
                 )}
               </div>
-              <p className="text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              <p className="text-base font-semibold text-primary">
                 {booking.activityType.map(courseLabel).join(', ')}
               </p>
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm text-secondary">
                 {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
                 {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
               </p>
-              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-xs text-secondary">
                 Operator: {booking.operatorName}
               </p>
             </div>
@@ -322,7 +322,7 @@ function BookingDetailContent({
           <div>
             <SectionLabel>Session Schedule</SectionLabel>
             {booking.sessions.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm text-secondary">
                 No sessions scheduled.
               </p>
             ) : (

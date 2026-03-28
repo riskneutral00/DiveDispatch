@@ -7,16 +7,15 @@ export default function DashboardNotFound() {
       <GlassCard className="max-w-md w-full p-8 text-center">
         <Search
           size={40}
-          className="mx-auto mb-4"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="mx-auto mb-4 text-secondary"
         />
         <h2
-          className="text-lg font-semibold mb-2"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="text-lg font-semibold mb-2 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Page not found
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
       </GlassCard>

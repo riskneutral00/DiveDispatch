@@ -49,12 +49,9 @@ const OptionRow = memo(function OptionRow({
       aria-selected={isSelected}
       onClick={onSelect}
       onMouseEnter={onHover}
-      className="flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-colors"
-      style={{
-        fontFamily: 'var(--font-body)',
-        color: 'var(--color-text-primary)',
-        background: isFocused ? 'var(--color-accent-muted)' : 'transparent',
-      }}
+      className="flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-colors text-primary"
+      style={{ fontFamily: 'var(--font-body)',
+        background: isFocused ? 'var(--color-accent-muted)' : 'transparent' }}
     >
       <span className="flex items-center gap-2 min-w-0">
         <span className="w-3.5 flex-shrink-0">
@@ -103,8 +100,8 @@ function TierSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary"
+        style={{ fontFamily: 'var(--font-heading)' }}
       >
         {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
         {title} ({items.length})
@@ -217,8 +214,8 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
       {label && (
         <label
           htmlFor={id}
-          className="text-sm font-medium"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+          className="text-sm font-medium text-secondary"
+          style={{ fontFamily: 'var(--font-body)' }}
         >
           {label}
           {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
@@ -249,11 +246,8 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
         </span>
         <ChevronDown
           size={12}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform"
-          style={{
-            color: 'var(--color-text-secondary)',
-            transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)',
-          }}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform text-secondary"
+          style={{ transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)' }}
         />
       </button>
 

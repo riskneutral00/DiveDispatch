@@ -221,13 +221,13 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
           </span>
         </SectionLabel>
         {customers.length === 0 ? (
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             No customers added.
           </p>
         ) : (
           <div className="flex flex-col gap-2">
             {customers.map((c, i) => (
-              <div key={c.id} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              <div key={c.id} className="flex items-center gap-2 text-sm text-primary">
                 {c.flags?.[0] ? (
                   <span className="text-base leading-none">{countryCodeToEmoji(c.flags[0].code)}</span>
                 ) : (
@@ -235,7 +235,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
                 )}
                 <span className="font-medium">{c.name || `Customer ${i + 1}`}</span>
                 {(c.courseEntries?.length ?? 0) > 0 && (
-                  <span className="ml-auto text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  <span className="ml-auto text-xs text-secondary">
                     {c.courseEntries!.map((e) => e.activityCode).filter(Boolean).join(', ')}
                   </span>
                 )}
@@ -253,7 +253,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
             Booking Overview
           </span>
         </SectionLabel>
-        <div className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+        <div className="text-sm text-primary">
           <p>{formatDateRange(startDate, endDate)}</p>
           {activityType.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -281,7 +281,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
           <SectionLabel>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</SectionLabel>
           <div className="flex flex-col gap-1.5">
             {days.map((d, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              <div key={i} className="flex items-center gap-2 text-sm text-primary">
                 <span
                   className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)' }}
@@ -289,8 +289,8 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
                   {i + 1}
                 </span>
                 <span>{d.date}</span>
-                <span className="capitalize" style={{ color: 'var(--color-text-secondary)' }}>{d.venueType}</span>
-                <span className="ml-auto text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <span className="capitalize text-secondary">{d.venueType}</span>
+                <span className="ml-auto text-xs text-secondary">
                   {d.startTime}–{d.endTime}
                 </span>
               </div>
@@ -326,7 +326,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       </div>
 
       {!submitting && validationError && (
-        <p className="text-xs text-center" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+        <p className="text-xs text-center text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
           {validationError}
         </p>
       )}

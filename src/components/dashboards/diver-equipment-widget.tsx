@@ -118,7 +118,7 @@ function DiverCard({
             {countryCodeToFlag(diver.flag.code)}
           </span>
           <div>
-            <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="font-medium text-sm text-primary">
               {diver.name}
             </p>
             {diver.needsPoweredLenses && (
@@ -134,7 +134,7 @@ function DiverCard({
         {diver.bag ? (
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="text-xs text-secondary">
                 Bag {diver.bag.bagNumber}
               </span>
               <BagStatusBadge status={diver.bag.status} />
@@ -182,7 +182,7 @@ function DiverCard({
           />
         )}
         {!hasMeasurements && (
-          <p className="text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs italic text-secondary">
             Measurements not submitted yet
           </p>
         )}
@@ -192,8 +192,7 @@ function DiverCard({
       {rentingTypes.length > 0 && (
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-glass-border)' }}>
           <p
-            className="text-xs font-semibold uppercase mb-2"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs font-semibold uppercase mb-2 text-secondary"
           >
             Rental Gear
           </p>
@@ -238,8 +237,8 @@ function MeasurementChip({ label, value }: { label: string; value: string }) {
         border: '1px solid var(--color-glass-border)',
       }}
     >
-      <span style={{ color: 'var(--color-text-secondary)' }}>{label}: </span>
-      <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+      <span className="text-secondary">{label}: </span>
+      <span className="font-medium text-primary">
         {value}
       </span>
     </div>
@@ -286,7 +285,7 @@ function GearSizeRow({
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+      <span className="text-xs font-medium text-primary">
         {GEAR_LABELS[gearType] ?? gearType}
       </span>
 
@@ -332,7 +331,7 @@ function GearSizeRow({
         )}
 
         {effectiveSuggestion.status === 'no_data' && !editing && (
-          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs text-secondary">
             —
           </span>
         )}
@@ -345,12 +344,9 @@ function GearSizeRow({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               placeholder="e.g. M"
-              className="text-xs px-2 py-0.5 rounded w-16 outline-none"
-              style={{
-                background: 'var(--color-glass-bg)',
-                border: '1px solid var(--color-primary)',
-                color: 'var(--color-text-primary)',
-              }}
+              className="text-xs px-2 py-0.5 rounded w-16 outline-none text-primary"
+              style={{ background: 'var(--color-glass-bg)',
+                border: '1px solid var(--color-primary)' }}
               autoFocus
             />
             <button
@@ -372,12 +368,9 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{
-                background: 'var(--color-glass-bg)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-glass-border)',
-              }}
+              className="text-xs px-1.5 py-0.5 rounded text-secondary"
+              style={{ background: 'var(--color-glass-bg)',
+                border: '1px solid var(--color-glass-border)' }}
             >
               ✕
             </button>
@@ -392,8 +385,7 @@ function GearSizeRow({
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
               }}
-              className="text-xs"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-xs text-secondary"
               title="Override size"
             >
               ✏
@@ -401,8 +393,7 @@ function GearSizeRow({
             {isManualOverride && (
               <button
                 onClick={onClearOverride}
-                className="text-xs"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-xs text-secondary"
                 title="Clear override"
               >
                 ↺
@@ -473,7 +464,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data === null) {
     return (
       <GlassCard padding="md">
-        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-center text-secondary">
           Equipment profile not set up.
         </p>
       </GlassCard>
@@ -484,7 +475,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data.bookings.length === 0) {
     return (
       <GlassCard padding="md">
-        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-center text-secondary">
           No bookings in this date range.
         </p>
       </GlassCard>
@@ -551,10 +542,10 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
       {/* Booking header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          <p className="text-sm font-medium text-primary">
             {activeBooking.operatorName}
           </p>
-          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs text-secondary">
             {activeBooking.activityType.join(', ')} ·{' '}
             {activeBooking.startDate === activeBooking.endDate
               ? activeBooking.startDate

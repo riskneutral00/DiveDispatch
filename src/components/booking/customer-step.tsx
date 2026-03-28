@@ -161,8 +161,8 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         {/* Contact method */}
         <div className="flex flex-col gap-1.5">
           <label
-            className="text-xs font-medium"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+            className="text-xs font-medium text-secondary"
+            style={{ fontFamily: 'var(--font-body)' }}
           >
             Contact *
           </label>
@@ -190,8 +190,8 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
               }
               type={contactType === 'email' ? 'email' : 'text'}
               data-testid={contactType === 'email' ? 'customer-email' : undefined}
-              className="glass glass-field flex-1 text-sm py-2.5 px-3"
-              style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
+              className="glass glass-field flex-1 text-sm py-2.5 px-3 text-primary"
+              style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
           <ContactValidationHint contactType={contactType} value={getContactValue()} />

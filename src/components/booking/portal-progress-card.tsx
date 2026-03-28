@@ -25,9 +25,9 @@ function StepRow({ label, required, complete }: StepRowProps) {
   const icon = complete ? (
     <CheckCircle2 size={16} style={{ color: 'var(--color-success)' }} />
   ) : required ? (
-    <Circle size={16} style={{ color: 'var(--color-text-secondary)' }} />
+    <Circle className="text-secondary" size={16} />
   ) : (
-    <AlertCircle size={16} style={{ color: 'var(--color-text-secondary)', opacity: 0.4 }} />
+    <AlertCircle className="text-secondary" size={16} style={{ opacity: 0.4 }} />
   )
 
   return (
@@ -42,7 +42,7 @@ function StepRow({ label, required, complete }: StepRowProps) {
       >
         {label}
         {!required && (
-          <span className="text-xs ml-1" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs ml-1 text-secondary">
             (not required)
           </span>
         )}
@@ -72,7 +72,7 @@ export function PortalProgressCard({
     <div className="space-y-3">
       {/* Overall status */}
       <div className="flex items-center justify-between">
-        <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm text-secondary">
           {totalProfiles > 0
             ? `${submittedCount} / ${totalProfiles} submitted`
             : 'No portal submissions yet'}
@@ -98,8 +98,7 @@ export function PortalProgressCard({
       {customerProfiles.length > 0 && (
         <div className="pt-2" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
           <p
-            className="text-xs font-semibold uppercase tracking-wider mb-2"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs font-semibold uppercase tracking-wider mb-2 text-secondary"
           >
             Diver submissions
           </p>
@@ -111,10 +110,10 @@ export function PortalProgressCard({
                   {submitted ? (
                     <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
                   ) : (
-                    <Circle size={14} style={{ color: 'var(--color-text-secondary)' }} />
+                    <Circle className="text-secondary" size={14} />
                   )}
-                  <span style={{ color: 'var(--color-text-primary)' }}>Diver {i + 1}</span>
-                  <span style={{ color: 'var(--color-text-secondary)' }} className="text-xs">
+                  <span className="text-primary">Diver {i + 1}</span>
+                  <span className="text-xs text-secondary">
                     {submitted
                       ? `Submitted ${new Date(profile.submittedAt!).toLocaleDateString()}`
                       : profile.waiverSignedAt

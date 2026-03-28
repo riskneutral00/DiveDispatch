@@ -20,7 +20,7 @@ function GlassCheckboxGroup({ label, items, selected, onChange, error, columns =
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+      <span className="text-sm font-medium text-secondary">
         {label}
       </span>
       <div className={`grid gap-2 ${columns === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'}`}>
@@ -29,8 +29,7 @@ function GlassCheckboxGroup({ label, items, selected, onChange, error, columns =
           return (
             <label
               key={value}
-              className="flex items-center gap-2 cursor-pointer select-none text-sm"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="flex items-center gap-2 cursor-pointer select-none text-sm text-primary"
             >
               <input
                 type="checkbox"

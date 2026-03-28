@@ -158,10 +158,10 @@ export function SendPortalLink({
         <div className="space-y-4">
           {/* Customer info */}
           <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="text-sm font-medium text-primary">
               {customerName}
             </p>
-            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs text-secondary">
               {email}
             </p>
           </div>
@@ -170,12 +170,9 @@ export function SendPortalLink({
           {resolvedUrl && (
             <div
               data-testid="portal-link-url"
-              className="text-xs font-mono p-2 rounded break-all"
-              style={{
-                background: 'var(--color-glass-bg)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid var(--color-glass-border)',
-              }}
+              className="text-xs font-mono p-2 rounded break-all text-secondary"
+              style={{ background: 'var(--color-glass-bg)',
+                border: '1px solid var(--color-glass-border)' }}
             >
               {resolvedUrl}
             </div>
@@ -183,7 +180,7 @@ export function SendPortalLink({
 
           {/* Expiry */}
           {expiryLabel && (
-            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs text-secondary">
               {expiryLabel}
             </p>
           )}

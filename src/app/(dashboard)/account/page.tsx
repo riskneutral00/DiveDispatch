@@ -64,8 +64,7 @@ export default function AccountPage() {
       >
         <Link
           href={`/${slug}/${roleSlug}`}
-          className="flex items-center gap-1 text-sm transition-opacity hover:opacity-70"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="flex items-center gap-1 text-sm transition-opacity hover:opacity-70 text-secondary"
         >
           <ChevronLeft size={16} />
           Dashboard
@@ -86,8 +85,8 @@ export default function AccountPage() {
         <div className="w-full max-w-lg mx-auto">
           <div className="mb-6">
             <h1
-              className="font-bold mb-1"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-page-title)' }}
+              className="font-bold mb-1 text-primary"
+              style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-page-title)' }}
             >
               Account
             </h1>

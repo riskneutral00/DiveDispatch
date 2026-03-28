@@ -271,10 +271,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {returningCustomer && !returningConfirmed && !returningDismissed && (
         <GlassCard padding="md">
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="text-sm font-medium text-primary">
               Welcome back! We found your info from a previous booking.
             </p>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm text-secondary">
               {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
             </p>
             <div className="flex gap-2">
@@ -492,8 +492,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="allergies"
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm font-medium text-secondary"
           >
             Known Allergies
           </label>
@@ -503,12 +502,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
             value={form.allergies ?? ''}
             onChange={(e) => setField('allergies', e.target.value)}
-            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none rounded-[var(--border-radius)]"
-            style={{
-              color: 'var(--color-text-primary)',
-              caretColor: 'var(--color-accent)',
-              outlineColor: 'var(--color-accent)',
-            }}
+            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none rounded-[var(--border-radius)] text-primary"
+            style={{ caretColor: 'var(--color-accent)',
+              outlineColor: 'var(--color-accent)' }}
           />
         </div>
       </GlassCard>

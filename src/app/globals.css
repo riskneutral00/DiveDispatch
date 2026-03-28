@@ -162,6 +162,18 @@
   --color-date-blocked: var(--color-text-secondary);
 }
 
+/* ── Color text utilities ───────────────────────────────────────────────────
+   Map CSS custom properties to utility classes. Replaces inline
+   style={{ color: 'var(--color-text-primary)' }} across the codebase.
+   ──────────────────────────────────────────────────────────────────────────── */
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
 /* ── Urgent Draft pulse animation ────────────────────────────────────────── */
 @keyframes urgent-pulse {
   0%, 100% { opacity: 1; }

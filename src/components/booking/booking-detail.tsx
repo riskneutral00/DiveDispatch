@@ -84,12 +84,11 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       <div className="min-h-screen flex items-center justify-center p-6">
         <GlassCard padding="lg" className="max-w-sm w-full text-center">
           <p
-            className="text-lg font-semibold mb-2"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="text-lg font-semibold mb-2 text-primary"
           >
             Booking not found
           </p>
-          <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mb-4 text-secondary">
             This booking does not exist or you do not have access.
           </p>
           <GlassButton variant="secondary" onClick={() => router.push('/dashboard')}>
@@ -126,13 +125,12 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       <div className="flex items-center gap-3 mb-2">
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-lg transition-colors"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="p-2 rounded-lg transition-colors text-secondary"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        <h1 className="text-xl font-semibold text-primary">
           Booking Detail
         </h1>
       </div>
@@ -159,10 +157,10 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
                 </span>
               )}
             </div>
-            <p className="text-sm font-medium mt-1" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="text-sm font-medium mt-1 text-primary">
               {booking.activityType.map(courseLabel).join(', ')}
             </p>
-            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-sm text-secondary">
               {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
               {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
             </p>

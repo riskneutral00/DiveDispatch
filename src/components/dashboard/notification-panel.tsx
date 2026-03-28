@@ -76,8 +76,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
         <span
-          className="text-sm font-semibold"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="text-sm font-semibold text-primary"
         >
           Notifications
         </span>
@@ -101,8 +100,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         )}
         {notifications?.length === 0 && (
           <p
-            className="text-sm text-center py-6"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm text-center py-6 text-secondary"
           >
             No notifications yet.
           </p>

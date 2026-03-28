@@ -87,7 +87,7 @@ export function CustomerTable({
 
   if (divers.length === 0) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-secondary">
         No customers added.
       </p>
     )
@@ -115,12 +115,11 @@ export function CustomerTable({
               </span>
               <div className="min-w-0">
                 <p
-                  className="text-sm font-medium truncate"
-                  style={{ color: 'var(--color-text-primary)' }}
+                  className="text-sm font-medium truncate text-primary"
                 >
                   {diver.name}
                 </p>
-                <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-xs text-secondary">
                   {diver.activityType.map(courseLabel).join(', ')}
                 </p>
               </div>
@@ -146,7 +145,7 @@ export function StakeholderList({
 }) {
   if (stakeholders.length === 0) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-secondary">
         No resources assigned.
       </p>
     )
@@ -165,20 +164,16 @@ export function StakeholderList({
         >
           <div className="flex items-center gap-2 min-w-0">
             <span
-              className={`flex-shrink-0 ${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-full flex items-center justify-center`}
-              style={{
-                background: 'var(--color-glass-bg-elevated)',
-                border: '1px solid var(--color-glass-border)',
-                color: 'var(--color-text-secondary)',
-              }}
+              className={`flex-shrink-0 ${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-full flex items-center justify-center text-secondary`}
+              style={{ background: 'var(--color-glass-bg-elevated)',
+                border: '1px solid var(--color-glass-border)' }}
             >
               <RoleIcon role={s.role as ClerkRole} size={18} />
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <p
-                  className="text-sm font-medium truncate"
-                  style={{ color: 'var(--color-text-primary)' }}
+                  className="text-sm font-medium truncate text-primary"
                 >
                   {s.name}
                 </p>
@@ -188,7 +183,7 @@ export function StakeholderList({
                   </GlassBadge>
                 )}
               </div>
-              <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-xs text-secondary">
                 {s.role}
                 {s.email && <> · {s.email}</>}
               </p>
@@ -265,12 +260,9 @@ export function PortalLinkSection({
       <div className="space-y-2">
         <div
           data-testid="portal-link-url"
-          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-lg border font-mono break-all`}
-          style={{
-            background: 'var(--color-glass-bg)',
-            borderColor: 'var(--color-glass-border)',
-            color: 'var(--color-text-secondary)',
-          }}
+          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-lg border font-mono break-all text-secondary`}
+          style={{ background: 'var(--color-glass-bg)',
+            borderColor: 'var(--color-glass-border)' }}
         >
           <ExternalLink size={iconSize} className="flex-shrink-0" />
           <span className={`flex-1${compact ? ' truncate' : ''}`}>{portalUrl}</span>
@@ -298,8 +290,7 @@ export function PortalLinkSection({
       <form onSubmit={handleCreate} className="space-y-3">
         <div>
           <label
-            className="text-xs font-medium block mb-1"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs font-medium block mb-1 text-secondary"
           >
             Customer name
           </label>
@@ -307,18 +298,14 @@ export function PortalLinkSection({
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg border text-sm"
-            style={{
-              background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)',
-              color: 'var(--color-text-primary)',
-            }}
+            className="w-full px-3 py-2 rounded-lg border text-sm text-primary"
+            style={{ background: 'var(--color-glass-bg)',
+              borderColor: 'var(--color-glass-border)' }}
           />
         </div>
         <div>
           <label
-            className="text-xs font-medium block mb-1"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs font-medium block mb-1 text-secondary"
           >
             Customer email
           </label>
@@ -327,12 +314,9 @@ export function PortalLinkSection({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg border text-sm"
-            style={{
-              background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)',
-              color: 'var(--color-text-primary)',
-            }}
+            className="w-full px-3 py-2 rounded-lg border text-sm text-primary"
+            style={{ background: 'var(--color-glass-bg)',
+              borderColor: 'var(--color-glass-border)' }}
           />
         </div>
         {createError && (

@@ -15,7 +15,7 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
       title={pendingToggle.mode === 'block' ? 'Block this date?' : 'Unblock this date?'}
       size="sm"
     >
-      <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm mb-4 text-secondary">
         {pendingToggle.mode === 'block'
           ? `Block ${pendingToggle.date}? Operators will not be able to book you on this date.`
           : `Unblock ${pendingToggle.date}? You will become available for bookings on this date again.`}

@@ -128,13 +128,13 @@ function SectionHeading({
   return (
     <div className="flex items-baseline gap-2 mb-4">
       <h3
-        className="text-base font-semibold"
-        style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+        className="text-base font-semibold text-primary"
+        style={{ fontFamily: 'var(--font-heading)' }}
       >
         {children}
       </h3>
       {note && (
-        <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm text-secondary">
           {note}
         </span>
       )}
@@ -328,8 +328,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           {/* Height */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Height
             </label>
@@ -357,8 +356,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           {/* Weight */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Weight
             </label>
@@ -386,8 +384,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           {/* Shoe size */}
           <div>
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Shoe Size
             </label>
@@ -418,7 +415,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       {/* ── Corrective Lenses ─────────────────────────────────────────── */}
       <GlassCard padding="md">
         <SectionHeading>Corrective Lenses</SectionHeading>
-        <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mb-4 text-secondary">
           Do you need prescription (powered) lenses in your mask?
         </p>
 
@@ -453,8 +450,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                     )}
                   </span>
                   <span
-                    className="text-sm font-medium"
-                    style={{ color: 'var(--color-text-primary)' }}
+                    className="text-sm font-medium text-primary"
                   >
                     {opt}
                   </span>
@@ -467,8 +463,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         {needsPoweredLenses === true && (
           <div className="mt-4">
             <label
-              className="text-sm font-medium block mb-1.5"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="text-sm font-medium block mb-1.5 text-secondary"
             >
               Prescription Details
               {rentalChecklist.mask === 'rent' && (
@@ -480,18 +475,15 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               placeholder="e.g. Left: −2.00, Right: −2.50"
               rows={DEFAULT_TEXTAREA_ROWS}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none"
-              style={{
-                color: 'var(--color-text-primary)',
-                caretColor: 'var(--color-accent)',
+              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
+              style={{ caretColor: 'var(--color-accent)',
                 outlineColor: displayErrors.prescriptionStrength
                   ? 'var(--color-destructive)'
                   : 'var(--color-primary-glow)',
                 borderRadius: 'var(--border-radius)',
                 ...(displayErrors.prescriptionStrength
                   ? { boxShadow: '0 0 0 2px var(--color-destructive)' }
-                  : {}),
-              }}
+                  : {}) }}
             />
             {displayErrors.prescriptionStrength && (
               <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
@@ -505,7 +497,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       {/* ── Equipment Rental ──────────────────────────────────────────── */}
       <GlassCard padding="md">
         <SectionHeading>Equipment Rental</SectionHeading>
-        <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mb-4 text-secondary">
           Will you bring your own gear or rent from us?
         </p>
 

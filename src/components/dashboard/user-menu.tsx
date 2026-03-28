@@ -71,15 +71,13 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               style={{ borderBottom: '1px solid var(--color-glass-border)' }}
             >
               <p
-                className="text-sm font-medium truncate leading-tight"
-                style={{ color: 'var(--color-text-primary)' }}
+                className="text-sm font-medium truncate leading-tight text-primary"
               >
                 {displayName}
               </p>
               {email && (
                 <p
-                  className="text-xs truncate leading-tight mt-0.5"
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className="text-xs truncate leading-tight mt-0.5 text-secondary"
                 >
                   {email}
                 </p>
@@ -88,8 +86,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
             <button
               onClick={() => handleMenuAction('profile')}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <User size={14} />
               Profile
@@ -97,8 +94,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
             <button
               onClick={() => handleMenuAction('preferences')}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <Settings size={14} />
               Settings
@@ -114,8 +110,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
                   setOpen(false)
                   signOut({ redirectUrl: '/' })
                 }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
               >
                 <LogOut size={14} />
                 Sign out

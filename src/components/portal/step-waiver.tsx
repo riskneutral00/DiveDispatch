@@ -60,16 +60,13 @@ function todayISO(): string {
 function LegalBlock({ text }: { text: string }) {
   return (
     <div
-      className="rounded-[var(--border-radius)] p-3 text-xs leading-relaxed overflow-y-auto"
-      style={{
-        background: 'var(--color-glass-bg)',
+      className="rounded-[var(--border-radius)] p-3 text-xs leading-relaxed overflow-y-auto text-secondary"
+      style={{ background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
         backdropFilter: 'blur(var(--glass-blur))',
         WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        color: 'var(--color-text-secondary)',
         maxHeight: 140,
-        whiteSpace: 'pre-wrap',
-      }}
+        whiteSpace: 'pre-wrap' }}
     >
       {text}
     </div>
@@ -169,12 +166,11 @@ export function StepWaiver({
           </div>
 
           <div>
-            <p className={labelClass} style={{ color: 'var(--color-text-secondary)' }}>
+            <p className={`${labelClass} text-secondary`}>
               PADI Member / Store / Resort Name
             </p>
             <p
-              className="mt-1 text-sm font-medium"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="mt-1 text-sm font-medium text-primary"
             >
               {operatorName}
             </p>
@@ -193,11 +189,10 @@ export function StepWaiver({
             Release of Liability / Assumption of Risk
           </h2>
 
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             I,{' '}
             <span
-              className="font-semibold"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="font-semibold text-primary"
             >
               {participantName}
             </span>
@@ -220,7 +215,7 @@ export function StepWaiver({
                 if (e.target.checked) clearError('acknowledged')
               }}
             />
-            <span className="text-sm leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="text-sm leading-snug text-secondary">
               I have read and fully understand this Release of Liability / Assumption of Risk
               Agreement. I am of lawful age and legally competent to sign it of my own free act.
             </span>
@@ -239,7 +234,7 @@ export function StepWaiver({
           <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
             Diver Accident Insurance
           </h2>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             Do you have diver accident insurance?
           </p>
           <div className="flex gap-6">
@@ -258,8 +253,7 @@ export function StepWaiver({
                   style={{ accentColor: 'var(--color-primary)' }}
                 />
                 <span
-                  className="text-sm capitalize"
-                  style={{ color: 'var(--color-text-primary)' }}
+                  className="text-sm capitalize text-primary"
                 >
                   {val === 'yes' ? 'Yes' : 'No'}
                 </span>
@@ -324,7 +318,7 @@ export function StepWaiver({
               <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
                 Parent / Guardian Signature
               </h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mt-1 text-secondary">
                 Required because the participant is under 18 years of age.
               </p>
             </div>

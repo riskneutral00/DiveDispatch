@@ -201,7 +201,7 @@ export function BoatProfileForm() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <span style={{ color: 'var(--color-text-secondary)' }}>Loading…</span>
+        <span className="text-secondary">Loading…</span>
       </div>
     )
   }
@@ -211,8 +211,8 @@ export function BoatProfileForm() {
       <div className="flex items-center gap-3 mb-2">
         <Anchor size={26} style={{ color: 'var(--color-primary)' }} />
         <h1
-          className="text-2xl font-bold"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          className="text-2xl font-bold text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           {isUpdate ? 'Edit Profile' : 'Complete Your Profile'}
         </h1>
@@ -327,7 +327,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
   return (
     <ItemCard onRemove={onRemove} canRemove={canRemove} aria-label={`Remove vessel ${fi + 1}`}>
       <div className="mb-4">
-        <span className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+        <span className="text-sm font-medium text-primary">
           Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
         </span>
       </div>
@@ -335,7 +335,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
         <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Boat Type</label>
+          <label className="text-sm font-medium text-secondary">Boat Type</label>
           <select
             value={vessel.boatType}
             onChange={(e) => onUpdate({ boatType: e.target.value as BoatType })}
@@ -358,14 +358,14 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         <FormSectionHeader
           label="Routes"
           action={
-            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80" style={{ color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
+            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
               <Plus size={11} />
               Add Route
             </button>
           }
         />
         {vessel.routes.length === 0 && (
-          <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs text-secondary">
             No routes added. Routes define which dive sites this vessel visits and on which days.
           </p>
         )}

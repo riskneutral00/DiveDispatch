@@ -44,8 +44,7 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
         {WEEKDAYS.map((wd) => (
           <div
             key={wd}
-            className="text-center text-xs font-semibold py-1"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-center text-xs font-semibold py-1 text-secondary"
           >
             {wd}
           </div>

@@ -111,7 +111,7 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
       <div>
         <div className="flex items-center gap-3 mb-1">
           <RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />
-          <h1 className="text-2xl font-bold flex-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
+          <h1 className="text-2xl font-bold flex-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
             {convexUser?.businessName ?? roleConfig?.label ?? roleSlug} Dashboard
           </h1>
         </div>

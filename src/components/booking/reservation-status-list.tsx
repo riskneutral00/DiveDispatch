@@ -42,7 +42,7 @@ function statusLabel(status: BookingDetailReservation['status']): string {
 export function ReservationStatusList({ reservations }: ReservationStatusListProps) {
   if (reservations.length === 0) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-secondary">
         No resources assigned.
       </p>
     )
@@ -69,15 +69,14 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
         >
           <div className="min-w-0">
             <p
-              className="text-sm font-medium truncate"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="text-sm font-medium truncate text-primary"
             >
               {res.inventoryUnitName}
             </p>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs mt-0.5 text-secondary">
               {ROLE_BY_CLERK_ROLE[res.resourceType as ClerkRole]?.label ?? res.resourceType}
               {res.stakeholderName && (
-                <> · <span style={{ color: 'var(--color-text-secondary)' }}>{res.stakeholderName}</span></>
+                <> · <span className="text-secondary">{res.stakeholderName}</span></>
               )}
             </p>
             {res.vacatedBy && (

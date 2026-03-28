@@ -25,12 +25,12 @@ export default function AuthError({
           style={{ color: 'var(--color-destructive)' }}
         />
         <h2
-          className="text-lg font-semibold mb-2"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="text-lg font-semibold mb-2 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Authentication error
         </h2>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm mb-6 text-secondary">
           Something went wrong during sign in. Please try again.
         </p>
         <GlassButton onClick={reset}>Try again</GlassButton>

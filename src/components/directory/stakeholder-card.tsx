@@ -102,8 +102,7 @@ export function StakeholderCard({
             {/* Name + verified + star */}
             <div className="flex items-center gap-1.5 flex-wrap">
               <span
-                className="font-semibold text-sm truncate"
-                style={{ color: 'var(--color-text-primary)' }}
+                className="font-semibold text-sm truncate text-primary"
               >
                 {entry.name}
               </span>
@@ -157,8 +156,7 @@ export function StakeholderCard({
             {/* Location */}
             {location && (
               <div
-                className="mt-2 flex items-center gap-1 text-xs"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="mt-2 flex items-center gap-1 text-xs text-secondary"
               >
                 <MapPin size={11} className="flex-shrink-0" />
                 <span className="truncate">{location}</span>
@@ -178,8 +176,7 @@ export function StakeholderCard({
         {/* Boat: capacity + type */}
         {entry.role === 'Boat' && (entry.boatCapacity != null || entry.boatType) && (
           <div
-            className="mt-2 text-xs"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="mt-2 text-xs text-secondary"
           >
             {entry.boatCapacity != null && entry.boatCapacity > 0 && (
               <span>Cap. {entry.boatCapacity} divers</span>
@@ -193,8 +190,7 @@ export function StakeholderCard({
         {/* Pool: depth + capacity */}
         {entry.role === 'Pool' && (entry.maxDepth != null || entry.maxCapacity != null) && (
           <div
-            className="mt-2 text-xs"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="mt-2 text-xs text-secondary"
           >
             {entry.maxDepth != null && entry.maxDepth > 0 && (
               <span>{entry.maxDepth}m max depth</span>
@@ -233,13 +229,10 @@ export function StakeholderCard({
             onClick={() => {
               // placeholder — navigation handled by card Link
             }}
-            className="w-full px-3 py-1.5 rounded-[var(--border-radius)] text-xs font-medium transition-colors"
-            style={{
-              background: 'var(--color-glass-bg)',
+            className="w-full px-3 py-1.5 rounded-[var(--border-radius)] text-xs font-medium transition-colors text-primary"
+            style={{ background: 'var(--color-glass-bg)',
               border: '1px solid var(--color-glass-border)',
-              color: 'var(--color-text-primary)',
-              transitionDuration: 'var(--transition-speed)',
-            }}
+              transitionDuration: 'var(--transition-speed)' }}
           >
             {actionLabel}
           </button>

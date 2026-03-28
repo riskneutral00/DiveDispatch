@@ -18,8 +18,7 @@ export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': a
             type="button"
             onClick={onRemove}
             aria-label={ariaLabel}
-            className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150 text-secondary"
             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
           >

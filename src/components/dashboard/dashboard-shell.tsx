@@ -58,7 +58,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ color: 'var(--color-text-secondary)' }}>
+      <div className="min-h-screen flex items-center justify-center text-secondary">
         <Spinner />
       </div>
     )

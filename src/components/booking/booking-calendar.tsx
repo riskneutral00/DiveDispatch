@@ -218,8 +218,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
-              className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
               aria-label="Previous 2 weeks"
             >
               <ChevronLeft size={16} />
@@ -228,11 +227,8 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="font-semibold text-base sm:text-lg min-w-[12rem] text-center hover:underline underline-offset-4"
-              style={{
-                color: 'var(--color-text-primary)',
-                fontFamily: 'var(--font-heading)',
-              }}
+              className="font-semibold text-base sm:text-lg min-w-[12rem] text-center hover:underline underline-offset-4 text-primary"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               {headerLabel}
             </button>
@@ -240,8 +236,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(1) }}
-              className="p-1.5 rounded-lg transition-opacity hover:opacity-70"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
               aria-label="Next 2 weeks"
             >
               <ChevronRight size={16} />
@@ -264,23 +259,21 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { if (pickerYear > currentYear - 1) setPickerYear((y) => y - 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'}`}
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Previous year"
                 >
                   <ChevronLeft size={14} />
                 </button>
                 <span
-                  className="text-sm font-semibold"
-                  style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+                  className="text-sm font-semibold text-primary"
+                  style={{ fontFamily: 'var(--font-heading)' }}
                 >
                   {pickerYear}
                 </span>
                 <button
                   type="button"
                   onClick={() => { if (pickerYear < currentYear + 1) setPickerYear((y) => y + 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'}`}
-                  style={{ color: 'var(--color-text-secondary)' }}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Next year"
                 >
                   <ChevronRight size={14} />

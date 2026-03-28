@@ -29,8 +29,7 @@ export function LanguageField({
   return (
     <div className="flex flex-col gap-1.5 w-[calc(50%-0.5rem)]">
       <label
-        className="text-sm font-medium"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="text-sm font-medium text-secondary"
       >
         {label}
         <span style={{ color: 'var(--color-destructive)' }}> *</span>

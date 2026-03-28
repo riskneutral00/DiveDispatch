@@ -31,13 +31,10 @@ export function BgSwitcher() {
     <button
       aria-label={`Switch skin (current: ${SKINS[index].name})`}
       onClick={cycle}
-      className="flex items-center justify-center w-11 h-11 rounded-full transition-all"
-      style={{
-        background: 'var(--color-glass-bg)',
+      className="flex items-center justify-center w-11 h-11 rounded-full transition-all text-secondary"
+      style={{ background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
-        color: 'var(--color-text-secondary)',
-        transitionDuration: 'var(--transition-speed)',
-      }}
+        transitionDuration: 'var(--transition-speed)' }}
     >
       <Palette size={15} />
     </button>

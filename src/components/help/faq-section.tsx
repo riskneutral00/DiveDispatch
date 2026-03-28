@@ -72,32 +72,25 @@ function FaqItemRow({ item }: FaqItemRowProps) {
   return (
     <GlassCard padding="none" className="overflow-hidden">
       <button
-        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-all"
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-all text-primary"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        style={{ color: 'var(--color-text-primary)' }}
       >
         <span className="font-medium text-sm" style={{ fontFamily: 'var(--font-heading)' }}>
           {item.question}
         </span>
         <ChevronDown
           size={16}
-          className="flex-shrink-0 transition-transform duration-200"
-          style={{
-            color: 'var(--color-text-secondary)',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
+          className="flex-shrink-0 transition-transform duration-200 text-secondary"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
       </button>
 
       {open && (
         <div
-          className="px-5 pb-4 text-sm leading-relaxed"
-          style={{
-            color: 'var(--color-text-secondary)',
-            borderTop: '1px solid var(--color-glass-border)',
-            paddingTop: '12px',
-          }}
+          className="px-5 pb-4 text-sm leading-relaxed text-secondary"
+          style={{ borderTop: '1px solid var(--color-glass-border)',
+            paddingTop: '12px' }}
         >
           {item.answer}
         </div>

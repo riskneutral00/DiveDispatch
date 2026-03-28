@@ -65,7 +65,7 @@ export function PreferencesTab() {
   if (user === undefined) {
     return (
       <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm animate-pulse text-secondary">
           Loading…
         </span>
       </div>

@@ -24,13 +24,10 @@ function RoleTile({
     <button
       type="button"
       onClick={() => onToggle(role)}
-      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2"
-      style={{
-        borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
+      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2 text-primary"
+      style={{ borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
         background: selected ? 'var(--color-primary-glow)' : 'var(--color-glass-bg)',
-        color: 'var(--color-text-primary)',
-        outlineColor: 'var(--color-accent)',
-      }}
+        outlineColor: 'var(--color-accent)' }}
       aria-pressed={selected}
     >
       <div className="flex items-center gap-3">
@@ -66,12 +63,11 @@ export function StepRoleSelection({
     <>
       <div className="mb-6 text-center">
         <h2
-          className="text-xl font-semibold mb-1"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="text-xl font-semibold mb-1 text-primary"
         >
           What&apos;s your role?
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           Select all that apply.
         </p>
       </div>
@@ -79,7 +75,7 @@ export function StepRoleSelection({
       <div className="w-full grid grid-cols-2 gap-2.5 mb-4" data-testid="wizard-content">
         {/* Organizers */}
         <div className="col-span-2 mb-0.5">
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-secondary">
             Organizers
           </p>
         </div>
@@ -94,7 +90,7 @@ export function StepRoleSelection({
 
         {/* Resources */}
         <div className="col-span-2 mt-3 mb-0.5">
-          <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-secondary">
             Resources
           </p>
         </div>
@@ -130,8 +126,8 @@ export function StepRoleSelection({
       {selectedRoles.length > 0 && (
         <div className="mt-3 flex flex-col gap-1">
           {selectedRoles.map((role) => (
-            <p key={role.key} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <p key={role.key} className="text-xs text-secondary">
+              <span className="font-medium text-primary">
                 {role.label}:
               </span>{' '}
               {role.description}

@@ -59,6 +59,16 @@ function deriveDayLabel(_day: DayConfig): string {
   return 'Dive Day'
 }
 
+/** Extracted from map-loop inline styles — one allocation, shared by all renders. */
+const HEADING_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-heading)' }
+const BODY_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-body)' }
+const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
+const DAY_LABEL_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)', fontFamily: 'var(--font-body)' }
+const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 15%, transparent)', color: 'var(--color-warning, #fbbf24)' }
+const REMOVE_BTN_STYLE: React.CSSProperties = { color: 'var(--color-destructive)' }
+const SWITCH_LINK_STYLE: React.CSSProperties = { color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }
+const VENUE_SECTION_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
+
 const VENUE_ICONS = {
   boat: Anchor,
   shore: Waves,
@@ -89,8 +99,8 @@ function SelectField({
   return (
     <div className="flex flex-col gap-1">
       <label
-        className="text-xs font-medium"
-        style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+        className="text-xs font-medium text-secondary"
+        style={BODY_FONT_STYLE}
       >
         {label}
       </label>
@@ -109,7 +119,7 @@ function SelectField({
             </option>
           ))}
         </select>
-        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-secondary)' }} />
+        <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary" />
       </div>
     </div>
   )
@@ -189,36 +199,28 @@ export function DayRow({
       {/* Header */}
       <div
         className="flex items-center justify-between pb-2 mb-2 border-b"
-        style={{ borderColor: 'var(--color-glass-border)' }}
+        style={HEADER_BORDER_STYLE}
       >
         <div className="flex items-center gap-2">
           <span
-            className="text-xs font-bold uppercase tracking-wider"
-            style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}
+            className="text-xs font-bold uppercase tracking-wider text-secondary"
+            style={HEADING_FONT_STYLE}
           >
             Day {dayNumber}
           </span>
-          <span className="text-xs" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+          <span className="text-xs text-secondary" style={BODY_FONT_STYLE}>
             {formatDate(day.date)}
           </span>
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full"
-            style={{
-              background: 'var(--color-glass-bg)',
-              border: '1px solid var(--color-glass-border)',
-              color: 'var(--color-text-secondary)',
-              fontFamily: 'var(--font-body)',
-            }}
+            className="text-xs px-1.5 py-0.5 rounded-full text-secondary"
+            style={DAY_LABEL_STYLE}
           >
             {deriveDayLabel(day)}
           </span>
           {day.isAutoAppended && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full"
-              style={{
-                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 15%, transparent)',
-                color: 'var(--color-warning, #fbbf24)',
-              }}
+              style={AUTO_APPENDED_STYLE}
             >
               Auto-added
             </span>
@@ -229,7 +231,7 @@ export function DayRow({
             type="button"
             onClick={() => dispatch({ type: 'REMOVE_DAY', dayIndex })}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded opacity-50 hover:opacity-100 transition-opacity"
-            style={{ color: 'var(--color-destructive)' }}
+            style={REMOVE_BTN_STYLE}
             title="Remove day"
             aria-label={`Remove day ${dayNumber}`}
           >
@@ -275,7 +277,7 @@ export function DayRow({
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
                 }}
                 className="text-xs underline underline-offset-2 text-left"
-                style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
+                style={SWITCH_LINK_STYLE}
               >
                 Switch to system instructor
               </button>
@@ -307,8 +309,8 @@ export function DayRow({
           if (displaySlots.length === 0) {
             return (
               <p
-                className="text-xs text-center py-2"
-                style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}
+                className="text-xs text-center py-2 text-secondary"
+                style={BODY_FONT_STYLE}
               >
                 No dives scheduled
               </p>
@@ -359,9 +361,9 @@ export function DayRow({
         return (
           <div
             className="flex flex-col gap-2 pt-3 border-t mt-1"
-            style={{ borderColor: 'var(--color-glass-border)' }}
+            style={VENUE_SECTION_BORDER_STYLE}
           >
-            <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-heading)' }}>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-secondary" style={HEADING_FONT_STYLE}>
               Venue Assignment
             </span>
             {sortedDives.map((dive) => {
@@ -376,7 +378,7 @@ export function DayRow({
               return (
                 <div key={`venue-${dive.courseCode}-${dive.diveNumber}-${dive.isConfined}`} className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium w-16 shrink-0" style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-body)' }}>
+                    <span className="text-xs font-medium w-16 shrink-0 text-primary" style={BODY_FONT_STYLE}>
                       {diveLabel}
                     </span>
                     <div className="flex gap-1">

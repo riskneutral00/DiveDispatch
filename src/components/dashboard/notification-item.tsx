@@ -87,15 +87,12 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
 
         <div className="flex-1 min-w-0">
           <p
-            className="text-sm leading-snug"
-            style={{
-              color: 'var(--color-text-primary)',
-              fontWeight: isUnread ? 600 : 400,
-            }}
+            className="text-sm leading-snug text-primary"
+            style={{ fontWeight: isUnread ? 600 : 400 }}
           >
             {notification.message}
           </p>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs mt-0.5 text-secondary">
             {timeAgo(notification.createdAt)}
           </p>
         </div>
@@ -117,7 +114,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
         className="flex-shrink-0 mt-0.5 p-1 rounded transition-opacity opacity-40 hover:opacity-100"
         aria-label="Delete notification"
       >
-        <Trash2 size={14} style={{ color: 'var(--color-text-secondary)' }} />
+        <Trash2 className="text-secondary" size={14} />
       </button>
     </div>
   )

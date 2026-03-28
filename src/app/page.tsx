@@ -23,21 +23,15 @@ export default async function Home() {
             style={{ color: "var(--color-primary)" }}
           />
           <span
-            className="text-xl font-medium"
-            style={{
-              fontFamily: "var(--font-heading)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="text-xl font-medium text-secondary"
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             DiveDispatch
           </span>
         </div>
         <h1
-          className="text-4xl font-bold tracking-tight"
-          style={{
-            fontFamily: "var(--font-heading)",
-            color: "var(--color-text-primary)",
-          }}
+          className="text-4xl font-bold tracking-tight text-primary"
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           {t("app.tagline")}
         </h1>
@@ -61,16 +55,13 @@ export default async function Home() {
         </Link>
         <Link href="/sign-in" className="flex-1">
           <button
-            className="w-full inline-flex items-center justify-center px-6 py-3 text-base font-medium leading-none border rounded-[var(--border-radius)] transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-            style={{
-              background: "var(--color-glass-bg)",
-              color: "var(--color-text-primary)",
+            className="w-full inline-flex items-center justify-center px-6 py-3 text-base font-medium leading-none border rounded-[var(--border-radius)] transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 text-primary"
+            style={{ background: "var(--color-glass-bg)",
               borderColor: "var(--color-glass-border)",
               backdropFilter: "blur(var(--glass-blur))",
               WebkitBackdropFilter: "blur(var(--glass-blur))",
               transitionDuration: "var(--transition-speed)",
-              outlineColor: "var(--color-accent)",
-            }}
+              outlineColor: "var(--color-accent)" }}
           >
             {t("auth.signIn")}
           </button>

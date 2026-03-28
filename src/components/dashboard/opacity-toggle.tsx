@@ -27,13 +27,10 @@ export function OpacityToggle() {
     <button
       aria-label={hoverOn ? 'Disable border glow on hover' : 'Enable border glow on hover'}
       onClick={toggle}
-      className="flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer"
-      style={{
-        background: 'var(--color-glass-bg)',
+      className="flex items-center justify-center w-8 h-8 rounded-full transition-all cursor-pointer text-secondary"
+      style={{ background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
-        color: 'var(--color-text-secondary)',
-        transitionDuration: 'var(--transition-speed)',
-      }}
+        transitionDuration: 'var(--transition-speed)' }}
     >
       {hoverOn ? <Layers size={15} /> : <Layers2 size={15} />}
     </button>

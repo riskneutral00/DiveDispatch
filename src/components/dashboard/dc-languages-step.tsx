@@ -92,10 +92,10 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
   return (
     <GlassCard padding="lg">
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <h2 className="text-xl font-bold mb-1 text-primary">
           Languages & Preferences
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           What languages do you teach in, and how long are your courses?
         </p>
       </div>
@@ -110,10 +110,10 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
         </div>
 
         <div>
-          <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm font-medium mb-1 text-secondary">
             Default Course Durations <span style={{ fontWeight: 400 }}>(optional)</span>
           </p>
-          <p className="text-xs mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-xs mb-3 text-secondary">
             Used when creating bookings.
           </p>
           <div className="grid grid-cols-3 gap-3">
@@ -148,7 +148,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
         </div>
 
         <div>
-          <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm font-medium mb-2 text-secondary">
             AOW Specialties Offered <span style={{ fontWeight: 400 }}>(optional)</span>
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -183,12 +183,9 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
               <button
                 type="button"
                 onClick={() => setShowMore(true)}
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer"
-                style={{
-                  background: 'var(--color-surface-elevated)',
-                  color: 'var(--color-text-secondary)',
-                  border: '1px dashed var(--color-glass-border)',
-                }}
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer text-secondary"
+                style={{ background: 'var(--color-surface-elevated)',
+                  border: '1px dashed var(--color-glass-border)' }}
               >
                 More…
               </button>

@@ -14,7 +14,7 @@ export function LoadingCard({ message = 'Loading\u2026' }: LoadingCardProps) {
   return (
     <GlassCard padding="lg">
       <div className="flex items-center justify-center py-8">
-        <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm animate-pulse text-secondary">
           {message}
         </span>
       </div>

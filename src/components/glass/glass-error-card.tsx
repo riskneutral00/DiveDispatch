@@ -34,14 +34,13 @@ export function GlassErrorCard({
           <Icon size={40} style={{ color: iconColor }} />
         </div>
         <h2
-          className="text-lg font-semibold mb-2"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="text-lg font-semibold mb-2 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           {title}
         </h2>
         <p
-          className="text-sm leading-relaxed"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="text-sm leading-relaxed text-secondary"
         >
           {message}
         </p>

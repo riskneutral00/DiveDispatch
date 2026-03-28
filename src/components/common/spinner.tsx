@@ -26,7 +26,7 @@ export function Spinner({ size = 'md', label, className = '' }: SpinnerProps) {
   if (!label) return spinner
 
   return (
-    <div className="flex items-center gap-3" style={{ color: 'var(--color-text-secondary)' }}>
+    <div className="flex items-center gap-3 text-secondary">
       {spinner}
       <span className="text-sm">{label}</span>
     </div>

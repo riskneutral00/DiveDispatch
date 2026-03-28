@@ -29,25 +29,21 @@ function RoleTileButton({
       disabled={disabled}
       onClick={onClick}
       aria-label={role.label}
-      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      style={{
-        borderColor: 'var(--color-glass-border)',
+      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary"
+      style={{ borderColor: 'var(--color-glass-border)',
         background: 'var(--color-glass-bg)',
-        color: 'var(--color-text-primary)',
         outlineColor: 'var(--color-primary-glow)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
+        cursor: disabled ? 'not-allowed' : 'pointer' }}
     >
       <div className="flex items-center gap-3">
-        <Icon
+        <Icon className="text-secondary"
           size={20}
-          style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}
+          style={{ flexShrink: 0 }}
         />
         <div className="flex flex-col gap-0.5">
           <span className="font-medium text-sm leading-tight">{role.label}</span>
           <span
-            className="text-xs leading-snug"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs leading-snug text-secondary"
           >
             {role.description}
           </span>
@@ -91,13 +87,10 @@ export function AddRoleModal({
       )}
 
       {availableRoles.length === 0 ? (
-        <p
-          style={{
-            textAlign: 'center',
-            color: 'var(--color-text-secondary)',
+        <p className="text-secondary"
+          style={{ textAlign: 'center',
             fontSize: 14,
-            padding: '24px 0',
-          }}
+            padding: '24px 0' }}
         >
           You already hold all roles.
         </p>

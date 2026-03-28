@@ -55,12 +55,12 @@ export default function RoleProfilePage({
     <div className="max-w-3xl mx-auto px-4 pt-6 pb-28 md:pb-10">
       <div className="mb-6">
         <h1
-          className="font-bold mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-page-title)' }}
+          className="font-bold mb-1 text-primary"
+          style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-page-title)' }}
         >
           Profile
         </h1>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           {config.label}
         </p>
       </div>

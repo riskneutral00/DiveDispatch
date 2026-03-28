@@ -133,10 +133,10 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
             style={{ color: 'var(--color-warning)' }}
             aria-hidden="true"
           />
-          <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          <h2 className="text-xl font-semibold text-primary">
             Physician Clearance Required
           </h2>
-          <p style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-secondary">
             A medical condition requires physician clearance before diving. Your dive center has
             been notified and will contact you with next steps.
           </p>
@@ -152,13 +152,13 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       {/* Intro text — verbatim from PADI 10346 */}
       <GlassCard padding="md">
-        <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+        <p className="text-sm leading-relaxed text-primary">
           Recreational scuba diving and freediving requires good physical and mental health. There
           are a few medical conditions which can be hazardous while diving. This questionnaire
           provides a basis to determine if you should seek out a physician&apos;s evaluation.
           Answer all questions honestly.
         </p>
-        <p className="mt-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="mt-3 text-sm text-secondary">
           <strong>Note to women:</strong> If you are pregnant, or attempting to become pregnant, do
           not dive.
         </p>
@@ -173,10 +173,9 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
           return (
             <GlassCard key={q.key} padding="md">
               <div className="flex flex-col gap-3">
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+                <p className="text-sm leading-relaxed text-primary">
                   <span
-                    className="font-semibold mr-1"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="font-semibold mr-1 text-secondary"
                   >
                     {idx + 1}.
                   </span>
@@ -194,7 +193,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
-                    <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                    <span className="text-sm text-primary">
                       Yes
                     </span>
                   </label>
@@ -209,7 +208,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
-                    <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                    <span className="text-sm text-primary">
                       No
                     </span>
                   </label>
@@ -228,7 +227,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
       {/* Participant statement — verbatim */}
       <GlassCard padding="md">
-        <p className="text-sm leading-relaxed italic" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm leading-relaxed italic text-secondary">
           &ldquo;I have answered all questions honestly, and understand that I accept responsibility
           for any consequences resulting from any questions I may have answered inaccurately or for
           my failure to disclose any existing or past health conditions.&rdquo;

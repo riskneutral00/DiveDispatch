@@ -212,8 +212,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <span
-              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary"
             >
               <Search size={15} />
             </span>
@@ -231,8 +230,8 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
                 if (query) setSuggestionsOpen(true)
               }}
               onBlur={() => setTimeout(() => setSuggestionsOpen(false), 150)}
-              className="glass glass-field w-full text-sm py-2.5 pl-9 pr-3 placeholder:opacity-50"
-              style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
+              className="glass glass-field w-full text-sm py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
+              style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
           <button
@@ -262,8 +261,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
                 key={s.place_id}
                 role="option"
                 aria-selected={false}
-                className="px-3 py-2.5 text-sm cursor-pointer"
-                style={{ color: 'var(--color-text-primary)' }}
+                className="px-3 py-2.5 text-sm cursor-pointer text-primary"
                 onMouseDown={() => handleSelect(s)}
                 onMouseEnter={(e) => {
                   ;(e.currentTarget as HTMLElement).style.background =
@@ -355,8 +353,7 @@ function LocationPickerGate(props: ModalInnerProps) {
   if (!isLoaded) {
     return (
       <div
-        className="flex items-center justify-center h-full"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="flex items-center justify-center h-full text-secondary"
       >
         <span className="text-sm">Loading map…</span>
       </div>
@@ -383,8 +380,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
       {label && (
         <label
           htmlFor={inputId}
-          className="text-sm font-medium"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="text-sm font-medium text-secondary"
         >
           {label}
           {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
@@ -392,8 +388,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
       )}
       <div className="relative">
         <span
-          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary"
         >
           <MapPin size={16} />
         </span>
@@ -426,8 +421,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
               e.stopPropagation()
               onClear()
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full transition-opacity hover:opacity-70 cursor-pointer"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full transition-opacity hover:opacity-70 cursor-pointer text-secondary"
             aria-label="Clear location"
           >
             <X size={14} />

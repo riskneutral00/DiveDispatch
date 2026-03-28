@@ -129,22 +129,22 @@ export function GlassDialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight"
-                    style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-primary)" }}
+                    className="text-lg font-semibold leading-tight text-primary"
+                    style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {title}
                   </h2>
                 )}
                 {description && (
-                  <p id={descId} className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  <p id={descId} className="mt-1 text-sm text-secondary">
                     {description}
                   </p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2"
-                style={{ color: "var(--color-text-secondary)", outlineColor: "var(--color-accent)" }}
+                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >
                 <X size={20} />
@@ -188,22 +188,22 @@ export function GlassDialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight"
-                    style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-primary)" }}
+                    className="text-lg font-semibold leading-tight text-primary"
+                    style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {title}
                   </h2>
                 )}
                 {description && (
-                  <p id={descId} className="mt-1 text-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  <p id={descId} className="mt-1 text-sm text-secondary">
                     {description}
                   </p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2"
-                style={{ color: "var(--color-text-secondary)", outlineColor: "var(--color-accent)" }}
+                className="flex-shrink-0 p-1 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >
                 <X size={18} />

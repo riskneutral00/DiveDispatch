@@ -26,13 +26,10 @@ export function ManageRoles({ roles, onAddRole, onNavigateToOnboarding }: Manage
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2
-          style={{
-            fontSize: 18,
+        <h2 className="text-primary"
+          style={{ fontSize: 18,
             fontWeight: 600,
-            color: 'var(--color-text-primary)',
-            margin: 0,
-          }}
+            margin: 0 }}
         >
           Manage Roles
         </h2>
@@ -52,12 +49,9 @@ export function ManageRoles({ roles, onAddRole, onNavigateToOnboarding }: Manage
                 <RoleIcon role={entry.role} size={20} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: 'var(--color-text-primary)',
-                      }}
+                    <span className="text-primary"
+                      style={{ fontSize: 14,
+                        fontWeight: 500 }}
                     >
                       {config.label}
                     </span>

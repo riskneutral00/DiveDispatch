@@ -196,7 +196,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm animate-pulse text-secondary">
           Loading profile…
         </span>
       </div>
@@ -208,12 +208,12 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       {!section && (
         <div>
           <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            className="text-2xl font-bold text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             {isUpdate ? 'Profile Settings' : 'Complete Your Profile'}
           </h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mt-1 text-sm text-secondary">
             {isUpdate
               ? 'Update your dive center information.'
               : 'Tell us about your dive center to get started.'}
@@ -286,7 +286,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
         />
 
         {form.associations.length === 0 ? (
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             No affiliations added. Click Add to register one.
           </p>
         ) : (
@@ -331,7 +331,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
                   <div className="flex gap-6 items-start">
                     {/* Default course #days — fixed width */}
                     <div className="shrink-0">
-                      <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      <p className="text-sm font-medium mb-2 text-secondary">
                         Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
                       </p>
                       <div className="flex gap-2">

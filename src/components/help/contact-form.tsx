@@ -122,12 +122,12 @@ export function ContactForm() {
     return (
       <GlassCard padding="lg" className="text-center">
         <p
-          className="font-semibold text-base mb-1"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="font-semibold text-base mb-1 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Request submitted
         </p>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           {"Your request has been submitted. We'll get back to you soon."}
         </p>
       </GlassCard>
@@ -149,8 +149,7 @@ export function ContactForm() {
         {/* Category */}
         <div className="flex flex-col gap-1.5 w-full">
           <label
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm font-medium text-secondary"
           >
             Category
           </label>
@@ -186,8 +185,7 @@ export function ContactForm() {
         {/* Message */}
         <div className="flex flex-col gap-1.5 w-full">
           <label
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm font-medium text-secondary"
           >
             Message
           </label>
@@ -196,14 +194,11 @@ export function ContactForm() {
             onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
             placeholder="Describe your issue in detail (minimum 10 characters)"
             rows={5}
-            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-y"
-            style={{
-              color: 'var(--color-text-primary)',
-              outlineColor: errors.message ? 'var(--color-destructive)' : 'var(--color-accent)',
+            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-y text-primary"
+            style={{ outlineColor: errors.message ? 'var(--color-destructive)' : 'var(--color-accent)',
               ...(errors.message
                 ? { boxShadow: '0 0 0 2px var(--color-destructive)' }
-                : {}),
-            }}
+                : {}) }}
             aria-invalid={!!errors.message}
           />
           {errors.message && (
@@ -215,25 +210,23 @@ export function ContactForm() {
 
         {/* Screenshot upload */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="text-sm font-medium text-secondary">
             Screenshot{' '}
-            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400 }}>
+            <span className="text-secondary" style={{ fontWeight: 400 }}>
               (optional — PNG, JPG, WEBP, max 5 MB)
             </span>
           </span>
 
           {screenshot ? (
             <div
-              className="flex items-center gap-3 px-3 py-2.5 glass text-sm"
-              style={{ color: 'var(--color-text-primary)' }}
+              className="flex items-center gap-3 px-3 py-2.5 glass text-sm text-primary"
             >
-              <Upload size={15} style={{ color: 'var(--color-text-secondary)' }} />
+              <Upload className="text-secondary" size={15} />
               <span className="flex-1 truncate">{screenshot.name}</span>
-              <button
+              <button className="text-secondary"
                 type="button"
                 onClick={clearScreenshot}
                 aria-label="Remove screenshot"
-                style={{ color: 'var(--color-text-secondary)' }}
               >
                 <X size={14} />
               </button>
@@ -242,8 +235,7 @@ export function ContactForm() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2.5 glass text-sm transition-all hover:opacity-80"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex items-center gap-2 px-3 py-2.5 glass text-sm transition-all hover:opacity-80 text-secondary"
             >
               <Upload size={15} />
               <span>Attach screenshot</span>

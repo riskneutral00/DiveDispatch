@@ -31,20 +31,17 @@ function OnboardingBanner() {
   }
 
   return (
-    <div
+    <div className="text-primary"
       role="status"
       aria-live="polite"
-      style={{
-        background: 'var(--color-warning-bg)',
+      style={{ background: 'var(--color-warning-bg)',
         borderBottom: '1px solid var(--color-warning-border)',
         padding: '10px 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        fontSize: 13,
-        color: 'var(--color-text-primary)',
-      }}
+        fontSize: 13 }}
     >
       <span>Complete your profile to start creating or receiving bookings.</span>
       <Link

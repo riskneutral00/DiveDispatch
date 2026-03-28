@@ -76,8 +76,7 @@ export function CancelBookingDialog({
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="cancel-reason"
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-sm font-medium text-secondary"
           >
             Reason <span className="font-normal opacity-60">(optional)</span>
           </label>
@@ -88,12 +87,9 @@ export function CancelBookingDialog({
             disabled={submitting}
             rows={DEFAULT_TEXTAREA_ROWS}
             placeholder="e.g. Customer requested cancellation"
-            className="glass w-full text-sm px-3 py-2.5 resize-none focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder:opacity-50"
-            style={{
-              color: 'var(--color-text-primary)',
-              caretColor: 'var(--color-accent)',
-              outlineColor: 'var(--color-accent)',
-            }}
+            className="glass w-full text-sm px-3 py-2.5 resize-none focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder:opacity-50 text-primary"
+            style={{ caretColor: 'var(--color-accent)',
+              outlineColor: 'var(--color-accent)' }}
           />
         </div>
 

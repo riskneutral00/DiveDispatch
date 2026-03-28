@@ -160,8 +160,7 @@ function DiffExpander({ diff }: { diff: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-xs transition-colors"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="flex items-center gap-1 text-xs transition-colors text-secondary"
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {open ? 'Hide changes' : `${entries.length} field${entries.length > 1 ? 's' : ''} changed`}
@@ -171,16 +170,16 @@ function DiffExpander({ diff }: { diff: string }) {
           {entries.map(([field, change]) => (
             <div
               key={field}
-              className="flex items-baseline gap-2 text-xs font-mono px-2 py-1 rounded"
-              style={{ background: 'var(--color-glass-bg)', color: 'var(--color-text-secondary)' }}
+              className="flex items-baseline gap-2 text-xs font-mono px-2 py-1 rounded text-secondary"
+              style={{ background: 'var(--color-glass-bg)' }}
             >
-              <span className="font-semibold" style={{ color: 'var(--color-text-primary)', minWidth: '6rem' }}>
+              <span className="font-semibold text-primary" style={{ minWidth: '6rem' }}>
                 {field}
               </span>
               <span style={{ color: 'var(--color-destructive)', textDecoration: 'line-through' }}>
                 {String(change.old ?? '—')}
               </span>
-              <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+              <span className="text-secondary">→</span>
               <span style={{ color: 'var(--color-success, #34d399)' }}>
                 {String(change.new ?? '—')}
               </span>
@@ -232,19 +231,17 @@ function TimelineEntry({
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex items-baseline justify-between gap-2 flex-wrap">
           <span
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="text-sm font-medium text-primary"
           >
             {actionLabel(entry.action)}
           </span>
           <span
-            className="text-xs flex-shrink-0"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="text-xs flex-shrink-0 text-secondary"
           >
             {timeAgo(entry.timestamp)}
           </span>
         </div>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs mt-0.5 text-secondary">
           {actorLabel(entry)}
           {entry.note && <> · {entry.note}</>}
         </p>
@@ -282,7 +279,7 @@ export function AuditTrailTable({ bookingId }: AuditTrailTableProps) {
 
   if (entries.length === 0) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-secondary">
         No activity recorded yet.
       </p>
     )

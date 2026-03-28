@@ -39,9 +39,9 @@ function StepRow({ label, complete, required }: StepRowProps) {
           aria-hidden
         />
       ) : (
-        <Circle
+        <Circle className="text-secondary"
           size={18}
-          style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}
+          style={{ flexShrink: 0 }}
           aria-hidden
         />
       )}
@@ -105,12 +105,12 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold"
-                style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+                className="text-xl font-semibold text-primary"
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Submission Received
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm leading-relaxed text-secondary">
                 Your forms have been submitted. However, your medical questionnaire
                 indicates that physician clearance is required before diving. Your dive
                 center has been notified and will contact you with next steps.
@@ -124,12 +124,12 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold"
-                style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+                className="text-xl font-semibold text-primary"
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Submission Complete
               </h2>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm leading-relaxed text-secondary">
                 Your booking paperwork is complete. Your dive center will confirm the
                 final details and reach out with any questions. See you in the water!
               </p>
@@ -177,8 +177,8 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     <div className="flex flex-col gap-4">
       <GlassCard padding="md">
         <h2
-          className="text-base font-semibold mb-4"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="text-base font-semibold mb-4 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Review &amp; Submit
         </h2>
@@ -202,7 +202,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
       </GlassCard>
 
       {!allComplete && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-center text-secondary">
           Complete all required steps above before submitting.
         </p>
       )}

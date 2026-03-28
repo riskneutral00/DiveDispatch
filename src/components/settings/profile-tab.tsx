@@ -135,7 +135,7 @@ export function ProfileTab() {
   if (user === undefined) {
     return (
       <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse" style={{ color: 'var(--color-text-secondary)' }}>
+        <span className="text-sm animate-pulse text-secondary">
           Loading…
         </span>
       </div>
@@ -188,7 +188,7 @@ export function ProfileTab() {
             required
           />
         </div>
-        <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>Date of birth</p>
+        <p className="text-sm font-medium text-secondary">Date of birth</p>
         <div className="grid grid-cols-3 gap-4">
           <GlassSimpleSelect
             label="Month"

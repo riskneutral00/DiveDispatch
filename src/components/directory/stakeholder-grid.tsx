@@ -32,8 +32,7 @@ export function StakeholderGrid({
   if (entries.length === 0) {
     return (
       <div
-        className="flex flex-col items-center justify-center py-20 gap-3"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="flex flex-col items-center justify-center py-20 gap-3 text-secondary"
       >
         <Users size={40} strokeWidth={1.5} />
         <p className="text-sm font-medium">No results found</p>

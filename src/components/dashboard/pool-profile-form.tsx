@@ -159,13 +159,12 @@ export function PoolProfileForm() {
           <hr className="form-divider" />
 
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="text-sm font-medium text-secondary">
               Venue Capabilities
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label
-                className="flex items-center gap-2 cursor-pointer select-none text-sm"
-                style={{ color: 'var(--color-text-primary)' }}
+                className="flex items-center gap-2 cursor-pointer select-none text-sm text-primary"
               >
                 <input
                   type="checkbox"

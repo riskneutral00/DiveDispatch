@@ -96,10 +96,10 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
   return (
     <GlassCard padding="lg">
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+        <h2 className="text-xl font-bold mb-1 text-primary">
           Basic Information
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           Tell us about your dive center.
         </p>
       </div>

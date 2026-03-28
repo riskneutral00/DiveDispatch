@@ -184,10 +184,10 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {!section && (
         <div>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
+          <h1 className="text-2xl font-bold mb-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
             {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
           </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             {isUpdate ? 'Keep your profile current so dive centers can find you.' : 'Set up your instructor profile to start receiving booking requests.'}
           </p>
         </div>

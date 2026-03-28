@@ -56,15 +56,14 @@ function BannerDisplay({
         aria-hidden
         style={{ color: 'var(--color-warning)', flexShrink: 0, marginTop: 1 }}
       />
-      <p className="flex-1 text-sm" style={{ color: 'var(--color-text-primary)' }}>
+      <p className="flex-1 text-sm text-primary">
         <span className="font-semibold">Complete your profile: </span>
-        <span style={{ color: 'var(--color-text-secondary)' }}>{missingFields.join(', ')}</span>
+        <span className="text-secondary">{missingFields.join(', ')}</span>
       </p>
       <button
         aria-label="Dismiss"
         onClick={handleDismiss}
-        className="flex-shrink-0 p-0.5"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="flex-shrink-0 p-0.5 text-secondary"
       >
         <X size={16} />
       </button>

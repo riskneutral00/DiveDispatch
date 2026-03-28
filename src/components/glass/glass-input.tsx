@@ -30,8 +30,7 @@ export function GlassInput({
       {label && (
         <label
           htmlFor={id}
-          className="text-sm font-medium"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="text-sm font-medium text-secondary"
         >
           {label}
           {props.required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
@@ -41,14 +40,13 @@ export function GlassInput({
       <div className="relative flex items-center">
         {leadingIcon && (
           <span
-            className="absolute left-3 flex items-center pointer-events-none"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="absolute left-3 flex items-center pointer-events-none text-secondary"
           >
             {leadingIcon}
           </span>
         )}
 
-        <input
+        <input className="text-primary"
           {...props}
           type={type}
           id={id}
@@ -71,14 +69,11 @@ export function GlassInput({
           ]
             .filter(Boolean)
             .join(" ")}
-          style={{
-            color: "var(--color-text-primary)",
-            caretColor: "var(--color-accent)",
+          style={{ caretColor: "var(--color-accent)",
             ...(error ? {
               borderColor: "var(--color-destructive)",
               boxShadow: `0 0 0 3px var(--color-destructive-glow)`,
-            } : {}),
-          }}
+            } : {}) }}
           aria-invalid={!!error}
           aria-describedby={
             error ? `${id}-error` : helperText ? `${id}-helper` : undefined
@@ -87,8 +82,7 @@ export function GlassInput({
 
         {trailingIcon && (
           <span
-            className="absolute right-3 flex items-center pointer-events-none"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="absolute right-3 flex items-center pointer-events-none text-secondary"
           >
             {trailingIcon}
           </span>
@@ -101,7 +95,7 @@ export function GlassInput({
         </p>
       )}
       {!error && helperText && (
-        <p id={`${id}-helper`} className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+        <p id={`${id}-helper`} className="text-sm text-secondary">
           {helperText}
         </p>
       )}

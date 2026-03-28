@@ -36,8 +36,7 @@ export function SpecialtyField({
   return (
     <div className="flex flex-col gap-1.5 flex-1 min-w-0">
       <p
-        className="text-sm font-medium"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="text-sm font-medium text-secondary"
       >
         Default Specialties<span style={{ color: 'var(--color-destructive)' }}> *</span>
         <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span>

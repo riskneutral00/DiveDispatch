@@ -97,12 +97,11 @@ export function LanguagePicker({
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
           placeholder={value.length > 0 ? value.map((l) => CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label).join(', ') : 'Search languages…'}
-          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
-          style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
+          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'} text-primary`}
+          style={{ caretColor: 'var(--color-accent)' }}
         />
         <span
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
-          style={{ color: 'var(--color-text-secondary)' }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none text-secondary"
         >
           {value.length} / {max}
         </span>
@@ -116,7 +115,7 @@ export function LanguagePicker({
       >
         {searchResults !== null ? (
           searchResults.length === 0 ? (
-            <p className="text-xs px-1" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs px-1 text-secondary">
               No languages match &ldquo;{query}&rdquo;
             </p>
           ) : (

@@ -67,8 +67,7 @@ export const sharedProfileSchema = z.object({
 export function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <h2
-      className="text-xs font-semibold uppercase tracking-wider"
-      style={{ color: 'var(--color-text-secondary)' }}
+      className="text-xs font-semibold uppercase tracking-wider text-secondary"
     >
       {children}
     </h2>

@@ -155,7 +155,7 @@ export function EquipmentProfileForm() {
 
   if (loading) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>
+      <p className="text-sm text-secondary">Loading…</p>
     )
   }
 
@@ -210,7 +210,7 @@ export function EquipmentProfileForm() {
       {/* Gear Catalog */}
       <GlassCard padding="lg">
         <FormSectionHeader label="Gear Catalog" />
-        <p className="text-xs mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-xs mb-4 text-secondary">
           Select the gear types you stock and add manufacturer brands per type.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
@@ -227,7 +227,7 @@ export function EquipmentProfileForm() {
           <div className="space-y-3">
             {activeGearTypes.map((gt) => (
               <div key={gt} className="p-3 rounded-[var(--border-radius)]" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-glass-border)' }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-secondary">
                   {GEAR_TYPE_LABELS[gt]}
                 </p>
                 <div className="flex gap-2 mb-2">
@@ -244,9 +244,9 @@ export function EquipmentProfileForm() {
                 {(form.manufacturersByGearType[gt] ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {(form.manufacturersByGearType[gt] ?? []).map((mfr) => (
-                      <span key={mfr} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border" style={{ background: 'var(--color-glass-bg)', color: 'var(--color-text-primary)', borderColor: 'var(--color-glass-border)' }}>
+                      <span key={mfr} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border text-primary" style={{ background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)' }}>
                         {mfr}
-                        <button type="button" aria-label={`Remove ${mfr}`} onClick={() => removeManufacturer(gt, mfr)} style={{ color: 'var(--color-text-secondary)' }}>
+                        <button className="text-secondary" type="button" aria-label={`Remove ${mfr}`} onClick={() => removeManufacturer(gt, mfr)}>
                           <X size={10} />
                         </button>
                       </span>

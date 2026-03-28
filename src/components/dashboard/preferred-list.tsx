@@ -16,12 +16,11 @@ import { Spinner } from '@/components/common/spinner'
 
 const badgeStyle = {
   background: 'var(--color-glass-bg-elevated)',
-  color: 'var(--color-text-secondary)',
 } as const
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-2 text-xs px-1.5 py-0.5 rounded shrink-0" style={badgeStyle}>
+    <span className="ml-2 text-xs px-1.5 py-0.5 rounded shrink-0 text-secondary" style={badgeStyle}>
       {children}
     </span>
   )
@@ -102,11 +101,10 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
                 key={entry.slug}
                 type="button"
                 onClick={() => add(entry.slug)}
-                className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80"
-                style={{ color: 'var(--color-text-primary)' }}
+                className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80 text-primary"
               >
                 <span className="font-medium">{entry.name}</span>
-                <span className="ml-2 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                <span className="ml-2 text-xs text-secondary">
                   {entry.placeName}
                 </span>
                 {renderBadge?.(entry)}
@@ -117,7 +115,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
       </div>
 
       {slugs.length === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           No preferred {emptyNoun} added yet.
         </p>
       ) : (
@@ -128,20 +126,19 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
               <GlassCard key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span
-                    className="text-xs font-bold w-5 text-center shrink-0"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="text-xs font-bold w-5 text-center shrink-0 text-secondary"
                   >
                     {index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                      <p className="text-sm font-medium truncate text-primary">
                         {entry?.name ?? slug}
                       </p>
                       {entry && renderBadge?.(entry)}
                     </div>
                     {entry?.placeName && (
-                      <p className="text-xs truncate" style={{ color: 'var(--color-text-secondary)' }}>
+                      <p className="text-xs truncate text-secondary">
                         {entry.placeName}
                       </p>
                     )}

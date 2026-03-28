@@ -120,12 +120,11 @@ function CoverageStatus({
   return (
     <GlassCard padding="md">
       <h2
-        className="text-sm font-semibold uppercase tracking-wider mb-4"
-        style={{ color: 'var(--color-text-secondary)' }}
+        className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
       >
         Booking Readiness
       </h2>
-      <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm mb-4 text-secondary">
         These resources must be configured before you can create bookings.
         Detailed capability checks happen when you submit a booking.
       </p>
@@ -258,12 +257,12 @@ export function PreferencesEditor() {
     <form onSubmit={handleSubmit} noValidate className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10">
       <div className="mb-6">
         <h1
-          className="text-2xl font-bold mb-1"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          className="text-2xl font-bold mb-1 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Settings
         </h1>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           Booking behaviour and availability preferences
         </p>
       </div>
@@ -277,8 +276,7 @@ export function PreferencesEditor() {
           <>
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Acceptance Mode
               </h2>
@@ -304,10 +302,10 @@ export function PreferencesEditor() {
                         style={{ accentColor: 'var(--color-primary)' }}
                       />
                       <div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                        <p className="text-sm font-medium text-primary">
                           {label}
                         </p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
+                        <p className="text-xs mt-0.5 text-secondary">
                           {description}
                         </p>
                       </div>
@@ -321,8 +319,7 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Confirmation Alerts
               </h2>
@@ -335,8 +332,7 @@ export function PreferencesEditor() {
                 ).map(({ key, label }) => (
                   <label
                     key={key}
-                    className="flex items-center gap-3 cursor-pointer select-none text-sm"
-                    style={{ color: 'var(--color-text-primary)' }}
+                    className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary"
                   >
                     <input
                       type="checkbox"
@@ -358,8 +354,7 @@ export function PreferencesEditor() {
           <>
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Availability Limits
               </h2>
@@ -405,12 +400,11 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Preferred Instructors
               </h2>
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mb-4 text-secondary">
                 Rank instructors in order of booking priority. The wizard will suggest them first.
               </p>
               <PreferredInstructorList
@@ -423,12 +417,11 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Preferred Venues
               </h2>
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mb-4 text-secondary">
                 Pools and dive sites, ranked by preference. Need at least one confined water and one open water venue (or a boat).
               </p>
               <PreferredVenueList
@@ -441,12 +434,11 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Preferred Equipment Providers
               </h2>
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mb-4 text-secondary">
                 At least one equipment provider is required before creating bookings.
               </p>
               <PreferredEquipmentList
@@ -459,12 +451,11 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Preferred Boats
               </h2>
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mb-4 text-secondary">
                 A boat satisfies both confined and open water venue requirements.
               </p>
               <PreferredBoatList
@@ -477,12 +468,11 @@ export function PreferencesEditor() {
 
             <GlassCard padding="md">
               <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
                 Preferred Compressors
               </h2>
-              <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+              <p className="text-sm mb-4 text-secondary">
                 Not required if a preferred boat or venue has a compressor.
               </p>
               <PreferredCompressorList

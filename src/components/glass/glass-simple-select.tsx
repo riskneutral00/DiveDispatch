@@ -33,7 +33,7 @@ export function GlassSimpleSelect({
 }: GlassSimpleSelectProps) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+      <label className="text-sm font-medium text-secondary">
         {label}
         {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
       </label>

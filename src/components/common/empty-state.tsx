@@ -9,12 +9,12 @@ export function EmptyState({ message, icon: Icon }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-8 gap-2">
       {Icon && (
-        <Icon
+        <Icon className="text-secondary"
           size={24}
-          style={{ color: 'var(--color-text-secondary)', opacity: 0.6 }}
+          style={{ opacity: 0.6 }}
         />
       )}
-      <p className="text-sm text-center" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-center text-secondary">
         {message}
       </p>
     </div>

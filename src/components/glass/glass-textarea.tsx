@@ -25,14 +25,13 @@ export function GlassTextarea({
       {label && (
         <label
           htmlFor={id}
-          className="text-sm font-medium"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="text-sm font-medium text-secondary"
         >
           {label}
         </label>
       )}
 
-      <textarea
+      <textarea className="text-primary"
         {...props}
         id={id}
         rows={rows}
@@ -45,16 +44,13 @@ export function GlassTextarea({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{
-          color: "var(--color-text-primary)",
-          caretColor: "var(--color-accent)",
+        style={{ caretColor: "var(--color-accent)",
           ...(error
             ? {
                 borderColor: "var(--color-destructive)",
                 boxShadow: "0 0 0 3px var(--color-destructive-glow)",
               }
-            : {}),
-        }}
+            : {}) }}
         aria-invalid={!!error}
         aria-describedby={
           error ? `${id}-error` : helperText ? `${id}-helper` : undefined
@@ -74,8 +70,7 @@ export function GlassTextarea({
       {!error && helperText && (
         <p
           id={`${id}-helper`}
-          className="text-sm"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="text-sm text-secondary"
         >
           {helperText}
         </p>

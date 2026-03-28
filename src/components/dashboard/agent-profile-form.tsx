@@ -204,10 +204,10 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {!section && (
         <div>
-          <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}>
+          <h1 className="text-2xl font-bold mb-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
             {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
           </h1>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             {isUpdate ? 'Keep your profile current so dive operators can find you.' : 'Set up your agent profile to start creating and referring bookings.'}
           </p>
         </div>
@@ -271,7 +271,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
                 )
               })}
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+            <p className="text-xs mt-2 text-secondary">
               {form.defaultReferralMode === 'independent'
                 ? 'You create and manage bookings directly.'
                 : 'You refer customers to operators who manage the booking.'}

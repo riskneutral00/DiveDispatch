@@ -42,8 +42,8 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
       {/* Equipment & Compressor */}
       <GlassCard padding="md">
         <h3
-          className="text-sm font-semibold mb-3"
-          style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+          className="text-sm font-semibold mb-3 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Equipment & Compressor
         </h3>

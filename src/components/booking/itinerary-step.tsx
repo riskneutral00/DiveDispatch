@@ -139,7 +139,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {/* Course picker */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             Activity
           </label>
           <div className="relative">
@@ -157,13 +157,13 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               <option disabled>──────────</option>
               <option value="O+A">{COMBO_COURSES['O+A'].label}</option>
             </select>
-            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--color-text-secondary)' }} />
+            <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-secondary" />
           </div>
         </div>
 
         {/* Start date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             Start date
           </label>
           <input
@@ -173,14 +173,14 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             onChange={(e) => handleStartDateChange(e.target.value)}
             onClick={(e) => e.currentTarget.showPicker()}
             data-testid="course-start-date"
-            className="glass glass-field w-full text-sm py-2.5 px-3 cursor-pointer"
-            style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
+            className="glass glass-field w-full text-sm py-2.5 px-3 cursor-pointer text-primary"
+            style={{ caretColor: 'var(--color-accent)' }}
           />
         </div>
 
         {/* End date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             End date
           </label>
           <div className="flex gap-1 items-center">
@@ -190,8 +190,8 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               min={entry.dates[0]}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              className="glass glass-field flex-1 text-sm py-2.5 px-3 cursor-pointer"
-              style={{ color: 'var(--color-text-primary)', caretColor: 'var(--color-accent)' }}
+              className="glass glass-field flex-1 text-sm py-2.5 px-3 cursor-pointer text-primary"
+              style={{ caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (
               <GlassButton
@@ -416,8 +416,8 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
       {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
         <label
-          className="flex items-center gap-2 text-sm"
-          style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)', opacity: 0.5, cursor: 'not-allowed' }}
+          className="flex items-center gap-2 text-sm text-secondary"
+          style={{ fontFamily: 'var(--font-body)', opacity: 0.5, cursor: 'not-allowed' }}
           title="Coming soon"
         >
           <input
@@ -428,7 +428,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
             aria-label="Same courses for all customers (coming soon)"
           />
           Same courses for all customers
-          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--color-glass-border)', color: 'var(--color-text-secondary)' }}>
+          <span className="text-xs px-1.5 py-0.5 rounded text-secondary" style={{ background: 'var(--color-glass-border)' }}>
             Coming soon
           </span>
         </label>
@@ -439,13 +439,13 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
         <div key={customer.id}>
           <div className="flex items-center justify-between mb-2">
             <h3
-              className="text-sm font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+              className="text-sm font-semibold text-primary"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               {sameForAll && customers.length > 1 ? 'All customers' : customer.name}
             </h3>
             {sameForAll && customers.length > 1 && (
-              <span className="text-xs" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+              <span className="text-xs text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
                 <Copy size={10} className="inline mr-1" />
                 Applies to {customers.length} customers
               </span>
@@ -536,8 +536,8 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3
-              className="text-sm font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}
+              className="text-sm font-semibold text-primary"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               Schedule ({days.length} day{days.length !== 1 ? 's' : ''})
             </h3>
@@ -597,7 +597,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
 
       {/* Empty state if no customers */}
       {customers.length === 0 && (
-        <p className="text-sm text-center py-6" style={{ color: 'var(--color-text-secondary)', fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-center py-6 text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
           Add customers in step 1 first.
         </p>
       )}

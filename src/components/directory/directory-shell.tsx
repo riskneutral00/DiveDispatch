@@ -155,8 +155,8 @@ export function DirectoryShell() {
         <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
           <Waves size={20} style={{ color: 'var(--color-primary)' }} />
           <span
-            className="font-bold text-sm leading-none hidden sm:block"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            className="font-bold text-sm leading-none hidden sm:block text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             DiveDispatch
           </span>
@@ -196,8 +196,8 @@ export function DirectoryShell() {
       {/* Page content */}
       <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
         <h1
-          className="text-2xl font-bold mb-6"
-          style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+          className="text-2xl font-bold mb-6 text-primary"
+          style={{ fontFamily: 'var(--font-heading)' }}
         >
           Directory
         </h1>

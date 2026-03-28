@@ -34,12 +34,11 @@ export function StepBusinessInfo({
       <div className="w-full max-w-md mx-auto flex flex-col gap-6" data-testid="wizard-content">
         <div className="text-center">
           <h2
-            className="text-xl font-semibold mb-1"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="text-xl font-semibold mb-1 text-primary"
           >
             Business Info
           </h2>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-secondary">
             No business info needed — operators will find you by your profile.
           </p>
         </div>
@@ -62,12 +61,11 @@ export function StepBusinessInfo({
     <div className="w-full max-w-md mx-auto flex flex-col gap-6" data-testid="wizard-content">
       <div className="text-center">
         <h2
-          className="text-xl font-semibold mb-1"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="text-xl font-semibold mb-1 text-primary"
         >
           Business Info
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           {selectedRoles.map((r) => r.label).join(' · ')}
         </p>
       </div>

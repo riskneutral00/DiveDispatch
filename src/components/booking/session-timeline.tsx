@@ -39,7 +39,7 @@ function groupByDate(sessions: BookingDetailSession[]): Map<string, BookingDetai
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
   if (sessions.length === 0) {
     return (
-      <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="text-sm text-secondary">
         No sessions scheduled.
       </p>
     )
@@ -56,8 +56,7 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
           <div key={date}>
             {/* Date header */}
             <div
-              className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-secondary"
             >
               <Calendar size={12} />
               <span>{date}</span>
@@ -87,14 +86,12 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                     }}
                   >
                     <p
-                      className="text-sm font-medium"
-                      style={{ color: 'var(--color-text-primary)' }}
+                      className="text-sm font-medium text-primary"
                     >
                       {s.inventoryUnitName}
                     </p>
                     <div
-                      className="flex items-center gap-3 mt-1 text-xs flex-wrap"
-                      style={{ color: 'var(--color-text-secondary)' }}
+                      className="flex items-center gap-3 mt-1 text-xs flex-wrap text-secondary"
                     >
                       <span className="flex items-center gap-1">
                         <Clock size={11} />

@@ -13,13 +13,13 @@ export default function HelpPage() {
           <div className="flex items-center gap-3 mb-1">
             <HelpCircle size={26} style={{ color: 'var(--color-primary)' }} />
             <h1
-              className="font-bold"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)', fontSize: 'var(--font-size-page-title)' }}
+              className="font-bold text-primary"
+              style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-page-title)' }}
             >
               Help &amp; Support
             </h1>
           </div>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm mt-2 text-secondary">
             Browse common questions or send us a message and we&apos;ll get back to you.
           </p>
         </div>
@@ -27,8 +27,8 @@ export default function HelpPage() {
         {/* FAQ */}
         <section>
           <h2
-            className="text-base font-semibold mb-4"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+            className="text-base font-semibold mb-4 text-primary"
+            style={{ fontFamily: 'var(--font-heading)' }}
           >
             Frequently Asked Questions
           </h2>
@@ -40,8 +40,8 @@ export default function HelpPage() {
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare size={18} style={{ color: 'var(--color-primary)' }} />
             <h2
-              className="text-base font-semibold"
-              style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-primary)' }}
+              className="text-base font-semibold text-primary"
+              style={{ fontFamily: 'var(--font-heading)' }}
             >
               Contact Support
             </h2>

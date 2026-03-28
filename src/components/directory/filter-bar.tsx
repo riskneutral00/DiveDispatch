@@ -162,9 +162,8 @@ function MultiSelectFilter({
         {label}
       </button>
       <span
-        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary"
         aria-hidden="true"
-        style={{ color: 'var(--color-text-secondary)' }}
       >
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path
@@ -255,9 +254,8 @@ export function FilterBar({ filters, values, onChange }: FilterBarProps) {
               ))}
             </select>
             <span
-              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-secondary"
               aria-hidden
-              style={{ color: 'var(--color-text-secondary)' }}
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <path

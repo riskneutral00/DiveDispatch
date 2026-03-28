@@ -37,12 +37,11 @@ export function StepAboutYou({
     <div className="w-full max-w-md mx-auto flex flex-col gap-6" data-testid="wizard-content">
       <div className="text-center">
         <h2
-          className="text-xl font-semibold mb-1"
-          style={{ color: 'var(--color-text-primary)' }}
+          className="text-xl font-semibold mb-1 text-primary"
         >
           About You
         </h2>
-        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="text-sm text-secondary">
           Tell us a bit about yourself
         </p>
       </div>
