@@ -3,6 +3,7 @@ import type { DbCtx } from './auth'
 import type { Doc } from '../_generated/dataModel'
 import { isBookingExpired } from '../bookings/_shared'
 import { ErrorCode } from './errorCodes'
+import { BOOKING_STATUS } from '../shared/statuses'
 
 /**
  * Validates a portal token and resolves link, booking, and customer profile.
@@ -21,7 +22,7 @@ export async function resolvePortalToken(ctx: DbCtx, token: string): Promise<{ l
   const booking = await ctx.db.get(link.bookingId)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
   if (isBookingExpired(booking)) throw new ConvexError({ code: ErrorCode.TOKEN_EXPIRED })
-  if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.BOOKING_CLOSED })
+  if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.BOOKING_CLOSED })
 
   const profile = await ctx.db
     .query('customerProfiles')
@@ -48,7 +49,7 @@ export async function resolvePortalTokenSoft(ctx: DbCtx, token: string): Promise
   const booking = await ctx.db.get(link.bookingId)
   if (!booking) return null
   if (isBookingExpired(booking)) return null
-  if (booking.status !== 'Draft') return null
+  if (booking.status !== BOOKING_STATUS.Draft) return null
 
   const profile = await ctx.db
     .query('customerProfiles')

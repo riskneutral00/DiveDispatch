@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { internalMutation } from './_generated/server'
 import { tryAutoAdvance } from './bookings/_shared'
+import { BOOKING_STATUS } from './shared/statuses'
 
 /**
  * DEV-ONLY: Delete a Convex user record by email.
@@ -32,7 +33,7 @@ export const completeCustomerForm = internalMutation({
       .withIndex('by_ownerId_ownerType', (q: any) => q.eq('ownerId', args.ownerSlug))
       .collect()
     const draft = bookings
-      .filter((b) => b.status === 'Draft' && b.bookingFormComplete)
+      .filter((b) => b.status === BOOKING_STATUS.Draft && b.bookingFormComplete)
       .sort((a, b) => b.createdAt - a.createdAt)[0]
     if (!draft) return { ok: false, reason: 'no submitted draft found' }
     await ctx.db.patch(draft._id, { customerFormComplete: true })

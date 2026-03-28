@@ -2,7 +2,8 @@ import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
-import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
+import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, rentalChecklistValidator } from './lib/validators'
+import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
 
 // ── Typed Unions ────────────────────────────────────────────────────
 
@@ -19,29 +20,7 @@ const operatorType = v.union(
 // DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT added to this union.
 // DiveHostel inherits DiveResort's path — NOT added to this union.
 
-const bookingStatus = v.union(
-  v.literal('Draft'),
-  v.literal('Upcoming'),
-  v.literal('Completed'),
-  v.literal('Cancelled'),
-)
-
-const reservationStatus = v.union(
-  v.literal('PendingAcceptance'),
-  v.literal('Confirmed'),
-  v.literal('Vacated'),
-  v.literal('NoShow'),
-)
-
 const capacityModel = v.union(v.literal('Exclusive'), v.literal('Pooled'))
-
-const gearType = v.union(
-  v.literal('wetsuit'),
-  v.literal('bcd'),
-  v.literal('fins'),
-  v.literal('mask'),
-  v.literal('regulator'),
-)
 
 const gender = v.union(v.literal('M'), v.literal('F'), v.literal('Other'))
 
@@ -76,21 +55,6 @@ const acceptanceMode = v.union(
   v.literal('PostPayAllowed'),
 )
 
-
-const notificationType = v.union(
-  v.literal('hold_placed'),
-  v.literal('hold_declined'),
-  v.literal('booking_cancelled'),
-  v.literal('booking_updated'),
-  v.literal('booking_referred'),
-  v.literal('medical_hard_block'),
-  v.literal('medical_cleared'),
-  v.literal('physician_clearance_submitted'),
-  v.literal('no_backup_available'),
-  v.literal('min_pax_not_met'),
-  v.literal('noshow_marked'),
-  v.literal('noshow_reverted'),
-)
 
 // ── Schema ──────────────────────────────────────────────────────────
 
@@ -261,16 +225,7 @@ export default defineSchema({
     waiverSignedAt: v.optional(v.number()),
     signatureFileId: v.optional(v.id('_storage')),
     guardianSignatureFileId: v.optional(v.id('_storage')),
-    rentalChecklist: v.optional(
-      v.object({
-        mask: v.union(v.literal('own'), v.literal('rent')),
-        bcd: v.union(v.literal('own'), v.literal('rent')),
-        wetsuit: v.union(v.literal('own'), v.literal('rent')),
-        fins: v.union(v.literal('own'), v.literal('rent')),
-        regulator: v.union(v.literal('own'), v.literal('rent')),
-        maskPrescription: v.optional(v.string()),
-      }),
-    ),
+    rentalChecklist: v.optional(rentalChecklistValidator),
     submittedAt: v.optional(v.number()),
     bloodType: v.optional(v.string()),
     insurancePolicyNumber: v.optional(v.string()),
@@ -322,16 +277,7 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     noShowAt: v.optional(v.number()),
     vacatedAt: v.optional(v.number()),
-    vacatedBy: v.optional(
-      v.union(
-        v.literal('booking_cancelled'),
-        v.literal('stakeholder_declined'),
-        v.literal('hold_expired'),
-        v.literal('operator_edit'),
-        v.literal('noshow_replacement'),
-        v.literal('equipment_not_needed'),
-      ),
-    ),
+    vacatedBy: v.optional(vacatedReasonValidator),
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_bookingId_status', ['bookingId', 'status'])
@@ -393,7 +339,8 @@ export default defineSchema({
   })
     .index('by_userId', ['userId'])
     .index('by_userId_readAt', ['userId', 'readAt'])
-    .index('by_userId_createdAt', ['userId', 'createdAt']),
+    .index('by_userId_createdAt', ['userId', 'createdAt'])
+    .index('by_bookingId', ['bookingId']),
 
   // ── L1: Stakeholder Profile Tables ──────────────────────────────────
 
@@ -526,11 +473,7 @@ export default defineSchema({
     bagNumber: v.string(),
     equipmentManagerId: v.string(),
     bookingId: v.id('bookings'),
-    status: v.union(
-      v.literal('Assigned'),
-      v.literal('InUse'),
-      v.literal('Returned'),
-    ),
+    status: bagStatusValidator,
     assignedAt: v.optional(v.number()),
     returnedAt: v.optional(v.number()),
     damageStatus: v.optional(v.union(v.literal('Damaged'), v.literal('Missing'))),

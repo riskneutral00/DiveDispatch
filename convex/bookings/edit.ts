@@ -7,6 +7,7 @@ import {
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
 import { ErrorCode } from '../lib/errorCodes'
+import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
 
 // ─── editBooking ──────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export const editBooking = mutation({
       })
     }
 
-    await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
 
     // Clear sessions so operator can re-submit with new session data
     const sessions = await ctx.db
@@ -42,7 +43,7 @@ export const editBooking = mutation({
     }
 
     await ctx.db.patch(args.bookingId, {
-      status: 'Draft',
+      status: BOOKING_STATUS.Draft,
       bookingFormComplete: false,
       submittedAt: undefined,
       expiresAt: undefined,

@@ -12,6 +12,7 @@ import {
   type BookingResource,
 } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
+import { BOOKING_STATUS } from './shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -366,7 +367,7 @@ export async function _myDashboard(
   }
 
   const filteredBookings = allBookings.filter(
-    (b) => b.status === 'Draft' || b.status === 'Upcoming' || b.status === 'Completed',
+    (b) => b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming || b.status === BOOKING_STATUS.Completed,
   )
 
   // Build calendar bookings, attaching caller's reservation status for resource roles

@@ -12,6 +12,7 @@ import { notify } from './notifications'
 import { logBookingChange } from './bookingAuditLog'
 import { ErrorCode } from './lib/errorCodes'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
+import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
 
 // Re-export for test backwards compatibility
 export { getDatesInRange as getDateRange } from './shared/dateRange'
@@ -88,14 +89,14 @@ export async function _acceptHandler(
   if (unit.ownerId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
   // Idempotent: already confirmed is a no-op
-  if (reservation.status === 'Confirmed') return
+  if (reservation.status === RESERVATION_STATUS.Confirmed) return
 
-  if (reservation.status !== 'PendingAcceptance') {
+  if (reservation.status !== RESERVATION_STATUS.PendingAcceptance) {
     throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
   await ctx.db.patch(args.reservationId as Id<"reservations">, {
-    status: 'Confirmed',
+    status: RESERVATION_STATUS.Confirmed,
     confirmedAt: Date.now(),
   })
 
@@ -139,13 +140,13 @@ export async function _acceptBookingHandler(
     .collect()
 
   const pending = unitReservations.filter(
-    (r) => r.status === 'PendingAcceptance',
+    (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
   )
 
   if (pending.length === 0) return // idempotent
 
   for (const res of pending) {
-    await ctx.db.patch(res._id, { status: 'Confirmed', confirmedAt: Date.now() })
+    await ctx.db.patch(res._id, { status: RESERVATION_STATUS.Confirmed, confirmedAt: Date.now() })
   }
 
   await logBookingChange(ctx, {
@@ -191,7 +192,7 @@ export async function _declineHandler(
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   // Guard: cannot decline on a finalized booking
-  if (booking.status === 'Completed' || booking.status === 'Cancelled') {
+  if (booking.status === BOOKING_STATUS.Completed || booking.status === BOOKING_STATUS.Cancelled) {
     throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
@@ -204,7 +205,7 @@ export async function _declineHandler(
     .collect()
 
   const activeForUnit = unitReservations.filter(
-    (r) => r.status === 'PendingAcceptance' || r.status === 'Confirmed',
+    (r) => r.status === RESERVATION_STATUS.PendingAcceptance || r.status === RESERVATION_STATUS.Confirmed,
   )
 
   const now = Date.now()
@@ -212,9 +213,9 @@ export async function _declineHandler(
   // Vacate each reservation and restore its snapshot atomically (Invariant 3)
   for (const reservation of activeForUnit) {
     await ctx.db.patch(reservation._id, {
-      status: 'Vacated',
+      status: RESERVATION_STATUS.Vacated,
       vacatedAt: now,
-      vacatedBy: 'stakeholder_declined',
+      vacatedBy: VACATED_REASON.StakeholderDeclined,
     })
 
     const session = await ctx.db.get(reservation.bookingSessionId)
@@ -251,8 +252,8 @@ export async function _declineHandler(
 
   // Cascade booking status if needed
   const bookingPatch: Record<string, unknown> = {}
-  if (booking.status === 'Upcoming') {
-    bookingPatch.status = 'Draft'
+  if (booking.status === BOOKING_STATUS.Upcoming) {
+    bookingPatch.status = BOOKING_STATUS.Draft
     bookingPatch.bookingFormComplete = false
     bookingPatch.expiresAt = now + booking.holdTTL
   }
@@ -270,7 +271,7 @@ export async function _declineHandler(
   // Notify the booking owner of the decline
   await ctx.db.insert('notifications', {
     userId: booking.ownerId,
-    type: 'hold_declined',
+    type: NOTIFICATION_TYPE.HoldDeclined,
     bookingId: args.bookingId as Id<"bookings">,
     message: `${unit.displayName} has declined the reservation.`,
     createdAt: now,
@@ -338,7 +339,7 @@ export async function _declineHandler(
   if (!hasAlternative) {
     await ctx.db.insert('notifications', {
       userId: booking.ownerId,
-      type: 'no_backup_available',
+      type: NOTIFICATION_TYPE.NoBackupAvailable,
       bookingId: args.bookingId as Id<"bookings">,
       message: `No available ${unit.resourceType} found in this area for the booking dates.`,
       createdAt: now,
@@ -384,7 +385,7 @@ export const declineByBookingForCaller = mutation({
     const activeForCaller = reservations.filter(
       (r) =>
         callerUnitIds.has(r.inventoryUnitId) &&
-        (r.status === 'PendingAcceptance' || r.status === 'Confirmed'),
+        (r.status === RESERVATION_STATUS.PendingAcceptance || r.status === RESERVATION_STATUS.Confirmed),
     )
 
     if (activeForCaller.length === 0) {
@@ -427,7 +428,7 @@ export const acceptByBookingForCaller = mutation({
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_bookingId_status', (q) =>
-        q.eq('bookingId', args.bookingId).eq('status', 'PendingAcceptance'),
+        q.eq('bookingId', args.bookingId).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
       .collect()
 
@@ -478,7 +479,7 @@ export async function _markNoShowHandler(
   }
 
   // State guard
-  const status = reservation.status as 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
+  const status = reservation.status as ReservationStatus
   if (!canReservationTransition(status, 'mark_noshow')) {
     throw new ConvexError({
       code: ErrorCode.INVALID_TRANSITION,
@@ -497,7 +498,7 @@ export async function _markNoShowHandler(
 
   // Mark NoShow — do NOT restore snapshot (capacity stays consumed)
   await ctx.db.patch(args.reservationId, {
-    status: 'NoShow',
+    status: RESERVATION_STATUS.NoShow,
     noShowAt: Date.now(),
   })
 
@@ -513,7 +514,7 @@ export async function _markNoShowHandler(
   if (unit) {
     await notify(ctx, {
       userId: unit.ownerId,
-      type: 'noshow_marked',
+      type: NOTIFICATION_TYPE.NoshowMarked,
       bookingId: reservation.bookingId as string,
       message: `A customer was marked as NoShow for your ${session.date} session.`,
     })
@@ -538,7 +539,7 @@ export async function _revertNoShowHandler(
   }
 
   // State guard
-  const status = reservation.status as 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
+  const status = reservation.status as ReservationStatus
   if (!canReservationTransition(status, 'revert_noshow')) {
     throw new ConvexError({
       code: ErrorCode.INVALID_TRANSITION,
@@ -556,7 +557,7 @@ export async function _revertNoShowHandler(
 
   // Revert to Confirmed
   await ctx.db.patch(args.reservationId, {
-    status: 'Confirmed',
+    status: RESERVATION_STATUS.Confirmed,
     noShowAt: undefined,
   })
 
@@ -573,7 +574,7 @@ export async function _revertNoShowHandler(
   if (unit && session) {
     await notify(ctx, {
       userId: unit.ownerId,
-      type: 'noshow_reverted',
+      type: NOTIFICATION_TYPE.NoshowReverted,
       bookingId: reservation.bookingId as string,
       message: `NoShow was reverted for your ${session.date} session. Customer is back to Confirmed.`,
     })

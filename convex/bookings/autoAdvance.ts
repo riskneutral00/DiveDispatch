@@ -8,6 +8,7 @@ import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
 import { restoreSnapshotUnits } from './inventoryRelease'
+import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
 /**
  * Advances booking Draft → Upcoming when all conditions are simultaneously satisfied.
@@ -23,7 +24,7 @@ import { restoreSnapshotUnits } from './inventoryRelease'
  */
 export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promise<void> {
   const booking = await ctx.db.get(bookingId as Id<'bookings'>)
-  if (!booking || booking.status !== 'Draft') return
+  if (!booking || booking.status !== BOOKING_STATUS.Draft) return
   if (!booking.bookingFormComplete || !booking.customerFormComplete) return
   if (booking.medicalHardBlock) return
 
@@ -63,17 +64,17 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
         .collect()
 
       for (const res of allReservations) {
-        if (res.status === 'Vacated' || res.status === 'NoShow') continue
+        if (res.status === RESERVATION_STATUS.Vacated || res.status === RESERVATION_STATUS.NoShow) continue
         // DD-017: re-read reservation to guard against concurrent vacate
         const fresh = await ctx.db.get(res._id)
-        if (!fresh || fresh.status === 'Vacated') continue
+        if (!fresh || fresh.status === RESERVATION_STATUS.Vacated) continue
         const unit = await ctx.db.get(res.inventoryUnitId)
         if (!unit || unit.resourceType !== 'Equipment') continue
 
         await ctx.db.patch(res._id, {
-          status: 'Vacated',
+          status: RESERVATION_STATUS.Vacated,
           vacatedAt: Date.now(),
-          vacatedBy: 'equipment_not_needed',
+          vacatedBy: VACATED_REASON.EquipmentNotNeeded,
         })
 
         // Restore availability snapshot — same pattern as releaseBookingReservations
@@ -98,7 +99,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
 
   // DD-017: re-read booking after EM auto-release to guard against concurrent status change
   const freshBooking = await ctx.db.get(bookingId as Id<'bookings'>)
-  if (!freshBooking || freshBooking.status !== 'Draft') return
+  if (!freshBooking || freshBooking.status !== BOOKING_STATUS.Draft) return
 
   // ─── Reservation check ────────────────────────────────────────────────────
   const reservations = await ctx.db
@@ -106,19 +107,19 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
     .collect()
 
-  const active = reservations.filter((r) => r.status !== 'Vacated')
+  const active = reservations.filter((r) => r.status !== RESERVATION_STATUS.Vacated)
   // A declined resource (stakeholder_declined) means the booking is missing a required
   // resource and cannot advance. Vacated-for-other-reasons (equipment_not_needed) is fine.
   const hasDeclinedResource = reservations.some(
-    (r) => r.status === 'Vacated' && r.vacatedBy === 'stakeholder_declined',
+    (r) => r.status === RESERVATION_STATUS.Vacated && r.vacatedBy === VACATED_REASON.StakeholderDeclined,
   )
 
   // All in-system reservations must be Confirmed.
   // Vacuously true when ALL resources are external (zero reservations ever created).
   // Blocked when a required resource was declined (needs operator attention).
-  const allConfirmed = active.every((r) => r.status === 'Confirmed')
+  const allConfirmed = active.every((r) => r.status === RESERVATION_STATUS.Confirmed)
 
   if (allConfirmed && !hasDeclinedResource) {
-    await ctx.db.patch(bookingId as Id<'bookings'>, { status: 'Upcoming' })
+    await ctx.db.patch(bookingId as Id<'bookings'>, { status: BOOKING_STATUS.Upcoming })
   }
 }

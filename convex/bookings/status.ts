@@ -12,6 +12,7 @@ import {
 import { logBookingChange } from '../bookingAuditLog'
 import { notify } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
+import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
@@ -35,8 +36,8 @@ export const cancelBooking = mutation({
       })
     }
 
-    await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
-    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
+    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
       action: 'cancelled',
@@ -62,8 +63,8 @@ export const expireBooking = internalMutation({
     if (!booking) return
     if (!isBookingExpired(booking)) return
 
-    await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
-    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.HoldExpired)
+    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
       action: 'expired',
@@ -104,8 +105,8 @@ export const checkAndExpireBooking = mutation({
     }
 
     // Perform expiry inline (same logic as internalMutation expireBooking)
-    await releaseBookingReservations(ctx, args.bookingId, 'hold_expired')
-    await ctx.db.patch(args.bookingId, { status: 'Cancelled' })
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.HoldExpired)
+    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
       action: 'expired',
@@ -176,7 +177,7 @@ export const clearMedicalBlock = mutation({
     // 4. Notify booking owner
     await notify(ctx, {
       userId: booking.ownerId,
-      type: 'medical_cleared',
+      type: NOTIFICATION_TYPE.MedicalCleared,
       bookingId: args.bookingId,
       message: 'Medical block cleared: physician clearance reviewed and approved.',
     })
@@ -222,7 +223,6 @@ export const expireStaleBookings = internalMutation({
       await ctx.runMutation(internal.bookings.status.expireBooking, { bookingId: booking._id })
     }
 
-    console.log(`[expireStaleBookings] expired ${staleDrafts.length} stale Draft bookings`)
     return { expired: staleDrafts.length }
   },
 })
@@ -236,7 +236,7 @@ async function runCompletionBatch(
 ): Promise<{ completed: number; more: boolean }> {
   const upcoming = await ctx.db
     .query('bookings')
-    .withIndex('by_status', (q) => q.eq('status', 'Upcoming'))
+    .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Upcoming))
     .take(101)
 
   const batch = upcoming.slice(0, 100)
@@ -259,7 +259,7 @@ async function runCompletionBatch(
     })
 
     if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-      await ctx.db.patch(booking._id, { status: 'Completed' })
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed })
       await logBookingChange(ctx, {
         bookingId: booking._id,
         action: 'completed',

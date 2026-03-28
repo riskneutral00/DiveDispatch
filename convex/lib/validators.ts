@@ -31,3 +31,25 @@ export function effectiveResourceType(roleType: string): ResourceOwnerType | nul
   if (roleType === 'DiveMaster') return 'Instructor'
   return RESOURCE_TYPES.has(roleType) ? (roleType as ResourceOwnerType) : null
 }
+
+/** Canonical gear type validator — use instead of redefining the union inline. */
+export const gearTypeValidator = v.union(
+  v.literal('wetsuit'),
+  v.literal('bcd'),
+  v.literal('fins'),
+  v.literal('mask'),
+  v.literal('regulator'),
+)
+
+/** Canonical own/rent validator for individual gear items. */
+export const gearRentalValidator = v.union(v.literal('own'), v.literal('rent'))
+
+/** Canonical rental checklist object — shared across schema, portalDraft, customerProfiles. */
+export const rentalChecklistValidator = v.object({
+  mask: gearRentalValidator,
+  bcd: gearRentalValidator,
+  wetsuit: gearRentalValidator,
+  fins: gearRentalValidator,
+  regulator: gearRentalValidator,
+  maskPrescription: v.optional(v.string()),
+})

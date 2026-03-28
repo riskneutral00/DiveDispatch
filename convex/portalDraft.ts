@@ -4,6 +4,7 @@ import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS, SHORT_TEXT_MAX } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
+import { rentalChecklistValidator } from './lib/validators'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -255,16 +256,7 @@ export const saveEquipmentData = mutation({
     shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
     needsPoweredLenses: v.optional(v.boolean()),
     prescriptionStrength: v.optional(v.string()),
-    rentalChecklist: v.optional(
-      v.object({
-        mask: v.union(v.literal('own'), v.literal('rent')),
-        bcd: v.union(v.literal('own'), v.literal('rent')),
-        wetsuit: v.union(v.literal('own'), v.literal('rent')),
-        fins: v.union(v.literal('own'), v.literal('rent')),
-        regulator: v.union(v.literal('own'), v.literal('rent')),
-        maskPrescription: v.optional(v.string()),
-      }),
-    ),
+    rentalChecklist: v.optional(rentalChecklistValidator),
   },
   handler: async (ctx, args): Promise<void> => {
     await checkRateLimit(ctx, 'saveEquipmentData', args.token)

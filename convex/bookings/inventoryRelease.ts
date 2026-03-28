@@ -7,7 +7,8 @@
 import { ConvexError } from 'convex/values'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
-import type { VacatedReason } from './stateMachine'
+import type { VacatedReason } from '../shared/statuses'
+import { RESERVATION_STATUS } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
 
 /** Restore availability snapshot when a reservation is released.
@@ -39,13 +40,13 @@ export async function releaseBookingReservations(
     ctx.db
       .query('reservations')
       .withIndex('by_bookingId_status', (q) =>
-        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', 'PendingAcceptance'),
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
       .collect(),
     ctx.db
       .query('reservations')
       .withIndex('by_bookingId_status', (q) =>
-        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', 'Confirmed'),
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.Confirmed),
       )
       .collect(),
   ])
@@ -54,7 +55,7 @@ export async function releaseBookingReservations(
 
   for (const res of active) {
     await ctx.db.patch(res._id, {
-      status: 'Vacated',
+      status: RESERVATION_STATUS.Vacated,
       vacatedAt: Date.now(),
       vacatedBy: reason,
     })

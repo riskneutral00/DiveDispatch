@@ -2,6 +2,7 @@ import { ConvexError } from 'convex/values'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { ErrorCode } from './lib/errorCodes'
+import { BAG_STATUS } from './shared/statuses'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
 
@@ -31,7 +32,7 @@ export async function assignBagsForBooking(
     .collect()
 
   const available = bags
-    .filter((b) => b.status === 'Returned')
+    .filter((b) => b.status === BAG_STATUS.Returned)
     .sort((a, b) => String(a.bagNumber).localeCompare(String(b.bagNumber)))
 
   if (available.length < diverCount) {
@@ -43,7 +44,7 @@ export async function assignBagsForBooking(
 
   for (const bag of toAssign) {
     await ctx.db.patch(bag._id, {
-      status: 'Assigned',
+      status: BAG_STATUS.Assigned,
       bookingId: bookingId as Id<"bookings">,
       assignedAt: now,
     })
@@ -68,11 +69,11 @@ export async function releaseBagsForBooking(
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<"bookings">))
     .collect()
 
-  const assigned = bags.filter((b) => b.status === 'Assigned')
+  const assigned = bags.filter((b) => b.status === BAG_STATUS.Assigned)
 
   for (const bag of assigned) {
     await ctx.db.patch(bag._id, {
-      status: 'Returned',
+      status: BAG_STATUS.Returned,
       returnedAt: Date.now(),
     })
   }

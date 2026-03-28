@@ -17,6 +17,7 @@ import {
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
+import { VACATED_REASON } from '../shared/statuses'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
 
@@ -96,7 +97,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const isResubmit = existingReservations.length > 0
 
   if (isResubmit) {
-    await releaseBookingReservations(ctx, args.bookingId, 'operator_edit')
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
     const existingSessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))

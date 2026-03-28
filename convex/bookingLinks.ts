@@ -5,6 +5,7 @@ import { requireAuth, type DbCtx } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
+import { BOOKING_STATUS } from './shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,7 +153,7 @@ export const getByToken = query({
     }
 
     // Booking closed means the portal should not accept new submissions.
-    if (booking.status !== 'Draft') {
+    if (booking.status !== BOOKING_STATUS.Draft) {
       return { status: 'closed' }
     }
 

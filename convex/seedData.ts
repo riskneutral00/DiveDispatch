@@ -194,7 +194,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     email: 'hug-ocean@divedispatch.dev',
     phone: '+66-76-381-100',
     associations: [{ agencyCode: 'PADI', memberId: 'S-34782', ...PADI_PREFS }],
-    customerLanguages: ['zh-CN', 'zh-TW', 'th', 'en', 'ko'],
+    customerLanguages: ['zh-CN', 'zh-TW', 'th', 'en'],
     verified: VERIFIED,
   },
   boat: {

@@ -11,6 +11,7 @@ import type { QueryCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import { requireAuth } from '../lib/auth'
 import { ErrorCode } from '../lib/errorCodes'
+import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,14 +56,14 @@ async function computeReadiness(
     .collect()
 
   // Active = not Vacated (same filter as autoAdvance)
-  const active = reservations.filter((r) => r.status !== 'Vacated')
+  const active = reservations.filter((r) => r.status !== RESERVATION_STATUS.Vacated)
 
   // Declined = Vacated with stakeholder_declined reason
   const declined = reservations.filter(
-    (r) => r.status === 'Vacated' && r.vacatedBy === 'stakeholder_declined',
+    (r) => r.status === RESERVATION_STATUS.Vacated && r.vacatedBy === VACATED_REASON.StakeholderDeclined,
   )
 
-  const allReservationsConfirmed = active.every((r) => r.status === 'Confirmed')
+  const allReservationsConfirmed = active.every((r) => r.status === RESERVATION_STATUS.Confirmed)
   const noDeclinedResources = declined.length === 0
 
   // 3. Physician clearance check
@@ -79,12 +80,12 @@ async function computeReadiness(
   // 4. Build pending and declined resource arrays by joining to inventoryUnit
   const pendingResources: BookingReadiness['pendingResources'] = []
   for (const r of active) {
-    if (r.status === 'PendingAcceptance') {
+    if (r.status === RESERVATION_STATUS.PendingAcceptance) {
       const unit = await ctx.db.get(r.inventoryUnitId)
       pendingResources.push({
         resourceType: unit?.resourceType ?? 'Unknown',
         displayName: unit?.displayName ?? 'Unknown',
-        status: 'PendingAcceptance',
+        status: RESERVATION_STATUS.PendingAcceptance,
       })
     }
   }

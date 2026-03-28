@@ -21,6 +21,7 @@ const MEDICAL_QUESTION_KEYS = [
   'medical_q8',
   'medical_q9',
   'medical_q10',
+  'medical_details',
 ] as const
 
 // ─── saveMedicalAnswers ────────────────────────────────────────────────────────

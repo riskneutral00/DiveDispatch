@@ -15,6 +15,7 @@ import {
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
+import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
 
 type OperatorType =
   | 'DiveCenter'
@@ -134,7 +135,7 @@ export const createDraftShell = mutation({
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: user.slug,
       ownerType: args.activeRole as OperatorType,
-      status: 'Draft' as const,
+      status: BOOKING_STATUS.Draft as const,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,
       paid: false,
@@ -191,7 +192,7 @@ export const createReferralDraftShell = mutation({
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,
       ownerType: dcOperatorRole.role as OperatorType,
-      status: 'Draft' as const,
+      status: BOOKING_STATUS.Draft as const,
       createdAt: Date.now(),
       holdTTL: HOLD_TTL_MS,
       paid: false,
@@ -231,7 +232,7 @@ export const saveDraftState = mutation({
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
+    if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await ctx.db.patch(args.bookingId, { draftState: sanitizeString(args.draftState, DRAFT_STATE_MAX) })
   },
@@ -270,9 +271,9 @@ export const discardDraft = mutation({
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (booking.ownerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    if (booking.status !== 'Draft') throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
+    if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
-    await releaseBookingReservations(ctx, args.bookingId, 'booking_cancelled')
+    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
 
     const sessions = await ctx.db
       .query('bookingSessions')

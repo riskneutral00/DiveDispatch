@@ -4,20 +4,7 @@ import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
-
-type NotificationType =
-  | 'hold_placed'
-  | 'hold_declined'
-  | 'booking_cancelled'
-  | 'booking_updated'
-  | 'booking_referred'
-  | 'medical_hard_block'
-  | 'medical_cleared'
-  | 'physician_clearance_submitted'
-  | 'no_backup_available'
-  | 'noshow_marked'
-  | 'noshow_reverted'
-  | 'min_pax_not_met'
+import { type NotificationType, notificationTypeValidator } from './shared/statuses'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
@@ -59,17 +46,7 @@ export async function _createNotificationHandler(
 export const createNotification = mutation({
   args: {
     userId: v.string(),
-    type: v.union(
-      v.literal('hold_placed'),
-      v.literal('hold_declined'),
-      v.literal('booking_cancelled'),
-      v.literal('booking_updated'),
-      v.literal('booking_referred'),
-      v.literal('medical_hard_block'),
-      v.literal('physician_clearance_submitted'),
-      v.literal('no_backup_available'),
-      v.literal('min_pax_not_met'),
-    ),
+    type: notificationTypeValidator,
     bookingId: v.optional(v.id('bookings')),
     message: v.string(),
   },

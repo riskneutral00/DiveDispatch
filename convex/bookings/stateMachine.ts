@@ -7,17 +7,11 @@ import { ConvexError, v } from 'convex/values'
 import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 import { ErrorCode } from '../lib/errorCodes'
 import { MEDICAL_TTL_MS } from '../lib/timeConstants'
+import { type VacatedReason, type BookingStatus, type ReservationStatus, BOOKING_STATUS, RESERVATION_STATUS } from '../shared/statuses'
 export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
+export { type VacatedReason } from '../shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-export type VacatedReason =
-  | 'booking_cancelled'
-  | 'stakeholder_declined'
-  | 'hold_expired'
-  | 'operator_edit'
-  | 'noshow_replacement'
-  | 'equipment_not_needed'
 
 export type SessionInput = {
   inventoryUnitId: string
@@ -132,18 +126,18 @@ export const bookingDataValidator = v.object({
  * complete: Upcoming only (auto-complete cron)
  */
 export function canBookingTransition(
-  currentStatus: 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled',
+  currentStatus: BookingStatus,
   action: 'confirm' | 'edit' | 'cancel' | 'complete',
 ): boolean {
   switch (action) {
     case 'confirm':
-      return currentStatus === 'Draft'
+      return currentStatus === BOOKING_STATUS.Draft
     case 'edit':
-      return currentStatus === 'Upcoming' || currentStatus === 'Completed'
+      return currentStatus === BOOKING_STATUS.Upcoming || currentStatus === BOOKING_STATUS.Completed
     case 'cancel':
-      return currentStatus !== 'Cancelled'
+      return currentStatus !== BOOKING_STATUS.Cancelled
     case 'complete':
-      return currentStatus === 'Upcoming'
+      return currentStatus === BOOKING_STATUS.Upcoming
     default:
       return false
   }
@@ -156,18 +150,18 @@ export function canBookingTransition(
  * vacate: PendingAcceptance | Confirmed
  */
 export function canReservationTransition(
-  currentStatus: 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow',
+  currentStatus: ReservationStatus,
   action: 'accept' | 'vacate' | 'mark_noshow' | 'revert_noshow',
 ): boolean {
   switch (action) {
     case 'accept':
-      return currentStatus === 'PendingAcceptance'
+      return currentStatus === RESERVATION_STATUS.PendingAcceptance
     case 'vacate':
-      return currentStatus === 'PendingAcceptance' || currentStatus === 'Confirmed'
+      return currentStatus === RESERVATION_STATUS.PendingAcceptance || currentStatus === RESERVATION_STATUS.Confirmed
     case 'mark_noshow':
-      return currentStatus === 'Confirmed'
+      return currentStatus === RESERVATION_STATUS.Confirmed
     case 'revert_noshow':
-      return currentStatus === 'NoShow'
+      return currentStatus === RESERVATION_STATUS.NoShow
     default:
       return false
   }

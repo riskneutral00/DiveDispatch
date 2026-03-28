@@ -9,6 +9,7 @@ import { todayISO } from './bookings/stateMachine'
 import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
 import { effectiveResourceType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
+import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from './shared/statuses'
 
 /**
  * Maximum number of inventoryUnit rows fetched in _getCapacityForDates.
@@ -455,7 +456,7 @@ export async function _toggleBlockedDate(
           .filter((q) =>
             q.and(
               q.eq(q.field('inventoryUnitId'), unit._id),
-              q.eq(q.field('status'), 'Confirmed'),
+              q.eq(q.field('status'), RESERVATION_STATUS.Confirmed),
             ),
           )
           .collect()
@@ -492,16 +493,16 @@ export async function _toggleBlockedDate(
           .filter((q) =>
             q.and(
               q.eq(q.field('inventoryUnitId'), unit._id),
-              q.eq(q.field('status'), 'PendingAcceptance'),
+              q.eq(q.field('status'), RESERVATION_STATUS.PendingAcceptance),
             ),
           )
           .collect()
 
         for (const reservation of pending) {
           await ctx.db.patch(reservation._id, {
-            status: 'Vacated',
+            status: RESERVATION_STATUS.Vacated,
             vacatedAt: now,
-            vacatedBy: 'stakeholder_declined',
+            vacatedBy: VACATED_REASON.StakeholderDeclined,
           })
 
           // Restore snapshot (Invariant 3: same mutation as reservation write)
@@ -531,7 +532,7 @@ export async function _toggleBlockedDate(
     // The DC operator will see the booking as needing attention.
     for (const bookingId of affectedBookingIds) {
       const booking = await ctx.db.get(bookingId as Id<"bookings">)
-      if (!booking || (booking as { status: string }).status !== 'Draft') continue
+      if (!booking || (booking as { status: string }).status !== BOOKING_STATUS.Draft) continue
 
       // Mark booking as needing attention (instructor declined)
       await ctx.db.patch(bookingId as Id<"bookings">, { needsAttention: true })

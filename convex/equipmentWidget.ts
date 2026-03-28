@@ -4,6 +4,7 @@ import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
+import { BAG_STATUS, type BagStatus } from './shared/statuses'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export type DiverRow = {
   bag?: {
     bagId: string
     bagNumber: string
-    status: 'Assigned' | 'InUse' | 'Returned'
+    status: BagStatus
   }
 }
 
@@ -177,7 +178,7 @@ export const getDiverEquipmentData = query({
             ? {
                 bagId: String(bag._id),
                 bagNumber: String(bag.bagNumber),
-                status: bag.status as 'Assigned' | 'InUse' | 'Returned',
+                status: bag.status as BagStatus,
               }
             : undefined,
         })
@@ -268,10 +269,10 @@ export const markBagPickedUp = mutation({
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    if (bag.status !== 'Assigned') {
+    if (bag.status !== BAG_STATUS.Assigned) {
       throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be Assigned to mark as picked up' })
     }
-    await ctx.db.patch(args.bagId, { status: 'InUse' })
+    await ctx.db.patch(args.bagId, { status: BAG_STATUS.InUse })
   },
 })
 
@@ -286,9 +287,9 @@ export const markBagReturned = mutation({
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    if (bag.status !== 'InUse') {
+    if (bag.status !== BAG_STATUS.InUse) {
       throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be InUse to mark as returned' })
     }
-    await ctx.db.patch(args.bagId, { status: 'Returned', returnedAt: Date.now() })
+    await ctx.db.patch(args.bagId, { status: BAG_STATUS.Returned, returnedAt: Date.now() })
   },
 })
