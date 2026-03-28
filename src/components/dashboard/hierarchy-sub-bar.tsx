@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { GlassTooltip } from '@/components/glass'
-import { ROLE_PRECEDENCE } from '../../../convex/lib/rolePrecedence'
+import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 
 interface HierarchySubBarProps {
   slug: string

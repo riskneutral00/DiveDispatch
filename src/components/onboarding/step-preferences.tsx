@@ -22,7 +22,7 @@ const QUICK_BOOK_OPTIONS = [
 import { type CourseCode } from '@/lib/constants/course-catalog'
 import { ORGANIZER_ROLE_KEYS } from '@/lib/constants/roles'
 
-import type { StakeholderRole } from '../../../convex/lib/validators'
+import type { StakeholderRole } from '@/lib/utils/role'
 
 interface StepPreferencesProps {
   userRole: string

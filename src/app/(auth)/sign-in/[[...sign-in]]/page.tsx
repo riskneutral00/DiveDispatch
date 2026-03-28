@@ -8,7 +8,7 @@ import { api } from '../../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { Spinner } from '@/components/common/spinner'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
-import { deriveDefaultRole } from '../../../../../convex/lib/rolePrecedence'
+import { deriveDefaultRole } from '@/lib/utils/role'
 
 export default function SignInPage() {
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()

@@ -9,7 +9,7 @@ import { AddRoleModal } from './add-role-modal'
 import { RoleOnboarding } from './role-onboarding'
 import { Spinner } from '@/components/common/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
-import { ErrorCode } from '../../../convex/lib/errorCodes'
+import { ErrorCode } from '@/lib/errors'
 
 /**
  * Connected wrapper that wires ManageRoles + AddRoleModal + RoleOnboarding

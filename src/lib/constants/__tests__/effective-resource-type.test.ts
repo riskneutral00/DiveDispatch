@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { effectiveResourceType } from '../../../../convex/lib/validators'
+import { effectiveResourceType } from '@/lib/utils/role'
 import { RESOURCE_OWNER_TYPES } from '../../../../convex/shared/resourceOwnerTypes'
 
 describe('effectiveResourceType', () => {

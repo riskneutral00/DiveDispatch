@@ -10,7 +10,7 @@ import {
 } from '@/lib/constants/roles'
 import { GlassTooltip } from '@/components/glass'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
-import { ROLE_PRECEDENCE } from '../../../convex/lib/rolePrecedence'
+import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 
 interface RoleSwitcherProps {
   slug: string

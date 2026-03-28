@@ -3,7 +3,7 @@
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { GlassCard, GlassButton, GlassBadge } from '@/components/glass'
 import { RoleIcon } from '@/components/glass/role-icon'
-import { deriveDefaultRole } from '../../../convex/lib/rolePrecedence'
+import { deriveDefaultRole } from '@/lib/utils/role'
 
 interface RoleEntry {
   _id: string
