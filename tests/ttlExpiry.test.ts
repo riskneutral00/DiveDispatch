@@ -1871,3 +1871,247 @@ describe('token invalidation', () => {
     expect(typeof newToken).toBe('string')
   })
 })
+
+// ─── expireStaleBookings (cron batch) ─────────────────────────────────────────
+
+describe('expireStaleBookings', () => {
+  afterEach(() => vi.clearAllMocks())
+
+  it('expires a Draft booking with expired TTL and vacates reservations', async () => {
+    const t = makeT()
+
+    const { bookingId, reservationId, snapshotId } = await t.run(async (ctx) => {
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-stale-1',
+        displayName: 'Instructor Stale 1',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-stale-1',
+        ownerType: 'Instructor',
+      })
+
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '17:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      const snapshotId = await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      const reservationId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId, reservationId, snapshotId }
+    })
+
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 1 })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Cancelled')
+
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation?.status).toBe('Vacated')
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot?.availableUnits).toBe(1)
+    expect(snapshot?.reservedUnits).toBe(0)
+  })
+
+  it('leaves a Draft booking with future TTL untouched', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: false,
+        expiresAt: Date.now() + 12 * 60 * 60 * 1000,
+      }),
+    )
+
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 0 })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Draft')
+  })
+
+  it('is idempotent: running on already-Cancelled booking does not error', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) =>
+      ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Cancelled',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+        expiresAt: Date.now() - 1_000,
+      }),
+    )
+
+    // Cancelled bookings are not Draft — cron should not pick them up
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 0 })
+  })
+
+  it('processes at most 50 stale Drafts per run', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 60; i++) {
+        await ctx.db.insert('bookings', {
+          ownerId: 'dc-test',
+          ownerType: 'DiveCenter',
+          status: 'Draft',
+          createdAt: Date.now(),
+          holdTTL: HOLD_TTL,
+          paid: false,
+          activityType: ['OW'],
+          startDate: testDate(5),
+          endDate: testDate(5),
+          divers: [],
+          operatorName: 'Test DC',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+          medicalHardBlock: false,
+          bookingFormComplete: true,
+          customerFormComplete: false,
+          expiresAt: Date.now() - 1_000,
+        })
+      }
+    })
+
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 50 })
+
+    // 10 remaining stale Drafts still exist
+    const remaining = await t.run(async (ctx) =>
+      ctx.db.query('bookings').withIndex('by_status', (q) => q.eq('status', 'Draft')).collect(),
+    )
+    expect(remaining).toHaveLength(10)
+  })
+
+  it('ignores non-Draft bookings (Upcoming, Completed) with past expiresAt', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Upcoming',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        expiresAt: Date.now() - 1_000,
+      })
+
+      await ctx.db.insert('bookings', {
+        ownerId: 'dc-test',
+        ownerType: 'DiveCenter',
+        status: 'Completed',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(-5),
+        endDate: testDate(-5),
+        divers: [],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        expiresAt: Date.now() - 1_000,
+      })
+    })
+
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 0 })
+  })
+
+  it('returns { expired: 0 } when no bookings exist', async () => {
+    const t = makeT()
+    const result = await t.mutation(internal.bookings.status.expireStaleBookings, {})
+    expect(result).toEqual({ expired: 0 })
+  })
+})

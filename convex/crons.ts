@@ -12,4 +12,8 @@ crons.interval('purge-rate-limits', { hours: 24 }, internal.lib.rateLimiter.purg
 // Prune past dates from stakeholderBlockedDates to prevent unbounded array growth
 crons.interval('prune-blocked-dates', { hours: 168 }, internal.availability.pruneBlockedDates)
 
+// Expire stale Draft bookings whose holdTTL has lapsed — belt-and-suspenders to catch
+// bookings the lazy client check (useBookingWithExpiry) never triggered
+crons.interval('expire-stale-bookings', { hours: 2 }, internal.bookings.status.expireStaleBookings)
+
 export default crons
