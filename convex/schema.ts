@@ -528,28 +528,6 @@ export default defineSchema({
     .index('by_userId_role', ['userId', 'role'])
     .index('by_role', ['role']),
 
-  // ── L1: Relationships & Moderation ──────────────────────────────────
-
-  stakeholderHierarchy: defineTable({
-    parentSlug: v.string(),
-    parentType: stakeholderType,
-    childSlug: v.string(),
-    childType: stakeholderType,
-    createdAt: v.number(),
-  })
-    .index('by_parentSlug', ['parentSlug'])
-    .index('by_childSlug', ['childSlug'])
-    .index('by_parentSlug_childType', ['parentSlug', 'childType']),
-
-  bans: defineTable({
-    bannerSlug: v.string(),
-    bannedSlug: v.string(),
-    createdAt: v.number(),
-  })
-    .index('by_bannerSlug', ['bannerSlug'])
-    .index('by_bannedSlug', ['bannedSlug'])
-    .index('by_bannerSlug_bannedSlug', ['bannerSlug', 'bannedSlug']),
-
   // ── L1: Booking Templates ───────────────────────────────────────────
 
   bookingTemplates: defineTable({
@@ -691,18 +669,6 @@ export default defineSchema({
   }).index('by_userId', ['userId']),
 
   // diveSites table removed — absorbed into `venues` table with venueType discriminator
-
-  // ── L5: Support ─────────────────────────────────────────────────────────────
-
-  supportRequests: defineTable({
-    userId: v.string(),
-    subject: v.string(),
-    category: v.string(),
-    message: v.string(),
-    screenshotFileId: v.optional(v.id('_storage')),
-    status: v.string(),
-    createdAt: v.number(),
-  }).index('by_userId', ['userId']),
 
   // ── L6: Cron Monitoring ────────────────────────────────────────────────────────
 

@@ -43,21 +43,3 @@ export async function seedStakeholderPreferences(
     ...(overrides.noWorkAfterTime !== undefined ? { noWorkAfterTime: overrides.noWorkAfterTime } : {}),
   })
 }
-
-export async function seedStakeholderHierarchy(
-  ctx: SeedCtx,
-  opts: {
-    parentSlug: string
-    parentType: Doc<'stakeholderHierarchy'>['parentType']
-    childSlug: string
-    childType: Doc<'stakeholderHierarchy'>['childType']
-  },
-) {
-  return ctx.db.insert('stakeholderHierarchy', {
-    parentSlug: opts.parentSlug,
-    parentType: opts.parentType,
-    childSlug: opts.childSlug,
-    childType: opts.childType,
-    createdAt: Date.now(),
-  })
-}

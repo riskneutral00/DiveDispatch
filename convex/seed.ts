@@ -5,7 +5,7 @@ import type { MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, HIERARCHY_LINKS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -116,7 +116,6 @@ export const seedAll = internalAction({
     await ctx.runMutation(internal.seed.seedStakeholders)
     await ctx.runMutation(internal.seed.seedInstructors)
     await ctx.runMutation(internal.seed.seedUserRoles)
-    await ctx.runMutation(internal.seed.seedHierarchy)
     await ctx.runMutation(internal.seed.seedEquipmentInventory)
     await ctx.runMutation(internal.seed.seedGearSizingLookup)
     await ctx.runMutation(internal.seed.seedResourceInventory)
@@ -149,11 +148,10 @@ const TABLES_TO_WIPE = [
   'stakeholderPreferences', 'notifications',
   'diveCenters', 'instructors', 'boats', 'equipment', 'venues', 'compressors',
   'equipmentBags', 'gearSizingLookup',
-  'stakeholderHierarchy', 'bans', 'bookingTemplates',
+  'bookingTemplates',
   'agents', 'diveMasters',
   'liveaboards', 'cabins', 'tripSchedules',
   'diveResorts', 'rooms', 'diveHostels',
-  'supportRequests',
   'stakeholderBlockedDates',
 ] as const
 
@@ -245,26 +243,6 @@ export const seedUserRoles = internalMutation({
           profileComplete: true,
         })
       }
-    }
-  },
-})
-
-// ── Seed Hierarchy (DC → managed resource links) ───────────────────
-
-export const seedHierarchy = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const existing = await ctx.db.query('stakeholderHierarchy').first()
-    if (existing) return 'Already seeded'
-
-    for (const link of HIERARCHY_LINKS) {
-      await ctx.db.insert('stakeholderHierarchy', {
-        parentSlug: link.parentSlug,
-        parentType: link.parentType,
-        childSlug: link.childSlug,
-        childType: link.childType,
-        createdAt: Date.now(),
-      })
     }
   },
 })

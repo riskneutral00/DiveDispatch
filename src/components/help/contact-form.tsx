@@ -2,8 +2,6 @@
 
 import { Upload, X } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -49,9 +47,6 @@ export function ContactForm() {
   const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const generateUploadUrl = useMutation(api.support.generateUploadUrl)
-  const submitSupportRequest = useMutation(api.support.submitSupportRequest)
-
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setScreenshotError('')
     const file = e.target.files?.[0] ?? null
@@ -89,27 +84,7 @@ export function ContactForm() {
     setSubmitting(true)
 
     try {
-      let screenshotFileId: string | undefined
-
-      if (screenshot) {
-        const uploadUrl = await generateUploadUrl()
-        const res = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': screenshot.type },
-          body: screenshot,
-        })
-        if (!res.ok) throw new Error('Upload failed')
-        const { storageId } = await res.json() as { storageId: string }
-        screenshotFileId = storageId
-      }
-
-      await submitSupportRequest({
-        subject: form.subject.trim(),
-        category: form.category,
-        message: form.message.trim(),
-        screenshotFileId: screenshotFileId as Parameters<typeof submitSupportRequest>[0]['screenshotFileId'],
-      })
-
+      // TODO: Wire to support backend when implemented
       setSubmitted(true)
     } catch {
       setErrors({ subject: 'Submission failed. Please try again.' })

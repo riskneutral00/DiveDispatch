@@ -628,9 +628,3 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   AMANDA,
 ]
 
-// ── Hierarchy Links (cross-stakeholder relationships) ───────────────
-
-export const HIERARCHY_LINKS: { parentSlug: string; parentType: StakeholderRole; childSlug: string; childType: StakeholderRole }[] = [
-  // Scuba Deep uses Sirolo's boat
-  { parentSlug: 'h3cp6n', parentType: 'DiveCenter', childSlug: 'sirolo', childType: 'Boat' },
-]

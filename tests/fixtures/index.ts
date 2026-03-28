@@ -25,4 +25,4 @@ export {
   seedBoatProfile,
   seedEquipmentProfile,
 } from './seedProfiles'
-export { seedStakeholderPreferences, seedStakeholderHierarchy } from './seedStakeholders'
+export { seedStakeholderPreferences } from './seedStakeholders'

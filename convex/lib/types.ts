@@ -32,8 +32,6 @@ export type EquipmentBagDoc = Doc<'equipmentBags'>
 export type GearSizingLookupDoc = Doc<'gearSizingLookup'>
 export type EquipmentInventoryDoc = Doc<'equipmentInventory'>
 export type UserRoleDoc = Doc<'userRoles'>
-export type StakeholderHierarchyDoc = Doc<'stakeholderHierarchy'>
-export type BanDoc = Doc<'bans'>
 export type BookingTemplateDoc = Doc<'bookingTemplates'>
 export type AgentDoc = Doc<'agents'>
 export type DiveMasterDoc = Doc<'diveMasters'>
@@ -43,7 +41,6 @@ export type TripScheduleDoc = Doc<'tripSchedules'>
 export type DiveResortDoc = Doc<'diveResorts'>
 export type RoomDoc = Doc<'rooms'>
 export type DiveHostelDoc = Doc<'diveHostels'>
-export type SupportRequestDoc = Doc<'supportRequests'>
 export type CronRunLogDoc = Doc<'cronRunLog'>
 export type BookingAuditLogDoc = Doc<'bookingAuditLog'>
 

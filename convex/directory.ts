@@ -47,24 +47,6 @@ type ProfileData = {
   association?: string
 }
 
-// Queries the bans table in both directions for mySlug, returning the union
-// of all slugs that share a ban relationship with the caller.
-export async function getBannedSlugSet(db: DatabaseReader, mySlug: string): Promise<Set<string>> {
-  const [asBanner, asBanned] = await Promise.all([
-    db
-      .query('bans').withIndex('by_bannerSlug', (q) => q.eq('bannerSlug', mySlug))
-      .collect(),
-    db
-      .query('bans').withIndex('by_bannedSlug', (q) => q.eq('bannedSlug', mySlug))
-      .collect(),
-  ])
-
-  const result = new Set<string>()
-  for (const ban of asBanner) result.add(ban.bannedSlug)
-  for (const ban of asBanned) result.add(ban.bannerSlug)
-  return result
-}
-
 // Returns profile display fields (including role-specific extras) for a user.
 // Returns null if no profile row exists yet.
 /** Profile tables that have a `by_userId` index with userId: Id<'users'>. */
@@ -207,14 +189,11 @@ export const listByRole = query({
     // Auth required — unauthenticated callers must not access the directory.
     const { user: caller } = await requireAuth(ctx)
 
-    // Resolve caller's ban list and preferred-instructor set.
-    const [bannedSlugs, prefs] = await Promise.all([
-      getBannedSlugSet(ctx.db, caller.slug),
-      ctx.db
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
-        .unique(),
-    ])
+    // Resolve caller's preferred-instructor set.
+    const prefs = await ctx.db
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
+      .unique()
     const preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
 
     // Query userRoles by role, then point-read the user docs
@@ -227,7 +206,6 @@ export const listByRole = query({
 
     const results = await Promise.all(
       users
-        .filter((u) => !bannedSlugs.has(u.slug))
         .map(async (u): Promise<DirectoryEntry | null> => {
           const profile = await fetchProfile(ctx.db, u._id, args.role)
           if (!profile) return null

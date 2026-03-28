@@ -24,8 +24,6 @@ import type {
   GearSizingLookupDoc,
   EquipmentInventoryDoc,
   UserRoleDoc,
-  StakeholderHierarchyDoc,
-  BanDoc,
   BookingTemplateDoc,
   AgentDoc,
   DiveMasterDoc,
@@ -35,7 +33,6 @@ import type {
   DiveResortDoc,
   RoomDoc,
   DiveHostelDoc,
-  SupportRequestDoc,
   CronRunLogDoc,
   BookingAuditLogDoc,
   BookingId,
@@ -81,8 +78,6 @@ describe('convex/lib/types — Doc exports', () => {
     false satisfies IsNever<GearSizingLookupDoc>
     false satisfies IsNever<EquipmentInventoryDoc>
     false satisfies IsNever<UserRoleDoc>
-    false satisfies IsNever<StakeholderHierarchyDoc>
-    false satisfies IsNever<BanDoc>
     false satisfies IsNever<BookingTemplateDoc>
     false satisfies IsNever<AgentDoc>
     false satisfies IsNever<DiveMasterDoc>
@@ -92,7 +87,6 @@ describe('convex/lib/types — Doc exports', () => {
     false satisfies IsNever<DiveResortDoc>
     false satisfies IsNever<RoomDoc>
     false satisfies IsNever<DiveHostelDoc>
-    false satisfies IsNever<SupportRequestDoc>
     false satisfies IsNever<CronRunLogDoc>
     false satisfies IsNever<BookingAuditLogDoc>
 
