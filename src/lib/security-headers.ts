@@ -18,9 +18,12 @@ const GOOGLE_MAPS_STATIC = 'maps.gstatic.com'
 // Until Clerk ships full nonce support, unsafe-inline is required.
 const CLERK_INLINE = "'unsafe-inline'"
 
+// React dev mode requires unsafe-eval for error reconstruction and debugging.
+const DEV_EVAL = process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''
+
 const cspDirectives = [
   `default-src 'self'`,
-  `script-src 'self' ${CLERK_INLINE} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT}`,
+  `script-src 'self' ${CLERK_INLINE} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT} ${DEV_EVAL}`.trim(),
   `style-src 'self' ${CLERK_INLINE} fonts.googleapis.com`,
   `img-src 'self' data: blob: ${CONVEX_DOMAINS} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
   `font-src 'self' fonts.gstatic.com`,

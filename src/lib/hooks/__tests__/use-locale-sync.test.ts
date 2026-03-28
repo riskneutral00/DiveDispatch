@@ -9,6 +9,13 @@ vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockCurrentUser(),
 }))
 
+const mockRefresh = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: mockRefresh,
+  }),
+}))
+
 // Import AFTER mocks
 import { useLocaleSync } from '../use-locale-sync'
 
@@ -29,6 +36,7 @@ function clearCookie(name: string) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockRefresh.mockClear()
   clearCookie('dd-locale')
 })
 
@@ -83,6 +91,8 @@ describe('useLocaleSync', () => {
 
     // Cookie setter should not have been called since value matches
     expect(spy).not.toHaveBeenCalled()
+    // router.refresh should not be called if cookie already matches
+    expect(mockRefresh).not.toHaveBeenCalled()
     spy.mockRestore()
   })
 
@@ -93,6 +103,33 @@ describe('useLocaleSync', () => {
       isLoading: false,
     })
     renderHook(() => useLocaleSync())
+    expect(getCookie('dd-locale')).toBe('zh-CN')
+  })
+
+  it('calls router.refresh() when cookie is stale', () => {
+    // Pre-set a stale cookie
+    document.cookie = 'dd-locale=en; path=/'
+    mockCurrentUser.mockReturnValue({
+      user: { appLanguage: 'th' },
+      isLoading: false,
+    })
+    renderHook(() => useLocaleSync())
+
+    // Should have called refresh when mismatch detected
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
+    expect(getCookie('dd-locale')).toBe('th')
+  })
+
+  it('calls router.refresh() when cookie is absent', () => {
+    // No pre-set cookie (fresh session)
+    mockCurrentUser.mockReturnValue({
+      user: { appLanguage: 'zh-CN' },
+      isLoading: false,
+    })
+    renderHook(() => useLocaleSync())
+
+    // Should have called refresh when setting cookie for the first time
+    expect(mockRefresh).toHaveBeenCalledTimes(1)
     expect(getCookie('dd-locale')).toBe('zh-CN')
   })
 })

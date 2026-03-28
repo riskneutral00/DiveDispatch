@@ -39,6 +39,13 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
     onOpenOverlay?.(tab)
   }
 
+  function handleSignOut() {
+    setOpen(false)
+    // Clear locale cookie on sign-out so unauthenticated users default to Accept-Language
+    document.cookie = 'dd-locale=; path=/; max-age=0'
+    signOut({ redirectUrl: '/' })
+  }
+
   return (
     <div className="relative">
       <button
@@ -106,10 +113,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               style={{ borderTop: '1px solid var(--color-glass-border)' }}
             >
               <button
-                onClick={() => {
-                  setOpen(false)
-                  signOut({ redirectUrl: '/' })
-                }}
+                onClick={handleSignOut}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
               >
                 <LogOut size={14} />

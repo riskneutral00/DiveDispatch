@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useCurrentUser } from "./use-current-user";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "../constants/locales";
 
@@ -9,11 +10,11 @@ const COOKIE_NAME = "dd-locale";
 /**
  * Syncs the authenticated user's preferred locale to the dd-locale cookie.
  * Reads appLanguage from the Convex user record.
- * When the cookie changes, the next server request picks up the new locale
- * via getRequestConfig in src/i18n/request.ts.
+ * When the cookie changes, triggers a router.refresh() to re-run SSR with the new locale.
  */
 export function useLocaleSync() {
   const { user } = useCurrentUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) return;
@@ -32,6 +33,8 @@ export function useLocaleSync() {
     if (currentCookie !== locale) {
       // Set cookie with 1 year expiry, path=/ so the server can read it
       document.cookie = `${COOKIE_NAME}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+      // Refresh to re-run SSR with the corrected cookie, preventing locale flicker
+      router.refresh();
     }
-  }, [user]);
+  }, [user, router]);
 }
