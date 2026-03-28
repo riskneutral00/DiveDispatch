@@ -1,68 +1,58 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
+import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/common/language-field'
 import { FormSectionHeader } from '@/components/common/form-section-header'
-import { toast } from 'sonner'
-import { parseConvexError } from '@/lib/utils/convex-error'
 import { SaveButton } from '@/components/common/save-button'
-import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
-interface SettingsValues {
+// ── Exported for testing ────────────────────────────────────────────────────
+
+export type PreferencesValues = {
   appLanguage: string
 }
+
+export const preferencesTabSchema = z.object({
+  appLanguage: z.string().min(1, 'Language is required'),
+})
+
+export const PREFERENCES_DEFAULTS: PreferencesValues = {
+  appLanguage: 'en',
+}
+
+export function preferencesFromUser(p: Record<string, unknown>): PreferencesValues {
+  return {
+    appLanguage: (typeof p.appLanguage === 'string' ? p.appLanguage : '') || 'en',
+  }
+}
+
+export function preferencesToPayload(form: PreferencesValues) {
+  return {
+    role: 'DiveCenter' as const,
+    appLanguage: form.appLanguage,
+  }
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
 
 export function PreferencesTab() {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
 
-  const [values, setValues] = useState<SettingsValues>({
-    appLanguage: 'en',
+  const { form, setField, serverError, saving, saved, isDirty, isUpdate, handleSubmit, loading } = useProfileForm<PreferencesValues, ReturnType<typeof preferencesToPayload>>({
+    profile: user as Record<string, unknown> | null | undefined,
+    schema: preferencesTabSchema,
+    defaults: PREFERENCES_DEFAULTS,
+    fromProfile: preferencesFromUser,
+    toPayload: preferencesToPayload,
+    create: (payload) => createUser(payload),
+    update: (payload) => createUser(payload),
   })
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
-  const baselineRef = useRef<SettingsValues | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      const loaded: SettingsValues = {
-        appLanguage: user.appLanguage ?? 'en',
-      }
-      setValues(loaded)
-      baselineRef.current = loaded
-    }
-  }, [user])
-
-  const isDirty = baselineRef.current !== null && JSON.stringify(values) !== JSON.stringify(baselineRef.current)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setSaved(false)
-    setSaving(true)
-    try {
-      await createUser({
-        role: 'DiveCenter',
-        appLanguage: values.appLanguage,
-      })
-      baselineRef.current = { ...values }
-      setSaved(true)
-      setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
-      toast.success('Preferences saved', { duration: 3000 })
-    } catch (err) {
-      const message = parseConvexError(err, 'Something went wrong.')
-      setError(message)
-      toast.error('Save failed', { description: message, duration: 5000 })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (user === undefined) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <span className="text-sm animate-pulse text-secondary">
@@ -72,7 +62,7 @@ export function PreferencesTab() {
     )
   }
 
-  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(values.appLanguage))
+  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(form.appLanguage))
   const selectedLocale = selectedLocaleObj
     ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
     : []
@@ -86,17 +76,16 @@ export function PreferencesTab() {
           variant="app"
           value={selectedLocale}
           onChange={(langs) => {
-            if (langs[0]) setValues((v) => ({ ...v, appLanguage: langs[0].code }))
-            setSaved(false)
+            if (langs[0]) setField('appLanguage', langs[0].code)
           }}
         />
       </div>
 
-      {error && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
+      {serverError && (
+        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
       )}
 
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={true} />
+      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
     </form>
   )
 }
