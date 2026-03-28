@@ -7,6 +7,7 @@ import { ROLES, type ClerkRole } from '@/lib/constants/roles'
 
 // jsdom doesn't implement HTMLDialogElement methods
 beforeEach(() => {
+  HTMLDialogElement.prototype.show = vi.fn()
   HTMLDialogElement.prototype.showModal = vi.fn()
   HTMLDialogElement.prototype.close = vi.fn()
 })

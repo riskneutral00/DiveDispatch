@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { ConvexError } from 'convex/values'
 import type { CalendarBooking } from '../../../../convex/bookings'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -160,7 +161,7 @@ describe('useBookingActions', () => {
   })
 
   it('handleDetailAccept captures Error message on failure', async () => {
-    mockAccept.mockRejectedValue(new Error('Inventory conflict'))
+    mockAccept.mockRejectedValue(new ConvexError({ reason: 'Inventory conflict' }))
     const booking = makeBooking({ _id: 'b-fail' })
     const { result } = renderHook(() => useBookingActions())
 
@@ -192,7 +193,7 @@ describe('useBookingActions', () => {
 
   it('handleDetailAccept clears previous error on success', async () => {
     // First call: fail
-    mockAccept.mockRejectedValueOnce(new Error('first error'))
+    mockAccept.mockRejectedValueOnce(new ConvexError({ reason: 'first error' }))
     const { result } = renderHook(() => useBookingActions())
 
     await act(async () => {
@@ -252,7 +253,7 @@ describe('useBookingActions', () => {
   })
 
   it('handleDetailDecline captures Error message on failure', async () => {
-    mockDecline.mockRejectedValue(new Error('Cannot decline confirmed'))
+    mockDecline.mockRejectedValue(new ConvexError({ reason: 'Cannot decline confirmed' }))
     const booking = makeBooking({ _id: 'b-fail' })
     const { result } = renderHook(() => useBookingActions())
 

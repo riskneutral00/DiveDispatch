@@ -88,6 +88,6 @@ describe('useDialogSubmit', () => {
     await act(async () => {
       await result.current.runSubmit(async () => { throw 42 })
     })
-    expect(result.current.error).toBe('An unexpected error occurred.')
+    expect(result.current.error).toBe('An unexpected error occurred. Please try again.')
   })
 })
