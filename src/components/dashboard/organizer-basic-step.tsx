@@ -91,18 +91,18 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     if (existing !== undefined && me !== undefined && !initialized) {
       if (existing) {
         setName(existing.name)
-        // Agents store location in a locations[] array; diveCenters use top-level fields
-        const rec = existing as Record<string, unknown>
-        if (rec.placeName) {
+        // DiveCenters: top-level placeName/country/lat/lng
+        // Agents: locations[] array
+        if ('placeName' in existing && existing.placeName) {
           setLocation({
-            placeName: rec.placeName as string,
-            country: rec.country as string,
-            lat: rec.lat as number,
-            lng: rec.lng as number,
-            placeId: (rec.placeId as string | undefined) ?? undefined,
+            placeName: existing.placeName,
+            country: existing.country,
+            lat: existing.lat,
+            lng: existing.lng,
+            placeId: existing.placeId ?? undefined,
           })
-        } else if (Array.isArray(rec.locations) && rec.locations.length > 0) {
-          const loc = rec.locations[0] as { placeName: string; country: string; lat: number; lng: number; placeId?: string }
+        } else if ('locations' in existing && Array.isArray(existing.locations) && existing.locations.length > 0) {
+          const loc = existing.locations[0]
           setLocation({
             placeName: loc.placeName,
             country: loc.country,
@@ -142,14 +142,17 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
       if (existing) {
         await update(basePayload)
+      } else if (role === 'DiveCenter') {
+        await create({ ...basePayload, associations: [] })
+      } else if (role === 'Agent') {
+        await create({
+          ...basePayload,
+          locations: [{ placeName: location.placeName, country: location.country, lat: location.lat, lng: location.lng, placeId: location.placeId }],
+          associations: [],
+          defaultReferralMode: 'independent' as const,
+        })
       } else {
-        // Role-specific defaults for create
-        const createPayload = role === 'DiveCenter'
-          ? { ...basePayload, associations: [] }
-          : role === 'Agent'
-            ? { ...basePayload, locations: [{ placeName: location.placeName, country: location.country, lat: location.lat, lng: location.lng, placeId: location.placeId }], associations: [], defaultReferralMode: 'independent' as const }
-            : basePayload
-        await create(createPayload as Parameters<typeof create>[0])
+        await create(basePayload)
       }
       onSaved()
     } catch (err) {
