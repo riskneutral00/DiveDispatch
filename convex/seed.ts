@@ -212,6 +212,12 @@ export const seedStakeholders = internalMutation({
       if (s.agent) {
         await ctx.db.insert('agents', { userId, ...s.agent })
       }
+      if (s.liveaboard) {
+        await ctx.db.insert('liveaboards', { userId, ...s.liveaboard })
+      }
+      if (s.diveResort) {
+        await ctx.db.insert('diveResorts', { userId, ...s.diveResort })
+      }
     }
   },
 })
@@ -449,6 +455,10 @@ export const seedStakeholderPreferences = internalMutation({
       't7gw1k': ['stefan-braun', 'david-schmidt', 'pierre-dubois', 'maria-santos', 'ryan-clarke', 'nattaya-srisuk'],
       // Amanda (Agent): CN, TW
       'r5yz4q': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
+      // Andaman Explorer (Liveaboard): EN
+      'k8lv3a': ['ryan-clarke', 'mike-chen', 'rachel-nguyen', 'david-schmidt', 'yuki-tanaka'],
+      // Coral Bay Resort (DiveResort): TH, EN
+      'j2dn9f': ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'stefan-braun', 'maria-santos'],
     }
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [

@@ -115,6 +115,30 @@ interface CompressorProfile {
   verified: boolean
 }
 
+interface LiveaboardProfile {
+  name: string
+  placeName: string
+  country: string
+  lat: number
+  lng: number
+  placeId?: string
+  email: string
+  phone: string
+  verified: boolean
+}
+
+interface DiveResortProfile {
+  name: string
+  placeName: string
+  country: string
+  lat: number
+  lng: number
+  placeId?: string
+  email: string
+  phone: string
+  verified: boolean
+}
+
 interface AgentProfile {
   name: string
   locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]
@@ -153,6 +177,8 @@ export interface SeedStakeholder {
   compressor?: CompressorProfile
   agent?: AgentProfile
   instructor?: InstructorProfile
+  liveaboard?: LiveaboardProfile
+  diveResort?: DiveResortProfile
 }
 
 /** Unowned dive sites -- public locations seeded without user accounts. */
@@ -607,6 +633,56 @@ export const AMANDA: SeedStakeholder = {
   },
 }
 
+// ── 11. Andaman Explorer (Liveaboard) ─────────────────────────────
+
+export const ANDAMAN_EXPLORER: SeedStakeholder = {
+  user: {
+    slug: 'k8lv3a',
+    email: 'andaman-explorer+clerk_test@divedispatch.dev',
+    name: 'Chaiwat Meesuk',
+    firstName: 'Chaiwat',
+    lastName: 'Meesuk',
+    businessName: 'Andaman Explorer',
+    appLanguage: 'en',
+    phone: '+66-81-234-5011',
+  },
+  roles: [
+    { role: 'Liveaboard' },
+  ],
+  liveaboard: {
+    name: 'Andaman Explorer',
+    ...PHUKET,
+    email: 'andaman-explorer@divedispatch.dev',
+    phone: '+66-76-392-001',
+    verified: VERIFIED,
+  },
+}
+
+// ── 12. Coral Bay Resort (DiveResort) ─────────────────────────────
+
+export const CORAL_BAY_RESORT: SeedStakeholder = {
+  user: {
+    slug: 'j2dn9f',
+    email: 'coral-bay-resort+clerk_test@divedispatch.dev',
+    name: 'Supattra Laohakul',
+    firstName: 'Supattra',
+    lastName: 'Laohakul',
+    businessName: 'Coral Bay Resort',
+    appLanguage: 'th',
+    phone: '+66-81-234-5012',
+  },
+  roles: [
+    { role: 'DiveResort' },
+  ],
+  diveResort: {
+    name: 'Coral Bay Resort',
+    ...PHUKET,
+    email: 'coral-bay-resort@divedispatch.dev',
+    phone: '+66-76-393-001',
+    verified: VERIFIED,
+  },
+}
+
 // ── Unowned Dive Sites (no user account) ────────────────────────────
 
 export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
@@ -626,5 +702,7 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   SIROLO,
   PRAY_DC,
   AMANDA,
+  ANDAMAN_EXPLORER,
+  CORAL_BAY_RESORT,
 ]
 
