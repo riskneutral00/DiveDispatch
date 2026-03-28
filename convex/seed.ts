@@ -15,8 +15,8 @@ import {
   AQUALUNG_BCDS,
   MARES_WETSUITS,
   MARES_BCDS,
-  GearSizingEntry,
-} from '../src/lib/constants/gear-sizing'
+  type GearSizingEntry,
+} from './shared/gearSizing'
 
 // ── Equipment Inventory Generation ──────────────────────────────────
 

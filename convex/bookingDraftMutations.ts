@@ -11,7 +11,7 @@ import {
   type CoverageInput,
   type VenueCapabilities,
   type BoatCapabilities,
-} from '../src/lib/booking/coverage-validation'
+} from './shared/coverageValidation'
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
