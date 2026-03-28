@@ -1,5 +1,3 @@
-'use client'
-
 interface FlagEmojiProps {
   countryCode: string
   label: string

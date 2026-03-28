@@ -1,5 +1,3 @@
-'use client'
-
 import { Calendar, Clock, MapPin } from 'lucide-react'
 import type { BookingDetailSession } from '../../../convex/bookings'
 

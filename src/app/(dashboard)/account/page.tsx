@@ -1,5 +1,3 @@
-'use client'
-
 import { AccountForm } from '@/components/dashboard/account-form'
 import { SessionDashboardShell } from '@/components/dashboard/session-dashboard-shell'
 import { PageTitle } from '@/components/common/page-title'

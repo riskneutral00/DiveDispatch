@@ -1,5 +1,3 @@
-'use client'
-
 interface RadialProgressProps {
   percentage: number
   size?: number

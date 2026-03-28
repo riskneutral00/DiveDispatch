@@ -1,5 +1,3 @@
-'use client'
-
 import type { ReactNode } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
 import { DiveCenterProfileForm, type DiveCenterProfileSection } from '@/components/dashboard/dive-center-profile-form'

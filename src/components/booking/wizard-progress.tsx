@@ -1,5 +1,3 @@
-'use client'
-
 import { Check } from 'lucide-react'
 import { WIZARD_STEPS, WIZARD_STEP_LABELS, stepIndex, type WizardStep } from '@/lib/booking/wizard-state'
 

@@ -1,5 +1,3 @@
-'use client'
-
 import { STATUS_COLORS, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 
 interface BookingStatusBadgeProps {

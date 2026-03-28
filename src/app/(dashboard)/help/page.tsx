@@ -1,5 +1,3 @@
-'use client'
-
 import { HelpCircle, MessageSquare } from 'lucide-react'
 import { FaqSection } from '@/components/help/faq-section'
 import { ContactForm } from '@/components/help/contact-form'

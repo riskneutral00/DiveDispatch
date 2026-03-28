@@ -1,5 +1,3 @@
-'use client'
-
 import type { BookingDetailReservation } from '../../../convex/bookings'
 import { GlassBadge } from '@/components/glass'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'

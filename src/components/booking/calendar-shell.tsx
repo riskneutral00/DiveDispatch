@@ -1,5 +1,3 @@
-'use client'
-
 import { getDaysOfWeek } from '@/lib/hooks/use-calendar-range'
 import { GlassCard } from '@/components/glass'
 
