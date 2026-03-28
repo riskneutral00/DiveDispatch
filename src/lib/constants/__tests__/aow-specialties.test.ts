@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../aow-specialties'
+import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../../../../convex/shared/aowSpecialties'
 
 describe('AOW specialties', () => {
   it('has 12 total specialties', () => {
