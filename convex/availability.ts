@@ -464,7 +464,7 @@ export async function _toggleBlockedDate(
         if (confirmed.length > 0) {
           throw new ConvexError({
             code: ErrorCode.CONFIRMED_RESERVATION_EXISTS,
-            message: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
+            reason: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
           })
         }
       }
@@ -586,7 +586,7 @@ export const pruneBlockedDates = internalMutation({
   args: {},
   handler: async (ctx): Promise<number> => {
     const today = todayISO()
-    const allDocs = await ctx.db.query('stakeholderBlockedDates').collect()
+    const allDocs = await ctx.db.query('stakeholderBlockedDates').take(BLOCKED_DATES_LIMIT)
 
     let prunedCount = 0
 
