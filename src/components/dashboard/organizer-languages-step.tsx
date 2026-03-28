@@ -13,6 +13,17 @@ import type { Language } from '@/lib/types/language'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
 
+function useRoleApi(role: ClerkRole) {
+  switch (role) {
+    case 'DiveCenter':
+      return { mine: api.diveCenters.mine, update: api.diveCenters.update } as const
+    case 'Agent':
+      return { mine: api.agents.mine, update: api.agents.update } as const
+    default:
+      return null
+  }
+}
+
 interface OrganizerLanguagesStepProps {
   role: ClerkRole
   onSaved: () => void
@@ -20,9 +31,33 @@ interface OrganizerLanguagesStepProps {
 }
 
 export function OrganizerLanguagesStep({ role, onSaved, onBack }: OrganizerLanguagesStepProps) {
-  const existing = useQuery(api.diveCenters.mine)
+  const roleApi = useRoleApi(role)
+
+  // Roles without a languages step shouldn't reach here (config guards this),
+  // but if they do, skip forward on next tick
+  if (!roleApi) {
+    return <LanguagesStepSkip onSaved={onSaved} />
+  }
+
+  return <LanguagesStepInner role={role} roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
+}
+
+function LanguagesStepSkip({ onSaved }: { onSaved: () => void }) {
+  useEffect(() => { onSaved() }, [onSaved])
+  return null
+}
+
+interface LanguagesStepInnerProps {
+  role: ClerkRole
+  roleApi: NonNullable<ReturnType<typeof useRoleApi>>
+  onSaved: () => void
+  onBack: () => void
+}
+
+function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInnerProps) {
+  const existing = useQuery(roleApi.mine)
   const me = useQuery(api.users.me)
-  const update = useMutation(api.diveCenters.update)
+  const update = useMutation(roleApi.update)
 
   const isDiveCenter = role === 'DiveCenter'
 
