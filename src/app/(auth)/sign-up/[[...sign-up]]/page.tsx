@@ -11,6 +11,7 @@ import { Spinner } from '@/components/common/spinner'
 import { StepIndicator } from '@/components/common/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 export const SIGNUP_STEPS = [
   { key: 'signup', label: 'Sign Up' },
@@ -59,9 +60,7 @@ export default function SignUpPage() {
       })
       // The user useEffect above will redirect to dashboard once the record appears
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Something went wrong. Please try again.',
-      )
+      setError(parseConvexError(err, 'Something went wrong. Please try again.'))
       setSubmitting(false)
     }
   }

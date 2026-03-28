@@ -5,6 +5,7 @@ import { useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import type { CalendarBooking } from '../../../convex/bookings'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ export function useBookingActions(): UseBookingActionsReturn {
       await acceptByBooking({ bookingId: bookingId as Id<'bookings'> })
       setDetailBooking(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to accept booking'
+      const message = parseConvexError(err, 'Failed to accept booking')
       setDetailError(message)
     } finally {
       setIsAccepting(false)
@@ -74,7 +75,7 @@ export function useBookingActions(): UseBookingActionsReturn {
       await declineByBooking({ bookingId: bookingId as Id<'bookings'> })
       setDetailBooking(null)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to decline booking'
+      const message = parseConvexError(err, 'Failed to decline booking')
       setDetailError(message)
     } finally {
       setIsDeclining(false)

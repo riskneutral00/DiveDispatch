@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
 import { toast } from 'sonner'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/common/spinner'
 
 const PERSONAL_ROLE_KEYS = new Set(['instructor', 'dive-master'])
@@ -82,7 +83,7 @@ export function AccountForm() {
       setTimeout(() => setSaved(false), 2000)
       toast.success('Account saved', { duration: 3000 })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      const message = parseConvexError(err, 'Something went wrong. Please try again.')
       setError(message)
       toast.error('Save failed', { description: message, duration: 5000 })
     } finally {

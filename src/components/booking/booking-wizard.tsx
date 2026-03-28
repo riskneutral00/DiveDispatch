@@ -14,6 +14,7 @@ import {
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { GlassCard, GlassButton } from "@/components/glass";
+import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
 import { Spinner } from "@/components/common/spinner";
@@ -232,7 +233,7 @@ export function BookingWizard({
       await editBooking({ bookingId: initialBookingId as Id<"bookings"> });
     } catch (err: unknown) {
       setEditResetError(
-        err instanceof Error ? err.message : "Failed to reset booking",
+        parseConvexError(err, "Failed to reset booking"),
       );
       setIsResetting(false);
     }
@@ -311,7 +312,7 @@ export function BookingWizard({
       }
     } catch (err: unknown) {
       setSaveError(
-        err instanceof Error ? err.message : "Failed to save progress",
+        parseConvexError(err, "Failed to save progress"),
       );
       setIsSaving(false);
       return;

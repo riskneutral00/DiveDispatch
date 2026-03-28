@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { toast } from 'sonner'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ export function useProfileForm<
       toast.success('Profile saved', { duration: 3000 })
       onSaved?.()
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Save failed'
+      const message = parseConvexError(err, 'Save failed')
       setServerError(message)
       toast.error('Save failed', { description: message, duration: 5000 })
     } finally {

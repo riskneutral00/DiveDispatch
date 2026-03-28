@@ -7,6 +7,7 @@ import { GlassButton, GlassCard } from '@/components/glass'
 import { LoadingCard } from '@/components/glass/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/common/location-picker'
 import { GlassInput } from '@/components/glass/glass-input'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 interface DcBasicStepProps {
   onSaved: () => void
@@ -82,7 +83,7 @@ export function DcBasicStep({ onSaved, onBack }: DcBasicStepProps) {
       }
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
+      setError(parseConvexError(err, 'Save failed'))
     } finally {
       setSaving(false)
     }

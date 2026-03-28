@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton, GlassCard } from '@/components/glass'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { ROLE_BY_CLERK_ROLE, ROLES } from '@/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '../../../convex/lib/rolePrecedence'
 import type { Language } from '@/lib/types/language'
@@ -131,7 +132,7 @@ export function OnboardingWizard() {
       })
       goNext()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save business info.')
+      setError(parseConvexError(e, 'Failed to save business info.'))
     }
   }
 
@@ -149,8 +150,7 @@ export function OnboardingWizard() {
       }
       router.replace('/dashboard')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to complete onboarding.'
-      setError(msg)
+      setError(parseConvexError(e, 'Failed to complete onboarding.'))
     } finally {
       setCompleting(false)
     }

@@ -5,6 +5,7 @@ import { useMutation, useAction, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassDialog, GlassButton } from '@/components/glass'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import { Link2, Mail, Copy, Check } from 'lucide-react'
 
 interface SendPortalLinkProps {
@@ -54,7 +55,7 @@ export function SendPortalLink({
       setExpiresAt(expiry)
       return url
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to generate link')
+      setError(parseConvexError(e, 'Failed to generate link'))
       return null
     }
   }
@@ -106,7 +107,7 @@ export function SendPortalLink({
       })
       setEmailDone(true)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send email')
+      setError(parseConvexError(e, 'Failed to send email'))
     } finally {
       setBusy(null)
     }

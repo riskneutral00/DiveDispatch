@@ -11,6 +11,7 @@ import { AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '@/lib/constan
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
 import { LanguageField } from '@/components/common/language-field'
 import type { Language } from '@/lib/types/language'
+import { parseConvexError } from '@/lib/utils/convex-error'
 
 interface DcLanguagesStepProps {
   onSaved: () => void
@@ -78,7 +79,7 @@ export function DcLanguagesStep({ onSaved, onBack }: DcLanguagesStepProps) {
       })
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
+      setError(parseConvexError(err, 'Save failed'))
     } finally {
       setSaving(false)
     }
