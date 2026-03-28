@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
+import { GlassTextarea } from '@/components/glass/glass-textarea'
 
 const CATEGORIES = [
   { value: 'Bug', label: 'Bug' },
@@ -158,30 +159,14 @@ export function ContactForm() {
         </div>
 
         {/* Message */}
-        <div className="flex flex-col gap-1.5 w-full">
-          <label
-            className="text-sm font-medium text-secondary"
-          >
-            Message
-          </label>
-          <textarea
-            value={form.message}
-            onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-            placeholder="Describe your issue in detail (minimum 10 characters)"
-            rows={5}
-            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-y text-primary"
-            style={{ outlineColor: errors.message ? 'var(--color-destructive)' : 'var(--color-accent)',
-              ...(errors.message
-                ? { boxShadow: '0 0 0 2px var(--color-destructive)' }
-                : {}) }}
-            aria-invalid={!!errors.message}
-          />
-          {errors.message && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-              {errors.message}
-            </p>
-          )}
-        </div>
+        <GlassTextarea
+          label="Message"
+          value={form.message}
+          onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+          placeholder="Describe your issue in detail (minimum 10 characters)"
+          rows={5}
+          error={errors.message}
+        />
 
         {/* Screenshot upload */}
         <div className="flex flex-col gap-1.5">

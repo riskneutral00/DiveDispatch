@@ -6,6 +6,7 @@ import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
+import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { Spinner } from '@/components/common/spinner'
 
@@ -124,16 +125,12 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
                 (Optional)
               </span>
             </label>
-            <textarea
+            <GlassTextarea
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
               placeholder="e.g., penicillin, shellfish"
               rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
-              style={{ caretColor: 'var(--color-accent)',
-                borderRadius: 'var(--border-radius)',
-                outlineColor: 'var(--color-accent)' }}
             />
           </div>
 
@@ -147,16 +144,12 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
                 (Optional)
               </span>
             </label>
-            <textarea
+            <GlassTextarea
               value={medications}
               onChange={(e) => setMedications(e.target.value)}
               placeholder="e.g., aspirin, blood thinners"
               rows={DEFAULT_TEXTAREA_ROWS}
               maxLength={500}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
-              style={{ caretColor: 'var(--color-accent)',
-                borderRadius: 'var(--border-radius)',
-                outlineColor: 'var(--color-accent)' }}
             />
           </div>
 

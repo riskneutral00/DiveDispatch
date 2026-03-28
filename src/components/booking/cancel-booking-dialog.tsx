@@ -8,6 +8,7 @@ import type { Id } from '../../../convex/_generated/dataModel'
 import { GlassDialog } from '@/components/glass/glass-dialog'
 import { GlassButton } from '@/components/glass/glass-button'
 import { ErrorAlert } from '@/components/glass/error-alert'
+import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 
@@ -73,25 +74,14 @@ export function CancelBookingDialog({
     >
       <div className="flex flex-col gap-4">
         {/* Reason field */}
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="cancel-reason"
-            className="text-sm font-medium text-secondary"
-          >
-            Reason <span className="font-normal opacity-60">(optional)</span>
-          </label>
-          <textarea
-            id="cancel-reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            disabled={submitting}
-            rows={DEFAULT_TEXTAREA_ROWS}
-            placeholder="e.g. Customer requested cancellation"
-            className="glass w-full text-sm px-3 py-2.5 resize-none focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder:opacity-50 text-primary"
-            style={{ caretColor: 'var(--color-accent)',
-              outlineColor: 'var(--color-accent)' }}
-          />
-        </div>
+        <GlassTextarea
+          label="Reason (optional)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          disabled={submitting}
+          rows={DEFAULT_TEXTAREA_ROWS}
+          placeholder="e.g. Customer requested cancellation"
+        />
 
         {/* Inline error */}
         {error && <ErrorAlert>{error}</ErrorAlert>}

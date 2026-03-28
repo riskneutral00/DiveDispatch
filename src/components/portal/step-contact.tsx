@@ -10,6 +10,7 @@ import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { COUNTRY_NAMES } from '@/lib/constants/countries'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
+import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
@@ -489,24 +490,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {/* Health Information */}
       <GlassCard padding="md">
         <SectionHeading>Health Information</SectionHeading>
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="allergies"
-            className="text-sm font-medium text-secondary"
-          >
-            Known Allergies
-          </label>
-          <textarea
-            id="allergies"
-            rows={DEFAULT_TEXTAREA_ROWS}
-            placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
-            value={form.allergies ?? ''}
-            onChange={(e) => setField('allergies', e.target.value)}
-            className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none rounded-[var(--border-radius)] text-primary"
-            style={{ caretColor: 'var(--color-accent)',
-              outlineColor: 'var(--color-accent)' }}
-          />
-        </div>
+        <GlassTextarea
+          label="Known Allergies"
+          rows={DEFAULT_TEXTAREA_ROWS}
+          placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
+          value={form.allergies ?? ''}
+          onChange={(e) => setField('allergies', e.target.value)}
+        />
       </GlassCard>
 
       {/* Server error */}

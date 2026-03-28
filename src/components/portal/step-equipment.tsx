@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { GlassCard } from '../glass/glass-card'
 import { GlassInput } from '../glass/glass-input'
 import { GlassButton } from '../glass/glass-button'
+import { GlassTextarea } from '../glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -470,20 +471,12 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                 <span style={{ color: 'var(--color-destructive)' }}> *</span>
               )}
             </label>
-            <textarea
+            <GlassTextarea
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               placeholder="e.g. Left: −2.00, Right: −2.50"
               rows={DEFAULT_TEXTAREA_ROWS}
-              className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 resize-none text-primary"
-              style={{ caretColor: 'var(--color-accent)',
-                outlineColor: displayErrors.prescriptionStrength
-                  ? 'var(--color-destructive)'
-                  : 'var(--color-primary-glow)',
-                borderRadius: 'var(--border-radius)',
-                ...(displayErrors.prescriptionStrength
-                  ? { boxShadow: '0 0 0 2px var(--color-destructive)' }
-                  : {}) }}
+              error={displayErrors.prescriptionStrength}
             />
             {displayErrors.prescriptionStrength && (
               <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
