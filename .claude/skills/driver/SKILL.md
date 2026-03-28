@@ -1,61 +1,75 @@
 ---
 name: driver
 description: >
-  Autonomous ticket processor. Spawns the driver agent to scan, implement,
-  review, and merge tickets. Part of the Car workflow.
-allowed-tools: Agent
+  Autonomous ticket processor. Creates the Car agent team and spawns
+  Driver/Backseat/Patrol as teammates. Part of the Car workflow.
+allowed-tools: Agent, TeamCreate
 user-invocable: true
 ---
 
-# /driver — Autonomous Ticket Processor
+# /driver — Car Team Launcher
 
-**Execute immediately.** Spawn the driver agent and walk away.
+**Execute immediately.** Create the Car agent team and spawn all 3 teammates.
+
+```
+TeamCreate(team_name: "car", description: "Car workflow: Driver/Backseat/Patrol")
+```
+
+Spawn all 3 teammates (in a single response, all in parallel):
 
 ```
 Agent(
   description: "Driver: autonomous ticket processor",
   subagent_type: "driver",
-  prompt: "Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. Run until idle or batch cap.",
+  name: "driver",
+  team_name: "car",
+  prompt: "You are the Driver teammate in the Car agent team. Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. After each merge, SendMessage to backseat with merge details. Go idle when no tickets — TeammateIdle hook will wake you.",
   run_in_background: true,
   mode: "auto"
 )
-```
 
-Print: `Driver agent spawned — running in background.`
-
-Then spawn the backseat agent to watch for merges:
-
-```
 Agent(
   description: "Backseat: post-merge reviewer",
   subagent_type: "backseat",
-  prompt: "Start the Backseat loop. Watch main for new merge commits, dispatch reviews, create tickets for findings.",
+  name: "backseat",
+  team_name: "car",
+  prompt: "You are the Backseat teammate in the Car agent team. You are event-driven — wait for merge messages from Driver. When you receive a MERGED message, run diff-classify and dispatch reviews. After review, SendMessage to patrol with findings and to driver with any fix tickets.",
   run_in_background: true,
   mode: "auto"
 )
-```
 
-Print: `Backseat agent spawned — watching for merges.`
-
-Then spawn the patrol agent to prepare vault observations:
-
-```
 Agent(
   description: "Patrol: quality preparation",
   subagent_type: "patrol",
-  prompt: "Start the Patrol loop. Watch for backseat-debrief completion, then run gate/qa/review-tests/reconcile to prepare vault observations.",
+  name: "patrol",
+  team_name: "car",
+  prompt: "You are the Patrol teammate in the Car agent team. You are event-driven — wait for review-complete messages from Backseat. When you receive a REVIEW-DONE message, run post-merge validation, QA, review-tests, reconcile, and vault readiness check (tsc + tests + invariants + backseat queue drain). Write .patrol-ran with CLEAN/BLOCKED verdict. SendMessage to team-lead when observations are staged.",
   run_in_background: true,
   mode: "auto"
 )
 ```
 
-Print: `Patrol agent spawned — preparing quality work.`
+**Fail-loud guard** — verify the team actually spawned:
+
+```bash
+cat ~/.claude/teams/car/config.json 2>/dev/null | grep -c '"name"'
+```
+
+If the config file doesn't exist or has fewer than 3 members, **STOP immediately** and print:
+```
+CAR TEAM FAILED TO SPAWN. Do NOT proceed with ticket work inline.
+Check: ~/.claude/hooks/check-ticket-agent.sh
+Run: /driver to retry, or fix the hook first.
+```
+
+If the team spawned successfully, print:
 
 ```
-Car flow active — 3 agents running in background.
+Car team created — 3 teammates in tmux panes.
   Driver:   scanning tickets, implementing in worktrees
-  Backseat: watching main for merges, dispatching reviews
-  Patrol:   preparing vault observations after reviews
+  Backseat: waiting for merge notifications from Driver
+  Patrol:   waiting for review-complete notifications from Backseat
 
-You can continue working. Run /vault when ready to close.
+You can continue working. Click any pane to interact directly.
+Run /vault when ready to close.
 ```

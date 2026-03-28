@@ -2,7 +2,7 @@
 name: gate
 description: "Pre-commit quality gate. Classifies uncommitted changes, dispatches relevant review skills, produces GO/NO-GO verdict. Run before /vault."
 allowed-tools: Read, Glob, Grep, Bash, Skill
-user-invocable: true
+user-invocable: false
 ---
 
 # /gate — Pre-Commit Quality Gate
@@ -48,7 +48,24 @@ Otherwise run `npx vitest run`. Fail → immediate NO-GO. Pass → write timesta
 
 No changes → `Nothing to gate.` and stop.
 
-## Phase 2: Dispatch Reviews
+## Phase 2: Patrol Sentinel Check
+
+Before dispatching reviews, check if Patrol already reviewed the current diff:
+
+```bash
+cat .patrol-ran 2>/dev/null
+```
+
+If `.patrol-ran` exists:
+1. Parse `fileHash` from sentinel JSON
+2. Compute current diff hash: `git diff --name-only | sort | md5`
+3. If hashes match → print: `Patrol already reviewed: {skills}. Skipping re-dispatch.`
+4. Still run Phase 3 (invariant sweep) and Phase 4 (test gap detection) — these are fast and cheap
+5. Skip to Phase 5 with Patrol's finding counts carried forward
+
+If no sentinel or hash mismatch → continue to Phase 2b.
+
+## Phase 2b: Dispatch Reviews
 
 Invoke all triggered skills **in parallel**. Collect CRITICAL/HIGH/MEDIUM/LOW counts.
 

@@ -18,6 +18,16 @@ When this skill is invoked, execute all steps in order — no questions, no prea
 3. Read the thread file to get the exact next action + key file paths
 4. Read `CLAUDE.md` to refresh architectural constraints and rules
 
+Also check for Car flow activity since last session:
+
+```bash
+# What did Driver do since last session?
+git log --oneline --since="$(cat .last-session-ts 2>/dev/null || echo '24 hours ago')" --grep="^feat(DD-\|^fix(DD-\|^test(DD-\|^refactor(DD-\|^chore(DD-"
+# Read Driver/Backseat debriefs if they exist
+cat ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/$(date +%Y-%m-%d)-driver.md 2>/dev/null
+cat ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/$(date +%Y-%m-%d)-backseat.md 2>/dev/null
+```
+
 Do not output anything yet.
 
 ---
@@ -62,6 +72,9 @@ Print exactly this format:
 ```
 Status — {YYYY-MM-DD}
 ───────────────────
+Car flow: {N} tickets completed by Driver, {N} Backseat findings ({N} CRITICAL, {N} HIGH)
+  {Completed: DD-{NNN}, DD-{NNN}, ... — if any}
+  {New fix tickets: DD-{NNN}, DD-{NNN} — if any}
 Board: {action taken — e.g., "3 stale tickets archived. 14 active (5 ready, 9 backlog)."}
 {Skipped: DD-{NNN} {title} (human required) — for each skipped ticket, if any}
 Next: DD-{NNN} {title} (P{N}, {category}) — {one-line description}
@@ -70,13 +83,23 @@ Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation compon
 Starting DD-{NNN} now.
 ```
 
-Then spawn the Car agents in background:
+Omit the `Car flow:` line if no Driver/Backseat activity since last session.
+
+Then create the Car agent team and spawn teammates:
+
+```
+TeamCreate(team_name: "car", description: "Car workflow: Driver/Backseat/Patrol")
+```
+
+Spawn all 3 teammates (in a single response, all in parallel):
 
 ```
 Agent(
   description: "Driver: autonomous ticket processor",
   subagent_type: "driver",
-  prompt: "Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. Run indefinitely.",
+  name: "driver",
+  team_name: "car",
+  prompt: "You are the Driver teammate in the Car agent team. Start the Driver loop. Scan .tickets/ for ready tickets, implement in worktrees, review, merge to main. After each merge, SendMessage to backseat with merge details. Go idle when no tickets — TeammateIdle hook will wake you.",
   run_in_background: true,
   mode: "auto"
 )
@@ -84,7 +107,9 @@ Agent(
 Agent(
   description: "Backseat: post-merge reviewer",
   subagent_type: "backseat",
-  prompt: "Start the Backseat loop. Watch main for new merge commits, dispatch reviews, create tickets for findings. Run indefinitely.",
+  name: "backseat",
+  team_name: "car",
+  prompt: "You are the Backseat teammate in the Car agent team. You are event-driven — wait for merge messages from Driver. When you receive a MERGED message, run diff-classify and dispatch reviews. After review, SendMessage to patrol with findings and to driver with any fix tickets.",
   run_in_background: true,
   mode: "auto"
 )
@@ -92,13 +117,30 @@ Agent(
 Agent(
   description: "Patrol: quality preparation",
   subagent_type: "patrol",
-  prompt: "Start the Patrol loop. Watch for backseat-debrief completion, run gate/qa/review-tests/reconcile to prepare vault observations. Run indefinitely.",
+  name: "patrol",
+  team_name: "car",
+  prompt: "You are the Patrol teammate in the Car agent team. You are event-driven — wait for review-complete messages from Backseat. When you receive a REVIEW-DONE message, run post-merge validation, QA, review-tests, reconcile, and vault readiness check (tsc + tests + invariants + backseat queue drain). Write .patrol-ran with CLEAN/BLOCKED verdict. SendMessage to team-lead when observations are staged.",
   run_in_background: true,
   mode: "auto"
 )
 ```
 
-Print: `Car agents spawned (Driver, Backseat, Patrol).`
+**Fail-loud guard** — verify the team actually spawned:
+
+```bash
+cat ~/.claude/teams/car/config.json 2>/dev/null | grep -c '"name"'
+```
+
+If the config file doesn't exist or has fewer than 3 members, **STOP immediately** and print:
+```
+CAR TEAM FAILED TO SPAWN. Do NOT proceed with ticket work inline.
+Check: ~/.claude/hooks/check-ticket-agent.sh
+Run: /driver to retry, or fix the hook first.
+```
+
+Do NOT continue to work on tickets if the team failed to spawn. This prevents silent bypass of the review pipeline.
+
+If the team spawned successfully, print: `Car team created (Driver, Backseat, Patrol) — tmux panes active.`
 
 Then immediately begin working on the identified ticket. Read the spec from `.tickets/DD-{NNN}.md`. Read the relevant source files. Follow CLAUDE.md rules. No further prompts — just start coding.
 

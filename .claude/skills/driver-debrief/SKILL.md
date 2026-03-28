@@ -39,3 +39,23 @@ Append to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/{YYYY-MM-DD}-drive
 - {Which ticket types completed cleanly vs struggled?}
 - {Recurring merge conflict areas?}
 ```
+
+## Board Sync
+
+After writing the session summary, regenerate the vault TODO.md mirror so it stays current without manual `/board sync`:
+
+1. Read all `.tickets/DD-*.md` YAML frontmatter
+2. Regenerate `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` from current ticket state
+3. This is the same logic as `/board sync` — group by status, sort by priority
+
+## Memory Update
+
+Update the active thread memory so `/first` in the next session has current context:
+
+1. Read `~/.claude/projects/-Users-matthewlee-Desktop-RiskNeutral-DiveDispatch/memory/project_thread_dd_present.md`
+2. Update:
+   - **Test Baseline** — new test count from final `npx vitest run`
+   - **Recent Commits** — last 5 from `git log --oneline -5`
+   - **What's next / NEXT:** — first ready ticket from `.tickets/` (by priority, then ID)
+   - **Board:** — current ticket counts by status
+3. Update `MEMORY.md` active thread line with new `NEXT:` tag matching the ticket

@@ -4,7 +4,7 @@ description: >
   Pre-vault quality check. If Patrol has run, reads its observations and verifies.
   If no Patrol, falls back to running tests, QA, and reconciliation directly.
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
-user-invocable: true
+user-invocable: false
 ---
 
 When this skill is invoked, execute all steps in order — no questions, no preamble.
@@ -48,7 +48,17 @@ npx vitest run 2>&1
 
 ### Step 2 — Generate Missing Tests
 
-Classify changed files. Filter to `.ts`/`.tsx` in `convex/` or `src/`. Exclude `_generated/`, `node_modules/`, `.md`, config.
+Check if Patrol already covered test generation:
+
+```bash
+PATROL_RAN=$(cat .patrol-ran 2>/dev/null)
+```
+
+If `.patrol-ran` exists with today's date and `fileHash` matches current diff (`git diff --name-only | sort | md5`):
+- Print: `Patrol reviewed {N} files. Skipping redundant coverage check.`
+- Skip to Step 3.
+
+Otherwise, classify changed files. Filter to `.ts`/`.tsx` in `convex/` or `src/`. Exclude `_generated/`, `node_modules/`, `.md`, config.
 
 For each changed source file without test coverage, select cheapest test type and generate following DD patterns (`testDate(N)`, seed fixtures, assert outcomes, one test home).
 

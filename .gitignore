@@ -3,9 +3,12 @@
 # tickets (working items for parallel Claude terminals)
 .tickets/
 
-# lifecycle sentinel files (written by /last and /gate, consumed by /vault)
+# lifecycle sentinel files (written by /last, /gate, /patrol, /vault, consumed by /first)
 .last-ran
+.last-session-ts
 .gate-ran
+.patrol-ran
+.patrol-observations.md
 .vitest-last-pass
 
 # dependencies

@@ -1,13 +1,13 @@
 ---
 name: vault
 description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, SendMessage, TeamDelete
 user-invocable: true
 ---
 
 # /vault — Session Close
 
-Run this before ending a session. No questions, no prompts — just execute all 5 jobs.
+Run this before ending a session. No questions, no prompts — just execute all jobs (5 core + team shutdown).
 
 ---
 
@@ -18,9 +18,7 @@ Run this before ending a session. No questions, no prompts — just execute all 
 1. **Batch bash commands** with `&&` — never run `git status`, `git diff`, `git log` as separate tool calls.
 2. **Parallel tool calls** — Jobs 2/3/4 write to different files. Fire all writes in ONE response after Job 1.
 3. **Skip reads when overwriting** — Session file is always overwritten. Don't read it first.
-4. **Single NLM call** — chain all `nlm source add` with `&&` in one Bash call.
-
-### Ideal execution shape (6 rounds max, usually 5)
+### Ideal execution shape (5 rounds max, usually 4)
 
 ```
 Round 0: Bash(git status --porcelain + git log --diff-filter=D --name-only -20) → classify untracked
@@ -31,8 +29,7 @@ Round 1: Bash(git status && git diff && git diff --cached && git log --oneline -
 Round 2: Bash(rm -rf [ghosts/stale] && git add <bucket1> && git commit ... && git add <bucket2> && git commit ...)
 Round 3: Bash(session file heredoc) + Bash(lessons append) + Bash(TODO sed) + Write(thread) + Edit(MEMORY.md)
          ← all parallel, all write different files
-Round 4: Bash(nlm source add ... && nlm source add ...)
-Round 5: Print output
+Round 4: Print output
 ```
 
 If no untracked files, skip Round 0. If no git changes, skip Round 1's diff and Round 2 entirely. If no lessons, drop that from Round 3.
@@ -41,18 +38,28 @@ If no untracked files, skip Round 0. If no git changes, skip Round 1's diff and 
 
 ## Instructions
 
-### Pre-flight: Lifecycle Check
+### Pre-flight: Patrol Verdict Check
 
-Before anything else, check for sentinel files:
+Before anything else, check Patrol's sentinel:
 
-1. **`.last-ran`** — If missing, warn: `⚠ /last was not run this session. Tests may not have been verified and tickets may not be reconciled. Continue anyway? (y/n)` If the user says no, stop.
-2. **`.gate-ran`** — If missing, warn: `⚠ /gate was not run this session. Code quality was not reviewed. Continue anyway? (y/n)` If the user says no, stop.
-3. If `.gate-ran` exists, read it. If `verdict` is `NO-GO`, block: `❌ /gate returned NO-GO. Fix CRITICAL findings before vaulting.` Stop.
-4. If both sentinels exist and gate is GO → proceed silently.
-
-After Job 1 (commit) succeeds, clean up sentinels:
 ```bash
-rm -f .last-ran .gate-ran
+cat .patrol-ran 2>/dev/null
+```
+
+1. If `.patrol-ran` exists and `verdict` is `CLEAN` → proceed silently.
+2. If `.patrol-ran` exists and `verdict` is `BLOCKED` → block: `❌ Patrol reports build/test failure. Fix before vaulting.` Stop.
+3. If `.patrol-ran` is missing → warn: `⚠ Car agents didn't complete a review cycle this session. Continue anyway? (y/n)` If the user says no, stop.
+
+**Quick sanity** — even if Patrol says CLEAN, double-check:
+```bash
+grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready' 2>/dev/null | xargs grep -L 'human_required: true' 2>/dev/null
+```
+If any unresolved non-human_required backseat tickets exist → warn: `⚠ {N} backseat fix tickets still open. Driver may not have finished. Continue anyway? (y/n)` If the user says no, stop.
+
+After Job 1 (commit) succeeds, clean up sentinels and write session timestamp:
+```bash
+rm -f .patrol-ran .patrol-observations.md
+date -u +%Y-%m-%dT%H:%M:%SZ > .last-session-ts
 ```
 
 ---
@@ -232,20 +239,6 @@ Source of truth: `.tickets/DD-*.md` files. Vault mirror: `~/Desktop/RiskNeutral/
 4. New memory files only for info that isn't already captured, will be useful in future sessions, and can't be derived from code/vault.
 5. Write via Write/Edit tools in Round 3 (parallel with other writes).
 
-### Job 5: NotebookLM Sync
-
-If vault files were created/modified in Job 2, sync in **one Bash call**:
-
-```bash
-nlm source add <alias1> --file "<path1>" && nlm source add <alias2> --file "<path2>"
-```
-
-| Vault path prefix | Notebook alias |
-|-------------------|---------------|
-| `RiskNeutral/` | `rn-strategy` |
-| `DiveDispatch/` (Product, Architecture, Legal, Reviews) | `dd-product` |
-| `Sessions/`, `Ideas/`, `DiveDispatch/Architecture/Lessons.md` | `sessions` |
-
 ---
 
 ## Output
@@ -260,7 +253,6 @@ Committed:
 Vault: N observations → [locations]
 Board: [brief summary of ticket updates + vault mirror synced]
 Memory: [updated/cleaned/no changes]
-NotebookLM: N sources synced
 Saved. Next session: /first → [exact next action]
 ```
 
@@ -272,3 +264,34 @@ If all five jobs are skipped:
 ```
 Nothing to vault.
 ```
+
+---
+
+### Job 6: Shutdown Car Team
+
+Run **after** all other jobs complete. Check if a Car agent team is active:
+
+```bash
+cat ~/.claude/teams/car/config.json 2>/dev/null
+```
+
+If the team exists:
+
+1. Send shutdown to all teammates:
+   ```
+   SendMessage(to: "driver", message: "Session closing. Finish current work and shut down.")
+   SendMessage(to: "backseat", message: "Session closing. Finish current work and shut down.")
+   SendMessage(to: "patrol", message: "Session closing. Finish current work and shut down.")
+   ```
+   If a navigator teammate exists, send to it too.
+
+2. Wait up to 60 seconds for teammates to finish. Do not force-kill — let them complete current work.
+
+3. Clean up the team:
+   ```
+   TeamDelete()
+   ```
+
+4. Print: `Car team shut down.`
+
+If no team exists, skip this job silently.

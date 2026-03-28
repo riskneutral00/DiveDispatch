@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/teammate-idle.sh",
+            "timeout": 10,
+            "statusMessage": "Checking teammate status…"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
