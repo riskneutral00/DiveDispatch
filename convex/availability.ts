@@ -7,7 +7,7 @@ import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } f
 import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
-import { effectiveResourceType, stakeholderTypeValidator as stakeholderType, type StakeholderRole } from './lib/validators'
+import { effectiveResourceType, stakeholderTypeValidator as stakeholderType, type StakeholderRole, assertValidTime } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from './shared/statuses'
 
@@ -506,6 +506,7 @@ export async function _toggleBlockedDate(
           })
 
           // Restore snapshot (Invariant 3: same mutation as reservation write)
+          assertValidTime(session.startTime, 'startTime')
           const snapshot = await ctx.db
             .query('availabilitySnapshots')
             .withIndex('by_inventoryUnitId_date_windowStart', (q) =>

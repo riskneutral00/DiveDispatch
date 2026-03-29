@@ -1,5 +1,6 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { RESOURCE_OWNER_TYPES, type ResourceOwnerType } from '../shared/resourceOwnerTypes'
+import { ErrorCode } from './errorCodes'
 
 /** Canonical stakeholder type validator — use this everywhere instead of redefining. */
 export const stakeholderTypeValidator = v.union(
@@ -30,6 +31,24 @@ const RESOURCE_TYPES: ReadonlySet<string> = new Set(RESOURCE_OWNER_TYPES)
 export function effectiveResourceType(roleType: string): ResourceOwnerType | null {
   if (roleType === 'DiveMaster') return 'Instructor'
   return RESOURCE_TYPES.has(roleType) ? (roleType as ResourceOwnerType) : null
+}
+
+// ─── Time format validation ──────────────────────────────────────────────────
+
+/** Matches strict HH:MM (two-digit hours, two-digit minutes). */
+export const TIME_REGEX = /^\d{2}:\d{2}$/
+
+/** Throws a VALIDATION ConvexError if value is not in HH:MM format. */
+export function assertValidTime(value: string, field: string): void {
+  if (!TIME_REGEX.test(value)) {
+    throw new ConvexError({ code: ErrorCode.VALIDATION, message: `${field} must be HH:MM format` })
+  }
+}
+
+/** Pads single-digit hours/minutes to HH:MM. Idempotent on already-valid values. */
+export function normalizeTime(t: string): string {
+  const [h, m] = t.split(':')
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
 }
 
 /** Canonical gear type validator — use instead of redefining the union inline. */

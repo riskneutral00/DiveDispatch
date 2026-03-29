@@ -1219,7 +1219,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
     })
   })
 
-  it('H4-3: time format mismatch — "9:00" vs "09:00" throws MISSING_SNAPSHOT', async () => {
+  it('H4-3: time format mismatch — "9:00" vs "09:00" throws VALIDATION error (DD-260)', async () => {
     const date = testDate(20)
     await t.run(async (ctx) => {
       const unitId = await seedInventoryUnit(ctx, {
@@ -1238,7 +1238,7 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
 
       const bookingId = await seedBooking(ctx)
-      // Session with non-zero-padded time — mismatch
+      // Session with non-zero-padded time — now caught by assertValidTime (DD-260)
       const sessionId = await seedSession(ctx, bookingId, unitId, {
         date,
         startTime: '9:00',
@@ -1246,11 +1246,11 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       })
       await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
 
-      // Should throw MISSING_SNAPSHOT because index lookup won't match
+      // DD-260: assertValidTime rejects malformed "9:00" before the lookup
       await expect(
         releaseBookingReservations(ctx, bookingId, 'hold_expired'),
       ).rejects.toMatchObject({
-        data: { code: 'MISSING_SNAPSHOT' },
+        data: { code: 'VALIDATION' },
       })
     })
   })

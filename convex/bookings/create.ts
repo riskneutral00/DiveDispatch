@@ -18,6 +18,7 @@ import {
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
+import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
@@ -108,6 +109,13 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
   }
 
+  // Normalize time strings before any snapshot lookup or write (DD-260)
+  const normalizedSessions: SessionInput[] = args.sessions.map((s) => ({
+    ...s,
+    startTime: normalizeTime(s.startTime),
+    endTime: normalizeTime(s.endTime),
+  }))
+
   // STEP 1: Read-only pass — build plans or throw CONFLICT (zero writes so far)
   type SessionPlan = {
     session: SessionInput
@@ -118,7 +126,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   const plans: SessionPlan[] = []
 
-  for (const session of args.sessions) {
+  for (const session of normalizedSessions) {
     const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null
     if (!inventoryUnit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 

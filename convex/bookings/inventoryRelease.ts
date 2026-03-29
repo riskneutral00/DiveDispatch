@@ -11,6 +11,7 @@ import type { Doc, Id } from '../_generated/dataModel'
 import type { VacatedReason } from '../shared/statuses'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
+import { assertValidTime } from '../lib/validators'
 import { logBookingChange } from '../bookingAuditLog'
 
 /**
@@ -24,6 +25,7 @@ export async function getAvailabilitySnapshot(
   date: string,
   windowStart: string,
 ): Promise<Doc<'availabilitySnapshots'> | null> {
+  assertValidTime(windowStart, 'windowStart')
   return ctx.db
     .query('availabilitySnapshots')
     .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
