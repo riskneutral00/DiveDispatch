@@ -9,6 +9,7 @@ import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { checkRateLimit } from './lib/rateLimiter'
 import { deriveDefaultRole } from './lib/rolePrecedence'
+import { checkIdempotency } from './lib/idempotency'
 
 /** Strip sensitive fields from a user document for public consumption. */
 function publicUser(user: Doc<'users'>) {
@@ -353,8 +354,21 @@ export const upsertFromWebhook = internalMutation({
     name: v.string(),
     firstName: v.string(),
     lastName: v.string(),
+    svixId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (args.svixId) {
+      const isDuplicate = await checkIdempotency(ctx, args.svixId, 'clerk_webhook_upsert')
+      if (isDuplicate) {
+        const existing = await ctx.db
+          .query('users')
+          .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.tokenIdentifier))
+          .unique()
+        if (existing) return existing._id
+        // fall through to create if not found
+      }
+    }
+
     const existing = await ctx.db
       .query('users')
       .withIndex('by_tokenIdentifier', (q) =>
@@ -402,8 +416,14 @@ export const upsertFromWebhook = internalMutation({
 export const deleteFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
+    svixId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (args.svixId) {
+      const isDuplicate = await checkIdempotency(ctx, args.svixId, 'clerk_webhook_delete')
+      if (isDuplicate) return
+    }
+
     const user = await ctx.db
       .query('users')
       .withIndex('by_tokenIdentifier', (q) =>

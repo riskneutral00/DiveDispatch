@@ -118,10 +118,12 @@ http.route({
         name,
         firstName,
         lastName,
+        svixId,
       })
     } else if (event.type === 'user.deleted') {
       await ctx.runMutation(internal.users.deleteFromWebhook, {
         tokenIdentifier,
+        svixId,
       })
     }
 
