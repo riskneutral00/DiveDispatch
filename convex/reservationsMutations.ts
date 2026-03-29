@@ -3,7 +3,8 @@ import { mutation } from './_generated/server'
 import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { tryAutoAdvance, restoreSnapshotUnits, canReservationTransition, isActiveReservation, getAvailabilitySnapshot } from './bookings/_shared'
+import { tryAutoAdvance, canReservationTransition, isActiveReservation } from './bookings/_shared'
+import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
@@ -13,6 +14,7 @@ import { logBookingChange } from './bookingAuditLog'
 import { ErrorCode } from './lib/errorCodes'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
+import { languageOverlap } from './lib/languageMatch'
 
 // Re-export for test backwards compatibility
 export { getDatesInRange as getDateRange } from './shared/dateRange'
@@ -114,6 +116,42 @@ export async function batchGetOwnerCities(
   }
 
   return cityMap
+}
+
+/**
+ * Batch-fetches teachingLanguages for instructor candidates in parallel.
+ * Returns Map<slug, string[]>. Only meaningful for Instructor/DiveMaster resources.
+ */
+async function batchGetTeachingLanguages(
+  ctx: MutationCtx,
+  slugs: string[],
+  ownerType: ResourceType,
+): Promise<Map<string, string[]>> {
+  const langMap = new Map<string, string[]>()
+  if (slugs.length === 0) return langMap
+  if (ownerType !== 'Instructor') return langMap
+
+  const table = 'instructors' as const
+
+  const users = await Promise.all(
+    slugs.map((slug) =>
+      ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique(),
+    ),
+  )
+
+  const profiles = await Promise.all(
+    users.map((user) =>
+      user
+        ? ctx.db.query(table).withIndex('by_userId', (q) => q.eq('userId', user._id)).unique()
+        : Promise.resolve(null),
+    ),
+  )
+
+  for (let i = 0; i < slugs.length; i++) {
+    langMap.set(slugs[i], profiles[i]?.teachingLanguages ?? [])
+  }
+
+  return langMap
 }
 
 // ─── acceptReservation ────────────────────────────────────────────────────────
@@ -247,64 +285,13 @@ export async function _declineHandler(
     throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
-  // Collect all active reservations for this unit on this booking
-  const unitReservations = await ctx.db
-    .query('reservations')
-    .withIndex('by_bookingId_inventoryUnitId', (q) =>
-      q.eq('bookingId', args.bookingId as Id<"bookings">).eq('inventoryUnitId', args.inventoryUnitId as Id<"inventoryUnits">),
-    )
-    .collect()
-
-  const activeForUnit = unitReservations.filter(isActiveReservation)
-
   const now = Date.now()
 
-  // ── Phase 1 (read): accumulate unitsToRestore per snapshot ───────────────
-  // DD-295: aggregate across all reservations FIRST so each snapshot is
-  // patched exactly once, even when multiple pooled reservations share it.
-  const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
-  const unitsToRestore = new Map<string, number>()
-
-  for (const reservation of activeForUnit) {
-    const session = await ctx.db.get(reservation.bookingSessionId)
-    if (!session) {
-      throw new ConvexError({
-        code: ErrorCode.ORPHANED_RESERVATION,
-        reason: `Reservation ${reservation._id} references missing session ${reservation.bookingSessionId}. Inventory cannot be restored — aborting to prevent capacity leak.`,
-      })
-    }
-
-    const key = `${args.inventoryUnitId}|${session.date}|${session.startTime}`
-
-    if (!snapshotIdMap.has(key)) {
-      const snapshot = await getAvailabilitySnapshot(ctx, args.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
-      if (!snapshot) {
-        throw new ConvexError({
-          code: ErrorCode.MISSING_SNAPSHOT,
-          reason: `No availability snapshot found for unit ${args.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
-        })
-      }
-      snapshotIdMap.set(key, snapshot._id)
-    }
-
-    unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)
-  }
-
-  // ── Phase 2 (write): vacate all reservations ────────────────────────────
-  for (const reservation of activeForUnit) {
-    await ctx.db.patch(reservation._id, {
-      status: RESERVATION_STATUS.Vacated,
-      vacatedAt: now,
-      vacatedBy: VACATED_REASON.StakeholderDeclined,
-    })
-  }
-
-  // ── Phase 3 (patch): restore each snapshot once with aggregated count ───
-  const seenSnapshotIds = new Set<string>()
-  for (const [key, units] of unitsToRestore) {
-    const snapshotId = snapshotIdMap.get(key)!
-    await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds)
-  }
+  // Vacate all active reservations for this unit and restore snapshots
+  await releaseBookingReservations(
+    ctx, args.bookingId, VACATED_REASON.StakeholderDeclined,
+    args.inventoryUnitId as Id<'inventoryUnits'>,
+  )
 
   // Delete from bookingResources junction table
   await deleteResourceByType(ctx, args.bookingId, unit.resourceType as string)
@@ -372,9 +359,21 @@ export async function _declineHandler(
     }
   }
 
-  // Batch-fetch cities for all candidates in parallel (eliminates N+1)
+  // Batch-fetch cities and teaching languages for all candidates in parallel
   const candidateSlugs = candidates.map((c) => c.ownerId)
-  const cityMap = await batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType)
+  const [cityMap, langMap] = await Promise.all([
+    batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType),
+    batchGetTeachingLanguages(ctx, candidateSlugs, unit.resourceType as ResourceType),
+  ])
+
+  // Extract customer language codes from the booking for language-aware sorting
+  const customerLangs = booking.divers.map((d) => d.flag.code)
+
+  // Precompute overlap scores once, then sort (avoids O(N log N) Set allocations)
+  const overlapScores = new Map(
+    candidates.map(c => [c.ownerId, languageOverlap(langMap.get(c.ownerId) ?? [], customerLangs)])
+  )
+  candidates.sort((a, b) => (overlapScores.get(b.ownerId) ?? 0) - (overlapScores.get(a.ownerId) ?? 0))
 
   let hasAlternative = false
 
