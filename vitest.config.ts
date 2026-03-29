@@ -13,6 +13,7 @@ export default defineConfig({
       '**/node_modules/**',
       '**/.overstory/worktrees/**',
       '**/.worktrees/**',
+      '**/.research/**',
       'e2e/**',
     ],
     coverage: {
