@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-declare const self: ServiceWorkerGlobalScope & typeof globalThis
+declare const self: WorkerGlobalScope & typeof globalThis
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,

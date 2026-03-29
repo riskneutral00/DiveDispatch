@@ -73,10 +73,14 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
 
   useEffect(() => {
     if (existing !== undefined && me !== undefined && !initialized) {
-      const langCodes: string[] = (existing?.customerLanguages as string[]) ?? me?.customerLanguages ?? []
+      const lang = existing as { customerLanguages?: string[] } | null | undefined
+      const langCodes: string[] = lang?.customerLanguages ?? me?.customerLanguages ?? []
       setFocusedLanguages(resolveLanguages(langCodes))
       if (supportsCoursePreferences) {
-        const firstAssoc = existing?.associations?.[0]
+        const firstAssoc = existing?.associations?.[0] as {
+          number: string; agency: string;
+          owDays?: number; aowDays?: number; oaDays?: number; selectedSpecialties?: string[]
+        } | undefined
         setOwDays(firstAssoc?.owDays?.toString() ?? '')
         setAowDays(firstAssoc?.aowDays?.toString() ?? '')
         setOaDays(firstAssoc?.oaDays?.toString() ?? '')

@@ -94,7 +94,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         setName(existing.name)
         // DiveCenters: top-level placeName/country/lat/lng
         // Agents: locations[] array
-        if ('placeName' in existing && existing.placeName) {
+        if ('lat' in existing && existing.lat !== undefined) {
           setLocation({
             placeName: existing.placeName,
             country: existing.country,
@@ -155,7 +155,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           defaultReferralMode: 'independent' as const,
         })
       } else {
-        await create(basePayload)
+        throw new Error(`Unexpected locationModel for role: ${role}`)
       }
       onSaved()
     } catch (err) {
