@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useId, memo } from 'react'
+import { useState, useRef, useEffect, useCallback, useId, useMemo, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { LanguageFlags } from '@/components/common/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
@@ -94,6 +94,7 @@ function TierSection({
   globalIdxOffset,
   focusedIdx,
   setFocusedIdx,
+  customerLanguages,
 }: {
   title: string
   items: GlassSelectOption[]
@@ -104,9 +105,16 @@ function TierSection({
   globalIdxOffset: number
   focusedIdx: number
   setFocusedIdx: (idx: number) => void
+  customerLanguages?: string[]
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [showAll, setShowAll] = useState(false)
+
+  // Precompute match tiers once per items/customerLanguages change
+  const tierMap = useMemo(() => {
+    if (!customerLanguages?.length) return null
+    return new Map(items.map(opt => [opt.id, scoreLanguageMatch(opt.languages ?? [], customerLanguages).tier]))
+  }, [items, customerLanguages])
 
   if (items.length === 0) return null
 
@@ -137,6 +145,7 @@ function TierSection({
                 onSelect={() => onSelect(opt.id)}
                 onHover={() => setFocusedIdx(globalIdx)}
                 id={`${idPrefix}-opt-${globalIdx}`}
+                matchTier={tierMap?.get(opt.id)}
               />
             )
           })}
@@ -302,6 +311,7 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
                     globalIdxOffset={0}
                     focusedIdx={focusedIdx}
                     setFocusedIdx={setFocusedIdx}
+                    customerLanguages={customerLanguages}
                   />
                   <TierSection
                     title="Matching language"
@@ -313,6 +323,7 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
                     globalIdxOffset={tiers.tier1.length}
                     focusedIdx={focusedIdx}
                     setFocusedIdx={setFocusedIdx}
+                    customerLanguages={customerLanguages}
                   />
                   <TierSection
                     title="Preferred"
