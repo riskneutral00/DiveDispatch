@@ -445,9 +445,34 @@ describe('_toggleBlockedDate', () => {
 
       expect(result).toBe(true)
 
-      // PendingAcceptance reservation should be vacated
+      // PendingAcceptance reservation should be vacated with date_blocked reason
       const reservations = await ctx.db.query('reservations').collect()
       expect(reservations[0].status).toBe('Vacated')
+      expect(reservations[0].vacatedBy).toBe('date_blocked')
+    })
+  })
+
+  it('vacates PendingAcceptance with DateBlocked reason, not StakeholderDeclined', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor }).run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: TEST_TOKENS.instructor,
+        slug: TEST_SLUGS.instructor,
+        role: 'Instructor',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const bookingId = await seedBooking(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
+
+      await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Instructor' })
+
+      const reservations = await ctx.db.query('reservations').collect()
+      expect(reservations).toHaveLength(1)
+      expect(reservations[0].status).toBe('Vacated')
+      expect(reservations[0].vacatedBy).toBe('date_blocked')
+      // Must NOT be stakeholder_declined — that permanently blocks autoAdvance
+      expect(reservations[0].vacatedBy).not.toBe('stakeholder_declined')
     })
   })
 

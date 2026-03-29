@@ -540,7 +540,7 @@ export async function _toggleBlockedDate(
       await ctx.db.patch(resId, {
         status: RESERVATION_STATUS.Vacated,
         vacatedAt: now,
-        vacatedBy: VACATED_REASON.StakeholderDeclined,
+        vacatedBy: VACATED_REASON.DateBlocked,
       })
     }
 

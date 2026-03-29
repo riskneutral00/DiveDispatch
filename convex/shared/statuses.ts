@@ -108,6 +108,7 @@ export const clientNotificationTypeValidator = v.union(
 export const VACATED_REASON = {
   BookingCancelled: 'booking_cancelled',
   StakeholderDeclined: 'stakeholder_declined',
+  DateBlocked: 'date_blocked',
   HoldExpired: 'hold_expired',
   OperatorEdit: 'operator_edit',
   NoshowReplacement: 'noshow_replacement',
@@ -119,6 +120,7 @@ export type VacatedReason = (typeof VACATED_REASON)[keyof typeof VACATED_REASON]
 export const vacatedReasonValidator = v.union(
   v.literal(VACATED_REASON.BookingCancelled),
   v.literal(VACATED_REASON.StakeholderDeclined),
+  v.literal(VACATED_REASON.DateBlocked),
   v.literal(VACATED_REASON.HoldExpired),
   v.literal(VACATED_REASON.OperatorEdit),
   v.literal(VACATED_REASON.NoshowReplacement),

@@ -881,6 +881,87 @@ describe('H18: EM auto-release snapshot restoration', () => {
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking!.status).toBe('Draft')
   })
+
+  it('H19: date_blocked vacated reason does NOT block auto-advance (DD-297)', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bId = await seedBooking(ctx, 'blue-ocean', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        medicalHardBlock: false,
+        portalContact: true,
+        portalMedical: true,
+        portalWaiver: true,
+      })
+
+      // Instructor reservation — Confirmed
+      const instrUnit = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'inst-1',
+        displayName: 'Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'inst-1',
+        ownerType: 'Instructor',
+      })
+      const instrSession = await ctx.db.insert('bookingSessions', {
+        bookingId: bId,
+        inventoryUnitId: instrUnit,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: bId,
+        inventoryUnitId: instrUnit,
+        bookingSessionId: instrSession,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: Date.now(),
+      })
+
+      // Boat reservation — Vacated by date_blocked (not stakeholder_declined)
+      const boatUnit = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-1',
+        displayName: 'Boat',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: 'boat-1',
+        ownerType: 'Boat',
+      })
+      const boatSession = await ctx.db.insert('bookingSessions', {
+        bookingId: bId,
+        inventoryUnitId: boatUnit,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId: bId,
+        inventoryUnitId: boatUnit,
+        bookingSessionId: boatSession,
+        unitsRequested: 1,
+        status: 'Vacated',
+        vacatedAt: Date.now(),
+        vacatedBy: 'date_blocked',
+      })
+
+      return bId
+    })
+
+    // tryAutoAdvance SHOULD promote — date_blocked is recoverable, not a permanent gate
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking!.status).toBe('Upcoming')
+  })
 })
 
 // ─── 20-22. TOCTOU fresh-read guards (DD-017) ────────────────────────────────

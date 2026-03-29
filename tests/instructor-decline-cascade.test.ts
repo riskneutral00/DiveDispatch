@@ -123,7 +123,7 @@ describe('instructor blocks date — booking cascade', () => {
 
       const reservation = await ctx.db.get(reservationId)
       expect(reservation!.status).toBe('Vacated')
-      expect(reservation!.vacatedBy).toBe('stakeholder_declined')
+      expect(reservation!.vacatedBy).toBe('date_blocked')
     })
   })
 

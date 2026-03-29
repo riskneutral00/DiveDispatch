@@ -1409,7 +1409,7 @@ describe('toggleBlockedDate auto-cancels Draft bookings', () => {
     // Reservation on blocked date is vacated; others on non-blocked dates remain
     const blockedDateReservation = await t.run(async (ctx) => ctx.db.get(reservationIds[1]))
     expect(blockedDateReservation?.status).toBe('Vacated')
-    expect(blockedDateReservation?.vacatedBy).toBe('stakeholder_declined')
+    expect(blockedDateReservation?.vacatedBy).toBe('date_blocked')
 
     // Snapshot on blocked date is restored
     const blockedSnapshot = await t.run(async (ctx) => ctx.db.get(snapshotIds[1]))
