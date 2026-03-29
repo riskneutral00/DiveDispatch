@@ -504,6 +504,95 @@ describe('useOptimisticNotifications', () => {
     })
   })
 
+  // ─── Concurrency: rapid duplicate clearAll ─────────────────────────────────
+
+  it('rapid double handleClearAll: second call is deduplicated, only one mutation fires', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+      makeNotification({ _id: 'n-2' }),
+    ]
+
+    let resolveFirst!: () => void
+    mockClearAll.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveFirst = resolve }),
+    )
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // First call
+    act(() => {
+      result.current.handleClearAll()
+    })
+
+    // Second rapid call while first is in-flight — should be guarded
+    act(() => {
+      result.current.handleClearAll()
+    })
+
+    // Only one mutation should have fired
+    expect(mockClearAll).toHaveBeenCalledTimes(1)
+
+    // UI still shows cleared
+    expect(result.current.notifications).toHaveLength(0)
+
+    await act(async () => {
+      resolveFirst()
+    })
+
+    // After resolve, server data shows through
+    expect(result.current.notifications).toHaveLength(2)
+  })
+
+  it('handleClearAll in-flight guard releases after first resolves — second call then fires', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    let resolveFirst!: () => void
+    let resolveSecond!: () => void
+    let callCount = 0
+    mockClearAll.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        return new Promise<void>((resolve) => { resolveFirst = resolve })
+      }
+      return new Promise<void>((resolve) => { resolveSecond = resolve })
+    })
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // First call
+    act(() => {
+      result.current.handleClearAll()
+    })
+    expect(mockClearAll).toHaveBeenCalledTimes(1)
+
+    // Second call while in-flight — deduplicated
+    act(() => {
+      result.current.handleClearAll()
+    })
+    expect(mockClearAll).toHaveBeenCalledTimes(1)
+
+    // Resolve first call — releases the guard
+    await act(async () => {
+      resolveFirst()
+    })
+
+    // Now a new call should go through
+    act(() => {
+      result.current.handleClearAll()
+    })
+    expect(mockClearAll).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      resolveSecond()
+    })
+  })
+
   // ─── Concurrency: first succeeds, second errors ──────────────────────────
 
   it('first markAsRead succeeds, second errors: reflects server truth', async () => {

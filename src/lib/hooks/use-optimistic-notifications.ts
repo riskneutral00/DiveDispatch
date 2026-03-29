@@ -22,8 +22,6 @@ interface UseOptimisticNotificationsReturn {
 /** Per-ID inflight tracking. Maps `${opType}:${id}` to a unique token. */
 type InflightMap = Map<string, number>
 
-let tokenCounter = 0
-
 /**
  * Wraps notification queries and mutations with local-state optimistic updates.
  * Immediately reflects markAsRead, delete, and clearAll in the UI, reverting
@@ -47,6 +45,7 @@ export function useOptimisticNotifications({
 
   // Inflight tracking: keyed by "opType:id", value is the token for the active call
   const inflightRef = useRef<InflightMap>(new Map())
+  const tokenCounterRef = useRef(0)
 
   const notifications = useMemo(() => {
     if (serverNotifications === undefined) return undefined
@@ -70,7 +69,7 @@ export function useOptimisticNotifications({
     // Guard: skip if a markAsRead is already in-flight for this ID
     if (inflightRef.current.has(key)) return
 
-    const token = ++tokenCounter
+    const token = ++tokenCounterRef.current
     inflightRef.current.set(key, token)
 
     setOptimisticOverrides((prev) => {
@@ -101,7 +100,7 @@ export function useOptimisticNotifications({
     // Guard: skip if a delete is already in-flight for this ID
     if (inflightRef.current.has(key)) return
 
-    const token = ++tokenCounter
+    const token = ++tokenCounterRef.current
     inflightRef.current.set(key, token)
 
     setOptimisticDeleted((prev) => new Set(prev).add(id))
@@ -132,6 +131,13 @@ export function useOptimisticNotifications({
   }, [deleteNotification])
 
   const handleClearAll = useCallback(async () => {
+    const key = 'clearAll'
+    // Guard: skip if a clearAll is already in-flight
+    if (inflightRef.current.has(key)) return
+
+    const token = ++tokenCounterRef.current
+    inflightRef.current.set(key, token)
+
     setOptimisticClearedAll(true)
 
     try {
@@ -139,6 +145,10 @@ export function useOptimisticNotifications({
     } catch {
       // Swallow — optimistic state is reverted below
     } finally {
+      // Only clean up if this token is still the active one for this key
+      if (inflightRef.current.get(key) === token) {
+        inflightRef.current.delete(key)
+      }
       setOptimisticClearedAll(false)
     }
   }, [clearAll, userId])
