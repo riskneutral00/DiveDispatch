@@ -195,8 +195,33 @@ describe('NotificationPanel aria-live announcements', () => {
     await waitFor(() => {
       const liveRegion = screen.getByRole('status')
       expect(liveRegion).toHaveAttribute('aria-live', 'polite')
-      expect(liveRegion.textContent).toMatch(/marked as read/i)
+      expect(liveRegion.textContent).toMatch(/marking notification as read/i)
     })
+  })
+
+  it('announces before onClose so aria-live region commits before unmount', async () => {
+    let liveRegionTextAtClose = ''
+    const onClose = vi.fn(() => {
+      // Capture the aria-live region content at the moment onClose fires
+      const liveRegion = document.querySelector('[aria-live="polite"]')
+      liveRegionTextAtClose = liveRegion?.textContent ?? ''
+    })
+
+    render(<NotificationPanel userId="test-user" onClose={onClose} />)
+
+    const notificationButtons = screen.getAllByRole('button').filter(
+      (btn) => btn.textContent?.includes('New booking request'),
+    )
+
+    const user = userEvent.setup()
+    await user.click(notificationButtons[0])
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1)
+    })
+
+    // The announcement must already be in the live region when onClose fires
+    expect(liveRegionTextAtClose).toMatch(/marking notification as read/i)
   })
 
   it('announces when all notifications are cleared', async () => {

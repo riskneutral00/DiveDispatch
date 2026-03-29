@@ -95,8 +95,8 @@ export function NotificationPanel({ userId, onClose, triggerRef }: NotificationP
   }, [])
 
   async function handleItemClick(id: string) {
+    announce('Marking notification as read...')
     await handleMarkAsRead(id)
-    announce('Notification marked as read')
     onClose()
   }
 
