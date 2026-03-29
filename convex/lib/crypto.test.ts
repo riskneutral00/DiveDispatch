@@ -48,17 +48,22 @@ describe('encryptMedical / decryptMedical', () => {
     expect(ct1).not.toEqual(ct2)
   })
 
-  it('ciphertext is not readable JSON', async () => {
+  it('output is prefixed with v1: version tag', async () => {
+    const input: Record<string, boolean | string> = { medical_q1: true }
+    const ciphertext = await encryptMedical(input)
+    expect(ciphertext).toMatch(/^v1:/)
+  })
+
+  it('ciphertext payload after v1: prefix is base64 (no readable JSON)', async () => {
     const input: Record<string, boolean | string> = {
       medical_q1: true,
       medical_details: 'Heart condition',
     }
     const ciphertext = await encryptMedical(input)
-    // Should not contain plaintext values
-    expect(ciphertext).not.toContain('Heart condition')
-    expect(ciphertext).not.toContain('medical_q1')
-    // Should be base64 — no curly braces
-    expect(ciphertext).not.toContain('{')
+    const payload = ciphertext.slice(3) // strip 'v1:'
+    expect(payload).not.toContain('Heart condition')
+    expect(payload).not.toContain('medical_q1')
+    expect(payload).not.toContain('{')
   })
 
   it('rejects decryption with a wrong key', async () => {
@@ -76,8 +81,8 @@ describe('encryptMedical / decryptMedical', () => {
     const input: Record<string, boolean | string> = { medical_q1: true }
     const ciphertext = await encryptMedical(input)
 
-    // Corrupt the ciphertext by flipping characters
-    const corrupted = ciphertext.slice(0, -4) + 'XXXX'
+    // Corrupt the ciphertext by flipping characters in the payload
+    const corrupted = 'v1:' + ciphertext.slice(3, -4) + 'XXXX'
 
     await expect(decryptMedical(corrupted)).rejects.toThrow()
   })
@@ -104,10 +109,25 @@ describe('encryptMedical / decryptMedical', () => {
     const decrypted = await decryptMedical(ciphertext)
     expect(decrypted).toEqual(input)
   })
+
+  it('decrypts with rotated key using MEDICAL_ENCRYPTION_KEY_V1 fallback', async () => {
+    const input: Record<string, boolean | string> = { medical_q1: true }
+    // Encrypt with current key (TEST_KEY, which becomes the "old" key)
+    const ciphertext = await encryptMedical(input)
+
+    // Simulate key rotation: new key is primary, old key is V1 fallback
+    const newKey = 'YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmI=' // base64 of 32 'b' bytes
+    vi.stubEnv('MEDICAL_ENCRYPTION_KEY', newKey)
+    vi.stubEnv('MEDICAL_ENCRYPTION_KEY_V1', TEST_KEY)
+
+    const decrypted = await decryptMedical(ciphertext)
+    expect(decrypted).toEqual(input)
+  })
 })
 
 describe('safeDecryptMedical', () => {
   const TEST_KEY = 'YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=' // base64 of 32 'a' bytes
+  const WRONG_KEY = 'YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmI=' // base64 of 32 'b' bytes
 
   beforeEach(() => {
     vi.stubEnv('MEDICAL_ENCRYPTION_KEY', TEST_KEY)
@@ -117,32 +137,55 @@ describe('safeDecryptMedical', () => {
     vi.unstubAllEnvs()
   })
 
-  it('decrypts valid encrypted data', async () => {
+  it('decrypts valid v1-prefixed encrypted data', async () => {
     const input: Record<string, boolean | string> = { medical_q1: true, medical_q2: false }
     const ciphertext = await encryptMedical(input)
     const result = await safeDecryptMedical(ciphertext)
     expect(result).toEqual(input)
   })
 
-  it('parses legacy plaintext JSON records', async () => {
+  it('parses legacy plaintext JSON records (no version prefix)', async () => {
     const legacy = JSON.stringify({ medical_q1: true, medical_q2: false })
     const result = await safeDecryptMedical(legacy)
     expect(result).toEqual({ medical_q1: true, medical_q2: false })
   })
 
-  it('returns empty object for corrupted ciphertext that is not JSON', async () => {
+  it('returns empty object for unversioned garbage that is not JSON', async () => {
     const result = await safeDecryptMedical('not-base64-and-not-json!!!')
     expect(result).toEqual({})
   })
 
-  it('returns empty object when key is wrong', async () => {
+  it('versioned ciphertext with wrong key returns {} without falling through to JSON.parse', async () => {
     const input: Record<string, boolean | string> = { medical_q1: true }
     const ciphertext = await encryptMedical(input)
 
-    // Switch to wrong key
-    vi.stubEnv('MEDICAL_ENCRYPTION_KEY', 'YmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmI=')
+    // Switch to wrong key — no V1 fallback set
+    vi.stubEnv('MEDICAL_ENCRYPTION_KEY', WRONG_KEY)
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
     const result = await safeDecryptMedical(ciphertext)
     expect(result).toEqual({})
+
+    // Should have logged a warning (not silently succeeded via JSON.parse)
+    const logCalls = logSpy.mock.calls.map((args) => args[0])
+    const warnEntry = logCalls.find(
+      (entry) => typeof entry === 'string' && entry.includes('"level":"warn"')
+    )
+    expect(warnEntry).toBeDefined()
+    const logMessage = typeof warnEntry === 'string' ? warnEntry : JSON.stringify(warnEntry)
+    expect(logMessage).toContain('failed')
+    expect(logMessage).toContain('versioned ciphertext')
+
+    // Should also have logged an error about missing fallback key
+    const errorEntry = logCalls.find(
+      (entry) => typeof entry === 'string' && entry.includes('"level":"error"')
+    )
+    expect(errorEntry).toBeDefined()
+    const errorMessage = typeof errorEntry === 'string' ? errorEntry : JSON.stringify(errorEntry)
+    expect(errorMessage).toContain('no fallback key configured')
+    expect(errorMessage).toContain('MEDICAL_ENCRYPTION_KEY_V1')
+
+    logSpy.mockRestore()
   })
 
   it('returns empty object for non-object JSON (string)', async () => {
@@ -167,5 +210,17 @@ describe('safeDecryptMedical', () => {
     })
     const result = await safeDecryptMedical(legacy)
     expect(result).toEqual({ medical_q1: true, medical_details: 'Heart condition' })
+  })
+
+  it('versioned ciphertext decrypts via V1 fallback key when primary key is rotated', async () => {
+    const input: Record<string, boolean | string> = { medical_q1: true }
+    const ciphertext = await encryptMedical(input)
+
+    // Rotate: new primary key, old key saved as V1 fallback
+    vi.stubEnv('MEDICAL_ENCRYPTION_KEY', WRONG_KEY)
+    vi.stubEnv('MEDICAL_ENCRYPTION_KEY_V1', TEST_KEY)
+
+    const result = await safeDecryptMedical(ciphertext)
+    expect(result).toEqual(input)
   })
 })
