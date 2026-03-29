@@ -17,10 +17,12 @@ import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, 
 // Re-export for test backwards compatibility
 export { getDatesInRange as getDateRange } from './shared/dateRange'
 
+/** Maximum number of candidates evaluated during alternative resource search. */
+export const MAX_CANDIDATES = 20
 
 /**
- * Looks up the placeName of an inventoryUnit owner via their role-specific profile table.
- * Returns null if the owner or profile cannot be found.
+ * Looks up the placeName for a single owner via their role-specific profile table.
+ * Used by the decline handler for the declined unit itself.
  */
 async function getOwnerCity(
   ctx: MutationCtx,
@@ -33,36 +35,85 @@ async function getOwnerCity(
     .unique()
   if (!user) return null
 
+  return getProfileCity(ctx, user._id, ownerType)
+}
+
+/**
+ * Fetches the placeName from the profile table for a given userId and resource type.
+ */
+async function getProfileCity(
+  ctx: MutationCtx,
+  userId: Id<'users'>,
+  ownerType: ResourceType,
+): Promise<string | null> {
   let profile: { placeName?: string } | null = null
 
   if (ownerType === 'Instructor') {
     profile = await ctx.db
       .query('instructors')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .unique()
   } else if (ownerType === 'Boat') {
     profile = await ctx.db
       .query('boats')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .unique()
   } else if (ownerType === 'Equipment') {
     profile = await ctx.db
       .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .unique()
   } else if (ownerType === 'Pool') {
     profile = await ctx.db
       .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .unique()
   } else if (ownerType === 'Compressor') {
     profile = await ctx.db
       .query('compressors')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
       .unique()
   }
 
   return profile?.placeName ?? null
+}
+
+/**
+ * Batch-fetches cities for multiple owner slugs in parallel.
+ * Returns Map<slug, city | null>. All user lookups and profile lookups
+ * happen via Promise.all — O(slugs) parallel queries, not sequential.
+ */
+export async function batchGetOwnerCities(
+  ctx: MutationCtx,
+  slugs: string[],
+  ownerType: ResourceType,
+): Promise<Map<string, string | null>> {
+  const cityMap = new Map<string, string | null>()
+  if (slugs.length === 0) return cityMap
+
+  // Step 1: fetch all users by slug in parallel
+  const users = await Promise.all(
+    slugs.map((slug) =>
+      ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', slug))
+        .unique(),
+    ),
+  )
+
+  // Step 2: fetch all profiles in parallel using the resolved user IDs
+  const cities = await Promise.all(
+    users.map((user) =>
+      user ? getProfileCity(ctx, user._id, ownerType) : Promise.resolve(null),
+    ),
+  )
+
+  // Step 3: assemble the map
+  for (let i = 0; i < slugs.length; i++) {
+    cityMap.set(slugs[i], cities[i])
+  }
+
+  return cityMap
 }
 
 // ─── acceptReservation ────────────────────────────────────────────────────────
@@ -276,7 +327,10 @@ export async function _declineHandler(
     .withIndex('by_resourceType', (q) => q.eq('resourceType', unit.resourceType))
     .collect()
 
-  const candidates = allSameTypeUnits.filter((u) => u._id !== args.inventoryUnitId)
+  // Exclude the declined unit and bound the search
+  const candidates = allSameTypeUnits
+    .filter((u) => u._id !== args.inventoryUnitId)
+    .slice(0, MAX_CANDIDATES)
 
   // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates)
   const snapshotsByUnitAndDate = new Map<string, boolean>()
@@ -300,16 +354,16 @@ export async function _declineHandler(
     }
   }
 
+  // Batch-fetch cities for all candidates in parallel (eliminates N+1)
+  const candidateSlugs = candidates.map((c) => c.ownerId)
+  const cityMap = await batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType)
+
   let hasAlternative = false
 
   for (const candidate of candidates) {
     if (hasAlternative) break
 
-    const candidateCity = await getOwnerCity(
-      ctx,
-      candidate.ownerId,
-      candidate.ownerType as ResourceType,
-    )
+    const candidateCity = cityMap.get(candidate.ownerId) ?? null
     // Only skip when both cities are known and differ
     if (declinedCity && candidateCity && candidateCity !== declinedCity) continue
 
