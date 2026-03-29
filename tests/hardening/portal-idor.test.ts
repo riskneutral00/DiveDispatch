@@ -21,9 +21,9 @@ import {
 async function seedFixture(
   ctx: SeedCtx,
   overrides: {
-    bookingOverrides?: Parameters<typeof seedPortalFixture>[1]['booking']
-    linkOverrides?: Parameters<typeof seedPortalFixture>[1]['link']
-    profileOverrides?: Parameters<typeof seedPortalFixture>[1]['profile']
+    bookingOverrides?: NonNullable<Parameters<typeof seedPortalFixture>[1]>['booking']
+    linkOverrides?: NonNullable<Parameters<typeof seedPortalFixture>[1]>['link']
+    profileOverrides?: NonNullable<Parameters<typeof seedPortalFixture>[1]>['profile']
   } = {},
 ) {
   return seedPortalFixture(ctx, {

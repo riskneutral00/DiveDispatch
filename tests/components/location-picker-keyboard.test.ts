@@ -16,7 +16,7 @@ describe('autocompleteKeyboardReducer', () => {
     })
 
     it('increments highlighted index', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 0 }
+      const state: AutocompleteKbState = { highlightedIndex: 0, isOpen: true }
       const result = autocompleteKeyboardReducer(state, {
         type: 'ARROW_DOWN',
         itemCount: 3,
@@ -25,7 +25,7 @@ describe('autocompleteKeyboardReducer', () => {
     })
 
     it('wraps from last item to first', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 2 }
+      const state: AutocompleteKbState = { highlightedIndex: 2, isOpen: true }
       const result = autocompleteKeyboardReducer(state, {
         type: 'ARROW_DOWN',
         itemCount: 3,
@@ -52,7 +52,7 @@ describe('autocompleteKeyboardReducer', () => {
     })
 
     it('decrements highlighted index', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 2 }
+      const state: AutocompleteKbState = { highlightedIndex: 2, isOpen: true }
       const result = autocompleteKeyboardReducer(state, {
         type: 'ARROW_UP',
         itemCount: 3,
@@ -61,7 +61,7 @@ describe('autocompleteKeyboardReducer', () => {
     })
 
     it('wraps from first item to last', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 0 }
+      const state: AutocompleteKbState = { highlightedIndex: 0, isOpen: true }
       const result = autocompleteKeyboardReducer(state, {
         type: 'ARROW_UP',
         itemCount: 3,
@@ -80,7 +80,7 @@ describe('autocompleteKeyboardReducer', () => {
 
   describe('ESCAPE', () => {
     it('resets highlight to -1', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 1 }
+      const state: AutocompleteKbState = { highlightedIndex: 1, isOpen: true }
       const result = autocompleteKeyboardReducer(state, { type: 'ESCAPE' })
       expect(result).toEqual(INITIAL_STATE)
     })
@@ -88,7 +88,7 @@ describe('autocompleteKeyboardReducer', () => {
 
   describe('CLOSE', () => {
     it('resets highlight to -1', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 2 }
+      const state: AutocompleteKbState = { highlightedIndex: 2, isOpen: true }
       const result = autocompleteKeyboardReducer(state, { type: 'CLOSE' })
       expect(result).toEqual(INITIAL_STATE)
     })
@@ -104,7 +104,7 @@ describe('autocompleteKeyboardReducer', () => {
     })
 
     it('resets highlight on mouse leave', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 2 }
+      const state: AutocompleteKbState = { highlightedIndex: 2, isOpen: true }
       const result = autocompleteKeyboardReducer(state, {
         type: 'SET_INDEX',
         index: -1,
@@ -115,7 +115,7 @@ describe('autocompleteKeyboardReducer', () => {
 
   describe('RESET', () => {
     it('returns initial state', () => {
-      const state: AutocompleteKbState = { highlightedIndex: 2 }
+      const state: AutocompleteKbState = { highlightedIndex: 2, isOpen: true }
       const result = autocompleteKeyboardReducer(state, { type: 'RESET' })
       expect(result).toEqual(INITIAL_STATE)
     })
