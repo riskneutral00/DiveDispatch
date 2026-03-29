@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# jira-merge.sh — Rebase a ticket branch onto a target and run tests
+# jira-merge.sh — Squash-merge a ticket branch onto a target and run tests
 # Usage: ./scripts/jira-merge.sh ticket/DD-NNN [target-branch]
 # Exit 0 = success, 1 = merge conflict, 2 = test failure
 
@@ -18,22 +18,19 @@ log() { echo "[$(date '+%H:%M:%S')] $1" | tee -a "$LOG"; }
 
 log "── Merging $BRANCH → $TARGET ──"
 
-# Ensure we're on target and up to date
+# Ensure we're on target
 git checkout "$TARGET" 2>>"$LOG"
 
-# Rebase ticket branch onto current target
-if ! git rebase "$TARGET" "$BRANCH" 2>>"$LOG"; then
-  log "CONFLICT: rebase of $BRANCH onto $TARGET failed"
-  git rebase --abort 2>/dev/null || true
+# Squash-merge: collapse all branch commits into a single staged changeset
+if ! git merge --squash "$BRANCH" 2>>"$LOG"; then
+  log "CONFLICT: squash merge of $BRANCH onto $TARGET failed"
+  git reset --hard HEAD 2>/dev/null || true
   exit 1
 fi
 
-# Fast-forward target to include the rebased commits
-git checkout "$TARGET" 2>>"$LOG"
-if ! git merge --ff-only "$BRANCH" 2>>"$LOG"; then
-  log "CONFLICT: fast-forward merge of $BRANCH failed"
-  exit 1
-fi
+# Commit with the first commit message from the branch (type(DD-NNN): description)
+COMMIT_MSG=$(git log --format='%s' "$TARGET".."$BRANCH" | head -1)
+git commit -m "$COMMIT_MSG" 2>>"$LOG"
 
 # Run full test suite on target
 log "Running tests on $TARGET..."
@@ -42,12 +39,6 @@ if npx vitest run 2>&1 | tee -a "$LOG" | tail -5; then
   exit 0
 else
   log "Tests FAILED after merging $BRANCH. Reverting."
-  # Count how many commits the branch added (between merge-base and HEAD)
-  MERGE_BASE=$(git merge-base HEAD "$BRANCH" 2>/dev/null || echo "")
-  if [ -n "$MERGE_BASE" ]; then
-    git reset --hard "$MERGE_BASE" 2>>"$LOG"
-  else
-    git reset --hard HEAD~1 2>>"$LOG"
-  fi
+  git reset --hard HEAD~1 2>>"$LOG"
   exit 2
 fi
