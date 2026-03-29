@@ -2,6 +2,7 @@ import { httpRouter } from 'convex/server'
 import { httpAction } from './_generated/server'
 import { internal } from './_generated/api'
 import { isTimestampFresh } from './lib/webhookTimestamp'
+import { constantTimeEqual } from './lib/constantTimeEqual'
 import { isDevEnvironment } from './lib/devGuard'
 
 const http = httpRouter()
@@ -39,13 +40,24 @@ async function verifyWebhookSignature(
     new TextEncoder().encode(toSign),
   )
 
-  const computedSig = btoa(
-    String.fromCharCode(...new Uint8Array(signatureBuffer)),
-  )
+  const computedBytes = new Uint8Array(signatureBuffer)
 
   for (const entry of svixSignature.split(' ')) {
     const [version, sig] = entry.split(',')
-    if (version === 'v1' && sig === computedSig) return true
+    if (version !== 'v1' || !sig) continue
+
+    let sigBytes: Uint8Array
+    try {
+      const decoded = atob(sig)
+      sigBytes = new Uint8Array(decoded.length)
+      for (let i = 0; i < decoded.length; i++) {
+        sigBytes[i] = decoded.charCodeAt(i)
+      }
+    } catch {
+      continue
+    }
+
+    if (constantTimeEqual(computedBytes, sigBytes)) return true
   }
 
   return false
