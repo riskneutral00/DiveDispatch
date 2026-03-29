@@ -374,7 +374,9 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?._id).toBe('n-2')
 
-    // Resolve markAsRead first — n-1 must NOT reappear
+    // Resolve markAsRead first — n-1 must NOT reappear.
+    // INVARIANT: handleMarkAsRead.finally must NOT clear optimisticDeleted for the same ID.
+    // If it did, n-1 would ghost-resurrect here because the delete is still pending.
     await act(async () => {
       resolveMarkAsRead()
     })
@@ -386,10 +388,8 @@ describe('useOptimisticNotifications', () => {
       resolveDelete()
     })
     // After both resolve, optimistic state is cleared. Server still has n-1 since
-    // the mock query doesn't change, but the delete-cleanup path should NOT leave
-    // stale overrides that cause unexpected readAt on n-1.
-    // With both optimistic flags cleared, server data shows through (both notifications).
-    // This is correct: after success, we trust the server.
+    // the mock query doesn't change. Both notifications reappear — this is
+    // server passthrough (trust the server after success), NOT ghost resurrection.
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -422,6 +422,13 @@ describe('useOptimisticNotifications', () => {
     await act(async () => {
       resolveDelete()
     })
+
+    // DANGEROUS WINDOW: delete resolved but markAsRead is still pending.
+    // handleDelete.finally cross-operation cleanup must have cleared the readAt
+    // override. Without that cleanup, n-1 would reappear here with a stale
+    // optimistic readAt (set by the still-pending handleMarkAsRead).
+    expect(result.current.notifications).toHaveLength(1)
+    expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
 
     // Then resolve markAsRead
     await act(async () => {
@@ -501,6 +508,54 @@ describe('useOptimisticNotifications', () => {
 
     await act(async () => {
       resolveMarkAsRead()
+    })
+  })
+
+  it('handleMarkAsRead in-flight guard releases after resolve — second call fires', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    let resolveFirst!: () => void
+    let resolveSecond!: () => void
+    let callCount = 0
+    mockMarkAsRead.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        return new Promise<void>((resolve) => { resolveFirst = resolve })
+      }
+      return new Promise<void>((resolve) => { resolveSecond = resolve })
+    })
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // First call — takes the guard
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
+
+    // Second call while in-flight — deduplicated by guard
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
+
+    // Resolve first call — releases the guard
+    await act(async () => {
+      resolveFirst()
+    })
+
+    // Now a new call should go through (guard released)
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    expect(mockMarkAsRead).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      resolveSecond()
     })
   })
 
