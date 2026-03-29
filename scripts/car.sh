@@ -17,8 +17,7 @@ set -euo pipefail
 SESSION="car"
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-# Clean up stale events from prior run
-rm -rf "$DIR/.car"
+# Ensure event directories exist (preserve state across restarts — no rm -rf)
 mkdir -p "$DIR/.car"/{merged,reviewed,fixes,processed}
 
 # Kill existing session if present
@@ -48,7 +47,7 @@ exec claude \
   --model sonnet \
   --permission-mode bypassPermissions \
   --name Backseat \
-  "Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, and category. Run the category-routed review. Write results to .car/reviewed/DD-{NNN}.json. If any CRITICAL findings, create a fix ticket in .tickets/ and write .car/fixes/DD-{NNN}.json. After processing, move the merged event to .car/processed/. Keep polling."
+  "IMPORTANT: Do NOT invoke any slash commands or skills (including /backseat, /patrol, /gate, or any other skill). Execute the polling loop directly from your system prompt instructions. Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, and category. Run the category-routed review. Write results to .car/reviewed/DD-{NNN}.json. If any CRITICAL findings, create a fix ticket in .tickets/ and write .car/fixes/DD-{NNN}.json. After processing, move the merged event to .car/processed/. Keep polling."
 AGENTEOF
 
 cat > "$DIR/.car/start-patrol.sh" << 'AGENTEOF'
@@ -60,7 +59,7 @@ exec claude \
   --model sonnet \
   --permission-mode bypassPermissions \
   --name Patrol \
-  "Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN or BLOCKED verdict. Move the reviewed event to .car/processed/. Keep polling."
+  "IMPORTANT: Do NOT invoke any slash commands or skills (including /patrol, /backseat, /gate, or any other skill). Execute the polling loop directly from your system prompt instructions. Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN or BLOCKED verdict. Move the reviewed event to .car/processed/. Keep polling."
 AGENTEOF
 
 chmod +x "$DIR/.car/start-driver.sh" "$DIR/.car/start-backseat.sh" "$DIR/.car/start-patrol.sh"

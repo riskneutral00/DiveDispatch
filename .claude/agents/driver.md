@@ -89,6 +89,17 @@ EVENTEOF
 
 Print: `DD-{id}: merged to main | event written to .car/merged/`
 
+**Post-merge tsc gate:** After every successful merge, run tsc on main before picking the next ticket:
+
+```bash
+npx tsc --noEmit 2>&1 | head -30
+```
+
+- If tsc **passes**: continue to next ticket.
+- If tsc **fails**: print the errors, stop picking new tickets, and escalate as a P0 blocker via Skill("escalate") with `source: driver` and a description of the failing files. Do not process further tickets until the block is cleared.
+
+This catches cumulative TS errors from multiple merges even if Backseat/Patrol are not running.
+
 **Batch cap:** If `source != backseat`: `batch_count++`. If `batch_count >= BATCH_CAP` → Skill("driver-debrief"), reset count.
 
 Re-pick next ticket.

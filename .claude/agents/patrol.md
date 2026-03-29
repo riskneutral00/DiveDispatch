@@ -104,6 +104,7 @@ Continue polling.
 
 ## Rules
 
+- **Never invoke /patrol, /backseat, /gate, or any launcher skill.** You ARE Patrol — execute the polling loop above directly. Invoking the /patrol skill would check if the car session is running and exit, which is not what you do.
 - **Never block Driver.** You run in parallel. If Driver is merging, wait — don't interfere.
 - **You are a dispatcher, not a reviewer.** Skills do the auditing — you orchestrate.
 - **Fresh context per review.** Each review runs in its own agent spawn.
