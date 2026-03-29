@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import { restoreSnapshotUnits } from '../convex/bookings/_shared'
 import type { Doc } from '../convex/_generated/dataModel'
 import { ErrorCode } from '../convex/lib/errorCodes'
@@ -31,6 +32,7 @@ describe('restoreSnapshotUnits', () => {
       await restoreSnapshotUnits(ctx, snapshotId, 1)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
+      expect(snapshot).not.toBeNull()
       expect(snapshot!.availableUnits).toBe(4)
       expect(snapshot!.reservedUnits).toBe(1)
     })
@@ -50,6 +52,7 @@ describe('restoreSnapshotUnits', () => {
       await restoreSnapshotUnits(ctx, snapshotId, 3)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
+      expect(snapshot).not.toBeNull()
       expect(snapshot!.availableUnits).toBe(7)
       expect(snapshot!.reservedUnits).toBe(0)
     })
@@ -68,6 +71,7 @@ describe('restoreSnapshotUnits', () => {
       await restoreSnapshotUnits(ctx, snapshotId, 0)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
+      expect(snapshot).not.toBeNull()
       expect(snapshot!.availableUnits).toBe(3)
       expect(snapshot!.reservedUnits).toBe(2)
     })
@@ -86,6 +90,7 @@ describe('restoreSnapshotUnits', () => {
       await restoreSnapshotUnits(ctx, snapshotId, 3)
 
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
+      expect(snapshot).not.toBeNull()
       expect(snapshot!.availableUnits).toBe(7)
       expect(snapshot!.reservedUnits).toBe(3)
     })
@@ -106,8 +111,42 @@ describe('restoreSnapshotUnits', () => {
       await expect(
         restoreSnapshotUnits(ctx, snapshotId, 1),
       ).rejects.toMatchObject({
-        data: { code: ErrorCode.MISSING_SNAPSHOT_ON_RELEASE },
+        data: {
+          code: ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+          reason: expect.stringContaining(snapshotId),
+        },
       })
+    })
+  })
+
+  it('mutates only the targeted snapshot, leaving others unchanged', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unitA = await seedInventoryUnit(ctx, { totalUnits: 5, displayName: 'Unit A' })
+      const unitB = await seedInventoryUnit(ctx, { totalUnits: 5, displayName: 'Unit B' })
+      const snapshotA = await seedSnapshot(ctx, unitA, {
+        totalUnits: 5,
+        availableUnits: 2,
+        reservedUnits: 3,
+      })
+      const snapshotB = await seedSnapshot(ctx, unitB, {
+        totalUnits: 5,
+        availableUnits: 1,
+        reservedUnits: 4,
+        date: '2026-04-10',
+      })
+
+      await restoreSnapshotUnits(ctx, snapshotA, 2)
+
+      const snapA = await ctx.db.get(snapshotA) as Doc<'availabilitySnapshots'> | null
+      expect(snapA).not.toBeNull()
+      expect(snapA!.availableUnits).toBe(4)
+      expect(snapA!.reservedUnits).toBe(1)
+
+      const snapB = await ctx.db.get(snapshotB) as Doc<'availabilitySnapshots'> | null
+      expect(snapB).not.toBeNull()
+      expect(snapB!.availableUnits).toBe(1)
+      expect(snapB!.reservedUnits).toBe(4)
     })
   })
 })
@@ -116,12 +155,11 @@ describe('restoreSnapshotUnits', () => {
 
 describe('anti-duplication guard', () => {
   it('snapshot restoration is not inlined outside _shared.ts', () => {
-    const { globSync } = require('node:fs')
-    const path = require('node:path')
     const convexDir = path.resolve(__dirname, '../convex')
 
-    // Get all .ts files in convex/ except _shared.ts
-    const allFiles: string[] = globSync('**/*.ts', { cwd: convexDir })
+    // Get all .ts files in convex/ except _shared.ts (Node 20.12+ recursive readdirSync)
+    const allEntries = readdirSync(convexDir, { recursive: true }) as string[]
+    const allFiles = allEntries.filter((f) => f.endsWith('.ts'))
     const filesToCheck = allFiles.filter(
       (f: string) => !f.endsWith('_shared.ts') && !f.includes('_generated'),
     )
