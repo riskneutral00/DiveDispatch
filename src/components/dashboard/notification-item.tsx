@@ -101,7 +101,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
           <div
             className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
             style={{ background: 'var(--color-primary)' }}
-            aria-label="Unread"
+            aria-hidden="true"
           />
         )}
       </button>

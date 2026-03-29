@@ -1,23 +1,44 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback, type RefObject } from 'react'
 import { Spinner } from '@/components/common/spinner'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 
+const FOCUSABLE_SELECTOR =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 interface NotificationPanelProps {
   userId: string
   onClose: () => void
+  triggerRef?: RefObject<HTMLElement | null>
 }
 
-export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
+export function NotificationPanel({ userId, onClose, triggerRef }: NotificationPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const [liveMessage, setLiveMessage] = useState('')
   const {
     notifications,
     handleMarkAsRead,
     handleDelete,
     handleClearAll,
   } = useOptimisticNotifications({ userId, limit: 20 })
+
+  // Move focus into the panel on mount
+  useEffect(() => {
+    if (panelRef.current) {
+      const firstFocusable = panelRef.current.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
+      firstFocusable?.focus()
+    }
+  }, [])
+
+  // Restore focus to trigger on unmount
+  useEffect(() => {
+    const trigger = triggerRef?.current
+    return () => {
+      trigger?.focus()
+    }
+  }, [triggerRef])
 
   // Close on outside click
   useEffect(() => {
@@ -30,18 +51,64 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
 
-  // Close on Escape
+  // Close on Escape (scoped — only when panel is focused)
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && panelRef.current?.contains(document.activeElement)) {
+        e.stopPropagation()
+        onClose()
+      }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [onClose])
 
+  // Focus trap: keep Tab / Shift+Tab within panel
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Tab' || !panelRef.current) return
+
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const announce = useCallback((message: string) => {
+    setLiveMessage(message)
+  }, [])
+
   async function handleItemClick(id: string) {
     await handleMarkAsRead(id)
+    announce('Notification marked as read')
     onClose()
+  }
+
+  async function handleItemDelete(id: string) {
+    await handleDelete(id)
+    announce('Notification deleted')
+  }
+
+  async function handleClearAllClick() {
+    const count = notifications?.length ?? 0
+    await handleClearAll()
+    announce(`All ${count} notifications cleared`)
   }
 
   const hasNotifications = (notifications?.length ?? 0) > 0
@@ -58,6 +125,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         borderRadius: 'var(--border-radius)',
       }}
       role="dialog"
+      aria-modal="true"
       aria-label="Notifications"
     >
       {/* Header */}
@@ -72,7 +140,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         </span>
         {hasNotifications && (
           <button
-            onClick={handleClearAll}
+            onClick={handleClearAllClick}
             className="text-xs font-medium transition-opacity hover:opacity-70"
             style={{ color: 'var(--color-primary)' }}
           >
@@ -100,9 +168,18 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
             key={n._id}
             notification={n}
             onClick={handleItemClick}
-            onDelete={handleDelete}
+            onDelete={handleItemDelete}
           />
         ))}
+      </div>
+
+      {/* Screen reader announcements */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="sr-only"
+      >
+        {liveMessage}
       </div>
     </div>
   )

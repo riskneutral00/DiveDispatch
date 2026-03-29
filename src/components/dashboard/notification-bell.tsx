@@ -1,7 +1,7 @@
 'use client'
 
 import { Bell } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -9,6 +9,7 @@ import { NotificationPanel } from './notification-panel'
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const { user } = useCurrentUser()
   const userId = user?.slug ?? ''
 
@@ -22,6 +23,7 @@ export function NotificationBell() {
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         aria-label={
           unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'
         }
@@ -44,7 +46,11 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <NotificationPanel userId={userId} onClose={() => setOpen(false)} />
+        <NotificationPanel
+          userId={userId}
+          onClose={() => setOpen(false)}
+          triggerRef={triggerRef}
+        />
       )}
     </div>
   )
