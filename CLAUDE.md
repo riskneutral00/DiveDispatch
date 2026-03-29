@@ -49,7 +49,7 @@ Any implementation that violates these is wrong:
 
 Non-obvious rules:
 
-- **TTL is lazy expiry** — checked when a booking is read, not by scheduled cron. Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
+- **TTL is hybrid (lazy + cron)** — `checkAndExpireBooking` fires on client read via `useBookingWithExpiry`; `purgeExpiredDrafts` cron runs every 6h to catch abandoned drafts. Both paths: Draft + `expiresAt < now` → vacate reservations → set status to Cancelled.
 - Default `holdTTL`: **12 hours (43200000 ms)**. Once Upcoming, TTL never applies.
 - Medical block, auto-advance conditions → `Vaults/DiveDispatch/Architecture/Architecture.md`
 
