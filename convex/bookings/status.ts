@@ -214,38 +214,6 @@ export const clearMedicalBlock = mutation({
   },
 })
 
-// ─── expireStaleBookings (cron) ──────────────────────────────────────────────
-
-/**
- * Cron: batch-expire Draft bookings whose holdTTL has lapsed.
- * Runs every 2 hours. Belt-and-suspenders to catch bookings the lazy client
- * check (useBookingWithExpiry) never triggered.
- *
- * Batch limit: take(50) per run to stay within Convex limits.
- * Idempotent: expireBooking() is a no-op for already-Cancelled bookings.
- */
-export const expireStaleBookings = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ expired: number }> => {
-    const now = Date.now()
-
-    const staleDrafts = await ctx.db
-      .query('bookings')
-      .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Draft))
-      .filter((q) => q.and(
-        q.neq(q.field('expiresAt'), undefined),
-        q.lt(q.field('expiresAt'), now),
-      ))
-      .take(50)
-
-    for (const booking of staleDrafts) {
-      await ctx.runMutation(internal.bookings.status.expireBooking, { bookingId: booking._id })
-    }
-
-    return { expired: staleDrafts.length }
-  },
-})
-
 // ─── Shared completion logic ─────────────────────────────────────────────────
 
 import type { MutationCtx } from '../_generated/server'
