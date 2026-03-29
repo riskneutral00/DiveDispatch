@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import { ALL_STAKEHOLDERS } from '../convex/seedData'
 import { BOOKING_CONFIGS } from '../convex/seedBookingData'
+import packageJson from '../package.json'
 
 describe('Non-DiveCenter operator seed data', () => {
   const liveaboardStakeholder = ALL_STAKEHOLDERS.find(
@@ -120,5 +121,32 @@ describe('Non-DiveCenter operator seed data', () => {
       const emails = ALL_STAKEHOLDERS.map((s) => s.user.email)
       expect(new Set(emails).size).toBe(emails.length)
     })
+  })
+})
+
+describe('Seed guard integrity', () => {
+  const scripts = packageJson.scripts as Record<string, string>
+
+  it('does not expose a standalone wipe:all script', () => {
+    expect(scripts['wipe:all']).toBeUndefined()
+  })
+
+  it('seed:force chains wipe, seed, clerk sync, and verify', () => {
+    const seedForce = scripts['seed:force']
+    expect(seedForce).toBeDefined()
+    expect(seedForce).toContain('seed:wipeAll')
+    expect(seedForce).toContain('seed:seedAll')
+    expect(seedForce).toContain('seed-clerk')
+    expect(seedForce).toContain('seed:seedVerify')
+  })
+
+  it('no script calls seed:wipeAll in isolation', () => {
+    for (const [name, command] of Object.entries(scripts)) {
+      if (command.includes('seed:wipeAll') && !command.includes('seed:seedAll')) {
+        throw new Error(
+          `Script "${name}" calls seed:wipeAll without seed:seedAll — bypasses seed guard`,
+        )
+      }
+    }
   })
 })
