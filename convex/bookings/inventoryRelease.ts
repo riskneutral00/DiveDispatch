@@ -43,7 +43,12 @@ export async function restoreSnapshotUnits(
   unitsRequested: number,
 ) {
   const fresh = await ctx.db.get(snapshotId)
-  if (!fresh) return
+  if (!fresh) {
+    throw new ConvexError({
+      code: ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+      reason: `AvailabilitySnapshot ${snapshotId} disappeared between lookup and restore. Aborting to prevent capacity leak.`,
+    })
+  }
   await ctx.db.patch(snapshotId, {
     availableUnits: fresh.availableUnits + unitsRequested,
     reservedUnits: Math.max(0, fresh.reservedUnits - unitsRequested),

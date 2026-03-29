@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { restoreSnapshotUnits } from '../convex/bookings/_shared'
 import type { Doc } from '../convex/_generated/dataModel'
+import { ErrorCode } from '../convex/lib/errorCodes'
 import {
   seedUser,
   seedInventoryUnit,
@@ -87,6 +88,26 @@ describe('restoreSnapshotUnits', () => {
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot!.availableUnits).toBe(7)
       expect(snapshot!.reservedUnits).toBe(3)
+    })
+  })
+
+  it('throws MISSING_SNAPSHOT_ON_RELEASE when snapshot document is missing', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
+      // Create then delete to get a valid-format but non-existent ID
+      const snapshotId = await seedSnapshot(ctx, unit, {
+        totalUnits: 5,
+        availableUnits: 3,
+        reservedUnits: 2,
+      })
+      await ctx.db.delete(snapshotId)
+
+      await expect(
+        restoreSnapshotUnits(ctx, snapshotId, 1),
+      ).rejects.toMatchObject({
+        data: { code: ErrorCode.MISSING_SNAPSHOT_ON_RELEASE },
+      })
     })
   })
 })
