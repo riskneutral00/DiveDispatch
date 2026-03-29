@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
-import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey } from '@/lib/constants/roles'
+import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey, type RoleConfig } from '@/lib/constants/roles'
 import { DASHBOARD_CONFIGS, DEFAULT_LEGEND_STATUSES } from '@/lib/constants/dashboard-config'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useStableQuery } from '@/lib/hooks/use-stable-query'
@@ -37,6 +37,18 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   // to prevent empty-string StakeholderRole reaching Convex validators.
   if (!roleConfig) return null
 
+  return <DashboardContentInner roleConfig={roleConfig} slug={slug} roleSlug={roleSlug} />
+}
+
+// ── Inner Component (all hooks live here) ───────────────────────────────────
+
+interface DashboardContentInnerProps {
+  roleConfig: RoleConfig
+  slug: string
+  roleSlug: string
+}
+
+function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentInnerProps) {
   const { user: convexUser } = useCurrentUser()
   const RoleIcon = roleConfig.icon
   const isOrganizer = roleConfig.isOrganizer
