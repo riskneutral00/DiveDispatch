@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import type { StakeholderRole } from '../../utils/role'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 let mockQueryReturn: string[] | undefined = []
-const mockMutate = vi.fn<(args: { date: string; roleType: string }) => Promise<boolean>>()
+const mockMutate = vi.fn<(args: { date: string; roleType: StakeholderRole }) => Promise<boolean>>()
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')

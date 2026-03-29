@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Anchor } from 'lucide-react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
 import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey } from '@/lib/constants/roles'
@@ -32,14 +31,19 @@ type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'Dive
 // ── Main Component ──────────────────────────────────────────────────────────
 
 export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: string }) {
-  const { user: convexUser } = useCurrentUser()
   const roleConfig = ROLE_BY_KEY[roleSlug as RoleKey]
-  const RoleIcon = roleConfig?.icon ?? Anchor
-  const isOrganizer = roleConfig?.isOrganizer ?? false
-  const isResourceOnly = (roleConfig?.isResource ?? false) && !isOrganizer
-  const clerkRole = roleConfig?.clerkRole
+
+  // Guard: unknown roleSlug means roleConfig is undefined — bail before hooks
+  // to prevent empty-string StakeholderRole reaching Convex validators.
+  if (!roleConfig) return null
+
+  const { user: convexUser } = useCurrentUser()
+  const RoleIcon = roleConfig.icon
+  const isOrganizer = roleConfig.isOrganizer
+  const isResourceOnly = roleConfig.isResource && !isOrganizer
+  const clerkRole = roleConfig.clerkRole
   const dashConfig = DASHBOARD_CONFIGS[roleSlug]
-  const isOperator = clerkRole ? ORGANIZER_ROLE_KEYS.has(clerkRole) : false
+  const isOperator = ORGANIZER_ROLE_KEYS.has(clerkRole)
 
   const { defaults } = useOperatorDefaults()
   const { isSwitching } = useDevSwitching()
@@ -60,7 +64,7 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
   const legendStatuses = dashConfig?.legendStatuses ?? DEFAULT_LEGEND_STATUSES
 
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
-    useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole ?? '' })
+    useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole })
 
   // ── Booking overlay state ────────────────────────────────────────────────
 
@@ -112,7 +116,7 @@ export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: s
         <div className="flex items-center gap-3 mb-1">
           <RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />
           <h1 className="text-2xl font-bold flex-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-            {convexUser?.businessName ?? roleConfig?.label ?? roleSlug} Dashboard
+            {convexUser?.businessName ?? roleConfig.label} Dashboard
           </h1>
         </div>
         {isOrganizer && (
