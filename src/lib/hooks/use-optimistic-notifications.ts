@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -18,6 +18,11 @@ interface UseOptimisticNotificationsReturn {
   handleDelete: (id: string) => Promise<void>
   handleClearAll: () => Promise<void>
 }
+
+/** Per-ID inflight tracking. Maps `${opType}:${id}` to a unique token. */
+type InflightMap = Map<string, number>
+
+let tokenCounter = 0
 
 /**
  * Wraps notification queries and mutations with local-state optimistic updates.
@@ -40,6 +45,9 @@ export function useOptimisticNotifications({
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set())
   const [optimisticClearedAll, setOptimisticClearedAll] = useState(false)
 
+  // Inflight tracking: keyed by "opType:id", value is the token for the active call
+  const inflightRef = useRef<InflightMap>(new Map())
+
   const notifications = useMemo(() => {
     if (serverNotifications === undefined) return undefined
     if (optimisticClearedAll) return []
@@ -58,6 +66,13 @@ export function useOptimisticNotifications({
   }, [notifications])
 
   const handleMarkAsRead = useCallback(async (id: string) => {
+    const key = `read:${id}`
+    // Guard: skip if a markAsRead is already in-flight for this ID
+    if (inflightRef.current.has(key)) return
+
+    const token = ++tokenCounter
+    inflightRef.current.set(key, token)
+
     setOptimisticOverrides((prev) => {
       const next = new Map(prev)
       next.set(id, { readAt: Date.now() })
@@ -66,14 +81,13 @@ export function useOptimisticNotifications({
 
     try {
       await markAsRead({ notificationId: id as Id<'notifications'> })
-      // Clear after success so server data takes over
-      setOptimisticOverrides((prev) => {
-        const next = new Map(prev)
-        next.delete(id)
-        return next
-      })
     } catch {
-      // Revert optimistic update
+      // Swallow — optimistic state is reverted below
+    } finally {
+      // Only clean up if this token is still the active one for this key
+      if (inflightRef.current.get(key) === token) {
+        inflightRef.current.delete(key)
+      }
       setOptimisticOverrides((prev) => {
         const next = new Map(prev)
         next.delete(id)
@@ -83,20 +97,34 @@ export function useOptimisticNotifications({
   }, [markAsRead])
 
   const handleDelete = useCallback(async (id: string) => {
+    const key = `delete:${id}`
+    // Guard: skip if a delete is already in-flight for this ID
+    if (inflightRef.current.has(key)) return
+
+    const token = ++tokenCounter
+    inflightRef.current.set(key, token)
+
     setOptimisticDeleted((prev) => new Set(prev).add(id))
 
     try {
       await deleteNotification({ notificationId: id as Id<'notifications'> })
-      // Clear after success so server data takes over
+    } catch {
+      // Swallow — optimistic state is reverted below
+    } finally {
+      // Only clean up if this token is still the active one for this key
+      if (inflightRef.current.get(key) === token) {
+        inflightRef.current.delete(key)
+      }
+      // Clear deleted flag
       setOptimisticDeleted((prev) => {
         const next = new Set(prev)
         next.delete(id)
         return next
       })
-    } catch {
-      // Revert optimistic delete
-      setOptimisticDeleted((prev) => {
-        const next = new Set(prev)
+      // Also clear any stale overrides for this ID (cross-operation cleanup)
+      setOptimisticOverrides((prev) => {
+        if (!prev.has(id)) return prev
+        const next = new Map(prev)
         next.delete(id)
         return next
       })
@@ -108,10 +136,9 @@ export function useOptimisticNotifications({
 
     try {
       await clearAll({ userId })
-      // Clear after success so server data takes over
-      setOptimisticClearedAll(false)
     } catch {
-      // Revert optimistic clear
+      // Swallow — optimistic state is reverted below
+    } finally {
       setOptimisticClearedAll(false)
     }
   }, [clearAll, userId])

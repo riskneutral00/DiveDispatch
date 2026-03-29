@@ -16,20 +16,20 @@ const mockMarkAsRead = vi.fn<(args: { notificationId: string }) => Promise<void>
 const mockDeleteNotification = vi.fn<(args: { notificationId: string }) => Promise<void>>()
 const mockClearAll = vi.fn<(args: { userId: string }) => Promise<void>>()
 
-// useMutation is called 3 times per render: markAsRead, deleteNotification, clearAll
-let mutationCallCount = 0
+// Argument-keyed mock: routes useMutation calls based on the Convex function name symbol
+const FUNCTION_NAME = Symbol.for('functionName')
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
   return {
     ...actual,
     useQuery: () => mockNotifications,
-    useMutation: () => {
-      const idx = mutationCallCount % 3
-      mutationCallCount++
-      if (idx === 0) return mockMarkAsRead
-      if (idx === 1) return mockDeleteNotification
-      return mockClearAll
+    useMutation: (apiRef: Record<symbol, string>) => {
+      const name: string = apiRef[FUNCTION_NAME] ?? ''
+      if (name.includes('markAsRead')) return mockMarkAsRead
+      if (name.includes('deleteNotification')) return mockDeleteNotification
+      if (name.includes('clearAll')) return mockClearAll
+      throw new Error(`Unexpected useMutation argument: ${name}`)
     },
   }
 })
@@ -52,7 +52,6 @@ function makeNotification(overrides: Partial<typeof mockNotifications extends (i
 
 describe('useOptimisticNotifications', () => {
   beforeEach(() => {
-    mutationCallCount = 0
     mockNotifications = []
     mockMarkAsRead.mockReset()
     mockDeleteNotification.mockReset()
@@ -340,5 +339,255 @@ describe('useOptimisticNotifications', () => {
 
     expect(result.current.notifications).toBeUndefined()
     expect(result.current.unreadCount).toBe(0)
+  })
+
+  // ─── Concurrency: ghost resurrection ──────────────────────────────────────
+
+  it('concurrent markAsRead + delete on same ID: no ghost resurrection', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+      makeNotification({ _id: 'n-2' }),
+    ]
+
+    let resolveMarkAsRead!: () => void
+    let resolveDelete!: () => void
+    mockMarkAsRead.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveMarkAsRead = resolve }),
+    )
+    mockDeleteNotification.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveDelete = resolve }),
+    )
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // Fire markAsRead and delete concurrently on the same notification
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    act(() => {
+      result.current.handleDelete('n-1')
+    })
+
+    // n-1 should be deleted (delete wins over mark-as-read visually)
+    expect(result.current.notifications).toHaveLength(1)
+    expect(result.current.notifications?.[0]?._id).toBe('n-2')
+
+    // Resolve markAsRead first — n-1 must NOT reappear
+    await act(async () => {
+      resolveMarkAsRead()
+    })
+    expect(result.current.notifications).toHaveLength(1)
+    expect(result.current.notifications?.[0]?._id).toBe('n-2')
+
+    // Resolve delete — n-1 still gone (server mock still has it, but delete cleanup is clean)
+    await act(async () => {
+      resolveDelete()
+    })
+    // After both resolve, optimistic state is cleared. Server still has n-1 since
+    // the mock query doesn't change, but the delete-cleanup path should NOT leave
+    // stale overrides that cause unexpected readAt on n-1.
+    // With both optimistic flags cleared, server data shows through (both notifications).
+    // This is correct: after success, we trust the server.
+    expect(result.current.notifications).toHaveLength(2)
+  })
+
+  it('concurrent markAsRead + delete: delete resolution does not leave stale overrides', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    let resolveMarkAsRead!: () => void
+    let resolveDelete!: () => void
+    mockMarkAsRead.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveMarkAsRead = resolve }),
+    )
+    mockDeleteNotification.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveDelete = resolve }),
+    )
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    act(() => {
+      result.current.handleDelete('n-1')
+    })
+
+    // Resolve delete first — should also clean up the overrides entry
+    await act(async () => {
+      resolveDelete()
+    })
+
+    // Then resolve markAsRead
+    await act(async () => {
+      resolveMarkAsRead()
+    })
+
+    // After both resolve, n-1 should show through from server with original readAt (undefined)
+    // i.e., no stale optimistic readAt override lingering
+    expect(result.current.notifications).toHaveLength(1)
+    expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
+  })
+
+  // ─── Concurrency: rapid duplicate calls ───────────────────────────────────
+
+  it('rapid double handleMarkAsRead on same ID: second call is idempotent', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    let resolveFirst!: () => void
+    let callCount = 0
+    mockMarkAsRead.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        return new Promise<void>((resolve) => { resolveFirst = resolve })
+      }
+      return Promise.resolve()
+    })
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // First call
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+
+    // Second rapid call while first is in-flight — should be guarded
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+
+    // Only one mutation should have fired
+    expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveFirst()
+    })
+  })
+
+  it('rapid triple handleMarkAsRead: only one mutation fires', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    let resolveMarkAsRead!: () => void
+    mockMarkAsRead.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveMarkAsRead = resolve }),
+    )
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+
+    expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveMarkAsRead()
+    })
+  })
+
+  // ─── Concurrency: first succeeds, second errors ──────────────────────────
+
+  it('first markAsRead succeeds, second errors: reflects server truth', async () => {
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+      makeNotification({ _id: 'n-2' }),
+    ]
+
+    // n-1: succeeds
+    let resolveFirst!: () => void
+    mockMarkAsRead.mockImplementationOnce(
+      () => new Promise<void>((resolve) => { resolveFirst = resolve }),
+    )
+    // n-2: errors
+    let rejectSecond!: (err: Error) => void
+    mockMarkAsRead.mockImplementationOnce(
+      () => new Promise<void>((_resolve, reject) => { rejectSecond = reject }),
+    )
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // Track the promises so we can ensure they settle before asserting
+    let promise1: Promise<void>
+    let promise2: Promise<void>
+    act(() => {
+      promise1 = result.current.handleMarkAsRead('n-1')
+    })
+    act(() => {
+      promise2 = result.current.handleMarkAsRead('n-2')
+    })
+
+    // Both optimistically read
+    expect(result.current.unreadCount).toBe(0)
+
+    // First succeeds
+    await act(async () => {
+      resolveFirst()
+      await promise1!
+    })
+
+    // Second errors (hook swallows the error internally)
+    await act(async () => {
+      rejectSecond(new Error('Server error'))
+      await promise2!
+    })
+
+    // n-1 override cleared (success), server shows readAt=undefined
+    // n-2 override cleared (revert), server shows readAt=undefined
+    // Both reflect server truth
+    expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
+    expect(result.current.notifications?.[1]?.readAt).toBeUndefined()
+    expect(result.current.unreadCount).toBe(2)
+  })
+
+  // ─── Mock is argument-keyed ───────────────────────────────────────────────
+
+  it('mock routes by api reference name, not call order', () => {
+    // This test verifies the mock is argument-keyed.
+    // We call useMutation with different api refs and verify correct mock is returned.
+    // If the mock were position-keyed, reordering internal useMutation calls
+    // would break mock assignment. With argument-keyed mocks, order is irrelevant.
+    mockNotifications = [
+      makeNotification({ _id: 'n-1' }),
+    ]
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
+    )
+
+    // Verify each handler invokes the correct mutation mock
+    mockMarkAsRead.mockResolvedValue(undefined)
+    mockDeleteNotification.mockResolvedValue(undefined)
+
+    act(() => {
+      result.current.handleMarkAsRead('n-1')
+    })
+    expect(mockMarkAsRead).toHaveBeenCalledWith({ notificationId: 'n-1' })
+    expect(mockDeleteNotification).not.toHaveBeenCalled()
+
+    act(() => {
+      result.current.handleDelete('n-1')
+    })
+    expect(mockDeleteNotification).toHaveBeenCalledWith({ notificationId: 'n-1' })
   })
 })
