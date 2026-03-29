@@ -10,8 +10,8 @@
  * - Draft with zero reservations purges cleanly (DD-271)
  * - Boundary: expiresAt === Date.now() is NOT purged (strict q.lt) (DD-271)
  * - Already-Cancelled booking is not selected by purge query (DD-271)
- * - Error: ORPHANED_RESERVATION when session is missing (DD-271)
- * - Error: MISSING_SNAPSHOT when snapshot is missing (DD-271)
+ * - Error: ORPHANED_RESERVATION when session is missing (DD-271) + reservation not Vacated (DD-275)
+ * - Error: MISSING_SNAPSHOT when snapshot is missing (DD-271) + reservation not Vacated (DD-275)
  * - Count test extended with status + snapshot assertions (DD-271)
  */
 
@@ -377,7 +377,7 @@ describe('purgeExpiredDrafts', () => {
   it('throws ORPHANED_RESERVATION when a reservation references a missing session', async () => {
     const t = makeT()
 
-    await t.run(async (ctx) => {
+    const reservationId = await t.run(async (ctx) => {
       await seedUser(ctx)
       const bookingId = await seedBooking(ctx, {
         expiresAt: Date.now() - 60_000,
@@ -385,23 +385,29 @@ describe('purgeExpiredDrafts', () => {
       })
       const unitId = await seedInventoryUnit(ctx)
       const sessionId = await seedSession(ctx, bookingId, unitId)
-      await seedReservation(ctx, bookingId, unitId, sessionId, {
+      const reservationId = await seedReservation(ctx, bookingId, unitId, sessionId, {
         status: 'PendingAcceptance',
       })
       // Delete the session to create the orphan condition
       await ctx.db.delete(sessionId)
+      return reservationId
     })
 
     await expectConvexError(
       t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
       ErrorCode.ORPHANED_RESERVATION,
     )
+
+    // DD-275: verify reservation was NOT prematurely patched to Vacated
+    // (fetch-before-patch ordering ensures no writes occur before the throw)
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation?.status).toBe('PendingAcceptance')
   })
 
   it('throws MISSING_SNAPSHOT when a reservation has no matching availability snapshot', async () => {
     const t = makeT()
 
-    await t.run(async (ctx) => {
+    const reservationId = await t.run(async (ctx) => {
       await seedUser(ctx)
       const bookingId = await seedBooking(ctx, {
         expiresAt: Date.now() - 60_000,
@@ -409,15 +415,21 @@ describe('purgeExpiredDrafts', () => {
       })
       const unitId = await seedInventoryUnit(ctx)
       const sessionId = await seedSession(ctx, bookingId, unitId)
-      await seedReservation(ctx, bookingId, unitId, sessionId, {
+      const reservationId = await seedReservation(ctx, bookingId, unitId, sessionId, {
         status: 'PendingAcceptance',
       })
       // No snapshot seeded — snapshot lookup will return null
+      return reservationId
     })
 
     await expectConvexError(
       t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
       ErrorCode.MISSING_SNAPSHOT,
     )
+
+    // DD-275: verify reservation was NOT prematurely patched to Vacated
+    // (fetch-before-patch ordering ensures no writes occur before the throw)
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation?.status).toBe('PendingAcceptance')
   })
 })
