@@ -9,25 +9,12 @@ describe('TIME_REGEX', () => {
     expect(TIME_REGEX.test('23:59')).toBe(true)
   })
 
-  it('rejects single-digit hour', () => {
-    expect(TIME_REGEX.test('9:00')).toBe(false)
-  })
-
-  it('rejects single-digit minute', () => {
-    expect(TIME_REGEX.test('09:0')).toBe(false)
-  })
-
-  it('rejects missing colon', () => {
-    expect(TIME_REGEX.test('0900')).toBe(false)
-  })
-
-  it('rejects trailing characters', () => {
-    expect(TIME_REGEX.test('09:00:00')).toBe(false)
-  })
-
-  it('rejects leading characters', () => {
-    expect(TIME_REGEX.test(' 09:00')).toBe(false)
-  })
+  it.each(['9:00', '09:0', '0900', '09:00:00', ' 09:00'])(
+    'rejects invalid format %j',
+    (input) => {
+      expect(TIME_REGEX.test(input)).toBe(false)
+    },
+  )
 })
 
 describe('assertValidTime', () => {
@@ -36,15 +23,12 @@ describe('assertValidTime', () => {
     expect(() => assertValidTime('14:30', 'startTime')).not.toThrow()
   })
 
-  it('throws VALIDATION error for single-digit hour', () => {
-    expect(() => assertValidTime('9:00', 'startTime')).toThrow(
-      'startTime must be HH:MM format',
-    )
-  })
-
-  it('throws VALIDATION error for single-digit minute', () => {
-    expect(() => assertValidTime('09:0', 'endTime')).toThrow(
-      'endTime must be HH:MM format',
+  it.each([
+    ['9:00', 'startTime'],
+    ['09:0', 'endTime'],
+  ])('throws VALIDATION error for %j with field %j', (time, field) => {
+    expect(() => assertValidTime(time, field)).toThrow(
+      `${field} must be HH:MM format`,
     )
   })
 
