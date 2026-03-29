@@ -11,8 +11,11 @@ const RETRY_DELAY_MS = 1000
 
 /**
  * Debounce-saves wizard state to Convex in the background.
- * Fires 2 seconds after the last state change.
+ * Fires 3 seconds after the last state change.
  * Retries once on failure; shows error message on second failure.
+ *
+ * Only one saveDraftState mutation is inflight at a time. If state changes
+ * while a save is inflight, one follow-up save fires after completion.
  *
  * Exposes cancelPending() so the wizard can cancel the debounce before
  * doing an immediate navigation save — avoids redundant double-writes.
@@ -25,6 +28,14 @@ export function useBookingDraftAutoSave(
   const [autoSaveError, setAutoSaveError] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRenderRef = useRef(true)
+  const isSavingRef = useRef(false)
+  const pendingRef = useRef(false)
+  const latestStateRef = useRef(state)
+  const latestBookingIdRef = useRef(bookingId)
+
+  // Keep refs in sync with latest values
+  latestStateRef.current = state
+  latestBookingIdRef.current = bookingId
 
   const cancelPending = useCallback(() => {
     if (timerRef.current) {
@@ -32,6 +43,45 @@ export function useBookingDraftAutoSave(
       timerRef.current = null
     }
   }, [])
+
+  const doSave = useCallback(() => {
+    const currentBookingId = latestBookingIdRef.current
+    if (!currentBookingId) return
+
+    isSavingRef.current = true
+    const serialized = serializeDraftState(latestStateRef.current)
+    let attempts = 0
+
+    const onComplete = () => {
+      isSavingRef.current = false
+      if (pendingRef.current) {
+        pendingRef.current = false
+        doSave()
+      }
+    }
+
+    const attempt = () => {
+      saveDraftState({
+        bookingId: currentBookingId as Id<'bookings'>,
+        draftState: serialized,
+      })
+        .then(() => {
+          setAutoSaveError(null)
+          onComplete()
+        })
+        .catch(() => {
+          attempts++
+          if (attempts < 2) {
+            setTimeout(attempt, RETRY_DELAY_MS)
+          } else {
+            setAutoSaveError('Save failed')
+            onComplete()
+          }
+        })
+    }
+
+    attempt()
+  }, [saveDraftState])
 
   useEffect(() => {
     // Skip initial render — only auto-save after user changes state
@@ -46,28 +96,13 @@ export function useBookingDraftAutoSave(
 
     timerRef.current = setTimeout(() => {
       timerRef.current = null
-      const serialized = serializeDraftState(state)
-      let attempts = 0
 
-      const attempt = () => {
-        saveDraftState({
-          bookingId: bookingId as Id<'bookings'>,
-          draftState: serialized,
-        })
-          .then(() => {
-            setAutoSaveError(null)
-          })
-          .catch(() => {
-            attempts++
-            if (attempts < 2) {
-              setTimeout(attempt, RETRY_DELAY_MS)
-            } else {
-              setAutoSaveError('Save failed')
-            }
-          })
+      if (isSavingRef.current) {
+        pendingRef.current = true
+        return
       }
 
-      attempt()
+      doSave()
     }, DEBOUNCE_MS)
 
     return () => {
@@ -76,7 +111,7 @@ export function useBookingDraftAutoSave(
         timerRef.current = null
       }
     }
-  }, [bookingId, state, saveDraftState, cancelPending])
+  }, [bookingId, state, saveDraftState, cancelPending, doSave])
 
   return { autoSaveError, cancelPending }
 }
