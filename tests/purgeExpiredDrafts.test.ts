@@ -1,5 +1,5 @@
 /**
- * DD-256 / DD-271 / DD-276: purgeExpiredDrafts cron — behavioral tests
+ * DD-256 / DD-271 / DD-276 / DD-286: purgeExpiredDrafts cron — behavioral tests
  *
  * Covers:
  * - Expired Draft bookings are cancelled with reservations vacated
@@ -13,6 +13,7 @@
  * - Per-booking error isolation: corrupt booking #2 skipped, #1 and #3 purged (DD-276)
  * - BATCH_SIZE cap: only 25 bookings attempted per run (DD-276)
  * - Count test extended with status + snapshot assertions (DD-271)
+ * - Unrecognized error codes re-throw instead of being silently swallowed (DD-286)
  */
 
 import { describe, it, expect } from 'vitest'
@@ -560,5 +561,37 @@ describe('purgeExpiredDrafts', () => {
         .collect(),
     )
     expect(cancelled).toHaveLength(25)
+  })
+
+  it('re-throws unrecognized errors instead of silently swallowing them (DD-286)', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      // Corrupt the session startTime to trigger a VALIDATION ConvexError
+      // (not in the isolatable allowlist)
+      await ctx.db.patch(sessionId, { startTime: 'INVALID' })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'PendingAcceptance',
+      })
+    })
+
+    // The mutation must throw — not silently swallow the unrecognized error
+    await expect(
+      t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
+    ).rejects.toThrow()
   })
 })

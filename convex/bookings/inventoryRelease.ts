@@ -197,6 +197,13 @@ export const purgeExpiredDrafts = internalMutation({
     let purged = 0
     const errors: Array<{ bookingId: string; errorCode: string }> = []
 
+    /** Error codes safe to isolate per-booking without aborting the batch. */
+    const ISOLATABLE_ERRORS: ReadonlySet<string> = new Set([
+      ErrorCode.ORPHANED_RESERVATION,
+      ErrorCode.MISSING_SNAPSHOT,
+      ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+    ])
+
     for (const booking of staleDrafts) {
       try {
         await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
@@ -218,6 +225,11 @@ export const purgeExpiredDrafts = internalMutation({
           typeof (err.data as { code: unknown }).code === 'string'
         ) {
           errorCode = (err.data as { code: string }).code
+        }
+        // Re-throw unrecognized errors to prevent partial-write inconsistency.
+        // Only known inventory-corruption errors are safe to isolate per-booking.
+        if (!ISOLATABLE_ERRORS.has(errorCode)) {
+          throw err
         }
         console.error(`purgeExpiredDrafts: failed to purge booking`, {
           bookingId: booking._id,
