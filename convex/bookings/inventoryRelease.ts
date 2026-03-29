@@ -288,15 +288,16 @@ function extractErrorCode(err: unknown): string {
 /**
  * Per-booking data errors that are safe to isolate without aborting the batch.
  * If booking N throws one of these, bookings N+1…M can still be purged.
- * Only data-corruption / logic-bug errors belong here — NOT unknown runtime
- * errors, which should re-throw to abort the batch and surface the failure.
+ *
+ * Scope: missing-data races that cannot be fixed by retrying — NOT logic-bug
+ * or data-corruption signals. SNAPSHOT_UNDERFLOW and SNAPSHOT_DOUBLE_WRITE
+ * indicate bugs in accumulation or reservation logic and must re-throw to
+ * abort the batch and surface the anomaly (DD-290).
  */
 const ISOLATABLE_ERRORS: ReadonlySet<string> = new Set([
   ErrorCode.ORPHANED_RESERVATION,
   ErrorCode.MISSING_SNAPSHOT,
   ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
-  ErrorCode.SNAPSHOT_UNDERFLOW,
-  ErrorCode.SNAPSHOT_DOUBLE_WRITE,
   ErrorCode.INVARIANT_VIOLATION,
 ])
 

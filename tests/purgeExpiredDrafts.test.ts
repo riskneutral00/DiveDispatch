@@ -19,6 +19,7 @@
  * - purgeExpiredDrafts isolates INVARIANT_VIOLATION per-booking (DD-284)
  * - Per-booking atomicity: failure on booking N does not affect bookings 1…N-1 (DD-278)
  * - MISSING_SNAPSHOT_ON_RELEASE error code path tested (DD-278)
+ * - SNAPSHOT_UNDERFLOW re-throws instead of being isolated (DD-290)
  */
 
 import { describe, it, expect } from 'vitest'
@@ -878,6 +879,38 @@ describe('purgeExpiredDrafts', () => {
     // Booking #2's reservation was NOT vacated (mutation rolled back)
     const res2 = await t.run(async (ctx) => ctx.db.get(res2Id))
     expect(res2?.status).toBe('PendingAcceptance')
+  })
+
+  it('re-throws SNAPSHOT_UNDERFLOW instead of isolating it (DD-290)', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      // Snapshot has reservedUnits: 0 but reservation requests 1 unit
+      // This triggers SNAPSHOT_UNDERFLOW in restoreSnapshotUnits
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'PendingAcceptance',
+        unitsRequested: 1,
+      })
+    })
+
+    // SNAPSHOT_UNDERFLOW must abort the batch, not be silently isolated
+    await expect(
+      t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
+    ).rejects.toThrow()
   })
 
   it('MISSING_SNAPSHOT_ON_RELEASE: snapshot deleted between batch-fetch and restore (DD-278)', async () => {
