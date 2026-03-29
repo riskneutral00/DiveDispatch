@@ -718,6 +718,7 @@ export default defineSchema({
       v.literal('noshow_marked'),
       v.literal('noshow_reverted'),
       v.literal('expired_draft_purged'),
+      v.literal('user_deleted_cascade'),
     ),
     actorSlug: v.string(),
     actorType: v.union(

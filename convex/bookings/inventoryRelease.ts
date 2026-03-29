@@ -18,6 +18,8 @@ import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/st
 import { ErrorCode } from '../lib/errorCodes'
 import { assertValidTime } from '../lib/validators'
 import { logBookingChange } from '../bookingAuditLog'
+import { batchPatch } from '../lib/batch'
+import { releaseBagsForBooking } from '../equipmentBags'
 
 /**
  * Looks up a single AvailabilitySnapshot by inventoryUnitId + date + windowStart.
@@ -105,6 +107,7 @@ export async function releaseBookingReservations(
   ctx: MutationCtx,
   bookingId: string,
   reason: VacatedReason,
+  inventoryUnitId?: Id<'inventoryUnits'>,
 ): Promise<void> {
   const [pending, confirmed] = await Promise.all([
     ctx.db
@@ -135,7 +138,12 @@ export async function releaseBookingReservations(
     })
   }
 
-  const active = [...pending, ...confirmed]
+  // When inventoryUnitId is provided, only release that unit's reservations (decline path).
+  // When omitted, release all active reservations (cancellation/cascade path).
+  const all = [...pending, ...confirmed]
+  const active = inventoryUnitId
+    ? all.filter((r) => r.inventoryUnitId === inventoryUnitId)
+    : all
 
   if (active.length === 0) return
 
@@ -196,18 +204,23 @@ export async function releaseBookingReservations(
   }
 
   // ── Patch: vacate reservations + restore snapshots (writes only) ──────────
-  for (const res of active) {
-    await ctx.db.patch(res._id, {
-      status: RESERVATION_STATUS.Vacated,
-      vacatedAt: Date.now(),
-      vacatedBy: reason,
-    })
-  }
+  const vacatedAt = Date.now()
+  await batchPatch(ctx, active.map((res) => [res._id, {
+    status: RESERVATION_STATUS.Vacated,
+    vacatedAt,
+    vacatedBy: reason,
+  }] as const))
 
   const seenSnapshotIds = new Set<string>()
   for (const [key, units] of unitsToRestore) {
     const snapshotId = snapshotIdMap.get(key)!
-    await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds)
+    await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds) // batch-exempt: seenSnapshotIds guard requires sequential execution
+  }
+
+  // Release equipment bags when releasing ALL reservations (cancel/expire/edit).
+  // Skip on targeted decline (inventoryUnitId set) — bags are booking-level, not unit-level.
+  if (!inventoryUnitId) {
+    await releaseBagsForBooking(ctx, bookingId)
   }
 }
 
@@ -260,46 +273,7 @@ export const purgeOneDraft = internalMutation({
   },
 })
 
-/** Extract a ConvexError code string, or return 'UNKNOWN'.
- * Handles both object data (direct throw) and JSON-serialized string data
- * (when error crosses a ctx.runMutation boundary, Convex serializes err.data). */
-function extractErrorCode(err: unknown): string {
-  if (!(err instanceof ConvexError)) return 'UNKNOWN'
-
-  let data: unknown = err.data
-  if (typeof data === 'string') {
-    try {
-      data = JSON.parse(data)
-    } catch {
-      return 'UNKNOWN'
-    }
-  }
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'code' in data &&
-    typeof (data as { code: unknown }).code === 'string'
-  ) {
-    return (data as { code: string }).code
-  }
-  return 'UNKNOWN'
-}
-
-/**
- * Per-booking data errors that are safe to isolate without aborting the batch.
- * If booking N throws one of these, bookings N+1…M can still be purged.
- *
- * Scope: missing-data races that cannot be fixed by retrying — NOT logic-bug
- * or data-corruption signals. SNAPSHOT_UNDERFLOW and SNAPSHOT_DOUBLE_WRITE
- * indicate bugs in accumulation or reservation logic and must re-throw to
- * abort the batch and surface the anomaly (DD-290).
- */
-const ISOLATABLE_ERRORS: ReadonlySet<string> = new Set([
-  ErrorCode.ORPHANED_RESERVATION,
-  ErrorCode.MISSING_SNAPSHOT,
-  ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
-  ErrorCode.INVARIANT_VIOLATION,
-])
+import { extractErrorCode, ISOLATABLE_ERRORS } from '../lib/errorClassification'
 
 /**
  * Cron: purge Draft bookings whose holdTTL has lapsed.

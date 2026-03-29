@@ -22,6 +22,7 @@ export type AuditAction =
   | 'noshow_marked'
   | 'noshow_reverted'
   | 'expired_draft_purged'
+  | 'user_deleted_cascade'
 
 export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
 

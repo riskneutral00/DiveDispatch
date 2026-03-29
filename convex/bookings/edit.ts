@@ -6,6 +6,7 @@ import {
   releaseBookingReservations,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
+import { batchDelete } from '../lib/batch'
 import { ErrorCode } from '../lib/errorCodes'
 import { checkIdempotency } from '../lib/idempotency'
 import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
@@ -47,9 +48,7 @@ export const editBooking = mutation({
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
       .collect()
-    for (const session of sessions) {
-      await ctx.db.delete(session._id)
-    }
+    await batchDelete(ctx, sessions)
 
     await ctx.db.patch(args.bookingId, {
       status: BOOKING_STATUS.Draft,

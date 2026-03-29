@@ -8,7 +8,7 @@
  * 4. Missing svixId preserves backwards compatibility (no guard applied)
  */
 
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import { internal } from '../convex/_generated/api'
 import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -148,6 +148,9 @@ describe('upsertFromWebhook idempotency', () => {
 // ── deleteFromWebhook idempotency ─────────────────────────────────────────
 
 describe('deleteFromWebhook idempotency', () => {
+  beforeEach(() => { vi.useFakeTimers({ now: Date.now() }) })
+  afterEach(() => { vi.useRealTimers() })
+
   it('anonymises user on first delete event', async () => {
     const t = makeT()
     const token = makeTokenIdentifier('delete')
@@ -165,6 +168,7 @@ describe('deleteFromWebhook idempotency', () => {
       tokenIdentifier: token,
       svixId,
     })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
 
     const user = await t.run(async (ctx) => {
       return await ctx.db
@@ -197,6 +201,7 @@ describe('deleteFromWebhook idempotency', () => {
       tokenIdentifier: token,
       svixId,
     })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
 
     // Manually restore the email to prove second call is a no-op
     await t.run(async (ctx) => {
@@ -216,6 +221,7 @@ describe('deleteFromWebhook idempotency', () => {
       tokenIdentifier: token,
       svixId,
     })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
 
     // Email should still be 'restored' (second call was no-op)
     const user = await t.run(async (ctx) => {
@@ -280,6 +286,7 @@ describe('webhook backwards compatibility', () => {
   })
 
   it('deleteFromWebhook works without svixId (no guard applied)', async () => {
+    vi.useFakeTimers({ now: Date.now() })
     const t = makeT()
     const token = makeTokenIdentifier('delete-no-svix')
 
@@ -294,6 +301,7 @@ describe('webhook backwards compatibility', () => {
     await t.mutation(internal.users.deleteFromWebhook, {
       tokenIdentifier: token,
     })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
 
     const user = await t.run(async (ctx) => {
       return await ctx.db
@@ -305,5 +313,6 @@ describe('webhook backwards compatibility', () => {
     })
 
     expect(user?.email).toBe('deleted@deleted.invalid')
+    vi.useRealTimers()
   })
 })

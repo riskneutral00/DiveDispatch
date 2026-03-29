@@ -10,7 +10,7 @@ import {
   tryAutoAdvance,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
-import { notify } from '../notifications'
+import { notify, notifyVacatedStakeholders } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
 import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
@@ -39,22 +39,7 @@ export const cancelBooking = mutation({
     await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
 
     // Notify resource stakeholders whose inventory was just released
-    const vacatedReservations = await ctx.db
-      .query('reservations')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
-    const vacated = vacatedReservations.filter((r) => r.status === 'Vacated')
-    for (const res of vacated) {
-      const unit = await ctx.db.get(res.inventoryUnitId)
-      if (unit) {
-        await notify(ctx, {
-          userId: unit.ownerId,
-          type: NOTIFICATION_TYPE.BookingCancelled,
-          bookingId: args.bookingId as string,
-          message: `Booking cancelled — your ${unit.displayName} inventory has been released.`,
-        })
-      }
-    }
+    await notifyVacatedStakeholders(ctx, args.bookingId)
 
     await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {

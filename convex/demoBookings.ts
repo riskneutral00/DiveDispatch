@@ -4,6 +4,7 @@ import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { HOLD_TTL_MS } from './lib/auth'
 import { type CourseCode } from './shared/courseCodes'
+import { batchDelete } from './lib/batch'
 
 type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
 
@@ -195,46 +196,37 @@ export const insertDemoBatch = internalMutation({
     resources: v.array(v.any()),
   },
   handler: async (ctx, args) => {
-    // Insert customers first
-    const customerIds: Id<'customers'>[] = []
-    for (const c of args.customers) {
-      const id = await ctx.db.insert('customers', c)
-      customerIds.push(id)
-    }
+    // Insert customers and bookings in parallel
+    const [customerIds, bookingIds] = await Promise.all([
+      Promise.all(args.customers.map((c) => ctx.db.insert('customers', c))),
+      Promise.all(args.bookings.map((b) => ctx.db.insert('bookings', b))),
+    ])
 
-    // Insert bookings
-    const bookingIds: Id<'bookings'>[] = []
-    for (const b of args.bookings) {
-      const id = await ctx.db.insert('bookings', b)
-      bookingIds.push(id)
-    }
-
-    // Insert customer profiles with resolved IDs
-    for (const p of args.profiles) {
-      const bookingId = bookingIds[p.bookingLocalIndex]
-      const customerId = customerIds[p.customerLocalIndex]
-      if (bookingId && customerId) {
-        await ctx.db.insert('customerProfiles', {
-          bookingId,
-          customerId,
-          linkToken: p.linkToken,
-          accommodationName: 'Demo Hotel',
-          needsPickup: false,
-        })
-      }
-    }
-
-    // Insert booking resources
-    for (const r of args.resources) {
-      const bookingId = bookingIds[r.bookingLocalIndex]
-      if (bookingId) {
-        await ctx.db.insert('bookingResources', {
-          bookingId,
-          resourceType: r.resourceType,
-          externalName: r.externalName,
-        })
-      }
-    }
+    // Insert profiles and resources in parallel (depend on resolved IDs from above)
+    await Promise.all([
+      Promise.all(
+        args.profiles
+          .filter((p) => bookingIds[p.bookingLocalIndex] && customerIds[p.customerLocalIndex])
+          .map((p) =>
+            ctx.db.insert('customerProfiles', {
+              bookingId: bookingIds[p.bookingLocalIndex],
+              customerId: customerIds[p.customerLocalIndex],
+              linkToken: p.linkToken,
+              accommodationName: 'Demo Hotel',
+              needsPickup: false,
+            })),
+      ),
+      Promise.all(
+        args.resources
+          .filter((r) => bookingIds[r.bookingLocalIndex])
+          .map((r) =>
+            ctx.db.insert('bookingResources', {
+              bookingId: bookingIds[r.bookingLocalIndex],
+              resourceType: r.resourceType,
+              externalName: r.externalName,
+            })),
+      ),
+    ])
   },
 })
 
@@ -252,38 +244,31 @@ export const cleanupDemoBookings = internalMutation({
       .collect()
 
     const demoBookings = bookings.filter(b => b.isDemo === true)
+    if (demoBookings.length === 0) return
 
-    for (const booking of demoBookings) {
-      // Delete related customer profiles
-      const profiles = await ctx.db
-        .query('customerProfiles')
-        .withIndex('by_bookingId', q => q.eq('bookingId', booking._id))
-        .collect()
-      for (const p of profiles) {
-        await ctx.db.delete(p._id)
-      }
+    // Batch-query all related records for all demo bookings in parallel
+    const demoIds = demoBookings.map(b => b._id)
+    const [profileArrays, resourceArrays, linkArrays, sessionArrays, reservationArrays, auditArrays, bagArrays] = await Promise.all([
+      Promise.all(demoIds.map(id => ctx.db.query('customerProfiles').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('bookingResources').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('bookingLinks').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('bookingSessions').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('reservations').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('bookingAuditLog').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('equipmentBags').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+    ])
 
-      // Delete related booking resources
-      const resources = await ctx.db
-        .query('bookingResources')
-        .withIndex('by_bookingId', q => q.eq('bookingId', booking._id))
-        .collect()
-      for (const r of resources) {
-        await ctx.db.delete(r._id)
-      }
-
-      // Delete related booking links
-      const links = await ctx.db
-        .query('bookingLinks')
-        .withIndex('by_bookingId', q => q.eq('bookingId', booking._id))
-        .collect()
-      for (const l of links) {
-        await ctx.db.delete(l._id)
-      }
-
-      // Delete the booking itself
-      await ctx.db.delete(booking._id)
-    }
+    // Batch-delete related records, then bookings
+    await Promise.all([
+      batchDelete(ctx, profileArrays.flat()),
+      batchDelete(ctx, resourceArrays.flat()),
+      batchDelete(ctx, linkArrays.flat()),
+      batchDelete(ctx, sessionArrays.flat()),
+      batchDelete(ctx, reservationArrays.flat()),
+      batchDelete(ctx, auditArrays.flat()),
+      batchDelete(ctx, bagArrays.flat()),
+    ])
+    await batchDelete(ctx, demoBookings)
 
     // Orphaned demo customers without profiles are harmless — skip cleanup
   },

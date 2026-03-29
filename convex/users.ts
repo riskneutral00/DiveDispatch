@@ -1,8 +1,8 @@
 import { ConvexError, v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
+import { internalAction, internalMutation, internalQuery, mutation, query } from './_generated/server'
 import type { DatabaseWriter } from './_generated/server'
 import { internal } from './_generated/api'
-import type { Doc } from './_generated/dataModel'
+import type { Doc, Id } from './_generated/dataModel'
 import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
@@ -10,6 +10,12 @@ import { ErrorCode } from './lib/errorCodes'
 import { checkRateLimit } from './lib/rateLimiter'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 import { checkIdempotency } from './lib/idempotency'
+import { releaseBookingReservations } from './bookings/inventoryRelease'
+import { notifyVacatedStakeholders } from './notifications'
+import { logBookingChange } from './bookingAuditLog'
+import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
+import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
+import { batchDelete, batchPatch } from './lib/batch'
 
 /** Strip sensitive fields from a user document for public consumption. */
 function publicUser(user: Doc<'users'>) {
@@ -437,11 +443,166 @@ export const deleteFromWebhook = internalMutation({
 
     if (!user) return
 
+    // Capture slug before anonymization for cascade args
+    const userSlug = user.slug
+
     await ctx.db.patch(user._id, {
       email: 'deleted@deleted.invalid',
       name: '',
       firstName: '',
       lastName: '',
     })
+
+    // Schedule async cascade to clean up bookings, reservations, roles, etc.
+    await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
+      userId: user._id,
+      userSlug,
+    })
+  },
+})
+
+// ─── User Deletion Cascade (DD-258) ──────────────────────────────────────────
+
+const CASCADE_BATCH_SIZE = 50
+
+/** Query: find active (Draft/Upcoming) bookings owned by a user slug. */
+export const findActiveBookingsForOwner = internalQuery({
+  args: { userSlug: v.string() },
+  handler: async (ctx, { userSlug }): Promise<Array<{ bookingId: Id<'bookings'> }>> => {
+    const bookings = await ctx.db
+      .query('bookings')
+      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', userSlug))
+      .take(CASCADE_BATCH_SIZE + 1)
+
+    return bookings
+      .filter((b) => b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming)
+      .map((b) => ({ bookingId: b._id }))
+  },
+})
+
+/**
+ * Mutation: cancel a single booking as part of user deletion cascade.
+ * Idempotent — no-op if booking is already Cancelled or missing.
+ * Mirrors purgeOneDraft pattern from inventoryRelease.ts.
+ */
+export const cancelOneBookingForDeletedUser = internalMutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, { bookingId }): Promise<void> => {
+    const booking = await ctx.db.get(bookingId)
+    if (!booking || booking.status === BOOKING_STATUS.Cancelled) return
+
+    // Release all active reservations and restore snapshots
+    await releaseBookingReservations(ctx, bookingId, VACATED_REASON.UserDeleted)
+
+    // Notify resource stakeholders
+    await notifyVacatedStakeholders(ctx, bookingId as string, 'user_deleted')
+
+    // Cancel the booking
+    await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled })
+
+    // Audit log
+    await logBookingChange(ctx, {
+      bookingId: bookingId as string,
+      action: 'user_deleted_cascade',
+      actorSlug: 'system',
+      actorType: 'system',
+      note: 'Owner account deleted',
+    })
+  },
+})
+
+/**
+ * Mutation: clean up ancillary user data after all bookings are cancelled.
+ * Runs as the final step of the cascade.
+ */
+export const cleanupDeletedUserData = internalMutation({
+  args: {
+    userId: v.id('users'),
+    userSlug: v.string(),
+  },
+  handler: async (ctx, { userId, userSlug }): Promise<void> => {
+    // Fetch all ancillary data in parallel
+    const [roles, notifications, prefs, blocked, resources] = await Promise.all([
+      ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).collect(),
+      ctx.db.query('notifications').withIndex('by_userId', (q) => q.eq('userId', userSlug)).collect(),
+      ctx.db.query('stakeholderPreferences').withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userSlug)).collect(),
+      ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).collect(),
+      ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).collect(),
+    ])
+
+    const now = Date.now()
+    const unread = notifications.filter((n) => n.readAt === undefined)
+
+    // Delete/patch all in parallel
+    await Promise.all([
+      batchDelete(ctx, roles),
+      batchPatch(ctx, unread.map((n) => [n._id, { readAt: now }] as const)),
+      batchDelete(ctx, prefs),
+      batchDelete(ctx, blocked),
+      batchDelete(ctx, resources),
+    ])
+  },
+})
+
+/**
+ * Action: coordinator for user deletion cascade.
+ * Processes bookings in batches, then cleans up ancillary data.
+ * Self-reschedules if more bookings remain.
+ */
+export const cascadeUserDeletion = internalAction({
+  args: {
+    userId: v.id('users'),
+    userSlug: v.string(),
+  },
+  handler: async (ctx, { userId, userSlug }): Promise<void> => {
+    const activeBookings = await ctx.runQuery(
+      internal.users.findActiveBookingsForOwner,
+      { userSlug },
+    )
+
+    const batch = activeBookings.slice(0, CASCADE_BATCH_SIZE)
+    const more = activeBookings.length > CASCADE_BATCH_SIZE
+
+    let cancelled = 0
+    const errors: Array<{ bookingId: string; errorCode: string }> = []
+
+    for (const { bookingId } of batch) {
+      try {
+        await ctx.runMutation(
+          internal.users.cancelOneBookingForDeletedUser,
+          { bookingId },
+        )
+        cancelled++
+      } catch (err) {
+        const errorCode = extractErrorCode(err)
+        if (!ISOLATABLE_ERRORS.has(errorCode)) throw err
+        console.error('cascadeUserDeletion: failed to cancel booking', {
+          bookingId,
+          errorCode,
+        })
+        errors.push({ bookingId, errorCode })
+      }
+    }
+
+    if (more) {
+      // Self-reschedule for next batch
+      await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
+        userId,
+        userSlug,
+      })
+    } else {
+      // All bookings handled — clean up ancillary data
+      await ctx.runMutation(internal.users.cleanupDeletedUserData, {
+        userId,
+        userSlug,
+      })
+    }
+
+    if (errors.length > 0) {
+      await ctx.scheduler.runAfter(0, internal.lib.alerts.sendAlertEmail, {
+        jobName: 'user-deletion-cascade',
+        error: `Failed to cancel ${errors.length} bookings for user ${userSlug}: ${errors.map((e) => `${e.bookingId}(${e.errorCode})`).join(', ')}`,
+      })
+    }
   },
 })

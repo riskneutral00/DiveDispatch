@@ -3,6 +3,7 @@ import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS } from './shared/statuses'
+import { batchPatch } from './lib/batch'
 
 // ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
 
@@ -42,13 +43,11 @@ export async function assignBagsForBooking(
   const now = Date.now()
   const toAssign = available.slice(0, diverCount)
 
-  for (const bag of toAssign) {
-    await ctx.db.patch(bag._id, {
-      status: BAG_STATUS.Assigned,
-      bookingId: bookingId as Id<"bookings">,
-      assignedAt: now,
-    })
-  }
+  await batchPatch(ctx, toAssign.map((bag) => [bag._id, {
+    status: BAG_STATUS.Assigned,
+    bookingId: bookingId as Id<"bookings">,
+    assignedAt: now,
+  }] as const))
 }
 
 /**
@@ -70,11 +69,10 @@ export async function releaseBagsForBooking(
     .collect()
 
   const assigned = bags.filter((b) => b.status === BAG_STATUS.Assigned)
+  const now = Date.now()
 
-  for (const bag of assigned) {
-    await ctx.db.patch(bag._id, {
-      status: BAG_STATUS.Returned,
-      returnedAt: Date.now(),
-    })
-  }
+  await batchPatch(ctx, assigned.map((bag) => [bag._id, {
+    status: BAG_STATUS.Returned,
+    returnedAt: now,
+  }] as const))
 }

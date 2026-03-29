@@ -5,6 +5,7 @@ import { requireAuth } from './lib/auth'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS, type BagStatus } from './shared/statuses'
+import { batchGet } from './lib/batch'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -128,10 +129,15 @@ export const getDiverEquipmentData = query({
         String(a.bagNumber).localeCompare(String(b.bagNumber)),
       )
 
-      // Fetch customer profiles in parallel
+      // Fetch customer profiles and their linked customers in parallel
       const profileIds = booking.customerProfileIds ?? []
       const profiles = await Promise.all(
         profileIds.map((id) => ctx.db.get(id)),
+      )
+      const customerIds = profiles.map((p) => p?.customerId ?? null)
+      const customers = await batchGet(ctx, customerIds.filter(Boolean) as Id<'customers'>[])
+      const customerMap = new Map(
+        customerIds.filter(Boolean).map((id, i) => [id!, customers[i]] as const),
       )
 
       const diverRows: DiverRow[] = []
@@ -150,7 +156,7 @@ export const getDiverEquipmentData = query({
         if (profile) {
           rentalChecklist = profile.rentalChecklist as RentalChecklist | undefined
           if (profile.customerId) {
-            const customer = await ctx.db.get(profile.customerId)
+            const customer = customerMap.get(profile.customerId)
             if (customer) {
               heightCm = customer.heightCm
               weightKg = customer.weightKg
@@ -232,18 +238,15 @@ export const getDiverEquipmentData = query({
       )
       .collect()
 
-    const inventory: GearInventoryItem[] = []
-    for (const inv of inventoryRecords) {
-      const unit = await ctx.db.get(inv.inventoryUnitId)
-      inventory.push({
-        gearType: inv.gearType,
-        manufacturer: inv.manufacturer,
-        size: inv.size,
-        diopter: inv.diopter,
-        isPrescription: inv.isPrescription,
-        totalUnits: unit ? unit.totalUnits : 0,
-      })
-    }
+    const units = await batchGet(ctx, inventoryRecords.map((inv) => inv.inventoryUnitId))
+    const inventory: GearInventoryItem[] = inventoryRecords.map((inv, i) => ({
+      gearType: inv.gearType,
+      manufacturer: inv.manufacturer,
+      size: inv.size,
+      diopter: inv.diopter,
+      isPrescription: inv.isPrescription,
+      totalUnits: units[i] ? units[i].totalUnits : 0,
+    }))
 
     return {
       emSlug: user.slug,

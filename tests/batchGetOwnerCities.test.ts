@@ -343,6 +343,164 @@ describe('decline with batched city lookup preserves filtering', () => {
     })
   })
 
+  it('prefers language-matching alternative when multiple exist', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      // DC
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|lang-dc',
+        slug: 'lang-dc',
+        role: 'DiveCenter',
+        email: 'lang-dc@test.com',
+        name: 'Lang DC',
+        firstName: 'Lang',
+        lastName: 'DC',
+        businessName: 'Lang DC Co',
+      })
+
+      // Declining instructor in Koh Tao
+      const declUserId = await seedUser(ctx, {
+        tokenIdentifier: 'user|lang-decl',
+        slug: 'lang-decl-instr',
+        role: 'Instructor',
+        email: 'lang-decl@test.com',
+        name: 'Decl Instructor',
+        firstName: 'Decl',
+        lastName: 'Inst',
+        businessName: 'Decl Co',
+      })
+      await seedInstructorProfile(ctx, declUserId, {
+        placeName: 'Koh Tao',
+        teachingLanguages: ['en-GB'],
+      })
+
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Decl Instructor',
+        ownerId: 'lang-decl-instr',
+        ownerType: 'Instructor',
+      })
+
+      // Alternative A: NO language match (French only)
+      const altAUserId = await seedUser(ctx, {
+        tokenIdentifier: 'user|lang-alt-a',
+        slug: 'lang-alt-a',
+        role: 'Instructor',
+        email: 'lang-alt-a@test.com',
+        name: 'Alt A',
+        firstName: 'Alt',
+        lastName: 'A',
+        businessName: 'Alt A Co',
+      })
+      await seedInstructorProfile(ctx, altAUserId, {
+        placeName: 'Koh Tao',
+        teachingLanguages: ['fr-FR'],
+      })
+      const altAUnit = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Alt A',
+        ownerId: 'lang-alt-a',
+        ownerType: 'Instructor',
+      })
+
+      // Alternative B: HAS language match (English)
+      const altBUserId = await seedUser(ctx, {
+        tokenIdentifier: 'user|lang-alt-b',
+        slug: 'lang-alt-b',
+        role: 'Instructor',
+        email: 'lang-alt-b@test.com',
+        name: 'Alt B',
+        firstName: 'Alt',
+        lastName: 'B',
+        businessName: 'Alt B Co',
+      })
+      await seedInstructorProfile(ctx, altBUserId, {
+        placeName: 'Koh Tao',
+        teachingLanguages: ['en-GB', 'th-TH'],
+      })
+      const altBUnit = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Alt B',
+        ownerId: 'lang-alt-b',
+        ownerType: 'Instructor',
+      })
+
+      // Booking with English-speaking diver (using locale code to match backend format)
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'lang-dc',
+        startDate: testDate(5),
+        endDate: testDate(5),
+        operatorName: 'Lang DC Co',
+        divers: [{
+          name: 'Alice',
+          abbrev: 'AL',
+          flag: { code: 'en-GB', label: 'English' },
+          startDate: testDate(5),
+          endDate: testDate(5),
+          activityType: ['OW'],
+        }],
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'lang-decl-instr',
+      })
+
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId)
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      // Both alternatives have availability
+      await seedSnapshot(ctx, altAUnit, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+      await seedSnapshot(ctx, altBUnit, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+
+      return { bookingId, unitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'user|lang-decl' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // Language-matching alternative exists → no no_backup_available
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const noBackup = notifications.find((n) => n.type === 'no_backup_available')
+      expect(noBackup).toBeUndefined()
+
+      const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
+      expect(holdDeclined).toMatchObject({
+        type: 'hold_declined',
+        bookingId,
+      })
+    })
+  })
+
   it('filters out alternative in different city', async () => {
     const t = makeT()
 

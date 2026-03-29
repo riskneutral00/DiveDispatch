@@ -100,6 +100,7 @@ export async function seedInstructorProfile(
     phone?: string
     credential?: Array<{ agency: string; level: string; agencyID: string; courses: string[] }>
     verified?: boolean
+    teachingLanguages?: string[]
   } = {},
 ) {
   return ctx.db.insert('instructors', {
@@ -115,6 +116,7 @@ export async function seedInstructorProfile(
       { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
     ],
     verified: overrides.verified ?? true,
+    ...(overrides.teachingLanguages !== undefined ? { teachingLanguages: overrides.teachingLanguages } : {}),
   })
 }
 

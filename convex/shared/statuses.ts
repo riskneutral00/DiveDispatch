@@ -113,6 +113,7 @@ export const VACATED_REASON = {
   OperatorEdit: 'operator_edit',
   NoshowReplacement: 'noshow_replacement',
   EquipmentNotNeeded: 'equipment_not_needed',
+  UserDeleted: 'user_deleted',
 } as const
 
 export type VacatedReason = (typeof VACATED_REASON)[keyof typeof VACATED_REASON]
@@ -125,4 +126,5 @@ export const vacatedReasonValidator = v.union(
   v.literal(VACATED_REASON.OperatorEdit),
   v.literal(VACATED_REASON.NoshowReplacement),
   v.literal(VACATED_REASON.EquipmentNotNeeded),
+  v.literal(VACATED_REASON.UserDeleted),
 )

@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
 import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
+import type { Doc, Id } from './_generated/dataModel'
 import { tryAutoAdvance, canReservationTransition, isActiveReservation } from './bookings/_shared'
 import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
@@ -14,6 +14,7 @@ import { logBookingChange } from './bookingAuditLog'
 import { ErrorCode } from './lib/errorCodes'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
+import { batchPatch } from './lib/batch'
 import { languageOverlap } from './lib/languageMatch'
 
 // Re-export for test backwards compatibility
@@ -81,36 +82,48 @@ async function getProfileCity(
 }
 
 /**
+ * Batch-fetches users by slug in parallel. Shared by batch helpers
+ * so callers that need both city + languages don't duplicate user lookups.
+ */
+async function batchGetUsers(
+  ctx: MutationCtx,
+  slugs: string[],
+): Promise<Map<string, Doc<'users'> | null>> {
+  if (slugs.length === 0) return new Map()
+  const users = await Promise.all(
+    slugs.map((slug) =>
+      ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique(),
+    ),
+  )
+  const map = new Map<string, Doc<'users'> | null>()
+  for (let i = 0; i < slugs.length; i++) {
+    map.set(slugs[i], users[i])
+  }
+  return map
+}
+
+/**
  * Batch-fetches cities for multiple owner slugs in parallel.
- * Returns Map<slug, city | null>. All user lookups and profile lookups
- * happen via Promise.all — O(slugs) parallel queries, not sequential.
+ * Returns Map<slug, city | null>. Pass pre-resolved userMap to skip user lookups.
  */
 export async function batchGetOwnerCities(
   ctx: MutationCtx,
   slugs: string[],
   ownerType: ResourceType,
+  userMap?: Map<string, Doc<'users'> | null>,
 ): Promise<Map<string, string | null>> {
   const cityMap = new Map<string, string | null>()
   if (slugs.length === 0) return cityMap
 
-  // Step 1: fetch all users by slug in parallel
-  const users = await Promise.all(
-    slugs.map((slug) =>
-      ctx.db
-        .query('users')
-        .withIndex('by_slug', (q) => q.eq('slug', slug))
-        .unique(),
-    ),
-  )
+  const resolvedUsers = userMap ?? await batchGetUsers(ctx, slugs)
 
-  // Step 2: fetch all profiles in parallel using the resolved user IDs
   const cities = await Promise.all(
-    users.map((user) =>
-      user ? getProfileCity(ctx, user._id, ownerType) : Promise.resolve(null),
-    ),
+    slugs.map((slug) => {
+      const user = resolvedUsers.get(slug)
+      return user ? getProfileCity(ctx, user._id, ownerType) : Promise.resolve(null)
+    }),
   )
 
-  // Step 3: assemble the map
   for (let i = 0; i < slugs.length; i++) {
     cityMap.set(slugs[i], cities[i])
   }
@@ -120,31 +133,27 @@ export async function batchGetOwnerCities(
 
 /**
  * Batch-fetches teachingLanguages for instructor candidates in parallel.
- * Returns Map<slug, string[]>. Only meaningful for Instructor/DiveMaster resources.
+ * Returns Map<slug, string[]>. Pass pre-resolved userMap to skip user lookups.
  */
 async function batchGetTeachingLanguages(
   ctx: MutationCtx,
   slugs: string[],
   ownerType: ResourceType,
+  userMap?: Map<string, Doc<'users'> | null>,
 ): Promise<Map<string, string[]>> {
   const langMap = new Map<string, string[]>()
   if (slugs.length === 0) return langMap
   if (ownerType !== 'Instructor') return langMap
 
-  const table = 'instructors' as const
-
-  const users = await Promise.all(
-    slugs.map((slug) =>
-      ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique(),
-    ),
-  )
+  const resolvedUsers = userMap ?? await batchGetUsers(ctx, slugs)
 
   const profiles = await Promise.all(
-    users.map((user) =>
-      user
-        ? ctx.db.query(table).withIndex('by_userId', (q) => q.eq('userId', user._id)).unique()
-        : Promise.resolve(null),
-    ),
+    slugs.map((slug) => {
+      const user = resolvedUsers.get(slug)
+      return user
+        ? ctx.db.query('instructors' as const).withIndex('by_userId', (q) => q.eq('userId', user._id)).unique()
+        : Promise.resolve(null)
+    }),
   )
 
   for (let i = 0; i < slugs.length; i++) {
@@ -234,9 +243,10 @@ export async function _acceptBookingHandler(
 
   if (pending.length === 0) return // idempotent
 
-  for (const res of pending) {
-    await ctx.db.patch(res._id, { status: RESERVATION_STATUS.Confirmed, confirmedAt: Date.now() })
-  }
+  const confirmedAt = Date.now()
+  await batchPatch(ctx, pending.map((res) => [res._id, {
+    status: RESERVATION_STATUS.Confirmed, confirmedAt,
+  }] as const))
 
   await logBookingChange(ctx, {
     bookingId: args.bookingId,
@@ -359,11 +369,12 @@ export async function _declineHandler(
     }
   }
 
-  // Batch-fetch cities and teaching languages for all candidates in parallel
+  // Batch-fetch users once, then derive cities + languages without duplicate lookups
   const candidateSlugs = candidates.map((c) => c.ownerId)
+  const userMap = await batchGetUsers(ctx, candidateSlugs)
   const [cityMap, langMap] = await Promise.all([
-    batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType),
-    batchGetTeachingLanguages(ctx, candidateSlugs, unit.resourceType as ResourceType),
+    batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType, userMap),
+    batchGetTeachingLanguages(ctx, candidateSlugs, unit.resourceType as ResourceType, userMap),
   ])
 
   // Extract customer language codes from the booking for language-aware sorting
