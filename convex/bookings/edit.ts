@@ -22,12 +22,12 @@ export const editBooking = mutation({
     idempotencyKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { user } = await requireAuth(ctx)
+
     if (args.idempotencyKey) {
       const isDuplicate = await checkIdempotency(ctx, args.idempotencyKey, 'editBooking')
       if (isDuplicate) return
     }
-
-    const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })

@@ -44,6 +44,7 @@ import type * as lib_alerts from "../lib/alerts.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_devGuard from "../lib/devGuard.js";
 import type * as lib_errorCodes from "../lib/errorCodes.js";
+import type * as lib_idempotency from "../lib/idempotency.js";
 import type * as lib_logger from "../lib/logger.js";
 import type * as lib_portal from "../lib/portal.js";
 import type * as lib_profileCompleteness from "../lib/profileCompleteness.js";
@@ -127,6 +128,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/devGuard": typeof lib_devGuard;
   "lib/errorCodes": typeof lib_errorCodes;
+  "lib/idempotency": typeof lib_idempotency;
   "lib/logger": typeof lib_logger;
   "lib/portal": typeof lib_portal;
   "lib/profileCompleteness": typeof lib_profileCompleteness;
