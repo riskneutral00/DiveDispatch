@@ -1,4 +1,4 @@
-// Tests that non-DiveCenter operator types (Liveaboard, DiveResort) exist in seed data
+// Tests that non-DiveCenter operator types (Liveaboard, DiveResort, Agent) exist in seed data
 // and have correct structure for seeding.
 
 import { describe, it, expect } from 'vitest'
@@ -13,6 +13,10 @@ describe('Non-DiveCenter operator seed data', () => {
 
   const diveResortStakeholder = ALL_STAKEHOLDERS.find(
     (s) => s.roles?.some((r) => r.role === 'DiveResort'),
+  )
+
+  const agentStakeholder = ALL_STAKEHOLDERS.find(
+    (s) => s.roles?.some((r) => r.role === 'Agent'),
   )
 
   describe('Liveaboard operator', () => {
@@ -106,6 +110,65 @@ describe('Non-DiveCenter operator seed data', () => {
       const slug = diveResortStakeholder!.user.slug
       const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
       expect(config!.ownerType).toBe('DiveResort')
+    })
+  })
+
+  describe('Agent operator', () => {
+    it('exists in ALL_STAKEHOLDERS', () => {
+      expect(agentStakeholder).toBeTruthy()
+    })
+
+    it('has a user record with all required fields', () => {
+      const user = agentStakeholder!.user
+      expect(user.slug).toBe('r5yz4q')
+      expect(user.email).toContain('@divedispatch.dev')
+      expect(user.name).toBeTruthy()
+      expect(user.firstName).toBeTruthy()
+      expect(user.lastName).toBeTruthy()
+      expect(user.businessName).toBeTruthy()
+      expect(user.phone).toBeTruthy()
+    })
+
+    it('has the Agent role assigned', () => {
+      const roles = agentStakeholder!.roles!
+      expect(roles).toContainEqual({ role: 'Agent' })
+    })
+
+    it('has an agent profile with required fields', () => {
+      const profile = agentStakeholder!.agent
+      expect(profile).toBeTruthy()
+      expect(profile!.name).toBeTruthy()
+      expect(profile!.locations.length).toBeGreaterThanOrEqual(1)
+      expect(profile!.locations[0].placeName).toBeTruthy()
+      expect(profile!.locations[0].country).toBeTruthy()
+      expect(typeof profile!.locations[0].lat).toBe('number')
+      expect(typeof profile!.locations[0].lng).toBe('number')
+      expect(profile!.email).toContain('@divedispatch.dev')
+      expect(profile!.phone).toBeTruthy()
+      expect(profile!.verified).toBe(true)
+    })
+
+    it('has at least one booking config', () => {
+      const slug = agentStakeholder!.user.slug
+      const configs = BOOKING_CONFIGS.filter((c) => c.ownerSlug === slug)
+      expect(configs.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('booking config uses Agent ownerType', () => {
+      const slug = agentStakeholder!.user.slug
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
+      expect(config!.ownerType).toBe('Agent')
+    })
+
+    it('booking config is structurally valid', () => {
+      const slug = agentStakeholder!.user.slug
+      const config = BOOKING_CONFIGS.find((c) => c.ownerSlug === slug)
+      expect(config!.ownerName).toBeTruthy()
+      expect(config!.count).toBeGreaterThanOrEqual(1)
+      expect(config!.activityMix).toBeTruthy()
+      expect(Object.keys(config!.activityMix).length).toBeGreaterThanOrEqual(1)
+      expect(config!.statusMix).toBeTruthy()
+      expect(Object.keys(config!.statusMix).length).toBeGreaterThanOrEqual(1)
     })
   })
 
