@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useId, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { LanguageFlags } from '@/components/common/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
+import { scoreLanguageMatch, type MatchTier } from '@/lib/utils/language-matching'
 
 export interface GlassSelectOption {
   id: string
@@ -27,6 +28,12 @@ interface GlassSelectProps {
 
 const DEFAULT_VISIBLE = 2
 
+const MATCH_BADGE: Record<MatchTier, { label: string; color: string } | null> = {
+  full: { label: 'Full match', color: 'var(--color-success, #22c55e)' },
+  partial: { label: 'Partial', color: 'var(--color-warning, #f59e0b)' },
+  none: null,
+}
+
 const OptionRow = memo(function OptionRow({
   opt,
   isSelected,
@@ -34,6 +41,7 @@ const OptionRow = memo(function OptionRow({
   onSelect,
   onHover,
   id,
+  matchTier,
 }: {
   opt: GlassSelectOption
   isSelected: boolean
@@ -41,7 +49,9 @@ const OptionRow = memo(function OptionRow({
   onSelect: () => void
   onHover: () => void
   id: string
+  matchTier?: MatchTier
 }) {
+  const badge = matchTier ? MATCH_BADGE[matchTier] : null
   return (
     <li
       id={id}
@@ -58,6 +68,14 @@ const OptionRow = memo(function OptionRow({
           {isSelected && <Check size={14} style={{ color: 'var(--color-accent)' }} />}
         </span>
         <span className="truncate">{opt.label}</span>
+        {badge && (
+          <span
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+            style={{ color: badge.color, backgroundColor: `color-mix(in srgb, ${badge.color} 15%, transparent)` }}
+          >
+            {badge.label}
+          </span>
+        )}
       </span>
       {opt.languages && opt.languages.length > 0 && (
         <LanguageFlags languages={opt.languages} className="text-sm flex-shrink-0" />
