@@ -65,6 +65,8 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
         .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
         .collect()
 
+      // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
+      const seenSnapshotIds = new Set<string>()
       for (const res of allReservations) {
         if (res.status === RESERVATION_STATUS.Vacated || res.status === RESERVATION_STATUS.NoShow) continue
         // DD-017: re-read reservation to guard against concurrent vacate
@@ -95,7 +97,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
           vacatedBy: VACATED_REASON.EquipmentNotNeeded,
         })
 
-        await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
+        await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested, seenSnapshotIds)
       }
     }
   }

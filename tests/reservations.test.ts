@@ -3,6 +3,7 @@ import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import { getDateRange } from '../convex/reservationsMutations'
 import { testDate } from './helpers/dates'
+import { ErrorCode } from '../convex/lib/errorCodes'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import {
   seedUser,
@@ -950,6 +951,79 @@ describe('decline cascade side effects', () => {
         expect(snap?.reservedUnits).toBe(0)
       }
     })
+  })
+
+  it('DD-291: decline with 2 reservations on the same pooled snapshot throws SNAPSHOT_DOUBLE_WRITE (guard is wired)', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dw-inst',
+        slug: 'dw-instructor',
+        email: 'dw@test.com',
+        name: 'DW Instructor',
+        firstName: 'DW',
+        lastName: 'Instructor',
+        businessName: 'DW Co',
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dw-dc',
+        slug: 'dw-dc',
+        email: 'dw-dc@test.com',
+        name: 'DW DC',
+        firstName: 'DW',
+        lastName: 'DC',
+        businessName: 'DW DC Co',
+        role: 'DiveCenter',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        displayName: 'Pooled Tank Rack',
+        capacityModel: 'Pooled',
+        totalUnits: 10,
+        ownerId: 'dw-instructor',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'dw-dc',
+        startDate: testDate(5),
+        endDate: testDate(5),
+        operatorName: 'DW DC Co',
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'dw-instructor',
+      })
+      // One session, one snapshot, TWO reservations on the same session+snapshot
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 10,
+        availableUnits: 8,
+        reservedUnits: 2,
+      })
+      // Two reservations against the same snapshot
+      await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
+
+      return { bookingId, unitId }
+    })
+
+    // Decline should throw SNAPSHOT_DOUBLE_WRITE because two reservations map
+    // to the same snapshot and the guard detects the second write attempt
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|dw-inst' }).mutation(
+        api.reservationsMutations.declineReservation,
+        { bookingId, inventoryUnitId: unitId },
+      ),
+      ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+    )
   })
 
   it('H17: decline deletes the bookingResources junction row for the declined resource type', async () => {

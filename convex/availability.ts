@@ -473,6 +473,8 @@ export async function _toggleBlockedDate(
     // Second pass: vacate PendingAcceptance reservations (safe — no Confirmed exist)
     const now = Date.now()
     const affectedBookingIds = new Set<string>()
+    // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
+    const seenSnapshotIds = new Set<string>()
 
     for (const unit of units) {
       const sessions = await ctx.db
@@ -523,7 +525,7 @@ export async function _toggleBlockedDate(
             )
           }
 
-          await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested)
+          await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested, seenSnapshotIds)
         }
       }
     }

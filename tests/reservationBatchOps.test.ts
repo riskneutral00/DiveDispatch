@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import {
   seedUser,
@@ -83,9 +84,11 @@ describe('declineByBookingForCaller', () => {
       await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
       bookingId = await seedBooking(ctx)
       const unitId = await seedInventoryUnit(ctx)
-      await seedSnapshot(ctx, unitId, { reservedUnits: 2, availableUnits: -1 })
-      const session1 = await seedSession(ctx, bookingId, unitId)
-      const session2 = await seedSession(ctx, bookingId, unitId, { date: undefined })
+      // DD-291: two sessions on different dates → two distinct snapshots (no double-write)
+      await seedSnapshot(ctx, unitId, { date: testDate(5), reservedUnits: 1, availableUnits: 0 })
+      await seedSnapshot(ctx, unitId, { date: testDate(6), reservedUnits: 1, availableUnits: 0 })
+      const session1 = await seedSession(ctx, bookingId, unitId, { date: testDate(5) })
+      const session2 = await seedSession(ctx, bookingId, unitId, { date: testDate(6) })
       resId1 = await seedReservation(ctx, bookingId, unitId, session1)
       resId2 = await seedReservation(ctx, bookingId, unitId, session2)
     })

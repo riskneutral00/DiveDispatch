@@ -260,6 +260,8 @@ export async function _declineHandler(
   const now = Date.now()
 
   // Vacate each reservation and restore its snapshot atomically (Invariant 3)
+  // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
+  const seenSnapshotIds = new Set<string>()
   for (const reservation of activeForUnit) {
     await ctx.db.patch(reservation._id, {
       status: RESERVATION_STATUS.Vacated,
@@ -285,7 +287,7 @@ export async function _declineHandler(
       })
     }
 
-    await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested)
+    await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested, seenSnapshotIds)
   }
 
   // Delete from bookingResources junction table
