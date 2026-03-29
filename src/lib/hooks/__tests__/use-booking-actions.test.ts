@@ -323,4 +323,103 @@ describe('useBookingActions', () => {
     })
     expect(result.current.urgentCancelId).toBeNull()
   })
+
+  // ── Optimistic updates ─────────────────────────────────────────────────────
+
+  it('handleDetailAccept optimistically sets reservationStatus to Confirmed before mutation resolves', async () => {
+    const booking = makeBooking({ _id: 'b-opt', reservationStatus: 'PendingAcceptance' })
+    let resolveAccept!: () => void
+    mockAccept.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveAccept = resolve }),
+    )
+
+    const { result } = renderHook(() => useBookingActions())
+
+    act(() => {
+      result.current.setDetailBooking(booking)
+    })
+    expect(result.current.detailBooking?.reservationStatus).toBe('PendingAcceptance')
+
+    let acceptPromise: Promise<void>
+    act(() => {
+      acceptPromise = result.current.handleDetailAccept('b-opt')
+    })
+
+    // Mutation invoked but still pending (deferred promise)
+    expect(mockAccept).toHaveBeenCalledTimes(1)
+    // Optimistic state visible while mutation is in-flight
+    expect(result.current.detailBooking?.reservationStatus).toBe('Confirmed')
+
+    await act(async () => {
+      resolveAccept()
+      await acceptPromise!
+    })
+  })
+
+  it('handleDetailAccept reverts reservationStatus on server rejection', async () => {
+    const booking = makeBooking({ _id: 'b-revert', reservationStatus: 'PendingAcceptance' })
+    mockAccept.mockRejectedValue(new ConvexError({ reason: 'Booking already cancelled' }))
+
+    const { result } = renderHook(() => useBookingActions())
+
+    act(() => {
+      result.current.setDetailBooking(booking)
+    })
+
+    await act(async () => {
+      await result.current.handleDetailAccept('b-revert')
+    })
+
+    // After rejection: reverts to original status
+    expect(result.current.detailBooking?.reservationStatus).toBe('PendingAcceptance')
+    expect(result.current.detailError).toBe('Booking already cancelled')
+  })
+
+  it('handleDetailDecline optimistically sets reservationStatus to Vacated before mutation resolves', async () => {
+    const booking = makeBooking({ _id: 'b-decline-opt', reservationStatus: 'PendingAcceptance' })
+    let resolveDecline!: () => void
+    mockDecline.mockImplementation(
+      () => new Promise<void>((resolve) => { resolveDecline = resolve }),
+    )
+
+    const { result } = renderHook(() => useBookingActions())
+
+    act(() => {
+      result.current.setDetailBooking(booking)
+    })
+
+    let declinePromise: Promise<void>
+    act(() => {
+      declinePromise = result.current.handleDetailDecline('b-decline-opt')
+    })
+
+    // Mutation invoked but still pending (deferred promise)
+    expect(mockDecline).toHaveBeenCalledTimes(1)
+    // Optimistic state visible while mutation is in-flight
+    expect(result.current.detailBooking?.reservationStatus).toBe('Vacated')
+
+    await act(async () => {
+      resolveDecline()
+      await declinePromise!
+    })
+  })
+
+  it('handleDetailDecline reverts reservationStatus on server rejection', async () => {
+    const booking = makeBooking({ _id: 'b-decline-revert', reservationStatus: 'PendingAcceptance' })
+    mockDecline.mockRejectedValue(new ConvexError({ reason: 'Cannot decline' }))
+
+    const { result } = renderHook(() => useBookingActions())
+
+    act(() => {
+      result.current.setDetailBooking(booking)
+    })
+
+    await act(async () => {
+      await result.current.handleDetailDecline('b-decline-revert')
+    })
+
+    // After rejection: reverts to original status
+    expect(result.current.detailBooking?.reservationStatus).toBe('PendingAcceptance')
+    expect(result.current.detailError).toBe('Cannot decline')
+  })
 })

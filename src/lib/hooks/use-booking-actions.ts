@@ -57,30 +57,52 @@ export function useBookingActions(): UseBookingActionsReturn {
   const handleDetailAccept = useCallback(async (bookingId: string) => {
     setIsAccepting(true)
     setDetailError(null)
+
+    // Optimistically update reservation status
+    const previousBooking = detailBooking
+    if (detailBooking) {
+      setDetailBooking({ ...detailBooking, reservationStatus: 'Confirmed' })
+    }
+
     try {
       await acceptByBooking({ bookingId: bookingId as Id<'bookings'> })
       setDetailBooking(null)
     } catch (err) {
       const message = parseConvexError(err, 'Failed to accept booking')
       setDetailError(message)
+      // Revert optimistic update
+      if (previousBooking) {
+        setDetailBooking(previousBooking)
+      }
     } finally {
       setIsAccepting(false)
     }
-  }, [acceptByBooking])
+  }, [acceptByBooking, detailBooking])
 
   const handleDetailDecline = useCallback(async (bookingId: string) => {
     setIsDeclining(true)
     setDetailError(null)
+
+    // Optimistically update reservation status
+    const previousBooking = detailBooking
+    if (detailBooking) {
+      setDetailBooking({ ...detailBooking, reservationStatus: 'Vacated' })
+    }
+
     try {
       await declineByBooking({ bookingId: bookingId as Id<'bookings'> })
       setDetailBooking(null)
     } catch (err) {
       const message = parseConvexError(err, 'Failed to decline booking')
       setDetailError(message)
+      // Revert optimistic update
+      if (previousBooking) {
+        setDetailBooking(previousBooking)
+      }
     } finally {
       setIsDeclining(false)
     }
-  }, [declineByBooking])
+  }, [declineByBooking, detailBooking])
 
   const handleUrgentCancel = useCallback((bookingId: string, isOperator: boolean) => {
     if (isOperator) {

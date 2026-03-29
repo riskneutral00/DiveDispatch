@@ -1,12 +1,9 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
 import { Spinner } from '@/components/common/spinner'
 import { NotificationItem } from './notification-item'
-import type { NotificationDoc } from './notification-item'
+import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 
 interface NotificationPanelProps {
   userId: string
@@ -15,11 +12,12 @@ interface NotificationPanelProps {
 
 export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
-  const rawNotifications = useQuery(api.notifications.listNotifications, { userId, limit: 20 })
-  const notifications = rawNotifications as NotificationDoc[] | undefined
-  const markAsRead = useMutation(api.notifications.markAsRead)
-  const deleteNotification = useMutation(api.notifications.deleteNotification)
-  const clearAll = useMutation(api.notifications.clearAll)
+  const {
+    notifications,
+    handleMarkAsRead,
+    handleDelete,
+    handleClearAll,
+  } = useOptimisticNotifications({ userId, limit: 20 })
 
   // Close on outside click
   useEffect(() => {
@@ -42,16 +40,8 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   }, [onClose])
 
   async function handleItemClick(id: string) {
-    await markAsRead({ notificationId: id as Id<'notifications'> })
+    await handleMarkAsRead(id)
     onClose()
-  }
-
-  async function handleDelete(id: string) {
-    await deleteNotification({ notificationId: id as Id<'notifications'> })
-  }
-
-  async function handleClearAll() {
-    await clearAll({ userId })
   }
 
   const hasNotifications = (notifications?.length ?? 0) > 0
