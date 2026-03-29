@@ -174,7 +174,11 @@ const BATCH_SIZE = 25
  */
 export const purgeExpiredDrafts = internalMutation({
   args: {},
-  handler: async (ctx): Promise<{ purged: number }> => {
+  handler: async (ctx): Promise<{
+    purged: number
+    skipped: number
+    errors: Array<{ bookingId: string; errorCode: string }>
+  }> => {
     const now = Date.now()
 
     const staleDrafts = await ctx.db
@@ -188,17 +192,39 @@ export const purgeExpiredDrafts = internalMutation({
       )
       .take(BATCH_SIZE)
 
+    let purged = 0
+    const errors: Array<{ bookingId: string; errorCode: string }> = []
+
     for (const booking of staleDrafts) {
-      await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
-      await logBookingChange(ctx, {
-        bookingId: booking._id,
-        action: 'expired_draft_purged',
-        actorSlug: 'system',
-        actorType: 'system',
-      })
+      try {
+        await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
+        await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
+        await logBookingChange(ctx, {
+          bookingId: booking._id,
+          action: 'expired_draft_purged',
+          actorSlug: 'system',
+          actorType: 'system',
+        })
+        purged++
+      } catch (err) {
+        let errorCode = 'UNKNOWN'
+        if (
+          err instanceof ConvexError &&
+          typeof err.data === 'object' &&
+          err.data !== null &&
+          'code' in err.data &&
+          typeof (err.data as { code: unknown }).code === 'string'
+        ) {
+          errorCode = (err.data as { code: string }).code
+        }
+        console.error(`purgeExpiredDrafts: failed to purge booking`, {
+          bookingId: booking._id,
+          errorCode,
+        })
+        errors.push({ bookingId: booking._id, errorCode })
+      }
     }
 
-    return { purged: staleDrafts.length }
+    return { purged, skipped: errors.length, errors }
   },
 })
