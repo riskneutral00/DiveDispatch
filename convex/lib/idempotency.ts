@@ -16,10 +16,22 @@ const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000
 /**
  * Check whether a mutation with this idempotency key has already been executed.
  *
- * Convex uses serializable OCC transactions. If two concurrent mutations read
- * this index range and both see null, one commits first. The second is retried
- * by Convex and finds the existing record on the second attempt, returning true.
- * This provides atomic deduplication without explicit locking.
+ * ATOMICITY GUARANTEE — Convex Serializable Transactions
+ *
+ * This function uses a read-then-insert pattern. Two concurrent calls with
+ * the same (key, mutationName) pair are safe because Convex transactions are
+ * serializable with OCC (Optimistic Concurrency Control):
+ *
+ * 1. Both transactions read the `by_key_mutationName` index and find no match.
+ * 2. Both insert a new idempotencyLog record.
+ * 3. Convex detects the read-set conflict (both read the same empty index range
+ *    that one has now written to) and retries the losing transaction.
+ * 4. On retry, the second transaction finds the first's record via the index
+ *    query and returns `true` (duplicate detected).
+ *
+ * This guarantee is inherent to Convex's transaction model — it is not testable
+ * via the sequential test harness, but is verified by Convex's runtime.
+ * See: https://docs.convex.dev/database/advanced/occ
  *
  * @returns `true` if the key is a duplicate (caller should short-circuit),
  *          `false` if the key is fresh (caller should proceed and the key is now recorded).
