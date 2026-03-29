@@ -10,22 +10,34 @@
 
 import { describe, it, expect } from 'vitest'
 import { internal } from '../convex/_generated/api'
-import { seedUser, TEST_TOKENS } from './fixtures'
+import { seedUser } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+
+/** Generate a unique svixId per test to prevent cross-test collision. */
+function makeSvixId(): string {
+  return `msg_${crypto.randomUUID()}`
+}
+
+/** Generate a unique tokenIdentifier per test to prevent cross-test collision. */
+function makeTokenIdentifier(label: string): string {
+  return `clerk|${label}-${crypto.randomUUID().slice(0, 8)}`
+}
 
 // ── upsertFromWebhook idempotency ─────────────────────────────────────────
 
 describe('upsertFromWebhook idempotency', () => {
   it('processes the first event normally', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('first')
+    const svixId = makeSvixId()
 
     const userId = await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|webhook-user-1',
+      tokenIdentifier: token,
       email: 'user1@test.com',
       name: 'User One',
       firstName: 'User',
       lastName: 'One',
-      svixId: 'msg_first-event',
+      svixId,
     })
 
     expect(userId).not.toBeNull()
@@ -34,7 +46,7 @@ describe('upsertFromWebhook idempotency', () => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|webhook-user-1'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
@@ -44,25 +56,27 @@ describe('upsertFromWebhook idempotency', () => {
 
   it('skips duplicate svixId on upsert (second call is no-op)', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('dup')
+    const svixId = makeSvixId()
 
     // First call — creates the user
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|webhook-dup',
+      tokenIdentifier: token,
       email: 'original@test.com',
       name: 'Original Name',
       firstName: 'Original',
       lastName: 'Name',
-      svixId: 'msg_duplicate-upsert',
+      svixId,
     })
 
     // Second call — same svixId, different data. Should be skipped.
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|webhook-dup',
+      tokenIdentifier: token,
       email: 'updated@test.com',
       name: 'Updated Name',
       firstName: 'Updated',
       lastName: 'Name',
-      svixId: 'msg_duplicate-upsert',
+      svixId,
     })
 
     // User should still have original data (second call was no-op)
@@ -70,36 +84,50 @@ describe('upsertFromWebhook idempotency', () => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|webhook-dup'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
 
     expect(user?.email).toBe('original@test.com')
     expect(user?.name).toBe('Original Name')
+
+    // idempotencyLog should contain exactly one entry for this svixId
+    const logEntries = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', svixId).eq('mutationName', 'clerk_webhook_upsert'),
+        )
+        .collect()
+    })
+    expect(logEntries).toHaveLength(1)
   })
 
   it('processes different svixIds independently', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('multi')
+    const svixIdA = makeSvixId()
+    const svixIdB = makeSvixId()
 
     // First event — creates user
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|webhook-multi',
+      tokenIdentifier: token,
       email: 'first@test.com',
       name: 'First',
       firstName: 'First',
       lastName: 'User',
-      svixId: 'msg_event-a',
+      svixId: svixIdA,
     })
 
     // Second event — different svixId, updates user
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|webhook-multi',
+      tokenIdentifier: token,
       email: 'second@test.com',
       name: 'Second',
       firstName: 'Second',
       lastName: 'User',
-      svixId: 'msg_event-b',
+      svixId: svixIdB,
     })
 
     // User should have data from second event (both processed)
@@ -107,7 +135,7 @@ describe('upsertFromWebhook idempotency', () => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|webhook-multi'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
@@ -122,24 +150,27 @@ describe('upsertFromWebhook idempotency', () => {
 describe('deleteFromWebhook idempotency', () => {
   it('anonymises user on first delete event', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('delete')
+    const svixId = makeSvixId()
+
     await t.run(async (ctx) => {
       await seedUser(ctx, {
-        tokenIdentifier: 'clerk|delete-target',
+        tokenIdentifier: token,
         email: 'victim@test.com',
         name: 'Delete Me',
       })
     })
 
     await t.mutation(internal.users.deleteFromWebhook, {
-      tokenIdentifier: 'clerk|delete-target',
-      svixId: 'msg_delete-first',
+      tokenIdentifier: token,
+      svixId,
     })
 
     const user = await t.run(async (ctx) => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|delete-target'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
@@ -150,9 +181,12 @@ describe('deleteFromWebhook idempotency', () => {
 
   it('skips duplicate svixId on delete (second call is no-op)', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('delete-dup')
+    const svixId = makeSvixId()
+
     await t.run(async (ctx) => {
       await seedUser(ctx, {
-        tokenIdentifier: 'clerk|delete-dup',
+        tokenIdentifier: token,
         email: 'target@test.com',
         name: 'Target User',
       })
@@ -160,8 +194,8 @@ describe('deleteFromWebhook idempotency', () => {
 
     // First call — anonymises the user
     await t.mutation(internal.users.deleteFromWebhook, {
-      tokenIdentifier: 'clerk|delete-dup',
-      svixId: 'msg_delete-dup',
+      tokenIdentifier: token,
+      svixId,
     })
 
     // Manually restore the email to prove second call is a no-op
@@ -169,7 +203,7 @@ describe('deleteFromWebhook idempotency', () => {
       const user = await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|delete-dup'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
       if (user) {
@@ -179,8 +213,8 @@ describe('deleteFromWebhook idempotency', () => {
 
     // Second call — same svixId, should be skipped
     await t.mutation(internal.users.deleteFromWebhook, {
-      tokenIdentifier: 'clerk|delete-dup',
-      svixId: 'msg_delete-dup',
+      tokenIdentifier: token,
+      svixId,
     })
 
     // Email should still be 'restored' (second call was no-op)
@@ -188,12 +222,23 @@ describe('deleteFromWebhook idempotency', () => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|delete-dup'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
 
     expect(user?.email).toBe('restored@test.com')
+
+    // idempotencyLog should contain exactly one entry for this svixId
+    const logEntries = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', svixId).eq('mutationName', 'clerk_webhook_delete'),
+        )
+        .collect()
+    })
+    expect(logEntries).toHaveLength(1)
   })
 })
 
@@ -202,10 +247,11 @@ describe('deleteFromWebhook idempotency', () => {
 describe('webhook backwards compatibility', () => {
   it('upsertFromWebhook works without svixId (no guard applied)', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('no-svix')
 
     // First call without svixId
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|no-svix',
+      tokenIdentifier: token,
       email: 'first@test.com',
       name: 'First',
       firstName: 'First',
@@ -214,7 +260,7 @@ describe('webhook backwards compatibility', () => {
 
     // Second call without svixId — should still process
     await t.mutation(internal.users.upsertFromWebhook, {
-      tokenIdentifier: 'clerk|no-svix',
+      tokenIdentifier: token,
       email: 'second@test.com',
       name: 'Second',
       firstName: 'Second',
@@ -225,7 +271,7 @@ describe('webhook backwards compatibility', () => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|no-svix'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
@@ -235,23 +281,25 @@ describe('webhook backwards compatibility', () => {
 
   it('deleteFromWebhook works without svixId (no guard applied)', async () => {
     const t = makeT()
+    const token = makeTokenIdentifier('delete-no-svix')
+
     await t.run(async (ctx) => {
       await seedUser(ctx, {
-        tokenIdentifier: 'clerk|delete-no-svix',
+        tokenIdentifier: token,
         email: 'target@test.com',
         name: 'Target',
       })
     })
 
     await t.mutation(internal.users.deleteFromWebhook, {
-      tokenIdentifier: 'clerk|delete-no-svix',
+      tokenIdentifier: token,
     })
 
     const user = await t.run(async (ctx) => {
       return await ctx.db
         .query('users')
         .withIndex('by_tokenIdentifier', (q) =>
-          q.eq('tokenIdentifier', 'clerk|delete-no-svix'),
+          q.eq('tokenIdentifier', token),
         )
         .unique()
     })
