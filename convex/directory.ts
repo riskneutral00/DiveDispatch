@@ -29,7 +29,7 @@ export type DirectoryEntry = {
   maxCapacity?: number      // Pool: max capacity in pax
   association?: string      // Agent: primary association agency name
   isPreferred?: boolean     // Instructor: starred by the authenticated caller
-  languages?: string[]      // Country codes the stakeholder speaks (from users.customerLanguages)
+  languages?: string[]      // Instructor/DiveMaster: teachingLanguages; other roles: users.customerLanguages
 }
 
 type ProfileData = {
@@ -45,6 +45,7 @@ type ProfileData = {
   maxDepth?: number
   maxCapacity?: number
   association?: string
+  teachingLanguages?: string[]
 }
 
 // Returns profile display fields (including role-specific extras) for a user.
@@ -79,12 +80,19 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
         country: p.country,
         verified: p.verified,
         agencies: (p.credential ?? []).map((c: { agency: string }) => c.agency),
+        teachingLanguages: p.teachingLanguages,
       }
     }
     case 'DiveMaster': {
       const p = await queryProfileByUser(db, 'diveMasters', userId)
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
+      return {
+        name: p.name,
+        placeName: p.placeName,
+        country: p.country,
+        verified: p.verified,
+        teachingLanguages: p.teachingLanguages,
+      }
     }
     case 'DiveCenter': {
       const p = await queryProfileByUser(db, 'diveCenters', userId)
@@ -243,7 +251,7 @@ export const listByRole = query({
             maxCapacity: profile.maxCapacity,
             association: profile.association,
             isPreferred,
-            languages: u.customerLanguages,
+            languages: profile.teachingLanguages ?? u.customerLanguages,
           }
         }),
     )

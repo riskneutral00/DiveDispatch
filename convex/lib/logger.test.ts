@@ -24,29 +24,16 @@ describe('structured logger', () => {
     return JSON.parse(raw)
   }
 
-  it('log.info emits valid JSON with level, message, timestamp', () => {
-    log.info('test message')
-    const output = getLastLoggedJson()
-    expect(output.level).toBe('info')
-    expect(output.message).toBe('test message')
-    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
-  })
-
-  it('log.warn emits level "warn" with ISO timestamp', () => {
-    log.warn('warning message')
-    const output = getLastLoggedJson()
-    expect(output.level).toBe('warn')
-    expect(output.message).toBe('warning message')
-    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
-  })
-
-  it('log.error emits level "error" with ISO timestamp', () => {
-    log.error('error message')
-    const output = getLastLoggedJson()
-    expect(output.level).toBe('error')
-    expect(output.message).toBe('error message')
-    expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
-  })
+  it.each(['info', 'warn', 'error'] as const)(
+    'log.%s emits valid JSON with level, message, timestamp',
+    (level) => {
+      log[level](`${level} message`)
+      const output = getLastLoggedJson()
+      expect(output.level).toBe(level)
+      expect(output.message).toBe(`${level} message`)
+      expect(new Date(String(output.timestamp)).toISOString()).toBe(output.timestamp)
+    },
+  )
 
   it('spreads context fields into the JSON output', () => {
     log.info('user action', { userId: 'abc123', action: 'login' })
@@ -70,7 +57,6 @@ describe('structured logger', () => {
     const output = getLastLoggedJson()
     expect(output.level).toBe('error')
     expect(output.message).toBe('bare error')
-    // Should only have level, message, timestamp
     expect(Object.keys(output).sort()).toEqual(['level', 'message', 'timestamp'])
   })
 
