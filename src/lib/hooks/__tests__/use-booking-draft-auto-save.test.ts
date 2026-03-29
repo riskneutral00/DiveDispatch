@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { WizardState } from '@/lib/booking/wizard-state'
+import { serializeDraftState } from '@/lib/booking/wizard-state'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ describe('useBookingDraftAutoSave', () => {
     expect(mockSaveDraftState).toHaveBeenCalledOnce()
     expect(mockSaveDraftState).toHaveBeenCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state2),
+      draftState: serializeDraftState(state2),
     })
   })
 
@@ -134,7 +135,7 @@ describe('useBookingDraftAutoSave', () => {
     // Saved with latest state
     expect(mockSaveDraftState).toHaveBeenCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state3),
+      draftState: serializeDraftState(state3),
     })
   })
 
@@ -358,7 +359,7 @@ describe('useBookingDraftAutoSave', () => {
     // Follow-up uses the latest state
     expect(mockSaveDraftState).toHaveBeenLastCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state3),
+      draftState: serializeDraftState(state3),
     })
   })
 
@@ -398,7 +399,7 @@ describe('useBookingDraftAutoSave', () => {
     expect(mockSaveDraftState).toHaveBeenCalledTimes(2)
     expect(mockSaveDraftState).toHaveBeenLastCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state3),
+      draftState: serializeDraftState(state3),
     })
   })
 
@@ -451,7 +452,7 @@ describe('useBookingDraftAutoSave', () => {
     expect(mockSaveDraftState).toHaveBeenCalledTimes(2)
     expect(mockSaveDraftState).toHaveBeenLastCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state4),
+      draftState: serializeDraftState(state4),
     })
   })
 
@@ -507,7 +508,7 @@ describe('useBookingDraftAutoSave', () => {
     // The final call used the latest state (state3)
     expect(mockSaveDraftState).toHaveBeenLastCalledWith({
       bookingId: 'booking-1',
-      draftState: JSON.stringify(state3),
+      draftState: serializeDraftState(state3),
     })
   })
 

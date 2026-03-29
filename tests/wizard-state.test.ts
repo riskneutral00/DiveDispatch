@@ -7,6 +7,8 @@ import {
   canAdvanceFromCustomers,
   canAdvanceFromItinerary,
   canAdvanceFromResources,
+  serializeDraftState,
+  deserializeDraftState,
   type CustomerData,
 } from '../src/lib/booking/wizard-state'
 import { testDate } from './helpers/dates'
@@ -888,3 +890,32 @@ function makeOADays() {
     { date: testDate(6), venueType: 'boat' as const, dives: [{ courseCode: 'AOW', diveNumber: 3, isConfined: false }, { courseCode: 'AOW', diveNumber: 4, isConfined: false }, { courseCode: 'AOW', diveNumber: 5, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
   ]
 }
+
+// ── Serialization (schema version) ─────────────────────────────────────────
+
+describe('serializeDraftState / deserializeDraftState', () => {
+  it('roundtrips: serialize then deserialize returns equivalent state', () => {
+    const state = makeInitialState('booking-123')
+    const json = serializeDraftState(state)
+    const restored = deserializeDraftState(json)
+    expect(restored).not.toBeNull()
+    expect(restored!.step).toBe('customers')
+    expect(restored!.bookingId).toBe('booking-123')
+    expect(restored!.customers.length).toBe(1)
+  })
+
+  it('returns null for JSON missing _v field', () => {
+    const raw = JSON.stringify({ step: 'customers', bookingId: null })
+    expect(deserializeDraftState(raw)).toBeNull()
+  })
+
+  it('returns null for JSON with wrong version number', () => {
+    const state = makeInitialState()
+    const raw = JSON.stringify({ ...state, _v: 999 })
+    expect(deserializeDraftState(raw)).toBeNull()
+  })
+
+  it('returns null for invalid JSON', () => {
+    expect(deserializeDraftState('not-json{{')).toBeNull()
+  })
+})

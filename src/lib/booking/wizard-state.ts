@@ -1,6 +1,8 @@
 // ── Wizard State (3-step) ─────────────────────────────────────────────────────
 // Step structure: Customers → Itinerary (with resources) → Review
 
+export const WIZARD_STATE_VERSION = 1
+
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG } from '@/lib/constants/course-catalog'
 import {
@@ -487,12 +489,14 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
 // ── Serialization ─────────────────────────────────────────────────────────────
 
 export function serializeDraftState(state: WizardState): string {
-  return JSON.stringify(state)
+  return JSON.stringify({ ...state, _v: WIZARD_STATE_VERSION })
 }
 
 export function deserializeDraftState(json: string): WizardState | null {
   try {
-    return JSON.parse(json) as WizardState
+    const parsed = JSON.parse(json)
+    if (parsed._v !== WIZARD_STATE_VERSION) return null
+    return parsed as WizardState
   } catch {
     return null
   }
