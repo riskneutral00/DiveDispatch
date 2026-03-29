@@ -11,6 +11,7 @@ import { api } from '../../convex/_generated/api'
 import { dob, passportExpiry, testDate } from '../helpers/dates'
 import { makeT } from '../helpers/convex-helpers'
 import { seedPortalFixture, type SeedCtx } from '../fixtures'
+import { decryptMedicalForTest } from '../helpers/crypto'
 import {
   sanitizeString,
   sanitizeFields,
@@ -315,7 +316,8 @@ describe('saveMedicalAnswers — sanitization behavioral', () => {
     })
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    const answers = profile?.medicalAnswers as Record<string, boolean | string>
+    // medicalAnswers is now encrypted — decrypt to verify sanitization
+    const answers = await decryptMedicalForTest(profile!.medicalAnswers!)
 
     // Booleans untouched
     expect(answers.medical_q1).toBe(false)

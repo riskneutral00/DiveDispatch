@@ -12,6 +12,7 @@ import type { Doc } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate, testToken, dob } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { decryptMedicalForTest } from './helpers/crypto'
 import {
   seedPortalFixture as _seedPortalFixture,
   seedBooking,
@@ -174,7 +175,9 @@ describe('saveMedicalAnswers', () => {
 
     await t.run(async (ctx) => {
       const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
-      expect(profile!.medicalAnswers).toBeTruthy()
+      // medicalAnswers is encrypted — verify it's a non-empty string (ciphertext)
+      expect(typeof profile!.medicalAnswers).toBe('string')
+      expect(profile!.medicalAnswers!.length).toBeGreaterThan(0)
       expect(profile!.medicalSchemaVersion).toBe('10346_v1')
       expect(profile!.physicianClearanceRequired).toBe(false)
     })
@@ -224,11 +227,14 @@ describe('saveMedicalAnswers — key filtering', () => {
       answers: { medical_q1: true, injected_key: 'payload' },
     })
 
-    await t.run(async (ctx) => {
+    const encrypted = await t.run(async (ctx) => {
       const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
-      expect((profile!.medicalAnswers as Record<string, unknown>)['injected_key']).toBeUndefined()
-      expect((profile!.medicalAnswers as Record<string, unknown>)['medical_q1']).toBe(true)
+      return profile!.medicalAnswers!
     })
+    // Decrypt and verify key filtering
+    const decrypted = await decryptMedicalForTest(encrypted)
+    expect(decrypted['injected_key']).toBeUndefined()
+    expect(decrypted['medical_q1']).toBe(true)
   })
 
   it('all 10 valid keys pass through unchanged', async () => {
@@ -247,13 +253,16 @@ describe('saveMedicalAnswers — key filtering', () => {
       answers: VALID_MEDICAL,
     })
 
-    await t.run(async (ctx) => {
+    const encrypted = await t.run(async (ctx) => {
       const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
-      expect(Object.keys(profile!.medicalAnswers ?? {})).toHaveLength(10)
-      for (let i = 1; i <= 10; i++) {
-        expect((profile!.medicalAnswers as Record<string, unknown>)[`medical_q${i}`]).toBe(false)
-      }
+      return profile!.medicalAnswers!
     })
+    // Decrypt and verify all 10 keys
+    const decrypted = await decryptMedicalForTest(encrypted)
+    expect(Object.keys(decrypted)).toHaveLength(10)
+    for (let i = 1; i <= 10; i++) {
+      expect(decrypted[`medical_q${i}`]).toBe(false)
+    }
   })
 
   it('empty answers object stores empty', async () => {
@@ -274,7 +283,8 @@ describe('saveMedicalAnswers — key filtering', () => {
 
     await t.run(async (ctx) => {
       const profile = await ctx.db.get(profileId) as Doc<'customerProfiles'> | null
-      expect(profile!.medicalAnswers).toEqual({})
+      // Empty answers are not stored (no encryption of empty records)
+      expect(profile!.medicalAnswers).toBeUndefined()
     })
   })
 })

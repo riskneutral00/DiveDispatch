@@ -21,6 +21,7 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate, dob } from './helpers/dates'
 import { seedUser, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { encryptMedicalForTest } from './helpers/crypto'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -277,7 +278,7 @@ describe('clearMedicalBlock', () => {
       })
       await seedCustomerProfile(ctx, bookingId, 'tok-a', {
         customerId,
-        medicalAnswers: { medical_q1: true },
+        medicalAnswers: await encryptMedicalForTest({ medical_q1: true }),
         medicalSchemaVersion: '10346_v1',
         physicianClearanceRequired: true,
       })
@@ -303,7 +304,7 @@ describe('clearMedicalBlock', () => {
         medicalHardBlock: true,
       })
       const profileId = await seedCustomerProfile(ctx, bookingId, 'tok-a', {
-        medicalAnswers: { medical_q1: true },
+        medicalAnswers: await encryptMedicalForTest({ medical_q1: true }),
         medicalSchemaVersion: '10346_v1',
         physicianClearanceRequired: true,
       })

@@ -6,6 +6,7 @@ import { resolvePortalToken } from './lib/portal'
 import { checkRateLimit } from './lib/rateLimiter'
 import { validateOrThrow } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
+import { safeDecryptMedical } from './lib/crypto'
 
 // Inline medical schema — mirrors medicalAnswersSchema from src/lib/validation/schemas.ts.
 // Defined inline to avoid importing across the convex/ → src/ boundary.
@@ -60,9 +61,14 @@ export const getPortalStatus = query({
       .unique()
     if (!profile) return null
 
+    const medicalAnswers = profile.medicalAnswers
+      ? await safeDecryptMedical(profile.medicalAnswers)
+      : {}
+    const medicalComplete = Object.keys(medicalAnswers).length > 0
+
     return {
       contactComplete: profile.customerId != null,
-      medicalComplete: Object.keys(profile.medicalAnswers ?? {}).length > 0,
+      medicalComplete,
       waiverComplete: profile.waiverSignedAt != null,
       medicalHardBlock: booking.medicalHardBlock as boolean,
       portalContact: booking.portalContact as boolean,
@@ -99,7 +105,7 @@ export const submitPortal = mutation({
         reason: 'Contact form not submitted',
       })
     }
-    if (booking.portalMedical && Object.keys(profile.medicalAnswers ?? {}).length === 0) {
+    if (booking.portalMedical && (!profile.medicalAnswers || profile.medicalAnswers === '')) {
       throw new ConvexError({
         code: ErrorCode.FORMS_INCOMPLETE,
         reason: 'Medical questionnaire not submitted',
@@ -116,7 +122,8 @@ export const submitPortal = mutation({
     // Re-derive medicalHardBlock from raw answers — never trust cached booking flag.
     let medicalHardBlock = false
     if (booking.portalMedical && profile.medicalAnswers) {
-      const validatedAnswers = validateOrThrow(_medicalAnswersSchema, profile.medicalAnswers)
+      const decryptedAnswers = await safeDecryptMedical(profile.medicalAnswers)
+      const validatedAnswers = validateOrThrow(_medicalAnswersSchema, decryptedAnswers)
       medicalHardBlock = Object.values(validatedAnswers).some((v) => v === true)
       // Keep booking flag in sync in case it drifted
       if ((booking.medicalHardBlock as boolean) !== medicalHardBlock) {

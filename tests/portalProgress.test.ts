@@ -11,6 +11,7 @@ import {
   type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { encryptMedicalForTest } from './helpers/crypto'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -401,10 +402,11 @@ describe('getPortalProgress — equipmentComplete flag', () => {
 describe('getPortalProgress — medical data', () => {
   it('pre-fills medicalData from profile with answers and clearance flag', async () => {
     const t = makeT()
+    const encrypted = await encryptMedicalForTest(ALL_FALSE_MEDICAL)
     const { token } = await t.run(async (ctx) =>
       seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: ALL_FALSE_MEDICAL,
+          medicalAnswers: encrypted,
           physicianClearanceRequired: false,
         },
       }),
@@ -419,10 +421,11 @@ describe('getPortalProgress — medical data', () => {
 
   it('medicalComplete is false when medicalAnswers is empty object', async () => {
     const t = makeT()
+    const encrypted = await encryptMedicalForTest({})
     const { token } = await t.run(async (ctx) =>
       seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: {},
+          medicalAnswers: encrypted,
         },
       }),
     )
@@ -444,10 +447,11 @@ describe('getPortalProgress — medical data', () => {
   it('preserves physicianClearanceRequired = true in pre-fill', async () => {
     const t = makeT()
     const medicalWithBlock = { ...ALL_FALSE_MEDICAL, medical_q1: true }
+    const encrypted = await encryptMedicalForTest(medicalWithBlock)
     const { token } = await t.run(async (ctx) =>
       seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: medicalWithBlock,
+          medicalAnswers: encrypted,
           physicianClearanceRequired: true,
         },
       }),
@@ -507,10 +511,11 @@ describe('getPortalProgress — partial completion / firstIncompleteStep', () =>
 
   it('contact + medical done, waiver not → firstIncompleteStep is waiver', async () => {
     const t = makeT()
+    const encrypted = await encryptMedicalForTest(ALL_FALSE_MEDICAL)
     const { token } = await t.run(async (ctx) => {
       const fixture = await seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: ALL_FALSE_MEDICAL,
+          medicalAnswers: encrypted,
           physicianClearanceRequired: false,
         },
       })
@@ -527,10 +532,11 @@ describe('getPortalProgress — partial completion / firstIncompleteStep', () =>
 
   it('all required steps complete → firstIncompleteStep is submit', async () => {
     const t = makeT()
+    const encrypted = await encryptMedicalForTest(ALL_FALSE_MEDICAL)
     const { token } = await t.run(async (ctx) => {
       const fixture = await seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: ALL_FALSE_MEDICAL,
+          medicalAnswers: encrypted,
           physicianClearanceRequired: false,
           waiverSignedAt: Date.now() - 30_000,
           rentalChecklist: FULL_RENTAL_CHECKLIST,
@@ -609,10 +615,11 @@ describe('getPortalProgress — full completion', () => {
   it('returns all data populated and all steps complete', async () => {
     const t = makeT()
     const waiverTs = Date.now() - 120_000
+    const encrypted = await encryptMedicalForTest(ALL_FALSE_MEDICAL)
     const { token } = await t.run(async (ctx) => {
       const fixture = await seedPortalFixture(ctx, {
         profileOverrides: {
-          medicalAnswers: ALL_FALSE_MEDICAL,
+          medicalAnswers: encrypted,
           physicianClearanceRequired: false,
           waiverSignedAt: waiverTs,
           rentalChecklist: FULL_RENTAL_CHECKLIST,

@@ -219,7 +219,7 @@ export default defineSchema({
     pickupLocation: v.optional(v.string()),
     pickupTime: v.optional(v.string()),
     medicalSchemaVersion: v.optional(v.string()), // set by saveMedicalAnswers
-    medicalAnswers: v.optional(v.record(v.string(), v.union(v.boolean(), v.string()))), // set by saveMedicalAnswers
+    medicalAnswers: v.optional(v.string()), // AES-256-GCM encrypted JSON — set by saveMedicalAnswers
     physicianClearanceRequired: v.optional(v.boolean()), // set by saveMedicalAnswers
     physicianClearedAt: v.optional(v.number()),
     waiverSignedAt: v.optional(v.number()),

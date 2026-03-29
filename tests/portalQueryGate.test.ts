@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { seedPortalFixture, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { encryptMedicalForTest } from './helpers/crypto'
 
 // ─── DD-133: Gate medical/safety queries on token expiry and usedAt ──────────
 
@@ -61,7 +62,7 @@ describe('DD-133: getMedicalByToken — token gating', () => {
         booking: { bookingFormComplete: false },
         link: { expiresAt: Date.now() - 1000 },
         profile: {
-          medicalAnswers: { medical_q1: true },
+          medicalAnswers: await encryptMedicalForTest({ medical_q1: true }),
           physicianClearanceRequired: true,
         },
       }),
@@ -77,7 +78,7 @@ describe('DD-133: getMedicalByToken — token gating', () => {
         booking: { status: 'Cancelled', bookingFormComplete: false },
         link: { usedAt: Date.now() - 5000 },
         profile: {
-          medicalAnswers: { medical_q1: false },
+          medicalAnswers: await encryptMedicalForTest({ medical_q1: false }),
         },
       }),
     )
@@ -91,7 +92,7 @@ describe('DD-133: getMedicalByToken — token gating', () => {
       seedPortalFixture(ctx, {
         booking: { status: 'Draft', bookingFormComplete: false },
         profile: {
-          medicalAnswers: { medical_q1: true, medical_q2: false },
+          medicalAnswers: await encryptMedicalForTest({ medical_q1: true, medical_q2: false }),
           physicianClearanceRequired: true,
         },
       }),

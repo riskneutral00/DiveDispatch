@@ -4,6 +4,7 @@ import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS, SHORT_TEXT_MAX } from './lib/sanitize'
 import { checkRateLimit } from './lib/rateLimiter'
+import { safeDecryptMedical } from './lib/crypto'
 import { rentalChecklistValidator } from './lib/validators'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -122,8 +123,10 @@ export async function _getPortalProgress(
       }
     : null
 
-  // Build medical data from profile
-  const medicalAnswers = (profile.medicalAnswers ?? {}) as Record<string, boolean | string>
+  // Build medical data from profile (decrypt encrypted answers)
+  const medicalAnswers: Record<string, boolean | string> = profile.medicalAnswers
+    ? await safeDecryptMedical(profile.medicalAnswers)
+    : {}
   const medicalData: MedicalData | null =
     Object.keys(medicalAnswers).length > 0
       ? {

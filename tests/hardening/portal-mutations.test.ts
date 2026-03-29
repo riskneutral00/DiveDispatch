@@ -4,6 +4,7 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate, passportExpiry, dob } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import { seedPortalFixture, seedInventoryUnit, seedSession, type SeedCtx } from '../fixtures'
+import { encryptMedicalForTest } from '../helpers/crypto'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -234,6 +235,7 @@ describe('submitPortal — medical block TTL extension wiring', () => {
     // Drift scenario: profile has "yes" answers but booking.medicalHardBlock is still false.
     // submitPortal re-derives from stored answers, detects drift, and extends TTL.
     const originalExpiresAt = Date.now() + HOLD_TTL
+    const encryptedYes = await encryptMedicalForTest({ ...ALL_NO, medical_q3: true })
     const { token, bookingId } = await t.run(async (ctx: SeedCtx) => {
       const fixture = await seedPortalFixture(ctx, {
         booking: {
@@ -246,7 +248,7 @@ describe('submitPortal — medical block TTL extension wiring', () => {
         },
         // Seed "yes" answer directly on profile (bypasses saveMedicalAnswers)
         profile: {
-          medicalAnswers: { ...ALL_NO, medical_q3: true },
+          medicalAnswers: encryptedYes,
           medicalSchemaVersion: '1',
         },
       })
@@ -411,5 +413,68 @@ describe('submitPortal — full submission', () => {
       t.mutation(api.portalSubmission.submitPortal, { token }),
       'TOKEN_EXPIRED',
     )
+  })
+})
+
+// ─── getPortalStatus: medicalComplete checks decrypted data ─────────────────
+
+describe('getPortalStatus — medicalComplete decrypts before checking', () => {
+  it('returns medicalComplete=true only when decrypted answers have keys', async () => {
+    const t = makeT()
+    const encrypted = await encryptMedicalForTest(ALL_NO)
+    const { token } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-portal-hardening',
+          portalMedical: true,
+          bookingFormComplete: false,
+        },
+        profile: {
+          medicalAnswers: encrypted,
+        },
+      }),
+    )
+
+    const result = await t.query(api.portalSubmission.getPortalStatus, { token })
+    expect(result).not.toBeNull()
+    expect(result!.medicalComplete).toBe(true)
+  })
+
+  it('returns medicalComplete=false when encrypted value decrypts to empty object', async () => {
+    const t = makeT()
+    const encrypted = await encryptMedicalForTest({})
+    const { token } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-portal-hardening',
+          portalMedical: true,
+          bookingFormComplete: false,
+        },
+        profile: {
+          medicalAnswers: encrypted,
+        },
+      }),
+    )
+
+    const result = await t.query(api.portalSubmission.getPortalStatus, { token })
+    expect(result).not.toBeNull()
+    expect(result!.medicalComplete).toBe(false)
+  })
+
+  it('returns medicalComplete=false when medicalAnswers is not set', async () => {
+    const t = makeT()
+    const { token } = await t.run(async (ctx: SeedCtx) =>
+      seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-portal-hardening',
+          portalMedical: true,
+          bookingFormComplete: false,
+        },
+      }),
+    )
+
+    const result = await t.query(api.portalSubmission.getPortalStatus, { token })
+    expect(result).not.toBeNull()
+    expect(result!.medicalComplete).toBe(false)
   })
 })

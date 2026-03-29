@@ -1,9 +1,10 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { internalMutation, mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { sanitizeFields, sanitizeMedicalAnswers, PORTAL_SAFETY_FIELDS, PORTAL_EQUIPMENT_CHECKLIST_FIELDS } from './lib/sanitize'
+import { encryptMedical, safeDecryptMedical } from './lib/crypto'
 import { checkRateLimit } from './lib/rateLimiter'
 import { rentalChecklistValidator } from './lib/validators'
 import { NOTIFICATION_TYPE } from './shared/statuses'
@@ -58,8 +59,12 @@ export const saveMedicalAnswers = mutation({
     // Any "Yes" triggers physician referral
     const hasYes = MEDICAL_QUESTION_KEYS.some((key) => filtered[key] === true)
 
+    // Encrypt medical answers before writing to DB (skip encryption for empty records)
+    const hasAnswers = Object.keys(filtered).length > 0
+    const encryptedAnswers = hasAnswers ? await encryptMedical(filtered) : undefined
+
     await ctx.db.patch(profile._id, {
-      medicalAnswers: filtered,
+      medicalAnswers: encryptedAnswers,
       medicalSchemaVersion: MEDICAL_SCHEMA_VERSION,
       physicianClearanceRequired: hasYes,
     })
@@ -279,9 +284,79 @@ export const getMedicalByToken = query({
 
     const { profile } = resolved
 
+    const answers: Record<string, boolean | string> = profile.medicalAnswers
+      ? await safeDecryptMedical(profile.medicalAnswers)
+      : {}
+
     return {
-      answers: profile.medicalAnswers ?? {},
+      answers,
       physicianClearanceRequired: profile.physicianClearanceRequired ?? false,
     }
+  },
+})
+
+// ─── migratePlaintextMedical ─────────────────────────────────────────────────
+
+/**
+ * One-time migration: re-encrypt legacy plaintext medical answers with AES-256-GCM.
+ *
+ * For each customerProfile with a non-null medicalAnswers field:
+ * - If the value is parseable as plaintext JSON: re-encrypt and write back
+ * - If it fails JSON parse (already encrypted): skip
+ *
+ * Internal mutation — callable only from the dashboard or scheduled functions.
+ * Processes up to `batchSize` records per invocation (default 50) to stay
+ * within Convex mutation limits.
+ */
+export const migratePlaintextMedical = internalMutation({
+  args: {
+    batchSize: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ migrated: number; skipped: number; cursor: string | null }> => {
+    const limit = args.batchSize ?? 50
+    const cursorTime = args.cursor ? Number(args.cursor) : 0
+    const profiles = await ctx.db
+      .query('customerProfiles')
+      .filter((q) => q.gt(q.field('_creationTime'), cursorTime))
+      .take(limit + 1)
+
+    const hasMore = profiles.length > limit
+    const batch = hasMore ? profiles.slice(0, limit) : profiles
+
+    let migrated = 0
+    let skipped = 0
+
+    for (const profile of batch) {
+      if (!profile.medicalAnswers) {
+        skipped++
+        continue
+      }
+
+      // Try parsing as plaintext JSON (legacy format)
+      try {
+        const parsed = JSON.parse(profile.medicalAnswers as string)
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          // Legacy plaintext record — re-encrypt
+          const encrypted = await encryptMedical(parsed)
+          await ctx.db.patch(profile._id, { medicalAnswers: encrypted })
+          migrated++
+        } else {
+          skipped++
+        }
+      } catch {
+        // Not parseable as JSON — already encrypted, skip
+        skipped++
+      }
+    }
+
+    const nextCursor = hasMore
+      ? String(batch[batch.length - 1]._creationTime)
+      : null
+
+    return { migrated, skipped, cursor: nextCursor }
   },
 })

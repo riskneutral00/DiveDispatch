@@ -5,6 +5,7 @@ import { Id } from '../../convex/_generated/dataModel'
 import { seedPortalFixture, type SeedCtx } from '../fixtures'
 import { passportExpiry, dob } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
+import { encryptMedicalForTest } from '../helpers/crypto'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -319,6 +320,18 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
     const t = makeT()
     // Seed: booking says medicalHardBlock=false, but medical answers have a "yes"
     // submitPortal should re-derive and correct the flag
+    const encrypted = await encryptMedicalForTest({
+      medical_q1: true, // ← "yes" answer = hard block
+      medical_q2: false,
+      medical_q3: false,
+      medical_q4: false,
+      medical_q5: false,
+      medical_q6: false,
+      medical_q7: false,
+      medical_q8: false,
+      medical_q9: false,
+      medical_q10: false,
+    })
     const { token, bookingId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: {
@@ -327,18 +340,7 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
           bookingFormComplete: false,
         },
         profile: {
-          medicalAnswers: {
-            medical_q1: true, // ← "yes" answer = hard block
-            medical_q2: false,
-            medical_q3: false,
-            medical_q4: false,
-            medical_q5: false,
-            medical_q6: false,
-            medical_q7: false,
-            medical_q8: false,
-            medical_q9: false,
-            medical_q10: false,
-          },
+          medicalAnswers: encrypted,
         },
       }),
     )
@@ -353,6 +355,18 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
 
   it('clears medicalHardBlock when all answers are false', async () => {
     const t = makeT()
+    const encrypted = await encryptMedicalForTest({
+      medical_q1: false,
+      medical_q2: false,
+      medical_q3: false,
+      medical_q4: false,
+      medical_q5: false,
+      medical_q6: false,
+      medical_q7: false,
+      medical_q8: false,
+      medical_q9: false,
+      medical_q10: false,
+    })
     const { token, bookingId } = await t.run(async (ctx: SeedCtx) =>
       seedPortalFixture(ctx, {
         booking: {
@@ -361,18 +375,7 @@ describe('L9-10: submitPortal — medical re-derivation', () => {
           bookingFormComplete: false,
         },
         profile: {
-          medicalAnswers: {
-            medical_q1: false,
-            medical_q2: false,
-            medical_q3: false,
-            medical_q4: false,
-            medical_q5: false,
-            medical_q6: false,
-            medical_q7: false,
-            medical_q8: false,
-            medical_q9: false,
-            medical_q10: false,
-          },
+          medicalAnswers: encrypted,
         },
       }),
     )

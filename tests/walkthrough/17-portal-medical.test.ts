@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { seedPortalFixture, type SeedCtx } from '../fixtures'
 import { makeT } from '../helpers/convex-helpers'
+import { decryptMedicalForTest } from '../helpers/crypto'
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -68,11 +69,12 @@ describe('saveMedicalAnswers', () => {
     })
 
     const profile = await t.run(async (ctx: SeedCtx) => ctx.db.get(profileId))
-    const saved = profile?.medicalAnswers as Record<string, boolean> | undefined
-    expect(saved).not.toBeUndefined()
-    expect(Object.keys(saved!)).toHaveLength(10)
+    // medicalAnswers is now encrypted — decrypt to verify contents
+    expect(profile!.medicalAnswers).toBeTruthy()
+    const saved = await decryptMedicalForTest(profile!.medicalAnswers!)
+    expect(Object.keys(saved)).toHaveLength(10)
     for (let i = 1; i <= 10; i++) {
-      expect(saved![`medical_q${i}`]).toBe(false)
+      expect(saved[`medical_q${i}`]).toBe(false)
     }
   })
 })
