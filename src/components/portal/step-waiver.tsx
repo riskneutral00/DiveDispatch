@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { GlassCard } from '../glass/glass-card'
 import { GlassButton } from '../glass/glass-button'
 import { GlassCheckbox } from '../glass/glass-checkbox'
@@ -10,6 +10,7 @@ import { ShieldCheck } from 'lucide-react'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
 import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/waiver-text'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
+import { isSignatureValid } from '@/lib/utils/signature-coverage'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,30 @@ export function StepWaiver({
 
   const signatureRef = useRef<SignaturePadHandle>(null)
   const guardianSignatureRef = useRef<SignaturePadHandle>(null)
+
+  /** Check coverage on the participant signature pad after each stroke. */
+  const validateSignatureCoverage = useCallback(() => {
+    const imageData = signatureRef.current?.getImageData()
+    if (!imageData) {
+      setHasSig(false)
+      return
+    }
+    const valid = isSignatureValid(imageData)
+    setHasSig(valid)
+    if (valid) clearError('signature')
+  }, [clearError])
+
+  /** Check coverage on the guardian signature pad after each stroke. */
+  const validateGuardianCoverage = useCallback(() => {
+    const imageData = guardianSignatureRef.current?.getImageData()
+    if (!imageData) {
+      setHasGuardianSig(false)
+      return
+    }
+    const valid = isSignatureValid(imageData)
+    setHasGuardianSig(valid)
+    if (valid) clearError('guardianSignature')
+  }, [clearError])
 
   const validate = (): boolean => {
     const next: Record<string, string> = {}
@@ -282,9 +307,10 @@ export function StepWaiver({
             ref={signatureRef}
             label="Signature"
             onChange={(has) => {
-              setHasSig(has)
-              if (has) clearError('signature')
+              // On clear, immediately reset. On draw, defer to onDrawEnd coverage check.
+              if (!has) setHasSig(false)
             }}
+            onDrawEnd={validateSignatureCoverage}
             error={errors.signature}
           />
 
@@ -327,9 +353,9 @@ export function StepWaiver({
               ref={guardianSignatureRef}
               label="Guardian Signature"
               onChange={(has) => {
-                setHasGuardianSig(has)
-                if (has) clearError('guardianSignature')
+                if (!has) setHasGuardianSig(false)
               }}
+              onDrawEnd={validateGuardianCoverage}
               error={errors.guardianSignature}
             />
           </div>

@@ -7,6 +7,8 @@ import { Trash2 } from 'lucide-react'
 export interface SignaturePadHandle {
   /** Returns canvas content as a Blob (PNG), or null if canvas is empty. */
   getBlob(): Promise<Blob | null>
+  /** Returns the canvas ImageData for pixel-level inspection, or null if empty. */
+  getImageData(): ImageData | null
   /** Clears the canvas. */
   clear(): void
   /** Returns true if the user has drawn anything. */
@@ -17,12 +19,14 @@ interface SignaturePadProps {
   label?: string
   /** Called whenever the drawn state changes (drawn / cleared). */
   onChange?: (hasSignature: boolean) => void
+  /** Called each time a stroke ends (mouseup / touchend). Useful for deferred validation. */
+  onDrawEnd?: () => void
   error?: string
   disabled?: boolean
 }
 
 export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadProps>(
-  function SignaturePad({ label, onChange, error, disabled = false }, ref) {
+  function SignaturePad({ label, onChange, onDrawEnd, error, disabled = false }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const drawing = useRef(false)
     const hasContent = useRef(false)
@@ -106,8 +110,11 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
     }, [disabled, onChange])
 
     const endDraw = useCallback(() => {
-      drawing.current = false
-    }, [])
+      if (drawing.current) {
+        drawing.current = false
+        onDrawEnd?.()
+      }
+    }, [onDrawEnd])
 
     // Mouse events
     const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -156,6 +163,13 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           }
           canvasRef.current.toBlob((blob) => resolve(blob), 'image/png')
         }),
+      getImageData: () => {
+        const canvas = canvasRef.current
+        if (!canvas || !hasContent.current) return null
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return null
+        return ctx.getImageData(0, 0, canvas.width, canvas.height)
+      },
       clear,
       isEmpty: () => !hasContent.current,
     }))
