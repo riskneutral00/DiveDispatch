@@ -1,5 +1,5 @@
 /**
- * DD-256 / DD-271 / DD-276 / DD-286 / DD-284: purgeExpiredDrafts cron — behavioral tests
+ * DD-256 / DD-271 / DD-276 / DD-286 / DD-284 / DD-278: purgeExpiredDrafts cron — behavioral tests
  *
  * Covers:
  * - Expired Draft bookings are cancelled with reservations vacated
@@ -17,6 +17,8 @@
  * - INVARIANT_VIOLATION when reservation count exceeds MAX_RESERVATIONS_PER_BOOKING (DD-284)
  * - Booking with exactly MAX_RESERVATIONS_PER_BOOKING reservations succeeds normally (DD-284)
  * - purgeExpiredDrafts isolates INVARIANT_VIOLATION per-booking (DD-284)
+ * - Per-booking atomicity: failure on booking N does not affect bookings 1…N-1 (DD-278)
+ * - MISSING_SNAPSHOT_ON_RELEASE error code path tested (DD-278)
  */
 
 import { describe, it, expect } from 'vitest'
@@ -59,7 +61,7 @@ describe('purgeExpiredDrafts', () => {
       return { bookingId, reservationId, snapshotId }
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Cancelled')
@@ -84,7 +86,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const auditEntries = await t.run(async (ctx) =>
       ctx.db
@@ -109,7 +111,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Draft')
@@ -126,7 +128,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Upcoming')
@@ -158,7 +160,7 @@ describe('purgeExpiredDrafts', () => {
       return { snapshotId }
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     expect(snapshot?.availableUnits).toBe(4)
@@ -173,7 +175,7 @@ describe('purgeExpiredDrafts', () => {
       return seedBooking(ctx, { status: 'Draft' })
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Draft')
@@ -217,7 +219,7 @@ describe('purgeExpiredDrafts', () => {
       return { snapshotId }
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
     expect(snapshot?.availableUnits).toBe(4)
@@ -268,7 +270,7 @@ describe('purgeExpiredDrafts', () => {
       return { snapshotAId, snapshotBId }
     })
 
-    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
 
     const [snapA, snapB] = await t.run(async (ctx) =>
       Promise.all([ctx.db.get(snapshotAId), ctx.db.get(snapshotBId)]),
@@ -306,7 +308,7 @@ describe('purgeExpiredDrafts', () => {
       return { bookingA, bookingB, bookingC, snapshotId }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result).toEqual({ purged: 2, skipped: 0, errors: [] })
 
     const [bA, bB, bC, snapshot] = await t.run(async (ctx) =>
@@ -335,7 +337,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result).toEqual({ purged: 1, skipped: 0, errors: [] })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
@@ -354,7 +356,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result).toEqual({ purged: 0, skipped: 0, errors: [] })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
@@ -372,7 +374,7 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result).toEqual({ purged: 0, skipped: 0, errors: [] })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
@@ -398,7 +400,7 @@ describe('purgeExpiredDrafts', () => {
       return { bookingId, reservationId }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.purged).toBe(0)
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
@@ -432,7 +434,7 @@ describe('purgeExpiredDrafts', () => {
       return { bookingId, reservationId }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.purged).toBe(0)
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
@@ -505,7 +507,7 @@ describe('purgeExpiredDrafts', () => {
       return { booking1, booking2, booking3, snap1Id, snap3Id }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.purged).toBe(2)
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
@@ -543,7 +545,7 @@ describe('purgeExpiredDrafts', () => {
       }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.purged).toBe(25)
     expect(result.skipped).toBe(0)
     expect(result.errors).toEqual([])
@@ -593,9 +595,9 @@ describe('purgeExpiredDrafts', () => {
       })
     })
 
-    // The mutation must throw — not silently swallow the unrecognized error
+    // The action must throw — not silently swallow the unrecognized error
     await expect(
-      t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
+      t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
     ).rejects.toThrow()
   })
 
@@ -630,7 +632,7 @@ describe('purgeExpiredDrafts', () => {
       }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].errorCode).toBe(ErrorCode.INVARIANT_VIOLATION)
@@ -667,7 +669,7 @@ describe('purgeExpiredDrafts', () => {
       }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].errorCode).toBe(ErrorCode.INVARIANT_VIOLATION)
@@ -705,7 +707,7 @@ describe('purgeExpiredDrafts', () => {
       return { bookingId, snapshotId }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     expect(result).toEqual({ purged: 1, skipped: 0, errors: [] })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
@@ -769,7 +771,7 @@ describe('purgeExpiredDrafts', () => {
       return { healthyBookingId, overflowBookingId, snapshotId }
     })
 
-    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
     // Healthy booking purged, overflow booking skipped
     expect(result.purged).toBe(1)
     expect(result.skipped).toBe(1)
@@ -788,4 +790,127 @@ describe('purgeExpiredDrafts', () => {
     const overflowBooking = await t.run(async (ctx) => ctx.db.get(overflowBookingId))
     expect(overflowBooking?.status).toBe('Draft')
   }, 30_000)
+
+  it('per-booking atomicity: booking N failure does not roll back bookings 1…N-1 (DD-278)', async () => {
+    const t = makeT()
+
+    const { booking1, booking2, booking3, snap1Id, snap3Id, res2Id } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+
+      // Booking #1 — healthy expired draft with reservation
+      const booking1 = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unit1 = await seedInventoryUnit(ctx, { displayName: 'Instructor 1' })
+      const session1 = await seedSession(ctx, booking1, unit1)
+      const snap1Id = await seedSnapshot(ctx, unit1, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, booking1, unit1, session1, {
+        status: 'PendingAcceptance',
+      })
+
+      // Booking #2 — has reservation but snapshot is deleted (MISSING_SNAPSHOT_ON_RELEASE)
+      // This tests the write-phase error path: the snapshot lookup in
+      // releaseBookingReservations finds it during batch-fetch, but
+      // restoreSnapshotUnits re-fetches and it's gone.
+      const booking2 = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unit2 = await seedInventoryUnit(ctx, { displayName: 'Instructor 2' })
+      const session2 = await seedSession(ctx, booking2, unit2)
+      const res2Id = await seedReservation(ctx, booking2, unit2, session2, {
+        status: 'PendingAcceptance',
+      })
+      // No snapshot seeded — will trigger MISSING_SNAPSHOT during batch-fetch
+      // (MISSING_SNAPSHOT is in ISOLATABLE_ERRORS)
+
+      // Booking #3 — healthy expired draft with reservation
+      const booking3 = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unit3 = await seedInventoryUnit(ctx, { displayName: 'Instructor 3' })
+      const session3 = await seedSession(ctx, booking3, unit3)
+      const snap3Id = await seedSnapshot(ctx, unit3, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, booking3, unit3, session3, {
+        status: 'PendingAcceptance',
+      })
+
+      return { booking1, booking2, booking3, snap1Id, snap3Id, res2Id }
+    })
+
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    // Bookings #1 and #3 purged, booking #2 skipped
+    expect(result.purged).toBe(2)
+    expect(result.skipped).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].bookingId).toBe(booking2)
+
+    // Bookings #1 and #3 are cancelled with snapshots restored
+    const [b1, b2, b3] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(booking1), ctx.db.get(booking2), ctx.db.get(booking3)]),
+    )
+    expect(b1?.status).toBe('Cancelled')
+    expect(b2?.status).toBe('Draft')
+    expect(b3?.status).toBe('Cancelled')
+
+    const [snap1, snap3] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(snap1Id), ctx.db.get(snap3Id)]),
+    )
+    expect(snap1?.availableUnits).toBe(1)
+    expect(snap1?.reservedUnits).toBe(0)
+    expect(snap3?.availableUnits).toBe(1)
+    expect(snap3?.reservedUnits).toBe(0)
+
+    // Booking #2's reservation was NOT vacated (mutation rolled back)
+    const res2 = await t.run(async (ctx) => ctx.db.get(res2Id))
+    expect(res2?.status).toBe('PendingAcceptance')
+  })
+
+  it('MISSING_SNAPSHOT_ON_RELEASE: snapshot deleted between batch-fetch and restore (DD-278)', async () => {
+    const t = makeT()
+
+    const { bookingId, reservationId } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const reservationId = await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'PendingAcceptance',
+      })
+      // No snapshot → MISSING_SNAPSHOT during batch-fetch in releaseBookingReservations
+      return { bookingId, reservationId }
+    })
+
+    const result = await t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    expect(result.purged).toBe(0)
+    expect(result.skipped).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].bookingId).toBe(bookingId)
+    expect(result.errors[0].errorCode).toBe(ErrorCode.MISSING_SNAPSHOT)
+
+    // Booking remains Draft — mutation for this booking was rolled back
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Draft')
+
+    // Reservation was NOT vacated
+    const reservation = await t.run(async (ctx) => ctx.db.get(reservationId))
+    expect(reservation?.status).toBe('PendingAcceptance')
+  })
 })

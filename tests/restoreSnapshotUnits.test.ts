@@ -38,7 +38,7 @@ describe('restoreSnapshotUnits', () => {
     })
   })
 
-  it('clamps reservedUnits to zero when underflow would occur', async () => {
+  it('throws SNAPSHOT_UNDERFLOW when unitsRequested exceeds reservedUnits (DD-278)', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
       const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
@@ -48,13 +48,20 @@ describe('restoreSnapshotUnits', () => {
         reservedUnits: 1,
       })
 
-      // Release 3 units when only 1 is reserved — should clamp to 0
-      await restoreSnapshotUnits(ctx, snapshotId, 3)
+      await expect(
+        restoreSnapshotUnits(ctx, snapshotId, 3),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.SNAPSHOT_UNDERFLOW,
+          reason: expect.stringContaining('3'),
+        },
+      })
 
+      // Snapshot remains unchanged — no partial write
       const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
       expect(snapshot).not.toBeNull()
-      expect(snapshot!.availableUnits).toBe(7)
-      expect(snapshot!.reservedUnits).toBe(0)
+      expect(snapshot!.availableUnits).toBe(4)
+      expect(snapshot!.reservedUnits).toBe(1)
     })
   })
 
@@ -147,6 +154,55 @@ describe('restoreSnapshotUnits', () => {
       expect(snapB).not.toBeNull()
       expect(snapB!.availableUnits).toBe(1)
       expect(snapB!.reservedUnits).toBe(4)
+    })
+  })
+
+  it('throws SNAPSHOT_DOUBLE_WRITE when same snapshotId is restored twice with seenSnapshotIds (DD-278)', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 5 })
+      const snapshotId = await seedSnapshot(ctx, unit, {
+        totalUnits: 5,
+        availableUnits: 3,
+        reservedUnits: 2,
+      })
+
+      const seen = new Set<string>()
+      // First call succeeds
+      await restoreSnapshotUnits(ctx, snapshotId, 1, seen)
+
+      // Second call with same snapshotId throws
+      await expect(
+        restoreSnapshotUnits(ctx, snapshotId, 1, seen),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+          reason: expect.stringContaining(snapshotId),
+        },
+      })
+    })
+  })
+
+  it('allows same snapshotId across separate seenSnapshotIds sets (DD-278)', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 10 })
+      const snapshotId = await seedSnapshot(ctx, unit, {
+        totalUnits: 10,
+        availableUnits: 4,
+        reservedUnits: 6,
+      })
+
+      const seen1 = new Set<string>()
+      const seen2 = new Set<string>()
+      // Both calls succeed with separate tracking sets
+      await restoreSnapshotUnits(ctx, snapshotId, 2, seen1)
+      await restoreSnapshotUnits(ctx, snapshotId, 2, seen2)
+
+      const snapshot = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'> | null
+      expect(snapshot).not.toBeNull()
+      expect(snapshot!.availableUnits).toBe(8)
+      expect(snapshot!.reservedUnits).toBe(2)
     })
   })
 })

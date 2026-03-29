@@ -2,10 +2,15 @@
  * Inventory release helpers for booking mutations. Handles restoring
  * availability snapshots when reservations are vacated.
  * Extracted from _shared.ts (L8-24).
+ *
+ * DD-278: purgeExpiredDrafts refactored to internalAction + per-booking
+ * internalMutation for true per-booking atomicity. restoreSnapshotUnits
+ * hardened with double-write guard and underflow throw.
  */
 
-import { ConvexError } from 'convex/values'
-import { internalMutation } from '../_generated/server'
+import { ConvexError, v } from 'convex/values'
+import { internalAction, internalMutation, internalQuery } from '../_generated/server'
+import { internal } from '../_generated/api'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { VacatedReason } from '../shared/statuses'
@@ -37,13 +42,33 @@ export async function getAvailabilitySnapshot(
     .unique()
 }
 
-/** Restore availability snapshot when a reservation is released.
- * Re-reads snapshot from DB to avoid TOCTOU stale-parameter bugs (DD-017). */
+/**
+ * Restore availability snapshot when a reservation is released.
+ * Re-reads snapshot from DB to avoid TOCTOU stale-parameter bugs (DD-017).
+ *
+ * DD-278 guards:
+ * - Optional `seenSnapshotIds` set detects double-write on the same snapshot
+ *   within a single mutation call. Callers processing multiple snapshots in
+ *   a loop should create a Set and pass it to each call.
+ * - Throws SNAPSHOT_UNDERFLOW instead of silently clamping when
+ *   unitsRequested exceeds reservedUnits, exposing data inconsistencies.
+ */
 export async function restoreSnapshotUnits(
   ctx: MutationCtx,
   snapshotId: Id<"availabilitySnapshots">,
   unitsRequested: number,
+  seenSnapshotIds?: Set<string>,
 ) {
+  if (seenSnapshotIds) {
+    if (seenSnapshotIds.has(snapshotId)) {
+      throw new ConvexError({
+        code: ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+        reason: `AvailabilitySnapshot ${snapshotId} has already been restored in this mutation. This indicates a bug in the accumulation logic — each snapshot must be patched at most once per mutation.`,
+      })
+    }
+    seenSnapshotIds.add(snapshotId)
+  }
+
   const fresh = await ctx.db.get(snapshotId)
   if (!fresh) {
     throw new ConvexError({
@@ -51,9 +76,17 @@ export async function restoreSnapshotUnits(
       reason: `AvailabilitySnapshot ${snapshotId} disappeared between lookup and restore. Aborting to prevent capacity leak.`,
     })
   }
+
+  if (unitsRequested > fresh.reservedUnits) {
+    throw new ConvexError({
+      code: ErrorCode.SNAPSHOT_UNDERFLOW,
+      reason: `Cannot release ${unitsRequested} units from snapshot ${snapshotId} — only ${fresh.reservedUnits} are reserved. This indicates a data inconsistency.`,
+    })
+  }
+
   await ctx.db.patch(snapshotId, {
     availableUnits: fresh.availableUnits + unitsRequested,
-    reservedUnits: Math.max(0, fresh.reservedUnits - unitsRequested),
+    reservedUnits: fresh.reservedUnits - unitsRequested,
   })
 }
 
@@ -171,9 +204,10 @@ export async function releaseBookingReservations(
     })
   }
 
+  const seenSnapshotIds = new Set<string>()
   for (const [key, units] of unitsToRestore) {
     const snapshotId = snapshotIdMap.get(key)!
-    await restoreSnapshotUnits(ctx, snapshotId, units)
+    await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds)
   }
 }
 
@@ -182,21 +216,13 @@ export async function releaseBookingReservations(
 const BATCH_SIZE = 25
 
 /**
- * Cron: purge Draft bookings whose holdTTL has lapsed.
- * Runs every 6 hours. Vacates reservations, restores availability snapshots,
- * cancels the booking, and logs an audit entry.
- *
- * Batch limit: 25 per run to stay within Convex mutation limits.
+ * Query: find up to BATCH_SIZE expired Draft bookings.
+ * Used by purgeExpiredDrafts action to separate read from write.
  */
-export const purgeExpiredDrafts = internalMutation({
+export const findExpiredDrafts = internalQuery({
   args: {},
-  handler: async (ctx): Promise<{
-    purged: number
-    skipped: number
-    errors: Array<{ bookingId: string; errorCode: string }>
-  }> => {
+  handler: async (ctx): Promise<Array<{ bookingId: Id<'bookings'> }>> => {
     const now = Date.now()
-
     const staleDrafts = await ctx.db
       .query('bookings')
       .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Draft))
@@ -208,49 +234,117 @@ export const purgeExpiredDrafts = internalMutation({
       )
       .take(BATCH_SIZE)
 
+    return staleDrafts.map((b) => ({ bookingId: b._id }))
+  },
+})
+
+/**
+ * Mutation: purge a single expired Draft booking.
+ * Each call is its own atomic unit — a failure here does not affect other bookings.
+ * Called by the purgeExpiredDrafts action coordinator.
+ */
+export const purgeOneDraft = internalMutation({
+  args: { bookingId: v.id('bookings') },
+  handler: async (ctx, { bookingId }): Promise<void> => {
+    const booking = await ctx.db.get(bookingId)
+    if (!booking || booking.status !== BOOKING_STATUS.Draft) return
+
+    await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
+    await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
+    await logBookingChange(ctx, {
+      bookingId: booking._id,
+      action: 'expired_draft_purged',
+      actorSlug: 'system',
+      actorType: 'system',
+    })
+  },
+})
+
+/** Extract a ConvexError code string, or return 'UNKNOWN'.
+ * Handles both object data (direct throw) and JSON-serialized string data
+ * (when error crosses a ctx.runMutation boundary, Convex serializes err.data). */
+function extractErrorCode(err: unknown): string {
+  if (!(err instanceof ConvexError)) return 'UNKNOWN'
+
+  let data: unknown = err.data
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data)
+    } catch {
+      return 'UNKNOWN'
+    }
+  }
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'code' in data &&
+    typeof (data as { code: unknown }).code === 'string'
+  ) {
+    return (data as { code: string }).code
+  }
+  return 'UNKNOWN'
+}
+
+/**
+ * Per-booking data errors that are safe to isolate without aborting the batch.
+ * If booking N throws one of these, bookings N+1…M can still be purged.
+ * Only data-corruption / logic-bug errors belong here — NOT unknown runtime
+ * errors, which should re-throw to abort the batch and surface the failure.
+ */
+const ISOLATABLE_ERRORS: ReadonlySet<string> = new Set([
+  ErrorCode.ORPHANED_RESERVATION,
+  ErrorCode.MISSING_SNAPSHOT,
+  ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+  ErrorCode.SNAPSHOT_UNDERFLOW,
+  ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+  ErrorCode.INVARIANT_VIOLATION,
+])
+
+/**
+ * Cron: purge Draft bookings whose holdTTL has lapsed.
+ * Runs every 6 hours. Vacates reservations, restores availability snapshots,
+ * cancels the booking, and logs an audit entry.
+ *
+ * DD-278: Refactored from internalMutation to internalAction. Each booking
+ * is processed in an isolated ctx.runMutation call so a failure on booking N
+ * does not roll back writes for bookings 1…N-1.
+ *
+ * Batch limit: 25 per run to stay within Convex limits.
+ */
+export const purgeExpiredDrafts = internalAction({
+  args: {},
+  handler: async (ctx): Promise<{
+    purged: number
+    skipped: number
+    errors: Array<{ bookingId: string; errorCode: string }>
+  }> => {
+    const expiredDrafts = await ctx.runQuery(
+      internal.bookings.inventoryRelease.findExpiredDrafts,
+      {},
+    )
+
     let purged = 0
     const errors: Array<{ bookingId: string; errorCode: string }> = []
 
-    /** Error codes safe to isolate per-booking without aborting the batch. */
-    const ISOLATABLE_ERRORS: ReadonlySet<string> = new Set([
-      ErrorCode.ORPHANED_RESERVATION,
-      ErrorCode.MISSING_SNAPSHOT,
-      ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
-      ErrorCode.INVARIANT_VIOLATION,
-    ])
-
-    for (const booking of staleDrafts) {
+    for (const { bookingId } of expiredDrafts) {
       try {
-        await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
-        await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
-        await logBookingChange(ctx, {
-          bookingId: booking._id,
-          action: 'expired_draft_purged',
-          actorSlug: 'system',
-          actorType: 'system',
-        })
+        await ctx.runMutation(
+          internal.bookings.inventoryRelease.purgeOneDraft,
+          { bookingId },
+        )
         purged++
       } catch (err) {
-        let errorCode = 'UNKNOWN'
-        if (
-          err instanceof ConvexError &&
-          typeof err.data === 'object' &&
-          err.data !== null &&
-          'code' in err.data &&
-          typeof (err.data as { code: unknown }).code === 'string'
-        ) {
-          errorCode = (err.data as { code: string }).code
-        }
-        // Re-throw unrecognized errors to prevent partial-write inconsistency.
+        const errorCode = extractErrorCode(err)
+        // Re-throw unrecognized errors to surface unexpected failures.
         // Only known inventory-corruption errors are safe to isolate per-booking.
         if (!ISOLATABLE_ERRORS.has(errorCode)) {
           throw err
         }
         console.error(`purgeExpiredDrafts: failed to purge booking`, {
-          bookingId: booking._id,
+          bookingId,
           errorCode,
         })
-        errors.push({ bookingId: booking._id, errorCode })
+        errors.push({ bookingId, errorCode })
       }
     }
 
