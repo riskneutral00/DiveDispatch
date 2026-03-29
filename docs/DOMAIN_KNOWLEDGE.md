@@ -95,9 +95,15 @@ Compressor operators maintain an effectively infinite surplus of filled air cyli
 
 Real-world equipment fulfillment: one EM packs one set of bags for a booking. Cross-EM fallback would mean split gear from two different shops arriving at two different piers — logistically impossible. If EM-A doesn't have enough XL BCDs, the DC selects a different EM or reduces quantity. No automatic fallback.
 
-### Why Lazy TTL (No Cron)
+### Why Hybrid TTL (Lazy + Cron)
 
-Draft bookings expire after 12 hours by default. The expiry is checked lazily on read, not via a cron job. This means a Draft booking that nobody queries might "live" past its TTL — but the moment anyone reads it, it's cleaned up. This is simpler, cheaper, and avoids Convex cron complexity for something that doesn't need real-time precision.
+Draft bookings expire after 12 hours by default. Expiry is enforced through two complementary mechanisms:
+
+1. **Lazy-on-read:** `checkAndExpireBooking()` (in `convex/bookings/status.ts`) runs when a Draft booking is fetched. If `expiresAt < now`, it vacates reservations and cancels the booking immediately. This handles the common case where a customer or operator revisits the booking.
+
+2. **Cron-based cleanup:** `purgeExpiredDrafts` (in `convex/bookings/inventoryRelease.ts`) runs every 6 hours via `crons.interval()` in `convex/crons.ts`. This catches abandoned drafts that are never re-read — e.g., a customer who starts the portal, closes the browser, and never returns. Without this, orphaned inventory holds would persist indefinitely.
+
+The lazy path provides instant cleanup on access. The cron provides a bounded upper limit (6 hours past TTL) for the worst case. Neither mechanism alone is sufficient: lazy-only leaves orphaned holds; cron-only delays cleanup for active bookings unnecessarily.
 
 ### Why Cross-Owner Visibility is Limited
 
@@ -335,7 +341,7 @@ Every notification is created inline by the mutation that triggers it (via a `no
 
 | Mutation | Type | Recipient | Template |
 |----------|------|-----------|----------|
-| submitToDraft | `hold_placed` | Each non-Auto resource owner | "New booking request for {activity} on {dates}" |
+| submitToDraft | `hold_placed` | Each non-Auto resource owner | "New booking request for {activity} on {dates}" `[planned]` |
 | submitToDraft (referral) | `booking_referred` | Agent | "{operator} referred a booking to you" |
 | declineReservation | `hold_declined` | Booking owner | "{resource} declined your booking for {activity}" |
 | declineReservation (no alt) | `no_backup_available` | Booking owner | "No alternative {type} available" |
@@ -409,7 +415,7 @@ Irreversible or expensive-to-reverse architectural decisions are documented as f
 | ADR | Title | Summary |
 |-----|-------|---------|
 | ADR-001 | Portal Token as Credential | Customer portal uses UUID tokens instead of Clerk auth. Token IS the credential. No account creation required. |
-| ADR-002 | Lazy TTL Expiry | Draft booking holds expire on read, not via cron. Simpler, cheaper, deterministic. |
+| ADR-002 | Hybrid TTL Expiry | Draft booking holds expire via lazy-on-read (`checkAndExpireBooking`) AND a 6-hour cron (`purgeExpiredDrafts`) that catches abandoned drafts. |
 | ADR-003 | Core vs Adapters Boundary | `convex/` divided into core (booking lifecycle), adapters (notifications, email, equipment), and shared (utilities). Strict import direction. |
 | ADR-004 | Inventory/Availability Invariants | Three non-negotiable invariants enforced atomically: exclusive uniqueness, pooled decrement, and atomic snapshot+reservation writes. |
 
