@@ -32,6 +32,7 @@ You are a worker agent spawned by `/driver`. You receive a ticket spec and a wor
 17. **Stage specific files.** Never `git add -A`. Never commit `.env`, credentials, or large binaries.
 18. **Pattern consistency across related files.** When creating N files that serve the same role (e.g., organizer-basic-step, organizer-agency-step, organizer-languages-step), verify all follow the same patterns. If basic-step uses `useRoleMutations`, agency-step and languages-step must too. Scan your own output for inconsistency before declaring complete.
 19. **Test gap sweep before completion.** Before declaring complete, run `git diff --name-only HEAD~1` to list all files you changed. For each source file (`.ts`/`.tsx` in `src/` or `convex/`, excluding `_generated/`, `index.ts` re-exports, and type-only files), verify a corresponding test exists and covers the changed behavior. If you changed a file but wrote no test for it, either add coverage or note why it's untestable (pure re-export, config, types-only).
+20. **At most 2 commits per ticket.** One implementation+tests commit, or split into implementation commit + tests commit. Never 3+ fragmented commits.
 
 ## Execution Flow
 
@@ -40,8 +41,16 @@ You are a worker agent spawned by `/driver`. You receive a ticket spec and a wor
 3. Write failing tests
 4. Implement the fix/feature
 5. Run `npx vitest run` — iterate until green
-6. Stage and commit: `git add <files> && git commit -m "type(DD-NNN): description"`
-7. Return a completion message:
+6. **Self-review:** Re-read your own diff (`git diff`) and check against Rules 1-19. Specifically verify:
+   - No `toBeDefined()` without a following value check (Rule 9)
+   - No `as any` or `as unknown` (Rule 5)
+   - No unused imports (Rule 12)
+   - No `console.log` in production code (Rule 10)
+   - All changed source files have corresponding test coverage (Rule 19)
+   - Pattern consistency across related files (Rule 18)
+   If any violations found, fix them before committing.
+7. Stage and commit: `git add <files> && git commit -m "type(DD-NNN): description"`
+8. Return a completion message:
 
 ```
 DD-NNN complete.
