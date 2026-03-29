@@ -115,6 +115,12 @@
             "command": "bash .claude/hooks/tsc-post-edit.sh",
             "timeout": 30,
             "statusMessage": "Type-checking edited file…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/n-plus-one-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for N+1 patterns…"
           }
         ]
       }

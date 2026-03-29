@@ -170,21 +170,31 @@ tag(action="add", notebook_id=..., tags="matrix,youtube,{TOPIC}")
 
 ### 2a. Primary Extraction
 
-Query the notebook for a structured, deduplicated technical outline:
+Query the notebook for a structured, deduplicated outline of ALL knowledge:
 
 ```
 notebook_query(notebook_id=..., query="From the video '{TITLE}':
-Create a comprehensive technical outline of every unique concept, technique,
-tool, command, and recommendation presented.
+Create a comprehensive outline of EVERYTHING taught, recommended, or explained.
+This includes but is not limited to:
+- Techniques, tools, commands, libraries
+- Organizational principles (what goes where, how to structure files/directories)
+- Decision frameworks (when to use X vs Y, and why)
+- Anti-patterns and warnings (what NOT to do, and why)
+- Mental models and conceptual frameworks
+- Workflow sequences (multi-step processes, not just individual tools)
+- Opinions, philosophy, and reasoning about why something matters
+- Configuration examples (actual file contents, directory layouts shown)
+- Rules of thumb, heuristics, and thresholds mentioned
 
 Rules:
 - Remove ALL repetition, filler, promotional content, and verbal padding
 - Preserve EXACT tool names, library names, commands, configuration details
 - Preserve EXACT actionable steps and implementation details
+- Preserve EXACT organizational advice (what content belongs where, and why)
 - Include timestamps for key moments (e.g., [12:34])
 - Group by TOPIC, not by video timeline
 - Each point should be a distinct, non-overlapping idea
-- If a technique is mentioned multiple times, consolidate into one entry with all details
+- If a concept is mentioned multiple times, consolidate into one entry with all details
 
 Format as a structured outline with clear headers and bullet points.")
 ```
@@ -205,9 +215,27 @@ For each technique or tool mentioned:
 Cite timestamps where available.")
 ```
 
-### 2c. Assemble Outline
+### 2c. Organizational & Decision Extraction
 
-Merge responses from 2a and 2b into a single structured outline. Deduplicate any overlap between the two queries. This merged outline is the permanent library content.
+Third query for advice that doesn't fit the "technique" lens:
+
+```
+notebook_query(notebook_id=..., query="From the video '{TITLE}':
+What organizational advice, decision rules, and content-routing guidance is given?
+Specifically:
+- What content should go in which files or directories? (e.g., 'put X in global, Y in local')
+- What are the decision criteria for choosing between approaches?
+- What anti-patterns or mistakes does the speaker warn against?
+- What mental models or frameworks for thinking are introduced?
+- What heuristics, thresholds, or rules of thumb are stated? (e.g., 'if loop takes >30s, it won't work')
+- What opinions does the speaker express about WHY certain approaches matter?
+- What specific file contents, directory layouts, or configuration examples are shown?
+Include every detail — this is the knowledge that falls between 'techniques' and 'implementation steps'.")
+```
+
+### 2d. Assemble Outline
+
+Merge responses from 2a, 2b, and 2c into a single structured outline. Deduplicate any overlap across the three queries. This merged outline is the permanent library content. Every distinct idea from the video must appear — if it was said and it's not filler, it belongs in the outline.
 
 Derive `TOPIC` from the outline content. Use a short slug:
 - `ai-agents`, `testing`, `architecture`, `devops`, `design`, `performance`, `security`, `database`, `frontend`, `backend`, `business`, `diving`, `workflow`, `deployment`, `observability`, `other`
@@ -223,10 +251,10 @@ After Phase 2 completes, query the `Matrix — YouTube` notebook for deeper unde
 ### 3a. Video-Scoped Query
 
 ```
-notebook_query(notebook_id=..., query="From '{TITLE}': What are the key implementation patterns, and what prerequisites does each require?")
+notebook_query(notebook_id=..., query="From '{TITLE}': What knowledge from this video is NOT captured by listing techniques, tools, and implementation steps? Look for: organizational advice, file content routing rules, decision criteria, anti-patterns, mental models, philosophy, heuristics, and any specific examples or demonstrations that illustrate a point.")
 ```
 
-Use to enrich the outline with details NLM extracted that the structured queries in Phase 2 may have missed.
+Use to catch anything the Phase 2 queries missed. Phase 2 is biased toward discrete techniques — this query sweeps for everything else.
 
 ### 3b. Cross-Video Query (conditional)
 
