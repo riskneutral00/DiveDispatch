@@ -133,4 +133,65 @@ describe('StepSafety', () => {
       expect(defaultProps.onComplete).toHaveBeenCalled()
     })
   })
+
+  it('sends empty string when a previously saved field is cleared', async () => {
+    mockUseQuery.mockReturnValue(savedData)
+    mockSaveSafetyInfo.mockResolvedValueOnce(undefined)
+
+    render(<StepSafety {...defaultProps} />)
+
+    // Clear the insurance field
+    const insuranceInput = screen.getByPlaceholderText('Policy number')
+    fireEvent.change(insuranceInput, { target: { value: '' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+
+    await waitFor(() => {
+      expect(mockSaveSafetyInfo).toHaveBeenCalledWith({
+        token: 'test-token',
+        bloodType: 'O+',
+        allergies: 'Penicillin',
+        medications: 'Aspirin',
+        insurancePolicyNumber: '',
+      })
+    })
+  })
+
+  it('preserves original values when submitted without clearing', async () => {
+    mockUseQuery.mockReturnValue(savedData)
+    mockSaveSafetyInfo.mockResolvedValueOnce(undefined)
+
+    render(<StepSafety {...defaultProps} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+
+    await waitFor(() => {
+      expect(mockSaveSafetyInfo).toHaveBeenCalledWith({
+        token: 'test-token',
+        bloodType: 'O+',
+        allergies: 'Penicillin',
+        medications: 'Aspirin',
+        insurancePolicyNumber: 'POL-123',
+      })
+    })
+  })
+
+  it('sends all fields unconditionally even when all are empty', async () => {
+    mockUseQuery.mockReturnValue(null)
+    mockSaveSafetyInfo.mockResolvedValueOnce(undefined)
+
+    render(<StepSafety {...defaultProps} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+
+    await waitFor(() => {
+      expect(mockSaveSafetyInfo).toHaveBeenCalledWith({
+        token: 'test-token',
+        bloodType: '',
+        allergies: '',
+        medications: '',
+        insurancePolicyNumber: '',
+      })
+    })
+  })
 })

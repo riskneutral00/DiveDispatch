@@ -76,10 +76,10 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
     try {
       await saveSafetyInfo({
         token,
-        ...(form.bloodType ? { bloodType: form.bloodType } : {}),
-        ...(form.allergies ? { allergies: form.allergies } : {}),
-        ...(form.medications ? { medications: form.medications } : {}),
-        ...(form.insurancePolicyNumber ? { insurancePolicyNumber: form.insurancePolicyNumber } : {}),
+        bloodType: form.bloodType,
+        allergies: form.allergies,
+        medications: form.medications,
+        insurancePolicyNumber: form.insurancePolicyNumber,
       })
       onComplete()
     } catch (err) {
