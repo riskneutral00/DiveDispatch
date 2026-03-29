@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import type { StakeholderRole } from '../utils/role'
 
 interface UseBlockedDateToggleReturn {
   blockedDates: string[]
@@ -23,7 +24,7 @@ export function useBlockedDateToggle({
   roleType,
 }: {
   ownerSlug: string
-  roleType: string
+  roleType: StakeholderRole
 }): UseBlockedDateToggleReturn {
   const blockedDatesData = useQuery(api.availability.getBlockedDatesForStakeholder, {
     ownerSlug,

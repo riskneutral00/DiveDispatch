@@ -7,7 +7,7 @@ import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } f
 import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
-import { effectiveResourceType } from './lib/validators'
+import { effectiveResourceType, stakeholderTypeValidator as stakeholderType, type StakeholderRole } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from './shared/statuses'
 
@@ -251,7 +251,7 @@ export async function _listInventoryByType(
  */
 export async function _getBlockedDatesForStakeholder(
   ctx: DbCtx,
-  args: { ownerSlug: string; roleType: string },
+  args: { ownerSlug: string; roleType: StakeholderRole },
 ): Promise<string[]> {
   const { user } = await requireAuth(ctx)
   if (user.slug !== args.ownerSlug) return []
@@ -266,7 +266,7 @@ export async function _getBlockedDatesForStakeholder(
 }
 
 export const getBlockedDatesForStakeholder = query({
-  args: { ownerSlug: v.string(), roleType: v.string() },
+  args: { ownerSlug: v.string(), roleType: stakeholderType },
   handler: async (ctx, args) => _getBlockedDatesForStakeholder(ctx, args),
 })
 
@@ -387,7 +387,7 @@ export const checkPreferredAvailability = query({
  */
 export async function _toggleBlockedDate(
   ctx: MutationCtx,
-  args: { date: string; roleType: string },
+  args: { date: string; roleType: StakeholderRole },
 ): Promise<boolean> {
   const { user } = await requireAuth(ctx)
 
@@ -543,7 +543,7 @@ export async function _toggleBlockedDate(
 }
 
 export const toggleBlockedDate = mutation({
-  args: { date: v.string(), roleType: v.string() },
+  args: { date: v.string(), roleType: stakeholderType },
   handler: _toggleBlockedDate,
 })
 

@@ -4,6 +4,7 @@
 
 import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
 import type { DataModel, Doc } from '../../convex/_generated/dataModel'
+import type { StakeholderRole } from '../../convex/lib/validators'
 import { TEST_TOKENS, TEST_SLUGS } from '../helpers/testData'
 
 export type SeedCtx = GenericMutationCtx<DataModel> &
@@ -50,7 +51,7 @@ export async function seedUser(
 /** Seed blocked dates into the stakeholderBlockedDates table. */
 export async function seedBlockedDates(
   ctx: SeedCtx,
-  opts: { ownerSlug: string; roleType: string; dates: string[] },
+  opts: { ownerSlug: string; roleType: StakeholderRole; dates: string[] },
 ) {
   return ctx.db.insert('stakeholderBlockedDates', {
     ownerSlug: opts.ownerSlug,

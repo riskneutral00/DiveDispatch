@@ -303,7 +303,7 @@ export default defineSchema({
 
   stakeholderBlockedDates: defineTable({
     ownerSlug: v.string(),
-    roleType: v.string(), // matches ClerkRole: 'Boat', 'Instructor', etc.
+    roleType: stakeholderType,
     dates: v.array(v.string()),
   }).index('by_ownerSlug_roleType', ['ownerSlug', 'roleType']),
 
@@ -448,6 +448,7 @@ export default defineSchema({
     venueType: venueType,
     isPublic: v.boolean(),
     confinedCapable: v.boolean(),
+    openWaterCapable: v.optional(v.boolean()),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
