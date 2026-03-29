@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import type { NotificationDoc } from '@/components/dashboard/notification-item'
+import type { NotificationDoc } from '@/lib/types/notifications'
 
 interface UseOptimisticNotificationsOptions {
   userId: string

@@ -52,13 +52,8 @@ function NotificationIcon({ type, isUnread }: { type: string; isUnread: boolean 
   return <Icon size={16} style={{ color }} />
 }
 
-export interface NotificationDoc {
-  _id: string
-  type: string
-  message: string
-  createdAt: number
-  readAt?: number
-}
+export type { NotificationDoc } from '@/lib/types/notifications'
+import type { NotificationDoc } from '@/lib/types/notifications'
 
 interface NotificationItemProps {
   notification: NotificationDoc
