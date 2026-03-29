@@ -15,4 +15,8 @@ crons.interval('prune-blocked-dates', { hours: 168 }, internal.availability.prun
 // Purge expired idempotency keys to prevent unbounded table growth from offline mutation replay
 crons.interval('purge-idempotency-keys', { hours: 1 }, internal.lib.idempotency.purgeExpiredIdempotencyKeys)
 
+// Purge expired Draft bookings whose holdTTL has lapsed — releases held reservations
+// and restores availability snapshots for abandoned drafts
+crons.interval('purge-expired-drafts', { hours: 6 }, internal.bookings.inventoryRelease.purgeExpiredDrafts)
+
 export default crons

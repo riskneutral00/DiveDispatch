@@ -716,6 +716,7 @@ export default defineSchema({
       v.literal('medical_cleared'),
       v.literal('noshow_marked'),
       v.literal('noshow_reverted'),
+      v.literal('expired_draft_purged'),
     ),
     actorSlug: v.string(),
     actorType: v.union(

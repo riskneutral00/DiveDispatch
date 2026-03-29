@@ -5,11 +5,13 @@
  */
 
 import { ConvexError } from 'convex/values'
+import { internalMutation } from '../_generated/server'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { VacatedReason } from '../shared/statuses'
-import { RESERVATION_STATUS } from '../shared/statuses'
+import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
+import { logBookingChange } from '../bookingAuditLog'
 
 /**
  * Looks up a single AvailabilitySnapshot by inventoryUnitId + date + windowStart.
@@ -103,3 +105,45 @@ export async function releaseBookingReservations(
     await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
   }
 }
+
+// ─── purgeExpiredDrafts (cron) ──────────────────────────────────────────────
+
+const BATCH_SIZE = 25
+
+/**
+ * Cron: purge Draft bookings whose holdTTL has lapsed.
+ * Runs every 6 hours. Vacates reservations, restores availability snapshots,
+ * cancels the booking, and logs an audit entry.
+ *
+ * Batch limit: 25 per run to stay within Convex mutation limits.
+ */
+export const purgeExpiredDrafts = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ purged: number }> => {
+    const now = Date.now()
+
+    const staleDrafts = await ctx.db
+      .query('bookings')
+      .withIndex('by_status', (q) => q.eq('status', BOOKING_STATUS.Draft))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field('expiresAt'), undefined),
+          q.lt(q.field('expiresAt'), now),
+        ),
+      )
+      .take(BATCH_SIZE)
+
+    for (const booking of staleDrafts) {
+      await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
+      await logBookingChange(ctx, {
+        bookingId: booking._id,
+        action: 'expired_draft_purged',
+        actorSlug: 'system',
+        actorType: 'system',
+      })
+    }
+
+    return { purged: staleDrafts.length }
+  },
+})

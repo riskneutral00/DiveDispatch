@@ -21,6 +21,7 @@ export type AuditAction =
   | 'medical_cleared'
   | 'noshow_marked'
   | 'noshow_reverted'
+  | 'expired_draft_purged'
 
 export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
 
