@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQuery } from 'convex/react'
 import { AlertTriangle } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
+import { usePortalMedical } from '@/lib/hooks/use-portal-medical'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -65,8 +64,7 @@ interface StepMedicalProps {
 }
 
 export function StepMedical({ token, onComplete }: StepMedicalProps) {
-  const saveMedicalAnswers = useMutation(api.customerProfiles.saveMedicalAnswers)
-  const saved = useQuery(api.customerProfiles.getMedicalByToken, { token })
+  const { saved, save: saveMedicalAnswers } = usePortalMedical({ token })
 
   const [answers, setAnswers] = useState<Answers>({})
   const [touched, setTouched] = useState(false)

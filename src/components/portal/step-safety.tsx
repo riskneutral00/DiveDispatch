@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassButton } from '@/components/glass/glass-button'
 import { GlassInput } from '@/components/glass/glass-input'
@@ -10,6 +8,7 @@ import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
+import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
 import { Spinner } from '@/components/common/spinner'
 
 // ── Blood type options ────────────────────────────────────────────────────────
@@ -41,8 +40,7 @@ interface StepSafetyProps {
 }
 
 export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
-  const saved = useQuery(api.customerProfiles.getSafetyInfoByToken, { token })
-  const saveSafetyInfo = useMutation(api.customerProfiles.saveSafetyInfo)
+  const { saved, save: saveSafetyInfo } = usePortalSafety({ token })
 
   const [form, setForm] = useState<SafetyForm>(defaultForm())
   const {
