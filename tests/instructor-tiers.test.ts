@@ -127,4 +127,25 @@ describe('splitInstructorTiers', () => {
     const result = splitInstructorTiers(options, ['GB'])
     expect(result.tier2.map(o => o.id)).toEqual(['a', 'b', 'c'])
   })
+
+  it('sorts tier2 by match quality: full match before partial', () => {
+    // Customer speaks English + Thai
+    // 'partial' only speaks English (1/2 match)
+    // 'full' speaks both English + Thai (2/2 match)
+    const options = [
+      makeOpt('partial', { languages: ['en-GB'], isPreferred: false }),
+      makeOpt('full', { languages: ['en-GB', 'th-TH'], isPreferred: false }),
+    ]
+    const result = splitInstructorTiers(options, ['GB', 'TH'])
+    expect(result.tier2.map(o => o.id)).toEqual(['full', 'partial'])
+  })
+
+  it('sorts tier1 by match quality: full match before partial', () => {
+    const options = [
+      makeOpt('partial', { languages: ['en-GB'], isPreferred: true }),
+      makeOpt('full', { languages: ['en-GB', 'th-TH'], isPreferred: true }),
+    ]
+    const result = splitInstructorTiers(options, ['GB', 'TH'])
+    expect(result.tier1.map(o => o.id)).toEqual(['full', 'partial'])
+  })
 })

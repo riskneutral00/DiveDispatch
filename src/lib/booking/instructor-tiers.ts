@@ -1,4 +1,5 @@
 import { languageToCode } from '@/lib/constants/dive-languages'
+import { scoreLanguageMatch } from '@/lib/utils/language-matching'
 
 export interface TierableOption {
   id: string
@@ -55,6 +56,15 @@ export function splitInstructorTiers<T extends TierableOption>(
       tier4.push(opt)
     }
   }
+
+  // Sort language-matched tiers by match quality (full before partial)
+  const byMatchQuality = (a: T, b: T) => {
+    const aScore = scoreLanguageMatch(a.languages ?? [], customerLanguageCodes)
+    const bScore = scoreLanguageMatch(b.languages ?? [], customerLanguageCodes)
+    return bScore.matchCount - aScore.matchCount
+  }
+  tier1.sort(byMatchQuality)
+  tier2.sort(byMatchQuality)
 
   return { tier1, tier2, tier3, tier4 }
 }
