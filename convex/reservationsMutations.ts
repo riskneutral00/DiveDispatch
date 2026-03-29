@@ -259,16 +259,13 @@ export async function _declineHandler(
 
   const now = Date.now()
 
-  // Vacate each reservation and restore its snapshot atomically (Invariant 3)
-  // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
-  const seenSnapshotIds = new Set<string>()
-  for (const reservation of activeForUnit) {
-    await ctx.db.patch(reservation._id, {
-      status: RESERVATION_STATUS.Vacated,
-      vacatedAt: now,
-      vacatedBy: VACATED_REASON.StakeholderDeclined,
-    })
+  // ── Phase 1 (read): accumulate unitsToRestore per snapshot ───────────────
+  // DD-295: aggregate across all reservations FIRST so each snapshot is
+  // patched exactly once, even when multiple pooled reservations share it.
+  const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
+  const unitsToRestore = new Map<string, number>()
 
+  for (const reservation of activeForUnit) {
     const session = await ctx.db.get(reservation.bookingSessionId)
     if (!session) {
       throw new ConvexError({
@@ -277,17 +274,36 @@ export async function _declineHandler(
       })
     }
 
-    // Snapshot lookup uses windowStart to match the exact time window
-    const snapshot = await getAvailabilitySnapshot(ctx, args.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
+    const key = `${args.inventoryUnitId}|${session.date}|${session.startTime}`
 
-    if (!snapshot) {
-      throw new ConvexError({
-        code: ErrorCode.MISSING_SNAPSHOT,
-        reason: `No availability snapshot found for unit ${args.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
-      })
+    if (!snapshotIdMap.has(key)) {
+      const snapshot = await getAvailabilitySnapshot(ctx, args.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
+      if (!snapshot) {
+        throw new ConvexError({
+          code: ErrorCode.MISSING_SNAPSHOT,
+          reason: `No availability snapshot found for unit ${args.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
+        })
+      }
+      snapshotIdMap.set(key, snapshot._id)
     }
 
-    await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested, seenSnapshotIds)
+    unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)
+  }
+
+  // ── Phase 2 (write): vacate all reservations ────────────────────────────
+  for (const reservation of activeForUnit) {
+    await ctx.db.patch(reservation._id, {
+      status: RESERVATION_STATUS.Vacated,
+      vacatedAt: now,
+      vacatedBy: VACATED_REASON.StakeholderDeclined,
+    })
+  }
+
+  // ── Phase 3 (patch): restore each snapshot once with aggregated count ───
+  const seenSnapshotIds = new Set<string>()
+  for (const [key, units] of unitsToRestore) {
+    const snapshotId = snapshotIdMap.get(key)!
+    await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds)
   }
 
   // Delete from bookingResources junction table

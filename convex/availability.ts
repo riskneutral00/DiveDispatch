@@ -471,10 +471,16 @@ export async function _toggleBlockedDate(
     }
 
     // Second pass: vacate PendingAcceptance reservations (safe — no Confirmed exist)
+    // DD-295: aggregate unitsToRestore per snapshot so each is patched once,
+    // even when multiple pooled reservations share the same snapshot.
     const now = Date.now()
     const affectedBookingIds = new Set<string>()
-    // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
-    const seenSnapshotIds = new Set<string>()
+
+    // Phase 1 (read): collect all pending reservations and accumulate units per snapshot
+    type PendingRes = { resId: Id<'reservations'>; unitsRequested: number }
+    const allPending: PendingRes[] = []
+    const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
+    const unitsToRestore = new Map<string, number>()
 
     for (const unit of units) {
       const sessions = await ctx.db
@@ -501,33 +507,48 @@ export async function _toggleBlockedDate(
           .collect()
 
         for (const reservation of pending) {
-          await ctx.db.patch(reservation._id, {
-            status: RESERVATION_STATUS.Vacated,
-            vacatedAt: now,
-            vacatedBy: VACATED_REASON.StakeholderDeclined,
-          })
+          allPending.push({ resId: reservation._id, unitsRequested: reservation.unitsRequested })
 
-          // Restore snapshot (Invariant 3: same mutation as reservation write)
-          assertValidTime(session.startTime, 'startTime')
-          const snapshot = await ctx.db
-            .query('availabilitySnapshots')
-            .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-              q
-                .eq('inventoryUnitId', unit._id)
-                .eq('date', session.date)
-                .eq('windowStart', session.startTime),
-            )
-            .unique()
+          const key = `${unit._id}|${session.date}|${session.startTime}`
+          if (!snapshotIdMap.has(key)) {
+            assertValidTime(session.startTime, 'startTime')
+            const snapshot = await ctx.db
+              .query('availabilitySnapshots')
+              .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
+                q
+                  .eq('inventoryUnitId', unit._id)
+                  .eq('date', session.date)
+                  .eq('windowStart', session.startTime),
+              )
+              .unique()
 
-          if (!snapshot) {
-            throw new Error(
-              `Invariant 3 violation: missing snapshot for unit ${unit._id} on ${session.date} at ${session.startTime}`,
-            )
+            if (!snapshot) {
+              throw new Error(
+                `Invariant 3 violation: missing snapshot for unit ${unit._id} on ${session.date} at ${session.startTime}`,
+              )
+            }
+            snapshotIdMap.set(key, snapshot._id)
           }
 
-          await restoreSnapshotUnits(ctx, snapshot._id, reservation.unitsRequested, seenSnapshotIds)
+          unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)
         }
       }
+    }
+
+    // Phase 2 (write): vacate all reservations
+    for (const { resId } of allPending) {
+      await ctx.db.patch(resId, {
+        status: RESERVATION_STATUS.Vacated,
+        vacatedAt: now,
+        vacatedBy: VACATED_REASON.StakeholderDeclined,
+      })
+    }
+
+    // Phase 3 (patch): restore each snapshot once with aggregated count
+    const seenSnapshotIds = new Set<string>()
+    for (const [key, units_] of unitsToRestore) {
+      const snapshotId = snapshotIdMap.get(key)!
+      await restoreSnapshotUnits(ctx, snapshotId, units_, seenSnapshotIds)
     }
 
     // Notify affected booking owners that a resource was declined.

@@ -953,10 +953,10 @@ describe('decline cascade side effects', () => {
     })
   })
 
-  it('DD-291: decline with 2 reservations on the same pooled snapshot throws SNAPSHOT_DOUBLE_WRITE (guard is wired)', async () => {
+  it('DD-295: decline with 2 reservations on the same pooled snapshot aggregates and restores both units', async () => {
     const t = makeT()
 
-    const { bookingId, unitId } = await t.run(async (ctx) => {
+    const { bookingId, unitId, snapshotId } = await t.run(async (ctx) => {
       await seedUser(ctx, {
         tokenIdentifier: 'user|dw-inst',
         slug: 'dw-instructor',
@@ -1000,7 +1000,7 @@ describe('decline cascade side effects', () => {
         startTime: '08:00',
         endTime: '16:00',
       })
-      await seedSnapshot(ctx, unitId, {
+      const snapshotId = await seedSnapshot(ctx, unitId, {
         date: testDate(5),
         windowStart: '08:00',
         windowEnd: '16:00',
@@ -1008,22 +1008,36 @@ describe('decline cascade side effects', () => {
         availableUnits: 8,
         reservedUnits: 2,
       })
-      // Two reservations against the same snapshot
+      // Two reservations against the same snapshot (pooled: 1 unit each)
       await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
       await seedReservation(ctx, bookingId, unitId, sessionId, { unitsRequested: 1 })
 
-      return { bookingId, unitId }
+      return { bookingId, unitId, snapshotId }
     })
 
-    // Decline should throw SNAPSHOT_DOUBLE_WRITE because two reservations map
-    // to the same snapshot and the guard detects the second write attempt
-    await expectConvexError(
-      t.withIdentity({ tokenIdentifier: 'user|dw-inst' }).mutation(
-        api.reservationsMutations.declineReservation,
-        { bookingId, inventoryUnitId: unitId },
-      ),
-      ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+    // Decline should succeed — aggregating 2 units and restoring the snapshot once
+    await t.withIdentity({ tokenIdentifier: 'user|dw-inst' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
     )
+
+    // Verify: both reservations vacated, snapshot restored by 2 units total
+    await t.run(async (ctx) => {
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_inventoryUnitId', (q) =>
+          q.eq('bookingId', bookingId as Id<'bookings'>).eq('inventoryUnitId', unitId as Id<'inventoryUnits'>),
+        )
+        .collect()
+
+      expect(reservations).toHaveLength(2)
+      expect(reservations[0].status).toBe('Vacated')
+      expect(reservations[1].status).toBe('Vacated')
+
+      const snapshot = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      expect(snapshot!.availableUnits).toBe(10) // 8 + 2 restored
+      expect(snapshot!.reservedUnits).toBe(0)   // 2 - 2 restored
+    })
   })
 
   it('H17: decline deletes the bookingResources junction row for the declined resource type', async () => {
