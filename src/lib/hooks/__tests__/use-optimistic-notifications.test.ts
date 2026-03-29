@@ -395,7 +395,7 @@ describe('useOptimisticNotifications', () => {
 
   it('concurrent markAsRead + delete: delete resolution does not leave stale overrides', async () => {
     mockNotifications = [
-      makeNotification({ _id: 'n-1' }),
+      makeNotification({ _id: 'n-1', readAt: 100 }),
     ]
 
     let resolveMarkAsRead!: () => void
@@ -426,19 +426,20 @@ describe('useOptimisticNotifications', () => {
     // DANGEROUS WINDOW: delete resolved but markAsRead is still pending.
     // handleDelete.finally cross-operation cleanup must have cleared the readAt
     // override. Without that cleanup, n-1 would reappear here with a stale
-    // optimistic readAt (set by the still-pending handleMarkAsRead).
+    // optimistic readAt (a Date.now() timestamp, not 100).
+    // With cleanup: server baseline (100) shows through.
     expect(result.current.notifications).toHaveLength(1)
-    expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
+    expect(result.current.notifications?.[0]?.readAt).toBe(100)
 
     // Then resolve markAsRead
     await act(async () => {
       resolveMarkAsRead()
     })
 
-    // After both resolve, n-1 should show through from server with original readAt (undefined)
+    // After both resolve, n-1 should show through from server with original readAt (100)
     // i.e., no stale optimistic readAt override lingering
     expect(result.current.notifications).toHaveLength(1)
-    expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
+    expect(result.current.notifications?.[0]?.readAt).toBe(100)
   })
 
   // ─── Concurrency: rapid duplicate calls ───────────────────────────────────
