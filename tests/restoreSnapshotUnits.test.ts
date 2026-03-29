@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { restoreSnapshotUnits } from '../convex/bookings/_shared'
+import { restoreSnapshotUnits } from '../convex/bookings/inventoryRelease'
 import type { Doc } from '../convex/_generated/dataModel'
 import { ErrorCode } from '../convex/lib/errorCodes'
 import {
@@ -9,6 +9,7 @@ import {
   seedInventoryUnit,
   seedSnapshot,
 } from './fixtures'
+import { testDate } from './helpers/dates'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()
@@ -140,7 +141,7 @@ describe('restoreSnapshotUnits', () => {
         totalUnits: 5,
         availableUnits: 1,
         reservedUnits: 4,
-        date: '2026-04-10',
+        date: testDate(10),
       })
 
       await restoreSnapshotUnits(ctx, snapshotA, 2)

@@ -18,7 +18,7 @@
  * - Booking with exactly MAX_RESERVATIONS_PER_BOOKING reservations succeeds normally (DD-284)
  * - purgeExpiredDrafts isolates INVARIANT_VIOLATION per-booking (DD-284)
  * - Per-booking atomicity: failure on booking N does not affect bookings 1…N-1 (DD-278)
- * - MISSING_SNAPSHOT_ON_RELEASE error code path tested (DD-278)
+ * - MISSING_SNAPSHOT: batch-fetch phase (no snapshot seeded) error code path tested (DD-278)
  * - SNAPSHOT_UNDERFLOW re-throws instead of being isolated (DD-290)
  */
 
@@ -816,10 +816,9 @@ describe('purgeExpiredDrafts', () => {
         status: 'PendingAcceptance',
       })
 
-      // Booking #2 — has reservation but snapshot is deleted (MISSING_SNAPSHOT_ON_RELEASE)
-      // This tests the write-phase error path: the snapshot lookup in
-      // releaseBookingReservations finds it during batch-fetch, but
-      // restoreSnapshotUnits re-fetches and it's gone.
+      // Booking #2 — has reservation but no snapshot seeded (MISSING_SNAPSHOT)
+      // No snapshot exists, so releaseBookingReservations throws MISSING_SNAPSHOT
+      // during the batch-fetch phase.
       const booking2 = await seedBooking(ctx, {
         expiresAt: Date.now() - 60_000,
         status: 'Draft',
@@ -913,7 +912,7 @@ describe('purgeExpiredDrafts', () => {
     ).rejects.toThrow()
   })
 
-  it('MISSING_SNAPSHOT_ON_RELEASE: snapshot deleted between batch-fetch and restore (DD-278)', async () => {
+  it('MISSING_SNAPSHOT: no snapshot in batch-fetch phase (DD-278)', async () => {
     const t = makeT()
 
     const { bookingId, reservationId } = await t.run(async (ctx) => {
