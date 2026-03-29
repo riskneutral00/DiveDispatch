@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 interface ErrorAlertProps {
   children: ReactNode
@@ -28,7 +29,7 @@ export function ErrorAlert({
 
   return (
     <div
-      className={['flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm', className].filter(Boolean).join(' ')}
+      className={cn('flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm', className)}
       style={{
         background: `color-mix(in srgb, ${color} 8%, transparent)`,
         border: `1px solid ${borderMix}`,

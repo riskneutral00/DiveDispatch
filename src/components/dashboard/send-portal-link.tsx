@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -46,6 +46,12 @@ export function SendPortalLink({
     (existingLink ? `${window.location.origin}/portal/${existingLink.token}` : null)
   const resolvedExpiry = expiresAt ?? existingLink?.expiresAt ?? null
 
+  useEffect(() => {
+    if (!copyDone) return
+    const timer = setTimeout(() => setCopyDone(false), COPY_FEEDBACK_MS)
+    return () => clearTimeout(timer)
+  }, [copyDone])
+
   async function ensureLink(): Promise<string | null> {
     if (resolvedUrl) return resolvedUrl
     try {
@@ -83,7 +89,6 @@ export function SendPortalLink({
         document.body.removeChild(el)
       }
       setCopyDone(true)
-      setTimeout(() => setCopyDone(false), COPY_FEEDBACK_MS)
     } catch {
       setError('Clipboard access denied. Copy the link manually.')
     } finally {

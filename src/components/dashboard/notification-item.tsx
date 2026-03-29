@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import type { IconName } from '@/lib/notifications/notification-config'
 import { getNotificationStyle } from '@/lib/notifications/notification-config'
+import { timeAgo } from '@/lib/utils/time-ago'
 
 const ICON_MAP: Record<IconName, React.ElementType> = {
   AlertTriangle,
@@ -33,16 +34,6 @@ const ICON_MAP: Record<IconName, React.ElementType> = {
   UserX,
   UsersRound,
   XCircle,
-}
-
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
 }
 
 // Static component — declared outside render to preserve reference identity.

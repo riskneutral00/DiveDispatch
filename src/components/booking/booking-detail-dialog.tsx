@@ -13,13 +13,13 @@ import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
   useTTLCountdown,
-  SectionLabel,
   CustomerTable,
   StakeholderList,
   PortalLinkSection,
   PortalPills,
   type PortalPill,
 } from './booking-detail-shared'
+import { FormSectionHeader } from '@/components/common/form-section-header'
 import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
@@ -295,7 +295,7 @@ function BookingDetailContent({
 
             {/* Portal completion pills */}
             <div>
-              <SectionLabel>Customer Portal</SectionLabel>
+              <FormSectionHeader label="Customer Portal" />
               <PortalPills pills={portalPills} />
               <div className="mt-3">
                 <PortalLinkSection
@@ -312,7 +312,7 @@ function BookingDetailContent({
         {/* ── Customers ────────────────────────────────────────────────── */}
         {activeSection === 'customers' && (
           <div>
-            <SectionLabel>Customers</SectionLabel>
+            <FormSectionHeader label="Customers" />
             <CustomerTable booking={booking} compact />
           </div>
         )}
@@ -320,7 +320,7 @@ function BookingDetailContent({
         {/* ── Schedule ─────────────────────────────────────────────────── */}
         {activeSection === 'schedule' && (
           <div>
-            <SectionLabel>Session Schedule</SectionLabel>
+            <FormSectionHeader label="Session Schedule" />
             {booking.sessions.length === 0 ? (
               <p className="text-sm text-secondary">
                 No sessions scheduled.
@@ -334,7 +334,7 @@ function BookingDetailContent({
         {/* ── Resources ────────────────────────────────────────────────── */}
         {activeSection === 'resources' && (
           <div>
-            <SectionLabel>Stakeholders</SectionLabel>
+            <FormSectionHeader label="Stakeholders" />
             <StakeholderList stakeholders={booking.stakeholders} compact />
           </div>
         )}
@@ -342,7 +342,7 @@ function BookingDetailContent({
         {/* ── Reservations ─────────────────────────────────────────────── */}
         {activeSection === 'reservations' && (
           <div>
-            <SectionLabel>Reservations</SectionLabel>
+            <FormSectionHeader label="Reservations" />
             <ReservationStatusList reservations={booking.reservations} />
           </div>
         )}
@@ -350,7 +350,7 @@ function BookingDetailContent({
         {/* ── Audit Trail ──────────────────────────────────────────────── */}
         {activeSection === 'audit' && (
           <div>
-            <SectionLabel>Audit Trail</SectionLabel>
+            <FormSectionHeader label="Audit Trail" />
             <AuditTrailTable bookingId={bookingId} />
           </div>
         )}

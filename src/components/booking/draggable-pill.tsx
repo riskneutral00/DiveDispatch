@@ -4,8 +4,7 @@ import { useDraggable } from '@dnd-kit/react'
 import { useRef } from 'react'
 import type { QuickBookTemplate } from '@/lib/booking/quick-book-templates'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-
-const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all focus:outline-none focus-visible:ring-2'
+import { PILL_BASE, DISABLED_OVERLAY } from '@/components/booking/pill-constants'
 
 interface DraggablePillProps {
   template: QuickBookTemplate
@@ -13,8 +12,6 @@ interface DraggablePillProps {
   onSelect: (courses: CourseCode[]) => void
   style?: React.CSSProperties
 }
-
-const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
 
 export function DraggablePill({ template, canBook, onSelect, style }: DraggablePillProps) {
   const elementRef = useRef<HTMLButtonElement | null>(null)

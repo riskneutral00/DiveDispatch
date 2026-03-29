@@ -45,6 +45,12 @@ export function AccountForm() {
     }
   }, [user])
 
+  useEffect(() => {
+    if (!saved) return
+    const timer = setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
+    return () => clearTimeout(timer)
+  }, [saved])
+
   const isDirty = baselineRef.current !== null && JSON.stringify(values) !== JSON.stringify(baselineRef.current)
 
   if (user === undefined) {
@@ -85,7 +91,6 @@ export function AccountForm() {
       })
       baselineRef.current = { ...values }
       setSaved(true)
-      setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
       toast.success('Account saved', { duration: 3000 })
     } catch (err) {
       const message = parseConvexError(err, 'Something went wrong. Please try again.')

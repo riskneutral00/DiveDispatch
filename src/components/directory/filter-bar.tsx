@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FilterDef } from '@/lib/constants/resource-filters'
 import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
 
@@ -36,8 +36,9 @@ function MultiSelectFilter({
   const listboxId = useId()
   const optionRefs = useRef<(HTMLLabelElement | null)[]>([])
 
-  const selectedSet = new Set(
-    value && value !== 'all' ? value.split(',') : [],
+  const selectedSet = useMemo(
+    () => new Set(value && value !== 'all' ? value.split(',') : []),
+    [value],
   )
   const allSelected = selectedSet.size === 0
 

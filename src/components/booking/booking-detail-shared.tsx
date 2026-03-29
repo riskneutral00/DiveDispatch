@@ -64,15 +64,6 @@ export function PortalPills({ pills }: { pills: PortalPill[] }) {
   )
 }
 
-// ── Section heading ─────────────────────────────────────────────────────────
-
-import { FormSectionHeader } from '@/components/common/form-section-header'
-
-/** @deprecated Use FormSectionHeader directly. Re-exported for backward compat. */
-export function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <FormSectionHeader label={children} />
-}
-
 // ── Customer table ──────────────────────────────────────────────────────────
 
 export function CustomerTable({
@@ -226,11 +217,16 @@ export function PortalLinkSection({
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/portal/${portalLink.token}`
     : null
 
+  useEffect(() => {
+    if (!copied) return
+    const timer = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
+    return () => clearTimeout(timer)
+  }, [copied])
+
   async function handleCopy() {
     if (!portalUrl) return
     await navigator.clipboard.writeText(portalUrl)
     setCopied(true)
-    setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
   }
 
   async function handleCreate(e: React.FormEvent) {

@@ -202,4 +202,72 @@ describe('listByRole location filter', () => {
   })
 })
 
-// Language filter removed -- languages consolidated to users table (DD-068)
+// ─── listByRole: language propagation ────────────────────────────────────────
+
+describe('listByRole language propagation', () => {
+  it('returns teachingLanguages from instructor profile, not customerLanguages from users', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const callerId = await seedCallerUser(ctx, 'caller-lang')
+      const u1 = await seedInstructorUser(ctx, 'inst-lang')
+      // Set customerLanguages on user (should NOT appear in result)
+      await ctx.db.patch(u1, { customerLanguages: ['fr-FR', 'de-DE'] })
+      // Set teachingLanguages on instructor profile (SHOULD appear)
+      await seedInstructorProfile(ctx, u1, 'Nattaya', 'Koh Tao', 'Thailand', true)
+      const inst = await ctx.db.query('instructors')
+        .withIndex('by_userId', (q) => q.eq('userId', u1))
+        .unique()
+      await ctx.db.patch(inst!._id, { teachingLanguages: ['en-GB', 'th-TH'] })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-lang' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].languages).toEqual(['en-GB', 'th-TH'])
+  })
+
+  it('falls back to customerLanguages for non-instructor roles', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const callerId = await seedCallerUser(ctx, 'caller-lang-dc')
+      // Seed a DiveCenter with customerLanguages on user
+      const dcUserId = await ctx.db.insert('users', {
+        tokenIdentifier: 'user|dc-lang',
+        slug: 'dc-lang',
+        email: 'dc-lang@test.com',
+        name: 'DC Lang',
+        firstName: 'DC',
+        lastName: 'Lang',
+        businessName: 'DC Business',
+        isSeeded: false,
+        appLanguage: 'en',
+        customerLanguages: ['ko-KR', 'ja-JP'],
+      })
+      await ctx.db.insert('userRoles', {
+        userId: dcUserId,
+        role: 'DiveCenter',
+        createdAt: Date.now(),
+        profileComplete: false,
+      })
+      await ctx.db.insert('diveCenters', {
+        userId: dcUserId,
+        name: 'Test DC',
+        placeName: 'Koh Tao',
+        country: 'Thailand',
+        lat: 10.0957,
+        lng: 99.8408,
+        email: 'dc@test.com',
+        phone: '+66123456789',
+        associations: [{ agency: 'PADI', number: '12345' }],
+        verified: true,
+      })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-lang-dc' })
+      .query(api.directory.listByRole, { role: 'DiveCenter' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].languages).toEqual(['ko-KR', 'ja-JP'])
+  })
+})

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { GlassButton, GlassInput, GlassBadge } from '@/components/glass'
 import { Spinner } from '@/components/common/spinner'
@@ -56,19 +56,29 @@ export function ResourcePicker({
 
   // ── Preferred grouping ──────────────────────────────────────────────────
   const hasPref = (preferredSlugs?.length ?? 0) > 0
-  const prefSet = new Set(preferredSlugs ?? [])
+  const prefSet = useMemo(() => new Set(preferredSlugs ?? []), [preferredSlugs])
 
-  // Preferred entries in exact preference order (filter to those in entries)
-  const preferredAvailable = (preferredSlugs ?? [])
-    .map((slug) => entries.find((e) => e.slug === slug))
-    .filter((e): e is ResourcePickerEntry => !!e && !unavailableOwnerSlugs.has(e.slug))
-  const preferredUnavailable = (preferredSlugs ?? [])
-    .map((slug) => entries.find((e) => e.slug === slug))
-    .filter((e): e is ResourcePickerEntry => !!e && unavailableOwnerSlugs.has(e.slug))
+  const preferredAvailable = useMemo(
+    () => (preferredSlugs ?? [])
+      .map((slug) => entries.find((e) => e.slug === slug))
+      .filter((e): e is ResourcePickerEntry => !!e && !unavailableOwnerSlugs.has(e.slug)),
+    [preferredSlugs, entries, unavailableOwnerSlugs],
+  )
+  const preferredUnavailable = useMemo(
+    () => (preferredSlugs ?? [])
+      .map((slug) => entries.find((e) => e.slug === slug))
+      .filter((e): e is ResourcePickerEntry => !!e && unavailableOwnerSlugs.has(e.slug)),
+    [preferredSlugs, entries, unavailableOwnerSlugs],
+  )
 
-  // Non-preferred entries (already sorted by step-resources when preferredSlugs is set)
-  const availableEntries = entries.filter((e) => !unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug)))
-  const unavailableEntries = entries.filter((e) => unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug)))
+  const availableEntries = useMemo(
+    () => entries.filter((e) => !unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug))),
+    [entries, unavailableOwnerSlugs, hasPref, prefSet],
+  )
+  const unavailableEntries = useMemo(
+    () => entries.filter((e) => unavailableOwnerSlugs.has(e.slug) && (!hasPref || !prefSet.has(e.slug))),
+    [entries, unavailableOwnerSlugs, hasPref, prefSet],
+  )
 
   return (
     <div className="flex flex-col gap-2">

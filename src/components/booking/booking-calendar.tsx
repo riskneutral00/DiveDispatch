@@ -74,7 +74,6 @@ export function BookingCalendar({
   const [pickerYear, setPickerYear] = useState(viewYear)
   const pickerRef = useRef<HTMLDivElement>(null)
 
-  // Sync picker year when range changes
   useEffect(() => { setPickerYear(viewYear) }, [viewYear])
 
   // Click-outside dismiss
@@ -111,7 +110,6 @@ export function BookingCalendar({
   const blockedDatesSet = useMemo(() => new Set(blockedDates ?? []), [blockedDates])
   const dayHeaders = getDaysOfWeek()
 
-  // Derive display statuses and filter out hidden/null
   const resolvedBookings = useMemo(() => {
     const result: (CalendarBooking & { displayStatus: CalendarDisplayStatus })[] = []
     for (const b of bookings) {

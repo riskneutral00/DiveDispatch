@@ -8,6 +8,7 @@
  */
 
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 interface FormGridProps {
   children: ReactNode
@@ -17,7 +18,7 @@ interface FormGridProps {
 export function FormGrid({ children, className }: FormGridProps) {
   return (
     <div
-      className={['grid grid-cols-12 gap-4', className].filter(Boolean).join(' ')}
+      className={cn('grid grid-cols-12 gap-4', className)}
     >
       {children}
     </div>
@@ -42,7 +43,7 @@ interface FormFieldProps {
 
 export function FormField({ size, children, className }: FormFieldProps) {
   return (
-    <div className={[DESKTOP_SPANS[size], className].filter(Boolean).join(' ')}>
+    <div className={cn(DESKTOP_SPANS[size], className)}>
       {children}
     </div>
   )

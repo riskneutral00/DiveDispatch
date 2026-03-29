@@ -11,11 +11,11 @@ import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
   useTTLCountdown,
-  SectionLabel,
   CustomerTable,
   StakeholderList,
   PortalLinkSection,
 } from './booking-detail-shared'
+import { FormSectionHeader } from '@/components/common/form-section-header'
 import { CANCEL_BOOKING_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
@@ -205,7 +205,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       {/* Customers */}
       {booking.divers.length > 0 && (
         <GlassCard padding="md">
-          <SectionLabel>Customers</SectionLabel>
+          <FormSectionHeader label="Customers" />
           <CustomerTable booking={booking} />
         </GlassCard>
       )}
@@ -213,26 +213,26 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       {/* Sessions */}
       {booking.sessions.length > 0 && (
         <GlassCard padding="md">
-          <SectionLabel>Schedule</SectionLabel>
+          <FormSectionHeader label="Schedule" />
           <SessionTimeline sessions={booking.sessions} />
         </GlassCard>
       )}
 
       {/* Stakeholders */}
       <GlassCard padding="md">
-        <SectionLabel>Stakeholders</SectionLabel>
+        <FormSectionHeader label="Stakeholders" />
         <StakeholderList stakeholders={booking.stakeholders} />
       </GlassCard>
 
       {/* Reservations */}
       <GlassCard padding="md">
-        <SectionLabel>Reservations</SectionLabel>
+        <FormSectionHeader label="Reservations" />
         <ReservationStatusList reservations={booking.reservations} />
       </GlassCard>
 
       {/* Portal progress */}
       <GlassCard padding="md">
-        <SectionLabel>Customer Portal</SectionLabel>
+        <FormSectionHeader label="Customer Portal" />
         <PortalProgressCard
           portalContact={booking.portalContact}
           portalMedical={booking.portalMedical}
@@ -251,7 +251,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
       {/* Audit trail */}
       <GlassCard padding="md">
-        <SectionLabel>Audit Trail</SectionLabel>
+        <FormSectionHeader label="Audit Trail" />
         <AuditTrailTable bookingId={bookingId} />
       </GlassCard>
 

@@ -69,6 +69,11 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   const [poiSelected, setPoiSelected] = useState(false)
 
   const [kbState, kbDispatch] = useReducer(autocompleteKeyboardReducer, INITIAL_STATE)
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current) }
+  }, [])
 
   // Auto-trigger GPS if no value set yet
   useEffect(() => {
@@ -274,7 +279,10 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
               onFocus={() => {
                 if (query) setSuggestionsOpen(true)
               }}
-              onBlur={() => setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)}
+              onBlur={() => {
+                if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
+                blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
+              }}
               className="glass glass-field w-full text-sm py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />

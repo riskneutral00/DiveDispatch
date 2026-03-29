@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import { WIZARD_STEPS, WIZARD_STEP_LABELS, stepIndex, type WizardStep } from '@/lib/booking/wizard-state'
+import { cn } from '@/lib/utils/cn'
 
 interface WizardProgressProps {
   currentStep: WizardStep
@@ -19,7 +20,7 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
           return (
             <li
               key={step}
-              className={['flex items-center', !isLast && 'flex-1'].filter(Boolean).join(' ')}
+              className={cn('flex items-center', !isLast && 'flex-1')}
             >
               {/* Step node */}
               <div className="flex flex-col items-center gap-1.5 relative">

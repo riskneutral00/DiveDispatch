@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Calendar, Clock, MapPin } from 'lucide-react'
 import type { BookingDetailSession } from '../../../convex/bookings'
 
@@ -43,8 +44,8 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
     )
   }
 
-  const byDate = groupByDate(sessions)
-  const sortedDates = [...byDate.keys()].sort()
+  const byDate = useMemo(() => groupByDate(sessions), [sessions])
+  const sortedDates = useMemo(() => [...byDate.keys()].sort(), [byDate])
 
   return (
     <div className="space-y-4">
