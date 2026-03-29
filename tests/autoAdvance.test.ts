@@ -12,11 +12,13 @@
  * 16:    Availability snapshot restored on EM release
  */
 
+import { ConvexError } from 'convex/values'
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { tryAutoAdvance, restoreSnapshotUnits } from '../convex/bookings/_shared'
 import type { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
+import { ErrorCode } from '../convex/lib/errorCodes'
 import { testDate } from './helpers/dates'
 import { seedUser, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -191,6 +193,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
       await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
       await seedCustomerProfile(ctx, bookingId, 'tok-b', ALL_OWN)
       return { bookingId, resId }
@@ -286,6 +289,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
       await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
       return { bookingId, resId }
     })
@@ -379,6 +383,7 @@ describe('tryAutoAdvance — trigger points', () => {
         sessionId,
         'PendingAcceptance',
       )
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
       // One customer, all owns → EM will be released and booking advances
       await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
       return { reservationId }
@@ -975,5 +980,121 @@ describe('tryAutoAdvance — TOCTOU fresh-read guards (DD-017)', () => {
     // Fresh read: available=5+1=6, reserved=max(0, 3-1)=2
     expect(snapshot!.availableUnits).toBe(6)
     expect(snapshot!.reservedUnits).toBe(2)
+  })
+})
+
+// ─── 23-25. DD-274: EM auto-release throws on missing session/snapshot ────────
+
+describe('DD-274: EM auto-release aborts on missing session or snapshot', () => {
+  it('23 — throws ORPHANED_RESERVATION when session is missing, reservation NOT vacated', async () => {
+    const t = makeT()
+
+    const { bookingId, resId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      // Create session, then delete it to simulate orphaned reference
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      // Delete the session to create the orphan
+      await ctx.db.delete(sessionId)
+      return { bookingId, resId }
+    })
+
+    // Mutation must throw with ORPHANED_RESERVATION — reservation must NOT be vacated
+    const err23 = await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    }).catch((e: unknown) => e)
+    expect(err23).toBeInstanceOf(ConvexError)
+    const parsed23 = JSON.parse((err23 as Error).message)
+    expect(parsed23.code).toBe(ErrorCode.ORPHANED_RESERVATION)
+
+    // Reservation must remain Confirmed — mutation aborted before patching
+    const res = await t.run(async (ctx) => ctx.db.get(resId))
+    expect(res!.status).toBe('Confirmed')
+  })
+
+  it('24 — throws MISSING_SNAPSHOT when snapshot is missing, reservation NOT vacated', async () => {
+    const t = makeT()
+
+    const { bookingId, resId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')
+      // Intentionally NO snapshot seeded — simulates missing availability data
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      return { bookingId, resId }
+    })
+
+    // Mutation must throw with MISSING_SNAPSHOT — reservation must NOT be vacated
+    const err24 = await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    }).catch((e: unknown) => e)
+    expect(err24).toBeInstanceOf(ConvexError)
+    const parsed24 = JSON.parse((err24 as Error).message)
+    expect(parsed24.code).toBe(ErrorCode.MISSING_SNAPSHOT)
+
+    // Reservation must remain Confirmed — mutation aborted before patching
+    const res = await t.run(async (ctx) => ctx.db.get(resId))
+    expect(res!.status).toBe('Confirmed')
+  })
+
+  it('25 — happy path: reservation vacated and snapshot restored atomically when both exist', async () => {
+    const t = makeT()
+
+    const { bookingId, resId, snapshotId } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
+      const unitId = await seedEquipmentUnit(ctx, 'em-slug')
+      const bookingId = await seedBooking(ctx, 'dc-slug', {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+      })
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Equipment',
+        resourceSlug: 'em-slug',
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')
+      const snapshotId = await seedSnapshot(ctx, unitId, { reservedUnits: 1 })
+      await seedCustomerProfile(ctx, bookingId, 'tok-a', ALL_OWN)
+      return { bookingId, resId, snapshotId }
+    })
+
+    await t.run(async (ctx) => {
+      await tryAutoAdvance(ctx, bookingId)
+    })
+
+    const [res, snapshot, booking] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(resId), ctx.db.get(snapshotId), ctx.db.get(bookingId)]),
+    )
+    // Reservation vacated with correct reason
+    expect(res!.status).toBe('Vacated')
+    expect(res!.vacatedBy).toBe('equipment_not_needed')
+    // Snapshot restored: reserved 1→0, available 0→1
+    expect(snapshot!.reservedUnits).toBe(0)
+    expect(snapshot!.availableUnits).toBe(1)
+    // Booking advanced to Upcoming
+    expect(booking!.status).toBe('Upcoming')
   })
 })

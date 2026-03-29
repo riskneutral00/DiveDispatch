@@ -4,11 +4,13 @@
  * Extracted from _shared.ts (L8-24).
  */
 
+import { ConvexError } from 'convex/values'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
 import { restoreSnapshotUnits, getAvailabilitySnapshot } from './inventoryRelease'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
+import { ErrorCode } from '../lib/errorCodes'
 
 /**
  * Advances booking Draft → Upcoming when all conditions are simultaneously satisfied.
@@ -71,20 +73,29 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
         const unit = await ctx.db.get(res.inventoryUnitId)
         if (!unit || unit.resourceType !== 'Equipment') continue
 
+        // Fetch session + snapshot BEFORE patching reservation (Invariant 3: paired writes)
+        const session = await ctx.db.get(res.bookingSessionId)
+        if (!session) {
+          throw new ConvexError({
+            code: ErrorCode.ORPHANED_RESERVATION,
+            reason: `Reservation ${res._id} references missing session ${res.bookingSessionId}. Aborting EM auto-release to prevent inventory leak.`,
+          })
+        }
+        const snapshot = await getAvailabilitySnapshot(ctx, res.inventoryUnitId, session.date, session.startTime)
+        if (!snapshot) {
+          throw new ConvexError({
+            code: ErrorCode.MISSING_SNAPSHOT,
+            reason: `No availability snapshot found for unit ${res.inventoryUnitId} on ${session.date} at ${session.startTime}. Aborting EM auto-release to prevent inventory leak.`,
+          })
+        }
+
         await ctx.db.patch(res._id, {
           status: RESERVATION_STATUS.Vacated,
           vacatedAt: Date.now(),
           vacatedBy: VACATED_REASON.EquipmentNotNeeded,
         })
 
-        // Restore availability snapshot — same pattern as releaseBookingReservations
-        const session = await ctx.db.get(res.bookingSessionId)
-        if (session) {
-          const snapshot = await getAvailabilitySnapshot(ctx, res.inventoryUnitId, session.date, session.startTime)
-          if (snapshot) {
-            await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
-          }
-        }
+        await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
       }
     }
   }
