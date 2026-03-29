@@ -26,6 +26,12 @@ git log --oneline --since="$(cat .last-session-ts 2>/dev/null || echo '24 hours 
 # Read Driver/Backseat debriefs if they exist
 cat ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/$(date +%Y-%m-%d)-driver.md 2>/dev/null
 cat ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/$(date +%Y-%m-%d)-backseat.md 2>/dev/null
+# What did Researcher do?
+if git branch --list research/auto | grep -q research/auto; then
+  RESEARCH_KEPT=$(cat .research/results.tsv 2>/dev/null | grep -c 'KEEP' || echo 0)
+  RESEARCH_TOTAL=$(cat .research/results.tsv 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')
+  RESEARCH_RUNG=$(cat .research/results.tsv 2>/dev/null | tail -1 | cut -f3)
+fi
 ```
 
 Do not output anything yet.
@@ -79,26 +85,24 @@ Board: {action taken — e.g., "3 stale tickets archived. 14 active (5 ready, 9 
 {Skipped: DD-{NNN} {title} (human required) — for each skipped ticket, if any}
 Queue: DD-{NNN}, DD-{NNN}, ... — {N} tickets for Driver to process
 Health: {pass}/{total} passing | Component {pct}% | {N} untested mutation components
+Research: {RESEARCH_KEPT}/{RESEARCH_TOTAL} experiments kept | Rung: {RESEARCH_RUNG}
 {Conflict: {description} OR Conflict: None}
 Launching Car team now.
 ```
 
 Omit the `Car flow:` line if no Driver/Backseat activity since last session.
+Omit the `Research:` line if `research/auto` branch does not exist.
 
-Then launch the Car team via tmux:
+Then launch the Car team. tmux requires a real terminal, so don't try `exec bash scripts/car.sh` from inside Claude Code — it will fail with "not a terminal."
 
-```bash
-exec bash scripts/car.sh
-```
-
-This opens a tmux session with 4 panes: Driver, Backseat, Patrol, and a free shell. Each agent runs as its own `claude` CLI instance. Matt can switch between panes with `Ctrl+B + arrow keys` to watch or interact with any agent.
-
-If `scripts/car.sh` doesn't exist or tmux isn't available, fall back to printing:
+Instead, print:
 
 ```
-Car team ready. Run this from your terminal:
-  ./scripts/car.sh
+Car team ready. Launch with:
+  ! ./scripts/car.sh
 ```
+
+The `!` prefix runs the command in Matt's actual shell. If he's already in a terminal (not Claude Code), run `exec bash scripts/car.sh` directly.
 
 Then **stop**. Do NOT claim tickets or code inline — the Car team handles all ticket work autonomously.
 

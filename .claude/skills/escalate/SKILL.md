@@ -1,15 +1,15 @@
 ---
 name: escalate
-description: "Create tickets from CRITICAL/HIGH findings. Lockfile counter for IDs."
+description: "Create tickets from CRITICAL/HIGH/MEDIUM findings. Lockfile counter for IDs."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 user-invocable: false
 ---
 
 # escalate
 
-Called by Backseat agent after reviews complete. Args: `{findings}` (severity, file, line, description, review skill, original ticket).
+Called by Backseat, Patrol, or Driver after reviews or tsc checks. Args: `{source} {findings}` where source is the caller (`backseat`, `patrol`, or `driver`) and findings contain severity, file, line, description, review skill, original ticket.
 
-## For Each CRITICAL or HIGH Finding
+## For Each CRITICAL, HIGH, or MEDIUM Finding
 
 ### Duplicate Check
 
@@ -35,10 +35,10 @@ Set `true` if finding involves architectural decisions, multi-file refactors, or
 
 ### Write Ticket
 
-Write `.tickets/DD-{NEXT}.md` with frontmatter: `source: backseat`, `size: S`, priority P1 (CRITICAL) or P2 (HIGH). Include spec with finding details and suggested fix.
+Write `.tickets/DD-{NEXT}.md` with frontmatter: `source: {caller_source}` (use the source arg passed by the caller — `backseat`, `patrol`, or `driver`), `size: S`, priority P1 (CRITICAL), P2 (HIGH), or P3 (MEDIUM). Include spec with finding details and suggested fix.
 
 Print: `🎫 DD-{NEXT}: {title} [{priority}, from {original_ticket}]`
 
-## MEDIUM/LOW — Log Only
+## LOW — Log Only
 
 Append to `.backseat/findings.md`. Do not create tickets.

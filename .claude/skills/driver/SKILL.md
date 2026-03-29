@@ -4,7 +4,7 @@ description: >
   Autonomous ticket processor. Launches the Car team in tmux with
   Driver/Backseat/Patrol in separate panes. Part of the Car workflow.
 allowed-tools: Bash
-user-invocable: true
+user-invocable: false
 ---
 
 # /driver — Car Team Launcher

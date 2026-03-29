@@ -59,6 +59,23 @@ Commit: {short-hash}
 Files changed: {list}
 ```
 
+## Retry Mode
+
+If your prompt contains `RETRY MODE`, you are fixing issues from a prior review — not starting fresh.
+
+1. Read the REVIEW FINDINGS section carefully
+2. `git log --oneline -5` to see what the previous worker committed
+3. Read the specific files mentioned in the findings
+4. For each finding:
+   - If it's a test gap: write the missing test
+   - If it's a code issue: fix the code, update affected tests
+   - If it's an invariant violation: fix the violation
+5. Run `npx vitest run` — iterate until green
+6. Stage and commit: `git add <files> && git commit -m "fix(DD-NNN): address review findings (retry {N})"`
+7. Return completion message as normal
+
+Do NOT rewrite existing code that wasn't flagged. Minimize the diff. The goal is to address the specific findings, not refactor.
+
 ## If you get stuck
 
 If you cannot implement the ticket after 3 attempts (tests keep failing, unclear spec, missing context):

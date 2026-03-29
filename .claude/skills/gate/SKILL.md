@@ -140,7 +140,7 @@ Report in output but doesn't affect verdict.
 
 Aggregate findings from all dispatched skills + invariant sweep + test gaps + queue check.
 
-Determine **CRITICAL count** = sum of all CRITICAL findings from dispatched skills (not from test gaps or invariant checks — those are informational).
+Determine **CRITICAL count** and **HIGH count** = sum of all CRITICAL and HIGH findings from dispatched skills (not from test gaps or invariant checks — those are informational).
 
 ```
 ═══════════════════════════════
@@ -153,13 +153,13 @@ Skills dispatched: {list}
 {GO or NO-GO}
 ───────────────────────
 
-{If NO-GO — any CRITICAL finding:}
+{If NO-GO — any CRITICAL or HIGH finding:}
 BLOCKING:
-  [{skill-name}] {summary of each CRITICAL finding}
+  [{skill-name}] {summary of each CRITICAL and HIGH finding}
 
-{If HIGH/MEDIUM/LOW findings exist:}
+{If MEDIUM/LOW findings exist:}
 WARNINGS:
-  [{skill-name}] HIGH: {N} | MEDIUM: {N} | LOW: {N}
+  [{skill-name}] MEDIUM: {N} | LOW: {N}
 
 {If invariant-adjacent changes found:}
 INVARIANT CHECK:
@@ -184,8 +184,8 @@ Ready for /vault: {YES or NO}
 
 ### Threshold
 
-- **NO-GO** → Any CRITICAL finding from any dispatched skill OR tests fail. Verdict = `BLOCKED`.
-- **GO** → No CRITICAL findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
+- **NO-GO** → Any CRITICAL or HIGH finding from any dispatched skill OR tests fail. Verdict = `BLOCKED`.
+- **GO** → No CRITICAL or HIGH findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
 
 ---
 
@@ -195,7 +195,7 @@ After printing the verdict, write `.patrol-ran`:
 
 ```bash
 VERDICT="CLEAN"
-if [ {CRITICAL_COUNT} -gt 0 ] || [ {TESTS_FAIL} = true ]; then
+if [ {CRITICAL_COUNT} -gt 0 ] || [ {HIGH_COUNT} -gt 0 ] || [ {TESTS_FAIL} = true ]; then
     VERDICT="BLOCKED"
 elif [ {UNREVIEWED_COUNT} -gt 0 ]; then
     VERDICT="CLEAN_UNREVIEWED"

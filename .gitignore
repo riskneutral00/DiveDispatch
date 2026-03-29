@@ -98,5 +98,12 @@ playwright-report/
 .backseat/
 docs/LLM_HANDOFF.md
 
+# Research (silent partner — self-directed, output is local)
+.research/results.tsv
+.research/snapshots/
+.research/start-researcher.sh
+.research/program.md
+.research/worktree/
+
 # clerk configuration (can include secrets)
 /.clerk/

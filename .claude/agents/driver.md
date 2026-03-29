@@ -14,7 +14,7 @@ You are the Driver agent running in a tmux pane. You scan for tickets, dispatch 
 
 ```
 WORKTREE_PREFIX=../DD-worktree-
-BATCH_CAP=8
+BATCH_CAP=4
 TIMEOUTS: S=5min, M=15min, L=30min
 MAX_MERGE_ATTEMPTS=3
 EVENT_DIR=.car
@@ -38,13 +38,13 @@ If any exist → read the fix ticket file, pick that ticket directly (skip ticke
 
 If no fix tickets → Invoke Skill("ticket-pick") → returns ticket ID or "idle".
 
-- If "idle": print status and stop. The board is empty or all remaining tickets are blocked/human-required.
+- If "idle": print status, write sentinel file `echo "idle" > .car/exit-driver`, then stop. The watchdog will kill this process and the restart loop will relaunch with a fresh context window.
   ```
   DRIVER-IDLE | no ready tickets | backseat fixes: drained | batch: {batch_count}/{BATCH_CAP}
   ```
 - If ticket: read `.tickets/DD-{id}.md`, claim it (`status: in_progress`, `assigned_to: driver`, `branch: ticket/DD-{id}`).
 
-**Implement:** Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent:
+**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent:
 
 ```
 Agent(
@@ -63,10 +63,34 @@ Timeout per size (S=5min, M=15min, L=30min).
 
 **Review:** Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
 
-- If NO-GO: mark `status: blocked`, append findings to ticket, keep worktree, re-pick.
 - If GO: proceed to merge.
+- If NO-GO and `retry_count < 2`:
+  1. `retry_count++`
+  2. Print: `DD-{id}: NO-GO (attempt {retry_count}/2) — retrying with feedback`
+  3. Spawn a **fresh** jira-worker in the **same worktree** (code is already there):
+     ```
+     Agent(
+       description: "DD-{id}: retry {retry_count} — fix review findings",
+       subagent_type: "jira-worker",
+       prompt: "<full ticket spec>
 
-**Merge:** `bash scripts/jira-merge.sh ticket/DD-{id} main`. Handle exit codes:
+     RETRY MODE — Previous attempt was reviewed and got NO-GO.
+     The worktree already has a partial implementation. Fix the
+     specific issues below, not start over.
+
+     REVIEW FINDINGS:
+     {paste the full pre-merge-review output}
+
+     Fix each finding, run tests, commit on top of existing work.",
+       run_in_background: false,
+       mode: "bypassPermissions"
+     )
+     ```
+  4. Loop back to **Review** (run pre-merge-review again).
+- If NO-GO and `retry_count >= 2`: mark `status: blocked`, append all findings to ticket, keep worktree, re-pick.
+  Print: `DD-{id}: NO-GO after 2 retries — marked blocked`
+
+**Merge:** `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
 - Exit 0: move to `done/`, auto-unblock dependents, clean worktree.
 - Exit 1: retry up to MAX_MERGE_ATTEMPTS (rebase, then fix agent). On exhaustion: mark blocked, keep worktree.
 - Exit 2: test failure post-merge (script reverts). Mark blocked, keep worktree.
@@ -100,7 +124,7 @@ npx tsc --noEmit 2>&1 | head -30
 
 This catches cumulative TS errors from multiple merges even if Backseat/Patrol are not running.
 
-**Batch cap:** If `source != backseat`: `batch_count++`. If `batch_count >= BATCH_CAP` → Skill("driver-debrief"), reset count.
+**Batch cap:** If `source != backseat`: `batch_count++`. If `batch_count >= BATCH_CAP` → Skill("driver-debrief"), then print `DRIVER-RESTART | batch cap reached | exiting for fresh context`, write sentinel file `echo "batch_cap" > .car/exit-driver`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window. Do not continue the loop.
 
 Re-pick next ticket.
 

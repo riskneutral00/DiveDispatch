@@ -21,6 +21,8 @@ When invoked, parse the command and execute. No preamble.
 ```
 Board — {YYYY-MM-DD}
 ─────────────────────
+{Car status line — see below}
+
 In Progress ({count}):
   {id} [{priority}] {title} — assigned: {assigned_to}, branch: {branch}
   {⚠ Side-effect overlap with DD-{XXX} on [{areas}] — if any overlap detected}
@@ -199,6 +201,25 @@ updated: {today}
 ### `/board backlog` — List backlog items
 
 List all tickets with `status: backlog`, sorted by priority then id.
+
+### Car Status Line
+
+Before printing the board, check Car team state. Only show if `.car/` directory exists:
+
+```bash
+MERGED=$(ls .car/merged/*.json 2>/dev/null | wc -l | tr -d ' ')
+REVIEWED=$(ls .car/reviewed/*.json 2>/dev/null | wc -l | tr -d ' ')
+PROCESSED=$(ls .car/processed/ 2>/dev/null | wc -l | tr -d ' ')
+PENDING=$((MERGED + REVIEWED))
+VERDICT=$(python3 -c "import json; print(json.load(open('.patrol-ran'))['verdict'])" 2>/dev/null || echo "none")
+```
+
+Print one line:
+- `PENDING > 0` → `Car: {PENDING} pending ({MERGED}→Backseat, {REVIEWED}→Patrol) | {PROCESSED} processed`
+- `PENDING = 0 && VERDICT = CLEAN` → `Car: done — ready for /vault`
+- `PENDING = 0 && VERDICT = BLOCKED` → `Car: done — BLOCKED, run /gate`
+- `PENDING = 0 && VERDICT = none` → `Car: idle`
+- No `.car/` dir → omit line entirely
 
 ## Rules
 

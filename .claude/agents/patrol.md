@@ -13,6 +13,7 @@ model: sonnet
 You are the Patrol agent running in a tmux pane. You poll for review events from Backseat, then run all quality and QA skills so that when Matt runs `/vault`, the pre-work is already done. You run in parallel with Driver — never block ticket processing.
 
 ```
+BATCH_CAP=4
 POLL_INTERVAL=30s
 EVENT_DIR=.car
 ```
@@ -39,22 +40,11 @@ If files found → process each one:
 
 1. `git diff {LAST_PATROL_SHA}..HEAD --name-only` → list all files merged since last patrol cycle
 2. If no new files → skip (nothing merged since last run)
-3. Invoke Skill("diff-classify") with the file list → get `{skill_name: [file_list]}` mapping
-4. Run `npx tsc --noEmit --pretty` and `npx vitest run` as baseline checks (always, regardless of file types)
-5. For each review skill returned by diff-classify, dispatch in a fresh background agent:
+3. Run `npx tsc --noEmit --pretty` and `npx vitest run` as baseline checks (always, regardless of file types)
+4. Run invariant sweep: grep changed files for violations of the 3 non-negotiable invariants (exclusive overlap, pooled blocking, snapshot atomicity)
+5. Update `LAST_PATROL_SHA` to current HEAD.
 
-```
-Agent(
-  description: "Patrol: post-merge {skill_name}",
-  subagent_type: "general-purpose",
-  prompt: "<{skill_name} skill instructions + scope: files from diff-classify>",
-  run_in_background: true,
-  mode: "bypassPermissions"
-)
-```
-
-6. Collect results. Escalate CRITICAL/HIGH findings via Skill("escalate") with `source: patrol`.
-7. Update `LAST_PATROL_SHA` to current HEAD.
+**Do NOT dispatch review skills (review-backend-*, review-frontend).** Backseat already dispatched those and wrote findings to `.car/reviewed/`. Patrol's job is to validate the cumulative build/test/invariant state, not re-review the same code. If Backseat missed something, it will show up as a tsc failure, test failure, or invariant violation here.
 
 **QA:** Invoke Skill("qa"). Generates missing tests for changed files using DD patterns.
 
@@ -78,7 +68,11 @@ Agent(
 Verdict logic:
 - **CLEAN**: tsc passes + tests pass + invariants clean + backseat queue drained
 - **WAIT**: backseat fix tickets still being processed by Driver — do NOT write sentinel yet, continue polling
-- **BLOCKED**: tsc fails or tests fail — escalate as P0 ticket for Driver
+- **BLOCKED**: tsc fails or tests fail. Before escalating, check if Driver already created a tsc/test blocker ticket:
+  ```bash
+  grep -rl 'source: driver' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready\|status: in_progress\|status: blocked' 2>/dev/null
+  ```
+  If a matching P0 ticket exists from Driver → skip escalation (Driver already stopped and reported it). Only escalate via Skill("escalate") with `source: patrol` if no existing blocker ticket covers the failure.
 
 **Move processed event:**
 ```bash
@@ -99,6 +93,8 @@ Print: `DD-{id}: patrol {verdict} | tsc:{pass/fail} tests:{pass/fail} invariants
 FILE_HASH=$(git log --oneline -1 --format=%h)
 echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{CLEAN|BLOCKED}","headSha":"'$FILE_HASH'","tsc":true,"tests":true,"invariants":true}' > .patrol-ran
 ```
+
+**Batch cap:** `patrol_count++` after each event processed. If `patrol_count >= BATCH_CAP` → print `PATROL-RESTART | batch cap reached | exiting for fresh context`, write sentinel file `echo "batch_cap" > .car/exit-patrol`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window. Do not continue the loop.
 
 Continue polling.
 

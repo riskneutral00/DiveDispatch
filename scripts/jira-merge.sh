@@ -16,6 +16,22 @@ cd "$PROJECT_DIR"
 
 log() { echo "[$(date '+%H:%M:%S')] $1" | tee -a "$LOG"; }
 
+# Auto-stash dirty working tree (interactive edits shouldn't block merges)
+STASHED=false
+if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  log "Dirty working tree detected — auto-stashing"
+  git stash push --include-untracked -m "jira-merge: auto-stash for $BRANCH" 2>>"$LOG"
+  STASHED=true
+fi
+
+cleanup() {
+  if [ "$STASHED" = true ]; then
+    log "Restoring stashed changes"
+    git stash pop 2>>"$LOG" || log "WARNING: stash pop conflict — run 'git stash pop' manually"
+  fi
+}
+trap cleanup EXIT
+
 log "── Merging $BRANCH → $TARGET ──"
 
 # Ensure we're on target

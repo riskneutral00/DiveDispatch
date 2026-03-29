@@ -28,7 +28,7 @@ if [ "$LEN" -lt 10 ]; then
 fi
 
 # Check conventional commit prefix
-if ! echo "$MSG" | grep -qE '^(feat|fix|refactor|test|chore|docs|revert|perf|ci|build|style)(\([\w-]+\))?:'; then
+if ! echo "$MSG" | grep -qE '^(feat|fix|refactor|test|chore|docs|revert|perf|ci|build|style)(\([a-zA-Z0-9_-]+\))?:'; then
   echo '{"decision":"block","reason":"Commit message missing conventional prefix. Use: feat:, fix:, refactor:, test:, chore:, docs:, revert:, perf: (optional scope: feat(DD-123): ...)"}'
   exit 0
 fi
