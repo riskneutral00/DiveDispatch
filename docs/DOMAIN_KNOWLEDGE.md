@@ -402,4 +402,19 @@ The following features are identified but deferred beyond the initial build:
 
 ---
 
+## Section 7: Architecture Decision Records
+
+Irreversible or expensive-to-reverse architectural decisions are documented as formal ADRs in the vault at `Vaults/DiveDispatch/Architecture/ADR-*.md`. Each entry follows the format: Problem / Decision / Consequences / Status.
+
+| ADR | Title | Summary |
+|-----|-------|---------|
+| ADR-001 | Portal Token as Credential | Customer portal uses UUID tokens instead of Clerk auth. Token IS the credential. No account creation required. |
+| ADR-002 | Lazy TTL Expiry | Draft booking holds expire on read, not via cron. Simpler, cheaper, deterministic. |
+| ADR-003 | Core vs Adapters Boundary | `convex/` divided into core (booking lifecycle), adapters (notifications, email, equipment), and shared (utilities). Strict import direction. |
+| ADR-004 | Inventory/Availability Invariants | Three non-negotiable invariants enforced atomically: exclusive uniqueness, pooled decrement, and atomic snapshot+reservation writes. |
+
+Full ADR files: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/`
+
+---
+
 **END OF DOMAIN KNOWLEDGE DOCUMENT**
