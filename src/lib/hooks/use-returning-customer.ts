@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,6 +60,21 @@ export function useReturningCustomer(
   > | null>(null)
   const [returningConfirmed, setReturningConfirmed] = useState(false)
   const [returningDismissed, setReturningDismissed] = useState(false)
+
+  // Track previous email to reset dismissed/confirmed when the email changes.
+  // undefined (loading/refetching) is ignored to avoid false resets.
+  const prevEmailRef = useRef<string | null | undefined>(queryResult?.email)
+  const currentEmail = queryResult === undefined ? undefined : (queryResult?.email ?? null)
+
+  useEffect(() => {
+    if (currentEmail === undefined) return // skip undefined (loading state)
+    if (prevEmailRef.current !== undefined && currentEmail !== prevEmailRef.current) {
+      setReturningConfirmed(false)
+      setReturningDismissed(false)
+      setReturningCustomer(null)
+    }
+    prevEmailRef.current = currentEmail
+  }, [currentEmail])
 
   useEffect(() => {
     if (queryResult && !returningConfirmed && !returningDismissed) {

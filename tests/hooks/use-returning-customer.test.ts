@@ -99,4 +99,126 @@ describe('useReturningCustomer', () => {
     expect(onConfirm).not.toHaveBeenCalled()
     expect(result.current.returningConfirmed).toBe(false)
   })
+
+  describe('resets dismissed/confirmed state on email change', () => {
+    const MATCH_B: ReturningCustomerMatch = {
+      ...MATCH,
+      _id: 'cust_456',
+      legalFirstName: 'Bob',
+      legalLastName: 'Smith',
+      email: 'bob@example.com',
+    }
+
+    it('dismiss for email A -> change to email B (match) -> banner appears', () => {
+      const { result, rerender } = renderHook(
+        ({ qr }) => useReturningCustomer(qr),
+        { initialProps: { qr: MATCH as ReturningCustomerMatch | null } },
+      )
+
+      // Dismiss the match for email A
+      act(() => {
+        result.current.dismiss()
+      })
+      expect(result.current.showBanner).toBe(false)
+      expect(result.current.returningDismissed).toBe(true)
+
+      // Change to email B (different match)
+      rerender({ qr: MATCH_B })
+
+      expect(result.current.returningDismissed).toBe(false)
+      expect(result.current.returningConfirmed).toBe(false)
+      expect(result.current.showBanner).toBe(true)
+      expect(result.current.returningCustomer).toEqual({
+        _id: 'cust_456',
+        legalFirstName: 'Bob',
+        legalLastName: 'Smith',
+        email: 'bob@example.com',
+      })
+    })
+
+    it('dismiss for email A -> change to email B (no match) -> banner hidden', () => {
+      const { result, rerender } = renderHook(
+        ({ qr }) => useReturningCustomer(qr),
+        { initialProps: { qr: MATCH as ReturningCustomerMatch | null } },
+      )
+
+      // Dismiss the match for email A
+      act(() => {
+        result.current.dismiss()
+      })
+      expect(result.current.returningDismissed).toBe(true)
+
+      // Change to email B (no match -- null)
+      rerender({ qr: null })
+
+      expect(result.current.returningDismissed).toBe(false)
+      expect(result.current.returningConfirmed).toBe(false)
+      expect(result.current.showBanner).toBe(false)
+      expect(result.current.returningCustomer).toBeNull()
+    })
+
+    it('confirm for email A -> change to email B (match) -> banner appears', () => {
+      const onConfirm = vi.fn()
+      const { result, rerender } = renderHook(
+        ({ qr }) => useReturningCustomer(qr, onConfirm),
+        { initialProps: { qr: MATCH as ReturningCustomerMatch | null } },
+      )
+
+      // Confirm the match for email A
+      act(() => {
+        result.current.confirm()
+      })
+      expect(result.current.returningConfirmed).toBe(true)
+      expect(result.current.showBanner).toBe(false)
+
+      // Change to email B (different match)
+      rerender({ qr: MATCH_B })
+
+      expect(result.current.returningConfirmed).toBe(false)
+      expect(result.current.returningDismissed).toBe(false)
+      expect(result.current.showBanner).toBe(true)
+      expect(result.current.returningCustomer).toEqual({
+        _id: 'cust_456',
+        legalFirstName: 'Bob',
+        legalLastName: 'Smith',
+        email: 'bob@example.com',
+      })
+    })
+
+    it('does not reset when same email re-renders (dismissed stays dismissed)', () => {
+      const { result, rerender } = renderHook(
+        ({ qr }) => useReturningCustomer(qr),
+        { initialProps: { qr: MATCH as ReturningCustomerMatch | null } },
+      )
+
+      act(() => {
+        result.current.dismiss()
+      })
+      expect(result.current.returningDismissed).toBe(true)
+
+      // Re-render with same email (same match object, possibly new reference)
+      rerender({ qr: { ...MATCH } })
+
+      expect(result.current.returningDismissed).toBe(true)
+      expect(result.current.showBanner).toBe(false)
+    })
+
+    it('does not reset when queryResult goes from match to undefined (loading state)', () => {
+      const { result, rerender } = renderHook(
+        ({ qr }) => useReturningCustomer(qr),
+        { initialProps: { qr: MATCH as ReturningCustomerMatch | undefined } },
+      )
+
+      act(() => {
+        result.current.dismiss()
+      })
+      expect(result.current.returningDismissed).toBe(true)
+
+      // Convex query returns undefined briefly while re-fetching
+      rerender({ qr: undefined })
+
+      // Should preserve dismissed state -- undefined is not a new email
+      expect(result.current.returningDismissed).toBe(true)
+    })
+  })
 })
