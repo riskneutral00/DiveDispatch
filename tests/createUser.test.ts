@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ConvexError, type Value } from 'convex/values'
-import { api } from '../convex/_generated/api'
-import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { api, internal } from '../convex/_generated/api'
+import { makeT } from './helpers/convex-helpers'
 
 describe('createUser mutation', () => {
   it('uses identity.email and ignores args.email on new user', async () => {
@@ -254,11 +254,11 @@ describe('updateBusinessInfo mutation', () => {
   })
 })
 
-describe('updateProfile email protection', () => {
-  it('rejects when args.email does not match identity.email', async () => {
+describe('updateProfile email removed from args schema', () => {
+  it('does not accept email in the args validator', async () => {
     const t = makeT()
     const identity = {
-      tokenIdentifier: 'clerk|profile-email-user',
+      tokenIdentifier: 'clerk|profile-no-email-schema',
       email: 'real@clerk.dev',
     }
 
@@ -266,74 +266,100 @@ describe('updateProfile email protection', () => {
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       role: 'DiveCenter',
-      businessName: 'Profile Test',
+      businessName: 'Schema Test',
     })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    // Attempt to overwrite email via updateProfile
-    await expectConvexError(
-      t.withIdentity(identity).mutation(api.users.updateProfile, {
-        email: 'attacker@evil.com',
-      }),
-      'VALIDATION',
-    )
+    // Passing email should be rejected at schema validation level.
+    // convex-test throws when args don't match the validator.
+    const badCall = t.withIdentity(identity).mutation(api.users.updateProfile, {
+      // @ts-expect-error -- intentionally passing an arg not in the validator
+      email: 'attacker@evil.com',
+    })
+    await expect(badCall).rejects.toThrow()
 
-    // Verify email was not changed
+    // Verify email unchanged
     const user = await t.withIdentity(identity).query(api.users.me, {})
     expect(user?.email).toBe('real@clerk.dev')
   })
 
-  it('allows updateProfile when email matches identity.email', async () => {
+  it('preserves Clerk identity email after profile update', async () => {
     const t = makeT()
     const identity = {
-      tokenIdentifier: 'clerk|profile-match-user',
-      email: 'real@clerk.dev',
+      tokenIdentifier: 'clerk|profile-preserves-email',
+      email: 'identity@clerk.dev',
     }
 
     // Create user first
     vi.useFakeTimers({ now: Date.now() })
     await t.withIdentity(identity).mutation(api.users.createUser, {
       role: 'DiveCenter',
-      businessName: 'Match Test',
+      businessName: 'Preserve Test',
     })
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    // Passing matching email should work (no-op but not rejected)
+    // Update non-email fields
     await t.withIdentity(identity).mutation(api.users.updateProfile, {
-      email: 'real@clerk.dev',
       firstName: 'Updated',
+      nickname: 'Updater',
     })
 
+    // Stored email still reflects Clerk identity, not overwritten
     const user = await t.withIdentity(identity).query(api.users.me, {})
-    expect(user?.email).toBe('real@clerk.dev')
+    expect(user?.email).toBe('identity@clerk.dev')
     expect(user?.firstName).toBe('Updated')
+    expect(user?.nickname).toBe('Updater')
+  })
+})
+
+describe('upsertFromWebhook email path', () => {
+  it('sets email from webhook args on new user creation', async () => {
+    const t = makeT()
+    const token = `clerk|webhook-email-new-${crypto.randomUUID().slice(0, 8)}`
+
+    const userId = await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: token,
+      email: 'webhook@clerk.dev',
+      name: 'Webhook User',
+      firstName: 'Webhook',
+      lastName: 'User',
+    })
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.email).toBe('webhook@clerk.dev')
   })
 
-  it('allows updateProfile without email field', async () => {
+  it('updates email from webhook args on existing user', async () => {
     const t = makeT()
-    const identity = {
-      tokenIdentifier: 'clerk|profile-no-email-user',
-      email: 'real@clerk.dev',
-    }
+    const token = `clerk|webhook-email-update-${crypto.randomUUID().slice(0, 8)}`
 
-    // Create user first
-    vi.useFakeTimers({ now: Date.now() })
-    await t.withIdentity(identity).mutation(api.users.createUser, {
-      role: 'DiveCenter',
-      businessName: 'No Email Test',
-    })
-    await t.finishAllScheduledFunctions(vi.runAllTimers)
-    vi.useRealTimers()
-
-    // Update other fields without email — should succeed
-    await t.withIdentity(identity).mutation(api.users.updateProfile, {
-      firstName: 'NoEmail',
+    // Create user via first webhook event
+    await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: token,
+      email: 'old@clerk.dev',
+      name: 'Old Name',
+      firstName: 'Old',
+      lastName: 'Name',
     })
 
-    const user = await t.withIdentity(identity).query(api.users.me, {})
-    expect(user?.firstName).toBe('NoEmail')
-    expect(user?.email).toBe('real@clerk.dev')
+    // Second webhook event updates email (e.g. user changed email in Clerk)
+    await t.mutation(internal.users.upsertFromWebhook, {
+      tokenIdentifier: token,
+      email: 'new@clerk.dev',
+      name: 'New Name',
+      firstName: 'New',
+      lastName: 'Name',
+    })
+
+    const user = await t.run(async (ctx) => {
+      return await ctx.db
+        .query('users')
+        .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', token))
+        .unique()
+    })
+    expect(user?.email).toBe('new@clerk.dev')
+    expect(user?.name).toBe('New Name')
   })
 })

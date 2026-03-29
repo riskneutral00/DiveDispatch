@@ -135,7 +135,6 @@ export const updateProfile = mutation({
     lastName: v.optional(v.string()),
     nickname: v.optional(v.string()),
     phone: v.optional(v.string()),
-    email: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
     appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
@@ -151,11 +150,6 @@ export const updateProfile = mutation({
       )
       .unique()
     if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-
-    // Reject client-supplied email that does not match the Clerk identity.
-    if (args.email !== undefined && args.email !== identity.email) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Email must match your Clerk identity.' })
-    }
 
     await ctx.db.patch(user._id, {
       ...(args.businessName !== undefined && { businessName: args.businessName }),
