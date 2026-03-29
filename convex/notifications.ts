@@ -4,6 +4,7 @@ import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
+import { checkIdempotency } from './lib/idempotency'
 import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator } from './shared/statuses'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
@@ -34,12 +35,19 @@ export async function _createNotificationHandler(
     type: NotificationType
     bookingId?: string
     message: string
+    idempotencyKey?: string
   },
 ): Promise<void> {
   const { user } = await requireAuth(ctx)
   if (args.userId !== user.slug) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN })
   }
+
+  if (args.idempotencyKey) {
+    const isDuplicate = await checkIdempotency(ctx, args.idempotencyKey, 'createNotification')
+    if (isDuplicate) return
+  }
+
   await notify(ctx, args)
 }
 
@@ -49,6 +57,7 @@ export const createNotification = mutation({
     type: clientNotificationTypeValidator,
     bookingId: v.optional(v.id('bookings')),
     message: v.string(),
+    idempotencyKey: v.optional(v.string()),
   },
   handler: _createNotificationHandler,
 })

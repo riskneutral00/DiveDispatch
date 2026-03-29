@@ -16,4 +16,7 @@ crons.interval('prune-blocked-dates', { hours: 168 }, internal.availability.prun
 // bookings the lazy client check (useBookingWithExpiry) never triggered
 crons.interval('expire-stale-bookings', { hours: 2 }, internal.bookings.status.expireStaleBookings)
 
+// Purge expired idempotency keys to prevent unbounded table growth from offline mutation replay
+crons.interval('purge-idempotency-keys', { hours: 1 }, internal.lib.idempotency.purgeExpiredIdempotencyKeys)
+
 export default crons

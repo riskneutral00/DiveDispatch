@@ -4,6 +4,14 @@ import {
   type QueuedMutation,
 } from '../src/lib/pwa/offline-queue'
 
+// Polyfill crypto.randomUUID for test environment
+if (typeof globalThis.crypto === 'undefined') {
+  let counter = 0
+  globalThis.crypto = {
+    randomUUID: () => `test-uuid-${++counter}`,
+  } as Crypto
+}
+
 describe('OfflineQueue', () => {
   let queue: OfflineQueue
 
@@ -68,6 +76,37 @@ describe('OfflineQueue', () => {
     queue.enqueue('bookings:confirm', { id: '2' })
     const items = queue.getAll()
     expect(items[0].id).not.toBe(items[1].id)
+  })
+
+  it('generates an idempotencyKey for each enqueued mutation', () => {
+    queue.enqueue('bookings:confirm', { id: '1' })
+    const items = queue.getAll()
+    expect(items[0].idempotencyKey).toBeTruthy()
+    expect(typeof items[0].idempotencyKey).toBe('string')
+    expect(items[0].idempotencyKey.length).toBeGreaterThan(0)
+  })
+
+  it('assigns unique idempotency keys to different mutations', () => {
+    queue.enqueue('bookings:confirm', { id: '1' })
+    queue.enqueue('bookings:confirm', { id: '2' })
+    const items = queue.getAll()
+    expect(items[0].idempotencyKey).not.toBe(items[1].idempotencyKey)
+  })
+
+  it('preserves idempotencyKey on failed items retained for retry', async () => {
+    queue.enqueue('bookings:fail', { id: '1' })
+    const originalKey = queue.getAll()[0].idempotencyKey
+
+    const executor = vi.fn(async () => {
+      throw new Error('Network error')
+    })
+
+    await queue.replay(executor)
+
+    // Failed item stays in queue with same idempotency key
+    const items = queue.getAll()
+    expect(items).toHaveLength(1)
+    expect(items[0].idempotencyKey).toBe(originalKey)
   })
 })
 

@@ -7,6 +7,7 @@ import {
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
 import { ErrorCode } from '../lib/errorCodes'
+import { checkIdempotency } from '../lib/idempotency'
 import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
 
 // ─── editBooking ──────────────────────────────────────────────────────────────
@@ -16,8 +17,16 @@ import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
  * Vacates all reservations, clears sessions, and marks bookingFormComplete false.
  */
 export const editBooking = mutation({
-  args: { bookingId: v.id('bookings') },
+  args: {
+    bookingId: v.id('bookings'),
+    idempotencyKey: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
+    if (args.idempotencyKey) {
+      const isDuplicate = await checkIdempotency(ctx, args.idempotencyKey, 'editBooking')
+      if (isDuplicate) return
+    }
+
     const { user } = await requireAuth(ctx)
 
     const booking = await ctx.db.get(args.bookingId)

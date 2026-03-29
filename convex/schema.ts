@@ -679,6 +679,16 @@ export default defineSchema({
     runAt: v.number(),
   }).index('by_jobName_runAt', ['jobName', 'runAt']),
 
+  // ── L7: Idempotency Log ────────────────────────────────────────────────────
+
+  idempotencyLog: defineTable({
+    key: v.string(),
+    mutationName: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_key', ['key'])
+    .index('by_createdAt', ['createdAt']),
+
   // ── L7: Rate Limiting ──────────────────────────────────────────────────────
 
   rateLimits: defineTable({

@@ -10,6 +10,7 @@ export interface QueuedMutation {
   functionName: string
   args: Record<string, unknown>
   timestamp: number
+  idempotencyKey: string
 }
 
 export interface ReplayResult {
@@ -33,6 +34,7 @@ export class OfflineQueue {
       functionName,
       args,
       timestamp: Date.now(),
+      idempotencyKey: crypto.randomUUID(),
     })
   }
 
