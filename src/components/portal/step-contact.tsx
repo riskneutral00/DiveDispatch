@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery } from 'convex/react'
 import { AlertTriangle } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
 import { GlassCard } from '@/components/glass/glass-card'
 import { GlassInput } from '@/components/glass/glass-input'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
@@ -14,6 +12,7 @@ import { GlassTextarea } from '@/components/glass/glass-textarea'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
+import { usePortalContact } from '@/lib/hooks/use-portal-contact'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { useReturningCustomer } from '@/lib/hooks/use-returning-customer'
 import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
@@ -62,9 +61,6 @@ interface StepContactProps {
 }
 
 export function StepContact({ token, onComplete, bookingStartDate }: StepContactProps) {
-  const context = useQuery(api.customers.getPortalContext, { token })
-  const save = useMutation(api.customers.savePortalContact)
-
   const [form, setFormState] = useState<CustomerContactData>(defaultForm())
   const [ageError, setAgeError] = useState<string | null>(null)
   const {
@@ -77,12 +73,16 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   // Returning customer dedup
   const [returningDismissedLocal, setReturningDismissedLocal] = useState(false)
-  const checkReturning = useQuery(
-    api.customers.checkReturningCustomer,
+
+  const returningEmail =
     form.email && form.email.includes('@') && !returningDismissedLocal
-      ? { email: form.email, token }
-      : 'skip',
-  )
+      ? form.email
+      : null
+
+  const { context, save, checkReturning } = usePortalContact({
+    token,
+    returningEmail,
+  })
 
   const {
     returningCustomer,
