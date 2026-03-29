@@ -19,7 +19,6 @@ import {
   seedReservation,
   seedInventoryUnit,
   seedSnapshot,
-  TEST_SLUGS,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -166,6 +165,106 @@ describe('purgeExpiredDrafts', () => {
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
     expect(booking?.status).toBe('Draft')
+  })
+
+  it('restores snapshot capacity when multiple reservations share the same session', async () => {
+    const t = makeT()
+
+    const { snapshotId } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        capacityModel: 'Pooled',
+        totalUnits: 4,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const snapshotId = await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 4,
+        reservedUnits: 3,
+        availableUnits: 1,
+      })
+      // Three reservations on the same session/snapshot
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'PendingAcceptance',
+        unitsRequested: 1,
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'Confirmed',
+        unitsRequested: 1,
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
+        status: 'PendingAcceptance',
+        unitsRequested: 1,
+      })
+      return { snapshotId }
+    })
+
+    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot?.availableUnits).toBe(4)
+    expect(snapshot?.reservedUnits).toBe(0)
+  })
+
+  it('restores snapshots for reservations across different sessions', async () => {
+    const t = makeT()
+
+    const { snapshotAId, snapshotBId } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitA = await seedInventoryUnit(ctx, { displayName: 'Instructor A' })
+      const unitB = await seedInventoryUnit(ctx, { displayName: 'Instructor B' })
+      const sessionA = await seedSession(ctx, bookingId, unitA, {
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '12:00',
+      })
+      const sessionB = await seedSession(ctx, bookingId, unitB, {
+        date: testDate(6),
+        startTime: '09:00',
+        endTime: '17:00',
+      })
+      const snapshotAId = await seedSnapshot(ctx, unitA, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '12:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      const snapshotBId = await seedSnapshot(ctx, unitB, {
+        date: testDate(6),
+        windowStart: '09:00',
+        windowEnd: '17:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, bookingId, unitA, sessionA, {
+        status: 'PendingAcceptance',
+      })
+      await seedReservation(ctx, bookingId, unitB, sessionB, {
+        status: 'Confirmed',
+      })
+      return { snapshotAId, snapshotBId }
+    })
+
+    await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+
+    const [snapA, snapB] = await t.run(async (ctx) =>
+      Promise.all([ctx.db.get(snapshotAId), ctx.db.get(snapshotBId)]),
+    )
+    expect(snapA?.availableUnits).toBe(1)
+    expect(snapA?.reservedUnits).toBe(0)
+    expect(snapB?.availableUnits).toBe(1)
+    expect(snapB?.reservedUnits).toBe(0)
   })
 
   it('returns the count of purged bookings', async () => {

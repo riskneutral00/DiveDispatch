@@ -55,10 +55,16 @@ export async function restoreSnapshotUnits(
   })
 }
 
+/** Upper bound on reservations fetched per status query. Prevents unbounded memory use. */
+const MAX_RESERVATIONS_PER_BOOKING = 500
+
 /**
  * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
  * and restores their corresponding AvailabilitySnapshot counts atomically.
  * Used by: edit mode re-submission, cancellation, TTL expiry.
+ *
+ * Sessions and snapshots are batch-fetched before the loop to avoid N+1 queries.
+ * Units to restore are accumulated per snapshot so each snapshot is patched once.
  */
 export async function releaseBookingReservations(
   ctx: MutationCtx,
@@ -71,43 +77,87 @@ export async function releaseBookingReservations(
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
-      .collect(),
+      .take(MAX_RESERVATIONS_PER_BOOKING),
     ctx.db
       .query('reservations')
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.Confirmed),
       )
-      .collect(),
+      .take(MAX_RESERVATIONS_PER_BOOKING),
   ])
 
   const active = [...pending, ...confirmed]
 
+  if (active.length === 0) return
+
+  // ── Batch-fetch sessions ──────────────────────────────────────────────────
+  const uniqueSessionIds = [...new Set(active.map((r) => r.bookingSessionId))]
+  const sessionDocs = await Promise.all(uniqueSessionIds.map((id) => ctx.db.get(id)))
+  const sessionMap = new Map<string, Doc<'bookingSessions'>>()
+  for (let i = 0; i < uniqueSessionIds.length; i++) {
+    const doc = sessionDocs[i]
+    if (!doc) {
+      throw new ConvexError({
+        code: ErrorCode.ORPHANED_RESERVATION,
+        reason: `Reservation references missing session ${uniqueSessionIds[i]}. Inventory cannot be restored — aborting to prevent capacity leak.`,
+      })
+    }
+    sessionMap.set(uniqueSessionIds[i], doc)
+  }
+
+  // ── Batch-fetch snapshots ─────────────────────────────────────────────────
+  // Build unique (inventoryUnitId, date, windowStart) lookup keys
+  type SnapshotKey = { inventoryUnitId: Id<'inventoryUnits'>; date: string; windowStart: string }
+  const snapshotKeyMap = new Map<string, SnapshotKey>()
+  for (const res of active) {
+    const session = sessionMap.get(res.bookingSessionId)!
+    const key = `${res.inventoryUnitId}|${session.date}|${session.startTime}`
+    if (!snapshotKeyMap.has(key)) {
+      snapshotKeyMap.set(key, {
+        inventoryUnitId: res.inventoryUnitId,
+        date: session.date,
+        windowStart: session.startTime,
+      })
+    }
+  }
+
+  const snapshotEntries = [...snapshotKeyMap.entries()]
+  const snapshotDocs = await Promise.all(
+    snapshotEntries.map(([, k]) => getAvailabilitySnapshot(ctx, k.inventoryUnitId, k.date, k.windowStart)),
+  )
+  const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
+  for (let i = 0; i < snapshotEntries.length; i++) {
+    const doc = snapshotDocs[i]
+    if (!doc) {
+      const k = snapshotEntries[i][1]
+      throw new ConvexError({
+        code: ErrorCode.MISSING_SNAPSHOT,
+        reason: `No availability snapshot found for unit ${k.inventoryUnitId} on ${k.date} at ${k.windowStart}. Inventory cannot be restored — aborting to prevent capacity leak.`,
+      })
+    }
+    snapshotIdMap.set(snapshotEntries[i][0], doc._id)
+  }
+
+  // ── Accumulate units to restore per snapshot ──────────────────────────────
+  const unitsToRestore = new Map<string, number>()
+  for (const res of active) {
+    const session = sessionMap.get(res.bookingSessionId)!
+    const key = `${res.inventoryUnitId}|${session.date}|${session.startTime}`
+    unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + res.unitsRequested)
+  }
+
+  // ── Patch: vacate reservations + restore snapshots (writes only) ──────────
   for (const res of active) {
     await ctx.db.patch(res._id, {
       status: RESERVATION_STATUS.Vacated,
       vacatedAt: Date.now(),
       vacatedBy: reason,
     })
+  }
 
-    // Restore snapshot units using the linked booking session for window coordinates
-    const session = await ctx.db.get(res.bookingSessionId)
-    if (!session) {
-      throw new ConvexError({
-        code: ErrorCode.ORPHANED_RESERVATION,
-        reason: `Reservation ${res._id} references missing session ${res.bookingSessionId}. Inventory cannot be restored — aborting to prevent capacity leak.`,
-      })
-    }
-
-    const snapshot = await getAvailabilitySnapshot(ctx, res.inventoryUnitId, session.date, session.startTime)
-
-    if (!snapshot) {
-      throw new ConvexError({
-        code: ErrorCode.MISSING_SNAPSHOT,
-        reason: `No availability snapshot found for unit ${res.inventoryUnitId} on ${session.date} at ${session.startTime}. Inventory cannot be restored — aborting to prevent capacity leak.`,
-      })
-    }
-
-    await restoreSnapshotUnits(ctx, snapshot._id, res.unitsRequested)
+  for (const [key, units] of unitsToRestore) {
+    const snapshotId = snapshotIdMap.get(key)!
+    await restoreSnapshotUnits(ctx, snapshotId, units)
   }
 }
 
