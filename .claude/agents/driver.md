@@ -106,7 +106,11 @@ Timeout per size (S=5min, M=15min, L=30min).
   Print: `DD-{id}: NO-GO after 2 retries — marked blocked | stuck_reason: {first finding}`
 
 **Merge:** `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
-- Exit 0: move to `done/`, auto-unblock dependents, clean worktree.
+- Exit 0: move to `done/`, auto-unblock dependents, then remove the worktree:
+  ```bash
+  git worktree remove {WORKTREE_PREFIX}{id}
+  git worktree prune
+  ```
 - Exit 1: retry up to MAX_MERGE_ATTEMPTS (rebase, then fix agent). On exhaustion: mark blocked, keep worktree.
 - Exit 2: test failure post-merge (script reverts). Mark blocked, keep worktree.
 

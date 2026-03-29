@@ -1,7 +1,7 @@
 ---
 name: vault
 description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, SendMessage, TeamDelete
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, SendMessage, TeamDelete, mcp__openspace__execute_task
 user-invocable: true
 ---
 
@@ -271,6 +271,78 @@ If all five jobs are skipped:
 ```
 Nothing to vault.
 ```
+
+---
+
+### Job 4.5: OpenSpace Skill Evolution
+
+Run **after** Job 4 (git commit) so skill files are in a clean state.
+
+1. Check if `.openspace/skill_usage.jsonl` exists and has content:
+   ```bash
+   [ -s .openspace/skill_usage.jsonl ] && echo "HAS_USAGE" || echo "NO_USAGE"
+   ```
+   If `NO_USAGE`, skip this job silently.
+
+2. Read the log. Count invocations per skill. Build a summary line:
+   ```
+   Skills used this session: board(3), gate(2), qa(1), spec(1), review-frontend(1)
+   ```
+
+3. **Snapshot skill frontmatter** before evolution (for rollback):
+   ```bash
+   for f in .claude/skills/*/SKILL.md; do head -10 "$f"; done > /tmp/dd-skill-frontmatter-snapshot.txt
+   ```
+
+4. Call OpenSpace evolution engine:
+   ```
+   mcp__openspace__execute_task(
+     task: "Skills used this session: [summary from step 2]. Review each skill's SKILL.md definition in the skill directories. Compare instructions against what these skills actually need to do. Evolve skills that have unclear instructions, missing edge cases, outdated patterns, or redundant steps. Focus on the most-used skills first. Do not modify skills that are already clear and effective.
+
+CRITICAL FORMAT RULES — you MUST preserve these in every skill file you modify:
+- The YAML frontmatter block (between --- markers) must be preserved exactly, including: name, description, allowed-tools, user-invocable, and any other fields
+- Never remove or rename frontmatter fields
+- Only modify the instruction body below the frontmatter
+- If a skill's instructions are already clear and effective, leave it unchanged",
+     workspace_dir: "<project root>",
+     skill_dirs: ["/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/.claude/skills"],
+     search_scope: "local",
+     max_iterations: 10
+   )
+   ```
+
+5. **Validate evolved skills** — check that frontmatter survived:
+   ```bash
+   BROKEN=0
+   for f in .claude/skills/*/SKILL.md; do
+     if ! head -1 "$f" | grep -q '^---'; then
+       echo "BROKEN FRONTMATTER: $f"
+       BROKEN=$((BROKEN + 1))
+     fi
+   done
+   ```
+   If `BROKEN > 0`: revert ALL skill changes with `git checkout .claude/skills/` and report the failure. Do NOT clear the usage log (so evolution retries next session).
+
+6. If validation passes, clear the usage log:
+   ```bash
+   > .openspace/skill_usage.jsonl
+   ```
+
+7. If `execute_task` failed or timed out: do NOT clear the usage log. Print `Evolution: skipped (OpenSpace error)` and continue — never block vault completion.
+
+8. If any skills were evolved, commit them:
+   ```bash
+   git add .claude/skills/ && git commit -m "$(cat <<'EOF'
+   chore: openspace skill evolution
+
+   Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+   Output: `Evolution: N skills improved by OpenSpace`
+   If none evolved: skip the output line.
+
+**Note:** This step may take 1-2 minutes (OpenSpace runs its own analysis loop). It runs after commits are done so it never blocks the safety-critical parts of /vault. If it fails, vault still completes normally.
 
 ---
 

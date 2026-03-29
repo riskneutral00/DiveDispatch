@@ -91,6 +91,9 @@ playwright-report/
 # Stale skill versions (only SKILL.md is canonical)
 .claude/skills/**/skill *.md
 
+# OpenSpace evolution tracking (usage logs, not code)
+.openspace/
+
 # Internal AI tooling (keep locally, not public)
 .mulch/
 .overstory/

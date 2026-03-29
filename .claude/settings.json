@@ -73,6 +73,17 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/skill-usage-logger.sh",
+            "timeout": 5,
+            "statusMessage": "Logging skill usage…"
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {

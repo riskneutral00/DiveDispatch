@@ -68,6 +68,25 @@ RiskNeutral vault: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 | New app idea | `Vaults/RiskNeutral/Ideas/Ideas.md` (append) |
 | Risk Neutral strategy/vision | `Vaults/RiskNeutral/Strategy/*.md` (update) |
 | Founder insight/background | `Vaults/RiskNeutral/Founder/Matt.md` (update) |
+| Matrix-GitHub analysis | `Vaults/Matrix-GitHub/Integrations.md` |
+| Matrix-YouTube analysis | `Vaults/Matrix-YouTube/Index.md` |
+
+## Matrix Config
+
+Required by `/matrix-github` and `/matrix-youtube` skills. Declares what the skill needs to assess sources against this project.
+
+- **project:** DiveDispatch
+- **vault:** ~/Desktop/RiskNeutral/Vaults/DiveDispatch
+- **key_files:**
+  - convex/schema.ts — data model
+  - package.json — dependencies
+  - convex/bookings/ — state machine, core mutations
+  - convex/lib/ — shared utilities
+  - src/lib/hooks/ — hook patterns
+  - .claude/skills/ — existing skills
+  - .claude/settings.json — existing hooks
+  - design-system/MASTER.md — UI system
+  - CLAUDE.md — project rules and constraints
 
 ## Design Workflow
 
