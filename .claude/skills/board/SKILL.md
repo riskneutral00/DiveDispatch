@@ -31,7 +31,10 @@ Ready ({count}):
   {id} [{priority}] {title} ({category}) {size} {🧑 human | ⚡ auto} {⚠ non-standard format — if missing **Spec:** or **Acceptance:** headers}
 
 Blocked ({count}):
-  {id} [{priority}] {title} — waiting: {blocked_by}
+  {id} [{priority}] {title} — waiting: {blocked_by}          ← dependency-blocked (blocked_by non-empty, stuck_reason null)
+  {id} [{priority}] {title}                                   ← stuck (stuck_reason set)
+    ⚠ stuck: {stuck_reason}
+  (If both: show waiting line AND stuck line for same ticket)
 
 In Review ({count}):
   {id} [{priority}] {title} — PR: {pr}
@@ -44,6 +47,7 @@ Done: {count} archived
 
 1. List all `.tickets/DD-*.md` where `status: ready` AND `assigned_to: null`
 2. **Skip** any ticket where `human_required: true` — print: `Skipped DD-{NNN} (human required)`
+   **Skip** any ticket where `stuck_reason` is non-null — print: `Skipped DD-{NNN} (stuck: {stuck_reason})` — these require human intervention before re-picking
 3. **Spec guard** — For each candidate, read the ticket body (below the closing `---`). If body has <50 chars of content → skip: `Skipped DD-{NNN} (empty spec)`. If body has content but is missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format` but still include in scoring.
 4. **Score** remaining tickets:
    - **Priority:** P0=40, P1=30, P2=20, P3=10
@@ -71,6 +75,7 @@ Done: {count} archived
 Same as above but for the specified ticket (skip scoring).
 - **Spec guard** — Read the ticket body. If body has <50 chars of content → refuse: `Error: DD-{NNN} has no spec. Run /spec DD-{NNN} to add spec + acceptance before picking.` If body has content but missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format` but allow pick.
 - If `human_required: true`, warn: `Warning: DD-{NNN} requires human intervention. Pick anyway? (y/n)`
+- If `stuck_reason` is non-null, refuse: `Error: DD-{NNN} is stuck: {stuck_reason}. Run /board release DD-{NNN} after fixing the underlying issue.`
 - If any `side_effects` entry overlaps with an `in_progress` ticket, warn: `Warning: side-effect overlap with DD-{XXX} on [{overlapping areas}]. Pick anyway? (y/n)`
 Error if `status` is not `ready` OR `assigned_to` is not null.
 If already claimed, print: `Error: DD-{NNN} is already in_progress (assigned to: {assigned_to}, branch: {branch})`
@@ -79,8 +84,8 @@ If already claimed, print: `Error: DD-{NNN} is already in_progress (assigned to:
 
 1. Read the ticket file
 2. Verify `status: in_progress`
-3. Update: `status: ready`, `assigned_to: null`, `branch: null`, `updated: {today}`
-4. Print: `Released DD-{NNN}: {title} — back to ready`
+3. Update: `status: ready`, `assigned_to: null`, `branch: null`, `stuck_reason: null`, `updated: {today}`
+4. Print: `Released DD-{NNN}: {title} — back to ready` (if `stuck_reason` was set, also print: `stuck_reason cleared — fix the underlying issue before Driver re-picks`)
 
 ### `/board status DD-{NNN}` — Show ticket details
 
@@ -93,7 +98,8 @@ Read and display the full ticket file.
 3. Move file from `.tickets/DD-{NNN}.md` to `.tickets/done/DD-{NNN}.md`
 4. **Auto-unblock:** Scan all `.tickets/DD-*.md` for `blocked_by` containing `DD-{NNN}`. For each:
    - Remove `DD-{NNN}` from the `blocked_by` array
-   - If `blocked_by` is now empty AND `status: blocked` → set `status: ready`
+   - If `blocked_by` is now empty AND `status: blocked` AND `stuck_reason` is null → set `status: ready`
+   - If `blocked_by` is now empty AND `stuck_reason` is non-null → leave `status: blocked` (still stuck; human must `/board release` after fixing)
    - Print: `Unblocked: DD-{XXX} {title} → ready`
 5. **Auto-sync vault mirror:** Run the same logic as `/board sync` — regenerate `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` from current `.tickets/` state.
 6. Print: `Done: DD-{NNN} archived. Vault mirror synced.`
@@ -135,6 +141,7 @@ pr: null
 side_effects: [{from input, or empty array}]
 human_required: {true/false}
 size: {S/M/L}
+stuck_reason: null
 created: {today}
 updated: {today}
 ---

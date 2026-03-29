@@ -82,9 +82,9 @@ If you cannot implement the ticket after 3 attempts (tests keep failing, unclear
 
 ```
 DD-NNN blocked.
-Reason: {what went wrong}
-Attempted: {what you tried}
-Suggestion: {what a human should look at}
+Reason: {one-line summary of what specifically failed — not a story, just the blocker}
+Attempted: {comma-separated list of approaches tried, e.g. "rewrote import x3, checked exports, added barrel export"}
+Suggestion: {specific file path + line number or action for a human, e.g. "check releaseBookingReservations export in convex/bookings/inventoryRelease.ts:42"}
 ```
 
-The orchestrator will flag this for review. Do not spin endlessly.
+These three lines are parsed by Driver — use exactly these labels. Do not spin endlessly.

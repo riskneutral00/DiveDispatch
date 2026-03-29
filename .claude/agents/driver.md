@@ -58,7 +58,22 @@ Agent(
 
 Timeout per size (S=5min, M=15min, L=30min).
 
-- If blocked/timeout: mark `status: blocked`, clean worktree, re-pick.
+- If blocked/timeout: **Stuck procedure:**
+  1. Parse result:
+     - Timeout → `stuck_reason = "timeout after {X}m (size: {size})"`, `attempted = "timed out"`, `suggestion = "inspect worktree at {WORKTREE_PREFIX}{id}"`
+     - Self-report (`DD-{id} blocked.`) → extract `Reason:`, `Attempted:`, `Suggestion:` lines verbatim from jira-worker output
+  2. Update ticket frontmatter: `status: blocked`, `stuck_reason: "{stuck_reason}"`, `assigned_to: null`, `branch: null`, `updated: {today}`. Keep worktree intact for inspection.
+  3. Append to vault Lessons.md (`~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md`):
+     ```
+     ## Stuck: DD-{id} — {title}
+     **Date:** {YYYY-MM-DD}
+     **Trigger:** {timeout | self-report}
+     **Reason:** {stuck_reason}
+     **Attempted:** {attempted}
+     **Suggestion:** {suggestion}
+     ```
+  4. Print: `DD-{id}: blocked | stuck_reason: {stuck_reason} | lesson → Lessons.md`
+  5. Re-pick next ready ticket.
 - If complete: proceed to review.
 
 **Review:** Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
@@ -87,8 +102,8 @@ Timeout per size (S=5min, M=15min, L=30min).
      )
      ```
   4. Loop back to **Review** (run pre-merge-review again).
-- If NO-GO and `retry_count >= 2`: mark `status: blocked`, append all findings to ticket, keep worktree, re-pick.
-  Print: `DD-{id}: NO-GO after 2 retries — marked blocked`
+- If NO-GO and `retry_count >= 2`: set `stuck_reason` to the first CRITICAL or HIGH finding (or "NO-GO after 2 retries: {first finding}"), then run the **Stuck procedure** above (step 2 onward). Keep worktree intact.
+  Print: `DD-{id}: NO-GO after 2 retries — marked blocked | stuck_reason: {first finding}`
 
 **Merge:** `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
 - Exit 0: move to `done/`, auto-unblock dependents, clean worktree.
