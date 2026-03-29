@@ -314,6 +314,182 @@ describe('OfflineQueue Web Locks replay gate', () => {
   })
 })
 
+describe('OfflineQueue same-tab replay guard', () => {
+  it('second concurrent replay no-ops when first is still running', async () => {
+    // Disable Web Locks so we test the in-method guard, not cross-tab lock
+    const originalLocks = navigator.locks
+    Object.defineProperty(navigator, 'locks', {
+      value: undefined,
+      configurable: true,
+    })
+
+    const queue = new OfflineQueue()
+    queue.enqueue('bookings:confirm', { id: '1' })
+    queue.enqueue('bookings:confirm', { id: '2' })
+
+    const executedIds: string[] = []
+    let resolveFirstMutation: (() => void) | null = null
+
+    // Executor that blocks on the first call so we can fire a second replay
+    const executor = vi.fn(async (mutation: QueuedMutation) => {
+      if (!resolveFirstMutation) {
+        await new Promise<void>((resolve) => {
+          resolveFirstMutation = resolve
+        })
+      }
+      executedIds.push(mutation.args.id as string)
+    })
+
+    // Start first replay (will block on first mutation)
+    const replay1Promise = queue.replay(executor)
+
+    // Wait for executor to be called (it's now blocking)
+    await vi.waitFor(() => {
+      expect(resolveFirstMutation).not.toBeNull()
+    })
+
+    // Fire second replay while first is still running
+    const result2 = await queue.replay(executor)
+
+    // Second replay should no-op
+    expect(result2.succeeded).toBe(0)
+    expect(result2.failed).toBe(0)
+    expect(result2.errors).toEqual([])
+
+    // Unblock the first replay
+    resolveFirstMutation!()
+    const result1 = await replay1Promise
+
+    // First replay should have processed both mutations
+    expect(result1.succeeded).toBe(2)
+    expect(result1.failed).toBe(0)
+    expect(executedIds).toEqual(['1', '2'])
+    expect(queue.size()).toBe(0)
+
+    // Executor called exactly twice (once per mutation, no double-fire)
+    expect(executor).toHaveBeenCalledTimes(2)
+
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      configurable: true,
+    })
+  })
+
+  it('replay works again after first replay completes', async () => {
+    const originalLocks = navigator.locks
+    Object.defineProperty(navigator, 'locks', {
+      value: undefined,
+      configurable: true,
+    })
+
+    const queue = new OfflineQueue()
+    queue.enqueue('bookings:confirm', { id: '1' })
+
+    const executor = vi.fn(async () => {})
+
+    // First replay
+    const result1 = await queue.replay(executor)
+    expect(result1.succeeded).toBe(1)
+
+    // Enqueue more and replay again -- should work, not stay locked
+    queue.enqueue('bookings:confirm', { id: '2' })
+    const result2 = await queue.replay(executor)
+    expect(result2.succeeded).toBe(1)
+    expect(queue.size()).toBe(0)
+
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      configurable: true,
+    })
+  })
+
+  it('replaying flag resets even when executor throws for all items', async () => {
+    const originalLocks = navigator.locks
+    Object.defineProperty(navigator, 'locks', {
+      value: undefined,
+      configurable: true,
+    })
+
+    const queue = new OfflineQueue()
+    queue.enqueue('bookings:fail', { id: '1' })
+
+    const failExecutor = vi.fn(async () => {
+      throw new Error('Network error')
+    })
+
+    // First replay -- all items fail
+    const result1 = await queue.replay(failExecutor)
+    expect(result1.failed).toBe(1)
+
+    // Second replay should still work (flag was reset in finally block)
+    const succeedExecutor = vi.fn(async () => {})
+    const result2 = await queue.replay(succeedExecutor)
+    expect(result2.succeeded).toBe(1)
+    expect(queue.size()).toBe(0)
+
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      configurable: true,
+    })
+  })
+
+  it('two simultaneous replay calls fire each mutation exactly once', async () => {
+    const originalLocks = navigator.locks
+    Object.defineProperty(navigator, 'locks', {
+      value: undefined,
+      configurable: true,
+    })
+
+    const queue = new OfflineQueue()
+    queue.enqueue('bookings:confirm', { id: '1' })
+    queue.enqueue('bookings:decline', { id: '2' })
+    queue.enqueue('bookings:confirm', { id: '3' })
+
+    const callCount = new Map<string, number>()
+    let resolveBlock: (() => void) | null = null
+
+    const executor = vi.fn(async (mutation: QueuedMutation) => {
+      const id = mutation.args.id as string
+      // Block on first call to create timing window for concurrent replay
+      if (!resolveBlock) {
+        await new Promise<void>((resolve) => {
+          resolveBlock = resolve
+        })
+      }
+      callCount.set(id, (callCount.get(id) ?? 0) + 1)
+    })
+
+    const p1 = queue.replay(executor)
+
+    // Wait until first executor call is blocking
+    await vi.waitFor(() => {
+      expect(resolveBlock).not.toBeNull()
+    })
+
+    // Fire second replay concurrently
+    const p2 = queue.replay(executor)
+
+    // Unblock
+    resolveBlock!()
+
+    const [r1, r2] = await Promise.all([p1, p2])
+
+    // Total: exactly 3 mutations executed, no double-fires
+    expect(r1.succeeded + r2.succeeded).toBe(3)
+    expect(r2.succeeded).toBe(0) // second was no-op
+
+    // Each mutation called exactly once
+    expect(callCount.get('1')).toBe(1)
+    expect(callCount.get('2')).toBe(1)
+    expect(callCount.get('3')).toBe(1)
+
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      configurable: true,
+    })
+  })
+})
+
 describe('OfflineQueue in-memory fallback', () => {
   it('works without IndexedDB when init is not called', () => {
     const queue = new OfflineQueue()

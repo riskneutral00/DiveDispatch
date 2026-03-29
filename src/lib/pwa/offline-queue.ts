@@ -152,6 +152,7 @@ function clearStore(db: IDBDatabase): Promise<void> {
 export class OfflineQueue {
   private queue: QueuedMutation[] = []
   private db: IDBDatabase | null = null
+  private replaying = false
 
   /**
    * Initialize the queue by opening IndexedDB and hydrating from persisted data.
@@ -239,29 +240,38 @@ export class OfflineQueue {
   private async replayInternal(
     executor: (mutation: QueuedMutation) => Promise<void>
   ): Promise<ReplayResult> {
-    const items = [...this.queue]
-    const failedItems: QueuedMutation[] = []
-    const errors: ReplayResult['errors'] = []
-    let succeeded = 0
-
-    for (const mutation of items) {
-      try {
-        await executor(mutation)
-        succeeded++
-
-        // Remove from IndexedDB on success
-        if (this.db) {
-          await deleteFromStore(this.db, mutation.idempotencyKey)
-        }
-      } catch (error) {
-        failedItems.push(mutation)
-        errors.push({ mutation, error })
-      }
+    if (this.replaying) {
+      return { succeeded: 0, failed: 0, errors: [] }
     }
 
-    // Replace queue with only failed items
-    this.queue = failedItems
+    this.replaying = true
+    try {
+      const items = [...this.queue]
+      const failedItems: QueuedMutation[] = []
+      const errors: ReplayResult['errors'] = []
+      let succeeded = 0
 
-    return { succeeded, failed: failedItems.length, errors }
+      for (const mutation of items) {
+        try {
+          await executor(mutation)
+          succeeded++
+
+          // Remove from IndexedDB on success
+          if (this.db) {
+            await deleteFromStore(this.db, mutation.idempotencyKey)
+          }
+        } catch (error) {
+          failedItems.push(mutation)
+          errors.push({ mutation, error })
+        }
+      }
+
+      // Replace queue with only failed items
+      this.queue = failedItems
+
+      return { succeeded, failed: failedItems.length, errors }
+    } finally {
+      this.replaying = false
+    }
   }
 }
