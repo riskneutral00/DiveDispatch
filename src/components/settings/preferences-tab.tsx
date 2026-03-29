@@ -31,7 +31,6 @@ export function preferencesFromUser(p: Record<string, unknown>): PreferencesValu
 
 export function preferencesToPayload(form: PreferencesValues) {
   return {
-    role: 'DiveCenter' as const,
     appLanguage: form.appLanguage,
   }
 }
@@ -41,6 +40,7 @@ export function preferencesToPayload(form: PreferencesValues) {
 export function PreferencesTab() {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
+  const updateProfile = useMutation(api.users.updateProfile)
 
   const { form, setField, serverError, saving, saved, isDirty, isUpdate, handleSubmit, loading } = useProfileForm<PreferencesValues, ReturnType<typeof preferencesToPayload>>({
     profile: user as Record<string, unknown> | null | undefined,
@@ -48,8 +48,8 @@ export function PreferencesTab() {
     defaults: PREFERENCES_DEFAULTS,
     fromProfile: preferencesFromUser,
     toPayload: preferencesToPayload,
-    create: (payload) => createUser(payload),
-    update: (payload) => createUser(payload),
+    create: (payload) => createUser({ ...payload, role: 'DiveCenter' }),
+    update: (payload) => updateProfile(payload),
   })
 
   if (loading) {

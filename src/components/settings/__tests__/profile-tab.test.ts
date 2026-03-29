@@ -122,7 +122,6 @@ describe('profileToPayload', () => {
     const result = profileToPayload(form, 'en')
 
     expect(result).toEqual({
-      role: 'DiveCenter',
       firstName: 'Jane',
       lastName: 'Doe',
       nickname: 'JD',
@@ -132,6 +131,24 @@ describe('profileToPayload', () => {
       appLanguage: 'en',
       dateOfBirth: '1990-06-15',
     })
+  })
+
+  it('does not include a role field in the payload', () => {
+    const form: ProfileValues = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      nickname: '',
+      businessName: 'Ocean Corp',
+      email: 'jane@ocean.com',
+      phone: '+1234567890',
+      dobMonth: '',
+      dobDay: '',
+      dobYear: '',
+    }
+
+    const result = profileToPayload(form, 'en')
+
+    expect(result).not.toHaveProperty('role')
   })
 
   it('omits nickname when empty after trim', () => {

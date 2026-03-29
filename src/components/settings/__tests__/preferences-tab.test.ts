@@ -60,7 +60,6 @@ describe('preferencesToPayload', () => {
     const result = preferencesToPayload(form)
 
     expect(result).toEqual({
-      role: 'DiveCenter',
       appLanguage: 'th-TH',
     })
   })
@@ -69,9 +68,18 @@ describe('preferencesToPayload', () => {
     const result = preferencesToPayload(PREFERENCES_DEFAULTS)
 
     expect(result).toEqual({
-      role: 'DiveCenter',
       appLanguage: 'en',
     })
+  })
+
+  it('does not include a role field in the payload', () => {
+    const form: PreferencesValues = {
+      appLanguage: 'fr',
+    }
+
+    const result = preferencesToPayload(form)
+
+    expect(result).not.toHaveProperty('role')
   })
 })
 

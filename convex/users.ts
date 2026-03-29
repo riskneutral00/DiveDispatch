@@ -126,6 +126,39 @@ export const createUser = mutation({
   },
 })
 
+// Patches profile fields for the authenticated user.
+// Used by the settings profile and preferences tabs.
+// Does NOT modify role — role lives in userRoles and is set during onboarding.
+export const updateProfile = mutation({
+  args: {
+    businessName: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    nickname: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    email: v.optional(v.string()),
+    dateOfBirth: v.optional(v.string()),
+    appLanguage: v.optional(v.string()),
+    customerLanguages: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx)
+    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+
+    await ctx.db.patch(user._id, {
+      ...(args.businessName !== undefined && { businessName: args.businessName }),
+      ...(args.firstName !== undefined && { firstName: args.firstName }),
+      ...(args.lastName !== undefined && { lastName: args.lastName }),
+      ...(args.nickname !== undefined && { nickname: args.nickname }),
+      ...(args.phone !== undefined && { phone: args.phone }),
+      ...(args.email !== undefined && { email: args.email }),
+      ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
+      ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
+      ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
+    })
+  },
+})
+
 // Patches businessName and customerLanguages during onboarding step 4 (Business Info).
 export const updateBusinessInfo = mutation({
   args: {

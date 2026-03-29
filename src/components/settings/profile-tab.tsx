@@ -90,7 +90,6 @@ export function profileFromUser(p: Record<string, unknown>): ProfileValues {
 
 export function profileToPayload(form: ProfileValues, appLanguage: string) {
   return {
-    role: 'DiveCenter' as const,
     firstName: form.firstName.trim(),
     lastName: form.lastName.trim(),
     nickname: form.nickname.trim() || undefined,
@@ -109,6 +108,7 @@ export function profileToPayload(form: ProfileValues, appLanguage: string) {
 export function ProfileTab() {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
+  const updateProfile = useMutation(api.users.updateProfile)
 
   const appLanguage = (user as Record<string, unknown> | undefined)?.appLanguage as string | undefined
 
@@ -118,8 +118,8 @@ export function ProfileTab() {
     defaults: PROFILE_DEFAULTS,
     fromProfile: profileFromUser,
     toPayload: (f) => profileToPayload(f, appLanguage ?? 'en'),
-    create: (payload) => createUser(payload),
-    update: (payload) => createUser(payload),
+    create: (payload) => createUser({ ...payload, role: 'DiveCenter' }),
+    update: (payload) => updateProfile(payload),
   })
 
   if (loading) {
