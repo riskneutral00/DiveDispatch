@@ -41,7 +41,6 @@ export const createUser = mutation({
     lastName: v.optional(v.string()),
     nickname: v.optional(v.string()),
     phone: v.optional(v.string()),
-    email: v.optional(v.string()),
     dateOfBirth: v.optional(v.string()),
     appLanguage: v.optional(v.string()),
     customerLanguages: v.optional(v.array(v.string())),
@@ -59,7 +58,7 @@ export const createUser = mutation({
       )
       .unique()
 
-    // Explicit args override Clerk identity values; businessName falls back to Clerk name
+    // Email always comes from Clerk identity — never from client args.
     const identityFirstName = identity.givenName ?? ''
     const identityLastName = identity.familyName ?? ''
     const firstName = args.firstName ?? identityFirstName
@@ -75,7 +74,6 @@ export const createUser = mutation({
         ...(args.lastName !== undefined && { lastName: args.lastName }),
         ...(args.nickname !== undefined && { nickname: args.nickname }),
         ...(args.phone !== undefined && { phone: args.phone }),
-        ...(args.email !== undefined && { email: args.email }),
         ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
         ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
         ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
@@ -87,7 +85,7 @@ export const createUser = mutation({
     const userId = await ctx.db.insert('users', {
       tokenIdentifier: identity.tokenIdentifier,
       slug,
-      email: args.email ?? email,
+      email,
       name,
       firstName,
       lastName,
@@ -143,8 +141,21 @@ export const updateProfile = mutation({
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_tokenIdentifier', (q) =>
+        q.eq('tokenIdentifier', identity.tokenIdentifier),
+      )
+      .unique()
+    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+
+    // Reject client-supplied email that does not match the Clerk identity.
+    if (args.email !== undefined && args.email !== identity.email) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Email must match your Clerk identity.' })
+    }
 
     await ctx.db.patch(user._id, {
       ...(args.businessName !== undefined && { businessName: args.businessName }),
@@ -152,7 +163,6 @@ export const updateProfile = mutation({
       ...(args.lastName !== undefined && { lastName: args.lastName }),
       ...(args.nickname !== undefined && { nickname: args.nickname }),
       ...(args.phone !== undefined && { phone: args.phone }),
-      ...(args.email !== undefined && { email: args.email }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
       ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),

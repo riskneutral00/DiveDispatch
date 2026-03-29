@@ -1,9 +1,58 @@
 import { describe, it, expect, vi } from 'vitest'
 import { ConvexError, type Value } from 'convex/values'
 import { api } from '../convex/_generated/api'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 describe('createUser mutation', () => {
+  it('uses identity.email and ignores args.email on new user', async () => {
+    const t = makeT()
+    vi.useFakeTimers({ now: Date.now() })
+    const userId = await t
+      .withIdentity({
+        tokenIdentifier: 'clerk|email-trust-new',
+        email: 'real@clerk.dev',
+      })
+      .mutation(api.users.createUser, {
+        role: 'DiveCenter',
+        businessName: 'Trust Test DC',
+      })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.run(async (ctx) => ctx.db.get(userId))
+    expect(user?.email).toBe('real@clerk.dev')
+  })
+
+  it('uses identity.email even when args.email differs (existing user path)', async () => {
+    const t = makeT()
+    const identity = {
+      tokenIdentifier: 'clerk|email-trust-existing',
+      email: 'real@clerk.dev',
+    }
+
+    // Create user first
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'First Call',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    // Second call with a mismatched email in args should not overwrite
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'Second Call',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.email).toBe('real@clerk.dev')
+  })
+
   it('persists phone', async () => {
     const t = makeT()
     vi.useFakeTimers({ now: Date.now() })
@@ -202,5 +251,89 @@ describe('updateBusinessInfo mutation', () => {
           businessName: 'Ghost Biz',
         }),
     ).rejects.toThrow()
+  })
+})
+
+describe('updateProfile email protection', () => {
+  it('rejects when args.email does not match identity.email', async () => {
+    const t = makeT()
+    const identity = {
+      tokenIdentifier: 'clerk|profile-email-user',
+      email: 'real@clerk.dev',
+    }
+
+    // Create user first
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'Profile Test',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    // Attempt to overwrite email via updateProfile
+    await expectConvexError(
+      t.withIdentity(identity).mutation(api.users.updateProfile, {
+        email: 'attacker@evil.com',
+      }),
+      'VALIDATION',
+    )
+
+    // Verify email was not changed
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.email).toBe('real@clerk.dev')
+  })
+
+  it('allows updateProfile when email matches identity.email', async () => {
+    const t = makeT()
+    const identity = {
+      tokenIdentifier: 'clerk|profile-match-user',
+      email: 'real@clerk.dev',
+    }
+
+    // Create user first
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'Match Test',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    // Passing matching email should work (no-op but not rejected)
+    await t.withIdentity(identity).mutation(api.users.updateProfile, {
+      email: 'real@clerk.dev',
+      firstName: 'Updated',
+    })
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.email).toBe('real@clerk.dev')
+    expect(user?.firstName).toBe('Updated')
+  })
+
+  it('allows updateProfile without email field', async () => {
+    const t = makeT()
+    const identity = {
+      tokenIdentifier: 'clerk|profile-no-email-user',
+      email: 'real@clerk.dev',
+    }
+
+    // Create user first
+    vi.useFakeTimers({ now: Date.now() })
+    await t.withIdentity(identity).mutation(api.users.createUser, {
+      role: 'DiveCenter',
+      businessName: 'No Email Test',
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    vi.useRealTimers()
+
+    // Update other fields without email — should succeed
+    await t.withIdentity(identity).mutation(api.users.updateProfile, {
+      firstName: 'NoEmail',
+    })
+
+    const user = await t.withIdentity(identity).query(api.users.me, {})
+    expect(user?.firstName).toBe('NoEmail')
+    expect(user?.email).toBe('real@clerk.dev')
   })
 })
