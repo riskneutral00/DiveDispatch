@@ -228,11 +228,13 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                   </label>
                 </div>
 
-                {showError && (
-                  <p className="text-xs" style={{ color: 'var(--color-destructive)' }} role="alert">
-                    This field is required.
-                  </p>
-                )}
+                <div aria-live="polite">
+                  {showError && (
+                    <p className="text-xs" style={{ color: 'var(--color-destructive)' }} role="alert">
+                      This field is required.
+                    </p>
+                  )}
+                </div>
               </div>
             </GlassCard>
           )
@@ -248,17 +250,21 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
         </p>
       </GlassCard>
 
-      {touched && unanswered.length > 0 && !error && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-          Please answer all {unanswered.length} remaining question{unanswered.length !== 1 ? 's' : ''}.
-        </p>
-      )}
+      <div aria-live="polite">
+        {touched && unanswered.length > 0 && !error && (
+          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
+            Please answer all {unanswered.length} remaining question{unanswered.length !== 1 ? 's' : ''}.
+          </p>
+        )}
+      </div>
 
-      {error && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-          {error}
-        </p>
-      )}
+      <div aria-live="polite">
+        {error && (
+          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
+            {error}
+          </p>
+        )}
+      </div>
 
       <GlassButton type="submit" variant="primary" fullWidth loading={submitting} size="lg">
         Continue

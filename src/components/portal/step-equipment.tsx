@@ -305,7 +305,8 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
         <div className="space-y-4">
           {/* Height */}
-          <div>
+          <fieldset className="border-none p-0 m-0">
+            <legend className="sr-only">Height</legend>
             <label
               className="text-sm font-medium block mb-1.5 text-secondary"
             >
@@ -330,10 +331,11 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                 aria-label="Height unit"
               />
             </div>
-          </div>
+          </fieldset>
 
           {/* Weight */}
-          <div>
+          <fieldset className="border-none p-0 m-0">
+            <legend className="sr-only">Weight</legend>
             <label
               className="text-sm font-medium block mb-1.5 text-secondary"
             >
@@ -358,10 +360,11 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                 aria-label="Weight unit"
               />
             </div>
-          </div>
+          </fieldset>
 
           {/* Shoe size */}
-          <div>
+          <fieldset className="border-none p-0 m-0">
+            <legend className="sr-only">Shoe Size</legend>
             <label
               className="text-sm font-medium block mb-1.5 text-secondary"
             >
@@ -387,7 +390,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                 aria-label="Shoe size unit"
               />
             </div>
-          </div>
+          </fieldset>
         </div>
       </GlassCard>
 
@@ -486,11 +489,13 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           })}
         </div>
 
-        {displayErrors.rentalChecklist && (
-          <p className="mt-3 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-            {displayErrors.rentalChecklist}
-          </p>
-        )}
+        <div aria-live="polite" data-error-for="rentalChecklist" className="mt-3">
+          {displayErrors.rentalChecklist && (
+            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+              {displayErrors.rentalChecklist}
+            </p>
+          )}
+        </div>
 
         {/* Mask prescription — only when renting mask + needs powered lenses */}
         {showMaskPrescription && (

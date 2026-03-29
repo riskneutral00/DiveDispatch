@@ -154,11 +154,13 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
       </GlassCard>
 
       {/* Server error */}
-      {serverError && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-          {serverError}
-        </p>
-      )}
+      <div aria-live="polite">
+        {serverError && (
+          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
+            {serverError}
+          </p>
+        )}
+      </div>
 
       {/* Navigation */}
       <div className={`flex ${onBack ? 'justify-between' : 'justify-end'}`}>

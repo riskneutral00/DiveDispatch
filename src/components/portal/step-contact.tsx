@@ -343,11 +343,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               error={errors.dateOfBirth}
               autoComplete="bday"
             />
-            {ageError && (
-              <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-                {ageError}
-              </p>
-            )}
+            <div aria-live="polite">
+              {ageError && (
+                <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
+                  {ageError}
+                </p>
+              )}
+            </div>
           </div>
           <GlassSimpleSelect
             label="Gender"
@@ -490,11 +492,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </GlassCard>
 
       {/* Server error */}
-      {serverError && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
-          {serverError}
-        </p>
-      )}
+      <div aria-live="polite">
+        {serverError && (
+          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
+            {serverError}
+          </p>
+        )}
+      </div>
 
       {/* Submit */}
       <div className="flex justify-end">
