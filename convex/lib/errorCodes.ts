@@ -42,6 +42,9 @@ export const ErrorCode = {
   DUPLICATE_ROLE: 'DUPLICATE_ROLE',
   ROLE_NOT_HELD: 'ROLE_NOT_HELD',
 
+  // Invariant protection
+  INVARIANT_VIOLATION: 'INVARIANT_VIOLATION',
+
   // Rate limiting
   RATE_LIMITED: 'RATE_LIMITED',
 } as const;

@@ -58,7 +58,7 @@ export async function restoreSnapshotUnits(
 }
 
 /** Upper bound on reservations fetched per status query. Prevents unbounded memory use. */
-const MAX_RESERVATIONS_PER_BOOKING = 500
+export const MAX_RESERVATIONS_PER_BOOKING = 500
 
 /**
  * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
@@ -79,14 +79,28 @@ export async function releaseBookingReservations(
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
-      .take(MAX_RESERVATIONS_PER_BOOKING),
+      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
     ctx.db
       .query('reservations')
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.Confirmed),
       )
-      .take(MAX_RESERVATIONS_PER_BOOKING),
+      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
   ])
+
+  if (pending.length > MAX_RESERVATIONS_PER_BOOKING) {
+    throw new ConvexError({
+      code: ErrorCode.INVARIANT_VIOLATION,
+      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} PendingAcceptance reservations — cannot safely release. Manual intervention required.`,
+    })
+  }
+
+  if (confirmed.length > MAX_RESERVATIONS_PER_BOOKING) {
+    throw new ConvexError({
+      code: ErrorCode.INVARIANT_VIOLATION,
+      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} Confirmed reservations — cannot safely release. Manual intervention required.`,
+    })
+  }
 
   const active = [...pending, ...confirmed]
 
@@ -202,6 +216,7 @@ export const purgeExpiredDrafts = internalMutation({
       ErrorCode.ORPHANED_RESERVATION,
       ErrorCode.MISSING_SNAPSHOT,
       ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+      ErrorCode.INVARIANT_VIOLATION,
     ])
 
     for (const booking of staleDrafts) {

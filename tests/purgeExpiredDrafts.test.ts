@@ -1,5 +1,5 @@
 /**
- * DD-256 / DD-271 / DD-276 / DD-286: purgeExpiredDrafts cron — behavioral tests
+ * DD-256 / DD-271 / DD-276 / DD-286 / DD-284: purgeExpiredDrafts cron — behavioral tests
  *
  * Covers:
  * - Expired Draft bookings are cancelled with reservations vacated
@@ -14,6 +14,9 @@
  * - BATCH_SIZE cap: only 25 bookings attempted per run (DD-276)
  * - Count test extended with status + snapshot assertions (DD-271)
  * - Unrecognized error codes re-throw instead of being silently swallowed (DD-286)
+ * - INVARIANT_VIOLATION when reservation count exceeds MAX_RESERVATIONS_PER_BOOKING (DD-284)
+ * - Booking with exactly MAX_RESERVATIONS_PER_BOOKING reservations succeeds normally (DD-284)
+ * - purgeExpiredDrafts isolates INVARIANT_VIOLATION per-booking (DD-284)
  */
 
 import { describe, it, expect } from 'vitest'
@@ -29,6 +32,7 @@ import {
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 import { ErrorCode } from '../convex/lib/errorCodes'
+import { MAX_RESERVATIONS_PER_BOOKING } from '../convex/bookings/inventoryRelease'
 
 describe('purgeExpiredDrafts', () => {
   it('cancels an expired Draft and vacates its reservations', async () => {
@@ -594,4 +598,194 @@ describe('purgeExpiredDrafts', () => {
       t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
     ).rejects.toThrow()
   })
+
+  it('throws INVARIANT_VIOLATION when PendingAcceptance reservations exceed MAX_RESERVATIONS_PER_BOOKING (DD-284)', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        capacityModel: 'Pooled',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+        reservedUnits: MAX_RESERVATIONS_PER_BOOKING + 1,
+        availableUnits: 9,
+      })
+      // Insert MAX + 1 PendingAcceptance reservations to exceed the boundary
+      for (let i = 0; i < MAX_RESERVATIONS_PER_BOOKING + 1; i++) {
+        await seedReservation(ctx, bookingId, unitId, sessionId, {
+          status: 'PendingAcceptance',
+          unitsRequested: 1,
+        })
+      }
+    })
+
+    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    expect(result.skipped).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].errorCode).toBe(ErrorCode.INVARIANT_VIOLATION)
+  }, 30_000)
+
+  it('throws INVARIANT_VIOLATION when Confirmed reservations exceed MAX_RESERVATIONS_PER_BOOKING (DD-284)', async () => {
+    const t = makeT()
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        capacityModel: 'Pooled',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+        reservedUnits: MAX_RESERVATIONS_PER_BOOKING + 1,
+        availableUnits: 9,
+      })
+      // Insert MAX + 1 Confirmed reservations to exceed the boundary
+      for (let i = 0; i < MAX_RESERVATIONS_PER_BOOKING + 1; i++) {
+        await seedReservation(ctx, bookingId, unitId, sessionId, {
+          status: 'Confirmed',
+          unitsRequested: 1,
+        })
+      }
+    })
+
+    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    expect(result.skipped).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].errorCode).toBe(ErrorCode.INVARIANT_VIOLATION)
+  }, 30_000)
+
+  it('succeeds normally when booking has exactly MAX_RESERVATIONS_PER_BOOKING reservations (DD-284)', async () => {
+    const t = makeT()
+
+    const { bookingId, snapshotId } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const bookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        capacityModel: 'Pooled',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      const snapshotId = await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+        reservedUnits: MAX_RESERVATIONS_PER_BOOKING,
+        availableUnits: 10,
+      })
+      // Insert exactly MAX PendingAcceptance reservations — boundary is safe
+      for (let i = 0; i < MAX_RESERVATIONS_PER_BOOKING; i++) {
+        await seedReservation(ctx, bookingId, unitId, sessionId, {
+          status: 'PendingAcceptance',
+          unitsRequested: 1,
+        })
+      }
+      return { bookingId, snapshotId }
+    })
+
+    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    expect(result).toEqual({ purged: 1, skipped: 0, errors: [] })
+
+    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
+    expect(booking?.status).toBe('Cancelled')
+
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot?.availableUnits).toBe(MAX_RESERVATIONS_PER_BOOKING + 10)
+    expect(snapshot?.reservedUnits).toBe(0)
+  }, 30_000)
+
+  it('isolates INVARIANT_VIOLATION per-booking in purgeExpiredDrafts (DD-284)', async () => {
+    const t = makeT()
+
+    const { healthyBookingId, overflowBookingId, snapshotId } = await t.run(async (ctx) => {
+      await seedUser(ctx)
+
+      // Healthy booking — normal reservation count
+      const healthyBookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unit1 = await seedInventoryUnit(ctx, { displayName: 'Normal Unit' })
+      const session1 = await seedSession(ctx, healthyBookingId, unit1)
+      const snapshotId = await seedSnapshot(ctx, unit1, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, healthyBookingId, unit1, session1, {
+        status: 'PendingAcceptance',
+      })
+
+      // Overflow booking — MAX + 1 reservations
+      const overflowBookingId = await seedBooking(ctx, {
+        expiresAt: Date.now() - 60_000,
+        status: 'Draft',
+      })
+      const unit2 = await seedInventoryUnit(ctx, {
+        displayName: 'Overflow Unit',
+        capacityModel: 'Pooled',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+      })
+      const session2 = await seedSession(ctx, overflowBookingId, unit2)
+      await seedSnapshot(ctx, unit2, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: MAX_RESERVATIONS_PER_BOOKING + 10,
+        reservedUnits: MAX_RESERVATIONS_PER_BOOKING + 1,
+        availableUnits: 9,
+      })
+      for (let i = 0; i < MAX_RESERVATIONS_PER_BOOKING + 1; i++) {
+        await seedReservation(ctx, overflowBookingId, unit2, session2, {
+          status: 'PendingAcceptance',
+          unitsRequested: 1,
+        })
+      }
+
+      return { healthyBookingId, overflowBookingId, snapshotId }
+    })
+
+    const result = await t.mutation(internal.bookings.inventoryRelease.purgeExpiredDrafts, {})
+    // Healthy booking purged, overflow booking skipped
+    expect(result.purged).toBe(1)
+    expect(result.skipped).toBe(1)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].bookingId).toBe(overflowBookingId)
+    expect(result.errors[0].errorCode).toBe(ErrorCode.INVARIANT_VIOLATION)
+
+    // Healthy booking was cancelled and snapshot restored
+    const booking = await t.run(async (ctx) => ctx.db.get(healthyBookingId))
+    expect(booking?.status).toBe('Cancelled')
+    const snapshot = await t.run(async (ctx) => ctx.db.get(snapshotId))
+    expect(snapshot?.availableUnits).toBe(1)
+    expect(snapshot?.reservedUnits).toBe(0)
+
+    // Overflow booking remains Draft
+    const overflowBooking = await t.run(async (ctx) => ctx.db.get(overflowBookingId))
+    expect(overflowBooking?.status).toBe('Draft')
+  }, 30_000)
 })
