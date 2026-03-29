@@ -26,7 +26,9 @@ export async function checkIdempotency(
 ): Promise<boolean> {
   const existing = await ctx.db
     .query('idempotencyLog')
-    .withIndex('by_key', (q) => q.eq('key', key))
+    .withIndex('by_key_mutationName', (q) =>
+      q.eq('key', key).eq('mutationName', mutationName),
+    )
     .unique()
 
   if (existing) {

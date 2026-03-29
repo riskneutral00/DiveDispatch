@@ -150,6 +150,119 @@ describe('Idempotency guard', () => {
   })
 })
 
+// ── Composite index: no cross-mutation collision ────────────────────────────
+
+describe('Idempotency composite index', () => {
+  it('same key + different mutation name both execute (no cross-mutation collision)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+    })
+
+    const key = 'shared-key-1'
+    const identity = { tokenIdentifier: TEST_TOKENS.diveCenter }
+
+    // First mutation: createNotification with key
+    await t.withIdentity(identity)
+      .mutation(api.notifications.createNotification, {
+        userId: TEST_SLUGS.diveCenter,
+        type: 'hold_placed',
+        message: 'From createNotification',
+        idempotencyKey: key,
+      })
+
+    // Verify the idempotency log has one entry for createNotification
+    const logAfterFirst = await t.run(async (ctx) => {
+      return await ctx.db.query('idempotencyLog').collect()
+    })
+    expect(logAfterFirst).toHaveLength(1)
+    expect(logAfterFirst[0].mutationName).toBe('createNotification')
+
+    // Same key, different mutation name (editBooking) — should NOT collide
+    let bookingId: ReturnType<typeof seedBooking> extends Promise<infer T> ? T : never
+    await t.run(async (ctx) => {
+      bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+    })
+
+    await t.withIdentity(identity)
+      .mutation(api.bookings.edit.editBooking, {
+        bookingId: bookingId!,
+        idempotencyKey: key,
+      })
+
+    // editBooking should have executed (booking transitions to Draft)
+    const booking = await t.run(async (ctx) => {
+      return await ctx.db.get(bookingId!)
+    })
+    expect(booking!.status).toBe('Draft')
+
+    // Verify the idempotency log now has two entries — one per mutation name
+    const logAfterSecond = await t.run(async (ctx) => {
+      return await ctx.db.query('idempotencyLog').collect()
+    })
+    expect(logAfterSecond).toHaveLength(2)
+
+    const mutationNames = logAfterSecond.map((e) => e.mutationName).sort()
+    expect(mutationNames).toEqual(['createNotification', 'editBooking'])
+  })
+
+  it('same key + same mutation name is still blocked (idempotency preserved)', async () => {
+    const t = makeT()
+
+    const key = 'composite-dup-key'
+
+    // Insert a log entry directly
+    await t.run(async (ctx) => {
+      await ctx.db.insert('idempotencyLog', {
+        key,
+        mutationName: 'createNotification',
+        createdAt: Date.now(),
+      })
+    })
+
+    // Insert the same key + same mutationName — should find existing
+    const isDuplicate = await t.run(async (ctx) => {
+      const existing = await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', key).eq('mutationName', 'createNotification'),
+        )
+        .unique()
+      return existing !== null
+    })
+
+    expect(isDuplicate).toBe(true)
+  })
+
+  it('same key + different mutation name returns no match', async () => {
+    const t = makeT()
+
+    const key = 'composite-diff-key'
+
+    // Insert a log entry for createNotification
+    await t.run(async (ctx) => {
+      await ctx.db.insert('idempotencyLog', {
+        key,
+        mutationName: 'createNotification',
+        createdAt: Date.now(),
+      })
+    })
+
+    // Query with same key but different mutationName — should NOT find existing
+    const isDuplicate = await t.run(async (ctx) => {
+      const existing = await ctx.db
+        .query('idempotencyLog')
+        .withIndex('by_key_mutationName', (q) =>
+          q.eq('key', key).eq('mutationName', 'editBooking'),
+        )
+        .unique()
+      return existing !== null
+    })
+
+    expect(isDuplicate).toBe(false)
+  })
+})
+
 // ── editBooking idempotency ──────────────────────────────────────────────────
 
 describe('editBooking idempotency', () => {

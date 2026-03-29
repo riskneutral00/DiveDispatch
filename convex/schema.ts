@@ -686,7 +686,7 @@ export default defineSchema({
     mutationName: v.string(),
     createdAt: v.number(),
   })
-    .index('by_key', ['key'])
+    .index('by_key_mutationName', ['key', 'mutationName'])
     .index('by_createdAt', ['createdAt']),
 
   // ── L7: Rate Limiting ──────────────────────────────────────────────────────
