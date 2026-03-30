@@ -143,6 +143,10 @@ export default defineSchema({
     customerFormComplete: v.boolean(),
     needsAttention: v.optional(v.boolean()),
     isDemo: v.optional(v.boolean()),
+    warnings: v.optional(v.array(v.object({
+      type: v.string(),
+      missing: v.array(v.string()),
+    }))),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
     .index('by_status', ['status'])

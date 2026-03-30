@@ -7,6 +7,7 @@ import type { BookingDoc, InventoryUnitDoc, AvailabilitySnapshotDoc } from '../l
 import {
   type SessionInput,
   type SubmitToDraftArgs,
+  type CourseCode,
   sessionValidator,
   bookingDataValidator,
   releaseBookingReservations,
@@ -18,6 +19,7 @@ import {
 import { logBookingChange } from '../bookingAuditLog'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
+import { canTeachCourses, type Credential } from '../lib/credentialMatch'
 import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 
@@ -255,6 +257,45 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   }
   for (const r of resources) {
     await insertBookingResource(ctx, args.bookingId, r.resourceType, r.resourceSlug, r.externalName)
+  }
+
+  // ── Instructor credential soft warning ──────────────────────────────────────
+  // Collect all unique course codes from the booking's divers
+  const bookingCourses: CourseCode[] = args.bookingData
+    ? [...new Set(args.bookingData.divers.flatMap((d) => d.activityType))]
+    : (booking as BookingDoc).activityType as CourseCode[]
+
+  // Find instructor resource(s) assigned to this booking
+  const instructorResources = resources.filter(
+    (r) => r.resourceType === 'Instructor' && r.resourceSlug,
+  )
+
+  const warnings: Array<{ type: string; missing: string[] }> = []
+
+  for (const ir of instructorResources) { // batch-exempt: typically 1 instructor per booking
+    const instructorUser = await ctx.db
+      .query('users')
+      .withIndex('by_slug', (q) => q.eq('slug', ir.resourceSlug!))
+      .unique()
+    if (!instructorUser) continue
+
+    const instructor = await ctx.db
+      .query('instructors')
+      .withIndex('by_userId', (q) => q.eq('userId', instructorUser._id))
+      .unique()
+    if (!instructor) continue
+
+    const result = canTeachCourses(
+      instructor.credential as Credential[],
+      bookingCourses,
+    )
+    if (!result.canTeach) {
+      warnings.push({ type: 'credential_gap', missing: result.missing })
+    }
+  }
+
+  if (warnings.length > 0) {
+    await ctx.db.patch(args.bookingId as Id<"bookings">, { warnings })
   }
 
   // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
