@@ -10,7 +10,7 @@ import { deleteResourceByType } from './bookingResources'
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
 import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
-import { logBookingChange } from './bookingAuditLog'
+import { logBookingChange } from './lib/auditLog'
 import { ErrorCode } from './lib/errorCodes'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
@@ -325,12 +325,11 @@ export async function _declineHandler(
   })
 
   // Notify the booking owner of the decline
-  await ctx.db.insert('notifications', {
+  await notify(ctx, {
     userId: booking.ownerId,
     type: NOTIFICATION_TYPE.HoldDeclined,
-    bookingId: args.bookingId as Id<"bookings">,
+    bookingId: args.bookingId as Id<'bookings'>,
     message: `${unit.displayName} has declined the reservation.`,
-    createdAt: now,
   })
 
   // Check for same-location alternatives of the same resource type
@@ -409,12 +408,11 @@ export async function _declineHandler(
   }
 
   if (!hasAlternative) {
-    await ctx.db.insert('notifications', {
+    await notify(ctx, {
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.NoBackupAvailable,
-      bookingId: args.bookingId as Id<"bookings">,
+      bookingId: args.bookingId as Id<'bookings'>,
       message: `No available ${unit.resourceType} found in this area for the booking dates.`,
-      createdAt: now,
     })
   }
 }

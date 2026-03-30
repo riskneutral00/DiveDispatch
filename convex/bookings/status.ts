@@ -9,7 +9,7 @@ import {
   isBookingExpired,
   tryAutoAdvance,
 } from './_shared'
-import { logBookingChange } from '../bookingAuditLog'
+import { logBookingChange } from '../lib/auditLog'
 import { notify, notifyReleasedInventory } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
 import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
@@ -159,15 +159,15 @@ export const clearMedicalBlock = mutation({
 
     for (const profile of profiles) {
       if (profile.physicianClearanceRequired) {
-        await ctx.db.patch(profile._id, { physicianClearanceRequired: false })
+        await ctx.db.patch(profile._id, { physicianClearanceRequired: false }) // batch-exempt: conditional per-profile write, profiles are small (<10 per booking)
       }
 
       if (profile.customerId) {
-        const customer = await ctx.db.get(profile.customerId)
+        const customer = await ctx.db.get(profile.customerId) // batch-exempt: conditional per-profile lookup, profiles are small (<10 per booking)
         if (customer) {
           const flags = customer.flags ?? []
           if (flags.includes('medical_block')) {
-            await ctx.db.patch(profile.customerId, {
+            await ctx.db.patch(profile.customerId, { // batch-exempt: conditional per-customer flag patch
               flags: flags.filter((f) => f !== 'medical_block') as ('medical_block')[],
             })
           }
@@ -231,7 +231,7 @@ async function runCompletionBatch(
     })
 
     if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed })
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // batch-exempt: cron batch mutation, each booking patched conditionally inside bounded loop
       await logBookingChange(ctx, {
         bookingId: booking._id,
         action: 'completed',

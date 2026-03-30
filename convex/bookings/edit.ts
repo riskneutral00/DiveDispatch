@@ -5,7 +5,7 @@ import {
   canBookingTransition,
   releaseBookingReservations,
 } from './_shared'
-import { logBookingChange } from '../bookingAuditLog'
+import { logBookingChange } from '../lib/auditLog'
 import { batchDelete } from '../lib/batch'
 import { ErrorCode } from '../lib/errorCodes'
 import { checkIdempotency } from '../lib/idempotency'

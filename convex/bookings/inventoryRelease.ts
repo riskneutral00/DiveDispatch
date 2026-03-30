@@ -17,7 +17,7 @@ import type { VacatedReason } from '../shared/statuses'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
 import { assertValidTime } from '../lib/validators'
-import { logBookingChange } from '../bookingAuditLog'
+import { logBookingChange } from '../lib/auditLog'
 import { batchPatch } from '../lib/batch'
 import { releaseBagsForBooking } from '../equipmentBags'
 

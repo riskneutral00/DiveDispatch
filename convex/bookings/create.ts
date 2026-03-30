@@ -16,7 +16,7 @@ import {
   assertNoPastDates,
   getAvailabilitySnapshot,
 } from './_shared'
-import { logBookingChange } from '../bookingAuditLog'
+import { logBookingChange } from '../lib/auditLog'
 import { notifyReleasedInventory } from '../notifications'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'

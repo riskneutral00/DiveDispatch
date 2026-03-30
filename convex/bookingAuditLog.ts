@@ -1,62 +1,12 @@
 import { v } from 'convex/values'
 import { query } from './_generated/server'
-import type { MutationCtx, QueryCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
+import type { QueryCtx } from './_generated/server'
 import { requireAuth } from './lib/auth'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type AuditAction =
-  | 'created'
-  | 'submitted'
-  | 'confirmed'
-  | 'cancelled'
-  | 'expired'
-  | 'completed'
-  | 'edited'
-  | 'reservation_accepted'
-  | 'reservation_declined'
-  | 'portal_submitted'
-  | 'medical_blocked'
-  | 'medical_cleared'
-  | 'noshow_marked'
-  | 'noshow_reverted'
-  | 'expired_draft_purged'
-  | 'user_deleted_cascade'
-
-export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
-
-export type LogBookingChangeArgs = {
-  bookingId: Id<'bookings'>
-  action: AuditAction
-  actorSlug: string
-  actorType: AuditActorType
-  diff?: string
-  note?: string
-}
-
-// ─── logBookingChange ─────────────────────────────────────────────────────────
-
-/**
- * Plain helper — call directly inside a mutation to write an audit entry
- * in the same transaction as the state change. Not exposed to the client.
- *
- * Signature mirrors other shared helpers (releaseBookingReservations, tryAutoAdvance).
- */
-export async function logBookingChange(
-  ctx: MutationCtx,
-  args: LogBookingChangeArgs,
-): Promise<void> {
-  await ctx.db.insert('bookingAuditLog', {
-    bookingId: args.bookingId,
-    action: args.action,
-    actorSlug: args.actorSlug,
-    actorType: args.actorType,
-    timestamp: Date.now(),
-    diff: args.diff,
-    note: args.note,
-  })
-}
+// Re-export shared types and helper so external consumers (e.g. tests, admin tools)
+// can import from this module without knowing the lib layout.
+export type { AuditAction, AuditActorType, LogBookingChangeArgs } from './lib/auditLog'
+export { logBookingChange } from './lib/auditLog'
 
 // ─── getAuditLog ──────────────────────────────────────────────────────────────
 
