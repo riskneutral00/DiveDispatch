@@ -3,7 +3,7 @@ import { internalMutation, mutation, query } from './_generated/server'
 import { requireAuth, type DbCtx } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits } from './bookings/_shared'
+import { releaseBookingReservations, isFullDayResource, restoreSnapshotUnits, getAvailabilitySnapshot } from './bookings/_shared'
 import { todayISO } from './bookings/stateMachine'
 
 import { type ResourceOwnerType, resourceOwnerTypeValidator, RESOURCE_OWNER_TYPES } from './shared/resourceOwnerTypes'
@@ -441,36 +441,46 @@ export async function _toggleBlockedDate(
       )
       .collect()
 
-    // First pass: check for Confirmed reservations — block the entire operation if any exist
-    for (const unit of units) {
-      const sessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_inventoryUnitId_date', (q) =>
-          q.eq('inventoryUnitId', unit._id).eq('date', args.date),
-        )
-        .collect()
+    // ── Batch-fetch sessions for all units (eliminates units×sessions N+1) ───
+    const unitIds = new Set(units.map((u) => u._id))
+    const sessionArrays = await Promise.all(
+      units.map((unit) =>
+        ctx.db
+          .query('bookingSessions')
+          .withIndex('by_inventoryUnitId_date', (q) =>
+            q.eq('inventoryUnitId', unit._id).eq('date', args.date),
+          )
+          .collect(),
+      ),
+    )
+    const allSessions = sessionArrays.flat()
 
-      for (const session of sessions) {
-        const confirmed = await ctx.db // batch-exempt: early-exit guard, throws on first match
+    // ── Batch-fetch reservations for all sessions (eliminates sessions×reservations N+1) ───
+    const reservationArrays = await Promise.all(
+      allSessions.map((session) =>
+        ctx.db
           .query('reservations')
           .withIndex('by_bookingSessionId', (q) =>
             q.eq('bookingSessionId', session._id),
           )
-          .filter((q) =>
-            q.and(
-              q.eq(q.field('inventoryUnitId'), unit._id),
-              q.eq(q.field('status'), RESERVATION_STATUS.Confirmed),
-            ),
-          )
-          .collect()
+          .collect(),
+      ),
+    )
+    // Flatten and filter to only this owner's units
+    const allReservations = reservationArrays.flat().filter((r) => unitIds.has(r.inventoryUnitId))
 
-        if (confirmed.length > 0) {
-          throw new ConvexError({
-            code: ErrorCode.CONFIRMED_RESERVATION_EXISTS,
-            reason: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
-          })
-        }
-      }
+    // Build session lookup for in-memory joins
+    const sessionMap = new Map(allSessions.map((s) => [s._id, s]))
+
+    // First pass: check for Confirmed reservations — block the entire operation if any exist
+    const hasConfirmed = allReservations.some(
+      (r) => r.status === RESERVATION_STATUS.Confirmed,
+    )
+    if (hasConfirmed) {
+      throw new ConvexError({
+        code: ErrorCode.CONFIRMED_RESERVATION_EXISTS,
+        reason: 'Cannot block a date with confirmed reservations. Remove yourself from all confirmed bookings on this date first.',
+      })
     }
 
     // All guards passed — write the blocked-date record
@@ -493,60 +503,56 @@ export async function _toggleBlockedDate(
     // Phase 1 (read): collect all pending reservations and accumulate units per snapshot
     type PendingRes = { resId: Id<'reservations'>; unitsRequested: number }
     const allPending: PendingRes[] = []
-    const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
     const unitsToRestore = new Map<string, number>()
 
-    for (const unit of units) {
-      const sessions = await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_inventoryUnitId_date', (q) =>
-          q.eq('inventoryUnitId', unit._id).eq('date', args.date),
-        )
-        .collect()
+    // Collect affected bookings + pending reservations from the already-fetched data
+    for (const session of allSessions) {
+      affectedBookingIds.add(session.bookingId)
+    }
 
-      for (const session of sessions) {
-        affectedBookingIds.add(session.bookingId)
+    const pendingReservations = allReservations.filter(
+      (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
+    )
 
-        const pending = await ctx.db
-          .query('reservations')
-          .withIndex('by_bookingSessionId', (q) =>
-            q.eq('bookingSessionId', session._id),
-          )
-          .filter((q) =>
-            q.and(
-              q.eq(q.field('inventoryUnitId'), unit._id),
-              q.eq(q.field('status'), RESERVATION_STATUS.PendingAcceptance),
-            ),
-          )
-          .collect()
+    // Build unique snapshot keys from pending reservations
+    type SnapshotKey = { inventoryUnitId: Id<'inventoryUnits'>; date: string; windowStart: string }
+    const snapshotKeyMap = new Map<string, SnapshotKey>()
 
-        for (const reservation of pending) {
-          allPending.push({ resId: reservation._id, unitsRequested: reservation.unitsRequested })
+    for (const reservation of pendingReservations) {
+      allPending.push({ resId: reservation._id, unitsRequested: reservation.unitsRequested })
 
-          const key = `${unit._id}|${session.date}|${session.startTime}`
-          if (!snapshotIdMap.has(key)) {
-            assertValidTime(session.startTime, 'startTime')
-            const snapshot = await ctx.db
-              .query('availabilitySnapshots')
-              .withIndex('by_inventoryUnitId_date_windowStart', (q) =>
-                q
-                  .eq('inventoryUnitId', unit._id)
-                  .eq('date', session.date)
-                  .eq('windowStart', session.startTime),
-              )
-              .unique()
+      const session = sessionMap.get(reservation.bookingSessionId)!
+      const key = `${reservation.inventoryUnitId}|${session.date}|${session.startTime}`
 
-            if (!snapshot) {
-              throw new Error(
-                `Invariant 3 violation: missing snapshot for unit ${unit._id} on ${session.date} at ${session.startTime}`,
-              )
-            }
-            snapshotIdMap.set(key, snapshot._id)
-          }
-
-          unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)
-        }
+      if (!snapshotKeyMap.has(key)) {
+        assertValidTime(session.startTime, 'startTime')
+        snapshotKeyMap.set(key, {
+          inventoryUnitId: reservation.inventoryUnitId,
+          date: session.date,
+          windowStart: session.startTime,
+        })
       }
+
+      unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + reservation.unitsRequested)
+    }
+
+    // ── Batch-fetch snapshots (eliminates reservations×snapshots N+1) ───
+    const snapshotEntries = [...snapshotKeyMap.entries()]
+    const snapshotDocs = await Promise.all(
+      snapshotEntries.map(([, k]) =>
+        getAvailabilitySnapshot(ctx, k.inventoryUnitId, k.date, k.windowStart),
+      ),
+    )
+    const snapshotIdMap = new Map<string, Id<'availabilitySnapshots'>>()
+    for (let i = 0; i < snapshotEntries.length; i++) {
+      const doc = snapshotDocs[i]
+      if (!doc) {
+        const k = snapshotEntries[i][1]
+        throw new Error(
+          `Invariant 3 violation: missing snapshot for unit ${k.inventoryUnitId} on ${k.date} at ${k.windowStart}`,
+        )
+      }
+      snapshotIdMap.set(snapshotEntries[i][0], doc._id)
     }
 
     // Phase 2 (write): vacate all reservations
