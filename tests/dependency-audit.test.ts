@@ -51,26 +51,31 @@ describe('dependency-audit hook', () => {
     it('ignores non-npm-install commands', () => {
       const result = runHook('npm run build')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('ignores npm test commands', () => {
       const result = runHook('npm test')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('ignores git commands', () => {
       const result = runHook('git commit -m test')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('ignores npm install without arguments (installs from lockfile)', () => {
       const result = runHook('npm install')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('ignores npm i without arguments', () => {
       const result = runHook('npm i')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
   })
 
@@ -78,26 +83,31 @@ describe('dependency-audit hook', () => {
     it('allows react (whitelisted)', () => {
       const result = runHook('npm install react')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows convex (whitelisted)', () => {
       const result = runHook('npm install convex')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows scoped package @clerk/nextjs (whitelisted)', () => {
       const result = runHook('npm install @clerk/nextjs')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows multiple whitelisted packages at once', () => {
       const result = runHook('npm install react convex next')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows npm i shorthand with whitelisted package', () => {
       const result = runHook('npm i react')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
   })
 
@@ -105,37 +115,43 @@ describe('dependency-audit hook', () => {
     it('allows whitelisted package with --save-dev flag', () => {
       const result = runHook('npm install --save-dev vitest')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows whitelisted package with -D flag', () => {
       const result = runHook('npm install -D vitest')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
     it('allows whitelisted package with --save flag', () => {
       const result = runHook('npm install --save react')
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
   })
 
   describe('nonexistent packages', () => {
-    it('blocks a clearly fake package name', () => {
+    it('blocks a clearly fake package name with exit code 1', () => {
       const result = runHook('npm install xyzzy-nonexistent-pkg-abc123')
       expect(parseDecision(result.stdout)).toBe('block')
       expect(result.stdout).toContain('xyzzy-nonexistent-pkg-abc123')
+      expect(result.exitCode).toBe(1)
     })
 
-    it('blocks a fake package among valid ones', () => {
+    it('blocks a fake package among valid ones with exit code 1', () => {
       const result = runHook('npm install react xyzzy-fake-pkg-999')
       expect(parseDecision(result.stdout)).toBe('block')
       expect(result.stdout).toContain('xyzzy-fake-pkg-999')
+      expect(result.exitCode).toBe(1)
     })
 
-    it('includes reason in block response', () => {
+    it('includes reason in block response and exits non-zero', () => {
       const result = runHook('npm install nonexistent-pkg-zzzz')
       const stdout = result.stdout
       expect(stdout).toContain('"reason"')
       expect(stdout).toContain('nonexistent-pkg-zzzz')
+      expect(result.exitCode).not.toBe(0)
     })
   })
 
@@ -144,11 +160,13 @@ describe('dependency-audit hook', () => {
       const result = runHook('npm install @types/node')
       // @types/node is whitelisted
       expect(parseDecision(result.stdout)).toBeNull()
+      expect(result.exitCode).toBe(0)
     })
 
-    it('blocks nonexistent scoped packages', () => {
+    it('blocks nonexistent scoped packages with exit code 1', () => {
       const result = runHook('npm install @fake-org-zzz/fake-pkg-zzz')
       expect(parseDecision(result.stdout)).toBe('block')
+      expect(result.exitCode).toBe(1)
     })
   })
 

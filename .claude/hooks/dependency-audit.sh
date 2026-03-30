@@ -71,6 +71,7 @@ FLAGGED=$(echo "$FLAGGED" | sed 's/^ *//')
 if [ -n "$FLAGGED" ]; then
   REASON="Dependency audit flagged suspicious packages:\\n${FLAGGED_DETAILS}\\nTo proceed, add the package(s) to .claude/skills/dependency-audit/whitelist.txt and retry."
   printf '{"decision":"block","reason":"%s"}\n' "$REASON"
+  exit 1
 fi
 
 exit 0
