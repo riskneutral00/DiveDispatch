@@ -17,6 +17,7 @@ import {
   getAvailabilitySnapshot,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
+import { notifyReleasedInventory } from '../notifications'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
 import { canTeachCourses, type Credential } from '../lib/credentialMatch'
@@ -122,7 +123,8 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const isResubmit = existingReservations.length > 0
 
   if (isResubmit) {
-    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
+    const vacated = await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
+    await notifyReleasedInventory(ctx, args.bookingId as Id<'bookings'>, vacated)
     const existingSessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))

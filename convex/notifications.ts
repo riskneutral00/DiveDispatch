@@ -6,7 +6,7 @@ import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
-import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE, RESERVATION_STATUS } from './shared/statuses'
+import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE } from './shared/statuses'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
@@ -25,40 +25,6 @@ export async function notify(
     message: args.message,
     createdAt: Date.now(),
   })
-}
-
-/**
- * Notify resource stakeholders whose inventory was released by a booking cancellation.
- * Deduplicates by inventoryUnitId — each unique unit's owner gets one notification.
- * Uses batchGet to avoid N+1 sequential ctx.db.get() calls.
- */
-export async function notifyVacatedStakeholders(
-  ctx: MutationCtx,
-  bookingId: Id<'bookings'>,
-  vacatedBy?: string,
-): Promise<void> {
-  const vacatedReservations = await ctx.db
-    .query('reservations')
-    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-    .collect()
-  const vacated = vacatedReservations.filter((r) =>
-    r.status === RESERVATION_STATUS.Vacated && (vacatedBy === undefined || r.vacatedBy === vacatedBy),
-  )
-  if (vacated.length === 0) return
-
-  // Deduplicate by inventoryUnitId
-  const uniqueUnitIds = [...new Set(vacated.map((r) => r.inventoryUnitId))]
-  const units = await batchGet(ctx, uniqueUnitIds)
-
-  for (const unit of units) {
-    if (!unit) continue
-    await notify(ctx, {
-      userId: unit.ownerId,
-      type: NOTIFICATION_TYPE.BookingCancelled,
-      bookingId,
-      message: `Booking cancelled — your ${unit.displayName} inventory has been released.`,
-    })
-  }
 }
 
 /**
