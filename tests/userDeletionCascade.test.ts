@@ -467,6 +467,63 @@ describe('cleanupDeletedUserData', () => {
     })
   })
 
+  it('deletes all snapshots for user with 2 units × 60 snapshots each via self-reschedule (DD-366)', async () => {
+    const t = makeT()
+    let userId: Id<'users'>
+    let unitId1: Id<'inventoryUnits'>
+    let unitId2: Id<'inventoryUnits'>
+
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, {
+        slug: 'many-snap-user',
+        tokenIdentifier: 'test|many-snap-user',
+        skipUserRoles: true,
+      })
+      unitId1 = await seedInventoryUnit(ctx, { ownerId: 'many-snap-user', ownerType: 'Instructor' })
+      unitId2 = await seedInventoryUnit(ctx, { ownerId: 'many-snap-user', ownerType: 'Instructor' })
+      // Seed 60 snapshots per unit — more than CASCADE_BATCH_SIZE (50) per unit
+      for (let i = 1; i <= 60; i++) {
+        await seedSnapshot(ctx, unitId1, { date: testDate(i) })
+        await seedSnapshot(ctx, unitId2, { date: testDate(i) })
+      }
+    })
+
+    // First run — processes first batch and self-reschedules because snapshots overflow
+    await t.mutation(internal.users.cleanupDeletedUserData, {
+      userId: userId!,
+      userSlug: 'many-snap-user',
+    })
+
+    // After first batch, remaining snapshots still exist
+    await t.run(async (ctx) => {
+      const remaining = await ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', unitId1!))
+        .collect()
+      expect(remaining.length).toBeGreaterThan(0)
+    })
+
+    // Drain all rescheduled functions — all snapshots and units must be gone
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+    await t.run(async (ctx) => {
+      const snaps1 = await ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', unitId1!))
+        .collect()
+      expect(snaps1).toHaveLength(0)
+
+      const snaps2 = await ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', unitId2!))
+        .collect()
+      expect(snaps2).toHaveLength(0)
+
+      expect(await ctx.db.get(unitId1!)).toBeNull()
+      expect(await ctx.db.get(unitId2!)).toBeNull()
+    })
+  })
+
   it('self-reschedules when bookingTemplates exceed CASCADE_BATCH_SIZE, all processed after multiple runs', async () => {
     const t = makeT()
     let userId: Id<'users'>

@@ -559,17 +559,23 @@ export const cleanupDeletedUserData = internalMutation({
     const inventoryBatch = inventory.slice(0, CASCADE_BATCH_SIZE)
     const templatesBatch = templates.slice(0, CASCADE_BATCH_SIZE)
 
-    // For each inventoryUnit being deleted, collect and delete all of its availabilitySnapshots.
-    // Units are already bounded to CASCADE_BATCH_SIZE, so snapshot collection is bounded per unit.
+    // For each inventoryUnit being deleted, collect and delete a bounded batch of its availabilitySnapshots.
+    // Take CASCADE_BATCH_SIZE + 1 per unit to detect overflow — if any unit has more, self-reschedule handles the rest.
+    // Units with remaining snapshots are NOT deleted yet — they stay so the next reschedule can find their snapshots.
     const snapshotBatches = await Promise.all(
       inventoryBatch.map((unit) =>
         ctx.db
           .query('availabilitySnapshots')
           .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', unit._id))
-          .collect(),
+          .take(CASCADE_BATCH_SIZE + 1),
       ),
     )
-    const allSnapshots = snapshotBatches.flat()
+    const snapshotHasMore = snapshotBatches.some((batch) => batch.length > CASCADE_BATCH_SIZE)
+    const allSnapshots = snapshotBatches.flatMap((batch) => batch.slice(0, CASCADE_BATCH_SIZE))
+
+    // Only delete units whose snapshots were fully drained in this pass.
+    // Units with overflow keep their row so the next reschedule can query their remaining snapshots.
+    const unitsDrained = inventoryBatch.filter((_, i) => snapshotBatches[i].length <= CASCADE_BATCH_SIZE)
 
     // Determine whether any table has more rows beyond this batch
     const hasMore =
@@ -579,7 +585,8 @@ export const cleanupDeletedUserData = internalMutation({
       blocked.length > CASCADE_BATCH_SIZE ||
       resources.length > CASCADE_BATCH_SIZE ||
       inventory.length > CASCADE_BATCH_SIZE ||
-      templates.length > CASCADE_BATCH_SIZE
+      templates.length > CASCADE_BATCH_SIZE ||
+      snapshotHasMore
 
     const now = Date.now()
 
@@ -590,7 +597,7 @@ export const cleanupDeletedUserData = internalMutation({
       batchDelete(ctx, blockedBatch),
       batchDelete(ctx, resourcesBatch),
       batchDelete(ctx, allSnapshots),
-      batchDelete(ctx, inventoryBatch),
+      batchDelete(ctx, unitsDrained),
       batchDelete(ctx, templatesBatch),
     ])
 
