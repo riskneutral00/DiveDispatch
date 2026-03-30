@@ -71,6 +71,9 @@ export const updateItem = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
+    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
 
     const item = await ctx.db.get(args.inventoryId)
     if (!item) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
@@ -80,6 +83,26 @@ export const updateItem = mutation({
 
     if (args.totalUnits !== undefined && args.totalUnits < 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'totalUnits must be at least 1' })
+    }
+
+    // Guard: reject if reducing totalUnits below currently reserved count
+    if (args.totalUnits !== undefined) {
+      const snapshots = await ctx.db
+        .query('availabilitySnapshots')
+        .withIndex('by_inventoryUnitId_date', (q) =>
+          q.eq('inventoryUnitId', item.inventoryUnitId),
+        )
+        .collect()
+      const maxReserved = snapshots.reduce(
+        (max, s) => Math.max(max, s.reservedUnits),
+        0,
+      )
+      if (args.totalUnits < maxReserved) {
+        throw new ConvexError({
+          code: ErrorCode.VALIDATION,
+          message: `Cannot reduce totalUnits below reserved count (${maxReserved})`,
+        })
+      }
     }
 
     // Patch equipmentInventory fields
@@ -106,6 +129,9 @@ export const removeItem = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
+    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
 
     const item = await ctx.db.get(args.inventoryId)
     if (!item) throw new ConvexError({ code: ErrorCode.NOT_FOUND })

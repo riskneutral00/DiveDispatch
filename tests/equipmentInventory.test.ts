@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
-import { TEST_TOKENS, TEST_SLUGS, seedUser, seedInventoryUnit, seedBooking, seedSession, seedReservation } from './fixtures'
+import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking, seedSession, seedReservation, seedSnapshot } from './fixtures'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -224,6 +224,71 @@ describe('equipmentInventory.updateItem', () => {
       'VALIDATION',
     )
   })
+
+  it('rejects FORBIDDEN for authenticated non-Equipment-role user even if they own the item', async () => {
+    // Seed a DiveCenter user (no Equipment role)
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.diveCenter, slug: TEST_SLUGS.diveCenter, role: 'DiveCenter' })
+    })
+
+    // Directly insert an equipmentInventory row owned by the DC slug
+    // (bypassing addItem to avoid the role gate on addItem itself)
+    const inventoryId = await t.run(async (ctx) => {
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Equipment',
+        resourceId: TEST_SLUGS.diveCenter,
+        displayName: 'fins - test',
+        capacityModel: 'Pooled',
+        totalUnits: 5,
+        ownerId: TEST_SLUGS.diveCenter,
+        ownerType: 'Equipment',
+      })
+      return ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: unitId,
+        equipmentManagerId: TEST_SLUGS.diveCenter,
+        gearType: 'fins',
+      })
+    })
+
+    // DC user owns the item (slug matches) but lacks Equipment role
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).mutation(
+        api.equipmentInventory.updateItem,
+        { inventoryId, manufacturer: 'Mares' },
+      ),
+      'FORBIDDEN',
+    )
+  })
+
+  it('rejects VALIDATION when reducing totalUnits below reserved count', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'bcd', totalUnits: 10 },
+    )
+
+    // Create a snapshot showing 4 reserved units
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      await seedSnapshot(ctx, item!.inventoryUnitId, {
+        totalUnits: 10,
+        reservedUnits: 4,
+        availableUnits: 6,
+      })
+    })
+
+    // Attempt to reduce to 3 — below the 4 reserved
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+        api.equipmentInventory.updateItem,
+        { inventoryId, totalUnits: 3 },
+      ),
+      'VALIDATION',
+    )
+  })
 })
 
 // ── removeItem ───────────────────────────────────────────────────────────────
@@ -383,6 +448,40 @@ describe('equipmentInventory.removeItem', () => {
         { inventoryId },
       ),
       'NOT_FOUND',
+    )
+  })
+
+  it('rejects FORBIDDEN for authenticated non-Equipment-role user even if they own the item', async () => {
+    // Seed a DiveCenter user (no Equipment role)
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.diveCenter, slug: TEST_SLUGS.diveCenter, role: 'DiveCenter' })
+    })
+
+    // Directly insert an equipmentInventory row owned by the DC slug
+    const inventoryId = await t.run(async (ctx) => {
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Equipment',
+        resourceId: TEST_SLUGS.diveCenter,
+        displayName: 'fins - test',
+        capacityModel: 'Pooled',
+        totalUnits: 4,
+        ownerId: TEST_SLUGS.diveCenter,
+        ownerType: 'Equipment',
+      })
+      return ctx.db.insert('equipmentInventory', {
+        inventoryUnitId: unitId,
+        equipmentManagerId: TEST_SLUGS.diveCenter,
+        gearType: 'fins',
+      })
+    })
+
+    // DC user owns the item (slug matches) but lacks Equipment role
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).mutation(
+        api.equipmentInventory.removeItem,
+        { inventoryId },
+      ),
+      'FORBIDDEN',
     )
   })
 })
