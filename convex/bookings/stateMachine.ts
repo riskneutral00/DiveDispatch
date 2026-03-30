@@ -31,6 +31,8 @@ export type SessionInput = {
 
 export type BookingResourceInput = {
   resourceType: string
+  /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
+  roleType?: string
   resourceSlug?: string
   externalName?: string
 }
@@ -88,6 +90,8 @@ export const sessionValidator = v.object({
 
 export const bookingResourceInputValidator = v.object({
   resourceType: v.string(),
+  /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
+  roleType: v.optional(v.string()),
   resourceSlug: v.optional(v.string()),
   externalName: v.optional(v.string()),
 })

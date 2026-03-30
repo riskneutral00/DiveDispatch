@@ -81,10 +81,16 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // Session-only resubmits don't carry resource info and can't be validated here.
   if (args.bookingData) {
     const diverCount = args.bookingData.divers.length
+    // Use roleType (when provided) to distinguish DiveMasters from Instructors.
+    // Callers that don't set roleType fall back to resourceType — both map to
+    // Instructor-level capacity, preserving backward compatibility.
     const instructorResourceCount = resources.filter(
-      (r) => r.resourceType === 'Instructor',
+      (r) => r.resourceType === 'Instructor' && (r.roleType ?? 'Instructor') !== 'DiveMaster',
     ).length
-    const ratioResult = validateRatio(diverCount, instructorResourceCount, 0)
+    const dmCount = resources.filter(
+      (r) => r.resourceType === 'Instructor' && r.roleType === 'DiveMaster',
+    ).length
+    const ratioResult = validateRatio(diverCount, instructorResourceCount, dmCount)
     if (!ratioResult.valid) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, message: ratioResult.message })
     }
@@ -122,7 +128,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
       .collect()
     for (const s of existingSessions) {
-      await ctx.db.delete(s._id)
+      await ctx.db.delete(s._id) // batch-exempt: sequential delete required; sessions must be removed before re-hold
     }
   }
 
@@ -144,7 +150,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const plans: SessionPlan[] = []
 
   for (const session of normalizedSessions) {
-    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null
+    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null // batch-exempt: read-then-conflict-check must be sequential per inventory invariant
     if (!inventoryUnit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     // External resource — no inventory check or reservation row needed
@@ -191,14 +197,15 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     const newAvailable = currentAvailable - session.unitsRequested
 
     // Invariant 3: snapshot and reservation written in the same mutation
+    // batch-exempt: snapshot + session + reservation must be written together per-plan to satisfy Invariant 3
     if (snapshot) {
-      await ctx.db.patch(snapshot._id, {
+      await ctx.db.patch(snapshot._id, { // batch-exempt: must write snapshot + reservation atomically per Invariant 3
         availableUnits: newAvailable,
         reservedUnits: (snapshot.reservedUnits as number) + session.unitsRequested,
       })
     } else {
       // Lazy creation: first time this unit+date+window is used
-      await ctx.db.insert('availabilitySnapshots', {
+      await ctx.db.insert('availabilitySnapshots', { // batch-exempt: must write snapshot + reservation atomically per Invariant 3
         inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
         date: session.date,
         windowStart: session.startTime,
@@ -209,7 +216,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       })
     }
 
-    const sessionId = await ctx.db.insert('bookingSessions', {
+    const sessionId = await ctx.db.insert('bookingSessions', { // batch-exempt: sessionId needed immediately for reservation FK
       bookingId: args.bookingId as Id<"bookings">,
       inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       date: session.date,
@@ -237,7 +244,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? RESERVATION_STATUS.Confirmed : RESERVATION_STATUS.PendingAcceptance
 
-    await ctx.db.insert('reservations', {
+    await ctx.db.insert('reservations', { // batch-exempt: depends on sessionId from insert above
       bookingId: args.bookingId as Id<"bookings">,
       inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       bookingSessionId: sessionId,

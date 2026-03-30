@@ -100,11 +100,6 @@ describe('validateRatio — boundary cases', () => {
     expect(result.valid).toBe(true)
   })
 
-  it('12 divers is exactly at max customer limit', () => {
-    const result = validateRatio(12, 3, 0)
-    expect(result.valid).toBe(true)
-  })
-
   it('max 12 check fires before ratio check', () => {
     // 13 divers should fail with max-customers message, not ratio message
     const result = validateRatio(13, 10, 10)

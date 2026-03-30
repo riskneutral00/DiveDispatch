@@ -8,6 +8,7 @@ import {
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
+import { type CourseCode } from '../convex/shared/courseCodes'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -1384,6 +1385,139 @@ describe('submitToDraft', () => {
       expect(booking?.status).toBe('Upcoming')
       expect(booking?.bookingFormComplete).toBe(true)
     })
+  })
+
+  it('17 — ratio validation: mixed instructor + DiveMaster resources enforce correct capacity', async () => {
+    const t = makeT()
+
+    // 1 Instructor (capacity +4) + 1 DiveMaster (capacity +2) = total 6
+    // 7 divers → should reject; 6 divers → should accept
+
+    const { bookingId7, bookingId6 } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-ratio',
+        slug: 'dc-ratio',
+        email: 'dc-ratio@test.com',
+        name: 'dc-ratio',
+        firstName: 'DC',
+        lastName: 'Ratio',
+        businessName: 'Ratio DC',
+        isSeeded: false,
+        appLanguage: 'en',
+      })
+
+      const makeDiver = (name: string, abbrev: string) => ({
+        name,
+        abbrev,
+        flag: { code: 'US', label: 'English' },
+        startDate: testDate(5),
+        endDate: testDate(6),
+        activityType: ['OW'] as CourseCode[],
+      })
+
+      const bookingId7 = await ctx.db.insert('bookings', {
+        ownerId: 'dc-ratio',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(6),
+        divers: [
+          makeDiver('A1', 'AA'), makeDiver('A2', 'AB'), makeDiver('A3', 'AC'),
+          makeDiver('A4', 'AD'), makeDiver('A5', 'AE'), makeDiver('A6', 'AF'),
+          makeDiver('A7', 'AG'),
+        ],
+        operatorName: 'Ratio DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: true,
+      })
+
+      const bookingId6 = await ctx.db.insert('bookings', {
+        ownerId: 'dc-ratio',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(6),
+        divers: [
+          makeDiver('B1', 'BA'), makeDiver('B2', 'BB'), makeDiver('B3', 'BC'),
+          makeDiver('B4', 'BD'), makeDiver('B5', 'BE'), makeDiver('B6', 'BF'),
+        ],
+        operatorName: 'Ratio DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: true,
+      })
+
+      return { bookingId7, bookingId6 }
+    })
+
+    const mixedResources = [
+      { resourceType: 'Instructor', externalName: 'External Instructor' },
+      { resourceType: 'Instructor', roleType: 'DiveMaster', externalName: 'External DM' },
+    ]
+
+    const makeBookingData = (divers: { name: string; abbrev: string }[]) => ({
+      activityType: ['OW'] as CourseCode[],
+      startDate: testDate(5),
+      endDate: testDate(6),
+      portalContact: false,
+      portalMedical: false,
+      portalWaiver: false,
+      divers: divers.map((d) => ({
+        ...d,
+        flag: { code: 'US', label: 'English' },
+        startDate: testDate(5),
+        endDate: testDate(6),
+        activityType: ['OW'] as CourseCode[],
+      })),
+      resources: mixedResources,
+    })
+
+    // 7 divers, capacity 6 → VALIDATION error
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|dc-ratio' }).mutation(
+        api.bookings.create.submitToDraft,
+        {
+          bookingId: bookingId7,
+          sessions: [],
+          bookingData: makeBookingData([
+            { name: 'A1', abbrev: 'AA' }, { name: 'A2', abbrev: 'AB' },
+            { name: 'A3', abbrev: 'AC' }, { name: 'A4', abbrev: 'AD' },
+            { name: 'A5', abbrev: 'AE' }, { name: 'A6', abbrev: 'AF' },
+            { name: 'A7', abbrev: 'AG' },
+          ]),
+        },
+      ),
+      'VALIDATION',
+    )
+
+    // 6 divers, capacity 6 → accepted
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-ratio' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId: bookingId6,
+        sessions: [],
+        bookingData: makeBookingData([
+          { name: 'B1', abbrev: 'BA' }, { name: 'B2', abbrev: 'BB' },
+          { name: 'B3', abbrev: 'BC' }, { name: 'B4', abbrev: 'BD' },
+          { name: 'B5', abbrev: 'BE' }, { name: 'B6', abbrev: 'BF' },
+        ]),
+      },
+    )
   })
 })
 
