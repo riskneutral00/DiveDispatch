@@ -41,15 +41,35 @@ describe('ORGANIZER_WIZARD_CONFIG', () => {
 })
 
 describe('getOrganizerSteps', () => {
-  it('returns configured steps for known roles', () => {
+  it('returns configured steps for DiveCenter', () => {
     expect(getOrganizerSteps('DiveCenter')).toEqual(['basic', 'agency', 'languages'])
+  })
+
+  it('returns configured steps for Agent', () => {
     expect(getOrganizerSteps('Agent')).toEqual(['basic', 'agency'])
+  })
+
+  it('returns configured steps for Liveaboard', () => {
+    expect(getOrganizerSteps('Liveaboard')).toEqual(['basic'])
+  })
+
+  it('returns configured steps for DiveResort', () => {
+    expect(getOrganizerSteps('DiveResort')).toEqual(['basic'])
+  })
+
+  it('returns configured steps for DiveHostel', () => {
+    expect(getOrganizerSteps('DiveHostel')).toEqual(['basic'])
+  })
+
+  it('returns configured steps for DiveSite', () => {
+    expect(getOrganizerSteps('DiveSite')).toEqual(['basic'])
   })
 
   it('defaults to ["basic"] for unconfigured roles', () => {
     expect(getOrganizerSteps('Instructor')).toEqual(['basic'])
     expect(getOrganizerSteps('Boat')).toEqual(['basic'])
   })
+
 })
 
 describe('ORGANIZER_WIZARD_ROLES', () => {

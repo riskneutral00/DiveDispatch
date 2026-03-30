@@ -6,6 +6,7 @@ import type { Doc, Id } from '../../convex/_generated/dataModel'
 import type { SeedCtx } from './seedUsers'
 import { TEST_SLUGS } from '../helpers/testData'
 import { testDate, testToken } from '../helpers/dates'
+import { BOOKING_LINK_TTL_MS } from '../../convex/lib/timeConstants'
 
 export async function seedBooking(
   ctx: SeedCtx,
@@ -139,7 +140,7 @@ export async function seedBookingLink(
   return ctx.db.insert('bookingLinks', {
     bookingId,
     token: overrides.token ?? testToken('link'),
-    expiresAt: overrides.expiresAt ?? Date.now() + 30 * 24 * 60 * 60 * 1000,
+    expiresAt: overrides.expiresAt ?? Date.now() + BOOKING_LINK_TTL_MS,
     customerName: overrides.customerName ?? 'Alice',
     email: overrides.email ?? 'alice@example.com',
     ...(overrides.usedAt !== undefined ? { usedAt: overrides.usedAt } : {}),

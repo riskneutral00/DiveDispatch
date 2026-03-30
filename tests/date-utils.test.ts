@@ -4,6 +4,7 @@ import {
   diffDays,
   getDatesInRange,
   toISODateString,
+  formatDateShort,
 } from '../src/lib/utils/date'
 import { testDate } from './helpers/dates'
 
@@ -97,5 +98,36 @@ describe('toISODateString', () => {
 
   it('zero-pads single-digit months', () => {
     expect(toISODateString(new Date(year, 0, 5))).toBe(`${year}-01-05`)
+  })
+})
+
+describe('formatDateShort', () => {
+  it('formats a valid ISO date to short display', () => {
+    const result = formatDateShort('2026-03-16')
+    expect(result).toContain('Mon')
+    expect(result).toContain('Mar')
+    expect(result).toContain('16')
+  })
+
+  it('returns empty string for empty input', () => {
+    expect(formatDateShort('')).toBe('')
+  })
+
+  it('formats January date correctly', () => {
+    const result = formatDateShort('2026-01-01')
+    expect(result).toContain('Jan')
+    expect(result).toContain('1')
+  })
+
+  it('formats December date correctly', () => {
+    const result = formatDateShort('2026-12-25')
+    expect(result).toContain('Dec')
+    expect(result).toContain('25')
+  })
+
+  it('includes weekday abbreviation', () => {
+    // 2026-03-15 is a Sunday
+    const result = formatDateShort('2026-03-15')
+    expect(result).toContain('Sun')
   })
 })

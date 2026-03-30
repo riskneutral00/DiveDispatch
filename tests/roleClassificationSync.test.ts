@@ -36,4 +36,21 @@ describe('Backend OPERATOR_ROLE_SET alignment', () => {
       ).toBe(false)
     }
   })
+
+  it('has exactly 5 operator roles', () => {
+    expect(OPERATOR_ROLE_SET.size).toBe(5)
+  })
+
+  it('ORGANIZER_ROLES and RESOURCE_ROLES together cover all roles', () => {
+    const all = new Set([
+      ...ORGANIZER_ROLES.map((r) => r.clerkRole),
+      ...RESOURCE_ROLES.map((r) => r.clerkRole),
+    ])
+    // At minimum, all operator + resource roles exist
+    expect(all.size).toBeGreaterThanOrEqual(OPERATOR_ROLE_SET.size + RESOURCE_ROLES.length)
+  })
+
+  it('RESOURCE_ROLES has at least 5 entries', () => {
+    expect(RESOURCE_ROLES.length).toBeGreaterThanOrEqual(5)
+  })
 })

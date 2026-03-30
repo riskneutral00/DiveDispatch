@@ -13,18 +13,38 @@ describe('ORGANIZER_ROLE_KEYS', () => {
     expect([...ORGANIZER_ROLE_KEYS].sort()).toEqual(expected.sort())
   })
 
-  it('matches ORGANIZER_ROLES length', () => {
-    expect(ORGANIZER_ROLE_KEYS.size).toBe(ORGANIZER_ROLES.length)
-  })
-
   it('does not include any resource-only roles', () => {
     for (const r of RESOURCE_ROLES) {
       expect(ORGANIZER_ROLE_KEYS.has(r.clerkRole)).toBe(false)
     }
   })
 
-  it('is a proper Set (no duplicates possible)', () => {
-    expect(ORGANIZER_ROLE_KEYS).toBeInstanceOf(Set)
+})
+
+describe('isOrganizer / isResource mutual exclusivity', () => {
+  it('every role has exactly one of isOrganizer or isResource set to true', () => {
+    for (const role of ROLES) {
+      expect(
+        role.isOrganizer !== role.isResource,
+        `${role.clerkRole} has isOrganizer=${role.isOrganizer} and isResource=${role.isResource} — must be mutually exclusive`,
+      ).toBe(true)
+    }
+  })
+
+  it('ORGANIZER_ROLES + RESOURCE_ROLES covers all ROLES', () => {
+    const allFromGroups = new Set([
+      ...ORGANIZER_ROLES.map((r) => r.clerkRole),
+      ...RESOURCE_ROLES.map((r) => r.clerkRole),
+    ])
+    const allRoles = new Set(ROLES.map((r) => r.clerkRole))
+    expect(allFromGroups).toEqual(allRoles)
+  })
+
+  it('ORGANIZER_ROLES and RESOURCE_ROLES have no overlap', () => {
+    const orgSet = new Set(ORGANIZER_ROLES.map((r) => r.clerkRole))
+    for (const r of RESOURCE_ROLES) {
+      expect(orgSet.has(r.clerkRole)).toBe(false)
+    }
   })
 })
 

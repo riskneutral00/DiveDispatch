@@ -6,4 +6,16 @@ describe('getRosterCacheName', () => {
     const name = getRosterCacheName()
     expect(name).toBe('dd-roster-v1')
   })
+
+  it('returns a consistent value across calls', () => {
+    expect(getRosterCacheName()).toBe(getRosterCacheName())
+  })
+
+  it('starts with dd- prefix', () => {
+    expect(getRosterCacheName().startsWith('dd-')).toBe(true)
+  })
+
+  it('contains a version suffix', () => {
+    expect(getRosterCacheName()).toMatch(/-v\d+$/)
+  })
 })

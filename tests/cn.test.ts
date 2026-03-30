@@ -21,4 +21,21 @@ describe('cn', () => {
   it('returns single class name', () => {
     expect(cn('only')).toBe('only')
   })
+
+  it('returns empty string with no arguments', () => {
+    expect(cn()).toBe('')
+  })
+
+  it('trims does not trim individual class names', () => {
+    // cn doesn't trim — users should pass clean class names
+    expect(cn('a ', ' b')).toBe('a   b')
+  })
+
+  it('handles many arguments', () => {
+    expect(cn('a', 'b', 'c', 'd', 'e', 'f')).toBe('a b c d e f')
+  })
+
+  it('handles mixed truthy and falsy', () => {
+    expect(cn('base', true && 'active', false && 'hidden', null, 'end')).toBe('base active end')
+  })
 })

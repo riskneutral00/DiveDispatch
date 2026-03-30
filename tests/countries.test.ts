@@ -42,4 +42,22 @@ describe('COUNTRIES', () => {
   it('contains Thailand', () => {
     expect(COUNTRIES.find((c) => c.code === 'TH')?.label).toBe('Thailand')
   })
+
+  it('has no duplicate codes', () => {
+    const codes = COUNTRIES.map((c) => c.code)
+    expect(new Set(codes).size).toBe(codes.length)
+  })
+
+  it('has no duplicate labels', () => {
+    const labels = COUNTRIES.map((c) => c.label)
+    expect(new Set(labels).size).toBe(labels.length)
+  })
+
+  it('contains United States', () => {
+    expect(COUNTRIES.find((c) => c.code === 'US')?.label).toContain('United States')
+  })
+
+  it('has at least 200 countries', () => {
+    expect(COUNTRIES.length).toBeGreaterThanOrEqual(200)
+  })
 })

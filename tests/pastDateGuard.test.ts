@@ -22,18 +22,54 @@ describe('todayISO', () => {
 
 describe('assertNoPastDates', () => {
   it('does not throw for a date that is today in Honolulu but yesterday in Bangkok', () => {
-    // Same time trick: Bangkok sees March 28, Honolulu sees March 27.
-    // A session on March 27 should pass when timezone is Honolulu,
-    // but would fail if we incorrectly defaulted to Bangkok.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-27T17:30:00Z'))
 
     const sessions = [{ date: '2026-03-27', timezone: 'Pacific/Honolulu' }]
 
-    // With Honolulu timezone, March 27 is today — should NOT throw
     expect(() => assertNoPastDates(sessions, 'Pacific/Honolulu')).not.toThrow()
+    expect(() => assertNoPastDates(sessions, 'Asia/Bangkok')).toThrow()
 
-    // With Bangkok timezone, March 27 is yesterday — SHOULD throw
+    vi.useRealTimers()
+  })
+
+  it('does not throw for future date', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-27T12:00:00Z'))
+
+    const sessions = [{ date: '2026-03-29' }]
+    expect(() => assertNoPastDates(sessions, 'Asia/Bangkok')).not.toThrow()
+
+    vi.useRealTimers()
+  })
+
+  it('does not throw for empty sessions array', () => {
+    expect(() => assertNoPastDates([])).not.toThrow()
+  })
+
+  it('throws with PAST_DATE error code', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-28T12:00:00Z'))
+
+    const sessions = [{ date: '2026-03-27' }]
+    try {
+      assertNoPastDates(sessions, 'Asia/Bangkok')
+      expect.unreachable('should have thrown')
+    } catch (err) {
+      expect((err as { data: { code: string } }).data.code).toBe('PAST_DATE')
+    }
+
+    vi.useRealTimers()
+  })
+
+  it('checks all sessions, not just the first', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-28T12:00:00Z'))
+
+    const sessions = [
+      { date: '2026-03-29' },
+      { date: '2026-03-25' }, // past
+    ]
     expect(() => assertNoPastDates(sessions, 'Asia/Bangkok')).toThrow()
 
     vi.useRealTimers()

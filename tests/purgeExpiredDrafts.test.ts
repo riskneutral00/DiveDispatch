@@ -858,6 +858,7 @@ describe('purgeExpiredDrafts', () => {
     expect(result.skipped).toBe(1)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].bookingId).toBe(booking2)
+    expect(result.errors[0].errorCode).toBe(ErrorCode.MISSING_SNAPSHOT)
 
     // Bookings #1 and #3 are cancelled with snapshots restored
     const [b1, b2, b3] = await t.run(async (ctx) =>
@@ -909,7 +910,7 @@ describe('purgeExpiredDrafts', () => {
     // SNAPSHOT_UNDERFLOW must abort the batch, not be silently isolated
     await expect(
       t.action(internal.bookings.inventoryRelease.purgeExpiredDrafts, {}),
-    ).rejects.toThrow()
+    ).rejects.toThrow(/SNAPSHOT_UNDERFLOW/)
   })
 
   it('MISSING_SNAPSHOT: no snapshot in batch-fetch phase (DD-278)', async () => {

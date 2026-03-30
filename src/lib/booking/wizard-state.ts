@@ -496,7 +496,9 @@ export function deserializeDraftState(json: string): WizardState | null {
   try {
     const parsed = JSON.parse(json)
     if (parsed._v !== WIZARD_STATE_VERSION) return null
-    return parsed as WizardState
+    const { _v, ...rest } = parsed
+    const defaults = makeInitialState(rest.bookingId ?? null)
+    return { ...defaults, ...rest } as WizardState
   } catch {
     return null
   }

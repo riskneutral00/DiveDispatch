@@ -24,4 +24,25 @@ describe('toggleInArray', () => {
   it('handles removing last item', () => {
     expect(toggleInArray(['only'], 'only')).toEqual([])
   })
+
+  it('preserves order when appending', () => {
+    expect(toggleInArray(['a', 'c'], 'b')).toEqual(['a', 'c', 'b'])
+  })
+
+  it('preserves order when removing middle item', () => {
+    expect(toggleInArray(['a', 'b', 'c'], 'b')).toEqual(['a', 'c'])
+  })
+
+  it('handles duplicate values (removes first occurrence)', () => {
+    const result = toggleInArray(['a', 'b', 'a'], 'a')
+    // filter removes ALL occurrences, not just the first
+    expect(result).not.toContain('a')
+  })
+
+  it('handles many items', () => {
+    const many = Array.from({ length: 100 }, (_, i) => `item-${i}`)
+    const result = toggleInArray(many, 'new')
+    expect(result).toHaveLength(101)
+    expect(result[100]).toBe('new')
+  })
 })

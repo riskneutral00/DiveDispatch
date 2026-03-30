@@ -1,7 +1,5 @@
 import type { BookingStatus } from './statuses'
 
-export type { BookingStatus }
-
 export type CalendarDisplayStatus = BookingStatus | 'Active' | 'Urgent'
 
 export const LOCKING_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set([

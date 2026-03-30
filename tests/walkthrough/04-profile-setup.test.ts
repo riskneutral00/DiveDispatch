@@ -46,8 +46,8 @@ describe('diveCenters.create (profile setup)', () => {
     const args = {
       name: 'Idempotent DC',
       placeName: 'Koh Tao',
-        lat: 10.0957,
-        lng: 99.8408,
+      lat: 10.0957,
+      lng: 99.8408,
       country: 'Thailand',
       email: 'idem@dc.com',
       phone: '+66800000000',

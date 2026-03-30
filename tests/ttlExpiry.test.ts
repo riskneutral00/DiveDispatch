@@ -5,6 +5,7 @@ import { resolvePortalToken, resolvePortalTokenSoft } from '../convex/lib/portal
 import type { MutationCtx } from '../convex/_generated/server'
 import { Id } from '../convex/_generated/dataModel'
 import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
+import { BOOKING_LINK_TTL_MS } from '../convex/lib/timeConstants'
 import { testDate, testToken } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 
@@ -821,7 +822,7 @@ describe('expireBooking', () => {
       await ctx.db.insert('bookingLinks', {
         bookingId,
         token,
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // link not expired
+        expiresAt: Date.now() + BOOKING_LINK_TTL_MS, // link not expired
         customerName: 'Alice',
         email: 'alice@example.com',
       })
@@ -1677,7 +1678,7 @@ async function makePortalFixture(
   const linkBase = {
     bookingId,
     token,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    expiresAt: Date.now() + BOOKING_LINK_TTL_MS,
     customerName: 'Alice',
     email: 'alice@example.com',
   }
@@ -1850,7 +1851,7 @@ describe('token invalidation', () => {
       await ctx.db.insert('bookingLinks', {
         bookingId,
         token: usedToken,
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        expiresAt: Date.now() + BOOKING_LINK_TTL_MS,
         customerName: 'Bob',
         email: 'bob@example.com',
         usedAt: Date.now() - 1000,

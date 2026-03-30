@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api, internal } from '../../convex/_generated/api'
 import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
+import { BOOKING_LINK_TTL_MS } from '../../convex/lib/timeConstants'
 import { testDate, testToken } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures'
@@ -97,7 +98,7 @@ describe('L9-14: Expire booking → portal submit → rejected', () => {
       await ctx.db.insert('bookingLinks', {
         bookingId,
         token,
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        expiresAt: Date.now() + BOOKING_LINK_TTL_MS,
         customerName: 'Alice',
         email: 'alice@example.com',
       })

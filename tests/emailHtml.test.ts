@@ -40,4 +40,29 @@ describe('buildPortalEmailHtml', () => {
     expect(html).toMatch(/^<!DOCTYPE html>/)
     expect(html).toContain('</html>')
   })
+
+  it('includes DiveDispatch branding', () => {
+    const html = buildPortalEmailHtml(baseArgs)
+    expect(html).toContain('DiveDispatch')
+  })
+
+  it('includes CTA button text', () => {
+    const html = buildPortalEmailHtml(baseArgs)
+    expect(html).toContain('Open My Booking Portal')
+  })
+
+  it('includes meta viewport for mobile', () => {
+    const html = buildPortalEmailHtml(baseArgs)
+    expect(html).toContain('viewport')
+  })
+
+  it('includes UTF-8 charset', () => {
+    const html = buildPortalEmailHtml(baseArgs)
+    expect(html).toContain('UTF-8')
+  })
+
+  it('handles special characters in customer name', () => {
+    const html = buildPortalEmailHtml({ ...baseArgs, customerName: 'José García' })
+    expect(html).toContain('José García')
+  })
 })
