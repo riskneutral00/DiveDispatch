@@ -6,7 +6,7 @@ import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
-import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE } from './shared/statuses'
+import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE, RESERVATION_STATUS } from './shared/statuses'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
@@ -14,14 +14,14 @@ export async function notify(
   args: {
     userId: string
     type: NotificationType
-    bookingId?: string
+    bookingId?: Id<'bookings'>
     message: string
   },
 ): Promise<void> {
   await ctx.db.insert('notifications', {
     userId: args.userId,
     type: args.type,
-    bookingId: args.bookingId as Id<'bookings'> | undefined,
+    bookingId: args.bookingId,
     message: args.message,
     createdAt: Date.now(),
   })
@@ -34,15 +34,15 @@ export async function notify(
  */
 export async function notifyVacatedStakeholders(
   ctx: MutationCtx,
-  bookingId: string,
+  bookingId: Id<'bookings'>,
   vacatedBy?: string,
 ): Promise<void> {
   const vacatedReservations = await ctx.db
     .query('reservations')
-    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
     .collect()
   const vacated = vacatedReservations.filter((r) =>
-    r.status === 'Vacated' && (vacatedBy === undefined || r.vacatedBy === vacatedBy),
+    r.status === RESERVATION_STATUS.Vacated && (vacatedBy === undefined || r.vacatedBy === vacatedBy),
   )
   if (vacated.length === 0) return
 
@@ -71,7 +71,7 @@ export async function notifyVacatedStakeholders(
  */
 export async function notifyReleasedInventory(
   ctx: MutationCtx,
-  bookingId: string,
+  bookingId: Id<'bookings'>,
   vacatedReservations: Doc<'reservations'>[],
 ): Promise<void> {
   if (vacatedReservations.length === 0) return
@@ -98,7 +98,7 @@ export async function _createNotificationHandler(
   args: {
     userId: string
     type: NotificationType
-    bookingId?: string
+    bookingId?: Id<'bookings'>
     message: string
     idempotencyKey?: string
   },

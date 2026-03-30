@@ -199,7 +199,7 @@ export async function _acceptHandler(
   })
 
   await logBookingChange(ctx, {
-    bookingId: reservation.bookingId as string,
+    bookingId: reservation.bookingId,
     action: 'reservation_accepted',
     actorSlug: caller.slug,
     actorType: 'resource',
@@ -249,7 +249,7 @@ export async function _acceptBookingHandler(
   }] as const))
 
   await logBookingChange(ctx, {
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<'bookings'>,
     action: 'reservation_accepted',
     actorSlug: caller.slug,
     actorType: 'resource',
@@ -318,7 +318,7 @@ export async function _declineHandler(
   }
 
   await logBookingChange(ctx, {
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<'bookings'>,
     action: 'reservation_declined',
     actorSlug: caller.slug,
     actorType: 'resource',
@@ -574,7 +574,7 @@ export async function _markNoShowHandler(
   })
 
   await logBookingChange(ctx, {
-    bookingId: reservation.bookingId as string,
+    bookingId: reservation.bookingId,
     action: 'noshow_marked',
     actorSlug: user.slug,
     actorType: 'operator',
@@ -586,7 +586,7 @@ export async function _markNoShowHandler(
     await notify(ctx, {
       userId: unit.ownerId,
       type: NOTIFICATION_TYPE.NoshowMarked,
-      bookingId: reservation.bookingId as string,
+      bookingId: reservation.bookingId,
       message: `A customer was marked as NoShow for your ${session.date} session.`,
     })
   }
@@ -633,7 +633,7 @@ export async function _revertNoShowHandler(
   })
 
   await logBookingChange(ctx, {
-    bookingId: reservation.bookingId as string,
+    bookingId: reservation.bookingId,
     action: 'noshow_reverted',
     actorSlug: user.slug,
     actorType: 'operator',
@@ -646,7 +646,7 @@ export async function _revertNoShowHandler(
     await notify(ctx, {
       userId: unit.ownerId,
       type: NOTIFICATION_TYPE.NoshowReverted,
-      bookingId: reservation.bookingId as string,
+      bookingId: reservation.bookingId,
       message: `NoShow was reverted for your ${session.date} session. Customer is back to Confirmed.`,
     })
   }

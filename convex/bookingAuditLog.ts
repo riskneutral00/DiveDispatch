@@ -27,7 +27,7 @@ export type AuditAction =
 export type AuditActorType = 'operator' | 'resource' | 'customer' | 'system'
 
 export type LogBookingChangeArgs = {
-  bookingId: string
+  bookingId: Id<'bookings'>
   action: AuditAction
   actorSlug: string
   actorType: AuditActorType
@@ -48,7 +48,7 @@ export async function logBookingChange(
   args: LogBookingChangeArgs,
 ): Promise<void> {
   await ctx.db.insert('bookingAuditLog', {
-    bookingId: args.bookingId as Id<"bookings">,
+    bookingId: args.bookingId,
     action: args.action,
     actorSlug: args.actorSlug,
     actorType: args.actorType,

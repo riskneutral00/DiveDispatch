@@ -502,7 +502,7 @@ export const cancelOneBookingForDeletedUser = internalMutation({
 
     // Audit log
     await logBookingChange(ctx, {
-      bookingId: bookingId as string,
+      bookingId,
       action: 'user_deleted_cascade',
       actorSlug: 'system',
       actorType: 'system',

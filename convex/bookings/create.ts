@@ -334,7 +334,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
     if (Object.keys(diff).length > 0) {
       await logBookingChange(ctx, {
-        bookingId: args.bookingId,
+        bookingId: args.bookingId as Id<'bookings'>,
         action: 'edited',
         actorSlug: user.slug,
         actorType: 'operator',
@@ -345,7 +345,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   if (!isResubmit) {
     await logBookingChange(ctx, {
-      bookingId: args.bookingId,
+      bookingId: args.bookingId as Id<'bookings'>,
       action: 'created',
       actorSlug: user.slug,
       actorType: 'operator',
@@ -353,7 +353,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   }
 
   await logBookingChange(ctx, {
-    bookingId: args.bookingId,
+    bookingId: args.bookingId as Id<'bookings'>,
     action: 'submitted',
     actorSlug: user.slug,
     actorType: 'operator',
