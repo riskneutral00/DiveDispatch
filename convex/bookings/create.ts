@@ -22,6 +22,7 @@ import { ErrorCode } from '../lib/errorCodes'
 import { canTeachCourses, type Credential } from '../lib/credentialMatch'
 import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
+import { validateRatio } from '../shared/ratioRules'
 
 // ─── submitToDraft ────────────────────────────────────────────────────────────
 
@@ -75,7 +76,21 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const tz = args.sessions[0]?.timezone ?? 'Asia/Bangkok'
   assertNoPastDates(args.sessions, tz)
 
-  // 5. Max non-confined dives per day — reject if any date exceeds 3
+  // 5. Instructor-to-student ratio — reject if insufficient staff (DD-304)
+  // Only enforce when bookingData is provided (full submit with resources + divers).
+  // Session-only resubmits don't carry resource info and can't be validated here.
+  if (args.bookingData) {
+    const diverCount = args.bookingData.divers.length
+    const instructorResourceCount = resources.filter(
+      (r) => r.resourceType === 'Instructor',
+    ).length
+    const ratioResult = validateRatio(diverCount, instructorResourceCount, 0)
+    if (!ratioResult.valid) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, message: ratioResult.message })
+    }
+  }
+
+  // 6. Max non-confined dives per day — reject if any date exceeds 3
   const nonConfinedPerDate = new Map<string, number>()
   for (const session of args.sessions) {
     if (!session.diveSlots) continue
