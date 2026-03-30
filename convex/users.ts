@@ -109,7 +109,7 @@ export const createUser = mutation({
       const uniqueRoles = [...new Set(args.roles)]
       const now = Date.now()
       for (let i = 0; i < uniqueRoles.length; i++) {
-        await ctx.db.insert('userRoles', {
+        await ctx.db.insert('userRoles', { // batch-exempt: roles is a tiny bounded array (user-selected roles, max ~5)
           userId,
           role: uniqueRoles[i],
           createdAt: now,
@@ -521,7 +521,8 @@ export const cancelOneBookingForDeletedUser = internalMutation({
 
 /**
  * Mutation: clean up ancillary user data after all bookings are cancelled.
- * Runs as the final step of the cascade.
+ * Runs as the final step of the cascade. Uses bounded take + self-reschedule
+ * to avoid unbounded collects on high-activity users (DD-343).
  */
 export const cleanupDeletedUserData = internalMutation({
   args: {
@@ -529,26 +530,51 @@ export const cleanupDeletedUserData = internalMutation({
     userSlug: v.string(),
   },
   handler: async (ctx, { userId, userSlug }): Promise<void> => {
-    // Fetch all ancillary data in parallel
-    const [roles, notifications, prefs, blocked, resources] = await Promise.all([
-      ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).collect(),
-      ctx.db.query('notifications').withIndex('by_userId', (q) => q.eq('userId', userSlug)).collect(),
-      ctx.db.query('stakeholderPreferences').withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userSlug)).collect(),
-      ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).collect(),
-      ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).collect(),
+    // Fetch one batch from each table (take CASCADE_BATCH_SIZE + 1 to detect overflow)
+    const PROBE = CASCADE_BATCH_SIZE + 1
+    const [roles, unreadNotifs, prefs, blocked, resources] = await Promise.all([
+      ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).take(PROBE),
+      ctx.db
+        .query('notifications')
+        .withIndex('by_userId', (q) => q.eq('userId', userSlug))
+        .filter((q) => q.eq(q.field('readAt'), undefined))
+        .take(PROBE),
+      ctx.db.query('stakeholderPreferences').withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userSlug)).take(PROBE),
+      ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).take(PROBE),
+      ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).take(PROBE),
     ])
+
+    // Determine whether any table has more rows beyond this batch
+    const hasMore =
+      roles.length > CASCADE_BATCH_SIZE ||
+      unreadNotifs.length > CASCADE_BATCH_SIZE ||
+      prefs.length > CASCADE_BATCH_SIZE ||
+      blocked.length > CASCADE_BATCH_SIZE ||
+      resources.length > CASCADE_BATCH_SIZE
+
+    // Slice to the actual batch size before processing
+    const rolesBatch = roles.slice(0, CASCADE_BATCH_SIZE)
+    const unreadBatch = unreadNotifs.slice(0, CASCADE_BATCH_SIZE)
+    const prefsBatch = prefs.slice(0, CASCADE_BATCH_SIZE)
+    const blockedBatch = blocked.slice(0, CASCADE_BATCH_SIZE)
+    const resourcesBatch = resources.slice(0, CASCADE_BATCH_SIZE)
 
     const now = Date.now()
-    const unread = notifications.filter((n) => n.readAt === undefined)
 
-    // Delete/patch all in parallel
     await Promise.all([
-      batchDelete(ctx, roles),
-      batchPatch(ctx, unread.map((n) => [n._id, { readAt: now }] as const)),
-      batchDelete(ctx, prefs),
-      batchDelete(ctx, blocked),
-      batchDelete(ctx, resources),
+      batchDelete(ctx, rolesBatch),
+      batchPatch(ctx, unreadBatch.map((n) => [n._id, { readAt: now }] as const)),
+      batchDelete(ctx, prefsBatch),
+      batchDelete(ctx, blockedBatch),
+      batchDelete(ctx, resourcesBatch),
     ])
+
+    if (hasMore) {
+      await ctx.scheduler.runAfter(0, internal.users.cleanupDeletedUserData, {
+        userId,
+        userSlug,
+      })
+    }
   },
 })
 

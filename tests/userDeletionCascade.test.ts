@@ -381,6 +381,53 @@ describe('cleanupDeletedUserData', () => {
       userSlug: 'empty-user',
     })
   })
+
+  it('self-reschedules when notifications exceed CASCADE_BATCH_SIZE, all processed after multiple runs', async () => {
+    const t = makeT()
+    let userId: Id<'users'>
+
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, {
+        slug: 'many-notifs-user',
+        tokenIdentifier: 'test|many-notifs-user',
+        skipUserRoles: true,
+      })
+
+      // Seed 60 unread notifications — more than CASCADE_BATCH_SIZE (50)
+      for (let i = 0; i < 60; i++) {
+        await seedNotification(ctx, { userId: 'many-notifs-user', message: `Notif ${i}` })
+      }
+    })
+
+    // Run first cleanup invocation — should process a batch and self-reschedule
+    await t.mutation(internal.users.cleanupDeletedUserData, {
+      userId: userId!,
+      userSlug: 'many-notifs-user',
+    })
+
+    // After first run, not all notifications are processed yet — reschedule must fire
+    await t.run(async (ctx) => {
+      const unread = await ctx.db
+        .query('notifications')
+        .withIndex('by_userId', (q) => q.eq('userId', 'many-notifs-user'))
+        .filter((q) => q.eq(q.field('readAt'), undefined))
+        .collect()
+      // Some should still be unread (the ones beyond the batch size)
+      expect(unread.length).toBeGreaterThan(0)
+    })
+
+    // Drain all rescheduled functions — all notifications must be marked read afterward
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db
+        .query('notifications')
+        .withIndex('by_userId', (q) => q.eq('userId', 'many-notifs-user'))
+        .collect()
+      expect(notifications).toHaveLength(60)
+      expect(notifications.every((n) => n.readAt !== undefined)).toBe(true)
+    })
+  })
 })
 
 // ── deleteFromWebhook schedules cascade ──────────────────────────────────────
