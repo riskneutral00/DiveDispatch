@@ -536,7 +536,7 @@ export const cleanupDeletedUserData = internalMutation({
   handler: async (ctx, { userId, userSlug }): Promise<void> => {
     // Fetch one batch from each table (take CASCADE_BATCH_SIZE + 1 to detect overflow)
     const PROBE = CASCADE_BATCH_SIZE + 1
-    const [roles, unreadNotifs, prefs, blocked, resources, inventory] = await Promise.all([
+    const [roles, unreadNotifs, prefs, blocked, resources, inventory, templates] = await Promise.all([
       ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).take(PROBE),
       ctx.db
         .query('notifications')
@@ -547,16 +547,8 @@ export const cleanupDeletedUserData = internalMutation({
       ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).take(PROBE),
       ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).take(PROBE),
       ctx.db.query('inventoryUnits').withIndex('by_ownerId_resourceType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
+      ctx.db.query('bookingTemplates').withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
     ])
-
-    // Determine whether any table has more rows beyond this batch
-    const hasMore =
-      roles.length > CASCADE_BATCH_SIZE ||
-      unreadNotifs.length > CASCADE_BATCH_SIZE ||
-      prefs.length > CASCADE_BATCH_SIZE ||
-      blocked.length > CASCADE_BATCH_SIZE ||
-      resources.length > CASCADE_BATCH_SIZE ||
-      inventory.length > CASCADE_BATCH_SIZE
 
     // Slice to the actual batch size before processing
     const rolesBatch = roles.slice(0, CASCADE_BATCH_SIZE)
@@ -565,6 +557,29 @@ export const cleanupDeletedUserData = internalMutation({
     const blockedBatch = blocked.slice(0, CASCADE_BATCH_SIZE)
     const resourcesBatch = resources.slice(0, CASCADE_BATCH_SIZE)
     const inventoryBatch = inventory.slice(0, CASCADE_BATCH_SIZE)
+    const templatesBatch = templates.slice(0, CASCADE_BATCH_SIZE)
+
+    // For each inventoryUnit being deleted, collect and delete all of its availabilitySnapshots.
+    // Units are already bounded to CASCADE_BATCH_SIZE, so snapshot collection is bounded per unit.
+    const snapshotBatches = await Promise.all(
+      inventoryBatch.map((unit) =>
+        ctx.db
+          .query('availabilitySnapshots')
+          .withIndex('by_inventoryUnitId_date', (q) => q.eq('inventoryUnitId', unit._id))
+          .collect(),
+      ),
+    )
+    const allSnapshots = snapshotBatches.flat()
+
+    // Determine whether any table has more rows beyond this batch
+    const hasMore =
+      roles.length > CASCADE_BATCH_SIZE ||
+      unreadNotifs.length > CASCADE_BATCH_SIZE ||
+      prefs.length > CASCADE_BATCH_SIZE ||
+      blocked.length > CASCADE_BATCH_SIZE ||
+      resources.length > CASCADE_BATCH_SIZE ||
+      inventory.length > CASCADE_BATCH_SIZE ||
+      templates.length > CASCADE_BATCH_SIZE
 
     const now = Date.now()
 
@@ -574,7 +589,9 @@ export const cleanupDeletedUserData = internalMutation({
       batchDelete(ctx, prefsBatch),
       batchDelete(ctx, blockedBatch),
       batchDelete(ctx, resourcesBatch),
+      batchDelete(ctx, allSnapshots),
       batchDelete(ctx, inventoryBatch),
+      batchDelete(ctx, templatesBatch),
     ])
 
     if (hasMore) {
@@ -631,24 +648,24 @@ export const cascadeUserDeletion = internalAction({
       }
     }
 
+    if (errors.length > 0) {
+      await ctx.scheduler.runAfter(0, internal.lib.alerts.sendAlertEmail, {
+        jobName: 'user-deletion-cascade',
+        error: `Failed to cancel ${errors.length} bookings for user ${userSlug}: ${errors.map((e) => `${e.bookingId}(${e.errorCode})`).join(', ')}`,
+      })
+    }
+
     if (more) {
       // Self-reschedule for next batch
       await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
         userId,
         userSlug,
       })
-    } else {
-      // All bookings handled — clean up ancillary data
+    } else if (errors.length === 0) {
+      // All bookings successfully handled — clean up ancillary data
       await ctx.runMutation(internal.users.cleanupDeletedUserData, {
         userId,
         userSlug,
-      })
-    }
-
-    if (errors.length > 0) {
-      await ctx.scheduler.runAfter(0, internal.lib.alerts.sendAlertEmail, {
-        jobName: 'user-deletion-cascade',
-        error: `Failed to cancel ${errors.length} bookings for user ${userSlug}: ${errors.map((e) => `${e.bookingId}(${e.errorCode})`).join(', ')}`,
       })
     }
   },

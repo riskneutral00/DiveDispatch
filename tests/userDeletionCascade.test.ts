@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'
 import { internal } from '../convex/_generated/api'
 import { makeT } from './helpers/convex-helpers'
 import { seedUser } from './fixtures/seedUsers'
-import { seedBooking, seedSession, seedReservation, seedNotification, seedBookingResource } from './fixtures/seedBookings'
+import { seedBooking, seedSession, seedReservation, seedNotification, seedBookingResource, seedBookingTemplate } from './fixtures/seedBookings'
 import { seedInventoryUnit, seedSnapshot } from './fixtures/seedInventory'
 import { testDate } from './helpers/dates'
 import type { Id } from '../convex/_generated/dataModel'
@@ -379,6 +379,134 @@ describe('cleanupDeletedUserData', () => {
     await t.mutation(internal.users.cleanupDeletedUserData, {
       userId: userId!,
       userSlug: 'empty-user',
+    })
+  })
+
+  it('deletes inventoryUnits and their availabilitySnapshots for the deleted user', async () => {
+    const t = makeT()
+    let userId: Id<'users'>
+    let unitId1: Id<'inventoryUnits'>
+    let unitId2: Id<'inventoryUnits'>
+    let snap1: Id<'availabilitySnapshots'>
+    let snap2: Id<'availabilitySnapshots'>
+    let snap3: Id<'availabilitySnapshots'>
+    // unitId3 belongs to a different user — snapshots should survive
+    let unitId3: Id<'inventoryUnits'>
+    let snap4: Id<'availabilitySnapshots'>
+
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, {
+        slug: 'inv-user',
+        tokenIdentifier: 'test|inv-user',
+        skipUserRoles: true,
+      })
+      // Two inventory units owned by the deleted user
+      unitId1 = await seedInventoryUnit(ctx, { ownerId: 'inv-user', ownerType: 'Instructor' })
+      unitId2 = await seedInventoryUnit(ctx, { ownerId: 'inv-user', ownerType: 'Instructor' })
+      // Snapshots linked to each unit
+      snap1 = await seedSnapshot(ctx, unitId1, { date: testDate(1) })
+      snap2 = await seedSnapshot(ctx, unitId1, { date: testDate(2) })
+      snap3 = await seedSnapshot(ctx, unitId2, { date: testDate(3) })
+      // Unit owned by a different user — must NOT be touched
+      unitId3 = await seedInventoryUnit(ctx, { ownerId: 'other-slug', ownerType: 'Instructor' })
+      snap4 = await seedSnapshot(ctx, unitId3, { date: testDate(4) })
+    })
+
+    await t.mutation(internal.users.cleanupDeletedUserData, {
+      userId: userId!,
+      userSlug: 'inv-user',
+    })
+
+    await t.run(async (ctx) => {
+      // Both deleted user's units are gone
+      expect(await ctx.db.get(unitId1!)).toBeNull()
+      expect(await ctx.db.get(unitId2!)).toBeNull()
+
+      // All snapshots linked to those units are gone
+      expect(await ctx.db.get(snap1!)).toBeNull()
+      expect(await ctx.db.get(snap2!)).toBeNull()
+      expect(await ctx.db.get(snap3!)).toBeNull()
+
+      // The other user's unit and snapshot survive
+      expect(await ctx.db.get(unitId3!)).not.toBeNull()
+      expect(await ctx.db.get(snap4!)).not.toBeNull()
+    })
+  })
+
+  it('deletes bookingTemplates owned by the deleted user', async () => {
+    const t = makeT()
+    let userId: Id<'users'>
+    let templateId1: Id<'bookingTemplates'>
+    let templateId2: Id<'bookingTemplates'>
+    let otherTemplateId: Id<'bookingTemplates'>
+
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, {
+        slug: 'tmpl-user',
+        tokenIdentifier: 'test|tmpl-user',
+        skipUserRoles: true,
+      })
+      // Templates owned by deleted user
+      templateId1 = await seedBookingTemplate(ctx, { ownerId: 'tmpl-user', name: 'Template A' })
+      templateId2 = await seedBookingTemplate(ctx, { ownerId: 'tmpl-user', name: 'Template B' })
+      // Template owned by another user — must NOT be touched
+      otherTemplateId = await seedBookingTemplate(ctx, { ownerId: 'other-owner', name: 'Other Template' })
+    })
+
+    await t.mutation(internal.users.cleanupDeletedUserData, {
+      userId: userId!,
+      userSlug: 'tmpl-user',
+    })
+
+    await t.run(async (ctx) => {
+      // Deleted user's templates are gone
+      expect(await ctx.db.get(templateId1!)).toBeNull()
+      expect(await ctx.db.get(templateId2!)).toBeNull()
+      // Other user's template survives
+      expect(await ctx.db.get(otherTemplateId!)).not.toBeNull()
+    })
+  })
+
+  it('self-reschedules when bookingTemplates exceed CASCADE_BATCH_SIZE, all processed after multiple runs', async () => {
+    const t = makeT()
+    let userId: Id<'users'>
+
+    await t.run(async (ctx) => {
+      userId = await seedUser(ctx, {
+        slug: 'many-tmpl-user',
+        tokenIdentifier: 'test|many-tmpl-user',
+        skipUserRoles: true,
+      })
+      // Seed 60 templates — more than CASCADE_BATCH_SIZE (50)
+      for (let i = 0; i < 60; i++) {
+        await seedBookingTemplate(ctx, { ownerId: 'many-tmpl-user', name: `Template ${i}` })
+      }
+    })
+
+    // First run — processes a batch and self-reschedules
+    await t.mutation(internal.users.cleanupDeletedUserData, {
+      userId: userId!,
+      userSlug: 'many-tmpl-user',
+    })
+
+    // Some templates must still exist after the first batch
+    await t.run(async (ctx) => {
+      const remaining = await ctx.db
+        .query('bookingTemplates')
+        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', 'many-tmpl-user'))
+        .collect()
+      expect(remaining.length).toBeGreaterThan(0)
+    })
+
+    // Drain all rescheduled functions — all templates must be gone
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+    await t.run(async (ctx) => {
+      const remaining = await ctx.db
+        .query('bookingTemplates')
+        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', 'many-tmpl-user'))
+        .collect()
+      expect(remaining).toHaveLength(0)
     })
   })
 
