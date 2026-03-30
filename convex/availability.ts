@@ -505,11 +505,6 @@ export async function _toggleBlockedDate(
     const allPending: PendingRes[] = []
     const unitsToRestore = new Map<string, number>()
 
-    // Collect affected bookings + pending reservations from the already-fetched data
-    for (const session of allSessions) {
-      affectedBookingIds.add(session.bookingId)
-    }
-
     const pendingReservations = allReservations.filter(
       (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
     )
@@ -520,6 +515,7 @@ export async function _toggleBlockedDate(
 
     for (const reservation of pendingReservations) {
       allPending.push({ resId: reservation._id, unitsRequested: reservation.unitsRequested })
+      affectedBookingIds.add(sessionMap.get(reservation.bookingSessionId)!.bookingId)
 
       const session = sessionMap.get(reservation.bookingSessionId)!
       const key = `${reservation.inventoryUnitId}|${session.date}|${session.startTime}`
@@ -548,9 +544,10 @@ export async function _toggleBlockedDate(
       const doc = snapshotDocs[i]
       if (!doc) {
         const k = snapshotEntries[i][1]
-        throw new Error(
-          `Invariant 3 violation: missing snapshot for unit ${k.inventoryUnitId} on ${k.date} at ${k.windowStart}`,
-        )
+        throw new ConvexError({
+          code: ErrorCode.MISSING_SNAPSHOT,
+          reason: `Invariant 3 violation: missing snapshot for unit ${k.inventoryUnitId} on ${k.date} at ${k.windowStart}`,
+        })
       }
       snapshotIdMap.set(snapshotEntries[i][0], doc._id)
     }

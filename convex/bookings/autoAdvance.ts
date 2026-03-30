@@ -112,7 +112,9 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
     .collect()
 
-  const active = reservations.filter((r) => r.status !== RESERVATION_STATUS.Vacated)
+  const active = reservations.filter(
+    (r) => r.status !== RESERVATION_STATUS.Vacated && r.status !== RESERVATION_STATUS.NoShow,
+  )
   // A declined or date-blocked resource means the booking is missing a required
   // resource and cannot advance. Vacated-for-other-reasons (equipment_not_needed) is fine.
   const hasMissingResource = reservations.some(
