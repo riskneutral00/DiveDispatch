@@ -63,6 +63,7 @@ RiskNeutral vault: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
 | Reusable pattern | `Vaults/DiveDispatch/PatternLibrary/<slug>.md` |
 | Project architecture/schema | `Vaults/DiveDispatch/Architecture/*.md` (update) |
 | Lesson / mistake to avoid | `Vaults/DiveDispatch/Architecture/Lessons.md` |
+| Failure / structured mistake log | `Vaults/DiveDispatch/Failures/YYYY-MM-DD.md` (append) |
 | Session summary | `Vaults/DiveDispatch/Sessions/YYYY-MM-DD.md` |
 | Code review | `Vaults/DiveDispatch/Reviews/<slug>.md` |
 | New app idea | `Vaults/RiskNeutral/Ideas/Ideas.md` (append) |

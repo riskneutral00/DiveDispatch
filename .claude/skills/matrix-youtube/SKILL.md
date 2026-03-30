@@ -25,6 +25,8 @@ Extract structured knowledge from any YouTube video and map it to concrete proje
 /matrix-youtube <youtube-url>
 /matrix-youtube <youtube-url-1> <youtube-url-2>
 /matrix-youtube <youtube-url-1> <youtube-url-2> --compare
+/matrix-youtube review
+/matrix-youtube review <video-id>
 ```
 
 Accepts any YouTube URL format:
@@ -36,6 +38,8 @@ Accepts any YouTube URL format:
 Multiple URLs: process each sequentially through the full pipeline.
 
 With `--compare`: process each video through Phases 0-7, then run Phase 8 (Comparison) across all results.
+
+With `review`: skip analysis, go straight to the interview phase (Phase 9). Reviews all applicable findings across the library that don't have tickets yet. With a video ID, reviews only that video's findings.
 
 ---
 
@@ -83,9 +87,11 @@ Store these variables for use throughout the pipeline: `{PROJECT}`, `{VAULT}`, `
 
 ## Phase 0a: Parse + Gate
 
-### 0a. Parse URL
+### 0a. Parse Arguments
 
-Extract video ID from URL:
+If argument is `review` or `review <video-id>`: jump directly to **Phase 9 (Review Mode)**. Skip all other phases.
+
+Otherwise, extract video ID from URL:
 - `youtube.com/watch?v={ID}` -> extract `v` parameter
 - `youtu.be/{ID}` -> extract path
 - `youtube.com/live/{ID}` -> extract path
@@ -93,7 +99,7 @@ Extract video ID from URL:
 
 Result: `VIDEO_ID` variable.
 
-If no valid YouTube URL found: print usage hint and stop.
+If no valid YouTube URL found and not `review`: print usage hint and stop.
 
 ### 0b. Check Existing Entry
 
@@ -298,8 +304,8 @@ TECHNIQUES:
 
 Classification rules:
 - `applicable` — {PROJECT} should adopt this. The technique solves a real problem or improves an existing pattern. {PROJECT} has the infrastructure to support it.
-- `already-done` — {PROJECT} already does this or something equivalent. Note where (file/skill/hook).
-- `not-applicable` — Doesn't apply to {PROJECT}'s architecture, domain, or tech stack (e.g., Java-specific, mobile-native, irrelevant domain).
+- `already-done` — {PROJECT} already implements the **specific techniques**, not just the concept. Verify each sub-technique individually against the codebase — having a related file, directory, or tool is NOT sufficient. The actual workflow or pattern must exist and be in active use. When in doubt, classify as `applicable`.
+- `not-applicable` — **Architecturally incompatible** with the project: requires a completely different tech stack, targets a domain that doesn't exist here, or is physically impossible given the project's constraints (e.g., Java-specific technique in a Node project, mobile-native API on a web app). "I can't immediately see how" is NOT sufficient — default to `applicable` or `future` when uncertain. Reserve `not-applicable` only for techniques that could never apply regardless of future project direction.
 - `future` — Would be valuable but depends on features {PROJECT} doesn't have yet. Note the dependency.
 
 ### Agent 2: Implementation Specs
@@ -616,6 +622,114 @@ Decision 1 of {N}: {question}
 
 Wait for Matt's answer before presenting the next.
 
+### 6h. Interview — Applicable Findings
+
+After all decision points are resolved (or immediately if there are none), run a one-at-a-time interview for every applicable technique.
+
+**Opening digest first:**
+
+```
+Key insights from this video:
+  1. {most surprising or non-obvious thing the video taught}
+  2. {second insight}
+  3. {third insight}
+  (keep to 3-5, only non-obvious insights — skip things already well-known)
+
+{N} applicable findings for {PROJECT}. Walking through them now.
+```
+
+**Then for each applicable technique, one at a time:**
+
+```
+Finding {i} of {N}: {technique name}
+─────────────────────────────────────
+What the video teaches:
+  {1-2 sentences — what Nick actually said/showed about this}
+
+How it applies to {PROJECT}:
+  {1-2 sentences — specific to the project's current state, not generic}
+
+The benefit:
+  {1 sentence — concrete improvement: faster X, fewer Y, prevents Z}
+
+Effort: {S|M|L}  Risk: {LOW|MEDIUM|HIGH}  Build: {skill|hook|agent|refactor|etc}
+
+  A) Yes — create ticket  ← recommended
+  B) Skip
+  C) Tell me more / discuss
+```
+
+Wait for the answer before presenting the next finding.
+
+**If answer is A (create ticket):**
+
+Acquire ticket ID via lockfile counter:
+```bash
+LOCK=".tickets/.counter.lock"
+COUNTER=".tickets/.counter"
+for i in 1 2 3 4 5; do
+  if (set -C; echo $$ > "$LOCK") 2>/dev/null; then break; fi
+  sleep 0.1
+done
+NUM=$(cat "$COUNTER" 2>/dev/null || echo "0")
+NEXT=$((NUM + 1))
+echo "$NEXT" > "$COUNTER"
+rm -f "$LOCK"
+```
+
+Write `.tickets/DD-{NEXT}.md`:
+
+```markdown
+---
+id: DD-{NEXT}
+title: "{technique name} — {short benefit phrase}"
+status: ready
+priority: P2
+category: tooling
+assigned_to: null
+branch: null
+blocked_by: []
+pr: null
+side_effects: [{project_files from spec}]
+size: {S|M|L}
+created: {YYYY-MM-DD}
+updated: {YYYY-MM-DD}
+---
+
+**Source:** {video title} by {channel} — {url}
+
+**Spec:** {summary from spec}
+
+**Changes:**
+{numbered steps from spec}
+
+**Risk:** {risk} ({risk_level})
+
+**Acceptance:**
+- {concrete outcome, not "spec steps followed"}
+- {test_type} tests pass
+
+**Test plan:**
+- {test_type}: {what to verify}
+```
+
+Confirm: `✓ DD-{NEXT} created.` Then continue to the next finding.
+
+**If answer is B (skip):** Acknowledge and move to next.
+
+**If answer is C (discuss):** Answer the question, then re-present the same finding with A/B/C.
+
+**After all findings:**
+
+```
+Done. {N} tickets created: {DD-XXX, DD-XXX, ...}
+{N} skipped.
+
+Run /board to review.
+```
+
+If zero tickets were created: `No tickets created. Library entry saved — findings available for future review.`
+
 ---
 
 ## Phase 7: Cleanup
@@ -707,6 +821,113 @@ Handled by Phase 0b rich gate. Key behaviors:
 ### Playlist URLs
 If URL contains `&list=`: strip the list parameter, process only the single video. Print note:
 `"Playlist detected. Processing single video only. Run /matrix-youtube on each video separately."`
+
+---
+
+## Phase 9: Review Mode (`/matrix-youtube review`)
+
+Triggered by `review` argument. Skips all analysis — works from existing library entries.
+
+### 9a. Load Library
+
+```bash
+ls .claude/runs/yt-*.md
+```
+
+If no files: `"No videos in library. Run /matrix-youtube <url> to analyze a video first."` Stop.
+
+If a specific video ID was given (`review <video-id>`): load only `.claude/runs/yt-{video-id}.md`. If not found: `"Video {video-id} not in library."` Stop.
+
+### 9b. Collect Applicable Findings
+
+Read each detail file. From the assessment section, extract every technique with `classification: applicable`.
+
+Cross-reference against existing `.tickets/DD-*.md` files: search for ticket titles containing the technique name or the video title. If a ticket already exists for a finding, mark it as `ticketed` and exclude from the interview.
+
+Build the review queue:
+
+```
+REVIEW_QUEUE = []
+for each detail file:
+  for each applicable technique:
+    if not already ticketed:
+      REVIEW_QUEUE.append({
+        video_title, video_url, technique_name,
+        summary, steps, effort, risk, risk_level,
+        test_type, build_type, project_files
+      })
+```
+
+If `REVIEW_QUEUE` is empty:
+```
+All applicable findings already have tickets, or no applicable findings exist.
+Library: {N} videos, {N} total techniques, {N} applicable, {N} ticketed.
+```
+Stop.
+
+### 9c. Library Summary
+
+```
+YouTube Library Review
+──────────────────────
+{N} videos analyzed | {N} applicable findings | {N} already ticketed | {N} to review
+
+Videos:
+  {title} ({channel}, {date}) — {N applicable}/{N total}
+  {title} ({channel}, {date}) — {N applicable}/{N total}
+  ...
+```
+
+### 9d. Key Insights Digest
+
+Read the outline sections from each video's detail file. Synthesize 3-5 non-obvious insights across all videos (not just technique names — mental models, anti-patterns, decision frameworks):
+
+```
+Key insights across your library:
+  1. {most surprising or non-obvious insight}
+  2. {second insight}
+  3. {third insight}
+```
+
+### 9e. Interview — One Finding at a Time
+
+Run the same interview pattern as Phase 6h, but pulling from `REVIEW_QUEUE` across all videos:
+
+```
+Finding {i} of {N}: {technique name}
+─────────────────────────────────────
+Source: {video title} by {channel}
+
+What the video teaches:
+  {1-2 sentences}
+
+How it applies to {PROJECT}:
+  {1-2 sentences — specific to project's current state}
+
+The benefit:
+  {1 sentence — concrete improvement}
+
+Effort: {S|M|L}  Risk: {LOW|MEDIUM|HIGH}  Build: {skill|hook|agent|refactor|etc}
+
+  A) Yes — create ticket  ← recommended
+  B) Skip
+  C) Tell me more / discuss
+```
+
+Wait for answer before next finding. Handle A/B/C exactly as Phase 6h.
+
+### 9f. Review Summary
+
+After all findings reviewed:
+
+```
+Review complete.
+  {N} tickets created: {DD-XXX, DD-XXX, ...}
+  {N} skipped
+  {N} already ticketed (not shown)
+
+Run /board to review and queue.
+```
 
 ---
 

@@ -113,16 +113,19 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
    | New app idea | `RiskNeutral/Ideas/Ideas.md` (append) |
    | Project architecture/schema | `DiveDispatch/Architecture/*.md` (update) |
    | Lesson / mistake to avoid | `DiveDispatch/Architecture/Lessons.md` (append dated section) |
+   | Failure / mistake that happened | `DiveDispatch/Failures/YYYY-MM-DD.md` (append) |
    | Session summary | `DiveDispatch/Sessions/YYYY-MM-DD.md` (overwrite) |
    | Code review | `DiveDispatch/Reviews/<slug>.md` |
    | Risk Neutral strategy/vision | `RiskNeutral/Strategy/*.md` (update) |
    | Founder insight/background | `RiskNeutral/Founder/Matt.md` (update) |
 
-2. Session file is always written (overwrite). **Do NOT read it first.**
-3. For observations that append (Lessons, Patterns): read the tail in Round 1 to check for duplicates and match format.
-4. Fire all vault writes as **parallel Bash calls** in Round 2.
+2. **Failure scan** — Review the conversation for anything that went wrong: bugs hit, wrong approaches taken, tools that misbehaved, regressions introduced, time wasted on dead ends. If any failures occurred, write structured entries to `DiveDispatch/Failures/YYYY-MM-DD.md` (append, one `##` section per failure, following `.template.md` format). If no failures this session, skip — don't write an empty file.
+3. Session file is always written (overwrite). **Do NOT read it first.**
+4. For observations that append (Lessons, Patterns, Failures): read the tail in Round 1 to check for duplicates and match format.
+5. Fire all vault writes as **parallel Bash calls** in Round 2.
 
    - **Lessons format:** `## Title — YYYY-MM-DD` with subsections: what happened, root cause, the fix, rule. Cross-ref line.
+   - **Failures format:** Append to `DiveDispatch/Failures/YYYY-MM-DD.md`. Each entry is a `##` section following the template in `Failures/.template.md`: Context, What failed, What was tried, Root cause, Proposed rule, Frequency, Severity, Tags. One file per day, multiple entries append. Failures differ from Lessons — failures are raw structured data for `/distill` to cluster; lessons are curated narratives.
    - **Patterns format:** `## The smell`, `## Why it's a problem`, `## The fix`, `## Prevention checklist`, `## Where this came from`.
    - **Session format:**
      ```
