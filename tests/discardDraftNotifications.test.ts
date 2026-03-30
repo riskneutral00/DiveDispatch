@@ -223,4 +223,160 @@ describe('submitToDraft edit-resubmit notifications (DD-340)', () => {
     expect(notifications[0].userId).toBe('instr-old')
     expect(notifications[0].bookingId).toBe(bookingId)
   })
+
+  // ── 4. Edit-resubmit with SWAPPED resources notifies only old owner ─────────
+  it('4 -- edit-mode resubmit with new resource notifies old owner only, not new owner', async () => {
+    const t = makeT()
+
+    const { bookingId, unitBId } = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-swap',
+        slug: 'dc-swap',
+        email: 'dc-swap@test.com',
+        name: 'dc-swap',
+        firstName: 'DC',
+        lastName: 'Swap',
+        businessName: 'Swap DC',
+        isSeeded: false,
+        appLanguage: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|instr-old',
+        slug: 'instr-old',
+        email: 'instr-old@test.com',
+        name: 'Old Instructor',
+        firstName: 'Old',
+        lastName: 'Instructor',
+        businessName: 'Old Instructor Biz',
+        isSeeded: false,
+        appLanguage: 'en',
+      })
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|instr-new',
+        slug: 'instr-new',
+        email: 'instr-new@test.com',
+        name: 'New Instructor',
+        firstName: 'New',
+        lastName: 'Instructor',
+        businessName: 'New Instructor Biz',
+        isSeeded: false,
+        appLanguage: 'en',
+      })
+
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: 'dc-swap',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [],
+        operatorName: 'Swap DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+
+      // Unit A: old instructor (has existing confirmed reservation)
+      const unitAId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instr-old',
+        displayName: 'Old Instructor Unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instr-old',
+        ownerType: 'Instructor',
+      })
+
+      // Unit B: new instructor (available, not yet held)
+      const unitBId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: 'instr-new',
+        displayName: 'New Instructor Unit',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: 'instr-new',
+        ownerType: 'Instructor',
+      })
+
+      // Snapshot for unit A: 1 reserved, 0 available (already held)
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitAId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '11:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      // Snapshot for unit B: 0 reserved, 1 available (free to hold)
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitBId,
+        date: testDate(5),
+        windowStart: '09:00',
+        windowEnd: '11:00',
+        totalUnits: 1,
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+
+      const sessionAId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitAId,
+        date: testDate(5),
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitAId,
+        bookingSessionId: sessionAId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+        confirmedAt: Date.now(),
+        expiresAt: Date.now() + HOLD_TTL,
+      })
+
+      return { bookingId, unitBId }
+    })
+
+    // Edit-resubmit: replace unit A with unit B
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-swap' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId,
+        sessions: [
+          {
+            inventoryUnitId: unitBId,
+            date: testDate(5),
+            startTime: '09:00',
+            endTime: '11:00',
+            timezone: 'Asia/Bangkok',
+            unitsRequested: 1,
+          },
+        ],
+      },
+    )
+
+    const notifications = await t.run(async (ctx) =>
+      ctx.db
+        .query('notifications')
+        .filter((q) => q.eq(q.field('type'), 'booking_cancelled'))
+        .collect(),
+    )
+
+    // Only the old resource owner (instr-old) should be notified — not the new one (instr-new)
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].userId).toBe('instr-old')
+    expect(notifications[0].bookingId).toBe(bookingId)
+  })
 })
