@@ -90,6 +90,34 @@ describe('findActiveBookingsForOwner', () => {
     expect(results).toHaveLength(2)
   })
 
+  it('returns all active bookings even when many completed/cancelled exist (DD-310)', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'owner-310', tokenIdentifier: 'test|owner-310' })
+
+      // Seed 60 Completed + Cancelled bookings to exceed CASCADE_BATCH_SIZE (50)
+      for (let i = 0; i < 30; i++) {
+        await seedBooking(ctx, { ownerId: 'owner-310', status: 'Completed' })
+        await seedBooking(ctx, { ownerId: 'owner-310', status: 'Cancelled' })
+      }
+
+      // Seed 5 active bookings (3 Draft + 2 Upcoming)
+      for (let i = 0; i < 3; i++) {
+        await seedBooking(ctx, { ownerId: 'owner-310', status: 'Draft' })
+      }
+      for (let i = 0; i < 2; i++) {
+        await seedBooking(ctx, { ownerId: 'owner-310', status: 'Upcoming' })
+      }
+    })
+
+    const results = await t.query(internal.users.findActiveBookingsForOwner, {
+      userSlug: 'owner-310',
+    })
+
+    // Must find all 5 active bookings regardless of 60 inactive ones
+    expect(results).toHaveLength(5)
+  })
+
   it('returns empty array when user has no active bookings', async () => {
     const t = makeT()
     const results = await t.query(internal.users.findActiveBookingsForOwner, {

@@ -149,6 +149,7 @@ export default defineSchema({
     }))),
   })
     .index('by_ownerId_ownerType', ['ownerId', 'ownerType'])
+    .index('by_ownerId_status', ['ownerId', 'status'])
     .index('by_status', ['status'])
     .index('by_status_createdAt', ['status', 'createdAt'])
     .index('by_agentId', ['agentId']),

@@ -469,14 +469,22 @@ const CASCADE_BATCH_SIZE = 50
 export const findActiveBookingsForOwner = internalQuery({
   args: { userSlug: v.string() },
   handler: async (ctx, { userSlug }): Promise<Array<{ bookingId: Id<'bookings'> }>> => {
-    const bookings = await ctx.db
-      .query('bookings')
-      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', userSlug))
-      .take(CASCADE_BATCH_SIZE + 1)
+    const [drafts, upcoming] = await Promise.all([
+      ctx.db
+        .query('bookings')
+        .withIndex('by_ownerId_status', (q) =>
+          q.eq('ownerId', userSlug).eq('status', BOOKING_STATUS.Draft),
+        )
+        .take(CASCADE_BATCH_SIZE + 1),
+      ctx.db
+        .query('bookings')
+        .withIndex('by_ownerId_status', (q) =>
+          q.eq('ownerId', userSlug).eq('status', BOOKING_STATUS.Upcoming),
+        )
+        .take(CASCADE_BATCH_SIZE + 1),
+    ])
 
-    return bookings
-      .filter((b) => b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming)
-      .map((b) => ({ bookingId: b._id }))
+    return [...drafts, ...upcoming].map((b) => ({ bookingId: b._id }))
   },
 })
 
