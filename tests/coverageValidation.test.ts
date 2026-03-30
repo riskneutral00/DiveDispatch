@@ -196,4 +196,111 @@ describe('checkPreferenceCoverage', () => {
     // Boat still satisfies venue (hasBoat check), but compressor not resolved
     expect(result.missing).toContain('compressor')
   })
+
+  // ── Non-confined Pool ───────────────────────────────────────────
+
+  it('non-confined Pool does not satisfy confinedWater', () => {
+    const result = checkPreferenceCoverage(
+      fullCoverage({
+        preferredVenueSlugs: ['pool-1'],
+        venueCapabilities: {
+          'pool-1': { venueType: 'Pool', confinedCapable: false, hasCompressor: false },
+        },
+      })
+    )
+    expect(result.missing).toContain('confinedWater')
+  })
+
+  // ── DiveSite satisfies openWater only ───────────────────────────
+
+  it('non-Pool venue (DiveSite) satisfies openWater but not confinedWater', () => {
+    const result = checkPreferenceCoverage(
+      fullCoverage({
+        preferredVenueSlugs: ['site-1'],
+        venueCapabilities: {
+          'site-1': { venueType: 'DiveSite', confinedCapable: false, hasCompressor: false },
+        },
+      })
+    )
+    expect(result.missing).not.toContain('openWater')
+    expect(result.missing).toContain('confinedWater')
+  })
+
+  // ── Combined partial scenarios ──────────────────────────────────
+
+  it('instructor + EM only leaves venues and compressor missing', () => {
+    const result = checkPreferenceCoverage({
+      preferredInstructorSlugs: ['inst-1'],
+      preferredEquipmentSlugs: ['em-1'],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: [],
+      preferredCompressorSlugs: [],
+      venueCapabilities: {},
+      boatCapabilities: {},
+    })
+    expect(result.isComplete).toBe(false)
+    expect(result.missing).toEqual(['confinedWater', 'openWater', 'compressor'])
+  })
+
+  it('everything except compressor is incomplete', () => {
+    const result = checkPreferenceCoverage({
+      preferredInstructorSlugs: ['inst-1'],
+      preferredEquipmentSlugs: ['em-1'],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: ['boat-1'],
+      preferredCompressorSlugs: [],
+      venueCapabilities: {},
+      boatCapabilities: { 'boat-1': { hasCompressor: false } },
+    })
+    expect(result.isComplete).toBe(false)
+    expect(result.missing).toEqual(['compressor'])
+  })
+
+  it('multiple boats — one with compressor is enough', () => {
+    const result = checkPreferenceCoverage({
+      preferredInstructorSlugs: ['inst-1'],
+      preferredEquipmentSlugs: ['em-1'],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: ['boat-1', 'boat-2'],
+      preferredCompressorSlugs: [],
+      venueCapabilities: {},
+      boatCapabilities: {
+        'boat-1': { hasCompressor: false },
+        'boat-2': { hasCompressor: true },
+      },
+    })
+    expect(result.isComplete).toBe(true)
+    expect(result.missing).toEqual([])
+  })
+
+  it('multiple venues with combined capabilities satisfy all venue needs', () => {
+    const result = checkPreferenceCoverage({
+      preferredInstructorSlugs: ['inst-1'],
+      preferredEquipmentSlugs: ['em-1'],
+      preferredVenueSlugs: ['pool-1', 'site-1'],
+      preferredBoatSlugs: [],
+      preferredCompressorSlugs: ['comp-1'],
+      venueCapabilities: {
+        'pool-1': { venueType: 'Pool', confinedCapable: true, hasCompressor: false },
+        'site-1': { venueType: 'DiveSite', confinedCapable: false, hasCompressor: false },
+      },
+      boatCapabilities: {},
+    })
+    expect(result.isComplete).toBe(true)
+  })
+
+  // ── Standalone compressor slug ──────────────────────────────────
+
+  it('standalone compressor slug satisfies compressor', () => {
+    const result = checkPreferenceCoverage({
+      preferredInstructorSlugs: [],
+      preferredEquipmentSlugs: [],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: [],
+      preferredCompressorSlugs: ['comp-1'],
+      venueCapabilities: {},
+      boatCapabilities: {},
+    })
+    expect(result.missing).not.toContain('compressor')
+  })
 })

@@ -9,6 +9,7 @@ import {
   AQUALUNG_BCDS,
   MARES_WETSUITS,
   MARES_BCDS,
+  type GearSizingEntry,
 } from '../convex/shared/gearSizing'
 
 describe('GEAR_TYPES', () => {
@@ -92,6 +93,78 @@ describe('ALL_GEAR_SIZING', () => {
     }
     for (const [, sizes] of Object.entries(grouped)) {
       expect(new Set(sizes).size).toBe(sizes.length)
+    }
+  })
+})
+
+// ── Per-manufacturer array structural checks ───────────────────────────────────
+
+const manufacturerArrays: [string, GearSizingEntry[]][] = [
+  ['ScubaPro wetsuits', SCUBAPRO_WETSUITS],
+  ['ScubaPro BCDs', SCUBAPRO_BCDS],
+  ['Aqua Lung wetsuits', AQUALUNG_WETSUITS],
+  ['Aqua Lung BCDs', AQUALUNG_BCDS],
+  ['Mares wetsuits', MARES_WETSUITS],
+  ['Mares BCDs', MARES_BCDS],
+]
+
+describe.each(manufacturerArrays)('%s', (_name, entries) => {
+  it('has at least 3 size entries', () => {
+    expect(entries.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('entries are ordered by ascending minHeight', () => {
+    for (let i = 1; i < entries.length; i++) {
+      expect(entries[i].minHeight).toBeGreaterThanOrEqual(entries[i - 1].minHeight)
+    }
+  })
+
+  it('height ranges overlap (no gaps in coverage)', () => {
+    for (let i = 1; i < entries.length; i++) {
+      expect(
+        entries[i].minHeight,
+        `gap between ${entries[i - 1].size} and ${entries[i].size}`,
+      ).toBeLessThanOrEqual(entries[i - 1].maxHeight)
+    }
+  })
+})
+
+// ── Physical plausibility ──────────────────────────────────────────────────────
+
+describe('physical plausibility', () => {
+  it('no wetsuit starts below 140cm height', () => {
+    const wetsuits = ALL_GEAR_SIZING.filter((e) => e.gearType === 'wetsuit')
+    for (const e of wetsuits) {
+      expect(e.minHeight, `${e.manufacturer} ${e.size}`).toBeGreaterThanOrEqual(140)
+    }
+  })
+
+  it('no BCD starts below 140cm height', () => {
+    const bcds = ALL_GEAR_SIZING.filter((e) => e.gearType === 'bcd')
+    for (const e of bcds) {
+      expect(e.minHeight, `${e.manufacturer} ${e.size}`).toBeGreaterThanOrEqual(140)
+    }
+  })
+
+  it('no entry has minWeight below 30kg (adult sizing)', () => {
+    for (const e of ALL_GEAR_SIZING) {
+      expect(e.minWeight, `${e.manufacturer} ${e.size}`).toBeGreaterThanOrEqual(30)
+    }
+  })
+
+  it('largest size covers at least 190cm', () => {
+    for (const m of MANUFACTURERS) {
+      const wetsuits = ALL_GEAR_SIZING.filter((e) => e.manufacturer === m && e.gearType === 'wetsuit')
+      const maxMaxHeight = Math.max(...wetsuits.map((e) => e.maxHeight))
+      expect(maxMaxHeight, `${m} wetsuits`).toBeGreaterThanOrEqual(190)
+    }
+  })
+
+  it('smallest size starts at or below 160cm', () => {
+    for (const m of MANUFACTURERS) {
+      const wetsuits = ALL_GEAR_SIZING.filter((e) => e.manufacturer === m && e.gearType === 'wetsuit')
+      const minMinHeight = Math.min(...wetsuits.map((e) => e.minHeight))
+      expect(minMinHeight, `${m} wetsuits`).toBeLessThanOrEqual(160)
     }
   })
 })

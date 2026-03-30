@@ -4,6 +4,8 @@ import {
   getCoursesForAgency,
   courseLabel,
   COURSE_CATALOG,
+  COURSE_CODES,
+  COURSE_DISPLAY_LABELS,
   COMBO_COURSES,
 } from '../src/lib/constants/course-catalog'
 
@@ -67,6 +69,12 @@ describe('courseLabel', () => {
   it('returns code itself for unknown code', () => {
     expect(courseLabel('UNKNOWN_CODE')).toBe('UNKNOWN_CODE')
   })
+
+  it('has a label for every COURSE_CODE', () => {
+    for (const code of COURSE_CODES) {
+      expect(COURSE_DISPLAY_LABELS[code]).toBeTruthy()
+    }
+  })
 })
 
 describe('COURSE_CATALOG', () => {
@@ -88,6 +96,26 @@ describe('COURSE_CATALOG', () => {
   it('all entries have positive maxDiversPerInstructor', () => {
     for (const entry of COURSE_CATALOG) {
       expect(entry.maxDiversPerInstructor).toBeGreaterThan(0)
+    }
+  })
+
+  it('prerequisites reference valid course codes', () => {
+    const validCodes = new Set(COURSE_CODES)
+    for (const entry of COURSE_CATALOG) {
+      for (const prereq of entry.prerequisites) {
+        expect(validCodes.has(prereq)).toBe(true)
+      }
+    }
+  })
+
+  it('no circular prerequisites at depth 1', () => {
+    for (const entry of COURSE_CATALOG) {
+      for (const prereq of entry.prerequisites) {
+        const prereqEntry = getCourseByCode(prereq)
+        if (prereqEntry) {
+          expect(prereqEntry.prerequisites).not.toContain(entry.code)
+        }
+      }
     }
   })
 })
