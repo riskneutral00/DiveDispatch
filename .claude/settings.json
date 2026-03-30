@@ -45,6 +45,12 @@
             "command": "bash .claude/hooks/test-colocation-check.sh",
             "timeout": 5,
             "statusMessage": "Checking test co-location…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/dependency-audit.sh",
+            "timeout": 15,
+            "statusMessage": "Auditing npm dependencies…"
           }
         ]
       },

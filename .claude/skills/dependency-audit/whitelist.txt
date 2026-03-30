@@ -1,0 +1,46 @@
+# Dependency audit whitelist — packages listed here skip registry verification.
+# One package per line. Lines starting with # are comments.
+# Keep in sync with package.json. Add new packages here after manual verification.
+
+# === dependencies ===
+@clerk/nextjs
+@dnd-kit/abstract
+@dnd-kit/dom
+@dnd-kit/react
+@dnd-kit/state
+@serwist/next
+@vis.gl/react-google-maps
+convex
+libphonenumber-js
+lucide-react
+next
+next-intl
+react
+react-dom
+serwist
+sonner
+use-places-autocomplete
+zod
+
+# === devDependencies ===
+@axe-core/playwright
+@axe-core/react
+@playwright/test
+@tailwindcss/postcss
+@testing-library/jest-dom
+@testing-library/react
+@testing-library/user-event
+@types/node
+@types/react
+@types/react-dom
+@vitest/coverage-v8
+axe-core
+convex-test
+eslint
+eslint-config-next
+fake-indexeddb
+jsdom
+tailwindcss
+tsx
+typescript
+vitest
