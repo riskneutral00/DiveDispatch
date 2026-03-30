@@ -35,15 +35,27 @@ ls .car/merged/*.json 2>/dev/null
 
 If no files → `touch .car/heartbeat-backseat`, sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
 
-**Heartbeat:** Also `touch .car/heartbeat-backseat` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>120s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
+**Heartbeat:** Also `touch .car/heartbeat-backseat` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>60s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
 
-If files found → process each one:
+**Recovery on restart:** Before entering the polling loop, check for orphaned `.processing` events:
+```bash
+ls .car/merged/*.json.processing 2>/dev/null
+```
+If found: the previous Backseat instance died mid-review. Rename back to `.json` (remove `.processing` suffix) to retry the review from scratch.
 
-**Read event:** Parse the JSON file to get ticket ID, SHA, changed files, size, category.
+If files found → process each one **sequentially** (one at a time, never batch):
+
+**Claim event (write-ahead):** Before doing any review work, rename the event to mark it in-flight:
+```bash
+mv .car/merged/DD-{id}.json .car/merged/DD-{id}.json.processing
+```
+This prevents duplicate processing if Backseat restarts mid-review.
+
+**Read event:** Parse the `.processing` JSON file to get ticket ID, SHA, changed files, size, category.
 
 **Classify:** Invoke Skill("diff-classify") with args `{commit_sha}` → review plan (skill→file mapping).
 
-**Review:** Dispatch review skills **in parallel** via Agent tool. Each review runs in a fresh agent with `mode: "bypassPermissions"`:
+**Review:** Dispatch review skills **in parallel** via Agent tool. Each review runs in a fresh agent with `mode: "bypassPermissions"`. **Hard timeout per skill** — S=5min, M=10min, L=15min. If a review agent doesn't return within its timeout, treat it as a NO-GO with `"timeout": true` and move on. Never wait indefinitely.
 
 ```
 Agent(
@@ -87,14 +99,17 @@ cat > .car/fixes/DD-{new_id}.json << 'EVENTEOF'
 EVENTEOF
 ```
 
-**Move processed event:**
+**Move processed event** (the `.processing` file, not the original):
 ```bash
-mv .car/merged/DD-{id}.json .car/processed/merged-DD-{id}.json
+mv .car/merged/DD-{id}.json.processing .car/processed/merged-DD-{id}.json
+touch .car/heartbeat-backseat
 ```
 
 Print: `DD-{id}: reviewed | {verdict} | {C}C {H}H {M}M {L}L | event written to .car/reviewed/`
 
 **Advance:** Set `BASELINE_SHA` to latest reviewed commit. `review_count++`.
+
+**CRITICAL: Flush per-event.** Steps 1-4 (claim → review → write reviewed event → move to processed) must complete for EACH event before starting the next. Never accumulate results across events. If context runs out after this point, zero work is lost — the reviewed event and fix tickets are already on disk.
 
 **Batch cap:** If `review_count >= BATCH_CAP` → Skill("backseat-debrief"), then print `BACKSEAT-RESTART | batch cap reached | exiting for fresh context`, write sentinel file `echo "batch_cap" > .car/exit-backseat`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window. Do not continue the loop.
 

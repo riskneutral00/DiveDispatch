@@ -53,7 +53,7 @@ while true; do
     # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
     if [ -f .car/heartbeat-driver ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-driver) ))
-      if [ "$HB_AGE" -gt 120 ]; then
+      if [ "$HB_AGE" -gt 60 ]; then
         echo "[$(date '+%H:%M:%S')] Driver stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
         kill $CLAUDE_PID 2>/dev/null
         wait $CLAUDE_PID 2>/dev/null
@@ -94,7 +94,7 @@ while true; do
     # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
     if [ -f .car/heartbeat-backseat ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-backseat) ))
-      if [ "$HB_AGE" -gt 120 ]; then
+      if [ "$HB_AGE" -gt 60 ]; then
         echo "[$(date '+%H:%M:%S')] Backseat stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
         kill $CLAUDE_PID 2>/dev/null
         wait $CLAUDE_PID 2>/dev/null
@@ -135,7 +135,7 @@ while true; do
     # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
     if [ -f .car/heartbeat-patrol ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-patrol) ))
-      if [ "$HB_AGE" -gt 120 ]; then
+      if [ "$HB_AGE" -gt 60 ]; then
         echo "[$(date '+%H:%M:%S')] Patrol stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
         kill $CLAUDE_PID 2>/dev/null
         wait $CLAUDE_PID 2>/dev/null
@@ -182,18 +182,32 @@ tmux set-option -t "$SESSION" status-left-length 30
 tmux set-option -t "$SESSION" status-right-length 80
 tmux set-option -t "$SESSION" status-left " #[bold]CAR#[default] "
 tmux set-option -t "$SESSION" status-right "#(cd '$DIR' && python3 -c \"
-import json, os, glob
-m=len(glob.glob('.car/merged/*.json'))
-r=len(glob.glob('.car/reviewed/*.json'))
+import json, os, glob, time
+m=glob.glob('.car/merged/*.json');mp=glob.glob('.car/merged/*.json.processing')
+r=glob.glob('.car/reviewed/*.json');rp=glob.glob('.car/reviewed/*.json.processing')
 p=len(glob.glob('.car/processed/*'))
-pending=m+r
-try:
- v=json.load(open('.patrol-ran'))['verdict']
+pending=len(m)+len(r)+len(mp)+len(rp)
+# Agent heartbeats
+def hb(name):
+  f=f'.car/heartbeat-{name}'
+  if not os.path.exists(f): return '?'
+  age=int(time.time()-os.path.getmtime(f))
+  return '✓' if age<60 else f'✗{age}s'
+agents=f'D{hb(\"driver\")} B{hb(\"backseat\")} P{hb(\"patrol\")}'
+# Stall detection
+stall=''
+for f in m+r:
+  age=int(time.time()-os.path.getmtime(f))
+  if age>600: stall=f'STALL:{os.path.basename(f)} {age//60}m'
+for f in mp+rp:
+  stall=f'IN-FLIGHT:{os.path.basename(f).replace(\".processing\",\"\")}'
+try: v=json.load(open('.patrol-ran'))['verdict']
 except: v=None
-if pending>0: print(f'⏳ {pending} pending ({m}→BS {r}→PT) | {p} done')
-elif v=='CLEAN': print('✅ CLEAN — ready for /vault')
-elif v=='BLOCKED': print('❌ BLOCKED — run /gate')
-else: print(f'⏳ waiting | {p} done')
+if stall: print(f'⚠ {stall} | {agents} | {p} done')
+elif pending>0: print(f'⏳ {pending} pending | {agents} | {p} done')
+elif v=='CLEAN': print(f'✅ CLEAN | {agents} | {p} done')
+elif v=='BLOCKED': print(f'❌ BLOCKED | {agents} | {p} done')
+else: print(f'⏳ idle | {agents} | {p} done')
 \" 2>/dev/null || echo '⏳ starting...') | %H:%M "
 
 # Start dev server if not already running
@@ -220,8 +234,8 @@ tmux send-keys -t "$SESSION:Patrol" "bash .car/start-patrol.sh" Enter
 # Launch researcher (self-directed — no setup required)
 tmux send-keys -t "$SESSION:Research" "bash scripts/research.sh" Enter
 
-# Run watchdog inside the Shell window (doesn't block anything)
-tmux send-keys -t "$SESSION:Shell" "bash scripts/memory-watchdog.sh .car" Enter
+# Run pipeline health monitor inside the Shell window (replaces memory-watchdog)
+tmux send-keys -t "$SESSION:Shell" "bash scripts/pipeline-health.sh" Enter
 
 # Start on Driver window
 tmux select-window -t "$SESSION:Driver"

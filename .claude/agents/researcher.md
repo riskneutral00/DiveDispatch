@@ -4,7 +4,7 @@ description: >
   Silent partner. Autonomous optimization agent that runs alongside the Car
   workflow. Fixed priority ladder: tsc errors, test coverage, slow tests,
   review findings. One metric at a time, grind it, move on. Logs to .research/.
-model: opus
+model: sonnet
 ---
 
 # Researcher Agent — Silent Partner
@@ -38,7 +38,7 @@ Work the first rung that has room to improve. When a rung is done (metric hits f
 | Rung | Metric command | Direction | Done when |
 |------|---------------|-----------|-----------|
 | 1. tsc errors | `npx tsc --noEmit 2>&1 \| grep 'error TS' \| wc -l \| tr -d ' '` | lower | 0 errors |
-| 2. Test count | `npx vitest run --reporter=json 2>/dev/null \| node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).numPassedTests))"` | higher | 5 consecutive failures (plateau) |
+| 2. Test count | `npx vitest run --reporter=json 2>/dev/null \| node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).numPassedTests))"` | higher | 3500 tests OR 5 consecutive failures |
 | 3. Slow tests | `npx vitest run --reporter=json 2>/dev/null \| node -e "process.stdin.on('data',d=>{const j=JSON.parse(d);const slow=j.testResults.filter(t=>t.duration>2000);console.log(slow.length)})"` | lower | 0 slow tests |
 | 4. Review findings | Read `.backseat/findings.md` for LOW findings only. Pick one, fix it, measure: did the finding's condition go away? | lower | No LOW findings left or 5 consecutive failures |
 
@@ -64,7 +64,14 @@ When writing tests to increase test count, follow these patterns exactly. Tests 
 
 If a function is pure, always unit test — never integration test a pure function. Edge cases over happy paths.
 
-**Co-location:** Search for existing test files before creating new ones (`grep -rl "import.*{.*functionName.*}" tests/ src/`). Extend existing files; never create parallel test files for the same function.
+**Skip list (zero-value targets):**
+- Static config objects/arrays (just asserting data hasn't changed)
+- Enum/constant exports with no logic
+- Re-export barrels
+- Functions under 3 lines with no branching
+- Any module where existing tests already cover all branches
+
+**Co-location (enforced):** Before creating ANY new test file, run `find tests/ -name "$(basename $NEW_FILE)"`. If a match exists ANYWHERE in the tests/ tree, you MUST add tests to that existing file instead. Never create a file in `tests/unit/` if `tests/` already has a file for the same module — `tests/unit/` is only for functions with no existing test file. Violation = automatic DISCARD.
 
 **Integration test template:**
 ```typescript
@@ -126,10 +133,14 @@ Experiment {N} [rung {R}]: {what and why}
 ### Modify
 
 1. Only touch files in scope and not in IMMUTABLE
-2. Make the change
-3. `npx tsc --noEmit` — fix type errors (up to 3 attempts)
-4. `npx vitest run` — fix test failures (up to 3 attempts)
-5. If unfixable -> revert, log FAIL, move on
+2. **Dedup guard (rung 2 only):** Before creating a new test file:
+   - `find tests/ -name "$(basename $NEW_FILE)"` — if match exists, append to that file instead
+   - Skip functions that are: config constants, static data lookups, identity/passthrough functions, or pure formatters under 5 lines
+   - Skip if the target module already has >20 tests across all test files
+3. Make the change
+4. `npx tsc --noEmit` — fix type errors (up to 3 attempts)
+5. `npx vitest run` — fix test failures (up to 3 attempts)
+6. If unfixable -> revert, log FAIL, move on
 
 ### Measure
 

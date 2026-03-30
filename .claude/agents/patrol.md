@@ -32,11 +32,22 @@ ls .car/reviewed/*.json 2>/dev/null
 
 If no files → `touch .car/heartbeat-patrol`, sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
 
-**Heartbeat:** Also `touch .car/heartbeat-patrol` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>120s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
+**Heartbeat:** Also `touch .car/heartbeat-patrol` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>60s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
 
-If files found → process each one:
+**Recovery on restart:** Before entering the polling loop, check for orphaned `.processing` events:
+```bash
+ls .car/reviewed/*.json.processing 2>/dev/null
+```
+If found: the previous Patrol instance died mid-gate. Rename back to `.json` (remove `.processing` suffix) to retry.
 
-**Read event:** Parse the JSON to get ticket ID, verdict, findings, details.
+If files found → process each one **sequentially**:
+
+**Claim event (write-ahead):** Before doing any gate work, rename the event:
+```bash
+mv .car/reviewed/DD-{id}.json .car/reviewed/DD-{id}.json.processing
+```
+
+**Read event:** Parse the `.processing` JSON to get ticket ID, verdict, findings, details.
 
 **Post-Merge Validation:** Validate the cumulative state of main since your last run:
 
@@ -76,9 +87,10 @@ Verdict logic:
   ```
   If a matching P0 ticket exists from Driver → skip escalation (Driver already stopped and reported it). Only escalate via Skill("escalate") with `source: patrol` if no existing blocker ticket covers the failure.
 
-**Move processed event:**
+**Move processed event** (the `.processing` file):
 ```bash
-mv .car/reviewed/DD-{id}.json .car/processed/reviewed-DD-{id}.json
+mv .car/reviewed/DD-{id}.json.processing .car/processed/reviewed-DD-{id}.json
+touch .car/heartbeat-patrol
 ```
 
 Print: `DD-{id}: patrol {verdict} | tsc:{pass/fail} tests:{pass/fail} invariants:{clean/violation}`

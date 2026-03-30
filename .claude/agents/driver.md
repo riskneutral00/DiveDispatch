@@ -28,7 +28,13 @@ Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes d
 
 `batch_count = 0`
 
-**Heartbeat:** At the start of every loop iteration, `touch .car/heartbeat-driver`. The wrapper script monitors this — if stale >120s, it kills and restarts your process automatically.
+**Heartbeat:** `touch .car/heartbeat-driver` at the start of every loop iteration AND before/after each major operation (implement, review, merge). The wrapper script monitors this — if stale >60s, it kills and restarts your process automatically.
+
+**Recovery on restart:** Before entering the main loop, check for orphaned `.processing` events:
+```bash
+ls .car/merged/*.json.processing 2>/dev/null
+```
+If found: the previous Driver instance died mid-work. Read the event, check `git log --oneline -1` to see if the merge actually landed. If yes → move to `.car/processed/`. If no → rename back to `.json` (remove `.processing` suffix) so Backseat can see it.
 
 **Pick:** Before invoking ticket-pick, check for backseat fix tickets:
 
@@ -116,7 +122,7 @@ Timeout per size (S=5min, M=15min, L=30min).
 - Exit 1: retry up to MAX_MERGE_ATTEMPTS (rebase, then fix agent). On exhaustion: mark blocked, keep worktree.
 - Exit 2: test failure post-merge (script reverts). Mark blocked, keep worktree.
 
-**After successful merge — write event file:**
+**After successful merge — write event file and touch heartbeat:**
 
 ```bash
 # Write merged event for Backseat to pick up
@@ -130,6 +136,7 @@ cat > .car/merged/DD-{id}.json << 'EVENTEOF'
   "timestamp": "{ISO timestamp}"
 }
 EVENTEOF
+touch .car/heartbeat-driver
 ```
 
 Print: `DD-{id}: merged to main | event written to .car/merged/`
