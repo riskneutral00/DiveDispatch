@@ -571,19 +571,24 @@ export const cascadeUserDeletion = internalAction({
     const batch = activeBookings.slice(0, CASCADE_BATCH_SIZE)
     const more = activeBookings.length > CASCADE_BATCH_SIZE
 
-    let cancelled = 0
+    const results = await Promise.allSettled(
+      batch.map(({ bookingId }) =>
+        ctx
+          .runMutation(internal.users.cancelOneBookingForDeletedUser, {
+            bookingId,
+          })
+          .then(() => ({ bookingId })),
+      ),
+    )
+
     const errors: Array<{ bookingId: string; errorCode: string }> = []
 
-    for (const { bookingId } of batch) {
-      try {
-        await ctx.runMutation(
-          internal.users.cancelOneBookingForDeletedUser,
-          { bookingId },
-        )
-        cancelled++
-      } catch (err) {
-        const errorCode = extractErrorCode(err)
-        if (!ISOLATABLE_ERRORS.has(errorCode)) throw err
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i]
+      if (result.status === 'rejected') {
+        const errorCode = extractErrorCode(result.reason)
+        if (!ISOLATABLE_ERRORS.has(errorCode)) throw result.reason
+        const { bookingId } = batch[i]
         console.error('cascadeUserDeletion: failed to cancel booking', {
           bookingId,
           errorCode,
