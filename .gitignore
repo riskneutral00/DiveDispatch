@@ -13,6 +13,7 @@
 .patrol-ran
 .patrol-observations.md
 .vitest-last-pass
+.last-summary-ts
 
 # dependencies
 /node_modules

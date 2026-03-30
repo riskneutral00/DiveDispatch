@@ -7,6 +7,8 @@ import { checkRateLimit } from './lib/rateLimiter'
 import { validateOrThrow } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
 import { safeDecryptMedical } from './lib/crypto'
+import { notify } from './notifications'
+import { NOTIFICATION_TYPE } from './shared/statuses'
 
 // Inline medical schema — mirrors medicalAnswersSchema from src/lib/validation/schemas.ts.
 // Defined inline to avoid importing across the convex/ → src/ boundary.
@@ -165,6 +167,14 @@ export const submitPortal = mutation({
 
     // Invalidate the token — prevents re-submission via the same link
     await ctx.db.patch(link._id, { usedAt: now })
+
+    // Notify the booking owner that the customer completed the portal
+    await notify(ctx, {
+      userId: booking.ownerId,
+      type: NOTIFICATION_TYPE.PortalComplete,
+      bookingId: link.bookingId,
+      message: `${link.customerName} has completed the customer portal.`,
+    })
 
     // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
     await tryAutoAdvance(ctx, link.bookingId)

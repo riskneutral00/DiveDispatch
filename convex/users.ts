@@ -484,7 +484,11 @@ export const findActiveBookingsForOwner = internalQuery({
         .take(CASCADE_BATCH_SIZE + 1),
     ])
 
-    return [...drafts, ...upcoming].map((b) => ({ bookingId: b._id }))
+    // Limit to CASCADE_BATCH_SIZE + 1 so the action's sentinel check
+    // fires only when total active bookings truly exceed the batch size.
+    return [...drafts, ...upcoming]
+      .slice(0, CASCADE_BATCH_SIZE + 1)
+      .map((b) => ({ bookingId: b._id }))
   },
 })
 
@@ -532,7 +536,7 @@ export const cleanupDeletedUserData = internalMutation({
   handler: async (ctx, { userId, userSlug }): Promise<void> => {
     // Fetch one batch from each table (take CASCADE_BATCH_SIZE + 1 to detect overflow)
     const PROBE = CASCADE_BATCH_SIZE + 1
-    const [roles, unreadNotifs, prefs, blocked, resources] = await Promise.all([
+    const [roles, unreadNotifs, prefs, blocked, resources, inventory] = await Promise.all([
       ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).take(PROBE),
       ctx.db
         .query('notifications')
@@ -542,6 +546,7 @@ export const cleanupDeletedUserData = internalMutation({
       ctx.db.query('stakeholderPreferences').withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userSlug)).take(PROBE),
       ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).take(PROBE),
       ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).take(PROBE),
+      ctx.db.query('inventoryUnits').withIndex('by_ownerId_resourceType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
     ])
 
     // Determine whether any table has more rows beyond this batch
@@ -550,7 +555,8 @@ export const cleanupDeletedUserData = internalMutation({
       unreadNotifs.length > CASCADE_BATCH_SIZE ||
       prefs.length > CASCADE_BATCH_SIZE ||
       blocked.length > CASCADE_BATCH_SIZE ||
-      resources.length > CASCADE_BATCH_SIZE
+      resources.length > CASCADE_BATCH_SIZE ||
+      inventory.length > CASCADE_BATCH_SIZE
 
     // Slice to the actual batch size before processing
     const rolesBatch = roles.slice(0, CASCADE_BATCH_SIZE)
@@ -558,6 +564,7 @@ export const cleanupDeletedUserData = internalMutation({
     const prefsBatch = prefs.slice(0, CASCADE_BATCH_SIZE)
     const blockedBatch = blocked.slice(0, CASCADE_BATCH_SIZE)
     const resourcesBatch = resources.slice(0, CASCADE_BATCH_SIZE)
+    const inventoryBatch = inventory.slice(0, CASCADE_BATCH_SIZE)
 
     const now = Date.now()
 
@@ -567,6 +574,7 @@ export const cleanupDeletedUserData = internalMutation({
       batchDelete(ctx, prefsBatch),
       batchDelete(ctx, blockedBatch),
       batchDelete(ctx, resourcesBatch),
+      batchDelete(ctx, inventoryBatch),
     ])
 
     if (hasMore) {
