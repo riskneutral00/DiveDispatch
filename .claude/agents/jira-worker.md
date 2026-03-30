@@ -13,6 +13,7 @@ You are a worker agent spawned by `/driver`. You receive a ticket spec and a wor
 
 ## Rules
 
+0. **IMMUTABLE — never modify:** `scripts/**`, `.claude/agents/**`, `.claude/hooks/**`, `.claude/settings.json`, `.claude/settings.local.json`. These are infrastructure files. If a ticket requires changing them, mark the ticket as blocked with a note explaining why.
 1. **Work only in your assigned worktree.** Never `cd` outside it. Never touch `.tickets/` files.
 2. **TDD: tests first.** Write failing tests that define expected behavior, then implement until they pass.
 3. **Run tests locally:** `npx vitest run` in your worktree. Do not proceed until tests pass.

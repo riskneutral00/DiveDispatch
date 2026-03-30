@@ -38,9 +38,32 @@ Work the first rung that has room to improve. When a rung is done (metric hits f
 | Rung | Metric command | Direction | Done when |
 |------|---------------|-----------|-----------|
 | 1. tsc errors | `npx tsc --noEmit 2>&1 \| grep 'error TS' \| wc -l \| tr -d ' '` | lower | 0 errors |
-| 2. Test count | `npx vitest run --reporter=json 2>/dev/null \| node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).numPassedTests))"` | higher | 3500 tests OR 5 consecutive failures |
+| 2. Quality tests | See "Rung 2 Metric" below | higher | 3500 quality tests OR 5 consecutive failures |
 | 3. Slow tests | `npx vitest run --reporter=json 2>/dev/null \| node -e "process.stdin.on('data',d=>{const j=JSON.parse(d);const slow=j.testResults.filter(t=>t.duration>2000);console.log(slow.length)})"` | lower | 0 slow tests |
 | 4. Review findings | Read `.backseat/findings.md` for LOW findings only. Pick one, fix it, measure: did the finding's condition go away? | lower | No LOW findings left or 5 consecutive failures |
+
+### Rung 2 Metric — Quality-Weighted Test Count
+
+Raw `numPassedTests` is a bad metric — it rewards garbage. The agent produced 100 tests that passed but tested nothing meaningful. The metric must include quality.
+
+**Metric command:**
+```bash
+npx vitest run --reporter=json 2>/dev/null | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+const dominated = ['toBeDefined','toBeTruthy','toBeFalsy'];
+let quality=0;
+for(const r of d.testResults){
+  if(r.status!=='passed') continue;
+  const src=require('fs').readFileSync(r.name,'utf8');
+  const total=src.match(/\.(toBe|toEqual|toMatch|toThrow|toContain|toHaveLength|toBeDefined|toBeTruthy|toBeFalsy|toStrictEqual|toHaveBeenCalled|toHaveProperty|resolves|rejects)\(/g)||[];
+  const weak=src.match(/\.(toBeDefined|toBeTruthy|toBeFalsy)\(/g)||[];
+  if(total.length>0 && weak.length<total.length) quality+=r.assertionResults.filter(a=>a.status==='passed').length;
+}
+console.log(quality);
+"
+```
+
+This counts passing assertions only from test files that have at least one non-trivial assertion. Files where ALL assertions are `.toBeDefined()/.toBeTruthy()/.toBeFalsy()` score zero — they don't exist in the metric. The agent can only improve the score by writing tests that assert something meaningful.
 
 After exhausting rung 4, loop back to rung 1 (main has likely changed via Driver merges — rebase and re-measure).
 
@@ -204,7 +227,9 @@ Current rung: {name}
 - **Tests must pass.** Never commit broken tests.
 - **tsc must pass.** Never commit type errors.
 - **Log everything.** Every experiment gets a TSV row.
-- **Commit to research branch only.** Never main.
+- **Commit to research branch only.** Never main. (Enforced: `main-branch-guard.sh` hook blocks commits to main from autonomous agents.)
+- **Pre-commit hook enforces test quality.** The git pre-commit hook rejects: duplicate test files, `as any` casts, hardcoded dates, zero-value tests (only `.toBeDefined()` assertions), raw `ctx.db.insert` without fixtures. If your commit is rejected, fix the issue — don't bypass the hook.
+- **Merge requires validation.** Before any merge to main, `bash scripts/validate-merge.sh research/auto` must pass. It checks: duplicates, zero-value tests, banned patterns, tsc, test suite. Individual commits are preserved (no squash) — each good commit stays in history.
 - **Plain language.** Matt reads the log.
 - **Median of 3.** Reduces measurement noise.
 - **Stay quiet.** One line per experiment. Snapshots every 10.

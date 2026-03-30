@@ -47,6 +47,16 @@ Dispatch review skill(s) by category:
 
 Spawn a fresh agent (no author bias). On CRITICAL findings → attempt fix, re-test. If still CRITICAL → **NO-GO**. Otherwise → **GO** with advisory.
 
+## Branch Validation (all sizes, all categories)
+
+Before issuing GO, run the merge validator:
+
+```bash
+cd {worktree_path} && bash scripts/validate-merge.sh ticket/DD-{NNN}
+```
+
+If it exits non-zero → **NO-GO** with the validator output. This catches duplicate test files, zero-value tests, `as any` casts, and test suite failures that the worker may have introduced.
+
 ## Output
 
 Print `✓ DD-{NNN} review GO ({N} advisory)` or `⚠ DD-{NNN} review NO-GO — {N} CRITICAL findings`.

@@ -18,7 +18,10 @@ BATCH_CAP=4
 TIMEOUTS: S=5min, M=15min, L=30min
 MAX_MERGE_ATTEMPTS=3
 EVENT_DIR=.car
+IMMUTABLE=scripts/**, .claude/agents/**, .claude/hooks/**, .claude/settings.json, .claude/settings.local.json
 ```
+
+**IMMUTABLE files:** Never modify files matching the IMMUTABLE patterns — not in the main repo, not in worktrees. These are infrastructure files that control the Car workflow itself. Modifying them from inside the workflow is like a process rewriting its own init system. If an infrastructure change is needed, create a ticket for interactive implementation.
 
 ## Startup
 

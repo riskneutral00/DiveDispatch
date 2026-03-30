@@ -113,3 +113,4 @@ docs/LLM_HANDOFF.md
 
 # PreCompact context archive (local only — session-scoped, not for review)
 .claude/context-archive/
+.car/golden/
