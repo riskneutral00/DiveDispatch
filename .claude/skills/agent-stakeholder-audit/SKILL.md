@@ -24,11 +24,10 @@ If no role provided or invalid role, print valid options and stop.
 ```
 Agent(
   description: "Stakeholder audit: {role}",
-  subagent_type: "general-purpose",
-  prompt: "You are the Stakeholder Audit agent. Read .claude/agents/stakeholder-audit.md for your full instructions. The role to audit is: {role}. Follow the startup sequence, build the capability inventory, cross-reference tickets, then interview Matt one topic at a time.",
+  subagent_type: "stakeholder-audit",
+  prompt: "The role to audit is: {role}. Follow your startup sequence, build the capability inventory, cross-reference tickets, then interview Matt one topic at a time.",
   run_in_background: false,
-  mode: "auto",
-  model: "opus"
+  mode: "auto"
 )
 ```
 

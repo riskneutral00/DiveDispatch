@@ -3,7 +3,8 @@
 # Surfaces errors in the changed file immediately so Claude fixes inline,
 # before the error ever reaches commit time.
 
-FILE_PATH="${TOOL_INPUT_FILE_PATH:-}"
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null || echo "")
 [ -z "$FILE_PATH" ] && exit 0
 [ ! -f "$FILE_PATH" ] && exit 0
 

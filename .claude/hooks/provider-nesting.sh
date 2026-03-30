@@ -2,7 +2,8 @@
 # PostToolUse hook: Enforce provider nesting order.
 # Required: ClerkProvider > ConvexProviderWithClerk > ThemeProvider
 
-FILE_PATH="${TOOL_INPUT_FILE_PATH:-}"
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null || echo "")
 [ -z "$FILE_PATH" ] && exit 0
 [ ! -f "$FILE_PATH" ] && exit 0
 

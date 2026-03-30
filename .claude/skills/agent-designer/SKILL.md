@@ -16,8 +16,8 @@ user-invocable: true
 ```
 Agent(
   description: "Designer: interactive design intelligence",
-  subagent_type: "general-purpose",
-  prompt: "You are the Designer agent. Read .claude/agents/designer.md for your full instructions. Follow the startup sequence, then enter the interactive loop. Matt will describe what to design, build, or review.",
+  subagent_type: "designer",
+  prompt: "Follow your startup sequence, then enter the interactive loop. Matt will describe what to design, build, or review.",
   run_in_background: false,
   mode: "auto"
 )

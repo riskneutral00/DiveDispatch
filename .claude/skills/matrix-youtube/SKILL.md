@@ -280,7 +280,7 @@ This works because all prior videos' transcripts are already in the shared NLM n
 
 ## Phase 4: Project Analysis — 2 Parallel Agents
 
-Launch both simultaneously after Phase 3 completes.
+Launch both simultaneously with `model: "sonnet"` after Phase 3 completes.
 
 ### Agent 1: Technique Mapping
 

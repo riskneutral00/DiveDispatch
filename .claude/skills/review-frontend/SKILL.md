@@ -40,7 +40,7 @@ Build the frontend map:
 
 ## Phase 2: Audit (silent, 3 parallel Explore agents)
 
-Launch 3 Explore agents in a single message:
+Launch 3 Explore agents in a single message with `model: "sonnet"`:
 
 ### Agent 1: Architecture
 

@@ -3,7 +3,8 @@
 # Warns when await ctx.db.{get|delete|patch|replace|insert} appears inside
 # for/while loops. Lines with "// batch-exempt" are skipped.
 
-FILE_PATH="${TOOL_INPUT_FILE_PATH:-}"
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null || echo "")
 [ -z "$FILE_PATH" ] && exit 0
 [ ! -f "$FILE_PATH" ] && exit 0
 

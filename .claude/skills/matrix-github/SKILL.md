@@ -206,7 +206,7 @@ NLM ingest is library-building, not verdict-dependent. A KEEP_CURRENT repo gets 
 
 ## Phase 2: Deep Analysis — 3 Parallel Agents
 
-Launch all three simultaneously. Each agent reads from the clone at `/tmp/{OWNER}-{REPO}`.
+Launch all three simultaneously with `model: "sonnet"`. Each agent reads from the clone at `/tmp/{OWNER}-{REPO}`.
 
 ### Agent 1: Repo Architecture
 

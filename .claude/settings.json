@@ -121,6 +121,12 @@
             "command": "bash .claude/hooks/n-plus-one-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking for N+1 patterns…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/skeleton-stale-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking skeleton freshness…"
           }
         ]
       }

@@ -5,7 +5,7 @@ description: >
   against open tickets. Surfaces overlapping tickets one at a time. Each can be
   absorbed (merge uncovered criteria into plan), dismissed (delete ticket, your work
   is the new truth), closed (recent commits suggest already done), or skipped.
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, AskUserQuestion
 user-invocable: true
 ---
 

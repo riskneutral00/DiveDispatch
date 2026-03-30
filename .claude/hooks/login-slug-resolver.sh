@@ -2,7 +2,7 @@
 # UserPromptSubmit hook: resolves "log me into <business>" to the correct seed slug.
 # Lookup table from convex/seedData.ts — update if seed users change.
 
-read -r INPUT
+INPUT=$(cat)
 echo "$INPUT" | grep -qiE 'log me in.?to' || exit 0
 
 # Extract business name after "log me in(-)to" (stop at JSON quote boundary)

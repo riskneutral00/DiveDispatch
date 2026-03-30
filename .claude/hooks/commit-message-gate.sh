@@ -13,8 +13,9 @@ MSG=$(echo "$CMD" | sed -n 's/.*-m[[:space:]]*"\([^"]*\)".*/\1/p')
 [ -z "$MSG" ] && MSG=$(echo "$CMD" | sed -n "s/.*-m[[:space:]]*'\([^']*\)'.*/\1/p")
 
 # Try heredoc pattern: <<'EOF' ... EOF (take first line as subject)
+# Use sed instead of grep -P (PCRE not available on macOS BSD grep)
 if [ -z "$MSG" ]; then
-  MSG=$(echo "$INPUT" | grep -oP "<<'?EOF'?\s*\n\K[^\n]+" | head -1)
+  MSG=$(echo "$CMD" | sed -n "/<<'\\{0,1\\}EOF'\\{0,1\\}/{n;p;}" | head -1 | sed 's/^[[:space:]]*//')
 fi
 
 # --amend or other format without -m — skip

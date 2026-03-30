@@ -14,7 +14,7 @@ When this skill is invoked, execute all steps in order — no questions, no prea
 
 ## Step 1 — Snapshot (silent, parallel)
 
-Launch 3 Explore agents in parallel. Each returns a structured list of findings. Do not output anything yet.
+Launch 3 Explore agents in parallel with `model: "sonnet"`. Each returns a structured list of findings. Do not output anything yet.
 
 ### Agent 1: Schema & Backend
 

@@ -2,7 +2,8 @@
 # PostToolUse hook: Schema change pre-flight checklist
 # Non-blocking reminder when convex/schema.ts is modified
 
-FILE_PATH="${TOOL_INPUT_FILE_PATH:-}"
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null || echo "")
 [ -z "$FILE_PATH" ] && exit 0
 
 case "$FILE_PATH" in

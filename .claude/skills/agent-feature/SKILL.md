@@ -16,8 +16,8 @@ user-invocable: true
 ```
 Agent(
   description: "Feature: interactive spec builder",
-  subagent_type: "general-purpose",
-  prompt: "You are the Feature agent. Read .claude/agents/feature.md for your full instructions. Follow the startup sequence, then enter the interactive loop. Matt will describe features — interview him one question at a time, schema-first, and write specs to .tickets/.",
+  subagent_type: "feature",
+  prompt: "Follow your startup sequence, then enter the interactive loop. Matt will describe features — interview him one question at a time, schema-first, and write specs to .tickets/.",
   run_in_background: false,
   mode: "auto"
 )
