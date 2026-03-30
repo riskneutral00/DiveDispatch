@@ -113,6 +113,9 @@ describe('saveEquipmentData', () => {
 
     await t.mutation(api.portalDraft.saveEquipmentData, {
       token,
+      heightCm: 175,
+      weightKg: 70,
+      shoeSize: 42,
       rentalChecklist: checklist,
     })
 

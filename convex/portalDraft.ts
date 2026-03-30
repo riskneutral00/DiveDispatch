@@ -1,4 +1,4 @@
-import { v } from 'convex/values'
+import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { DbCtx } from './lib/auth'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
@@ -6,6 +6,7 @@ import { sanitizeString, sanitizeFields, PORTAL_WAIVER_FIELDS, PORTAL_EQUIPMENT_
 import { checkRateLimit } from './lib/rateLimiter'
 import { safeDecryptMedical } from './lib/crypto'
 import { rentalChecklistValidator } from './lib/validators'
+import { ErrorCode } from './lib/errorCodes'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,40 @@ export const saveEquipmentData = mutation({
     await checkRateLimit(ctx, 'saveEquipmentData', args.token)
     const { profile } = await resolvePortalToken(ctx, args.token)
     const sanitized = sanitizeFields(args, PORTAL_EQUIPMENT_FIELDS)
+
+    // ── Range validation ───────────────────────────────────────────────────
+    if (args.heightCm !== undefined && (args.heightCm < 50 || args.heightCm > 250)) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'heightCm must be between 50 and 250' })
+    }
+    if (args.weightKg !== undefined && (args.weightKg < 15 || args.weightKg > 300)) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'weightKg must be between 15 and 300' })
+    }
+    if (args.shoeSize !== undefined && (args.shoeSize < 15 || args.shoeSize > 55)) {
+      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'shoeSize must be between 15 and 55' })
+    }
+
+    // ── Conditional validation: renting requires measurements ──────────────
+    if (args.rentalChecklist !== undefined) {
+      const { mask, bcd, wetsuit, fins, regulator } = args.rentalChecklist
+      const hasAnyRental = [mask, bcd, wetsuit, fins, regulator].includes('rent')
+
+      if (hasAnyRental) {
+        if (args.heightCm === undefined) {
+          throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'heightCm is required when renting equipment' })
+        }
+        if (args.weightKg === undefined) {
+          throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'weightKg is required when renting equipment' })
+        }
+      }
+
+      if (fins === 'rent' && args.shoeSize === undefined) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'shoeSize is required when renting fins' })
+      }
+
+      if (mask === 'rent' && args.needsPoweredLenses === true && !args.prescriptionStrength?.trim()) {
+        throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'prescriptionStrength is required when renting mask with powered lenses' })
+      }
+    }
 
     // Save body measurements to customers record if contact step is complete
     if (profile.customerId) {
