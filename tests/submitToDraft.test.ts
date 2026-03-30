@@ -9,6 +9,7 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../convex/lib/auth'
 import { testDate } from './helpers/dates'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import { type CourseCode } from '../convex/shared/courseCodes'
+import { type BookingRoleType } from '../convex/bookings/stateMachine'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -1465,7 +1466,7 @@ describe('submitToDraft', () => {
       return { bookingId7, bookingId6 }
     })
 
-    const mixedResources = [
+    const mixedResources: Array<{ resourceType: string; roleType?: BookingRoleType; externalName?: string }> = [
       { resourceType: 'Instructor', externalName: 'External Instructor' },
       { resourceType: 'Instructor', roleType: 'DiveMaster', externalName: 'External DM' },
     ]

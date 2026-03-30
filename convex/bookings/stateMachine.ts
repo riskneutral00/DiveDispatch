@@ -13,6 +13,8 @@ export { type VacatedReason } from '../shared/statuses'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type BookingRoleType = 'Instructor' | 'DiveMaster'
+
 export type SessionInput = {
   inventoryUnitId: string
   date: string
@@ -32,7 +34,7 @@ export type SessionInput = {
 export type BookingResourceInput = {
   resourceType: string
   /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
-  roleType?: string
+  roleType?: BookingRoleType
   resourceSlug?: string
   externalName?: string
 }
@@ -91,7 +93,7 @@ export const sessionValidator = v.object({
 export const bookingResourceInputValidator = v.object({
   resourceType: v.string(),
   /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
-  roleType: v.optional(v.string()),
+  roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
   resourceSlug: v.optional(v.string()),
   externalName: v.optional(v.string()),
 })
