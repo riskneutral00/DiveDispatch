@@ -33,7 +33,9 @@ Poll for new merge events:
 ls .car/merged/*.json 2>/dev/null
 ```
 
-If no files → sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
+If no files → `touch .car/heartbeat-backseat`, sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
+
+**Heartbeat:** Also `touch .car/heartbeat-backseat` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>120s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
 
 If files found → process each one:
 

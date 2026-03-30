@@ -33,7 +33,7 @@ cat > "$DIR/.car/start-driver.sh" << 'AGENTEOF'
 cd "$(dirname "$0")/.."
 while true; do
   echo "[$(date '+%H:%M:%S')] Driver starting..."
-  rm -f .car/exit-driver
+  rm -f .car/exit-driver .car/heartbeat-driver
   PROMPT=$(cat .claude/agents/driver.md)
   claude \
     --append-system-prompt "$PROMPT" \
@@ -42,7 +42,6 @@ while true; do
     --name Driver \
     "Start the Driver loop. Run preflight skill first, then process ready tickets sequentially. After each successful merge to main, write a JSON event file to .car/merged/DD-{NNN}.json with keys: ticket, sha, files, size, category, timestamp. Before picking the next ticket, check .car/fixes/ for backseat fix-ticket requests — those have priority. On pre-merge-review NO-GO, retry up to 2 times with a fresh jira-worker that receives the review findings. Only mark blocked after 2 failed retries. Keep going until the board is empty or batch cap is reached." &
   CLAUDE_PID=$!
-  # Watchdog: kill claude when agent writes exit sentinel
   while kill -0 $CLAUDE_PID 2>/dev/null; do
     if [ -f .car/exit-driver ]; then
       echo "[$(date '+%H:%M:%S')] Driver signaled exit ($(cat .car/exit-driver)) — killing process..."
@@ -50,6 +49,17 @@ while true; do
       wait $CLAUDE_PID 2>/dev/null
       rm -f .car/exit-driver
       break
+    fi
+    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    if [ -f .car/heartbeat-driver ]; then
+      HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-driver) ))
+      if [ "$HB_AGE" -gt 120 ]; then
+        echo "[$(date '+%H:%M:%S')] Driver stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
+        kill $CLAUDE_PID 2>/dev/null
+        wait $CLAUDE_PID 2>/dev/null
+        rm -f .car/heartbeat-driver
+        break
+      fi
     fi
     sleep 5
   done
@@ -64,7 +74,7 @@ cat > "$DIR/.car/start-backseat.sh" << 'AGENTEOF'
 cd "$(dirname "$0")/.."
 while true; do
   echo "[$(date '+%H:%M:%S')] Backseat starting..."
-  rm -f .car/exit-backseat
+  rm -f .car/exit-backseat .car/heartbeat-backseat
   PROMPT=$(cat .claude/agents/backseat.md)
   claude \
     --append-system-prompt "$PROMPT" \
@@ -81,6 +91,17 @@ while true; do
       rm -f .car/exit-backseat
       break
     fi
+    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    if [ -f .car/heartbeat-backseat ]; then
+      HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-backseat) ))
+      if [ "$HB_AGE" -gt 120 ]; then
+        echo "[$(date '+%H:%M:%S')] Backseat stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
+        kill $CLAUDE_PID 2>/dev/null
+        wait $CLAUDE_PID 2>/dev/null
+        rm -f .car/heartbeat-backseat
+        break
+      fi
+    fi
     sleep 5
   done
   wait $CLAUDE_PID 2>/dev/null
@@ -94,7 +115,7 @@ cat > "$DIR/.car/start-patrol.sh" << 'AGENTEOF'
 cd "$(dirname "$0")/.."
 while true; do
   echo "[$(date '+%H:%M:%S')] Patrol starting..."
-  rm -f .car/exit-patrol
+  rm -f .car/exit-patrol .car/heartbeat-patrol
   PROMPT=$(cat .claude/agents/patrol.md)
   claude \
     --append-system-prompt "$PROMPT" \
@@ -110,6 +131,17 @@ while true; do
       wait $CLAUDE_PID 2>/dev/null
       rm -f .car/exit-patrol
       break
+    fi
+    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    if [ -f .car/heartbeat-patrol ]; then
+      HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-patrol) ))
+      if [ "$HB_AGE" -gt 120 ]; then
+        echo "[$(date '+%H:%M:%S')] Patrol stalled (heartbeat ${HB_AGE}s old) — killing for auto-restart..."
+        kill $CLAUDE_PID 2>/dev/null
+        wait $CLAUDE_PID 2>/dev/null
+        rm -f .car/heartbeat-patrol
+        break
+      fi
     fi
     sleep 5
   done

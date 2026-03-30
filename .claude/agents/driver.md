@@ -28,6 +28,8 @@ Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes d
 
 `batch_count = 0`
 
+**Heartbeat:** At the start of every loop iteration, `touch .car/heartbeat-driver`. The wrapper script monitors this — if stale >120s, it kills and restarts your process automatically.
+
 **Pick:** Before invoking ticket-pick, check for backseat fix tickets:
 
 ```bash
