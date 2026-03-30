@@ -882,7 +882,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
     expect(booking!.status).toBe('Draft')
   })
 
-  it('H19: date_blocked vacated reason does NOT block auto-advance (DD-297)', async () => {
+  it('H19: date_blocked vacated reason blocks auto-advance (DD-337)', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
@@ -954,13 +954,13 @@ describe('H18: EM auto-release snapshot restoration', () => {
       return bId
     })
 
-    // tryAutoAdvance SHOULD promote — date_blocked is recoverable, not a permanent gate
+    // tryAutoAdvance should NOT promote — date_blocked means a required resource is missing
     await t.run(async (ctx) => {
       await tryAutoAdvance(ctx, bookingId)
     })
 
     const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking!.status).toBe('Upcoming')
+    expect(booking!.status).toBe('Draft')
   })
 })
 

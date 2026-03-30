@@ -101,14 +101,14 @@ describe('instructor blocks date — booking cascade', () => {
         { date, roleType: 'Instructor' },
       )
 
-      // Snapshot should show available again
+      // Snapshot should show available again — find by inventoryUnitId, not array index
       const snapshots = await ctx.db
         .query('availabilitySnapshots')
-        .filter((q: any) => q.eq(q.field('inventoryUnitId'), unitId))
         .collect()
-      expect(snapshots.length).toBeGreaterThan(0)
-      expect(snapshots[0].availableUnits).toBe(1)
-      expect(snapshots[0].reservedUnits).toBe(0)
+      const snapshot = snapshots.find((s) => s.inventoryUnitId === unitId)
+      expect(snapshot).not.toBeNull()
+      expect(snapshot!.availableUnits).toBe(1)
+      expect(snapshot!.reservedUnits).toBe(0)
     })
   })
 
@@ -145,6 +145,33 @@ describe('instructor blocks date — booking cascade', () => {
 // ─── Auto-advance gate tests ──────────────────────────────────────────────────
 
 describe('auto-advance blocked when instructor missing', () => {
+  it('5. toggleBlockedDate cascade blocks auto-advance to Upcoming', async () => {
+    await t.run(async (ctx) => {
+      const { bookingId, instrToken, date } = await setupBookingWithInstructor(ctx)
+
+      // Set booking conditions that would otherwise allow auto-advance
+      await ctx.db.patch(bookingId, {
+        bookingFormComplete: true,
+        customerFormComplete: true,
+        medicalHardBlock: false,
+      })
+
+      // Instructor blocks the date via the real cascade path
+      await _toggleBlockedDate(
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as unknown as Parameters<typeof _toggleBlockedDate>[0],
+        { date, roleType: 'Instructor' },
+      )
+
+      // Attempt auto-advance
+      const { tryAutoAdvance } = await import('../convex/bookings/_shared')
+      await tryAutoAdvance(ctx, bookingId)
+
+      // Booking must stay Draft — date_blocked vacate blocks advancement
+      const booking = await ctx.db.get(bookingId)
+      expect(booking!.status).toBe('Draft')
+    })
+  })
+
   it('6. booking with vacated instructor reservation cannot auto-advance', async () => {
     await t.run(async (ctx) => {
       const { bookingId, reservationId } = await setupBookingWithInstructor(ctx)

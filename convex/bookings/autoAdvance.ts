@@ -113,18 +113,21 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
     .collect()
 
   const active = reservations.filter((r) => r.status !== RESERVATION_STATUS.Vacated)
-  // A declined resource (stakeholder_declined) means the booking is missing a required
+  // A declined or date-blocked resource means the booking is missing a required
   // resource and cannot advance. Vacated-for-other-reasons (equipment_not_needed) is fine.
-  const hasDeclinedResource = reservations.some(
-    (r) => r.status === RESERVATION_STATUS.Vacated && r.vacatedBy === VACATED_REASON.StakeholderDeclined,
+  const hasMissingResource = reservations.some(
+    (r) =>
+      r.status === RESERVATION_STATUS.Vacated &&
+      (r.vacatedBy === VACATED_REASON.StakeholderDeclined ||
+        r.vacatedBy === VACATED_REASON.DateBlocked),
   )
 
   // All in-system reservations must be Confirmed.
   // Vacuously true when ALL resources are external (zero reservations ever created).
-  // Blocked when a required resource was declined (needs operator attention).
+  // Blocked when a required resource was declined or date-blocked (needs operator attention).
   const allConfirmed = active.every((r) => r.status === RESERVATION_STATUS.Confirmed)
 
-  if (allConfirmed && !hasDeclinedResource) {
+  if (allConfirmed && !hasMissingResource) {
     await ctx.db.patch(bookingId as Id<'bookings'>, { status: BOOKING_STATUS.Upcoming })
   }
 }
