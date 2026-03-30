@@ -10,7 +10,7 @@ import {
   tryAutoAdvance,
 } from './_shared'
 import { logBookingChange } from '../bookingAuditLog'
-import { notify, notifyVacatedStakeholders } from '../notifications'
+import { notify, notifyReleasedInventory } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
 import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
@@ -36,10 +36,10 @@ export const cancelBooking = mutation({
       })
     }
 
-    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
+    const vacated = await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
 
     // Notify resource stakeholders whose inventory was just released
-    await notifyVacatedStakeholders(ctx, args.bookingId)
+    await notifyReleasedInventory(ctx, args.bookingId, vacated)
 
     await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
     await logBookingChange(ctx, {

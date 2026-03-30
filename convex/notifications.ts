@@ -1,13 +1,12 @@
 import { ConvexError, v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
-import type { Id } from './_generated/dataModel'
+import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
-import { batchDelete } from './lib/batch'
+import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
 import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE } from './shared/statuses'
-import { batchGet } from './lib/batch'
 
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
@@ -49,6 +48,36 @@ export async function notifyVacatedStakeholders(
 
   // Deduplicate by inventoryUnitId
   const uniqueUnitIds = [...new Set(vacated.map((r) => r.inventoryUnitId))]
+  const units = await batchGet(ctx, uniqueUnitIds)
+
+  for (const unit of units) {
+    if (!unit) continue
+    await notify(ctx, {
+      userId: unit.ownerId,
+      type: NOTIFICATION_TYPE.BookingCancelled,
+      bookingId,
+      message: `Booking cancelled — your ${unit.displayName} inventory has been released.`,
+    })
+  }
+}
+
+/**
+ * Notify resource stakeholders about released inventory using already-known vacated reservations.
+ * Deduplicates by inventoryUnitId — each unique unit's owner gets one notification.
+ * Batch-fetches units with Promise.all to avoid N+1 sequential db.get() calls.
+ *
+ * Callers pass the vacated reservation list returned by releaseBookingReservations,
+ * eliminating the re-query that notifyVacatedStakeholders performs.
+ */
+export async function notifyReleasedInventory(
+  ctx: MutationCtx,
+  bookingId: string,
+  vacatedReservations: Doc<'reservations'>[],
+): Promise<void> {
+  if (vacatedReservations.length === 0) return
+
+  // Deduplicate by inventoryUnitId
+  const uniqueUnitIds = [...new Set(vacatedReservations.map((r) => r.inventoryUnitId))]
   const units = await batchGet(ctx, uniqueUnitIds)
 
   for (const unit of units) {

@@ -11,7 +11,7 @@ import { checkRateLimit } from './lib/rateLimiter'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 import { checkIdempotency } from './lib/idempotency'
 import { releaseBookingReservations } from './bookings/inventoryRelease'
-import { notifyVacatedStakeholders } from './notifications'
+import { notifyReleasedInventory } from './notifications'
 import { logBookingChange } from './bookingAuditLog'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
 import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
@@ -492,10 +492,10 @@ export const cancelOneBookingForDeletedUser = internalMutation({
     if (!booking || booking.status === BOOKING_STATUS.Cancelled) return
 
     // Release all active reservations and restore snapshots
-    await releaseBookingReservations(ctx, bookingId, VACATED_REASON.UserDeleted)
+    const vacated = await releaseBookingReservations(ctx, bookingId, VACATED_REASON.UserDeleted)
 
-    // Notify resource stakeholders
-    await notifyVacatedStakeholders(ctx, bookingId as string, 'user_deleted')
+    // Notify resource stakeholders whose inventory was just released
+    await notifyReleasedInventory(ctx, bookingId, vacated)
 
     // Cancel the booking
     await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled })

@@ -108,7 +108,7 @@ export async function releaseBookingReservations(
   bookingId: string,
   reason: VacatedReason,
   inventoryUnitId?: Id<'inventoryUnits'>,
-): Promise<void> {
+): Promise<Doc<'reservations'>[]> {
   const [pending, confirmed] = await Promise.all([
     ctx.db
       .query('reservations')
@@ -145,7 +145,7 @@ export async function releaseBookingReservations(
     ? all.filter((r) => r.inventoryUnitId === inventoryUnitId)
     : all
 
-  if (active.length === 0) return
+  if (active.length === 0) return []
 
   // ── Batch-fetch sessions ──────────────────────────────────────────────────
   const uniqueSessionIds = [...new Set(active.map((r) => r.bookingSessionId))]
@@ -222,6 +222,8 @@ export async function releaseBookingReservations(
   if (!inventoryUnitId) {
     await releaseBagsForBooking(ctx, bookingId)
   }
+
+  return active
 }
 
 // ─── purgeExpiredDrafts (cron) ──────────────────────────────────────────────
