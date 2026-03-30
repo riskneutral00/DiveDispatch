@@ -170,7 +170,7 @@ describe('instructor blocks date — booking cascade', () => {
 describe('auto-advance blocked when instructor missing', () => {
   it('5. toggleBlockedDate cascade blocks auto-advance to Upcoming', async () => {
     await t.run(async (ctx) => {
-      const { bookingId, instrToken, date } = await setupBookingWithInstructor(ctx)
+      const { bookingId, reservationId, instrToken, date } = await setupBookingWithInstructor(ctx)
 
       // Set booking conditions that would otherwise allow auto-advance
       await ctx.db.patch(bookingId, {
@@ -184,6 +184,10 @@ describe('auto-advance blocked when instructor missing', () => {
         { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as unknown as Parameters<typeof _toggleBlockedDate>[0],
         { date, roleType: 'Instructor' },
       )
+
+      // Verify cascade correctly set vacatedBy before attempting auto-advance
+      const reservation = await ctx.db.get(reservationId)
+      expect(reservation!.vacatedBy).toBe('date_blocked')
 
       // Attempt auto-advance
       const { tryAutoAdvance } = await import('../convex/bookings/_shared')
