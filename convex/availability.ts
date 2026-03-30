@@ -415,21 +415,24 @@ export async function _toggleBlockedDate(
     if (args.date < todayISO()) {
       throw new ConvexError({ code: ErrorCode.PAST_DATE, date: args.date })
     }
-    if (existing) {
-      await ctx.db.patch(existing._id, { dates: [...current, args.date] })
-    } else {
-      await ctx.db.insert('stakeholderBlockedDates', {
-        ownerSlug: user.slug,
-        roleType: args.roleType,
-        dates: [args.date],
-      })
-    }
 
-    // Gate: reject if any Confirmed reservations exist on this date for caller's units
+    // Guard: reject if any Confirmed reservations exist on this date for caller's units.
+    // Runs to completion BEFORE any DB write — fail-fast, all-or-nothing.
     const resourceType = effectiveResourceType(args.roleType)
 
-    // Non-resource roles don't own inventory — skip auto-decline
-    if (!resourceType) return true
+    // Non-resource roles don't own inventory — safe to write immediately, skip auto-decline
+    if (!resourceType) {
+      if (existing) {
+        await ctx.db.patch(existing._id, { dates: [...current, args.date] })
+      } else {
+        await ctx.db.insert('stakeholderBlockedDates', {
+          ownerSlug: user.slug,
+          roleType: args.roleType,
+          dates: [args.date],
+        })
+      }
+      return true
+    }
 
     const units = await ctx.db
       .query('inventoryUnits')
@@ -448,7 +451,7 @@ export async function _toggleBlockedDate(
         .collect()
 
       for (const session of sessions) {
-        const confirmed = await ctx.db
+        const confirmed = await ctx.db // batch-exempt: early-exit guard, throws on first match
           .query('reservations')
           .withIndex('by_bookingSessionId', (q) =>
             q.eq('bookingSessionId', session._id),
@@ -468,6 +471,17 @@ export async function _toggleBlockedDate(
           })
         }
       }
+    }
+
+    // All guards passed — write the blocked-date record
+    if (existing) {
+      await ctx.db.patch(existing._id, { dates: [...current, args.date] })
+    } else {
+      await ctx.db.insert('stakeholderBlockedDates', {
+        ownerSlug: user.slug,
+        roleType: args.roleType,
+        dates: [args.date],
+      })
     }
 
     // Second pass: vacate PendingAcceptance reservations (safe — no Confirmed exist)
@@ -537,7 +551,7 @@ export async function _toggleBlockedDate(
 
     // Phase 2 (write): vacate all reservations
     for (const { resId } of allPending) {
-      await ctx.db.patch(resId, {
+      await ctx.db.patch(resId, { // batch-exempt: sequential vacate with status transition
         status: RESERVATION_STATUS.Vacated,
         vacatedAt: now,
         vacatedBy: VACATED_REASON.DateBlocked,
@@ -555,11 +569,11 @@ export async function _toggleBlockedDate(
     // The booking survives — only the instructor's reservation was vacated (above).
     // The DC operator will see the booking as needing attention.
     for (const bookingId of affectedBookingIds) {
-      const booking = await ctx.db.get(bookingId as Id<"bookings">)
+      const booking = await ctx.db.get(bookingId as Id<"bookings">) // batch-exempt: conditional patch per booking
       if (!booking || (booking as { status: string }).status !== BOOKING_STATUS.Draft) continue
 
       // Mark booking as needing attention (instructor declined)
-      await ctx.db.patch(bookingId as Id<"bookings">, { needsAttention: true })
+      await ctx.db.patch(bookingId as Id<"bookings">, { needsAttention: true }) // batch-exempt
     }
 
     return true
@@ -619,7 +633,7 @@ export const pruneBlockedDates = internalMutation({
     for (const doc of allDocs) {
       const filtered = doc.dates.filter((d) => d >= today)
       if (filtered.length < doc.dates.length) {
-        await ctx.db.patch(doc._id, { dates: filtered })
+        await ctx.db.patch(doc._id, { dates: filtered }) // batch-exempt: conditional prune per doc
         prunedCount++
       }
     }
