@@ -9,6 +9,14 @@ user-invocable: false
 
 Called by Driver agent at session start. Cleans up stale state and establishes baseline.
 
+## Heartbeat Init
+
+```bash
+touch .car/heartbeat-driver
+```
+
+Touch this first. The watchdog wrapper monitors this file — if it goes stale >60s, the process is killed. Touching it early prevents a false-stall kill during the longer preflight steps.
+
 ## Stale Claim Recovery
 
 Scan `.tickets/DD-*.md` for `status: in_progress`. For each:
