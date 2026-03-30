@@ -140,6 +140,29 @@ describe('instructor blocks date — booking cascade', () => {
       expect(booking!.needsAttention).toBe(true)
     })
   })
+
+  it('7. booking with pre-vacated reservation is NOT marked needsAttention after date block', async () => {
+    await t.run(async (ctx) => {
+      const { bookingId, reservationId, instrToken, date } = await setupBookingWithInstructor(ctx)
+
+      // Pre-vacate the reservation (simulate a prior decline or expiry)
+      await ctx.db.patch(reservationId, {
+        status: 'Vacated',
+        vacatedAt: Date.now(),
+        vacatedBy: 'stakeholder_declined',
+      })
+
+      // Instructor blocks the same date
+      await _toggleBlockedDate(
+        { ...ctx, auth: { getUserIdentity: async () => ({ tokenIdentifier: instrToken }) } } as unknown as Parameters<typeof _toggleBlockedDate>[0],
+        { date, roleType: 'Instructor' },
+      )
+
+      // Booking should NOT be marked needsAttention — no pending reservation was vacated
+      const booking = await ctx.db.get(bookingId)
+      expect(booking!.needsAttention).not.toBe(true)
+    })
+  })
 })
 
 // ─── Auto-advance gate tests ──────────────────────────────────────────────────

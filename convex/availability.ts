@@ -498,7 +498,7 @@ export async function _toggleBlockedDate(
     // DD-295: aggregate unitsToRestore per snapshot so each is patched once,
     // even when multiple pooled reservations share the same snapshot.
     const now = Date.now()
-    const affectedBookingIds = new Set<string>()
+    const affectedBookingIds = new Set<Id<'bookings'>>()
 
     // Phase 1 (read): collect all pending reservations and accumulate units per snapshot
     type PendingRes = { resId: Id<'reservations'>; unitsRequested: number }
@@ -572,11 +572,11 @@ export async function _toggleBlockedDate(
     // The booking survives — only the instructor's reservation was vacated (above).
     // The DC operator will see the booking as needing attention.
     for (const bookingId of affectedBookingIds) {
-      const booking = await ctx.db.get(bookingId as Id<"bookings">) // batch-exempt: conditional patch per booking
-      if (!booking || (booking as { status: string }).status !== BOOKING_STATUS.Draft) continue
+      const booking = await ctx.db.get(bookingId) // batch-exempt: conditional patch per booking
+      if (!booking || booking.status !== BOOKING_STATUS.Draft) continue
 
       // Mark booking as needing attention (instructor declined)
-      await ctx.db.patch(bookingId as Id<"bookings">, { needsAttention: true }) // batch-exempt
+      await ctx.db.patch(bookingId, { needsAttention: true }) // batch-exempt
     }
 
     return true
