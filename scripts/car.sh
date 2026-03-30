@@ -9,8 +9,9 @@
 #   Ctrl+B 1  — jump to Driver
 #   Ctrl+B 2  — jump to Backseat
 #   Ctrl+B 3  — jump to Patrol
-#   Ctrl+B 4  — jump to Shell
+#   Ctrl+B 4  — jump to Shell (free terminal)
 #   Ctrl+B 5  — jump to Research (silent partner, always on)
+#   Ctrl+B 6  — jump to Health (pipeline health monitor)
 #   Ctrl+B d  — detach (agents keep running)
 #   tmux attach -t car  — reattach
 
@@ -50,7 +51,7 @@ while true; do
       rm -f .car/exit-driver
       break
     fi
-    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    # Heartbeat stall detection: if heartbeat file exists and is >60s old, kill stalled process
     if [ -f .car/heartbeat-driver ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-driver) ))
       if [ "$HB_AGE" -gt 60 ]; then
@@ -91,7 +92,7 @@ while true; do
       rm -f .car/exit-backseat
       break
     fi
-    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    # Heartbeat stall detection: if heartbeat file exists and is >60s old, kill stalled process
     if [ -f .car/heartbeat-backseat ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-backseat) ))
       if [ "$HB_AGE" -gt 60 ]; then
@@ -132,7 +133,7 @@ while true; do
       rm -f .car/exit-patrol
       break
     fi
-    # Heartbeat stall detection: if heartbeat file exists and is >120s old, kill stalled process
+    # Heartbeat stall detection: if heartbeat file exists and is >60s old, kill stalled process
     if [ -f .car/heartbeat-patrol ]; then
       HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-patrol) ))
       if [ "$HB_AGE" -gt 60 ]; then
@@ -168,11 +169,14 @@ tmux new-window -t "$SESSION" -n "Backseat" -c "$DIR"
 # Window 3: Patrol
 tmux new-window -t "$SESSION" -n "Patrol" -c "$DIR"
 
-# Window 4: Shell (free terminal)
+# Window 4: Shell (free terminal for Matt)
 tmux new-window -t "$SESSION" -n "Shell" -c "$DIR"
 
 # Window 5: Research (silent partner — self-directed, always on)
 tmux new-window -t "$SESSION" -n "Research" -c "$DIR"
+
+# Window 6: Health (pipeline health monitor)
+tmux new-window -t "$SESSION" -n "Health" -c "$DIR"
 
 # Status bar — gate verdict + time
 tmux set-option -t "$SESSION" status on
@@ -234,8 +238,8 @@ tmux send-keys -t "$SESSION:Patrol" "bash .car/start-patrol.sh" Enter
 # Launch researcher (self-directed — no setup required)
 tmux send-keys -t "$SESSION:Research" "bash scripts/research.sh" Enter
 
-# Run pipeline health monitor inside the Shell window (replaces memory-watchdog)
-tmux send-keys -t "$SESSION:Shell" "bash scripts/pipeline-health.sh" Enter
+# Run pipeline health monitor in dedicated Health window (Shell stays free for Matt)
+tmux send-keys -t "$SESSION:Health" "bash scripts/pipeline-health.sh" Enter
 
 # Start on Driver window
 tmux select-window -t "$SESSION:Driver"

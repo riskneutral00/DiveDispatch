@@ -55,14 +55,17 @@ This prevents duplicate processing if Backseat restarts mid-review.
 
 **Classify:** Invoke Skill("diff-classify") with args `{commit_sha}` → review plan (skill→file mapping).
 
-**Review:** Dispatch review skills **in parallel** via Agent tool. Each review runs in a fresh agent with `mode: "bypassPermissions"`. **Hard timeout per skill** — S=5min, M=10min, L=15min. If a review agent doesn't return within its timeout, treat it as a NO-GO with `"timeout": true` and move on. Never wait indefinitely.
+**Review:** Dispatch review skills **sequentially** — one skill at a time, each in a fresh blocking agent (`run_in_background: false`). Touch heartbeat **before** dispatching each skill so the 60s wrapper doesn't false-kill Backseat during a legitimate long review. The wrapper's heartbeat kill is the hard deadline: if any skill hangs, the wrapper kills Backseat, the `.processing` file survives, and on restart the event is retried from scratch.
 
 ```
+# Touch heartbeat before each skill so wrapper knows we're alive
+touch .car/heartbeat-backseat
+
 Agent(
   description: "Review {skill_name} for DD-{id}",
   subagent_type: "general-purpose",
   prompt: "<review skill instructions + file list>",
-  run_in_background: true,
+  run_in_background: false,
   mode: "bypassPermissions"
 )
 ```
@@ -120,7 +123,7 @@ Continue polling.
 - **Never invoke /backseat, /patrol, /gate, or any launcher skill.** You ARE Backseat — execute the polling loop above directly. Invoking the /backseat skill would check if the car session is running and exit, which is not what you do.
 - **Never modify code.** Pure observer. Only create tickets and log findings.
 - **You are a dispatcher, not a reviewer.** Skills do the auditing — you orchestrate.
-- **Parallel reviews.** Dispatch all review skills concurrently via separate agents.
+- **Sequential reviews with per-skill heartbeat.** One skill at a time; touch heartbeat before each dispatch. Wrapper kill is the hard timeout.
 - **Source field.** Always `source: backseat` on created tickets.
 - **Duplicate check before ticket creation.** Skip if area already covered.
 - **human_required for judgment calls.** Architectural/product decisions flagged for Matt.

@@ -30,11 +30,19 @@ Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes d
 
 **Heartbeat:** `touch .car/heartbeat-driver` at the start of every loop iteration AND before/after each major operation (implement, review, merge). The wrapper script monitors this — if stale >60s, it kills and restarts your process automatically.
 
-**Recovery on restart:** Before entering the main loop, check for orphaned `.processing` events:
+**Recovery on restart:** Check for two crash scenarios before entering the main loop:
+
+1. **Mid-implementation crash:** Find any ticket with `status: in_progress` AND `assigned_to: driver`. That ticket was being worked on when Driver crashed — re-pick it directly (skip scoring) and spawn a fresh worker.
+
+2. **Post-merge event-loss:** Check for recent merges that landed in git but never got an event written for Backseat:
 ```bash
-ls .car/merged/*.json.processing 2>/dev/null
+git log --oneline origin/main..HEAD --merges --pretty=format:"%h %s" | grep "ticket/DD-"
 ```
-If found: the previous Driver instance died mid-work. Read the event, check `git log --oneline -1` to see if the merge actually landed. If yes → move to `.car/processed/`. If no → rename back to `.json` (remove `.processing` suffix) so Backseat can see it.
+For each `ticket/DD-{id}` found, check whether a corresponding event exists:
+```bash
+ls .car/merged/DD-{id}.json .car/merged/DD-{id}.json.processing .car/processed/merged-DD-{id}.json 2>/dev/null
+```
+If none exist → the merge landed but Backseat never saw it. Write `.car/merged/DD-{id}.json` now (use the commit SHA from git log for the `sha` field, infer `size` and `category` from the ticket file). Backseat will review it on its next poll.
 
 **Pick:** Before invoking ticket-pick, check for backseat fix tickets:
 

@@ -20,19 +20,13 @@ EVENT_DIR=.car
 
 ## Startup
 
-Record `LAST_PATROL_SHA` from `git rev-parse HEAD`. Print: `Patrol ready — polling .car/reviewed/ every 30s.`
+Record `LAST_PATROL_SHA` from `git rev-parse HEAD`. Initialize `patrol_count = 0`. Print: `Patrol ready — polling .car/reviewed/ every 30s.`
 
 ## Polling Loop
 
-Poll for new review events:
+`patrol_count = 0`
 
-```bash
-ls .car/reviewed/*.json 2>/dev/null
-```
-
-If no files → `touch .car/heartbeat-patrol`, sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
-
-**Heartbeat:** Also `touch .car/heartbeat-patrol` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>60s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
+**Heartbeat:** `touch .car/heartbeat-patrol` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>60s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
 
 **Recovery on restart:** Before entering the polling loop, check for orphaned `.processing` events:
 ```bash
@@ -40,75 +34,95 @@ ls .car/reviewed/*.json.processing 2>/dev/null
 ```
 If found: the previous Patrol instance died mid-gate. Rename back to `.json` (remove `.processing` suffix) to retry.
 
-If files found → process each one **sequentially**:
+Poll for new review events:
+```bash
+ls .car/reviewed/*.json 2>/dev/null
+```
 
-**Claim event (write-ahead):** Before doing any gate work, rename the event:
+If no files → sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
+
+If files found → **drain the queue first (lightweight per-event pass)**, then run expensive checks once:
+
+---
+
+### Step 1 — Drain queue (lightweight, per event)
+
+For each `.json` file found:
+
+**Claim (write-ahead):**
 ```bash
 mv .car/reviewed/DD-{id}.json .car/reviewed/DD-{id}.json.processing
 ```
 
-**Read event:** Parse the `.processing` JSON to get ticket ID, verdict, findings, details.
+**Read:** Parse the `.processing` JSON — ticket ID, verdict, findings, details.
 
-**Post-Merge Validation:** Validate the cumulative state of main since your last run:
+**Accumulate:** Add findings to a running tally (`TOTAL_CRITICAL`, `TOTAL_HIGH`, `TOTAL_MEDIUM`, `TOTAL_LOW`).
 
-1. `git diff {LAST_PATROL_SHA}..HEAD --name-only` → list all files merged since last patrol cycle
-2. If no new files → skip (nothing merged since last run)
-3. Run `npx tsc --noEmit --pretty` and `npx vitest run` as baseline checks (always, regardless of file types)
-4. Run invariant sweep: grep changed files for violations of the 3 non-negotiable invariants (exclusive overlap, pooled blocking, snapshot atomicity)
-5. Update `LAST_PATROL_SHA` to current HEAD.
-
-**Do NOT dispatch review skills (review-backend-*, review-frontend).** Backseat already dispatched those and wrote findings to `.car/reviewed/`. Patrol's job is to validate the cumulative build/test/invariant state, not re-review the same code. If Backseat missed something, it will show up as a tsc failure, test failure, or invariant violation here.
-
-**QA:** Invoke Skill("qa"). Generates missing tests for changed files using DD patterns.
-
-**Cumulative Review:** Dispatch review-tests in a fresh agent to assess overall test health.
-
-**Reconcile:** Invoke Skill("reconcile") to compare current state against open tickets. Mark completed tickets as done, enrich next ready tickets.
-
-**Vault Readiness Check:** Run these checks inline:
-
-1. `npx tsc --noEmit --pretty` — TypeScript must compile
-2. `npx vitest run` — all tests must pass
-3. Invariant sweep: grep changed files for violations of the 3 non-negotiable invariants (exclusive overlap, pooled blocking, snapshot atomicity)
-4. Backseat queue check:
-   ```bash
-   grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready\|status: in_progress' 2>/dev/null
-   ```
-   - If any match AND they are NOT `human_required: true` → verdict is **WAIT**
-   - If matches are all `human_required: true` → acceptable, proceed
-   - If no matches → backseat queue is drained
-
-Verdict logic:
-- **CLEAN**: tsc passes + tests pass + invariants clean + backseat queue drained
-- **WAIT**: backseat fix tickets still being processed by Driver — do NOT write sentinel yet, continue polling
-- **BLOCKED**: tsc fails or tests fail. Before escalating, check if Driver already created a tsc/test blocker ticket:
-  ```bash
-  grep -rl 'source: driver' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready\|status: in_progress\|status: blocked' 2>/dev/null
-  ```
-  If a matching P0 ticket exists from Driver → skip escalation (Driver already stopped and reported it). Only escalate via Skill("escalate") with `source: patrol` if no existing blocker ticket covers the failure.
-
-**Move processed event** (the `.processing` file):
+**Move processed:**
 ```bash
 mv .car/reviewed/DD-{id}.json.processing .car/processed/reviewed-DD-{id}.json
 touch .car/heartbeat-patrol
 ```
 
-Print: `DD-{id}: patrol {verdict} | tsc:{pass/fail} tests:{pass/fail} invariants:{clean/violation}`
+Print: `DD-{id}: ingested | {verdict} | {C}C {H}H {M}M {L}L`
 
-**Prepare Vault Observations:** Stage observations to `.patrol-observations.md`:
-- Lessons learned from review findings
-- Patterns across backseat tickets (recurring issue types)
-- Test coverage delta (baseline vs now)
-- Blocked ticket diagnosis
+`patrol_count++`. If `patrol_count >= BATCH_CAP` → print `PATROL-RESTART | batch cap reached | exiting for fresh context`, write `echo "batch_cap" > .car/exit-patrol`, and **stop**. The watchdog will relaunch with a fresh context window.
 
-**Write sentinel on CLEAN or BLOCKED (never WAIT):**
+---
+
+### Step 2 — Validate (once per cycle, after queue drained)
+
+Run these checks **once** after all events are ingested. Store results — do NOT re-run later.
+
+1. `git diff {LAST_PATROL_SHA}..HEAD --name-only` → changed files since last cycle. If none → skip to polling.
+2. `npx tsc --noEmit --pretty` → store as `TSC_PASS` (true/false)
+3. `npx vitest run` → store as `TESTS_PASS` (true/false)
+4. Invariant sweep on changed files (exclusive overlap, pooled blocking, snapshot atomicity) → store as `INVARIANTS_CLEAN` (true/false)
+5. Update `LAST_PATROL_SHA` to current HEAD.
+
+---
+
+### Step 3 — Backseat queue check
 
 ```bash
+grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | \
+  xargs grep -l 'status: ready\|status: in_progress' 2>/dev/null | \
+  xargs grep -L 'human_required: true' 2>/dev/null
+```
+- Matches → `BACKSEAT_CLEAR = false` → verdict is **WAIT**: do NOT write sentinel. Continue polling.
+- No matches → `BACKSEAT_CLEAR = true`
+
+---
+
+### Step 4 — Verdict and remediation (only if not WAIT)
+
+**Verdict (using stored results from Step 2):**
+- **BLOCKED**: `TSC_PASS = false` OR `TESTS_PASS = false`. Before escalating, check for an existing Driver blocker ticket:
+  ```bash
+  grep -rl 'source: driver' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready\|status: in_progress\|status: blocked' 2>/dev/null
+  ```
+  If a matching P0 ticket exists → skip escalation. Otherwise → Skill("escalate") with `source: patrol`.
+- **CLEAN**: `TSC_PASS = true` AND `TESTS_PASS = true` AND `INVARIANTS_CLEAN = true` AND `BACKSEAT_CLEAR = true`
+
+**QA:** Invoke Skill("qa"). Generates missing tests for changed files.
+
+**Cumulative Review:** Dispatch review-tests in a fresh agent to assess overall test health.
+
+**Reconcile:** Invoke Skill("reconcile") to compare current state against open tickets.
+
+**Prepare Vault Observations:** Stage to `.patrol-observations.md`:
+- Lessons from review findings
+- Patterns across backseat tickets
+- Test coverage delta
+- Blocked ticket diagnosis
+
+**Write sentinel (CLEAN or BLOCKED only — never WAIT):**
+```bash
 FILE_HASH=$(git log --oneline -1 --format=%h)
-echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{CLEAN|BLOCKED}","headSha":"'$FILE_HASH'","tsc":true,"tests":true,"invariants":true}' > .patrol-ran
+echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{CLEAN|BLOCKED}","headSha":"'$FILE_HASH'","tsc":'$TSC_PASS',"tests":'$TESTS_PASS',"invariants":'$INVARIANTS_CLEAN'}' > .patrol-ran
 ```
 
-**Batch cap:** `patrol_count++` after each event processed. If `patrol_count >= BATCH_CAP` → print `PATROL-RESTART | batch cap reached | exiting for fresh context`, write sentinel file `echo "batch_cap" > .car/exit-patrol`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window. Do not continue the loop.
+Print: `Patrol cycle complete | tsc:{pass/fail} tests:{pass/fail} invariants:{clean/violation} | verdict: {CLEAN|BLOCKED|WAIT}`
 
 Continue polling.
 
