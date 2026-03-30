@@ -21,6 +21,7 @@ import {
 import { testDate, malformedDate } from './helpers/dates'
 import { todayISO } from '../convex/bookings/stateMachine'
 import { makeT } from './helpers/convex-helpers'
+import { api } from '../convex/_generated/api'
 
 let t = makeT()
 beforeEach(() => {
@@ -1330,5 +1331,49 @@ describe('H4 — Snapshot window matching via releaseBookingReservations', () =>
       expect(afternoonSnap!.availableUnits).toBe(0)
       expect(afternoonSnap!.reservedUnits).toBe(1)
     })
+  })
+})
+
+// ─── Auth gate: listInventoryByType & listDiveSites ─────────────────────────
+
+describe('listInventoryByType auth gate', () => {
+  it('throws UNAUTHENTICATED when called without identity', async () => {
+    await expect(
+      t.query(api.availability.listInventoryByType, { type: 'Instructor' }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
+  })
+
+  it('returns results for authenticated caller', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      await seedInventoryUnit(ctx, { resourceType: 'Instructor' })
+    })
+
+    const result = await t
+      .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .query(api.availability.listInventoryByType, { type: 'Instructor' })
+
+    expect(result).toHaveLength(1)
+  })
+})
+
+describe('listDiveSites auth gate', () => {
+  it('throws UNAUTHENTICATED when called without identity', async () => {
+    await expect(
+      t.query(api.availability.listDiveSites, {}),
+    ).rejects.toMatchObject({ data: expect.stringContaining('UNAUTHENTICATED') })
+  })
+
+  it('returns results for authenticated caller', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      await seedInventoryUnit(ctx, { resourceType: 'DiveSite' })
+    })
+
+    const result = await t
+      .withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .query(api.availability.listDiveSites, {})
+
+    expect(result).toHaveLength(1)
   })
 })

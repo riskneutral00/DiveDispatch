@@ -581,6 +581,7 @@ export const listInventoryByType = query({
     ownerSlug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx)
     return _listInventoryByType(ctx, args)
   },
 })
@@ -589,6 +590,7 @@ export const listInventoryByType = query({
 export const listDiveSites = query({
   args: {},
   handler: async (ctx) => {
+    await requireAuth(ctx)
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_resourceType', (q) => q.eq('resourceType', 'DiveSite'))
