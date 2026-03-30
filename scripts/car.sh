@@ -65,7 +65,12 @@ while true; do
     sleep 5
   done
   wait $CLAUDE_PID 2>/dev/null
-  echo "[$(date '+%H:%M:%S')] Driver exited — restarting in 5s..."
+  READY_COUNT=$(grep -rl "^status: ready" .tickets/ 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$READY_COUNT" -eq 0 ]; then
+    echo "[$(date '+%H:%M:%S')] Board is empty — Driver stopping."
+    exit 0
+  fi
+  echo "[$(date '+%H:%M:%S')] Driver exited — restarting in 5s ($READY_COUNT tickets ready)..."
   sleep 5
 done
 AGENTEOF

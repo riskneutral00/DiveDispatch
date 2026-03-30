@@ -136,6 +136,18 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/precompact-archive.sh",
+            "timeout": 10,
+            "statusMessage": "Archiving context before compaction…"
+          }
+        ]
+      }
     ]
   }
 }

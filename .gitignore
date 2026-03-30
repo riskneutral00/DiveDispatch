@@ -110,3 +110,6 @@ docs/LLM_HANDOFF.md
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# PreCompact context archive (local only — session-scoped, not for review)
+.claude/context-archive/

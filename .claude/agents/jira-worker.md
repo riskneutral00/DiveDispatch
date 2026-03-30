@@ -4,7 +4,7 @@ description: >
   Autonomous ticket worker for /driver. Receives a ticket spec and
   worktree path. Implements the ticket following DiveDispatch TDD conventions.
   Quality rules baked in — no de-sloppify step after.
-model: opus
+model: sonnet
 ---
 
 # jira-worker — Ticket Implementation Agent
