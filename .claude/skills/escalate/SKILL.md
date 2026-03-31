@@ -23,7 +23,7 @@ for i in 1 2 3 4 5; do
   if (set -C; echo $$ > "$LOCK") 2>/dev/null; then break; fi
   sleep 0.1
 done
-NUM=$(cat .tickets/.counter 2>/dev/null || echo "237")
+NUM=$(cat .tickets/.counter 2>/dev/null || echo "366")
 NEXT=$((NUM + 1))
 echo "$NEXT" > .tickets/.counter
 rm -f "$LOCK"

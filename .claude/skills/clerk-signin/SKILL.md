@@ -69,10 +69,10 @@ If the result is `null` → Convex doesn't have the user record. Run `npm run se
 ### Step 5 — Get sign-in token
 
 ```bash
-cd /Users/matthewlee/Desktop/RiskNeutral/DiveDispatch && npx tsx scripts/get-signin-token.ts <slug>
+npx tsx scripts/get-signin-token.ts <slug>
 ```
 
-> Note: `npm run dev:token` is blocked by a plugin hook (false-positive on `dev\b` matching `dev:token`). Use the `npx tsx` form instead.
+> Use the `npx tsx` form directly — avoids npm script resolution overhead.
 
 Capture the token from stdout (long alphanumeric string).
 

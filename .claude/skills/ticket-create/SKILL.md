@@ -42,7 +42,7 @@ for i in 1 2 3 4 5; do
 done
 
 # Read, increment, write
-NUM=$(cat "$COUNTER" 2>/dev/null || echo "214")
+NUM=$(cat "$COUNTER" 2>/dev/null || echo "366")
 NEXT=$((NUM + 1))
 echo "$NEXT" > "$COUNTER"
 

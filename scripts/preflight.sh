@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pre-flight environment check for DiveDispatch dev workflows.
 # Auto-remediates where possible. Exit 0 = ready, non-zero = unrecoverable.
-# Called by /clerk-dev skill before sign-in.
+# Called by dev-preflight skill (used by /clerk-signin and navigator agent).
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
