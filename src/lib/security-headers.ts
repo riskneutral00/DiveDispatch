@@ -10,7 +10,8 @@
 // ---------------------------------------------------------------------------
 
 const CLERK_DOMAINS = '*.clerk.accounts.dev *.clerk.com'
-const CONVEX_DOMAINS = '*.convex.cloud'
+const CONVEX_HTTPS = '*.convex.cloud'
+const CONVEX_CONNECT = '*.convex.cloud wss://*.convex.cloud'
 const GOOGLE_MAPS_SCRIPT = 'maps.googleapis.com'
 const GOOGLE_MAPS_STATIC = 'maps.gstatic.com'
 
@@ -25,9 +26,10 @@ const cspDirectives = [
   `default-src 'self'`,
   `script-src 'self' ${CLERK_INLINE} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT} ${DEV_EVAL}`.trim(),
   `style-src 'self' ${CLERK_INLINE} fonts.googleapis.com`,
-  `img-src 'self' data: blob: ${CONVEX_DOMAINS} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
+  `img-src 'self' data: blob: ${CONVEX_HTTPS} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
   `font-src 'self' fonts.gstatic.com`,
-  `connect-src 'self' ${CONVEX_DOMAINS} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT}`,
+  `connect-src 'self' ${CONVEX_CONNECT} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT}`,
+  `worker-src 'self' blob:`,
   `frame-src 'self' ${CLERK_DOMAINS}`,
   `object-src 'none'`,
   `base-uri 'self'`,

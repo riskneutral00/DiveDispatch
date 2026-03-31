@@ -46,8 +46,13 @@ describe('security-headers', () => {
       expect(csp).toMatch(/script-src\s[^;]*\*\.clerk\.com/)
     })
 
-    it('allows Convex domains in connect-src', () => {
+    it('allows Convex domains in connect-src (HTTPS and WSS)', () => {
       expect(csp).toMatch(/connect-src\s[^;]*\*\.convex\.cloud/)
+      expect(csp).toMatch(/connect-src\s[^;]*wss:\/\/\*\.convex\.cloud/)
+    })
+
+    it('allows blob: workers in worker-src (required by Convex client)', () => {
+      expect(csp).toMatch(/worker-src\s[^;]*blob:/)
     })
 
     it('allows Google Maps domains in script-src', () => {
