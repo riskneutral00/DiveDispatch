@@ -10,13 +10,12 @@ import {
   type LanguageCode,
   type DiveLanguage,
 } from '@/lib/constants/dive-languages'
-
-export type { Language } from '@/lib/types/language'
 import type { Language } from '@/lib/types/language'
 
-// h-8 w-8 rounded-[6px] flex items-center justify-center text-[1.1rem] leading-none transition-colors border
+export type { Language }
+
 const FLAG_TILE =
-  'h-9 w-9 rounded-[6px] flex items-center justify-center text-[1.2rem] leading-none transition-colors border'
+  'h-9 w-9 rounded-[6px] flex items-center justify-center text-[1.2rem] leading-none transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 interface LanguagePickerProps {
   value: Language[]
@@ -37,40 +36,33 @@ export function LanguagePicker({
 
   const selectedCodes = new Set<string>(value.map((l) => l.code))
   const atMax = value.length >= max
+
   function toggle(lang: Language) {
     if (max === 1) {
       onChange([{ code: lang.code, label: lang.label }])
       setQuery('')
       return
     }
+
     if (selectedCodes.has(lang.code)) {
       onChange(value.filter((l) => l.code !== lang.code))
-    } else {
-      if (atMax) return
+    } else if (!atMax) {
       onChange([...value, { code: lang.code, label: lang.label }])
     }
+    
     setQuery('')
   }
 
-  const row1Set = new Set<string>()
-
-  // Popular row A (Asian): popular codes minus anything already in row 1
-  const popRowALanguages = POPULAR_ROW1_CODES.filter((code) => !row1Set.has(code))
-    .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-    .filter((l): l is DiveLanguage => Boolean(l))
-
-  // Popular row B (European): popular codes minus anything already in row 1
-  const popRowBLanguages = POPULAR_ROW2_CODES.filter((code) => !row1Set.has(code))
-    .map((code) => ALL_LANGUAGES.find((l) => l.code === code))
-    .filter((l): l is DiveLanguage => Boolean(l))
-
-  const popularSet = new Set<string>([
-    ...popRowALanguages.map((l) => l.code),
-    ...popRowBLanguages.map((l) => l.code),
-  ])
+  // Pre-calculate mapped languages for popular rows
+  const resolveDiveLanguage = (code: string) => ALL_LANGUAGES.find((l) => l.code === code)
+  
+  const popRowALanguages = POPULAR_ROW1_CODES.map(resolveDiveLanguage).filter(Boolean) as DiveLanguage[]
+  const popRowBLanguages = POPULAR_ROW2_CODES.map(resolveDiveLanguage).filter(Boolean) as DiveLanguage[]
+  
+  const popularSet = new Set<string>([...POPULAR_ROW1_CODES, ...POPULAR_ROW2_CODES])
 
   // Overflow: selected languages not present in any main row (added via search)
-  const overflowLanguages = value.filter((l) => !row1Set.has(l.code) && !popularSet.has(l.code))
+  const overflowLanguages = value.filter((l) => !popularSet.has(l.code))
 
   const searchResults = query.trim()
     ? ALL_LANGUAGES.filter((l) => {
@@ -87,6 +79,28 @@ export function LanguagePicker({
     }
   })
 
+  // Helper to render lists of flags uniformly
+  const renderFlagGroup = (languages: DiveLanguage[] | Language[]) => {
+    if (languages.length === 0) return null
+    return (
+      <div className="flex flex-wrap gap-1">
+        {languages.map((lang) => (
+          <FlagPill
+            key={lang.code}
+            lang={lang}
+            active={selectedCodes.has(lang.code)}
+            disabled={disabled || (max !== 1 && atMax && !selectedCodes.has(lang.code))}
+            onToggle={() => toggle(lang)}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  const placeholderText = value.length > 0 
+    ? value.map((l) => CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label).join(', ') 
+    : 'Search languages…'
+
   return (
     <div className="flex flex-col gap-2">
       {/* Search input with counter */}
@@ -96,76 +110,30 @@ export function LanguagePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
-          placeholder={value.length > 0 ? value.map((l) => CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label).join(', ') : 'Search languages…'}
-          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'} text-primary`}
+          placeholder={placeholderText}
+          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 text-primary focus:outline-none focus:ring-1 focus:ring-accent ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
           style={{ caretColor: 'var(--color-accent)' }}
         />
-        <span
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none text-secondary"
-        >
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none text-secondary">
           {value.length} / {max}
         </span>
       </div>
 
       <div
         ref={gridRef}
-        style={searchResults !== null && restingHeight.current
-          ? { minHeight: restingHeight.current }
-          : undefined}
+        style={searchResults !== null && restingHeight.current ? { minHeight: restingHeight.current } : undefined}
       >
         {searchResults !== null ? (
           searchResults.length === 0 ? (
-            <p className="text-xs px-1 text-secondary">
-              No languages match &ldquo;{query}&rdquo;
-            </p>
+            <p className="text-xs px-1 text-secondary">No languages match &ldquo;{query}&rdquo;</p>
           ) : (
-            <div className="flex flex-wrap gap-1">
-              {searchResults.map((lang) => (
-                <FlagPill
-                  key={lang.code}
-                  lang={lang}
-                  active={selectedCodes.has(lang.code)}
-                  disabled={disabled || (max !== 1 && atMax && !selectedCodes.has(lang.code))}
-                  onToggle={() => toggle(lang)}
-                />
-              ))}
-            </div>
+            renderFlagGroup(searchResults)
           )
         ) : (
           <div className="flex flex-col gap-1.5">
-            {overflowLanguages.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {overflowLanguages.map((lang) => (
-                  <FlagPill key={lang.code} lang={lang} active={true} disabled={disabled} onToggle={() => toggle(lang)} />
-                ))}
-              </div>
-            )}
-            {popRowALanguages.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {popRowALanguages.map((lang) => (
-                  <FlagPill
-                    key={lang.code}
-                    lang={lang}
-                    active={selectedCodes.has(lang.code)}
-                    disabled={disabled || (max !== 1 && atMax && !selectedCodes.has(lang.code))}
-                    onToggle={() => toggle(lang)}
-                  />
-                ))}
-              </div>
-            )}
-            {popRowBLanguages.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {popRowBLanguages.map((lang) => (
-                  <FlagPill
-                    key={lang.code}
-                    lang={lang}
-                    active={selectedCodes.has(lang.code)}
-                    disabled={disabled || (max !== 1 && atMax && !selectedCodes.has(lang.code))}
-                    onToggle={() => toggle(lang)}
-                  />
-                ))}
-              </div>
-            )}
+            {renderFlagGroup(overflowLanguages)}
+            {renderFlagGroup(popRowALanguages)}
+            {renderFlagGroup(popRowBLanguages)}
           </div>
         )}
       </div>
@@ -183,6 +151,7 @@ interface FlagPillProps {
 function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
   const scriptLabel = CHINESE_SCRIPT_LABELS[lang.code as LanguageCode]
   const isText = Boolean(scriptLabel)
+  
   return (
     <button
       type="button"
@@ -193,13 +162,11 @@ function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
       aria-pressed={active}
       translate="no"
       className={isText
-        ? 'h-9 px-1.5 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border'
+        ? 'h-9 px-1.5 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         : FLAG_TILE}
       style={{
         background: active ? 'var(--color-primary-muted)' : 'transparent',
-        borderColor: active
-          ? 'var(--color-primary-border)'
-          : 'var(--color-glass-border)',
+        borderColor: active ? 'var(--color-primary-border)' : 'var(--color-glass-border)',
         color: isText ? 'var(--color-text-primary)' : undefined,
         opacity: disabled ? 0.4 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',

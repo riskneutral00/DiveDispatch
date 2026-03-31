@@ -22,17 +22,15 @@ export function LanguageField({
   variant,
   value,
   onChange,
-  disabled,
+  disabled = false,
 }: LanguageFieldProps) {
   const { label, max } = VARIANT_CONFIG[variant]
 
   return (
     <div className="flex flex-col gap-1.5 w-[calc(50%-0.5rem)]">
-      <label
-        className="text-sm font-medium text-secondary"
-      >
+      <label className="text-sm font-medium text-secondary">
         {label}
-        <span style={{ color: 'var(--color-destructive)' }}> *</span>
+        <span className="text-destructive"> *</span>
       </label>
       <LanguagePicker
         value={value}

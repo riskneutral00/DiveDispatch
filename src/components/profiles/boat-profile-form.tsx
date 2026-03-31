@@ -1,11 +1,10 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import { Anchor, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '../ui/glass-button'
-import { GlassCard } from '../ui/glass-card'
 import { GlassInput } from '../ui/glass-input'
 import { GlassSimpleSelect } from '../ui/glass-simple-select'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
@@ -209,19 +208,7 @@ export function BoatProfileForm() {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-2">
-        <Anchor size={26} style={{ color: 'var(--color-primary)' }} />
-        <h1
-          className="text-2xl font-bold text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          {isUpdate ? 'Edit Profile' : 'Complete Your Profile'}
-        </h1>
-      </div>
-
       {/* Contact info */}
-      <GlassCard>
-        <FormSectionHeader label="Contact Information" />
         <div className="space-y-4 mt-4">
           <div className="max-w-sm">
             <GlassInput
@@ -259,7 +246,7 @@ export function BoatProfileForm() {
             />
           </div>
         </div>
-      </GlassCard>
+      
 
       <hr className="form-divider" />
 

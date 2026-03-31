@@ -7,31 +7,32 @@ interface CustomerWithLanguages {
 
 /**
  * Returns the intersection of all customers' language codes.
- * If any customer has no languages set, returns empty array.
+ * Ignores customers who do not have any languages specified.
  */
 export function getSharedLanguages(customers: CustomerWithLanguages[]): Language[] {
-  if (customers.length === 0) return []
+  const validCustomers = customers.filter((c) => c.flags && c.flags.length > 0)
+  
+  if (validCustomers.length === 0) return []
 
-  const customersWithLangs = customers.filter((c) => c.flags && c.flags.length > 0)
-  if (customersWithLangs.length === 0) return []
-
-  // Start with first customer's languages
-  const first = customersWithLangs[0].flags!
-  const sharedCodes = first.filter((lang) =>
-    customersWithLangs.every((c) => c.flags!.some((f) => f.code === lang.code)),
+  const firstCustomerLanguages = validCustomers[0].flags ?? []
+  
+  return firstCustomerLanguages.filter((baseLang) =>
+    validCustomers.every((customer) => 
+      customer.flags?.some((customerLang) => customerLang.code === baseLang.code)
+    )
   )
-
-  return sharedCodes
 }
 
 /**
  * Returns true if 2+ customers share no common language.
- * Only meaningful when all customers have at least one language set.
+ * Only evaluates customers that have at least one language set.
  */
 export function hasLanguageConflict(customers: CustomerWithLanguages[]): boolean {
-  const withLangs = customers.filter((c) => c.flags && c.flags.length > 0)
-  if (withLangs.length < 2) return false
-  return getSharedLanguages(withLangs).length === 0
+  const validCustomerCount = customers.filter((c) => c.flags && c.flags.length > 0).length
+  
+  if (validCustomerCount < 2) return false
+  
+  return getSharedLanguages(customers).length === 0
 }
 
 export type MatchTier = 'full' | 'partial' | 'none'
@@ -48,23 +49,21 @@ export function scoreLanguageMatch(
   instructorLanguages: string[],
   customerLanguageCodes: string[],
 ): { tier: MatchTier; matchCount: number; total: number } {
-  const total = customerLanguageCodes.length
-  if (total === 0 || instructorLanguages.length === 0) {
-    return { tier: 'none', matchCount: 0, total }
+  if (customerLanguageCodes.length === 0 || instructorLanguages.length === 0) {
+    return { tier: 'none', matchCount: 0, total: customerLanguageCodes.length }
   }
 
-  const instructorCodes = new Set(
-    instructorLanguages.map((l) => languageToCode(l)).filter(Boolean),
+  const normalizedInstructorCodes = new Set(
+    instructorLanguages.map((l) => languageToCode(l)).filter(Boolean)
   )
 
-  let matchCount = 0
-  for (const code of customerLanguageCodes) {
-    const normalized = languageToCode(code)
-    if (normalized && instructorCodes.has(normalized)) matchCount++
-  }
+  const matchCount = customerLanguageCodes.filter((code) => {
+    const normalizedCode = languageToCode(code)
+    return normalizedCode && normalizedInstructorCodes.has(normalizedCode)
+  }).length
 
   const tier: MatchTier =
-    matchCount === 0 ? 'none' : matchCount >= total ? 'full' : 'partial'
+    matchCount === 0 ? 'none' : matchCount >= customerLanguageCodes.length ? 'full' : 'partial'
 
-  return { tier, matchCount, total }
+  return { tier, matchCount, total: customerLanguageCodes.length }
 }

@@ -205,26 +205,9 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {!section && (
-        <div>
-          <h1
-            className="text-2xl font-bold text-primary"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            {isUpdate ? 'Profile Settings' : 'Complete Your Profile'}
-          </h1>
-          <p className="mt-1 text-sm text-secondary">
-            {isUpdate
-              ? 'Update your dive center information.'
-              : 'Tell us about your dive center to get started.'}
-          </p>
-        </div>
-      )}
-
       {/* Basic Information */}
       {(!section || section === 'contact') && (
       <div className="space-y-4">
-        <FormSectionHeader label="Basic Information" />
         <ProfileBasicInfo
           nameValue={form.name}
           onNameChange={(val) => setField('name', val)}
