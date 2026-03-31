@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { NotificationDoc as NotificationDocFromLib } from '../notifications'
-import type { NotificationDoc as NotificationDocFromComponent } from '@/components/dashboard/notification-item'
+import type { NotificationDoc as NotificationDocFromComponent } from '@/components/notifications/notification-item'
 
 describe('NotificationDoc type location', () => {
   it('canonical type from lib/types/notifications has all required fields', () => {
