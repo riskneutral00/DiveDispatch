@@ -4,7 +4,7 @@ description: >
   Silent partner. Autonomous optimization agent that runs alongside the Car
   workflow. Fixed priority ladder: tsc errors, test coverage, slow tests,
   review findings. One metric at a time, grind it, move on. Logs to .research/.
-model: sonnet
+model: opus
 ---
 
 # Researcher Agent — Silent Partner

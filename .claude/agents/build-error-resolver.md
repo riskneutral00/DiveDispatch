@@ -1,7 +1,7 @@
 ---
 name: build-error-resolver
 description: Build and TypeScript error resolution specialist. Fixes build/type errors only with minimal diffs, no architectural edits. Focuses on getting the build green quickly.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+allowed-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: sonnet
 ---
 

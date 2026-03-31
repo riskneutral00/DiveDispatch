@@ -11,7 +11,7 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.path // 
 # Only check Convex TypeScript files (skip batch utility itself)
 case "$FILE_PATH" in
   */convex/lib/batch.ts) exit 0 ;;
-  */convex/*.ts) ;;
+  */convex/*.ts|*/convex/*/*.ts) ;;
   *) exit 0 ;;
 esac
 

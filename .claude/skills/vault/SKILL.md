@@ -1,7 +1,7 @@
 ---
 name: vault
 description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, SendMessage, TeamDelete, mcp__openspace__execute_task
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, mcp__openspace__execute_task
 user-invocable: true
 ---
 
@@ -144,6 +144,47 @@ Vault path: `~/Desktop/RiskNeutral/Vaults/RiskNeutral/`
      ## Resume Point
      **Next action:** [Specific enough for a fresh session to execute]
      ```
+
+### Job 1.1: 24-Hour Summary (conditional)
+
+Vault path: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Summaries/`
+Template: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Summaries/.template.md`
+Happy path reference: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/HappyPath.md`
+
+**Trigger check** — in Round 1, read `.last-summary-ts`:
+```bash
+cat .last-summary-ts 2>/dev/null || echo "1970-01-01T00:00:00Z"
+```
+
+If less than 24 hours since last summary → skip silently.
+
+If ≥ 24 hours → generate summary. Gather data in Round 1 (parallel with Job 1 reads):
+
+1. **Sessions since last summary:** Read session files (`Sessions/YYYY-MM-DD*.md`), driver debriefs, and backseat debriefs dated after last summary timestamp.
+
+2. **Project vitals:** Read `.SKELETON.md` (already in Round 1) for launch gates and ticket counts. Get test count from most recent session or driver debrief.
+
+3. **Skill ecosystem:**
+   ```bash
+   ls .claude/skills/ | wc -l && git log --since="$LAST_SUMMARY" --name-only --pretty=format: -- .claude/skills/ .claude/agents/ .claude/hooks/ | sort -u | grep -v '^$'
+   ```
+   Cross-reference with previous summary to identify new/modified/deprecated. **Always cover matrix-github and matrix-youtube specifically** — these are strategic skills.
+
+4. **AutoResearch & OpenSpace:** Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/AutoResearch/Index.md`. Read `.openspace/skill_usage.jsonl` if it exists.
+
+5. **Failures:** Read failure entries in `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Failures/` dated after last summary.
+
+6. **Trajectory (Section 9):** Read `HappyPath.md` gap list. For each gap, check if the corresponding ticket changed status since last summary. Compute on-path ratio and drift indicator.
+
+**Write in Round 2** (parallel with other writes):
+```bash
+cat > ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Summaries/YYYY-MM-DD.md << 'SUMMARY'
+[filled template — all 9 sections]
+SUMMARY
+date -u +%Y-%m-%dT%H:%M:%SZ > .last-summary-ts
+```
+
+**Performance:** All reads fold into Round 1. Summary write + timestamp write fold into Round 2. Zero extra rounds.
 
 ### Job 1.5: Skeleton Update
 
@@ -351,29 +392,26 @@ CRITICAL FORMAT RULES — you MUST preserve these in every skill file you modify
 
 ### Job 5: Shutdown Car Team
 
-Run **after** all other jobs complete. Check if a Car agent team is active:
+Run **after** all other jobs complete. Check if a Car tmux session is active:
 
 ```bash
-cat ~/.claude/teams/car/config.json 2>/dev/null
+tmux has-session -t car 2>/dev/null
 ```
 
-If the team exists:
+If the session exists:
 
-1. Send shutdown to all teammates:
-   ```
-   SendMessage(to: "driver", message: "Session closing. Finish current work and shut down.")
-   SendMessage(to: "backseat", message: "Session closing. Finish current work and shut down.")
-   SendMessage(to: "patrol", message: "Session closing. Finish current work and shut down.")
-   ```
-   If a navigator teammate exists, send to it too.
-
-2. Wait up to 60 seconds for teammates to finish. Do not force-kill — let them complete current work.
-
-3. Clean up the team:
-   ```
-   TeamDelete()
+1. Write exit sentinels so agents shut down gracefully:
+   ```bash
+   echo "vault" > .car/exit-driver
+   echo "vault" > .car/exit-backseat
+   echo "vault" > .car/exit-patrol
    ```
 
-4. Print: `Car team shut down.`
+2. Wait up to 30 seconds for agents to finish current work, then kill the session:
+   ```bash
+   sleep 10 && tmux kill-session -t car 2>/dev/null
+   ```
 
-If no team exists, skip this job silently.
+3. Print: `Car team shut down.`
+
+If no tmux session exists, skip this job silently.

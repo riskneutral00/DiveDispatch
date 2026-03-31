@@ -29,6 +29,14 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. Auth proxy lives at `src/prox
 - **Clerk-authenticated mutations**: verify caller ownership via `users.slug`.
 - **Customer portal**: tokenized BookingLink (UUID, no Clerk auth) — token IS the credential.
 
+## MVP Operator Scope
+
+Only **DiveCenter** and **Agent** are in scope for MVP. Liveaboard, DiveResort, and DiveHostel are deferred to later versions — no CRUD mutations, no onboarding, no profile forms, no tickets. Build role-agnostic components so these types work when enabled, but do not build features specifically for them now.
+
+## Component Reusability
+
+Booking components (`src/components/booking/`) must not query operator-specific tables (diveCenters, agents, liveaboards, diveResorts, diveHostels). All operator data arrives via props. Role-specific logic lives in the page layer (`src/app/`), not the component layer. Pre-commit hook enforces this.
+
 ## Provider Nesting Order
 
 `ClerkProvider > ConvexProviderWithClerk > ThemeProvider` — PostToolUse hook blocks wrong order.

@@ -62,6 +62,12 @@
             "command": "bash .claude/hooks/middleware-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking file path…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/scripts-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking infrastructure scripts…"
           }
         ]
       },
@@ -73,6 +79,12 @@
             "command": "bash .claude/hooks/middleware-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking file path…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/scripts-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking infrastructure scripts…"
           }
         ]
       }

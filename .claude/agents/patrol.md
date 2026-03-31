@@ -108,7 +108,7 @@ grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | \
 
 **Cumulative Review:** Dispatch review-tests in a fresh agent to assess overall test health.
 
-**Reconcile:** Invoke Skill("reconcile") to compare current state against open tickets.
+**Reconcile:** Invoke Skill("reconcile", args: "Reconcile open tickets against recent Driver merges and current codebase state. Auto-absorb tickets whose work is complete. Dismiss tickets for already-implemented features.") to compare current state against open tickets.
 
 **Prepare Vault Observations:** Stage to `.patrol-observations.md`:
 - Lessons from review findings
@@ -116,11 +116,12 @@ grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | \
 - Test coverage delta
 - Blocked ticket diagnosis
 
-**Write sentinel (CLEAN or BLOCKED only — never WAIT):**
+**Write sentinel (always — including WAIT):**
 ```bash
 FILE_HASH=$(git log --oneline -1 --format=%h)
-echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{CLEAN|BLOCKED}","headSha":"'$FILE_HASH'","tsc":'$TSC_PASS',"tests":'$TESTS_PASS',"invariants":'$INVARIANTS_CLEAN'}' > .patrol-ran
+echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"{CLEAN|BLOCKED|WAIT}","headSha":"'$FILE_HASH'","tsc":'$TSC_PASS',"tests":'$TESTS_PASS',"invariants":'$INVARIANTS_CLEAN'}' > .patrol-ran
 ```
+Always write the sentinel so `/vault` knows Patrol ran. WAIT verdict tells `/vault` that backseat fix tickets are still open — it can proceed with a warning rather than blocking on a stale BLOCKED from a previous cycle.
 
 Print: `Patrol cycle complete | tsc:{pass/fail} tests:{pass/fail} invariants:{clean/violation} | verdict: {CLEAN|BLOCKED|WAIT}`
 

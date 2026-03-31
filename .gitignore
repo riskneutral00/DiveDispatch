@@ -15,6 +15,7 @@
 .vitest-last-pass
 .last-summary-ts
 
+
 # dependencies
 /node_modules
 /.pnp
@@ -115,3 +116,7 @@ docs/LLM_HANDOFF.md
 # PreCompact context archive (local only — session-scoped, not for review)
 .claude/context-archive/
 .car/golden/
+
+# Ephemeral directories
+.research/
+.tmp/

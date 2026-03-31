@@ -3,7 +3,7 @@
 # Blocks vague commit messages (< 10 chars or missing conventional prefix).
 
 INPUT=$(cat)
-CMD=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"command"[[:space:]]*:[[:space:]]*"//;s/"$//')
+CMD=$(echo "$INPUT" | jq -r '.tool_input.command // ""' 2>/dev/null || echo "")
 
 # Only check git commit commands
 echo "$CMD" | grep -qE '\bgit\s+commit\b' || exit 0
@@ -12,10 +12,9 @@ echo "$CMD" | grep -qE '\bgit\s+commit\b' || exit 0
 MSG=$(echo "$CMD" | sed -n 's/.*-m[[:space:]]*"\([^"]*\)".*/\1/p')
 [ -z "$MSG" ] && MSG=$(echo "$CMD" | sed -n "s/.*-m[[:space:]]*'\([^']*\)'.*/\1/p")
 
-# Try heredoc pattern: <<'EOF' ... EOF (take first line as subject)
-# Use sed instead of grep -P (PCRE not available on macOS BSD grep)
+# Try heredoc pattern: $(cat <<'EOF' ... EOF) — jq unescapes \n to real newlines
 if [ -z "$MSG" ]; then
-  MSG=$(echo "$CMD" | sed -n "/<<'\\{0,1\\}EOF'\\{0,1\\}/{n;p;}" | head -1 | sed 's/^[[:space:]]*//')
+  MSG=$(printf '%s\n' "$CMD" | sed -n '/<<.*EOF/{n;p;q;}' | sed 's/^[[:space:]]*//')
 fi
 
 # --amend or other format without -m — skip
