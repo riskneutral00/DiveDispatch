@@ -22,7 +22,7 @@ export interface UseProfileFormOptions<
   /** Default form values */
   defaults: TForm
   /** Map profile data → form state (called once when profile loads) */
-  fromProfile: (profile: ProfileRecord) => TForm
+  fromProfile: (profile: ProfileRecord, me?: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>) => TForm
   /** Map form state → mutation payload (called on submit) */
   toPayload: (form: TForm) => TPayload
   /** Create mutation */
@@ -33,6 +33,10 @@ export interface UseProfileFormOptions<
   onSaved?: () => void
   /** Optional: pre-fill from `me` when no profile exists */
   fromMe?: (me: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>, defaults: TForm) => TForm
+  /** When true, wait for `me` to be defined (not loading) before initializing the form. */
+  waitForMeBeforeInit?: boolean
+  /** Runs after create/update succeeds (e.g. sync `users.customerLanguages`) */
+  afterSuccessfulSave?: (form: TForm) => Promise<void>
 }
 
 export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
@@ -70,7 +74,20 @@ export function useProfileForm<
 >(
   options: UseProfileFormOptions<TForm, TPayload>,
 ): UseProfileFormReturn<TForm> {
-  const { profile, me, schema, defaults, fromProfile, toPayload, create, update, onSaved, fromMe } = options
+  const {
+    profile,
+    me,
+    schema,
+    defaults,
+    fromProfile,
+    toPayload,
+    create,
+    update,
+    onSaved,
+    fromMe,
+    waitForMeBeforeInit,
+    afterSuccessfulSave,
+  } = options
 
   const [form, setForm] = useState<TForm>(defaults)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -88,10 +105,12 @@ export function useProfileForm<
 
   // Initialize form from profile (once)
   useEffect(() => {
-    if (profile !== undefined && !initialized) {
+    if (profile === undefined) return
+    if (waitForMeBeforeInit && me === undefined) return
+    if (!initialized) {
       let initial = defaults
       if (profile) {
-        initial = fromProfile(profile)
+        initial = fromProfile(profile, me ?? undefined)
       } else if (me && fromMe) {
         initial = fromMe(me, defaults)
       }
@@ -99,7 +118,7 @@ export function useProfileForm<
       baselineRef.current = initial
       setInitialized(true)
     }
-  }, [profile, me, initialized, fromProfile, fromMe, defaults])
+  }, [profile, me, initialized, fromProfile, fromMe, defaults, waitForMeBeforeInit])
 
   function setField<K extends keyof TForm>(key: K, value: TForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -138,6 +157,7 @@ export function useProfileForm<
       } else {
         await create(payload)
       }
+      await afterSuccessfulSave?.(form)
       baselineRef.current = form
       setSaved(true)
       toast.success('Profile saved', { duration: 3000 })
@@ -163,7 +183,9 @@ export function useProfileForm<
     saved,
     isDirty: isDirty(),
     isValid,
-    loading: profile === undefined,
+    loading:
+      profile === undefined
+      || (waitForMeBeforeInit === true && me === undefined),
     isUpdate: !!profile,
     handleSubmit,
   }

@@ -1,38 +1,29 @@
 'use client'
 
-import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus } from 'lucide-react'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
-import { COURSE_CODES } from '@/lib/constants/course-catalog'
-import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { Spinner } from '@/components/ui/spinner'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { CredentialRow } from '@/components/profiles/credential-row'
-import { LanguageField } from '@/components/profiles/language-field'
-import type { Language } from '@/lib/types/language'
-import { resolveLanguages } from '@/lib/constants/dive-languages'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { z } from 'zod'
 
-const COURSE_LABELS: Record<string, string> = {
-  DSD: 'Discover Scuba Diving',
-  TRY_DIVE: 'Try Dive',
-  OW: 'Open Water',
-  AOW: 'Advanced Open Water',
-  RESCUE: 'Rescue Diver',
-  DM: 'Divemaster',
-  FD: 'Fun Dive',
-  REFRESH: 'Refresher / ReActivate',
-  SPECIALTY: 'Specialty',
-}
+import { api } from '../../../convex/_generated/api'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
+import { SaveButton } from '@/components/ui/save-button'
+import {
+  languagesFromProfile,
+  languagesToPayload,
+  teachingLanguagesFieldSchema,
+} from '@/lib/profile-form/languages'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import type { Language } from '@/lib/types/language'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -43,24 +34,16 @@ const credentialSchema = z.object({
   courses: z.array(z.string()).min(1, 'Select at least one course'),
 })
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  location: nullableProfileLocation(),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Phone number is required'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
+  teachingLanguages: teachingLanguagesFieldSchema,
 })
 
 type CredentialData = z.infer<typeof credentialSchema>
-type CredentialErrors = Partial<Record<keyof CredentialData, string>>
 
 type ProfileFormData = {
   name: string
@@ -82,31 +65,6 @@ const INITIAL_FORM: ProfileFormData = {
   teachingLanguages: [],
 }
 
-// ── Sub-components ────────────────────────────────────────────────────
-
-function InstructorCredentialFields({ index, credential, errors, onChange }: {
-  index: number
-  credential: CredentialData
-  errors: Record<string, string>
-  onChange: (index: number, updated: CredentialData) => void
-}) {
-  const update = (field: keyof CredentialData, value: string | string[]) => {
-    onChange(index, { ...credential, [field]: value })
-  }
-  const courseItems = COURSE_CODES.map((code) => ({ value: code, label: COURSE_LABELS[code] ?? code }))
-  return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
-        <GlassInput label="Certification Level" placeholder="e.g. Open Water Instructor" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
-        <GlassInput label="Agency Instructor ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-1" />
-      </div>
-      <GlassCheckboxGroup label="Courses Taught" items={courseItems} selected={credential.courses} onChange={(values) => update('courses', values)} error={errors[`credential.${index}.courses`]} columns={3} />
-    </>
-  )
-}
-
-// ── Main Form ─────────────────────────────────────────────────────────
 
 export type InstructorProfileSection = 'contact' | 'languages' | 'credentials'
 
@@ -116,7 +74,7 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
   const create = useMutation(api.instructors.create)
   const update = useMutation(api.instructors.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -125,23 +83,23 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
       const cred = p.credential as { agency: string; level: string; agencyID: string; courses: string[] }[]
       return {
         name: p.name as string,
-        location: {
-          placeName: p.placeName,
-          country: p.country,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: (p.placeId ?? undefined) as string | undefined,
-        } as LocationValue,
+        location: locationFromProfileDoc({
+          placeName: p.placeName as string,
+          country: p.country as string,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          placeId: p.placeId as string | null | undefined,
+        }) as LocationValue,
         email: p.email as string,
         phone: p.phone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
-        teachingLanguages: resolveLanguages((p.teachingLanguages as string[]) ?? []),
+        teachingLanguages: languagesFromProfile(p.teachingLanguages as string[] | undefined),
       }
     },
-    fromMe: (defaults, initial) => ({
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -155,98 +113,69 @@ export function InstructorProfileForm({ section }: { section?: InstructorProfile
         email: f.email,
         phone: f.phone,
         credential: f.credential,
-        teachingLanguages: f.teachingLanguages.map((l) => l.code),
+        teachingLanguages: languagesToPayload(f.teachingLanguages),
       }
     },
     create,
     update,
   })
 
-  const updateCredential = (index: number, updated: CredentialData) => {
-    setForm((prev) => { const credential = [...prev.credential]; credential[index] = updated; return { ...prev, credential } })
-  }
-
-  const addCredential = () => setForm((prev) => ({ ...prev, credential: [...prev.credential, emptyCredential()] }))
-
-  const removeCredential = (index: number) => {
-    setForm((prev) => ({ ...prev, credential: prev.credential.filter((_, i) => i !== index) }))
-  }
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
+    return <ProfileFormLoading />
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {!section && (
-        <div>
-          <h1 className="text-2xl font-bold mb-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="text-sm text-secondary">
-            {isUpdate ? 'Keep your profile current so dive centers can find you.' : 'Set up your instructor profile to start receiving booking requests.'}
-          </p>
-        </div>
-      )}
-
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Basic Information */}
       {(!section || section === 'contact') && (
-        <GlassCard padding="md">
-          <FormSectionHeader label="Contact Information" />
-          <div className="space-y-4">
-            <ProfileBasicInfo
-              nameValue={form.name}
-              onNameChange={(val) => setField('name', val)}
-              nameError={errors.name}
-              nameLabel="Full Name"
-              namePlaceholder="Your name"
-              locationValue={form.location}
-              onLocationChange={(loc) => setField('location', loc)}
-              locationError={errors.location}
-              emailValue={form.email}
-              onEmailChange={(val) => setField('email', val)}
-              emailError={errors.email}
-              phoneValue={form.phone}
-              onPhoneChange={(val) => setField('phone', val)}
-              phoneError={errors.phone}
-            />
-          </div>
-        </GlassCard>
-      )}
-
-      {(!section) && <hr className="form-divider" />}
-
-      {(!section || section === 'languages') && (
-        <LanguageField
-          variant="teaching"
-          value={form.teachingLanguages}
-          onChange={(langs) => setField('teachingLanguages', langs)}
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Full Name"
+          namePlaceholder="Ariel Nemo"
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={onLocationChange}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
         />
+      </div>
       )}
 
-      {(!section) && <hr className="form-divider" />}
+      <ProfileFormSectionDivider show={!section} />
+
+      <ProfileLanguagesSection
+        section={section}
+        variant="teaching"
+        value={form.teachingLanguages}
+        onChange={(langs) => setField('teachingLanguages', langs)}
+      />
+
+      <ProfileFormSectionDivider show={!section} />
 
       {(!section || section === 'credentials') && (
-        <div className="space-y-4">
-          <FormSectionHeader
-            label="Dive Credentials"
-            action={
-              <GlassButton variant="secondary" size="sm" type="button" onClick={addCredential}>
-                <Plus size={14} />
-                Add Credential
-              </GlassButton>
-            }
-          />
-          {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
-          {form.credential.map((cred, index) => (
-            <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
-              <InstructorCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
-            </CredentialRow>
-          ))}
-        </div>
+        <ProfileAgencyInfo
+          variant="instructor"
+          items={form.credential}
+          onChange={(items) => setField('credential', items)}
+          errors={errors as Record<string, string>}
+        />
       )}
 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}

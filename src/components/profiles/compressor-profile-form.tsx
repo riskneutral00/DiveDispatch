@@ -1,15 +1,22 @@
 'use client'
 
-import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
+import { z } from 'zod'
+
 import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/ui/glass-card'
-import { Spinner } from '@/components/ui/spinner'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { GlassInput } from '@/components/ui/glass-input'
+import { GlassCard } from '@/components/ui/glass-card'
 import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
+import { SaveButton } from '@/components/ui/save-button'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -24,17 +31,9 @@ type GasMix = 'air' | 'nitrox' | 'trimix'
 
 // ── Zod Schema ────────────────────────────────────────────────────────
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  location: nullableProfileLocation(),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Phone number is required'),
   gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
@@ -74,21 +73,21 @@ export function CompressorProfileForm() {
     defaults: INITIAL_FORM,
     fromProfile: (p) => ({
       name: p.name as string,
-      location: {
-        placeName: p.placeName,
-        country: p.country,
-        lat: p.lat,
-        lng: p.lng,
-        placeId: (p.placeId ?? undefined) as string | undefined,
-      } as LocationValue,
+      location: locationFromProfileDoc({
+        placeName: p.placeName as string,
+        country: p.country as string,
+        lat: p.lat as number,
+        lng: p.lng as number,
+        placeId: p.placeId as string | null | undefined,
+      }) as LocationValue,
       email: p.email as string,
       phone: p.phone as string,
       gasMixes: (p.gasMixes ?? []) as GasMix[],
     }),
-    fromMe: (defaults, initial) => ({
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -108,12 +107,14 @@ export function CompressorProfileForm() {
     update,
   })
 
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
+    return <ProfileFormLoading />
   }
 
   return (
@@ -133,46 +134,28 @@ export function CompressorProfileForm() {
       </div>
 
       {/* Basic info */}
-      <GlassCard padding="md">
-        <FormSectionHeader label="Contact Information" />
-        <div className="space-y-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Business Name"
-              placeholder="e.g. Phuket Gas Services"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              error={errors.name}
-            />
-          </div>
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setField('email', e.target.value)}
-              error={errors.email}
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              placeholder="+66 81 234 5678"
-              value={form.phone}
-              onChange={(e) => setField('phone', e.target.value)}
-              error={errors.phone}
-            />
-          </div>
-        </div>
-      </GlassCard>
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Business Name"
+          namePlaceholder="e.g. Phuket Gas Services"
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={onLocationChange}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
+        />
+      </div>
 
       <hr className="form-divider" />
 

@@ -92,8 +92,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
     if (existing !== undefined && me !== undefined && !initialized) {
       if (existing) {
         setName(existing.name)
-        // DiveCenters: top-level placeName/country/lat/lng
-        // Agents: locations[] array
+        // All roles now use flat placeName/country/lat/lng
         if ('lat' in existing && existing.lat !== undefined) {
           setLocation({
             placeName: existing.placeName,
@@ -101,15 +100,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
             lat: existing.lat,
             lng: existing.lng,
             placeId: existing.placeId ?? undefined,
-          })
-        } else if ('locations' in existing && Array.isArray(existing.locations) && existing.locations.length > 0) {
-          const loc = existing.locations[0]
-          setLocation({
-            placeName: loc.placeName,
-            country: loc.country,
-            lat: loc.lat,
-            lng: loc.lng,
-            placeId: loc.placeId ?? undefined,
           })
         }
         setContactEmail(existing.email)
@@ -141,21 +131,16 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         phone,
       }
 
-      const { locationModel } = getOrganizerRoleFlags(role)
+
 
       if (existing) {
         await update(basePayload)
-      } else if (locationModel === 'single') {
-        await create({ ...basePayload, associations: [] })
-      } else if (locationModel === 'multi') {
+      } else {
         await create({
           ...basePayload,
-          locations: [{ placeName: location.placeName, country: location.country, lat: location.lat, lng: location.lng, placeId: location.placeId }],
           associations: [],
-          defaultReferralMode: 'independent' as const,
+          ...(role === 'Agent' ? { defaultReferralMode: 'independent' as const } : {}),
         })
-      } else {
-        throw new Error(`Unexpected locationModel for role: ${role}`)
       }
       onSaved()
     } catch (err) {

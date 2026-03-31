@@ -1,23 +1,29 @@
 'use client'
 
-import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus } from 'lucide-react'
+import { z } from 'zod'
+
 import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { Spinner } from '@/components/ui/spinner'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { CredentialRow } from '@/components/profiles/credential-row'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { LanguageField } from '@/components/profiles/language-field'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { SaveButton } from '@/components/ui/save-button'
+import {
+  languagesFromProfile,
+  languagesToPayload,
+  teachingLanguagesFieldSchema,
+} from '@/lib/profile-form/languages'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
-import { resolveLanguages } from '@/lib/constants/dive-languages'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
 
@@ -27,20 +33,13 @@ const credentialSchema = z.object({
   agencyID: z.string().min(1, 'Agency ID is required'),
 })
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  location: nullableProfileLocation(),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Phone number is required'),
   credential: z.array(credentialSchema).min(1, 'Add at least one credential'),
+  teachingLanguages: teachingLanguagesFieldSchema,
 })
 
 type CredentialData = z.infer<typeof credentialSchema>
@@ -54,6 +53,7 @@ type ProfileFormData = {
   teachingLanguages: Language[]
 }
 
+
 const emptyCredential = (): CredentialData => ({ agency: '', level: '', agencyID: '' })
 
 const INITIAL_FORM: ProfileFormData = {
@@ -65,27 +65,6 @@ const INITIAL_FORM: ProfileFormData = {
   teachingLanguages: [],
 }
 
-// ── Sub-components ────────────────────────────────────────────────────
-
-function DmCredentialFields({ index, credential, errors, onChange }: {
-  index: number
-  credential: CredentialData
-  errors: Record<string, string>
-  onChange: (index: number, updated: CredentialData) => void
-}) {
-  const update = (field: keyof CredentialData, value: string) => {
-    onChange(index, { ...credential, [field]: value })
-  }
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <GlassSimpleSelect label="Agency" value={credential.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`credential.${index}.agency`]} />
-      <GlassInput label="Certification Level" placeholder="e.g. Divemaster" value={credential.level} onChange={(e) => update('level', e.target.value)} error={errors[`credential.${index}.level`]} />
-      <GlassInput label="Agency Member ID" placeholder="e.g. 12345678" value={credential.agencyID} onChange={(e) => update('agencyID', e.target.value)} error={errors[`credential.${index}.agencyID`]} className="sm:col-span-2" />
-    </div>
-  )
-}
-
-// ── Main Form ─────────────────────────────────────────────────────────
 
 export type DiveMasterProfileSection = 'contact' | 'languages' | 'credentials'
 
@@ -95,7 +74,7 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
   const create = useMutation(api.diveMasters.create)
   const update = useMutation(api.diveMasters.update)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -104,23 +83,23 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
       const cred = p.credential as { agency: string; level: string; agencyID: string }[]
       return {
         name: p.name as string,
-        location: {
-          placeName: p.placeName,
-          country: p.country,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: (p.placeId ?? undefined) as string | undefined,
-        } as LocationValue,
+        location: locationFromProfileDoc({
+          placeName: p.placeName as string,
+          country: p.country as string,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          placeId: p.placeId as string | null | undefined,
+        }) as LocationValue,
         email: p.email as string,
         phone: p.phone as string,
         credential: cred.length > 0 ? cred : [emptyCredential()],
-        teachingLanguages: resolveLanguages((p.teachingLanguages as string[]) ?? []),
+        teachingLanguages: languagesFromProfile(p.teachingLanguages as string[] | undefined),
       }
     },
-    fromMe: (defaults, initial) => ({
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -134,29 +113,21 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
         email: f.email,
         phone: f.phone,
         credential: f.credential,
-        teachingLanguages: f.teachingLanguages.map((l) => l.code),
+        teachingLanguages: languagesToPayload(f.teachingLanguages),
       }
     },
     create,
     update,
   })
 
-  const updateCredential = (index: number, updated: CredentialData) => {
-    setForm((prev) => { const credential = [...prev.credential]; credential[index] = updated; return { ...prev, credential } })
-  }
-
-  const addCredential = () => setForm((prev) => ({ ...prev, credential: [...prev.credential, emptyCredential()] }))
-
-  const removeCredential = (index: number) => {
-    setForm((prev) => ({ ...prev, credential: prev.credential.filter((_, i) => i !== index) }))
-  }
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
+    return <ProfileFormLoading />
   }
 
   return (
@@ -173,53 +144,48 @@ export function DiveMasterProfileForm({ section }: { section?: DiveMasterProfile
       )}
 
       {(!section || section === 'contact') && (
-        <GlassCard padding="md">
-          <FormSectionHeader label="Contact Information" />
-          <div className="space-y-4">
-            <div className="max-w-sm">
-              <GlassInput label="Full Name" placeholder="Your name" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} />
-            </div>
-            <div className="max-w-md">
-              <LocationPicker label="Location" value={form.location} onChange={(loc) => setField('location', loc)} error={errors.location} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setField('email', e.target.value)} error={errors.email} />
-              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.phone} onChange={(e) => setField('phone', e.target.value)} error={errors.phone} />
-            </div>
-          </div>
-        </GlassCard>
-      )}
-
-      {(!section) && <hr className="form-divider" />}
-
-      {(!section || section === 'languages') && (
-        <LanguageField
-          variant="teaching"
-          value={form.teachingLanguages}
-          onChange={(langs) => setField('teachingLanguages', langs)}
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Full Name"
+          namePlaceholder="Your name"
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={onLocationChange}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
         />
+      </div>
       )}
 
-      {(!section) && <hr className="form-divider" />}
+      <ProfileFormSectionDivider show={!section} />
+
+      <ProfileLanguagesSection
+        section={section}
+        variant="teaching"
+        value={form.teachingLanguages}
+        onChange={(langs) => setField('teachingLanguages', langs)}
+      />
+
+      <ProfileFormSectionDivider show={!section} />
 
       {(!section || section === 'credentials') && (
-        <div className="space-y-4">
-          <FormSectionHeader
-            label="Dive Credentials"
-            action={
-              <GlassButton variant="secondary" size="sm" type="button" onClick={addCredential}>
-                <Plus size={14} />
-                Add Credential
-              </GlassButton>
-            }
-          />
-          {errors.credential && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>}
-          {form.credential.map((cred, index) => (
-            <CredentialRow key={index} index={index} onRemove={removeCredential} canRemove={form.credential.length > 1}>
-              <DmCredentialFields index={index} credential={cred} errors={errors} onChange={updateCredential} />
-            </CredentialRow>
-          ))}
-        </div>
+        <ProfileAgencyInfo
+          variant="divemaster"
+          items={form.credential}
+          onChange={(items) => setField('credential', items)}
+          errors={errors as Record<string, string>}
+        />
       )}
 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}

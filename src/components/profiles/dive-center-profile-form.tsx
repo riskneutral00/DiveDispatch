@@ -1,39 +1,37 @@
 'use client'
 
-import { Fragment } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus } from 'lucide-react'
 import { z } from 'zod'
-import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassInput, GlassSelect } from '@/components/ui'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { FormGrid, FormField } from '@/components/ui/form-grid'
-import { LanguageField } from '@/components/profiles/language-field'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ItemCard } from '@/components/ui/item-card'
-import { DayPicker } from '@/components/ui/day-picker'
-import { SpecialtyField } from '@/components/profiles/specialty-field'
-import { SaveButton } from '@/components/ui/save-button'
-import type { Language } from '@/lib/types/language'
-import { resolveLanguages } from '@/lib/constants/dive-languages'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { AGENCIES, AGENCY_CODES, COURSE_DAY_RANGES, getDefaultSpecialties } from '@/lib/constants/agencies'
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
+import { api } from '../../../convex/_generated/api'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
+import { SaveButton } from '@/components/ui/save-button'
+import { AGENCIES } from '@/lib/constants/agencies'
+import {
+  customerLanguagesFieldSchema,
+  languagesFromProfile,
+  languagesToPayload,
+} from '@/lib/profile-form/languages'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import type { Language } from '@/lib/types/language'
 
 const formSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  location: nullableProfileLocation(),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Contact phone is required'),
-  customerLanguages: z.array(z.object({ code: z.string(), label: z.string() })).min(1, 'At least one language required'),
+  customerLanguages: customerLanguagesFieldSchema,
   associations: z.array(
     z.object({
       agency: z.string().min(1, 'Agency is required'),
@@ -43,7 +41,7 @@ const formSchema = z.object({
       oaDays: z.number().min(1),
       selectedSpecialties: z.array(z.string()),
     }),
-  ),
+  ).min(1, 'At least one agency association is required'),
 }).refine((data) => {
   return data.associations.every((a) => {
     const required = AGENCIES[a.agency]?.specialtyCount ?? 5
@@ -51,41 +49,30 @@ const formSchema = z.object({
   })
 }, { message: 'Not enough specialties selected', path: ['associations'] })
 
-interface AssociationForm {
-  agency: string
-  number: string
-  owDays: number
-  aowDays: number
-  oaDays: number
-  selectedSpecialties: string[]
-}
-
 type FormState = {
   name: string
   location: LocationValue | null
   email: string
   phone: string
-  associations: AssociationForm[]
+  associations: Array<{ agency: string; number: string; owDays: number; aowDays: number; oaDays: number; selectedSpecialties: string[] }>
   customerLanguages: Language[]
 }
 
-function makeDefaultAssociation(): AssociationForm {
-  return {
-    agency: '',
-    number: '',
-    owDays: COURSE_DAY_RANGES.OW.min,
-    aowDays: COURSE_DAY_RANGES.AOW.min,
-    oaDays: COURSE_DAY_RANGES.combined.min,
-    selectedSpecialties: getDefaultSpecialties('PADI'),
-  }
-}
+const makeDefaultAssoc = () => ({
+  agency: '',
+  number: '',
+  owDays: 3,
+  aowDays: 2,
+  oaDays: 4,
+  selectedSpecialties: [],
+})
 
 const INITIAL_FORM: FormState = {
   name: '',
   location: null,
   email: '',
   phone: '',
-  associations: [],
+  associations: [makeDefaultAssoc()],
   customerLanguages: [],
 }
 
@@ -94,7 +81,6 @@ export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
   const existing = useQuery(api.diveCenters.mine)
   const me = useQuery(api.users.me)
-  const accountDefaults = useQuery(api.users.getAccountDefaults)
   const create = useMutation(api.diveCenters.create)
   const update = useMutation(api.diveCenters.update)
 
@@ -111,29 +97,24 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       }>) ?? []
       return {
         name: p.name as string,
-        location: {
-          placeName: p.placeName,
-          country: p.country,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: (p.placeId ?? undefined) as string | undefined,
-        } as LocationValue,
+        location: locationFromProfileDoc({
+          placeName: p.placeName as string,
+          country: p.country as string,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          placeId: p.placeId as string | null | undefined,
+        }) as LocationValue,
         email: p.email as string,
         phone: p.phone as string,
-        associations: assocs.map((a) => ({
-          agency: a.agency,
-          number: a.number,
-          owDays: a.owDays ?? COURSE_DAY_RANGES.OW.min,
-          aowDays: a.aowDays ?? COURSE_DAY_RANGES.AOW.min,
-          oaDays: a.oaDays ?? COURSE_DAY_RANGES.combined.min,
-          selectedSpecialties: [
-            ...new Set([
-              ...getDefaultSpecialties(a.agency),
-              ...(a.selectedSpecialties ?? []),
-            ]),
-          ],
-        })),
-        customerLanguages: resolveLanguages((p.customerLanguages as string[]) ?? []),
+        associations: assocs.length > 0 ? assocs.map((a: Record<string, unknown>) => ({
+          agency: String(a.agency || ''),
+          number: String(a.number || ''),
+          owDays: typeof a.owDays === 'number' ? a.owDays : 3,
+          aowDays: typeof a.aowDays === 'number' ? a.aowDays : 2,
+          oaDays: typeof a.oaDays === 'number' ? a.oaDays : 4,
+          selectedSpecialties: Array.isArray(a.selectedSpecialties) ? a.selectedSpecialties : [],
+        })) : [makeDefaultAssoc()],
+        customerLanguages: languagesFromProfile(p.customerLanguages as string[] | undefined),
       }
     },
     fromMe: (u, defaults) => ({
@@ -161,7 +142,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           oaDays: a.oaDays,
           selectedSpecialties: a.selectedSpecialties,
         })),
-        customerLanguages: f.customerLanguages.map((l) => l.code),
+        customerLanguages: languagesToPayload(f.customerLanguages),
       }
     },
     create,
@@ -169,43 +150,21 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     onSaved,
   })
 
-  function addAssociation() {
-    const firstAssoc = form.associations[0]
-    const newAssoc = firstAssoc
-      ? { ...firstAssoc, agency: '', number: '' }
-      : makeDefaultAssociation()
-    setField('associations', [...form.associations, newAssoc])
-  }
 
-  function removeAssociation(idx: number) {
-    if (form.associations.length <= 1) return
-    setField('associations', form.associations.filter((_, i) => i !== idx))
-  }
-
-  function updateAssociation(idx: number, patch: Partial<AssociationForm>) {
-    setField('associations', form.associations.map((a, i) => {
-      if (i !== idx) return a
-      const updated = { ...a, ...patch }
-      if (patch.agency && patch.agency !== a.agency) {
-        updated.selectedSpecialties = getDefaultSpecialties(patch.agency)
-      }
-      return updated
-    }))
-  }
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse text-secondary">
-          Loading profile…
-        </span>
-      </div>
-    )
+    return <ProfileFormLoading variant="pulse-text" />
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
+      
       {(!section || section === 'contact') && (
       <div className="space-y-4">
         <ProfileBasicInfo
@@ -213,21 +172,10 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           onNameChange={(val) => setField('name', val)}
           nameError={errors.name}
           nameLabel="Business Name"
-          namePlaceholder="e.g. Ocean Explorer Dive Center"
+          namePlaceholder="Ms. Mermaids' DC"
           nameRequired
           locationValue={form.location}
-          onLocationChange={(loc) => {
-            setField('location', loc)
-            if (loc && isUpdate) {
-              update({
-                placeName: loc.placeName,
-                country: loc.country,
-                lat: loc.lat,
-                lng: loc.lng,
-                placeId: loc.placeId,
-              })
-            }
-          }}
+          onLocationChange={onLocationChange}
           locationError={errors.location}
           locationRequired
           emailValue={form.email}
@@ -242,119 +190,26 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       </div>
       )}
 
-      {(!section) && <hr className="form-divider" />}
+      <ProfileFormSectionDivider show={!section} />
 
       {/* Languages */}
-      {(!section || section === 'languages') && (
-        <LanguageField
-          variant="customer"
-          value={form.customerLanguages}
-          onChange={(langs) => setField('customerLanguages', langs)}
-        />
-      )}
+      <ProfileLanguagesSection
+        section={section}
+        variant="customer"
+        value={form.customerLanguages}
+        onChange={(langs) => setField('customerLanguages', langs)}
+      />
 
-      {(!section) && <hr className="form-divider" />}
+      <ProfileFormSectionDivider show={!section} />
 
       {/* Affiliations */}
       {(!section || section === 'associations') && (
-      <div className="space-y-4">
-        <FormSectionHeader
-          label="Affiliations"
-          action={
-            <GlassButton type="button" variant="ghost" size="sm" onClick={addAssociation}>
-              <Plus size={14} />
-              Add
-            </GlassButton>
-          }
+        <ProfileAgencyInfo
+          variant="dive-center"
+          items={form.associations}
+          onChange={(items) => setField('associations', items)}
+          errors={errors as Record<string, string>}
         />
-
-        {form.associations.length === 0 ? (
-          <p className="text-sm text-secondary">
-            No affiliations added. Click Add to register one.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {form.associations.map((assoc, idx) => {
-              const agency = AGENCIES[assoc.agency]
-
-              return (
-                <Fragment key={idx}>
-                  {idx > 0 && <hr className="form-divider" />}
-                <ItemCard
-                  onRemove={() => removeAssociation(idx)}
-                  canRemove={form.associations.length > 1}
-                  aria-label="Remove affiliation"
-                >
-                  {/* Agency + Member ID row */}
-                  <div className="flex gap-2 items-start">
-                    <div className="flex-1">
-                      <GlassSelect
-                        label="Agency"
-                        value={assoc.agency}
-                        onChange={(v) => updateAssociation(idx, { agency: v })}
-                        options={AGENCY_CODES
-                          .filter((code) => code === assoc.agency || !form.associations.some((a, i) => i !== idx && a.agency === code))
-                          .map((code) => ({ id: code, label: AGENCIES[code].name }))}
-                        placeholder="Select agency"
-                        required
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <GlassInput
-                        label={agency?.memberIdLabel ?? 'Member ID'}
-                        value={assoc.number}
-                        onChange={(e) => updateAssociation(idx, { number: e.target.value })}
-                        placeholder={agency?.memberIdLabel ?? 'Member ID'}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Course days + Specialties */}
-                  <div className="flex gap-6 items-start">
-                    {/* Default course #days — fixed width */}
-                    <div className="shrink-0">
-                      <p className="text-sm font-medium mb-2 text-secondary">
-                        Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
-                      </p>
-                      <div className="flex gap-2">
-                        <DayPicker
-                          label={agency?.courses.find((c) => c.code === 'OW')?.label ?? 'OW'}
-                          value={assoc.owDays}
-                          min={COURSE_DAY_RANGES.OW.min}
-                          max={COURSE_DAY_RANGES.OW.max}
-                          onChange={(v) => updateAssociation(idx, { owDays: v })}
-                        />
-                        <DayPicker
-                          label={agency?.courses.find((c) => c.code === 'AOW')?.label ?? 'AOW'}
-                          value={assoc.aowDays}
-                          min={COURSE_DAY_RANGES.AOW.min}
-                          max={COURSE_DAY_RANGES.AOW.max}
-                          onChange={(v) => updateAssociation(idx, { aowDays: v })}
-                        />
-                        <DayPicker
-                          label={agency?.combinedLabel ?? 'O+A'}
-                          value={assoc.oaDays}
-                          min={COURSE_DAY_RANGES.combined.min}
-                          max={COURSE_DAY_RANGES.combined.max}
-                          onChange={(v) => updateAssociation(idx, { oaDays: v })}
-                        />
-                      </div>
-                    </div>
-
-                    <SpecialtyField
-                      agencyCode={assoc.agency}
-                      value={assoc.selectedSpecialties}
-                      onChange={(specialties) => updateAssociation(idx, { selectedSpecialties: specialties })}
-                    />
-                  </div>
-                </ItemCard>
-                </Fragment>
-              )
-            })}
-          </div>
-        )}
-      </div>
       )}
 
       {serverError && (

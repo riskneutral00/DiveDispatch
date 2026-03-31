@@ -1,16 +1,27 @@
 'use client'
 
-import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { Plus, X } from 'lucide-react'
+import { useState } from 'react'
 import { z } from 'zod'
+
 import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassCard, GlassInput } from '@/components/ui'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassInput } from '@/components/ui/glass-input'
 import { PillToggle } from '@/components/ui/pill-toggle'
+import { SaveButton } from '@/components/ui/save-button'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
 type GearType = (typeof GEAR_TYPES)[number]
@@ -23,17 +34,9 @@ const GEAR_TYPE_LABELS: Record<GearType, string> = {
   mask: 'Mask',
 }
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  location: nullableProfileLocation(),
   email: z.string().email('Valid email required'),
   phone: z.string().min(1, 'Phone is required').max(30),
 })
@@ -76,22 +79,22 @@ export function EquipmentProfileForm() {
       }
       return {
         name: p.name as string,
-        location: {
-          placeName: p.placeName,
-          country: p.country,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: (p.placeId ?? undefined) as string | undefined,
-        } as LocationValue,
+        location: locationFromProfileDoc({
+          placeName: p.placeName as string,
+          country: p.country as string,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          placeId: p.placeId as string | null | undefined,
+        }) as LocationValue,
         email: p.email as string,
         phone: p.phone as string,
         manufacturersByGearType: parsed,
       }
     },
-    fromMe: (defaults, initial) => ({
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -153,10 +156,14 @@ export function EquipmentProfileForm() {
     }))
   }
 
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
+
   if (loading) {
-    return (
-      <p className="text-sm text-secondary">Loading…</p>
-    )
+    return <ProfileFormLoading variant="plain" message="Loading…" />
   }
 
   const activeGearTypes = GEAR_TYPES.filter((gt) => gt in form.manufacturersByGearType)
@@ -164,46 +171,28 @@ export function EquipmentProfileForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Business Details */}
-      <GlassCard padding="lg">
-        <FormSectionHeader label="Business Details" />
-        <div className="space-y-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Business Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              placeholder="e.g. Phuket Gear Rental"
-              error={errors.name}
-            />
-          </div>
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors.location}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setField('email', e.target.value)}
-              placeholder="you@example.com"
-              error={errors.email}
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setField('phone', e.target.value)}
-              placeholder="+66 81 234 5678"
-              error={errors.phone}
-            />
-          </div>
-        </div>
-      </GlassCard>
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Business Name"
+          namePlaceholder="e.g. Phuket Gear Rental"
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={onLocationChange}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
+        />
+      </div>
 
       <hr className="form-divider" />
 

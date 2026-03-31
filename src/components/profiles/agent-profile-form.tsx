@@ -1,30 +1,32 @@
 'use client'
 
-import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { Plus } from 'lucide-react'
+import { z } from 'zod'
+
 import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { Spinner } from '@/components/ui/spinner'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { SaveButton } from '@/components/ui/save-button'
-import { ItemCard } from '@/components/ui/item-card'
+import {
+  customerLanguagesFieldSchema,
+  languagesFromProfile,
+  languagesToPayload,
+} from '@/lib/profile-form/languages'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import type { Language } from '@/lib/types/language'
 
 // ── Zod Schemas ───────────────────────────────────────────────────────
-
-const locationSchema = z.object({
-  placeName: z.string().min(1, 'Location name is required'),
-  country: z.string().min(1, 'Country is required'),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
 
 const associationSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
@@ -33,223 +35,142 @@ const associationSchema = z.object({
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  locations: z.array(locationSchema).min(1, 'Add at least one location'),
+  location: nullableProfileLocation(),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(1, 'Phone number is required'),
   associations: z.array(associationSchema),
   defaultReferralMode: z.enum(['independent', 'referral']),
+  customerLanguages: customerLanguagesFieldSchema,
 })
-
 type AssociationData = z.infer<typeof associationSchema>
 
 type ProfileFormData = {
   name: string
-  locations: (LocationValue | null)[]
+  location: LocationValue | null
   email: string
   phone: string
   associations: AssociationData[]
   defaultReferralMode: 'independent' | 'referral'
+  customerLanguages: Language[]
 }
 
-const emptyAssociation = (): AssociationData => ({ agency: '', number: '' })
+
 
 const INITIAL_FORM: ProfileFormData = {
   name: '',
-  locations: [null],
+  location: null,
   email: '',
   phone: '',
   associations: [],
   defaultReferralMode: 'independent',
+  customerLanguages: [],
 }
 
-// ── Sub-components ────────────────────────────────────────────────────
 
-
-// ── Location Row (uses LocationPicker) ────────────────────────────────
-
-interface LocationRowProps {
-  index: number
-  location: LocationValue | null
-  error?: string
-  onChange: (index: number, updated: LocationValue | null) => void
-  onRemove: (index: number) => void
-  canRemove: boolean
-}
-
-function LocationRow({ index, location, error, onChange, onRemove, canRemove }: LocationRowProps) {
-  return (
-    <ItemCard onRemove={() => onRemove(index)} canRemove={canRemove} aria-label={`Remove location ${index + 1}`}>
-      <FormSectionHeader label={`Location ${index + 1}`} />
-      <LocationPicker
-        value={location}
-        onChange={(loc) => onChange(index, loc)}
-        error={error}
-      />
-    </ItemCard>
-  )
-}
-
-// ── Association Row ───────────────────────────────────────────────────
-
-interface AssociationRowProps {
-  index: number
-  association: AssociationData
-  errors: Record<string, string>
-  onChange: (index: number, updated: AssociationData) => void
-  onRemove: (index: number) => void
-}
-
-function AssociationRow({ index, association, errors, onChange, onRemove }: AssociationRowProps) {
-  const update = (field: keyof AssociationData, value: string) => {
-    onChange(index, { ...association, [field]: value })
-  }
-  return (
-    <ItemCard onRemove={() => onRemove(index)} aria-label={`Remove membership ${index + 1}`}>
-      <FormSectionHeader label={`Membership ${index + 1}`} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <GlassSimpleSelect label="Agency" value={association.agency} onChange={(v) => update('agency', v)} options={DIVE_AGENCIES} placeholder="Select agency…" error={errors[`associations.${index}.agency`]} />
-        <GlassInput label="Membership Number" placeholder="e.g. PADI-12345" value={association.number} onChange={(e) => update('number', e.target.value)} error={errors[`associations.${index}.number`]} />
-      </div>
-    </ItemCard>
-  )
-}
-
-// ── Main Form ─────────────────────────────────────────────────────────
-
-export type AgentProfileSection = 'contact' | 'associations'
+export type AgentProfileSection = 'contact' | 'languages' | 'associations'
 
 export function AgentProfileForm({ section }: { section?: AgentProfileSection } = {}) {
   const profile = useQuery(api.agents.mine)
-  const me = useQuery(api.users.getAccountDefaults)
+  const me = useQuery(api.users.me)
   const create = useMutation(api.agents.create)
   const update = useMutation(api.agents.update)
+  const updateProfile = useMutation(api.users.updateProfile)
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
-    fromProfile: (p) => {
-      const prof = p as { name: string; locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]; email: string; phone: string; associations: AssociationData[]; defaultReferralMode: 'independent' | 'referral' }
-      return {
-        name: prof.name,
-        locations: prof.locations.length > 0
-          ? prof.locations.map((loc) => ({
-              placeName: loc.placeName,
-              country: loc.country,
-              lat: loc.lat,
-              lng: loc.lng,
-              placeId: loc.placeId ?? undefined,
-            }))
-          : [null],
-        email: prof.email,
-        phone: prof.phone,
-        associations: prof.associations,
-        defaultReferralMode: prof.defaultReferralMode,
-      } as ProfileFormData
-    },
-    fromMe: (defaults, initial) => ({
+    waitForMeBeforeInit: true,
+    fromProfile: (p, user) => ({
+      name: p.name as string,
+      location: locationFromProfileDoc({
+        placeName: p.placeName as string,
+        country: p.country as string,
+        lat: p.lat as number,
+        lng: p.lng as number,
+        placeId: p.placeId as string | null | undefined,
+      }) as LocationValue,
+      email: p.email as string,
+      phone: p.phone as string,
+      associations: (p.associations as Record<string, unknown>[])?.map(a => ({ agency: String(a.agency || ''), number: String(a.number || '') })) ?? [],
+      defaultReferralMode: p.defaultReferralMode as 'independent' | 'referral',
+      customerLanguages: languagesFromProfile(
+        (user as { customerLanguages?: string[] } | undefined)?.customerLanguages,
+      ),
+    }),
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
+      customerLanguages: languagesFromProfile(u.customerLanguages),
     }),
     toPayload: (f) => {
-      const validLocations = f.locations.filter((l): l is LocationValue => l !== null)
+      const loc = f.location!
       return {
         name: f.name,
-        locations: validLocations,
+        placeName: loc.placeName,
+        country: loc.country,
+        lat: loc.lat,
+        lng: loc.lng,
+        placeId: loc.placeId,
         email: f.email,
         phone: f.phone,
         associations: f.associations,
         defaultReferralMode: f.defaultReferralMode,
       }
     },
+    afterSuccessfulSave: async (f) => {
+      await updateProfile({ customerLanguages: languagesToPayload(f.customerLanguages) })
+    },
     create,
     update,
   })
 
-  const updateLocation = (index: number, updated: LocationValue | null) => {
-    setForm((prev) => {
-      const locations = [...prev.locations]
-      locations[index] = updated
-      return { ...prev, locations }
-    })
-  }
-
-  const addLocation = () => setForm((prev) => ({ ...prev, locations: [...prev.locations, null] }))
-
-  const removeLocation = (index: number) => {
-    setForm((prev) => ({ ...prev, locations: prev.locations.filter((_, i) => i !== index) }))
-  }
-
-  const updateAssociation = (index: number, updated: AssociationData) => {
-    setForm((prev) => { const associations = [...prev.associations]; associations[index] = updated; return { ...prev, associations } })
-  }
-
-  const addAssociation = () => setForm((prev) => ({ ...prev, associations: [...prev.associations, emptyAssociation()] }))
-
-  const removeAssociation = (index: number) => {
-    setForm((prev) => ({ ...prev, associations: prev.associations.filter((_, i) => i !== index) }))
-  }
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
+    return <ProfileFormLoading />
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {!section && (
-        <div>
-          <h1 className="text-2xl font-bold mb-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-            {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-          </h1>
-          <p className="text-sm text-secondary">
-            {isUpdate ? 'Keep your profile current so dive operators can find you.' : 'Set up your agent profile to start creating and referring bookings.'}
-          </p>
-        </div>
-      )}
-
       {/* Contact info */}
       {(!section || section === 'contact') && (
         <>
-          <GlassCard padding="md">
-            <FormSectionHeader label="Contact Information" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <GlassInput label="Agent / Business Name" placeholder="Your name or agency" value={form.name} onChange={(e) => setField('name', e.target.value)} error={errors.name} className="sm:col-span-2" />
-              <GlassInput label="Contact Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setField('email', e.target.value)} error={errors.email} />
-              <GlassInput label="Contact Phone" type="tel" placeholder="+66 81 234 5678" value={form.phone} onChange={(e) => setField('phone', e.target.value)} error={errors.phone} />
-            </div>
-          </GlassCard>
-
-          <hr className="form-divider" />
-
-          {/* Locations */}
           <div className="space-y-4">
-            <FormSectionHeader label="Locations" action={<GlassButton variant="secondary" size="sm" type="button" onClick={addLocation}><Plus size={14} />Add Location</GlassButton>} />
-            {errors.locations && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.locations}</p>}
-            {form.locations.map((loc, index) => (
-              <LocationRow
-                key={index}
-                index={index}
-                location={loc}
-                error={errors[`locations.${index}`]}
-                onChange={updateLocation}
-                onRemove={removeLocation}
-                canRemove={form.locations.length > 1}
-              />
-            ))}
+            <ProfileBasicInfo
+              nameValue={form.name}
+              onNameChange={(val) => setField('name', val)}
+              nameError={errors.name}
+              nameLabel="Agent / Business Name"
+              namePlaceholder="Your name or agency"
+              nameRequired
+              locationValue={form.location}
+              onLocationChange={onLocationChange}
+              locationError={errors.location}
+              locationRequired
+              emailValue={form.email}
+              onEmailChange={(val) => setField('email', val)}
+              emailError={errors.email}
+              emailRequired
+              phoneValue={form.phone}
+              onPhoneChange={(val) => setField('phone', val)}
+              phoneError={errors.phone}
+              phoneRequired
+            />
           </div>
 
           <hr className="form-divider" />
 
           {/* Referral mode */}
-          <GlassCard padding="md">
+          <div>
             <FormSectionHeader label="Default Booking Mode" />
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-2">
               {(['independent', 'referral'] as const).map((mode) => {
                 const active = form.defaultReferralMode === mode
                 return (
@@ -277,20 +198,29 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
                 : 'You refer customers to operators who manage the booking.'}
             </p>
             {errors.defaultReferralMode && <p className="text-sm mt-1" style={{ color: 'var(--color-destructive)' }}>{errors.defaultReferralMode}</p>}
-          </GlassCard>
+          </div>
         </>
       )}
 
-      {(!section) && <hr className="form-divider" />}
+      <ProfileFormSectionDivider show={!section} />
+
+      <ProfileLanguagesSection
+        section={section}
+        variant="customer"
+        value={form.customerLanguages}
+        onChange={(langs) => setField('customerLanguages', langs)}
+      />
+
+      <ProfileFormSectionDivider show={!section} />
 
       {/* Agency associations */}
       {(!section || section === 'associations') && (
-        <div className="space-y-4">
-          <FormSectionHeader label="Agency Memberships (optional)" action={<GlassButton variant="secondary" size="sm" type="button" onClick={addAssociation}><Plus size={14} />Add Membership</GlassButton>} />
-          {form.associations.map((assoc, index) => (
-            <AssociationRow key={index} index={index} association={assoc} errors={errors} onChange={updateAssociation} onRemove={removeAssociation} />
-          ))}
-        </div>
+        <ProfileAgencyInfo
+          variant="agent"
+          items={form.associations}
+          onChange={(items) => setField('associations', items)}
+          errors={errors as Record<string, string>}
+        />
       )}
 
       {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}

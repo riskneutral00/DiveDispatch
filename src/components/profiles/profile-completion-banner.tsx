@@ -116,10 +116,11 @@ function DiveCenterBanner({ slug }: { slug: string }) {
 
   const missing: string[] = []
   if (!profile) {
-    missing.push('business name', 'phone')
+    missing.push('business name', 'phone', 'affiliations')
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.phone) missing.push('phone')
+    if (!profile.associations?.length) missing.push('affiliations')
   }
 
   return (
@@ -137,7 +138,7 @@ function AgentBanner({ slug }: { slug: string }) {
   } else {
     if (!profile.name) missing.push('business name')
     if (!profile.phone) missing.push('phone')
-    if (!profile.locations?.length) missing.push('location')
+    if (!profile.placeName) missing.push('location')
   }
 
   return (

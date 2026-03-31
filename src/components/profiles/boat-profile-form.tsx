@@ -3,15 +3,24 @@
 import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
+
 import { api } from '../../../convex/_generated/api'
-import { GlassButton } from '../ui/glass-button'
-import { GlassInput } from '../ui/glass-input'
-import { GlassSimpleSelect } from '../ui/glass-simple-select'
-import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { useProfileForm } from '@/lib/hooks/use-profile-form'
+
+import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { ItemCard } from '@/components/ui/item-card'
+import { SaveButton } from '@/components/ui/save-button'
+import {
+  createOptimisticLocationOnChange,
+  locationFromProfileDoc,
+  nullableProfileLocation,
+} from '@/lib/profile-form/location'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -78,17 +87,9 @@ const fleetZod = z.object({
   cutoffHours: z.number().min(0).optional(),
 })
 
-const locationSchema = z.object({
-  placeName: z.string().min(1),
-  country: z.string().min(1),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
 const profileZod = z.object({
   name: z.string().min(1, 'Business name required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location required' }),
+  location: nullableProfileLocation('Location required'),
   email: z.string().email('Valid email required'),
   phone: z.string().min(1, 'Phone required'),
   fleet: z.array(fleetZod),
@@ -134,13 +135,13 @@ export function BoatProfileForm() {
       const fleet = p.fleet as Record<string, unknown>[]
       return {
         name: p.name as string,
-        location: {
-          placeName: p.placeName,
-          country: p.country,
-          lat: p.lat,
-          lng: p.lng,
-          placeId: (p.placeId ?? undefined) as string | undefined,
-        } as LocationValue,
+        location: locationFromProfileDoc({
+          placeName: p.placeName as string,
+          country: p.country as string,
+          lat: p.lat as number,
+          lng: p.lng as number,
+          placeId: p.placeId as string | null | undefined,
+        }) as LocationValue,
         email: p.email as string,
         phone: p.phone as string,
         fleet:
@@ -156,10 +157,10 @@ export function BoatProfileForm() {
             : [emptyFleet()],
       }
     },
-    fromMe: (defaults, initial) => ({
+    fromMe: (u, initial) => ({
       ...initial,
-      email: defaults.email ?? '',
-      phone: defaults.phone ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
     }),
     toPayload: (f) => {
       const loc = f.location!
@@ -198,10 +199,16 @@ export function BoatProfileForm() {
     updateRoute(fi, ri, { daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] })
   }
 
+  const onLocationChange = createOptimisticLocationOnChange({
+    setField,
+    update,
+    isUpdate,
+  })
+
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <span className="text-secondary">Loading…</span>
+        <ProfileFormLoading variant="plain" message="Loading…" />
       </div>
     )
   }
@@ -209,42 +216,27 @@ export function BoatProfileForm() {
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
       {/* Contact info */}
-        <div className="space-y-4 mt-4">
-          <div className="max-w-sm">
-            <GlassInput
-              label="Business Name"
-              value={form.name}
-              onChange={(e) => setField('name', e.target.value)}
-              error={errors['name']}
-              placeholder="Phuket Boat Co."
-            />
-          </div>
-          <div className="max-w-md">
-            <LocationPicker
-              label="Location"
-              value={form.location}
-              onChange={(loc) => setField('location', loc)}
-              error={errors['location']}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GlassInput
-              label="Contact Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setField('email', e.target.value)}
-              error={errors['email']}
-              placeholder="info@phuketboat.com"
-            />
-            <GlassInput
-              label="Contact Phone"
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setField('phone', e.target.value)}
-              error={errors['phone']}
-              placeholder="+66 81 234 5678"
-            />
-          </div>
+        <div className="space-y-4">
+          <ProfileBasicInfo
+            nameValue={form.name}
+            onNameChange={(val) => setField('name', val)}
+            nameError={errors.name}
+            nameLabel="Business Name"
+            namePlaceholder="Phuket Boat Co."
+            nameRequired
+            locationValue={form.location}
+            onLocationChange={onLocationChange}
+            locationError={errors.location}
+            locationRequired
+            emailValue={form.email}
+            onEmailChange={(val) => setField('email', val)}
+            emailError={errors.email}
+            emailRequired
+            phoneValue={form.phone}
+            onPhoneChange={(val) => setField('phone', val)}
+            phoneError={errors.phone}
+            phoneRequired
+          />
         </div>
       
 

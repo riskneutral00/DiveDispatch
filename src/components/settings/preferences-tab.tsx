@@ -70,7 +70,6 @@ export function PreferencesTab() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
-        <FormSectionHeader label="App Preferences" />
 
         <LanguageField
           variant="app"
