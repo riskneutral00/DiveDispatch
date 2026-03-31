@@ -23,7 +23,10 @@ for i in 1 2 3 4 5; do
   if (set -C; echo $$ > "$LOCK") 2>/dev/null; then break; fi
   sleep 0.1
 done
-NUM=$(cat .tickets/.counter 2>/dev/null || echo "366")
+# Sync counter with actual max ticket ID to prevent collisions
+ACTUAL_MAX=$(ls .tickets/DD-*.md 2>/dev/null | sed 's/.*DD-\([0-9]*\)\.md/\1/' | sort -n | tail -1)
+COUNTER_VAL=$(cat .tickets/.counter 2>/dev/null || echo "0")
+NUM=$(( ${ACTUAL_MAX:-0} > ${COUNTER_VAL:-0} ? ${ACTUAL_MAX:-0} : ${COUNTER_VAL:-0} ))
 NEXT=$((NUM + 1))
 echo "$NEXT" > .tickets/.counter
 rm -f "$LOCK"

@@ -41,8 +41,10 @@ for i in 1 2 3 4 5; do
   sleep 0.1
 done
 
-# Read, increment, write
-NUM=$(cat "$COUNTER" 2>/dev/null || echo "366")
+# Sync counter with actual max ticket ID to prevent collisions
+ACTUAL_MAX=$(ls "$TICKETS_DIR"/DD-*.md 2>/dev/null | sed 's/.*DD-\([0-9]*\)\.md/\1/' | sort -n | tail -1)
+COUNTER_VAL=$(cat "$COUNTER" 2>/dev/null || echo "0")
+NUM=$(( ${ACTUAL_MAX:-0} > ${COUNTER_VAL:-0} ? ${ACTUAL_MAX:-0} : ${COUNTER_VAL:-0} ))
 NEXT=$((NUM + 1))
 echo "$NEXT" > "$COUNTER"
 

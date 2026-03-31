@@ -7,8 +7,14 @@ FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"
 
 case "$FILE_PATH" in
   */scripts/car.sh|*/scripts/car-ctl.sh|*/scripts/research.sh|*/scripts/pipeline-health.sh|*/scripts/preflight.sh|*/scripts/validate-merge.sh|*/scripts/memory-watchdog.sh)
-    echo '{"decision":"block","reason":"Infrastructure scripts are protected. These files require human review before modification. Discuss changes with Matt first."}'
+    echo 'Infrastructure scripts are protected. These files require human review before modification. Discuss changes with Matt first.'
+    exit 2
     ;;
 esac
 
 exit 0
+
+# TEST: echo '{"tool_input":{"file_path":"scripts/car.sh"}}' | bash scripts-guard.sh; echo $?
+# Expected: prints block message, exits 2
+# TEST: echo '{"tool_input":{"file_path":"src/app/page.tsx"}}' | bash scripts-guard.sh; echo $?
+# Expected: no output, exits 0

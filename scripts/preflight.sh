@@ -25,7 +25,9 @@ fi
 # ── 1. Process cleanup ──────────────────────────────────────────────
 echo "── Process cleanup ──"
 
-for pattern in 'playwright-mcp' 'convex mcp start' 'next-devtools-mcp' 'notebooklm-mcp'; do
+# playwright-mcp excluded: Claude Code manages its lifecycle via stdio.
+# Orphaned stdio processes don't block new instances; killing them can race-condition the live session.
+for pattern in 'convex mcp start' 'next-devtools-mcp' 'notebooklm-mcp'; do
   for pid in $(pgrep -f "$pattern" 2>/dev/null || true); do
     ppid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
     [ -z "$ppid" ] && continue

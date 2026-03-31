@@ -1,7 +1,7 @@
 ---
 name: clerk-signin
 description: >
-  Full Clerk sign-in procedure. Preflight, fuzzy user match, Playwright fallback,
+  Full Clerk sign-in procedure. Preflight, fuzzy user match,
   Convex user verification, token generation, session clearing, dashboard navigation.
   Replaces /clerk-dev.
 allowed-tools: Bash, Read, Grep, Glob, Skill, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_click, mcp__playwright__browser_close, mcp__playwright__browser_type, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_fill_form
@@ -46,13 +46,13 @@ Read `.claude/data/seed-users.md`. Fuzzy-match the argument against the Users ta
 
 ### Step 3 — Playwright MCP availability check
 
-Use `ToolSearch` to check for `mcp__playwright__browser_navigate`. If Playwright MCP tools are **not available**, use the standalone fallback:
+Use `ToolSearch` to check for `mcp__playwright__browser_navigate`.
 
-```bash
-cd /Users/matthewlee/Desktop/RiskNeutral/DiveDispatch && npx tsx scripts/clerk-signin.ts <slug>
-```
+If Playwright MCP tools are **not available** → **stop immediately**:
 
-This script handles everything: token generation, browser launch, sign-in, dashboard navigation, and screenshot. It prints the screenshot path to stdout. Read that file to show the user their dashboard. **Skip remaining steps.**
+> "⚠️ Playwright MCP is not available this session. Please restart Claude Code and try again."
+
+Do not use any headless fallback script.
 
 ---
 
