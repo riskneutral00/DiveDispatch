@@ -6,11 +6,11 @@ import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassInput } from '@/components/glass/glass-input'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassInput } from '@/components/ui/glass-input'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
-import { GlassButton } from '@/components/glass/glass-button'
-import { Spinner } from '@/components/common/spinner'
+import { GlassButton } from '@/components/ui/glass-button'
+import { Spinner } from '@/components/ui/spinner'
 
 // ─── Badge helper ────────────────────────────────────────────────────────────
 

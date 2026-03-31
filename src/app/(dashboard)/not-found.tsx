@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react'
-import { GlassCard } from '@/components/glass/glass-card'
+import { GlassCard } from '@/components/ui/glass-card'
 
 export default function DashboardNotFound() {
   return (

@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import type { Language } from '@/lib/types/language'
 import type { RoleConfig } from '@/lib/constants/roles'
-import { LanguageField } from '@/components/common/language-field'
-import { GlassButton } from '@/components/glass/glass-button'
-import { GlassInput } from '@/components/glass/glass-input'
+import { LanguageField } from '@/components/profiles/language-field'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassInput } from '@/components/ui/glass-input'
 
 export interface BusinessInfoValues {
   businessName: string

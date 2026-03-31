@@ -1,15 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
-import { GlassInput } from '@/components/glass/glass-input'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
-import { GlassTextarea } from '@/components/glass/glass-textarea'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { GlassTextarea } from '@/components/ui/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 
 // ── Blood type options ────────────────────────────────────────────────────────
 

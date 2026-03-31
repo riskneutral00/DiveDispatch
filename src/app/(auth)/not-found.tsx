@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Search } from 'lucide-react'
-import { GlassErrorCard } from '@/components/glass/glass-error-card'
+import { GlassErrorCard } from '@/components/ui/glass-error-card'
 
 export default function AuthNotFound() {
   return (

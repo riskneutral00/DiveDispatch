@@ -1,6 +1,6 @@
 'use client'
 
-import { GlassDialog, GlassButton } from '@/components/glass'
+import { GlassDialog, GlassButton } from '@/components/ui'
 
 interface BlockDateConfirmProps {
   date: string

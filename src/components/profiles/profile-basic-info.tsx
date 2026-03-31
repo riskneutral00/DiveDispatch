@@ -1,5 +1,5 @@
-import { GlassInput } from '@/components/glass/glass-input'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
+import { GlassInput } from '@/components/ui/glass-input'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 
 interface ProfileBasicInfoProps {
   nameLabel?: string

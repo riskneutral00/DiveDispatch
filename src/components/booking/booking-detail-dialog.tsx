@@ -8,7 +8,7 @@ import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { DISCARD_DRAFT_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog } from '@/components/glass'
+import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -19,7 +19,7 @@ import {
   PortalPills,
   type PortalPill,
 } from './booking-detail-shared'
-import { FormSectionHeader } from '@/components/common/form-section-header'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'

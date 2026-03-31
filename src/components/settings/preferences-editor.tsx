@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { SettingsTabBar } from '@/components/common/settings-tab-bar'
+import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { toast } from 'sonner'
@@ -11,19 +11,19 @@ import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassInput } from '@/components/glass/glass-input'
-import { GlassButton } from '@/components/glass/glass-button'
-import { GlassCheckboxGroup } from '@/components/glass/glass-checkbox-group'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
 import {
   PreferredInstructorList,
   PreferredVenueList,
   PreferredEquipmentList,
   PreferredBoatList,
   PreferredCompressorList,
-} from '@/components/dashboard/preferred-list'
+} from '@/components/profiles/preferred-list'
 import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 
 // ── Constants ────────────────────────────────────────────────────────
 

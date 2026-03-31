@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
-import { DiveCenterProfileForm, type DiveCenterProfileSection } from '@/components/dashboard/dive-center-profile-form'
-import { AgentProfileForm, type AgentProfileSection } from '@/components/dashboard/agent-profile-form'
-import { InstructorProfileForm, type InstructorProfileSection } from '@/components/dashboard/instructor-profile-form'
-import { DiveMasterProfileForm, type DiveMasterProfileSection } from '@/components/dashboard/divemaster-profile-form'
-import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
-import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
-import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
-import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
+import { DiveCenterProfileForm, type DiveCenterProfileSection } from '@/components/profiles/dive-center-profile-form'
+import { AgentProfileForm, type AgentProfileSection } from '@/components/profiles/agent-profile-form'
+import { InstructorProfileForm, type InstructorProfileSection } from '@/components/profiles/instructor-profile-form'
+import { DiveMasterProfileForm, type DiveMasterProfileSection } from '@/components/profiles/divemaster-profile-form'
+import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
+import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
+import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
+import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
 
 /** Full role profile tabbed/single form — used on `/[slug]/[roleSlug]/profile`. */
 const FULL_PROFILE_BY_ROLE: {

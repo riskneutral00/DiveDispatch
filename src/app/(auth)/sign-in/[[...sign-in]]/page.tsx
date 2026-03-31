@@ -5,7 +5,7 @@ import { SignIn } from '@clerk/nextjs'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { api } from '../../../../../convex/_generated/api'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { resolveSignInRedirect } from '@/lib/utils/sign-in-redirect'
 

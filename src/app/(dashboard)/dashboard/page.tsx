@@ -6,7 +6,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import { deriveDefaultRole } from '@/lib/utils/role'
 
 // Redirect landing — Clerk sends users here after sign-in.

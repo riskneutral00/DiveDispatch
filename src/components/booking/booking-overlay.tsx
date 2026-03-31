@@ -1,6 +1,6 @@
 "use client";
 
-import { GlassDialog } from "@/components/glass";
+import { GlassDialog } from "@/components/ui";
 import { BookingWizard } from "./booking-wizard";
 import type { BookingPreFill } from "@/lib/booking/wizard-state";
 

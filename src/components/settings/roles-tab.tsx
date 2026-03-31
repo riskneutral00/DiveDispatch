@@ -1,14 +1,14 @@
 'use client'
 
 import type { RoleKey } from '@/lib/constants/roles'
-import { DiveCenterProfileForm } from '@/components/dashboard/dive-center-profile-form'
-import { AgentProfileForm } from '@/components/dashboard/agent-profile-form'
-import { InstructorProfileForm } from '@/components/dashboard/instructor-profile-form'
-import { DiveMasterProfileForm } from '@/components/dashboard/divemaster-profile-form'
-import { BoatProfileForm } from '@/components/dashboard/boat-profile-form'
-import { CompressorProfileForm } from '@/components/dashboard/compressor-profile-form'
-import { EquipmentProfileForm } from '@/components/dashboard/equipment-profile-form'
-import { PoolProfileForm } from '@/components/dashboard/pool-profile-form'
+import { DiveCenterProfileForm } from '@/components/profiles/dive-center-profile-form'
+import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
+import { InstructorProfileForm } from '@/components/profiles/instructor-profile-form'
+import { DiveMasterProfileForm } from '@/components/profiles/divemaster-profile-form'
+import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
+import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
+import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
+import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
 
 export function RoleDetailForm({ roleKey }: { roleKey: RoleKey }) {
   switch (roleKey) {

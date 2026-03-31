@@ -1,7 +1,7 @@
 'use client'
 
 import { use } from 'react'
-import { DashboardContent } from '@/components/dashboard/dashboard-content'
+import { DashboardContent } from '@/components/layout/dashboard-content'
 
 // Primary dashboard page — roleSlug is validated by the parent layout.
 export default function DashboardPage({

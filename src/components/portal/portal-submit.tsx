@@ -10,9 +10,9 @@ import {
   BOOKING_CLOSED_MESSAGE,
   UNEXPECTED_ERROR_MESSAGE,
 } from '@/lib/constants/error-messages'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
-import { Spinner } from '@/components/common/spinner'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassButton } from '@/components/ui/glass-button'
+import { Spinner } from '@/components/ui/spinner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

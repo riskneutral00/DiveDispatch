@@ -9,7 +9,7 @@ import { useDevSwitching } from './dev-switch-context'
 import { ROLES, ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
 import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
-import { GlassCard } from '@/components/glass/glass-card'
+import { GlassCard } from '@/components/ui/glass-card'
 import { parseConvexError } from '@/lib/utils/convex-error'
 
 // Guard: dev-only component

@@ -1,8 +1,8 @@
 import { HelpCircle, MessageSquare } from 'lucide-react'
 import { FaqSection } from '@/components/help/faq-section'
 import { ContactForm } from '@/components/help/contact-form'
-import { SessionDashboardShell } from '@/components/dashboard/session-dashboard-shell'
-import { PageTitle } from '@/components/common/page-title'
+import { SessionDashboardShell } from '@/components/layout/session-dashboard-shell'
+import { PageTitle } from '@/components/ui/page-title'
 
 export default function HelpPage() {
   return (

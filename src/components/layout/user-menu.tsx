@@ -5,7 +5,7 @@ import { LogOut, Settings, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import type { ProfileOverlayTab } from './profile-overlay'
+import type { ProfileOverlayTab } from '../profiles/profile-overlay'
 
 interface UserMenuProps {
   roleSlug: RoleKey

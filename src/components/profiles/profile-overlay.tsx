@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
-import { GlassDialog } from '@/components/glass'
+import { GlassDialog } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { api } from '../../../convex/_generated/api'
 import { ProfileTab } from '@/components/settings/profile-tab'

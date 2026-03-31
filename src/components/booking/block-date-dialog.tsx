@@ -1,4 +1,4 @@
-import { GlassDialog, GlassButton } from '@/components/glass'
+import { GlassDialog, GlassButton } from '@/components/ui'
 
 interface BlockDateDialogProps {
   pendingToggle: { date: string; mode: 'block' | 'unblock' }

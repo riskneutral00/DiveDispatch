@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassErrorCard } from '@/components/glass/glass-error-card'
+import { GlassErrorCard } from '@/components/ui/glass-error-card'
 
 export default function PortalError({
   error,

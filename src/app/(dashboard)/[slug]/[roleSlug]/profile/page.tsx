@@ -2,10 +2,10 @@
 
 import { use, useState } from 'react'
 import { notFound } from 'next/navigation'
-import { SettingsTabBar } from '@/components/common/settings-tab-bar'
-import { PageTitle } from '@/components/common/page-title'
+import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
+import { PageTitle } from '@/components/ui/page-title'
 import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
-import { RoleProfileForm } from '@/components/dashboard/profile-form-registry'
+import { RoleProfileForm } from '@/components/profiles/profile-form-registry'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 export default function RoleProfilePage({

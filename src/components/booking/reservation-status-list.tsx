@@ -1,5 +1,5 @@
 import type { BookingDetailReservation } from '../../../convex/bookings'
-import { GlassBadge } from '@/components/glass'
+import { GlassBadge } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 // ── Types ──────────────────────────────────────────────────────────────────────

@@ -3,15 +3,15 @@
 import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassCheckbox } from '@/components/glass/glass-checkbox'
-import { GlassInput } from '@/components/glass/glass-input'
-import { Spinner } from '@/components/common/spinner'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassCheckbox } from '@/components/ui/glass-checkbox'
+import { GlassInput } from '@/components/ui/glass-input'
+import { Spinner } from '@/components/ui/spinner'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { FormSectionHeader } from '@/components/common/form-section-header'
-import { SaveButton } from '@/components/common/save-button'
-import { ProfileBasicInfo } from '@/components/common/profile-basic-info'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { SaveButton } from '@/components/ui/save-button'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 
 const locationSchema = z.object({
   placeName: z.string().min(1),

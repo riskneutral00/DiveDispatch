@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassButton } from '@/components/ui/glass-button'
 
 export default function AuthError({
   error,

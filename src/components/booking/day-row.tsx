@@ -1,14 +1,14 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets } from 'lucide-react'
-import { GlassCard, GlassInput, GlassSelect, GlassSimpleSelect } from '@/components/glass'
+import { GlassCard, GlassInput, GlassSelect, GlassSimpleSelect } from '@/components/ui'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
 import type { Dispatch } from 'react'
 import { getCourseByCode } from '@/lib/constants/course-catalog'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { languageFlagText } from '@/components/common/language-flags'
+import { languageFlagText } from '@/components/profiles/language-flags'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

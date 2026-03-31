@@ -2,9 +2,9 @@
 
 import { use } from 'react'
 import { notFound } from 'next/navigation'
-import { PreferencesEditor } from '@/components/dashboard/preferences-editor'
+import { PreferencesEditor } from '@/components/settings/preferences-editor'
 import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
-import { SettingsEmbeddedProfileForm } from '@/components/dashboard/profile-form-registry'
+import { SettingsEmbeddedProfileForm } from '@/components/profiles/profile-form-registry'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 import { ManageRolesConnected } from '@/components/settings/manage-roles-connected'
 

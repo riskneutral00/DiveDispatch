@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
-import { GlassButton, GlassInput, GlassBadge } from '@/components/glass'
-import { Spinner } from '@/components/common/spinner'
+import { GlassButton, GlassInput, GlassBadge } from '@/components/ui'
+import { Spinner } from '@/components/ui/spinner'
 import type { ResourcePickerEntry } from '@/lib/types/booking'
 
 export type { ResourcePickerEntry }

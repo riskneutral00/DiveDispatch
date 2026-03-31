@@ -1,6 +1,6 @@
 'use client'
 
-import { GlassDialog } from '@/components/glass'
+import { GlassDialog } from '@/components/ui'
 import { getAvailableRoles } from '@/lib/utils/available-roles'
 import type { ClerkRole, RoleConfig } from '@/lib/constants/roles'
 

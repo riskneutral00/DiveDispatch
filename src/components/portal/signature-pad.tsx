@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useEffect, useImperativeHandle, useCallback, useState } from 'react'
-import { GlassButton } from '../glass/glass-button'
+import { GlassButton } from '../ui/glass-button'
 import { Trash2 } from 'lucide-react'
 
 export interface SignaturePadHandle {

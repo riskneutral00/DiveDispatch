@@ -1,4 +1,4 @@
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 
 interface DayPickerProps {
   label: string

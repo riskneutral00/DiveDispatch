@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useId, useMemo, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
-import { LanguageFlags } from '@/components/common/language-flags'
+import { LanguageFlags } from '@/components/profiles/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
 import { scoreLanguageMatch, type MatchTier } from '@/lib/utils/language-matching'
 

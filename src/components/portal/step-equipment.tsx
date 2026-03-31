@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { GlassCard } from '../glass/glass-card'
-import { GlassInput } from '../glass/glass-input'
-import { GlassButton } from '../glass/glass-button'
-import { GlassTextarea } from '../glass/glass-textarea'
+import { GlassCard } from '../ui/glass-card'
+import { GlassInput } from '../ui/glass-input'
+import { GlassButton } from '../ui/glass-button'
+import { GlassTextarea } from '../ui/glass-textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'

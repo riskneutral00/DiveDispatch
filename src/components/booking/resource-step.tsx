@@ -2,7 +2,7 @@
 
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard } from '@/components/glass'
+import { GlassCard } from '@/components/ui'
 import { ResourceOrExternalField } from './resource-or-external-field'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'

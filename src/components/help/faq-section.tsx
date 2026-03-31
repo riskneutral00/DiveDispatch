@@ -2,7 +2,7 @@
 
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import { GlassCard } from '@/components/glass'
+import { GlassCard } from '@/components/ui'
 
 interface FaqItem {
   question: string

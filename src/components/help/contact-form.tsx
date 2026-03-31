@@ -2,11 +2,11 @@
 
 import { Upload, X } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { GlassButton } from '@/components/glass/glass-button'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassInput } from '@/components/glass/glass-input'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
-import { GlassTextarea } from '@/components/glass/glass-textarea'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { GlassTextarea } from '@/components/ui/glass-textarea'
 
 const CATEGORIES = [
   { value: 'Bug', label: 'Bug' },

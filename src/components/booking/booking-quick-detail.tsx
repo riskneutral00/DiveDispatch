@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassDialog, GlassButton } from '@/components/glass'
-import { BookingStatusBadge } from '@/components/glass/booking-status-badge'
+import { GlassDialog, GlassButton } from '@/components/ui'
+import { BookingStatusBadge } from '@/components/ui/booking-status-badge'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import type { CalendarBooking } from '../../../convex/bookings'
 import { BookingDetailDialog } from './booking-detail-dialog'

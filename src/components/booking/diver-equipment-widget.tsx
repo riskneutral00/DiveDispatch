@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard, GlassBadge, GlassButton } from '@/components/glass'
+import { GlassCard, GlassBadge, GlassButton } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import {
   suggestGearSizes,
   type DiverMeasurements,

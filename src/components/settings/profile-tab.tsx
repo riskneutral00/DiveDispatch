@@ -4,9 +4,9 @@ import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
-import { GlassInput } from '@/components/glass/glass-input'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
-import { SaveButton } from '@/components/common/save-button'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { SaveButton } from '@/components/ui/save-button'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const MONTHS = [

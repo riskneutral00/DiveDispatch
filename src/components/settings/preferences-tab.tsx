@@ -4,9 +4,9 @@ import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
-import { LanguageField } from '@/components/common/language-field'
-import { FormSectionHeader } from '@/components/common/form-section-header'
-import { SaveButton } from '@/components/common/save-button'
+import { LanguageField } from '@/components/profiles/language-field'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { SaveButton } from '@/components/ui/save-button'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Exported for testing ────────────────────────────────────────────────────

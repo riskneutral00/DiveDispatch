@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock, MapPin, Lock, Waves, Anchor, Footprints } from 'lucide-react'
-import { GlassCard, GlassBadge, GlassInput, GlassSimpleSelect } from '@/components/glass'
+import { GlassCard, GlassBadge, GlassInput, GlassSimpleSelect } from '@/components/ui'
 import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
 import { VenueToggle } from './venue-toggle'
 

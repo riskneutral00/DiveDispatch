@@ -3,7 +3,7 @@
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { GlassTooltip } from '@/components/glass/glass-tooltip'
+import { GlassTooltip } from '@/components/ui/glass-tooltip'
 import { DraggablePill } from '@/components/booking/draggable-pill'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'

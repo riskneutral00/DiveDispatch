@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FilterDef } from '@/lib/constants/resource-filters'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 
 interface FilterBarProps {
   filters: FilterDef[]

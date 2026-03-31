@@ -4,9 +4,9 @@
  * "Switch to system" link.
  */
 
-import { GlassInput } from '@/components/glass/glass-input'
-import { GlassLink } from '@/components/glass/glass-link'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
+import { GlassInput } from '@/components/ui/glass-input'
+import { GlassLink } from '@/components/ui/glass-link'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 
 interface ResourceOption {
   id: string

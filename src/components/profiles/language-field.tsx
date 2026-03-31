@@ -1,6 +1,6 @@
 'use client'
 
-import { LanguagePicker } from '@/components/common/language-picker'
+import { LanguagePicker } from '@/components/profiles/language-picker'
 import type { Language } from '@/lib/types/language'
 
 type LanguageVariant = 'app' | 'customer' | 'teaching'

@@ -13,6 +13,3 @@ Matt uses "toast" for any confirmation pop-up. Don't ask which UI pattern — pi
 
 ## Never auto-queue POST specs
 POST-tier specs must be reviewed before queuing. When loading tasks, exclude POST-* specs and mention they exist separately.
-
-## Stakeholder features are role-agnostic
-Build one component serving all stakeholder roles, not per-role tickets. 90% of features apply to all stakeholders with `roleType`/`activeRole` as the only varying input.

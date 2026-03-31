@@ -1,11 +1,11 @@
 'use client'
 
 import type { RoleKey } from '@/lib/constants/roles'
-import { ProfileCompletionPill } from './profile-completion-pill'
-import type { ProfileOverlayTab } from './profile-overlay'
+import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
+import type { ProfileOverlayTab } from '../profiles/profile-overlay'
 import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
-import { NotificationBell } from './notification-bell'
+import { NotificationBell } from '../notifications/notification-bell'
 import { UserMenu } from './user-menu'
 
 interface MobileTopNavProps {

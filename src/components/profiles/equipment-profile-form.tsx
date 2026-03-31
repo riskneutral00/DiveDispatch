@@ -5,12 +5,12 @@ import { useMutation, useQuery } from 'convex/react'
 import { Plus, X } from 'lucide-react'
 import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassCard, GlassInput } from '@/components/glass'
-import { LocationPicker, type LocationValue } from '@/components/common/location-picker-lazy'
+import { GlassButton, GlassCard, GlassInput } from '@/components/ui'
+import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { FormSectionHeader } from '@/components/common/form-section-header'
-import { SaveButton } from '@/components/common/save-button'
-import { PillToggle } from '@/components/common/pill-toggle'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { SaveButton } from '@/components/ui/save-button'
+import { PillToggle } from '@/components/ui/pill-toggle'
 
 const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
 type GearType = (typeof GEAR_TYPES)[number]

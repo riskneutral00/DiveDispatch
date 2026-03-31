@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { Check, Send, Users, Calendar } from 'lucide-react'
-import { GlassCard, GlassButton } from '@/components/glass'
-import { countryCodeToEmoji } from '@/components/common/flag-emoji'
+import { GlassCard, GlassButton } from '@/components/ui'
+import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { formatDateRange } from '@/lib/booking/booking-display'
 import type { WizardState } from '@/lib/booking/wizard-state'
 

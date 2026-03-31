@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { GlassCard, GlassButton } from "@/components/glass";
+import { GlassCard, GlassButton } from "@/components/ui";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
-import { Spinner } from "@/components/common/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 const ItineraryStep = dynamic(
   () => import("./itinerary-step").then((m) => ({ default: m.ItineraryStep })),

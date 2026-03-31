@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 export default async function SlugRoleLayout({

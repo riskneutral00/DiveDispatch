@@ -1,4 +1,4 @@
-import { countryCodeToEmoji } from '@/components/common/flag-emoji'
+import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { languageToCode } from '@/lib/constants/dive-languages'
 
 const MAX_FLAGS = 4

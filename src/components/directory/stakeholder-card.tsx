@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { BadgeCheck, MapPin, Star } from 'lucide-react'
-import { GlassBadge } from '@/components/glass/glass-badge'
-import { GlassCard } from '@/components/glass/glass-card'
+import { GlassBadge } from '@/components/ui/glass-badge'
+import { GlassCard } from '@/components/ui/glass-card'
 import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
-import { LanguageFlags } from '@/components/common/language-flags'
+import { LanguageFlags } from '@/components/profiles/language-flags'
 
 
 const ROLE_PATH_PREFIX: Record<string, string> = {

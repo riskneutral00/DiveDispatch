@@ -1,5 +1,5 @@
 import { Link2Off } from 'lucide-react'
-import { GlassErrorCard } from '@/components/glass/glass-error-card'
+import { GlassErrorCard } from '@/components/ui/glass-error-card'
 
 // Static page — no client-side JS needed.
 export default function PortalExpiredPage() {

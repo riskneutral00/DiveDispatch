@@ -4,8 +4,8 @@ import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'rea
 import { APIProvider, Map, useApiIsLoaded, useMap } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
-import { GlassDialog } from '@/components/glass/glass-dialog'
-import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/common/autocomplete-keyboard'
+import { GlassDialog } from '@/components/ui/glass-dialog'
+import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

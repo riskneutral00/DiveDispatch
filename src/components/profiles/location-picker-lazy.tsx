@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 
 export type { LocationValue } from './location-picker'
 

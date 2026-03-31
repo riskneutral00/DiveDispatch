@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { countryCodeToEmoji } from '@/components/common/flag-emoji'
+import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import {
   ALL_LANGUAGES,
   POPULAR_ROW1_CODES,

@@ -1,4 +1,4 @@
-import { GlassCard } from '@/components/glass/glass-card'
+import { GlassCard } from '@/components/ui/glass-card'
 
 interface LoadingCardProps {
   /** Text shown while loading. Default: 'Loading...' */

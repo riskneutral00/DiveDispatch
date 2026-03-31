@@ -1,6 +1,6 @@
-import { AccountForm } from '@/components/dashboard/account-form'
-import { SessionDashboardShell } from '@/components/dashboard/session-dashboard-shell'
-import { PageTitle } from '@/components/common/page-title'
+import { AccountForm } from '@/components/settings/account-form'
+import { SessionDashboardShell } from '@/components/layout/session-dashboard-shell'
+import { PageTitle } from '@/components/ui/page-title'
 
 export default function AccountPage() {
   return (

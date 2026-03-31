@@ -1,7 +1,7 @@
 'use client'
 
 import { Lock } from 'lucide-react'
-import { PillToggleGroup } from '@/components/common/pill-toggle'
+import { PillToggleGroup } from '@/components/ui/pill-toggle'
 import { AGENCIES, getMandatorySpecialties } from '@/lib/constants/agencies'
 
 interface SpecialtyFieldProps {

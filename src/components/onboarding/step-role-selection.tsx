@@ -5,8 +5,8 @@ import {
   DISPLAY_RESOURCE_ROLES,
   type RoleConfig,
 } from '@/lib/constants/roles'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassButton } from '@/components/glass/glass-button'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassButton } from '@/components/ui/glass-button'
 
 // ── Role tile ─────────────────────────────────────────────────────────────────
 

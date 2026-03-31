@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback, type RefObject } from 'react'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 

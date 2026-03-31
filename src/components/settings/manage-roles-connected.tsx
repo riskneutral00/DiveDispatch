@@ -7,7 +7,7 @@ import { api } from '../../../convex/_generated/api'
 import { ManageRoles } from './manage-roles'
 import { AddRoleModal } from './add-role-modal'
 import { RoleOnboarding } from './role-onboarding'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { ErrorCode } from '@/lib/errors'
 

@@ -8,7 +8,7 @@ import {
   type ClerkRole,
   type RoleKey,
 } from '@/lib/constants/roles'
-import { GlassTooltip } from '@/components/glass'
+import { GlassTooltip } from '@/components/ui'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 

@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassErrorCard } from '@/components/glass/glass-error-card'
-import { GlassButton } from '@/components/glass/glass-button'
+import { GlassErrorCard } from '@/components/ui/glass-error-card'
+import { GlassButton } from '@/components/ui/glass-button'
 
 export default function DashboardError({
   error,

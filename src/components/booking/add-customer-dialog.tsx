@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassDialog, GlassButton, GlassInput, GlassButtonGroup } from '@/components/glass'
-import type { GlassButtonGroupOption } from '@/components/glass'
-import { LanguageField } from '@/components/common/language-field'
+import { GlassDialog, GlassButton, GlassInput, GlassButtonGroup } from '@/components/ui'
+import type { GlassButtonGroupOption } from '@/components/ui'
+import { LanguageField } from '@/components/profiles/language-field'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
 

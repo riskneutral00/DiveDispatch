@@ -6,7 +6,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { DashboardShell } from './dashboard-shell'
 

@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../../convex/_generated/api'
-import { GlassButton, GlassCard } from '@/components/glass'
+import { GlassButton, GlassCard } from '@/components/ui'
 import type { Id } from '../../../convex/_generated/dataModel'
 
 const QUICK_BOOK_OPTIONS = [

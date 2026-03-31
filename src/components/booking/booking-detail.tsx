@@ -6,7 +6,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/glass'
+import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -15,7 +15,7 @@ import {
   StakeholderList,
   PortalLinkSection,
 } from './booking-detail-shared'
-import { FormSectionHeader } from '@/components/common/form-section-header'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CANCEL_BOOKING_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'

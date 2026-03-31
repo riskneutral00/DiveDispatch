@@ -6,7 +6,7 @@ import { getLocale, getMessages } from "next-intl/server"
 import { ConvexClerkProvider } from "../lib/convex"
 import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
-import { GlassToaster } from "../components/glass/glass-toaster"
+import { GlassToaster } from "../components/ui/glass-toaster"
 import { OfflineIndicator } from "../components/pwa/offline-indicator"
 import "./globals.css"
 
@@ -28,7 +28,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        {/* Provider order is critical: ClerkProvider > ConvexProviderWithClerk > ThemeProvider */}
+        {/* Provider order is critical: ClerkProvider > ConvexClerkProvider > ThemeProvider */}
         <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"

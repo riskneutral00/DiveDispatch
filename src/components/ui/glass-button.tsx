@@ -1,5 +1,5 @@
 import React from "react";
-import { Spinner } from "@/components/common/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | "destructive-ghost";
 type ButtonSize = "sm" | "md" | "lg" | "icon";

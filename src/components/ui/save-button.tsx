@@ -1,5 +1,5 @@
 import { Check, Save } from 'lucide-react'
-import { GlassButton } from '@/components/glass'
+import { GlassButton } from '@/components/ui'
 
 interface SaveButtonProps {
   saving: boolean

@@ -1,5 +1,5 @@
 import { getDaysOfWeek } from '@/lib/hooks/use-calendar-range'
-import { GlassCard } from '@/components/glass'
+import { GlassCard } from '@/components/ui'
 
 interface CalendarShellProps {
   header: React.ReactNode

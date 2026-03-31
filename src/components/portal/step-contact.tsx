@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassCard } from '@/components/glass/glass-card'
-import { GlassInput } from '@/components/glass/glass-input'
+import { GlassCard } from '@/components/ui/glass-card'
+import { GlassInput } from '@/components/ui/glass-input'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { COUNTRY_NAMES } from '@/lib/constants/countries'
-import { GlassButton } from '@/components/glass/glass-button'
-import { GlassSimpleSelect } from '@/components/glass/glass-simple-select'
-import { GlassTextarea } from '@/components/glass/glass-textarea'
+import { GlassButton } from '@/components/ui/glass-button'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { GlassTextarea } from '@/components/ui/glass-textarea'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
@@ -18,7 +18,7 @@ import { useReturningCustomer } from '@/lib/hooks/use-returning-customer'
 import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { Spinner } from '@/components/common/spinner'
+import { Spinner } from '@/components/ui/spinner'
 
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
@@ -43,7 +43,7 @@ const defaultForm = (): CustomerContactData => ({
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 
-import { FormSectionHeader } from '@/components/common/form-section-header'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return <FormSectionHeader label={children} />
