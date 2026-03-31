@@ -131,6 +131,31 @@ describe('useProfileForm', () => {
     expect(result.current.saving).toBe(false)
   })
 
+  it('calls afterSuccessfulSave after successful create', async () => {
+    const afterSave = vi.fn().mockResolvedValue(undefined)
+    const createMock = vi.fn().mockResolvedValue(undefined)
+    const opts = makeOptions({ profile: null, create: createMock, afterSuccessfulSave: afterSave })
+    const { result } = renderHook(() => useProfileForm(opts))
+
+    act(() => { result.current.setField('name', 'New') })
+    act(() => { result.current.setField('email', 'new@test.com') })
+
+    const fakeEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent
+    await act(async () => { await result.current.handleSubmit(fakeEvent) })
+
+    expect(afterSave).toHaveBeenCalledWith({ name: 'New', email: 'new@test.com' })
+  })
+
+  it('stays loading when waitForMeBeforeInit and me is still undefined', () => {
+    const opts = makeOptions({
+      profile: null,
+      waitForMeBeforeInit: true,
+      me: undefined,
+    })
+    const { result } = renderHook(() => useProfileForm(opts))
+    expect(result.current.loading).toBe(true)
+  })
+
   it('handleSubmit calls update for existing profile', async () => {
     const updateMock = vi.fn().mockResolvedValue(undefined)
     const opts = makeOptions({

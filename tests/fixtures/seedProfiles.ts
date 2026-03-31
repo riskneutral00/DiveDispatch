@@ -51,7 +51,10 @@ export async function seedAgent(
   return ctx.db.insert('agents', {
     userId,
     name: overrides.name ?? 'Test Agent',
-    locations: [{ placeName: 'Koh Tao', country: 'Thailand', lat: 10.09, lng: 99.84 }],
+    placeName: 'Koh Tao',
+    country: 'Thailand',
+    lat: 10.09,
+    lng: 99.84,
     email: overrides.email ?? 'agent@test.com',
     phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],

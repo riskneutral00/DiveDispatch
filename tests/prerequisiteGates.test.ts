@@ -115,7 +115,11 @@ describe('prerequisite gate: Agent — associations depth', () => {
   it('association with blank agency and number must make completeness < 100% — currently passes', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Agent' })
-      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await ctx.db.patch(userId, {
+        phone: '+66123456789',
+        appLanguage: 'en',
+        customerLanguages: ['en-GB'],
+      })
       await seedAgent(ctx, userId, {
         associations: [{ agency: '', number: '' }],
       })

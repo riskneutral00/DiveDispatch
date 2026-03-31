@@ -50,10 +50,11 @@ describe('ROLE_REQUIRED', () => {
     expect(fields).toContain('diveSite')
   })
 
-  it('Agent requires name, placeName, country, associations', () => {
+  it('Agent requires name, placeName, country, associations, customerLanguages', () => {
     const fields = ROLE_REQUIRED['Agent']
     expect(fields).toContain('name')
     expect(fields).toContain('associations')
+    expect(fields).toContain('customerLanguages')
   })
 
   it('every role has name and placeName at minimum', () => {

@@ -165,6 +165,7 @@ describe('createDraftShell — activeRole ownership stamping', () => {
         profileComplete: false,
       })
       await seedAgent(ctx, userId)
+      await ctx.db.patch(userId, { customerLanguages: ['en-GB'] })
       await seedBookingTemplate(ctx, {
         ownerId: 'dc-own-2',
         ownerType: 'Agent',

@@ -8,6 +8,7 @@ import {
   seedDiveCenterProfile,
   seedInstructorProfile,
   seedEquipmentProfile,
+  seedAgent,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -116,6 +117,19 @@ describe('checkProfileCompleteness', () => {
       expect(result.incomplete).toHaveLength(2)
       expect(result.incomplete).toContain('appLanguage')
       expect(result.incomplete).toContain('phone')
+    })
+  })
+
+  it('Agent with profile but no users.customerLanguages marks customerLanguages incomplete', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Agent' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedAgent(ctx, userId)
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Agent')
+
+      expect(result.incomplete).toContain('customerLanguages')
+      expect(result.percentage).toBeLessThan(100)
     })
   })
 
