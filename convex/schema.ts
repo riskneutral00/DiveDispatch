@@ -552,7 +552,11 @@ export default defineSchema({
   agents: defineTable({
     userId: v.id('users'),
     name: v.string(),
-    locations: v.array(v.object({ placeName: v.string(), country: v.string(), lat: v.number(), lng: v.number(), placeId: v.optional(v.string()) })),
+    placeName: v.string(),
+    country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),

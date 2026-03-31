@@ -180,7 +180,11 @@ async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
     isSeeded: true,
     appLanguage: s.user.appLanguage,
     phone: s.user.phone,
-    ...(s.diveCenter?.customerLanguages ? { customerLanguages: s.diveCenter.customerLanguages } : {}),
+    ...(s.diveCenter?.customerLanguages
+      ? { customerLanguages: s.diveCenter.customerLanguages }
+      : s.user.customerLanguages
+        ? { customerLanguages: s.user.customerLanguages }
+        : {}),
     onboardingComplete: true,
   })
 }

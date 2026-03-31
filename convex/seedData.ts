@@ -26,6 +26,7 @@ export interface SeedUser {
   businessName: string
   appLanguage: string
   phone: string
+  customerLanguages?: string[]
 }
 
 interface DiveCenterProfile {
@@ -141,7 +142,11 @@ interface DiveResortProfile {
 
 interface AgentProfile {
   name: string
-  locations: { placeName: string; country: string; lat: number; lng: number; placeId?: string }[]
+  placeName: string
+  country: string
+  lat: number
+  lng: number
+  placeId?: string
   email: string
   phone: string
   associations: { agency: string; number: string }[]
@@ -618,13 +623,14 @@ export const AMANDA: SeedStakeholder = {
     businessName: 'Amanda',
     appLanguage: 'zh-CN',
     phone: '+66-81-234-5010',
+    customerLanguages: ['zh-CN', 'zh-TW', 'en', 'th'],
   },
   roles: [
     { role: 'Agent' },
   ],
   agent: {
     name: 'Amanda',
-    locations: [{ placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 }],
+    ...PHUKET,
     email: 'amanda@divedispatch.dev',
     phone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],

@@ -4,14 +4,16 @@ import { requireAuth, getAuthUser } from './lib/auth'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 
-const locationValidator = v.object({ placeName: v.string(), country: v.string(), lat: v.number(), lng: v.number(), placeId: v.optional(v.string()) })
-
 const associationValidator = v.object({ agency: v.string(), number: v.string() })
 
 export const create = mutation({
   args: {
     name: v.string(),
-    locations: v.array(locationValidator),
+    placeName: v.string(),
+    country: v.string(),
+    lat: v.number(),
+    lng: v.number(),
+    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     associations: v.array(associationValidator),
@@ -34,7 +36,11 @@ export const create = mutation({
 export const update = mutation({
   args: {
     name: v.optional(v.string()),
-    locations: v.optional(v.array(locationValidator)),
+    placeName: v.optional(v.string()),
+    country: v.optional(v.string()),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+    placeId: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     associations: v.optional(v.array(associationValidator)),
@@ -61,19 +67,10 @@ export const mine = query({
     const user = await getAuthUser(ctx)
     if (!user) return null
 
-    const agent = await ctx.db
+    return await ctx.db
       .query('agents')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .unique()
-    if (!agent) return null
-
-    // Normalize: expose flat placeName/country from locations[0] for consumers that expect it
-    const primary = agent.locations[0]
-    return {
-      ...agent,
-      placeName: primary?.placeName ?? '',
-      country: primary?.country ?? '',
-    }
   },
 })
 
@@ -86,3 +83,4 @@ export const byUserId = query({
       .unique()
   },
 })
+

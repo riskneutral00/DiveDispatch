@@ -46,6 +46,8 @@ type ProfileData = {
   maxCapacity?: number
   association?: string
   teachingLanguages?: string[]
+  /** DiveCenter row — customer-facing language codes */
+  customerLanguages?: string[]
 }
 
 // Returns profile display fields (including role-specific extras) for a user.
@@ -97,16 +99,21 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
     case 'DiveCenter': {
       const p = await queryProfileByUser(db, 'diveCenters', userId)
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
+      return {
+        name: p.name,
+        placeName: p.placeName,
+        country: p.country,
+        verified: p.verified,
+        customerLanguages: p.customerLanguages,
+      }
     }
     case 'Agent': {
       const p = await queryProfileByUser(db, 'agents', userId)
       if (!p) return null
-      const loc = p.locations?.[0] ?? { placeName: '', country: '' }
       return {
         name: p.name,
-        placeName: loc.placeName,
-        country: loc.country,
+        placeName: p.placeName,
+        country: p.country,
         verified: p.verified,
         association: (p.associations ?? [])[0]?.agency,
       }
@@ -251,7 +258,10 @@ export const listByRole = query({
             maxCapacity: profile.maxCapacity,
             association: profile.association,
             isPreferred,
-            languages: profile.teachingLanguages ?? u.customerLanguages,
+            languages:
+              profile.teachingLanguages
+              ?? profile.customerLanguages
+              ?? u.customerLanguages,
           }
         }),
     )

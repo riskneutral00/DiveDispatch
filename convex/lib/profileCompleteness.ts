@@ -67,15 +67,19 @@ export async function checkProfileCompleteness(
       continue
     }
 
-    // Agent uses locations[0].placeName for 'placeName' and locations[0].country for 'country'
+    // Agent: customer languages live on users.customerLanguages (not agents table)
+    if (role === 'Agent' && field === 'customerLanguages') {
+      if (!arr(userDoc.customerLanguages)) incomplete.push(field)
+      continue
+    }
+
+    // Agent profile uses flat placeName / country on agents row
     if (role === 'Agent' && field === 'placeName') {
-      const locations = profile.locations as Array<{ placeName: string; country: string }> | undefined
-      if (!locations?.[0]?.placeName) incomplete.push(field)
+      if (!str(profile.placeName)) incomplete.push(field)
       continue
     }
     if (role === 'Agent' && field === 'country') {
-      const locations = profile.locations as Array<{ placeName: string; country: string }> | undefined
-      if (!locations?.[0]?.country) incomplete.push(field)
+      if (!str(profile.country)) incomplete.push(field)
       continue
     }
 
