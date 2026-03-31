@@ -27,19 +27,19 @@ esac
 # Check for upstream imports
 case "$LAYER" in
   convex)
-    if grep -qE "from ['\"](@/|\.\./)*(src/|@/)(lib|components|app)/" "$FILE_PATH" 2>/dev/null; then
+    if grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -qE "from ['\"](@/|\.\./)*(src/|@/)(lib|components|app)/"; then
       echo '{"decision":"block","reason":"Dependency direction violation: convex/ must not import from src/. Direction: convex/ <- lib/ <- components/ <- app/"}'
       exit 0
     fi
     ;;
   lib)
-    if grep -qE "from ['\"](@/|\.\./)*(components|app)/" "$FILE_PATH" 2>/dev/null; then
+    if grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -qE "from ['\"](@/|\.\./)*(components|app)/"; then
       echo '{"decision":"block","reason":"Dependency direction violation: lib/ must not import from components/ or app/. Direction: convex/ <- lib/ <- components/ <- app/"}'
       exit 0
     fi
     ;;
   components)
-    if grep -qE "from ['\"](@/|\.\./)*(app)/" "$FILE_PATH" 2>/dev/null; then
+    if grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -qE "from ['\"](@/|\.\./)*(app)/"; then
       echo '{"decision":"block","reason":"Dependency direction violation: components/ must not import from app/. Direction: convex/ <- lib/ <- components/ <- app/"}'
       exit 0
     fi

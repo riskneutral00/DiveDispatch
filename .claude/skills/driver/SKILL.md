@@ -22,11 +22,11 @@ This opens a tmux session `car` with 7 windows:
 - **3 Patrol:** polls .car/reviewed/ for review events, runs quality gates
 - **4 Shell:** free terminal for Matt
 - **5 Research:** silent research partner, always on
-- **6 Health:** pipeline health monitor
+- **6 Health:** pipeline health monitor (heartbeat staleness, orphaned events, memory pressure)
 
 Navigate by number: `Ctrl+B 0`–`Ctrl+B 6`. Cycle: `Ctrl+B n` / `Ctrl+B p`. Detach: `Ctrl+B d`. Reattach: `tmux attach -t car`.
 
-Each agent runs in a watchdog loop — if its heartbeat file goes stale >60s, the wrapper kills and auto-restarts it.
+Each agent touches a `.car/heartbeat-{agent}` file every poll cycle. The Health monitor watches these — if any goes stale >60s, it alerts.
 
 If `scripts/car.sh` doesn't exist or tmux isn't available, print:
 

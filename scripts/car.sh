@@ -11,6 +11,7 @@
 #   Ctrl+B 3  — jump to Patrol
 #   Ctrl+B 4  — jump to Shell
 #   Ctrl+B 5  — jump to Research
+#   Ctrl+B 6  — jump to Health
 #   Ctrl+B d  — detach (agents keep running)
 #   tmux attach -t car  — reattach
 
@@ -88,7 +89,7 @@ while true; do
     --model sonnet \
     --permission-mode bypassPermissions \
     --name Backseat \
-    "IMPORTANT: Do NOT invoke any slash commands or skills (including /backseat, /patrol, /gate, or any other skill). Execute the polling loop directly from your system prompt instructions. Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, category. Run the category-routed review. Write results to .car/reviewed/DD-{NNN}.json. If any CRITICAL findings, create a fix ticket in .tickets/ and write .car/fixes/DD-{NNN}.json. After processing, move the merged event to .car/processed/. Keep polling until batch cap is reached." &
+    "IMPORTANT: Do NOT invoke launcher skills (/backseat, /patrol, /gate, /driver, /first). You MAY use Skill() calls as instructed in your system prompt (diff-classify, escalate, backseat-debrief). Start the Backseat review loop. Poll .car/merged/ every 30 seconds for new JSON event files. When you find one, read it to get the ticket ID, SHA, changed files, size, category. Run the category-routed review. Write results to .car/reviewed/DD-{NNN}.json. If any CRITICAL findings, create a fix ticket in .tickets/ and write .car/fixes/DD-{NNN}.json. After processing, move the merged event to .car/processed/. Keep polling until batch cap is reached." &
   CLAUDE_PID=$!
   while kill -0 $CLAUDE_PID 2>/dev/null; do
     if [ -f .car/exit-backseat ]; then
@@ -118,7 +119,7 @@ while true; do
     --model sonnet \
     --permission-mode bypassPermissions \
     --name Patrol \
-    "IMPORTANT: Do NOT invoke any slash commands or skills (including /patrol, /backseat, /gate, or any other skill). Execute the polling loop directly from your system prompt instructions. Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN or BLOCKED verdict. Move the reviewed event to .car/processed/. Keep polling until batch cap is reached." &
+    "IMPORTANT: Do NOT invoke launcher skills (/patrol, /backseat, /gate, /driver, /first). You MAY use Skill() calls as instructed in your system prompt (qa, review-tests, reconcile, escalate). Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN, BLOCKED, or WAIT verdict. Move the reviewed event to .car/processed/. Keep polling until batch cap is reached." &
   CLAUDE_PID=$!
   while kill -0 $CLAUDE_PID 2>/dev/null; do
     if [ -f .car/exit-patrol ]; then
@@ -149,6 +150,7 @@ tmux new-window -t "$SESSION" -n "Backseat" -c "$DIR"
 tmux new-window -t "$SESSION" -n "Patrol" -c "$DIR"
 tmux new-window -t "$SESSION" -n "Shell" -c "$DIR"
 tmux new-window -t "$SESSION" -n "Research" -c "$DIR"
+tmux new-window -t "$SESSION" -n "Health" -c "$DIR"
 
 # Status bar (simple version — complex python breaks with set -e)
 tmux set-option -t "$SESSION" status on
@@ -193,6 +195,7 @@ tmux send-keys -t "$SESSION:Driver" "bash .car/start-driver.sh" Enter
 tmux send-keys -t "$SESSION:Backseat" "bash .car/start-backseat.sh" Enter
 tmux send-keys -t "$SESSION:Patrol" "bash .car/start-patrol.sh" Enter
 tmux send-keys -t "$SESSION:Research" "bash scripts/research.sh" Enter
+tmux send-keys -t "$SESSION:Health" "bash scripts/pipeline-health.sh" Enter
 
 # Start on Driver window
 tmux select-window -t "$SESSION:Driver"
