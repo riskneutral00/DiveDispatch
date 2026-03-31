@@ -15,7 +15,7 @@ vi.mock('convex/react', async () => {
 })
 
 // ─── Import after mocks ─────────────────────────────────────────────────────
-import { HierarchySubBar } from '@/components/dashboard/hierarchy-sub-bar'
+import { HierarchySubBar } from '@/components/layout/hierarchy-sub-bar'
 
 beforeEach(() => {
   vi.clearAllMocks()

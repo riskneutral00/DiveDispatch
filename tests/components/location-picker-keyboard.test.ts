@@ -3,7 +3,7 @@ import {
   autocompleteKeyboardReducer,
   INITIAL_STATE,
   type AutocompleteKbState,
-} from '../../src/components/common/autocomplete-keyboard'
+} from '../../src/components/ui/autocomplete-keyboard'
 
 describe('autocompleteKeyboardReducer', () => {
   describe('ARROW_DOWN', () => {

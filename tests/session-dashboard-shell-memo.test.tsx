@@ -40,13 +40,13 @@ vi.mock('next/navigation', () => ({
 }))
 
 // Mock DashboardShell to avoid its deep dependency tree
-vi.mock('@/components/dashboard/dashboard-shell', () => ({
+vi.mock('@/components/layout/dashboard-shell', () => ({
   DashboardShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
 // ── Import after mocks ──────────────────────────────────────────────────────
 
-import { useSessionRoleContext, SessionDashboardShell } from '@/components/dashboard/session-dashboard-shell'
+import { useSessionRoleContext, SessionDashboardShell } from '@/components/layout/session-dashboard-shell'
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '../helpers/render'
-import { GlassCheckbox } from '../../src/components/glass/glass-checkbox'
+import { GlassCheckbox } from '../../src/components/ui/glass-checkbox'
 
 describe('GlassCheckbox', () => {
   it('renders unchecked by default', () => {

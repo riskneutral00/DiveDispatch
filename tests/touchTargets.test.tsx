@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
-import { GlassButton } from '@/components/glass/glass-button'
+import { GlassButton } from '@/components/ui/glass-button'
 
 const sizes = ['sm', 'md', 'lg', 'icon'] as const
 

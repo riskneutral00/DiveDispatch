@@ -33,7 +33,7 @@ vi.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: { fullName: 'Test User', primaryEmailAddress: { emailAddress: 'test@test.com' } } }),
 }))
 
-vi.mock('@/components/dashboard/notification-panel', () => ({
+vi.mock('@/components/notifications/notification-panel', () => ({
   NotificationPanel: () => null,
 }))
 
@@ -50,10 +50,10 @@ Object.defineProperty(globalThis, 'localStorage', { value: localStorageStub, wri
 
 // ── Import after mocks ──────────────────────────────────────────────────────
 
-import { ThemeSwitcher } from '@/components/dashboard/theme-switcher'
-import { BgSwitcher } from '@/components/dashboard/bg-switcher'
-import { NotificationBell } from '@/components/dashboard/notification-bell'
-import { UserMenu } from '@/components/dashboard/user-menu'
+import { ThemeSwitcher } from '@/components/layout/theme-switcher'
+import { BgSwitcher } from '@/components/layout/bg-switcher'
+import { NotificationBell } from '@/components/notifications/notification-bell'
+import { UserMenu } from '@/components/layout/user-menu'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

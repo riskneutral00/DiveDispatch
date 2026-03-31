@@ -6,7 +6,7 @@ import {
   poolFromProfile,
   INITIAL_POOL_FORM,
   type PoolFormState,
-} from '../src/components/dashboard/pool-profile-form'
+} from '../src/components/profiles/pool-profile-form'
 
 describe('poolSchema', () => {
   const validPool = {

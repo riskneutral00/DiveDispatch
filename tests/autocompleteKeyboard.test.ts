@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   autocompleteKeyboardReducer,
   INITIAL_STATE,
-} from '../src/components/common/autocomplete-keyboard'
+} from '../src/components/ui/autocomplete-keyboard'
 
 describe('autocompleteKeyboardReducer', () => {
   it('ARROW_DOWN from initial state highlights first item and opens', () => {

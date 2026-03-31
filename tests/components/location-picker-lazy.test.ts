@@ -11,7 +11,7 @@ import { resolve } from 'path'
  */
 
 const LAZY_WRAPPER = readFileSync(
-  resolve(__dirname, '../../src/components/common/location-picker-lazy.tsx'),
+  resolve(__dirname, '../../src/components/profiles/location-picker-lazy.tsx'),
   'utf-8',
 )
 
@@ -41,16 +41,16 @@ describe('DD-224: LocationPicker lazy wrapper', () => {
  * not directly from location-picker.tsx.
  */
 const CONSUMER_FILES = [
-  'src/components/dashboard/equipment-profile-form.tsx',
-  'src/components/dashboard/boat-profile-form.tsx',
-  'src/components/dashboard/instructor-profile-form.tsx',
-  'src/components/dashboard/divemaster-profile-form.tsx',
-  'src/components/dashboard/compressor-profile-form.tsx',
-  'src/components/dashboard/pool-profile-form.tsx',
-  'src/components/dashboard/dive-center-profile-form.tsx',
-  'src/components/dashboard/organizer-basic-step.tsx',
-  'src/components/dashboard/agent-profile-form.tsx',
-  'src/components/common/profile-basic-info.tsx',
+  'src/components/profiles/equipment-profile-form.tsx',
+  'src/components/profiles/boat-profile-form.tsx',
+  'src/components/profiles/instructor-profile-form.tsx',
+  'src/components/profiles/divemaster-profile-form.tsx',
+  'src/components/profiles/compressor-profile-form.tsx',
+  'src/components/profiles/pool-profile-form.tsx',
+  'src/components/profiles/dive-center-profile-form.tsx',
+  'src/components/onboarding/organizer-basic-step.tsx',
+  'src/components/profiles/agent-profile-form.tsx',
+  'src/components/profiles/profile-basic-info.tsx',
 ]
 
 describe('DD-224: consumers import from lazy wrapper', () => {
@@ -60,13 +60,13 @@ describe('DD-224: consumers import from lazy wrapper', () => {
     it(`${shortName} imports from location-picker-lazy`, () => {
       const source = readFileSync(resolve(__dirname, '../../', file), 'utf-8')
       // Should NOT import directly from location-picker (without -lazy)
-      const directImport = /from\s+['"]@\/components\/common\/location-picker['"]/.test(source)
+      const directImport = /from\s+['"]@\/components\/profiles\/location-picker['"]/.test(source)
       expect(directImport, `${shortName} still imports directly from location-picker`).toBe(false)
     })
 
     it(`${shortName} imports from the lazy path`, () => {
       const source = readFileSync(resolve(__dirname, '../../', file), 'utf-8')
-      const lazyImport = /from\s+['"]@\/components\/common\/location-picker-lazy['"]/.test(source)
+      const lazyImport = /from\s+['"]@\/components\/profiles\/location-picker-lazy['"]/.test(source)
       expect(lazyImport, `${shortName} should import from location-picker-lazy`).toBe(true)
     })
   }

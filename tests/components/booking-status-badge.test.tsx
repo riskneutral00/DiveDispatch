@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '../helpers/render'
-import { BookingStatusBadge } from '../../src/components/glass/booking-status-badge'
+import { BookingStatusBadge } from '../../src/components/ui/booking-status-badge'
 
 describe('BookingStatusBadge', () => {
   it('renders status text', () => {

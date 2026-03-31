@@ -8,7 +8,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '../helpers/render'
 import { screen, fireEvent } from '@testing-library/react'
-import { LanguagePicker } from '../../src/components/common/language-picker'
+import { LanguagePicker } from '../../src/components/profiles/language-picker'
 
 describe('LanguagePicker', () => {
   it('search input container has max-width constraint', () => {

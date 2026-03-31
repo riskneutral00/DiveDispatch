@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '../helpers/render'
-import { SettingsTabBar, type TabItem } from '@/components/common/settings-tab-bar'
+import { SettingsTabBar, type TabItem } from '@/components/settings/settings-tab-bar'
 
 const TABS: TabItem[] = [
   { id: 'general', label: 'General' },

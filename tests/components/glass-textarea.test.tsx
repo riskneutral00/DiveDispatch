@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { GlassTextarea } from '@/components/glass/glass-textarea'
+import { GlassTextarea } from '@/components/ui/glass-textarea'
 
 describe('GlassTextarea', () => {
   it('includes text-primary class on the textarea element', () => {

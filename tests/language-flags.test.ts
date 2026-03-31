@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { languageFlagText } from '../src/components/common/language-flags'
+import { languageFlagText } from '../src/components/profiles/language-flags'
 import { languageToCode, resolveLanguages, PROFILE_LANGUAGE_OPTIONS, localeToCountryCode } from '../src/lib/constants/dive-languages'
 
 describe('languageFlagText', () => {

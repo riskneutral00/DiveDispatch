@@ -49,7 +49,7 @@ vi.mock('@/components/icons/role-icons', () => {
 })
 
 // Stub LanguagePicker (depends on Convex useQuery)
-vi.mock('@/components/common/language-picker', () => ({
+vi.mock('@/components/profiles/language-picker', () => ({
   LanguagePicker: ({ disabled }: { disabled?: boolean }) => (
     <div data-testid="language-picker" data-disabled={disabled} />
   ),

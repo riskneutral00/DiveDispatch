@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import { render, cleanup } from '../helpers/render'
-import { GlassDialog } from '@/components/glass/glass-dialog'
+import { GlassDialog } from '@/components/ui/glass-dialog'
 
 // jsdom doesn't implement HTMLDialogElement.show / .showModal / .close
 beforeEach(() => {

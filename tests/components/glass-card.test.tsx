@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
-import { GlassCard } from '@/components/glass/glass-card'
+import { GlassCard } from '@/components/ui/glass-card'
 
 describe('GlassCard', () => {
   it('renders with glass-container class, not glass or glass-elevated', () => {

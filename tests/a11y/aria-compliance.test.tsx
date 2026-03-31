@@ -35,7 +35,7 @@ vi.mock('convex/react', async (importOriginal) => {
 // Stub heavy child components
 vi.mock('@/components/booking/calendar-legend', () => ({ CalendarLegend: () => null }))
 vi.mock('@/components/booking/urgent-booking-strip', () => ({ UrgentBookingStrip: () => null }))
-vi.mock('@/components/glass', () => ({
+vi.mock('@/components/ui', () => ({
   GlassCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   GlassDialog: ({ children, open, title }: { children: React.ReactNode; open: boolean; title?: string }) =>
     open ? <dialog open aria-label={title}>{children}</dialog> : null,

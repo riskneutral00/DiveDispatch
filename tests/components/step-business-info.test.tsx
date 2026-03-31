@@ -5,7 +5,7 @@ import { StepBusinessInfo, type BusinessInfoValues } from '@/components/onboardi
 import type { RoleConfig } from '@/lib/constants/roles'
 
 // Stub the LanguagePicker — it depends on Convex useQuery
-vi.mock('@/components/common/language-picker', () => ({
+vi.mock('@/components/profiles/language-picker', () => ({
   LanguagePicker: ({ disabled }: { disabled?: boolean }) => (
     <div data-testid="language-picker" data-disabled={disabled} />
   ),

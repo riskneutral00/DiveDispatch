@@ -29,7 +29,7 @@ vi.mock('@/lib/hooks/use-optimistic-notifications', () => ({
   }),
 }))
 
-vi.mock('@/components/common/spinner', () => ({
+vi.mock('@/components/ui/spinner', () => ({
   Spinner: () => <span data-testid="spinner">Loading...</span>,
 }))
 
@@ -61,7 +61,7 @@ vi.mock('@/lib/notifications/notification-config', () => ({
 
 // ── Import after mocks ──────────────────────────────────────────────────────
 
-import { NotificationPanel } from '@/components/dashboard/notification-panel'
+import { NotificationPanel } from '@/components/notifications/notification-panel'
 
 const SAMPLE_NOTIFICATIONS = [
   { _id: 'n1', type: 'hold_placed', message: 'New booking request', createdAt: Date.now() - 60000 },

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
-import { GlassBadge } from '@/components/glass/glass-badge'
+import { GlassBadge } from '@/components/ui/glass-badge'
 
 const variants = ['default', 'success', 'warning', 'destructive', 'info'] as const
 

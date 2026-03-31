@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '../helpers/render'
-import { GlassInput } from '../../src/components/glass/glass-input'
+import { GlassInput } from '../../src/components/ui/glass-input'
 
 describe('GlassInput', () => {
   it('renders without error', () => {

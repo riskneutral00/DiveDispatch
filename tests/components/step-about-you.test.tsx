@@ -5,7 +5,7 @@ import { StepAboutYou, type AboutYouValues } from '@/components/onboarding/step-
 import type { Language } from '@/lib/types/language'
 
 // Stub the LanguagePicker — it depends on Convex useQuery
-vi.mock('@/components/common/language-picker', () => ({
+vi.mock('@/components/profiles/language-picker', () => ({
   LanguagePicker: ({ disabled }: { disabled?: boolean }) => (
     <div data-testid="language-picker" data-disabled={disabled} />
   ),

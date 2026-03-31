@@ -61,7 +61,7 @@ describe('AccountForm', () => {
   // Lazy import so mocks are in place
   async function renderForm() {
     const { AccountForm } = await import(
-      '../../src/components/dashboard/account-form'
+      '../../src/components/settings/account-form'
     )
     return render(<AccountForm />)
   }
