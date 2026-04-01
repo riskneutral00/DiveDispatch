@@ -29,6 +29,56 @@ function baseArgs(overrides: Record<string, unknown> = {}) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+describe('stakeholderPreferences.bySlug', () => {
+  it('returns another stakeholder preferences when authenticated', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-target', tokenIdentifier: 'clerk|dc-target', role: 'DiveCenter' })
+      await seedUser(ctx, { slug: 'agent-caller', tokenIdentifier: 'clerk|agent-bs', role: 'Agent' })
+      await ctx.db.insert('stakeholderPreferences', {
+        stakeholderId: 'dc-target',
+        stakeholderType: 'DiveCenter',
+        acceptanceMode: 'Auto',
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 30,
+        useNamedUnits: false,
+        confirmOnAccept: false,
+        confirmOnDecline: false,
+        preferredInstructorSlugs: ['instr-from-target'],
+      })
+    })
+
+    const row = await t.withIdentity({ tokenIdentifier: 'clerk|agent-bs' }).query(
+      api.stakeholderPreferences.bySlug,
+      { stakeholderSlug: 'dc-target' },
+    )
+    expect(row).not.toBeNull()
+    expect(row!.preferredInstructorSlugs).toEqual(['instr-from-target'])
+  })
+})
+
+describe('stakeholderPreferences.upsert — preferredOperatorSlug (DD-355)', () => {
+  it('persists preferredOperatorSlug for Agent', async () => {
+    const t = makeT()
+    await t.run(async (ctx) =>
+      seedUser(ctx, { slug: 'agent-pref-op', tokenIdentifier: 'clerk|agent-pref-op', role: 'Agent' }),
+    )
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|agent-pref-op' }).mutation(
+      api.stakeholderPreferences.upsert,
+      {
+        ...baseArgs({ activeRole: 'Agent' as const, preferredOperatorSlug: 'some-dc-slug' }),
+      },
+    )
+
+    const prefs = await t.withIdentity({ tokenIdentifier: 'clerk|agent-pref-op' }).query(
+      api.stakeholderPreferences.mine,
+      {},
+    )
+    expect(prefs!.preferredOperatorSlug).toBe('some-dc-slug')
+  })
+})
+
 describe('stakeholderPreferences.upsert — preferred resource arrays', () => {
   it('persists preferredVenueSlugs on upsert', async () => {
     const t = makeT()

@@ -15,6 +15,11 @@ const MOCK_DEFAULTS: OperatorDefaults = {
   preferredBoatSlug: 'boat-1',
   preferredEquipmentSlug: 'equip-1',
   preferredCompressorSlug: 'comp-1',
+  preferredInstructorSlugs: ['instructor-1'],
+  preferredVenueSlugs: ['venue-1'],
+  preferredBoatSlugs: ['boat-1'],
+  preferredEquipmentSlugs: ['equip-1'],
+  preferredCompressorSlugs: ['comp-1'],
 }
 
 describe('drag-to-date pre-fill generation', () => {
@@ -54,6 +59,11 @@ describe('drag-to-date pre-fill generation', () => {
       preferredBoatSlug: '',
       preferredEquipmentSlug: '',
       preferredCompressorSlug: '',
+      preferredInstructorSlugs: [],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: [],
+      preferredEquipmentSlugs: [],
+      preferredCompressorSlugs: [],
     }
     const result = buildPreFill(['DSD'], FUTURE, emptyDefaults)
 

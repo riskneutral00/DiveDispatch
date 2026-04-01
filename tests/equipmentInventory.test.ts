@@ -8,6 +8,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { api } from '../convex/_generated/api'
+import type { Id } from '../convex/_generated/dataModel'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
 import { TEST_TOKENS, TEST_SLUGS, seedUser, seedBooking, seedSession, seedReservation, seedSnapshot } from './fixtures'
 
@@ -258,6 +259,106 @@ describe('equipmentInventory.updateItem', () => {
       ),
       'FORBIDDEN',
     )
+  })
+
+  it('syncs snapshots on totalUnits increase (DD-350)', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'bcd', totalUnits: 5 },
+    )
+
+    // Seed a snapshot with 3 reserved out of 5
+    let snapshotId: any
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+        totalUnits: 5,
+        reservedUnits: 3,
+        availableUnits: 2,
+      })
+    })
+
+    // Increase totalUnits 5 → 10
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.updateItem,
+      { inventoryId, totalUnits: 10 },
+    )
+
+    await t.run(async (ctx) => {
+      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      expect(snap!.totalUnits).toBe(10)
+      expect(snap!.availableUnits).toBe(7) // 10 - 3
+    })
+  })
+
+  it('syncs snapshots on totalUnits decrease (DD-350)', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'regulator', totalUnits: 10 },
+    )
+
+    let snapshotId: any
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+        totalUnits: 10,
+        reservedUnits: 3,
+        availableUnits: 7,
+      })
+    })
+
+    // Decrease totalUnits 10 → 4 (passes guard: 4 >= 3)
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.updateItem,
+      { inventoryId, totalUnits: 4 },
+    )
+
+    await t.run(async (ctx) => {
+      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      expect(snap!.totalUnits).toBe(4)
+      expect(snap!.availableUnits).toBe(1) // 4 - 3
+    })
+  })
+
+  it('syncs snapshots at totalUnits === maxReserved boundary (DD-350)', async () => {
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).run(async (ctx) => {
+      await seedUser(ctx, { tokenIdentifier: EM_TOKEN, slug: EM_SLUG, role: 'Equipment', email: 'em@test.com' })
+    })
+
+    const inventoryId = await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.addItem,
+      { gearType: 'fins', totalUnits: 10 },
+    )
+
+    let snapshotId: any
+    await t.run(async (ctx) => {
+      const item = await ctx.db.get(inventoryId)
+      snapshotId = await seedSnapshot(ctx, item!.inventoryUnitId, {
+        totalUnits: 10,
+        reservedUnits: 5,
+        availableUnits: 5,
+      })
+    })
+
+    // Reduce to exactly the reserved count
+    await t.withIdentity({ tokenIdentifier: EM_TOKEN }).mutation(
+      api.equipmentInventory.updateItem,
+      { inventoryId, totalUnits: 5 },
+    )
+
+    await t.run(async (ctx) => {
+      const snap = await ctx.db.get(snapshotId as Id<'availabilitySnapshots'>)
+      expect(snap!.totalUnits).toBe(5)
+      expect(snap!.availableUnits).toBe(0) // 5 - 5
+    })
   })
 
   it('rejects VALIDATION when reducing totalUnits below reserved count', async () => {

@@ -24,6 +24,7 @@ import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { AuditTrailTable } from './audit-trail-table'
+import { SendPortalLink } from './send-portal-link'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -288,13 +289,23 @@ function BookingDetailContent({
             <div>
               <FormSectionHeader label="Customer Portal" />
               <PortalPills pills={portalPills} />
-              <div className="mt-3">
+              <div className="mt-3 space-y-3">
                 <PortalLinkSection
                   bookingId={bookingId}
                   portalLink={portalLink ?? null}
                   divers={booking.divers}
                   compact
                 />
+                {booking.divers.length > 0 && (
+                  <SendPortalLink
+                    bookingId={bookingId as Id<'bookings'>}
+                    customerName={booking.divers[0].name}
+                    email={booking.divers[0].contactType === 'email' ? (booking.divers[0].contactValue ?? '') : (portalLink?.email ?? '')}
+                    operatorName={booking.operatorName}
+                    contactType={booking.divers[0].contactType}
+                    contactValue={booking.divers[0].contactValue}
+                  />
+                )}
               </div>
             </div>
           </>

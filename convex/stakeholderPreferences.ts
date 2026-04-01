@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { ErrorCode } from './lib/errorCodes'
+import { requireAuth } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
@@ -31,6 +32,19 @@ export const mine = query({
   },
 })
 
+/** Read-only preferences for another stakeholder (e.g. target operator in referral / preferred operator cascade). */
+export const bySlug = query({
+  args: { stakeholderSlug: v.string() },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx)
+
+    return await ctx.db
+      .query('stakeholderPreferences')
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', args.stakeholderSlug))
+      .unique()
+  },
+})
+
 /** Inserts default `useNamedUnits: false` on first create. `noWorkAfterTime` exists on the table but is not in args yet — reserved for future scheduling UI. */
 export const upsert = mutation({
   args: {
@@ -44,6 +58,7 @@ export const upsert = mutation({
     preferredEquipmentSlugs: v.optional(v.array(v.string())),
     preferredBoatSlugs: v.optional(v.array(v.string())),
     preferredCompressorSlugs: v.optional(v.array(v.string())),
+    preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
   },
@@ -82,6 +97,7 @@ export const upsert = mutation({
       preferredEquipmentSlugs: args.preferredEquipmentSlugs,
       preferredBoatSlugs: args.preferredBoatSlugs,
       preferredCompressorSlugs: args.preferredCompressorSlugs,
+      preferredOperatorSlug: args.preferredOperatorSlug,
       confirmOnAccept: args.confirmOnAccept,
       confirmOnDecline: args.confirmOnDecline,
     }

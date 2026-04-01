@@ -85,15 +85,19 @@ export const updateItem = mutation({
       throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'totalUnits must be at least 1' })
     }
 
+    // Fetch linked snapshots once — used by both the guard and the sync below
+    const linkedSnapshots = args.totalUnits !== undefined
+      ? await ctx.db
+          .query('availabilitySnapshots')
+          .withIndex('by_inventoryUnitId_date', (q) =>
+            q.eq('inventoryUnitId', item.inventoryUnitId),
+          )
+          .collect()
+      : []
+
     // Guard: reject if reducing totalUnits below currently reserved count
     if (args.totalUnits !== undefined) {
-      const snapshots = await ctx.db
-        .query('availabilitySnapshots')
-        .withIndex('by_inventoryUnitId_date', (q) =>
-          q.eq('inventoryUnitId', item.inventoryUnitId),
-        )
-        .collect()
-      const maxReserved = snapshots.reduce(
+      const maxReserved = linkedSnapshots.reduce(
         (max, s) => Math.max(max, s.reservedUnits),
         0,
       )
@@ -114,9 +118,15 @@ export const updateItem = mutation({
       await ctx.db.patch(args.inventoryId, cleanPatch)
     }
 
-    // Patch inventoryUnit.totalUnits if provided
+    // Patch inventoryUnit.totalUnits and sync linked snapshots (DD-350)
     if (totalUnits !== undefined) {
       await ctx.db.patch(item.inventoryUnitId, { totalUnits })
+      for (const snap of linkedSnapshots) {
+        await ctx.db.patch(snap._id, {
+          totalUnits,
+          availableUnits: totalUnits - snap.reservedUnits,
+        })
+      }
     }
   },
 })

@@ -128,6 +128,15 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         const firstEntry = c.courseEntries?.[0]
         const allCodes = [...new Set((c.courseEntries ?? []).map((e) => e.activityCode).filter(Boolean))]
         const primaryFlag = c.flags?.[0] ?? { code: 'GB', label: 'English' }
+
+        const contactType: 'email' | 'whatsapp' | 'line' | undefined =
+          c.contact?.whatsapp ? 'whatsapp'
+            : c.contact?.line ? 'line'
+              : c.contact?.email ? 'email'
+                : undefined
+        const contactValue =
+          c.contact?.whatsapp ?? c.contact?.line ?? c.contact?.email
+
         return {
           name: c.name,
           abbrev: c.name.charAt(0).toUpperCase(),
@@ -136,6 +145,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
           endDate: firstEntry?.dates[1] ?? firstEntry?.dates[0] ?? endDate,
           agency: firstEntry?.agency ?? '',
           activityType: allCodes as import('@/lib/constants/course-catalog').CourseCode[],
+          ...(contactType && contactValue ? { contactType, contactValue } : {}),
         }
       })
 

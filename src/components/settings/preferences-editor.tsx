@@ -21,6 +21,7 @@ import {
   PreferredCompressorList,
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ const prefsSchema = z.object({
   preferredEquipmentSlugs: z.array(z.string()).optional(),
   preferredBoatSlugs: z.array(z.string()).optional(),
   preferredCompressorSlugs: z.array(z.string()).optional(),
+  preferredOperatorSlug: z.string().optional(),
 })
 
 type PrefsFormData = z.infer<typeof prefsSchema>
@@ -77,6 +79,7 @@ const defaultFormData = (): PrefsFormData => ({
   preferredEquipmentSlugs: [],
   preferredBoatSlugs: [],
   preferredCompressorSlugs: [],
+  preferredOperatorSlug: undefined,
 })
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -149,6 +152,54 @@ function CoverageStatus({
   )
 }
 
+// ── Agent: preferred target operator (DD-355) ───────────────────────────
+
+function PreferredOperatorPicker({
+  value,
+  onChange,
+}: {
+  value: string | undefined
+  onChange: (slug: string | undefined) => void
+}) {
+  const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' }) ?? []
+  const lb = useQuery(api.directory.listByRole, { role: 'Liveaboard' }) ?? []
+  const dr = useQuery(api.directory.listByRole, { role: 'DiveResort' }) ?? []
+  const dh = useQuery(api.directory.listByRole, { role: 'DiveHostel' }) ?? []
+
+  const options = useMemo(() => {
+    const merged = [...dc, ...lb, ...dr, ...dh]
+    return merged
+      .map((e) => ({
+        value: e.slug,
+        label: `${e.name} (${e.role}) — ${e.placeName}`,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [dc, lb, dr, dh])
+
+  return (
+    <GlassCard padding="md">
+      <h2
+        className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
+      >
+        Preferred operator
+      </h2>
+      <p className="text-sm mb-4 text-secondary">
+        When set, the booking wizard can pre-fill resources from this operator&apos;s preferences (referral-style cascade).
+      </p>
+      <GlassSimpleSelect
+        label="Target operator"
+        value={value ?? ''}
+        onChange={(v) => onChange(v ? v : undefined)}
+        options={[
+          { value: '', label: 'None' },
+          ...options,
+        ]}
+        placeholder="Select an operator…"
+      />
+    </GlassCard>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────
 
 export function PreferencesEditor() {
@@ -200,6 +251,7 @@ export function PreferencesEditor() {
         preferredEquipmentSlugs: typed.preferredEquipmentSlugs ?? [],
         preferredBoatSlugs: typed.preferredBoatSlugs ?? [],
         preferredCompressorSlugs: typed.preferredCompressorSlugs ?? [],
+        preferredOperatorSlug: typed.preferredOperatorSlug,
       }
     },
     toPayload: (values) => values,
@@ -359,6 +411,16 @@ export function PreferencesEditor() {
               boatSlugs={form.preferredBoatSlugs ?? []}
               compressorSlugs={form.preferredCompressorSlugs ?? []}
             />
+
+            {activeRole === 'Agent' && (
+              <>
+                <ProfileFormSectionDivider show />
+                <PreferredOperatorPicker
+                  value={form.preferredOperatorSlug}
+                  onChange={(slug) => setField('preferredOperatorSlug', slug)}
+                />
+              </>
+            )}
 
             <ProfileFormSectionDivider show />
 

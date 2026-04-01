@@ -23,6 +23,11 @@ const DEFAULTS = {
   preferredBoatSlug: 'boat-1',
   preferredEquipmentSlug: 'equip-1',
   preferredCompressorSlug: 'comp-1',
+  preferredInstructorSlugs: ['instr-1'],
+  preferredVenueSlugs: ['venue-1'],
+  preferredBoatSlugs: ['boat-1'],
+  preferredEquipmentSlugs: ['equip-1'],
+  preferredCompressorSlugs: ['comp-1'],
 }
 
 const TEMPLATE = { name: 'Open Water', courses: ['OW'], color: '#000' }

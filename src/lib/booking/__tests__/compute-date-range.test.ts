@@ -9,6 +9,11 @@ const MOCK_DEFAULTS: OperatorDefaults = {
   preferredBoatSlug: 'boat-1',
   preferredEquipmentSlug: 'eq-1',
   preferredCompressorSlug: 'comp-1',
+  preferredInstructorSlugs: ['inst-1'],
+  preferredVenueSlugs: ['venue-1'],
+  preferredBoatSlugs: ['boat-1'],
+  preferredEquipmentSlugs: ['eq-1'],
+  preferredCompressorSlugs: ['comp-1'],
 }
 
 describe('computeDateRange', () => {

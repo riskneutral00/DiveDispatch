@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
 import { GlassCard, GlassButton, GlassCheckbox, GlassSimpleSelect } from '@/components/ui'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
@@ -19,6 +20,20 @@ import { AlertTriangle, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-re
 interface ItineraryStepProps {
   state: WizardState
   dispatch: Dispatch<WizardAction>
+  /** When true, skip preference cascade auto-fill (DD-313) */
+  isEditMode?: boolean
+}
+
+function pickFirstAvailable(
+  slugs: string[] | undefined,
+  rows: { slug: string; available: boolean }[] | undefined,
+): string {
+  if (!slugs?.length || !rows?.length) return ''
+  const map = new Map(rows.map((r) => [r.slug, r.available]))
+  for (const s of slugs) {
+    if (map.get(s) !== false) return s
+  }
+  return ''
 }
 
 // ── O+A Combo Locks ─────────────────────────────────────────────────────────
@@ -207,7 +222,7 @@ import { filterByAvailability, enrichOptionsWithCapacity } from '@/lib/booking/a
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
-export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
+export function ItineraryStep({ state, dispatch, isEditMode = false }: ItineraryStepProps) {
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
@@ -243,11 +258,105 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
     bookingDates.length > 0 ? { dates: bookingDates } : 'skip',
   )
 
+  const { prefs: cascadePrefs, isLoading: cascadePrefsLoading } = useWizardPreferences(
+    state.referralOwnerSlug ?? null,
+  )
+
+  const preferredSlugsForCheck = useMemo(
+    () => ({
+      instructor: cascadePrefs?.preferredInstructorSlugs ?? [],
+      venue: cascadePrefs?.preferredVenueSlugs ?? [],
+      boat: cascadePrefs?.preferredBoatSlugs ?? [],
+      equipment: cascadePrefs?.preferredEquipmentSlugs ?? [],
+      compressor: cascadePrefs?.preferredCompressorSlugs ?? [],
+    }),
+    [cascadePrefs],
+  )
+
+  const prefAvailability = useQuery(
+    api.availability.checkPreferredAvailability,
+    bookingDates.length > 0 && cascadePrefs && !cascadePrefsLoading
+      ? { dates: bookingDates, preferredSlugs: preferredSlugsForCheck }
+      : 'skip',
+  )
+
   useEffect(() => {
     if (Object.keys(inventoryMap).length > 0) {
       dispatch({ type: 'SET_INVENTORY_MAP', map: inventoryMap })
     }
   }, [inventoryMap, dispatch])
+
+  // Preference cascade + availability check (DD-313 / DD-356) — separate from course/dates effect
+  const preferenceCascadeAppliedRef = useRef(false)
+  useEffect(() => {
+    if (isEditMode || preferenceCascadeAppliedRef.current) return
+    if (!prefAvailability || days.length === 0) return
+    if (state.preFillInstructorSlug || state.preFillVenueSlug || state.preFillBoatSlug) return
+
+    const inst = pickFirstAvailable(
+      preferredSlugsForCheck.instructor,
+      prefAvailability.instructor,
+    )
+    const venue = pickFirstAvailable(
+      preferredSlugsForCheck.venue,
+      prefAvailability.venue,
+    )
+    const boat = pickFirstAvailable(
+      preferredSlugsForCheck.boat,
+      prefAvailability.boat,
+    )
+    if (!inst && !venue && !boat) return
+
+    preferenceCascadeAppliedRef.current = true
+    const newDays = days.map((day) => ({
+      ...day,
+      ...(inst ? { instructorSlug: inst } : {}),
+      dives: day.dives.map((dive) => {
+        const vt = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
+        const resourceSlug = vt === 'boat'
+          ? (boat || dive.resourceSlug)
+          : (venue || dive.resourceSlug)
+        return { ...dive, resourceSlug }
+      }),
+    }))
+    dispatch({ type: 'SET_DAYS', days: newDays })
+  }, [
+    isEditMode,
+    prefAvailability,
+    days,
+    state.preFillInstructorSlug,
+    state.preFillVenueSlug,
+    state.preFillBoatSlug,
+    preferredSlugsForCheck,
+    dispatch,
+  ])
+
+  const equipmentCascadeAppliedRef = useRef(false)
+  useEffect(() => {
+    if (isEditMode || equipmentCascadeAppliedRef.current) return
+    if (!prefAvailability) return
+    if (state.equipment || state.compressor) return
+
+    const eq = pickFirstAvailable(
+      preferredSlugsForCheck.equipment,
+      prefAvailability.equipment,
+    )
+    const comp = pickFirstAvailable(
+      preferredSlugsForCheck.compressor,
+      prefAvailability.compressor,
+    )
+    if (!eq && !comp) return
+    equipmentCascadeAppliedRef.current = true
+    if (eq) dispatch({ type: 'SET_EQUIPMENT', value: eq })
+    if (comp) dispatch({ type: 'SET_COMPRESSOR', value: comp })
+  }, [
+    isEditMode,
+    prefAvailability,
+    state.equipment,
+    state.compressor,
+    preferredSlugsForCheck,
+    dispatch,
+  ])
 
   // Derive all course codes and date range
   const allCourseCodes: CourseCode[] = [...new Set(

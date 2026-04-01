@@ -14,6 +14,8 @@ import {
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { GlassCard, GlassButton, ErrorAlert } from "@/components/ui";
+import { SendPortalLink } from "./send-portal-link";
+import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
@@ -91,6 +93,8 @@ export function BookingWizard({
   const createDraftShell = useMutation(
     api.bookingDraftMutations.createDraftShell,
   );
+  const { user: convexUserForPortal } = useCurrentUser();
+  const [portalDraftBusy, setPortalDraftBusy] = useState(false);
   const saveDraftState = useMutation(api.bookingDraftMutations.saveDraftState);
   const discardDraft = useMutation(api.bookingDraftMutations.discardDraft);
   const editBooking = useMutation(api.bookings.edit.editBooking);
@@ -221,6 +225,9 @@ export function BookingWizard({
       payload: {
         step: "customers",
         bookingId: initialBookingId!,
+        ...(existingBooking.agentIsReferral
+          ? { referralOwnerSlug: existingBooking.ownerId as string }
+          : {}),
       },
     });
   }, [isEditMode, existingBooking, initialBookingId, router]);
@@ -411,13 +418,101 @@ export function BookingWizard({
       ? `#${state.bookingId.slice(-8).toUpperCase()}`
       : null;
 
+  async function ensureDraftForPortalLink(): Promise<string | null> {
+    if (state.bookingId) return state.bookingId;
+    if (!activeRole) return null;
+    setPortalDraftBusy(true);
+    try {
+      const id = await createDraftShell({ activeRole });
+      dispatch({ type: "SET_BOOKING_ID", payload: id });
+      return id;
+    } catch {
+      return null;
+    } finally {
+      setPortalDraftBusy(false);
+    }
+  }
+
+  function renderCustomerPortalSend() {
+    if (state.step !== "customers" || isEditMode) return null;
+    const c0 = state.customers[0];
+    if (!c0?.name?.trim() || !canAdvanceFromCustomers(state.customers))
+      return null;
+    const contact = c0.contact;
+    const contactType =
+      contact?.whatsapp
+        ? ("whatsapp" as const)
+        : contact?.line
+          ? ("line" as const)
+          : contact?.email
+            ? ("email" as const)
+            : undefined;
+    const contactValue =
+      contact?.whatsapp ?? contact?.line ?? contact?.email ?? "";
+    const emailForResend =
+      contactType === "email" ? contactValue : (contact?.email ?? "");
+
+    if (!state.bookingId) {
+      return (
+        <div className="mt-4">
+          <GlassButton
+            variant="secondary"
+            size="sm"
+            type="button"
+            loading={portalDraftBusy}
+            onClick={() => void ensureDraftForPortalLink()}
+          >
+            Prepare portal link
+          </GlassButton>
+          <p
+            className="text-xs mt-2 text-secondary"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Creates a draft booking so you can copy or send the customer portal
+            link before finishing the itinerary.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-4 space-y-2">
+        <p
+          className="text-xs font-medium text-secondary"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Portal link delivery
+        </p>
+        <SendPortalLink
+          bookingId={state.bookingId as Id<"bookings">}
+          customerName={c0.name}
+          email={emailForResend}
+          operatorName={convexUserForPortal?.businessName ?? "Operator"}
+          contactType={contactType}
+          contactValue={contactValue || undefined}
+        />
+      </div>
+    );
+  }
+
   // Step content
   function renderStepContent() {
     switch (state.step) {
       case "customers":
-        return <CustomerStep customers={state.customers} dispatch={dispatch} />;
+        return (
+          <>
+            <CustomerStep customers={state.customers} dispatch={dispatch} />
+            {renderCustomerPortalSend()}
+          </>
+        );
       case "itinerary":
-        return <ItineraryStep state={state} dispatch={dispatch} />;
+        return (
+          <ItineraryStep
+            state={state}
+            dispatch={dispatch}
+            isEditMode={isEditMode}
+          />
+        );
       case "review":
         return <ReviewStep state={state} dispatch={dispatch} isEditMode={isEditMode} />;
       default:

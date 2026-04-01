@@ -15,6 +15,7 @@ import {
   StakeholderList,
   PortalLinkSection,
 } from './booking-detail-shared'
+import { SendPortalLink } from './send-portal-link'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CANCEL_BOOKING_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { ReservationStatusList } from './reservation-status-list'
@@ -240,12 +241,24 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
           customerFormComplete={booking.customerFormComplete}
           customerProfiles={booking.customerProfiles}
         />
-        <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
-          <PortalLinkSection
-            bookingId={bookingId}
-            portalLink={portalLink ?? null}
-            divers={booking.divers}
-          />
+        <div className="mt-4 pt-3 space-y-3" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
+          {portalLink && (
+            <PortalLinkSection
+              bookingId={bookingId}
+              portalLink={portalLink}
+              divers={booking.divers}
+            />
+          )}
+          {booking.divers.length > 0 && (
+            <SendPortalLink
+              bookingId={bookingId as Id<'bookings'>}
+              customerName={booking.divers[0].name}
+              email={booking.divers[0].contactType === 'email' ? (booking.divers[0].contactValue ?? '') : (portalLink?.email ?? '')}
+              operatorName={booking.operatorName}
+              contactType={booking.divers[0].contactType}
+              contactValue={booking.divers[0].contactValue}
+            />
+          )}
         </div>
       </GlassCard>
 

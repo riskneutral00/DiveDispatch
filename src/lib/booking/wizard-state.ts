@@ -140,6 +140,9 @@ export interface WizardState {
   preFillInstructorSlug?: string
   preFillVenueSlug?: string
   preFillBoatSlug?: string
+
+  /** Referral booking owner slug — load cascade prefs via stakeholderPreferences.bySlug (DD-317) */
+  referralOwnerSlug?: string
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -235,6 +238,7 @@ export function makeInitialState(bookingId: string | null = null): WizardState {
     preFillInstructorSlug: undefined,
     preFillVenueSlug: undefined,
     preFillBoatSlug: undefined,
+    referralOwnerSlug: undefined,
   }
 }
 

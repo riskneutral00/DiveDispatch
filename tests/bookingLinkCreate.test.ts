@@ -137,3 +137,51 @@ describe('createBookingLink', () => {
     expect(token).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
   })
 })
+
+describe('bookingLinks.create — channel recording (DD-314)', () => {
+  it('writes channel field when provided', async () => {
+    const t = makeT()
+    let bookingId: any
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      bookingId = await seedBooking(ctx)
+    })
+
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).mutation(
+      api.bookingLinks.create,
+      { bookingId, customerName: 'Carlos', email: 'carlos@test.com', channel: 'whatsapp' },
+    )
+
+    await t.run(async (ctx) => {
+      const links = await ctx.db
+        .query('bookingLinks')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+        .collect()
+      expect(links).toHaveLength(1)
+      expect(links[0].channel).toBe('whatsapp')
+    })
+  })
+
+  it('omits channel field when not provided', async () => {
+    const t = makeT()
+    let bookingId: any
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      bookingId = await seedBooking(ctx)
+    })
+
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).mutation(
+      api.bookingLinks.create,
+      { bookingId, customerName: 'Dani', email: 'dani@test.com' },
+    )
+
+    await t.run(async (ctx) => {
+      const links = await ctx.db
+        .query('bookingLinks')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+        .collect()
+      expect(links).toHaveLength(1)
+      expect(links[0].channel).toBeUndefined()
+    })
+  })
+})

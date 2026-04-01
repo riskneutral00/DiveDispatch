@@ -85,6 +85,8 @@ export type BookingDetail = {
     startDate: string
     endDate: string
     activityType: string[]
+    contactType?: 'email' | 'whatsapp' | 'line'
+    contactValue?: string
   }>
   operatorName: string
   bookingFormComplete: boolean

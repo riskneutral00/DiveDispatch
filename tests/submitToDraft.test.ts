@@ -1520,6 +1520,106 @@ describe('submitToDraft', () => {
       },
     )
   })
+
+  it('18 — contact data round-trip: contactType and contactValue persist on divers (DD-353)', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await ctx.db.insert('users', {
+        tokenIdentifier: 'clerk|dc-contact',
+        slug: 'dc-contact',
+        email: 'dc@contact.com',
+        name: 'dc-contact',
+        firstName: 'DC',
+        lastName: 'Contact',
+        businessName: 'Contact DC',
+        isSeeded: false,
+        appLanguage: 'en',
+      })
+      return ctx.db.insert('bookings', {
+        ownerId: 'dc-contact',
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: 43200000,
+        paid: false,
+        activityType: ['DSD'],
+        startDate: testDate(5),
+        endDate: testDate(5),
+        divers: [],
+        operatorName: 'Contact DC',
+        portalContact: true,
+        portalMedical: true,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false,
+        customerFormComplete: false,
+      })
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'clerk|dc-contact' }).mutation(
+      api.bookings.create.submitToDraft,
+      {
+        bookingId,
+        sessions: [],
+        bookingData: {
+          activityType: ['DSD'] as CourseCode[],
+          startDate: testDate(5),
+          endDate: testDate(5),
+          portalContact: true,
+          portalMedical: true,
+          portalWaiver: false,
+          resources: [{ resourceType: 'Instructor', externalName: 'External Instructor' }],
+          divers: [
+            {
+              name: 'Carlos Diver',
+              abbrev: 'C',
+              flag: { code: 'MX', label: 'Mexico' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'] as CourseCode[],
+              contactType: 'whatsapp' as const,
+              contactValue: '+52 555 123 4567',
+            },
+            {
+              name: 'Dani Diver',
+              abbrev: 'D',
+              flag: { code: 'TH', label: 'Thailand' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'] as CourseCode[],
+              contactType: 'line' as const,
+              contactValue: 'dani_line_id',
+            },
+            {
+              name: 'Eva Diver',
+              abbrev: 'E',
+              flag: { code: 'GB', label: 'English' },
+              startDate: testDate(5),
+              endDate: testDate(5),
+              activityType: ['DSD'] as CourseCode[],
+              contactType: 'email' as const,
+              contactValue: 'eva@example.com',
+            },
+          ],
+        },
+      },
+    )
+
+    await t.run(async (ctx) => {
+      const booking = await ctx.db.get(bookingId)
+      expect(booking!.divers).toHaveLength(3)
+
+      expect(booking!.divers[0].contactType).toBe('whatsapp')
+      expect(booking!.divers[0].contactValue).toBe('+52 555 123 4567')
+
+      expect(booking!.divers[1].contactType).toBe('line')
+      expect(booking!.divers[1].contactValue).toBe('dani_line_id')
+
+      expect(booking!.divers[2].contactType).toBe('email')
+      expect(booking!.divers[2].contactValue).toBe('eva@example.com')
+    })
+  })
 })
 
 // ─── Helper function tests ────────────────────────────────────────────────────

@@ -128,6 +128,8 @@ export default defineSchema({
         endDate: v.string(),
         agency: v.optional(v.string()),
         activityType: v.array(courseCode),
+        contactType: v.optional(v.union(v.literal('email'), v.literal('whatsapp'), v.literal('line'))),
+        contactValue: v.optional(v.string()),
       }),
     ),
     agentIsReferral: v.optional(v.boolean()),
@@ -327,6 +329,8 @@ export default defineSchema({
     preferredEquipmentSlugs: v.optional(v.array(v.string())),
     preferredBoatSlugs: v.optional(v.array(v.string())),
     preferredCompressorSlugs: v.optional(v.array(v.string())),
+    /** Agent: preferred target operator for referral-style cascade (any operator type). */
+    preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
   }).index('by_stakeholderId', ['stakeholderId']),

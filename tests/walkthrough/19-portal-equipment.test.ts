@@ -164,7 +164,7 @@ describe('saveEquipmentData', () => {
     })
 
     const tokenB = testToken('tok-equip-b')
-    await t.run(async (ctx: SeedCtx) => {
+    const profileBId = await t.run(async (ctx: SeedCtx) => {
       const bookingId = await seedBooking(ctx, {
         ownerId: 'dc-equip-test-b',
         activityType: ['DSD'],
@@ -180,9 +180,11 @@ describe('saveEquipmentData', () => {
         customerName: 'Dani Diver',
         email: 'dani@example.com',
       })
-      await seedCustomerProfile(ctx, bookingId, {
+      const pId = await seedCustomerProfile(ctx, bookingId, {
         linkToken: tokenB,
       })
+      await seedCustomerForProfile(ctx, pId)
+      return pId
     })
 
     // Only submit equipment for token A
@@ -192,17 +194,29 @@ describe('saveEquipmentData', () => {
       weightKg: 60,
     })
 
-    // Profile A has customer with sizing; Profile B has no sizing
-    const { profileA } = await t.run(async (ctx: SeedCtx) => {
+    // Profile A has customer with sizing
+    const { profileA, profileB } = await t.run(async (ctx: SeedCtx) => {
       const profileA = await ctx.db.get(profileAId)
-      return { profileA }
+      const profileB = await ctx.db.get(profileBId)
+      return { profileA, profileB }
     })
 
     const customerA = profileA?.customerId
-      ? await t.run(async (ctx: SeedCtx) => ctx.db.get(profileA.customerId!))
+      ? await t.run(async (ctx: SeedCtx) => ctx.db.get(profileA!.customerId!))
       : null
 
     expect(customerA?.heightCm).toBe(165)
     expect(customerA?.weightKg).toBe(60)
+
+    // Profile B's customer must be completely untouched (DD-347)
+    const customerB = profileB?.customerId
+      ? await t.run(async (ctx: SeedCtx) => ctx.db.get(profileB!.customerId!))
+      : null
+
+    expect(customerB).not.toBeNull()
+    expect(customerB!.heightCm).toBeUndefined()
+    expect(customerB!.weightKg).toBeUndefined()
+    expect(customerB!.shoeSize).toBeUndefined()
+    expect(profileB!.rentalChecklist).toBeUndefined()
   })
 })

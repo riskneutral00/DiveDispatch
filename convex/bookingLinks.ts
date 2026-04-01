@@ -84,9 +84,20 @@ export async function _getByBookingId(
  * Returns the existing token if a non-expired link already exists (idempotent).
  * Auth: caller slug must match booking.ownerId.
  */
+type CreateLinkChannel =
+  | 'whatsapp'
+  | 'line'
+  | 'email'
+  | 'sms'
+
 export async function _createLink(
   ctx: MutationCtx,
-  args: { bookingId: string; customerName: string; email: string },
+  args: {
+    bookingId: string
+    customerName: string
+    email: string
+    channel?: CreateLinkChannel
+  },
 ): Promise<string> {
   await requireAuthAndOwnership(ctx, args.bookingId)
 
@@ -98,7 +109,12 @@ export async function _createLink(
 
   const now = Date.now()
   const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))
-  if (existing) return existing.token as string
+  if (existing) {
+    if (args.channel && existing.channel !== args.channel) {
+      await ctx.db.patch(existing._id, { channel: args.channel })
+    }
+    return existing.token as string
+  }
 
   // Create new link — 30-day TTL
   const token = crypto.randomUUID()
@@ -110,6 +126,7 @@ export async function _createLink(
     expiresAt,
     customerName: args.customerName,
     email: args.email,
+    ...(args.channel ? { channel: args.channel } : {}),
   })
 
   return token
@@ -181,8 +198,11 @@ export const create = mutation({
     bookingId: v.id('bookings'),
     customerName: v.string(),
     email: v.string(),
+    channel: v.optional(v.union(v.literal('whatsapp'), v.literal('line'), v.literal('email'), v.literal('sms'))),
   },
-  handler: _createLink,
+  handler: async (ctx, args) => {
+    return await _createLink(ctx, args)
+  },
 })
 
 /**

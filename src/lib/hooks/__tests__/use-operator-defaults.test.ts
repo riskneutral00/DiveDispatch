@@ -9,10 +9,18 @@ vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockCurrentUser(),
 }))
 
-// Track useQuery calls by index — hook calls useQuery 4 times:
-// [0] userRoles.myRoles, [1] stakeholderPreferences.mine, [2] diveCenters.mine, [3] agents.mine
+let mockWizardPrefs: Record<string, unknown> | null | undefined = undefined
+
+vi.mock('@/lib/hooks/use-wizard-preferences', () => ({
+  useWizardPreferences: () => ({
+    prefs: mockWizardPrefs,
+    isLoading: mockWizardPrefs === undefined,
+  }),
+}))
+
+// [0] userRoles.myRoles, [1] diveCenters.mine, [2] agents.mine
 let queryCallIndex = 0
-const queryReturns: (unknown | undefined)[] = [undefined, undefined, undefined, undefined]
+const queryReturns: (unknown | undefined)[] = [undefined, undefined, undefined]
 
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
@@ -35,7 +43,7 @@ beforeEach(() => {
   queryReturns[0] = undefined
   queryReturns[1] = undefined
   queryReturns[2] = undefined
-  queryReturns[3] = undefined
+  mockWizardPrefs = undefined
 })
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -46,10 +54,9 @@ describe('useOperatorDefaults', () => {
       user: { slug: 'test' },
       isLoading: false,
     })
-    // [0] userRoles, [1] prefs=null, [2] dcProfile, [3] agentProfile skipped
+    mockWizardPrefs = null
     queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = null
-    queryReturns[2] = { associations: [{ agency: 'PADI', number: '123' }] }
+    queryReturns[1] = { associations: [{ agency: 'PADI', number: '123' }] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.agency).toBe('')
@@ -61,15 +68,15 @@ describe('useOperatorDefaults', () => {
       user: { slug: 'test' },
       isLoading: false,
     })
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = {
+    mockWizardPrefs = {
       preferredInstructorSlugs: ['instr-1'],
       preferredVenueSlugs: [],
       preferredBoatSlugs: [],
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[2] = {
+    queryReturns[0] = [{ role: 'DiveCenter' }]
+    queryReturns[1] = {
       associations: [{ agency: 'PADI', number: '12345' }, { agency: 'SSI', number: '999' }],
     }
 
@@ -83,18 +90,19 @@ describe('useOperatorDefaults', () => {
       user: { slug: 'test' },
       isLoading: false,
     })
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = {
+    mockWizardPrefs = {
       preferredInstructorSlugs: ['instr-a', 'instr-b'],
       preferredVenueSlugs: ['venue-x'],
       preferredBoatSlugs: ['boat-1'],
       preferredEquipmentSlugs: ['equip-1'],
       preferredCompressorSlugs: ['comp-1'],
     }
-    queryReturns[2] = { associations: [{ agency: 'PADI', number: '1' }] }
+    queryReturns[0] = [{ role: 'DiveCenter' }]
+    queryReturns[1] = { associations: [{ agency: 'PADI', number: '1' }] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.defaults.preferredInstructorSlug).toBe('instr-a')
+    expect(result.current.defaults.preferredInstructorSlugs).toEqual(['instr-a', 'instr-b'])
     expect(result.current.defaults.preferredVenueSlug).toBe('venue-x')
     expect(result.current.defaults.preferredBoatSlug).toBe('boat-1')
     expect(result.current.defaults.preferredEquipmentSlug).toBe('equip-1')
@@ -113,15 +121,15 @@ describe('useOperatorDefaults', () => {
       user: { slug: 'test' },
       isLoading: false,
     })
-    queryReturns[0] = [{ role: 'DiveCenter' }]
-    queryReturns[1] = {
+    mockWizardPrefs = {
       preferredInstructorSlugs: [],
       preferredVenueSlugs: [],
       preferredBoatSlugs: [],
       preferredEquipmentSlugs: [],
       preferredCompressorSlugs: [],
     }
-    queryReturns[2] = { associations: [] }
+    queryReturns[0] = [{ role: 'DiveCenter' }]
+    queryReturns[1] = { associations: [] }
 
     const { result } = renderHook(() => useOperatorDefaults())
     expect(result.current.isLoading).toBe(false)
