@@ -1,13 +1,5 @@
-import { Loader2 } from 'lucide-react'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 
 export default function PortalLoading() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2
-        size={32}
-        className="animate-spin"
-        style={{ color: 'var(--color-primary)' }}
-      />
-    </div>
-  )
+  return <FullPageSpinner label="Loading..." />
 }

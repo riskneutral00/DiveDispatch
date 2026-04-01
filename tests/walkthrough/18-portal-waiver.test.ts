@@ -1,3 +1,7 @@
+/**
+ * @module-tag slow
+ */
+
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { seedPortalFixture, type SeedCtx } from '../fixtures'

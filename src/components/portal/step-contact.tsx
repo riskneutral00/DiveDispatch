@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassInput } from '@/components/ui/glass-input'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { COUNTRY_NAMES } from '@/lib/constants/countries'
-import { GlassButton } from '@/components/ui/glass-button'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { GlassTextarea } from '@/components/ui/glass-textarea'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
@@ -19,6 +19,7 @@ import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { Spinner } from '@/components/ui/spinner'
+import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
@@ -257,7 +258,12 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   )
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+    <PortalStepShell
+      serverError={serverError}
+      onSubmit={handleSubmit}
+      continueType="submit"
+      submitting={submitting}
+    >
       {/* Returning customer banner */}
       {showReturningBanner && returningCustomer && (
         <GlassCard padding="md">
@@ -491,27 +497,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         />
       </GlassCard>
 
-      {/* Server error */}
-      <div aria-live="polite">
-        {serverError && (
-          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
-            {serverError}
-          </p>
-        )}
-      </div>
-
-      {/* Submit */}
-      <div className="flex justify-end">
-        <GlassButton
-          type="submit"
-          variant="primary"
-          size="md"
-          loading={submitting}
-          disabled={submitting}
-        >
-          Continue
-        </GlassButton>
-      </div>
-    </form>
+    </PortalStepShell>
   )
 }

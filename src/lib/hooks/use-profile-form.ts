@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { z } from 'zod'
 import { toast } from 'sonner'
+import {
+  FORM_SAVE_FAILED_TOAST,
+  FORM_SAVE_SUCCESS_TOAST,
+  FORM_SECONDARY_SAVE_WARNING_TITLE,
+  FORM_VALIDATION_WARNING_TOAST,
+} from '@/lib/profile-form/save-feedback'
 import { parseConvexError } from '@/lib/utils/convex-error'
+import { isDirtyComparedToSnapshot } from '@/lib/utils/form-baseline'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +57,8 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
   errors: Record<string, string>
   /** Server-side error message */
   serverError: string | null
+  /** Combined server + schema-level footer errors (`_form`, root path) for ProfileFormShell */
+  footerErrorMessage: string | null
   /** Whether a save is in progress */
   saving: boolean
   /** Whether the last save succeeded */
@@ -99,9 +108,10 @@ export function useProfileForm<
   // Baseline snapshot for dirty-checking — updated on init and after save
   const baselineRef = useRef<TForm>(defaults)
 
-  const isDirty = useCallback(() => {
-    return JSON.stringify(form) !== JSON.stringify(baselineRef.current)
-  }, [form])
+  const isDirty = useCallback(
+    () => isDirtyComparedToSnapshot(form, baselineRef.current),
+    [form],
+  )
 
   // Initialize form from profile (once)
   useEffect(() => {
@@ -140,11 +150,12 @@ export function useProfileForm<
     const result = schema.safeParse(form)
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
-      for (const issue of (result as { success: false; error: z.ZodError }).error.issues) {
+      for (const issue of result.error.issues) {
         const path = issue.path.join('.')
         if (!fieldErrors[path]) fieldErrors[path] = issue.message
       }
       setErrors(fieldErrors)
+      toast.warning(FORM_VALIDATION_WARNING_TOAST, { duration: 4000 })
       return
     }
 
@@ -157,15 +168,27 @@ export function useProfileForm<
       } else {
         await create(payload)
       }
-      await afterSuccessfulSave?.(form)
+
       baselineRef.current = form
       setSaved(true)
-      toast.success('Profile saved', { duration: 3000 })
+      toast.success(FORM_SAVE_SUCCESS_TOAST, { duration: 3000 })
       onSaved?.()
+
+      if (afterSuccessfulSave) {
+        try {
+          await afterSuccessfulSave(form)
+        } catch (secondaryErr: unknown) {
+          const message = parseConvexError(secondaryErr, 'Sync failed')
+          toast.warning(FORM_SECONDARY_SAVE_WARNING_TITLE, {
+            description: message,
+            duration: 6000,
+          })
+        }
+      }
     } catch (err: unknown) {
       const message = parseConvexError(err, 'Save failed')
       setServerError(message)
-      toast.error('Save failed', { description: message, duration: 5000 })
+      toast.error(FORM_SAVE_FAILED_TOAST, { description: message, duration: 5000 })
     } finally {
       setSaving(false)
     }
@@ -173,12 +196,16 @@ export function useProfileForm<
 
   const isValid = schema.safeParse(form).success
 
+  const footerErrorMessage =
+    serverError ?? errors['_form'] ?? errors[''] ?? null
+
   return {
     form,
     setForm,
     setField,
     errors,
     serverError,
+    footerErrorMessage,
     saving,
     saved,
     isDirty: isDirty(),

@@ -11,7 +11,7 @@ vi.mock('@dnd-kit/react', () => ({
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent } from '../helpers/render'
-import type { CalendarDay } from '@/lib/hooks/use-calendar-range'
+import type { CalendarDay } from '@/lib/utils/calendar-range'
 import { addDays, toISODateString } from '@/lib/utils/date'
 
 // ── Build a controlled 7-day week relative to a dynamic "today" ─────────────

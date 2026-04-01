@@ -301,3 +301,66 @@ describe('combined filters', () => {
     expect(result[0].slug).toBe('padi-english-unverified')
   })
 })
+
+describe('filterDirectoryEntries (additional search and capacity)', () => {
+  it('searches by placeName', () => {
+    const result = filterDirectoryEntries({
+      entries: [
+        makeEntry({ slug: 'a', placeName: 'Koh Tao' }),
+        makeEntry({ slug: 'b', placeName: 'Phuket' }),
+      ],
+      search: 'tao',
+      filterValues: {},
+      verifiedOnly: false,
+      preferredSlugs: [],
+      selectedRole: 'All',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].slug).toBe('a')
+  })
+
+  it('searches by country', () => {
+    const result = filterDirectoryEntries({
+      entries: [
+        makeEntry({ slug: 'a', country: 'Thailand' }),
+        makeEntry({ slug: 'b', country: 'Egypt' }),
+      ],
+      search: 'egypt',
+      filterValues: {},
+      verifiedOnly: false,
+      preferredSlugs: [],
+      selectedRole: 'All',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].slug).toBe('b')
+  })
+
+  it('filters by minimum boat capacity', () => {
+    const result = filterDirectoryEntries({
+      entries: [
+        makeEntry({ slug: 'a', boatCapacity: 20 }),
+        makeEntry({ slug: 'b', boatCapacity: 5 }),
+      ],
+      search: '',
+      filterValues: { minCapacity: '10' },
+      verifiedOnly: false,
+      preferredSlugs: [],
+      selectedRole: 'All',
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0].slug).toBe('a')
+  })
+
+  it('handles empty entries', () => {
+    expect(
+      filterDirectoryEntries({
+        entries: [],
+        search: '',
+        filterValues: {},
+        verifiedOnly: false,
+        preferredSlugs: [],
+        selectedRole: 'All',
+      }),
+    ).toEqual([])
+  })
+})

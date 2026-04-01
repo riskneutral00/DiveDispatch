@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * L8-22: Unit tests for acceptByBookingForCaller mutation.
  *
  * Verifies:

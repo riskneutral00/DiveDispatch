@@ -37,7 +37,10 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
     lng: 98.3923,
     email: `${userId}@test.com`,
     phone: '+66000000000',
-    credential: [],
+    credential: [
+      { agency: 'PADI', level: 'OWSI', agencyID: 'DIR-1', courses: ['OW'] },
+    ],
+    teachingLanguages: ['en'],
     verified,
   })
 }

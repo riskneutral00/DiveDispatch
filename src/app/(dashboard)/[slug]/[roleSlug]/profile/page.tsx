@@ -2,10 +2,10 @@
 
 import { use, useState } from 'react'
 import { notFound } from 'next/navigation'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
-import { PageTitle } from '@/components/ui/page-title'
 import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
-import { RoleProfileForm } from '@/components/profiles/profile-form-registry'
+import { RoleProfileForm } from '@/app/(dashboard)/_lib/connected-profile-forms'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
 
 export default function RoleProfilePage({
@@ -23,9 +23,12 @@ export default function RoleProfilePage({
   const [activeTab, setActiveTab] = useState(config.tabs?.[0]?.id ?? '')
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pt-6 pb-28 md:pb-10">
-      <PageTitle title="Profile" description={config.label} />
-
+    <DashboardPageFrame
+      maxWidth="3xl"
+      padding="mobileNavClearance"
+      title="Profile"
+      description={config.label}
+    >
       {config.tabs && (
         <SettingsTabBar tabs={config.tabs} activeTab={activeTab} onChange={setActiveTab} />
       )}
@@ -41,6 +44,6 @@ export default function RoleProfilePage({
       ) : (
         <RoleProfileForm roleSlug={roleSlug as RoleKey} />
       )}
-    </div>
+    </DashboardPageFrame>
   )
 }

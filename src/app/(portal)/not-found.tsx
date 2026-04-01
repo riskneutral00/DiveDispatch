@@ -9,6 +9,7 @@ export default function PortalNotFound() {
       iconColor="var(--color-text-secondary)"
       title="Page not found"
       message="The page you're looking for doesn't exist or has been moved."
+      minHeight="min-h-screen"
       action={
         <Link
           href="/"

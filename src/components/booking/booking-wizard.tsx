@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { GlassCard, GlassButton } from "@/components/ui";
+import { GlassCard, GlassButton, ErrorAlert } from "@/components/ui";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
@@ -337,14 +337,7 @@ export function BookingWizard({
   if (initError) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <p
-          style={{
-            color: "var(--color-destructive)",
-            fontFamily: "var(--font-body)",
-          }}
-        >
-          {initError}
-        </p>
+        <ErrorAlert>{initError}</ErrorAlert>
       </div>
     );
   }
@@ -378,12 +371,7 @@ export function BookingWizard({
               </div>
             </div>
             {editResetError && (
-              <p
-                className="text-sm"
-                style={{ color: "var(--color-destructive)" }}
-              >
-                {editResetError}
-              </p>
+              <ErrorAlert>{editResetError}</ErrorAlert>
             )}
             <div className="flex gap-3">
               <GlassButton
@@ -460,9 +448,7 @@ export function BookingWizard({
 
         {/* Errors */}
         {saveError && (
-          <p className="mt-3 text-sm" style={{ color: "var(--color-destructive)" }}>
-            {saveError}
-          </p>
+          <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
         )}
         {autoSaveError && !saveError && !isReviewStep && (
           <p className="mt-3 text-xs text-secondary">
@@ -541,12 +527,7 @@ export function BookingWizard({
 
       {/* Errors (save-state errors — review step manages its own submit errors) */}
       {saveError && (
-        <p
-          className="mt-3 text-sm"
-          style={{ color: "var(--color-destructive)" }}
-        >
-          {saveError}
-        </p>
+        <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
       )}
       {autoSaveError && !saveError && !isReviewStep && (
         <p

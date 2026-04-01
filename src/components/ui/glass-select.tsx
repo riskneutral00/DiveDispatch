@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, useId, useMemo, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
+import { FieldShell } from '@/components/ui/field-shell'
 import { LanguageFlags } from '@/components/profiles/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
 import { scoreLanguageMatch, type MatchTier } from '@/lib/utils/language-matching'
@@ -24,6 +25,8 @@ interface GlassSelectProps {
   /** Pass-through for E2E test selectors */
   'data-testid'?: string
   required?: boolean
+  error?: string
+  helperText?: string
 }
 
 const DEFAULT_VISIBLE = 2
@@ -165,7 +168,18 @@ function TierSection({
   )
 }
 
-export function GlassSelect({ label, value, onChange, options, placeholder = 'Select…', customerLanguages, 'data-testid': testId, required }: GlassSelectProps) {
+export function GlassSelect({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  customerLanguages,
+  'data-testid': testId,
+  required,
+  error,
+  helperText,
+}: GlassSelectProps) {
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -237,18 +251,8 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
   }
 
   return (
-    <div className="relative flex flex-col gap-1.5" ref={containerRef}>
-      {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-secondary"
-          style={{ fontFamily: 'var(--font-body)' }}
-        >
-          {label}
-          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-        </label>
-      )}
-
+    <FieldShell id={id} label={label} required={required} error={error} helperText={helperText} className="relative flex flex-col gap-1.5 w-full">
+      <div ref={containerRef}>
       <button
         id={id}
         type="button"
@@ -256,6 +260,8 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={`${id}-list`}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : helperText ? `${id}-help` : undefined}
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
@@ -365,6 +371,7 @@ export function GlassSelect({ label, value, onChange, options, placeholder = 'Se
           )}
         </ul>
       )}
-    </div>
+      </div>
+    </FieldShell>
   )
 }

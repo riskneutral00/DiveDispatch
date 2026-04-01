@@ -1,6 +1,7 @@
 'use client'
 
 import { LanguagePicker } from '@/components/profiles/language-picker'
+import { FieldShell } from '@/components/ui/field-shell'
 import type { Language } from '@/lib/types/language'
 
 type LanguageVariant = 'app' | 'customer' | 'teaching'
@@ -27,17 +28,13 @@ export function LanguageField({
   const { label, max } = VARIANT_CONFIG[variant]
 
   return (
-    <div className="flex flex-col gap-1.5 w-[calc(50%-0.5rem)]">
-      <label className="text-sm font-medium text-secondary">
-        {label}
-        <span className="text-destructive"> *</span>
-      </label>
+    <FieldShell id={`language-${variant}`} label={label} required className="flex flex-col gap-1.5 w-full">
       <LanguagePicker
         value={value}
         onChange={onChange}
         max={max}
         disabled={disabled}
       />
-    </div>
+    </FieldShell>
   )
 }

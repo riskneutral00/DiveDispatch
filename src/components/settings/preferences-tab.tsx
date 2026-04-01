@@ -5,8 +5,7 @@ import { z } from 'zod'
 import { api } from '../../../convex/_generated/api'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/profiles/language-field'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Exported for testing ────────────────────────────────────────────────────
@@ -42,7 +41,18 @@ export function PreferencesTab() {
   const createUser = useMutation(api.users.createUser)
   const updateProfile = useMutation(api.users.updateProfile)
 
-  const { form, setField, serverError, saving, saved, isDirty, isUpdate, handleSubmit, loading } = useProfileForm<PreferencesValues, ReturnType<typeof preferencesToPayload>>({
+  const {
+    form,
+    setField,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    isUpdate,
+    handleSubmit,
+    loading,
+  } = useProfileForm<PreferencesValues, ReturnType<typeof preferencesToPayload>>({
     profile: user as Record<string, unknown> | null | undefined,
     schema: preferencesTabSchema,
     defaults: PREFERENCES_DEFAULTS,
@@ -52,25 +62,26 @@ export function PreferencesTab() {
     update: (payload) => updateProfile(payload),
   })
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse text-secondary">
-          Loading…
-        </span>
-      </div>
-    )
-  }
-
   const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(form.appLanguage))
   const selectedLocale = selectedLocaleObj
     ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
     : []
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      loadingVariant="pulse-text"
+      className="space-y-6"
+    >
       <div className="space-y-4">
-
         <LanguageField
           variant="app"
           value={selectedLocale}
@@ -79,12 +90,6 @@ export function PreferencesTab() {
           }}
         />
       </div>
-
-      {serverError && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
-      )}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
-    </form>
+    </ProfileFormShell>
   )
 }

@@ -1,20 +1,19 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
-
-import { api } from '../../../convex/_generated/api'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  contactFieldsFromProfile,
   createOptimisticLocationOnChange,
-  locationFromProfileDoc,
+  locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -60,49 +59,40 @@ const INITIAL_FORM: FormState = {
 
 // ── Main Form ─────────────────────────────────────────────────────────
 
-export function CompressorProfileForm() {
-  const profile = useQuery(api.compressors.mine)
-  const me = useQuery(api.users.getAccountDefaults)
-  const create = useMutation(api.compressors.create)
-  const update = useMutation(api.compressors.update)
+export type CompressorProfileFormProps = {
+  profile: Record<string, unknown> | null | undefined
+  me: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+}
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+export function CompressorProfileForm({ profile, me, create, update }: CompressorProfileFormProps) {
+
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
-    fromProfile: (p) => ({
-      name: p.name as string,
-      location: locationFromProfileDoc({
-        placeName: p.placeName as string,
-        country: p.country as string,
-        lat: p.lat as number,
-        lng: p.lng as number,
-        placeId: p.placeId as string | null | undefined,
-      }) as LocationValue,
-      email: p.email as string,
-      phone: p.phone as string,
-      gasMixes: (p.gasMixes ?? []) as GasMix[],
-    }),
+    fromProfile: (p) => {
+      const c = contactFieldsFromProfile(p)
+      return {
+        ...c,
+        location: c.location as LocationValue,
+        gasMixes: (p.gasMixes ?? []) as GasMix[],
+      }
+    },
     fromMe: (u, initial) => ({
       ...initial,
       email: u.email ?? '',
       phone: u.phone ?? '',
     }),
-    toPayload: (f) => {
-      const loc = f.location!
-      return {
-        name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
-        email: f.email,
-        phone: f.phone,
-        gasMixes: f.gasMixes,
-      }
-    },
+    toPayload: (f) => ({
+      name: f.name,
+      ...locationToPayload(f.location!),
+      email: f.email,
+      phone: f.phone,
+      gasMixes: f.gasMixes,
+    }),
     create,
     update,
   })
@@ -113,25 +103,18 @@ export function CompressorProfileForm() {
     isUpdate,
   })
 
-  if (loading) {
-    return <ProfileFormLoading />
-  }
-
   return (
-    <form onSubmit={handleSubmit} noValidate className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1
-          className="text-2xl font-bold mb-1 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
-        </h1>
-        <p className="text-sm text-secondary">
-          {isUpdate
-            ? 'Keep your profile current so dive centers can find you.'
-            : 'Set up your compressor profile to start receiving booking requests.'}
-        </p>
-      </div>
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      className="space-y-6"
+    >
+      <ProfileFormHeader isUpdate={isUpdate} roleName="compressor" />
 
       {/* Basic info */}
       <div className="space-y-4">
@@ -157,7 +140,7 @@ export function CompressorProfileForm() {
         />
       </div>
 
-      <hr className="form-divider" />
+      <ProfileFormSectionDivider show />
 
       {/* Gas mixes */}
       <GlassCard padding="md">
@@ -171,19 +154,6 @@ export function CompressorProfileForm() {
           columns={2}
         />
       </GlassCard>
-
-      {serverError && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>
-          {serverError}
-        </p>
-      )}
-      {saved && (
-        <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>
-          Profile saved successfully.
-        </p>
-      )}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
-    </form>
+    </ProfileFormShell>
   )
 }

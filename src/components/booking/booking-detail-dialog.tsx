@@ -8,7 +8,7 @@ import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { DISCARD_DRAFT_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog } from '@/components/ui'
+import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog, ErrorAlert, EmptyState } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -110,9 +110,7 @@ function DiscardDraftDialog({
       size="sm"
     >
       {error && (
-        <p className="text-sm mb-3" style={{ color: 'var(--color-destructive)' }}>
-          {error}
-        </p>
+        <ErrorAlert className="mb-3">{error}</ErrorAlert>
       )}
       <div className="flex justify-end gap-3">
         <GlassButton variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
@@ -170,14 +168,7 @@ function BookingDetailContent({
 
   if (booking === null) {
     return (
-      <div className="text-center py-4">
-        <p className="text-sm font-semibold mb-1 text-primary">
-          Booking not found
-        </p>
-        <p className="text-xs text-secondary">
-          This booking does not exist or you do not have access.
-        </p>
-      </div>
+      <EmptyState message="Booking not found. This booking does not exist or you do not have access." />
     )
   }
 

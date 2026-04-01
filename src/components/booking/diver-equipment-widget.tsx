@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { GlassCard, GlassBadge, GlassButton } from '@/components/ui'
+import { GlassCard, GlassBadge, GlassButton, EmptyState, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -464,9 +464,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data === null) {
     return (
       <GlassCard padding="md">
-        <p className="text-sm text-center text-secondary">
-          Equipment profile not set up.
-        </p>
+        <EmptyState message="Equipment profile not set up." />
       </GlassCard>
     )
   }
@@ -475,9 +473,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data.bookings.length === 0) {
     return (
       <GlassCard padding="md">
-        <p className="text-sm text-center text-secondary">
-          No bookings in this date range.
-        </p>
+        <EmptyState message="No bookings in this date range." />
       </GlassCard>
     )
   }
@@ -491,19 +487,12 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     <div className="space-y-4">
       {/* Mutation error banner */}
       {mutationError && (
-        <div
-          className="flex items-center justify-between gap-2 px-3 py-2 rounded-md text-xs"
-          style={{
-            background: 'color-mix(in srgb, var(--color-destructive) 10%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--color-destructive) 30%, transparent)',
-            color: 'var(--color-destructive)',
-          }}
-        >
+        <ErrorAlert className="justify-between">
           <span>{mutationError}</span>
-          <button onClick={() => setMutationError(null)} className="font-medium">
+          <button onClick={() => setMutationError(null)} className="font-medium ml-2">
             Dismiss
           </button>
-        </div>
+        </ErrorAlert>
       )}
 
       {/* Booking filter tabs (shown only when multiple bookings) */}

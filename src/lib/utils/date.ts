@@ -3,15 +3,18 @@
 // getDatesInRange and parseDateLocal are canonical in convex/shared/dateRange.ts
 // and re-exported here for client convenience.
 
+import { DAY_MS } from '@/lib/constants/time'
+
 export { getDatesInRange, parseDateLocal } from '../../../convex/shared/dateRange'
 
-export const MS_PER_DAY = 86_400_000
+/** Alias for `DAY_MS` — same source as convex/lib/timeConstants. */
+export const MS_PER_DAY = DAY_MS
 
 /** Difference in calendar days between two ISO date strings (a - b). */
 export function diffDays(dateA: string, dateB: string): number {
   const a = new Date(dateA + 'T00:00:00')
   const b = new Date(dateB + 'T00:00:00')
-  return Math.round((a.getTime() - b.getTime()) / MS_PER_DAY)
+  return Math.round((a.getTime() - b.getTime()) / DAY_MS)
 }
 
 /** Convert a Date object to "YYYY-MM-DD" ISO date string (local time). */

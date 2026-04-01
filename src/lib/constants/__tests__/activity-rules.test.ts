@@ -223,7 +223,8 @@ describe('isPassportExpiringSoon', () => {
   })
 
   it('returns false when passport expires exactly 1 day after the 6-month mark', () => {
-    const ref = new Date()
+    // Fixed calendar anchor avoids `new Date()` / `setMonth` + timezone drift vs fmt(toISOString).
+    const ref = new Date('2026-01-15T12:00:00Z')
     const sixMonthsOut = new Date(ref)
     sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6)
     const oneDayAfter = new Date(sixMonthsOut)

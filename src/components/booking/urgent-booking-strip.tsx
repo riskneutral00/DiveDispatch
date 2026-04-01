@@ -1,7 +1,7 @@
 'use client'
 
 import { X } from 'lucide-react'
-import { parseDateLocal } from '@/lib/hooks/use-calendar-range'
+import { parseDateLocal } from '@/lib/utils/date'
 
 interface UrgentBooking {
   _id: string

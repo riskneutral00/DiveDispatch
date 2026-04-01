@@ -1,3 +1,7 @@
+/**
+ * @module-tag slow
+ */
+
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../../convex/_generated/api'
 import { makeT } from '../helpers/convex-helpers'

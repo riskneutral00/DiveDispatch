@@ -17,6 +17,7 @@ const VALID_INSTRUCTOR_ARGS = {
   email: 'instr@test.com',
   phone: '+66123456789',
   credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] }],
+  teachingLanguages: ['en'],
 }
 
 describe('instructors.create', () => {

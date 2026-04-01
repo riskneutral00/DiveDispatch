@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import dynamic from 'next/dynamic'
 import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '../../../../../convex/_generated/api'
@@ -13,6 +13,8 @@ import { StepContact } from '../../../../components/portal/step-contact'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/onboarding/step-indicator'
 import { computeStep, type ClientPortalStep } from '@/lib/portal/compute-step'
+import { PortalStepShell } from '@/components/portal/portal-step-shell'
+import type { EquipmentData } from '@/components/portal/step-equipment'
 
 const StepMedical = dynamic(
   () => import('../../../../components/portal/step-medical').then((m) => m.StepMedical),
@@ -52,11 +54,25 @@ export default function PortalTokenPage() {
 
   const result = useQuery(api.bookingLinks.getByToken, token ? { token } : 'skip')
   const progress = useQuery(api.portalDraft.getPortalProgress, token ? { token } : 'skip')
+  const saveEquipment = useMutation(api.portalDraft.saveEquipmentData)
+
+  // Debounced equipment save — avoids hammering Convex on every keystroke
+  const equipmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleEquipmentChange = useCallback(
+    (data: EquipmentData) => {
+      if (equipmentTimerRef.current) clearTimeout(equipmentTimerRef.current)
+      equipmentTimerRef.current = setTimeout(() => {
+        saveEquipment({ token, ...data }).catch(() => {})
+      }, 600)
+    },
+    [saveEquipment, token],
+  )
 
   // Derive completion booleans directly from server query
   const contactDone = progress?.contactComplete ?? false
   const medicalDone = progress?.medicalComplete ?? false
   const waiverDone = progress?.waiverComplete ?? false
+  const dateOfBirth = progress?.contactData?.dateOfBirth ?? ''
 
   // Local step override allows user navigation; server-derived default used until override
   const serverStep = computeStep(progress)
@@ -186,21 +202,20 @@ export default function PortalTokenPage() {
           <StepWaiver
             operatorName={operatorName}
             participantName={customerName}
-            dateOfBirth=""
+            dateOfBirth={dateOfBirth}
+            bookingStartDate={startDate}
             onComplete={() => setStepOverride('equipment')}
             onBack={() => setStepOverride('medical')}
           />
         )
       case 'equipment':
         return (
-          <div className="space-y-4">
-            <StepEquipment onChange={() => {}} />
-            <div className="flex justify-end">
-              <GlassButton variant="primary" size="md" onClick={() => setStepOverride('safety')}>
-                Continue
-              </GlassButton>
-            </div>
-          </div>
+          <PortalStepShell
+            onContinue={() => setStepOverride('safety')}
+            onBack={() => setStepOverride('waiver')}
+          >
+            <StepEquipment onChange={handleEquipmentChange} />
+          </PortalStepShell>
         )
       case 'safety':
         return (

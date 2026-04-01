@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { BadgeCheck, MapPin, Star } from 'lucide-react'
 import { GlassBadge } from '@/components/ui/glass-badge'
@@ -52,7 +53,7 @@ interface StakeholderCardProps {
   onTogglePreferred?: (slug: string) => void
 }
 
-export function StakeholderCard({
+export const StakeholderCard = React.memo(function StakeholderCard({
   entry,
   isPreferred = false,
   onTogglePreferred,
@@ -226,4 +227,4 @@ export function StakeholderCard({
       )}
     </GlassCard>
   )
-}
+})

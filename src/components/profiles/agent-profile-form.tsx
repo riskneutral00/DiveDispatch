@@ -1,37 +1,29 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
-
-import { api } from '../../../convex/_generated/api'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileTabSection } from '@/components/profiles/profile-tab-section'
 import {
   customerLanguagesFieldSchema,
   languagesFromProfile,
   languagesToPayload,
 } from '@/lib/profile-form/languages'
 import {
+  contactFieldsFromProfile,
   createOptimisticLocationOnChange,
-  locationFromProfileDoc,
+  locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { associationSchema } from '@/lib/schemas/profile-shared'
 import type { Language } from '@/lib/types/language'
-
-// ── Zod Schemas ───────────────────────────────────────────────────────
-
-const associationSchema = z.object({
-  agency: z.string().min(1, 'Agency is required'),
-  number: z.string().min(1, 'Number is required'),
-})
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -69,57 +61,61 @@ const INITIAL_FORM: ProfileFormData = {
 
 export type AgentProfileSection = 'contact' | 'languages' | 'associations'
 
-export function AgentProfileForm({ section }: { section?: AgentProfileSection } = {}) {
-  const profile = useQuery(api.agents.mine)
-  const me = useQuery(api.users.me)
-  const create = useMutation(api.agents.create)
-  const update = useMutation(api.agents.update)
-  const updateProfile = useMutation(api.users.updateProfile)
+export type AgentProfileFormProps = {
+  section?: AgentProfileSection
+  profile: Record<string, unknown> | null | undefined
+  me: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+  updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
+}
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
-    profile,
-    me: me ?? undefined,
+export function AgentProfileForm({ section, profile, me, create, update, updateProfile }: AgentProfileFormProps) {
+
+  const {
+    form,
+    setField,
+    errors,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    loading,
+    isUpdate,
+    handleSubmit,
+  } = useProfileForm({
+    profile: profile as Record<string, unknown> | null | undefined,
+    me: (me ?? undefined) as { businessName?: string; email?: string; phone?: string; customerLanguages?: string[] } | undefined,
     schema: profileSchema,
     defaults: INITIAL_FORM,
     waitForMeBeforeInit: true,
-    fromProfile: (p, user) => ({
-      name: p.name as string,
-      location: locationFromProfileDoc({
-        placeName: p.placeName as string,
-        country: p.country as string,
-        lat: p.lat as number,
-        lng: p.lng as number,
-        placeId: p.placeId as string | null | undefined,
-      }) as LocationValue,
-      email: p.email as string,
-      phone: p.phone as string,
-      associations: (p.associations as Record<string, unknown>[])?.map(a => ({ agency: String(a.agency || ''), number: String(a.number || '') })) ?? [],
-      defaultReferralMode: p.defaultReferralMode as 'independent' | 'referral',
-      customerLanguages: languagesFromProfile(
-        (user as { customerLanguages?: string[] } | undefined)?.customerLanguages,
-      ),
-    }),
+    fromProfile: (p, user) => {
+      const c = contactFieldsFromProfile(p)
+      return {
+        ...c,
+        location: c.location as LocationValue,
+        associations: (p.associations as Record<string, unknown>[])?.map(a => ({ agency: String(a.agency || ''), number: String(a.number || '') })) ?? [],
+        defaultReferralMode: p.defaultReferralMode as 'independent' | 'referral',
+        customerLanguages: languagesFromProfile(
+          (user as { customerLanguages?: string[] } | undefined)?.customerLanguages,
+        ),
+      }
+    },
     fromMe: (u, initial) => ({
       ...initial,
       email: u.email ?? '',
       phone: u.phone ?? '',
       customerLanguages: languagesFromProfile(u.customerLanguages),
     }),
-    toPayload: (f) => {
-      const loc = f.location!
-      return {
-        name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
-        email: f.email,
-        phone: f.phone,
-        associations: f.associations,
-        defaultReferralMode: f.defaultReferralMode,
-      }
-    },
+    toPayload: (f) => ({
+      name: f.name,
+      ...locationToPayload(f.location!),
+      email: f.email,
+      phone: f.phone,
+      associations: f.associations,
+      defaultReferralMode: f.defaultReferralMode,
+    }),
     afterSuccessfulSave: async (f) => {
       await updateProfile({ customerLanguages: languagesToPayload(f.customerLanguages) })
     },
@@ -133,14 +129,21 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
     isUpdate,
   })
 
-  if (loading) {
-    return <ProfileFormLoading />
-  }
-
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       {/* Contact info */}
-      {(!section || section === 'contact') && (
+      <ProfileTabSection id="contact" section={section}>
         <>
           <div className="space-y-4">
             <ProfileBasicInfo
@@ -200,7 +203,7 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
             {errors.defaultReferralMode && <p className="text-sm mt-1" style={{ color: 'var(--color-destructive)' }}>{errors.defaultReferralMode}</p>}
           </div>
         </>
-      )}
+      </ProfileTabSection>
 
       <ProfileFormSectionDivider show={!section} />
 
@@ -214,19 +217,14 @@ export function AgentProfileForm({ section }: { section?: AgentProfileSection } 
       <ProfileFormSectionDivider show={!section} />
 
       {/* Agency associations */}
-      {(!section || section === 'associations') && (
+      <ProfileTabSection id="associations" section={section}>
         <ProfileAgencyInfo
           variant="agent"
           items={form.associations}
           onChange={(items) => setField('associations', items)}
           errors={errors as Record<string, string>}
         />
-      )}
-
-      {serverError && <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
-      {saved && <p className="text-sm text-center" style={{ color: 'var(--color-success)' }}>Profile saved successfully.</p>}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
-    </form>
+      </ProfileTabSection>
+    </ProfileFormShell>
   )
 }

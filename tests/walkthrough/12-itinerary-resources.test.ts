@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * L8-12: Unit tests for createDraftShell mutation.
  *
  * Verifies that createDraftShell creates a minimal Draft booking shell
@@ -74,7 +78,7 @@ describe('createDraftShell', () => {
     vi.useRealTimers()
 
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as unknown as Id<'bookings'>)
+      const booking = await ctx.db.get(bookingId as Id<'bookings'>)
       expect(booking).not.toBeNull()
       expect(booking?.status).toBe('Draft')
     })
@@ -100,7 +104,7 @@ describe('createDraftShell', () => {
     vi.useRealTimers()
 
     await t.run(async (ctx) => {
-      const booking = await ctx.db.get(bookingId as unknown as Id<'bookings'>)
+      const booking = await ctx.db.get(bookingId as Id<'bookings'>)
       expect(booking?.bookingFormComplete).toBe(false)
       expect(booking?.customerFormComplete).toBe(false)
       expect(booking?.medicalHardBlock).toBe(false)

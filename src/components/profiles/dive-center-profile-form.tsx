@@ -1,17 +1,14 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
 import { z } from 'zod'
-
-import { api } from '../../../convex/_generated/api'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileTabSection } from '@/components/profiles/profile-tab-section'
 import { AGENCIES } from '@/lib/constants/agencies'
 import {
   customerLanguagesFieldSchema,
@@ -19,8 +16,9 @@ import {
   languagesToPayload,
 } from '@/lib/profile-form/languages'
 import {
+  contactFieldsFromProfile,
   createOptimisticLocationOnChange,
-  locationFromProfileDoc,
+  locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -78,34 +76,32 @@ const INITIAL_FORM: FormState = {
 
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 
-export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => void; section?: DiveCenterProfileSection } = {}) {
-  const existing = useQuery(api.diveCenters.mine)
-  const me = useQuery(api.users.me)
-  const create = useMutation(api.diveCenters.create)
-  const update = useMutation(api.diveCenters.update)
+export type DiveCenterProfileFormProps = {
+  onSaved?: () => void
+  section?: DiveCenterProfileSection
+  profile: Record<string, unknown> | null | undefined
+  me: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+}
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
+export function DiveCenterProfileForm({ onSaved, section, profile: existing, me, create, update }: DiveCenterProfileFormProps) {
+
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } = useProfileForm({
     profile: existing,
     me,
     schema: formSchema,
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
+      const c = contactFieldsFromProfile(p)
       const assocs = (p.associations as Array<{
         agency: string; number: string
         owDays?: number; aowDays?: number; oaDays?: number
         selectedSpecialties?: string[]
       }>) ?? []
       return {
-        name: p.name as string,
-        location: locationFromProfileDoc({
-          placeName: p.placeName as string,
-          country: p.country as string,
-          lat: p.lat as number,
-          lng: p.lng as number,
-          placeId: p.placeId as string | null | undefined,
-        }) as LocationValue,
-        email: p.email as string,
-        phone: p.phone as string,
+        ...c,
+        location: c.location as LocationValue,
         associations: assocs.length > 0 ? assocs.map((a: Record<string, unknown>) => ({
           agency: String(a.agency || ''),
           number: String(a.number || ''),
@@ -123,18 +119,12 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       email: u.email ?? '',
       phone: u.phone ?? '',
     }),
-    toPayload: (f) => {
-      const loc = f.location!
-      return {
-        name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
-        email: f.email,
-        phone: f.phone,
-        associations: f.associations.map((a) => ({
+    toPayload: (f) => ({
+      name: f.name,
+      ...locationToPayload(f.location!),
+      email: f.email,
+      phone: f.phone,
+      associations: f.associations.map((a) => ({
           agency: a.agency,
           number: a.number,
           owDays: a.owDays,
@@ -142,14 +132,12 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           oaDays: a.oaDays,
           selectedSpecialties: a.selectedSpecialties,
         })),
-        customerLanguages: languagesToPayload(f.customerLanguages),
-      }
-    },
+      customerLanguages: languagesToPayload(f.customerLanguages),
+    }),
     create,
     update,
     onSaved,
   })
-
 
   const onLocationChange = createOptimisticLocationOnChange({
     setField,
@@ -157,15 +145,21 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
     isUpdate,
   })
 
-  if (loading) {
-    return <ProfileFormLoading variant="pulse-text" />
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       {/* Basic Information */}
-      
-      {(!section || section === 'contact') && (
+      <ProfileTabSection id="contact" section={section}>
       <div className="space-y-4">
         <ProfileBasicInfo
           nameValue={form.name}
@@ -188,7 +182,7 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
           phoneRequired
         />
       </div>
-      )}
+      </ProfileTabSection>
 
       <ProfileFormSectionDivider show={!section} />
 
@@ -203,20 +197,14 @@ export function DiveCenterProfileForm({ onSaved, section }: { onSaved?: () => vo
       <ProfileFormSectionDivider show={!section} />
 
       {/* Affiliations */}
-      {(!section || section === 'associations') && (
+      <ProfileTabSection id="associations" section={section}>
         <ProfileAgencyInfo
           variant="dive-center"
           items={form.associations}
           onChange={(items) => setField('associations', items)}
           errors={errors as Record<string, string>}
         />
-      )}
-
-      {serverError && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
-      )}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} />
-    </form>
+      </ProfileTabSection>
+    </ProfileFormShell>
   )
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { GlassTextarea } from '@/components/ui/glass-textarea'
@@ -10,6 +9,7 @@ import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
 import { Spinner } from '@/components/ui/spinner'
+import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 // ── Blood type options ────────────────────────────────────────────────────────
 
@@ -96,7 +96,12 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <PortalStepShell
+      serverError={serverError}
+      onBack={onBack}
+      onContinue={handleContinue}
+      submitting={submitting}
+    >
       <GlassCard padding="md">
         <div className="mb-5">
           <h2
@@ -152,34 +157,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           />
         </div>
       </GlassCard>
-
-      {/* Server error */}
-      <div aria-live="polite">
-        {serverError && (
-          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-            {serverError}
-          </p>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <div className={`flex ${onBack ? 'justify-between' : 'justify-end'}`}>
-        {onBack && (
-          <GlassButton type="button" variant="ghost" size="md" onClick={onBack}>
-            Back
-          </GlassButton>
-        )}
-        <GlassButton
-          type="button"
-          variant="primary"
-          size="md"
-          onClick={handleContinue}
-          loading={submitting}
-          disabled={submitting}
-        >
-          Continue
-        </GlassButton>
-      </div>
-    </div>
+    </PortalStepShell>
   )
 }

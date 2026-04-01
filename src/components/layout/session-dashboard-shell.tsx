@@ -6,7 +6,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
-import { Spinner } from '@/components/ui/spinner'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { DashboardShell } from './dashboard-shell'
 
@@ -40,19 +40,11 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
   }, [user, router])
 
   if (user === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner label="Loading…" />
-      </div>
-    )
+    return <FullPageSpinner label="Loading…" />
   }
 
   if (user === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner label="Redirecting…" />
-      </div>
-    )
+    return <FullPageSpinner label="Redirecting…" />
   }
 
   const defaultRole =
@@ -62,11 +54,7 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
   const slug = convexUser?.slug
 
   if (!roleSlug || !slug) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner label="Loading…" />
-      </div>
-    )
+    return <FullPageSpinner label="Loading…" />
   }
 
   const contextValue = useMemo(

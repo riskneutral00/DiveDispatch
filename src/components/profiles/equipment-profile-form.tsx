@@ -1,24 +1,22 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { z } from 'zod'
 
-import { api } from '../../../convex/_generated/api'
-
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassInput } from '@/components/ui/glass-input'
 import { PillToggle } from '@/components/ui/pill-toggle'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  contactFieldsFromProfile,
   createOptimisticLocationOnChange,
-  locationFromProfileDoc,
+  locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -57,13 +55,16 @@ const INITIAL_FORM: FormState = {
   manufacturersByGearType: {},
 }
 
-export function EquipmentProfileForm() {
-  const profile = useQuery(api.equipment.mine)
-  const me = useQuery(api.users.getAccountDefaults)
-  const create = useMutation(api.equipment.create)
-  const update = useMutation(api.equipment.update)
+export type EquipmentProfileFormProps = {
+  profile: Record<string, unknown> | null | undefined
+  me: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+}
 
-  const { form, setForm, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+export function EquipmentProfileForm({ profile, me, create, update }: EquipmentProfileFormProps) {
+
+  const { form, setForm, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileSchema,
@@ -77,17 +78,10 @@ export function EquipmentProfileForm() {
           if (mfrs && mfrs.length > 0) parsed[gt] = mfrs
         }
       }
+      const c = contactFieldsFromProfile(p)
       return {
-        name: p.name as string,
-        location: locationFromProfileDoc({
-          placeName: p.placeName as string,
-          country: p.country as string,
-          lat: p.lat as number,
-          lng: p.lng as number,
-          placeId: p.placeId as string | null | undefined,
-        }) as LocationValue,
-        email: p.email as string,
-        phone: p.phone as string,
+        ...c,
+        location: c.location as LocationValue,
         manufacturersByGearType: parsed,
       }
     },
@@ -97,7 +91,6 @@ export function EquipmentProfileForm() {
       phone: u.phone ?? '',
     }),
     toPayload: (f) => {
-      const loc = f.location!
       const mbt: Record<string, string[]> = {}
       for (const gt of GEAR_TYPES) {
         const mfrs = f.manufacturersByGearType[gt]
@@ -105,11 +98,7 @@ export function EquipmentProfileForm() {
       }
       return {
         name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
+        ...locationToPayload(f.location!),
         email: f.email,
         phone: f.phone,
         manufacturersByGearType: Object.keys(mbt).length > 0 ? mbt : undefined,
@@ -162,14 +151,21 @@ export function EquipmentProfileForm() {
     isUpdate,
   })
 
-  if (loading) {
-    return <ProfileFormLoading variant="plain" message="Loading…" />
-  }
-
   const activeGearTypes = GEAR_TYPES.filter((gt) => gt in form.manufacturersByGearType)
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      loadingVariant="plain"
+      loadingMessage="Loading…"
+      className="space-y-6"
+    >
       {/* Business Details */}
       <div className="space-y-4">
         <ProfileBasicInfo
@@ -194,7 +190,7 @@ export function EquipmentProfileForm() {
         />
       </div>
 
-      <hr className="form-divider" />
+      <ProfileFormSectionDivider show />
 
       {/* Gear Catalog */}
       <GlassCard padding="lg">
@@ -247,9 +243,6 @@ export function EquipmentProfileForm() {
           </div>
         )}
       </GlassCard>
-
-      {serverError && <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>}
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
-    </form>
+    </ProfileFormShell>
   )
 }

@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * DD-193: Portal sanitization gap — savePortalContact + saveMedicalAnswers
  *
  * Unit tests for sanitization of portal contact fields and medical answers.

@@ -23,10 +23,17 @@ export function Spinner({ size = 'md', label, className = '' }: SpinnerProps) {
     />
   )
 
-  if (!label) return spinner
+  if (!label) {
+    return (
+      <span role="status" aria-live="polite" className="inline-flex">
+        <span className="sr-only">Loading</span>
+        {spinner}
+      </span>
+    )
+  }
 
   return (
-    <div className="flex items-center gap-3 text-secondary">
+    <div role="status" aria-live="polite" className="flex items-center gap-3 text-secondary">
       {spinner}
       <span className="text-sm">{label}</span>
     </div>

@@ -2,6 +2,7 @@
 
 import { Palette } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { GlassIconButton } from '@/components/ui/glass-icon-button'
 import { SKINS } from '@/themes/skins'
 import { useTheme } from '@/themes/theme-provider'
 
@@ -28,15 +29,11 @@ export function BgSwitcher() {
   }
 
   return (
-    <button
+    <GlassIconButton
       aria-label={`Switch skin (current: ${SKINS[index].name})`}
       onClick={cycle}
-      className="flex items-center justify-center w-11 h-11 rounded-full transition-all text-secondary"
-      style={{ background: 'var(--color-glass-bg)',
-        border: '1px solid var(--color-glass-border)',
-        transitionDuration: 'var(--transition-speed)' }}
     >
       <Palette size={15} />
-    </button>
+    </GlassIconButton>
   )
 }

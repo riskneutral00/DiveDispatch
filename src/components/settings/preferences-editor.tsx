@@ -1,20 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { toast } from 'sonner'
-import { parseConvexError } from '@/lib/utils/convex-error'
-import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '../../../convex/_generated/api'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassInput } from '@/components/ui/glass-input'
-import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import {
   PreferredInstructorList,
   PreferredVenueList,
@@ -22,8 +20,7 @@ import {
   PreferredBoatList,
   PreferredCompressorList,
 } from '@/components/profiles/preferred-list'
-import { PROFILE_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '@/lib/constants/dive-languages'
-import { Spinner } from '@/components/ui/spinner'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -46,6 +43,7 @@ const ACCEPTANCE_MODES = [
 ] as const
 
 type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
+type PreferencesRecord = Record<string, unknown>
 
 const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
 
@@ -66,7 +64,6 @@ const prefsSchema = z.object({
 })
 
 type PrefsFormData = z.infer<typeof prefsSchema>
-type FormErrors = Partial<Record<keyof PrefsFormData, string>>
 
 const defaultFormData = (): PrefsFormData => ({
   acceptanceMode: 'Auto',
@@ -159,88 +156,58 @@ export function PreferencesEditor() {
   const roleSlug = params?.roleSlug as string | undefined
   const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
   const prefs = useQuery(api.stakeholderPreferences.mine)
-  const me = useQuery(api.users.me)
   const upsert = useMutation(api.stakeholderPreferences.upsert)
 
-  const [form, setForm] = useState<PrefsFormData>(defaultFormData())
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState('booking')
-  const baselineRef = useRef<PrefsFormData | null>(null)
-
-  useEffect(() => {
-    if (prefs) {
-      const loaded: PrefsFormData = {
-        acceptanceMode: prefs.acceptanceMode as AcceptanceMode,
-        maxHoursPerDay: prefs.maxHoursPerDay,
-        postJobBlockDuration: prefs.postJobBlockDuration,
-        commonLanguageCodes: prefs.commonLanguageCodes,
-        confirmOnAccept: prefs.confirmOnAccept,
-        confirmOnDecline: prefs.confirmOnDecline,
-        preferredInstructorSlugs: prefs.preferredInstructorSlugs ?? [],
-        preferredVenueSlugs: prefs.preferredVenueSlugs ?? [],
-        preferredEquipmentSlugs: prefs.preferredEquipmentSlugs ?? [],
-        preferredBoatSlugs: prefs.preferredBoatSlugs ?? [],
-        preferredCompressorSlugs: prefs.preferredCompressorSlugs ?? [],
+  const defaults = useMemo(() => defaultFormData(), [])
+  const savePreferences = useCallback(
+    async (payload: PrefsFormData) => {
+      if (!activeRole) {
+        throw new Error('Unable to determine active role for saving preferences.')
       }
-      setForm(loaded)
-      baselineRef.current = loaded
-    }
-  }, [prefs])
+      await upsert({ ...payload, activeRole })
+    },
+    [activeRole, upsert],
+  )
 
-  const isDirty = baselineRef.current !== null && JSON.stringify(form) !== JSON.stringify(baselineRef.current)
-
-  const setField = <K extends keyof PrefsFormData>(key: K, value: PrefsFormData[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-    setSaved(false)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setServerError(null)
-    setSaved(false)
-
-    const result = prefsSchema.safeParse(form)
-    if (!result.success) {
-      const fieldErrors: FormErrors = {}
-      for (const issue of result.error.issues) {
-        const key = issue.path[0] as keyof PrefsFormData
-        if (key && !fieldErrors[key]) {
-          fieldErrors[key] = issue.message
-        }
+  const {
+    form,
+    setField,
+    errors,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    loading,
+    isUpdate,
+    handleSubmit,
+  } = useProfileForm<PrefsFormData, PrefsFormData>({
+    profile: prefs === undefined ? undefined : (prefs as PreferencesRecord | null),
+    schema: prefsSchema,
+    defaults,
+    fromProfile: (profile) => {
+      const typed = profile as Partial<PrefsFormData>
+      return {
+        acceptanceMode: (typed.acceptanceMode as AcceptanceMode) ?? 'Auto',
+        maxHoursPerDay: typed.maxHoursPerDay ?? 8,
+        postJobBlockDuration: typed.postJobBlockDuration ?? 30,
+        commonLanguageCodes: typed.commonLanguageCodes ?? ['en'],
+        confirmOnAccept: typed.confirmOnAccept ?? false,
+        confirmOnDecline: typed.confirmOnDecline ?? false,
+        preferredInstructorSlugs: typed.preferredInstructorSlugs ?? [],
+        preferredVenueSlugs: typed.preferredVenueSlugs ?? [],
+        preferredEquipmentSlugs: typed.preferredEquipmentSlugs ?? [],
+        preferredBoatSlugs: typed.preferredBoatSlugs ?? [],
+        preferredCompressorSlugs: typed.preferredCompressorSlugs ?? [],
       }
-      setErrors(fieldErrors)
-      return
-    }
-
-    setSubmitting(true)
-    try {
-      await upsert({ ...result.data, activeRole: activeRole! })
-      baselineRef.current = { ...form }
-      setSaved(true)
-      toast.success('Preferences saved', { duration: 3000 })
-    } catch (err) {
-      const message = parseConvexError(err, UNEXPECTED_ERROR_MESSAGE)
-      setServerError(message)
-      toast.error('Save failed', { description: message, duration: 5000 })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (prefs === undefined || me === undefined) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
-  }
+    },
+    toPayload: (values) => values,
+    create: savePreferences,
+    update: savePreferences,
+  })
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
-  const langItems = LANGUAGE_OPTIONS.map(({ code, label }) => ({ value: code, label }))
 
   const tabs = useMemo(() => {
     const base = [
@@ -252,19 +219,18 @@ export function PreferencesEditor() {
   }, [showResourcePrefs])
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="max-w-2xl mx-auto px-4 pt-6 pb-28 md:pb-10">
-      <div className="mb-6">
-        <h1
-          className="text-2xl font-bold mb-1 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          Settings
-        </h1>
-        <p className="text-sm text-secondary">
-          Booking behaviour and availability preferences
-        </p>
-      </div>
-
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="max-w-2xl mx-auto w-full px-4 pt-4 pb-28 md:pb-10"
+    >
       <SettingsTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="space-y-6">
@@ -313,7 +279,7 @@ export function PreferencesEditor() {
               </div>
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -378,7 +344,7 @@ export function PreferencesEditor() {
               </div>
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
           </>
         )}
@@ -394,7 +360,7 @@ export function PreferencesEditor() {
               compressorSlugs={form.preferredCompressorSlugs ?? []}
             />
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -411,7 +377,7 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -428,7 +394,7 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -445,7 +411,7 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -462,7 +428,7 @@ export function PreferencesEditor() {
               />
             </GlassCard>
 
-            <hr className="form-divider" />
+            <ProfileFormSectionDivider show />
 
             <GlassCard padding="md">
               <h2
@@ -482,29 +448,6 @@ export function PreferencesEditor() {
         )}
 
       </div>
-
-      {serverError && (
-        <p className="text-sm text-center mt-4" style={{ color: 'var(--color-destructive)' }}>
-          {serverError}
-        </p>
-      )}
-      {saved && (
-        <p className="text-sm text-center mt-4" style={{ color: 'var(--color-success)' }}>
-          Preferences saved.
-        </p>
-      )}
-
-      <div className="flex justify-end mt-6">
-        <GlassButton
-          type="submit"
-          variant="primary"
-          size="md"
-          loading={submitting}
-          disabled={!isDirty || submitting}
-        >
-          Save
-        </GlassButton>
-      </div>
-    </form>
+    </ProfileFormShell>
   )
 }

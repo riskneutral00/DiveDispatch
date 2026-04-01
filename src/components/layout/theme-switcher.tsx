@@ -2,6 +2,7 @@
 
 import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { GlassIconButton } from '@/components/ui/glass-icon-button'
 import { useTheme } from '@/themes/theme-provider'
 import type { ThemeMode } from '@/themes/theme-types'
 
@@ -29,15 +30,11 @@ export function ThemeSwitcher() {
   const Icon = mode === 'light' ? Sun : Moon
 
   return (
-    <button
+    <GlassIconButton
       aria-label={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       onClick={toggle}
-      className="flex items-center justify-center w-11 h-11 rounded-full transition-all text-secondary"
-      style={{ background: 'var(--color-glass-bg)',
-        border: '1px solid var(--color-glass-border)',
-        transitionDuration: 'var(--transition-speed)' }}
     >
       <Icon size={15} />
-    </button>
+    </GlassIconButton>
   )
 }

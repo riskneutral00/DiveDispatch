@@ -52,7 +52,7 @@ const dotColorVar: Record<BadgeVariant, string> = {
   info: "var(--color-secondary)",
 };
 
-export function GlassBadge({
+export const GlassBadge = React.memo(function GlassBadge({
   variant = "default",
   size = "md",
   dot = false,
@@ -85,4 +85,4 @@ export function GlassBadge({
       {children}
     </span>
   );
-}
+})

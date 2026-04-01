@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useId } from "react";
+import React, { useId } from 'react'
+import { GlassFieldError, GlassFieldLabel } from '@/components/ui/field-shell'
+import { cn } from '@/lib/utils/cn'
 
 interface GlassInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  helperText?: string;
-  leadingIcon?: React.ReactNode;
-  trailingIcon?: React.ReactNode;
+  label?: string
+  error?: string
+  helperText?: string
+  leadingIcon?: React.ReactNode
+  trailingIcon?: React.ReactNode
 }
 
 export function GlassInput({
@@ -30,13 +32,9 @@ export function GlassInput({
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-secondary"
-        >
+        <GlassFieldLabel htmlFor={id} required={props.required}>
           {label}
-          {props.required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-        </label>
+        </GlassFieldLabel>
       )}
 
       <div className="relative flex items-center">
@@ -59,19 +57,17 @@ export function GlassInput({
             }
             onClick?.(e);
           }}
-          className={[
-            "glass glass-field w-full text-sm text-primary",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            "placeholder:opacity-50",
-            leadingIcon ? "pl-9" : "pl-3",
-            trailingIcon ? "pr-9" : "pr-3",
-            "py-2.5",
-            isDateLike ? "cursor-pointer" : "",
+          className={cn(
+            'glass glass-field w-full text-sm text-primary',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'placeholder:opacity-50',
+            leadingIcon ? 'pl-9' : 'pl-3',
+            trailingIcon ? 'pr-9' : 'pr-3',
+            'py-2.5',
+            isDateLike && 'cursor-pointer',
             className,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={{ caretColor: "var(--color-accent)",
+          )}
+          style={{ caretColor: 'var(--color-accent)',
             ...(error ? {
               borderColor: "var(--color-destructive)",
               boxShadow: `0 0 0 3px var(--color-destructive-glow)`,
@@ -91,11 +87,7 @@ export function GlassInput({
         )}
       </div>
 
-      {error && (
-        <p id={`${id}-error`} role="alert" className="text-sm" style={{ color: "var(--color-destructive)" }}>
-          {error}
-        </p>
-      )}
+      <GlassFieldError id={`${id}-error`} message={error} />
       {!error && helperText && (
         <p id={`${id}-helper`} className="text-sm text-secondary">
           {helperText}

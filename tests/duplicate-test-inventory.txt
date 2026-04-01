@@ -1,0 +1,19 @@
+Duplicate / parallel Vitest locations (maintenance hints)
+========================================================
+
+Quick vs full runs: package.json scripts `test:quick` (excludes @module-tag slow) and `test:full` / `test` (entire suite).
+
+MERGED INTO src/**/__tests__/
+-----------------------------
+- booking-display, coverage-validation, bar-styles (see prior sessions)
+- Utils: shorten-operator-name, build-bar-sub-label, skyline-packer, signature-coverage, unit-conversion, available-roles, role-hierarchy, directory-filters
+- Hooks (removed tests/hooks twins; colocated suites retained): use-blocked-date-toggle, use-booking-draft-auto-save, use-booking-actions, use-portal-step, use-locale-sync, use-operator-defaults
+- Hooks (new): use-calendar-range moved from tests/hooks to src/lib/hooks/__tests__/use-calendar-range.test.ts
+- Constants + booking: locales, status-colors, error-messages, countries, ui-timings, activity-rules, compute-date-range (removed tests/ copies; colocated retained)
+- Calendar helpers moved from tests/calendarRangeHelpers.test.ts to src/lib/utils/__tests__/calendar-range.test.ts
+- Role constants duplicate removed: tests/roles.test.ts (canonical suite remains in src/lib/constants/__tests__/roles.test.ts)
+- pool-profile-form: tests/poolProfileForm.test.ts merged into src/components/profiles/__tests__/pool-profile-form.test.ts
+
+OPTIONAL FOLLOW-UP
+------------------
+- Grep tests/ for remaining `../src/lib/` imports that duplicate colocated tests

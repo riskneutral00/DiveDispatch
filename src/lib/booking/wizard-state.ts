@@ -1,8 +1,6 @@
 // ── Wizard State (3-step) ─────────────────────────────────────────────────────
 // Step structure: Customers → Itinerary (with resources) → Review
 
-export const WIZARD_STATE_VERSION = 1
-
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG } from '@/lib/constants/course-catalog'
 import {
@@ -12,6 +10,8 @@ import {
   validateStartDateNotInPast,
 } from '@/lib/booking/course-validation'
 import { toISODateString } from '@/lib/utils/date'
+
+export const WIZARD_STATE_VERSION = 1
 
 // ── Step definition ───────────────────────────────────────────────────────────
 

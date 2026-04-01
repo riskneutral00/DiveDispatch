@@ -7,6 +7,7 @@ import { GlassButton } from '@/components/ui/glass-button'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalMedical } from '@/lib/hooks/use-portal-medical'
+import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
@@ -147,7 +148,14 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+    <PortalStepShell
+      onSubmit={handleSubmit}
+      continueType="submit"
+      serverError={error}
+      submitting={submitting}
+      continueSize="lg"
+      continueFullWidth
+    >
       {/* Intro text — verbatim from PADI 10346 */}
       <GlassCard padding="md">
         <p className="text-sm leading-relaxed text-primary">
@@ -257,18 +265,6 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
           </p>
         )}
       </div>
-
-      <div aria-live="polite">
-        {error && (
-          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-            {error}
-          </p>
-        )}
-      </div>
-
-      <GlassButton type="submit" variant="primary" fullWidth loading={submitting} size="lg">
-        Continue
-      </GlassButton>
-    </form>
+    </PortalStepShell>
   )
 }

@@ -1,115 +1,125 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   formatDateRange,
   statusVariant,
-  computeTTLLabel,
   reservationVariant,
+  computeTTLLabel,
 } from '../booking-display'
 
 // ── formatDateRange ─────────────────────────────────────────────────────────
 
 describe('formatDateRange', () => {
+  it('returns en-dash for empty start and end', () => {
+    expect(formatDateRange('', '')).toBe('\u2013')
+  })
+
   it('returns single date when start equals end', () => {
+    expect(formatDateRange('2026-03-15', '2026-03-15')).toBe('2026-03-15')
     expect(formatDateRange('2026-03-01', '2026-03-01')).toBe('2026-03-01')
   })
 
-  it('returns range with en-dash when dates differ', () => {
-    expect(formatDateRange('2026-03-01', '2026-03-05')).toBe('2026-03-01 – 2026-03-05')
-  })
-
-  it('returns dash when both are empty', () => {
-    expect(formatDateRange('', '')).toBe('–')
-  })
-
-  it('returns start when end is empty', () => {
+  it('returns start only when end is empty', () => {
+    expect(formatDateRange('2026-03-15', '')).toBe('2026-03-15')
     expect(formatDateRange('2026-03-01', '')).toBe('2026-03-01')
+  })
+
+  it('formats a proper range with en-dash', () => {
+    expect(formatDateRange('2026-03-15', '2026-03-18')).toBe('2026-03-15 \u2013 2026-03-18')
+    expect(formatDateRange('2026-03-01', '2026-03-05')).toBe('2026-03-01 \u2013 2026-03-05')
   })
 })
 
 // ── statusVariant ───────────────────────────────────────────────────────────
 
 describe('statusVariant', () => {
-  it('maps Draft to warning', () => {
+  it('returns warning for Draft', () => {
     expect(statusVariant('Draft')).toBe('warning')
   })
 
-  it('maps Upcoming to info', () => {
+  it('returns info for Upcoming', () => {
     expect(statusVariant('Upcoming')).toBe('info')
   })
 
-  it('maps Completed to success', () => {
+  it('returns success for Completed', () => {
     expect(statusVariant('Completed')).toBe('success')
   })
 
-  it('maps Cancelled to destructive', () => {
+  it('returns destructive for Cancelled', () => {
     expect(statusVariant('Cancelled')).toBe('destructive')
   })
 
-  it('maps unknown status to default', () => {
+  it('returns default for unknown status', () => {
+    expect(statusVariant('SomethingElse')).toBe('default')
     expect(statusVariant('SomeFutureStatus')).toBe('default')
+  })
+})
+
+// ── reservationVariant ─────────────────────────────────────────────────────
+
+describe('reservationVariant', () => {
+  it('returns success for Confirmed', () => {
+    expect(reservationVariant('Confirmed')).toBe('success')
+  })
+
+  it('returns warning for PendingAcceptance', () => {
+    expect(reservationVariant('PendingAcceptance')).toBe('warning')
+  })
+
+  it('returns destructive for Vacated', () => {
+    expect(reservationVariant('Vacated')).toBe('destructive')
+  })
+
+  it('returns destructive for NoShow', () => {
+    expect(reservationVariant('NoShow')).toBe('destructive')
+  })
+
+  it('returns default for undefined', () => {
+    expect(reservationVariant(undefined)).toBe('default')
+  })
+
+  it('returns default for unknown status', () => {
+    expect(reservationVariant('Unknown')).toBe('default')
+    expect(reservationVariant('Something')).toBe('default')
   })
 })
 
 // ── computeTTLLabel ─────────────────────────────────────────────────────────
 
 describe('computeTTLLabel', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-03-26T12:00:00Z'))
-  })
-
   afterEach(() => {
-    vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it('returns null when expiresAt is undefined', () => {
     expect(computeTTLLabel(undefined)).toBeNull()
   })
 
+  it('returns null when expiresAt is 0', () => {
+    expect(computeTTLLabel(0)).toBeNull()
+  })
+
   it('returns Expired when expiresAt is in the past', () => {
-    const pastTs = Date.now() - 60_000
-    expect(computeTTLLabel(pastTs)).toBe('Expired')
+    vi.spyOn(Date, 'now').mockReturnValue(2000)
+    expect(computeTTLLabel(1000)).toBe('Expired')
   })
 
-  it('returns hours and minutes when more than 1 hour remains', () => {
-    const futureTs = Date.now() + 2 * 60 * 60 * 1000 + 30 * 60 * 1000 // 2h 30m
-    expect(computeTTLLabel(futureTs)).toBe('2h 30m remaining')
+  it('returns hours and minutes when > 1 hour remaining', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(0)
+    expect(computeTTLLabel(9_000_000)).toBe('2h 30m remaining')
   })
 
-  it('returns only minutes when less than 1 hour remains', () => {
-    const futureTs = Date.now() + 45 * 60 * 1000 // 45m
-    expect(computeTTLLabel(futureTs)).toBe('45m remaining')
+  it('returns only minutes when < 1 hour remaining', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(0)
+    expect(computeTTLLabel(2_700_000)).toBe('45m remaining')
+  })
+
+  it('returns 0m remaining when exactly at expiry boundary', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(999)
+    expect(computeTTLLabel(1000)).toBe('0m remaining')
   })
 
   it('returns Expired when expiresAt equals now', () => {
-    expect(computeTTLLabel(Date.now())).toBe('Expired')
-  })
-})
-
-// ── reservationVariant ──────────────────────────────────────────────────────
-
-describe('reservationVariant', () => {
-  it('maps Confirmed to success', () => {
-    expect(reservationVariant('Confirmed')).toBe('success')
-  })
-
-  it('maps PendingAcceptance to warning', () => {
-    expect(reservationVariant('PendingAcceptance')).toBe('warning')
-  })
-
-  it('maps Vacated to destructive', () => {
-    expect(reservationVariant('Vacated')).toBe('destructive')
-  })
-
-  it('maps NoShow to destructive', () => {
-    expect(reservationVariant('NoShow')).toBe('destructive')
-  })
-
-  it('maps undefined to default', () => {
-    expect(reservationVariant(undefined)).toBe('default')
-  })
-
-  it('maps unknown status to default', () => {
-    expect(reservationVariant('Something')).toBe('default')
+    vi.spyOn(Date, 'now').mockReturnValue(5000)
+    expect(computeTTLLabel(5000)).toBe('Expired')
   })
 })

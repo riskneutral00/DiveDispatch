@@ -1,9 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
-import { GlassErrorCard } from '@/components/ui/glass-error-card'
-import { GlassButton } from '@/components/ui/glass-button'
+import { RouteErrorPage } from '@/components/layout/route-error-page'
 
 export default function RootError({
   error,
@@ -12,16 +9,14 @@ export default function RootError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  useEffect(() => {
-    console.error('[Root Error]', error)
-  }, [error])
-
   return (
-    <GlassErrorCard
-      icon={AlertTriangle}
+    <RouteErrorPage
+      error={error}
+      reset={reset}
+      logLabel="Root Error"
       title="Something went wrong"
       message="An unexpected error occurred. Try refreshing the page or contact support if this persists."
-      action={<GlassButton onClick={reset}>Try again</GlassButton>}
+      minHeight="min-h-screen"
     />
   )
 }

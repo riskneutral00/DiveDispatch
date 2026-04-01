@@ -1,24 +1,22 @@
 'use client'
 
-import { useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
-import { GlassErrorCard } from '@/components/ui/glass-error-card'
+import { RouteErrorPage } from '@/components/layout/route-error-page'
 
 export default function PortalError({
   error,
+  reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  useEffect(() => {
-    console.error('[Portal Error]', error)
-  }, [error])
-
   return (
-    <GlassErrorCard
-      icon={AlertTriangle}
+    <RouteErrorPage
+      error={error}
+      reset={reset}
+      logLabel="Portal Error"
       title="Something went wrong"
       message="We couldn't load your booking form. Please try the link again or contact your dive center."
+      minHeight="min-h-screen"
     />
   )
 }

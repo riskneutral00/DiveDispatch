@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Simple native <select> with glass styling. For basic string-option dropdowns
  * in profile forms and portal steps.
@@ -8,6 +10,9 @@
  * Extracted by L8-27 from 4 inline copies across agent, instructor, divemaster
  * profile forms and portal step-contact.
  */
+
+import { useId } from 'react'
+import { GlassFieldError, GlassFieldLabel } from '@/components/ui/field-shell'
 
 interface OptionItem {
   value: string
@@ -44,20 +49,25 @@ export function GlassSimpleSelect({
   'aria-label': ariaLabel,
   'data-testid': testId,
 }: GlassSimpleSelectProps) {
+  const generatedId = useId()
+  const id = generatedId
+
   return (
     <div className={`flex flex-col gap-1.5 w-full${className ? ` ${className}` : ''}`}>
       {label && (
-        <label className="text-sm font-medium text-secondary">
+        <GlassFieldLabel htmlFor={id} required={required}>
           {label}
-          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-        </label>
+        </GlassFieldLabel>
       )}
       <select
+        id={label ? id : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
         disabled={disabled}
         aria-label={ariaLabel}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         data-testid={testId}
         className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 rounded-[var(--border-radius)]"
         style={{
@@ -82,11 +92,7 @@ export function GlassSimpleSelect({
           )
         })}
       </select>
-      {error && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {error}
-        </p>
-      )}
+      <GlassFieldError id={`${id}-error`} message={error} />
     </div>
   )
 }

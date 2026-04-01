@@ -15,6 +15,7 @@ import { useBookingDnd, BOOKING_DND_SENSORS } from '@/lib/hooks/use-booking-dnd'
 import { BookingCalendar } from '@/components/booking/booking-calendar'
 import { BookingQuickDetail } from '@/components/booking/booking-quick-detail'
 import { BookingOverlay } from '@/components/booking/booking-overlay'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { QuickBookRail } from '@/components/booking/quick-book-rail'
 import { CancelBookingDialog } from '@/components/booking/cancel-booking-dialog'
 import { BlockDateDialog } from '@/components/booking/block-date-dialog'
@@ -124,22 +125,14 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   const calendarAndRail = (
     <>
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />
-          <h1 className="text-2xl font-bold flex-1 text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
-            {convexUser?.businessName ?? roleConfig.label} Dashboard
-          </h1>
+      {isOrganizer && (
+        <div className="mt-3">
+          <QuickBookRail
+            onSelect={(courses) => openBookingOverlay(courses as string[])}
+            dragEnabled={isOrganizer}
+          />
         </div>
-        {isOrganizer && (
-          <div className="mt-3">
-            <QuickBookRail
-              onSelect={(courses) => openBookingOverlay(courses as string[])}
-              dragEnabled={isOrganizer}
-            />
-          </div>
-        )}
-      </div>
+      )}
 
       <BookingCalendar
         bookings={calendarBookings}
@@ -156,7 +149,13 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   )
 
   return (
-    <div className="max-w-4xl mx-auto space-y-3">
+    <DashboardPageFrame
+      maxWidth="4xl"
+      padding="none"
+      className="space-y-3"
+      leading={<RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />}
+      title={`${convexUser?.businessName ?? roleConfig.label} Dashboard`}
+    >
       {isOrganizer ? (
         <DragDropProvider
           sensors={BOOKING_DND_SENSORS}
@@ -209,6 +208,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
           wizardKey={wizardKey}
         />
       )}
-    </div>
+    </DashboardPageFrame>
   )
 }

@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * L8-23: Unit tests for tryAutoAdvance — Draft → Upcoming transition.
  *
  * Verifies all 4 blocking conditions from CLAUDE.md State Transitions:

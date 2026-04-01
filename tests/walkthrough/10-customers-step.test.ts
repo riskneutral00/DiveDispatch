@@ -1,3 +1,7 @@
+/**
+ * @module-tag slow
+ */
+
 import { describe, it, expect } from 'vitest'
 import {
   canAdvanceFromCustomers,

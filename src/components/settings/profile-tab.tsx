@@ -6,7 +6,7 @@ import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '../../../convex/_generated/api'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 const MONTHS = [
@@ -112,7 +112,18 @@ export function ProfileTab() {
 
   const appLanguage = (user as Record<string, unknown> | undefined)?.appLanguage as string | undefined
 
-  const { form, setField, serverError, saving, saved, isDirty, isValid, isUpdate, handleSubmit, loading } = useProfileForm<ProfileValues, ReturnType<typeof profileToPayload>>({
+  const {
+    form,
+    setField,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    isUpdate,
+    handleSubmit,
+    loading,
+  } = useProfileForm<ProfileValues, ReturnType<typeof profileToPayload>>({
     profile: user as Record<string, unknown> | null | undefined,
     schema: profileTabSchema,
     defaults: PROFILE_DEFAULTS,
@@ -122,18 +133,20 @@ export function ProfileTab() {
     update: (payload) => updateProfile(payload),
   })
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <span className="text-sm animate-pulse text-secondary">
-          Loading…
-        </span>
-      </div>
-    )
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      loadingVariant="pulse-text"
+      className="space-y-6"
+    >
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <GlassInput
@@ -203,12 +216,6 @@ export function ProfileTab() {
           />
         </div>
       </div>
-
-      {serverError && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{serverError}</p>
-      )}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} disabled={!isValid} label="Save" />
-    </form>
+    </ProfileFormShell>
   )
 }

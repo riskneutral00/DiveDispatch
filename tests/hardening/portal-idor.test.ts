@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * DD-151: IDOR validation for existingCustomerId in savePortalContact.
  *
  * Ensures that a caller cannot pass an existingCustomerId belonging to a

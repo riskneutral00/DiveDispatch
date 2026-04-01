@@ -1,7 +1,7 @@
 'use client'
 
+import React, { useRef, type ReactNode } from 'react'
 import { useDroppable } from '@dnd-kit/react'
-import { useRef, type ReactNode } from 'react'
 
 interface DroppableDateCellProps {
   dateString: string
@@ -14,7 +14,7 @@ const HIGHLIGHT_STYLE: React.CSSProperties = {
   transition: 'box-shadow 150ms ease',
 }
 
-export function DroppableDateCell({ dateString, disabled, children }: DroppableDateCellProps) {
+export const DroppableDateCell = React.memo(function DroppableDateCell({ dateString, disabled, children }: DroppableDateCellProps) {
   const elementRef = useRef<HTMLDivElement | null>(null)
 
   const { isDropTarget, ref } = useDroppable({
@@ -37,4 +37,4 @@ export function DroppableDateCell({ dateString, disabled, children }: DroppableD
       {children}
     </div>
   )
-}
+})

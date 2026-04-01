@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * State-machine hardening tests.
  *
  * Pure function tests: every INVALID booking and reservation transition returns false.

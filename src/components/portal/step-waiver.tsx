@@ -2,7 +2,6 @@
 
 import React, { useCallback, useRef, useState } from 'react'
 import { GlassCard } from '../ui/glass-card'
-import { GlassButton } from '../ui/glass-button'
 import { GlassCheckbox } from '../ui/glass-checkbox'
 import { GlassInput } from '../ui/glass-input'
 import { SignaturePad, SignaturePadHandle } from './signature-pad'
@@ -11,6 +10,7 @@ import { calcAgeAtDate } from '@/lib/constants/activity-rules'
 import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/waiver-text'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { isSignatureValid } from '@/lib/utils/signature-coverage'
+import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -362,28 +362,16 @@ export function StepWaiver({
         </GlassCard>
       )}
 
-      {/* Navigation */}
-      <div className="flex gap-3">
-        {onBack && (
-          <GlassButton
-            type="button"
-            variant="secondary"
-            onClick={onBack}
-            disabled={submitting}
-          >
-            Back
-          </GlassButton>
-        )}
-        <GlassButton
-          type="submit"
-          variant="primary"
-          fullWidth={!onBack}
-          loading={submitting}
-          className={onBack ? 'flex-1' : ''}
-        >
-          Continue
-        </GlassButton>
-      </div>
+      <PortalStepShell
+        onBack={onBack}
+        backVariant="secondary"
+        continueType="submit"
+        submitting={submitting}
+        continueFullWidth={!onBack}
+        continueClassName={onBack ? 'flex-1' : undefined}
+      >
+        <></>
+      </PortalStepShell>
     </form>
   )
 }

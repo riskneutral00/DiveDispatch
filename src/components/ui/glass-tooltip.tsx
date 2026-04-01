@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useRef, useId, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { TOUCH_TOOLTIP_MS } from '@/lib/constants/ui-timings'
 
@@ -11,6 +11,7 @@ interface GlassTooltipProps {
 }
 
 export function GlassTooltip({ label, children, className }: GlassTooltipProps) {
+  const tooltipId = useId()
   const [showTouch, setShowTouch] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -65,6 +66,7 @@ export function GlassTooltip({ label, children, className }: GlassTooltipProps) 
     <span
       ref={ref}
       className={`relative inline-flex ${className ?? ''}`}
+      aria-describedby={visible ? tooltipId : undefined}
       onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -72,6 +74,7 @@ export function GlassTooltip({ label, children, className }: GlassTooltipProps) 
       {children}
       {visible && pos && createPortal(
         <span
+          id={tooltipId}
           className="pointer-events-none fixed px-3 py-1.5 rounded-md text-sm font-semibold whitespace-nowrap shadow-lg"
           style={{
             top: pos.top,

@@ -10,6 +10,10 @@ describe('toHeightCm', () => {
     expect(toHeightCm('175.4', 'cm')).toBe(175)
   })
 
+  it('returns cm value rounded when fractional', () => {
+    expect(toHeightCm('175.6', 'cm')).toBe(176)
+  })
+
   it('converts inches to cm', () => {
     // 70 inches * 2.54 = 177.8, rounded to 178
     expect(toHeightCm('70', 'in')).toBe(178)
@@ -36,9 +40,17 @@ describe('toWeightKg', () => {
     expect(toWeightKg('70.35', 'kg')).toBe(70.4)
   })
 
+  it('returns kg rounded to 1 decimal when unit is kg', () => {
+    expect(toWeightKg('75.55', 'kg')).toBe(75.6)
+  })
+
   it('converts lbs to kg', () => {
     // 154 * 0.453592 = 69.853168, rounded to 69.9
     expect(toWeightKg('154', 'lbs')).toBe(69.9)
+  })
+
+  it('converts 150 lbs to kg', () => {
+    expect(toWeightKg('150', 'lbs')).toBe(68)
   })
 
   it('returns undefined for non-positive values', () => {
@@ -56,6 +68,10 @@ describe('toShoeSizeNum', () => {
   it('returns rounded-to-1dp value for valid input', () => {
     expect(toShoeSizeNum('42')).toBe(42)
     expect(toShoeSizeNum('9.5')).toBe(9.5)
+  })
+
+  it('rounds to 1 decimal', () => {
+    expect(toShoeSizeNum('42.55')).toBe(42.6)
   })
 
   it('returns undefined for non-positive values', () => {

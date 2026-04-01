@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { StakeholderRole } from '../../utils/role'
+import { testDate } from '../../../../tests/helpers/dates'
+
+// testDate(1) produces a stable future ISO date string (today + 1 day).
+// The hook under test only does string membership — no Date object usage —
+// so fake timers are unnecessary.
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -37,30 +42,32 @@ describe('useBlockedDateToggle', () => {
     mockMutate.mockResolvedValue(true)
   })
 
+  const DATE = testDate(1)
+
   it('requestToggle on unblocked date sets mode=block', () => {
     mockQueryReturn = []
     const { result } = renderToggleHook()
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
 
     expect(result.current.pendingToggle).toEqual({
-      date: '2026-04-01',
+      date: DATE,
       mode: 'block',
     })
   })
 
   it('requestToggle on blocked date sets mode=unblock', () => {
-    mockQueryReturn = ['2026-04-01']
+    mockQueryReturn = [DATE]
     const { result } = renderToggleHook()
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
 
     expect(result.current.pendingToggle).toEqual({
-      date: '2026-04-01',
+      date: DATE,
       mode: 'unblock',
     })
   })
@@ -70,7 +77,7 @@ describe('useBlockedDateToggle', () => {
     const { result } = renderToggleHook()
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
     expect(result.current.pendingToggle).not.toBeNull()
 
@@ -86,7 +93,7 @@ describe('useBlockedDateToggle', () => {
     const { result } = renderToggleHook()
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
 
     await act(async () => {
@@ -94,7 +101,7 @@ describe('useBlockedDateToggle', () => {
     })
 
     expect(mockMutate).toHaveBeenCalledWith({
-      date: '2026-04-01',
+      date: DATE,
       roleType: 'Instructor',
     })
     expect(result.current.pendingToggle).toBeNull()
@@ -102,7 +109,6 @@ describe('useBlockedDateToggle', () => {
 
   it('confirmToggle applies optimistic update (date appears in blockedDates)', async () => {
     mockQueryReturn = []
-    // Use a deferred promise to inspect state during mutation
     let resolveMutation!: (v: boolean) => void
     mockMutate.mockImplementation(
       () => new Promise<boolean>((resolve) => { resolveMutation = resolve }),
@@ -111,42 +117,36 @@ describe('useBlockedDateToggle', () => {
     const { result } = renderToggleHook()
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
 
-    // Start confirm but don't resolve yet
     let confirmPromise: Promise<void>
     act(() => {
       confirmPromise = result.current.confirmToggle()
     })
 
-    // During mutation: optimistic update should show the date
-    expect(result.current.blockedDates).toContain('2026-04-01')
+    expect(result.current.blockedDates).toContain(DATE)
     expect(result.current.isToggling).toBe(true)
 
-    // Resolve mutation
     await act(async () => {
       resolveMutation(true)
       await confirmPromise!
     })
 
-    // After mutation: optimistic cleared, falls back to server data
     expect(result.current.isToggling).toBe(false)
   })
 
   it('optimistic update reverts when mutation fails', async () => {
-    mockQueryReturn = ['2026-04-01']
+    mockQueryReturn = [DATE]
     mockMutate.mockRejectedValue(new Error('CONFIRMED_RESERVATION_EXISTS'))
 
     const { result } = renderToggleHook()
 
-    // Request unblock
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
     expect(result.current.pendingToggle?.mode).toBe('unblock')
 
-    // Confirm — mutation will reject
     await act(async () => {
       try {
         await result.current.confirmToggle()
@@ -155,8 +155,7 @@ describe('useBlockedDateToggle', () => {
       }
     })
 
-    // After rejection: reverts to server data (date still blocked)
-    expect(result.current.blockedDates).toContain('2026-04-01')
+    expect(result.current.blockedDates).toContain(DATE)
     expect(result.current.isToggling).toBe(false)
   })
 
@@ -169,11 +168,10 @@ describe('useBlockedDateToggle', () => {
 
     const { result } = renderToggleHook()
 
-    // Before
     expect(result.current.isToggling).toBe(false)
 
     act(() => {
-      result.current.requestToggle('2026-04-01')
+      result.current.requestToggle(DATE)
     })
 
     let confirmPromise: Promise<void>
@@ -181,7 +179,6 @@ describe('useBlockedDateToggle', () => {
       confirmPromise = result.current.confirmToggle()
     })
 
-    // During
     expect(result.current.isToggling).toBe(true)
 
     await act(async () => {
@@ -189,7 +186,6 @@ describe('useBlockedDateToggle', () => {
       await confirmPromise!
     })
 
-    // After
     expect(result.current.isToggling).toBe(false)
   })
 })

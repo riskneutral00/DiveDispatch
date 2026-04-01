@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import type { Id } from '../../../convex/_generated/dataModel'
-import { GlassDialog, GlassButton } from '@/components/ui'
+import { GlassDialog, GlassButton, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
 import { GENERATE_LINK_ERROR_MESSAGE } from '@/lib/constants/error-messages'
@@ -192,9 +192,7 @@ export function SendPortalLink({
 
           {/* Error */}
           {error && (
-            <p className="text-xs" role="alert" style={{ color: 'var(--color-destructive)' }}>
-              {error}
-            </p>
+            <ErrorAlert className="text-xs">{error}</ErrorAlert>
           )}
 
           {/* Actions */}

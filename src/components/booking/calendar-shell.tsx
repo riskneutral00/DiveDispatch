@@ -1,4 +1,4 @@
-import { getDaysOfWeek } from '@/lib/hooks/use-calendar-range'
+import { getDaysOfWeek } from '@/lib/utils/calendar-range'
 import { GlassCard } from '@/components/ui'
 
 interface CalendarShellProps {

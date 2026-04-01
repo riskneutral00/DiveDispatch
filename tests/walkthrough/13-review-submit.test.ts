@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * L8-13: Unit tests for submitToDraft — atomic booking submission.
  *
  * Verifies:

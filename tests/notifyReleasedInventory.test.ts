@@ -22,6 +22,7 @@ import {
   seedSnapshot,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
+import { testDate } from './helpers/dates'
 
 let t = makeT()
 beforeEach(() => {
@@ -42,9 +43,9 @@ describe('notifyReleasedInventory', () => {
 
       const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
       const sessionA = await seedSession(ctx, bookingId, unit)
-      const sessionB = await seedSession(ctx, bookingId, unit, { date: '2026-04-02', startTime: '10:00', endTime: '12:00' })
+      const sessionB = await seedSession(ctx, bookingId, unit, { date: testDate(6), startTime: '10:00', endTime: '12:00' })
       await seedSnapshot(ctx, unit, { reservedUnits: 1, availableUnits: 0 })
-      await seedSnapshot(ctx, unit, { reservedUnits: 1, availableUnits: 0, date: '2026-04-02', windowStart: '10:00' })
+      await seedSnapshot(ctx, unit, { reservedUnits: 1, availableUnits: 0, date: testDate(6), windowStart: '10:00' })
 
       const resA = await seedReservation(ctx, bookingId, unit, sessionA, { status: 'Confirmed' })
       const resB = await seedReservation(ctx, bookingId, unit, sessionB, { status: 'Confirmed' })

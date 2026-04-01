@@ -689,6 +689,113 @@ describe('myDashboard', () => {
     expect(result.requests[0].dates).toEqual([testDate(10)])
   })
 
+  it('resource role: reservationStatus on each calendar row when one unit serves many bookings', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 unit',
+      })
+
+      const bookingIds = await Promise.all([
+        seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' }),
+        seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' }),
+        seedBookingWithResources(ctx, 'dc-1', { status: 'Upcoming', instructorId: 'instructor-1' }),
+      ])
+
+      for (const bookingId of bookingIds) {
+        const sessionId = await ctx.db.insert('bookingSessions', {
+          bookingId,
+          inventoryUnitId: unitId,
+          date: testDate(10),
+          startTime: '09:00',
+          endTime: '11:00',
+          timezone: 'Asia/Bangkok',
+        })
+        await ctx.db.insert('reservations', {
+          bookingId,
+          inventoryUnitId: unitId,
+          bookingSessionId: sessionId,
+          unitsRequested: 1,
+          status: 'Confirmed',
+        })
+      }
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
+
+    expect(result.bookings).toHaveLength(3)
+    for (const b of result.bookings) {
+      expect(b.reservationStatus).toBe('Confirmed')
+    }
+  })
+
+  it('resource role: two pending reservations on same booking yield two requests with shared session dates', async () => {
+    const t = makeT()
+    const { bookingId } = await t.run(async (ctx) => {
+      await seedTestUser(ctx, 'instructor-1', 'Instructor')
+      const unitId = await seedInventoryUnit(ctx, {
+        ownerId: 'instructor-1',
+        resourceType: 'Instructor',
+        ownerType: 'Instructor',
+        displayName: 'instructor-1 unit',
+      })
+
+      const bookingId = await seedBookingWithResources(ctx, 'dc-1', {
+        status: 'Draft',
+        operatorName: 'Ocean DC',
+      })
+
+      const session1Id = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(10),
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+      const session2Id = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(11),
+        startTime: '09:00',
+        endTime: '11:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: session1Id,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: session2Id,
+        unitsRequested: 1,
+        status: 'PendingAcceptance',
+      })
+
+      return { bookingId }
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'clerk|instructor-1' })
+      .query(api.bookings.myDashboard, { activeRole: 'Instructor' })
+
+    expect(result.requests).toHaveLength(2)
+    expect(result.requests[0].bookingId).toBe(bookingId)
+    expect(result.requests[1].bookingId).toBe(bookingId)
+    const expectedDates = [testDate(10), testDate(11)]
+    expect(result.requests[0].dates).toEqual(expectedDates)
+    expect(result.requests[1].dates).toEqual(expectedDates)
+  })
+
   it('resource role: skips requests for non-existent bookings', async () => {
     const t = makeT()
 

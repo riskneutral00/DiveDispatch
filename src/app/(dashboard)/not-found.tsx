@@ -1,24 +1,24 @@
+import Link from 'next/link'
 import { Search } from 'lucide-react'
-import { GlassCard } from '@/components/ui/glass-card'
+import { GlassErrorCard } from '@/components/ui/glass-error-card'
 
 export default function DashboardNotFound() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh] px-4">
-      <GlassCard className="max-w-md w-full p-8 text-center">
-        <Search
-          size={40}
-          className="mx-auto mb-4 text-secondary"
-        />
-        <h2
-          className="text-lg font-semibold mb-2 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
+    <GlassErrorCard
+      icon={Search}
+      iconColor="var(--color-text-secondary)"
+      title="Page not found"
+      message="The page you're looking for doesn't exist or has been moved."
+      minHeight="min-h-[60vh]"
+      action={
+        <Link
+          href="/account"
+          className="text-sm font-medium underline"
+          style={{ color: 'var(--color-text-link, var(--color-primary))' }}
         >
-          Page not found
-        </h2>
-        <p className="text-sm text-secondary">
-          The page you&apos;re looking for doesn&apos;t exist or has been moved.
-        </p>
-      </GlassCard>
-    </div>
+          Back to dashboard
+        </Link>
+      }
+    />
   )
 }

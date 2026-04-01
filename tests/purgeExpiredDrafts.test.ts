@@ -345,14 +345,14 @@ describe('purgeExpiredDrafts', () => {
     expect(booking?.status).toBe('Cancelled')
   })
 
-  it('does not purge a Draft whose expiresAt equals exactly Date.now() (strict q.lt boundary)', async () => {
+  it('does not purge a Draft that is not yet expired (strict q.lt boundary)', async () => {
     const t = makeT()
 
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx)
-      // expiresAt 1ms in the future — strict less-than means this must NOT be selected
+      // expiresAt well in the future — q.lt(now) must NOT select this; +1ms races the async action.
       return seedBooking(ctx, {
-        expiresAt: Date.now() + 1,
+        expiresAt: Date.now() + 60_000,
         status: 'Draft',
       })
     })

@@ -18,6 +18,10 @@ describe('getAvailableRoles', () => {
     expect(keys).not.toContain('Instructor')
   })
 
+  it('returns correct count when one role is held', () => {
+    expect(getAvailableRoles(['DiveCenter'])).toHaveLength(ROLES.length - 1)
+  })
+
   it('returns empty array when user holds all roles', () => {
     const allRoles = ROLES.map((r) => r.clerkRole)
     const available = getAvailableRoles(allRoles)
@@ -31,5 +35,22 @@ describe('getAvailableRoles', () => {
     const agentIdx = available.findIndex((r) => r.clerkRole === 'Agent')
     const instrIdx = available.findIndex((r) => r.clerkRole === 'Instructor')
     expect(agentIdx).toBeLessThan(instrIdx)
+  })
+
+  it('preserves role config structure', () => {
+    const available = getAvailableRoles(['DiveCenter'])
+    for (const role of available) {
+      expect(role).toHaveProperty('key')
+      expect(role).toHaveProperty('clerkRole')
+      expect(role).toHaveProperty('label')
+      expect(role).toHaveProperty('isOrganizer')
+    }
+  })
+
+  it('returns original ROLES objects (not copies)', () => {
+    const available = getAvailableRoles(['DiveCenter'])
+    const agentFromRoles = ROLES.find((r) => r.clerkRole === 'Agent')
+    const agentFromAvailable = available.find((r) => r.clerkRole === 'Agent')
+    expect(agentFromAvailable).toBe(agentFromRoles)
   })
 })

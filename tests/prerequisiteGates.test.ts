@@ -14,15 +14,15 @@ beforeEach(() => {
   t = makeT()
 })
 
-// ─── CRITICAL: Instructor credential depth (Hug Ocean bug) ─────────────────
+// ─── Instructor credential: hollow inner fields ────────────────────────────
 
 describe('prerequisite gate: Instructor — credential depth', () => {
-  it('credential with empty courses[] must make completeness < 100% — currently passes', async () => {
+  it('hollow credential (blank agency + empty courses) must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedInstructorProfile(ctx, userId, {
-        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '550453', courses: [] }],
+        credential: [{ agency: '', level: 'OWSI', agencyID: '550453', courses: [] }],
         teachingLanguages: ['en'],
       })
 
@@ -32,27 +32,22 @@ describe('prerequisite gate: Instructor — credential depth', () => {
     })
   })
 
-  it('credential with 4/5 AOW specialties must make completeness < 100% — currently passes', async () => {
+  it('credential with blank agencyID must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedInstructorProfile(ctx, userId, {
-        credential: [{
-          agency: 'PADI',
-          level: 'OWSI',
-          agencyID: '550453',
-          courses: ['Navigation', 'Deep', 'PPB', 'Night'], // 4/5 — missing one specialty
-        }],
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '', courses: ['OW', 'AOW'] }],
         teachingLanguages: ['en'],
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Instructor')
-      // AOW requires 5 specialties — 4/5 should not pass
       expect(result.percentage).toBeLessThan(100)
+      expect(result.incomplete).toContain('credential')
     })
   })
 
-  it('credential with blank agency/level/agencyID must make completeness < 100% — currently passes', async () => {
+  it('credential with blank agency/level/agencyID must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -72,7 +67,7 @@ describe('prerequisite gate: Instructor — credential depth', () => {
 // ─── HIGH: DiveCenter associations hollow-array bypass ──────────────────────
 
 describe('prerequisite gate: DiveCenter — associations depth', () => {
-  it('association with blank agency and number must make completeness < 100% — currently passes', async () => {
+  it('association with blank agency and number must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'DiveCenter' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -88,23 +83,18 @@ describe('prerequisite gate: DiveCenter — associations depth', () => {
     })
   })
 
-  it('association with empty selectedSpecialties must make completeness < 100% — currently passes', async () => {
+  it('association with blank number only must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'DiveCenter' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedDiveCenterProfile(ctx, userId, {
-        associations: [{
-          agency: 'PADI',
-          number: '12345',
-          aowDays: 3,
-          selectedSpecialties: [], // should have specialties selected
-        }],
+        associations: [{ agency: 'PADI', number: '' }],
         customerLanguages: ['en'],
       })
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveCenter')
-      // AOW days set but no specialties selected — profile should be incomplete
       expect(result.percentage).toBeLessThan(100)
+      expect(result.incomplete).toContain('associations')
     })
   })
 })
@@ -112,7 +102,7 @@ describe('prerequisite gate: DiveCenter — associations depth', () => {
 // ─── HIGH: Agent associations hollow-array bypass ───────────────────────────
 
 describe('prerequisite gate: Agent — associations depth', () => {
-  it('association with blank agency and number must make completeness < 100% — currently passes', async () => {
+  it('association with blank agency and number must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Agent' })
       await ctx.db.patch(userId, {
@@ -134,7 +124,7 @@ describe('prerequisite gate: Agent — associations depth', () => {
 // ─── HIGH: DiveMaster credential hollow-array bypass ────────────────────────
 
 describe('prerequisite gate: DiveMaster — credential depth', () => {
-  it('credential with blank agency/level/agencyID must make completeness < 100% — currently passes', async () => {
+  it('credential with blank agency/level/agencyID must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'DiveMaster' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
@@ -163,7 +153,7 @@ describe('prerequisite gate: DiveMaster — credential depth', () => {
 // ─── HIGH: Boat fleet depth — inner fields unchecked ────────────────────────
 
 describe('prerequisite gate: Boat — fleet depth', () => {
-  it('fleet entry with blank boatName must make completeness < 100% — currently passes', async () => {
+  it('fleet entry with blank boatName must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Boat' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })

@@ -1,13 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { buildBarSubLabel } from '../build-bar-sub-label'
 import type { CalendarBooking } from '../../../../convex/bookings'
+import { testDate } from '../../../../tests/helpers/dates'
+
+const FIXTURE_DATE = testDate(5)
 
 function fakeBooking(overrides: Partial<CalendarBooking> = {}): CalendarBooking {
   return {
     _id: 'test-id',
     activityType: ['DSD'],
-    startDate: '2026-03-20',
-    endDate: '2026-03-20',
+    startDate: FIXTURE_DATE,
+    endDate: FIXTURE_DATE,
     status: 'Upcoming',
     diverCount: 1,
     instructorName: undefined,
@@ -54,5 +57,18 @@ describe('buildBarSubLabel', () => {
   it('non-Instructor view with no instructorName: returns undefined', () => {
     const b = fakeBooking({ instructorName: undefined, operatorName: 'Nicole Dive Center' })
     expect(buildBarSubLabel(b, 'DiveCenter')).toBeUndefined()
+  })
+
+  it('returns first name only when instructor has single name', () => {
+    const b = fakeBooking({ instructorName: 'Tanaka', operatorName: 'Nicole Dive Center' })
+    expect(buildBarSubLabel(b, 'DiveCenter')).toBe('Tanaka')
+  })
+
+  it('Instructor view: Coral Dive Resort with instructor set still shows shortened operator', () => {
+    const b = fakeBooking({
+      operatorName: 'Coral Dive Resort',
+      instructorName: 'John Smith',
+    })
+    expect(buildBarSubLabel(b, 'Instructor')).toBe('Coral DR')
   })
 })

@@ -181,9 +181,6 @@ describe('getDiverEquipmentData', () => {
           customerId: customerId2,
         })
 
-        // Patch customerProfileIds onto the booking
-        await ctx.db.patch(bookingId, { customerProfileIds: [profileId1, profileId2] })
-
         // Link booking to EM via bookingResources
         await seedBookingResource(ctx, bookingId, {
           resourceType: 'Equipment',
@@ -298,7 +295,7 @@ describe('getDiverEquipmentData', () => {
       const startDate = testDate(5)
       const endDate = testDate(7)
 
-      // Booking with 1 diver, no customerProfileIds
+      // Booking with 1 diver, no customer profiles
       const bookingId = await seedBooking(ctx, {
         startDate,
         endDate,
@@ -383,7 +380,6 @@ describe('getDiverEquipmentData', () => {
         },
       })
 
-      await ctx.db.patch(bookingId, { customerProfileIds: [profileId] })
 
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Equipment',

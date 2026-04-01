@@ -19,6 +19,16 @@ function span(
 }
 
 describe('skylinePack', () => {
+  it('returns empty array for no bookings', () => {
+    expect(skylinePack([])).toEqual([])
+  })
+
+  it('places a single span in row 0', () => {
+    const result = skylinePack([span('solo', 0, 2)])
+    expect(result).toHaveLength(1)
+    expect(result[0].row).toBe(0)
+  })
+
   it('places non-overlapping spans at row 0', () => {
     const packed = skylinePack([
       span('a', 0, 1),
@@ -93,6 +103,17 @@ describe('skylinePack', () => {
     expect(cont.row).toBe(0)
     expect(r1.row).toBe(0) // no overlap with continuation
     expect(r2.row).toBe(1) // overlaps continuation cols
+  })
+
+  it('packs three spans: full-week plus two non-overlapping segments on row 1', () => {
+    const packed = skylinePack([
+      span('a', 0, 6),
+      span('b', 0, 2),
+      span('c', 3, 5),
+    ])
+    const rowB = packed.find((b) => b.id === 'b')!.row
+    const rowC = packed.find((b) => b.id === 'c')!.row
+    expect(rowB).toBe(rowC)
   })
 })
 

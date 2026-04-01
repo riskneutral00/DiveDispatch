@@ -1,23 +1,22 @@
 'use client'
 
-import { useMutation, useQuery } from 'convex/react'
 import { Plus } from 'lucide-react'
 import { z } from 'zod'
 
-import { api } from '../../../convex/_generated/api'
-
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormLoading } from '@/components/profiles/profile-form-loading'
+import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { GlassButton } from '@/components/ui/glass-button'
+import { FormGrid, FormField } from '@/components/ui/form-grid'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { ItemCard } from '@/components/ui/item-card'
-import { SaveButton } from '@/components/ui/save-button'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  contactFieldsFromProfile,
   createOptimisticLocationOnChange,
-  locationFromProfileDoc,
+  locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -120,30 +119,38 @@ const INITIAL_FORM: FormState = {
 
 // ── Main component ───────────────────────────────────────────────────
 
-export function BoatProfileForm() {
-  const profile = useQuery(api.boats.mine)
-  const me = useQuery(api.users.getAccountDefaults)
-  const create = useMutation(api.boats.create)
-  const update = useMutation(api.boats.update)
+export type BoatProfileFormProps = {
+  profile: Record<string, unknown> | null | undefined
+  me: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+}
 
-  const { form, setField, errors, serverError, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
+export function BoatProfileForm({ profile, me, create, update }: BoatProfileFormProps) {
+
+  const {
+    form,
+    setField,
+    errors,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    loading,
+    isUpdate,
+    handleSubmit,
+  } = useProfileForm({
     profile,
     me: me ?? undefined,
     schema: profileZod,
     defaults: INITIAL_FORM,
     fromProfile: (p) => {
+      const c = contactFieldsFromProfile(p)
       const fleet = p.fleet as Record<string, unknown>[]
       return {
-        name: p.name as string,
-        location: locationFromProfileDoc({
-          placeName: p.placeName as string,
-          country: p.country as string,
-          lat: p.lat as number,
-          lng: p.lng as number,
-          placeId: p.placeId as string | null | undefined,
-        }) as LocationValue,
-        email: p.email as string,
-        phone: p.phone as string,
+        ...c,
+        location: c.location as LocationValue,
         fleet:
           fleet.length > 0
             ? fleet.map((f) => ({
@@ -163,7 +170,6 @@ export function BoatProfileForm() {
       phone: u.phone ?? '',
     }),
     toPayload: (f) => {
-      const loc = f.location!
       const fleetParsed = f.fleet.map((v) => ({
         boatName: v.boatName,
         maxPax: parseOptionalInt(v.maxPax) ?? 0,
@@ -174,11 +180,7 @@ export function BoatProfileForm() {
       }))
       return {
         name: f.name,
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
+        ...locationToPayload(f.location!),
         email: f.email,
         phone: f.phone,
         fleet: fleetParsed,
@@ -205,16 +207,19 @@ export function BoatProfileForm() {
     isUpdate,
   })
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <ProfileFormLoading variant="plain" message="Loading…" />
-      </div>
-    )
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       {/* Contact info */}
         <div className="space-y-4">
           <ProfileBasicInfo
@@ -238,9 +243,9 @@ export function BoatProfileForm() {
             phoneRequired
           />
         </div>
-      
 
-      <hr className="form-divider" />
+
+      <ProfileFormSectionDivider show />
 
       {/* Fleet */}
       <div>
@@ -271,20 +276,7 @@ export function BoatProfileForm() {
           ))}
         </div>
       </div>
-
-      {(serverError || errors['_form']) && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {serverError || errors['_form']}
-        </p>
-      )}
-      {saved && (
-        <p className="text-sm font-medium" style={{ color: 'var(--color-success)' }}>
-          Profile saved successfully.
-        </p>
-      )}
-
-      <SaveButton saving={saving} saved={saved} isDirty={isDirty} isUpdate={isUpdate} />
-    </form>
+    </ProfileFormShell>
   )
 }
 
@@ -312,22 +304,30 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-        <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
-        <GlassSimpleSelect
-          label="Boat Type"
-          value={vessel.boatType}
-          onChange={(v) => onUpdate({ boatType: v as BoatType })}
-          options={BOAT_TYPE_OPTIONS}
-          placeholder="Select type…"
-          error={errors[`fleet.${fi}.boatType`]}
-        />
-        <GlassInput label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
-        <GlassInput label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
-        <div className="sm:col-span-2">
+      <FormGrid className="mb-5">
+        <FormField size="lg">
+          <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
+        </FormField>
+        <FormField size="lg">
+          <GlassSimpleSelect
+            label="Boat Type"
+            value={vessel.boatType}
+            onChange={(v) => onUpdate({ boatType: v as BoatType })}
+            options={BOAT_TYPE_OPTIONS}
+            placeholder="Select type…"
+            error={errors[`fleet.${fi}.boatType`]}
+          />
+        </FormField>
+        <FormField size="lg">
+          <GlassInput label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
+        </FormField>
+        <FormField size="lg">
+          <GlassInput label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
+        </FormField>
+        <FormField size="full">
           <GlassInput label="Cutoff Hours (optional)" type="number" min={0} value={vessel.cutoffHours} onChange={(e) => onUpdate({ cutoffHours: e.target.value })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
-        </div>
-      </div>
+        </FormField>
+      </FormGrid>
 
       <div>
         <FormSectionHeader

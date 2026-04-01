@@ -6,7 +6,17 @@ import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useDevSwitching } from './dev-switch-context'
-import { ROLES, ROLE_BY_CLERK_ROLE, type RoleKey } from '@/lib/constants/roles'
+import {
+  ROLES,
+  ROLE_BY_CLERK_ROLE,
+  type RoleKey,
+} from '@/lib/constants/roles'
+
+/** Hide organizer seeds that are rarely used for dev switching; show resource roles instead. */
+const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([
+  'liveaboard',
+  'dive-resort',
+])
 import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
 import { GlassCard } from '@/components/ui/glass-card'
@@ -26,15 +36,25 @@ const ALL_SEED: SeedStakeholder[] = [
 
 function groupByRole(): Map<RoleKey, SeedUser[]> {
   const groups = new Map<RoleKey, SeedUser[]>()
+  const seen = new Map<RoleKey, Set<string>>()
+
   for (const s of ALL_SEED) {
-    // Use first role from the stakeholder's roles array
-    const primaryRole = s.roles?.[0]?.role
-    if (!primaryRole) continue
-    const config = ROLE_BY_CLERK_ROLE[primaryRole]
-    if (!config) continue
-    const list = groups.get(config.key) ?? []
-    list.push(s.user)
-    groups.set(config.key, list)
+    if (!s.roles?.length) continue
+    for (const { role } of s.roles) {
+      const config = ROLE_BY_CLERK_ROLE[role]
+      if (!config) continue
+      const key = config.key
+      let slugs = seen.get(key)
+      if (!slugs) {
+        slugs = new Set()
+        seen.set(key, slugs)
+      }
+      if (slugs.has(s.user.slug)) continue
+      slugs.add(s.user.slug)
+      const list = groups.get(key) ?? []
+      list.push(s.user)
+      groups.set(key, list)
+    }
   }
   return groups
 }
@@ -154,7 +174,7 @@ function DevSwitcherInner() {
               </div>
             )}
             <div className="max-h-96 overflow-y-auto">
-              {ROLES.map((config) => {
+              {ROLES.filter((c) => !DEV_SWITCHER_EXCLUDED_ROLE_KEYS.has(c.key)).map((config) => {
                 const users = GROUPED.get(config.key)
                 if (!users?.length) return null
                 const Icon = config.icon

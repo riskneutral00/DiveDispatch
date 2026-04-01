@@ -38,6 +38,38 @@ export function locationFromProfileDoc(p: {
   }
 }
 
+/** Name + standard geo columns + email/phone — shared by all role profile `fromProfile` mappers. */
+export function contactFieldsFromProfile(p: Record<string, unknown>): {
+  name: string
+  location: ProfileLocationValue
+  email: string
+  phone: string
+} {
+  return {
+    name: p.name as string,
+    location: locationFromProfileDoc({
+      placeName: p.placeName as string,
+      country: p.country as string,
+      lat: p.lat as number,
+      lng: p.lng as number,
+      placeId: p.placeId as string | null | undefined,
+    }),
+    email: p.email as string,
+    phone: p.phone as string,
+  }
+}
+
+/** Spread into toPayload return — replaces the 5-field loc spread duplicated across all profile forms. */
+export function locationToPayload(loc: ProfileLocationValue) {
+  return {
+    placeName: loc.placeName,
+    country: loc.country,
+    lat: loc.lat,
+    lng: loc.lng,
+    placeId: loc.placeId,
+  }
+}
+
 export type OptimisticLocationPatch = {
   placeName: string
   country: string
@@ -50,15 +82,13 @@ export type OptimisticLocationPatch = {
  * Sets `location` on the form and, when editing an existing profile, patches Convex
  * with the same coordinates (same pattern across role profile forms).
  */
-export function createOptimisticLocationOnChange<
-  TForm extends Record<string, unknown> & { location: ProfileLocationValue | null },
->(opts: {
-  setField: <K extends keyof TForm>(key: K, value: TForm[K]) => void
+export function createOptimisticLocationOnChange(opts: {
+  setField: (key: 'location', value: ProfileLocationValue | null) => void
   update: (patch: OptimisticLocationPatch) => Promise<unknown>
   isUpdate: boolean
 }) {
   return (loc: ProfileLocationValue | null) => {
-    opts.setField('location', loc as TForm['location'])
+    opts.setField('location', loc)
     if (loc && opts.isUpdate) {
       void opts.update({
         placeName: loc.placeName,

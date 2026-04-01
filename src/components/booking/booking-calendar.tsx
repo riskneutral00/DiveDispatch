@@ -10,13 +10,9 @@ import { UrgentBookingStrip } from '@/components/booking/urgent-booking-strip'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
 import { getBarBorderColor } from '@/lib/booking/bar-styles'
-import {
-  useCalendarRange,
-  getDaysOfWeek,
-  deriveStatus,
-  parseDateLocal,
-} from '@/lib/hooks/use-calendar-range'
-import { toISODateString } from '@/lib/utils/date'
+import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
+import { deriveStatus, getDaysOfWeek } from '@/lib/utils/calendar-range'
+import { parseDateLocal, toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { CalendarBooking } from '../../../convex/bookings'
 

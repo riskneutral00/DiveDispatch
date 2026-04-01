@@ -8,7 +8,7 @@ import { api } from '../../../convex/_generated/api'
 import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { Spinner } from '@/components/ui/spinner'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
 import { ProfileOverlay, type ProfileOverlayTab } from '../profiles/profile-overlay'
 import { BgSwitcher } from './bg-switcher'
@@ -76,11 +76,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   }, [user, isLoading, router, slug, roleSlug])
 
   if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-secondary">
-        <Spinner />
-      </div>
-    )
+    return <FullPageSpinner label="Loading…" />
   }
 
   return (

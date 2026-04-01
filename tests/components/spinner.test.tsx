@@ -29,9 +29,9 @@ describe('Spinner', () => {
     expect(spinner).toHaveClass('w-8', 'h-8')
   })
 
-  it('does not render label text by default', () => {
-    const { queryByText } = render(<Spinner />)
-    expect(queryByText(/./)).not.toBeInTheDocument()
+  it('uses a screen-reader loading label when no visible label prop', () => {
+    const { container } = render(<Spinner />)
+    expect(container.querySelector('.sr-only')).toHaveTextContent('Loading')
   })
 
   it('renders label text when provided', () => {

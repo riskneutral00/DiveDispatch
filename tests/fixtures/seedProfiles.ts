@@ -121,7 +121,7 @@ export async function seedInstructorProfile(
       { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
     ],
     verified: overrides.verified ?? true,
-    ...(overrides.teachingLanguages !== undefined ? { teachingLanguages: overrides.teachingLanguages } : {}),
+    teachingLanguages: overrides.teachingLanguages ?? ['en'],
   })
 }
 

@@ -1,4 +1,8 @@
 /**
+ * @module-tag slow
+ */
+
+/**
  * Security: Input Sanitization
  *
  * Verifies that user-supplied string fields don't allow XSS, script injection,

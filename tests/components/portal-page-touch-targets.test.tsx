@@ -42,13 +42,12 @@ describe('Portal page GlassButton compliance (DD-162)', () => {
   })
 
   it('"Continue" action in equipment step uses GlassButton', () => {
-    // The equipment step should use GlassButton for "Continue"
+    // The equipment step wraps content in PortalStepShell, which uses GlassButton for Continue.
     const continueIdx = source.indexOf("'safety')")
-    // Find the last GlassButton or <button before the Continue text
     const precedingChunk = source.slice(
       Math.max(0, continueIdx - 400),
       continueIdx,
     )
-    expect(precedingChunk).toMatch(/GlassButton/)
+    expect(precedingChunk).toMatch(/GlassButton|PortalStepShell/)
   })
 })

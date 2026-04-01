@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react'
 import { api } from '../../../convex/_generated/api'
 import { GlassInput } from '@/components/ui/glass-input'
 import { useSessionRoleContext } from '@/components/layout/session-dashboard-shell'
-import { PageTitle } from '@/components/ui/page-title'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { ROLE_FILTERS } from '@/lib/constants/resource-filters'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { filterDirectoryEntries } from '@/lib/utils/directory-filters'
@@ -201,63 +201,69 @@ export function DirectoryShell() {
       </header>
 
       {/* Page content */}
-      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
-        <PageTitle title="Directory" className="mb-6" />
-
-        {/* Role filter tabs — horizontally scrollable on mobile */}
-        <div
-          className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-1 mb-4"
-          role="tablist"
-          aria-label="Filter by role"
+      <main className="flex-1">
+        <DashboardPageFrame
+          maxWidth="7xl"
+          padding="none"
+          title="Directory"
+          className="px-4 py-6 sm:px-6 lg:px-8"
         >
-          {TABS.map((tab) => {
-            const isActive = tab.key === selectedRole
-            return (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => {
-                  setSelectedRole(tab.key)
-                  setFilterValues({})
-                  setVerifiedOnly(false)
-                }}
-                className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus-visible:ring-2"
-                style={{
-                  background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                  color: isActive
-                    ? 'var(--color-text-on-primary)'
-                    : 'var(--color-text-secondary)',
-                  border: `1px solid ${isActive ? 'transparent' : 'var(--color-glass-border)'}`,
-                  transitionDuration: 'var(--transition-speed)',
-                }}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
 
-        {/* Role-specific filter dropdowns */}
-        {activeFilters.length > 0 && (
-          <div className="mb-4">
-            <FilterBar
-              filters={activeFilters}
-              values={filterValues}
-              onChange={(id, value) =>
-                setFilterValues((prev) => ({ ...prev, [id]: value }))
-              }
-            />
+          {/* Role filter tabs — horizontally scrollable on mobile */}
+          <div
+            className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-1 mb-4"
+            role="tablist"
+            aria-label="Filter by role"
+          >
+            {TABS.map((tab) => {
+              const isActive = tab.key === selectedRole
+              return (
+                <button
+                  key={tab.key}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    setSelectedRole(tab.key)
+                    setFilterValues({})
+                    setVerifiedOnly(false)
+                  }}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus-visible:ring-2"
+                  style={{
+                    background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
+                    color: isActive
+                      ? 'var(--color-text-on-primary)'
+                      : 'var(--color-text-secondary)',
+                    border: `1px solid ${isActive ? 'transparent' : 'var(--color-glass-border)'}`,
+                    transitionDuration: 'var(--transition-speed)',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
           </div>
-        )}
 
-        {/* Results */}
-        <StakeholderGrid
-          entries={entries}
-          isLoading={isLoading}
-          preferredSlugs={preferredSlugs}
-          onTogglePreferred={handleTogglePreferred}
-        />
+          {/* Role-specific filter dropdowns */}
+          {activeFilters.length > 0 && (
+            <div className="mb-4">
+              <FilterBar
+                filters={activeFilters}
+                values={filterValues}
+                onChange={(id, value) =>
+                  setFilterValues((prev) => ({ ...prev, [id]: value }))
+                }
+              />
+            </div>
+          )}
+
+          {/* Results */}
+          <StakeholderGrid
+            entries={entries}
+            isLoading={isLoading}
+            preferredSlugs={preferredSlugs}
+            onTogglePreferred={handleTogglePreferred}
+          />
+        </DashboardPageFrame>
       </main>
     </div>
   )

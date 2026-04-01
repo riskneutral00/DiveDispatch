@@ -37,8 +37,10 @@ describe('groupRolesByHierarchy', () => {
       'Agent',
       'Instructor',
     ] as ClerkRole[])
-    // DiveCenter + Instructor in one tree, Agent in another
     expect(groups).toHaveLength(2)
+    expect(groups[0]).toContain('DiveCenter')
+    expect(groups[0]).toContain('Instructor')
+    expect(groups[1]).toEqual(['Agent'])
   })
 
   it('groups multiple resource-only roles as separate trees', () => {
