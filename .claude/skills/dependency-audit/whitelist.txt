@@ -25,6 +25,7 @@ zod
 # === devDependencies ===
 @axe-core/playwright
 @axe-core/react
+@next/bundle-analyzer
 @playwright/test
 @tailwindcss/postcss
 @testing-library/jest-dom
