@@ -9,7 +9,6 @@ import { ProfileFormFooter } from '@/components/profiles/profile-form-footer'
  *
  * ⚪ WHO OWNS useProfileForm?
  * The wrapper component or page layer. The shell is purely presentational.
- * This ensures components don't query operator-specific tables (per CLAUDE.md).
  *
  * ⚪ SAVE / VALIDITY POLICY:
  * – Default (loose): Save button enabled when dirty; hook validates on click.

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useQuery } from 'convex/react'
@@ -12,6 +13,7 @@ import { deriveDefaultRole } from '@/lib/utils/role'
 // Redirect landing — Clerk sends users here after sign-in.
 // Reads user roles from Convex and redirects to the role-scoped dashboard.
 export default function DashboardRedirectPage() {
+  const t = useTranslations('common')
   const { user, isLoading } = useCurrentUser()
   const userRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
@@ -37,7 +39,7 @@ export default function DashboardRedirectPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <Spinner label="Loading dashboard…" />
+      <Spinner label={t('loadingDashboard')} />
     </div>
   )
 }

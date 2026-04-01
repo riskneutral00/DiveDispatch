@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "计划您的潜水，随时随地畅潜无忧。"
+    "tagline": "海未开，潜已定。随时随地。"
   },
   "nav": {
     "dashboard": "仪表板",
@@ -44,6 +44,22 @@
       "cancel": "取消预订",
       "save": "保存",
       "submit": "提交"
+    },
+    "wizard": {
+      "editConfirmTitle": "编辑此预订？",
+      "editConfirmBody": "编辑将把预订恢复为草稿并释放所有资源预留。已分配的资源需重新确认。",
+      "editConfirmYes": "是，编辑预订",
+      "preparing": "正在准备预订…",
+      "preparePortalLink": "准备门户链接",
+      "preparePortalHint": "创建草稿预订，以便在完成行程前复制或发送客户门户链接。",
+      "portalLinkDelivery": "门户链接发送",
+      "operatorFallback": "运营商",
+      "editingTitle": "编辑：{ref}",
+      "cancelBookingAria": "取消预订",
+      "errors": {
+        "resetBooking": "重置预订失败",
+        "saveProgress": "保存进度失败"
+      }
     }
   },
   "common": {
@@ -61,6 +77,53 @@
     "close": "关闭",
     "search": "搜索",
     "filter": "筛选",
-    "noResults": "未找到结果"
+    "noResults": "未找到结果",
+    "loadingDashboard": "正在加载仪表板…"
+  },
+  "onboarding": {
+    "bannerMessage": "请完善资料以开始创建或接收预订。",
+    "bannerCta": "完善资料 →"
+  },
+  "errors": {
+    "root": {
+      "title": "出了点问题",
+      "message": "发生意外错误。请刷新页面，若问题持续请联系支持。"
+    },
+    "dashboard": {
+      "title": "出了点问题",
+      "message": "发生意外错误。请刷新页面，若问题持续请联系支持。"
+    },
+    "portal": {
+      "title": "出了点问题",
+      "message": "无法加载预订表单。请重试链接或联系潜店。"
+    },
+    "auth": {
+      "title": "身份验证错误",
+      "message": "登录时出错，请重试。"
+    }
+  },
+  "portal": {
+    "loadingBooking": "正在加载预订…",
+    "submissionComplete": {
+      "title": "提交完成",
+      "bodyWithOperator": "您的资料已提交。{operatorName} 将在活动前{datePart}与您联系。",
+      "bodyNoOperator": "您的资料已提交。我们将在活动前{datePart}与您联系。"
+    },
+    "dateSuffix": "（{date}）",
+    "bookingClosed": {
+      "title": "预订已关闭",
+      "message": "此预订不再接受提交。请联系潜店协助。"
+    },
+    "steps": {
+      "contact": "联系",
+      "medical": "健康",
+      "waiver": "免责",
+      "equipment": "装备",
+      "safety": "安全",
+      "submit": "提交"
+    },
+    "welcome": "欢迎，{name}",
+    "subtitle": "请完成以下预订资料",
+    "diverCount": "{count, plural, other {# 位潜水员}}"
   }
 }

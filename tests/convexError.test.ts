@@ -1,6 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { ConvexError } from 'convex/values'
-import { parseConvexError, getConvexErrorCode } from '../src/lib/utils/convex-error'
+import {
+  parseConvexError,
+  getConvexErrorCode,
+  mapPortalMutationError,
+} from '../src/lib/utils/convex-error'
+import {
+  TOKEN_EXPIRED_MESSAGE,
+  BOOKING_CLOSED_MESSAGE,
+  UNEXPECTED_ERROR_MESSAGE,
+  FORMS_INCOMPLETE_FALLBACK_MESSAGE,
+} from '../src/lib/constants/error-messages'
 
 describe('parseConvexError', () => {
   it('extracts reason from ConvexError', () => {
@@ -57,5 +67,48 @@ describe('getConvexErrorCode', () => {
 
   it('returns undefined for null', () => {
     expect(getConvexErrorCode(null)).toBeUndefined()
+  })
+})
+
+describe('mapPortalMutationError', () => {
+  it('maps TOKEN_EXPIRED', () => {
+    expect(
+      mapPortalMutationError(new ConvexError({ code: 'TOKEN_EXPIRED' })),
+    ).toBe(TOKEN_EXPIRED_MESSAGE)
+  })
+
+  it('maps BOOKING_CLOSED', () => {
+    expect(
+      mapPortalMutationError(new ConvexError({ code: 'BOOKING_CLOSED' })),
+    ).toBe(BOOKING_CLOSED_MESSAGE)
+  })
+
+  it('maps FORMS_INCOMPLETE with reason', () => {
+    expect(
+      mapPortalMutationError(
+        new ConvexError({
+          code: 'FORMS_INCOMPLETE',
+          reason: 'Contact form not submitted',
+        }),
+      ),
+    ).toBe('Incomplete: Contact form not submitted')
+  })
+
+  it('maps FORMS_INCOMPLETE without usable reason', () => {
+    expect(
+      mapPortalMutationError(new ConvexError({ code: 'FORMS_INCOMPLETE' })),
+    ).toBe(FORMS_INCOMPLETE_FALLBACK_MESSAGE)
+  })
+
+  it('falls back like parseConvexError for other codes', () => {
+    expect(
+      mapPortalMutationError(new ConvexError({ code: 'SOMETHING_ELSE' })),
+    ).toBe('SOMETHING_ELSE')
+  })
+
+  it('uses UNEXPECTED_ERROR_MESSAGE for non-ConvexError', () => {
+    expect(mapPortalMutationError(new Error('network'))).toBe(
+      UNEXPECTED_ERROR_MESSAGE,
+    )
   })
 })

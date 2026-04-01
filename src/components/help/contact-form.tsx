@@ -2,11 +2,15 @@
 
 import { Upload, X } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { useMutation } from 'convex/react'
+import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '../../../convex/_generated/api'
 import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { GlassTextarea } from '@/components/ui/glass-textarea'
+import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 
 const CATEGORIES = [
   { value: 'Bug', label: 'Bug' },
@@ -14,6 +18,8 @@ const CATEGORIES = [
   { value: 'Question', label: 'Question' },
   { value: 'Account Issue', label: 'Account Issue' },
 ] as const
+
+type SupportCategory = (typeof CATEGORIES)[number]['value']
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
@@ -40,7 +46,27 @@ function validate(form: FormState): FormErrors {
   return errors
 }
 
+async function uploadScreenshotToConvex(
+  generateUploadUrl: () => Promise<string>,
+  file: File,
+): Promise<Id<'_storage'>> {
+  const postUrl = await generateUploadUrl()
+  const result = await fetch(postUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+  if (!result.ok) {
+    throw new Error('Upload failed')
+  }
+  const json = (await result.json()) as { storageId: Id<'_storage'> }
+  return json.storageId
+}
+
 export function ContactForm() {
+  const submitSupportRequest = useMutation(api.support.submitSupportRequest)
+  const generateUploadUrl = useMutation(api.support.generateUploadUrl)
+
   const [form, setForm] = useState<FormState>({ subject: '', category: '', message: '' })
   const [errors, setErrors] = useState<FormErrors>({})
   const [screenshot, setScreenshot] = useState<File | null>(null)
@@ -86,10 +112,28 @@ export function ContactForm() {
     setSubmitting(true)
 
     try {
-      // TODO: Wire to support backend when implemented
+      let screenshotStorageId: Id<'_storage'> | undefined
+      if (screenshot) {
+        screenshotStorageId = await uploadScreenshotToConvex(generateUploadUrl, screenshot)
+      }
+      await submitSupportRequest({
+        subject: form.subject.trim(),
+        category: form.category as SupportCategory,
+        message: form.message.trim(),
+        screenshotStorageId,
+      })
       setSubmitted(true)
-    } catch {
-      setErrors({ subject: 'Submission failed. Please try again.' })
+    } catch (err: unknown) {
+      const code = getConvexErrorCode(err)
+      if (code === 'RATE_LIMITED') {
+        setErrors({
+          subject: 'Too many requests. Please wait a minute and try again.',
+        })
+      } else {
+        setErrors({
+          subject: parseConvexError(err, 'Submission failed. Please try again.'),
+        })
+      }
     } finally {
       setSubmitting(false)
     }

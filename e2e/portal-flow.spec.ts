@@ -6,6 +6,7 @@ import {
   completeWaiverStep,
   completeEquipmentStep,
 } from './helpers/portal'
+import { checkAccessibility } from './helpers/accessibility'
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
 
@@ -24,6 +25,8 @@ test.describe('portal-flow', () => {
       timeout: 10_000,
     })
     await expect(page.getByText('DSD')).toBeVisible({ timeout: 5_000 })
+
+    await checkAccessibility(page)
 
     // Contact form pre-fills first name from booking link (salvaged from walkthrough/16)
     const firstNameValue = await page.getByLabel('Legal First Name *').inputValue()

@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import enMessages from '../../../messages/en.json'
 import RootError from '../error'
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -63,7 +65,11 @@ describe('RootError boundary', () => {
     const error = new Error('Test failure')
     const reset = vi.fn()
 
-    render(<RootError error={error} reset={reset} />)
+    render(
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <RootError error={error} reset={reset} />
+      </NextIntlClientProvider>,
+    )
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
     expect(
@@ -75,7 +81,11 @@ describe('RootError boundary', () => {
     const error = new Error('Boom')
     const reset = vi.fn()
 
-    render(<RootError error={error} reset={reset} />)
+    render(
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <RootError error={error} reset={reset} />
+      </NextIntlClientProvider>,
+    )
 
     expect(consoleSpy).toHaveBeenCalledWith('[Root Error]', error)
   })
@@ -84,7 +94,11 @@ describe('RootError boundary', () => {
     const error = new Error('Kaboom')
     const reset = vi.fn()
 
-    render(<RootError error={error} reset={reset} />)
+    render(
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <RootError error={error} reset={reset} />
+      </NextIntlClientProvider>,
+    )
 
     const button = screen.getByTestId('glass-button')
     expect(button.textContent).toBe('Try again')

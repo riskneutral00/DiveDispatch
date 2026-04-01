@@ -46,12 +46,14 @@ describe('DD-075: portal page dynamic imports', () => {
       expect(dynamicBlock![0]).toContain('ssr: false')
     })
 
-    it(`shows Spinner as loading fallback for ${name}`, () => {
+    it(`shows PortalStepLoading as loading fallback for ${name}`, () => {
       const dynamicBlock = SOURCE.match(
         new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\)\\s*\\)`, 'm'),
       )
       expect(dynamicBlock).not.toBeNull()
-      expect(dynamicBlock![0]).toMatch(/loading:\s*\(\)\s*=>\s*<Spinner\s*\/>/)
+      expect(dynamicBlock![0]).toMatch(
+        /loading:\s*\(\)\s*=>\s*<PortalStepLoading\s*\/>/,
+      )
     })
   }
 

@@ -2,14 +2,10 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
+import { mapPortalMutationError } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '../../../convex/_generated/api'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-} from '@/lib/constants/error-messages'
+import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassButton } from '@/components/ui/glass-button'
 import { Spinner } from '@/components/ui/spinner'
@@ -153,21 +149,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
       setMedicalHardBlock(result.medicalHardBlock)
       setSubmitted(true)
     } catch (err) {
-      const code = getConvexErrorCode(err)
-      if (code === 'TOKEN_EXPIRED') {
-        setError(TOKEN_EXPIRED_MESSAGE)
-      } else if (code === 'BOOKING_CLOSED') {
-        setError(BOOKING_CLOSED_MESSAGE)
-      } else if (code === 'FORMS_INCOMPLETE') {
-        const reason = parseConvexError(err, '')
-        setError(
-          reason && reason !== 'FORMS_INCOMPLETE'
-            ? `Incomplete: ${reason}`
-            : 'Please complete all required steps before submitting.',
-        )
-      } else {
-        setError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
-      }
+      setError(mapPortalMutationError(err))
     } finally {
       setSubmitting(false)
     }

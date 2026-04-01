@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useMutation, useQuery } from 'convex/react'
 import dynamic from 'next/dynamic'
+import { useTranslations } from 'next-intl'
 import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '../../../../../convex/_generated/api'
 import { GlassCard } from '../../../../components/ui/glass-card'
@@ -16,29 +17,34 @@ import { computeStep, type ClientPortalStep } from '@/lib/portal/compute-step'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
 import type { EquipmentData } from '@/components/portal/step-equipment'
 
+function PortalStepLoading() {
+  const t = useTranslations('portal')
+  return <Spinner label={t('loadingBooking')} />
+}
+
 const StepMedical = dynamic(
   () => import('../../../../components/portal/step-medical').then((m) => m.StepMedical),
-  { loading: () => <Spinner />, ssr: false },
+  { loading: () => <PortalStepLoading />, ssr: false },
 )
 
 const StepWaiver = dynamic(
   () => import('../../../../components/portal/step-waiver').then((m) => m.StepWaiver),
-  { loading: () => <Spinner />, ssr: false },
+  { loading: () => <PortalStepLoading />, ssr: false },
 )
 
 const StepEquipment = dynamic(
   () => import('../../../../components/portal/step-equipment').then((m) => m.StepEquipment),
-  { loading: () => <Spinner />, ssr: false },
+  { loading: () => <PortalStepLoading />, ssr: false },
 )
 
 const StepSafety = dynamic(
   () => import('../../../../components/portal/step-safety').then((m) => m.StepSafety),
-  { loading: () => <Spinner />, ssr: false },
+  { loading: () => <PortalStepLoading />, ssr: false },
 )
 
 const PortalSubmit = dynamic(
   () => import('../../../../components/portal/portal-submit').then((m) => m.PortalSubmit),
-  { loading: () => <Spinner />, ssr: false },
+  { loading: () => <PortalStepLoading />, ssr: false },
 )
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -48,6 +54,9 @@ type PortalStep = ClientPortalStep
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PortalTokenPage() {
+  const t = useTranslations('portal')
+  const tCommon = useTranslations('common')
+
   const params = useParams()
   const router = useRouter()
   const token = typeof params.token === 'string' ? params.token : ''
@@ -86,11 +95,23 @@ export default function PortalTokenPage() {
     }
   }, [result, router])
 
+  const steps: { key: PortalStep; label: string }[] = useMemo(
+    () => [
+      { key: 'contact', label: t('steps.contact') },
+      { key: 'medical', label: t('steps.medical') },
+      { key: 'waiver', label: t('steps.waiver') },
+      { key: 'equipment', label: t('steps.equipment') },
+      { key: 'safety', label: t('steps.safety') },
+      { key: 'submit', label: t('steps.submit') },
+    ],
+    [t],
+  )
+
   // Loading
   if (result === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
+        <Spinner size="lg" label={t('loadingBooking')} />
       </div>
     )
   }
@@ -102,6 +123,16 @@ export default function PortalTokenPage() {
 
   // Token already used — customer completed portal submission
   if (result.status === 'completed') {
+    const datePart = result.startDate
+      ? t('dateSuffix', { date: result.startDate })
+      : ''
+    const body = result.operatorName
+      ? t('submissionComplete.bodyWithOperator', {
+          operatorName: result.operatorName,
+          datePart,
+        })
+      : t('submissionComplete.bodyNoOperator', { datePart })
+
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <GlassCard className="max-w-md w-full text-center" padding="lg">
@@ -112,17 +143,16 @@ export default function PortalTokenPage() {
             className="text-xl font-semibold mb-2 text-primary"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Submission Complete
+            {t('submissionComplete.title')}
           </h1>
           <p className="text-sm font-medium mb-3 text-primary">
             {result.customerName}
           </p>
           <p className="text-sm leading-relaxed mb-6 text-secondary">
-            Your submission is complete.{result.operatorName ? ` ${result.operatorName}` : ''} will be
-            in touch before your activity{result.startDate ? ` on ${result.startDate}` : ''}.
+            {body}
           </p>
           <GlassButton variant="primary" size="md" onClick={() => window.close()}>
-            Close
+            {tCommon('close')}
           </GlassButton>
         </GlassCard>
       </div>
@@ -141,11 +171,10 @@ export default function PortalTokenPage() {
             className="text-xl font-semibold mb-3 text-primary"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Booking Closed
+            {t('bookingClosed.title')}
           </h1>
           <p className="text-sm leading-relaxed text-secondary">
-            This booking is no longer accepting submissions. Please contact your dive operator for
-            assistance.
+            {t('bookingClosed.message')}
           </p>
         </GlassCard>
       </div>
@@ -154,15 +183,6 @@ export default function PortalTokenPage() {
 
   // Valid token — portal entry point
   const { customerName, operatorName, activityType, startDate, endDate, diverCount } = result
-
-  const STEPS: { key: PortalStep; label: string }[] = [
-    { key: 'contact', label: 'Contact' },
-    { key: 'medical', label: 'Medical' },
-    { key: 'waiver', label: 'Waiver' },
-    { key: 'equipment', label: 'Equipment' },
-    { key: 'safety', label: 'Safety' },
-    { key: 'submit', label: 'Submit' },
-  ]
 
   function isStepComplete(step: PortalStep): boolean {
     switch (step) {
@@ -244,10 +264,10 @@ export default function PortalTokenPage() {
             className="text-2xl sm:text-3xl font-bold text-primary"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Welcome, {customerName}
+            {t('welcome', { name: customerName })}
           </h1>
           <p className="text-sm text-secondary">
-            Please complete your booking paperwork below
+            {t('subtitle')}
           </p>
         </header>
 
@@ -271,7 +291,7 @@ export default function PortalTokenPage() {
               <div className="flex items-center gap-2">
                 <Users size={14} />
                 <span>
-                  {diverCount} {diverCount === 1 ? 'diver' : 'divers'}
+                  {t('diverCount', { count: diverCount })}
                 </span>
               </div>
             </div>
@@ -280,8 +300,8 @@ export default function PortalTokenPage() {
 
         {/* Step progress */}
         <StepIndicator
-          steps={STEPS}
-          currentIndex={STEPS.findIndex((s) => s.key === currentStep)}
+          steps={steps}
+          currentIndex={steps.findIndex((s) => s.key === currentStep)}
         />
 
         {/* Active step */}

@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "規劃您的潛水，隨時隨地暢潛無憂。"
+    "tagline": "計畫您的潛水，依計畫潛水。隨時隨地。"
   },
   "nav": {
     "dashboard": "儀表板",
@@ -15,7 +15,7 @@
   "auth": {
     "signIn": "登入",
     "signUp": "註冊",
-    "email": "電子信箱",
+    "email": "電子郵件",
     "password": "密碼",
     "forgotPassword": "忘記密碼？",
     "noAccount": "還沒有帳戶？",
@@ -25,7 +25,7 @@
     "roleResource": "我提供潛水服務"
   },
   "booking": {
-    "new": "新建預訂",
+    "new": "新增預訂",
     "edit": "編輯預訂",
     "status": {
       "draft": "草稿",
@@ -44,6 +44,22 @@
       "cancel": "取消預訂",
       "save": "儲存",
       "submit": "提交"
+    },
+    "wizard": {
+      "editConfirmTitle": "編輯此預訂？",
+      "editConfirmBody": "編輯將把預訂恢復為草稿並釋放所有資源預留。已分配的資源需重新確認。",
+      "editConfirmYes": "是，編輯預訂",
+      "preparing": "正在準備預訂…",
+      "preparePortalLink": "準備入口連結",
+      "preparePortalHint": "建立草稿預訂，以便在完成行程前複製或傳送客戶入口連結。",
+      "portalLinkDelivery": "入口連結傳送",
+      "operatorFallback": "業者",
+      "editingTitle": "編輯：{ref}",
+      "cancelBookingAria": "取消預訂",
+      "errors": {
+        "resetBooking": "重設預訂失敗",
+        "saveProgress": "儲存進度失敗"
+      }
     }
   },
   "common": {
@@ -61,6 +77,53 @@
     "close": "關閉",
     "search": "搜尋",
     "filter": "篩選",
-    "noResults": "未找到結果"
+    "noResults": "找不到結果",
+    "loadingDashboard": "正在載入儀表板…"
+  },
+  "onboarding": {
+    "bannerMessage": "請完成個人資料以開始建立或接收預訂。",
+    "bannerCta": "完成資料 →"
+  },
+  "errors": {
+    "root": {
+      "title": "發生錯誤",
+      "message": "發生未預期的錯誤。請重新整理頁面，若問題持續請聯絡支援。"
+    },
+    "dashboard": {
+      "title": "發生錯誤",
+      "message": "發生未預期的錯誤。請重新整理頁面，若問題持續請聯絡支援。"
+    },
+    "portal": {
+      "title": "發生錯誤",
+      "message": "無法載入預訂表單。請重試連結或聯絡潛水中心。"
+    },
+    "auth": {
+      "title": "驗證錯誤",
+      "message": "登入時發生錯誤，請再試一次。"
+    }
+  },
+  "portal": {
+    "loadingBooking": "正在載入預訂…",
+    "submissionComplete": {
+      "title": "提交完成",
+      "bodyWithOperator": "您的資料已提交。{operatorName} 將在活動前{datePart}與您聯絡。",
+      "bodyNoOperator": "您的資料已提交。我們將在活動前{datePart}與您聯絡。"
+    },
+    "dateSuffix": "於{date}",
+    "bookingClosed": {
+      "title": "預訂已關閉",
+      "message": "此預訂不再接受提交。請聯絡潛水業者協助。"
+    },
+    "steps": {
+      "contact": "聯絡",
+      "medical": "健康",
+      "waiver": "免責",
+      "equipment": "裝備",
+      "safety": "安全",
+      "submit": "提交"
+    },
+    "welcome": "歡迎，{name}",
+    "subtitle": "請完成以下預訂文件",
+    "diverCount": "{count, plural, other {# 位潛水員}}"
   }
 }

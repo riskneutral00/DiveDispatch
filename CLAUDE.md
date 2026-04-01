@@ -29,10 +29,6 @@ Next.js 16 renamed `middleware.ts` → `proxy.ts`. Auth proxy lives at `src/prox
 - **Clerk-authenticated mutations**: verify caller ownership via `users.slug`.
 - **Customer portal**: tokenized BookingLink (UUID, no Clerk auth) — token IS the credential.
 
-## Component Reusability
-
-Components (`src/components/`) must not query operator-specific tables (diveCenters, agents, liveaboards, diveResorts, diveHostels). All operator data arrives via props. Role-specific logic lives in the page layer (`src/app/`), not the component layer. Pre-commit hook enforces this.
-
 ## Provider Nesting Order
 
 `ClerkProvider > ConvexClerkProvider > ThemeProvider` — PostToolUse hook blocks wrong order.

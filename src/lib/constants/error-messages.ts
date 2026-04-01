@@ -12,6 +12,10 @@ export const TOKEN_EXPIRED_MESSAGE =
 /** Booking is no longer accepting portal submissions */
 export const BOOKING_CLOSED_MESSAGE = 'This booking is no longer accepting submissions.'
 
+/** Portal final submit when required steps are incomplete */
+export const FORMS_INCOMPLETE_FALLBACK_MESSAGE =
+  'Please complete all required steps before submitting.'
+
 /** Fallback for unexpected Convex errors — used as default in parseConvexError calls */
 export const UNEXPECTED_ERROR_MESSAGE = 'An unexpected error occurred. Please try again.'
 

@@ -44,6 +44,22 @@
       "cancel": "Cancel Booking",
       "save": "Save",
       "submit": "Submit"
+    },
+    "wizard": {
+      "editConfirmTitle": "Edit this booking?",
+      "editConfirmBody": "Editing will reset this booking to Draft and vacate all resource reservations. All assigned resources will need to re-confirm.",
+      "editConfirmYes": "Yes, edit booking",
+      "preparing": "Preparing booking…",
+      "preparePortalLink": "Prepare portal link",
+      "preparePortalHint": "Creates a draft booking so you can copy or send the customer portal link before finishing the itinerary.",
+      "portalLinkDelivery": "Portal link delivery",
+      "operatorFallback": "Operator",
+      "editingTitle": "Editing: {ref}",
+      "cancelBookingAria": "Cancel booking",
+      "errors": {
+        "resetBooking": "Failed to reset booking",
+        "saveProgress": "Failed to save progress"
+      }
     }
   },
   "common": {
@@ -61,6 +77,53 @@
     "close": "Close",
     "search": "Search",
     "filter": "Filter",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "loadingDashboard": "Loading dashboard…"
+  },
+  "onboarding": {
+    "bannerMessage": "Complete your profile to start creating or receiving bookings.",
+    "bannerCta": "Complete profile →"
+  },
+  "errors": {
+    "root": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred. Try refreshing the page or contact support if this persists."
+    },
+    "dashboard": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred. Try refreshing or contact support if this persists."
+    },
+    "portal": {
+      "title": "Something went wrong",
+      "message": "We couldn't load your booking form. Please try the link again or contact your dive center."
+    },
+    "auth": {
+      "title": "Authentication error",
+      "message": "Something went wrong during sign in. Please try again."
+    }
+  },
+  "portal": {
+    "loadingBooking": "Loading your booking…",
+    "submissionComplete": {
+      "title": "Submission Complete",
+      "bodyWithOperator": "Your submission is complete. {operatorName} will be in touch before your activity{datePart}.",
+      "bodyNoOperator": "Your submission is complete. We will be in touch before your activity{datePart}."
+    },
+    "dateSuffix": " on {date}",
+    "bookingClosed": {
+      "title": "Booking Closed",
+      "message": "This booking is no longer accepting submissions. Please contact your dive operator for assistance."
+    },
+    "steps": {
+      "contact": "Contact",
+      "medical": "Medical",
+      "waiver": "Waiver",
+      "equipment": "Equipment",
+      "safety": "Safety",
+      "submit": "Submit"
+    },
+    "welcome": "Welcome, {name}",
+    "subtitle": "Please complete your booking paperwork below",
+    "diverCount": "{count, plural, one {# diver} other {# divers}}"
   }
 }

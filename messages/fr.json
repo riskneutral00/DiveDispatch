@@ -44,6 +44,22 @@
       "cancel": "Annuler la réservation",
       "save": "Enregistrer",
       "submit": "Soumettre"
+    },
+    "wizard": {
+      "editConfirmTitle": "Modifier cette réservation ?",
+      "editConfirmBody": "La modification repassera la réservation en brouillon et libérera toutes les réservations de ressources. Les ressources affectées devront être reconfirmées.",
+      "editConfirmYes": "Oui, modifier",
+      "preparing": "Préparation de la réservation…",
+      "preparePortalLink": "Préparer le lien du portail",
+      "preparePortalHint": "Crée une réservation brouillon pour copier ou envoyer le lien client avant de terminer le programme.",
+      "portalLinkDelivery": "Envoi du lien du portail",
+      "operatorFallback": "Opérateur",
+      "editingTitle": "Modification : {ref}",
+      "cancelBookingAria": "Annuler la réservation",
+      "errors": {
+        "resetBooking": "Échec de la réinitialisation de la réservation",
+        "saveProgress": "Échec de l'enregistrement"
+      }
     }
   },
   "common": {
@@ -61,6 +77,53 @@
     "close": "Fermer",
     "search": "Rechercher",
     "filter": "Filtrer",
-    "noResults": "Aucun résultat trouvé"
+    "noResults": "Aucun résultat trouvé",
+    "loadingDashboard": "Chargement du tableau de bord…"
+  },
+  "onboarding": {
+    "bannerMessage": "Complétez votre profil pour créer ou recevoir des réservations.",
+    "bannerCta": "Compléter le profil →"
+  },
+  "errors": {
+    "root": {
+      "title": "Une erreur est survenue",
+      "message": "Une erreur inattendue s'est produite. Actualisez la page ou contactez le support si le problème persiste."
+    },
+    "dashboard": {
+      "title": "Une erreur est survenue",
+      "message": "Une erreur inattendue s'est produite. Actualisez ou contactez le support si le problème persiste."
+    },
+    "portal": {
+      "title": "Une erreur est survenue",
+      "message": "Impossible de charger le formulaire de réservation. Réessayez le lien ou contactez le centre de plongée."
+    },
+    "auth": {
+      "title": "Erreur d'authentification",
+      "message": "Une erreur s'est produite lors de la connexion. Veuillez réessayer."
+    }
+  },
+  "portal": {
+    "loadingBooking": "Chargement de la réservation…",
+    "submissionComplete": {
+      "title": "Envoi terminé",
+      "bodyWithOperator": "Votre envoi est complet. {operatorName} vous contactera avant l'activité{datePart}.",
+      "bodyNoOperator": "Votre envoi est complet. Nous vous contacterons avant l'activité{datePart}."
+    },
+    "dateSuffix": " le {date}",
+    "bookingClosed": {
+      "title": "Réservation fermée",
+      "message": "Cette réservation n'accepte plus d'envois. Contactez l'opérateur pour assistance."
+    },
+    "steps": {
+      "contact": "Contact",
+      "medical": "Médical",
+      "waiver": "Décharge",
+      "equipment": "Équipement",
+      "safety": "Sécurité",
+      "submit": "Envoyer"
+    },
+    "welcome": "Bienvenue, {name}",
+    "subtitle": "Veuillez compléter les documents de réservation ci-dessous",
+    "diverCount": "{count, plural, one {# plongeur} other {# plongeurs}}"
   }
 }

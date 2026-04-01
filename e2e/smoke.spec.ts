@@ -29,6 +29,15 @@ test.describe('smoke: public pages', () => {
     await checkAccessibility(page, { exclude: ['.cl-rootBox'] })
   })
 
+  test('portal expired page accessibility', async ({ page }) => {
+    await page.goto(PUBLIC_ROUTES.portalExpired)
+    await page.waitForLoadState('domcontentloaded')
+    await expect(page.getByText('This link has expired')).toBeVisible({
+      timeout: 10_000,
+    })
+    await checkAccessibility(page)
+  })
+
 })
 
 // ── Auth redirects ─────────────────────────────────────────────────────────────
@@ -64,6 +73,19 @@ test.describe('smoke: auth redirects', () => {
     const bgOverlay = await page.locator('.bg-overlay').count()
     expect(bgImage, 'Missing .bg-image layer — glass needs a background').toBeGreaterThan(0)
     expect(bgOverlay, 'Missing .bg-overlay layer — glass needs an overlay').toBeGreaterThan(0)
+  })
+
+  test.skip(!process.env.E2E_CLERK_AUTH, 'Clerk auth not configured — set E2E_CLERK_AUTH=1')
+  test('role-scoped dashboard accessibility', async ({ page }) => {
+    await signInAs(page, NICOLE.email)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+    await expect(page.getByRole('heading', { name: /Dashboard/i })).toBeVisible({
+      timeout: 10_000,
+    })
+    await page.waitForLoadState('domcontentloaded')
+    await checkAccessibility(page, {
+      exclude: ['.cl-rootBox', '[data-clerk-component]'],
+    })
   })
 
   test('unauthenticated access to dashboard is redirected to sign-in', async ({ page }) => {

@@ -56,7 +56,7 @@ export default defineConfig({
         // Re-export barrels / config-only
         'src/lib/validation/index.ts',
         'src/components/glass/index.ts',
-        'src/lib/convex.ts',
+        'src/lib/convex.tsx',
         'src/lib/nav-items.ts',
         'src/proxy.ts',
         // Convex runtime-dependent (require Convex server context)

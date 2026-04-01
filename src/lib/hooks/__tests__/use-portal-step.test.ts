@@ -7,6 +7,7 @@ import {
   TOKEN_EXPIRED_MESSAGE,
   BOOKING_CLOSED_MESSAGE,
   UNEXPECTED_ERROR_MESSAGE,
+  FORMS_INCOMPLETE_FALLBACK_MESSAGE,
 } from '@/lib/constants/error-messages'
 
 // ── Error state management ──────────────────────────────────────────────────
@@ -85,6 +86,31 @@ describe('usePortalStep — handleMutationError', () => {
       ),
     )
     expect(result.current.serverError).toBe(BOOKING_CLOSED_MESSAGE)
+  })
+
+  it('sets FORMS_INCOMPLETE copy when code is FORMS_INCOMPLETE', () => {
+    const { result } = renderHook(() => usePortalStep())
+    act(() =>
+      result.current.handleMutationError(
+        new ConvexError({
+          code: 'FORMS_INCOMPLETE',
+          reason: 'Medical questionnaire not submitted',
+        }),
+      ),
+    )
+    expect(result.current.serverError).toBe(
+      'Incomplete: Medical questionnaire not submitted',
+    )
+  })
+
+  it('uses fallback when FORMS_INCOMPLETE has no reason', () => {
+    const { result } = renderHook(() => usePortalStep())
+    act(() =>
+      result.current.handleMutationError(
+        new ConvexError({ code: 'FORMS_INCOMPLETE' }),
+      ),
+    )
+    expect(result.current.serverError).toBe(FORMS_INCOMPLETE_FALLBACK_MESSAGE)
   })
 
   it('extracts code string from ConvexError with unknown code and no reason', () => {

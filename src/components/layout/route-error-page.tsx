@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
 import { GlassButton } from '@/components/ui/glass-button'
 import { GlassErrorCard } from '@/components/ui/glass-error-card'
@@ -22,6 +23,8 @@ export function RouteErrorPage({
   message,
   minHeight,
 }: RouteErrorPageProps) {
+  const t = useTranslations('common')
+
   useEffect(() => {
     console.error(`[${logLabel}]`, error)
   }, [error, logLabel])
@@ -32,7 +35,7 @@ export function RouteErrorPage({
       title={title}
       message={message}
       minHeight={minHeight}
-      action={<GlassButton onClick={reset}>Try again</GlassButton>}
+      action={<GlassButton onClick={reset}>{t('retry')}</GlassButton>}
     />
   )
 }

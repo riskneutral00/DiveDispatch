@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { RouteErrorPage } from '@/components/layout/route-error-page'
 
 export default function DashboardError({
@@ -9,13 +10,15 @@ export default function DashboardError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const t = useTranslations('errors')
+
   return (
     <RouteErrorPage
       error={error}
       reset={reset}
       logLabel="Dashboard Error"
-      title="Something went wrong"
-      message="An unexpected error occurred. Try refreshing or contact support if this persists."
+      title={t('dashboard.title')}
+      message={t('dashboard.message')}
       minHeight="min-h-[60vh]"
     />
   )

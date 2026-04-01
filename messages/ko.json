@@ -1,12 +1,12 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "다이빙을 계획하고, 계획대로 다이빙하세요. 언제 어디서나."
+    "tagline": "다이빙를 계획하고, 계획대로 다이빙하세요. 언제 어디서나."
   },
   "nav": {
     "dashboard": "대시보드",
     "bookings": "예약",
-    "directory": "디렉토리",
+    "directory": "디렉터리",
     "resources": "리소스",
     "settings": "설정",
     "signIn": "로그인",
@@ -20,7 +20,7 @@
     "forgotPassword": "비밀번호를 잊으셨나요?",
     "noAccount": "계정이 없으신가요?",
     "hasAccount": "이미 계정이 있으신가요?",
-    "selectRole": "역할을 선택하세요",
+    "selectRole": "역할 선택",
     "roleOrganizer": "다이빙 예약을 만듭니다",
     "roleResource": "다이빙 서비스를 제공합니다"
   },
@@ -28,14 +28,14 @@
     "new": "새 예약",
     "edit": "예약 수정",
     "status": {
-      "draft": "임시저장",
+      "draft": "초안",
       "upcoming": "예정",
       "completed": "완료",
       "cancelled": "취소됨"
     },
     "reservation": {
       "pending": "대기 중",
-      "confirmed": "확인됨",
+      "confirmed": "확정",
       "vacated": "해제됨"
     },
     "actions": {
@@ -44,6 +44,22 @@
       "cancel": "예약 취소",
       "save": "저장",
       "submit": "제출"
+    },
+    "wizard": {
+      "editConfirmTitle": "이 예약을 편집할까요?",
+      "editConfirmBody": "편집하면 예약이 초안으로 되돌아가고 모든 리소스 예약이 해제됩니다. 배정된 리소스는 다시 확인이 필요합니다.",
+      "editConfirmYes": "예, 편집합니다",
+      "preparing": "예약 준비 중…",
+      "preparePortalLink": "포털 링크 준비",
+      "preparePortalHint": "일정을 완료하기 전에 고객 포털 링크를 복사하거나 보낼 수 있도록 초안 예약을 만듭니다.",
+      "portalLinkDelivery": "포털 링크 전달",
+      "operatorFallback": "운영자",
+      "editingTitle": "편집: {ref}",
+      "cancelBookingAria": "예약 취소",
+      "errors": {
+        "resetBooking": "예약 초기화 실패",
+        "saveProgress": "저장 실패"
+      }
     }
   },
   "common": {
@@ -53,7 +69,7 @@
     "cancel": "취소",
     "save": "저장",
     "delete": "삭제",
-    "edit": "수정",
+    "edit": "편집",
     "view": "보기",
     "back": "뒤로",
     "next": "다음",
@@ -61,6 +77,53 @@
     "close": "닫기",
     "search": "검색",
     "filter": "필터",
-    "noResults": "결과를 찾을 수 없습니다"
+    "noResults": "결과 없음",
+    "loadingDashboard": "대시보드 로딩 중…"
+  },
+  "onboarding": {
+    "bannerMessage": "예약을 만들거나 받으려면 프로필을 완성하세요.",
+    "bannerCta": "프로필 완성 →"
+  },
+  "errors": {
+    "root": {
+      "title": "문제가 발생했습니다",
+      "message": "예기치 않은 오류가 발생했습니다. 새로고침하거나 문제가 계속되면 지원팀에 문의하세요."
+    },
+    "dashboard": {
+      "title": "문제가 발생했습니다",
+      "message": "예기치 않은 오류가 발생했습니다. 새로고침하거나 지원팀에 문의하세요."
+    },
+    "portal": {
+      "title": "문제가 발생했습니다",
+      "message": "예약 양식을 불러올 수 없습니다. 링크를 다시 시도하거나 다이빙 센터에 문의하세요."
+    },
+    "auth": {
+      "title": "인증 오류",
+      "message": "로그인 중 오류가 발생했습니다. 다시 시도해 주세요."
+    }
+  },
+  "portal": {
+    "loadingBooking": "예약 불러오는 중…",
+    "submissionComplete": {
+      "title": "제출 완료",
+      "bodyWithOperator": "제출이 완료되었습니다. {operatorName}님이 활동 전{datePart} 연락드립니다.",
+      "bodyNoOperator": "제출이 완료되었습니다. 활동 전{datePart} 연락드립니다."
+    },
+    "dateSuffix": " ({date})",
+    "bookingClosed": {
+      "title": "예약 마감",
+      "message": "이 예약은 더 이상 제출을 받지 않습니다. 운영자에게 문의하세요."
+    },
+    "steps": {
+      "contact": "연락처",
+      "medical": "의료",
+      "waiver": "면책",
+      "equipment": "장비",
+      "safety": "안전",
+      "submit": "제출"
+    },
+    "welcome": "환영합니다, {name}",
+    "subtitle": "아래 예약 서류를 작성해 주세요",
+    "diverCount": "{count, plural, other {#명}}"
   }
 }

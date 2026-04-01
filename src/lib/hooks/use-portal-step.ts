@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-} from '@/lib/constants/error-messages'
+import { mapPortalMutationError } from '@/lib/utils/convex-error'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,10 +27,7 @@ export interface UsePortalStepReturn {
   serverError: string | null
   clearServerError: () => void
   /**
-   * Standardized mutation error handler.
-   * Maps TOKEN_EXPIRED and BOOKING_CLOSED ConvexError codes to their
-   * canonical messages. Generic ConvexErrors with a `reason` field use
-   * that reason; everything else falls back to UNEXPECTED_ERROR_MESSAGE.
+   * Standardized mutation error handler (see mapPortalMutationError).
    */
   handleMutationError: (err: unknown) => void
 
@@ -85,14 +77,7 @@ export function usePortalStep(): UsePortalStepReturn {
   const clearServerError = useCallback(() => setServerError(null), [])
 
   const handleMutationError = useCallback((err: unknown) => {
-    const code = getConvexErrorCode(err)
-    if (code === 'TOKEN_EXPIRED') {
-      setServerError(TOKEN_EXPIRED_MESSAGE)
-    } else if (code === 'BOOKING_CLOSED') {
-      setServerError(BOOKING_CLOSED_MESSAGE)
-    } else {
-      setServerError(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
-    }
+    setServerError(mapPortalMutationError(err))
   }, [])
 
   // ── Declarative validation ────────────────────────────────────────

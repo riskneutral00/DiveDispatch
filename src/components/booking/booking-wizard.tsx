@@ -1,25 +1,34 @@
 "use client";
 
-import { useReducer, useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useMutation, useQuery, useConvexAuth } from "convex/react";
-import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
 import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
   X,
 } from "lucide-react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
 import { GlassCard, GlassButton, ErrorAlert } from "@/components/ui";
 import { SendPortalLink } from "./send-portal-link";
-import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  serializeDraftState,
+  WIZARD_STEPS,
+  canAdvanceFromCustomers,
+  canAdvanceFromItinerary,
+  type WizardStep,
+  type BookingPreFill,
+} from "@/lib/booking/wizard-state";
+import { useBookingWizardModel } from "@/lib/hooks/use-booking-wizard-model";
+import { useBookingWizardData } from "@/lib/hooks/use-booking-wizard-data";
+import { useBookingWizardEffects } from "@/lib/hooks/use-booking-wizard-effects";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 const ItineraryStep = dynamic(
   () => import("./itinerary-step").then((m) => ({ default: m.ItineraryStep })),
@@ -31,32 +40,12 @@ const ReviewStep = dynamic(
   { ssr: false, loading: () => <Spinner /> },
 );
 
-import {
-  wizardReducer,
-  makeInitialState,
-  serializeDraftState,
-  deserializeDraftState,
-  WIZARD_STEPS,
-  canAdvanceFromCustomers,
-  canAdvanceFromItinerary,
-  type WizardStep,
-  type BookingPreFill,
-} from "@/lib/booking/wizard-state";
-import { useBookingDraftAutoSave } from "@/lib/hooks/use-booking-draft-auto-save";
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
 interface BookingWizardProps {
   bookingId?: string;
-  /** 'overlay' renders compact layout inside GlassDialog; 'page' renders standalone page layout */
   mode?: "page" | "overlay";
-  /** Called instead of router.push('/dashboard') when user cancels in overlay mode */
   onClose?: () => void;
-  /** Called when booking is submitted in overlay mode */
   onComplete?: () => void;
-  /** Pre-fill course entries for the first customer (Quick Book template) */
   initialCourses?: string[];
-  /** Full pre-fill from drag-to-date (courses, dates, agency, resources) */
   initialPreFill?: BookingPreFill;
 }
 
@@ -68,48 +57,55 @@ export function BookingWizard({
   initialCourses,
   initialPreFill,
 }: BookingWizardProps) {
+  const t = useTranslations("booking");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const params = useParams();
   const roleSlug = params?.roleSlug as string | undefined;
-  const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined;
+  const activeRole = roleSlug
+    ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole
+    : undefined;
   const isEditMode = !!initialBookingId;
   const isOverlay = mode === "overlay";
 
-  const [state, dispatch] = useReducer(
-    wizardReducer,
-    makeInitialState(initialBookingId ?? null),
-  );
+  const { state, dispatch, initializedRef } =
+    useBookingWizardModel(initialBookingId);
+
+  const data = useBookingWizardData({
+    state,
+    isEditMode,
+    initialBookingId,
+  });
+
+  const {
+    createDraftShell,
+    saveDraftState,
+    discardDraft,
+    editBooking,
+    convexUserForPortal,
+    existingBooking,
+    autoSaveError,
+    cancelPending,
+  } = data;
+
+  useBookingWizardEffects({
+    isEditMode,
+    isOverlay,
+    initialBookingId,
+    initialCourses,
+    initialPreFill,
+    onComplete,
+    state,
+    dispatch,
+    initializedRef,
+    existingBooking,
+  });
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [initError, setInitError] = useState<string | null>(null);
-  const [isResetting, setIsResetting] = useState(false);
   const [editResetError, setEditResetError] = useState<string | null>(null);
-
-  const { isAuthenticated } = useConvexAuth();
-  const creatingRef = useRef(false);
-  const initializedRef = useRef(false);
-
-  const createDraftShell = useMutation(
-    api.bookingDraftMutations.createDraftShell,
-  );
-  const { user: convexUserForPortal } = useCurrentUser();
+  const [isResetting, setIsResetting] = useState(false);
   const [portalDraftBusy, setPortalDraftBusy] = useState(false);
-  const saveDraftState = useMutation(api.bookingDraftMutations.saveDraftState);
-  const discardDraft = useMutation(api.bookingDraftMutations.discardDraft);
-  const editBooking = useMutation(api.bookings.edit.editBooking);
-
-  const { autoSaveError, cancelPending } = useBookingDraftAutoSave(
-    state.bookingId,
-    state,
-  );
-
-  const existingBooking = useQuery(
-    api.bookingDraftMutations.getBookingForWizard,
-    isEditMode && initialBookingId
-      ? { bookingId: initialBookingId as Id<"bookings"> }
-      : "skip",
-  );
 
   const showEditConfirm =
     isEditMode &&
@@ -119,118 +115,7 @@ export function BookingWizard({
       existingBooking.status === "Completed");
 
   const isInitializing =
-    !initError &&
-    isEditMode &&
-    (existingBooking === undefined || isResetting);
-
-  // New booking with initialCourses: pre-fill locally (no draft shell yet)
-  useEffect(() => {
-    if (isEditMode || initializedRef.current || !initialCourses?.length) return;
-    initializedRef.current = true;
-    const makeId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-    dispatch({
-      type: "RESET",
-      payload: {
-        bookingId: null,
-        customers: [{
-          id: makeId(),
-          name: "",
-          contact: {},
-          flags: [],
-          courseEntries: initialCourses.map((code) => ({
-            id: makeId(),
-            activityCode: code,
-            dates: [],
-            agency: "",
-          })),
-        }],
-      },
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, initialCourses]);
-
-  // Drag-to-date: full pre-fill (courses + dates + agency + resources)
-  useEffect(() => {
-    if (isEditMode || initializedRef.current || !initialPreFill) return;
-    initializedRef.current = true;
-    const makeId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const { courses, startDate, endDate, agency, instructorSlug, venueSlug, boatSlug, equipmentSlug, compressorSlug } = initialPreFill;
-    dispatch({
-      type: "RESET",
-      payload: {
-        bookingId: null,
-        startDate,
-        endDate,
-        agency,
-        equipment: equipmentSlug,
-        compressor: compressorSlug,
-        preFillInstructorSlug: instructorSlug || undefined,
-        preFillVenueSlug: venueSlug || undefined,
-        preFillBoatSlug: boatSlug || undefined,
-        customers: [{
-          id: makeId(),
-          name: "",
-          contact: {},
-          flags: [],
-          courseEntries: courses.length > 0
-            ? courses.map((code) => ({
-                id: makeId(),
-                activityCode: code,
-                dates: [startDate, endDate],
-                agency,
-              }))
-            : [{ id: makeId(), activityCode: "", dates: [startDate, endDate], agency }],
-        }],
-      },
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, initialPreFill]);
-
-  // Overlay mode: close overlay when booking is submitted
-  useEffect(() => {
-    if (isOverlay && state.submittedBookingId && onComplete) {
-      onComplete();
-    }
-  }, [isOverlay, state.submittedBookingId, onComplete]);
-
-  // Edit mode: redirect cancelled bookings + restore wizard state
-  useEffect(() => {
-    if (!isEditMode || existingBooking === undefined) return;
-    if (existingBooking === null) return;
-
-    if (existingBooking.status === "Cancelled") {
-      router.push(`/booking/${initialBookingId}`);
-      return;
-    }
-
-    if (
-      existingBooking.status === "Upcoming" ||
-      existingBooking.status === "Completed"
-    )
-      return;
-
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
-    if (existingBooking.draftState) {
-      const restored = deserializeDraftState(existingBooking.draftState);
-      if (restored) {
-        dispatch({ type: "RESET", payload: restored });
-        return;
-      }
-    }
-
-    dispatch({
-      type: "RESET",
-      payload: {
-        step: "customers",
-        bookingId: initialBookingId!,
-        ...(existingBooking.agentIsReferral
-          ? { referralOwnerSlug: existingBooking.ownerId as string }
-          : {}),
-      },
-    });
-  }, [isEditMode, existingBooking, initialBookingId, router]);
+    isEditMode && (existingBooking === undefined || isResetting);
 
   async function handleConfirmEdit() {
     if (!initialBookingId) return;
@@ -240,13 +125,11 @@ export function BookingWizard({
       await editBooking({ bookingId: initialBookingId as Id<"bookings"> });
     } catch (err: unknown) {
       setEditResetError(
-        parseConvexError(err, "Failed to reset booking"),
+        parseConvexError(err, t("wizard.errors.resetBooking")),
       );
       setIsResetting(false);
     }
   }
-
-  // ── Cancel / Discard ─────────────────────────────────────────────────────────
 
   async function handleCancel() {
     cancelPending();
@@ -264,13 +147,10 @@ export function BookingWizard({
     }
   }
 
-  // ── Navigation ──────────────────────────────────────────────────────────────
-
   const currentIndex = WIZARD_STEPS.indexOf(state.step);
   const isFirstStep = currentIndex === 0;
   const isLastStep = currentIndex === WIZARD_STEPS.length - 1;
 
-  // Validation gate for current step (review manages its own buttons)
   function canAdvance(): boolean {
     switch (state.step) {
       case "customers":
@@ -288,9 +168,13 @@ export function BookingWizard({
     setIsSaving(true);
 
     try {
-      // Create draft shell on first save (deferred from mount)
       let currentBookingId = state.bookingId;
-      if (!currentBookingId && !isEditMode && state.step === "itinerary" && targetStep === "review") {
+      if (
+        !currentBookingId &&
+        !isEditMode &&
+        state.step === "itinerary" &&
+        targetStep === "review"
+      ) {
         currentBookingId = await createDraftShell({
           activeRole: activeRole!,
           startDate: state.startDate,
@@ -299,7 +183,6 @@ export function BookingWizard({
         dispatch({ type: "SET_BOOKING_ID", payload: currentBookingId });
       }
 
-      // When advancing to review with sameForAll, copy first customer courses to all
       if (
         state.step === "itinerary" &&
         targetStep === "review" &&
@@ -310,7 +193,6 @@ export function BookingWizard({
       }
 
       if (currentBookingId) {
-        // Build snapshot with correct bookingId — dispatch hasn't committed yet
         const stateSnapshot = { ...state, bookingId: currentBookingId };
         await saveDraftState({
           bookingId: currentBookingId as Id<"bookings">,
@@ -318,9 +200,7 @@ export function BookingWizard({
         });
       }
     } catch (err: unknown) {
-      setSaveError(
-        parseConvexError(err, "Failed to save progress"),
-      );
+      setSaveError(parseConvexError(err, t("wizard.errors.saveProgress")));
       setIsSaving(false);
       return;
     }
@@ -338,85 +218,6 @@ export function BookingWizard({
     if (isLastStep) return;
     void saveAndNavigate(WIZARD_STEPS[currentIndex + 1]);
   }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
-
-  if (initError) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <ErrorAlert>{initError}</ErrorAlert>
-      </div>
-    );
-  }
-
-  if (showEditConfirm) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16">
-        <GlassCard padding="lg">
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle
-                size={20}
-                className="flex-shrink-0 mt-0.5"
-                style={{ color: "var(--color-warning, #fbbf24)" }}
-              />
-              <div>
-                <h2
-                  className="text-lg font-semibold text-primary"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  Edit this booking?
-                </h2>
-                <p
-                  className="text-sm mt-1 text-secondary"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  Editing will reset this booking to Draft and vacate all
-                  resource reservations. All assigned resources will need to
-                  re-confirm.
-                </p>
-              </div>
-            </div>
-            {editResetError && (
-              <ErrorAlert>{editResetError}</ErrorAlert>
-            )}
-            <div className="flex gap-3">
-              <GlassButton
-                variant="primary"
-                size="md"
-                onClick={() => void handleConfirmEdit()}
-              >
-                Yes, edit booking
-              </GlassButton>
-              <GlassButton
-                variant="secondary"
-                size="md"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </GlassButton>
-            </div>
-          </div>
-        </GlassCard>
-      </div>
-    );
-  }
-
-  if (isInitializing) {
-    return (
-      <div
-        className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center text-secondary"
-      >
-        <Spinner label="Preparing booking…" />
-      </div>
-    );
-  }
-
-  const bookingRef = initialBookingId
-    ? `#${initialBookingId.slice(-8).toUpperCase()}`
-    : state.bookingId
-      ? `#${state.bookingId.slice(-8).toUpperCase()}`
-      : null;
 
   async function ensureDraftForPortalLink(): Promise<string | null> {
     if (state.bookingId) return state.bookingId;
@@ -439,14 +240,13 @@ export function BookingWizard({
     if (!c0?.name?.trim() || !canAdvanceFromCustomers(state.customers))
       return null;
     const contact = c0.contact;
-    const contactType =
-      contact?.whatsapp
-        ? ("whatsapp" as const)
-        : contact?.line
-          ? ("line" as const)
-          : contact?.email
-            ? ("email" as const)
-            : undefined;
+    const contactType = contact?.whatsapp
+      ? ("whatsapp" as const)
+      : contact?.line
+        ? ("line" as const)
+        : contact?.email
+          ? ("email" as const)
+          : undefined;
     const contactValue =
       contact?.whatsapp ?? contact?.line ?? contact?.email ?? "";
     const emailForResend =
@@ -462,14 +262,13 @@ export function BookingWizard({
             loading={portalDraftBusy}
             onClick={() => void ensureDraftForPortalLink()}
           >
-            Prepare portal link
+            {t("wizard.preparePortalLink")}
           </GlassButton>
           <p
             className="text-xs mt-2 text-secondary"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Creates a draft booking so you can copy or send the customer portal
-            link before finishing the itinerary.
+            {t("wizard.preparePortalHint")}
           </p>
         </div>
       );
@@ -481,13 +280,15 @@ export function BookingWizard({
           className="text-xs font-medium text-secondary"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          Portal link delivery
+          {t("wizard.portalLinkDelivery")}
         </p>
         <SendPortalLink
           bookingId={state.bookingId as Id<"bookings">}
           customerName={c0.name}
           email={emailForResend}
-          operatorName={convexUserForPortal?.businessName ?? "Operator"}
+          operatorName={
+            convexUserForPortal?.businessName ?? t("wizard.operatorFallback")
+          }
           contactType={contactType}
           contactValue={contactValue || undefined}
         />
@@ -495,7 +296,6 @@ export function BookingWizard({
     );
   }
 
-  // Step content
   function renderStepContent() {
     switch (state.step) {
       case "customers":
@@ -514,16 +314,88 @@ export function BookingWizard({
           />
         );
       case "review":
-        return <ReviewStep state={state} dispatch={dispatch} isEditMode={isEditMode} />;
+        return (
+          <ReviewStep
+            state={state}
+            dispatch={dispatch}
+            isEditMode={isEditMode}
+          />
+        );
       default:
         return null;
     }
   }
 
+  const bookingRef = initialBookingId
+    ? `#${initialBookingId.slice(-8).toUpperCase()}`
+    : state.bookingId
+      ? `#${state.bookingId.slice(-8).toUpperCase()}`
+      : null;
+
   const advanceDisabled = !canAdvance();
   const isReviewStep = state.step === "review";
 
-  // In overlay mode: compact layout filling the dialog's scrollable content area
+  if (showEditConfirm) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16">
+        <GlassCard padding="lg">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                size={20}
+                className="flex-shrink-0 mt-0.5"
+                style={{ color: "var(--color-warning, #fbbf24)" }}
+              />
+              <div>
+                <h2
+                  className="text-lg font-semibold text-primary"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  {t("wizard.editConfirmTitle")}
+                </h2>
+                <p
+                  className="text-sm mt-1 text-secondary"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {t("wizard.editConfirmBody")}
+                </p>
+              </div>
+            </div>
+            {editResetError && (
+              <ErrorAlert>{editResetError}</ErrorAlert>
+            )}
+            <div className="flex gap-3">
+              <GlassButton
+                variant="primary"
+                size="md"
+                onClick={() => void handleConfirmEdit()}
+              >
+                {t("wizard.editConfirmYes")}
+              </GlassButton>
+              <GlassButton
+                variant="secondary"
+                size="md"
+                onClick={() => router.back()}
+              >
+                {tCommon("cancel")}
+              </GlassButton>
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
+
+  if (isInitializing) {
+    return (
+      <div
+        className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center text-secondary"
+      >
+        <Spinner label={t("wizard.preparing")} />
+      </div>
+    );
+  }
+
   if (isOverlay) {
     return (
       <div className="px-4 py-4 sm:px-6">
@@ -535,13 +407,10 @@ export function BookingWizard({
           </p>
         )}
 
-        {/* Progress */}
         <WizardProgress currentStep={state.step} />
 
-        {/* Step content */}
         <div className="mt-4">{renderStepContent()}</div>
 
-        {/* Errors */}
         {saveError && (
           <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
         )}
@@ -551,7 +420,6 @@ export function BookingWizard({
           </p>
         )}
 
-        {/* Navigation */}
         {!isReviewStep && (
           <div className="flex justify-between items-center mt-4 gap-4">
             <GlassButton
@@ -561,7 +429,7 @@ export function BookingWizard({
               size="md"
             >
               <ChevronLeft size={16} />
-              {isFirstStep ? "Cancel" : "Back"}
+              {isFirstStep ? tCommon("cancel") : tCommon("back")}
             </GlassButton>
 
             <GlassButton
@@ -571,7 +439,7 @@ export function BookingWizard({
               loading={isSaving}
               size="md"
             >
-              Next
+              {tCommon("next")}
               <ChevronRight size={16} />
             </GlassButton>
           </div>
@@ -582,7 +450,6 @@ export function BookingWizard({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1
@@ -590,8 +457,8 @@ export function BookingWizard({
             style={{ fontFamily: "var(--font-heading)" }}
           >
             {isEditMode && bookingRef
-              ? `Editing: ${bookingRef}`
-              : "New Booking"}
+              ? t("wizard.editingTitle", { ref: bookingRef })
+              : t("new")}
           </h1>
           <GlassButton
             variant="ghost"
@@ -600,7 +467,7 @@ export function BookingWizard({
             onClick={() => void handleCancel()}
             disabled={state.submitting}
             className="rounded-full"
-            aria-label="Cancel booking"
+            aria-label={t("wizard.cancelBookingAria")}
           >
             <X size={16} />
           </GlassButton>
@@ -614,13 +481,10 @@ export function BookingWizard({
         )}
       </div>
 
-      {/* Progress */}
       <WizardProgress currentStep={state.step} />
 
-      {/* Step content */}
       <div className="mt-6">{renderStepContent()}</div>
 
-      {/* Errors (save-state errors — review step manages its own submit errors) */}
       {saveError && (
         <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
       )}
@@ -632,7 +496,6 @@ export function BookingWizard({
         </p>
       )}
 
-      {/* Navigation — review step renders its own back+submit buttons */}
       {!isReviewStep && (
         <div className="flex justify-between items-center mt-6 gap-4">
           <GlassButton
@@ -642,7 +505,7 @@ export function BookingWizard({
             size="md"
           >
             <ChevronLeft size={16} />
-            {isFirstStep ? "Cancel" : "Back"}
+            {isFirstStep ? tCommon("cancel") : tCommon("back")}
           </GlassButton>
 
           <GlassButton
@@ -652,7 +515,7 @@ export function BookingWizard({
             loading={isSaving}
             size="md"
           >
-            Next
+            {tCommon("next")}
             <ChevronRight size={16} />
           </GlassButton>
         </div>

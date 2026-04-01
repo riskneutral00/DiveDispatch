@@ -97,4 +97,17 @@ describe('computeStep', () => {
       ),
     ).toBe('contact')
   })
+
+  it('returns "safety" when firstIncompleteStep is safety (client/UI step)', () => {
+    expect(
+      computeStep(
+        makeProgress({
+          contactComplete: true,
+          medicalComplete: true,
+          waiverComplete: true,
+          firstIncompleteStep: 'safety' as PortalProgress['firstIncompleteStep'],
+        }),
+      ),
+    ).toBe('safety')
+  })
 })

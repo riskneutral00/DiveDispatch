@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { DevSwitcher } from '@/components/dev/dev-switcher'
@@ -8,6 +9,7 @@ import { DevSwitchProvider } from '@/components/dev/dev-switch-context'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
 function OnboardingBanner() {
+  const t = useTranslations('onboarding')
   const { user, isLoading } = useCurrentUser()
   const pathname = usePathname()
   const router = useRouter()
@@ -43,7 +45,7 @@ function OnboardingBanner() {
         gap: 12,
         fontSize: 13 }}
     >
-      <span>Complete your profile to start creating or receiving bookings.</span>
+      <span>{t('bannerMessage')}</span>
       <Link
         href="/onboarding"
         style={{
@@ -53,7 +55,7 @@ function OnboardingBanner() {
           whiteSpace: 'nowrap',
         }}
       >
-        Complete profile →
+        {t('bannerCta')}
       </Link>
     </div>
   )
