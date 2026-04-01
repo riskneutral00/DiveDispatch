@@ -5,7 +5,7 @@ import type { MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
-import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES } from './seedData'
+import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -39,6 +39,10 @@ interface InventoryLine {
   displayName: string
 }
 
+function randInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 function wetsuitSizesFor(manufacturer: string): GearSizingEntry[] {
   if (manufacturer === 'ScubaPro') return SCUBAPRO_WETSUITS
   if (manufacturer === 'Aqua Lung') return AQUALUNG_WETSUITS
@@ -66,7 +70,7 @@ function buildEquipmentLines(
           gearType: gearType as GearTypeValue,
           manufacturer: brand,
           size: entry.size,
-          totalUnits: 5,
+          totalUnits: randInt(3, 8),
           displayName: `${brand} ${gearType === 'wetsuit' ? 'Wetsuit' : 'BCD'} ${entry.size}`,
         })
       }
@@ -77,7 +81,7 @@ function buildEquipmentLines(
     lines.push({
       gearType: 'fins',
       size: `EU ${finSize}`,
-      totalUnits: 5,
+      totalUnits: randInt(3, 8),
       displayName: `Fins EU ${finSize}`,
     })
   }
@@ -85,7 +89,7 @@ function buildEquipmentLines(
   lines.push({
     gearType: 'mask',
     isPrescription: false,
-    totalUnits: 15,
+    totalUnits: randInt(8, 20),
     displayName: 'Mask (Regular)',
   })
 
@@ -94,14 +98,14 @@ function buildEquipmentLines(
       gearType: 'mask',
       diopter: pm.diopter,
       isPrescription: true,
-      totalUnits: pm.qty,
+      totalUnits: randInt(1, 3),
       displayName: `Mask (Rx ${pm.diopter})`,
     })
   }
 
   lines.push({
     gearType: 'regulator',
-    totalUnits: 15,
+    totalUnits: randInt(10, 30),
     displayName: 'Regulator Set',
   })
 
@@ -208,7 +212,8 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('venues', { userId, ...s.pool })
       }
       if (s.equipment) {
-        await ctx.db.insert('equipment', { userId, ...s.equipment })
+        const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
+        await ctx.db.insert('equipment', { userId, ...equipmentProfile })
       }
       if (s.compressor) {
         await ctx.db.insert('compressors', { userId, ...s.compressor })
@@ -306,10 +311,14 @@ export const seedEquipmentInventory = internalMutation({
   args: {},
   handler: async (ctx) => {
     for (const s of ALL_STAKEHOLDERS) {
-      if (!s.equipment?.manufacturersByGearType) continue
+      if (!s.equipment) continue
 
       const emSlug = s.user.slug
-      const lines = buildEquipmentLines(s.equipment.manufacturersByGearType)
+      const lines: InventoryLine[] = s.equipment.inventoryOverrides
+        ? (s.equipment.inventoryOverrides as InventoryLine[])
+        : s.equipment.manufacturersByGearType
+          ? buildEquipmentLines(s.equipment.manufacturersByGearType)
+          : []
 
       for (const line of lines) {
         const inventoryUnitId = await ctx.db.insert('inventoryUnits', {

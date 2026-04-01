@@ -1,5 +1,5 @@
 /**
- * Equipment inventory CRUD mutations for equipment managers (DD-300).
+ * Equipment inventory mutations for equipment managers (DD-300).
  *
  * EMs can add, update, remove, and list their own equipment inventory items.
  * Each item links an equipmentInventory row to a Pooled inventoryUnit.

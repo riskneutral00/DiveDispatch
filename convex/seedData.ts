@@ -2,6 +2,11 @@
 // Consumed by convex/seed.ts internal mutations.
 
 import type { StakeholderRole } from './lib/validators'
+import {
+  SCUBAPRO_WETSUITS, SCUBAPRO_BCDS,
+  AQUALUNG_WETSUITS, AQUALUNG_BCDS,
+  MARES_WETSUITS, MARES_BCDS,
+} from './shared/gearSizing'
 export type { StakeholderRole }
 
 // ── Shared Defaults ─────────────────────────────────────────────────
@@ -90,6 +95,16 @@ interface VenueProfile {
   maxCapacity?: number
 }
 
+export interface SeedInventoryLine {
+  gearType: 'wetsuit' | 'bcd' | 'fins' | 'mask' | 'regulator'
+  manufacturer?: string
+  size?: string
+  diopter?: number
+  isPrescription?: boolean
+  totalUnits: number
+  displayName: string
+}
+
 interface EquipmentProfile {
   name: string
   placeName: string
@@ -100,6 +115,7 @@ interface EquipmentProfile {
   email: string
   phone: string
   manufacturersByGearType?: Record<string, string[]>
+  inventoryOverrides?: SeedInventoryLine[]
   verified: boolean
 }
 
@@ -193,6 +209,48 @@ export interface SeedDiveSite {
   name: string
   slug: string
   capacity: number
+}
+
+// ── Nicole Inventory Override Builder ────────────────────────────────
+
+function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
+  const lines: SeedInventoryLine[] = []
+
+  const wetsuitBrands = [
+    { name: 'ScubaPro', sizes: SCUBAPRO_WETSUITS },
+    { name: 'Aqua Lung', sizes: AQUALUNG_WETSUITS },
+    { name: 'Mares', sizes: MARES_WETSUITS },
+  ]
+  for (const { name, sizes } of wetsuitBrands) {
+    for (const entry of sizes) {
+      lines.push({ gearType: 'wetsuit', manufacturer: name, size: entry.size, totalUnits: 5, displayName: `${name} Wetsuit ${entry.size}` })
+    }
+  }
+
+  const bcdBrands = [
+    { name: 'ScubaPro', sizes: SCUBAPRO_BCDS },
+    { name: 'Aqua Lung', sizes: AQUALUNG_BCDS },
+    { name: 'Mares', sizes: MARES_BCDS },
+  ]
+  for (const { name, sizes } of bcdBrands) {
+    for (const entry of sizes) {
+      lines.push({ gearType: 'bcd', manufacturer: name, size: entry.size, totalUnits: 6, displayName: `${name} BCD ${entry.size}` })
+    }
+  }
+
+  for (let eu = 38; eu <= 47.5; eu += 0.5) {
+    const label = `EU ${eu}`
+    lines.push({ gearType: 'fins', size: label, totalUnits: 5, displayName: `Fins ${label}` })
+  }
+
+  lines.push({ gearType: 'mask', isPrescription: false, totalUnits: 10, displayName: 'Mask + Snorkel (Regular)' })
+  lines.push({ gearType: 'mask', diopter: -3.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -3.5)' })
+  lines.push({ gearType: 'mask', diopter: -4.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -4.5)' })
+  lines.push({ gearType: 'mask', diopter: -5.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -5.5)' })
+
+  lines.push({ gearType: 'regulator', manufacturer: 'ScubaPro', totalUnits: 50, displayName: 'ScubaPro Regulator Set' })
+
+  return lines
 }
 
 // ── Route Helpers ───────────────────────────────────────────────────
@@ -423,6 +481,7 @@ export const NICOLE_DC: SeedStakeholder = {
       wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
       bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
     },
+    inventoryOverrides: buildNicoleInventoryOverrides(),
     verified: VERIFIED,
   },
 }
