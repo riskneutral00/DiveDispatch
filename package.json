@@ -6,6 +6,7 @@
     "car": "bash scripts/car.sh",
     "dev": "next dev",
     "build": "next build",
+    "analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint",
     "seed": "npm run seed:force",
@@ -20,6 +21,7 @@
     "test:focus": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage --passWithNoTests",
+    "i18n:verify": "node scripts/verify-i18n-keys.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:isolated": "bash scripts/e2e-preview.sh",
     "test:e2e:quick": "npm run seed:force && npx playwright test"
@@ -47,6 +49,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@axe-core/react": "^4.11.1",
+    "@next/bundle-analyzer": "^16.2.2",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
