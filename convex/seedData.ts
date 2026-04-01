@@ -163,6 +163,8 @@ interface InstructorProfile {
   placeId?: string
   email: string
   phone: string
+  /** ISO-ish codes, aligned with `users.customerLanguages` / directory. */
+  teachingLanguages: string[]
   credential: {
     agency: string
     level: string
@@ -664,7 +666,31 @@ export const ANDAMAN_EXPLORER: SeedStakeholder = {
   },
 }
 
-// ── 12. Coral Bay Resort (DiveResort) ─────────────────────────────
+// ── 12. Chalong Pier — standalone compressor (slug matches convex/seedBookingData COMPRESSOR_SLUG)
+
+export const CHALONG_COMPRESSOR: SeedStakeholder = {
+  user: {
+    slug: 'x4kp2m',
+    email: 'compressor-chalong+clerk_test@divedispatch.dev',
+    name: 'Sombat Charoensuk',
+    firstName: 'Sombat',
+    lastName: 'Charoensuk',
+    businessName: 'Compressor Shop Chalong Pier',
+    appLanguage: 'th',
+    phone: '+66-81-234-5014',
+  },
+  roles: [{ role: 'Compressor' }],
+  compressor: {
+    name: 'Compressor Shop Chalong Pier',
+    ...CHALONG,
+    email: 'compressor-chalong@divedispatch.dev',
+    phone: '+66-76-395-001',
+    gasMixes: ['air', 'nitrox'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 13. Coral Bay Resort (DiveResort) ─────────────────────────────
 
 export const CORAL_BAY_RESORT: SeedStakeholder = {
   user: {
@@ -708,6 +734,7 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   SIROLO,
   PRAY_DC,
   AMANDA,
+  CHALONG_COMPRESSOR,
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
 ]

@@ -11,6 +11,7 @@ import {
   getBookingIdsForResource,
   type BookingResource,
 } from './bookingResources'
+import { batchGet } from './lib/batch'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS } from './shared/statuses'
 
@@ -370,20 +371,30 @@ export async function _myDashboard(
     (b) => b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming || b.status === BOOKING_STATUS.Completed,
   )
 
-  // Build calendar bookings, attaching caller's reservation status for resource roles
-  // Batch-fetch reservations for all filtered bookings if resource role
+  // Reservations on caller's units only: O(units × statuses) index scans, not O(bookings).
   let reservationMap = new Map<string, ReservationDoc[]>()
-  if (isResourceRole && callerUnitIds.size > 0) {
-    const entries = await Promise.all(
-      filteredBookings.map(async (b) => {
-        const reservations = await ctx.db
-          .query('reservations')
-          .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
-          .collect()
-        return [b._id as string, reservations] as const
-      }),
+  if (isResourceRole && inventoryUnits.length > 0) {
+    const statuses = Object.values(RESERVATION_STATUS)
+    const rowsNested = await Promise.all(
+      inventoryUnits.flatMap((iu) =>
+        statuses.map((status) =>
+          ctx.db
+            .query('reservations')
+            .withIndex('by_inventoryUnitId_status', (q) =>
+              q.eq('inventoryUnitId', iu._id).eq('status', status),
+            )
+            .collect(),
+        ),
+      ),
     )
-    reservationMap = new Map(entries)
+    for (const rows of rowsNested) {
+      for (const r of rows) {
+        const bid = r.bookingId as string
+        const list = reservationMap.get(bid) ?? []
+        list.push(r as ReservationDoc)
+        reservationMap.set(bid, list)
+      }
+    }
   }
 
   const calendarBookings: CalendarBooking[] = filteredBookings.map((b) => {
@@ -417,28 +428,45 @@ export async function _myDashboard(
       )
     ).flat()
 
-    const requestItems = await Promise.all(
-      allPending.map(async (res) => {
-        const booking = await ctx.db.get(res.bookingId as Id<"bookings">)
-        if (!booking) return null
-
-        const sessions = await ctx.db
-          .query('bookingSessions')
-          .withIndex('by_bookingId', (q) => q.eq('bookingId', res.bookingId))
-          .collect()
-
-        const dates: string[] = [...new Set<string>(sessions.map((s) => s.date as string))].sort()
-
-        return {
-          _id: res._id as string,
-          bookingId: res.bookingId as string,
-          activityType: booking.activityType as string[],
-          dates,
-          status: res.status as string,
-          ownerName: booking.operatorName as string,
-        } satisfies RequestItem
-      }),
+    const uniqueRequestBookingIds = [...new Set(allPending.map((r) => r.bookingId as string))]
+    const bookingDocs = await batchGet(
+      ctx,
+      uniqueRequestBookingIds.map((id) => id as Id<'bookings'>),
     )
+    const bookingById = new Map<string, BookingDoc>()
+    for (let i = 0; i < uniqueRequestBookingIds.length; i++) {
+      const b = bookingDocs[i]
+      if (b) bookingById.set(uniqueRequestBookingIds[i], b as BookingDoc)
+    }
+
+    const sessionsLists = await Promise.all(
+      uniqueRequestBookingIds.map((id) =>
+        ctx.db
+          .query('bookingSessions')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
+          .collect(),
+      ),
+    )
+    const sessionsByBookingId = new Map(
+      uniqueRequestBookingIds.map((id, i) => [id, sessionsLists[i]]),
+    )
+
+    const requestItems = allPending.map((res) => {
+      const booking = bookingById.get(res.bookingId as string)
+      if (!booking) return null
+
+      const sessions = sessionsByBookingId.get(res.bookingId as string) ?? []
+      const dates: string[] = [...new Set<string>(sessions.map((s) => s.date as string))].sort()
+
+      return {
+        _id: res._id as string,
+        bookingId: res.bookingId as string,
+        activityType: booking.activityType as string[],
+        dates,
+        status: res.status as string,
+        ownerName: booking.operatorName as string,
+      } satisfies RequestItem
+    })
 
     requests = requestItems.filter((r): r is RequestItem => r !== null)
   }

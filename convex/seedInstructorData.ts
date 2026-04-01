@@ -34,12 +34,15 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     phone,
   }
 
+  const instructorCourses =
+    role === 'DiveMaster' ? ([] as string[]) : def.courses.length > 0 ? def.courses : ['OW']
+
   const credential = def.credentials.map((c, i) => ({
     agency: c.agency,
     level: c.level,
     agencyID: c.agency === 'PADI' ? `PADI-${300000 + index * 10 + i}` : `SSI-${500000 + index * 10 + i}`,
-    // DiveMasters have no courses; Instructors get their specialty courses
-    courses: role === 'DiveMaster' ? [] as string[] : def.courses,
+    // DiveMasters have no courses; Instructors need at least one course code (completeness + schema semantics)
+    courses: instructorCourses,
   }))
 
   return {
@@ -50,6 +53,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
       ...PHUKET,
       email,
       phone,
+      teachingLanguages: ['en'],
       credential,
       verified: true,
     },

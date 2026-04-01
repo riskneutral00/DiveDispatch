@@ -3,6 +3,7 @@ import { internalAction, internalMutation } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
 import { HOLD_TTL_MS } from './lib/auth'
+import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 import { type CourseCode } from './shared/courseCodes'
 import { batchDelete } from './lib/batch'
 
@@ -202,8 +203,25 @@ export const insertDemoBatch = internalMutation({
       Promise.all(args.bookings.map((b) => ctx.db.insert('bookings', b))),
     ])
 
-    // Insert profiles and resources in parallel (depend on resolved IDs from above)
+    // Insert portal links, profiles, and resources in parallel (depend on resolved IDs from above)
     await Promise.all([
+      Promise.all(
+        args.profiles
+          .filter((p) => bookingIds[p.bookingLocalIndex] && customerIds[p.customerLocalIndex])
+          .map((p) => {
+            const bookingDoc = args.bookings[p.bookingLocalIndex]
+            const customerDoc = args.customers[p.customerLocalIndex]
+            const now = Date.now()
+            return ctx.db.insert('bookingLinks', {
+              bookingId: bookingIds[p.bookingLocalIndex],
+              token: p.linkToken,
+              expiresAt: now + BOOKING_LINK_TTL_MS,
+              customerName: `${customerDoc.legalFirstName} ${customerDoc.legalLastName}`,
+              email: customerDoc.email,
+              ...(bookingDoc?.status !== 'Draft' ? { usedAt: now } : {}),
+            })
+          }),
+      ),
       Promise.all(
         args.profiles
           .filter((p) => bookingIds[p.bookingLocalIndex] && customerIds[p.customerLocalIndex])

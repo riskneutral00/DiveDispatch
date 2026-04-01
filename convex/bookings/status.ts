@@ -215,15 +215,21 @@ async function runCompletionBatch(
   const more = upcoming.length > 100
   let completed = 0
 
-  for (const booking of batch) {
-    const sessions = await ctx.db
-      .query('bookingSessions')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-      .collect()
+  const sessionsByBooking = await Promise.all(
+    batch.map((b) =>
+      ctx.db
+        .query('bookingSessions')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
+        .collect(),
+    ),
+  )
+
+  for (let i = 0; i < batch.length; i++) {
+    const booking = batch[i]
+    const sessions = sessionsByBooking[i]
 
     if (sessions.length === 0) continue
 
-    // Last session = max date, then max endTime (both YYYY-MM-DD / HH:MM are lex-sortable)
     const last = sessions.reduce((latest, s) => {
       if (s.date > latest.date) return s
       if (s.date === latest.date && s.endTime > latest.endTime) return s
@@ -231,7 +237,7 @@ async function runCompletionBatch(
     })
 
     if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // batch-exempt: cron batch mutation, each booking patched conditionally inside bounded loop
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed })
       await logBookingChange(ctx, {
         bookingId: booking._id,
         action: 'completed',

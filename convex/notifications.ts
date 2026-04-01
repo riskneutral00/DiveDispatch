@@ -171,12 +171,12 @@ export async function _getUnreadCountHandler(
   const { user: caller } = await requireAuth(ctx)
   if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-  const notifications = await ctx.db
+  const unread = await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+    .withIndex('by_userId_readAt', (q) => q.eq('userId', args.userId).eq('readAt', undefined))
     .collect()
 
-  return notifications.filter((n) => n.readAt === undefined).length
+  return unread.length
 }
 
 export const getUnreadCount = query({

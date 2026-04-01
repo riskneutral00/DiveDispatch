@@ -290,6 +290,7 @@ export const seedInstructors = internalMutation({
             level: c.level,
             agencyID: c.agencyID,
           })),
+          teachingLanguages: s.instructor.teachingLanguages,
           verified: s.instructor.verified,
         })
       } else if (s.instructor) {

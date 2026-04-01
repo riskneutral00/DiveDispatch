@@ -3,7 +3,7 @@ import { mutation } from './_generated/server'
 import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { tryAutoAdvance, canReservationTransition, isActiveReservation } from './bookings/_shared'
+import { tryAutoAdvance, canReservationTransition, isActiveReservation, isSessionStarted } from './bookings/_shared'
 import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
@@ -510,25 +510,24 @@ export const acceptByBookingForCaller = mutation({
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No pending reservations found for this booking.' })
     }
 
-    for (const res of pendingForCaller) {
-      await _acceptHandler(ctx, { reservationId: res._id as string })
-    }
+    const confirmedAt = Date.now()
+    await batchPatch(ctx, pendingForCaller.map((res) => [res._id, {
+      status: RESERVATION_STATUS.Confirmed, confirmedAt,
+    }] as const))
+
+    await logBookingChange(ctx, {
+      bookingId: args.bookingId,
+      action: 'reservation_accepted',
+      actorSlug: caller.slug,
+      actorType: 'resource',
+      note: `Bulk accepted ${pendingForCaller.length} reservation(s) for caller`,
+    })
+
+    await tryAutoAdvance(ctx, args.bookingId)
   },
 })
 
 // ─── NoShow ──────────────────────────────────────────────────────────────────
-
-/**
- * Returns true if the session's start time has passed (in its timezone).
- */
-function hasSessionStarted(session: { date: string; startTime: string; timezone?: string }): boolean {
-  const tz = session.timezone ?? 'Asia/Bangkok'
-  const nowLocal = new Date().toLocaleString('en-US', { timeZone: tz })
-  const now = new Date(nowLocal)
-
-  const sessionStart = new Date(`${session.date}T${session.startTime}:00`)
-  return now >= sessionStart
-}
 
 export async function _markNoShowHandler(
   ctx: MutationCtx,
@@ -556,9 +555,9 @@ export async function _markNoShowHandler(
     })
   }
 
-  // Time gate: session must have started
+  // Time gate: session must have started (timezone-aware via Intl.DateTimeFormat)
   const session = await ctx.db.get(reservation.bookingSessionId)
-  if (!session || !hasSessionStarted(session)) {
+  if (!session || !isSessionStarted(session.date, session.startTime, session.timezone ?? 'Asia/Bangkok')) {
     throw new ConvexError({
       code: ErrorCode.TOO_EARLY,
       reason: 'Cannot mark NoShow before session start time.',

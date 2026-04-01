@@ -113,7 +113,6 @@ export default defineSchema({
     status: bookingStatus,
     createdAt: v.number(),
     holdTTL: v.number(),
-    customerProfileIds: v.optional(v.array(v.id('customerProfiles'))),
     submittedAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
     paid: v.boolean(),
@@ -313,6 +312,7 @@ export default defineSchema({
 
   // ── L1: Stakeholder Preferences ─────────────────────────────────────
 
+  // noWorkAfterTime: optional until scheduling UI exposes it (see stakeholderPreferences.upsert).
   stakeholderPreferences: defineTable({
     stakeholderId: v.string(),
     stakeholderType: stakeholderType,
@@ -388,7 +388,7 @@ export default defineSchema({
         courses: v.array(v.string()),
       }),
     ),
-    teachingLanguages: v.optional(v.array(v.string())),
+    teachingLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -452,7 +452,6 @@ export default defineSchema({
     venueType: venueType,
     isPublic: v.boolean(),
     confinedCapable: v.boolean(),
-    openWaterCapable: v.optional(v.boolean()),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
     maxCapacity: v.optional(v.number()),
@@ -583,7 +582,7 @@ export default defineSchema({
         agencyID: v.string(),
       }),
     ),
-    teachingLanguages: v.optional(v.array(v.string())),
+    teachingLanguages: v.array(v.string()),
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 

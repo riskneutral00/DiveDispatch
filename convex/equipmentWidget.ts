@@ -116,90 +116,88 @@ export const getDiverEquipmentData = query({
         b!.startDate <= args.dateRangeEnd && b!.endDate >= args.dateRangeStart,
     )
 
-    // Build booking rows
-    const bookingRows: BookingRow[] = []
-    for (const booking of bookingsInRange) {
-      if (!booking) continue
-      // Bags for this booking (sorted by bagNumber for positional diver mapping)
-      const bags = await ctx.db
-        .query('equipmentBags')
-        .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-        .collect()
-      const sortedBags = [...bags].sort((a, b) =>
-        String(a.bagNumber).localeCompare(String(b.bagNumber)),
-      )
+    // Build booking rows (parallel per booking — bags + profiles)
+    const bookingRows: BookingRow[] = await Promise.all(
+      bookingsInRange.map(async (booking) => {
+        const bags = await ctx.db
+          .query('equipmentBags')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
+          .collect()
+        const sortedBags = [...bags].sort((a, b) =>
+          String(a.bagNumber).localeCompare(String(b.bagNumber)),
+        )
 
-      // Fetch customer profiles and their linked customers in parallel
-      const profileIds = booking.customerProfileIds ?? []
-      const profiles = await Promise.all(
-        profileIds.map((id) => ctx.db.get(id)),
-      )
-      const customerIds = profiles.map((p) => p?.customerId ?? null)
-      const customers = await batchGet(ctx, customerIds.filter(Boolean) as Id<'customers'>[])
-      const customerMap = new Map(
-        customerIds.filter(Boolean).map((id, i) => [id!, customers[i]] as const),
-      )
+        const profiles = await ctx.db
+          .query('customerProfiles')
+          .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
+          .collect()
+        const customerIds = profiles.map((p) => p?.customerId ?? null)
+        const customers = await batchGet(ctx, customerIds.filter(Boolean) as Id<'customers'>[])
+        const customerMap = new Map(
+          customerIds.filter(Boolean).map((id, i) => [id!, customers[i]] as const),
+        )
 
-      const diverRows: DiverRow[] = []
-      for (let i = 0; i < booking.divers.length; i++) {
-        const diver = booking.divers[i]
-        const profile = profiles[i] ?? null
+        const diverRows: DiverRow[] = []
+        for (let i = 0; i < booking.divers.length; i++) {
+          const diver = booking.divers[i]
+          const profile = profiles[i] ?? null
 
-        let heightCm: number | undefined
-        let weightKg: number | undefined
-        let shoeSize: number | undefined
-        let shoeSizeUnit: string | undefined
-        let needsPoweredLenses: boolean | undefined
-        let prescriptionStrength: string | undefined
-        let rentalChecklist: RentalChecklist | undefined
+          let heightCm: number | undefined
+          let weightKg: number | undefined
+          let shoeSize: number | undefined
+          let shoeSizeUnit: string | undefined
+          let needsPoweredLenses: boolean | undefined
+          let prescriptionStrength: string | undefined
+          let rentalChecklist: RentalChecklist | undefined
 
-        if (profile) {
-          rentalChecklist = profile.rentalChecklist as RentalChecklist | undefined
-          if (profile.customerId) {
-            const customer = customerMap.get(profile.customerId)
-            if (customer) {
-              heightCm = customer.heightCm
-              weightKg = customer.weightKg
-              shoeSize = customer.shoeSize
-              shoeSizeUnit = customer.shoeSizeUnit
-              needsPoweredLenses = customer.needsPoweredLenses
-              prescriptionStrength = customer.prescriptionStrength
+          if (profile) {
+            rentalChecklist = profile.rentalChecklist as RentalChecklist | undefined
+            if (profile.customerId) {
+              const customer = customerMap.get(profile.customerId)
+              if (customer) {
+                heightCm = customer.heightCm
+                weightKg = customer.weightKg
+                shoeSize = customer.shoeSize
+                shoeSizeUnit = customer.shoeSizeUnit
+                needsPoweredLenses = customer.needsPoweredLenses
+                prescriptionStrength = customer.prescriptionStrength
+              }
             }
           }
+
+          const bag = sortedBags[i]
+          diverRows.push({
+            diverIndex: i,
+            name: diver.name,
+            flag: diver.flag,
+            heightCm,
+            weightKg,
+            shoeSize,
+            shoeSizeUnit,
+            needsPoweredLenses,
+            prescriptionStrength,
+            rentalChecklist,
+            bag: bag
+              ? {
+                  bagId: String(bag._id),
+                  bagNumber: String(bag.bagNumber),
+                  status: bag.status as BagStatus,
+                }
+              : undefined,
+          })
         }
 
-        const bag = sortedBags[i]
-        diverRows.push({
-          diverIndex: i,
-          name: diver.name,
-          flag: diver.flag,
-          heightCm,
-          weightKg,
-          shoeSize,
-          shoeSizeUnit,
-          needsPoweredLenses,
-          prescriptionStrength,
-          rentalChecklist,
-          bag: bag
-            ? {
-                bagId: String(bag._id),
-                bagNumber: String(bag.bagNumber),
-                status: bag.status as BagStatus,
-              }
-            : undefined,
-        })
-      }
-
-      bookingRows.push({
-        bookingId: String(booking._id),
-        startDate: booking.startDate,
-        endDate: booking.endDate,
-        activityType: booking.activityType,
-        operatorName: booking.operatorName,
-        diverCount: booking.divers.length,
-        divers: diverRows,
-      })
-    }
+        return {
+          bookingId: String(booking._id),
+          startDate: booking.startDate,
+          endDate: booking.endDate,
+          activityType: booking.activityType,
+          operatorName: booking.operatorName,
+          diverCount: booking.divers.length,
+          divers: diverRows,
+        }
+      }),
+    )
 
     // Gear sizing entries: collect all for this EM's manufacturer preferences
     const mbgt = emProfile.manufacturersByGearType as Record<string, string[]> | undefined

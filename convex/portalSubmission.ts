@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { z } from 'zod'
 import { mutation, query } from './_generated/server'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
-import { resolvePortalToken } from './lib/portal'
+import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
 import { checkRateLimit } from './lib/rateLimiter'
 import { validateOrThrow } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
@@ -47,21 +47,9 @@ export const getPortalStatus = query({
     portalWaiver: boolean
     alreadySubmitted: boolean
   } | null> => {
-    const link = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_token', (q) => q.eq('token', args.token))
-      .unique()
-    if (!link) return null
-    if (link.expiresAt < Date.now()) return null
-
-    const booking = await ctx.db.get(link.bookingId)
-    if (!booking) return null
-
-    const profile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q) => q.eq('linkToken', args.token))
-      .unique()
-    if (!profile) return null
+    const resolved = await resolvePortalTokenSoft(ctx, args.token)
+    if (!resolved) return null
+    const { booking, profile } = resolved
 
     const medicalAnswers = profile.medicalAnswers
       ? await safeDecryptMedical(profile.medicalAnswers)

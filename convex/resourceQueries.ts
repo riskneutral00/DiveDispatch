@@ -67,14 +67,19 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
   // Group reservations by booking+unit to deduplicate multi-day bookings
   const byBooking = new Map<string, { unitId: string; resIds: string[]; units: number; createdAt: number }>()
 
-  for (const unit of units) {
-    const reservations = await ctx.db
-      .query('reservations')
-      .withIndex('by_inventoryUnitId_status', (q) =>
-        q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
-      )
-      .collect()
+  const unitReservationPairs = await Promise.all(
+    units.map(async (unit) => {
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_inventoryUnitId_status', (q) =>
+          q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
+        )
+        .collect()
+      return { unit, reservations }
+    }),
+  )
 
+  for (const { unit, reservations } of unitReservationPairs) {
     for (const res of reservations) {
       const key = `${res.bookingId as string}|${unit._id as string}`
       const existing = byBooking.get(key)
@@ -150,14 +155,19 @@ export async function _getConfirmedScheduleHandler(
     .collect()
 
   // Collect all confirmed reservations across all units
+  const unitConfirmedPairs = await Promise.all(
+    units.map(async (unit) => {
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_inventoryUnitId_status', (q) =>
+          q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.Confirmed),
+        )
+        .collect()
+      return { unit, reservations }
+    }),
+  )
   const allReservations: Array<{ unit: Doc<'inventoryUnits'>; reservation: Doc<'reservations'> }> = []
-  for (const unit of units) {
-    const reservations = await ctx.db
-      .query('reservations')
-      .withIndex('by_inventoryUnitId_status', (q) =>
-        q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.Confirmed),
-      )
-      .collect()
+  for (const { unit, reservations } of unitConfirmedPairs) {
     for (const reservation of reservations) {
       allReservations.push({ unit, reservation })
     }

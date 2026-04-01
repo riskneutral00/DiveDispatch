@@ -38,6 +38,38 @@ export async function checkProfileCompleteness(
   const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
   const arr = (v: unknown) => Array.isArray(v) && v.length > 0
 
+  // Deep validators — check required inner fields on array-of-object entries
+  const isDiveMasterCredentialDeepValid = (entries: unknown[]) =>
+    entries.every((e) => {
+      const c = e as Record<string, unknown>
+      return str(c.agency) && str(c.level) && str(c.agencyID)
+    })
+  /** Instructor credentials must include at least one course code per row (schema + forms). */
+  const isInstructorCredentialDeepValid = (entries: unknown[]) =>
+    entries.every((e) => {
+      const c = e as Record<string, unknown>
+      const courses = c.courses
+      if (!Array.isArray(courses) || courses.length === 0) return false
+      if (!courses.every((x) => typeof x === 'string' && str(x))) return false
+      return str(c.agency) && str(c.level) && str(c.agencyID)
+    })
+  const isAssociationDeepValid = (entries: unknown[]) =>
+    entries.every((e) => {
+      const a = e as Record<string, unknown>
+      return str(a.agency) && str(a.number)
+    })
+  const isFleetDeepValid = (entries: unknown[]) =>
+    entries.every((e) => {
+      const f = e as Record<string, unknown>
+      const maxPax = f.maxPax
+      return (
+        str(f.boatName) &&
+        typeof maxPax === 'number' &&
+        Number.isFinite(maxPax) &&
+        maxPax >= 1
+      )
+    })
+
   // 1. Profile layer
   for (const field of PROFILE_REQUIRED) {
     const value = (userDoc as Record<string, unknown>)[field]
@@ -93,7 +125,19 @@ export async function checkProfileCompleteness(
 
     const value = profile[field]
     if (Array.isArray(value)) {
-      if (!arr(value)) incomplete.push(field)
+      if (!arr(value)) {
+        incomplete.push(field)
+      } else if (field === 'credential') {
+        if (role === 'Instructor' && !isInstructorCredentialDeepValid(value)) {
+          incomplete.push(field)
+        } else if (role === 'DiveMaster' && !isDiveMasterCredentialDeepValid(value)) {
+          incomplete.push(field)
+        }
+      } else if (field === 'associations' && !isAssociationDeepValid(value)) {
+        incomplete.push(field)
+      } else if (field === 'fleet' && !isFleetDeepValid(value)) {
+        incomplete.push(field)
+      }
     } else {
       if (!str(value)) incomplete.push(field)
     }

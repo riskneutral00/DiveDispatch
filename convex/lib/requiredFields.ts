@@ -1,5 +1,9 @@
 // Config-driven required fields for profile completeness checks.
 // Each layer is checked independently: profile (users table), settings (users table), role (role-specific table).
+//
+// Contact / languages: PROFILE_REQUIRED is `users` (personal). Role rows may also store business email/phone
+// (schema-required on insert) without being listed here. Agent `customerLanguages` completeness reads
+// `users.customerLanguages` — see profileCompleteness.
 
 export const PROFILE_REQUIRED = ['firstName', 'lastName', 'email', 'phone'] as const
 

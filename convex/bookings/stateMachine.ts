@@ -285,12 +285,10 @@ export function computeMedicalDeadline(
 }
 
 /**
- * Check whether a session's end time has passed in the session's local timezone.
- * Uses Intl.DateTimeFormat to compare current time against session end date/time.
+ * Formats the current moment in a given timezone and returns the local date and time strings.
+ * Shared by isSessionStarted and isSessionEnded to avoid duplicating Intl logic.
  */
-export function isSessionEnded(date: string, endTime: string, timezone: string): boolean {
-  const now = Date.now()
-
+function currentLocalDateTime(timezone: string): { currentDate: string; currentTime: string } {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
@@ -301,12 +299,30 @@ export function isSessionEnded(date: string, endTime: string, timezone: string):
     hour12: false,
   })
 
-  const parts = Object.fromEntries(formatter.formatToParts(now).map((p) => [p.type, p.value]))
+  const parts = Object.fromEntries(formatter.formatToParts(Date.now()).map((p) => [p.type, p.value]))
   const currentDate = `${parts.year}-${parts.month}-${parts.day}`
-  // hour12: false can emit '24' for midnight in some runtimes
   const hour = parts.hour === '24' ? '00' : parts.hour
   const currentTime = `${hour}:${parts.minute}`
+  return { currentDate, currentTime }
+}
 
+/**
+ * Check whether a session's start time has passed in the session's local timezone.
+ * Uses Intl.DateTimeFormat for correct timezone handling on any server runtime.
+ */
+export function isSessionStarted(date: string, startTime: string, timezone: string): boolean {
+  const { currentDate, currentTime } = currentLocalDateTime(timezone)
+  if (currentDate > date) return true
+  if (currentDate === date && currentTime >= startTime) return true
+  return false
+}
+
+/**
+ * Check whether a session's end time has passed in the session's local timezone.
+ * Uses Intl.DateTimeFormat to compare current time against session end date/time.
+ */
+export function isSessionEnded(date: string, endTime: string, timezone: string): boolean {
+  const { currentDate, currentTime } = currentLocalDateTime(timezone)
   if (currentDate > date) return true
   if (currentDate === date && currentTime >= endTime) return true
   return false

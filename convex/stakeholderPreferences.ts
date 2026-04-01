@@ -31,6 +31,7 @@ export const mine = query({
   },
 })
 
+/** Inserts default `useNamedUnits: false` on first create. `noWorkAfterTime` exists on the table but is not in args yet — reserved for future scheduling UI. */
 export const upsert = mutation({
   args: {
     activeRole: stakeholderType,
