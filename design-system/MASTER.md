@@ -392,6 +392,27 @@ Shared UI patterns used across profile forms, booking, portal, and dashboard.
 | `FormGrid` | `form-grid.tsx` | Responsive field grid with col-span helpers |
 | `FormField` | `form-grid.tsx` | Grid cell with size-based col-span (sm/md/lg) |
 
+## UX State Taxonomy
+
+Canonical states for every feature surface. Use these exact labels in implementation and tests.
+
+| State | Meaning | Canonical primitive |
+|---|---|---|
+| `loading.initial` | Route/shell is waiting for first render data | `FullPageSpinner` (or `Spinner` with label when scoped) |
+| `loading.inline` | Panel/list subsection is loading | `Spinner` in local container |
+| `loading.action` | User-triggered mutation in progress | `GlassButton` with `loading` |
+| `error.inline` | Recoverable feature-level error | `ErrorAlert` |
+| `error.global` | Route-level uncaught error | `RouteErrorPage` / `GlassErrorCard` |
+| `empty` | Valid no-data result | `EmptyState` |
+| `success.transient` | Short-lived completion feedback | `SaveButton` state or surface toast policy |
+
+### Ownership Boundaries
+
+- `src/components/ui/*` owns visual primitives and tokens.
+- `src/components/layout/*` owns route-level framing and shell composition.
+- `src/app/*/loading.tsx` and `src/app/*/error.tsx` compose shared primitives only.
+- Feature modules (`booking`, `portal`, `profiles`, `settings`) own copy and flow behavior, not base visuals.
+
 ### Button Variants
 
 | Variant | Background | Hover |

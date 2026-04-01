@@ -9,6 +9,14 @@ export default defineConfig({
   },
   test: {
     setupFiles: ['./vitest.setup.ts'],
+    // Used by @module-tag slow on tests/hardening and tests/walkthrough — run `npm run test:quick` to skip them.
+    tags: [
+      {
+        name: 'slow',
+        description:
+          'Heavy Convex security / scenario suites. Excluded from test:quick (see package.json).',
+      },
+    ],
     exclude: [
       '**/node_modules/**',
       '**/.overstory/worktrees/**',
