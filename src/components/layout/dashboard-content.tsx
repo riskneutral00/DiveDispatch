@@ -20,6 +20,10 @@ import { QuickBookRail } from '@/components/booking/quick-book-rail'
 import { CancelBookingDialog } from '@/components/booking/cancel-booking-dialog'
 import { BlockDateDialog } from '@/components/booking/block-date-dialog'
 import { DragOverlayPill } from '@/components/booking/drag-overlay-pill'
+import { DiverEquipmentWidget } from '@/components/booking/diver-equipment-widget'
+import { VesselCalendar } from '@/components/booking/vessel-calendar'
+import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { api } from '../../../convex/_generated/api'
 import type { CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { CalendarBooking } from '../../../convex/bookings'
@@ -79,6 +83,15 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
     useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole })
 
+  const isEquipmentRole = clerkRole === 'Equipment'
+  const isBoatRole = clerkRole === 'Boat'
+
+  // Calendar visible range — drives DiverEquipmentWidget / BoatManifestWidget date window
+  const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
+  const handleRangeChange = useCallback((start: string, end: string) => {
+    setVisibleRange({ start, end })
+  }, [])
+
   // ── Booking overlay state ────────────────────────────────────────────────
 
   const [overlayOpen, setOverlayOpen] = useState(false)
@@ -123,7 +136,20 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const calendarAndRail = (
+  // Boat operator: vessel calendar + manifest data
+  const { data: vesselCalendarData } = useStableQuery(
+    api.boatWidget.getVesselCalendarData,
+    isBoatRole && visibleRange && !isSwitching
+      ? { dateRangeStart: visibleRange.start, dateRangeEnd: visibleRange.end }
+      : 'skip',
+  )
+
+  const calendarAndRail = isBoatRole ? (
+    <VesselCalendar
+      data={vesselCalendarData}
+      onRangeChange={handleRangeChange}
+    />
+  ) : (
     <>
       {isOrganizer && (
         <div className="mt-3">
@@ -140,6 +166,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
         onDateClick={requestToggle}
         onBookingClick={handleBookingClick}
         onUrgentCancel={handleUrgentCancel}
+        onRangeChange={isEquipmentRole ? handleRangeChange : undefined}
         legendStatuses={legendStatuses as CalendarDisplayStatus[]}
         allDraftsUrgent={isResourceOnly}
         viewerRole={clerkRole}
@@ -174,6 +201,20 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
         </DragDropProvider>
       ) : (
         calendarAndRail
+      )}
+
+      {isEquipmentRole && visibleRange && (
+        <div className="space-y-2">
+          <FormSectionHeader label="Diver Equipment" />
+          <DiverEquipmentWidget visibleRange={visibleRange} />
+        </div>
+      )}
+
+      {isBoatRole && visibleRange && (
+        <div className="space-y-2">
+          <FormSectionHeader label="Passenger Manifest" />
+          <BoatManifestWidget visibleRange={visibleRange} />
+        </div>
       )}
 
       <BookingQuickDetail

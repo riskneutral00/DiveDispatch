@@ -203,7 +203,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   )
 }
 
-import { filterByAvailability } from '@/lib/booking/availability-filter'
+import { filterByAvailability, enrichOptionsWithCapacity } from '@/lib/booking/availability-filter'
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
@@ -547,7 +547,7 @@ export function ItineraryStep({ state, dispatch }: ItineraryStepProps) {
               availableDives={getAvailableDives(idx, days, allCourseCodes)}
               onToggleDive={handleToggleDive}
               instructorOptions={filterByAvailability(instructorOptions, day.date, capacityData, inventoryMap)}
-              boatOptions={filterByAvailability(boatOptions, day.date, capacityData, inventoryMap)}
+              boatOptions={enrichOptionsWithCapacity(filterByAvailability(boatOptions, day.date, capacityData, inventoryMap), day.date, capacityData, inventoryMap)}
               poolOptions={filterByAvailability(poolOptions, day.date, capacityData, inventoryMap)}
               shoreOptions={shoreOptions}
               totalDays={days.length}
