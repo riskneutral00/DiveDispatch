@@ -206,15 +206,15 @@ export const listByRole = query({
 
     // Resolve caller's preferred-instructor set.
     const prefs = await ctx.db
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', caller.slug))
+      .query('stakeholderPreferences')
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', caller.slug))
       .unique()
     const preferredSlugs = new Set<string>(prefs?.preferredInstructorSlugs ?? [])
 
     // Query userRoles by role, then point-read the user docs
     const roleEntries = await ctx.db
       .query('userRoles')
-      .withIndex('by_role', (q) => q.eq('role', args.role as any))
+      .withIndex('by_role', (q) => q.eq('role', args.role))
       .take(DIRECTORY_LIST_LIMIT)
     const userDocs = await Promise.all(roleEntries.map((r) => ctx.db.get(r.userId)))
     const users = userDocs.filter(Boolean) as NonNullable<(typeof userDocs)[number]>[]

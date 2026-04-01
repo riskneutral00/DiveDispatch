@@ -1,6 +1,9 @@
 /**
  * DD-258: Async cascade user deletion tests.
  * Tests written before implementation (TDD).
+ *
+ * When adding user- or booking-scoped tables, follow docs/CASCADE_CHECKLIST.md
+ * and extend coverage here.
  */
 
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest'

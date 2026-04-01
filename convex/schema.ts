@@ -701,6 +701,20 @@ export default defineSchema({
     .index('by_key_mutationName', ['key', 'mutationName'])
     .index('by_createdAt', ['createdAt']),
 
+  // ── L7: Support (dashboard help contact form) ───────────────────────────────
+
+  supportRequests: defineTable({
+    userId: v.id('users'),
+    userSlug: v.string(),
+    subject: v.string(),
+    category: v.string(),
+    message: v.string(),
+    screenshotStorageId: v.optional(v.id('_storage')),
+    createdAt: v.number(),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_createdAt', ['createdAt']),
+
   // ── L7: Rate Limiting ──────────────────────────────────────────────────────
 
   rateLimits: defineTable({
