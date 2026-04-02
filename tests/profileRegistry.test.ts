@@ -45,18 +45,18 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('resource roles (boat, compressor, equipment, pool) have settingsIncludesProfile true', () => {
-    expect(PROFILE_REGISTRY.boat.settingsIncludesProfile).toBe(true)
-    expect(PROFILE_REGISTRY.compressor.settingsIncludesProfile).toBe(true)
-    expect(PROFILE_REGISTRY.equipment.settingsIncludesProfile).toBe(true)
-    expect(PROFILE_REGISTRY.pool.settingsIncludesProfile).toBe(true)
+  it('resource roles (boat, compressor, equipment, pool) have workspaceIncludesEmbeddedProfile true', () => {
+    expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(true)
+    expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(true)
+    expect(PROFILE_REGISTRY.equipment.workspaceIncludesEmbeddedProfile).toBe(true)
+    expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(true)
   })
 
-  it('operator roles have settingsIncludesProfile false', () => {
-    expect(PROFILE_REGISTRY['dive-center'].settingsIncludesProfile).toBe(false)
-    expect(PROFILE_REGISTRY.agent.settingsIncludesProfile).toBe(false)
-    expect(PROFILE_REGISTRY.instructor.settingsIncludesProfile).toBe(false)
-    expect(PROFILE_REGISTRY['dive-master'].settingsIncludesProfile).toBe(false)
+  it('operator roles have workspaceIncludesEmbeddedProfile false', () => {
+    expect(PROFILE_REGISTRY['dive-center'].workspaceIncludesEmbeddedProfile).toBe(false)
+    expect(PROFILE_REGISTRY.agent.workspaceIncludesEmbeddedProfile).toBe(false)
+    expect(PROFILE_REGISTRY.instructor.workspaceIncludesEmbeddedProfile).toBe(false)
+    expect(PROFILE_REGISTRY['dive-master'].workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
   it('no duplicate tab IDs within any role', () => {

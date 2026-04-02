@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * SettingsTabBar: WAI-ARIA tabs keyboard navigation
+ * ProfileSectionTabBar: WAI-ARIA tabs keyboard navigation
  *
  * Verifies roving tabindex and ArrowLeft/Right keyboard navigation
  * per the WAI-ARIA tabs pattern.
@@ -8,7 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent } from '../helpers/render'
-import { SettingsTabBar, type TabItem } from '@/components/settings/settings-tab-bar'
+import { ProfileSectionTabBar, type TabItem } from '@/components/account/profile-section-tab-bar'
 
 const TABS: TabItem[] = [
   { id: 'general', label: 'General' },
@@ -16,10 +16,10 @@ const TABS: TabItem[] = [
   { id: 'privacy', label: 'Privacy' },
 ]
 
-describe('SettingsTabBar: roving tabindex', () => {
+describe('ProfileSectionTabBar: roving tabindex', () => {
   it('active tab has tabIndex 0, inactive tabs have tabIndex -1', () => {
     const { getAllByRole } = render(
-      <SettingsTabBar tabs={TABS} activeTab="notifications" onChange={vi.fn()} />,
+      <ProfileSectionTabBar tabs={TABS} activeTab="notifications" onChange={vi.fn()} />,
     )
     const tabs = getAllByRole('tab')
 
@@ -29,11 +29,11 @@ describe('SettingsTabBar: roving tabindex', () => {
   })
 })
 
-describe('SettingsTabBar: arrow key navigation', () => {
+describe('ProfileSectionTabBar: arrow key navigation', () => {
   it('ArrowRight moves focus and activates the next tab', () => {
     const onChange = vi.fn()
     const { getAllByRole } = render(
-      <SettingsTabBar tabs={TABS} activeTab="general" onChange={onChange} />,
+      <ProfileSectionTabBar tabs={TABS} activeTab="general" onChange={onChange} />,
     )
     const tabs = getAllByRole('tab')
 
@@ -47,7 +47,7 @@ describe('SettingsTabBar: arrow key navigation', () => {
   it('ArrowLeft moves focus and activates the previous tab', () => {
     const onChange = vi.fn()
     const { getAllByRole } = render(
-      <SettingsTabBar tabs={TABS} activeTab="notifications" onChange={onChange} />,
+      <ProfileSectionTabBar tabs={TABS} activeTab="notifications" onChange={onChange} />,
     )
     const tabs = getAllByRole('tab')
 
@@ -60,7 +60,7 @@ describe('SettingsTabBar: arrow key navigation', () => {
   it('ArrowRight wraps from last tab to first', () => {
     const onChange = vi.fn()
     const { getAllByRole } = render(
-      <SettingsTabBar tabs={TABS} activeTab="privacy" onChange={onChange} />,
+      <ProfileSectionTabBar tabs={TABS} activeTab="privacy" onChange={onChange} />,
     )
     const tabs = getAllByRole('tab')
 
@@ -73,7 +73,7 @@ describe('SettingsTabBar: arrow key navigation', () => {
   it('ArrowLeft wraps from first tab to last', () => {
     const onChange = vi.fn()
     const { getAllByRole } = render(
-      <SettingsTabBar tabs={TABS} activeTab="general" onChange={onChange} />,
+      <ProfileSectionTabBar tabs={TABS} activeTab="general" onChange={onChange} />,
     )
     const tabs = getAllByRole('tab')
 

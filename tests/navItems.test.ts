@@ -8,19 +8,19 @@ describe('buildNavItems', () => {
     expect(items).toHaveLength(3)
   })
 
-  it('includes dashboard, directory, settings', () => {
+  it('includes dashboard, directory, workspace', () => {
     const keys = items.map((i) => i.key)
     expect(keys).toContain('dashboard')
     expect(keys).toContain('directory')
-    expect(keys).toContain('settings')
+    expect(keys).toContain('workspace')
   })
 
   it('dashboard href is /{slug}/{roleSlug}', () => {
     expect(items.find((i) => i.key === 'dashboard')!.href).toBe('/alice/dive-center')
   })
 
-  it('settings href includes settings path', () => {
-    expect(items.find((i) => i.key === 'settings')!.href).toBe('/alice/dive-center/settings')
+  it('workspace href includes workspace path', () => {
+    expect(items.find((i) => i.key === 'workspace')!.href).toBe('/alice/dive-center/workspace')
   })
 
   it('directory href is /directory', () => {

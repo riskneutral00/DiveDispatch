@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen } from '../helpers/render'
-import { ManageRoles } from '@/components/settings/manage-roles'
+import { ManageRoles } from '@/components/account/manage-roles'
 import type { ClerkRole } from '@/lib/constants/roles'
 
 // Stub role icons

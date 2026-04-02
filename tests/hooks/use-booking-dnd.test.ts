@@ -70,6 +70,37 @@ describe('drag-to-date pre-fill generation', () => {
     expect(result.instructorSlug).toBe('')
     expect(result.venueSlug).toBe('')
   })
+
+  it('merges template resource hints into gaps after operator defaults', () => {
+    const emptyDefaults: OperatorDefaults = {
+      agency: '',
+      preferredInstructorSlug: '',
+      preferredVenueSlug: '',
+      preferredBoatSlug: '',
+      preferredEquipmentSlug: '',
+      preferredCompressorSlug: '',
+      preferredInstructorSlugs: [],
+      preferredVenueSlugs: [],
+      preferredBoatSlugs: [],
+      preferredEquipmentSlugs: [],
+      preferredCompressorSlugs: [],
+    }
+    const hints = [
+      { resourceType: 'Instructor', resourceSlug: 'tmpl-inst' },
+      { resourceType: 'Boat', resourceSlug: 'tmpl-boat' },
+    ]
+    const result = buildPreFill(['OW'], FUTURE, emptyDefaults, hints)
+    expect(result.instructorSlug).toBe('tmpl-inst')
+    expect(result.boatSlug).toBe('tmpl-boat')
+    expect(result.templateResourceHints).toEqual(hints)
+  })
+
+  it('does not override operator defaults with template hints', () => {
+    const hints = [{ resourceType: 'Instructor', resourceSlug: 'tmpl-inst' }]
+    const result = buildPreFill(['OW'], FUTURE, MOCK_DEFAULTS, hints)
+    expect(result.instructorSlug).toBe('instructor-1')
+    expect(result.templateResourceHints).toEqual(hints)
+  })
 })
 
 describe('date validation for drop targets', () => {

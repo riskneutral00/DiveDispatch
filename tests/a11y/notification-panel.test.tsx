@@ -30,7 +30,7 @@ vi.mock('@/lib/hooks/use-optimistic-notifications', () => ({
 }))
 
 vi.mock('@/components/ui/spinner', () => ({
-  Spinner: () => <span data-testid="spinner">Loading...</span>,
+  Spinner: () => <span data-testid="spinner">Loading…</span>,
 }))
 
 vi.mock('lucide-react', () => {

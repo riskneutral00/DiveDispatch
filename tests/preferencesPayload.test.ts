@@ -3,7 +3,7 @@ import {
   preferencesToPayload,
   preferencesFromUser,
   PREFERENCES_DEFAULTS,
-} from '../src/components/settings/preferences-tab'
+} from '../src/components/account/preferences-tab'
 
 describe('preferencesFromUser', () => {
   it('extracts appLanguage from user record', () => {

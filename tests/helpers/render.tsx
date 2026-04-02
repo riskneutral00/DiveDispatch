@@ -1,5 +1,7 @@
 import { render, type RenderOptions } from '@testing-library/react'
 import { type ReactElement, type ReactNode } from 'react'
+import { NextIntlClientProvider } from 'next-intl'
+import enMessages from '../../messages/en.json'
 import { ThemeContext } from '@/themes/theme-provider'
 import { type ThemeContextValue } from '@/themes/theme-types'
 import { SKINS } from '@/themes/skins'
@@ -20,11 +22,13 @@ const stubTheme: ThemeContextValue = {
 
 function AllProviders({ children }: { children: ReactNode }) {
   return (
-    <ConvexProvider client={stubClient}>
-      <ThemeContext.Provider value={stubTheme}>
-        {children}
-      </ThemeContext.Provider>
-    </ConvexProvider>
+    <NextIntlClientProvider locale="en" messages={enMessages}>
+      <ConvexProvider client={stubClient}>
+        <ThemeContext.Provider value={stubTheme}>
+          {children}
+        </ThemeContext.Provider>
+      </ConvexProvider>
+    </NextIntlClientProvider>
   )
 }
 

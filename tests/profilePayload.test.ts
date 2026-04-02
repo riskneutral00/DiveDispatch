@@ -4,7 +4,7 @@ import {
   profileFromUser,
   PROFILE_DEFAULTS,
   type ProfileValues,
-} from '../src/components/settings/profile-tab'
+} from '../src/components/account/profile-tab'
 
 describe('profileFromUser', () => {
   it('extracts all fields from a user record', () => {

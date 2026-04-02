@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { render, screen } from '../helpers/render'
-import { AddRoleModal } from '@/components/settings/add-role-modal'
+import { AddRoleModal } from '@/components/account/add-role-modal'
 import { ROLES, type ClerkRole } from '@/lib/constants/roles'
 
 // jsdom doesn't implement HTMLDialogElement methods

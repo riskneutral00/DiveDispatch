@@ -187,7 +187,7 @@ describe('ORGANIZER_ROLE_KEYS derived set', () => {
 
 describe('PROFILE_REGISTRY ↔ ROLES reverse coverage', () => {
   it('every resource role key (except liveaboard/dive-resort/dive-hostel/dive-site) has a PROFILE_REGISTRY entry', () => {
-    // These roles use settings-includes-profile pattern or are v0.1.1 scope
+    // These roles use workspace-embedded-profile pattern or are v0.1.1 scope
     const excluded = new Set(['liveaboard', 'dive-resort', 'dive-hostel', 'dive-site'])
     const resourceAndPersonnel = ROLES.filter((r) => r.isResource || r.key === 'dive-center' || r.key === 'agent')
     for (const role of resourceAndPersonnel) {
