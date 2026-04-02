@@ -1,7 +1,9 @@
 'use client'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
+import { Plus } from 'lucide-react'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { GlassButton } from '@/components/ui/glass-button'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -266,6 +268,10 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
       update,
     })
 
+  function handleAdd() {
+    setField('associations', [...form.associations, makeDefaultAssoc()])
+  }
+
   return (
     <ProfileFormShell
       loading={loading}
@@ -278,6 +284,12 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
       disableSaveWhenInvalid
       isValid={isValid}
       className="space-y-6"
+      footerLeftAction={
+        <GlassButton type="button" variant="secondary" size="sm" onClick={handleAdd}>
+          <Plus size={14} />
+          Add
+        </GlassButton>
+      }
     >
       <ProfileAgencyInfo
         variant="dive-center"

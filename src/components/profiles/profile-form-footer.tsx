@@ -13,6 +13,8 @@ export interface ProfileFormFooterProps {
   disabled?: boolean
   saveLabel?: string
   className?: string
+  /** Optional element rendered to the left of the Save button (e.g. an Add action). */
+  leftAction?: React.ReactNode
 }
 
 /**
@@ -28,6 +30,7 @@ export function ProfileFormFooter({
   disabled,
   saveLabel,
   className,
+  leftAction,
 }: ProfileFormFooterProps) {
   return (
     <div className={cn('space-y-4', className)}>
@@ -36,14 +39,28 @@ export function ProfileFormFooter({
           {errorMessage}
         </p>
       ) : null}
-      <SaveButton
-        saving={saving}
-        saved={saved}
-        isDirty={isDirty}
-        isUpdate={isUpdate}
-        disabled={disabled}
-        label={saveLabel}
-      />
+      {leftAction ? (
+        <div className="flex items-center justify-between">
+          {leftAction}
+          <SaveButton
+            saving={saving}
+            saved={saved}
+            isDirty={isDirty}
+            isUpdate={isUpdate}
+            disabled={disabled}
+            label={saveLabel}
+          />
+        </div>
+      ) : (
+        <SaveButton
+          saving={saving}
+          saved={saved}
+          isDirty={isDirty}
+          isUpdate={isUpdate}
+          disabled={disabled}
+          label={saveLabel}
+        />
+      )}
     </div>
   )
 }

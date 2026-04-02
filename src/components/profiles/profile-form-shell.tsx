@@ -41,6 +41,8 @@ interface ProfileFormShellProps {
   // Layout
   children: ReactNode
   className?: string
+  /** Optional element rendered to the left of the Save button. */
+  footerLeftAction?: ReactNode
 
   // Loading customization
   loadingVariant?: 'spinner' | 'pulse-text' | 'plain'
@@ -62,6 +64,7 @@ export function ProfileFormShell({
   saveLabel,
   children,
   className,
+  footerLeftAction,
   loadingVariant,
   loadingMessage,
 }: ProfileFormShellProps) {
@@ -88,6 +91,7 @@ export function ProfileFormShell({
         isUpdate={isUpdate}
         disabled={footerDisabled}
         saveLabel={saveLabel}
+        leftAction={footerLeftAction}
       />
     </form>
   )

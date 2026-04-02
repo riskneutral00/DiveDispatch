@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
 import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey, type RoleConfig } from '@/lib/constants/roles'
@@ -12,7 +12,7 @@ import { useDevSwitching } from '@/components/dev/dev-switch-context'
 import { useBookingActions } from '@/lib/hooks/use-booking-actions'
 import { useOperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import { useBookingDnd, BOOKING_DND_SENSORS } from '@/lib/hooks/use-booking-dnd'
-import { BookingCalendar } from '@/components/booking/booking-calendar'
+import { BookingCalendar, type CustomCategories } from '@/components/booking/booking-calendar'
 import { BookingQuickDetail } from '@/components/booking/booking-quick-detail'
 import { BookingOverlay } from '@/components/booking/booking-overlay'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
@@ -21,6 +21,7 @@ import { CancelBookingDialog } from '@/components/booking/cancel-booking-dialog'
 import { BlockDateDialog } from '@/components/booking/block-date-dialog'
 import { DragOverlayPill } from '@/components/booking/drag-overlay-pill'
 import { DiverEquipmentWidget } from '@/components/booking/diver-equipment-widget'
+import { getVesselColor } from '@/lib/constants/vessel-colors'
 import { VesselCalendar } from '@/components/booking/vessel-calendar'
 import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
@@ -161,7 +162,15 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  // Boat operator: vessel calendar + manifest data
+  // Boat operator: vessel trips as CalendarBooking[] + fleet categories
+  const { data: vesselTrips } = useStableQuery(
+    api.boatWidget.getVesselCalendarTrips,
+    isBoatRole && visibleRange && !isSwitching
+      ? { dateRangeStart: visibleRange.start, dateRangeEnd: visibleRange.end }
+      : 'skip',
+  )
+
+  // Build fleet legend from vessel calendar data (uses existing capacity query for fleet names)
   const { data: vesselCalendarData } = useStableQuery(
     api.boatWidget.getVesselCalendarData,
     isBoatRole && visibleRange && !isSwitching
@@ -169,10 +178,39 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
       : 'skip',
   )
 
+  const boatCategories: CustomCategories | undefined = useMemo(() => {
+    if (!isBoatRole || !vesselCalendarData) return undefined
+    const items = vesselCalendarData.vessels.map((v, i) => ({
+      key: v.name,
+      label: v.name,
+      color: getVesselColor(i),
+    }))
+    return {
+      items,
+      getCategoryKey: (booking) => booking.boatName ?? '',
+    }
+  }, [isBoatRole, vesselCalendarData])
+
+  const boatCustomLabel = useCallback(
+    (booking: CalendarBooking) => {
+      const route = booking.operatorName || undefined
+      const parts = [`${booking.diverCount} pax`]
+      if (route) parts.push(route)
+      return { label: booking.boatName ?? 'Vessel', subLabel: parts.join(' \u00b7 ') }
+    },
+    [],
+  )
+
   const calendarAndRail = isBoatRole ? (
-    <VesselCalendar
-      data={vesselCalendarData}
+    <BookingCalendar
+      bookings={vesselTrips ?? []}
+      blockedDates={blockedDates}
+      onDateClick={requestToggle}
+      onBookingClick={handleBookingClick}
       onRangeChange={handleRangeChange}
+      customCategories={boatCategories}
+      customLabel={boatCustomLabel}
+      viewerRole={clerkRole}
     />
   ) : (
     <>

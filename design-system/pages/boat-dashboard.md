@@ -19,10 +19,11 @@ Tone: harbour master's clipboard — dense, scannable, authoritative.
 ## Layout
 
 ```
-DashboardPageFrame (max-w-5xl — wider than default to fit vessel grid)
-  VesselCalendar
-    NavBar              ← / → week, "Today" button, date range label
-    VesselGrid          one row per vessel, 14 columns (days)
+DashboardPageFrame (max-w-4xl)
+  BookingCalendar (unified — same component all roles use)
+    NavBar              ← / → week, month picker, "Today" jump
+    WeekGrid            7 columns × 4 weeks, glass day cells
+    Legend              one pill per vessel in the fleet (color-coded)
   BoatManifestWidget
     VesselSection × N   one per vessel (stacked)
       Header            vessel name + boatType badge + total pax for range
@@ -33,38 +34,47 @@ DashboardPageFrame (max-w-5xl — wider than default to fit vessel grid)
 
 ---
 
-## Vessel Calendar
+## Unified Calendar (Fleet Mode)
 
-### Grid structure
+The boat dashboard uses the **same `BookingCalendar`** component as every other role.
+The glass pills, layout, navigation, and blocked-date behavior are identical.
+What changes: the **legend** and **pill content**.
 
-- 14 columns (2-week window), same date navigation as BookingCalendar
-  (`useCalendarRange` hook, ← → week, "Today" jump)
-- One row per vessel in the operator's fleet
-- Row header (sticky left): vessel name + boatType badge (e.g. `day_boat`)
-- `onRangeChange` fires when the visible window changes — drives the manifest below
+### Legend = Fleet Roster
 
-### Day cells
+Instead of booking statuses (Active, Draft, Upcoming, Completed), the legend shows
+**one pill per vessel** in the operator's fleet. Each vessel gets a distinct color from
+the vessel palette (8 colors, wraps). Toggling a legend pill hides/shows that vessel's
+day pills — same UX as toggling status categories.
 
-Each cell shows a capacity pill: `{booked}/{total}` (e.g. `38/50`).
+| Fleet size | Legend |
+|-----------|-------|
+| 1 vessel | 1 pill (e.g., "M.V. Hug Ocean") |
+| 3 vessels | 3 pills, each a different color |
+| 7 vessels | 7 pills (palette wraps at 8) |
 
-Color scale by utilization percentage:
+### Day cells — vessel trip pills
 
-| Utilization | Color | Token |
-|-------------|-------|-------|
-| 0% | `var(--color-text-secondary)` | Empty — muted |
-| 1–49% | `var(--color-secondary)` | Blue — light load |
-| 50–79% | `var(--color-accent)` | Amber — filling up |
-| 80–99% | `var(--color-primary)` | Coral — near capacity |
-| 100% | solid `var(--color-primary)` bg, white text | Full |
+Each day cell contains **one pill per vessel** (boats go out daily). The pill shows:
 
-- Cell is a `<button>` — click selects it (highlight border `var(--color-accent)`)
-- Selected cell state drives manifest filtering (future: scope manifest to that vessel + date)
-- Today column gets a subtle top-border accent
+- **Label:** vessel name (e.g., "M.V. Hug Ocean")
+- **Sub-label:** `{pax} pax · {route}` (e.g., "12 pax · Racha Noi")
 
-### Empty vessel row
+Pill color = vessel's legend color. Same glass styling as booking pills.
+If a vessel has no route for that day-of-week, the route portion is omitted.
+If a vessel has 0 pax, the pill still appears (the boat is still going out).
 
-If a vessel has zero bookings for the entire 2-week window, show `0/{total}` in muted style
-for each day. Do not hide the vessel — the operator needs to see all fleet members.
+### Blocked dates
+
+Same guard as the booking calendar:
+- Days with vessel trips are **locked** — cannot be blocked directly
+- Operator must go into the vessel's day detail and cancel the trip first
+- Once cancelled, the date becomes blockable via the same click-to-block flow
+
+### Click behavior
+
+Clicking a vessel pill fires `onBookingClick` with the trip ID, which opens
+the `BookingQuickDetail` drawer (same as other roles).
 
 ---
 

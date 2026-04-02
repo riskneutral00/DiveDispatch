@@ -111,68 +111,61 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   function renderDiveCenterFields(item: AgencyRow, idx: number) {
     const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES]
     return (
-      <Fragment>
-        <div className="flex gap-2 items-start">
-          <div className="flex-1">
-            <GlassSelect
-              label="Agency"
-              value={String((item as AgencyRow).agency ?? '')}
-              onChange={(v) => handleUpdate(idx, { agency: v })}
-              options={AGENCY_CODES.filter(
-                (code) => code === item.agency || !items.some((a, i) => i !== idx && a.agency === code)
-              ).map((code) => ({ id: code, label: AGENCIES[code as keyof typeof AGENCIES].name }))}
-              placeholder="Select agency"
-              required
+      <div className="grid grid-cols-2 gap-x-2 gap-y-4 items-start">
+        {/* Row 1 */}
+        <GlassSelect
+          label="Agency"
+          value={String((item as AgencyRow).agency ?? '')}
+          onChange={(v) => handleUpdate(idx, { agency: v })}
+          options={AGENCY_CODES.filter(
+            (code) => code === item.agency || !items.some((a, i) => i !== idx && a.agency === code)
+          ).map((code) => ({ id: code, label: AGENCIES[code as keyof typeof AGENCIES].name }))}
+          placeholder="Select agency"
+          required
+        />
+        <GlassInput
+          label={agencyPrefix?.memberIdLabel ?? 'Member ID'}
+          value={String((item as AgencyRow).number ?? '')}
+          onChange={(e) => handleUpdate(idx, { number: e.target.value })}
+          placeholder={agencyPrefix?.memberIdLabel ?? 'Member ID'}
+          required
+        />
+
+        {/* Row 2 */}
+        <div>
+          <p className="text-sm font-medium mb-2 text-secondary">
+            Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
+          </p>
+          <div className="flex gap-2">
+            <DayPicker
+              label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'OW')?.label ?? 'OW'}
+              value={Number((item as AgencyRow).owDays)}
+              min={COURSE_DAY_RANGES.OW.min}
+              max={COURSE_DAY_RANGES.OW.max}
+              onChange={(v) => handleUpdate(idx, { owDays: v })}
             />
-          </div>
-          <div className="flex-1">
-            <GlassInput
-              label={agencyPrefix?.memberIdLabel ?? 'Member ID'}
-              value={String((item as AgencyRow).number ?? '')}
-              onChange={(e) => handleUpdate(idx, { number: e.target.value })}
-              placeholder={agencyPrefix?.memberIdLabel ?? 'Member ID'}
-              required
+            <DayPicker
+              label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'AOW')?.label ?? 'AOW'}
+              value={Number((item as AgencyRow).aowDays)}
+              min={COURSE_DAY_RANGES.AOW.min}
+              max={COURSE_DAY_RANGES.AOW.max}
+              onChange={(v) => handleUpdate(idx, { aowDays: v })}
+            />
+            <DayPicker
+              label={agencyPrefix?.combinedLabel ?? 'O+A'}
+              value={Number((item as AgencyRow).oaDays)}
+              min={COURSE_DAY_RANGES.combined.min}
+              max={COURSE_DAY_RANGES.combined.max}
+              onChange={(v) => handleUpdate(idx, { oaDays: v })}
             />
           </div>
         </div>
-
-        <div className="flex gap-6 items-start mt-4">
-          <div className="shrink-0">
-            <p className="text-sm font-medium mb-2 text-secondary">
-              Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
-            </p>
-            <div className="flex gap-2">
-              <DayPicker
-                label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'OW')?.label ?? 'OW'}
-                value={Number((item as AgencyRow).owDays)}
-                min={COURSE_DAY_RANGES.OW.min}
-                max={COURSE_DAY_RANGES.OW.max}
-                onChange={(v) => handleUpdate(idx, { owDays: v })}
-              />
-              <DayPicker
-                label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'AOW')?.label ?? 'AOW'}
-                value={Number((item as AgencyRow).aowDays)}
-                min={COURSE_DAY_RANGES.AOW.min}
-                max={COURSE_DAY_RANGES.AOW.max}
-                onChange={(v) => handleUpdate(idx, { aowDays: v })}
-              />
-              <DayPicker
-                label={agencyPrefix?.combinedLabel ?? 'O+A'}
-                value={Number((item as AgencyRow).oaDays)}
-                min={COURSE_DAY_RANGES.combined.min}
-                max={COURSE_DAY_RANGES.combined.max}
-                onChange={(v) => handleUpdate(idx, { oaDays: v })}
-              />
-            </div>
-          </div>
-
-          <SpecialtyField
-            agencyCode={String((item as AgencyRow).agency ?? '')}
-            value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
-            onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
-          />
-        </div>
-      </Fragment>
+        <SpecialtyField
+          agencyCode={String((item as AgencyRow).agency ?? '')}
+          value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
+          onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
+        />
+      </div>
     )
   }
 
@@ -254,15 +247,17 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
   return (
     <div className="space-y-4">
-      <FormSectionHeader
-        label={sectionLabel}
-        action={
-          <GlassButton type="button" variant="secondary" size="sm" onClick={handleAdd}>
-            <Plus size={14} />
-            {addLabel}
-          </GlassButton>
-        }
-      />
+      {!isCenter && (
+        <FormSectionHeader
+          label={sectionLabel}
+          action={
+            <GlassButton type="button" variant="secondary" size="sm" onClick={handleAdd}>
+              <Plus size={14} />
+              {addLabel}
+            </GlassButton>
+          }
+        />
+      )}
 
       {errors.associations && (
         <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.associations}</p>
@@ -289,6 +284,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           ))}
         </div>
       )}
+
     </div>
   )
 }

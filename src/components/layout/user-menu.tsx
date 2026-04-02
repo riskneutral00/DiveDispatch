@@ -1,52 +1,55 @@
-'use client'
+"use client";
 
-import { useClerk, useUser } from '@clerk/nextjs'
-import { LogOut, Settings, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useTranslations } from 'next-intl'
-import type { RoleKey } from '@/lib/constants/roles'
-import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import type { ProfileOverlayTab } from '../profiles/profile-overlay'
+import { useClerk, useUser } from "@clerk/nextjs";
+import { LogOut, Settings, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import type { RoleKey } from "@/lib/constants/roles";
+import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import type { ProfileOverlayTab } from "../profiles/profile-overlay";
 
 interface UserMenuProps {
-  roleSlug: RoleKey
-  slug: string
-  onOpenOverlay?: (tab: ProfileOverlayTab) => void
+  roleSlug: RoleKey;
+  slug: string;
+  onOpenOverlay?: (tab: ProfileOverlayTab) => void;
 }
 
 export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
-  const tNav = useTranslations('nav')
-  const tUserMenu = useTranslations('userMenu')
-  const { user: clerkUser } = useUser()
-  const { user: convexUser } = useCurrentUser()
-  const { signOut } = useClerk()
-  const [open, setOpen] = useState(false)
+  const tNav = useTranslations("nav");
+  const tUserMenu = useTranslations("userMenu");
+  const { user: clerkUser } = useUser();
+  const { user: convexUser } = useCurrentUser();
+  const { signOut } = useClerk();
+  const [open, setOpen] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [open])
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   const displayName =
-    convexUser?.businessName || clerkUser?.fullName || clerkUser?.username || '…'
-  const initials = displayName.slice(0, 2).toUpperCase()
-  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? null
+    convexUser?.businessName ||
+    clerkUser?.fullName ||
+    clerkUser?.username ||
+    "…";
+  const initials = displayName.slice(0, 2).toUpperCase();
+  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? null;
 
   function handleMenuAction(tab: ProfileOverlayTab) {
-    setOpen(false)
-    onOpenOverlay?.(tab)
+    setOpen(false);
+    onOpenOverlay?.(tab);
   }
 
   function handleSignOut() {
-    setOpen(false)
+    setOpen(false);
     // Clear locale cookie on sign-out so unauthenticated users default to Accept-Language
-    document.cookie = 'dd-locale=; path=/; max-age=0'
-    signOut({ redirectUrl: '/' })
+    document.cookie = "dd-locale=; path=/; max-age=0";
+    signOut({ redirectUrl: "/" });
   }
 
   return (
@@ -56,8 +59,8 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
         onClick={() => setOpen((o) => !o)}
         className="w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
         style={{
-          background: 'var(--color-primary)',
-          color: 'var(--color-text-on-primary)',
+          background: "var(--color-primary)",
+          color: "var(--color-text-on-primary)",
         }}
       >
         {initials}
@@ -65,67 +68,66 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" role="presentation" onClick={() => setOpen(false)} />
+          <div
+            className="fixed inset-0 z-40"
+            role="presentation"
+            onClick={() => setOpen(false)}
+          />
           <div
             className="absolute right-0 top-10 z-50 min-w-[180px] py-1 shadow-xl"
             style={{
-              background: 'var(--color-surface-elevated)',
-              border: '1px solid var(--color-glass-border)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
-              borderRadius: 'var(--border-radius)',
+              background: "var(--color-surface-elevated)",
+              border: "1px solid var(--color-glass-border)",
+              backdropFilter: "blur(var(--glass-blur))",
+              WebkitBackdropFilter: "blur(var(--glass-blur))",
+              borderRadius: "var(--border-radius)",
             }}
           >
             <div
               className="px-3 py-2"
-              style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+              style={{ borderBottom: "1px solid var(--color-glass-border)" }}
             >
-              <p
-                className="text-sm font-medium truncate leading-tight text-primary"
-              >
+              <p className="text-sm font-medium truncate leading-tight text-primary">
                 {displayName}
               </p>
               {email && (
-                <p
-                  className="text-xs truncate leading-tight mt-0.5 text-secondary"
-                >
+                <p className="text-xs truncate leading-tight mt-0.5 text-secondary">
                   {email}
                 </p>
               )}
             </div>
 
             <button
-              onClick={() => handleMenuAction('profile')}
+              onClick={() => handleMenuAction("profile")}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <User size={14} />
-              {tNav('profile')}
+              {tNav("profile")}
             </button>
 
             <button
-              onClick={() => handleMenuAction('preferences')}
+              onClick={() => handleMenuAction("preferences")}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <Settings size={14} />
-              {tUserMenu('preferences')}
+              {tUserMenu("preferences")}
             </button>
-
 
             <div
               className="mt-1"
-              style={{ borderTop: '1px solid var(--color-glass-border)' }}
+              style={{ borderTop: "1px solid var(--color-glass-border)" }}
             >
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
               >
                 <LogOut size={14} />
-                {tNav('signOut')}
+                {tNav("signOut")}
               </button>
             </div>
           </div>
         </>
       )}
     </div>
-  )
+  );
 }
