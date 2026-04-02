@@ -1,6 +1,6 @@
 # DiveDispatch session memory
 
-**NEXT:** Run `/first` → pick next ready ticket (DD-367, DD-316, or DD-331–333) or continue HappyPath alignment.
+**NEXT:** Run `/first` → pick next ready ticket (DD-332, DD-369) or continue HappyPath alignment.
 
-- **Recent merges:** `8b83deb` feat (i18n/portal/booking wizard/`convex.tsx`); `2652e74` convex support + contracts; `bcfd50f` CI/i18n/docs; `fddad22` dependency whitelist.
-- **Tests:** 4046 passed (vitest); gate last ran CLEAN.
+- **Recent merges:** (refresh after next commit) Account/Workspace + booking/schema batch.
+- **Tests:** 4048 passed (vitest); `./node_modules/.bin/tsc --noEmit` green; `.patrol-ran` CLEAN.

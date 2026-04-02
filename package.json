@@ -20,7 +20,7 @@
     "test:quick": "vitest run --passWithNoTests --tags-filter='!slow'",
     "test:focus": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "i18n:verify": "node scripts/verify-i18n-keys.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:isolated": "bash scripts/e2e-preview.sh",

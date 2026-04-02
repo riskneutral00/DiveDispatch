@@ -14,7 +14,7 @@ When invoked, parse the command and execute. No preamble.
 ### `/board` (no args) — Board summary
 
 1. Read all `.tickets/DD-*.md` files. Parse YAML frontmatter from each.
-2. Group by status: in_progress, ready, blocked, review, backlog.
+2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog.
 3. Sort each group by priority (P0 first), then by id (lower first).
 4. Print:
 
@@ -29,6 +29,12 @@ In Progress ({count}):
 
 Ready ({count}):
   {id} [{priority}] {title} ({category}) {size} {🧑 human | ⚡ auto} {⚠ non-standard format — if missing **Spec:** or **Acceptance:** headers}
+
+Black hole ({count}):
+  {id} [{priority}] {title} — parked / deprioritized (excluded from /board pick)
+
+Happy path ({count}):
+  {id} [{priority}] {title}
 
 Blocked ({count}):
   {id} [{priority}] {title} — waiting: {blocked_by}          ← dependency-blocked (blocked_by non-empty, stuck_reason null)
