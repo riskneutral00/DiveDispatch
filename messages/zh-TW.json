@@ -137,6 +137,15 @@
     },
     "welcome": "歡迎，{name}",
     "subtitle": "請完成以下預訂文件",
-    "diverCount": "{count, plural, other {# 位潛水員}}"
+    "diverCount": "{count, plural, other {# 位潛水員}}",
+    "postTrip": {
+      "title": "感謝您與我們一起潛水！",
+      "subtitle": "希望您度過了美好的體驗。",
+      "reviewPrompt": "幫助其他人發現精彩潛水——為我們留下評價。",
+      "googleMaps": "在 Google Maps 上評價",
+      "facebook": "在 Facebook 上評價",
+      "signupPrompt": "想預訂下一次潛水冒險嗎？",
+      "signupCta": "註冊 DiveDispatch"
+    }
   }
 }

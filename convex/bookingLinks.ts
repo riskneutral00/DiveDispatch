@@ -6,6 +6,7 @@ import { isBookingExpired } from './bookings/_shared'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 import { BOOKING_STATUS } from './shared/statuses'
+import { todayISO } from './bookings/stateMachine'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ export type BookingLinkResult =
       diverCount: number
     }
   | { status: 'completed'; customerName: string; operatorName: string; startDate: string }
+  | { status: 'post_trip'; operatorName: string; startDate: string; endDate: string }
   | { status: 'expired' }
   | { status: 'closed' }
   | { status: 'not_found' }
@@ -167,6 +169,19 @@ export const getByToken = query({
     // Booking TTL has lapsed — lazy expiry detected on read.
     if (isBookingExpired(booking)) {
       return { status: 'expired' }
+    }
+
+    // Post-trip: booking is Completed, or Upcoming with endDate already passed.
+    const isPostTrip =
+      booking.status === BOOKING_STATUS.Completed ||
+      (booking.status === BOOKING_STATUS.Upcoming && booking.endDate < todayISO())
+    if (isPostTrip) {
+      return {
+        status: 'post_trip',
+        operatorName: booking.operatorName,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+      }
     }
 
     // Booking closed means the portal should not accept new submissions.

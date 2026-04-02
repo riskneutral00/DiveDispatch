@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/onboarding/step-indicator'
 import { computeStep, type ClientPortalStep } from '@/lib/portal/compute-step'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
+import { PostTripPage } from '@/components/portal/post-trip-page'
 import type { EquipmentData } from '@/components/portal/step-equipment'
 
 function PortalStepLoading() {
@@ -156,6 +157,17 @@ export default function PortalTokenPage() {
           </GlassButton>
         </GlassCard>
       </div>
+    )
+  }
+
+  // Post-trip: booking completed or end date passed — show review + signup page
+  if (result.status === 'post_trip') {
+    return (
+      <PostTripPage
+        operatorName={result.operatorName}
+        startDate={result.startDate}
+        endDate={result.endDate}
+      />
     )
   }
 

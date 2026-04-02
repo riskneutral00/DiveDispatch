@@ -137,6 +137,15 @@
     },
     "welcome": "환영합니다, {name}",
     "subtitle": "아래 예약 서류를 작성해 주세요",
-    "diverCount": "{count, plural, other {#명}}"
+    "diverCount": "{count, plural, other {#명}}",
+    "postTrip": {
+      "title": "함께 잠수해 주셔서 감사합니다!",
+      "subtitle": "멋진 경험이 되셨길 바랍니다.",
+      "reviewPrompt": "다른 분들도 좋은 다이빙을 발견할 수 있도록 리뷰를 남겨주세요.",
+      "googleMaps": "Google Maps에서 리뷰하기",
+      "facebook": "Facebook에서 리뷰하기",
+      "signupPrompt": "다음 다이빙 모험을 예약하고 싶으신가요?",
+      "signupCta": "DiveDispatch 회원가입"
+    }
   }
 }

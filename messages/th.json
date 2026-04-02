@@ -137,6 +137,15 @@
     },
     "welcome": "ยินดีต้อนรับ {name}",
     "subtitle": "กรุณากรอกเอกสารการจองด้านล่าง",
-    "diverCount": "{count, plural, other {# คน}}"
+    "diverCount": "{count, plural, other {# คน}}",
+    "postTrip": {
+      "title": "ขอบคุณที่ดำน้ำกับเรา!",
+      "subtitle": "หวังว่าคุณจะมีประสบการณ์ที่ยอดเยี่ยม",
+      "reviewPrompt": "ช่วยให้คนอื่นค้นพบการดำน้ำที่ดี — ฝากรีวิวไว้ด้วยนะ",
+      "googleMaps": "รีวิวบน Google Maps",
+      "facebook": "รีวิวบน Facebook",
+      "signupPrompt": "อยากจองทริปดำน้ำครั้งต่อไปไหม?",
+      "signupCta": "สมัคร DiveDispatch"
+    }
   }
 }

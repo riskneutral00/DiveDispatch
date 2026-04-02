@@ -137,6 +137,15 @@
     },
     "welcome": "Bienvenue, {name}",
     "subtitle": "Veuillez compléter les documents de réservation ci-dessous",
-    "diverCount": "{count, plural, one {# plongeur} other {# plongeurs}}"
+    "diverCount": "{count, plural, one {# plongeur} other {# plongeurs}}",
+    "postTrip": {
+      "title": "Merci d'avoir plongé avec nous !",
+      "subtitle": "Nous espérons que vous avez vécu une expérience incroyable.",
+      "reviewPrompt": "Aidez d'autres plongeurs à nous trouver — laissez un avis.",
+      "googleMaps": "Avis sur Google Maps",
+      "facebook": "Avis sur Facebook",
+      "signupPrompt": "Envie de réserver votre prochaine aventure ?",
+      "signupCta": "S'inscrire sur DiveDispatch"
+    }
   }
 }

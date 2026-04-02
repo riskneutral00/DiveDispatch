@@ -137,6 +137,15 @@
     },
     "welcome": "Welcome, {name}",
     "subtitle": "Please complete your booking paperwork below",
-    "diverCount": "{count, plural, one {# diver} other {# divers}}"
+    "diverCount": "{count, plural, one {# diver} other {# divers}}",
+    "postTrip": {
+      "title": "Thanks for diving with us!",
+      "subtitle": "We hope you had an amazing experience.",
+      "reviewPrompt": "Help others discover great diving — leave us a review.",
+      "googleMaps": "Review on Google Maps",
+      "facebook": "Review on Facebook",
+      "signupPrompt": "Want to book your next dive adventure?",
+      "signupCta": "Sign Up for DiveDispatch"
+    }
   }
 }
