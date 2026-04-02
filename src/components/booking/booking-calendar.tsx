@@ -14,8 +14,14 @@ import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
 import { deriveStatus, getDaysOfWeek } from '@/lib/utils/calendar-range'
 import { parseDateLocal, toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
+import type { StatusColorSet } from '@/lib/constants/vessel-colors'
+import type { CustomLegendItem } from '@/components/booking/calendar-legend'
 import type { CalendarBooking } from '../../../convex/bookings'
 
+export type CustomCategories = {
+  items: CustomLegendItem[]
+  getCategoryKey: (booking: CalendarBooking) => string
+}
 
 interface BookingCalendarProps {
   bookings?: CalendarBooking[]
@@ -31,6 +37,8 @@ interface BookingCalendarProps {
   footerAction?: React.ReactNode
   className?: string
   droppableEnabled?: boolean
+  customCategories?: CustomCategories
+  customLabel?: (booking: CalendarBooking) => { label: string; subLabel?: string }
 }
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -57,6 +65,8 @@ export function BookingCalendar({
   footerAction,
   className,
   droppableEnabled,
+  customCategories,
+  customLabel,
 }: BookingCalendarProps) {
   const { range, shiftRange, jumpToDate, resetRange, weeks, headerLabel, todayCol } =
     useCalendarRange()
@@ -91,6 +101,7 @@ export function BookingCalendar({
   const [hiddenStatuses, setHiddenStatuses] = useState(
     () => new Set<CalendarDisplayStatus>(['Completed']),
   )
+  const [hiddenCategories, setHiddenCategories] = useState(() => new Set<string>())
   const [blockedHidden, setBlockedHidden] = useState(false)
   const toggleBlocked = useCallback(() => setBlockedHidden((h) => !h), [])
 
@@ -102,6 +113,24 @@ export function BookingCalendar({
     onHiddenStatusesChange?.(next)
   }
 
+  const toggleCategory = useCallback((key: string) => {
+    setHiddenCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
+
+  const categoryColorMap = useMemo(() => {
+    if (!customCategories) return null
+    const map = new Map<string, StatusColorSet>()
+    for (const item of customCategories.items) {
+      map.set(item.key, item.color)
+    }
+    return map
+  }, [customCategories])
+
   const todayStr = useMemo(() => toISODateString(new Date()), [])
   const blockedDatesSet = useMemo(() => new Set(blockedDates ?? []), [blockedDates])
   const dayHeaders = getDaysOfWeek()
@@ -109,19 +138,27 @@ export function BookingCalendar({
   const resolvedBookings = useMemo(() => {
     const result: (CalendarBooking & { displayStatus: CalendarDisplayStatus })[] = []
     for (const b of bookings) {
-      const status = deriveStatus(b, todayStr, allDraftsUrgent)
-      if (status !== null && !hiddenStatuses.has(status)) {
-        result.push({ ...b, displayStatus: status })
+      if (customCategories) {
+        const key = customCategories.getCategoryKey(b)
+        if (!hiddenCategories.has(key)) {
+          result.push({ ...b, displayStatus: 'Active' })
+        }
+      } else {
+        const status = deriveStatus(b, todayStr, allDraftsUrgent)
+        if (status !== null && !hiddenStatuses.has(status)) {
+          result.push({ ...b, displayStatus: status })
+        }
       }
     }
     return result
-  }, [bookings, todayStr, hiddenStatuses, allDraftsUrgent])
+  }, [bookings, todayStr, hiddenStatuses, hiddenCategories, allDraftsUrgent, customCategories])
 
-  // Dates with active/upcoming/completed bookings that cannot be blocked
+  // Dates with active/upcoming/completed bookings that cannot be blocked.
+  // Custom categories (vessels): all dates with items are locked.
   const lockedDatesSet = useMemo(() => {
     const locked = new Set<string>()
     for (const b of resolvedBookings) {
-      if (!LOCKING_STATUSES.has(b.displayStatus)) continue
+      if (!customCategories && !LOCKING_STATUSES.has(b.displayStatus)) continue
       const cur = parseDateLocal(b.startDate)
       const end = parseDateLocal(b.endDate)
       while (cur <= end) {
@@ -130,7 +167,7 @@ export function BookingCalendar({
       }
     }
     return locked
-  }, [resolvedBookings])
+  }, [resolvedBookings, customCategories])
 
   // Per-week urgent bookings — assigned to the week containing startDate
   const urgentPerWeek = useMemo(() => {
@@ -173,7 +210,7 @@ export function BookingCalendar({
       const spans: BookingSpan[] = []
 
       for (const booking of resolvedBookings) {
-        if (booking.displayStatus === 'Urgent') continue
+        if (!customCategories && booking.displayStatus === 'Urgent') continue
         if (booking.endDate < weekStart || booking.startDate > weekEnd) continue
 
         const startCol = Math.max(
@@ -187,11 +224,12 @@ export function BookingCalendar({
         const isContinuation = booking.startDate < weekStart
 
         if (startCol <= endCol) {
+          const labelResult = customLabel ? customLabel(booking) : null
           spans.push({
             id: booking._id,
             startCol,
             endCol,
-            label: buildBarLabel(booking),
+            label: labelResult ? labelResult.label : buildBarLabel(booking),
             status: booking.displayStatus,
             isMultiDay,
             continuation: isContinuation,
@@ -201,7 +239,7 @@ export function BookingCalendar({
 
       return skylinePack(spans)
     })
-  }, [weeks, resolvedBookings])
+  }, [weeks, resolvedBookings, customCategories, customLabel])
 
   return (
     <div data-testid="booking-calendar" className={`flex flex-col ${className ?? ''}`}>
@@ -407,13 +445,16 @@ export function BookingCalendar({
                     >
                     {dayBars.map((bar) => {
                       const booking = resolvedBookings.find((b) => b._id === bar.id)
+                      const categoryKey = booking && customCategories ? customCategories.getCategoryKey(booking) : null
+                      const catColor = categoryKey && categoryColorMap ? categoryColorMap.get(categoryKey) : null
                       const isMultiDay = !!bar.isMultiDay
-                      const statusColors = STATUS_COLORS[bar.status]
-                      const opacity = STATUS_OPACITY[bar.status]
-                      const borderStyle = STATUS_BORDER_STYLE[bar.status]
-                      const borderColor = getBarBorderColor(bar.status, isMultiDay, statusColors.borderVar)
-                      const subLabel = booking ? buildBarSubLabel(booking, viewerRole) : undefined
-                      const isReferral = booking?.isReferral ?? false
+                      const statusColors = catColor ?? STATUS_COLORS[bar.status]
+                      const opacity = catColor ? 1.0 : STATUS_OPACITY[bar.status]
+                      const borderStyle: 'solid' | 'dashed' = catColor ? 'solid' : STATUS_BORDER_STYLE[bar.status]
+                      const borderColor = catColor ? statusColors.borderVar : getBarBorderColor(bar.status, isMultiDay, statusColors.borderVar)
+                      const customLabelResult = booking && customLabel ? customLabel(booking) : null
+                      const subLabel = customLabelResult ? customLabelResult.subLabel : (booking ? buildBarSubLabel(booking, viewerRole) : undefined)
+                      const isReferral = !customCategories && (booking?.isReferral ?? false)
 
                       // Label-follows-today: show label only on the "active" day cell
                       let showLabel = true
@@ -502,9 +543,12 @@ export function BookingCalendar({
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-3">
         <div className="flex-1" />
         <CalendarLegend
-          statuses={legendStatuses}
-          hiddenStatuses={hiddenStatuses}
-          onToggle={toggleStatus}
+          statuses={customCategories ? undefined : legendStatuses}
+          hiddenStatuses={customCategories ? undefined : hiddenStatuses}
+          onToggle={customCategories ? undefined : toggleStatus}
+          customItems={customCategories?.items}
+          hiddenKeys={customCategories ? hiddenCategories : undefined}
+          onToggleKey={customCategories ? toggleCategory : undefined}
           showBlocked={!!onDateClick || blockedDatesSet.size > 0}
           blockedHidden={blockedHidden}
           onToggleBlocked={toggleBlocked}

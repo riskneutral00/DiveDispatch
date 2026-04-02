@@ -1,11 +1,21 @@
 'use client'
 
 import { STATUS_COLORS, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
+import type { StatusColorSet } from '@/lib/constants/vessel-colors'
+
+export type CustomLegendItem = {
+  key: string
+  label: string
+  color: StatusColorSet
+}
 
 interface CalendarLegendProps {
   statuses?: CalendarDisplayStatus[]
   hiddenStatuses?: Set<CalendarDisplayStatus>
   onToggle?: (status: CalendarDisplayStatus) => void
+  customItems?: CustomLegendItem[]
+  hiddenKeys?: Set<string>
+  onToggleKey?: (key: string) => void
   showBlocked?: boolean
   blockedHidden?: boolean
   onToggleBlocked?: () => void
@@ -18,6 +28,9 @@ export function CalendarLegend({
   statuses = DEFAULT_STATUSES,
   hiddenStatuses,
   onToggle,
+  customItems,
+  hiddenKeys,
+  onToggleKey,
   showBlocked,
   blockedHidden,
   onToggleBlocked,
@@ -27,8 +40,52 @@ export function CalendarLegend({
     <div
       className={`flex flex-wrap items-center gap-1.5${className ? ` ${className}` : ''}`}
     >
-      {/* Status border pills */}
-      {statuses.map((status) => {
+      {/* Custom category pills (e.g., fleet vessels) */}
+      {customItems ? customItems.map((item) => {
+        const isHidden = hiddenKeys?.has(item.key) ?? false
+        const colors = item.color
+
+        const pillStyle: React.CSSProperties = isHidden
+          ? {
+              color: colors.textVar,
+              border: `1px solid ${colors.borderVar}`,
+              background: 'transparent',
+              opacity: 0.55,
+            }
+          : {
+              color: colors.textVar,
+              background: colors.bgVar,
+              border: `1px solid ${colors.borderVar}`,
+            }
+
+        if (onToggleKey) {
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onToggleKey(item.key)}
+              title={isHidden ? `Show ${item.label}` : `Hide ${item.label}`}
+              className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
+              style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
+            >
+              {item.label}
+            </button>
+          )
+        }
+
+        return (
+          <div
+            key={item.key}
+            className="rounded-full px-2 py-0.5 font-medium select-none"
+            style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
+          >
+            {item.label}
+          </div>
+        )
+      }) :
+
+      /* Status border pills */
+      statuses.map((status) => {
         const isHidden = hiddenStatuses?.has(status) ?? false
         const colors = STATUS_COLORS[status]
 
