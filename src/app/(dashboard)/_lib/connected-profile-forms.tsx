@@ -14,6 +14,12 @@ import {
   DiveCenterAffiliationsSection,
   type DiveCenterProfileSection,
 } from '@/components/profiles/dive-center-profile-form'
+import {
+  AgentContactSection,
+  AgentLanguagesSection,
+  AgentAssociationsSection,
+  type AgentProfileSection,
+} from '@/components/profiles/agent-profile-form'
 
 /** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
@@ -29,6 +35,40 @@ function ConnectedDiveSiteForm() {
   const update = useMutation(api.venues.update)
   return (
     <DiveSiteProfileForm
+      profile={profile}
+      me={me}
+      create={asLooseMut(create)}
+      update={asLooseMut(update)}
+    />
+  )
+}
+
+function ConnectedAgentForm({ section }: { section?: string }) {
+  const profile = useQuery(api.agents.mine)
+  const me = useQuery(api.users.me)
+  const create = useMutation(api.agents.create)
+  const update = useMutation(api.agents.update)
+  const updateProfile = useMutation(api.users.updateProfile)
+  const sectionKey = (section ?? 'contact') as AgentProfileSection
+  if (sectionKey === 'languages')
+    return (
+      <AgentLanguagesSection
+        profile={profile}
+        me={me}
+        update={asLooseMut(update)}
+        updateProfile={asLooseMut(updateProfile)}
+      />
+    )
+  if (sectionKey === 'associations')
+    return (
+      <AgentAssociationsSection
+        profile={profile}
+        create={asLooseMut(create)}
+        update={asLooseMut(update)}
+      />
+    )
+  return (
+    <AgentContactSection
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -63,6 +103,7 @@ export function RoleProfileForm({
 }) {
   if (roleSlug === 'dive-site') return <ConnectedDiveSiteForm />
   if (roleSlug === 'dive-center') return <ConnectedDiveCenterForm section={section} />
+  if (roleSlug === 'agent') return <ConnectedAgentForm section={section} />
   return <LibRoleProfileForm roleSlug={roleSlug} section={section} />
 }
 
