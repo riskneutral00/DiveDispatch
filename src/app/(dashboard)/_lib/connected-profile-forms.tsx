@@ -8,6 +8,12 @@ import {
   WorkspaceEmbeddedProfileForm as LibWorkspaceEmbeddedProfileForm,
 } from '@/lib/profile/connected-role-forms'
 import { DiveSiteProfileForm } from '@/components/profiles/dive-site-profile-form'
+import {
+  DiveCenterContactSection,
+  DiveCenterLanguagesSection,
+  DiveCenterAffiliationsSection,
+  type DiveCenterProfileSection,
+} from '@/components/profiles/dive-center-profile-form'
 
 /** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
@@ -31,6 +37,23 @@ function ConnectedDiveSiteForm() {
   )
 }
 
+function ConnectedDiveCenterForm({ section }: { section?: string }) {
+  const profile = useQuery(api.diveCenters.mine)
+  const me = useQuery(api.users.me)
+  const create = useMutation(api.diveCenters.create)
+  const update = useMutation(api.diveCenters.update)
+  const sectionKey = (section ?? 'contact') as DiveCenterProfileSection
+  const props = {
+    profile,
+    me,
+    create: asLooseMut(create),
+    update: asLooseMut(update),
+  }
+  if (sectionKey === 'languages') return <DiveCenterLanguagesSection {...props} />
+  if (sectionKey === 'associations') return <DiveCenterAffiliationsSection {...props} />
+  return <DiveCenterContactSection {...props} />
+}
+
 export function RoleProfileForm({
   roleSlug,
   section,
@@ -39,6 +62,7 @@ export function RoleProfileForm({
   section?: string
 }) {
   if (roleSlug === 'dive-site') return <ConnectedDiveSiteForm />
+  if (roleSlug === 'dive-center') return <ConnectedDiveCenterForm section={section} />
   return <LibRoleProfileForm roleSlug={roleSlug} section={section} />
 }
 
