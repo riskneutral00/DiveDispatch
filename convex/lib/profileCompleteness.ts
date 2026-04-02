@@ -23,8 +23,8 @@ const profileTable: Record<string, string> = {
 /**
  * Check completeness for a single role. Three layers:
  * 1. Profile layer: PROFILE_REQUIRED fields on users table
- * 2. Settings layer: SETTINGS_REQUIRED fields on users table
- * 3. Role layer: ROLE_REQUIRED[role] fields on role-specific profile table
+ * 2. User account fields (users table): SETTINGS_REQUIRED — app language and similar
+ * 3. Role profile layer: ROLE_REQUIRED[role] fields on role-specific profile table
  */
 export async function checkProfileCompleteness(
   ctx: Pick<QueryCtx, 'db'>,

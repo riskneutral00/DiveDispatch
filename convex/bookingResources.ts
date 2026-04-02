@@ -79,12 +79,14 @@ export async function insertBookingResource(
   resourceType: string,
   resourceSlug: string | undefined,
   externalName: string | undefined,
+  roleType?: 'Instructor' | 'DiveMaster',
 ): Promise<string> {
   return ctx.db.insert('bookingResources', {
     bookingId: bookingId as Id<'bookings'>,
     resourceType: resourceType as ResourceOwnerType,
     resourceSlug,
     externalName,
+    ...(roleType ? { roleType } : {}),
   })
 }
 

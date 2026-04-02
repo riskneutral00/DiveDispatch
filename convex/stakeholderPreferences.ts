@@ -61,6 +61,7 @@ export const upsert = mutation({
     preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
+    autoAssignPreferred: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
@@ -100,6 +101,7 @@ export const upsert = mutation({
       preferredOperatorSlug: args.preferredOperatorSlug,
       confirmOnAccept: args.confirmOnAccept,
       confirmOnDecline: args.confirmOnDecline,
+      autoAssignPreferred: args.autoAssignPreferred,
     }
 
     if (existing) {
@@ -112,6 +114,7 @@ export const upsert = mutation({
       stakeholderType: args.activeRole,
       useNamedUnits: false,
       ...payload,
+      autoAssignPreferred: args.autoAssignPreferred ?? true,
     })
   },
 })

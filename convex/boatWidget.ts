@@ -3,6 +3,7 @@ import type { Id, Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { batchGet } from './lib/batch'
+import { getResourcesForBooking } from './bookingResources'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -50,6 +51,10 @@ export type ManifestGroup = {
   activityType: string[]
   diverCount: number
   divers: ManifestDiver[]
+  /** First session delivery point for this vessel date (when present). */
+  deliveryLocation?: 'BoatPier' | 'Pool' | 'Beach'
+  /** Resolved from bookingResources DiveSite + venues profile when available. */
+  diveSiteName?: string
 }
 
 export type ManifestDateEntry = {
@@ -213,6 +218,32 @@ export const getManifestData = query({
 
           const groups: ManifestGroup[] = await Promise.all(
             bookings.map(async (booking) => {
+              const bookingSessionsForDate = sessions.filter(
+                (s) => s.bookingId === booking._id,
+              )
+              const deliveryLocation = bookingSessionsForDate.find(
+                (s) => s.deliveryLocation,
+              )?.deliveryLocation as 'BoatPier' | 'Pool' | 'Beach' | undefined
+
+              let diveSiteName: string | undefined
+              const resRows = await getResourcesForBooking(ctx, String(booking._id))
+              const diveSiteRow = resRows.find(
+                (r) => r.resourceType === 'DiveSite' && r.resourceSlug,
+              )
+              if (diveSiteRow?.resourceSlug) {
+                const siteUser = await ctx.db
+                  .query('users')
+                  .withIndex('by_slug', (q) => q.eq('slug', diveSiteRow.resourceSlug!))
+                  .unique()
+                if (siteUser) {
+                  const venue = await ctx.db
+                    .query('venues')
+                    .withIndex('by_userId', (q) => q.eq('userId', siteUser._id))
+                    .unique()
+                  diveSiteName = venue?.name
+                }
+              }
+
               const profiles = await ctx.db
                 .query('customerProfiles')
                 .withIndex('by_bookingId', (q) =>
@@ -267,6 +298,8 @@ export const getManifestData = query({
                 activityType: booking.activityType,
                 diverCount: booking.divers.length,
                 divers,
+                ...(deliveryLocation ? { deliveryLocation } : {}),
+                ...(diveSiteName ? { diveSiteName } : {}),
               }
             }),
           )

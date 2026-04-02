@@ -280,7 +280,14 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     await deleteResourcesForBooking(ctx, args.bookingId)
   }
   for (const r of resources) {
-    await insertBookingResource(ctx, args.bookingId, r.resourceType, r.resourceSlug, r.externalName)
+    await insertBookingResource(
+      ctx,
+      args.bookingId,
+      r.resourceType,
+      r.resourceSlug,
+      r.externalName,
+      r.roleType,
+    )
   }
 
   // ── Instructor credential soft warning ──────────────────────────────────────
@@ -289,9 +296,12 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     ? [...new Set(args.bookingData.divers.flatMap((d) => d.activityType))]
     : (booking as BookingDoc).activityType as CourseCode[]
 
-  // Find instructor resource(s) assigned to this booking
+  // Lead instructors only — Dive Masters use instructors table for capacity, not course credentials.
   const instructorResources = resources.filter(
-    (r) => r.resourceType === 'Instructor' && r.resourceSlug,
+    (r) =>
+      r.resourceType === 'Instructor' &&
+      r.resourceSlug &&
+      (r.roleType ?? 'Instructor') !== 'DiveMaster',
   )
 
   const warnings: Array<{ type: string; missing: string[] }> = []

@@ -100,6 +100,8 @@ export default defineSchema({
     resourceType: resourceOwnerType,
     resourceSlug: v.optional(v.string()),
     externalName: v.optional(v.string()),
+    /** When resourceType is Instructor, distinguishes Dive Master helpers from lead instructors. */
+    roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_resourceSlug', ['resourceSlug'])
@@ -333,6 +335,8 @@ export default defineSchema({
     preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
+    /** When true, wizard picks first eligible preferred resource (tier-1 instructor, etc.) instead of leaving blank. */
+    autoAssignPreferred: v.optional(v.boolean()),
   }).index('by_stakeholderId', ['stakeholderId']),
 
   // ── L1: Notifications ───────────────────────────────────────────────
