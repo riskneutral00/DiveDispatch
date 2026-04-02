@@ -4,6 +4,7 @@ import { query } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { batchGet } from './lib/batch'
 import { getResourcesForBooking } from './bookingResources'
+import type { CalendarBooking } from './bookings'
 
 // ── Return types ───────────────────────────────────────────────────────────────
 
@@ -317,6 +318,86 @@ export const getManifestData = query({
     )
 
     return { vessels }
+  },
+})
+
+/**
+ * Returns vessel daily trips shaped as CalendarBooking[] so the unified
+ * BookingCalendar can render fleet pills. Each vessel × date = one entry.
+ */
+export const getVesselCalendarTrips = query({
+  args: {
+    dateRangeStart: v.string(),
+    dateRangeEnd: v.string(),
+  },
+  handler: async (ctx, args): Promise<CalendarBooking[]> => {
+    const { user } = await requireAuth(ctx)
+
+    const boatProfile = await ctx.db
+      .query('boats')
+      .withIndex('by_userId', (q) => q.eq('userId', user._id))
+      .unique()
+    if (!boatProfile) return []
+
+    const dates = buildDateRange(args.dateRangeStart, args.dateRangeEnd)
+
+    const units = await ctx.db
+      .query('inventoryUnits')
+      .withIndex('by_ownerId_resourceType', (q) =>
+        q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
+      )
+      .collect()
+
+    const unitMap = new Map(units.map((u) => [u.displayName, u]))
+
+    const trips: CalendarBooking[] = []
+
+    for (const vessel of boatProfile.fleet) {
+      const unit = unitMap.get(vessel.boatName)
+
+      for (const date of dates) {
+        const dayOfWeek = new Date(date + 'T00:00:00').getDay()
+        const route = vessel.routes?.find((r) =>
+          r.daysOfWeek.includes(dayOfWeek),
+        )
+        const routeName = route?.diveSite ?? ''
+
+        let bookedPax = 0
+        if (unit) {
+          const sessions = await ctx.db
+            .query('bookingSessions')
+            .withIndex('by_inventoryUnitId_date', (q) =>
+              q.eq('inventoryUnitId', unit._id).eq('date', date),
+            )
+            .collect()
+
+          const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
+          const bookingDocs = await batchGet(ctx, bookingIds)
+          bookedPax = bookingDocs.reduce(
+            (sum, b) => sum + (b ? b.divers.length : 0),
+            0,
+          )
+        }
+
+        trips.push({
+          _id: `${unit ? String(unit._id) : vessel.boatName}_${date}`,
+          activityType: route ? [route.diveSite] : [],
+          startDate: date,
+          endDate: date,
+          status: 'Upcoming',
+          diverCount: bookedPax,
+          instructorName: undefined,
+          boatName: vessel.boatName,
+          customerName: undefined,
+          operatorName: routeName,
+          reservationStatus: undefined,
+          resources: [],
+          isReferral: false,
+        })
+      }
+    }
+
+    return trips
   },
 })
 
