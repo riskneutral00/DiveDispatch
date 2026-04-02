@@ -9,8 +9,10 @@ import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { getResourcesForBooking } from '../bookingResources'
 import { restoreSnapshotUnits, getAvailabilitySnapshot } from './inventoryRelease'
-import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
+import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON, NOTIFICATION_TYPE } from '../shared/statuses'
 import { ErrorCode } from '../lib/errorCodes'
+import { notify } from '../notifications'
+import type { NotificationLogistics } from '../shared/notificationLogistics'
 
 /**
  * Advances booking Draft → Upcoming when all conditions are simultaneously satisfied.
@@ -70,13 +72,13 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
       for (const res of allReservations) {
         if (res.status === RESERVATION_STATUS.Vacated || res.status === RESERVATION_STATUS.NoShow) continue
         // DD-017: re-read reservation to guard against concurrent vacate
-        const fresh = await ctx.db.get(res._id)
+        const fresh = await ctx.db.get(res._id) // batch-exempt: guard read per-reservation, sequential intentional
         if (!fresh || fresh.status === RESERVATION_STATUS.Vacated) continue
-        const unit = await ctx.db.get(res.inventoryUnitId)
+        const unit = await ctx.db.get(res.inventoryUnitId) // batch-exempt: conditional check per reservation
         if (!unit || unit.resourceType !== 'Equipment') continue
 
         // Fetch session + snapshot BEFORE patching reservation (Invariant 3: paired writes)
-        const session = await ctx.db.get(res.bookingSessionId)
+        const session = await ctx.db.get(res.bookingSessionId) // batch-exempt: paired with snapshot fetch per reservation
         if (!session) {
           throw new ConvexError({
             code: ErrorCode.ORPHANED_RESERVATION,
@@ -91,7 +93,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
           })
         }
 
-        await ctx.db.patch(res._id, {
+        await ctx.db.patch(res._id, { // batch-exempt: Invariant 3 requires paired reservation + snapshot writes
           status: RESERVATION_STATUS.Vacated,
           vacatedAt: Date.now(),
           vacatedBy: VACATED_REASON.EquipmentNotNeeded,
@@ -131,5 +133,86 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
 
   if (allConfirmed && !hasMissingResource) {
     await ctx.db.patch(bookingId as Id<'bookings'>, { status: BOOKING_STATUS.Upcoming })
+
+    let logistics: NotificationLogistics | undefined
+    try {
+      logistics = await collectLogistics(ctx, bookingId as Id<'bookings'>)
+    } catch {
+      // collectLogistics is best-effort — notification proceeds without logistics
+    }
+    await notify(ctx, {
+      userId: freshBooking.ownerId,
+      type: NOTIFICATION_TYPE.BookingConfirmed,
+      bookingId: bookingId as Id<'bookings'>,
+      message: 'Your booking is confirmed.',
+      logistics,
+    })
   }
+}
+
+/**
+ * Collects logistics details for a booking_confirmed notification.
+ * Sources:
+ *   - departureTime: earliest session startTime
+ *   - departureLocation: deliveryLocation from earliest session (if set)
+ *   - pickupTime/pickupLocation: first customerProfile with pickup data
+ *   - boatName: Boat bookingResource externalName or inventory unit displayName
+ *
+ * Returns an object with only the fields that are present — no undefined values in the object.
+ */
+async function collectLogistics(
+  ctx: MutationCtx,
+  bookingId: Id<'bookings'>,
+): Promise<NotificationLogistics> {
+  const logistics: NotificationLogistics = {}
+
+  // Departure time + location from earliest booking session
+  const sessions = await ctx.db
+    .query('bookingSessions')
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+    .collect()
+
+  if (sessions.length > 0) {
+    const earliest = sessions.reduce((a, b) => {
+      if (a.date < b.date) return a
+      if (a.date > b.date) return b
+      return a.startTime <= b.startTime ? a : b
+    })
+    logistics.departureTime = earliest.startTime
+    if (earliest.deliveryLocation) {
+      logistics.departureLocation = earliest.deliveryLocation
+    }
+  }
+
+  // Pickup details from first customerProfile that has them
+  const profile = await ctx.db
+    .query('customerProfiles')
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+    .first() // batch-exempt: single first() read, not a loop
+  if (profile?.pickupTime) logistics.pickupTime = profile.pickupTime
+  if (profile?.pickupLocation) logistics.pickupLocation = profile.pickupLocation
+
+  // Boat name from bookingResources
+  const bookingResources = await ctx.db
+    .query('bookingResources')
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+    .collect()
+
+  const boatResource = bookingResources.find((r) => r.resourceType === 'Boat')
+  if (boatResource) {
+    if (boatResource.externalName) {
+      logistics.boatName = boatResource.externalName
+    } else if (boatResource.resourceSlug) {
+      // In-system boat: look up inventory unit displayName
+      const unit = await ctx.db
+        .query('inventoryUnits')
+        .withIndex('by_ownerId_resourceType', (q) =>
+          q.eq('ownerId', boatResource.resourceSlug!).eq('resourceType', 'Boat'),
+        )
+        .first() // batch-exempt: single first() read for one known boat slug
+      if (unit) logistics.boatName = unit.displayName
+    }
+  }
+
+  return logistics
 }

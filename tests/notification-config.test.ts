@@ -7,7 +7,7 @@ import {
   getNotificationStyle,
 } from '../src/lib/notifications/notification-config'
 
-// ── All 13 schema types ────────────────────────────────────────────────────
+// ── All 14 schema types ────────────────────────────────────────────────────
 
 const ALL_SCHEMA_TYPES = [
   'hold_placed',
@@ -15,6 +15,7 @@ const ALL_SCHEMA_TYPES = [
   'booking_cancelled',
   'booking_updated',
   'booking_referred',
+  'booking_confirmed',
   'medical_hard_block',
   'medical_cleared',
   'physician_clearance_submitted',
@@ -28,14 +29,14 @@ const ALL_SCHEMA_TYPES = [
 // ── NOTIFICATION_CONFIG completeness ───────────────────────────────────────
 
 describe('NOTIFICATION_CONFIG', () => {
-  it('has an entry for all 13 schema notification types', () => {
+  it('has an entry for all 14 schema notification types', () => {
     for (const type of ALL_SCHEMA_TYPES) {
       expect(NOTIFICATION_CONFIG[type], `missing config for "${type}"`).toHaveProperty('tier')
     }
   })
 
-  it('has exactly 13 entries (no extras)', () => {
-    expect(Object.keys(NOTIFICATION_CONFIG)).toHaveLength(13)
+  it('has exactly 14 entries (no extras)', () => {
+    expect(Object.keys(NOTIFICATION_CONFIG)).toHaveLength(14)
   })
 
   it('does not contain hold_accepted (phantom type)', () => {
@@ -55,7 +56,7 @@ describe('tier assignments', () => {
     'booking_cancelled',
     'physician_clearance_submitted',
   ]
-  const INFO_TYPES = ['hold_placed', 'medical_cleared', 'portal_complete']
+  const INFO_TYPES = ['hold_placed', 'medical_cleared', 'portal_complete', 'booking_confirmed']
 
   it.each(ACTION_TYPES)('"%s" is tier action', (type) => {
     expect(NOTIFICATION_CONFIG[type as NotificationType].tier).toBe('action')

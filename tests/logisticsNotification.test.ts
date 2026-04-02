@@ -1,0 +1,381 @@
+/**
+ * DD-360: Structured logistics in notifications.
+ *
+ * Tests:
+ * 1. booking → Upcoming emits booking_confirmed notification to owner with logistics
+ * 2. logistics fields populated from session startTime, customerProfile pickup, and boat resource
+ * 3. logistics absent when no session data exists (minimal booking)
+ * 4. notifications without logistics field are unaffected by schema change
+ * 5. notify() stores logistics payload when provided
+ * 6. notify() omits logistics key when not provided (backward compat)
+ * 7. multi-role: DiveCenter, Agent, and Liveaboard bookings all emit confirmed notification
+ */
+
+import { describe, it, expect, beforeEach } from 'vitest'
+import { notify } from '../convex/notifications'
+import { tryAutoAdvance } from '../convex/bookings/_shared'
+import { NOTIFICATION_TYPE } from '../convex/shared/statuses'
+import type { Id } from '../convex/_generated/dataModel'
+import { testDate } from './helpers/dates'
+import { TEST_SLUGS, seedUser, seedNotification } from './fixtures'
+import { makeT } from './helpers/convex-helpers'
+import { HOLD_TTL_MS } from '../convex/lib/auth'
+
+let t = makeT()
+beforeEach(() => {
+  t = makeT()
+})
+
+// ─── Helper: seed a fully-confirmed booking that should auto-advance ──────────
+
+async function seedConfirmedBooking(
+  ctx: Parameters<Parameters<typeof t.run>[0]>[0],
+  ownerId: string,
+  ownerType: 'DiveCenter' | 'Agent' | 'Liveaboard' = 'DiveCenter',
+): Promise<Id<'bookings'>> {
+  return ctx.db.insert('bookings', {
+    ownerId,
+    ownerType,
+    status: 'Draft',
+    createdAt: Date.now(),
+    holdTTL: HOLD_TTL_MS,
+    paid: false,
+    activityType: ['OW'],
+    startDate: testDate(5),
+    endDate: testDate(7),
+    divers: [
+      {
+        name: 'Alice',
+        abbrev: 'AL',
+        flag: { code: 'TH', label: 'Thailand' },
+        startDate: testDate(5),
+        endDate: testDate(7),
+        activityType: ['OW'],
+      },
+    ],
+    operatorName: 'Test Operator',
+    portalContact: false,
+    portalMedical: false,
+    portalWaiver: false,
+    medicalHardBlock: false,
+    bookingFormComplete: true,
+    customerFormComplete: true,
+  })
+}
+
+// ─── notify() logistics storage ───────────────────────────────────────────────
+
+describe('notify() with logistics payload', () => {
+  it('stores logistics when provided', async () => {
+    await t.run(async (ctx) => {
+      await notify(ctx, {
+        userId: TEST_SLUGS.diveCenter,
+        type: NOTIFICATION_TYPE.BookingConfirmed,
+        message: 'Your booking is confirmed.',
+        logistics: {
+          pickupTime: '07:30',
+          pickupLocation: 'Hotel lobby',
+          departureTime: '08:00',
+          departureLocation: 'Main pier',
+          boatName: 'MV Sea Rider',
+          meetingPoint: 'Pier 1, Gate A',
+        },
+      })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications).toHaveLength(1)
+      expect(notifications[0].logistics).toEqual({
+        pickupTime: '07:30',
+        pickupLocation: 'Hotel lobby',
+        departureTime: '08:00',
+        departureLocation: 'Main pier',
+        boatName: 'MV Sea Rider',
+        meetingPoint: 'Pier 1, Gate A',
+      })
+    })
+  })
+
+  it('omits logistics key entirely when not provided', async () => {
+    await t.run(async (ctx) => {
+      await notify(ctx, {
+        userId: TEST_SLUGS.diveCenter,
+        type: NOTIFICATION_TYPE.HoldPlaced,
+        message: 'Hold placed.',
+      })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications).toHaveLength(1)
+      expect(notifications[0].logistics).toBeUndefined()
+    })
+  })
+
+  it('allows partial logistics (some fields optional)', async () => {
+    await t.run(async (ctx) => {
+      await notify(ctx, {
+        userId: TEST_SLUGS.diveCenter,
+        type: NOTIFICATION_TYPE.BookingConfirmed,
+        message: 'Your booking is confirmed.',
+        logistics: {
+          departureTime: '08:00',
+        },
+      })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications[0].logistics).toMatchObject({ departureTime: '08:00' })
+      expect(notifications[0].logistics?.pickupTime).toBeUndefined()
+    })
+  })
+})
+
+// ─── seedNotification backward compat ─────────────────────────────────────────
+
+describe('existing notifications without logistics', () => {
+  it('are unaffected — logistics remains undefined', async () => {
+    await t.withIdentity({ tokenIdentifier: 'test|dc-user' }).run(async (ctx) => {
+      await seedUser(ctx)
+      const notifId = await seedNotification(ctx, {
+        userId: TEST_SLUGS.diveCenter,
+        type: 'hold_placed',
+      })
+
+      const notif = await ctx.db.get(notifId)
+      expect(notif?.message).toBe('Test notification')
+      expect(notif?.logistics).toBeUndefined()
+    })
+  })
+})
+
+// ─── tryAutoAdvance emits booking_confirmed notification ─────────────────────
+
+describe('tryAutoAdvance logistics notification', () => {
+  it('emits booking_confirmed notification to operator when booking advances to Upcoming', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.userId).toBe(TEST_SLUGS.diveCenter)
+      expect(confirmed?.bookingId).toEqual(bookingId)
+    })
+  })
+
+  it('populates departureTime from first booking session when present', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Seed an inventory unit and session
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Confirm reservation so advance succeeds
+      const sessionId = (await ctx.db
+        .query('bookingSessions')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+        .first())!._id
+      const resId = await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+      // Need snapshot for the reservation to exist properly
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      void resId
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.departureTime).toBe('08:00')
+    })
+  })
+
+  it('populates pickupTime and pickupLocation from customerProfile when present', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Seed customerProfile with pickup info
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-1',
+        needsPickup: true,
+        pickupTime: '07:30',
+        pickupLocation: 'Beach Road Hotel',
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.pickupTime).toBe('07:30')
+      expect(confirmed?.logistics?.pickupLocation).toBe('Beach Road Hotel')
+    })
+  })
+
+  it('populates boatName from Boat bookingResource externalName when present', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // External boat resource
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Boat',
+        externalName: 'MV Ocean Spirit',
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.boatName).toBe('MV Ocean Spirit')
+    })
+  })
+
+  it('populates boatName from inventoryUnit.displayName for in-system boat (resourceSlug set)', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      const boatSlug = 'sea-rider-boat-co'
+
+      // Seed the inventory unit for the in-system boat
+      await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Boat',
+        resourceId: 'boat-unit-1',
+        displayName: 'MV Sea Rider',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: boatSlug,
+        ownerType: 'Boat',
+      })
+
+      // Seed in-system boat resource (resourceSlug set, no externalName)
+      await ctx.db.insert('bookingResources', {
+        bookingId,
+        resourceType: 'Boat',
+        resourceSlug: boatSlug,
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.boatName).toBe('MV Sea Rider')
+    })
+  })
+
+  it('emits confirmed notification without boatName when no boat bookingResource exists', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // No bookingResources inserted — no boat at all
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed).toBeDefined()
+      expect(confirmed?.type).toBe(NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.boatName).toBeUndefined()
+    })
+  })
+
+  it('emits confirmed notification for Agent-owned booking (multi-role)', async () => {
+    await t.run(async (ctx) => {
+      const agentSlug = 'travel-agent-co'
+      const bookingId = await seedConfirmedBooking(ctx, agentSlug, 'Agent')
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.userId).toBe(agentSlug)
+    })
+  })
+
+  it('emits confirmed notification for Liveaboard-owned booking (multi-role)', async () => {
+    await t.run(async (ctx) => {
+      const liveaboardSlug = 'mv-pacific-star'
+      const bookingId = await seedConfirmedBooking(ctx, liveaboardSlug, 'Liveaboard')
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.userId).toBe(liveaboardSlug)
+    })
+  })
+
+  it('does not emit confirmed notification when booking stays Draft (conditions unmet)', async () => {
+    await t.run(async (ctx) => {
+      // booking not form-complete → stays Draft
+      const bookingId = await ctx.db.insert('bookings', {
+        ownerId: TEST_SLUGS.diveCenter,
+        ownerType: 'DiveCenter',
+        status: 'Draft',
+        createdAt: Date.now(),
+        holdTTL: HOLD_TTL_MS,
+        paid: false,
+        activityType: ['OW'],
+        startDate: testDate(5),
+        endDate: testDate(7),
+        divers: [
+          {
+            name: 'Alice',
+            abbrev: 'AL',
+            flag: { code: 'TH', label: 'Thailand' },
+            startDate: testDate(5),
+            endDate: testDate(7),
+            activityType: ['OW'],
+          },
+        ],
+        operatorName: 'Test DC',
+        portalContact: false,
+        portalMedical: false,
+        portalWaiver: false,
+        medicalHardBlock: false,
+        bookingFormComplete: false, // not complete
+        customerFormComplete: false,
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Draft')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed).toBeUndefined()
+    })
+  })
+})

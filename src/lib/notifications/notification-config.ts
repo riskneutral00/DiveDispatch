@@ -50,7 +50,7 @@ export interface NotificationTypeConfig {
 import type { NotificationType } from '../../../convex/shared/statuses'
 
 /**
- * All 13 notification types from the schema, each with an icon and severity tier.
+ * All 14 notification types from the schema, each with an icon and severity tier.
  * No hold_accepted -- it does not exist in the schema.
  */
 export const NOTIFICATION_CONFIG = {
@@ -72,6 +72,7 @@ export const NOTIFICATION_CONFIG = {
   hold_placed: { icon: 'Clock', tier: 'info' },
   medical_cleared: { icon: 'ShieldCheck', tier: 'info' },
   portal_complete: { icon: 'CheckCircle', tier: 'info' },
+  booking_confirmed: { icon: 'CheckCircle', tier: 'info' },
 } satisfies Record<NotificationType, NotificationTypeConfig>
 
 const FALLBACK_CONFIG: NotificationTypeConfig = { icon: 'Bell', tier: 'info' }

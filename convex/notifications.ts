@@ -8,6 +8,9 @@ import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
 import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE } from './shared/statuses'
 
+export type { NotificationLogistics } from './shared/notificationLogistics'
+import type { NotificationLogistics } from './shared/notificationLogistics'
+
 // notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
   ctx: MutationCtx,
@@ -16,6 +19,7 @@ export async function notify(
     type: NotificationType
     bookingId?: Id<'bookings'>
     message: string
+    logistics?: NotificationLogistics
   },
 ): Promise<void> {
   await ctx.db.insert('notifications', {
@@ -24,6 +28,7 @@ export async function notify(
     bookingId: args.bookingId,
     message: args.message,
     createdAt: Date.now(),
+    ...(args.logistics !== undefined ? { logistics: args.logistics } : {}),
   })
 }
 

@@ -348,6 +348,14 @@ export default defineSchema({
     message: v.string(),
     readAt: v.optional(v.number()),
     createdAt: v.number(),
+    logistics: v.optional(v.object({
+      pickupTime: v.optional(v.string()),
+      pickupLocation: v.optional(v.string()),
+      departureTime: v.optional(v.string()),
+      departureLocation: v.optional(v.string()),
+      boatName: v.optional(v.string()),
+      meetingPoint: v.optional(v.string()),
+    })),
   })
     .index('by_userId', ['userId'])
     .index('by_userId_readAt', ['userId', 'readAt'])
