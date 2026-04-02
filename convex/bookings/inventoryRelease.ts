@@ -96,57 +96,14 @@ export async function restoreSnapshotUnits(
 export const MAX_RESERVATIONS_PER_BOOKING = 500
 
 /**
- * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
- * and restores their corresponding AvailabilitySnapshot counts atomically.
- * Used by: edit mode re-submission, cancellation, TTL expiry.
- *
- * Sessions and snapshots are batch-fetched before the loop to avoid N+1 queries.
- * Units to restore are accumulated per snapshot so each snapshot is patched once.
+ * Core implementation shared by both release functions.
+ * Vacates the given active reservations and restores their availability snapshot counts.
  */
-export async function releaseBookingReservations(
+async function releaseActiveReservations(
   ctx: MutationCtx,
-  bookingId: string,
+  active: Doc<'reservations'>[],
   reason: VacatedReason,
-  inventoryUnitId?: Id<'inventoryUnits'>,
-): Promise<Doc<'reservations'>[]> {
-  const [pending, confirmed] = await Promise.all([
-    ctx.db
-      .query('reservations')
-      .withIndex('by_bookingId_status', (q) =>
-        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.PendingAcceptance),
-      )
-      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
-    ctx.db
-      .query('reservations')
-      .withIndex('by_bookingId_status', (q) =>
-        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.Confirmed),
-      )
-      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
-  ])
-
-  if (pending.length > MAX_RESERVATIONS_PER_BOOKING) {
-    throw new ConvexError({
-      code: ErrorCode.INVARIANT_VIOLATION,
-      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} PendingAcceptance reservations — cannot safely release. Manual intervention required.`,
-    })
-  }
-
-  if (confirmed.length > MAX_RESERVATIONS_PER_BOOKING) {
-    throw new ConvexError({
-      code: ErrorCode.INVARIANT_VIOLATION,
-      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} Confirmed reservations — cannot safely release. Manual intervention required.`,
-    })
-  }
-
-  // When inventoryUnitId is provided, only release that unit's reservations (decline path).
-  // When omitted, release all active reservations (cancellation/cascade path).
-  const all = [...pending, ...confirmed]
-  const active = inventoryUnitId
-    ? all.filter((r) => r.inventoryUnitId === inventoryUnitId)
-    : all
-
-  if (active.length === 0) return []
-
+): Promise<void> {
   // ── Batch-fetch sessions ──────────────────────────────────────────────────
   const uniqueSessionIds = [...new Set(active.map((r) => r.bookingSessionId))]
   const sessionDocs = await Promise.all(uniqueSessionIds.map((id) => ctx.db.get(id)))
@@ -216,12 +173,89 @@ export async function releaseBookingReservations(
     const snapshotId = snapshotIdMap.get(key)!
     await restoreSnapshotUnits(ctx, snapshotId, units, seenSnapshotIds) // batch-exempt: seenSnapshotIds guard requires sequential execution
   }
+}
 
-  // Release equipment bags when releasing ALL reservations (cancel/expire/edit).
-  // Skip on targeted decline (inventoryUnitId set) — bags are booking-level, not unit-level.
-  if (!inventoryUnitId) {
-    await releaseBagsForBooking(ctx, bookingId)
+/**
+ * Fetches all active (PendingAcceptance | Confirmed) reservations for a booking,
+ * bounded by MAX_RESERVATIONS_PER_BOOKING.
+ */
+async function fetchActiveReservations(
+  ctx: MutationCtx,
+  bookingId: string,
+): Promise<Doc<'reservations'>[]> {
+  const [pending, confirmed] = await Promise.all([
+    ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId_status', (q) =>
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.PendingAcceptance),
+      )
+      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
+    ctx.db
+      .query('reservations')
+      .withIndex('by_bookingId_status', (q) =>
+        q.eq('bookingId', bookingId as Id<'bookings'>).eq('status', RESERVATION_STATUS.Confirmed),
+      )
+      .take(MAX_RESERVATIONS_PER_BOOKING + 1),
+  ])
+
+  if (pending.length > MAX_RESERVATIONS_PER_BOOKING) {
+    throw new ConvexError({
+      code: ErrorCode.INVARIANT_VIOLATION,
+      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} PendingAcceptance reservations — cannot safely release. Manual intervention required.`,
+    })
   }
+
+  if (confirmed.length > MAX_RESERVATIONS_PER_BOOKING) {
+    throw new ConvexError({
+      code: ErrorCode.INVARIANT_VIOLATION,
+      reason: `Booking ${bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} Confirmed reservations — cannot safely release. Manual intervention required.`,
+    })
+  }
+
+  return [...pending, ...confirmed]
+}
+
+/**
+ * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
+ * and restores their corresponding AvailabilitySnapshot counts atomically.
+ * Used by: edit mode re-submission, cancellation, TTL expiry.
+ *
+ * Sessions and snapshots are batch-fetched before the loop to avoid N+1 queries.
+ * Units to restore are accumulated per snapshot so each snapshot is patched once.
+ */
+export async function releaseBookingReservations(
+  ctx: MutationCtx,
+  bookingId: string,
+  reason: VacatedReason,
+): Promise<Doc<'reservations'>[]> {
+  const all = await fetchActiveReservations(ctx, bookingId)
+
+  if (all.length === 0) return []
+
+  await releaseActiveReservations(ctx, all, reason)
+  await releaseBagsForBooking(ctx, bookingId)
+
+  return all
+}
+
+/**
+ * Vacates all active reservations for a single inventory unit on a booking,
+ * restoring snapshot counts atomically. Used by the decline path only.
+ *
+ * Does NOT release equipment bags — bags are booking-level, not unit-level.
+ */
+export async function releaseBookingReservationsByUnit(
+  ctx: MutationCtx,
+  bookingId: string,
+  inventoryUnitId: Id<'inventoryUnits'>,
+  reason: VacatedReason,
+): Promise<Doc<'reservations'>[]> {
+  const all = await fetchActiveReservations(ctx, bookingId)
+  const active = all.filter((r) => r.inventoryUnitId === inventoryUnitId)
+
+  if (active.length === 0) return []
+
+  await releaseActiveReservations(ctx, active, reason)
 
   return active
 }

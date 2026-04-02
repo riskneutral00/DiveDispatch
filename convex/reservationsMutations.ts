@@ -4,7 +4,7 @@ import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { tryAutoAdvance, canReservationTransition, isActiveReservation, isSessionStarted } from './bookings/_shared'
-import { releaseBookingReservations } from './bookings/inventoryRelease'
+import { releaseBookingReservationsByUnit } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
@@ -104,22 +104,20 @@ async function batchGetUsers(
 
 /**
  * Batch-fetches cities for multiple owner slugs in parallel.
- * Returns Map<slug, city | null>. Pass pre-resolved userMap to skip user lookups.
+ * Returns Map<slug, city | null>.
  */
 export async function batchGetOwnerCities(
   ctx: MutationCtx,
   slugs: string[],
   ownerType: ResourceType,
-  userMap?: Map<string, Doc<'users'> | null>,
+  userMap: Map<string, Doc<'users'> | null>,
 ): Promise<Map<string, string | null>> {
   const cityMap = new Map<string, string | null>()
   if (slugs.length === 0) return cityMap
 
-  const resolvedUsers = userMap ?? await batchGetUsers(ctx, slugs)
-
   const cities = await Promise.all(
     slugs.map((slug) => {
-      const user = resolvedUsers.get(slug)
+      const user = userMap.get(slug)
       return user ? getProfileCity(ctx, user._id, ownerType) : Promise.resolve(null)
     }),
   )
@@ -133,23 +131,21 @@ export async function batchGetOwnerCities(
 
 /**
  * Batch-fetches teachingLanguages for instructor candidates in parallel.
- * Returns Map<slug, string[]>. Pass pre-resolved userMap to skip user lookups.
+ * Returns Map<slug, string[]>.
  */
 async function batchGetTeachingLanguages(
   ctx: MutationCtx,
   slugs: string[],
   ownerType: ResourceType,
-  userMap?: Map<string, Doc<'users'> | null>,
+  userMap: Map<string, Doc<'users'> | null>,
 ): Promise<Map<string, string[]>> {
   const langMap = new Map<string, string[]>()
   if (slugs.length === 0) return langMap
   if (ownerType !== 'Instructor') return langMap
 
-  const resolvedUsers = userMap ?? await batchGetUsers(ctx, slugs)
-
   const profiles = await Promise.all(
     slugs.map((slug) => {
-      const user = resolvedUsers.get(slug)
+      const user = userMap.get(slug)
       return user
         ? ctx.db.query('instructors' as const).withIndex('by_userId', (q) => q.eq('userId', user._id)).unique()
         : Promise.resolve(null)
@@ -161,6 +157,23 @@ async function batchGetTeachingLanguages(
   }
 
   return langMap
+}
+
+/**
+ * Fetches users once and returns both city and language maps for a set of candidate slugs.
+ * Eliminates the need to thread a userMap between batchGetOwnerCities and batchGetTeachingLanguages.
+ */
+export async function batchGetOwnerContext(
+  ctx: MutationCtx,
+  slugs: string[],
+  ownerType: ResourceType,
+): Promise<{ cities: Map<string, string | null>; languages: Map<string, string[]> }> {
+  const userMap = await batchGetUsers(ctx, slugs)
+  const [cities, languages] = await Promise.all([
+    batchGetOwnerCities(ctx, slugs, ownerType, userMap),
+    batchGetTeachingLanguages(ctx, slugs, ownerType, userMap),
+  ])
+  return { cities, languages }
 }
 
 // ─── acceptReservation ────────────────────────────────────────────────────────
@@ -298,9 +311,9 @@ export async function _declineHandler(
   const now = Date.now()
 
   // Vacate all active reservations for this unit and restore snapshots
-  await releaseBookingReservations(
-    ctx, args.bookingId, VACATED_REASON.StakeholderDeclined,
-    args.inventoryUnitId as Id<'inventoryUnits'>,
+  await releaseBookingReservationsByUnit(
+    ctx, args.bookingId, args.inventoryUnitId as Id<'inventoryUnits'>,
+    VACATED_REASON.StakeholderDeclined,
   )
 
   // Delete from bookingResources junction table
@@ -368,13 +381,11 @@ export async function _declineHandler(
     }
   }
 
-  // Batch-fetch users once, then derive cities + languages without duplicate lookups
+  // Fetch users once, derive cities + languages via batchGetOwnerContext
   const candidateSlugs = candidates.map((c) => c.ownerId)
-  const userMap = await batchGetUsers(ctx, candidateSlugs)
-  const [cityMap, langMap] = await Promise.all([
-    batchGetOwnerCities(ctx, candidateSlugs, unit.resourceType as ResourceType, userMap),
-    batchGetTeachingLanguages(ctx, candidateSlugs, unit.resourceType as ResourceType, userMap),
-  ])
+  const { cities: cityMap, languages: langMap } = await batchGetOwnerContext(
+    ctx, candidateSlugs, unit.resourceType as ResourceType,
+  )
 
   // Extract customer language codes from the booking for language-aware sorting
   const customerLangs = booking.divers.map((d) => d.flag.code)

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { releaseBookingReservations } from '../convex/bookings/inventoryRelease'
+import { releaseBookingReservations, releaseBookingReservationsByUnit } from '../convex/bookings/inventoryRelease'
 import type { Doc } from '../convex/_generated/dataModel'
 import { VACATED_REASON } from '../convex/shared/statuses'
 import {
@@ -33,7 +33,7 @@ describe('releaseBookingReservations', () => {
       const resB = await seedReservation(ctx, bookingId, unitB, sessionB, { status: 'Confirmed' })
 
       // Release only unit A's reservations (decline path)
-      await releaseBookingReservations(ctx, bookingId, VACATED_REASON.StakeholderDeclined, unitA)
+      await releaseBookingReservationsByUnit(ctx, bookingId, unitA, VACATED_REASON.StakeholderDeclined)
 
       const reservationA = await ctx.db.get(resA) as Doc<'reservations'>
       const reservationB = await ctx.db.get(resB) as Doc<'reservations'>
@@ -106,7 +106,7 @@ describe('releaseBookingReservations', () => {
       await seedReservation(ctx, bookingId, unit, session, { status: 'Vacated' })
 
       // No active reservations for this unit — should be a no-op
-      await releaseBookingReservations(ctx, bookingId, VACATED_REASON.StakeholderDeclined, unit)
+      await releaseBookingReservationsByUnit(ctx, bookingId, unit, VACATED_REASON.StakeholderDeclined)
 
       const snap = await ctx.db.get(snapshot) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2) // unchanged

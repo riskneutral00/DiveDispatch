@@ -23,12 +23,12 @@ import {
   type SeedCtx,
 } from './fixtures'
 import { api } from '../convex/_generated/api'
-import { batchGetOwnerCities, MAX_CANDIDATES } from '../convex/reservationsMutations'
+import { batchGetOwnerContext, MAX_CANDIDATES } from '../convex/reservationsMutations'
 
-// ─── Unit: batchGetOwnerCities ───────────────────────────────────────────────
+// ─── Unit: batchGetOwnerContext ──────────────────────────────────────────────
 
-describe('batchGetOwnerCities', () => {
-  it('returns city for each slug from the profile table', async () => {
+describe('batchGetOwnerContext', () => {
+  it('returns city and language maps for each slug', async () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
@@ -42,7 +42,7 @@ describe('batchGetOwnerCities', () => {
         lastName: 'Test',
         businessName: 'A Co',
       })
-      await seedInstructorProfile(ctx, userId1, { placeName: 'Koh Tao' })
+      await seedInstructorProfile(ctx, userId1, { placeName: 'Koh Tao', teachingLanguages: ['en-GB'] })
 
       const userId2 = await seedUser(ctx, {
         tokenIdentifier: 'user|batch-2',
@@ -54,27 +54,29 @@ describe('batchGetOwnerCities', () => {
         lastName: 'Test',
         businessName: 'B Co',
       })
-      await seedInstructorProfile(ctx, userId2, { placeName: 'Koh Phi Phi' })
+      await seedInstructorProfile(ctx, userId2, { placeName: 'Koh Phi Phi', teachingLanguages: ['th-TH'] })
 
-      const result = await batchGetOwnerCities(ctx, ['instr-a', 'instr-b'], 'Instructor')
+      const { cities, languages } = await batchGetOwnerContext(ctx, ['instr-a', 'instr-b'], 'Instructor')
 
-      expect(result).toBeInstanceOf(Map)
-      expect(result.get('instr-a')).toBe('Koh Tao')
-      expect(result.get('instr-b')).toBe('Koh Phi Phi')
+      expect(cities).toBeInstanceOf(Map)
+      expect(cities.get('instr-a')).toBe('Koh Tao')
+      expect(cities.get('instr-b')).toBe('Koh Phi Phi')
+      expect(languages.get('instr-a')).toEqual(['en-GB'])
+      expect(languages.get('instr-b')).toEqual(['th-TH'])
     })
   })
 
-  it('returns null for slugs with no user record', async () => {
+  it('returns null city for slugs with no user record', async () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      const result = await batchGetOwnerCities(ctx, ['nonexistent-slug'], 'Instructor')
+      const { cities } = await batchGetOwnerContext(ctx, ['nonexistent-slug'], 'Instructor')
 
-      expect(result.get('nonexistent-slug')).toBeNull()
+      expect(cities.get('nonexistent-slug')).toBeNull()
     })
   })
 
-  it('returns null for users with no profile', async () => {
+  it('returns null city for users with no profile', async () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
@@ -89,9 +91,9 @@ describe('batchGetOwnerCities', () => {
         businessName: 'NP Co',
       })
 
-      const result = await batchGetOwnerCities(ctx, ['no-profile-slug'], 'Instructor')
+      const { cities } = await batchGetOwnerContext(ctx, ['no-profile-slug'], 'Instructor')
 
-      expect(result.get('no-profile-slug')).toBeNull()
+      expect(cities.get('no-profile-slug')).toBeNull()
     })
   })
 
@@ -99,10 +101,12 @@ describe('batchGetOwnerCities', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      const result = await batchGetOwnerCities(ctx, [], 'Instructor')
+      const { cities, languages } = await batchGetOwnerContext(ctx, [], 'Instructor')
 
-      expect(result).toBeInstanceOf(Map)
-      expect(result.size).toBe(0)
+      expect(cities).toBeInstanceOf(Map)
+      expect(cities.size).toBe(0)
+      expect(languages).toBeInstanceOf(Map)
+      expect(languages.size).toBe(0)
     })
   })
 })
