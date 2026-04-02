@@ -186,6 +186,37 @@ date -u +%Y-%m-%dT%H:%M:%SZ > .last-summary-ts
 
 **Performance:** All reads fold into Round 1. Summary write + timestamp write fold into Round 2. Zero extra rounds.
 
+### Job 1.2: Pattern File
+
+Path: `.claude/patterns/YYYY-MM-DD.md`
+
+Write a structured pattern file capturing session learnings. This is local knowledge (gitignored) — written every session without a trigger check.
+
+1. In Round 2 (parallel with other writes), write the pattern file:
+   ```bash
+   mkdir -p .claude/patterns && cat > .claude/patterns/$(date +%Y-%m-%d).md << 'PATTERN'
+   # Session Patterns: YYYY-MM-DD
+
+   ## What Worked
+   [Approaches, tools, or strategies that were effective this session]
+
+   ## What Failed
+   [Approaches that didn't work, dead ends, or misfires]
+
+   ## Key Decisions
+   [Architecture, product, or implementation decisions made — with rationale]
+
+   ## Lessons Learned
+   [Distilled takeaways for future sessions]
+   PATTERN
+   ```
+
+2. Fill each section from the actual session. If a section has nothing to report, write `- Nothing notable.` — never leave sections empty.
+
+3. This step folds into Round 2 alongside other writes. Zero extra rounds.
+
+**Note:** Pattern files are gitignored — they are local only and never committed. They feed future `/distill` runs but are not surfaced in vault output.
+
 ### Job 1.5: Skeleton Update
 
 Path: `.SKELETON.md` (project root)

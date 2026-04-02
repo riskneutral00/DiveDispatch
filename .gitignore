@@ -117,6 +117,9 @@ docs/LLM_HANDOFF.md
 .claude/context-archive/
 .car/golden/
 
+# Session pattern files (local knowledge only — not for review)
+.claude/patterns/
+
 # Ephemeral directories
 .research/
 .tmp/
