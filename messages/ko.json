@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "다이빙를 계획하고, 계획대로 다이빙하세요. 언제 어디서나."
   },
+  "accountOverlay": {
+    "title": "계정"
+  },
+  "userMenu": {
+    "preferences": "환경설정"
+  },
   "nav": {
     "dashboard": "대시보드",
     "bookings": "예약",
     "directory": "디렉터리",
     "resources": "리소스",
-    "settings": "설정",
+    "profile": "프로필",
+    "preferences": "환경설정",
+    "workspace": "워크스페이스",
     "signIn": "로그인",
     "signOut": "로그아웃"
   },
   "auth": {
     "signIn": "로그인",
     "signUp": "회원가입",
+    "creatingAccount": "계정 생성 중…",
     "email": "이메일",
     "password": "비밀번호",
     "forgotPassword": "비밀번호를 잊으셨나요?",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "로딩 중...",
+    "loading": "로딩 중…",
+    "redirecting": "이동 중…",
     "error": "문제가 발생했습니다",
     "retry": "다시 시도",
     "cancel": "취소",
@@ -78,7 +88,10 @@
     "search": "검색",
     "filter": "필터",
     "noResults": "결과 없음",
-    "loadingDashboard": "대시보드 로딩 중…"
+    "loadingDashboard": "대시보드 로딩 중…",
+    "loadingProfile": "프로필 로딩 중…",
+    "loadingInventory": "장비 목록 로딩 중…",
+    "loadingMap": "지도 로딩 중…"
   },
   "onboarding": {
     "bannerMessage": "예약을 만들거나 받으려면 프로필을 완성하세요.",

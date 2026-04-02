@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui/spinner'
 
 export type ProfileFormLoadingVariant = 'spinner' | 'pulse-text' | 'plain'
@@ -23,15 +24,18 @@ export function ProfileFormLoading({
   className = '',
   paddingClassName = 'py-16',
 }: ProfileFormLoadingProps) {
+  const t = useTranslations('common')
   if (variant === 'plain') {
-    return <p className={`text-sm text-secondary ${className}`.trim()}>{message ?? 'Loading…'}</p>
+    return (
+      <p className={`text-sm text-secondary ${className}`.trim()}>{message ?? t('loading')}</p>
+    )
   }
 
   if (variant === 'pulse-text') {
     return (
       <div className={`flex items-center justify-center ${paddingClassName} ${className}`.trim()}>
         <span className="text-sm animate-pulse text-secondary">
-          {message ?? 'Loading profile…'}
+          {message ?? t('loadingProfile')}
         </span>
       </div>
     )

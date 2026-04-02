@@ -8,7 +8,8 @@ interface Tab {
 export interface ProfileConfig {
   label: string
   tabs: Tab[] | null
-  settingsIncludesProfile: boolean
+  /** When true, embed role profile form on the role Workspace page (manage roles + prefs). */
+  workspaceIncludesEmbeddedProfile: boolean
 }
 
 export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
@@ -19,7 +20,7 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
     ],
-    settingsIncludesProfile: false,
+    workspaceIncludesEmbeddedProfile: false,
   },
   agent: {
     label: 'Agent',
@@ -28,7 +29,7 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Memberships' },
     ],
-    settingsIncludesProfile: false,
+    workspaceIncludesEmbeddedProfile: false,
   },
   instructor: {
     label: 'Instructor',
@@ -37,7 +38,7 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
     ],
-    settingsIncludesProfile: false,
+    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-master': {
     label: 'Divemaster',
@@ -46,26 +47,26 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
     ],
-    settingsIncludesProfile: false,
+    workspaceIncludesEmbeddedProfile: false,
   },
   boat: {
     label: 'Boat',
     tabs: null,
-    settingsIncludesProfile: true,
+    workspaceIncludesEmbeddedProfile: true,
   },
   compressor: {
     label: 'Compressor',
     tabs: null,
-    settingsIncludesProfile: true,
+    workspaceIncludesEmbeddedProfile: true,
   },
   equipment: {
     label: 'Equipment',
     tabs: null,
-    settingsIncludesProfile: true,
+    workspaceIncludesEmbeddedProfile: true,
   },
   pool: {
     label: 'Pool',
     tabs: null,
-    settingsIncludesProfile: true,
+    workspaceIncludesEmbeddedProfile: true,
   },
 } satisfies Partial<Record<RoleKey, ProfileConfig>>

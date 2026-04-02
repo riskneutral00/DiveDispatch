@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "海未开，潜已定。随时随地。"
   },
+  "accountOverlay": {
+    "title": "账户"
+  },
+  "userMenu": {
+    "preferences": "偏好设置"
+  },
   "nav": {
     "dashboard": "仪表板",
     "bookings": "预订",
     "directory": "目录",
     "resources": "资源",
-    "settings": "设置",
+    "profile": "个人资料",
+    "preferences": "偏好设置",
+    "workspace": "工作台",
     "signIn": "登录",
     "signOut": "退出"
   },
   "auth": {
     "signIn": "登录",
     "signUp": "注册",
+    "creatingAccount": "正在创建账户…",
     "email": "电子邮箱",
     "password": "密码",
     "forgotPassword": "忘记密码？",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "加载中...",
+    "loading": "加载中…",
+    "redirecting": "正在跳转…",
     "error": "出了点问题",
     "retry": "重试",
     "cancel": "取消",
@@ -78,7 +88,10 @@
     "search": "搜索",
     "filter": "筛选",
     "noResults": "未找到结果",
-    "loadingDashboard": "正在加载仪表板…"
+    "loadingDashboard": "正在加载仪表板…",
+    "loadingProfile": "正在加载资料…",
+    "loadingInventory": "正在加载库存…",
+    "loadingMap": "正在加载地图…"
   },
   "onboarding": {
     "bannerMessage": "请完善资料以开始创建或接收预订。",

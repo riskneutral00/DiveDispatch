@@ -3,10 +3,9 @@
 import { useMutation, useQuery } from 'convex/react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassButton, GlassCard } from '@/components/ui'
-import type { Id } from '../../../convex/_generated/dataModel'
-
+import type { Id } from '@/lib/convex-generated'
 const QUICK_BOOK_OPTIONS = [
   { code: 'DSD' as const, label: 'Discover Scuba Diving' },
   { code: 'TRY_DIVE' as const, label: 'Try Dive' },

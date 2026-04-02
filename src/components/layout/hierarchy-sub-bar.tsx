@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { GlassTooltip } from '@/components/ui'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'

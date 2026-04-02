@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { SignUp } from '@clerk/nextjs'
 import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
-import { api } from '../../../../../convex/_generated/api'
+import { useTranslations } from 'next-intl'
+import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { Spinner } from '@/components/ui/spinner'
@@ -19,6 +20,8 @@ export const SIGNUP_STEPS = [
 ] as const
 
 export default function SignUpPage() {
+  const t = useTranslations('common')
+  const tAuth = useTranslations('auth')
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
   const user = useQuery(api.users.me)
   const userRoles = useQuery(api.userRoles.myRoles)
@@ -68,7 +71,7 @@ export default function SignUpPage() {
   // ── Determine which step to show ────────────────────────────────────────────
 
   if (authLoading) {
-    return <Spinner label="Loading…" />
+    return <Spinner label={t('loading')} />
   }
 
   // Not authenticated → Step 1: Clerk sign-up
@@ -88,12 +91,12 @@ export default function SignUpPage() {
 
   // Authenticated — waiting for Convex user query
   if (user === undefined) {
-    return <Spinner label="Loading…" />
+    return <Spinner label={t('loading')} />
   }
 
   // User record exists — redirecting via useEffect
   if (user) {
-    return <Spinner label="Redirecting…" />
+    return <Spinner label={t('redirecting')} />
   }
 
   // Authenticated, no Convex user → Step 2: Role selection
@@ -109,7 +112,7 @@ export default function SignUpPage() {
         onBack={() => {}} // no back from role step — they already signed up
         onContinue={handleRoleSubmit}
       />
-      {submitting && <Spinner label="Creating account…" />}
+      {submitting && <Spinner label={tAuth('creatingAccount')} />}
       {error && (
         <p className="text-sm mt-2 text-center" style={{ color: 'var(--color-destructive)' }}>
           {error}

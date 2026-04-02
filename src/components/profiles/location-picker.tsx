@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback, useEffect, useId, useRef, useReducer } from 'react'
-import { APIProvider, Map, useApiIsLoaded, useMap } from '@vis.gl/react-google-maps'
+import { useTranslations } from 'next-intl'
+import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
 import { GlassDialog } from '@/components/ui/glass-dialog'
@@ -151,11 +152,10 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   }
 
   // ── POI click: tap a place on the map to use its address ──────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function handleMapClick(e: any) {
-    const placeId = e?.detail?.placeId
+  async function handleMapClick(e: MapMouseEvent) {
+    const placeId = e.detail.placeId
     if (!placeId) return
-    e.stop?.() // Prevent default Google info window
+    e.stop()
 
     poiClickRef.current = true
     setPoiSelected(true)
@@ -359,7 +359,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
           gestureHandling="greedy"
           disableDefaultUI
           mapId="dd-location-picker"
-          onClick={handleMapClick}
+          onClick={(e) => void handleMapClick(e)}
           onDragstart={() => { poiClickRef.current = false; initialLoadRef.current = false }}
           onIdle={handleIdle}
           style={{ width: '100%', height: '100%' }}
@@ -417,13 +417,14 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
 // ── Gate: defers modal inner until Maps API is loaded ─────────────────────────
 
 function LocationPickerGate(props: ModalInnerProps) {
+  const t = useTranslations('common')
   const isLoaded = useApiIsLoaded()
   if (!isLoaded) {
     return (
       <div
         className="flex items-center justify-center h-full text-secondary"
       >
-        <span className="text-sm">Loading map…</span>
+        <span className="text-sm">{t('loadingMap')}</span>
       </div>
     )
   }

@@ -2,13 +2,12 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useCallback } from 'react'
-import { api } from '../../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import {
   EquipmentInventoryTable,
   type InventoryRow,
 } from '@/components/inventory/equipment-inventory-table'
-import type { Id } from '../../../../convex/_generated/dataModel'
-
+import type { Id } from '@/lib/convex-generated'
 export function ConnectedEquipmentInventory() {
   const grouped = useQuery(api.equipmentInventory.listMyInventory)
   const addItemMutation = useMutation(api.equipmentInventory.addItem)

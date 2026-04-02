@@ -1,8 +1,8 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import type { WizardState } from '@/lib/booking/wizard-state'
 import { useBookingDraftAutoSave } from '@/lib/hooks/use-booking-draft-auto-save'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'

@@ -3,7 +3,7 @@
 import { Bell } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { NotificationPanel } from './notification-panel'
 

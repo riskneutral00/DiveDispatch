@@ -44,7 +44,7 @@ const GAS_MIX_COLORS: Record<string, string> = {
 function profileHref(entry: RichDirectoryEntry): string {
   const prefix = ROLE_PATH_PREFIX[entry.role]
   if (!prefix) return '#'
-  return `/${prefix}/${entry.slug}/settings`
+  return `/${prefix}/${entry.slug}/workspace`
 }
 
 interface StakeholderCardProps {

@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassButton, GlassCard, GlassInput, GlassSimpleSelect } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'

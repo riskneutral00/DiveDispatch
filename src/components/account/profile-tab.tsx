@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'

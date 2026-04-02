@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "Plan your dive, dive your plan. Anywhere, every time."
   },
+  "accountOverlay": {
+    "title": "Account"
+  },
+  "userMenu": {
+    "preferences": "Preferences"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "bookings": "Bookings",
     "directory": "Directory",
     "resources": "Resources",
-    "settings": "Settings",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "workspace": "Workspace",
     "signIn": "Sign In",
     "signOut": "Sign Out"
   },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
+    "creatingAccount": "Creating account…",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password?",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "Loading...",
+    "loading": "Loading…",
+    "redirecting": "Redirecting…",
     "error": "Something went wrong",
     "retry": "Try again",
     "cancel": "Cancel",
@@ -78,7 +88,10 @@
     "search": "Search",
     "filter": "Filter",
     "noResults": "No results found",
-    "loadingDashboard": "Loading dashboard…"
+    "loadingDashboard": "Loading dashboard…",
+    "loadingProfile": "Loading profile…",
+    "loadingInventory": "Loading inventory…",
+    "loadingMap": "Loading map…"
   },
   "onboarding": {
     "bannerMessage": "Complete your profile to start creating or receiving bookings.",

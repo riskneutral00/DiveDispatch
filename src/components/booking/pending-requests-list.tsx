@@ -2,8 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import type { RequestItem } from '../../../convex/bookings'
 import { GlassCard, GlassButton, GlassBadge, ErrorAlert, EmptyState } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'

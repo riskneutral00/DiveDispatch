@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "วางแผนดำน้ำของคุณ ดำน้ำตามแผน ทุกที่ทุกเวลา"
   },
+  "accountOverlay": {
+    "title": "บัญชี"
+  },
+  "userMenu": {
+    "preferences": "การตั้งค่าที่ต้องการ"
+  },
   "nav": {
     "dashboard": "แดชบอร์ด",
     "bookings": "การจอง",
     "directory": "ไดเรกทอรี",
     "resources": "ทรัพยากร",
-    "settings": "การตั้งค่า",
+    "profile": "โปรไฟล์",
+    "preferences": "การตั้งค่าที่ต้องการ",
+    "workspace": "พื้นที่ทำงาน",
     "signIn": "เข้าสู่ระบบ",
     "signOut": "ออกจากระบบ"
   },
   "auth": {
     "signIn": "เข้าสู่ระบบ",
     "signUp": "ลงทะเบียน",
+    "creatingAccount": "กำลังสร้างบัญชี…",
     "email": "อีเมล",
     "password": "รหัสผ่าน",
     "forgotPassword": "ลืมรหัสผ่าน?",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "กำลังโหลด...",
+    "loading": "กำลังโหลด…",
+    "redirecting": "กำลังเปลี่ยนเส้นทาง…",
     "error": "เกิดข้อผิดพลาด",
     "retry": "ลองอีกครั้ง",
     "cancel": "ยกเลิก",
@@ -78,7 +88,10 @@
     "search": "ค้นหา",
     "filter": "กรอง",
     "noResults": "ไม่พบผลลัพธ์",
-    "loadingDashboard": "กำลังโหลดแดชบอร์ด…"
+    "loadingDashboard": "กำลังโหลดแดชบอร์ด…",
+    "loadingProfile": "กำลังโหลดโปรไฟล์…",
+    "loadingInventory": "กำลังโหลดสินค้าคงคลัง…",
+    "loadingMap": "กำลังโหลดแผนที่…"
   },
   "onboarding": {
     "bannerMessage": "กรุณากรอกโปรไฟล์ให้ครบเพื่อเริ่มสร้างหรือรับการจอง",

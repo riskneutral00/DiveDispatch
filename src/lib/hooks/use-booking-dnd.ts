@@ -27,6 +27,10 @@ export const BOOKING_DND_SENSORS = [
 
 interface UseBookingDndInput {
   defaults: OperatorDefaults
+  /** Optional: resources from a matching booking template (same course set). */
+  resolveTemplateResourceHints?: (
+    courses: string[],
+  ) => Array<{ resourceType: string; resourceSlug: string }> | undefined
 }
 
 interface UseBookingDndReturn {
@@ -38,7 +42,10 @@ interface UseBookingDndReturn {
   handleDragEnd: (...args: any[]) => void
 }
 
-export function useBookingDnd({ defaults }: UseBookingDndInput): UseBookingDndReturn {
+export function useBookingDnd({
+  defaults,
+  resolveTemplateResourceHints,
+}: UseBookingDndInput): UseBookingDndReturn {
   const [activeTemplate, setActiveTemplate] = useState<QuickBookTemplate | null>(null)
   const [pendingPreFill, setPendingPreFill] = useState<BookingPreFill | null>(null)
 
@@ -69,10 +76,12 @@ export function useBookingDnd({ defaults }: UseBookingDndInput): UseBookingDndRe
       const today = toISODateString(new Date())
       if (date < today) return
 
-      const preFill = buildPreFill(template.courses as string[], date, defaults)
+      const courses = template.courses as string[]
+      const hints = resolveTemplateResourceHints?.(courses)
+      const preFill = buildPreFill(courses, date, defaults, hints)
       setPendingPreFill(preFill)
     },
-    [defaults],
+    [defaults, resolveTemplateResourceHints],
   )
 
   const clearPendingPreFill = useCallback(() => {

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ManageRoles } from './manage-roles'
 import { AddRoleModal } from './add-role-modal'
 import { RoleOnboarding } from './role-onboarding'

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import { serializeDraftState, type WizardState } from '@/lib/booking/wizard-state'
 
 const DEBOUNCE_MS = 3000

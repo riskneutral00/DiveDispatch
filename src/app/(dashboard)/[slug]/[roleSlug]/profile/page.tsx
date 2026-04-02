@@ -3,7 +3,7 @@
 import { use, useState } from 'react'
 import { notFound } from 'next/navigation'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
-import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
+import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
 import { RoleProfileForm } from '@/app/(dashboard)/_lib/connected-profile-forms'
 import { ROLE_BY_KEY, type RoleKey } from '@/lib/constants/roles'
@@ -30,7 +30,7 @@ export default function RoleProfilePage({
       description={config.label}
     >
       {config.tabs && (
-        <SettingsTabBar tabs={config.tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <ProfileSectionTabBar tabs={config.tabs} activeTab={activeTab} onChange={setActiveTab} />
       )}
 
       {config.tabs ? (

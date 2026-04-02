@@ -140,3 +140,18 @@ After deploying:
 3. Create a test booking and verify data appears in Convex dashboard.
 4. Trigger an email action and confirm delivery via Resend dashboard.
 5. Check Convex dashboard logs for any function errors.
+
+## 8. CI and browser E2E
+
+**Pull request checks** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)): on every PR to `main`, GitHub Actions runs `npm run lint`, `npx tsc --noEmit`, `npm run i18n:verify`, and `npm run test:coverage` (Vitest). This is the default quality gate for merges.
+
+**Playwright E2E** ([`.github/workflows/e2e.yml`](../.github/workflows/e2e.yml)): this workflow is **optional**. It only runs when the repository variable `PLAYWRIGHT_BASE_URL` is set (for example a Vercel preview or staging URL). It installs Chromium and runs a subset of tests against that live deployment—no Next.js build in CI—so PRs do **not** automatically run full browser suites unless you configure that variable.
+
+**Choosing a strategy:**
+
+| Approach | When to use |
+|----------|-------------|
+| Preview URL + `e2e.yml` | You want smoke tests against real deployments without paying for build minutes on every PR. |
+| Full in-CI E2E | Add a job that runs `npm run build` and `npx playwright test` (or `npm run test:e2e`) with a seeded env; heavier but catches UI regressions without relying on Vercel. |
+
+Vitest coverage intentionally excludes large parts of `src/app/` and `src/components/` (see [`vitest.config.ts`](../vitest.config.ts)); browser and visual tests are the intended complement for those layers when you need them.

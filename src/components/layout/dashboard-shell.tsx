@@ -3,8 +3,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -27,6 +28,7 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps) {
+  const t = useTranslations('common')
   const { user, isLoading } = useCurrentUser()
   const clerkRole = ROLE_BY_KEY[roleSlug]?.clerkRole ?? 'DiveCenter'
   const profileCompletion = useQuery(api.users.getProfileCompletionForRole, { role: clerkRole })
@@ -76,7 +78,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   }, [user, isLoading, router, slug, roleSlug])
 
   if (isLoading || !user) {
-    return <FullPageSpinner label="Loading…" />
+    return <FullPageSpinner label={t('loading')} />
   }
 
   return (

@@ -178,7 +178,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
             {/* Empty fleet message */}
             {vessels.length === 0 && (
               <div className="col-span-8 text-center text-sm text-secondary py-4">
-                No vessels found. Set up your fleet in Settings.
+                No vessels found. Set up your fleet in Workspace.
               </div>
             )}
           </div>

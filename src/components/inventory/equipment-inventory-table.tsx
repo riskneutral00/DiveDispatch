@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Package } from 'lucide-react'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassButton } from '@/components/ui/glass-button'
@@ -65,6 +66,7 @@ export function EquipmentInventoryTable({
   onUpdateUnits,
   onRemoveItem,
 }: EquipmentInventoryTableProps) {
+  const t = useTranslations('common')
   const [filterType, setFilterType] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<InventoryRow | null>(null)
@@ -116,7 +118,7 @@ export function EquipmentInventoryTable({
       {isLoading ? (
         <GlassCard>
           <div className="flex items-center justify-center py-12">
-            <Spinner label="Loading inventory…" />
+            <Spinner label={t('loadingInventory')} />
           </div>
         </GlassCard>
       ) : filteredItems.length === 0 ? (

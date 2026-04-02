@@ -1,5 +1,9 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 
 export default function DashboardLoading() {
-  return <FullPageSpinner label="Loading..." />
+  const t = useTranslations('common')
+  return <FullPageSpinner label={t('loading')} />
 }

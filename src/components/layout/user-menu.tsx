@@ -3,6 +3,7 @@
 import { useClerk, useUser } from '@clerk/nextjs'
 import { LogOut, Settings, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { RoleKey } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import type { ProfileOverlayTab } from '../profiles/profile-overlay'
@@ -14,6 +15,8 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
+  const tNav = useTranslations('nav')
+  const tUserMenu = useTranslations('userMenu')
   const { user: clerkUser } = useUser()
   const { user: convexUser } = useCurrentUser()
   const { signOut } = useClerk()
@@ -96,7 +99,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <User size={14} />
-              Profile
+              {tNav('profile')}
             </button>
 
             <button
@@ -104,7 +107,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <Settings size={14} />
-              Settings
+              {tUserMenu('preferences')}
             </button>
 
 
@@ -117,7 +120,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
               >
                 <LogOut size={14} />
-                Sign out
+                {tNav('signOut')}
               </button>
             </div>
           </div>

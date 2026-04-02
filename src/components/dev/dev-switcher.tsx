@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation } from 'convex/react'
 import { Bug, Loader2, ArrowRight, Check } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { useDevSwitching } from './dev-switch-context'
 import {

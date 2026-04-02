@@ -95,6 +95,8 @@ Compressor operators maintain an effectively infinite surplus of filled air cyli
 
 Real-world equipment fulfillment: one EM packs one set of bags for a booking. Cross-EM fallback would mean split gear from two different shops arriving at two different piers — logistically impossible. If EM-A doesn't have enough XL BCDs, the DC selects a different EM or reduces quantity. No automatic fallback.
 
+Sizing, bag assignment, reservation timing, and EM reoptimization (upward-only substitution) are specified in [`EM_GEAR_OPTIMIZATION.md`](./EM_GEAR_OPTIMIZATION.md) (epic DD-369).
+
 ### Why Hybrid TTL (Lazy + Cron)
 
 Draft bookings expire after 12 hours by default. Expiry is enforced through two complementary mechanisms:

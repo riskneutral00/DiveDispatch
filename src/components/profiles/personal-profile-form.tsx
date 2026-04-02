@@ -68,6 +68,7 @@ function PersonalProfileBody({
   create,
   update,
 }: PersonalProfileFormProps) {
+  const isDm = variant === 'divemaster'
 
   const schema = isDm ? profileSchemaDive : profileSchemaInstructor
 

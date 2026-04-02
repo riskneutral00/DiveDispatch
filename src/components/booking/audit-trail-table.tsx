@@ -18,8 +18,8 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import type { AuditAction } from '../../../convex/bookingAuditLog'
 import { timeAgo } from '@/lib/utils/time-ago'
 // ── Types ──────────────────────────────────────────────────────────────────────

@@ -39,11 +39,11 @@ export function dashboardRoute(roleSlug: string, userSlug: string): string {
 }
 
 /**
- * Returns the settings URL for a given role and user slug.
- * Pattern: /{userSlug}/{roleSlug}/settings
+ * Returns the workspace URL for a given role and user slug.
+ * Pattern: /{userSlug}/{roleSlug}/workspace
  */
-export function settingsRoute(roleSlug: string, userSlug: string): string {
-  return `/${userSlug}/${roleSlug}/settings`
+export function workspaceRoute(roleSlug: string, userSlug: string): string {
+  return `/${userSlug}/${roleSlug}/workspace`
 }
 
 // ── Per-role route sets ────────────────────────────────────────────────────────
@@ -55,6 +55,6 @@ export function settingsRoute(roleSlug: string, userSlug: string): string {
 export function routesForRole(roleSlug: string, userSlug: string): string[] {
   return [
     dashboardRoute(roleSlug, userSlug),
-    settingsRoute(roleSlug, userSlug),
+    workspaceRoute(roleSlug, userSlug),
   ]
 }

@@ -1,6 +1,6 @@
-# Settings Page — Design Override
+# Workspace Page — Design Override
 
-> Route: `/{role}/{slug}/settings`
+> Route: `/{slug}/{roleSlug}/workspace`
 > Overrides: MASTER.md
 > Purpose: Operational behaviour — how the system acts on the stakeholder's behalf.
 
@@ -23,9 +23,9 @@ Same structure as Profile page:
 ```
 DashboardShell
 └── page container  max-w-2xl mx-auto px-4 pt-6 pb-28 (mobile) / pb-10 (desktop)
-    ├── Page title          "Settings"  — 28px / 700 / -0.03em
+    ├── Page title          "Workspace"  — 28px / 700 / -0.03em
     ├── Page subtitle       Role label  — 13px / secondary text
-    ├── SettingsTabBar      horizontal tab strip (shared component with Profile page)
+    ├── ProfileSectionTabBar  horizontal tab strip (shared component with Profile page)
     └── Tab content pane    GlassCard
         └── Save row        right-aligned, or sticky mobile footer (same spec as Profile)
 ```
@@ -37,7 +37,7 @@ full-width button on narrow screens).
 
 ## Tab Bar
 
-Uses the same `SettingsTabBar` component as the Profile page (same visual spec).
+Uses the same `ProfileSectionTabBar` component as the Profile page (same visual spec).
 
 ### Tabs by role group
 
@@ -56,7 +56,7 @@ Booking  |  Availability
 Asset Details  |  Booking  |  Availability
 ```
 
-Note: Physical resource roles have no Profile page — Settings is their only self-management
+Note: Physical resource roles have no Profile page — Workspace is their only self-management
 destination. "Asset Details" absorbs what would otherwise be their profile form.
 
 ---

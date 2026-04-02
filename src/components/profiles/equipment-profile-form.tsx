@@ -2,6 +2,7 @@
 
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { z } from 'zod'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
@@ -63,6 +64,7 @@ export type EquipmentProfileFormProps = {
 }
 
 export function EquipmentProfileForm({ profile, me, create, update }: EquipmentProfileFormProps) {
+  const t = useTranslations('common')
 
   const { form, setForm, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
     profile,
@@ -163,7 +165,7 @@ export function EquipmentProfileForm({ profile, me, create, update }: EquipmentP
       isDirty={isDirty}
       isUpdate={isUpdate}
       loadingVariant="plain"
-      loadingMessage="Loading…"
+      loadingMessage={t('loading')}
       className="space-y-6"
     >
       {/* Business Details */}

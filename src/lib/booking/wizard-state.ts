@@ -73,6 +73,9 @@ export interface DayConfig {
   poolInventoryUnitId?: string
   externalPoolName?: string
   instructorSlug?: string
+  /** Optional dive master (assistant) — distinct from instructor; ratio rules apply. */
+  diveMasterSlug?: string
+  externalDiveMasterName?: string
   externalInstructorName?: string
   externalVenueName?: string
   isAutoAppended?: boolean
@@ -100,6 +103,8 @@ export interface BookingPreFill {
   boatSlug: string
   equipmentSlug: string
   compressorSlug: string
+  /** Optional hints from a saved booking template (merged on drag). */
+  templateResourceHints?: Array<{ resourceType: string; resourceSlug: string }>
 }
 
 // ── Root state ────────────────────────────────────────────────────────────────
@@ -163,7 +168,8 @@ export type WizardAction =
   | { type: 'SET_AGENCY'; value: string }
   | { type: 'SET_SAME_FOR_ALL'; value: boolean }
   | { type: 'SET_DAY_INSTRUCTOR'; dayIndex: number; slug: string }
-  | { type: 'UPDATE_DAY'; dayIndex: number; patch: Partial<Pick<DayConfig, 'inventoryUnitId' | 'venueType' | 'externalInstructorName' | 'externalVenueName' | 'poolInventoryUnitId' | 'externalPoolName' | 'startTime' | 'endTime'>> }
+  | { type: 'SET_DAY_DIVE_MASTER'; dayIndex: number; slug: string }
+  | { type: 'UPDATE_DAY'; dayIndex: number; patch: Partial<Pick<DayConfig, 'inventoryUnitId' | 'venueType' | 'externalInstructorName' | 'externalVenueName' | 'externalDiveMasterName' | 'poolInventoryUnitId' | 'externalPoolName' | 'startTime' | 'endTime'>> }
   | { type: 'APPLY_INSTRUCTOR_TO_REMAINING'; fromDayIndex: number; slug: string }
   | { type: 'APPLY_VENUE_TO_REMAINING'; fromDayIndex: number; unitId: string }
   | { type: 'REMOVE_DAY'; dayIndex: number }
@@ -343,6 +349,23 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ...state,
         days: state.days.map((d, i) =>
           i === action.dayIndex ? { ...d, instructorSlug: action.slug } : d,
+        ),
+      }
+
+    case 'SET_DAY_DIVE_MASTER':
+      return {
+        ...state,
+        days: state.days.map((d, i) =>
+          i === action.dayIndex
+            ? {
+                ...d,
+                diveMasterSlug: action.slug === '' ? undefined : action.slug,
+                externalDiveMasterName:
+                  action.slug === '' || (action.slug && action.slug !== '__external__')
+                    ? undefined
+                    : d.externalDiveMasterName,
+              }
+            : d,
         ),
       }
 

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
 import { GlassCard } from '@/components/ui/glass-card'

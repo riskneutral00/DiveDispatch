@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { AlertCircle, X } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import type { RoleKey } from '@/lib/constants/roles'
 import { PROFILE_BANNER_WINDOW_MS } from '@/lib/constants/ui-timings'
 
@@ -18,11 +18,11 @@ function dismissalKey(slug: string): string {
 
 function BannerDisplay({
   missingFields,
-  settingsHref,
+  workspaceHref,
   slug,
 }: {
   missingFields: string[]
-  settingsHref: string
+  workspaceHref: string
   slug: string
 }) {
   // Lazy initializer reads localStorage once on mount (client-only).
@@ -49,7 +49,7 @@ function BannerDisplay({
       role="alert"
       className="glass-container flex items-start gap-3 px-4 py-3 cursor-pointer"
       style={{ border: '1px solid var(--color-warning)' }}
-      onClick={() => router.push(settingsHref)}
+      onClick={() => router.push(workspaceHref)}
     >
       <AlertCircle
         size={18}
@@ -88,7 +88,7 @@ function InstructorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/instructor/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/instructor/profile`} slug={slug} />
   )
 }
 
@@ -106,7 +106,7 @@ function DiveMasterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/dive-master/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/dive-master/profile`} slug={slug} />
   )
 }
 
@@ -124,7 +124,7 @@ function DiveCenterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/dive-center/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/dive-center/profile`} slug={slug} />
   )
 }
 
@@ -142,7 +142,7 @@ function AgentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/agent/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/agent/profile`} slug={slug} />
   )
 }
 
@@ -160,7 +160,7 @@ function BoatBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/boat/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/boat/workspace`} slug={slug} />
   )
 }
 
@@ -177,7 +177,7 @@ function EquipmentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/equipment/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/equipment/workspace`} slug={slug} />
   )
 }
 
@@ -196,7 +196,7 @@ function PoolBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/pool/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/pool/workspace`} slug={slug} />
   )
 }
 
@@ -214,7 +214,7 @@ function CompressorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} settingsHref={`/${slug}/compressor/settings`} slug={slug} />
+    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/compressor/workspace`} slug={slug} />
   )
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from './use-current-user'
 import { useWizardPreferences } from './use-wizard-preferences'
 

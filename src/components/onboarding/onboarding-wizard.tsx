@@ -3,48 +3,47 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useMemo } from 'react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassButton, GlassCard } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
-import { ROLE_BY_CLERK_ROLE, ROLES } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, ROLES, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 import type { Language } from '@/lib/types/language'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/onboarding/step-indicator'
 import { StepBusinessInfo, type BusinessInfoValues } from './step-business-info'
 import { buildOnboardingSteps, roleLabelForClerkRole } from './onboarding-steps'
-import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
-import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
-import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step'
 import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-step'
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
-import { DiveMasterProfileForm } from '@/components/profiles/divemaster-profile-form'
-import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
-import { InstructorProfileForm } from '@/components/profiles/instructor-profile-form'
-import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
 import { StepPreferences } from './step-preferences'
 import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
-import type { ClerkRole } from '@/lib/constants/roles'
+import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
 
-function ProfileFormForRole({ role, onSaved }: { role: string; onSaved: () => void }) {
-  switch (role) {
-    case 'Agent':         return <AgentProfileForm />
-    case 'Instructor':    return <InstructorProfileForm />
-    case 'DiveMaster':    return <DiveMasterProfileForm />
-    case 'Boat':          return <BoatProfileForm />
-    case 'Equipment':     return <EquipmentProfileForm />
-    case 'Pool':          return <PoolProfileForm />
-    case 'Compressor':    return <CompressorProfileForm />
-    default:
-      return (
-        <GlassCard padding="md">
-          <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
-            Profile setup for <strong>{role}</strong> is available from your dashboard settings.
-          </p>
-        </GlassCard>
-      )
+const ROLE_KEYS_WITH_CONNECTED_FORM: readonly RoleKey[] = [
+  'dive-center',
+  'agent',
+  'instructor',
+  'dive-master',
+  'boat',
+  'compressor',
+  'equipment',
+  'pool',
+]
+
+function ProfileFormForRole({ role }: { role: string; onSaved: () => void }) {
+  const cfg = ROLE_BY_CLERK_ROLE[role as ClerkRole]
+  const key = cfg?.key
+  if (key && ROLE_KEYS_WITH_CONNECTED_FORM.includes(key)) {
+    return <RoleProfileForm roleSlug={key} />
   }
+  return (
+    <GlassCard padding="md">
+      <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
+        Profile setup for <strong>{role}</strong> is available from your dashboard settings.
+      </p>
+    </GlassCard>
+  )
 }
 
 export function OnboardingWizard() {

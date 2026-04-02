@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { SettingsTabBar } from '@/components/settings/settings-tab-bar'
+import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
 import { GlassCard } from '@/components/ui/glass-card'
@@ -63,6 +63,7 @@ const prefsSchema = z.object({
   preferredBoatSlugs: z.array(z.string()).optional(),
   preferredCompressorSlugs: z.array(z.string()).optional(),
   preferredOperatorSlug: z.string().optional(),
+  autoAssignPreferred: z.boolean(),
 })
 
 type PrefsFormData = z.infer<typeof prefsSchema>
@@ -80,6 +81,7 @@ const defaultFormData = (): PrefsFormData => ({
   preferredBoatSlugs: [],
   preferredCompressorSlugs: [],
   preferredOperatorSlug: undefined,
+  autoAssignPreferred: true,
 })
 
 // ── Sub-components ────────────────────────────────────────────────────
@@ -252,6 +254,7 @@ export function PreferencesEditor() {
         preferredBoatSlugs: typed.preferredBoatSlugs ?? [],
         preferredCompressorSlugs: typed.preferredCompressorSlugs ?? [],
         preferredOperatorSlug: typed.preferredOperatorSlug,
+        autoAssignPreferred: typed.autoAssignPreferred ?? true,
       }
     },
     toPayload: (values) => values,
@@ -283,7 +286,7 @@ export function PreferencesEditor() {
       isValid={isValid}
       className="max-w-2xl mx-auto w-full px-4 pt-4 pb-28 md:pb-10"
     >
-      <SettingsTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <ProfileSectionTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="space-y-6">
 
@@ -330,6 +333,34 @@ export function PreferencesEditor() {
                 })}
               </div>
             </GlassCard>
+
+            <ProfileFormSectionDivider show />
+
+            {showResourcePrefs && (
+              <>
+                <ProfileFormSectionDivider show />
+                <GlassCard padding="md">
+                  <h2
+                    className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
+                  >
+                    Preferred resources
+                  </h2>
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary">
+                    <input
+                      type="checkbox"
+                      checked={form.autoAssignPreferred}
+                      onChange={(e) => setField('autoAssignPreferred', e.target.checked)}
+                      className="rounded"
+                      style={{ accentColor: 'var(--color-primary)' }}
+                    />
+                    <span>
+                      Auto-assign preferred instructors, boats, and venues in new bookings when
+                      available
+                    </span>
+                  </label>
+                </GlassCard>
+              </>
+            )}
 
             <ProfileFormSectionDivider show />
 

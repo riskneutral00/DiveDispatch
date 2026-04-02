@@ -8,8 +8,7 @@ import {
   type WizardAction,
   type BookingPreFill,
 } from '@/lib/booking/wizard-state'
-import type { Doc } from '../../../convex/_generated/dataModel'
-
+import type { Doc } from '@/lib/convex-generated'
 export function useBookingWizardEffects({
   isEditMode,
   isOverlay,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { GlassTooltip } from '@/components/ui/glass-tooltip'
 import { DraggablePill } from '@/components/booking/draggable-pill'

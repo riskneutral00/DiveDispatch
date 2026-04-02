@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { GlassCard } from '@/components/ui/glass-card'

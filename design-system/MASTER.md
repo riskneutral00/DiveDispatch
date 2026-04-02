@@ -411,7 +411,7 @@ Canonical states for every feature surface. Use these exact labels in implementa
 - `src/components/ui/*` owns visual primitives and tokens.
 - `src/components/layout/*` owns route-level framing and shell composition.
 - `src/app/*/loading.tsx` and `src/app/*/error.tsx` compose shared primitives only.
-- Feature modules (`booking`, `portal`, `profiles`, `settings`) own copy and flow behavior, not base visuals.
+- Feature modules (`booking`, `portal`, `profiles`, `account`) own copy and flow behavior, not base visuals.
 
 ### Button Variants
 

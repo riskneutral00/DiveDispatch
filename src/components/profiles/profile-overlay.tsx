@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { GlassDialog } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
-import { api } from '../../../convex/_generated/api'
-import { ProfileTab } from '@/components/settings/profile-tab'
-import { PreferencesTab } from '@/components/settings/preferences-tab'
-import { RoleDetailForm } from '@/components/settings/roles-tab'
+import { api } from '@/lib/convex-generated'
+import { ProfileTab } from '@/components/account/profile-tab'
+import { PreferencesTab } from '@/components/account/preferences-tab'
+import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
+import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
+import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,15 +24,19 @@ interface ProfileOverlayProps {
   slug: string
 }
 
-const STATIC_TABS: { id: string; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'preferences', label: 'Settings' },
+const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'preferences' }[] = [
+  { id: 'profile', labelKey: 'profile' },
+  { id: 'preferences', labelKey: 'preferences' },
 ]
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug, slug }: ProfileOverlayProps) {
+  const tNav = useTranslations('nav')
+  const tAccountOverlay = useTranslations('accountOverlay')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
+  /** Section within a multi-tab role profile (Contact / Languages / …) — mirrors Profile page. */
+  const [roleProfileSection, setRoleProfileSection] = useState<string>('')
   const userRoles = useQuery(api.userRoles.myRoles)
 
   const roleConfigs = (userRoles ?? [])
@@ -44,8 +51,22 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   const isRoleTab = activeTab.startsWith('role:')
   const activeRoleKey = isRoleTab ? activeTab.slice(5) as RoleKey : null
 
+  // When switching role sub-tab, reset section to first profile tab (matches Profile page)
+  useEffect(() => {
+    if (!activeRoleKey) return
+    const cfg = PROFILE_REGISTRY[activeRoleKey]
+    const tabs = cfg?.tabs
+    if (tabs?.length) {
+      setRoleProfileSection((prev) => (prev && tabs.some((t) => t.id === prev) ? prev : tabs[0].id))
+    } else {
+      setRoleProfileSection('')
+    }
+  }, [activeRoleKey])
+  const roleProfileConfig = activeRoleKey ? PROFILE_REGISTRY[activeRoleKey] : undefined
+  const roleSectionTabs = roleProfileConfig?.tabs ?? null
+
   return (
-    <GlassDialog open={open} onClose={onClose} title="Settings" fullScreen>
+    <GlassDialog open={open} onClose={onClose} title={tAccountOverlay('title')} fullScreen>
       <div className="flex flex-col h-full">
         {/* Tab bar */}
         <div
@@ -53,7 +74,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           style={{ borderColor: 'var(--color-glass-border)', scrollbarWidth: 'none' }}
           role="tablist"
         >
-          {STATIC_TABS.map((tab) => {
+          {STATIC_TAB_IDS.map((tab) => {
             const isActive = activeTab === tab.id
             return (
               <button
@@ -68,7 +89,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                   border: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
                 }}
               >
-                {tab.label}
+                {tNav(tab.labelKey)}
               </button>
             )
           })}
@@ -87,7 +108,12 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                     key={role.key}
                     role="tab"
                     aria-selected={isActive}
-                    onClick={() => setActiveTab(`role:${role.key}`)}
+                    onClick={() => {
+                      setActiveTab(`role:${role.key}`)
+                      const cfg = PROFILE_REGISTRY[role.key]
+                      const first = cfg?.tabs?.[0]?.id ?? ''
+                      setRoleProfileSection(first)
+                    }}
                     className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer flex-shrink-0"
                     style={{
                       background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
@@ -111,7 +137,25 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           <div className="max-w-3xl mx-auto px-4 pt-4 pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'preferences' && <PreferencesTab />}
-            {activeRoleKey && <RoleDetailForm roleKey={activeRoleKey} />}
+            {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
+              <div className="mb-4">
+                <ProfileSectionTabBar
+                  tabs={roleSectionTabs}
+                  activeTab={roleProfileSection || roleSectionTabs[0].id}
+                  onChange={setRoleProfileSection}
+                />
+              </div>
+            )}
+            {activeRoleKey && (
+              <RoleProfileForm
+                roleSlug={activeRoleKey}
+                section={
+                  roleSectionTabs && roleSectionTabs.length > 0
+                    ? roleProfileSection || roleSectionTabs[0].id
+                    : undefined
+                }
+              />
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 # Equipment Inventory Page -- Design Override
 
-> Route: `/{slug}/{roleSlug}/settings` (Equipment role only, below profile form)
+> Route: `/{slug}/{roleSlug}/workspace` (Equipment role only, below profile form)
 > Overrides: MASTER.md
 > Purpose: EM manages their gear catalog -- view, add, edit, delete inventory lines.
 
@@ -18,7 +18,7 @@ Tone: functional spreadsheet energy in glass clothing.
 
 ## Layout
 
-Embedded as a section within the existing Settings page for Equipment role,
+Embedded as a section within the existing Workspace page for Equipment role,
 below the profile form and above preferences.
 
 ```

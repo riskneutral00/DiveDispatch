@@ -25,10 +25,10 @@ import { VesselCalendar } from '@/components/booking/vessel-calendar'
 import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import type { CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { CalendarBooking } from '../../../convex/bookings'
-import type { Id } from '../../../convex/_generated/dataModel'
+import type { Id } from '@/lib/convex-generated'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
 // Mirrors the Convex listByOwner validator union — kept in sync with convex/bookings.ts:670
@@ -78,6 +78,10 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     api.bookings.myDashboard,
     isResourceOnly && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
+  const { data: bookingTemplates } = useStableQuery(
+    api.bookingTemplates.list,
+    isOperator && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
+  )
   const calendarBookings: CalendarBooking[] = isOperator ? (bookings ?? []) : (dashboardData?.bookings ?? [])
   const legendStatuses = dashConfig?.legendStatuses ?? DEFAULT_LEGEND_STATUSES
 
@@ -109,7 +113,22 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   // ── Drag-to-date ────────────────────────────────────────────────────────
 
-  const dnd = useBookingDnd({ defaults })
+  const resolveTemplateResourceHints = useCallback(
+    (courses: string[]) => {
+      if (!bookingTemplates?.length) return undefined
+      const key = [...courses].sort().join('\0')
+      const match = bookingTemplates.find(
+        (t) => [...t.activityType].sort().join('\0') === key,
+      )
+      return match?.resources?.map((r) => ({
+        resourceType: r.resourceType,
+        resourceSlug: r.resourceSlug,
+      }))
+    },
+    [bookingTemplates],
+  )
+
+  const dnd = useBookingDnd({ defaults, resolveTemplateResourceHints })
 
   // When a pill is dropped on a date, open the wizard with pre-fill
   useEffect(() => {

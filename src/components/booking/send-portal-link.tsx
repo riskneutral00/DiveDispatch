@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import { GlassDialog, GlassButton, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'

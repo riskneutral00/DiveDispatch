@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail } from '../../../convex/bookings'
 import { isBookingExpired } from '../../../convex/shared/bookingExpiry'
 

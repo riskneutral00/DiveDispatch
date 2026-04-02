@@ -7,13 +7,14 @@ export interface TabItem {
   label: string
 }
 
-interface SettingsTabBarProps {
+interface ProfileSectionTabBarProps {
   tabs: TabItem[]
   activeTab: string
   onChange: (tab: string) => void
 }
 
-export function SettingsTabBar({ tabs, activeTab, onChange }: SettingsTabBarProps) {
+/** ARIA tablist for role profile sections (Contact, Languages, …) or preferences sub-tabs. */
+export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSectionTabBarProps) {
   const tablistRef = useRef<HTMLDivElement>(null)
 
   const handleKeyDown = useCallback(

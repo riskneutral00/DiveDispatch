@@ -4,12 +4,14 @@ import { useEffect } from 'react'
 import { SignIn } from '@clerk/nextjs'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
-import { api } from '../../../../../convex/_generated/api'
+import { useTranslations } from 'next-intl'
+import { api } from '@/lib/convex-generated'
 import { Spinner } from '@/components/ui/spinner'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { resolveSignInRedirect } from '@/lib/utils/sign-in-redirect'
 
 export default function SignInPage() {
+  const t = useTranslations('common')
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
   const user = useQuery(api.users.me)
   const userRoles = useQuery(api.userRoles.myRoles)
@@ -24,7 +26,7 @@ export default function SignInPage() {
   }, [user, userRoles, isAuthenticated, router])
 
   if (authLoading) {
-    return <Spinner label="Loading…" />
+    return <Spinner label={t('loading')} />
   }
 
   // Not authenticated → show Clerk sign-in form
@@ -39,9 +41,9 @@ export default function SignInPage() {
 
   // Authenticated — query loading or routing in progress
   if (user === undefined) {
-    return <Spinner label="Loading…" />
+    return <Spinner label={t('loading')} />
   }
 
   // Authenticated — redirecting via useEffect
-  return <Spinner label="Redirecting…" />
+  return <Spinner label={t('redirecting')} />
 }

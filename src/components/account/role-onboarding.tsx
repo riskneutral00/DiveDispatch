@@ -1,19 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { GlassCard, GlassButton } from '@/components/ui'
-import { AgentProfileForm } from '@/components/profiles/agent-profile-form'
-import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
-import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step'
 import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-step'
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
-import { DiveMasterProfileForm } from '@/components/profiles/divemaster-profile-form'
-import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
-import { InstructorProfileForm } from '@/components/profiles/instructor-profile-form'
-import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
 import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
+import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
+
+const ROLE_KEYS_WITH_CONNECTED_FORM: readonly RoleKey[] = [
+  'dive-center',
+  'agent',
+  'instructor',
+  'dive-master',
+  'boat',
+  'compressor',
+  'equipment',
+  'pool',
+]
 
 function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete: () => void }) {
   const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
@@ -54,25 +59,19 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
     )
   }
 
-  switch (role) {
-    case 'Agent':       return <AgentProfileForm />
-    case 'Instructor':  return <InstructorProfileForm />
-    case 'DiveMaster':  return <DiveMasterProfileForm />
-    case 'Boat':        return <BoatProfileForm />
-    case 'Equipment':   return <EquipmentProfileForm />
-    case 'Pool':        return <PoolProfileForm />
-    case 'Compressor':  return <CompressorProfileForm />
-    default: {
-      const config = ROLE_BY_CLERK_ROLE[role]
-      return (
-        <GlassCard padding="md">
-          <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
-            Profile setup for <strong>{config?.label ?? role}</strong> is available from your dashboard.
-          </p>
-        </GlassCard>
-      )
-    }
+  const cfg = ROLE_BY_CLERK_ROLE[role]
+  const key = cfg?.key
+  if (key && ROLE_KEYS_WITH_CONNECTED_FORM.includes(key)) {
+    return <RoleProfileForm roleSlug={key} />
   }
+
+  return (
+    <GlassCard padding="md">
+      <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
+        Profile setup for <strong>{cfg?.label ?? role}</strong> is available from your dashboard.
+      </p>
+    </GlassCard>
+  )
 }
 
 interface RoleOnboardingProps {
@@ -81,7 +80,7 @@ interface RoleOnboardingProps {
 }
 
 /**
- * Mini-onboarding flow shown after adding a new role from settings.
+ * Mini-onboarding flow shown after adding a new role from Workspace.
  * Renders the profile form for the given role with a header and done action.
  */
 export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
@@ -99,7 +98,7 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
           Set up your {config?.label ?? role} profile
         </h2>
         <p className="text-secondary" style={{ fontSize: 13, margin: 0 }}>
-          Complete your profile details for this role. You can always finish later from settings.
+          Complete your profile details for this role. You can always finish later from Workspace.
         </p>
       </div>
 

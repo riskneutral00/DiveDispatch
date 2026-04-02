@@ -30,6 +30,8 @@ interface DayRowProps {
   onToggleDive?: (dayIndex: number, slot: DiveSlot) => void
   /** Instructor options for inline picker */
   instructorOptions?: ResourceOption[]
+  /** Dive Master options (optional assistant; shares Instructor inventory path) */
+  diveMasterOptions?: ResourceOption[]
   /** Boat options for inline picker */
   boatOptions?: ResourceOption[]
   /** Pool options for inline picker */
@@ -170,6 +172,7 @@ export function DayRow({
   availableDives,
   onToggleDive,
   instructorOptions = [],
+  diveMasterOptions = [],
   boatOptions = [],
   poolOptions = [],
   shoreOptions = [],
@@ -330,6 +333,50 @@ export function DayRow({
           )
         })()}
       </div>
+
+      {/* Dive Master (optional) — ratio / manifest */}
+      {(diveMasterOptions.length > 0 || day.diveMasterSlug) && (
+        <div className="mb-3">
+          {day.diveMasterSlug === '__external__' ? (
+            <>
+              <GlassInput
+                label="Dive Master (external)"
+                value={day.externalDiveMasterName ?? ''}
+                onChange={(e) =>
+                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: e.target.value } })
+                }
+                placeholder="Name"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: 'SET_DAY_DIVE_MASTER', dayIndex, slug: '' })
+                  dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: '' } })
+                }}
+                className="text-xs underline underline-offset-2 text-left mt-1"
+                style={SWITCH_LINK_STYLE}
+              >
+                Switch to system dive master
+              </button>
+            </>
+          ) : (
+            <GlassSimpleSelect
+              label="Dive Master (optional)"
+              value={day.diveMasterSlug ?? ''}
+              onChange={(v) => dispatch({ type: 'SET_DAY_DIVE_MASTER', dayIndex, slug: v })}
+              options={[
+                { value: '', label: 'None' },
+                { value: '__external__', label: 'External (not in system)' },
+                ...diveMasterOptions.map((opt) => ({
+                  value: opt.id,
+                  label: `${opt.label}${languageFlagText(opt.languages)}`,
+                })),
+              ]}
+              placeholder="None"
+            />
+          )}
+        </div>
+      )}
 
       {/* Per-dive venue assignment (sorted by dive sequence order) */}
       {day.dives.length > 0 && (() => {

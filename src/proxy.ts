@@ -25,6 +25,15 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl)
   }
 
+  // Legacy bookmarks: /{slug}/{roleSlug}/settings → /workspace
+  const settingsLegacy = /^\/([^/]+)\/([^/]+)\/settings$/.exec(req.nextUrl.pathname)
+  if (settingsLegacy) {
+    return NextResponse.redirect(
+      new URL(`/${settingsLegacy[1]}/${settingsLegacy[2]}/workspace`, req.url),
+      308,
+    )
+  }
+
   // Server-side redirect: /dashboard → /{slug}/{roleSlug}/dashboard
   // Eliminates the client-side Convex query that hangs when tokenIdentifiers are out of sync.
   if (req.nextUrl.pathname === '/dashboard') {

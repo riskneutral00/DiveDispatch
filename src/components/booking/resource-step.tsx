@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassCard } from '@/components/ui'
 import { ResourceOrExternalField } from './resource-or-external-field'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'

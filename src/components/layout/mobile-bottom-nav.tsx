@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import type { RoleKey } from '@/lib/constants/roles'
 import { buildNavItems } from '@/lib/nav-items'
 
@@ -12,6 +13,7 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
   const pathname = usePathname()
+  const tNav = useTranslations('nav')
   const navItems = buildNavItems(roleSlug, slug)
 
   return (
@@ -52,7 +54,9 @@ export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
             aria-current={isActive ? 'page' : undefined}
           >
             <item.Icon size={20} />
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <span className="text-[10px] font-medium">
+              {tNav(item.key as 'dashboard' | 'directory' | 'workspace')}
+            </span>
           </Link>
         )
       })}

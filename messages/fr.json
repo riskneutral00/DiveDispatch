@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "Planifiez votre plongée, plongez selon votre plan. Partout, à chaque fois."
   },
+  "accountOverlay": {
+    "title": "Compte"
+  },
+  "userMenu": {
+    "preferences": "Préférences"
+  },
   "nav": {
     "dashboard": "Tableau de bord",
     "bookings": "Réservations",
     "directory": "Répertoire",
     "resources": "Ressources",
-    "settings": "Paramètres",
+    "profile": "Profil",
+    "preferences": "Préférences",
+    "workspace": "Espace de travail",
     "signIn": "Connexion",
     "signOut": "Déconnexion"
   },
   "auth": {
     "signIn": "Connexion",
     "signUp": "Inscription",
+    "creatingAccount": "Création du compte…",
     "email": "E-mail",
     "password": "Mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "Chargement...",
+    "loading": "Chargement…",
+    "redirecting": "Redirection…",
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
     "cancel": "Annuler",
@@ -78,7 +88,10 @@
     "search": "Rechercher",
     "filter": "Filtrer",
     "noResults": "Aucun résultat trouvé",
-    "loadingDashboard": "Chargement du tableau de bord…"
+    "loadingDashboard": "Chargement du tableau de bord…",
+    "loadingProfile": "Chargement du profil…",
+    "loadingInventory": "Chargement de l'inventaire…",
+    "loadingMap": "Chargement de la carte…"
   },
   "onboarding": {
     "bannerMessage": "Complétez votre profil pour créer ou recevoir des réservations.",

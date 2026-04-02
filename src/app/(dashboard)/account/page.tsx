@@ -1,4 +1,4 @@
-import { AccountForm } from '@/components/settings/account-form'
+import { AccountForm } from '@/components/account/account-form'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { SessionDashboardShell } from '@/components/layout/session-dashboard-shell'
 

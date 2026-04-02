@@ -37,16 +37,53 @@ export function computeDateRange(
   return { startDate, endDate: maxEnd }
 }
 
+/** Map saved template resource rows onto pre-fill slugs (does not override non-empty defaults from operator prefs). */
+function applyTemplateResourceHints(
+  pref: BookingPreFill,
+  hints: Array<{ resourceType: string; resourceSlug: string }> | undefined,
+): BookingPreFill {
+  if (!hints?.length) return pref
+  let next = { ...pref }
+  for (const h of hints) {
+    const slug = h.resourceSlug
+    if (!slug) continue
+    switch (h.resourceType) {
+      case 'Instructor':
+        if (!next.instructorSlug) next = { ...next, instructorSlug: slug }
+        break
+      case 'Pool':
+      case 'DiveSite':
+        if (!next.venueSlug) next = { ...next, venueSlug: slug }
+        break
+      case 'Boat':
+        if (!next.boatSlug) next = { ...next, boatSlug: slug }
+        break
+      case 'Equipment':
+        if (!next.equipmentSlug) next = { ...next, equipmentSlug: slug }
+        break
+      case 'Compressor':
+        if (!next.compressorSlug) next = { ...next, compressorSlug: slug }
+        break
+      default:
+        break
+    }
+  }
+  next.templateResourceHints = hints
+  return next
+}
+
 /**
  * Build a BookingPreFill from courses, a start date, and operator defaults.
+ * Optional template hints (e.g. from bookingTemplates.resources) fill gaps after defaults.
  */
 export function buildPreFill(
   courses: string[],
   startDate: string,
   defaults: OperatorDefaults,
+  templateResourceHints?: Array<{ resourceType: string; resourceSlug: string }>,
 ): BookingPreFill {
   const { endDate } = computeDateRange(courses, startDate)
-  return {
+  const base: BookingPreFill = {
     courses,
     startDate,
     endDate,
@@ -57,5 +94,6 @@ export function buildPreFill(
     equipmentSlug: defaults.preferredEquipmentSlug,
     compressorSlug: defaults.preferredCompressorSlug,
   }
+  return applyTemplateResourceHints(base, templateResourceHints)
 }
 

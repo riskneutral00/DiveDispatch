@@ -28,8 +28,7 @@ import {
 import { useBookingWizardModel } from "@/lib/hooks/use-booking-wizard-model";
 import { useBookingWizardData } from "@/lib/hooks/use-booking-wizard-data";
 import { useBookingWizardEffects } from "@/lib/hooks/use-booking-wizard-effects";
-import type { Id } from "../../../convex/_generated/dataModel";
-
+import type { Id } from '@/lib/convex-generated'
 const ItineraryStep = dynamic(
   () => import("./itinerary-step").then((m) => ({ default: m.ItineraryStep })),
   { ssr: false, loading: () => <Spinner /> },

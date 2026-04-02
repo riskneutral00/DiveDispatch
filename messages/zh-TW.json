@@ -3,18 +3,27 @@
     "name": "DiveDispatch",
     "tagline": "計畫您的潛水，依計畫潛水。隨時隨地。"
   },
+  "accountOverlay": {
+    "title": "帳戶"
+  },
+  "userMenu": {
+    "preferences": "偏好設定"
+  },
   "nav": {
     "dashboard": "儀表板",
     "bookings": "預訂",
     "directory": "目錄",
     "resources": "資源",
-    "settings": "設定",
+    "profile": "個人資料",
+    "preferences": "偏好設定",
+    "workspace": "工作區",
     "signIn": "登入",
     "signOut": "登出"
   },
   "auth": {
     "signIn": "登入",
     "signUp": "註冊",
+    "creatingAccount": "正在建立帳戶…",
     "email": "電子郵件",
     "password": "密碼",
     "forgotPassword": "忘記密碼？",
@@ -63,7 +72,8 @@
     }
   },
   "common": {
-    "loading": "載入中...",
+    "loading": "載入中…",
+    "redirecting": "正在重新導向…",
     "error": "發生錯誤",
     "retry": "重試",
     "cancel": "取消",
@@ -78,7 +88,10 @@
     "search": "搜尋",
     "filter": "篩選",
     "noResults": "找不到結果",
-    "loadingDashboard": "正在載入儀表板…"
+    "loadingDashboard": "正在載入儀表板…",
+    "loadingProfile": "正在載入個人資料…",
+    "loadingInventory": "正在載入庫存…",
+    "loadingMap": "正在載入地圖…"
   },
   "onboarding": {
     "bannerMessage": "請完成個人資料以開始建立或接收預訂。",

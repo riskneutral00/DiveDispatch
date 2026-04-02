@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
 import { GlassCard, GlassButton, GlassCheckbox, GlassSimpleSelect } from '@/components/ui'
 import { DayRow } from './day-row'
@@ -228,10 +228,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   // Load instructor and venue options for inline day-row pickers
   const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
+  const diveMasters = useQuery(api.directory.listByRole, { role: 'DiveMaster' }) ?? []
   const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
   const pools = useQuery(api.directory.listByRole, { role: 'Pool' }) ?? []
   const shoreOptions = useQuery(api.availability.listDiveSites) ?? []
   const instructorOptions = instructors.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
+  const diveMasterOptions = diveMasters.map((r) => ({ id: r.slug, label: r.name, languages: r.languages, isPreferred: r.isPreferred }))
   const customerLanguageCodes = customers.flatMap(c => (c.flags ?? []).map(f => f.code))
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
   const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
@@ -289,6 +291,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   // Preference cascade + availability check (DD-313 / DD-356) — separate from course/dates effect
   const preferenceCascadeAppliedRef = useRef(false)
   useEffect(() => {
+    if (cascadePrefs?.autoAssignPreferred === false) return
     if (isEditMode || preferenceCascadeAppliedRef.current) return
     if (!prefAvailability || days.length === 0) return
     if (state.preFillInstructorSlug || state.preFillVenueSlug || state.preFillBoatSlug) return
@@ -329,10 +332,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     state.preFillBoatSlug,
     preferredSlugsForCheck,
     dispatch,
+    cascadePrefs?.autoAssignPreferred,
   ])
 
   const equipmentCascadeAppliedRef = useRef(false)
   useEffect(() => {
+    if (cascadePrefs?.autoAssignPreferred === false) return
     if (isEditMode || equipmentCascadeAppliedRef.current) return
     if (!prefAvailability) return
     if (state.equipment || state.compressor) return
@@ -356,6 +361,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     state.compressor,
     preferredSlugsForCheck,
     dispatch,
+    cascadePrefs?.autoAssignPreferred,
   ])
 
   // Derive all course codes and date range
@@ -656,6 +662,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
               availableDives={getAvailableDives(idx, days, allCourseCodes)}
               onToggleDive={handleToggleDive}
               instructorOptions={filterByAvailability(instructorOptions, day.date, capacityData, inventoryMap)}
+              diveMasterOptions={filterByAvailability(diveMasterOptions, day.date, capacityData, inventoryMap)}
               boatOptions={enrichOptionsWithCapacity(filterByAvailability(boatOptions, day.date, capacityData, inventoryMap), day.date, capacityData, inventoryMap)}
               poolOptions={filterByAvailability(poolOptions, day.date, capacityData, inventoryMap)}
               shoreOptions={shoreOptions}

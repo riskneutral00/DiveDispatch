@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { Ship, ChevronDown, ChevronRight, AlertTriangle, Heart } from 'lucide-react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassCard, EmptyState } from '@/components/ui'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { Spinner } from '@/components/ui/spinner'
@@ -108,8 +108,23 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
   )
 }
 
+function deliveryWhereLabel(group: ManifestGroup): string | undefined {
+  const parts: string[] = []
+  if (group.diveSiteName) parts.push(group.diveSiteName)
+  if (group.deliveryLocation) {
+    const map: Record<string, string> = {
+      BoatPier: 'Boat / pier',
+      Pool: 'Pool',
+      Beach: 'Shore / beach',
+    }
+    parts.push(map[group.deliveryLocation] ?? group.deliveryLocation)
+  }
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
 function GroupSection({ group }: { group: ManifestGroup }) {
   const [expanded, setExpanded] = useState(true)
+  const whereLine = deliveryWhereLabel(group)
 
   return (
     <div className="mb-2">
@@ -125,6 +140,11 @@ function GroupSection({ group }: { group: ManifestGroup }) {
           {group.activityType.join(', ')} — {group.diverCount} diver{group.diverCount !== 1 ? 's' : ''}
         </span>
       </button>
+      {whereLine && (
+        <p className="text-[11px] text-secondary px-2 pb-1 pl-8" style={{ fontFamily: 'var(--font-body)' }}>
+          {whereLine}
+        </p>
+      )}
 
       {expanded && (
         <div className="overflow-x-auto">

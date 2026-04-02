@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassButton, GlassCard, GlassInput } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'

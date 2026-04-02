@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
 import { LanguageField } from '@/components/profiles/language-field'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'

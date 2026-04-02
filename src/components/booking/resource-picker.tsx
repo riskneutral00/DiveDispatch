@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Check, ChevronDown } from 'lucide-react'
 import { GlassButton, GlassInput, GlassBadge } from '@/components/ui'
 import { Spinner } from '@/components/ui/spinner'
@@ -37,6 +38,7 @@ export function ResourcePicker({
   isLoading = false,
   optional = false,
 }: ResourcePickerProps) {
+  const t = useTranslations('common')
   // Derive initial mode from whether a freeform name is already set
   const [isExternal, setIsExternal] = useState(() => !!freeformName)
   const [isOpen, setIsOpen] = useState(false)
@@ -111,7 +113,7 @@ export function ResourcePicker({
         >
           <Spinner size="sm" />
           <span className="text-sm">
-            Loading…
+            {t('loading')}
           </span>
         </div>
       ) : (

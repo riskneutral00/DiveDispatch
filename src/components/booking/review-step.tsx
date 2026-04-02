@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
 import { Calendar, Users, Send, ChevronLeft } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { api } from '../../../convex/_generated/api'
-import type { Id } from '../../../convex/_generated/dataModel'
+import { api } from '@/lib/convex-generated'
+import type { Id } from '@/lib/convex-generated'
 import { GlassCard, GlassButton } from '@/components/ui'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { courseLabel } from '@/lib/constants/course-catalog'
@@ -121,6 +121,26 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
             }
           }
         }
+
+        // Dive Master — same Instructor inventory path, no diveSlots (lead instructor carries teaching slots)
+        if (d.diveMasterSlug && d.diveMasterSlug !== '__external__') {
+          const dmUnitId = inventoryUnitMap[d.diveMasterSlug]
+          if (dmUnitId) {
+            const key = sessionKey(dmUnitId, d.date)
+            if (!seen.has(key)) {
+              seen.add(key)
+              sessions.push({
+                inventoryUnitId: dmUnitId as Id<'inventoryUnits'>,
+                date: d.date,
+                startTime: d.startTime,
+                endTime: d.endTime,
+                timezone: d.timezone,
+                unitsRequested: 1,
+                deliveryLocation,
+              })
+            }
+          }
+        }
       }
 
       // Build divers from customers
@@ -150,17 +170,31 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       })
 
       // Build generic resources array
-      const resources: Array<{ resourceType: string; resourceSlug?: string; externalName?: string }> = []
+      const resources: Array<{
+        resourceType: string
+        resourceSlug?: string
+        externalName?: string
+        roleType?: 'Instructor' | 'DiveMaster'
+      }> = []
 
       // Per-day resources (instructors, boats, pools) extracted from days
       for (const d of days) {
         if (d.instructorSlug && d.instructorSlug !== '__external__') {
-          if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.instructorSlug)) {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.instructorSlug && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
             resources.push({ resourceType: 'Instructor', resourceSlug: d.instructorSlug })
           }
         } else if (d.instructorSlug === '__external__' && d.externalInstructorName?.trim()) {
-          if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalInstructorName)) {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalInstructorName && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
             resources.push({ resourceType: 'Instructor', externalName: d.externalInstructorName })
+          }
+        }
+        if (d.diveMasterSlug && d.diveMasterSlug !== '__external__') {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.diveMasterSlug && r.roleType === 'DiveMaster')) {
+            resources.push({ resourceType: 'Instructor', roleType: 'DiveMaster', resourceSlug: d.diveMasterSlug })
+          }
+        } else if (d.diveMasterSlug === '__external__' && d.externalDiveMasterName?.trim()) {
+          if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalDiveMasterName && r.roleType === 'DiveMaster')) {
+            resources.push({ resourceType: 'Instructor', roleType: 'DiveMaster', externalName: d.externalDiveMasterName })
           }
         }
         if (d.venueType === 'boat' && d.inventoryUnitId) {

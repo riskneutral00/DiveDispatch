@@ -1,7 +1,7 @@
 import { GlassCard } from '@/components/ui/glass-card'
 
 interface LoadingCardProps {
-  /** Text shown while loading. Default: 'Loading...' */
+  /** Text shown while loading. Default: Unicode ellipsis (Loading…). */
   message?: string
 }
 

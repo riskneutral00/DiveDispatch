@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
@@ -28,6 +29,7 @@ export function useSessionRoleContext(): SessionRoleContextValue | null {
  * not under `/[slug]/[roleSlug]` so they share chrome, overlays, and role switchers.
  */
 export function SessionDashboardShell({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('common')
   const user = useQuery(api.users.me)
   const userRoles = useQuery(api.userRoles.myRoles)
   const { user: convexUser } = useCurrentUser()
@@ -40,11 +42,11 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
   }, [user, router])
 
   if (user === undefined) {
-    return <FullPageSpinner label="Loading…" />
+    return <FullPageSpinner label={t('loading')} />
   }
 
   if (user === null) {
-    return <FullPageSpinner label="Redirecting…" />
+    return <FullPageSpinner label={t('redirecting')} />
   }
 
   const defaultRole =
@@ -54,7 +56,7 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
   const slug = convexUser?.slug
 
   if (!roleSlug || !slug) {
-    return <FullPageSpinner label="Loading…" />
+    return <FullPageSpinner label={t('loading')} />
   }
 
   const contextValue = useMemo(

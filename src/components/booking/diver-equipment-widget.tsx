@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+import { api } from '@/lib/convex-generated'
 import { GlassCard, GlassBadge, GlassButton, EmptyState, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/ui/spinner'
@@ -18,8 +18,7 @@ import type {
   GearInventoryItem,
   GearSizingRow,
 } from '../../../convex/equipmentWidget'
-import type { Id } from '../../../convex/_generated/dataModel'
-
+import type { Id } from '@/lib/convex-generated'
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function countryCodeToFlag(code: string): string {

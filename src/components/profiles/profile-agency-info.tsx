@@ -16,6 +16,7 @@ import {
   COURSE_DAY_RANGES,
   DIVE_AGENCIES,
   getDefaultSpecialties,
+  type AgencyCourse,
 } from '@/lib/constants/agencies'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
 
@@ -85,14 +86,14 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   }
 
   function handleAdd() {
-    onChange([...items, makeDefaultItem()])
+    onChange([...items, makeDefaultItem() as unknown as TItem])
   }
 
   function handleRemove(idx: number) {
     onChange(items.filter((_, i) => i !== idx))
   }
 
-  function handleUpdate(idx: number, patch: Partial<TItem> & Record<string, unknown>) {
+  function handleUpdate(idx: number, patch: Record<string, unknown>) {
     const newItems = [...items] as TItem[]
     const updated = { ...(newItems[idx] as AgencyRow), ...patch } as TItem
 
@@ -115,7 +116,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           <div className="flex-1">
             <GlassSelect
               label="Agency"
-              value={item.agency}
+              value={String((item as AgencyRow).agency ?? '')}
               onChange={(v) => handleUpdate(idx, { agency: v })}
               options={AGENCY_CODES.filter(
                 (code) => code === item.agency || !items.some((a, i) => i !== idx && a.agency === code)
@@ -127,7 +128,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           <div className="flex-1">
             <GlassInput
               label={agencyPrefix?.memberIdLabel ?? 'Member ID'}
-              value={item.number}
+              value={String((item as AgencyRow).number ?? '')}
               onChange={(e) => handleUpdate(idx, { number: e.target.value })}
               placeholder={agencyPrefix?.memberIdLabel ?? 'Member ID'}
               required
@@ -142,22 +143,22 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             </p>
             <div className="flex gap-2">
               <DayPicker
-                label={agencyPrefix?.courses.find((c: any) => c.code === 'OW')?.label ?? 'OW'}
-                value={item.owDays}
+                label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'OW')?.label ?? 'OW'}
+                value={Number((item as AgencyRow).owDays)}
                 min={COURSE_DAY_RANGES.OW.min}
                 max={COURSE_DAY_RANGES.OW.max}
                 onChange={(v) => handleUpdate(idx, { owDays: v })}
               />
               <DayPicker
-                label={agencyPrefix?.courses.find((c: any) => c.code === 'AOW')?.label ?? 'AOW'}
-                value={item.aowDays}
+                label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'AOW')?.label ?? 'AOW'}
+                value={Number((item as AgencyRow).aowDays)}
                 min={COURSE_DAY_RANGES.AOW.min}
                 max={COURSE_DAY_RANGES.AOW.max}
                 onChange={(v) => handleUpdate(idx, { aowDays: v })}
               />
               <DayPicker
                 label={agencyPrefix?.combinedLabel ?? 'O+A'}
-                value={item.oaDays}
+                value={Number((item as AgencyRow).oaDays)}
                 min={COURSE_DAY_RANGES.combined.min}
                 max={COURSE_DAY_RANGES.combined.max}
                 onChange={(v) => handleUpdate(idx, { oaDays: v })}
@@ -166,8 +167,8 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           </div>
 
           <SpecialtyField
-            agencyCode={item.agency}
-            value={item.selectedSpecialties || []}
+            agencyCode={String((item as AgencyRow).agency ?? '')}
+            value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
             onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
           />
         </div>
@@ -180,7 +181,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <GlassSimpleSelect
           label="Agency"
-          value={item.agency}
+          value={String((item as AgencyRow).agency ?? '')}
           onChange={(v) => handleUpdate(idx, { agency: v })}
           options={DIVE_AGENCIES}
           placeholder="Select agency…"
@@ -190,7 +191,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         <GlassInput
           label="Agency Member ID"
           placeholder="e.g. 12345678"
-          value={item.number}
+          value={String((item as AgencyRow).number ?? '')}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           error={errors[`associations.${idx}.number`]}
           required
@@ -206,7 +207,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <GlassSimpleSelect
             label="Agency"
-            value={item.agency}
+            value={String((item as AgencyRow).agency ?? '')}
             onChange={(v) => handleUpdate(idx, { agency: v })}
             options={DIVE_AGENCIES}
             placeholder="Select agency…"
@@ -216,7 +217,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           <GlassInput
             label="Certification Level"
             placeholder={variant === 'instructor' ? 'e.g. Open Water Instructor' : 'e.g. Divemaster'}
-            value={item.level}
+            value={String((item as AgencyRow).level ?? '')}
             onChange={(e) => handleUpdate(idx, { level: e.target.value })}
             error={errors[`credential.${idx}.level`]}
             required
@@ -224,7 +225,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           <GlassInput
             label={variant === 'instructor' ? 'Agency Instructor ID' : 'Agency Member ID'}
             placeholder="e.g. 12345678"
-            value={item.agencyID}
+            value={String((item as AgencyRow).agencyID ?? '')}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}
             className="sm:col-span-1"
@@ -235,7 +236,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           <GlassCheckboxGroup
             label="Courses Taught"
             items={courseItems}
-            selected={item.courses || []}
+            selected={((item as AgencyRow).courses as string[] | undefined) ?? []}
             onChange={(values) => handleUpdate(idx, { courses: values })}
             error={errors[`credential.${idx}.courses`]}
             columns={3}
@@ -275,7 +276,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       ) : (
         <div className="space-y-6">
           {items.map((item, idx) => (
-            <Fragment key={(item as AgencyRow)._key ?? idx}>
+            <Fragment key={String((item as AgencyRow)._key ?? idx)}>
               {idx > 0 && isCenter && <hr className="form-divider" />}
               <ItemCard
                 onRemove={() => handleRemove(idx)}

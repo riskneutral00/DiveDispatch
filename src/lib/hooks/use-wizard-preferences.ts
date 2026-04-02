@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
-
+import { api } from '@/lib/convex-generated'
 type PrefsDoc = {
   preferredOperatorSlug?: string
   preferredInstructorSlugs?: string[]
