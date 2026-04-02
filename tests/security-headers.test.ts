@@ -59,6 +59,10 @@ describe('security-headers', () => {
       expect(csp).toMatch(/script-src\s[^;]*maps\.googleapis\.com/)
     })
 
+    it('allows Google Maps tile images in img-src (maps.googleapis.com)', () => {
+      expect(csp).toMatch(/img-src\s[^;]*maps\.googleapis\.com/)
+    })
+
     it('allows Google Maps static in img-src', () => {
       expect(csp).toMatch(/img-src\s[^;]*maps\.gstatic\.com/)
     })

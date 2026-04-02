@@ -26,7 +26,7 @@ const cspDirectives = [
   `default-src 'self'`,
   `script-src 'self' ${CLERK_INLINE} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT} ${DEV_EVAL}`.trim(),
   `style-src 'self' ${CLERK_INLINE} fonts.googleapis.com`,
-  `img-src 'self' data: blob: ${CONVEX_HTTPS} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
+  `img-src 'self' data: blob: ${CONVEX_HTTPS} ${GOOGLE_MAPS_SCRIPT} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
   `font-src 'self' fonts.gstatic.com`,
   `connect-src 'self' ${CONVEX_CONNECT} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT}`,
   `worker-src 'self' blob:`,
