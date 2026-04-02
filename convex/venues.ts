@@ -32,12 +32,27 @@ export const create = mutation({
       .unique()
     if (existing) return existing._id
 
-    return await ctx.db.insert('venues', {
+    const venueId = await ctx.db.insert('venues', {
       ...args,
       venueType: args.venueType as 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other',
       userId: user._id,
       verified: false,
     })
+
+    // Auto-create inventoryUnit for owned DiveSite accounts
+    if (await checkHasRole(ctx, user._id, 'DiveSite')) {
+      await ctx.db.insert('inventoryUnits', {
+        resourceType: 'DiveSite',
+        resourceId: user.slug,
+        displayName: args.name,
+        capacityModel: 'Pooled',
+        totalUnits: Math.max(1, args.maxCapacity ?? 1),
+        ownerId: user.slug,
+        ownerType: 'DiveSite',
+      })
+    }
+
+    return venueId
   },
 })
 

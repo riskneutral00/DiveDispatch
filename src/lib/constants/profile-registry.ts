@@ -69,4 +69,9 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
     tabs: null,
     workspaceIncludesEmbeddedProfile: true,
   },
+  'dive-site': {
+    label: 'Dive Site',
+    tabs: null,
+    workspaceIncludesEmbeddedProfile: false,
+  },
 } satisfies Partial<Record<RoleKey, ProfileConfig>>

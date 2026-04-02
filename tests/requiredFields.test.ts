@@ -87,6 +87,19 @@ describe('ROLE_REQUIRED', () => {
     expect(ROLE_REQUIRED.Pool).toEqual(['name', 'placeName'])
     expect(ROLE_REQUIRED.Compressor).toEqual(['name', 'placeName'])
   })
+
+  it('DiveSite has required fields defined', () => {
+    const fields = ROLE_REQUIRED['DiveSite']
+    expect(fields).toContain('name')
+    expect(fields).toContain('placeName')
+    expect(fields).toContain('country')
+    expect(fields).toContain('venueType')
+    expect(fields).toContain('maxCapacity')
+  })
+
+  it('DiveSite required fields are exactly the spec list', () => {
+    expect(ROLE_REQUIRED['DiveSite']).toEqual(['name', 'placeName', 'country', 'venueType', 'maxCapacity'])
+  })
 })
 
 // ── ROLE_REQUIRED ↔ ROLES alignment ───────────────────────────────────────────

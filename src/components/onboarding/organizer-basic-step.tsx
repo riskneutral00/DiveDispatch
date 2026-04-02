@@ -36,6 +36,12 @@ function useRoleMutations(role: ClerkRole) {
         create: api.agents.create,
         update: api.agents.update,
       } as const
+    case 'DiveSite':
+      return {
+        mine: api.venues.mine,
+        create: api.venues.create,
+        update: api.venues.update,
+      } as const
     default:
       return null
   }
@@ -102,8 +108,8 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
             placeId: existing.placeId ?? undefined,
           })
         }
-        setContactEmail(existing.email)
-        setContactPhone(existing.phone)
+        setContactEmail(existing.email ?? '')
+        setContactPhone(existing.phone ?? '')
       } else {
         setName(me?.businessName ?? '')
         setContactEmail(me?.email ?? '')
@@ -135,6 +141,14 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
       if (existing) {
         await update(basePayload)
+      } else if (role === 'DiveSite') {
+        await create({
+          ...basePayload,
+          venueType: 'Shore',
+          isPublic: false,
+          confinedCapable: false,
+          hasCompressor: false,
+        })
       } else {
         await create({
           ...basePayload,
