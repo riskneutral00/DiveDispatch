@@ -120,6 +120,9 @@ docs/LLM_HANDOFF.md
 # Session pattern files (local knowledge only — not for review)
 .claude/patterns/
 
+# Matrix/research run outputs (local only)
+.claude/runs/
+
 # Ephemeral directories
 .research/
 .tmp/
