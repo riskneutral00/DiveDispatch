@@ -131,6 +131,8 @@ export type CalendarBooking = {
   operatorName: string
   reservationStatus: string | undefined
   resources: CalendarBookingResource[]
+  /** True when this booking is a referral (agentId matches caller but ownerId is a different operator). */
+  isReferral: boolean
 }
 
 export type RequestItem = {
@@ -192,6 +194,7 @@ function toCalendarBooking(
   b: BookingDoc,
   nameMap: Map<string, string>,
   resourceMap: Map<string, BookingResource[]>,
+  isReferral = false,
 ): CalendarBooking {
   const divers = b.divers as Array<{ name: string }>
 
@@ -223,6 +226,7 @@ function toCalendarBooking(
     operatorName: b.operatorName as string,
     reservationStatus: undefined,
     resources: calendarResources,
+    isReferral,
   }
 }
 
@@ -263,6 +267,9 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
 /**
  * List bookings owned by the given operator (ownerId + ownerType).
  * Auth: caller slug must match ownerId.
+ *
+ * Agent branch: also includes referral bookings (agentId = agent slug, ownerId = another operator).
+ * These are marked isReferral=true and are read-only for the agent.
  */
 export async function _listByOwner(
   ctx: QueryCtx,
@@ -271,22 +278,48 @@ export async function _listByOwner(
   const { user } = await requireAuth(ctx)
   if (user.slug !== args.ownerId) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-  const bookings = await ctx.db
+  // Owned bookings (agent as operator or any other operator type)
+  const ownedBookings = await ctx.db
     .query('bookings')
     .withIndex('by_ownerId_ownerType', (q) =>
       q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel" | "DiveSite"),
     )
     .collect()
 
-  // Batch-fetch all resources upfront
-  const resourceMap = await getResourcesForBookings(ctx, bookings.map((b) => b._id as string))
+  // Agent referral bookings: owned by another operator but agentId = this agent
+  const ownedIds = new Set(ownedBookings.map((b) => b._id as string))
+  const referralBookings: BookingDoc[] = []
+
+  if (args.ownerType === 'Agent') {
+    const agentIdRows = await ctx.db
+      .query('bookings')
+      .withIndex('by_agentId', (q) => q.eq('agentId', args.ownerId))
+      .collect()
+
+    for (const b of agentIdRows) {
+      // Only include rows NOT already in ownedBookings (prevents double-counting
+      // the edge case where ownerId = agentId = same slug)
+      if (!ownedIds.has(b._id as string)) {
+        referralBookings.push(b as BookingDoc)
+      }
+    }
+  }
+
+  // Batch-fetch resources for all bookings upfront
+  const allBookings = [...ownedBookings, ...referralBookings]
+  const resourceMap = await getResourcesForBookings(ctx, allBookings.map((b) => b._id as string))
   const allResources = [...resourceMap.values()].flat()
   const slugs = allResources
     .map((r) => r.resourceSlug)
     .filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
 
-  return bookings.map((b) => toCalendarBooking(b, nameMap, resourceMap))
+  const result: CalendarBooking[] = [
+    ...ownedBookings.map((b) => toCalendarBooking(b, nameMap, resourceMap, false)),
+    ...referralBookings.map((b) => toCalendarBooking(b, nameMap, resourceMap, true)),
+  ]
+
+  return result
 }
 
 /**

@@ -19,6 +19,7 @@ function fakeBooking(overrides: Partial<CalendarBooking> = {}): CalendarBooking 
     operatorName: 'Nicole Dive Center',
     reservationStatus: undefined,
     resources: [],
+    isReferral: false,
     ...overrides,
   }
 }

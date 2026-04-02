@@ -150,8 +150,13 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   )
 
   const handleUrgentCancel = useCallback(
-    (bookingId: string) => actions.handleUrgentCancel(bookingId, isOperator),
-    [actions.handleUrgentCancel, isOperator],
+    (bookingId: string) => {
+      // Referral bookings are read-only for the agent — DC retains full control.
+      const booking = calendarBookings.find((b) => b._id === bookingId)
+      if (booking?.isReferral) return
+      actions.handleUrgentCancel(bookingId, isOperator)
+    },
+    [actions.handleUrgentCancel, isOperator, calendarBookings],
   )
 
   // ── Render ─────────────────────────────────────────────────────────────────

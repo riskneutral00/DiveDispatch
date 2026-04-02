@@ -413,6 +413,7 @@ export function BookingCalendar({
                       const borderStyle = STATUS_BORDER_STYLE[bar.status]
                       const borderColor = getBarBorderColor(bar.status, isMultiDay, statusColors.borderVar)
                       const subLabel = booking ? buildBarSubLabel(booking, viewerRole) : undefined
+                      const isReferral = booking?.isReferral ?? false
 
                       // Label-follows-today: show label only on the "active" day cell
                       let showLabel = true
@@ -428,6 +429,7 @@ export function BookingCalendar({
                         <button
                           key={bar.id}
                           type="button"
+                          data-referral={isReferral ? 'true' : undefined}
                           onClick={(e) => {
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
@@ -436,14 +438,14 @@ export function BookingCalendar({
                           style={{
                             height: `${BAR_ROW_HEIGHT - 2}px`,
                             minHeight: '44px',
-                            opacity,
+                            opacity: isReferral ? (opacity * 0.8) : opacity,
                             background: bar.status === 'Urgent'
                               ? 'var(--color-status-urgent)'
                               : statusColors.bgVar,
                             color: bar.status === 'Urgent'
                               ? 'var(--color-text-on-primary)'
                               : statusColors.textVar,
-                            borderLeft: `3px ${borderStyle} ${borderColor}`,
+                            borderLeft: `3px ${isReferral ? 'dashed' : borderStyle} ${borderColor}`,
                             borderTop: `1px ${borderStyle} ${borderColor}`,
                             borderRight: `1px ${borderStyle} ${borderColor}`,
                             borderBottom: `1px ${borderStyle} ${borderColor}`,
@@ -464,7 +466,7 @@ export function BookingCalendar({
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {bar.label}{subLabel ? ` · ${subLabel}` : ''}
+                            {isReferral ? 'Ref · ' : ''}{bar.label}{subLabel ? ` · ${subLabel}` : ''}
                           </span>
                           )}
                         </button>

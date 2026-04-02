@@ -44,6 +44,7 @@ function makeBooking(overrides: Partial<CalendarBooking> = {}): CalendarBooking 
     operatorName: 'DiveCo',
     reservationStatus: 'Confirmed',
     resources: [],
+    isReferral: false,
     ...overrides,
   }
 }

@@ -16,6 +16,13 @@ const SRC = readFileSync(
 )
 
 describe('DashboardContent Rules of Hooks compliance', () => {
+  it('handleUrgentCancel guards against referral bookings', () => {
+    // Referral bookings must be read-only for Agent — the cancel callback must check isReferral.
+    expect(SRC).toMatch(/booking\?\.isReferral/)
+    // The guard must return early to block cancel on referral rows
+    expect(SRC).toMatch(/if\s*\(\s*booking\?\.isReferral\s*\)\s*return/)
+  })
+
   it('exported DashboardContent does not call any hooks', () => {
     // Extract the body of the exported DashboardContent function.
     // It should be a thin wrapper: roleConfig lookup, guard, render inner.
