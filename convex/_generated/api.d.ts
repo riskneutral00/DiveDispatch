@@ -40,6 +40,7 @@ import type * as equipment from "../equipment.js";
 import type * as equipmentBags from "../equipmentBags.js";
 import type * as equipmentInventory from "../equipmentInventory.js";
 import type * as equipmentWidget from "../equipmentWidget.js";
+import type * as gearSizingLookup from "../gearSizingLookup.js";
 import type * as http from "../http.js";
 import type * as instructors from "../instructors.js";
 import type * as lib_alerts from "../lib/alerts.js";
@@ -134,6 +135,7 @@ declare const fullApi: ApiFromModules<{
   equipmentBags: typeof equipmentBags;
   equipmentInventory: typeof equipmentInventory;
   equipmentWidget: typeof equipmentWidget;
+  gearSizingLookup: typeof gearSizingLookup;
   http: typeof http;
   instructors: typeof instructors;
   "lib/alerts": typeof lib_alerts;
