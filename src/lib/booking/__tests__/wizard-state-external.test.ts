@@ -18,16 +18,16 @@ function baseState(overrides: Partial<WizardState['days'][number]> = {}): Wizard
       id: 'c1',
       name: 'Jane Doe',
       courseEntries: [
-        { id: 'e1', activityCode: 'DSD', dates: ['2026-04-01'], agency: 'PADI' },
+        { id: 'e1', activityCode: 'DSD', dates: ['2030-01-01'], agency: 'PADI' },
       ],
     },
   ]
-  state.startDate = '2026-04-01'
-  state.endDate = '2026-04-01'
+  state.startDate = '2030-01-01'
+  state.endDate = '2030-01-01'
   state.selectedCourses = ['DSD']
   state.days = [
     {
-      date: '2026-04-01',
+      date: '2030-01-01',
       venueType: 'boat',
       dives: [{ courseCode: 'DSD', diveNumber: 1, isConfined: true }],
       divesPerDay: 3,
