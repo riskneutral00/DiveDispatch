@@ -127,7 +127,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
           e.stopPropagation()
           onDelete(notification._id)
         }}
-        className="flex-shrink-0 mt-0.5 p-1 rounded transition-opacity opacity-40 hover:opacity-100"
+        className="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded transition-opacity opacity-40 hover:opacity-100"
         aria-label="Delete notification"
       >
         <Trash2 className="text-secondary" size={14} />
