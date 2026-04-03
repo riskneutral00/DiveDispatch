@@ -88,10 +88,28 @@ describe('releaseBookingReservations', () => {
   it('no-op when booking has no active reservations', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 2, displayName: 'Boat C' })
+      const snapshot = await seedSnapshot(ctx, unit, { totalUnits: 2, availableUnits: 2, reservedUnits: 0 })
       const bookingId = await seedBooking(ctx, { status: 'Draft' })
 
-      // Should not throw
       await releaseBookingReservations(ctx, bookingId, VACATED_REASON.HoldExpired)
+
+      // Booking still exists
+      const booking = await ctx.db.get(bookingId)
+      expect(booking).not.toBeNull()
+      expect(booking!._id).toEqual(bookingId)
+
+      // No reservations were vacated — none exist for this booking
+      const reservations = await ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
+        .collect()
+      expect(reservations).toHaveLength(0)
+
+      // Snapshot counts are unchanged
+      const snap = await ctx.db.get(snapshot) as Doc<'availabilitySnapshots'>
+      expect(snap.availableUnits).toBe(2)
+      expect(snap.reservedUnits).toBe(0)
     })
   })
 
