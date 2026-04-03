@@ -1,7 +1,6 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-import { z } from 'zod'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
@@ -14,14 +13,29 @@ import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
 import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  boatContactSchema,
+  boatFleetSchema,
+} from '@/lib/schemas/profile-shared'
+import {
   contactFieldsFromProfile,
   createOptimisticLocationOnChange,
   locationToPayload,
-  nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
-// ── Types ────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type BoatProfileSection = 'contact' | 'fleet'
+
+export type BoatSectionProps = {
+  profile: Record<string, unknown> | null | undefined
+  me?: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+  onSaved?: () => void
+}
 
 type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
 
@@ -39,15 +53,9 @@ interface FleetState {
   cutoffHours: string
 }
 
-type FormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-  fleet: FleetState[]
-}
-
-// ── Constants ────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
 const BOAT_TYPE_OPTIONS: { value: BoatType; label: string }[] = [
   { value: 'day_boat', label: 'Day Boat' },
@@ -68,39 +76,15 @@ const DAYS = [
   { value: 0, label: 'Sun' },
 ]
 
-// ── Zod schema ───────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-const BOAT_TYPES = ['day_boat', 'speedboat', 'longtail', 'liveaboard', 'catamaran', 'rib'] as const
-
-const routeZod = z.object({
-  diveSite: z.string().min(1, 'Dive site required'),
-  daysOfWeek: z.array(z.number()).min(1, 'Select at least one day'),
-})
-
-const fleetZod = z.object({
-  boatName: z.string().min(1, 'Boat name required'),
-  maxPax: z.number().int().min(1, 'At least 1 passenger'),
-  minPax: z.number().int().min(1).optional(),
-  boatType: z.enum(BOAT_TYPES),
-  routes: z.array(routeZod).optional(),
-  cutoffHours: z.number().min(0).optional(),
-})
-
-const profileZod = z.object({
-  name: z.string().min(1, 'Business name required'),
-  location: nullableProfileLocation('Location required'),
-  email: z.string().email('Valid email required'),
-  phone: z.string().min(1, 'Phone required'),
-  fleet: z.array(fleetZod),
-})
-
-// ── Helpers ──────────────────────────────────────────────────────────
-
-function emptyFleet(): FleetState {
+export function emptyFleet(): FleetState {
   return { boatName: '', maxPax: '', minPax: '', boatType: '', routes: [], cutoffHours: '' }
 }
 
-function emptyRoute(): RouteState {
+export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
 }
 
@@ -109,103 +93,63 @@ function parseOptionalInt(s: string): number | undefined {
   return isNaN(n) ? undefined : n
 }
 
-const INITIAL_FORM: FormState = {
+// ---------------------------------------------------------------------------
+// Contact section
+// ---------------------------------------------------------------------------
+
+export type BoatContactFormState = {
+  name: string
+  location: LocationValue | null
+  email: string
+  phone: string
+}
+
+export const INITIAL_BOAT_CONTACT_FORM: BoatContactFormState = {
   name: '',
   location: null,
   email: '',
   phone: '',
-  fleet: [emptyFleet()],
 }
 
-// ── Main component ───────────────────────────────────────────────────
-
-export type BoatProfileFormProps = {
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
-
-export function BoatProfileForm({ profile, me, create, update }: BoatProfileFormProps) {
-
-  const {
-    form,
-    setField,
-    errors,
-    footerErrorMessage,
-    saving,
-    saved,
-    isDirty,
-    isValid,
-    loading,
-    isUpdate,
-    handleSubmit,
-  } = useProfileForm({
-    profile,
-    me: me ?? undefined,
-    schema: profileZod,
-    defaults: INITIAL_FORM,
-    fromProfile: (p) => {
-      const c = contactFieldsFromProfile(p)
-      const fleet = p.fleet as Record<string, unknown>[]
-      return {
-        ...c,
-        location: c.location as LocationValue,
-        fleet:
-          fleet.length > 0
-            ? fleet.map((f) => ({
-                boatName: f.boatName as string,
-                maxPax: String(f.maxPax),
-                minPax: f.minPax != null ? String(f.minPax) : '',
-                boatType: f.boatType as BoatType,
-                routes: (f.routes as RouteState[] | undefined) ?? [],
-                cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
-              }))
-            : [emptyFleet()],
-      }
-    },
-    fromMe: (u, initial) => ({
-      ...initial,
-      email: u.email ?? '',
-      phone: u.phone ?? '',
-    }),
-    toPayload: (f) => {
-      const fleetParsed = f.fleet.map((v) => ({
-        boatName: v.boatName,
-        maxPax: parseOptionalInt(v.maxPax) ?? 0,
-        minPax: parseOptionalInt(v.minPax),
-        boatType: v.boatType as BoatType,
-        routes: v.routes.length > 0 ? v.routes : undefined,
-        cutoffHours: parseOptionalInt(v.cutoffHours),
-      }))
-      return {
-        name: f.name,
-        ...locationToPayload(f.location!),
-        email: f.email,
-        phone: f.phone,
-        fleet: fleetParsed,
-      }
-    },
-    create,
-    update,
-  })
-
-  function addFleet() { setField('fleet', [...form.fleet, emptyFleet()]) }
-  function removeFleet(i: number) { setField('fleet', form.fleet.filter((_, idx) => idx !== i)) }
-  function updateFleet(i: number, patch: Partial<FleetState>) { setField('fleet', form.fleet.map((f, idx) => (idx === i ? { ...f, ...patch } : f))) }
-  function addRoute(fi: number) { setField('fleet', form.fleet.map((f, i) => (i === fi ? { ...f, routes: [...f.routes, emptyRoute()] } : f))) }
-  function removeRoute(fi: number, ri: number) { setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.filter((_, idx) => idx !== ri) } : f)) }
-  function updateRoute(fi: number, ri: number, patch: Partial<RouteState>) { setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.map((r, idx) => (idx === ri ? { ...r, ...patch } : r)) } : f)) }
-  function toggleDay(fi: number, ri: number, day: number) {
-    const days = form.fleet[fi].routes[ri].daysOfWeek
-    updateRoute(fi, ri, { daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] })
+export function boatContactFromProfile(p: Record<string, unknown>): BoatContactFormState {
+  const c = contactFieldsFromProfile(p)
+  return {
+    name: c.name,
+    location: c.location as LocationValue,
+    email: c.email,
+    phone: c.phone,
   }
+}
 
-  const onLocationChange = createOptimisticLocationOnChange({
-    setField,
-    update,
-    isUpdate,
-  })
+export function boatContactToPayload(f: BoatContactFormState): Record<string, unknown> {
+  return {
+    name: f.name,
+    ...locationToPayload(f.location!),
+    email: f.email,
+    phone: f.phone,
+  }
+}
+
+export function BoatContactSection({ profile: existing, me, create, update, onSaved }: BoatSectionProps) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      me,
+      schema: boatContactSchema,
+      defaults: INITIAL_BOAT_CONTACT_FORM,
+      fromProfile: boatContactFromProfile,
+      fromMe: (u, defaults) => ({
+        ...defaults,
+        email: (u.email as string) ?? '',
+        phone: (u.phone as string) ?? '',
+      }),
+      toPayload: boatContactToPayload,
+      create,
+      update,
+      onSaved,
+    })
+
+  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
 
   return (
     <ProfileFormShell
@@ -220,34 +164,142 @@ export function BoatProfileForm({ profile, me, create, update }: BoatProfileForm
       isValid={isValid}
       className="space-y-6"
     >
-      {/* Contact info */}
-        <div className="space-y-4">
-          <ProfileBasicInfo
-            nameValue={form.name}
-            onNameChange={(val) => setField('name', val)}
-            nameError={errors.name}
-            nameLabel="Business Name"
-            namePlaceholder="Phuket Boat Co."
-            nameRequired
-            locationValue={form.location}
-            onLocationChange={onLocationChange}
-            locationError={errors.location}
-            locationRequired
-            emailValue={form.email}
-            onEmailChange={(val) => setField('email', val)}
-            emailError={errors.email}
-            emailRequired
-            phoneValue={form.phone}
-            onPhoneChange={(val) => setField('phone', val)}
-            phoneError={errors.phone}
-            phoneRequired
-          />
-        </div>
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Business Name"
+          namePlaceholder="Phuket Boat Co."
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={onLocationChange}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
+        />
+      </div>
+    </ProfileFormShell>
+  )
+}
 
+// ---------------------------------------------------------------------------
+// Fleet section
+// ---------------------------------------------------------------------------
 
-      <ProfileFormSectionDivider show />
+export type BoatFleetFormState = {
+  fleet: FleetState[]
+}
 
-      {/* Fleet */}
+export const INITIAL_BOAT_FLEET_FORM: BoatFleetFormState = {
+  fleet: [emptyFleet()],
+}
+
+export function boatFleetFromProfile(p: Record<string, unknown>): BoatFleetFormState {
+  const fleet = (p.fleet as Record<string, unknown>[] | undefined) ?? []
+  return {
+    fleet:
+      fleet.length > 0
+        ? fleet.map((f) => ({
+            boatName: f.boatName as string,
+            maxPax: String(f.maxPax),
+            minPax: f.minPax != null ? String(f.minPax) : '',
+            boatType: f.boatType as BoatType,
+            routes: (f.routes as RouteState[] | undefined) ?? [],
+            cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
+          }))
+        : [emptyFleet()],
+  }
+}
+
+export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknown> {
+  return {
+    fleet: f.fleet.map((v) => ({
+      boatName: v.boatName,
+      maxPax: parseOptionalInt(v.maxPax) ?? 0,
+      minPax: parseOptionalInt(v.minPax),
+      boatType: v.boatType as BoatType,
+      routes: v.routes.length > 0 ? v.routes : undefined,
+      cutoffHours: parseOptionalInt(v.cutoffHours),
+    })),
+  }
+}
+
+export function BoatFleetSection({ profile: existing, create, update }: BoatSectionProps) {
+  if (!existing) {
+    return (
+      <p className="text-sm text-secondary">
+        Complete contact info first before setting up the fleet.
+      </p>
+    )
+  }
+
+  return <BoatFleetSectionForm profile={existing} create={create} update={update} />
+}
+
+function BoatFleetSectionForm({
+  profile: existing,
+  create,
+  update,
+}: {
+  profile: Record<string, unknown>
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+}) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      schema: boatFleetSchema,
+      defaults: INITIAL_BOAT_FLEET_FORM,
+      fromProfile: boatFleetFromProfile,
+      toPayload: boatFleetToPayload,
+      create,
+      update,
+    })
+
+  function addFleet() {
+    setField('fleet', [...form.fleet, emptyFleet()])
+  }
+  function removeFleet(i: number) {
+    setField('fleet', form.fleet.filter((_, idx) => idx !== i))
+  }
+  function updateFleet(i: number, patch: Partial<FleetState>) {
+    setField('fleet', form.fleet.map((f, idx) => (idx === i ? { ...f, ...patch } : f)))
+  }
+  function addRoute(fi: number) {
+    setField('fleet', form.fleet.map((f, i) => (i === fi ? { ...f, routes: [...f.routes, emptyRoute()] } : f)))
+  }
+  function removeRoute(fi: number, ri: number) {
+    setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.filter((_, idx) => idx !== ri) } : f))
+  }
+  function updateRoute(fi: number, ri: number, patch: Partial<RouteState>) {
+    setField('fleet', form.fleet.map((f, i) => i === fi ? { ...f, routes: f.routes.map((r, idx) => (idx === ri ? { ...r, ...patch } : r)) } : f))
+  }
+  function toggleDay(fi: number, ri: number, day: number) {
+    const days = form.fleet[fi].routes[ri].daysOfWeek
+    updateRoute(fi, ri, { daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] })
+  }
+
+  return (
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       <div>
         <FormSectionHeader
           label="Fleet"
@@ -280,7 +332,9 @@ export function BoatProfileForm({ profile, me, create, update }: BoatProfileForm
   )
 }
 
-// ── Fleet entry card ─────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// FleetEntryCard (Do Not Touch — internal sub-component)
+// ---------------------------------------------------------------------------
 
 interface FleetEntryCardProps {
   vessel: FleetState
@@ -386,4 +440,27 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
       )}
     </ItemCard>
   )
+}
+
+// ---------------------------------------------------------------------------
+// Compat alias
+// ---------------------------------------------------------------------------
+
+/**
+ * Dispatches to the appropriate section component based on the `section` prop.
+ * The app-layer ConnectedBoatForm short-circuits before this is reached
+ * at runtime; this export exists so that the lib-layer registry in
+ * connected-role-forms.tsx continues to type-check without modification.
+ */
+export function BoatProfileForm({
+  section,
+  profile,
+  me,
+  create,
+  update,
+  onSaved,
+}: BoatSectionProps & { section?: BoatProfileSection }) {
+  if (section === 'fleet')
+    return <BoatFleetSection profile={profile} create={create} update={update} />
+  return <BoatContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }

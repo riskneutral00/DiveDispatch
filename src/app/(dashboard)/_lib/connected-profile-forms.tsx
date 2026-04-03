@@ -39,6 +39,11 @@ import {
   PoolCapabilitiesSection,
   type PoolProfileSection,
 } from '@/components/profiles/pool-profile-form'
+import {
+  BoatContactSection,
+  BoatFleetSection,
+  type BoatProfileSection,
+} from '@/components/profiles/boat-profile-form'
 
 /** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
@@ -145,6 +150,22 @@ function ConnectedPoolForm({ section }: { section?: string }) {
   return <PoolContactSection {...props} />
 }
 
+function ConnectedBoatForm({ section }: { section?: string }) {
+  const profile = useQuery(api.boats.mine)
+  const me = useQuery(api.users.me)
+  const create = useMutation(api.boats.create)
+  const update = useMutation(api.boats.update)
+  const sectionKey = (section ?? 'contact') as BoatProfileSection
+  const props = {
+    profile,
+    me,
+    create: asLooseMut(create),
+    update: asLooseMut(update),
+  }
+  if (sectionKey === 'fleet') return <BoatFleetSection {...props} />
+  return <BoatContactSection {...props} />
+}
+
 function ConnectedDiveCenterForm({ section }: { section?: string }) {
   const profile = useQuery(api.diveCenters.mine)
   const me = useQuery(api.users.me)
@@ -175,9 +196,15 @@ export function RoleProfileForm({
   if (roleSlug === 'compressor') return <ConnectedCompressorForm section={section} />
   if (roleSlug === 'equipment') return <ConnectedEquipmentForm section={section} />
   if (roleSlug === 'pool') return <ConnectedPoolForm section={section} />
+  if (roleSlug === 'boat') return <ConnectedBoatForm section={section} />
   return <LibRoleProfileForm roleSlug={roleSlug} section={section} />
 }
 
+// Roles that have been migrated to tabbed profile pages must not be embedded
+// on the workspace page. Override the lib-layer registry decision here.
+const WORKSPACE_EMBED_EXCLUDED: ReadonlySet<RoleKey> = new Set(['boat'])
+
 export function WorkspaceEmbeddedProfileForm({ roleSlug }: { roleSlug: RoleKey }) {
+  if (WORKSPACE_EMBED_EXCLUDED.has(roleSlug)) return null
   return <LibWorkspaceEmbeddedProfileForm roleSlug={roleSlug} />
 }

@@ -45,10 +45,6 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('boat is embedded (no tabs, workspaceIncludesEmbeddedProfile true)', () => {
-    expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(true)
-  })
-
   it('pool has tabs and workspaceIncludesEmbeddedProfile false', () => {
     expect(PROFILE_REGISTRY.pool.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.pool.tabs).toEqual([
@@ -74,6 +70,17 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'gas-mixes', label: 'Gas Mixes' },
     ])
     expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(false)
+  })
+
+  it('boat has workspaceIncludesEmbeddedProfile false (migrated to tabbed profile page)', () => {
+    expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(false)
+  })
+
+  it('boat has contact and fleet tabs', () => {
+    expect(PROFILE_REGISTRY.boat.tabs).toEqual([
+      { id: 'contact', label: 'Contact' },
+      { id: 'fleet', label: 'Fleet' },
+    ])
   })
 
   it('operator roles have workspaceIncludesEmbeddedProfile false', () => {

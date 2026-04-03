@@ -51,8 +51,11 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
   },
   boat: {
     label: 'Boat',
-    tabs: null,
-    workspaceIncludesEmbeddedProfile: true,
+    tabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'fleet', label: 'Fleet' },
+    ],
+    workspaceIncludesEmbeddedProfile: false,
   },
   compressor: {
     label: 'Compressor',

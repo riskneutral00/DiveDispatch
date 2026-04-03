@@ -125,6 +125,39 @@ export const instructorCredentialsSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
+// Boat per-section schemas
+// ---------------------------------------------------------------------------
+
+/** Boat contact section. */
+export const boatContactSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Contact phone is required'),
+})
+
+const BOAT_TYPES_TUPLE = ['day_boat', 'speedboat', 'longtail', 'liveaboard', 'catamaran', 'rib'] as const
+
+const boatRouteSchema = z.object({
+  diveSite: z.string().min(1, 'Dive site required'),
+  daysOfWeek: z.array(z.number()).min(1, 'Select at least one day'),
+})
+
+const boatFleetEntrySchema = z.object({
+  boatName: z.string().min(1, 'Boat name required'),
+  maxPax: z.number().int().min(1, 'At least 1 passenger'),
+  minPax: z.number().int().min(1).optional(),
+  boatType: z.enum(BOAT_TYPES_TUPLE),
+  routes: z.array(boatRouteSchema).optional(),
+  cutoffHours: z.number().min(0).optional(),
+})
+
+/** Boat fleet section. */
+export const boatFleetSchema = z.object({
+  fleet: z.array(boatFleetEntrySchema),
+})
+
+// ---------------------------------------------------------------------------
 // Compressor per-section schemas
 // ---------------------------------------------------------------------------
 
