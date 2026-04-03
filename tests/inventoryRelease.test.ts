@@ -48,8 +48,10 @@ describe('releaseBookingReservations', () => {
       const snapB = await ctx.db.get(snapshotB) as Doc<'availabilitySnapshots'>
       expect(snapA.availableUnits).toBe(2)
       expect(snapA.reservedUnits).toBe(1)
+      expect(snapA.totalUnits).toBe(3)
       expect(snapB.availableUnits).toBe(1) // unchanged
       expect(snapB.reservedUnits).toBe(2) // unchanged
+      expect(snapB.totalUnits).toBe(3)
     })
   })
 
@@ -81,8 +83,10 @@ describe('releaseBookingReservations', () => {
       const snapB = await ctx.db.get(snapshotB) as Doc<'availabilitySnapshots'>
       expect(snapA.availableUnits).toBe(2)
       expect(snapA.reservedUnits).toBe(1)
+      expect(snapA.totalUnits).toBe(3)
       expect(snapB.availableUnits).toBe(2)
       expect(snapB.reservedUnits).toBe(1)
+      expect(snapB.totalUnits).toBe(3)
     })
   })
 
@@ -111,6 +115,7 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshot) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2)
       expect(snap.reservedUnits).toBe(0)
+      expect(snap.totalUnits).toBe(2)
     })
   })
 
@@ -130,6 +135,7 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshot) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2) // unchanged
       expect(snap.reservedUnits).toBe(1) // unchanged
+      expect(snap.totalUnits).toBe(3)
     })
   })
 
@@ -157,6 +163,7 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2)
       expect(snap.reservedUnits).toBe(1)
+      expect(snap.totalUnits).toBe(3)
     })
   })
 
@@ -206,6 +213,7 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(1)
       expect(snap.reservedUnits).toBe(1)
+      expect(snap.totalUnits).toBe(2)
     })
   })
 
