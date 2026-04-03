@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { notify } from '../convex/notifications'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
-import { NOTIFICATION_TYPE } from '../convex/shared/statuses'
+import { NOTIFICATION_TYPE, RESERVATION_STATUS, VACATED_REASON } from '../convex/shared/statuses'
 import type { Id, TableNames } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
 import { TEST_SLUGS, seedUser, seedNotification } from './fixtures'
@@ -527,6 +527,145 @@ describe('tryAutoAdvance collectLogistics error swallow (DD-425)', () => {
 
       // Logistics is absent because collectLogistics threw
       expect(confirmed?.logistics).toBeUndefined()
+    })
+  })
+})
+
+// ─── DD-426: hasMissingResource gate blocks auto-advance ─────────────────────
+
+describe('tryAutoAdvance hasMissingResource gate (DD-426)', () => {
+  it('does NOT advance to Upcoming when a reservation is vacated with StakeholderDeclined', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Seed an inventory unit and session
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Reservation vacated by stakeholder declining — booking is missing a required resource
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: RESERVATION_STATUS.Vacated,
+        vacatedBy: VACATED_REASON.StakeholderDeclined,
+        vacatedAt: Date.now(),
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Draft')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed).toBeUndefined()
+    })
+  })
+
+  it('does NOT advance to Upcoming when a reservation is vacated with DateBlocked', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Reservation vacated because the date was blocked — also a missing resource
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: RESERVATION_STATUS.Vacated,
+        vacatedBy: VACATED_REASON.DateBlocked,
+        vacatedAt: Date.now(),
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Draft')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed).toBeUndefined()
+    })
+  })
+
+  it('DOES advance to Upcoming when the only vacated reservation reason is BookingCancelled (not a missing resource)', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      // Reservation vacated for BookingCancelled — does not set hasMissingResource
+      // No active reservations remain → allConfirmed is vacuously true
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: RESERVATION_STATUS.Vacated,
+        vacatedBy: VACATED_REASON.BookingCancelled,
+        vacatedAt: Date.now(),
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.userId).toBe(TEST_SLUGS.diveCenter)
+      expect(confirmed?.bookingId).toEqual(bookingId)
     })
   })
 })
