@@ -25,6 +25,11 @@ import {
   CompressorGasMixesSection,
   type CompressorProfileSection,
 } from '@/components/profiles/compressor-profile-form'
+import {
+  EquipmentContactSection,
+  EquipmentGearCatalogSection,
+  type EquipmentProfileSection,
+} from '@/components/profiles/equipment-profile-form'
 
 /** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
@@ -98,6 +103,22 @@ function ConnectedCompressorForm({ section }: { section?: string }) {
   return <CompressorContactSection {...props} />
 }
 
+function ConnectedEquipmentForm({ section }: { section?: string }) {
+  const profile = useQuery(api.equipment.mine)
+  const me = useQuery(api.users.me)
+  const create = useMutation(api.equipment.create)
+  const update = useMutation(api.equipment.update)
+  const sectionKey = (section ?? 'contact') as EquipmentProfileSection
+  const props = {
+    profile,
+    me,
+    create: asLooseMut(create),
+    update: asLooseMut(update),
+  }
+  if (sectionKey === 'gear-catalog') return <EquipmentGearCatalogSection {...props} />
+  return <EquipmentContactSection {...props} />
+}
+
 function ConnectedDiveCenterForm({ section }: { section?: string }) {
   const profile = useQuery(api.diveCenters.mine)
   const me = useQuery(api.users.me)
@@ -126,6 +147,7 @@ export function RoleProfileForm({
   if (roleSlug === 'dive-center') return <ConnectedDiveCenterForm section={section} />
   if (roleSlug === 'agent') return <ConnectedAgentForm section={section} />
   if (roleSlug === 'compressor') return <ConnectedCompressorForm section={section} />
+  if (roleSlug === 'equipment') return <ConnectedEquipmentForm section={section} />
   return <LibRoleProfileForm roleSlug={roleSlug} section={section} />
 }
 

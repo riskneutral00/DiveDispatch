@@ -140,3 +140,20 @@ export const compressorContactSchema = z.object({
 export const compressorGasMixesSchema = z.object({
   gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
 })
+
+// ---------------------------------------------------------------------------
+// Equipment per-section schemas
+// ---------------------------------------------------------------------------
+
+/** Equipment contact section. */
+export const equipmentContactSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Contact phone is required'),
+})
+
+/** Equipment gear catalog section. */
+export const equipmentGearCatalogSchema = z.object({
+  manufacturersByGearType: z.record(z.string(), z.array(z.string())),
+})

@@ -3,11 +3,9 @@
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { z } from 'zod'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCard } from '@/components/ui/glass-card'
@@ -15,12 +13,17 @@ import { GlassInput } from '@/components/ui/glass-input'
 import { PillToggle } from '@/components/ui/pill-toggle'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  equipmentContactSchema,
+  equipmentGearCatalogSchema,
+} from '@/lib/schemas/profile-shared'
+import {
   contactFieldsFromProfile,
   createOptimisticLocationOnChange,
   locationToPayload,
-  nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+
+// ── Constants ────────────────────────────────────────────────────────
 
 const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
 type GearType = (typeof GEAR_TYPES)[number]
@@ -33,127 +36,75 @@ const GEAR_TYPE_LABELS: Record<GearType, string> = {
   mask: 'Mask',
 }
 
-const profileSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  location: nullableProfileLocation(),
-  email: z.string().email('Valid email required'),
-  phone: z.string().min(1, 'Phone is required').max(30),
-})
+// ── Types ────────────────────────────────────────────────────────────
 
-type FormState = {
+export type EquipmentProfileSection = 'contact' | 'gear-catalog'
+
+export type EquipmentSectionProps = {
+  profile: Record<string, unknown> | null | undefined
+  me?: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+  onSaved?: () => void
+}
+
+// ── Contact section ──────────────────────────────────────────────────
+
+export type EquipmentContactFormState = {
   name: string
   location: LocationValue | null
   email: string
   phone: string
-  manufacturersByGearType: Partial<Record<GearType, string[]>>
 }
 
-const INITIAL_FORM: FormState = {
+export const INITIAL_EQUIPMENT_CONTACT_FORM: EquipmentContactFormState = {
   name: '',
   location: null,
   email: '',
   phone: '',
-  manufacturersByGearType: {},
 }
 
-export type EquipmentProfileFormProps = {
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
+export function equipmentContactFromProfile(p: Record<string, unknown>): EquipmentContactFormState {
+  const c = contactFieldsFromProfile(p)
+  return {
+    name: c.name,
+    location: c.location as LocationValue,
+    email: c.email,
+    phone: c.phone,
+  }
 }
 
-export function EquipmentProfileForm({ profile, me, create, update }: EquipmentProfileFormProps) {
+export function equipmentContactToPayload(f: EquipmentContactFormState): Record<string, unknown> {
+  return {
+    name: f.name,
+    ...locationToPayload(f.location!),
+    email: f.email,
+    phone: f.phone,
+  }
+}
+
+export function EquipmentContactSection({ profile: existing, me, create, update, onSaved }: EquipmentSectionProps) {
   const t = useTranslations('common')
 
-  const { form, setForm, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
-    profile,
-    me: me ?? undefined,
-    schema: profileSchema,
-    defaults: INITIAL_FORM,
-    fromProfile: (p) => {
-      const parsed: Partial<Record<GearType, string[]>> = {}
-      const mbt = p.manufacturersByGearType as Record<string, string[]> | undefined
-      if (mbt) {
-        for (const gt of GEAR_TYPES) {
-          const mfrs = mbt[gt]
-          if (mfrs && mfrs.length > 0) parsed[gt] = mfrs
-        }
-      }
-      const c = contactFieldsFromProfile(p)
-      return {
-        ...c,
-        location: c.location as LocationValue,
-        manufacturersByGearType: parsed,
-      }
-    },
-    fromMe: (u, initial) => ({
-      ...initial,
-      email: u.email ?? '',
-      phone: u.phone ?? '',
-    }),
-    toPayload: (f) => {
-      const mbt: Record<string, string[]> = {}
-      for (const gt of GEAR_TYPES) {
-        const mfrs = f.manufacturersByGearType[gt]
-        if (mfrs && mfrs.length > 0) mbt[gt] = mfrs
-      }
-      return {
-        name: f.name,
-        ...locationToPayload(f.location!),
-        email: f.email,
-        phone: f.phone,
-        manufacturersByGearType: Object.keys(mbt).length > 0 ? mbt : undefined,
-      }
-    },
-    create,
-    update,
-  })
-
-  // Local UI state for tag inputs (not part of form/schema)
-  const [mfrInputs, setMfrInputs] = useState<Partial<Record<GearType, string>>>({})
-
-  function toggleGearType(gt: GearType) {
-    setForm((prev) => {
-      const next = { ...prev.manufacturersByGearType }
-      if (gt in next) {
-        delete next[gt]
-      } else {
-        next[gt] = []
-      }
-      return { ...prev, manufacturersByGearType: next }
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      me,
+      schema: equipmentContactSchema,
+      defaults: INITIAL_EQUIPMENT_CONTACT_FORM,
+      fromProfile: equipmentContactFromProfile,
+      fromMe: (u, defaults) => ({
+        ...defaults,
+        email: (u.email as string) ?? '',
+        phone: (u.phone as string) ?? '',
+      }),
+      toPayload: equipmentContactToPayload,
+      create,
+      update,
+      onSaved,
     })
-  }
 
-  function addManufacturer(gt: GearType) {
-    const mfr = (mfrInputs[gt] ?? '').trim()
-    if (!mfr) return
-    const existing = form.manufacturersByGearType[gt] ?? []
-    if (existing.includes(mfr)) return
-    setForm((prev) => ({
-      ...prev,
-      manufacturersByGearType: { ...prev.manufacturersByGearType, [gt]: [...(prev.manufacturersByGearType[gt] ?? []), mfr] },
-    }))
-    setMfrInputs((prev) => ({ ...prev, [gt]: '' }))
-  }
-
-  function removeManufacturer(gt: GearType, mfr: string) {
-    setForm((prev) => ({
-      ...prev,
-      manufacturersByGearType: {
-        ...prev.manufacturersByGearType,
-        [gt]: (prev.manufacturersByGearType[gt] ?? []).filter((m) => m !== mfr),
-      },
-    }))
-  }
-
-  const onLocationChange = createOptimisticLocationOnChange({
-    setField,
-    update,
-    isUpdate,
-  })
-
-  const activeGearTypes = GEAR_TYPES.filter((gt) => gt in form.manufacturersByGearType)
+  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
 
   return (
     <ProfileFormShell
@@ -164,11 +115,12 @@ export function EquipmentProfileForm({ profile, me, create, update }: EquipmentP
       saved={saved}
       isDirty={isDirty}
       isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
       loadingVariant="plain"
       loadingMessage={t('loading')}
       className="space-y-6"
     >
-      {/* Business Details */}
       <div className="space-y-4">
         <ProfileBasicInfo
           nameValue={form.name}
@@ -191,10 +143,117 @@ export function EquipmentProfileForm({ profile, me, create, update }: EquipmentP
           phoneRequired
         />
       </div>
+    </ProfileFormShell>
+  )
+}
 
-      <ProfileFormSectionDivider show />
+// ── Gear Catalog section ─────────────────────────────────────────────
 
-      {/* Gear Catalog */}
+export type EquipmentGearCatalogFormState = {
+  manufacturersByGearType: Partial<Record<GearType, string[]>>
+}
+
+export const INITIAL_EQUIPMENT_GEAR_CATALOG_FORM: EquipmentGearCatalogFormState = {
+  manufacturersByGearType: {},
+}
+
+export function equipmentGearCatalogFromProfile(p: Record<string, unknown>): EquipmentGearCatalogFormState {
+  const parsed: Partial<Record<GearType, string[]>> = {}
+  const mbt = p.manufacturersByGearType as Record<string, string[]> | undefined
+  if (mbt) {
+    for (const gt of GEAR_TYPES) {
+      const mfrs = mbt[gt]
+      if (mfrs && mfrs.length > 0) parsed[gt] = mfrs
+    }
+  }
+  return { manufacturersByGearType: parsed }
+}
+
+export function equipmentGearCatalogToPayload(f: EquipmentGearCatalogFormState): Record<string, unknown> {
+  const mbt: Record<string, string[]> = {}
+  for (const gt of GEAR_TYPES) {
+    const mfrs = f.manufacturersByGearType[gt]
+    if (mfrs && mfrs.length > 0) mbt[gt] = mfrs
+  }
+  return {
+    manufacturersByGearType: Object.keys(mbt).length > 0 ? mbt : undefined,
+  }
+}
+
+export function EquipmentGearCatalogSection({ profile: existing, create, update }: EquipmentSectionProps) {
+  const { form, setForm, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      schema: equipmentGearCatalogSchema,
+      defaults: INITIAL_EQUIPMENT_GEAR_CATALOG_FORM,
+      fromProfile: equipmentGearCatalogFromProfile,
+      toPayload: equipmentGearCatalogToPayload,
+      create,
+      update,
+    })
+
+  const [mfrInputs, setMfrInputs] = useState<Partial<Record<GearType, string>>>({})
+
+  if (!existing) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-secondary">Complete contact info first</p>
+      </GlassCard>
+    )
+  }
+
+  function toggleGearType(gt: GearType) {
+    setForm((prev) => {
+      const next = { ...prev.manufacturersByGearType }
+      if (gt in next) {
+        delete next[gt]
+      } else {
+        next[gt] = []
+      }
+      return { ...prev, manufacturersByGearType: next }
+    })
+  }
+
+  function addManufacturer(gt: GearType) {
+    const mfr = (mfrInputs[gt] ?? '').trim()
+    if (!mfr) return
+    const existing = form.manufacturersByGearType[gt] ?? []
+    if (existing.includes(mfr)) return
+    setForm((prev) => ({
+      ...prev,
+      manufacturersByGearType: {
+        ...prev.manufacturersByGearType,
+        [gt]: [...(prev.manufacturersByGearType[gt] ?? []), mfr],
+      },
+    }))
+    setMfrInputs((prev) => ({ ...prev, [gt]: '' }))
+  }
+
+  function removeManufacturer(gt: GearType, mfr: string) {
+    setForm((prev) => ({
+      ...prev,
+      manufacturersByGearType: {
+        ...prev.manufacturersByGearType,
+        [gt]: (prev.manufacturersByGearType[gt] ?? []).filter((m) => m !== mfr),
+      },
+    }))
+  }
+
+  const activeGearTypes = GEAR_TYPES.filter((gt) => gt in form.manufacturersByGearType)
+
+  return (
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       <GlassCard padding="lg">
         <FormSectionHeader label="Gear Catalog" />
         <p className="text-xs mb-4 text-secondary">
@@ -247,4 +306,25 @@ export function EquipmentProfileForm({ profile, me, create, update }: EquipmentP
       </GlassCard>
     </ProfileFormShell>
   )
+}
+
+// ── Compat alias ─────────────────────────────────────────────────────
+
+/**
+ * Dispatches to the appropriate section component based on the `section` prop.
+ * The app-layer ConnectedEquipmentForm short-circuits before this is reached
+ * at runtime; this export exists so that the lib-layer registry in
+ * connected-role-forms.tsx continues to type-check without modification.
+ */
+export function EquipmentProfileForm({
+  section,
+  profile,
+  me,
+  create,
+  update,
+  onSaved,
+}: EquipmentSectionProps & { section?: EquipmentProfileSection }) {
+  if (section === 'gear-catalog')
+    return <EquipmentGearCatalogSection profile={profile} create={create} update={update} />
+  return <EquipmentContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }

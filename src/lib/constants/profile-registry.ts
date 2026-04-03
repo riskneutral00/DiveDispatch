@@ -64,8 +64,11 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
   },
   equipment: {
     label: 'Equipment',
-    tabs: null,
-    workspaceIncludesEmbeddedProfile: true,
+    tabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'gear-catalog', label: 'Gear Catalog' },
+    ],
+    workspaceIncludesEmbeddedProfile: false,
   },
   pool: {
     label: 'Pool',
