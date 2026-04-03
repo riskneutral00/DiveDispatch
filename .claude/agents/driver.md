@@ -27,6 +27,36 @@ IMMUTABLE=scripts/**, .claude/agents/**, .claude/hooks/**, .claude/settings.json
 
 Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes done tickets.
 
+## Manifest
+
+After preflight, check for an existing manifest:
+
+```bash
+cat .car/manifest.json 2>/dev/null
+```
+
+**Fresh run (no manifest):** Scan `.tickets/DD-*.md` (NOT `done/`) for all tickets that pass ticket-pick eligibility: `status: ready`, `assigned_to: null`, `human_required: false`, body >50 chars, `blocked_by` resolved. Write `.car/manifest.json`:
+
+```json
+{
+  "phase": 1,
+  "created": "{ISO timestamp}",
+  "initial_tickets": ["DD-448", "DD-449"],
+  "completed": [],
+  "blocked": [],
+  "deferred_fixes": []
+}
+```
+
+Print: `MANIFEST | phase 1 | {N} initial tickets: {list}`
+
+If the initial_tickets list is empty → skip Phase 1, go straight to Phase 2.
+
+**Restart (manifest exists):** Read manifest. Resume the current phase.
+Print: `MANIFEST | resuming phase {phase} | {remaining} initial tickets left`
+
+`idle_count = 0` (tracks consecutive idle results within current phase)
+
 ## Main Loop
 
 `batch_count = 0`
@@ -47,21 +77,46 @@ ls .car/merged/DD-{id}.json .car/merged/DD-{id}.json.processing .car/processed/m
 ```
 If none exist → the merge landed but Backseat never saw it. Write `.car/merged/DD-{id}.json` now (use the commit SHA from git log for the `sha` field, infer `size` and `category` from the ticket file). Backseat will review it on its next poll.
 
-**Pick:** Before invoking ticket-pick, check for backseat fix tickets:
+**Pick:** Check manifest phase to determine pick strategy.
 
+**Phase 1 pick:**
+
+Check for backseat fix tickets:
 ```bash
 ls .car/fixes/*.json 2>/dev/null
 ```
+If fix events exist → **defer each one** (do NOT process in Phase 1):
+- Append fix ticket ID to manifest `deferred_fixes` array, persist manifest
+- Move event: `mv .car/fixes/DD-{NNN}.json .car/deferred/DD-{NNN}.json`
+- Print: `DD-{NNN}: fix deferred to Phase 2`
 
-If any exist → read the fix ticket file, pick that ticket directly (skip ticket-pick scoring). **Driver MUST drain ALL fix tickets before picking new work.** After processing a fix ticket, move the event: `mv .car/fixes/DD-{NNN}.json .car/processed/fix-DD-{NNN}.json`. Set `is_fix_ticket = true`.
+Invoke Skill("ticket-pick"), then filter result to manifest `initial_tickets` only. If ticket-pick returns a ticket NOT in `initial_tickets`, treat as idle.
 
-If no fix tickets → Invoke Skill("ticket-pick") → returns ticket ID or "idle". Set `is_fix_ticket = false`.
+- If "idle": `idle_count++`.
+  - If there are `initial_tickets` not yet in `completed` or `blocked` AND `idle_count < 3`: sleep 30s, re-pick. Print: `PHASE1-WAIT | {remaining} initial tickets pending | idle {idle_count}/3`
+  - If `idle_count >= 3` AND remaining initial tickets: mark each remaining initial ticket `status: blocked`, `stuck_reason: "not reachable after 3 idle scans"`, move to `blocked` in manifest. Transition to Phase 2 (see below).
+  - If no remaining initial tickets (all in `completed` or `blocked`): transition to Phase 2.
+- If ticket: `idle_count = 0`. Read `.tickets/DD-{id}.md`, claim it. Set `is_fix_ticket = false`.
 
-- If "idle": print status, write sentinel file `echo "idle" > .car/exit-driver`, then stop. The watchdog will kill this process and the restart loop will relaunch with a fresh context window.
+**Phase 2 pick:**
+
+Drain all deferred fix events first:
+```bash
+ls .car/deferred/*.json 2>/dev/null && ls .car/fixes/*.json 2>/dev/null
+```
+If any exist → read the fix ticket file, pick that ticket directly (skip ticket-pick scoring). **Drain ALL before picking new work.** After processing, move events: `mv .car/deferred/DD-{NNN}.json .car/processed/fix-DD-{NNN}.json` (or `fixes/` → `processed/`). Set `is_fix_ticket = true`.
+
+If no fix events → Invoke Skill("ticket-pick") with no manifest constraint (picks any ready ticket, including `source: backseat` tickets). Set `is_fix_ticket = false`.
+
+- If "idle": print status, write sentinel file `echo "idle" > .car/exit-driver`, delete manifest (`rm -f .car/manifest.json`), then stop.
   ```
-  DRIVER-IDLE | no ready tickets | backseat fixes: drained | batch: {batch_count}/{BATCH_CAP}
+  DRIVER-DONE | phase 2 complete | all work processed | batch: {batch_count}
   ```
-- If ticket: read `.tickets/DD-{id}.md`, claim it (`status: in_progress`, `assigned_to: driver`, `branch: ticket/DD-{id}`).
+- If ticket: read `.tickets/DD-{id}.md`, claim it.
+
+**Transition to Phase 2:** Update manifest `phase: 2`, persist. Print: `PHASE2-START | all initial tickets done or blocked | draining {N} deferred fixes`.
+
+After any ticket completes or is blocked, update manifest (`completed` or `blocked` arrays), persist to disk atomically (write to `.car/manifest.json.tmp` then `mv`).
 
 **Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent — use **Opus** for fix tickets (Backseat-flagged HIGH/CRITICAL), Sonnet for normal tickets:
 
@@ -171,11 +226,14 @@ npx tsc --noEmit 2>&1 | head -30
 ```
 
 - If tsc **passes**: continue to next ticket.
-- If tsc **fails**: print the errors, stop picking new tickets, and escalate as a P0 blocker via Skill("escalate") with `source: driver` and a description of the failing files. Do not process further tickets until the block is cleared.
+- If tsc **fails** and errors are in files changed by this merge: create a fix ticket via Skill("escalate") with `source: driver`, defer it per the current phase (Phase 1 → `.car/deferred/`, Phase 2 → process immediately). **Continue picking the next ticket — do not hard-stop.**
+  Print: `TSC-WARN | {N} errors from DD-{id} | fix deferred`
+- If tsc **fails** and errors are NOT in files changed by this merge: log warning, continue picking. These are pre-existing errors that should not block current work.
+  Print: `TSC-WARN | {N} pre-existing errors | not from this merge | continuing`
 
 This catches cumulative TS errors from multiple merges even if Backseat/Patrol are not running.
 
-**Batch cap:** If `source != backseat`: `batch_count++`. If `batch_count >= BATCH_CAP` → Skill("driver-debrief"), then print `DRIVER-RESTART | batch cap reached | exiting for fresh context`, write sentinel file `echo "batch_cap" > .car/exit-driver`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window. Do not continue the loop.
+**Batch cap:** `batch_count++`. If `batch_count >= BATCH_CAP` → persist manifest to disk (atomic write), Skill("driver-debrief"), then print `DRIVER-RESTART | batch cap reached | manifest saved | phase {phase} | {remaining} tickets left`, write sentinel file `echo "batch_cap" > .car/exit-driver`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window — it will read the manifest and resume the correct phase. Do not continue the loop.
 
 Re-pick next ticket.
 

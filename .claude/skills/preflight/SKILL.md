@@ -32,7 +32,19 @@ Delete orphaned `.tickets/.counter.lock` if older than 60 seconds.
 
 ## Prune Already-Done Tickets
 
-For each `status: ready` ticket, read its `**Acceptance:**` bullets. For each bullet describing a codebase state ("X exists", "no X in codebase"), grep to check. If ALL acceptance bullets are already satisfied → move to `.tickets/done/`, print: `✅ DD-{NNN} — already done (acceptance met)`
+For each `status: ready` ticket, read its `**Acceptance:**` bullets.
+
+**Only prune if ALL of these conditions are met:**
+1. Every acceptance bullet references specific files or functions (not universal checks like "tsc passes", "tests pass", "no errors")
+2. Each greppable assertion matches in the specific files listed in the ticket's `side_effects` or `**File:**` field
+3. The ticket has NO unresolved `blocked_by` entries
+
+**Skip pruning for bullets that are:**
+- Runtime checks ("npx vitest run passes", "tsc passes", "no errors") — these are universal, not codebase-state
+- Negative universal assertions ("no X in codebase") — too broad, high false-positive rate
+- Missing file context (bullet mentions code but ticket has no file list)
+
+If ALL concrete, file-scoped bullets are satisfied → set `status: done` in frontmatter first, THEN move to `.tickets/done/`. Print: `✅ DD-{NNN} — already done (acceptance met)`
 
 ## Test Baseline
 

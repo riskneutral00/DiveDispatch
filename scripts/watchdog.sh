@@ -39,7 +39,7 @@ wlog "Watchdog started (PID=$$, poll=${POLL_INTERVAL}s, stale=${STALE_THRESHOLD}
 while true; do
   sleep "$POLL_INTERVAL"
 
-  READY=$(grep -rl "^status: ready" .tickets/ 2>/dev/null | wc -l | tr -d ' ')
+  READY=$(grep -l "^status: ready" .tickets/DD-*.md 2>/dev/null | wc -l | tr -d ' ')
   MERGED=$(ls .car/merged/*.json 2>/dev/null | wc -l | tr -d ' ')
   FIXES=$(ls .car/fixes/*.json 2>/dev/null | wc -l | tr -d ' ')
   TOTAL_WORK=$((READY + MERGED + FIXES))

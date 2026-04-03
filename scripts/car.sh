@@ -27,7 +27,7 @@ log ""
 log "=== Car launch $(date) ==="
 
 # Ensure event directories exist
-mkdir -p "$DIR/.car"/{merged,reviewed,fixes,processed}
+mkdir -p "$DIR/.car"/{merged,reviewed,fixes,deferred,processed}
 
 # Reset stale in_progress tickets from crashed runs
 STALE=$(grep -rl "^status: in_progress" "$DIR/.tickets/" 2>/dev/null | wc -l | tr -d ' ')
@@ -67,9 +67,9 @@ while true; do
     sleep 5
   done
   wait $CLAUDE_PID 2>/dev/null
-  READY_COUNT=$(grep -rl "^status: ready" .tickets/ 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$READY_COUNT" -eq 0 ]; then
-    echo "[$(date '+%H:%M:%S')] Board is empty — Driver stopping."
+  READY_COUNT=$(grep -l "^status: ready" .tickets/DD-*.md 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$READY_COUNT" -eq 0 ] && [ ! -f .car/manifest.json ]; then
+    echo "[$(date '+%H:%M:%S')] Board empty, no manifest — Driver stopping."
     exit 0
   fi
   echo "[$(date '+%H:%M:%S')] Driver exited — restarting in 5s ($READY_COUNT tickets ready)..."

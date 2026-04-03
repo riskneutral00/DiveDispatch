@@ -38,7 +38,7 @@ Set `true` if finding involves architectural decisions, multi-file refactors, or
 
 ### Write Ticket
 
-Write `.tickets/DD-{NEXT}.md` with frontmatter: `source: {caller_source}` (use the source arg passed by the caller — `backseat`, `patrol`, or `driver`), `size: S`, priority P1. Include spec with finding details and suggested fix.
+Write `.tickets/DD-{NEXT}.md` with frontmatter: `status: ready`, `source: {caller_source}` (use the source arg passed by the caller — `backseat`, `patrol`, or `driver`), `size: S`, `priority: P1`, `assigned_to: null`, `human_required: false`, `blocked_by: []`. Include spec with finding details and suggested fix.
 
 **Consolidation:** Before writing, check if another CRITICAL finding from the same review targets the same file or concept. Group related findings into one ticket (e.g., three `.take()` limits = one ticket, implementation + its test = one ticket).
 
