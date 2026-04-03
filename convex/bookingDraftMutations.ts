@@ -10,7 +10,6 @@ import { notifyReleasedInventory } from './notifications'
 import {
   checkPreferenceCoverage,
   type CoverageInput,
-  type VenueCapabilities,
   type BoatCapabilities,
 } from './shared/coverageValidation'
 import { ErrorCode } from './lib/errorCodes'
@@ -74,28 +73,6 @@ export const createDraftShell = mutation({
     const prefBoats = prefs?.preferredBoatSlugs ?? []
     const prefCompressors = prefs?.preferredCompressorSlugs ?? []
 
-    // Build venue capabilities from the venues table
-    const venueCapabilities: Record<string, VenueCapabilities> = {}
-    for (const slug of prefVenues) {
-      const venueUser = await ctx.db
-        .query('users')
-        .withIndex('by_slug', (q) => q.eq('slug', slug))
-        .unique()
-      if (venueUser) {
-        const venue = await ctx.db
-          .query('venues')
-          .withIndex('by_userId', (q) => q.eq('userId', venueUser._id))
-          .unique()
-        if (venue) {
-          venueCapabilities[slug] = {
-            venueType: venue.venueType,
-            confinedCapable: venue.confinedCapable,
-            hasCompressor: venue.hasCompressor,
-          }
-        }
-      }
-    }
-
     // Build boat capabilities from the boats table
     const boatCapabilities: Record<string, BoatCapabilities> = {}
     for (const slug of prefBoats) {
@@ -122,7 +99,6 @@ export const createDraftShell = mutation({
       preferredVenueSlugs: prefVenues,
       preferredBoatSlugs: prefBoats,
       preferredCompressorSlugs: prefCompressors,
-      venueCapabilities,
       boatCapabilities,
     }
     const coverage = checkPreferenceCoverage(coverageInput)

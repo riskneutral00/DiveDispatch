@@ -118,11 +118,10 @@ describe('createDraftShell — coverage gate', () => {
       const d = data as { code: string; missing: string[] }
       return (
         d.code === 'COVERAGE_INCOMPLETE' &&
-        d.missing.length === 4 &&
+        d.missing.length === 3 &&
         !d.missing.includes('instructor') &&
         d.missing.includes('equipmentManager') &&
-        d.missing.includes('confinedWater') &&
-        d.missing.includes('openWater') &&
+        d.missing.includes('venueOrBoat') &&
         d.missing.includes('compressor')
       )
     })

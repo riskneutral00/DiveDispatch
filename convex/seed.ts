@@ -200,32 +200,32 @@ export const seedStakeholders = internalMutation({
     if (existing) return 'Already seeded'
 
     for (const s of ALL_STAKEHOLDERS) {
-      const userId = await insertUser(ctx, s)
+      const userId = await insertUser(ctx, s) // batch-exempt
 
       if (s.diveCenter) {
-        await ctx.db.insert('diveCenters', { userId, ...s.diveCenter })
+        await ctx.db.insert('diveCenters', { userId, ...s.diveCenter }) // batch-exempt
       }
       if (s.boat) {
-        await ctx.db.insert('boats', { userId, ...s.boat })
+        await ctx.db.insert('boats', { userId, ...s.boat }) // batch-exempt
       }
       if (s.pool) {
-        await ctx.db.insert('venues', { userId, ...s.pool })
+        await ctx.db.insert('venues', { userId, ...s.pool }) // batch-exempt
       }
       if (s.equipment) {
         const { inventoryOverrides: _overrides, ...equipmentProfile } = s.equipment
-        await ctx.db.insert('equipment', { userId, ...equipmentProfile })
+        await ctx.db.insert('equipment', { userId, ...equipmentProfile }) // batch-exempt
       }
       if (s.compressor) {
-        await ctx.db.insert('compressors', { userId, ...s.compressor })
+        await ctx.db.insert('compressors', { userId, ...s.compressor }) // batch-exempt
       }
       if (s.agent) {
-        await ctx.db.insert('agents', { userId, ...s.agent })
+        await ctx.db.insert('agents', { userId, ...s.agent }) // batch-exempt
       }
       if (s.liveaboard) {
-        await ctx.db.insert('liveaboards', { userId, ...s.liveaboard })
+        await ctx.db.insert('liveaboards', { userId, ...s.liveaboard }) // batch-exempt
       }
       if (s.diveResort) {
-        await ctx.db.insert('diveResorts', { userId, ...s.diveResort })
+        await ctx.db.insert('diveResorts', { userId, ...s.diveResort }) // batch-exempt
       }
     }
   },
@@ -251,7 +251,7 @@ export const seedUserRoles = internalMutation({
       if (!user) continue
 
       for (const r of s.roles) {
-        await ctx.db.insert('userRoles', {
+        await ctx.db.insert('userRoles', { // batch-exempt
           userId: user._id,
           role: r.role,
           createdAt: Date.now(),
@@ -281,7 +281,7 @@ export const seedInstructors = internalMutation({
       if (primaryRole === 'DiveMaster' && s.instructor) {
         // DiveMasters use diveMasters table — credential has no courses
         const { courses: _ignored, ...credNoCourses } = s.instructor.credential[0] ?? {}
-        await ctx.db.insert('diveMasters', {
+        await ctx.db.insert('diveMasters', { // batch-exempt
           userId,
           name: s.instructor.name,
           placeName: s.instructor.placeName,
@@ -299,7 +299,7 @@ export const seedInstructors = internalMutation({
           verified: s.instructor.verified,
         })
       } else if (s.instructor) {
-        await ctx.db.insert('instructors', { userId, ...s.instructor })
+        await ctx.db.insert('instructors', { userId, ...s.instructor }) // batch-exempt
       }
     }
   },
@@ -321,7 +321,7 @@ export const seedEquipmentInventory = internalMutation({
           : []
 
       for (const line of lines) {
-        const inventoryUnitId = await ctx.db.insert('inventoryUnits', {
+        const inventoryUnitId = await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Equipment',
           resourceId: emSlug,
           displayName: line.displayName,
@@ -331,7 +331,7 @@ export const seedEquipmentInventory = internalMutation({
           ownerType: 'Equipment',
         })
 
-        await ctx.db.insert('equipmentInventory', {
+        await ctx.db.insert('equipmentInventory', { // batch-exempt
           inventoryUnitId,
           equipmentManagerId: emSlug,
           gearType: line.gearType,
@@ -351,7 +351,7 @@ export const seedGearSizingLookup = internalMutation({
   args: {},
   handler: async (ctx) => {
     for (const entry of ALL_GEAR_SIZING) {
-      await ctx.db.insert('gearSizingLookup', {
+      await ctx.db.insert('gearSizingLookup', { // batch-exempt
         manufacturer: entry.manufacturer,
         gearType: entry.gearType,
         size: entry.size,
@@ -371,7 +371,7 @@ export const seedResourceInventory = internalMutation({
   handler: async (ctx) => {
     // Instructors + DiveMasters: 1 Exclusive unit each
     for (const s of ALL_INSTRUCTORS) {
-      await ctx.db.insert('inventoryUnits', {
+      await ctx.db.insert('inventoryUnits', { // batch-exempt
         resourceType: 'Instructor' as const,
         resourceId: s.user.slug,
         displayName: s.user.name,
@@ -386,7 +386,7 @@ export const seedResourceInventory = internalMutation({
       // Boats: 1 Pooled unit per fleet entry
       if (s.boat) {
         for (const fleet of s.boat.fleet) {
-          await ctx.db.insert('inventoryUnits', {
+          await ctx.db.insert('inventoryUnits', { // batch-exempt
             resourceType: 'Boat',
             resourceId: s.user.slug,
             displayName: fleet.boatName,
@@ -400,7 +400,7 @@ export const seedResourceInventory = internalMutation({
 
       // Pools: 1 Pooled unit per pool
       if (s.pool) {
-        await ctx.db.insert('inventoryUnits', {
+        await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Pool',
           resourceId: s.user.slug,
           displayName: s.pool.name,
@@ -413,7 +413,7 @@ export const seedResourceInventory = internalMutation({
 
       // Compressors: 1 Pooled unit with unlimited capacity
       if (s.compressor) {
-        await ctx.db.insert('inventoryUnits', {
+        await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Compressor',
           resourceId: s.user.slug,
           displayName: s.compressor.name,
@@ -428,7 +428,7 @@ export const seedResourceInventory = internalMutation({
 
     // Unowned dive sites: public locations, no owner user
     for (const site of UNOWNED_DIVE_SITES) {
-      await ctx.db.insert('inventoryUnits', {
+      await ctx.db.insert('inventoryUnits', { // batch-exempt
         resourceType: 'DiveSite',
         resourceId: site.slug,
         displayName: site.name,
@@ -481,12 +481,12 @@ export const seedStakeholderPreferences = internalMutation({
     ]
 
     for (const { slug, role } of allStakeholders) {
-      await ctx.db.insert('stakeholderPreferences', {
+      await ctx.db.insert('stakeholderPreferences', { // batch-exempt
         stakeholderId: slug,
         stakeholderType: role,
         acceptanceMode: role === 'Instructor' || role === 'DiveMaster' ? 'PrePayRequired' : 'Auto',
-        maxHoursPerDay: 0,
-        postJobBlockDuration: 0,
+        maxHoursPerDay: 8,
+        postJobBlockDuration: 30,
         useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,
@@ -511,7 +511,7 @@ export const seedBookingTemplates = internalMutation({
       const primaryRole = s.roles?.[0]?.role
       if (!primaryRole || !OPERATOR_ROLES.has(primaryRole)) continue
 
-      await ctx.db.insert('bookingTemplates', {
+      await ctx.db.insert('bookingTemplates', { // batch-exempt
         ownerId: s.user.slug,
         ownerType: primaryRole as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
         name: 'DSD',
@@ -535,7 +535,7 @@ export const patchTokenIdentifiers = internalMutation({
         .withIndex('by_email', (q) => q.eq('email', email))
         .unique()
       if (user) {
-        await ctx.db.patch(user._id, { tokenIdentifier })
+        await ctx.db.patch(user._id, { tokenIdentifier }) // batch-exempt
       }
     }
   },
@@ -595,7 +595,7 @@ export const seedDefaultTheme = internalMutation({
 
     const allUsers = await ctx.db.query('users').collect()
     for (const user of allUsers) {
-      await ctx.db.patch(user._id, { selectedThemeId: themeId })
+      await ctx.db.patch(user._id, { selectedThemeId: themeId }) // batch-exempt
     }
   },
 })
