@@ -147,6 +147,8 @@
   --color-status-cancelled: #a78bfa; /* violet */
   --color-status-cancelled-bg: color-mix(in srgb, var(--color-status-cancelled) calc(var(--opacity-subtle) * 100%), transparent);
   --color-status-cancelled-border: color-mix(in srgb, var(--color-status-cancelled) 50%, transparent);
+  --color-status-warning: #fbbf24; /* amber — attention tier */
+  --color-status-success: #34d399; /* green — info/success tier */
   --color-status-urgent: #dc2626;
   --color-status-urgent-bg: color-mix(in srgb, var(--color-status-urgent) calc(var(--opacity-subtle) * 100%), transparent);
   --color-status-urgent-border: color-mix(in srgb, var(--color-status-urgent) 50%, transparent);
