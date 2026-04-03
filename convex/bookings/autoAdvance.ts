@@ -184,13 +184,19 @@ async function collectLogistics(
     }
   }
 
-  // Pickup details from first customerProfile that has them
-  const profile = await ctx.db
+  // Pickup details: in multi-diver bookings multiple profiles share the same
+  // bookingId. Prefer the first profile with needsPickup === true; fall back to
+  // the first profile that has pickupTime or pickupLocation set. If none have
+  // any pickup data, no pickup fields are added to logistics.
+  const allProfiles = await ctx.db
     .query('customerProfiles')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-    .first() // batch-exempt: single first() read, not a loop
-  if (profile?.pickupTime) logistics.pickupTime = profile.pickupTime
-  if (profile?.pickupLocation) logistics.pickupLocation = profile.pickupLocation
+    .collect()
+  const pickupProfile =
+    allProfiles.find((p) => p.needsPickup === true) ??
+    allProfiles.find((p) => p.pickupTime !== undefined || p.pickupLocation !== undefined)
+  if (pickupProfile?.pickupTime) logistics.pickupTime = pickupProfile.pickupTime
+  if (pickupProfile?.pickupLocation) logistics.pickupLocation = pickupProfile.pickupLocation
 
   // Boat name from bookingResources
   const bookingResources = await ctx.db

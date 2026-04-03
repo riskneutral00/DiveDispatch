@@ -379,3 +379,113 @@ describe('tryAutoAdvance logistics notification', () => {
     })
   })
 })
+
+// ─── DD-421: collectLogistics filters by needsPickup:true ────────────────────
+
+describe('collectLogistics pickup profile selection (DD-421)', () => {
+  it('uses diver 2 pickup when diver 1 has needsPickup:false and diver 2 has needsPickup:true', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Diver 1: no pickup
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-1',
+        needsPickup: false,
+      })
+
+      // Diver 2: has pickup
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-2',
+        needsPickup: true,
+        pickupTime: '07:00',
+        pickupLocation: 'Patong Beach Hotel',
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.pickupTime).toBe('07:00')
+      expect(confirmed?.logistics?.pickupLocation).toBe('Patong Beach Hotel')
+    })
+  })
+
+  it('single-diver booking with needsPickup:true retains pickup fields in notification', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-1',
+        needsPickup: true,
+        pickupTime: '06:45',
+        pickupLocation: 'Kata Rocks',
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.pickupTime).toBe('06:45')
+      expect(confirmed?.logistics?.pickupLocation).toBe('Kata Rocks')
+    })
+  })
+
+  it('notification omits pickup fields when no diver has needsPickup:true', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-1',
+        needsPickup: false,
+      })
+
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-2',
+        needsPickup: false,
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed).toBeDefined()
+      expect(confirmed?.type).toBe(NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.pickupTime).toBeUndefined()
+      expect(confirmed?.logistics?.pickupLocation).toBeUndefined()
+    })
+  })
+
+  it('falls back to first profile with pickup data when no profile has needsPickup:true', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Profile with no needsPickup flag but has pickup data (legacy / no flag set)
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-fallback',
+        pickupTime: '06:30',
+        pickupLocation: 'Laguna Hotel',
+      })
+      // Second profile also with pickup data but no needsPickup flag
+      await ctx.db.insert('customerProfiles', {
+        bookingId,
+        linkToken: 'tok-second',
+        pickupTime: '09:00',
+        pickupLocation: 'Airport',
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      // First profile with pickup data wins
+      expect(confirmed?.logistics?.pickupTime).toBe('06:30')
+      expect(confirmed?.logistics?.pickupLocation).toBe('Laguna Hotel')
+    })
+  })
+})
