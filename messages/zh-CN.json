@@ -18,7 +18,8 @@
     "preferences": "偏好设置",
     "workspace": "工作台",
     "signIn": "登录",
-    "signOut": "退出"
+    "signOut": "退出",
+    "roles": "角色"
   },
   "auth": {
     "signIn": "登录",

@@ -18,7 +18,8 @@
     "preferences": "偏好設定",
     "workspace": "工作區",
     "signIn": "登入",
-    "signOut": "登出"
+    "signOut": "登出",
+    "roles": "角色"
   },
   "auth": {
     "signIn": "登入",

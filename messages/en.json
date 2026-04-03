@@ -18,7 +18,8 @@
     "preferences": "Preferences",
     "workspace": "Workspace",
     "signIn": "Sign In",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "roles": "Roles"
   },
   "auth": {
     "signIn": "Sign In",

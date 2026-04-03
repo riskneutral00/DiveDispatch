@@ -9,12 +9,15 @@ import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
 import { PreferencesTab } from '@/components/account/preferences-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
-import { PROFILE_REGISTRY } from '@/lib/constants/profile-registry'
+import { PROFILE_REGISTRY, OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
 import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
+import { ManageRolesConnected } from '@/components/account/manage-roles-connected'
+import { ConnectedEquipmentInventory } from '@/components/inventory/connected-equipment-inventory'
+import { PreferencesEditor } from '@/components/account/preferences-editor'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ProfileOverlayTab = 'profile' | 'preferences'
+export type ProfileOverlayTab = 'profile' | 'preferences' | 'roles'
 
 interface ProfileOverlayProps {
   open: boolean
@@ -24,9 +27,10 @@ interface ProfileOverlayProps {
   slug: string
 }
 
-const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'preferences' }[] = [
+const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'preferences' | 'roles' }[] = [
   { id: 'profile', labelKey: 'profile' },
   { id: 'preferences', labelKey: 'preferences' },
+  { id: 'roles', labelKey: 'roles' },
 ]
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -65,6 +69,31 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   const roleProfileConfig = activeRoleKey ? PROFILE_REGISTRY[activeRoleKey] : undefined
   const roleSectionTabs = roleProfileConfig?.tabs ?? null
 
+  // The currently active section for a role tab
+  const activeSection = roleSectionTabs && roleSectionTabs.length > 0
+    ? roleProfileSection || roleSectionTabs[0].id
+    : undefined
+
+  // Determine what to render in the role tab content area
+  function renderRoleContent() {
+    if (!activeRoleKey) return null
+
+    if (activeSection && OVERLAY_ONLY_SECTIONS.has(activeSection)) {
+      if (activeSection === 'inventory') {
+        return <ConnectedEquipmentInventory />
+      }
+      // booking, availability, resources — PreferencesEditor reads roleSlug from URL params
+      return <PreferencesEditor />
+    }
+
+    return (
+      <RoleProfileForm
+        roleSlug={activeRoleKey}
+        section={activeSection}
+      />
+    )
+  }
+
   return (
     <GlassDialog open={open} onClose={onClose} title={tAccountOverlay('title')} fullScreen>
       <div className="flex flex-col h-full">
@@ -94,7 +123,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
             )
           })}
 
-          {/* Role sub-tabs — appear inline after "Roles" */}
+          {/* Role sub-tabs — appear inline after static tabs */}
           {roleConfigs.length > 0 && (
             <>
               <div
@@ -137,25 +166,17 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           <div className="max-w-3xl mx-auto px-4 pt-4 pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'preferences' && <PreferencesTab />}
+            {activeTab === 'roles' && <ManageRolesConnected />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
               <div className="mb-4">
                 <ProfileSectionTabBar
                   tabs={roleSectionTabs}
-                  activeTab={roleProfileSection || roleSectionTabs[0].id}
+                  activeTab={activeSection ?? roleSectionTabs[0].id}
                   onChange={setRoleProfileSection}
                 />
               </div>
             )}
-            {activeRoleKey && (
-              <RoleProfileForm
-                roleSlug={activeRoleKey}
-                section={
-                  roleSectionTabs && roleSectionTabs.length > 0
-                    ? roleProfileSection || roleSectionTabs[0].id
-                    : undefined
-                }
-              />
-            )}
+            {activeRoleKey && renderRoleContent()}
           </div>
         </div>
       </div>

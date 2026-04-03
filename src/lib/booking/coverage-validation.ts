@@ -6,7 +6,6 @@
  */
 export {
   checkPreferenceCoverage,
-  type VenueCapabilities,
   type BoatCapabilities,
   type CoverageInput,
   type CoverageResult,

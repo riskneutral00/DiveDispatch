@@ -5,18 +5,11 @@
  * dependency direction rule.
  *
  * Before an operator can create a booking, their preferred resources must
- * collectively satisfy five requirements: instructor, equipment manager,
- * confined water venue, open water venue, and compressor.
+ * collectively satisfy four requirements: instructor, equipment manager,
+ * venue or boat, and compressor.
  *
- * Boats satisfy ALL venue needs (captain picks the site).
- * Venues and boats can bundle compressor capability (hasCompressor).
+ * Boats can bundle compressor capability (hasCompressor).
  */
-
-export interface VenueCapabilities {
-  venueType: string
-  confinedCapable: boolean
-  hasCompressor: boolean
-}
 
 export interface BoatCapabilities {
   hasCompressor: boolean
@@ -28,7 +21,6 @@ export interface CoverageInput {
   preferredVenueSlugs: string[]
   preferredBoatSlugs: string[]
   preferredCompressorSlugs: string[]
-  venueCapabilities: Record<string, VenueCapabilities>
   boatCapabilities: Record<string, BoatCapabilities>
 }
 
@@ -50,43 +42,21 @@ export function checkPreferenceCoverage(input: CoverageInput): CoverageResult {
     missing.push('equipmentManager')
   }
 
-  // A boat satisfies both confined and open water venue needs
-  const hasBoat = input.preferredBoatSlugs.length > 0
-
-  // Scan venue capabilities
-  // Confined water: boat OR venue with confinedCapable
-  // Open water: boat OR dive site (always open water) OR confined-capable pool
-  let hasConfinedVenue = hasBoat
-  let hasOpenWaterVenue = hasBoat
-  let hasCompressorAnywhere =
-    input.preferredCompressorSlugs.length > 0
-
-  for (const slug of input.preferredVenueSlugs) {
-    const caps = input.venueCapabilities[slug]
-    if (!caps) continue
-    if (caps.confinedCapable) {
-      hasConfinedVenue = true
-      hasOpenWaterVenue = true
-    }
-    if (caps.venueType !== 'Pool') hasOpenWaterVenue = true
-    if (caps.hasCompressor) hasCompressorAnywhere = true
+  // 3. Venue or boat — at least one preferred
+  const hasVenueOrBoat =
+    input.preferredVenueSlugs.length > 0 ||
+    input.preferredBoatSlugs.length > 0
+  if (!hasVenueOrBoat) {
+    missing.push('venueOrBoat')
   }
 
   // Scan boat capabilities for bundled compressor
+  let hasCompressorAnywhere =
+    input.preferredCompressorSlugs.length > 0
   for (const slug of input.preferredBoatSlugs) {
     const caps = input.boatCapabilities[slug]
     if (!caps) continue
     if (caps.hasCompressor) hasCompressorAnywhere = true
-  }
-
-  // 3. Confined water venue
-  if (!hasConfinedVenue) {
-    missing.push('confinedWater')
-  }
-
-  // 4. Open water venue
-  if (!hasOpenWaterVenue) {
-    missing.push('openWater')
   }
 
   // 5. Compressor

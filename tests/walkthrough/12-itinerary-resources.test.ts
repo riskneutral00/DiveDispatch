@@ -55,7 +55,7 @@ async function seedCoverage(ctx: SeedCtx, operatorSlug: string, operatorUserId: 
     preferredEquipmentSlugs: ['em-cov'],
     preferredVenueSlugs: ['venue-cov'],
     preferredBoatSlugs: [],
-    preferredCompressorSlugs: [],
+    preferredCompressorSlugs: ['venue-cov'],
   })
 }
 

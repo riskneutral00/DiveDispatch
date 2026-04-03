@@ -50,6 +50,8 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.pool.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
       { id: 'capabilities', label: 'Capabilities' },
+      { id: 'booking', label: 'Booking' },
+      { id: 'availability', label: 'Availability' },
     ])
     expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(false)
   })
@@ -59,6 +61,9 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.equipment.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
       { id: 'gear-catalog', label: 'Gear Catalog' },
+      { id: 'inventory', label: 'Inventory' },
+      { id: 'booking', label: 'Booking' },
+      { id: 'availability', label: 'Availability' },
     ])
     expect(PROFILE_REGISTRY.equipment.workspaceIncludesEmbeddedProfile).toBe(false)
   })
@@ -68,6 +73,8 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.compressor.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
       { id: 'gas-mixes', label: 'Gas Mixes' },
+      { id: 'booking', label: 'Booking' },
+      { id: 'availability', label: 'Availability' },
     ])
     expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(false)
   })
@@ -76,10 +83,12 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
-  it('boat has contact and fleet tabs', () => {
+  it('boat has contact, fleet, booking, availability tabs', () => {
     expect(PROFILE_REGISTRY.boat.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
       { id: 'fleet', label: 'Fleet' },
+      { id: 'booking', label: 'Booking' },
+      { id: 'availability', label: 'Availability' },
     ])
   })
 
