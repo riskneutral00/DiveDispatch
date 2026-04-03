@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { releaseBookingReservations, releaseBookingReservationsByUnit } from '../convex/bookings/inventoryRelease'
+import { releaseBookingReservations, releaseBookingReservationsByUnit, restoreSnapshotUnits } from '../convex/bookings/inventoryRelease'
 import type { Doc } from '../convex/_generated/dataModel'
 import { VACATED_REASON } from '../convex/shared/statuses'
 import { ErrorCode } from '../convex/lib/errorCodes'
@@ -157,6 +157,38 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2)
       expect(snap.reservedUnits).toBe(1)
+    })
+  })
+
+  it('throws MISSING_SNAPSHOT_ON_RELEASE when snapshot disappears between lookup and restore (Invariant 3 guard)', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 2, displayName: 'Boat' })
+      // Create the snapshot so seedReservation can reference it, then delete it to simulate
+      // the TOCTOU gap: snapshot existed at reservation creation but is gone at release time.
+      const snapshotId = await seedSnapshot(ctx, unit, { totalUnits: 2, availableUnits: 1, reservedUnits: 1 })
+
+      const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+      const session = await seedSession(ctx, bookingId, unit)
+      const resId = await seedReservation(ctx, bookingId, unit, session, { status: 'Confirmed', unitsRequested: 1 })
+
+      // Delete the snapshot to simulate it disappearing before the restore step.
+      await ctx.db.delete(snapshotId)
+
+      // restoreSnapshotUnits is called after reservations are vacated; throwing here causes
+      // the entire mutation to roll back (Convex atomicity guarantees).
+      await expect(
+        restoreSnapshotUnits(ctx, snapshotId, 1),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.MISSING_SNAPSHOT_ON_RELEASE,
+        },
+      })
+
+      // Reservation must NOT be vacated — the mutation never committed the vacate writes.
+      const reservation = await ctx.db.get(resId) as Doc<'reservations'>
+      expect(reservation.status).toBe('Confirmed')
+      expect(reservation.status).not.toBe('Vacated')
     })
   })
 })
