@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { releaseBookingReservations, releaseBookingReservationsByUnit } from '../convex/bookings/inventoryRelease'
 import type { Doc } from '../convex/_generated/dataModel'
 import { VACATED_REASON } from '../convex/shared/statuses'
+import { ErrorCode } from '../convex/lib/errorCodes'
 import {
   seedUser,
   seedInventoryUnit,
@@ -129,6 +130,33 @@ describe('releaseBookingReservations', () => {
       const snap = await ctx.db.get(snapshot) as Doc<'availabilitySnapshots'>
       expect(snap.availableUnits).toBe(2) // unchanged
       expect(snap.reservedUnits).toBe(1) // unchanged
+    })
+  })
+
+  it('throws SNAPSHOT_UNDERFLOW when reservation unitsRequested exceeds snapshot reservedUnits (DD-278)', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 3, displayName: 'Boat' })
+      // Snapshot has only 1 reserved unit
+      const snapshotId = await seedSnapshot(ctx, unit, { totalUnits: 3, availableUnits: 2, reservedUnits: 1 })
+
+      const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+      const session = await seedSession(ctx, bookingId, unit)
+      // Reservation claims 2 units — exceeds the 1 reserved in the snapshot
+      await seedReservation(ctx, bookingId, unit, session, { status: 'Confirmed', unitsRequested: 2 })
+
+      await expect(
+        releaseBookingReservations(ctx, bookingId, VACATED_REASON.BookingCancelled),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.SNAPSHOT_UNDERFLOW,
+        },
+      })
+
+      // Snapshot must not have been mutated — no partial write
+      const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
+      expect(snap.availableUnits).toBe(2)
+      expect(snap.reservedUnits).toBe(1)
     })
   })
 })
