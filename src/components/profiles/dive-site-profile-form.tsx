@@ -4,10 +4,15 @@ import { z } from 'zod'
 
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { GlassCard } from '@/components/ui/glass-card'
 import { GlassCheckbox } from '@/components/ui/glass-checkbox'
 import { GlassInput } from '@/components/ui/glass-input'
 import { GlassSelect, type GlassSelectOption } from '@/components/ui/glass-select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import {
+  diveSiteDetailsSchema,
+  diveSiteCapabilitiesSchema,
+} from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
   createOptimisticLocationOnChange,
@@ -15,6 +20,8 @@ import {
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+
+// ── Constants ─────────────────────────────────────────────────────────
 
 const VENUE_TYPE_OPTIONS: GlassSelectOption[] = [
   { id: 'Shore', label: 'Shore' },
@@ -25,64 +32,46 @@ const VENUE_TYPE_OPTIONS: GlassSelectOption[] = [
   { id: 'Other', label: 'Other' },
 ]
 
-export const diveSiteSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  location: nullableProfileLocation(),
-  venueType: z.enum(['Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other']),
-  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
-  maxDepth: z.number().min(0).optional(),
-  confinedCapable: z.boolean(),
-  isPublic: z.boolean(),
-})
+// ── Types ─────────────────────────────────────────────────────────────
 
-export type DiveSiteFormState = {
+export type DiveSiteProfileSection = 'details' | 'capabilities'
+
+export type DiveSiteSectionProps = {
+  profile: Record<string, unknown> | null | undefined
+  me?: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+  onSaved?: () => void
+}
+
+// ── Details section ───────────────────────────────────────────────────
+
+export type DiveSiteDetailsFormState = {
   name: string
   location: LocationValue | null
   venueType: 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
-  maxCapacity: number
-  maxDepth: number
-  confinedCapable: boolean
-  isPublic: boolean
 }
 
-export const INITIAL_DIVE_SITE_FORM: DiveSiteFormState = {
+export const INITIAL_DIVE_SITE_DETAILS_FORM: DiveSiteDetailsFormState = {
   name: '',
   location: null,
   venueType: 'Shore',
-  maxCapacity: 0,
-  maxDepth: 0,
-  confinedCapable: false,
-  isPublic: false,
 }
 
-function parseNumber(raw: string, isInt: boolean): number {
-  if (raw === '') return 0
-  const parsed = isInt ? parseInt(raw, 10) : parseFloat(raw)
-  return isNaN(parsed) ? 0 : parsed
-}
-
-export function diveSiteFromProfile(p: Record<string, unknown>): DiveSiteFormState {
+export function diveSiteDetailsFromProfile(p: Record<string, unknown>): DiveSiteDetailsFormState {
   const { name, location } = contactFieldsFromProfile(p)
   return {
     name,
     location: location as LocationValue,
-    venueType: (p.venueType as DiveSiteFormState['venueType']) ?? 'Shore',
-    maxCapacity: (p.maxCapacity as number) ?? 0,
-    maxDepth: (p.maxDepth as number) ?? 0,
-    confinedCapable: (p.confinedCapable as boolean) ?? false,
-    isPublic: (p.isPublic as boolean) ?? false,
+    venueType: (p.venueType as DiveSiteDetailsFormState['venueType']) ?? 'Shore',
   }
 }
 
-export function diveSiteToPayload(f: DiveSiteFormState): Record<string, unknown> {
+export function diveSiteDetailsToPayload(f: DiveSiteDetailsFormState): Record<string, unknown> {
   return {
     name: f.name,
     ...locationToPayload(f.location!),
     venueType: f.venueType,
-    maxCapacity: f.maxCapacity,
-    ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
-    confinedCapable: f.confinedCapable,
-    isPublic: f.isPublic,
   }
 }
 
@@ -93,35 +82,22 @@ export function buildDiveSiteCreatePayload<T extends Record<string, unknown>>(pa
   }
 }
 
-export type DiveSiteProfileFormProps = {
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
+export function DiveSiteDetailsSection({ profile: existing, me, create, update, onSaved }: DiveSiteSectionProps) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      me,
+      schema: diveSiteDetailsSchema,
+      defaults: INITIAL_DIVE_SITE_DETAILS_FORM,
+      fromProfile: diveSiteDetailsFromProfile,
+      fromMe: (_u, defaults) => ({ ...defaults }),
+      toPayload: diveSiteDetailsToPayload,
+      create: (payload) => create(buildDiveSiteCreatePayload(payload)),
+      update,
+      onSaved,
+    })
 
-export function DiveSiteProfileForm({ profile, me, create: createMutation, update }: DiveSiteProfileFormProps) {
-
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
-    profile,
-    me: me ?? undefined,
-    schema: diveSiteSchema,
-    defaults: INITIAL_DIVE_SITE_FORM,
-    fromProfile: diveSiteFromProfile,
-    fromMe: (_u, initial) => ({
-      ...initial,
-    }),
-    toPayload: diveSiteToPayload,
-    create: (payload) =>
-      createMutation(buildDiveSiteCreatePayload(payload)),
-    update,
-  })
-
-  const onLocationChange = createOptimisticLocationOnChange({
-    setField,
-    update,
-    isUpdate,
-  })
+  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
 
   return (
     <ProfileFormShell
@@ -132,6 +108,8 @@ export function DiveSiteProfileForm({ profile, me, create: createMutation, updat
       saved={saved}
       isDirty={isDirty}
       isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
       className="space-y-6"
     >
       <div className="space-y-4">
@@ -158,14 +136,90 @@ export function DiveSiteProfileForm({ profile, me, create: createMutation, updat
         <GlassSelect
           label="Site Type"
           value={form.venueType}
-          onChange={(val) => setField('venueType', val as DiveSiteFormState['venueType'])}
+          onChange={(val) => setField('venueType', val as DiveSiteDetailsFormState['venueType'])}
           options={VENUE_TYPE_OPTIONS}
           error={errors.venueType}
           required
         />
+      </div>
+    </ProfileFormShell>
+  )
+}
 
-        <ProfileFormSectionDivider show />
+// ── Capabilities section ──────────────────────────────────────────────
 
+export type DiveSiteCapabilitiesFormState = {
+  confinedCapable: boolean
+  maxDepth: number
+  maxCapacity: number
+  isPublic: boolean
+}
+
+export const INITIAL_DIVE_SITE_CAPABILITIES_FORM: DiveSiteCapabilitiesFormState = {
+  confinedCapable: false,
+  maxDepth: 0,
+  maxCapacity: 0,
+  isPublic: false,
+}
+
+export function diveSiteCapabilitiesFromProfile(p: Record<string, unknown>): DiveSiteCapabilitiesFormState {
+  return {
+    confinedCapable: (p.confinedCapable as boolean) ?? false,
+    maxDepth: (p.maxDepth as number) ?? 0,
+    maxCapacity: (p.maxCapacity as number) ?? 0,
+    isPublic: (p.isPublic as boolean) ?? false,
+  }
+}
+
+export function diveSiteCapabilitiesToPayload(f: DiveSiteCapabilitiesFormState): Record<string, unknown> {
+  return {
+    confinedCapable: f.confinedCapable,
+    ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
+    maxCapacity: f.maxCapacity,
+    isPublic: f.isPublic,
+  }
+}
+
+function parseNumber(raw: string, isInt: boolean): number {
+  if (raw === '') return 0
+  const parsed = isInt ? parseInt(raw, 10) : parseFloat(raw)
+  return isNaN(parsed) ? 0 : parsed
+}
+
+export function DiveSiteCapabilitiesSection({ profile: existing, create, update }: DiveSiteSectionProps) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      schema: diveSiteCapabilitiesSchema,
+      defaults: INITIAL_DIVE_SITE_CAPABILITIES_FORM,
+      fromProfile: diveSiteCapabilitiesFromProfile,
+      toPayload: diveSiteCapabilitiesToPayload,
+      create,
+      update,
+    })
+
+  if (!existing) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-secondary">Complete details first</p>
+      </GlassCard>
+    )
+  }
+
+  return (
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
+      <div className="space-y-4">
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-secondary">
             Site Capabilities
@@ -218,4 +272,87 @@ export function DiveSiteProfileForm({ profile, me, create: createMutation, updat
       </div>
     </ProfileFormShell>
   )
+}
+
+// ── Compat alias ──────────────────────────────────────────────────────
+
+/**
+ * Dispatches to the appropriate section component based on the `section` prop.
+ * The app-layer ConnectedDiveSiteForm short-circuits before this is reached
+ * at runtime; this export exists so that the lib-layer registry continues to
+ * type-check without modification.
+ */
+export function DiveSiteProfileForm({
+  section,
+  profile,
+  me,
+  create,
+  update,
+  onSaved,
+}: DiveSiteSectionProps & { section?: DiveSiteProfileSection }) {
+  if (section === 'capabilities')
+    return <DiveSiteCapabilitiesSection profile={profile} create={create} update={update} />
+  return <DiveSiteDetailsSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
+}
+
+// ── Legacy monolithic exports (backward-compat) ───────────────────────
+
+/** @deprecated Use diveSiteDetailsSchema + diveSiteCapabilitiesSchema instead. */
+export const diveSiteSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  location: nullableProfileLocation(),
+  venueType: z.enum(['Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other']),
+  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+  maxDepth: z.number().min(0).optional(),
+  confinedCapable: z.boolean(),
+  isPublic: z.boolean(),
+})
+
+/** @deprecated Use DiveSiteDetailsFormState + DiveSiteCapabilitiesFormState instead. */
+export type DiveSiteFormState = {
+  name: string
+  location: LocationValue | null
+  venueType: 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
+  maxCapacity: number
+  maxDepth: number
+  confinedCapable: boolean
+  isPublic: boolean
+}
+
+/** @deprecated Use INITIAL_DIVE_SITE_DETAILS_FORM + INITIAL_DIVE_SITE_CAPABILITIES_FORM instead. */
+export const INITIAL_DIVE_SITE_FORM: DiveSiteFormState = {
+  name: '',
+  location: null,
+  venueType: 'Shore',
+  maxCapacity: 0,
+  maxDepth: 0,
+  confinedCapable: false,
+  isPublic: false,
+}
+
+/** @deprecated Use diveSiteDetailsFromProfile + diveSiteCapabilitiesFromProfile instead. */
+export function diveSiteFromProfile(p: Record<string, unknown>): DiveSiteFormState {
+  const { name, location } = contactFieldsFromProfile(p)
+  return {
+    name,
+    location: location as LocationValue,
+    venueType: (p.venueType as DiveSiteFormState['venueType']) ?? 'Shore',
+    maxCapacity: (p.maxCapacity as number) ?? 0,
+    maxDepth: (p.maxDepth as number) ?? 0,
+    confinedCapable: (p.confinedCapable as boolean) ?? false,
+    isPublic: (p.isPublic as boolean) ?? false,
+  }
+}
+
+/** @deprecated Use diveSiteDetailsToPayload + diveSiteCapabilitiesToPayload instead. */
+export function diveSiteToPayload(f: DiveSiteFormState): Record<string, unknown> {
+  return {
+    name: f.name,
+    ...locationToPayload(f.location!),
+    venueType: f.venueType,
+    maxCapacity: f.maxCapacity,
+    ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
+    confinedCapable: f.confinedCapable,
+    isPublic: f.isPublic,
+  }
 }

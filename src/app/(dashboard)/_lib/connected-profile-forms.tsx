@@ -7,7 +7,11 @@ import {
   RoleProfileForm as LibRoleProfileForm,
   WorkspaceEmbeddedProfileForm as LibWorkspaceEmbeddedProfileForm,
 } from '@/lib/profile/connected-role-forms'
-import { DiveSiteProfileForm } from '@/components/profiles/dive-site-profile-form'
+import {
+  DiveSiteDetailsSection,
+  DiveSiteCapabilitiesSection,
+  type DiveSiteProfileSection,
+} from '@/components/profiles/dive-site-profile-form'
 import {
   DiveCenterContactSection,
   DiveCenterLanguagesSection,
@@ -43,19 +47,20 @@ function asLooseMut<T>(
   return (p) => fn(p as T)
 }
 
-function ConnectedDiveSiteForm() {
+function ConnectedDiveSiteForm({ section }: { section?: string }) {
   const profile = useQuery(api.venues.mine)
   const me = useQuery(api.users.me)
   const create = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
-  return (
-    <DiveSiteProfileForm
-      profile={profile}
-      me={me}
-      create={asLooseMut(create)}
-      update={asLooseMut(update)}
-    />
-  )
+  const sectionKey = (section ?? 'details') as DiveSiteProfileSection
+  const props = {
+    profile,
+    me,
+    create: asLooseMut(create),
+    update: asLooseMut(update),
+  }
+  if (sectionKey === 'capabilities') return <DiveSiteCapabilitiesSection {...props} />
+  return <DiveSiteDetailsSection {...props} />
 }
 
 function ConnectedAgentForm({ section }: { section?: string }) {
@@ -164,7 +169,7 @@ export function RoleProfileForm({
   roleSlug: RoleKey
   section?: string
 }) {
-  if (roleSlug === 'dive-site') return <ConnectedDiveSiteForm />
+  if (roleSlug === 'dive-site') return <ConnectedDiveSiteForm section={section} />
   if (roleSlug === 'dive-center') return <ConnectedDiveCenterForm section={section} />
   if (roleSlug === 'agent') return <ConnectedAgentForm section={section} />
   if (roleSlug === 'compressor') return <ConnectedCompressorForm section={section} />

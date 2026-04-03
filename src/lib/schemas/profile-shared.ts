@@ -176,3 +176,22 @@ export const poolCapabilitiesSchema = z.object({
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
 })
+
+// ---------------------------------------------------------------------------
+// Dive Site per-section schemas
+// ---------------------------------------------------------------------------
+
+/** Dive Site details section — identity fields only (no email/phone). */
+export const diveSiteDetailsSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  venueType: z.enum(['Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other']),
+})
+
+/** Dive Site capabilities section. */
+export const diveSiteCapabilitiesSchema = z.object({
+  confinedCapable: z.boolean(),
+  maxDepth: z.number().min(0).optional(),
+  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+  isPublic: z.boolean(),
+})
