@@ -98,7 +98,7 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
           Set up your {config?.label ?? role} profile
         </h2>
         <p className="text-secondary" style={{ fontSize: 13, margin: 0 }}>
-          Complete your profile details for this role. You can always finish later from Workspace.
+          Complete your profile details for this role. You can always finish later from your Roles tab.
         </p>
       </div>
 

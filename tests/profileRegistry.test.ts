@@ -45,7 +45,7 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('pool has tabs and workspaceIncludesEmbeddedProfile false', () => {
+  it('pool has tabs', () => {
     expect(PROFILE_REGISTRY.pool.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.pool.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
@@ -53,10 +53,9 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ])
-    expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
-  it('equipment has tabs and workspaceIncludesEmbeddedProfile false', () => {
+  it('equipment has tabs', () => {
     expect(PROFILE_REGISTRY.equipment.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.equipment.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
@@ -65,10 +64,9 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ])
-    expect(PROFILE_REGISTRY.equipment.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
-  it('compressor has tabs and workspaceIncludesEmbeddedProfile false', () => {
+  it('compressor has tabs', () => {
     expect(PROFILE_REGISTRY.compressor.tabs).not.toBeNull()
     expect(PROFILE_REGISTRY.compressor.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
@@ -76,11 +74,6 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ])
-    expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(false)
-  })
-
-  it('boat has workspaceIncludesEmbeddedProfile false (migrated to tabbed profile page)', () => {
-    expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
   it('boat has contact, fleet, booking, availability tabs', () => {
@@ -90,13 +83,6 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ])
-  })
-
-  it('operator roles have workspaceIncludesEmbeddedProfile false', () => {
-    expect(PROFILE_REGISTRY['dive-center'].workspaceIncludesEmbeddedProfile).toBe(false)
-    expect(PROFILE_REGISTRY.agent.workspaceIncludesEmbeddedProfile).toBe(false)
-    expect(PROFILE_REGISTRY.instructor.workspaceIncludesEmbeddedProfile).toBe(false)
-    expect(PROFILE_REGISTRY['dive-master'].workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
   it('no duplicate tab IDs within any role', () => {

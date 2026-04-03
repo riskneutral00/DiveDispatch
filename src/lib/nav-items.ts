@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Settings,
   Users,
 } from 'lucide-react'
 
@@ -17,6 +16,5 @@ export function buildNavItems(roleSlug: string, slug: string): NavItem[] {
   return [
     { key: 'dashboard', label: 'Dashboard', href: base, Icon: LayoutDashboard },
     { key: 'directory', label: 'Directory', href: `/directory`, Icon: Users },
-    { key: 'workspace', label: 'Workspace', href: `${base}/workspace`, Icon: Settings },
   ]
 }

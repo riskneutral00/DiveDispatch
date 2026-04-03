@@ -55,7 +55,7 @@ export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
           >
             <item.Icon size={20} />
             <span className="text-[10px] font-medium">
-              {tNav(item.key as 'dashboard' | 'directory' | 'workspace')}
+              {tNav(item.key as 'dashboard' | 'directory')}
             </span>
           </Link>
         )

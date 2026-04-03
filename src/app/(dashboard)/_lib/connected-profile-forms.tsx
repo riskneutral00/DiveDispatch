@@ -2,11 +2,6 @@
 
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import type { RoleKey } from '@/lib/constants/roles'
-import {
-  RoleProfileForm as LibRoleProfileForm,
-  WorkspaceEmbeddedProfileForm as LibWorkspaceEmbeddedProfileForm,
-} from '@/lib/profile/connected-role-forms'
 import {
   DiveSiteDetailsSection,
   DiveSiteCapabilitiesSection,
@@ -44,6 +39,7 @@ import {
   BoatFleetSection,
   type BoatProfileSection,
 } from '@/components/profiles/boat-profile-form'
+import type { RoleKey } from '@/lib/constants/roles'
 
 /** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
@@ -197,14 +193,5 @@ export function RoleProfileForm({
   if (roleSlug === 'equipment') return <ConnectedEquipmentForm section={section} />
   if (roleSlug === 'pool') return <ConnectedPoolForm section={section} />
   if (roleSlug === 'boat') return <ConnectedBoatForm section={section} />
-  return <LibRoleProfileForm roleSlug={roleSlug} section={section} />
-}
-
-// Roles that have been migrated to tabbed profile pages must not be embedded
-// on the workspace page. Override the lib-layer registry decision here.
-const WORKSPACE_EMBED_EXCLUDED: ReadonlySet<RoleKey> = new Set(['boat'])
-
-export function WorkspaceEmbeddedProfileForm({ roleSlug }: { roleSlug: RoleKey }) {
-  if (WORKSPACE_EMBED_EXCLUDED.has(roleSlug)) return null
-  return <LibWorkspaceEmbeddedProfileForm roleSlug={roleSlug} />
+  return null
 }

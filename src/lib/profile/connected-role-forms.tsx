@@ -150,7 +150,6 @@ function ConnectedPoolForm() {
 
 type RoleProfileRegistryEntry = {
   renderFull: (section: string | undefined) => ReactNode
-  embedInWorkspace?: boolean
 }
 
 const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = {
@@ -168,19 +167,15 @@ const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> 
   },
   boat: {
     renderFull: () => <ConnectedBoatForm />,
-    embedInWorkspace: true,
   },
   compressor: {
     renderFull: () => <ConnectedCompressorForm />,
-    embedInWorkspace: true,
   },
   equipment: {
     renderFull: () => <ConnectedEquipmentForm />,
-    embedInWorkspace: true,
   },
   pool: {
     renderFull: () => <ConnectedPoolForm />,
-    embedInWorkspace: true,
   },
 }
 
@@ -195,8 +190,3 @@ export function RoleProfileForm({
   return entry ? <>{entry.renderFull(section)}</> : null
 }
 
-export function WorkspaceEmbeddedProfileForm({ roleSlug }: { roleSlug: RoleKey }) {
-  const entry = ROLE_PROFILE_REGISTRY[roleSlug]
-  if (!entry?.embedInWorkspace) return null
-  return <>{entry.renderFull(undefined)}</>
-}

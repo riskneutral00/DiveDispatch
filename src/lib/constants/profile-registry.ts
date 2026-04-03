@@ -8,8 +8,6 @@ interface Tab {
 export interface ProfileConfig {
   label: string
   tabs: Tab[] | null
-  /** When true, embed role profile form on the role Workspace page (manage roles + prefs). */
-  workspaceIncludesEmbeddedProfile: boolean
 }
 
 /** Tabs that only appear in the overlay — not on standalone profile pages. */
@@ -26,7 +24,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   agent: {
     label: 'Agent',
@@ -38,7 +35,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   instructor: {
     label: 'Instructor',
@@ -49,7 +45,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-master': {
     label: 'Divemaster',
@@ -60,7 +55,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   boat: {
     label: 'Boat',
@@ -70,7 +64,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   compressor: {
     label: 'Compressor',
@@ -80,7 +73,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   equipment: {
     label: 'Equipment',
@@ -91,7 +83,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   pool: {
     label: 'Pool',
@@ -101,7 +92,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-site': {
     label: 'Dive Site',
@@ -112,7 +102,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   liveaboard: {
     label: 'Liveaboard',
@@ -122,7 +111,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-resort': {
     label: 'Dive Resort',
@@ -132,7 +120,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-hostel': {
     label: 'Dive Hostel',
@@ -142,6 +129,5 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'booking', label: 'Booking' },
       { id: 'availability', label: 'Availability' },
     ],
-    workspaceIncludesEmbeddedProfile: false,
   },
 } satisfies Partial<Record<RoleKey, ProfileConfig>>

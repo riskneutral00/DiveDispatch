@@ -25,11 +25,11 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl)
   }
 
-  // Legacy bookmarks: /{slug}/{roleSlug}/settings → /workspace
+  // Legacy bookmarks: /{slug}/{roleSlug}/settings → /dashboard
   const settingsLegacy = /^\/([^/]+)\/([^/]+)\/settings$/.exec(req.nextUrl.pathname)
   if (settingsLegacy) {
     return NextResponse.redirect(
-      new URL(`/${settingsLegacy[1]}/${settingsLegacy[2]}/workspace`, req.url),
+      new URL(`/${settingsLegacy[1]}/${settingsLegacy[2]}/dashboard`, req.url),
       308,
     )
   }

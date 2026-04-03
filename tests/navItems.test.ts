@@ -4,23 +4,19 @@ import { buildNavItems } from '../src/lib/nav-items'
 describe('buildNavItems', () => {
   const items = buildNavItems('dive-center', 'alice')
 
-  it('returns 3 nav items', () => {
-    expect(items).toHaveLength(3)
+  it('returns 2 nav items', () => {
+    expect(items).toHaveLength(2)
   })
 
-  it('includes dashboard, directory, workspace', () => {
+  it('includes dashboard and directory only', () => {
     const keys = items.map((i) => i.key)
     expect(keys).toContain('dashboard')
     expect(keys).toContain('directory')
-    expect(keys).toContain('workspace')
+    expect(keys).not.toContain('workspace')
   })
 
   it('dashboard href is /{slug}/{roleSlug}', () => {
     expect(items.find((i) => i.key === 'dashboard')!.href).toBe('/alice/dive-center')
-  })
-
-  it('workspace href includes workspace path', () => {
-    expect(items.find((i) => i.key === 'workspace')!.href).toBe('/alice/dive-center/workspace')
   })
 
   it('directory href is /directory', () => {
@@ -29,7 +25,7 @@ describe('buildNavItems', () => {
 
   it('all items have Icon component', () => {
     for (const item of items) {
-      expect(item.Icon).toBeDefined()
+      expect(item.Icon).not.toBeNull()
     }
   })
 

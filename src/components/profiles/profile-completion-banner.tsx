@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { AlertCircle, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
@@ -18,11 +17,11 @@ function dismissalKey(slug: string): string {
 
 function BannerDisplay({
   missingFields,
-  workspaceHref,
+  onOpen,
   slug,
 }: {
   missingFields: string[]
-  workspaceHref: string
+  onOpen: () => void
   slug: string
 }) {
   // Lazy initializer reads localStorage once on mount (client-only).
@@ -32,7 +31,6 @@ function BannerDisplay({
     const stored = localStorage.getItem(dismissalKey(slug))
     return !!(stored && Date.now() - parseInt(stored, 10) < PROFILE_BANNER_WINDOW_MS)
   })
-  const router = useRouter()
 
   // No useEffect needed — initial dismissed state is computed by the lazy initializer.
 
@@ -49,7 +47,7 @@ function BannerDisplay({
       role="alert"
       className="glass-container flex items-start gap-3 px-4 py-3 cursor-pointer"
       style={{ border: '1px solid var(--color-warning)' }}
-      onClick={() => router.push(workspaceHref)}
+      onClick={onOpen}
     >
       <AlertCircle
         size={18}
@@ -74,7 +72,7 @@ function BannerDisplay({
 // ── Role-specific sub-components ──────────────────────────────────────
 // Each calls its own Convex query to avoid conditional hook calls.
 
-function InstructorBanner({ slug }: { slug: string }) {
+function InstructorBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.instructors.mine)
   if (profile === undefined) return null
 
@@ -88,11 +86,11 @@ function InstructorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/instructor/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function DiveMasterBanner({ slug }: { slug: string }) {
+function DiveMasterBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.diveMasters.mine)
   if (profile === undefined) return null
 
@@ -106,11 +104,11 @@ function DiveMasterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/dive-master/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function DiveCenterBanner({ slug }: { slug: string }) {
+function DiveCenterBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.diveCenters.mine)
   if (profile === undefined) return null
 
@@ -124,11 +122,11 @@ function DiveCenterBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/dive-center/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function AgentBanner({ slug }: { slug: string }) {
+function AgentBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.agents.mine)
   if (profile === undefined) return null
 
@@ -142,11 +140,11 @@ function AgentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/agent/profile`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function BoatBanner({ slug }: { slug: string }) {
+function BoatBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.boats.mine)
   if (profile === undefined) return null
 
@@ -160,11 +158,11 @@ function BoatBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/boat/workspace`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function EquipmentBanner({ slug }: { slug: string }) {
+function EquipmentBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.equipment.mine)
   if (profile === undefined) return null
 
@@ -177,11 +175,11 @@ function EquipmentBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/equipment/workspace`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function PoolBanner({ slug }: { slug: string }) {
+function PoolBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.venues.mine)
   if (profile === undefined) return null
 
@@ -196,11 +194,11 @@ function PoolBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/pool/workspace`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
-function CompressorBanner({ slug }: { slug: string }) {
+function CompressorBanner({ slug, onOpen }: { slug: string; onOpen: () => void }) {
   const profile = useQuery(api.compressors.mine)
   if (profile === undefined) return null
 
@@ -214,7 +212,7 @@ function CompressorBanner({ slug }: { slug: string }) {
   }
 
   return (
-    <BannerDisplay missingFields={missing} workspaceHref={`/${slug}/compressor/workspace`} slug={slug} />
+    <BannerDisplay missingFields={missing} onOpen={onOpen} slug={slug} />
   )
 }
 
@@ -223,26 +221,27 @@ function CompressorBanner({ slug }: { slug: string }) {
 export interface ProfileCompletionBannerProps {
   roleSlug: RoleKey
   slug: string
+  onOpen: () => void
 }
 
-export function ProfileCompletionBanner({ roleSlug, slug }: ProfileCompletionBannerProps) {
+export function ProfileCompletionBanner({ roleSlug, slug, onOpen }: ProfileCompletionBannerProps) {
   switch (roleSlug) {
     case 'instructor':
-      return <InstructorBanner slug={slug} />
+      return <InstructorBanner slug={slug} onOpen={onOpen} />
     case 'dive-master':
-      return <DiveMasterBanner slug={slug} />
+      return <DiveMasterBanner slug={slug} onOpen={onOpen} />
     case 'dive-center':
-      return <DiveCenterBanner slug={slug} />
+      return <DiveCenterBanner slug={slug} onOpen={onOpen} />
     case 'agent':
-      return <AgentBanner slug={slug} />
+      return <AgentBanner slug={slug} onOpen={onOpen} />
     case 'boat':
-      return <BoatBanner slug={slug} />
+      return <BoatBanner slug={slug} onOpen={onOpen} />
     case 'equipment':
-      return <EquipmentBanner slug={slug} />
+      return <EquipmentBanner slug={slug} onOpen={onOpen} />
     case 'pool':
-      return <PoolBanner slug={slug} />
+      return <PoolBanner slug={slug} onOpen={onOpen} />
     case 'compressor':
-      return <CompressorBanner slug={slug} />
+      return <CompressorBanner slug={slug} onOpen={onOpen} />
     default:
       return null
   }

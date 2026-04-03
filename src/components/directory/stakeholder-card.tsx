@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { BadgeCheck, MapPin, Star } from 'lucide-react'
 import { GlassBadge } from '@/components/ui/glass-badge'
 import { GlassCard } from '@/components/ui/glass-card'
@@ -9,21 +8,6 @@ import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { LanguageFlags } from '@/components/profiles/language-flags'
 
-
-const ROLE_PATH_PREFIX: Record<string, string> = {
-  DiveCenter: 'dive-center',
-  Agent: 'agent',
-  Instructor: 'instructor',
-  Boat: 'boat',
-  Equipment: 'equipment',
-  Pool: 'pool',
-  Compressor: 'compressor',
-  DiveMaster: 'dive-master',
-  Liveaboard: 'liveaboard',
-  DiveResort: 'dive-resort',
-  DiveHostel: 'dive-hostel',
-  DiveSite: 'dive-site',
-}
 
 // null = no action button; undefined = show "View"
 const ROLE_ACTION: Record<string, string | null> = {
@@ -41,12 +25,6 @@ const GAS_MIX_COLORS: Record<string, string> = {
   trimix: 'var(--color-warning)',
 }
 
-function profileHref(entry: RichDirectoryEntry): string {
-  const prefix = ROLE_PATH_PREFIX[entry.role]
-  if (!prefix) return '#'
-  return `/${prefix}/${entry.slug}/workspace`
-}
-
 interface StakeholderCardProps {
   entry: RichDirectoryEntry
   isPreferred?: boolean
@@ -61,7 +39,6 @@ export const StakeholderCard = React.memo(function StakeholderCard({
   const initials = entry.name.slice(0, 2).toUpperCase()
   const location = [entry.placeName, entry.country].filter(Boolean).join(', ')
   const roleLabel = ROLE_BY_CLERK_ROLE[entry.role as ClerkRole]?.label ?? entry.role
-  const href = profileHref(entry)
 
   const actionLabel =
     entry.role in ROLE_ACTION ? ROLE_ACTION[entry.role] : 'View'
@@ -71,8 +48,8 @@ export const StakeholderCard = React.memo(function StakeholderCard({
 
   return (
     <GlassCard hoverable className="h-full flex flex-col">
-      {/* Clickable body */}
-      <Link href={href} className="flex-1 block min-w-0">
+      {/* Non-navigating card body */}
+      <div className="flex-1 min-w-0">
         <div className="flex items-start gap-3">
           {/* Avatar */}
           <div
@@ -103,11 +80,7 @@ export const StakeholderCard = React.memo(function StakeholderCard({
               {entry.role === 'Instructor' && onTogglePreferred && (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    onTogglePreferred(entry.slug)
-                  }}
+                  onClick={() => onTogglePreferred(entry.slug)}
                   aria-label={isPreferred ? 'Remove from preferred' : 'Add to preferred'}
                   className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
                   style={{
@@ -206,15 +179,15 @@ export const StakeholderCard = React.memo(function StakeholderCard({
             ))}
           </div>
         )}
-      </Link>
+      </div>
 
-      {/* Action button (outside Link to avoid nested interactive elements) */}
+      {/* Action button (outside card body to avoid nested interactive elements) */}
       {actionLabel && (
         <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
           <button
             type="button"
             onClick={() => {
-              // placeholder — navigation handled by card Link
+              // placeholder — action TBD
             }}
             className="w-full px-3 py-1.5 rounded-[var(--border-radius)] text-xs font-medium transition-colors text-primary"
             style={{ background: 'var(--color-glass-bg)',
