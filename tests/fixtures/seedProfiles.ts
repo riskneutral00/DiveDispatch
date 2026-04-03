@@ -135,6 +135,7 @@ export async function seedBoatProfile(
     email?: string
     phone?: string
     fleet?: Array<{ boatName: string; maxPax: number; boatType: 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib' }>
+    hasCompressor?: boolean
     verified?: boolean
   } = {},
 ) {
@@ -148,7 +149,7 @@ export async function seedBoatProfile(
     email: overrides.email ?? 'boat@test.com',
     phone: overrides.phone ?? '+66123456789',
     fleet: overrides.fleet ?? [{ boatName: 'MV Test', maxPax: 20, boatType: 'day_boat' }],
-    hasCompressor: false,
+    hasCompressor: overrides.hasCompressor ?? true,
     verified: overrides.verified ?? true,
   })
 }
