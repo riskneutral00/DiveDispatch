@@ -76,7 +76,9 @@ describe('releaseBookingReservations', () => {
       const reservationB = await ctx.db.get(resB) as Doc<'reservations'>
 
       expect(reservationA.status).toBe('Vacated')
+      expect(reservationA.vacatedBy).toBe(VACATED_REASON.BookingCancelled)
       expect(reservationB.status).toBe('Vacated')
+      expect(reservationB.vacatedBy).toBe(VACATED_REASON.BookingCancelled)
 
       // Both snapshots restored
       const snapA = await ctx.db.get(snapshotA) as Doc<'availabilitySnapshots'>
