@@ -3,7 +3,7 @@ import { mutation } from './_generated/server'
 import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { tryAutoAdvance, canReservationTransition, isActiveReservation, isSessionStarted } from './bookings/_shared'
+import { tryAutoAdvance, canReservationTransition, isSessionStarted } from './bookings/_shared'
 import { releaseBookingReservationsByUnit, MAX_RESERVATIONS_PER_BOOKING } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
@@ -463,15 +463,38 @@ export const declineByBookingForCaller = mutation({
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
     }
 
-    const reservations = await ctx.db
-      .query('reservations')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+    const [pending, confirmed] = await Promise.all([
+      ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_status', (q) =>
+          q.eq('bookingId', args.bookingId).eq('status', RESERVATION_STATUS.PendingAcceptance),
+        )
+        .take(MAX_RESERVATIONS_PER_BOOKING + 1),
+      ctx.db
+        .query('reservations')
+        .withIndex('by_bookingId_status', (q) =>
+          q.eq('bookingId', args.bookingId).eq('status', RESERVATION_STATUS.Confirmed),
+        )
+        .take(MAX_RESERVATIONS_PER_BOOKING + 1),
+    ])
+
+    if (pending.length > MAX_RESERVATIONS_PER_BOOKING) {
+      throw new ConvexError({
+        code: ErrorCode.INVARIANT_VIOLATION,
+        reason: `Booking ${args.bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} PendingAcceptance reservations — cannot safely decline. Manual intervention required.`,
+      })
+    }
+
+    if (confirmed.length > MAX_RESERVATIONS_PER_BOOKING) {
+      throw new ConvexError({
+        code: ErrorCode.INVARIANT_VIOLATION,
+        reason: `Booking ${args.bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} Confirmed reservations — cannot safely decline. Manual intervention required.`,
+      })
+    }
 
     const callerUnitIds = new Set(units.map((u) => u._id))
-    const activeForCaller = reservations.filter(
-      (r) =>
-        callerUnitIds.has(r.inventoryUnitId) && isActiveReservation(r),
+    const activeForCaller = [...pending, ...confirmed].filter((r) =>
+      callerUnitIds.has(r.inventoryUnitId),
     )
 
     if (activeForCaller.length === 0) {

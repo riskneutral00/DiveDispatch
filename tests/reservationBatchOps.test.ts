@@ -73,6 +73,35 @@ describe('declineByBookingForCaller', () => {
     )
   })
 
+  it('skips Vacated reservations — only processes PendingAcceptance and Confirmed', async () => {
+    const t = makeT()
+    let bookingId: any
+    let vacatedResId: any
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
+      bookingId = await seedBooking(ctx)
+      const unitId = await seedInventoryUnit(ctx)
+      const session1 = await seedSession(ctx, bookingId, unitId, { date: testDate(5) })
+      const session2 = await seedSession(ctx, bookingId, unitId, { date: testDate(6) })
+      // One Vacated (should be ignored), one PendingAcceptance (active — will be processed)
+      vacatedResId = await seedReservation(ctx, bookingId, unitId, session1, { status: 'Vacated' })
+      await seedSnapshot(ctx, unitId, { date: testDate(6), reservedUnits: 1, availableUnits: 0 })
+      await seedReservation(ctx, bookingId, unitId, session2, { status: 'PendingAcceptance' })
+    })
+
+    // Should succeed — the PendingAcceptance reservation is processed, Vacated is ignored
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor })
+      .mutation(api.reservationsMutations.declineByBookingForCaller, { bookingId })
+
+    await t.run(async (ctx) => {
+      const vacated = await ctx.db.get(vacatedResId) as Doc<'reservations'> | null
+      // The Vacated reservation must remain Vacated — not re-processed
+      expect(vacated!.status).toBe('Vacated')
+    })
+  })
+
   it('declines all active reservations for caller on the booking', async () => {
     const t = makeT()
     let bookingId: any
