@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { notify } from '../convex/notifications'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
 import { NOTIFICATION_TYPE } from '../convex/shared/statuses'
-import type { Id } from '../convex/_generated/dataModel'
+import type { Id, TableNames } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
 import { TEST_SLUGS, seedUser, seedNotification } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -486,6 +486,47 @@ describe('collectLogistics pickup profile selection (DD-421)', () => {
       // First profile with pickup data wins
       expect(confirmed?.logistics?.pickupTime).toBe('06:30')
       expect(confirmed?.logistics?.pickupLocation).toBe('Laguna Hotel')
+    })
+  })
+})
+
+// ─── DD-425: collectLogistics error swallow path ──────────────────────────────
+
+describe('tryAutoAdvance collectLogistics error swallow (DD-425)', () => {
+  it('advances booking and sends notification without logistics when collectLogistics throws', async () => {
+    await t.run(async (ctx) => {
+      // Seed a booking that will advance (forms complete, no reservations = vacuously true)
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      // Intercept ctx.db.query so collectLogistics throws when it queries bookingSessions.
+      // tryAutoAdvance's main path (no in-system EM, no reservations) does not query
+      // bookingSessions, so only collectLogistics is affected.
+      const originalQuery = ctx.db.query.bind(ctx.db)
+      ctx.db.query = ((tableName: TableNames) => {
+        if (tableName === 'bookingSessions') {
+          throw new Error('Simulated transient DB error in collectLogistics')
+        }
+        return originalQuery(tableName)
+      }) as typeof ctx.db.query
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      // Restore original query for assertions
+      ctx.db.query = originalQuery
+
+      // Booking still advanced to Upcoming despite collectLogistics failure
+      const booking = await ctx.db.get(bookingId)
+      expect(booking?.status).toBe('Upcoming')
+
+      // Notification was still sent (fire-and-forget pattern)
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.userId).toBe(TEST_SLUGS.diveCenter)
+      expect(confirmed?.bookingId).toEqual(bookingId)
+      expect(confirmed?.message).toBe('Your booking is confirmed.')
+
+      // Logistics is absent because collectLogistics threw
+      expect(confirmed?.logistics).toBeUndefined()
     })
   })
 })
