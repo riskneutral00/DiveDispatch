@@ -6,7 +6,7 @@ import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
-import { type NotificationType, notificationTypeValidator, clientNotificationTypeValidator, NOTIFICATION_TYPE } from './shared/statuses'
+import { type NotificationType, clientNotificationTypeValidator, CLIENT_NOTIFICATION_TYPES, NOTIFICATION_TYPE } from './shared/statuses'
 
 export type { NotificationLogistics } from './shared/notificationLogistics'
 import type { NotificationLogistics } from './shared/notificationLogistics'
@@ -77,6 +77,10 @@ export async function _createNotificationHandler(
   const { user } = await requireAuth(ctx)
   if (args.userId !== user.slug) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
+
+  if (!CLIENT_NOTIFICATION_TYPES.has(args.type)) {
+    throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: `Invalid notification type for client creation: ${args.type}` })
   }
 
   if (args.idempotencyKey) {

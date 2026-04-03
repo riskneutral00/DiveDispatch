@@ -9,6 +9,7 @@ import {
   _listNotificationsHandler,
 } from '../convex/notifications'
 import { TEST_TOKENS, TEST_SLUGS, seedUser, seedNotification } from './fixtures'
+import type { NotificationType } from '../convex/shared/statuses'
 import { makeT } from './helpers/convex-helpers'
 
 let t = makeT()
@@ -105,6 +106,41 @@ describe('createNotification', () => {
           message: 'test',
         }),
       ).rejects.toMatchObject({ data: { code: 'UNAUTHENTICATED' } })
+    })
+  })
+
+  it('throws INVALID_INPUT when type is a server-only notification type', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      // medical_cleared is server-only — should be rejected by the handler
+      await expect(
+        _createNotificationHandler(ctx, {
+          userId: TEST_SLUGS.diveCenter,
+          type: 'medical_cleared' as NotificationType,
+          message: 'should not be allowed',
+        }),
+      ).rejects.toMatchObject({ data: { code: 'INVALID_INPUT' } })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications).toHaveLength(0)
+    })
+  })
+
+  it('throws INVALID_INPUT when type is not a valid notification type', async () => {
+    await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
+      await seedUser(ctx)
+
+      await expect(
+        _createNotificationHandler(ctx, {
+          userId: TEST_SLUGS.diveCenter,
+          type: 'totally_bogus' as NotificationType,
+          message: 'should not be allowed',
+        }),
+      ).rejects.toMatchObject({ data: { code: 'INVALID_INPUT' } })
+
+      const notifications = await ctx.db.query('notifications').collect()
+      expect(notifications).toHaveLength(0)
     })
   })
 })

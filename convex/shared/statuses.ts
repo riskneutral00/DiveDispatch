@@ -105,6 +105,19 @@ export const clientNotificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.MinPaxNotMet),
 )
 
+/** Runtime set mirroring clientNotificationTypeValidator for handler-layer guards. */
+export const CLIENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  NOTIFICATION_TYPE.HoldPlaced,
+  NOTIFICATION_TYPE.HoldDeclined,
+  NOTIFICATION_TYPE.BookingCancelled,
+  NOTIFICATION_TYPE.BookingUpdated,
+  NOTIFICATION_TYPE.BookingReferred,
+  NOTIFICATION_TYPE.MedicalHardBlock,
+  NOTIFICATION_TYPE.PhysicianClearanceSubmitted,
+  NOTIFICATION_TYPE.NoBackupAvailable,
+  NOTIFICATION_TYPE.MinPaxNotMet,
+])
+
 // ── Vacated Reasons ──────────────────────────────────────────────────
 
 export const VACATED_REASON = {
