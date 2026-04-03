@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
 import { getDateRange } from '../convex/reservationsMutations'
+import { MAX_RESERVATIONS_PER_BOOKING } from '../convex/bookings/inventoryRelease'
 import { testDate } from './helpers/dates'
 import { ErrorCode } from '../convex/lib/errorCodes'
 import { makeT, expectConvexError } from './helpers/convex-helpers'
@@ -754,6 +755,66 @@ describe('acceptBookingReservations', () => {
       const untouched = await ctx.db.get(resForOther) as Doc<'reservations'> | null
       expect(untouched?.status).toBe('PendingAcceptance')
     })
+  })
+
+  it('bulk accept: throws INVARIANT_VIOLATION when reservations exceed MAX_RESERVATIONS_PER_BOOKING', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|overflow-inst',
+        slug: 'overflow-instructor',
+        email: 'overflow@test.com',
+        name: 'Overflow Instructor',
+        firstName: 'Overflow',
+        lastName: 'Instructor',
+        businessName: 'Overflow Co',
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dc-overflow',
+        slug: 'dc-overflow',
+        email: 'dc-overflow@test.com',
+        name: 'DC Overflow',
+        firstName: 'DC',
+        lastName: 'Overflow',
+        businessName: 'Overflow DC',
+        role: 'DiveCenter',
+      })
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'Overflow Instructor',
+        ownerId: 'overflow-instructor',
+        ownerType: 'Instructor',
+      })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'dc-overflow',
+        operatorName: 'Overflow DC',
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'overflow-instructor',
+      })
+
+      // Seed MAX_RESERVATIONS_PER_BOOKING + 1 reservations to trigger the limit
+      for (let i = 0; i <= MAX_RESERVATIONS_PER_BOOKING; i++) {
+        const sessionId = await seedSession(ctx, bookingId, unitId, {
+          date: testDate(5),
+          startTime: `${String(Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}`,
+          endTime: `${String(Math.floor(i / 60)).padStart(2, '0')}:${String((i % 60) + 1).padStart(2, '0')}`,
+        })
+        await seedReservation(ctx, bookingId, unitId, sessionId)
+      }
+      return { bookingId, unitId }
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|overflow-inst' }).mutation(
+        api.reservationsMutations.acceptBookingReservations,
+        { bookingId, inventoryUnitId: unitId },
+      ),
+      ErrorCode.INVARIANT_VIOLATION,
+    )
   })
 
   it('accept idempotency: accepting already-Confirmed reservations is a no-op, no error', async () => {

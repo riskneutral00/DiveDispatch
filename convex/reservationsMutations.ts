@@ -4,7 +4,7 @@ import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { tryAutoAdvance, canReservationTransition, isActiveReservation, isSessionStarted } from './bookings/_shared'
-import { releaseBookingReservationsByUnit } from './bookings/inventoryRelease'
+import { releaseBookingReservationsByUnit, MAX_RESERVATIONS_PER_BOOKING } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
 import { type ResourceOwnerType as ResourceType } from './shared/resourceOwnerTypes'
@@ -248,7 +248,14 @@ export async function _acceptBookingHandler(
     .withIndex('by_bookingId_inventoryUnitId', (q) =>
       q.eq('bookingId', args.bookingId as Id<"bookings">).eq('inventoryUnitId', args.inventoryUnitId as Id<"inventoryUnits">),
     )
-    .collect()
+    .take(MAX_RESERVATIONS_PER_BOOKING + 1)
+
+  if (unitReservations.length > MAX_RESERVATIONS_PER_BOOKING) {
+    throw new ConvexError({
+      code: ErrorCode.INVARIANT_VIOLATION,
+      reason: `Booking ${args.bookingId} has more than ${MAX_RESERVATIONS_PER_BOOKING} reservations for unit ${args.inventoryUnitId} — cannot safely accept. Manual intervention required.`,
+    })
+  }
 
   const pending = unitReservations.filter(
     (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
