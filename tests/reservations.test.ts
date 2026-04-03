@@ -611,6 +611,130 @@ describe('declineReservation', () => {
       })
     })
   })
+
+  it('DD-390: correctly identifies alternative when many snapshots exist for the booking date (bounded fetch)', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId, altUnitId } = await t.run(async (ctx) => {
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dd390-inst',
+        slug: 'dd390-instructor',
+        email: 'dd390@test.com',
+        name: 'DD390 Instructor',
+        firstName: 'DD390',
+        lastName: 'Instructor',
+        businessName: 'DD390 Co',
+        role: 'Instructor',
+      })
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dd390-dc',
+        slug: 'dd390-dc',
+        email: 'dd390dc@test.com',
+        name: 'DD390 DC',
+        firstName: 'DD390',
+        lastName: 'DC',
+        businessName: 'DD390 DC Co',
+        role: 'DiveCenter',
+      })
+
+      const unitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'DD390 Instructor',
+        ownerId: 'dd390-instructor',
+        ownerType: 'Instructor',
+      })
+
+      // Alternative instructor with available capacity on the booking date
+      await seedUser(ctx, {
+        tokenIdentifier: 'user|dd390-alt',
+        slug: 'dd390-alt-instructor',
+        email: 'dd390alt@test.com',
+        name: 'DD390 Alt',
+        firstName: 'DD390',
+        lastName: 'Alt',
+        businessName: 'DD390 Alt Co',
+        role: 'Instructor',
+      })
+      const altUnitId = await seedInventoryUnit(ctx, {
+        resourceType: 'Instructor',
+        displayName: 'DD390 Alt Instructor',
+        ownerId: 'dd390-alt-instructor',
+        ownerType: 'Instructor',
+      })
+
+      const bookingId = await seedBooking(ctx, {
+        ownerId: 'dd390-dc',
+        startDate: testDate(5),
+        endDate: testDate(5),
+        operatorName: 'DD390 DC Co',
+      })
+      await seedBookingResource(ctx, bookingId, {
+        resourceType: 'Instructor',
+        resourceSlug: 'dd390-instructor',
+      })
+
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+      })
+      await seedSnapshot(ctx, unitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+      await seedReservation(ctx, bookingId, unitId, sessionId)
+
+      // Seed many unrelated snapshots on the same date to simulate a popular date.
+      // These represent other units that have no bearing on the alt candidate check.
+      for (let i = 0; i < 10; i++) {
+        const otherUnitId = await seedInventoryUnit(ctx, {
+          resourceType: 'Boat',
+          displayName: `Noise Boat ${i}`,
+          ownerId: 'dd390-instructor',
+          ownerType: 'Boat',
+        })
+        await seedSnapshot(ctx, otherUnitId, {
+          date: testDate(5),
+          windowStart: '08:00',
+          windowEnd: '16:00',
+          totalUnits: 5,
+          reservedUnits: 2,
+          availableUnits: 3,
+        })
+      }
+
+      // Alternative instructor snapshot — available on the booking date
+      await seedSnapshot(ctx, altUnitId, {
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 0,
+        availableUnits: 1,
+      })
+
+      return { bookingId, unitId, altUnitId }
+    })
+
+    await t.withIdentity({ tokenIdentifier: 'user|dd390-inst' }).mutation(
+      api.reservationsMutations.declineReservation,
+      { bookingId, inventoryUnitId: unitId },
+    )
+
+    // Alternative exists with capacity → no_backup_available must NOT be sent
+    await t.run(async (ctx) => {
+      const notifications = await ctx.db.query('notifications').collect()
+      const noBackup = notifications.find((n) => n.type === 'no_backup_available')
+      expect(noBackup).toBeUndefined()
+
+      const holdDeclined = notifications.find((n) => n.type === 'hold_declined')
+      expect(holdDeclined).toMatchObject({ type: 'hold_declined', bookingId })
+    })
+  })
 })
 
 // ─── acceptBookingReservations (bulk accept) ─────────────────────────────────

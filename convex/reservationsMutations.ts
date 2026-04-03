@@ -364,14 +364,15 @@ export async function _declineHandler(
   // Exclude the declined unit
   const candidates = allSameTypeUnits.filter((u) => u._id !== args.inventoryUnitId)
 
-  // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates)
+  // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates).
+  // Bounded by MAX_RESERVATIONS_PER_BOOKING to prevent unbounded memory use on popular dates.
   const snapshotsByUnitAndDate = new Map<string, boolean>()
   const dateSnapshots = await Promise.all(
     bookingDates.map((date) =>
       ctx.db
         .query('availabilitySnapshots')
         .withIndex('by_date', (q) => q.eq('date', date))
-        .collect(),
+        .take(MAX_RESERVATIONS_PER_BOOKING),
     ),
   )
   for (let i = 0; i < bookingDates.length; i++) {
