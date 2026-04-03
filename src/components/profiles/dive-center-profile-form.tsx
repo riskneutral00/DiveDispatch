@@ -201,9 +201,9 @@ export function DiveCenterLanguagesSection({ profile: existing, create, update }
 export type DiveCenterAssociationItem = {
   agency: string
   number: string
-  owDays: number
-  aowDays: number
-  oaDays: number
+  owDays: number | undefined
+  aowDays: number | undefined
+  oaDays: number | undefined
   selectedSpecialties: string[]
 }
 
@@ -215,9 +215,9 @@ export function makeDefaultAssoc(): DiveCenterAssociationItem {
   return {
     agency: '',
     number: '',
-    owDays: 3,
-    aowDays: 2,
-    oaDays: 4,
+    owDays: undefined,
+    aowDays: undefined,
+    oaDays: undefined,
     selectedSpecialties: [],
   }
 }
@@ -234,9 +234,9 @@ export function affiliationsFromProfile(p: Record<string, unknown>): DiveCenterA
         ? assocs.map((a) => ({
             agency: String(a.agency ?? ''),
             number: String(a.number ?? ''),
-            owDays: typeof a.owDays === 'number' ? a.owDays : 3,
-            aowDays: typeof a.aowDays === 'number' ? a.aowDays : 2,
-            oaDays: typeof a.oaDays === 'number' ? a.oaDays : 4,
+            owDays: typeof a.owDays === 'number' ? a.owDays : undefined,
+            aowDays: typeof a.aowDays === 'number' ? a.aowDays : undefined,
+            oaDays: typeof a.oaDays === 'number' ? a.oaDays : undefined,
             selectedSpecialties: Array.isArray(a.selectedSpecialties) ? a.selectedSpecialties : [],
           }))
         : [makeDefaultAssoc()],

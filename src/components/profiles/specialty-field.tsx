@@ -24,7 +24,7 @@ function reorderToggleable(specs: AgencySpecialty[], agencyCode: string, mandato
 
 /* ── Two-row overflow hook ────────────────────────────────────────────────── */
 
-const PILL_GAP = 6 // gap-1.5 = 6px
+const PILL_GAP = 8 // gap-2 = 8px
 const MORE_BTN_WIDTH = 58 // "More…" button measured width
 
 interface OverflowResult {
@@ -202,14 +202,14 @@ export function SpecialtyField({
       <div
         ref={containerRef}
         aria-hidden
-        className="flex flex-wrap gap-1.5"
+        className="flex flex-wrap gap-2"
         style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', width: '100%' }}
       >
         {toggleable.map(({ code, label }, i) => (
           <span
             key={code}
             ref={(el) => registerPill(i, el)}
-            className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium border border-transparent"
+            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-transparent"
           >
             {label}
           </span>
@@ -218,7 +218,7 @@ export function SpecialtyField({
           <span
             key={code}
             ref={(el) => registerMandatory(i, el)}
-            className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium border border-transparent"
+            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-transparent"
           >
             {label}
           </span>
@@ -226,10 +226,10 @@ export function SpecialtyField({
       </div>
 
       {/* Visible layout */}
-      <div className="flex flex-col gap-1.5" style={{ opacity: measured ? 1 : 0 }}>
+      <div className="flex flex-col gap-2" style={{ opacity: measured ? 1 : 0 }}>
         {/* Row 1: toggleable specialties */}
         {row1Pills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {row1Pills.map(({ code, label }) => (
               <SpecialtyPill
                 key={code}
@@ -243,7 +243,7 @@ export function SpecialtyField({
         )}
 
         {/* Row 2: [overflow toggleable] ... Nav, Deep, More... */}
-        <div className="flex flex-wrap gap-1.5 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {row2Pills.map(({ code, label }) => (
             <SpecialtyPill
               key={code}
@@ -293,7 +293,7 @@ interface SpecialtyPillProps {
 function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProps) {
   return (
     <label
-      className={`inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       style={{
         background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
@@ -320,7 +320,7 @@ function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProp
 function MandatoryPill({ label }: { label: string }) {
   return (
     <span
-      className="inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium cursor-not-allowed"
+      className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium cursor-not-allowed"
       style={{
         background: 'var(--color-primary)',
         color: 'var(--color-text-on-primary)',

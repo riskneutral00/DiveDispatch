@@ -269,10 +269,9 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       {items.length === 0 ? (
         <p className="text-sm text-secondary">{emptyMessage}</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {items.map((item, idx) => (
             <Fragment key={String((item as AgencyRow)._key ?? idx)}>
-              {idx > 0 && isCenter && <hr className="form-divider" />}
               <ItemCard
                 onRemove={() => handleRemove(idx)}
                 canRemove={isAgent ? true : items.length > 1}

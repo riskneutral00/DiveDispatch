@@ -10,23 +10,18 @@ interface ItemCardProps {
 
 export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': ariaLabel = 'Remove item' }: ItemCardProps) {
   return (
-    <div className="space-y-4">
-      {children}
+    <div className="border border-muted/30 rounded-lg p-4 relative">
       {onRemove && canRemove && (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label={ariaLabel}
-            className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150 text-secondary"
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
-          >
-            <Trash2 size={14} />
-            Remove
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={ariaLabel}
+          className="absolute top-2 right-2 cursor-pointer rounded p-1 transition-colors duration-150 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 size={14} />
+        </button>
       )}
+      {children}
     </div>
   )
 }

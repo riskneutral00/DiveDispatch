@@ -253,14 +253,14 @@ describe('affiliationsFromProfile', () => {
     expect(form.associations[0]).toEqual(makeDefaultAssoc())
   })
 
-  it('defaults numeric days when omitted from profile', () => {
+  it('returns undefined for days when omitted from profile', () => {
     const profile = {
       associations: [{ agency: 'SSI', number: 'SSI456' }],
     }
     const form = affiliationsFromProfile(profile)
-    expect(form.associations[0].owDays).toBe(3)
-    expect(form.associations[0].aowDays).toBe(2)
-    expect(form.associations[0].oaDays).toBe(4)
+    expect(form.associations[0].owDays).toBeUndefined()
+    expect(form.associations[0].aowDays).toBeUndefined()
+    expect(form.associations[0].oaDays).toBeUndefined()
     expect(form.associations[0].selectedSpecialties).toEqual([])
   })
 })
@@ -339,6 +339,22 @@ describe('INITIAL_CONTACT_FORM', () => {
     expect(INITIAL_CONTACT_FORM.email).toBe('')
     expect(INITIAL_CONTACT_FORM.phone).toBe('')
     expect(INITIAL_CONTACT_FORM.location).toBeNull()
+  })
+})
+
+describe('makeDefaultAssoc', () => {
+  it('returns undefined for owDays, aowDays, oaDays so new cards show empty day pickers', () => {
+    const assoc = makeDefaultAssoc()
+    expect(assoc.owDays).toBeUndefined()
+    expect(assoc.aowDays).toBeUndefined()
+    expect(assoc.oaDays).toBeUndefined()
+  })
+
+  it('returns empty string for agency and number', () => {
+    const assoc = makeDefaultAssoc()
+    expect(assoc.agency).toBe('')
+    expect(assoc.number).toBe('')
+    expect(assoc.selectedSpecialties).toEqual([])
   })
 })
 
