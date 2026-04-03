@@ -531,6 +531,106 @@ describe('tryAutoAdvance collectLogistics error swallow (DD-425)', () => {
   })
 })
 
+// ─── DD-427: deliveryLocation → departureLocation mapping ────────────────────
+
+describe('collectLogistics deliveryLocation mapping (DD-427)', () => {
+  it('maps session.deliveryLocation to logistics.departureLocation', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+        deliveryLocation: 'BoatPier',
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.departureLocation).toBe('BoatPier')
+    })
+  })
+
+  it('omits departureLocation from logistics when session has no deliveryLocation', async () => {
+    await t.run(async (ctx) => {
+      const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
+
+      const unitId = await ctx.db.insert('inventoryUnits', {
+        resourceType: 'Instructor',
+        resourceId: TEST_SLUGS.instructor,
+        displayName: 'John Instructor',
+        capacityModel: 'Exclusive',
+        totalUnits: 1,
+        ownerId: TEST_SLUGS.instructor,
+        ownerType: 'Instructor',
+      })
+      // No deliveryLocation field
+      const sessionId = await ctx.db.insert('bookingSessions', {
+        bookingId,
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        startTime: '08:00',
+        endTime: '16:00',
+        timezone: 'Asia/Bangkok',
+      })
+
+      await ctx.db.insert('reservations', {
+        bookingId,
+        inventoryUnitId: unitId,
+        bookingSessionId: sessionId,
+        unitsRequested: 1,
+        status: 'Confirmed',
+      })
+      await ctx.db.insert('availabilitySnapshots', {
+        inventoryUnitId: unitId,
+        date: testDate(5),
+        windowStart: '08:00',
+        windowEnd: '16:00',
+        totalUnits: 1,
+        reservedUnits: 1,
+        availableUnits: 0,
+      })
+
+      await tryAutoAdvance(ctx, bookingId)
+
+      const notifications = await ctx.db.query('notifications').collect()
+      const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
+      expect(confirmed?.logistics?.departureLocation).toBeUndefined()
+    })
+  })
+})
+
 // ─── DD-426: hasMissingResource gate blocks auto-advance ─────────────────────
 
 describe('tryAutoAdvance hasMissingResource gate (DD-426)', () => {
