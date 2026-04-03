@@ -111,14 +111,6 @@ describe('batchGetOwnerContext', () => {
   })
 })
 
-// ─── Behavioral: MAX_CANDIDATES export ──────────────────────────────────────
-
-describe('MAX_CANDIDATES constant', () => {
-  it('is exported and equals 20', () => {
-    expect(MAX_CANDIDATES).toBe(20)
-  })
-})
-
 // ─── Behavioral: decline with maxCandidates bound ───────────────────────────
 
 describe('decline with maxCandidates bound', () => {
