@@ -2,13 +2,16 @@
 
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery } from 'convex/react'
+import { toast } from 'sonner'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
+import type { Id } from '../../../convex/_generated/dataModel'
 import { ManageRoles } from './manage-roles'
 import { AddRoleModal } from './add-role-modal'
 import { RoleOnboarding } from './role-onboarding'
 import { Spinner } from '@/components/ui/spinner'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { ErrorCode } from '@/lib/errors'
 
 /**
@@ -17,7 +20,9 @@ import { ErrorCode } from '@/lib/errors'
  */
 export function ManageRolesConnected() {
   const roles = useQuery(api.userRoles.myRoles)
+  const bookingCounts = useQuery(api.userRoles.bookingCountsForMyRoles)
   const addRole = useMutation(api.userRoles.addRole)
+  const deleteRole = useMutation(api.userRoles.deleteRole)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -48,11 +53,36 @@ export function ManageRolesConnected() {
     [addRole],
   )
 
+  const handleDeleteRole = useCallback(
+    async (roleId: Id<'userRoles'>) => {
+      const roleEntry = (roles ?? []).find((r) => r._id === roleId)
+      const roleLabel = roleEntry
+        ? (ROLE_BY_CLERK_ROLE[roleEntry.role as ClerkRole]?.label ?? roleEntry.role)
+        : 'Role'
+
+      try {
+        const result = await deleteRole({ roleId })
+        if (result && 'blocked' in result && result.blocked) {
+          return
+        }
+        toast.success(`${roleLabel} deleted`)
+      } catch (e: unknown) {
+        const code = getConvexErrorCode(e)
+        if (code === ErrorCode.LAST_ROLE) {
+          toast.error('Cannot delete your only role.')
+        } else {
+          toast.error(parseConvexError(e, 'Failed to delete role.'))
+        }
+      }
+    },
+    [deleteRole, roles],
+  )
+
   const handleOnboardingComplete = useCallback(() => {
     setOnboardingRole(null)
   }, [])
 
-  if (roles === undefined) {
+  if (roles === undefined || bookingCounts === undefined) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
         <Spinner />
@@ -79,6 +109,8 @@ export function ManageRolesConnected() {
           setModalOpen(true)
         }}
         onNavigateToOnboarding={(role) => setOnboardingRole(role)}
+        onDeleteRole={handleDeleteRole}
+        bookingCounts={bookingCounts}
       />
       <AddRoleModal
         open={modalOpen}
