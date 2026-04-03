@@ -22,6 +22,7 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     name: `${slug} Display`,
     firstName: slug,
     lastName: 'Test',
+    phone: '+66800000000',
     businessName: `${slug} Business`,
     isSeeded: false,
     appLanguage: 'en',
@@ -33,6 +34,38 @@ async function seedUser(ctx: Ctx, slug: string, role: StakeholderRole = 'Agent')
     profileComplete: false,
   })
   return userId
+}
+
+/** Seed the role-profile table + stakeholderPreferences so the operator passes checkProfileCompleteness. */
+async function seedCompleteOperator(ctx: Ctx, slug: string, role: StakeholderRole, userId: Id<'users'>) {
+  if (role === 'DiveCenter') {
+    await ctx.db.insert('diveCenters', {
+      userId,
+      name: `${slug} DC`,
+      placeName: 'Koh Tao',
+      country: 'Thailand',
+      lat: 10.0957,
+      lng: 99.8408,
+      email: `${slug}@test.com`,
+      phone: '+66123456789',
+      associations: [{ agency: 'PADI', number: '12345', selectedSpecialties: ['PPB', 'Navigation', 'Deep', 'Night', 'Wreck'] }],
+      customerLanguages: ['en'],
+      verified: true,
+    })
+  }
+  await ctx.db.insert('stakeholderPreferences', {
+    stakeholderId: slug,
+    stakeholderType: role,
+    acceptanceMode: 'Auto',
+    useNamedUnits: false,
+    commonLanguageCodes: ['en'],
+    confirmOnAccept: true,
+    confirmOnDecline: true,
+    preferredInstructorSlugs: ['placeholder-instr'],
+    preferredEquipmentSlugs: ['placeholder-equip'],
+    preferredVenueSlugs: ['placeholder-venue'],
+    preferredCompressorSlugs: ['placeholder-comp'],
+  })
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -97,7 +130,8 @@ describe('createReferralDraftShell', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, 'agent-3', 'Agent')
-      await seedUser(ctx, 'target-dc', 'DiveCenter')
+      const dcId = await seedUser(ctx, 'target-dc', 'DiveCenter')
+      await seedCompleteOperator(ctx, 'target-dc', 'DiveCenter', dcId)
     })
 
     const bookingId = await t

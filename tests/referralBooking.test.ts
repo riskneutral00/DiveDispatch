@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import type { Doc, Id } from '../convex/_generated/dataModel'
-import { seedUser, type SeedCtx } from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences, type SeedCtx } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── createReferralDraftShell ─────────────────────────────────────────────────
@@ -78,7 +78,16 @@ describe('createReferralDraftShell', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'referral-agent', tokenIdentifier: 'clerk|referral-agent', role: 'Agent' })
-      await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter', businessName: 'Target DC Biz' })
+      const dcId = await seedUser(ctx, { slug: 'target-dc', tokenIdentifier: 'clerk|target-dc', role: 'DiveCenter', businessName: 'Target DC Biz' })
+      await ctx.db.patch(dcId, { phone: '+66800000000' })
+      await seedDiveCenterProfile(ctx, dcId)
+      await seedStakeholderPreferences(ctx, 'target-dc', {
+        stakeholderType: 'DiveCenter',
+        preferredInstructorSlugs: ['i'],
+        preferredEquipmentSlugs: ['e'],
+        preferredVenueSlugs: ['v'],
+        preferredCompressorSlugs: ['c'],
+      })
     })
 
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|referral-agent' })
@@ -116,7 +125,15 @@ describe('createReferralDraftShell', () => {
     const t = makeT()
     await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'agent-lb', tokenIdentifier: 'clerk|agent-lb', role: 'Agent' })
-      await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard', businessName: 'LB Biz' })
+      const lbId = await seedUser(ctx, { slug: 'target-lb', tokenIdentifier: 'clerk|target-lb', role: 'Liveaboard', businessName: 'LB Biz' })
+      await ctx.db.patch(lbId, { phone: '+66800000000' })
+      await seedStakeholderPreferences(ctx, 'target-lb', {
+        stakeholderType: 'Liveaboard',
+        preferredInstructorSlugs: ['i'],
+        preferredEquipmentSlugs: ['e'],
+        preferredVenueSlugs: ['v'],
+        preferredCompressorSlugs: ['c'],
+      })
     })
 
     const bookingId = await t.withIdentity({ tokenIdentifier: 'clerk|agent-lb' })
