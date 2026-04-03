@@ -182,6 +182,33 @@ describe('releaseBookingReservations', () => {
     })
   })
 
+  it('throws ORPHANED_RESERVATION when a reservation references a deleted session', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 2, displayName: 'Boat' })
+      const snapshotId = await seedSnapshot(ctx, unit, { totalUnits: 2, availableUnits: 1, reservedUnits: 1 })
+
+      const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+      // Create a session, reference it in a reservation, then delete the session to simulate an orphan.
+      const sessionId = await seedSession(ctx, bookingId, unit)
+      await seedReservation(ctx, bookingId, unit, sessionId, { status: 'Confirmed', unitsRequested: 1 })
+      await ctx.db.delete(sessionId)
+
+      await expect(
+        releaseBookingReservations(ctx, bookingId, VACATED_REASON.BookingCancelled),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.ORPHANED_RESERVATION,
+        },
+      })
+
+      // Snapshot must not have been mutated — mutation rolls back atomically
+      const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
+      expect(snap.availableUnits).toBe(1)
+      expect(snap.reservedUnits).toBe(1)
+    })
+  })
+
   it('throws MISSING_SNAPSHOT_ON_RELEASE when snapshot disappears between lookup and restore (Invariant 3 guard)', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
