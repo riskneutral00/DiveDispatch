@@ -219,6 +219,31 @@ describe('releaseBookingReservations', () => {
     })
   })
 
+  it('accumulates units across two reservations sharing the same snapshot before patching once', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 3, displayName: 'Boat' })
+      // Snapshot starts with 2 reserved units — one per reservation below
+      const snapshotId = await seedSnapshot(ctx, unit, { totalUnits: 3, availableUnits: 1, reservedUnits: 2 })
+
+      const bookingId = await seedBooking(ctx, { status: 'Upcoming' })
+      // Both reservations share the same session — same (inventoryUnitId, date, windowStart) key
+      const session = await seedSession(ctx, bookingId, unit)
+      await seedReservation(ctx, bookingId, unit, session, { status: 'Confirmed', unitsRequested: 1 })
+      await seedReservation(ctx, bookingId, unit, session, { status: 'Confirmed', unitsRequested: 1 })
+
+      await releaseBookingReservations(ctx, bookingId, VACATED_REASON.BookingCancelled)
+
+      // Snapshot must be patched once with the accumulated total (2), not twice with 1 each.
+      // A double-patch bug would throw SNAPSHOT_DOUBLE_WRITE; wrong accumulation would leave
+      // reservedUnits at 1 instead of 0.
+      const snap = await ctx.db.get(snapshotId) as Doc<'availabilitySnapshots'>
+      expect(snap.availableUnits).toBe(3)
+      expect(snap.reservedUnits).toBe(0)
+      expect(snap.totalUnits).toBe(3)
+    })
+  })
+
   it('throws MISSING_SNAPSHOT_ON_RELEASE when snapshot disappears between lookup and restore (Invariant 3 guard)', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
