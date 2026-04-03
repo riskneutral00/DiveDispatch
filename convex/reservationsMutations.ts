@@ -359,12 +359,10 @@ export async function _declineHandler(
   const allSameTypeUnits = await ctx.db
     .query('inventoryUnits')
     .withIndex('by_resourceType', (q) => q.eq('resourceType', unit.resourceType))
-    .collect()
+    .take(MAX_CANDIDATES)
 
-  // Exclude the declined unit and bound the search
-  const candidates = allSameTypeUnits
-    .filter((u) => u._id !== args.inventoryUnitId)
-    .slice(0, MAX_CANDIDATES)
+  // Exclude the declined unit
+  const candidates = allSameTypeUnits.filter((u) => u._id !== args.inventoryUnitId)
 
   // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates)
   const snapshotsByUnitAndDate = new Map<string, boolean>()
