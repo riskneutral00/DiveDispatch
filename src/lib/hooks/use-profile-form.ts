@@ -73,6 +73,8 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
   isUpdate: boolean
   /** Form submit handler — pass to <form onSubmit> */
   handleSubmit: (e: React.FormEvent) => Promise<void>
+  /** Call after a successful save outside handleSubmit (e.g. per-section upsert) so isDirty resets. */
+  markBaselineCurrent: () => void
 }
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
@@ -199,6 +201,11 @@ export function useProfileForm<
   const footerErrorMessage =
     serverError ?? errors['_form'] ?? errors[''] ?? null
 
+  const markBaselineCurrent = useCallback(() => {
+    baselineRef.current = form
+    setSaved(true)
+  }, [form])
+
   return {
     form,
     setForm,
@@ -215,5 +222,6 @@ export function useProfileForm<
       || (waitForMeBeforeInit === true && me === undefined),
     isUpdate: !!profile,
     handleSubmit,
+    markBaselineCurrent,
   }
 }

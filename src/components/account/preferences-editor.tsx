@@ -1,18 +1,18 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
-import { MAX_SESSION_MINUTES } from '@/lib/constants/form-config'
+import { GlassButton } from '@/components/ui/glass-button'
 import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { parseConvexError } from '@/lib/utils/convex-error'
 import {
   PreferredInstructorList,
   PreferredVenueList,
@@ -52,8 +52,6 @@ const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.c
 
 const prefsSchema = z.object({
   acceptanceMode: z.enum(['Auto', 'PrePayRequired', 'PostPayAllowed']),
-  maxHoursPerDay: z.number().int().min(1).max(16),
-  postJobBlockDuration: z.number().int().min(0).max(480),
   commonLanguageCodes: z.array(z.string()).optional(),
   confirmOnAccept: z.boolean(),
   confirmOnDecline: z.boolean(),
@@ -68,10 +66,17 @@ const prefsSchema = z.object({
 
 type PrefsFormData = z.infer<typeof prefsSchema>
 
+type ResourceSubTab =
+  | 'readiness'
+  | 'instructors'
+  | 'venues'
+  | 'equipment'
+  | 'boats'
+  | 'compressors'
+  | 'operator'
+
 const defaultFormData = (): PrefsFormData => ({
   acceptanceMode: 'Auto',
-  maxHoursPerDay: 8,
-  postJobBlockDuration: 30,
   commonLanguageCodes: ['en'],
   confirmOnAccept: false,
   confirmOnDecline: false,
@@ -95,6 +100,27 @@ interface CoverageStatusProps {
   equipmentSlugs: string[]
   boatSlugs: string[]
   compressorSlugs: string[]
+}
+
+function ResourceSectionTitle({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required?: boolean
+}) {
+  return (
+    <h2
+      className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary flex items-center gap-1"
+    >
+      {children}
+      {required ? (
+        <span style={{ color: 'var(--color-destructive)' }} aria-hidden>
+          *
+        </span>
+      ) : null}
+    </h2>
+  )
 }
 
 function CoverageStatus({
@@ -212,6 +238,8 @@ export function PreferencesEditor() {
   const upsert = useMutation(api.stakeholderPreferences.upsert)
 
   const [activeTab, setActiveTab] = useState('booking')
+  const [resourceSubTab, setResourceSubTab] = useState<ResourceSubTab>('readiness')
+  const [resourceSaving, setResourceSaving] = useState(false)
   const defaults = useMemo(() => defaultFormData(), [])
   const savePreferences = useCallback(
     async (payload: PrefsFormData) => {
@@ -235,6 +263,7 @@ export function PreferencesEditor() {
     loading,
     isUpdate,
     handleSubmit,
+    markBaselineCurrent,
   } = useProfileForm<PrefsFormData, PrefsFormData>({
     profile: prefs === undefined ? undefined : (prefs as PreferencesRecord | null),
     schema: prefsSchema,
@@ -243,8 +272,6 @@ export function PreferencesEditor() {
       const typed = profile as Partial<PrefsFormData>
       return {
         acceptanceMode: (typed.acceptanceMode as AcceptanceMode) ?? 'Auto',
-        maxHoursPerDay: typed.maxHoursPerDay ?? 8,
-        postJobBlockDuration: typed.postJobBlockDuration ?? 30,
         commonLanguageCodes: typed.commonLanguageCodes ?? ['en'],
         confirmOnAccept: typed.confirmOnAccept ?? false,
         confirmOnDecline: typed.confirmOnDecline ?? false,
@@ -264,10 +291,63 @@ export function PreferencesEditor() {
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
 
+  const resourceSubTabs = useMemo(() => {
+    const base: { id: ResourceSubTab; label: string }[] = [
+      { id: 'readiness', label: 'Readiness' },
+      { id: 'instructors', label: 'Instructors' },
+      { id: 'venues', label: 'Venues' },
+      { id: 'equipment', label: 'Equipment' },
+      { id: 'boats', label: 'Boats' },
+      { id: 'compressors', label: 'Compressors' },
+    ]
+    if (activeRole === 'Agent') {
+      base.push({ id: 'operator', label: 'Operator' })
+    }
+    return base
+  }, [activeRole])
+
+  const saveStakeholderPreferences = useCallback(async () => {
+    if (!activeRole) {
+      throw new Error('Unable to determine active role for saving preferences.')
+    }
+    await upsert({
+      activeRole,
+      acceptanceMode: form.acceptanceMode,
+      commonLanguageCodes: form.commonLanguageCodes,
+      confirmOnAccept: form.confirmOnAccept,
+      confirmOnDecline: form.confirmOnDecline,
+      preferredInstructorSlugs: form.preferredInstructorSlugs,
+      preferredVenueSlugs: form.preferredVenueSlugs,
+      preferredEquipmentSlugs: form.preferredEquipmentSlugs,
+      preferredBoatSlugs: form.preferredBoatSlugs,
+      preferredCompressorSlugs: form.preferredCompressorSlugs,
+      preferredOperatorSlug: form.preferredOperatorSlug,
+      autoAssignPreferred: form.autoAssignPreferred,
+    })
+  }, [activeRole, form, upsert])
+
+  const handleSaveResourceSection = useCallback(async () => {
+    setResourceSaving(true)
+    try {
+      await saveStakeholderPreferences()
+      markBaselineCurrent()
+      toast.success('Preferences saved')
+    } catch (err: unknown) {
+      toast.error(parseConvexError(err, 'Save failed'))
+    } finally {
+      setResourceSaving(false)
+    }
+  }, [markBaselineCurrent, saveStakeholderPreferences])
+
+  useEffect(() => {
+    if (activeRole !== 'Agent' && resourceSubTab === 'operator') {
+      setResourceSubTab('readiness')
+    }
+  }, [activeRole, resourceSubTab])
+
   const tabs = useMemo(() => {
     const base = [
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ]
     if (showResourcePrefs) base.push({ id: 'resources', label: 'Resources' })
     return base
@@ -284,6 +364,7 @@ export function PreferencesEditor() {
       isUpdate={isUpdate}
       disableSaveWhenInvalid
       isValid={isValid}
+      hideFooter={activeTab === 'resources'}
       className="max-w-2xl mx-auto w-full px-4 pt-4 pb-28 md:pb-10"
     >
       <ProfileSectionTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
@@ -396,147 +477,171 @@ export function PreferencesEditor() {
           </>
         )}
 
-        {/* ── Availability tab ─────────────────────────────────────── */}
-        {activeTab === 'availability' && (
-          <>
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Availability Limits
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <GlassInput
-                  label="Max hours per day"
-                  type="number"
-                  min={1}
-                  max={16}
-                  value={form.maxHoursPerDay}
-                  onChange={(e) => setField('maxHoursPerDay', Number(e.target.value))}
-                  error={errors.maxHoursPerDay}
-                />
-                <GlassInput
-                  label="Post-job block (minutes)"
-                  type="number"
-                  min={0}
-                  max={MAX_SESSION_MINUTES}
-                  value={form.postJobBlockDuration}
-                  onChange={(e) => setField('postJobBlockDuration', Number(e.target.value))}
-                  error={errors.postJobBlockDuration}
-                />
-              </div>
-            </GlassCard>
-
-            <ProfileFormSectionDivider show />
-
-          </>
-        )}
-
-        {/* ── Resources tab (organizer roles only) ─────────────────── */}
+        {/* ── Resources tab (organizer roles only) — horizontal sub-tabs, per-section save ── */}
         {activeTab === 'resources' && showResourcePrefs && (
           <>
-            <CoverageStatus
-              instructorSlugs={form.preferredInstructorSlugs ?? []}
-              venueSlugs={form.preferredVenueSlugs ?? []}
-              equipmentSlugs={form.preferredEquipmentSlugs ?? []}
-              boatSlugs={form.preferredBoatSlugs ?? []}
-              compressorSlugs={form.preferredCompressorSlugs ?? []}
+            <ProfileSectionTabBar
+              tabs={resourceSubTabs}
+              activeTab={resourceSubTab}
+              onChange={(id) => setResourceSubTab(id as ResourceSubTab)}
             />
 
-            {activeRole === 'Agent' && (
-              <>
-                <ProfileFormSectionDivider show />
-                <PreferredOperatorPicker
-                  value={form.preferredOperatorSlug}
-                  onChange={(slug) => setField('preferredOperatorSlug', slug)}
+            <div
+              id={`tabpanel-${resourceSubTab}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${resourceSubTab}`}
+              className="space-y-4"
+            >
+              {resourceSubTab === 'readiness' && (
+                <CoverageStatus
+                  instructorSlugs={form.preferredInstructorSlugs ?? []}
+                  venueSlugs={form.preferredVenueSlugs ?? []}
+                  equipmentSlugs={form.preferredEquipmentSlugs ?? []}
+                  boatSlugs={form.preferredBoatSlugs ?? []}
+                  compressorSlugs={form.preferredCompressorSlugs ?? []}
                 />
-              </>
-            )}
+              )}
 
-            <ProfileFormSectionDivider show />
+              {resourceSubTab === 'instructors' && (
+                <GlassCard padding="md">
+                  <ResourceSectionTitle required>Preferred Instructors</ResourceSectionTitle>
+                  <p className="text-sm mb-4 text-secondary">
+                    Rank instructors in order of booking priority. The wizard will suggest them first.
+                  </p>
+                  <PreferredInstructorList
+                    slugs={form.preferredInstructorSlugs ?? []}
+                    onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              )}
 
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Preferred Instructors
-              </h2>
-              <p className="text-sm mb-4 text-secondary">
-                Rank instructors in order of booking priority. The wizard will suggest them first.
-              </p>
-              <PreferredInstructorList
-                slugs={form.preferredInstructorSlugs ?? []}
-                onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
-              />
-            </GlassCard>
+              {resourceSubTab === 'venues' && (
+                <GlassCard padding="md">
+                  <ResourceSectionTitle required>Preferred Venues</ResourceSectionTitle>
+                  <p className="text-sm mb-4 text-secondary">
+                    Pools and dive sites, ranked by preference. At least one venue or boat is required.
+                  </p>
+                  <PreferredVenueList
+                    slugs={form.preferredVenueSlugs ?? []}
+                    onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              )}
 
-            <ProfileFormSectionDivider show />
+              {resourceSubTab === 'equipment' && (
+                <GlassCard padding="md">
+                  <ResourceSectionTitle required>Preferred Equipment Providers</ResourceSectionTitle>
+                  <p className="text-sm mb-4 text-secondary">
+                    At least one equipment provider is required before creating bookings.
+                  </p>
+                  <PreferredEquipmentList
+                    slugs={form.preferredEquipmentSlugs ?? []}
+                    onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              )}
 
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Preferred Venues
-              </h2>
-              <p className="text-sm mb-4 text-secondary">
-                Pools and dive sites, ranked by preference. Need at least one confined water and one open water venue (or a boat).
-              </p>
-              <PreferredVenueList
-                slugs={form.preferredVenueSlugs ?? []}
-                onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
-              />
-            </GlassCard>
+              {resourceSubTab === 'boats' && (
+                <GlassCard padding="md">
+                  <ResourceSectionTitle required>Preferred Boats</ResourceSectionTitle>
+                  <p className="text-sm mb-4 text-secondary">
+                    A boat satisfies the venue requirement. Captain picks the dive site.
+                  </p>
+                  <PreferredBoatList
+                    slugs={form.preferredBoatSlugs ?? []}
+                    onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              )}
 
-            <ProfileFormSectionDivider show />
+              {resourceSubTab === 'compressors' && (
+                <GlassCard padding="md">
+                  <ResourceSectionTitle required>Preferred Compressors</ResourceSectionTitle>
+                  <p className="text-sm mb-4 text-secondary">
+                    Not required if a preferred boat or venue has a compressor.
+                  </p>
+                  <PreferredCompressorList
+                    slugs={form.preferredCompressorSlugs ?? []}
+                    onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </GlassCard>
+              )}
 
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Preferred Equipment Providers
-              </h2>
-              <p className="text-sm mb-4 text-secondary">
-                At least one equipment provider is required before creating bookings.
-              </p>
-              <PreferredEquipmentList
-                slugs={form.preferredEquipmentSlugs ?? []}
-                onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
-              />
-            </GlassCard>
-
-            <ProfileFormSectionDivider show />
-
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Preferred Boats
-              </h2>
-              <p className="text-sm mb-4 text-secondary">
-                A boat satisfies both confined and open water venue requirements.
-              </p>
-              <PreferredBoatList
-                slugs={form.preferredBoatSlugs ?? []}
-                onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
-              />
-            </GlassCard>
-
-            <ProfileFormSectionDivider show />
-
-            <GlassCard padding="md">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Preferred Compressors
-              </h2>
-              <p className="text-sm mb-4 text-secondary">
-                Not required if a preferred boat or venue has a compressor.
-              </p>
-              <PreferredCompressorList
-                slugs={form.preferredCompressorSlugs ?? []}
-                onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
-              />
-            </GlassCard>
+              {resourceSubTab === 'operator' && activeRole === 'Agent' && (
+                <>
+                  <PreferredOperatorPicker
+                    value={form.preferredOperatorSlug}
+                    onChange={(slug) => setField('preferredOperatorSlug', slug)}
+                  />
+                  <div className="flex justify-end">
+                    <GlassButton
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      loading={resourceSaving}
+                      onClick={() => void handleSaveResourceSection()}
+                    >
+                      Save this section
+                    </GlassButton>
+                  </div>
+                </>
+              )}
+            </div>
           </>
         )}
 

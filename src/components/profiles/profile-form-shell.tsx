@@ -47,6 +47,8 @@ interface ProfileFormShellProps {
   // Loading customization
   loadingVariant?: 'spinner' | 'pulse-text' | 'plain'
   loadingMessage?: string
+  /** When true, omit the sticky Save footer (e.g. per-section saves only). */
+  hideFooter?: boolean
 }
 
 export function ProfileFormShell({
@@ -67,6 +69,7 @@ export function ProfileFormShell({
   footerLeftAction,
   loadingVariant,
   loadingMessage,
+  hideFooter = false,
 }: ProfileFormShellProps) {
   if (loading) {
     return (
@@ -83,16 +86,18 @@ export function ProfileFormShell({
   return (
     <form onSubmit={onSubmit} noValidate className={className || 'space-y-6'}>
       {children}
-      <ProfileFormFooter
-        errorMessage={footerErrorMessage ?? errorMessage}
-        saving={saving}
-        saved={saved}
-        isDirty={isDirty}
-        isUpdate={isUpdate}
-        disabled={footerDisabled}
-        saveLabel={saveLabel}
-        leftAction={footerLeftAction}
-      />
+      {!hideFooter && (
+        <ProfileFormFooter
+          errorMessage={footerErrorMessage ?? errorMessage}
+          saving={saving}
+          saved={saved}
+          isDirty={isDirty}
+          isUpdate={isUpdate}
+          disabled={footerDisabled}
+          saveLabel={saveLabel}
+          leftAction={footerLeftAction}
+        />
+      )}
     </form>
   )
 }
