@@ -56,8 +56,11 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
   },
   compressor: {
     label: 'Compressor',
-    tabs: null,
-    workspaceIncludesEmbeddedProfile: true,
+    tabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'gas-mixes', label: 'Gas Mixes' },
+    ],
+    workspaceIncludesEmbeddedProfile: false,
   },
   equipment: {
     label: 'Equipment',

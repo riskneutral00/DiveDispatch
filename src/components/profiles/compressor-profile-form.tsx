@@ -1,20 +1,19 @@
 'use client'
 
-import { z } from 'zod'
-
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
-import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import {
+  compressorContactSchema,
+  compressorGasMixesSchema,
+} from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
   createOptimisticLocationOnChange,
   locationToPayload,
-  nullableProfileLocation,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -28,80 +27,73 @@ const GAS_MIXES = [
 
 type GasMix = 'air' | 'nitrox' | 'trimix'
 
-// ── Zod Schema ────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────────────
 
-const profileSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  location: nullableProfileLocation(),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
-  gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
-})
+export type CompressorProfileSection = 'contact' | 'gas-mixes'
 
-type FormState = {
+export type CompressorSectionProps = {
+  profile: Record<string, unknown> | null | undefined
+  me?: Record<string, unknown> | null | undefined
+  create: (payload: Record<string, unknown>) => Promise<unknown>
+  update: (payload: Record<string, unknown>) => Promise<unknown>
+  onSaved?: () => void
+}
+
+// ── Contact section ──────────────────────────────────────────────────
+
+export type CompressorContactFormState = {
   name: string
   location: LocationValue | null
   email: string
   phone: string
-  gasMixes: GasMix[]
 }
 
-const INITIAL_FORM: FormState = {
+export const INITIAL_COMPRESSOR_CONTACT_FORM: CompressorContactFormState = {
   name: '',
   location: null,
   email: '',
   phone: '',
-  gasMixes: [],
 }
 
-// ── Sub-components ────────────────────────────────────────────────────
-
-
-// ── Main Form ─────────────────────────────────────────────────────────
-
-export type CompressorProfileFormProps = {
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
+export function compressorContactFromProfile(p: Record<string, unknown>): CompressorContactFormState {
+  const c = contactFieldsFromProfile(p)
+  return {
+    name: c.name,
+    location: c.location as LocationValue,
+    email: c.email,
+    phone: c.phone,
+  }
 }
 
-export function CompressorProfileForm({ profile, me, create, update }: CompressorProfileFormProps) {
+export function compressorContactToPayload(f: CompressorContactFormState): Record<string, unknown> {
+  return {
+    name: f.name,
+    ...locationToPayload(f.location!),
+    email: f.email,
+    phone: f.phone,
+  }
+}
 
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, loading, isUpdate, handleSubmit } = useProfileForm({
-    profile,
-    me: me ?? undefined,
-    schema: profileSchema,
-    defaults: INITIAL_FORM,
-    fromProfile: (p) => {
-      const c = contactFieldsFromProfile(p)
-      return {
-        ...c,
-        location: c.location as LocationValue,
-        gasMixes: (p.gasMixes ?? []) as GasMix[],
-      }
-    },
-    fromMe: (u, initial) => ({
-      ...initial,
-      email: u.email ?? '',
-      phone: u.phone ?? '',
-    }),
-    toPayload: (f) => ({
-      name: f.name,
-      ...locationToPayload(f.location!),
-      email: f.email,
-      phone: f.phone,
-      gasMixes: f.gasMixes,
-    }),
-    create,
-    update,
-  })
+export function CompressorContactSection({ profile: existing, me, create, update, onSaved }: CompressorSectionProps) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      me,
+      schema: compressorContactSchema,
+      defaults: INITIAL_COMPRESSOR_CONTACT_FORM,
+      fromProfile: compressorContactFromProfile,
+      fromMe: (u, defaults) => ({
+        ...defaults,
+        email: (u.email as string) ?? '',
+        phone: (u.phone as string) ?? '',
+      }),
+      toPayload: compressorContactToPayload,
+      create,
+      update,
+      onSaved,
+    })
 
-  const onLocationChange = createOptimisticLocationOnChange({
-    setField,
-    update,
-    isUpdate,
-  })
+  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
 
   return (
     <ProfileFormShell
@@ -112,11 +104,10 @@ export function CompressorProfileForm({ profile, me, create, update }: Compresso
       saved={saved}
       isDirty={isDirty}
       isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
       className="space-y-6"
     >
-      <ProfileFormHeader isUpdate={isUpdate} roleName="compressor" />
-
-      {/* Basic info */}
       <div className="space-y-4">
         <ProfileBasicInfo
           nameValue={form.name}
@@ -139,10 +130,65 @@ export function CompressorProfileForm({ profile, me, create, update }: Compresso
           phoneRequired
         />
       </div>
+    </ProfileFormShell>
+  )
+}
 
-      <ProfileFormSectionDivider show />
+// ── Gas Mixes section ────────────────────────────────────────────────
 
-      {/* Gas mixes */}
+export type CompressorGasMixesFormState = {
+  gasMixes: GasMix[]
+}
+
+export const INITIAL_COMPRESSOR_GAS_MIXES_FORM: CompressorGasMixesFormState = {
+  gasMixes: [],
+}
+
+export function compressorGasMixesFromProfile(p: Record<string, unknown>): CompressorGasMixesFormState {
+  return {
+    gasMixes: (p.gasMixes ?? []) as GasMix[],
+  }
+}
+
+export function compressorGasMixesToPayload(f: CompressorGasMixesFormState): Record<string, unknown> {
+  return {
+    gasMixes: f.gasMixes,
+  }
+}
+
+export function CompressorGasMixesSection({ profile: existing, create, update }: CompressorSectionProps) {
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      schema: compressorGasMixesSchema,
+      defaults: INITIAL_COMPRESSOR_GAS_MIXES_FORM,
+      fromProfile: compressorGasMixesFromProfile,
+      toPayload: compressorGasMixesToPayload,
+      create,
+      update,
+    })
+
+  if (!existing) {
+    return (
+      <GlassCard padding="md">
+        <p className="text-sm text-secondary">Complete contact info first</p>
+      </GlassCard>
+    )
+  }
+
+  return (
+    <ProfileFormShell
+      loading={loading}
+      onSubmit={handleSubmit}
+      footerErrorMessage={footerErrorMessage}
+      saving={saving}
+      saved={saved}
+      isDirty={isDirty}
+      isUpdate={isUpdate}
+      disableSaveWhenInvalid
+      isValid={isValid}
+      className="space-y-6"
+    >
       <GlassCard padding="md">
         <FormSectionHeader label="Gas Mixes Available" />
         <GlassCheckboxGroup
@@ -156,4 +202,25 @@ export function CompressorProfileForm({ profile, me, create, update }: Compresso
       </GlassCard>
     </ProfileFormShell>
   )
+}
+
+// ── Compat alias ─────────────────────────────────────────────────────
+
+/**
+ * Dispatches to the appropriate section component based on the `section` prop.
+ * The app-layer ConnectedCompressorForm short-circuits before this is reached
+ * at runtime; this export exists so that the lib-layer registry in
+ * connected-role-forms.tsx continues to type-check without modification.
+ */
+export function CompressorProfileForm({
+  section,
+  profile,
+  me,
+  create,
+  update,
+  onSaved,
+}: CompressorSectionProps & { section?: CompressorProfileSection }) {
+  if (section === 'gas-mixes')
+    return <CompressorGasMixesSection profile={profile} create={create} update={update} />
+  return <CompressorContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }

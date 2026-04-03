@@ -45,11 +45,19 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('resource roles (boat, compressor, equipment, pool) have workspaceIncludesEmbeddedProfile true', () => {
+  it('resource roles (boat, equipment, pool) have workspaceIncludesEmbeddedProfile true', () => {
     expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(true)
-    expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(true)
     expect(PROFILE_REGISTRY.equipment.workspaceIncludesEmbeddedProfile).toBe(true)
     expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(true)
+  })
+
+  it('compressor has tabs and workspaceIncludesEmbeddedProfile false', () => {
+    expect(PROFILE_REGISTRY.compressor.tabs).not.toBeNull()
+    expect(PROFILE_REGISTRY.compressor.tabs).toEqual([
+      { id: 'contact', label: 'Contact' },
+      { id: 'gas-mixes', label: 'Gas Mixes' },
+    ])
+    expect(PROFILE_REGISTRY.compressor.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
   it('operator roles have workspaceIncludesEmbeddedProfile false', () => {

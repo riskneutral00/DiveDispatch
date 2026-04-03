@@ -123,3 +123,20 @@ export const diveMasterCredentialsSchema = z.object({
 export const instructorCredentialsSchema = z.object({
   credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
 })
+
+// ---------------------------------------------------------------------------
+// Compressor per-section schemas
+// ---------------------------------------------------------------------------
+
+/** Compressor contact section. */
+export const compressorContactSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Contact phone is required'),
+})
+
+/** Compressor gas mixes section. */
+export const compressorGasMixesSchema = z.object({
+  gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
+})
