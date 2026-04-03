@@ -45,13 +45,10 @@ export const bySlug = query({
   },
 })
 
-/** Inserts default `useNamedUnits: false` on first create. `noWorkAfterTime` exists on the table but is not in args yet — reserved for future scheduling UI. */
 export const upsert = mutation({
   args: {
     activeRole: stakeholderType,
     acceptanceMode: acceptanceModeValidator,
-    maxHoursPerDay: v.number(),
-    postJobBlockDuration: v.number(),
     commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
     preferredVenueSlugs: v.optional(v.array(v.string())),
@@ -66,13 +63,6 @@ export const upsert = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
-
-    if (args.maxHoursPerDay < 1 || args.maxHoursPerDay > 16) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'maxHoursPerDay must be between 1 and 16' })
-    }
-    if (args.postJobBlockDuration < 0 || args.postJobBlockDuration > 480) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'postJobBlockDuration must be between 0 and 480' })
-    }
 
     const user = await ctx.db
       .query('users')
@@ -90,8 +80,6 @@ export const upsert = mutation({
 
     const payload = {
       acceptanceMode: args.acceptanceMode,
-      maxHoursPerDay: args.maxHoursPerDay,
-      postJobBlockDuration: args.postJobBlockDuration,
       commonLanguageCodes: args.commonLanguageCodes,
       preferredInstructorSlugs: args.preferredInstructorSlugs,
       preferredVenueSlugs: args.preferredVenueSlugs,

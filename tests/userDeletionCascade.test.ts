@@ -300,8 +300,6 @@ describe('cleanupDeletedUserData', () => {
         stakeholderId: 'cleanup-user',
         stakeholderType: 'DiveCenter',
         acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 0,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,

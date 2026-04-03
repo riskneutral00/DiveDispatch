@@ -298,8 +298,6 @@ export const togglePreferredInstructor = mutation({
         stakeholderId: user.slug,
         stakeholderType: args.activeRole,
         acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 0,
         useNamedUnits: false,
         commonLanguageCodes: [],
         preferredInstructorSlugs: [args.instructorSlug],

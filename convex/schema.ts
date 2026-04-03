@@ -316,14 +316,16 @@ export default defineSchema({
 
   // ── L1: Stakeholder Preferences ─────────────────────────────────────
 
-  // noWorkAfterTime: optional until scheduling UI exposes it (see stakeholderPreferences.upsert).
   stakeholderPreferences: defineTable({
     stakeholderId: v.string(),
     stakeholderType: stakeholderType,
     acceptanceMode: acceptanceMode,
-    maxHoursPerDay: v.number(),
+    /** @deprecated Removed from UI — availability handled by calendar. */
+    maxHoursPerDay: v.optional(v.number()),
+    /** @deprecated Removed from UI — availability handled by calendar. */
     noWorkAfterTime: v.optional(v.string()),
-    postJobBlockDuration: v.number(),
+    /** @deprecated Removed from UI — availability handled by calendar. */
+    postJobBlockDuration: v.optional(v.number()),
     useNamedUnits: v.boolean(),
     commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),

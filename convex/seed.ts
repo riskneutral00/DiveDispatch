@@ -485,8 +485,6 @@ export const seedStakeholderPreferences = internalMutation({
         stakeholderId: slug,
         stakeholderType: role,
         acceptanceMode: role === 'Instructor' || role === 'DiveMaster' ? 'PrePayRequired' : 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 30,
         useNamedUnits: false,
         commonLanguageCodes: [],
         confirmOnAccept: false,

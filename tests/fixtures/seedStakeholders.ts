@@ -11,8 +11,6 @@ export async function seedStakeholderPreferences(
   overrides: {
     stakeholderType?: Doc<'stakeholderPreferences'>['stakeholderType']
     acceptanceMode?: Doc<'stakeholderPreferences'>['acceptanceMode']
-    maxHoursPerDay?: number
-    postJobBlockDuration?: number
     useNamedUnits?: boolean
     commonLanguageCodes?: string[]
     confirmOnAccept?: boolean
@@ -29,8 +27,6 @@ export async function seedStakeholderPreferences(
     stakeholderId,
     stakeholderType: overrides.stakeholderType ?? 'DiveCenter',
     acceptanceMode: overrides.acceptanceMode ?? 'Auto',
-    maxHoursPerDay: overrides.maxHoursPerDay ?? 8,
-    postJobBlockDuration: overrides.postJobBlockDuration ?? 0,
     useNamedUnits: overrides.useNamedUnits ?? false,
     commonLanguageCodes: overrides.commonLanguageCodes ?? ['en'],
     confirmOnAccept: overrides.confirmOnAccept ?? true,

@@ -2,8 +2,8 @@
  * Coverage Gate — Integration Tests
  *
  * Validates that createDraftShell rejects booking creation when the
- * operator's preferred resources don't satisfy all 5 coverage requirements
- * (instructor, equipment, confined water, open water, compressor).
+ * operator's preferred resources don't satisfy all 4 coverage requirements
+ * (instructor, equipment, venue/boat, compressor).
  */
 
 import { describe, it, expect, vi } from 'vitest'

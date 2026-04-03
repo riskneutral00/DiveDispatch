@@ -45,8 +45,6 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
   })
   await seedStakeholderPreferences(ctx, slug, {
     stakeholderType: 'DiveCenter',
-    maxHoursPerDay: 0,
-    postJobBlockDuration: 0,
     commonLanguageCodes: [],
     confirmOnAccept: false,
     confirmOnDecline: false,

@@ -103,7 +103,7 @@ export const createDraftShell = mutation({
     }
     const coverage = checkPreferenceCoverage(coverageInput)
     if (!coverage.isComplete) {
-      throw new ConvexError({ code: ErrorCode.COVERAGE_INCOMPLETE, missing: coverage.missing })
+      throw new ConvexError({ code: ErrorCode.RESOURCES_INCOMPLETE, missing: coverage.missing })
     }
 
     // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
@@ -165,6 +165,12 @@ export const createReferralDraftShell = mutation({
       .collect()
     const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
     if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+
+    // Enforce profile + resource completeness on the target DC
+    const dcRoleStatus = await checkProfileCompleteness(ctx, { _id: dcUser._id }, dcOperatorRole.role)
+    if (dcRoleStatus.percentage < 100) {
+      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: dcRoleStatus.incomplete })
+    }
 
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,

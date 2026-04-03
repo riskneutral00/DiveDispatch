@@ -256,8 +256,6 @@ describe('2f — max 3 non-confined dives per day validation', () => {
         stakeholderId: 'instr-1',
         stakeholderType: 'Instructor',
         acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 0,
         useNamedUnits: false,
         commonLanguageCodes: ['en'],
         confirmOnAccept: true,

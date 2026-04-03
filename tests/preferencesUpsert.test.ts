@@ -18,8 +18,6 @@ function baseArgs(overrides: Record<string, unknown> = {}) {
   return {
     activeRole: 'DiveCenter' as const,
     acceptanceMode: 'Auto' as const,
-    maxHoursPerDay: 8,
-    postJobBlockDuration: 30,
     commonLanguageCodes: ['en'],
     confirmOnAccept: true,
     confirmOnDecline: true,
@@ -39,8 +37,6 @@ describe('stakeholderPreferences.bySlug', () => {
         stakeholderId: 'dc-target',
         stakeholderType: 'DiveCenter',
         acceptanceMode: 'Auto',
-        maxHoursPerDay: 8,
-        postJobBlockDuration: 30,
         useNamedUnits: false,
         confirmOnAccept: false,
         confirmOnDecline: false,

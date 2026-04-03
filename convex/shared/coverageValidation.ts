@@ -8,7 +8,8 @@
  * collectively satisfy four requirements: instructor, equipment manager,
  * venue or boat, and compressor.
  *
- * Boats can bundle compressor capability (hasCompressor).
+ * Boats satisfy the venue requirement (captain picks the site).
+ * Boats can also satisfy the compressor requirement via hasCompressor.
  */
 
 export interface BoatCapabilities {
@@ -42,24 +43,22 @@ export function checkPreferenceCoverage(input: CoverageInput): CoverageResult {
     missing.push('equipmentManager')
   }
 
-  // 3. Venue or boat — at least one preferred
+  // 3. Venue or Boat — at least one venue slug OR one boat slug
   const hasVenueOrBoat =
-    input.preferredVenueSlugs.length > 0 ||
-    input.preferredBoatSlugs.length > 0
+    input.preferredVenueSlugs.length > 0 || input.preferredBoatSlugs.length > 0
   if (!hasVenueOrBoat) {
     missing.push('venueOrBoat')
   }
 
-  // Scan boat capabilities for bundled compressor
-  let hasCompressorAnywhere =
-    input.preferredCompressorSlugs.length > 0
+  // 4. Compressor — standalone compressor slug OR a boat with hasCompressor
+  let hasCompressorAnywhere = input.preferredCompressorSlugs.length > 0
   for (const slug of input.preferredBoatSlugs) {
     const caps = input.boatCapabilities[slug]
-    if (!caps) continue
-    if (caps.hasCompressor) hasCompressorAnywhere = true
+    if (caps?.hasCompressor) {
+      hasCompressorAnywhere = true
+      break
+    }
   }
-
-  // 5. Compressor
   if (!hasCompressorAnywhere) {
     missing.push('compressor')
   }
