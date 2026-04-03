@@ -72,7 +72,7 @@ Agent(
 
 For M/L tickets: also run smoke E2E (`npx playwright test e2e/smoke.spec.ts`). Collect findings.
 
-**Act:** Invoke Skill("escalate") with args `{findings}` → creates tickets for CRITICAL/HIGH/MEDIUM, logs LOW.
+**Act:** Invoke Skill("escalate") with args `{findings}` → creates tickets for CRITICAL only. HIGH/MEDIUM/LOW are logged to `.backseat/findings.md` — no tickets.
 
 **Write review event for Patrol:**
 

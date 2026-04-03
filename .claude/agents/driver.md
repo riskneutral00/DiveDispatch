@@ -53,9 +53,9 @@ If none exist → the merge landed but Backseat never saw it. Write `.car/merged
 ls .car/fixes/*.json 2>/dev/null
 ```
 
-If any exist → read the fix ticket file, pick that ticket directly (skip ticket-pick scoring). **Driver MUST drain ALL fix tickets before picking new work.** After processing a fix ticket, move the event: `mv .car/fixes/DD-{NNN}.json .car/processed/fix-DD-{NNN}.json`
+If any exist → read the fix ticket file, pick that ticket directly (skip ticket-pick scoring). **Driver MUST drain ALL fix tickets before picking new work.** After processing a fix ticket, move the event: `mv .car/fixes/DD-{NNN}.json .car/processed/fix-DD-{NNN}.json`. Set `is_fix_ticket = true`.
 
-If no fix tickets → Invoke Skill("ticket-pick") → returns ticket ID or "idle".
+If no fix tickets → Invoke Skill("ticket-pick") → returns ticket ID or "idle". Set `is_fix_ticket = false`.
 
 - If "idle": print status, write sentinel file `echo "idle" > .car/exit-driver`, then stop. The watchdog will kill this process and the restart loop will relaunch with a fresh context window.
   ```
@@ -63,9 +63,20 @@ If no fix tickets → Invoke Skill("ticket-pick") → returns ticket ID or "idle
   ```
 - If ticket: read `.tickets/DD-{id}.md`, claim it (`status: in_progress`, `assigned_to: driver`, `branch: ticket/DD-{id}`).
 
-**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent:
+**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent — use **Opus** for fix tickets (Backseat-flagged HIGH/CRITICAL), Sonnet for normal tickets:
 
 ```
+# Fix ticket (is_fix_ticket = true):
+Agent(
+  description: "DD-{id}: {title} [FIX]",
+  subagent_type: "jira-worker",
+  model: "opus",
+  prompt: "<full ticket spec + worktree path>",
+  run_in_background: false,
+  mode: "bypassPermissions"
+)
+
+# Normal ticket (is_fix_ticket = false):
 Agent(
   description: "DD-{id}: {title}",
   subagent_type: "jira-worker",
@@ -106,6 +117,7 @@ Timeout per size (S=5min, M=15min, L=30min).
      Agent(
        description: "DD-{id}: retry {retry_count} — fix review findings",
        subagent_type: "jira-worker",
+       model: "opus",  # always Opus on retry — normal tickets that fail review need the upgrade too
        prompt: "<full ticket spec>
 
      RETRY MODE — Previous attempt was reviewed and got NO-GO.
