@@ -160,6 +160,28 @@ describe('releaseBookingReservations', () => {
     })
   })
 
+  it('throws SNAPSHOT_DOUBLE_WRITE when restoreSnapshotUnits is called twice with the same snapshotId (DD-278 accumulation bug guard)', async () => {
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      const unit = await seedInventoryUnit(ctx, { totalUnits: 3, displayName: 'Boat' })
+      const snapshotId = await seedSnapshot(ctx, unit, { totalUnits: 3, availableUnits: 1, reservedUnits: 2 })
+
+      const seenSnapshotIds = new Set<string>()
+
+      // First call succeeds — snapshot is processed and the ID is recorded in the set
+      await restoreSnapshotUnits(ctx, snapshotId, 1, seenSnapshotIds)
+
+      // Second call with the same snapshotId must throw — double-write detected
+      await expect(
+        restoreSnapshotUnits(ctx, snapshotId, 1, seenSnapshotIds),
+      ).rejects.toMatchObject({
+        data: {
+          code: ErrorCode.SNAPSHOT_DOUBLE_WRITE,
+        },
+      })
+    })
+  })
+
   it('throws MISSING_SNAPSHOT_ON_RELEASE when snapshot disappears between lookup and restore (Invariant 3 guard)', async () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
