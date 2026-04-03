@@ -62,65 +62,60 @@ export function AddCustomerDialog({
   return (
     <GlassDialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
-        {/* Name */}
+        {/* Name + Contact paired with Languages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <GlassInput
-            label="Full name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              if (nameError) setNameError('')
-            }}
-            placeholder="e.g. Sara Kim"
-            error={nameError}
-            autoFocus
-          />
-        </div>
-
-        <hr className="form-divider" />
-
-        {/* Contact method */}
-        <div className="flex flex-col gap-2">
-          <p
-            className="text-sm font-medium text-secondary"
-            style={{ fontFamily: 'var(--font-body)' }}
-          >
-            Contact (optional)
-          </p>
-          <GlassButtonGroup
-            variant="segment"
-            value={contactType}
-            onChange={(v) => setContactType(v as ContactType)}
-            aria-label="Contact type"
-            options={[
-              { value: 'email', label: 'Email' },
-              { value: 'whatsapp', label: 'WhatsApp' },
-              { value: 'line', label: 'LINE' },
-            ] satisfies GlassButtonGroupOption[]}
-          />
-          <GlassInput
-            value={contactValue}
-            onChange={(e) => setContactValue(e.target.value)}
-            placeholder={
-              contactType === 'email'
-                ? 'customer@email.com'
-                : contactType === 'whatsapp'
-                  ? '+66 81 234 5678'
-                  : 'LINE ID'
-            }
-            type={contactType === 'email' ? 'email' : 'text'}
-          />
-        </div>
-
-        <hr className="form-divider" />
-
-        {/* Languages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <LanguageField
-            variant="customer"
-            value={languages}
-            onChange={setLanguages}
-          />
+          <div className="flex flex-col gap-3 min-w-0">
+            <GlassInput
+              label="Full name"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                if (nameError) setNameError('')
+              }}
+              placeholder="e.g. Sara Kim"
+              error={nameError}
+              autoFocus
+            />
+            <div className="flex flex-col gap-2">
+              <p
+                className="text-sm font-medium text-secondary"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                Contact (optional)
+              </p>
+              <GlassButtonGroup
+                variant="segment"
+                value={contactType}
+                onChange={(v) => setContactType(v as ContactType)}
+                aria-label="Contact type"
+                options={[
+                  { value: 'email', label: 'Email' },
+                  { value: 'whatsapp', label: 'WhatsApp' },
+                  { value: 'line', label: 'LINE' },
+                ] satisfies GlassButtonGroupOption[]}
+              />
+              <GlassInput
+                value={contactValue}
+                onChange={(e) => setContactValue(e.target.value)}
+                placeholder={
+                  contactType === 'email'
+                    ? 'customer@email.com'
+                    : contactType === 'whatsapp'
+                      ? '+66 81 234 5678'
+                      : 'LINE ID'
+                }
+                type="text"
+                inputMode={contactType === 'email' ? 'email' : contactType === 'whatsapp' ? 'tel' : 'text'}
+              />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <LanguageField
+              variant="customer"
+              value={languages}
+              onChange={setLanguages}
+            />
+          </div>
         </div>
 
         {/* Actions */}

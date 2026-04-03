@@ -147,60 +147,68 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
       </div>
 
       <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <LanguageField
-            variant="customer"
-            value={focusedLanguages}
-            onChange={setFocusedLanguages}
-          />
-        </div>
-
-        {supportsCoursePreferences && (
-          <>
-            <div>
-              <p className="text-sm font-medium mb-1 text-secondary">
-                Default Course Durations <span style={{ fontWeight: 400 }}>(optional)</span>
-              </p>
-              <p className="text-xs mb-3 text-secondary">
-                Used when creating bookings.
-              </p>
-              <div className="grid grid-cols-3 gap-3">
-                <GlassInput
-                  label="Open Water Days"
-                  type="number"
-                  min={1}
-                  max={MAX_COURSE_DAYS}
-                  value={owDays}
-                  onChange={(e) => setOwDays(e.target.value)}
-                  placeholder="4"
-                />
-                <GlassInput
-                  label="Advanced OW Days"
-                  type="number"
-                  min={1}
-                  max={MAX_COURSE_DAYS}
-                  value={aowDays}
-                  onChange={(e) => setAowDays(e.target.value)}
-                  placeholder="2"
-                />
-                <GlassInput
-                  label="Adventure Days"
-                  type="number"
-                  min={1}
-                  max={MAX_COURSE_DAYS}
-                  value={oaDays}
-                  onChange={(e) => setOaDays(e.target.value)}
-                  placeholder="1"
-                />
+        {supportsCoursePreferences ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+            <div className="flex flex-col gap-4 min-w-0">
+              <LanguageField
+                variant="customer"
+                value={focusedLanguages}
+                onChange={setFocusedLanguages}
+              />
+              <div>
+                <p className="text-sm font-medium mb-1 text-secondary">
+                  Default Course Durations <span style={{ fontWeight: 400 }}>(optional)</span>
+                </p>
+                <p className="text-xs mb-3 text-secondary">
+                  Used when creating bookings.
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <GlassInput
+                    label="OW Days"
+                    type="number"
+                    min={1}
+                    max={MAX_COURSE_DAYS}
+                    value={owDays}
+                    onChange={(e) => setOwDays(e.target.value)}
+                    placeholder="4"
+                  />
+                  <GlassInput
+                    label="AOW Days"
+                    type="number"
+                    min={1}
+                    max={MAX_COURSE_DAYS}
+                    value={aowDays}
+                    onChange={(e) => setAowDays(e.target.value)}
+                    placeholder="2"
+                  />
+                  <GlassInput
+                    label="Adv. Days"
+                    type="number"
+                    min={1}
+                    max={MAX_COURSE_DAYS}
+                    value={oaDays}
+                    onChange={(e) => setOaDays(e.target.value)}
+                    placeholder="1"
+                  />
+                </div>
               </div>
             </div>
-
-            <SpecialtyField
-              agencyCode={firstAgency}
-              value={aowSpecialties}
-              onChange={setAowSpecialties}
+            <div className="min-w-0">
+              <SpecialtyField
+                agencyCode={firstAgency}
+                value={aowSpecialties}
+                onChange={setAowSpecialties}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+            <LanguageField
+              variant="customer"
+              value={focusedLanguages}
+              onChange={setFocusedLanguages}
             />
-          </>
+          </div>
         )}
 
         {error && (
