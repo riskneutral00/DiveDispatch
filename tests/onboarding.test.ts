@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
-import { seedUser, seedDiveCenterProfile, type SeedCtx } from './fixtures'
+import { seedUser, seedDiveCenterProfile, seedStakeholderPreferences } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -64,6 +64,14 @@ describe('getOnboardingStatus', () => {
       // Set customerLanguages
       const dc = await ctx.db.query('diveCenters').withIndex('by_userId', (q: any) => q.eq('userId', uid)).unique()
       if (dc) await ctx.db.patch(dc._id, { customerLanguages: ['en'] })
+      // Seed preferences — layers 4 (acceptanceMode) and 5 (coverage) for operator roles
+      await seedStakeholderPreferences(ctx, 'dc-complete', {
+        stakeholderType: 'DiveCenter',
+        preferredInstructorSlugs: ['any-instr'],
+        preferredEquipmentSlugs: ['any-equip'],
+        preferredBoatSlugs: ['any-boat'],
+        preferredCompressorSlugs: ['any-comp'],
+      })
       return uid
     })
 

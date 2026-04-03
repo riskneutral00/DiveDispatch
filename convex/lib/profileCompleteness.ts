@@ -1,9 +1,18 @@
 // Config-driven profile completeness check — used by getProfileCompletionForRole query,
 // getOnboardingStatus query, createDraftShell mutation, and profile completion banner.
+//
+// Five layers for operator roles:
+// 1. Profile (users table): name, email, phone
+// 2. Settings (users table): appLanguage
+// 3. Role profile (role-specific table): role-required fields
+// 4. Preferences (stakeholderPreferences): acceptanceMode
+// 5. Resource coverage (stakeholderPreferences): instructor, equipment, venue/boat, compressor
 
-import type { Doc, Id } from '../_generated/dataModel'
+import type { Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
+import { OPERATOR_ROLE_SET } from './auth'
+import { AGENCIES } from '../shared/agencies'
 
 const profileTable: Record<string, string> = {
   DiveCenter: 'diveCenters',
@@ -21,10 +30,8 @@ const profileTable: Record<string, string> = {
 }
 
 /**
- * Check completeness for a single role. Three layers:
- * 1. Profile layer: PROFILE_REQUIRED fields on users table
- * 2. User account fields (users table): SETTINGS_REQUIRED — app language and similar
- * 3. Role profile layer: ROLE_REQUIRED[role] fields on role-specific profile table
+ * Check completeness for a single role. Three layers for all roles,
+ * plus two additional layers (preferences + coverage) for operator roles.
  */
 export async function checkProfileCompleteness(
   ctx: Pick<QueryCtx, 'db'>,
@@ -53,10 +60,19 @@ export async function checkProfileCompleteness(
       if (!courses.every((x) => typeof x === 'string' && str(x))) return false
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
-  const isAssociationDeepValid = (entries: unknown[]) =>
+  // DiveCenter associations include selectedSpecialties; Agent associations do not.
+  const isAssociationDeepValid = (entries: unknown[], checkRole: string) =>
     entries.every((e) => {
       const a = e as Record<string, unknown>
-      return str(a.agency) && str(a.number)
+      if (!str(a.agency) || !str(a.number)) return false
+      if (checkRole === 'DiveCenter') {
+        const specs = a.selectedSpecialties
+        if (!Array.isArray(specs)) return false
+        const agencyDef = AGENCIES[a.agency as string]
+        const requiredCount = agencyDef?.specialtyCount ?? 5
+        if (specs.length < requiredCount) return false
+      }
+      return true
     })
   const isFleetDeepValid = (entries: unknown[]) =>
     entries.every((e) => {
@@ -133,7 +149,7 @@ export async function checkProfileCompleteness(
         } else if (role === 'DiveMaster' && !isDiveMasterCredentialDeepValid(value)) {
           incomplete.push(field)
         }
-      } else if (field === 'associations' && !isAssociationDeepValid(value)) {
+      } else if (field === 'associations' && !isAssociationDeepValid(value, role)) {
         incomplete.push(field)
       } else if (field === 'fleet' && !isFleetDeepValid(value)) {
         incomplete.push(field)
@@ -143,7 +159,62 @@ export async function checkProfileCompleteness(
     }
   }
 
-  const total = PROFILE_REQUIRED.length + SETTINGS_REQUIRED.length + roleFields.length
+  // 4. Preferences layer (operator roles only) — acceptanceMode
+  const isOperator = OPERATOR_ROLE_SET.has(role)
+  let prefsFieldCount = 0
+  let prefs: Record<string, unknown> | null = null
+
+  if (isOperator) {
+    prefsFieldCount = 1 // acceptanceMode
+    const prefsDoc = await ctx.db
+      .query('stakeholderPreferences')
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userDoc.slug))
+      .unique()
+    prefs = prefsDoc as Record<string, unknown> | null
+    if (!prefs || !str(prefs.acceptanceMode)) {
+      incomplete.push('acceptanceMode')
+    }
+  }
+
+  // 5. Resource coverage layer (operator roles only)
+  let coverageFieldCount = 0
+
+  if (isOperator) {
+    coverageFieldCount = 4 // instructor, equipment, venueOrBoat, compressor
+    const instrSlugs = (prefs?.preferredInstructorSlugs ?? []) as string[]
+    const equipSlugs = (prefs?.preferredEquipmentSlugs ?? []) as string[]
+    const venueSlugs = (prefs?.preferredVenueSlugs ?? []) as string[]
+    const boatSlugs = (prefs?.preferredBoatSlugs ?? []) as string[]
+    const compSlugs = (prefs?.preferredCompressorSlugs ?? []) as string[]
+
+    if (instrSlugs.length === 0) incomplete.push('preferredInstructor')
+    if (equipSlugs.length === 0) incomplete.push('preferredEquipment')
+    if (venueSlugs.length === 0 && boatSlugs.length === 0) incomplete.push('preferredVenueOrBoat')
+
+    // Compressor: direct slug OR a preferred boat with hasCompressor
+    let hasCompressor = compSlugs.length > 0
+    if (!hasCompressor) {
+      for (const slug of boatSlugs) {
+        const boatUser = await ctx.db
+          .query('users')
+          .withIndex('by_slug', (q) => q.eq('slug', slug))
+          .unique()
+        if (boatUser) {
+          const boat = await ctx.db
+            .query('boats')
+            .withIndex('by_userId', (q) => q.eq('userId', boatUser._id))
+            .unique()
+          if (boat && boat.hasCompressor) {
+            hasCompressor = true
+            break
+          }
+        }
+      }
+    }
+    if (!hasCompressor) incomplete.push('preferredCompressor')
+  }
+
+  const total = PROFILE_REQUIRED.length + SETTINGS_REQUIRED.length + roleFields.length + prefsFieldCount + coverageFieldCount
   const filled = total - incomplete.length
   const percentage = total === 0 ? 100 : Math.round((filled / total) * 100)
 

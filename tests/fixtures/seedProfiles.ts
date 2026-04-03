@@ -30,7 +30,7 @@ export async function seedDiveCenterProfile(
     lng: overrides.lng ?? 99.8408,
     email: overrides.email ?? 'dc@test.com',
     phone: overrides.phone ?? '+66123456789',
-    associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
+    associations: overrides.associations ?? [{ agency: 'PADI', number: '12345', selectedSpecialties: ['sp1', 'sp2', 'sp3', 'sp4', 'sp5'] }],
     customerLanguages: overrides.customerLanguages ?? ['en'],
     verified: overrides.verified ?? true,
   })

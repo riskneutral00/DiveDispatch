@@ -72,7 +72,7 @@ async function seedDCProfile(ctx: SeedCtx, userId: Id<'users'>, slug: string) {
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('createDraftShell — coverage gate', () => {
-  it('rejects with COVERAGE_INCOMPLETE when only instructor is in preferences (no equipment/venue/boat/compressor)', async () => {
+  it('rejects with PROFILE_INCOMPLETE when only instructor is in preferences (missing equipment/venue/compressor)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-noprofs')
@@ -88,11 +88,11 @@ describe('createDraftShell — coverage gate', () => {
         api.bookingDraftMutations.createDraftShell,
         { activeRole: 'DiveCenter', startDate: testDate(5) },
       ),
-      'COVERAGE_INCOMPLETE',
+      'PROFILE_INCOMPLETE',
     )
   })
 
-  it('rejects with COVERAGE_INCOMPLETE listing 4 missing when only instructor pref is set', async () => {
+  it('rejects with PROFILE_INCOMPLETE listing 3 missing resources when only instructor pref is set', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-empty')
@@ -117,17 +117,15 @@ describe('createDraftShell — coverage gate', () => {
       const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
       const d = data as { code: string; missing: string[] }
       return (
-        d.code === 'COVERAGE_INCOMPLETE' &&
-        d.missing.length === 3 &&
-        !d.missing.includes('instructor') &&
-        d.missing.includes('equipmentManager') &&
-        d.missing.includes('venueOrBoat') &&
-        d.missing.includes('compressor')
+        d.code === 'PROFILE_INCOMPLETE' &&
+        d.missing.includes('preferredEquipment') &&
+        d.missing.includes('preferredVenueOrBoat') &&
+        d.missing.includes('preferredCompressor')
       )
     })
   })
 
-  it('rejects when only instructor is preferred (missing 4 others)', async () => {
+  it('rejects when only instructor is preferred (missing equipment, venue, compressor)', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
       const userId = await seedUserBySlug(ctx, 'dc-partial')
@@ -148,9 +146,9 @@ describe('createDraftShell — coverage gate', () => {
       const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
       const d = data as { code: string; missing: string[] }
       return (
-        d.code === 'COVERAGE_INCOMPLETE' &&
-        !d.missing.includes('instructor') &&
-        d.missing.includes('equipmentManager')
+        d.code === 'PROFILE_INCOMPLETE' &&
+        !d.missing.includes('preferredInstructor') &&
+        d.missing.includes('preferredEquipment')
       )
     })
   })

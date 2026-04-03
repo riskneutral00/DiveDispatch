@@ -9,6 +9,8 @@ import {
   seedInstructorProfile,
   seedEquipmentProfile,
   seedAgent,
+  seedBoatProfile,
+  seedStakeholderPreferences,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 
@@ -147,6 +149,76 @@ describe('checkProfileCompleteness', () => {
       expect(result.incomplete).toContain('country')
       expect(result.incomplete).toContain('associations')
       expect(result.incomplete).toContain('customerLanguages')
+    })
+  })
+})
+
+// ─── DiveCenter operator — compressor coverage layer ─────────────────────────
+
+describe('checkProfileCompleteness — DiveCenter compressor coverage', () => {
+  it('returns 100% when a preferred boat with hasCompressor=true satisfies compressor requirement', async () => {
+    await t.run(async (ctx) => {
+      const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-boatcomp', tokenIdentifier: 'clerk|dc-boatcomp' })
+      await ctx.db.patch(dcId, { phone: '+66000000001' })
+      await seedDiveCenterProfile(ctx, dcId)
+
+      const boatId = await seedUser(ctx, { role: 'Boat', slug: 'boat-hascomp', tokenIdentifier: 'clerk|boat-hascomp' })
+      const boatProfileId = await seedBoatProfile(ctx, boatId)
+      await ctx.db.patch(boatProfileId, { hasCompressor: true })
+
+      await seedStakeholderPreferences(ctx, 'dc-boatcomp', {
+        stakeholderType: 'DiveCenter',
+        preferredInstructorSlugs: ['any-instr'],
+        preferredEquipmentSlugs: ['any-equip'],
+        preferredBoatSlugs: ['boat-hascomp'],
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: dcId }, 'DiveCenter')
+      expect(result.percentage).toBe(100)
+      expect(result.incomplete).toHaveLength(0)
+    })
+  })
+
+  it('returns 100% when preferredCompressorSlugs is populated directly', async () => {
+    await t.run(async (ctx) => {
+      const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-directcomp', tokenIdentifier: 'clerk|dc-directcomp' })
+      await ctx.db.patch(dcId, { phone: '+66000000002' })
+      await seedDiveCenterProfile(ctx, dcId)
+
+      await seedStakeholderPreferences(ctx, 'dc-directcomp', {
+        stakeholderType: 'DiveCenter',
+        preferredInstructorSlugs: ['any-instr'],
+        preferredEquipmentSlugs: ['any-equip'],
+        preferredVenueSlugs: ['any-venue'],
+        preferredCompressorSlugs: ['any-compressor'],
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: dcId }, 'DiveCenter')
+      expect(result.percentage).toBe(100)
+      expect(result.incomplete).toHaveLength(0)
+    })
+  })
+
+  it('marks preferredCompressor incomplete when preferred boat has hasCompressor=false and no compressor slug', async () => {
+    await t.run(async (ctx) => {
+      const dcId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-nocomp', tokenIdentifier: 'clerk|dc-nocomp' })
+      await ctx.db.patch(dcId, { phone: '+66000000003' })
+      await seedDiveCenterProfile(ctx, dcId)
+
+      const boatId = await seedUser(ctx, { role: 'Boat', slug: 'boat-nocomp', tokenIdentifier: 'clerk|boat-nocomp' })
+      await seedBoatProfile(ctx, boatId, { hasCompressor: false })
+
+      await seedStakeholderPreferences(ctx, 'dc-nocomp', {
+        stakeholderType: 'DiveCenter',
+        preferredInstructorSlugs: ['any-instr'],
+        preferredEquipmentSlugs: ['any-equip'],
+        preferredBoatSlugs: ['boat-nocomp'],
+        // no preferredCompressorSlugs
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: dcId }, 'DiveCenter')
+      expect(result.incomplete).toContain('preferredCompressor')
+      expect(result.percentage).toBeLessThan(100)
     })
   })
 })
