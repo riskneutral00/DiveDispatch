@@ -72,8 +72,11 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
   },
   pool: {
     label: 'Pool',
-    tabs: null,
-    workspaceIncludesEmbeddedProfile: true,
+    tabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'capabilities', label: 'Capabilities' },
+    ],
+    workspaceIncludesEmbeddedProfile: false,
   },
   'dive-site': {
     label: 'Dive Site',

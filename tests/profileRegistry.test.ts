@@ -45,9 +45,17 @@ describe('PROFILE_REGISTRY', () => {
     expect(PROFILE_REGISTRY.agent.tabs).not.toBeNull()
   })
 
-  it('embedded resource roles (boat, pool) have workspaceIncludesEmbeddedProfile true', () => {
+  it('boat is embedded (no tabs, workspaceIncludesEmbeddedProfile true)', () => {
     expect(PROFILE_REGISTRY.boat.workspaceIncludesEmbeddedProfile).toBe(true)
-    expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(true)
+  })
+
+  it('pool has tabs and workspaceIncludesEmbeddedProfile false', () => {
+    expect(PROFILE_REGISTRY.pool.tabs).not.toBeNull()
+    expect(PROFILE_REGISTRY.pool.tabs).toEqual([
+      { id: 'contact', label: 'Contact' },
+      { id: 'capabilities', label: 'Capabilities' },
+    ])
+    expect(PROFILE_REGISTRY.pool.workspaceIncludesEmbeddedProfile).toBe(false)
   })
 
   it('equipment has tabs and workspaceIncludesEmbeddedProfile false', () => {

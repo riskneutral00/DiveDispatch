@@ -157,3 +157,22 @@ export const equipmentContactSchema = z.object({
 export const equipmentGearCatalogSchema = z.object({
   manufacturersByGearType: z.record(z.string(), z.array(z.string())),
 })
+
+// ---------------------------------------------------------------------------
+// Pool per-section schemas
+// ---------------------------------------------------------------------------
+
+/** Pool contact section. */
+export const poolContactSchema = z.object({
+  name: z.string().min(1, 'Business name is required'),
+  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(1, 'Contact phone is required'),
+})
+
+/** Pool capabilities section. */
+export const poolCapabilitiesSchema = z.object({
+  confinedCapable: z.boolean(),
+  maxDepth: z.number().positive('Must be greater than 0'),
+  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
+})
