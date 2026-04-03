@@ -136,6 +136,9 @@ export const addRole = mutation({
 export const bookingCountForRole = query({
   args: { roleId: v.id('userRoles') },
   handler: async (ctx, { roleId }) => {
+    const authUser = await getAuthUser(ctx)
+    if (!authUser) return 0
+
     const roleRow = await ctx.db.get(roleId)
     if (!roleRow) return 0
 
@@ -178,16 +181,15 @@ export const bookingCountsForMyRoles = query({
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .collect()
 
-    const counts: Record<string, number> = {}
-    for (const role of roles) {
-      const resourceType = effectiveResourceType(role.role)
-      if (!resourceType) {
-        counts[role._id] = 0
-        continue
-      }
-      counts[role._id] = await countActiveBookings(ctx, user.slug, resourceType) // batch-exempt: role count is bounded (max ~5)
-    }
-    return counts
+    const entries = await Promise.all(
+      roles.map(async (role): Promise<[string, number]> => {
+        const resourceType = effectiveResourceType(role.role)
+        if (!resourceType) return [role._id, 0]
+        const count = await countActiveBookings(ctx, user.slug, resourceType)
+        return [role._id, count]
+      }),
+    )
+    return Object.fromEntries(entries) as Record<string, number>
   },
 })
 
@@ -202,7 +204,7 @@ async function countActiveBookings(
     .withIndex('by_resourceType_resourceSlug', (q) =>
       q.eq('resourceType', resourceType).eq('resourceSlug', slug),
     )
-    .collect()
+    .take(500)
 
   if (resources.length === 0) return 0
 
@@ -253,7 +255,7 @@ export const deleteRole = mutation({
     // 2. Delete profile record (table varies by role)
     await deleteProfileForRole(ctx, roleRow.role, user._id)
 
-    // 3. Delete inventoryUnits + their snapshots for this user slug + resource type
+    // 3. Delete inventoryUnits + their reservations + snapshots for this user slug + resource type
     if (resourceType) {
       const units = await ctx.db
         .query('inventoryUnits')
@@ -262,19 +264,33 @@ export const deleteRole = mutation({
         )
         .collect()
 
-      // Fetch all snapshots for all units in parallel
-      const snapshotSets = await Promise.all(
-        units.map((unit) =>
-          ctx.db
-            .query('availabilitySnapshots')
-            .withIndex('by_inventoryUnitId_date', (q) =>
-              q.eq('inventoryUnitId', unit._id),
-            )
-            .collect(),
+      // Fetch all reservations and snapshots for all units in parallel
+      const [reservationSets, snapshotSets] = await Promise.all([
+        Promise.all(
+          units.map((unit) =>
+            ctx.db
+              .query('reservations')
+              .withIndex('by_inventoryUnitId_status', (q) =>
+                q.eq('inventoryUnitId', unit._id),
+              )
+              .collect(),
+          ),
         ),
-      )
+        Promise.all(
+          units.map((unit) =>
+            ctx.db
+              .query('availabilitySnapshots')
+              .withIndex('by_inventoryUnitId_date', (q) =>
+                q.eq('inventoryUnitId', unit._id),
+              )
+              .collect(),
+          ),
+        ),
+      ])
+      const allReservations = reservationSets.flat()
       const allSnapshots = snapshotSets.flat()
 
+      await batchDelete(ctx, allReservations)
       await batchDelete(ctx, allSnapshots)
       await batchDelete(ctx, units)
     }
@@ -333,7 +349,21 @@ async function deleteProfileForRole(
       if (p) await ctx.db.delete(p._id)
       break
     }
-    // Liveaboard, DiveResort, DiveHostel: no separate profile table yet
+    case 'Liveaboard': {
+      const p = await ctx.db.query('liveaboards').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
+      if (p) await ctx.db.delete(p._id)
+      break
+    }
+    case 'DiveResort': {
+      const p = await ctx.db.query('diveResorts').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
+      if (p) await ctx.db.delete(p._id)
+      break
+    }
+    case 'DiveHostel': {
+      const p = await ctx.db.query('diveHostels').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
+      if (p) await ctx.db.delete(p._id)
+      break
+    }
     default:
       break
   }

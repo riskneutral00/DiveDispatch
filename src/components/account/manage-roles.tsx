@@ -44,6 +44,8 @@ export function ManageRoles({
     try {
       await onDeleteRole(roleId)
       setConfirmingId(null)
+    } catch {
+      // Keep confirmation open on failure — caller handles error display
     } finally {
       setDeletingId(null)
     }
@@ -109,44 +111,50 @@ export function ManageRoles({
                   </GlassButton>
                 )}
                 {canDelete && (
-                  <button
-                    type="button"
+                  <GlassButton
+                    variant="destructive-ghost"
+                    size="icon"
                     aria-label={`Delete ${config.label} role`}
                     disabled={isBlocked}
                     onClick={() => setConfirmingId(isConfirming ? null : entry._id)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: isBlocked ? 'not-allowed' : 'pointer',
-                      opacity: isBlocked ? 0.3 : 1,
-                      padding: 4,
-                      color: 'var(--color-destructive)',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
                   >
                     <Trash2 size={16} />
-                  </button>
+                  </GlassButton>
                 )}
               </div>
 
-              {/* Booking-blocked hint */}
-              {canDelete && isBlocked && (
+              {/* Booking-blocked hint — always rendered when canDelete, toggle via height+opacity */}
+              {canDelete && (
                 <div
                   className="text-secondary"
-                  style={{ fontSize: 12, marginTop: 6, paddingLeft: 32 }}
+                  aria-hidden={!isBlocked}
+                  data-blocked={isBlocked}
+                  style={{
+                    fontSize: 12,
+                    paddingLeft: 32,
+                    height: isBlocked ? 'auto' : 0,
+                    marginTop: isBlocked ? 6 : 0,
+                    overflow: 'hidden',
+                    opacity: isBlocked ? 1 : 0,
+                    transition: 'opacity 150ms ease',
+                  }}
                 >
                   {`Cannot delete — ${blockingCount} active ${blockingCount === 1 ? 'booking' : 'bookings'} use this role's resources.`}
                 </div>
               )}
 
-              {/* Inline confirmation */}
-              {isConfirming && !isBlocked && (
+              {/* Inline confirmation — always rendered when canDelete, toggle via visibility+height */}
+              {canDelete && (
                 <div
+                  aria-hidden={!(isConfirming && !isBlocked)}
+                  data-confirming={isConfirming && !isBlocked}
                   style={{
-                    marginTop: 10,
-                    paddingTop: 10,
-                    borderTop: '1px solid var(--color-glass-border)',
+                    visibility: isConfirming && !isBlocked ? 'visible' : 'hidden',
+                    height: isConfirming && !isBlocked ? 'auto' : 0,
+                    overflow: 'hidden',
+                    marginTop: isConfirming && !isBlocked ? 10 : 0,
+                    paddingTop: isConfirming && !isBlocked ? 10 : 0,
+                    borderTop: isConfirming && !isBlocked ? '1px solid var(--color-glass-border)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',

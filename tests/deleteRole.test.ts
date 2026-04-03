@@ -6,10 +6,10 @@
 import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { seedUser, TEST_TOKENS, TEST_SLUGS } from './fixtures'
-import { seedBooking } from './fixtures/seedBookings'
+import { seedBooking, seedSession, seedReservation } from './fixtures/seedBookings'
 import { seedBookingResource } from './fixtures/seedBookings'
 import { seedInventoryUnit, seedSnapshot } from './fixtures/seedInventory'
-import { seedDiveCenterProfile, seedInstructorProfile, seedBoatProfile } from './fixtures/seedProfiles'
+import { seedInstructorProfile } from './fixtures/seedProfiles'
 import { makeT } from './helpers/convex-helpers'
 import type { Id } from '../convex/_generated/dataModel'
 
@@ -188,12 +188,13 @@ describe('userRoles.deleteRole', () => {
     expect(result).toEqual({ blocked: true, bookingCount: 2 })
   })
 
-  it('succeeds and hard-deletes userRoles, profile, inventoryUnits when no active bookings', async () => {
+  it('succeeds and hard-deletes userRoles, profile, inventoryUnits, reservations, snapshots when no active bookings', async () => {
     const t = makeT()
     let roleId: Id<'userRoles'>
     let userId: Id<'users'>
     let unitId: Id<'inventoryUnits'>
     let snapId: Id<'availabilitySnapshots'>
+    let reservationId: Id<'reservations'>
 
     await t.run(async (ctx) => {
       userId = await seedUser(ctx, { skipUserRoles: true })
@@ -215,12 +216,22 @@ describe('userRoles.deleteRole', () => {
       // Profile record
       await seedInstructorProfile(ctx, userId)
 
-      // InventoryUnit + snapshot owned by user's slug
+      // InventoryUnit + snapshot + reservation owned by user's slug
       unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.diveCenter,
         ownerType: 'Instructor',
       })
       snapId = await seedSnapshot(ctx, unitId)
+
+      // Seed a Completed booking (does not block delete) with a reservation tied to the unit
+      const completedBookingId = await seedBooking(ctx, {
+        ownerId: TEST_SLUGS.diveCenter,
+        status: 'Completed',
+      })
+      const sessionId = await seedSession(ctx, completedBookingId, unitId)
+      reservationId = await seedReservation(ctx, completedBookingId, unitId, sessionId, {
+        status: 'Confirmed',
+      })
     })
 
     const result = await t
@@ -249,6 +260,10 @@ describe('userRoles.deleteRole', () => {
       // snapshot gone
       const snap = await ctx.db.get(snapId!)
       expect(snap).toBeNull()
+
+      // reservation gone — CRITICAL: dangling reservations would corrupt snapshot math
+      const reservation = await ctx.db.get(reservationId!)
+      expect(reservation).toBeNull()
     })
   })
 

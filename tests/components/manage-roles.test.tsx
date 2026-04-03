@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import userEvent from '@testing-library/user-event'
-import { render, screen } from '../helpers/render'
+import { render, screen, waitFor } from '../helpers/render'
 import { ManageRoles } from '@/components/account/manage-roles'
 import type { ClerkRole } from '@/lib/constants/roles'
 import type { Id } from '../../convex/_generated/dataModel'
@@ -157,6 +157,20 @@ describe('ManageRoles', () => {
 
   // ─── Inline confirmation flow ──────────────────────────────────────────────
 
+  it('confirmation is hidden before clicking delete icon', () => {
+    render(
+      <ManageRoles
+        {...defaultProps}
+        roles={[
+          makeRole('DiveCenter', { profileComplete: true }),
+          makeRole('Boat', { profileComplete: false }),
+        ]}
+      />,
+    )
+    // Text exists in DOM (always rendered) but is not visible
+    expect(screen.getByText(/delete dive center and all its data/i)).not.toBeVisible()
+  })
+
   it('shows inline confirmation after clicking delete icon', async () => {
     const user = userEvent.setup()
     render(
@@ -169,9 +183,7 @@ describe('ManageRoles', () => {
       />,
     )
     await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
-    expect(screen.getByText(/delete dive center and all its data/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /delete permanently/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+    expect(screen.getByText(/delete dive center and all its data/i)).toBeVisible()
   })
 
   it('collapses confirmation on Cancel click', async () => {
@@ -187,7 +199,8 @@ describe('ManageRoles', () => {
     )
     await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
     await user.click(screen.getByRole('button', { name: /cancel/i }))
-    expect(screen.queryByText(/delete dive center and all its data/i)).not.toBeInTheDocument()
+    // Text is back to hidden (always in DOM but not visible)
+    expect(screen.getByText(/delete dive center and all its data/i)).not.toBeVisible()
   })
 
   it('calls onDeleteRole when "Delete permanently" is clicked', async () => {
@@ -207,4 +220,38 @@ describe('ManageRoles', () => {
     await user.click(screen.getByRole('button', { name: /delete permanently/i }))
     expect(onDeleteRole).toHaveBeenCalledWith('role_DC')
   })
+
+  // ─── Loading and error states ─────────────────────────────────────────────
+
+  it('disables "Delete permanently" button while delete is pending', async () => {
+    const user = userEvent.setup()
+    let resolveDelete!: () => void
+    const onDeleteRole = vi.fn().mockImplementation(
+      () => new Promise<void>((resolve) => { resolveDelete = resolve }),
+    )
+    render(
+      <ManageRoles
+        {...defaultProps}
+        roles={[
+          makeRole('DiveCenter', { _id: 'role_DC' as Id<'userRoles'>, profileComplete: true }),
+          makeRole('Boat', { profileComplete: false }),
+        ]}
+        onDeleteRole={onDeleteRole}
+      />,
+    )
+    await user.click(screen.getByRole('button', { name: /delete dive center role/i }))
+
+    const deletePermBtn = screen.getByRole('button', { name: /delete permanently/i })
+    await user.click(deletePermBtn)
+
+    // Button should be disabled while pending (GlassButton sets disabled when loading)
+    expect(deletePermBtn).toBeDisabled()
+
+    // Resolve the promise to clean up
+    resolveDelete()
+    await waitFor(() => {
+      expect(deletePermBtn).not.toBeDisabled()
+    })
+  })
+
 })
