@@ -22,6 +22,7 @@ export type DirectoryEntry = {
   role: StakeholderRole
   // Role-specific extras
   agencies?: string[]       // Instructor: credential agencies (e.g. ['PADI', 'SSI'])
+  credentials?: { agency: string; courses: string[] }[]  // Instructor: full credential details
   boatCapacity?: number     // Boat: max pax of largest vessel in fleet
   boatType?: string         // Boat: type of largest vessel
   gasMixes?: string[]       // Compressor: supported gas mixes
@@ -39,6 +40,7 @@ type ProfileData = {
   verified: boolean
   // Extras (populated per-role)
   agencies?: string[]
+  credentials?: { agency: string; courses: string[] }[]
   boatCapacity?: number
   boatType?: string
   gasMixes?: string[]
@@ -82,6 +84,7 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
         country: p.country,
         verified: p.verified,
         agencies: (p.credential ?? []).map((c: { agency: string }) => c.agency),
+        credentials: (p.credential ?? []).map((c) => ({ agency: c.agency, courses: c.courses ?? [] })),
         teachingLanguages: p.teachingLanguages,
       }
     }
@@ -251,6 +254,7 @@ export const listByRole = query({
             verified: profile.verified,
             role: args.role,
             agencies: profile.agencies,
+            credentials: profile.credentials,
             boatCapacity: profile.boatCapacity,
             boatType: profile.boatType,
             gasMixes: profile.gasMixes,

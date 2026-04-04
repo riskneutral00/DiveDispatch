@@ -274,3 +274,102 @@ describe('listByRole language propagation', () => {
     expect(result[0].languages).toEqual(['ko-KR', 'ja-JP'])
   })
 })
+
+// ─── listByRole: credentials passthrough ───────────────────────────────────
+
+describe('listByRole credentials passthrough', () => {
+  it('returns credentials array with agency and courses for instructors', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-creds')
+      const u1 = await seedInstructorUser(ctx, 'inst-creds')
+      await ctx.db.insert('instructors', {
+        userId: u1,
+        name: 'Multi Cred Instructor',
+        placeName: 'Phuket',
+        country: 'Thailand',
+        lat: 7.88,
+        lng: 98.39,
+        email: 'multi@test.com',
+        phone: '+66000000001',
+        credential: [
+          { agency: 'PADI', level: 'OWSI', agencyID: 'P-123', courses: ['OW', 'AOW', 'Rescue'] },
+          { agency: 'SSI', level: 'Instructor', agencyID: 'S-456', courses: ['OW', 'Stress & Rescue'] },
+        ],
+        teachingLanguages: ['en-GB'],
+        verified: true,
+      })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-creds' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].credentials).toEqual([
+      { agency: 'PADI', courses: ['OW', 'AOW', 'Rescue'] },
+      { agency: 'SSI', courses: ['OW', 'Stress & Rescue'] },
+    ])
+  })
+
+  it('returns empty credentials array when instructor has no credentials', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-no-creds')
+      const u1 = await seedInstructorUser(ctx, 'inst-no-creds')
+      await ctx.db.insert('instructors', {
+        userId: u1,
+        name: 'No Cred Instructor',
+        placeName: 'Krabi',
+        country: 'Thailand',
+        lat: 8.09,
+        lng: 98.91,
+        email: 'nocred@test.com',
+        phone: '+66000000002',
+        credential: [],
+        teachingLanguages: ['en-GB'],
+        verified: false,
+      })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-no-creds' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].credentials).toEqual([])
+  })
+
+  it('returns empty credentials when instructor has no credentials (credential: [] — schema enforced minimum)', async () => {
+    // The `p.credential ?? []` guard in fetchProfile handles the edge case where
+    // a document stored before the credential field was added lacks the field.
+    // However, convex-test enforces the schema (credential is required), so we
+    // cannot seed a document with `credential` absent. Using `credential: []` is
+    // the closest valid test for the empty path — it exercises the same .map()
+    // over an empty iterable. The `?? []` nullish coalesce guard itself cannot
+    // be tested under convex-test constraints.
+    const t = makeT()
+    await t.run(async (ctx) => {
+      await seedCallerUser(ctx, 'caller-guard')
+      const u1 = await seedInstructorUser(ctx, 'inst-guard')
+      await ctx.db.insert('instructors', {
+        userId: u1,
+        name: 'Guard Path Instructor',
+        placeName: 'Phuket',
+        country: 'Thailand',
+        lat: 7.88,
+        lng: 98.39,
+        email: 'guard@test.com',
+        phone: '+66000000003',
+        credential: [],
+        teachingLanguages: ['en-GB'],
+        verified: false,
+      })
+    })
+
+    const result = await t.withIdentity({ tokenIdentifier: 'user|caller-guard' })
+      .query(api.directory.listByRole, { role: 'Instructor' })
+
+    expect(result).toHaveLength(1)
+    expect(result[0].credentials).toEqual([])
+    expect(result[0].agencies).toEqual([])
+  })
+})

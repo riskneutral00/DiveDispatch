@@ -148,7 +148,7 @@ interface FlagPillProps {
   onToggle: () => void
 }
 
-function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
+export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
   const scriptLabel = CHINESE_SCRIPT_LABELS[lang.code as LanguageCode]
   const isText = Boolean(scriptLabel)
   
