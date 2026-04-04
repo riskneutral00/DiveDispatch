@@ -10,6 +10,7 @@ import {
   seedSession,
   seedReservation,
 } from './fixtures'
+import { testDate } from './helpers/dates'
 
 let t = makeT()
 beforeEach(() => {
@@ -72,8 +73,8 @@ describe('by_bookingId_status index', () => {
       })
 
       const sessionA = await seedSession(ctx, bookingId, unit)
-      const sessionB = await seedSession(ctx, bookingId, unit, { date: '2025-07-02' })
-      const sessionC = await seedSession(ctx, bookingId, unit, { date: '2025-07-03' })
+      const sessionB = await seedSession(ctx, bookingId, unit, { date: testDate(6) })
+      const sessionC = await seedSession(ctx, bookingId, unit, { date: testDate(7) })
 
       await seedReservation(ctx, bookingId, unit, sessionA, { status: 'PendingAcceptance' })
       await seedReservation(ctx, bookingId, unit, sessionB, { status: 'Confirmed' })
