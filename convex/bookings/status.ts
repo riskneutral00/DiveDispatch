@@ -1,4 +1,6 @@
 import { ConvexError, v } from 'convex/values'
+import type { MutationCtx } from '../_generated/server'
+import type { Id } from '../_generated/dataModel'
 import { internalMutation, mutation } from '../_generated/server'
 import { internal } from '../_generated/api'
 import { requireAuth, assertOwnership, requireOwnerOrResourceAccess } from '../lib/auth'
@@ -53,12 +55,22 @@ export const cancelBooking = mutation({
 
 // ─── TTL expiry (lazy, server-side) ───────────────────────────────────────────
 
+/** Vacate reservations → set Cancelled → audit log. Shared by both expiry mutations. */
+async function performExpiry(ctx: MutationCtx, bookingId: Id<'bookings'>) {
+  await releaseBookingReservations(ctx, bookingId, VACATED_REASON.HoldExpired)
+  await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled })
+  await logBookingChange(ctx, {
+    bookingId,
+    action: 'expired',
+    actorSlug: 'system',
+    actorType: 'system',
+  })
+}
+
 /**
  * Expires a single Draft booking whose holdTTL has lapsed.
- * Internal only — not callable from the client.
- * Idempotent: no-op if the booking is already Cancelled or not expired.
- * Preserves sessions, links, and customerProfiles for audit trail.
- * Transaction order: vacate reservations → restore snapshots → set status Cancelled.
+ * Internal only — called by cron purgeExpiredDrafts.
+ * Idempotent: no-op if booking is already Cancelled or not expired.
  */
 export const expireBooking = internalMutation({
   args: { bookingId: v.id('bookings') },
@@ -66,15 +78,7 @@ export const expireBooking = internalMutation({
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) return
     if (!isBookingExpired(booking)) return
-
-    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.HoldExpired)
-    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
-    await logBookingChange(ctx, {
-      bookingId: args.bookingId,
-      action: 'expired',
-      actorSlug: 'system',
-      actorType: 'system',
-    })
+    await performExpiry(ctx, args.bookingId)
   },
 })
 
@@ -96,15 +100,7 @@ export const checkAndExpireBooking = mutation({
     // Verify caller has access: owns the booking or has a reservation on it
     await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
 
-    // Perform expiry inline (same logic as internalMutation expireBooking)
-    await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.HoldExpired)
-    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
-    await logBookingChange(ctx, {
-      bookingId: args.bookingId,
-      action: 'expired',
-      actorSlug: 'system',
-      actorType: 'system',
-    })
+    await performExpiry(ctx, args.bookingId)
   },
 })
 
@@ -189,8 +185,6 @@ export const clearMedicalBlock = mutation({
 
 // ─── Shared completion logic ─────────────────────────────────────────────────
 
-import type { MutationCtx } from '../_generated/server'
-
 async function runCompletionBatch(
   ctx: MutationCtx,
 ): Promise<{ completed: number; more: boolean }> {
@@ -225,7 +219,7 @@ async function runCompletionBatch(
     })
 
     if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed })
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // batch-exempt: conditional per-booking
       await logBookingChange(ctx, {
         bookingId: booking._id,
         action: 'completed',

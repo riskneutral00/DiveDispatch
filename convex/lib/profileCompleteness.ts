@@ -13,21 +13,7 @@ import type { QueryCtx } from '../_generated/server'
 import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
 import { OPERATOR_ROLE_SET } from './auth'
 import { AGENCIES } from '../shared/agencies'
-
-const profileTable: Record<string, string> = {
-  DiveCenter: 'diveCenters',
-  Agent: 'agents',
-  Instructor: 'instructors',
-  DiveMaster: 'diveMasters',
-  Boat: 'boats',
-  Equipment: 'equipment',
-  Pool: 'venues',
-  Compressor: 'compressors',
-  Liveaboard: 'liveaboards',
-  DiveResort: 'diveResorts',
-  DiveHostel: 'diveHostels',
-  DiveSite: 'venues',
-}
+import { ROLE_TABLE_MAP } from './profileHelpers'
 
 /**
  * Check completeness for a single role. Three layers for all roles,
@@ -99,7 +85,7 @@ export async function checkProfileCompleteness(
   }
 
   // 3. Role layer
-  const table = profileTable[role]
+  const table = ROLE_TABLE_MAP[role]
   let profile: Record<string, unknown> | null = null
   if (table) {
     profile = await ctx.db

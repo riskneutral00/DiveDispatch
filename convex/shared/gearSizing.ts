@@ -107,3 +107,11 @@ export type Manufacturer = (typeof MANUFACTURERS)[number];
 
 export const GEAR_TYPES = ['wetsuit', 'bcd', 'fins', 'mask', 'regulator'] as const;
 export type GearType = (typeof GEAR_TYPES)[number];
+
+export const GEAR_TYPE_LABELS: Record<GearType, string> = {
+  wetsuit: 'Wetsuit',
+  bcd: 'BCD',
+  fins: 'Fins',
+  mask: 'Mask',
+  regulator: 'Regulator',
+};
