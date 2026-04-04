@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import {
   boatContactSchema,
   boatFleetSchema,
@@ -216,13 +217,7 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
 }
 
 export function BoatFleetSection({ profile: existing, create, update }: BoatSectionProps) {
-  if (!existing) {
-    return (
-      <p className="text-sm text-secondary">
-        Complete contact info first before setting up the fleet.
-      </p>
-    )
-  }
+  if (!existing) return <ProfileIncompleteGuard message="Complete contact info first before setting up the fleet." />
 
   return <BoatFleetSectionForm profile={existing} create={create} update={update} />
 }

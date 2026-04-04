@@ -1,3 +1,5 @@
+import type { ClerkRole } from './roles'
+
 export type FilterOption = {
   label: string
   value: string
@@ -110,21 +112,7 @@ export const NO_FILTERS: FilterDef[] = []
 
 // ── Role → filters lookup ─────────────────────────────────────────────────────
 
-type StakeholderRole =
-  | 'DiveCenter'
-  | 'Agent'
-  | 'Instructor'
-  | 'Boat'
-  | 'Equipment'
-  | 'Pool'
-  | 'Compressor'
-  | 'DiveMaster'
-  | 'Liveaboard'
-  | 'DiveResort'
-  | 'DiveHostel'
-  | 'DiveSite'
-
-export const ROLE_FILTERS: Record<StakeholderRole, FilterDef[]> = {
+export const ROLE_FILTERS: Record<ClerkRole, FilterDef[]> = {
   Instructor: INSTRUCTOR_FILTERS,
   Boat: BOAT_FILTERS,
   Compressor: COMPRESSOR_FILTERS,

@@ -13,7 +13,9 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import {
   agentContactSchema,
@@ -126,14 +128,7 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
 // Section prop types
 // ---------------------------------------------------------------------------
 
-type BaseProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
-
-export type AgentContactSectionProps = BaseProps
+export type AgentContactSectionProps = BaseProfileSectionProps
 
 export type AgentLanguagesSectionProps = {
   profile: Record<string, unknown> | null | undefined
@@ -171,11 +166,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     schema: agentContactSchema,
     defaults: INITIAL_CONTACT_FORM,
     fromProfile: contactFromProfile,
-    fromMe: (u, defaults) => ({
-      ...defaults,
-      email: (u.email as string) ?? '',
-      phone: (u.phone as string) ?? '',
-    }),
+    fromMe: defaultFromMe,
     toPayload: contactToPayload,
     create,
     update,

@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { LanguageFlags } from '@/components/profiles/language-flags'
+import { GAS_MIX_COLORS } from '@/lib/constants/gas-mixes'
 
 
 // null = no action button; undefined = show "View"
@@ -17,12 +18,6 @@ const ROLE_ACTION: Record<string, string | null> = {
   Equipment: 'View Inventory',
   Pool: 'Reserve Lane',
   Compressor: 'Book Fill',
-}
-
-const GAS_MIX_COLORS: Record<string, string> = {
-  air: 'var(--color-info, var(--color-secondary))',
-  nitrox: 'var(--color-success)',
-  trimix: 'var(--color-warning)',
 }
 
 interface StakeholderCardProps {

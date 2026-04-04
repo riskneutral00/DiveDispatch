@@ -4,11 +4,11 @@ import { z } from 'zod'
 
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
-import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, type SelectOption } from '@/components/ui/select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import {
   diveSiteDetailsSchema,
   diveSiteCapabilitiesSchema,
@@ -18,6 +18,8 @@ import {
   locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ─────────────────────────────────────────────────────────
@@ -35,13 +37,7 @@ const VENUE_TYPE_OPTIONS: SelectOption[] = [
 
 export type DiveSiteProfileSection = 'details' | 'capabilities'
 
-export type DiveSiteSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
+export type DiveSiteSectionProps = BaseProfileSectionProps
 
 // ── Details section ───────────────────────────────────────────────────
 
@@ -179,12 +175,6 @@ export function diveSiteCapabilitiesToPayload(f: DiveSiteCapabilitiesFormState):
   }
 }
 
-function parseNumber(raw: string, isInt: boolean): number {
-  if (raw === '') return 0
-  const parsed = isInt ? parseInt(raw, 10) : parseFloat(raw)
-  return isNaN(parsed) ? 0 : parsed
-}
-
 export function DiveSiteCapabilitiesSection({ profile: existing, create, update }: DiveSiteSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
     useProfileForm({
@@ -197,13 +187,7 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
       update,
     })
 
-  if (!existing) {
-    return (
-      <Card padding="md">
-        <p className="text-sm text-secondary">Complete details first</p>
-      </Card>
-    )
-  }
+  if (!existing) return <ProfileIncompleteGuard message="Complete details first" />
 
   return (
     <ProfileFormShell

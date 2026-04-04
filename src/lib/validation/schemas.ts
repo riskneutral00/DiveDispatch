@@ -10,18 +10,9 @@ import {
 } from '@/lib/constants/activity-rules'
 
 // ── Location ──────────────────────────────────────────────────────────────────
-// Single source of truth — profile forms should import this instead of defining
-// their own copy.
+// Re-exported from the canonical definition in schemas/location.ts.
 
-export const locationSchema = z.object({
-  placeName: z.string().min(1, 'Location name is required'),
-  country: z.string().min(1, 'Country is required'),
-  lat: z.number(),
-  lng: z.number(),
-  placeId: z.string().optional(),
-})
-
-export type LocationData = z.infer<typeof locationSchema>
+export { locationSchema, type LocationValue as LocationData } from '@/lib/schemas/location'
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 

@@ -13,7 +13,9 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import {
   personalContactSchema,
   personalLanguagesSchema,
@@ -140,25 +142,14 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
 // Section prop types
 // ---------------------------------------------------------------------------
 
-export type PersonalContactSectionProps = {
+export type PersonalContactSectionProps = BaseProfileSectionProps & {
   variant: PersonalVariant
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
 }
 
-export type PersonalLanguagesSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
+export type PersonalLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'>
 
-export type PersonalCredentialsSectionProps = {
+export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & {
   variant: PersonalVariant
-  profile: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
 }
 
 // ---------------------------------------------------------------------------
@@ -193,11 +184,7 @@ export function PersonalContactSection({
     schema: personalContactSchema,
     defaults: INITIAL_CONTACT_FORM,
     fromProfile: contactFromProfile,
-    fromMe: (u, defaults) => ({
-      ...defaults,
-      email: (u.email as string) ?? '',
-      phone: (u.phone as string) ?? '',
-    }),
+    fromMe: defaultFromMe,
     toPayload: contactToPayload,
     create,
     update,

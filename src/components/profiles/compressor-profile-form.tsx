@@ -4,6 +4,7 @@ import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
+import { Card } from '@/components/ui/card'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import {
