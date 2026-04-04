@@ -25,6 +25,7 @@ const operatorRole: RoleConfig = {
   displayGroup: 'operator',
   tableName: 'diveCenters',
   description: 'Test',
+  profileTabs: [],
 }
 
 const resourceRole: RoleConfig = {
@@ -40,6 +41,7 @@ const resourceRole: RoleConfig = {
   displayGroup: 'resource',
   tableName: 'instructors',
   description: 'Test',
+  profileTabs: [],
 }
 
 const emptyValues: BusinessInfoValues = {

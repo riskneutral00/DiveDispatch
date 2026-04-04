@@ -186,16 +186,35 @@ describe('ORGANIZER_ROLE_KEYS derived set', () => {
 // ── PROFILE_REGISTRY ↔ ROLES reverse coverage ──────────────────────────────
 
 describe('PROFILE_REGISTRY ↔ ROLES reverse coverage', () => {
-  it('every resource role key (except liveaboard/dive-resort/dive-hostel/dive-site) has a PROFILE_REGISTRY entry', () => {
-    // These roles use workspace-embedded-profile pattern or are v0.1.1 scope
-    const excluded = new Set(['liveaboard', 'dive-resort', 'dive-hostel', 'dive-site'])
-    const resourceAndPersonnel = ROLES.filter((r) => r.isResource || r.key === 'dive-center' || r.key === 'agent')
-    for (const role of resourceAndPersonnel) {
-      if (excluded.has(role.key)) continue
+  it('every ROLES key has a PROFILE_REGISTRY entry (derived from profileTabs)', () => {
+    for (const role of ROLES) {
       expect(
         PROFILE_REGISTRY[role.key],
         `${role.key} (${role.clerkRole}) missing from PROFILE_REGISTRY`,
       ).toBeDefined()
+    }
+  })
+})
+
+// ── profileTabs on RoleConfig ───────────────────────────────────────────────
+
+describe('RoleConfig.profileTabs', () => {
+  it('every role has a non-empty profileTabs array', () => {
+    for (const role of ROLES) {
+      expect(role.profileTabs.length, `${role.key} has empty profileTabs`).toBeGreaterThan(0)
+    }
+  })
+
+  it('profileTabs match derived PROFILE_REGISTRY tabs', () => {
+    for (const role of ROLES) {
+      expect(role.profileTabs).toEqual(PROFILE_REGISTRY[role.key].tabs)
+    }
+  })
+
+  it('every role has booking as last tab', () => {
+    for (const role of ROLES) {
+      const lastTab = role.profileTabs[role.profileTabs.length - 1]
+      expect(lastTab.id, `${role.key} last tab is "${lastTab.id}" not "booking"`).toBe('booking')
     }
   })
 })

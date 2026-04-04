@@ -43,6 +43,11 @@ export type ClerkRole =
   | 'Pool'
   | 'Compressor'
 
+export interface ProfileTab {
+  id: string
+  label: string
+}
+
 export interface RoleConfig {
   key: RoleKey
   clerkRole: ClerkRole
@@ -56,6 +61,7 @@ export interface RoleConfig {
   displayGroup: 'operator' | 'resource'
   tableName: string
   description: string
+  profileTabs: ProfileTab[]
 }
 
 export const ROLES: RoleConfig[] = [
@@ -73,6 +79,13 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'diveCenters',
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'languages', label: 'Languages' },
+      { id: 'associations', label: 'Affiliations' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'agent',
@@ -87,6 +100,13 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'agents',
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'languages', label: 'Languages' },
+      { id: 'associations', label: 'Affiliations' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'liveaboard',
@@ -101,6 +121,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'liveaboards',
     description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'dive-resort',
@@ -115,6 +140,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'diveResorts',
     description: 'Offer dive packages, courses, and guided dives from a resort base.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'dive-hostel',
@@ -129,6 +159,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'diveHostels',
     description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'dive-site',
@@ -143,6 +178,12 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'operator',
     tableName: 'venues',
     description: 'Manage access and dive conditions for a specific underwater site.',
+    profileTabs: [
+      { id: 'details', label: 'Details' },
+      { id: 'capabilities', label: 'Capabilities' },
+      { id: 'resources', label: 'Resources' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
 
   // ── Resources ────────────────────────────────────────────────────
@@ -159,6 +200,12 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'instructors',
     description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'languages', label: 'Languages' },
+      { id: 'credentials', label: 'Credentials' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'dive-master',
@@ -173,6 +220,12 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'diveMasters',
     description: 'Guide certified divers, assist instructors, and lead fun dives.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'languages', label: 'Languages' },
+      { id: 'credentials', label: 'Credentials' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'boat',
@@ -187,6 +240,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'boats',
     description: 'Provide vessel transport and surface support for dive operations.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'fleet', label: 'Fleet' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'equipment',
@@ -201,6 +259,12 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'equipment',
     description: 'Supply rental gear and manage inventory across dive bookings.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'gear-catalog', label: 'Gear Catalog' },
+      { id: 'inventory', label: 'Inventory' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'pool',
@@ -215,6 +279,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'venues',
     description: 'Provide confined-water training space for beginner and refresher courses.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'capabilities', label: 'Capabilities' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
   {
     key: 'compressor',
@@ -229,6 +298,11 @@ export const ROLES: RoleConfig[] = [
     displayGroup: 'resource',
     tableName: 'compressors',
     description: 'Supply and track tank fills and gas blending for dive operations.',
+    profileTabs: [
+      { id: 'contact', label: 'Contact' },
+      { id: 'gas-mixes', label: 'Gas Mixes' },
+      { id: 'booking', label: 'Booking' },
+    ],
   },
 ]
 

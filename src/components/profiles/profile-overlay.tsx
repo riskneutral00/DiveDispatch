@@ -9,8 +9,9 @@ import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
 import { PreferencesTab } from '@/components/account/preferences-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
-import { PROFILE_REGISTRY, OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
-import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
+import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
+import { ROLE_BY_KEY } from '@/lib/constants/roles'
+import { RoleProfileForm } from '@/components/profiles/connected-role-forms'
 import { ManageRolesConnected } from '@/components/account/manage-roles-connected'
 import { ConnectedEquipmentInventory } from '@/components/inventory/connected-equipment-inventory'
 import { PreferencesEditor } from '@/components/account/preferences-editor'
@@ -58,16 +59,16 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   // When switching role sub-tab, reset section to first profile tab (matches Profile page)
   useEffect(() => {
     if (!activeRoleKey) return
-    const cfg = PROFILE_REGISTRY[activeRoleKey]
-    const tabs = cfg?.tabs
+    const role = ROLE_BY_KEY[activeRoleKey]
+    const tabs = role?.profileTabs
     if (tabs?.length) {
       setRoleProfileSection((prev) => (prev && tabs.some((t) => t.id === prev) ? prev : tabs[0].id))
     } else {
       setRoleProfileSection('')
     }
   }, [activeRoleKey])
-  const roleProfileConfig = activeRoleKey ? PROFILE_REGISTRY[activeRoleKey] : undefined
-  const roleSectionTabs = roleProfileConfig?.tabs ?? null
+  const activeRoleConfig = activeRoleKey ? ROLE_BY_KEY[activeRoleKey] : undefined
+  const roleSectionTabs = activeRoleConfig?.profileTabs ?? null
 
   // The currently active section for a role tab
   const activeSection = roleSectionTabs && roleSectionTabs.length > 0
@@ -140,8 +141,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                     aria-selected={isActive}
                     onClick={() => {
                       setActiveTab(`role:${role.key}`)
-                      const cfg = PROFILE_REGISTRY[role.key]
-                      const first = cfg?.tabs?.[0]?.id ?? ''
+                      const first = ROLE_BY_KEY[role.key]?.profileTabs?.[0]?.id ?? ''
                       setRoleProfileSection(first)
                     }}
                     className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer flex-shrink-0"

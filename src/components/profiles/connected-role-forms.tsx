@@ -12,6 +12,11 @@ import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
 import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
 import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
+import {
+  DiveSiteDetailsSection,
+  DiveSiteCapabilitiesSection,
+  type DiveSiteProfileSection,
+} from '@/components/profiles/dive-site-profile-form'
 
 import type { RoleKey } from '@/lib/constants/roles'
 
@@ -88,7 +93,7 @@ function ConnectedDiveMasterForm({ section }: { section?: string }) {
   )
 }
 
-function ConnectedBoatForm() {
+function ConnectedBoatForm({ section }: { section?: string }) {
   const profile = useQuery(api.boats.mine)
   const me = useQuery(api.users.me)
   const create = useMutation(api.boats.create)
@@ -103,7 +108,7 @@ function ConnectedBoatForm() {
   )
 }
 
-function ConnectedCompressorForm() {
+function ConnectedCompressorForm({ section }: { section?: string }) {
   const profile = useQuery(api.compressors.mine)
   const me = useQuery(api.users.me)
   const create = useMutation(api.compressors.create)
@@ -118,7 +123,7 @@ function ConnectedCompressorForm() {
   )
 }
 
-function ConnectedEquipmentForm() {
+function ConnectedEquipmentForm({ section }: { section?: string }) {
   const profile = useQuery(api.equipment.mine)
   const me = useQuery(api.users.me)
   const create = useMutation(api.equipment.create)
@@ -133,7 +138,7 @@ function ConnectedEquipmentForm() {
   )
 }
 
-function ConnectedPoolForm() {
+function ConnectedPoolForm({ section }: { section?: string }) {
   const profile = useQuery(api.venues.mine)
   const me = useQuery(api.users.me)
   const create = useMutation(api.venues.create)
@@ -146,6 +151,22 @@ function ConnectedPoolForm() {
       update={asLooseMut(update)}
     />
   )
+}
+
+function ConnectedDiveSiteForm({ section }: { section?: string }) {
+  const profile = useQuery(api.venues.mine)
+  const me = useQuery(api.users.me)
+  const create = useMutation(api.venues.create)
+  const update = useMutation(api.venues.update)
+  const sectionKey = (section ?? 'details') as DiveSiteProfileSection
+  const props = {
+    profile,
+    me,
+    create: asLooseMut(create),
+    update: asLooseMut(update),
+  }
+  if (sectionKey === 'capabilities') return <DiveSiteCapabilitiesSection {...props} />
+  return <DiveSiteDetailsSection {...props} />
 }
 
 type RoleProfileRegistryEntry = {
@@ -166,17 +187,25 @@ const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> 
     renderFull: (section) => <ConnectedDiveMasterForm section={section} />,
   },
   boat: {
-    renderFull: () => <ConnectedBoatForm />,
+    renderFull: (section) => <ConnectedBoatForm section={section} />,
   },
   compressor: {
-    renderFull: () => <ConnectedCompressorForm />,
+    renderFull: (section) => <ConnectedCompressorForm section={section} />,
   },
   equipment: {
-    renderFull: () => <ConnectedEquipmentForm />,
+    renderFull: (section) => <ConnectedEquipmentForm section={section} />,
   },
   pool: {
-    renderFull: () => <ConnectedPoolForm />,
+    renderFull: (section) => <ConnectedPoolForm section={section} />,
   },
+  'dive-site': {
+    renderFull: (section) => <ConnectedDiveSiteForm section={section} />,
+  },
+}
+
+/** Whether a role has a connected profile form available. */
+export function hasConnectedForm(roleKey: RoleKey): boolean {
+  return roleKey in ROLE_PROFILE_REGISTRY
 }
 
 export function RoleProfileForm({
@@ -189,4 +218,3 @@ export function RoleProfileForm({
   const entry = ROLE_PROFILE_REGISTRY[roleSlug]
   return entry ? <>{entry.renderFull(section)}</> : null
 }
-

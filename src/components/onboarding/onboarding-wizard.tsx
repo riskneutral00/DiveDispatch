@@ -18,23 +18,12 @@ import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-st
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
 import { StepPreferences } from './step-preferences'
 import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
-import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
-
-const ROLE_KEYS_WITH_CONNECTED_FORM: readonly RoleKey[] = [
-  'dive-center',
-  'agent',
-  'instructor',
-  'dive-master',
-  'boat',
-  'compressor',
-  'equipment',
-  'pool',
-]
+import { RoleProfileForm, hasConnectedForm } from '@/components/profiles/connected-role-forms'
 
 function ProfileFormForRole({ role }: { role: string; onSaved: () => void }) {
   const cfg = ROLE_BY_CLERK_ROLE[role as ClerkRole]
   const key = cfg?.key
-  if (key && ROLE_KEYS_WITH_CONNECTED_FORM.includes(key)) {
+  if (key && hasConnectedForm(key)) {
     return <RoleProfileForm roleSlug={key} />
   }
   return (

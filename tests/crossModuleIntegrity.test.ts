@@ -45,6 +45,15 @@ describe('roles ↔ PROFILE_REGISTRY', () => {
       expect(roleKeys.has(key), `PROFILE_REGISTRY key "${key}" not in ROLES`).toBe(true)
     }
   })
+
+  it('every ROLES key exists in PROFILE_REGISTRY', () => {
+    for (const role of ROLES) {
+      expect(
+        PROFILE_REGISTRY[role.key],
+        `ROLES key "${role.key}" missing from PROFILE_REGISTRY`,
+      ).toBeDefined()
+    }
+  })
 })
 
 describe('roles ↔ effectiveResourceType', () => {

@@ -6,19 +6,8 @@ import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step
 import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-step'
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
 import { getOrganizerSteps, ORGANIZER_WIZARD_CONFIG, type OrganizerSubStep } from '@/lib/constants/organizer-wizard-config'
-import { RoleProfileForm } from '@/lib/profile/connected-role-forms'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
-
-const ROLE_KEYS_WITH_CONNECTED_FORM: readonly RoleKey[] = [
-  'dive-center',
-  'agent',
-  'instructor',
-  'dive-master',
-  'boat',
-  'compressor',
-  'equipment',
-  'pool',
-]
+import { RoleProfileForm, hasConnectedForm } from '@/components/profiles/connected-role-forms'
+import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete: () => void }) {
   const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
@@ -61,7 +50,7 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
 
   const cfg = ROLE_BY_CLERK_ROLE[role]
   const key = cfg?.key
-  if (key && ROLE_KEYS_WITH_CONNECTED_FORM.includes(key)) {
+  if (key && hasConnectedForm(key)) {
     return <RoleProfileForm roleSlug={key} />
   }
 
