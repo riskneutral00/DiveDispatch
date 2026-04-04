@@ -80,6 +80,7 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
                 color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
                 transitionDuration: 'var(--transition-speed)',
               }}
+              aria-label={cfg.label}
               aria-current={isActive ? 'page' : undefined}
             >
               <GlassTooltip label={cfg.label}>

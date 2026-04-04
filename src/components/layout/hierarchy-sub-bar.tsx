@@ -38,7 +38,7 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBar
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-1.5 overflow-x-auto flex-shrink-0 max-w-4xl mx-auto w-full"
+      className="flex items-center gap-2 px-4 py-1 overflow-x-auto flex-shrink-0 max-w-4xl mx-auto w-full"
     >
       {sorted.map((role, idx) => {
         const cfg = ROLE_BY_CLERK_ROLE[role.role as ClerkRole]

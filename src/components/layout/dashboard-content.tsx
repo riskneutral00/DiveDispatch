@@ -243,8 +243,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
       maxWidth="4xl"
       padding="none"
       className="space-y-3"
-      leading={<RoleIcon size={26} style={{ color: 'var(--color-primary)' }} />}
-      title={`${convexUser?.businessName ?? roleConfig.label} Dashboard`}
     >
       {isOrganizer ? (
         <DragDropProvider
