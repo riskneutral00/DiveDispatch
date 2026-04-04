@@ -38,7 +38,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
     clerkUser?.username ||
     "…";
   const initials = displayName.slice(0, 2).toUpperCase();
-  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? null;
+  const subLabel = convexUser?.nickname ?? null;
 
   function handleMenuAction(tab: ProfileOverlayTab) {
     setOpen(false);
@@ -90,11 +90,9 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               <p className="text-sm font-medium truncate leading-tight text-primary">
                 {displayName}
               </p>
-              {email && (
-                <p className="text-xs truncate leading-tight mt-0.5 text-secondary">
-                  {email}
-                </p>
-              )}
+              <p className={`text-xs truncate leading-tight mt-0.5 text-secondary h-4 ${subLabel ? "opacity-100" : "opacity-0"}`}>
+                {subLabel ?? "\u00A0"}
+              </p>
             </div>
 
             <button

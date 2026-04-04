@@ -45,7 +45,7 @@ export type BookingDetailStakeholder = {
   name: string
   role: string
   isExternal: boolean
-  email: string | undefined
+  displaySub: string | undefined
   reservationStatus: string | undefined
 }
 
@@ -583,7 +583,7 @@ export async function _getBookingDetail(
     .map((r: BookingResource) => r.resourceSlug)
     .filter(Boolean) as string[]
 
-  const userProfileMap = new Map<string, { name: string; email: string }>()
+  const userProfileMap = new Map<string, { name: string; displaySub: string | undefined }>()
   await Promise.all(
     [...new Set(resourceSlugs)].map(async (slug) => {
       const u = await ctx.db
@@ -593,7 +593,7 @@ export async function _getBookingDetail(
       if (u) {
         userProfileMap.set(slug, {
           name: u.name as string,
-          email: u.email as string,
+          displaySub: (u.nickname as string | undefined) ?? (u.businessName as string) ?? undefined,
         })
       }
     }),
@@ -618,7 +618,7 @@ export async function _getBookingDetail(
         name: profile?.name ?? br.resourceSlug,
         role: br.resourceType,
         isExternal: false,
-        email: profile?.email,
+        displaySub: profile?.displaySub,
         reservationStatus: stakeholderRes?.status as string | undefined,
       })
     } else if (br.externalName) {
@@ -627,7 +627,7 @@ export async function _getBookingDetail(
         name: br.externalName,
         role: br.resourceType,
         isExternal: true,
-        email: undefined,
+        displaySub: undefined,
         reservationStatus: undefined,
       })
     }

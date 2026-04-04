@@ -176,7 +176,7 @@ export function StakeholderList({
               </div>
               <p className="text-xs text-secondary">
                 {s.role}
-                {s.email && <> · {s.email}</>}
+                {s.displaySub && <> · {s.displaySub}</>}
               </p>
             </div>
           </div>
