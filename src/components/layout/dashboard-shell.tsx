@@ -116,10 +116,15 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       <RoleSwitcher slug={slug} roleSlug={roleSlug} />
 
       {/* Within-hierarchy role pills (scoped to active tree when role switcher is visible) */}
-      <HierarchySubBar slug={slug} roleSlug={roleSlug} filterRoles={activeTreeFilter} />
+      <HierarchySubBar
+        slug={slug}
+        roleSlug={roleSlug}
+        filterRoles={activeTreeFilter}
+        businessName={activeTreeFilter ? undefined : (user.businessName ?? undefined)}
+      />
 
       {/* Page content — pb-20 on mobile clears the fixed bottom nav */}
-      <main className="dashboard-enter flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8">{children}</main>
+      <main className="dashboard-enter flex-1 pt-1 px-4 pb-20 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8 md:pb-8">{children}</main>
 
       {/* Mobile: fixed bottom nav (thumb-zone navigation) */}
       <MobileBottomNav roleSlug={roleSlug} slug={slug} />

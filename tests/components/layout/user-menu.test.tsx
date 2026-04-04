@@ -91,34 +91,28 @@ describe('UserMenu', () => {
     expect(screen.queryByText('Dive Center')).not.toBeInTheDocument()
   })
 
-  it('renders per-role sections for multi-role user', async () => {
+  it('renders single Profile/Preferences plus role-switch buttons for multi-role user', async () => {
     mockUseQueryReturn = MULTI_ROLE
     renderMenu()
 
     await userEvent.click(screen.getByLabelText('User menu'))
 
-    // Role labels appear as section headers
+    // Single top-level Profile and Preferences
+    expect(screen.getAllByText('Profile')).toHaveLength(1)
+    expect(screen.getAllByText('Preferences')).toHaveLength(1)
+
+    // Role labels appear as switch buttons
     expect(screen.getByText('Dive Center')).toBeInTheDocument()
     expect(screen.getByText('Instructor')).toBeInTheDocument()
-
-    // Two Profile buttons (one per role)
-    const profileBtns = screen.getAllByText('Profile')
-    expect(profileBtns).toHaveLength(2)
-
-    // Two Preferences buttons
-    const prefBtns = screen.getAllByText('Preferences')
-    expect(prefBtns).toHaveLength(2)
   })
 
-  it('calls onOpenOverlay with role:key when clicking a role Profile link', async () => {
+  it('calls onOpenOverlay with role:key when clicking a role-switch button', async () => {
     mockUseQueryReturn = MULTI_ROLE
     renderMenu()
 
     await userEvent.click(screen.getByLabelText('User menu'))
 
-    // Click the first Profile button (Dive Center)
-    const profileBtns = screen.getAllByText('Profile')
-    await userEvent.click(profileBtns[0])
+    await userEvent.click(screen.getByText('Dive Center'))
 
     expect(mockOnOpenOverlay).toHaveBeenCalledWith('role:dive-center')
   })

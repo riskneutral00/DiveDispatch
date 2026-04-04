@@ -215,7 +215,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   ) : (
     <>
       {isOrganizer && (
-        <div className="mt-3">
+        <div>
           <QuickBookRail
             onSelect={(courses) => openBookingOverlay(courses as string[])}
             dragEnabled={isOrganizer}
@@ -242,7 +242,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     <DashboardPageFrame
       maxWidth="4xl"
       padding="none"
-      className="space-y-3"
+      className="space-y-2"
     >
       {isOrganizer ? (
         <DragDropProvider

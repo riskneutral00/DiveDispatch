@@ -89,6 +89,30 @@ describe('HierarchySubBar', () => {
     expect(eqLink).toHaveAttribute('href', '/n7rq5j/equipment/dashboard')
   })
 
+  it('renders business name after icons when provided', () => {
+    mockRoles = [
+      { role: 'DiveCenter' },
+      { role: 'Boat' },
+    ]
+
+    render(
+      <HierarchySubBar slug="n7rq5j" roleSlug="dive-center" businessName="Deep Blue Scuba" />,
+    )
+
+    expect(screen.getByTestId('hierarchy-bar-name')).toHaveTextContent('Deep Blue Scuba')
+  })
+
+  it('does not render business name when not provided', () => {
+    mockRoles = [
+      { role: 'DiveCenter' },
+      { role: 'Boat' },
+    ]
+
+    render(<HierarchySubBar slug="n7rq5j" roleSlug="dive-center" />)
+
+    expect(screen.queryByTestId('hierarchy-bar-name')).not.toBeInTheDocument()
+  })
+
   it('places highest-precedence role first', () => {
     mockRoles = [
       { role: 'Equipment' },

@@ -12,9 +12,11 @@ interface HierarchySubBarProps {
   roleSlug: RoleKey
   /** When provided, only show roles in this set (used when RoleSwitcher is active). */
   filterRoles?: Set<string>
+  /** When provided, render the business name after the icon tabs on the same row. */
+  businessName?: string
 }
 
-export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBarProps) {
+export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: HierarchySubBarProps) {
   const roles = useQuery(api.userRoles.myRoles)
 
   // Don't render until loaded, or if user has only one role
@@ -37,9 +39,7 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBar
   const primaryIdx = 0
 
   return (
-    <div
-      className="flex items-center gap-2 px-4 py-1 overflow-x-auto flex-shrink-0 max-w-4xl mx-auto w-full"
-    >
+    <div className="relative flex items-center gap-2 overflow-x-auto px-4 py-0.5 flex-shrink-0 max-w-4xl mx-auto w-full">
       {sorted.map((role, idx) => {
         const cfg = ROLE_BY_CLERK_ROLE[role.role as ClerkRole]
         if (!cfg) return null
@@ -58,7 +58,7 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBar
             )}
             <Link
               href={`/${slug}/${cfg.key}/dashboard`}
-              className="flex items-center px-2.5 py-2 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
+              className="flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all"
               style={{
                 background: isActive ? 'var(--color-accent-glow)' : 'transparent',
                 border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-glass-border)'}`,
@@ -69,12 +69,21 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBar
               aria-current={isActive ? 'page' : undefined}
             >
               <GlassTooltip label={cfg.label}>
-                <Icon size={22} />
+                <Icon size={20} />
               </GlassTooltip>
             </Link>
           </span>
         )
       })}
+
+      {businessName && (
+        <span
+          className="absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
+          data-testid="hierarchy-bar-name"
+        >
+          {businessName}
+        </span>
+      )}
     </div>
   )
 }

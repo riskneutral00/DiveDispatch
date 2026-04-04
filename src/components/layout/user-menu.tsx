@@ -101,49 +101,40 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               </p>
             </div>
 
-            {roleConfigs.length > 1 ? (
-              roleConfigs.map((role) => {
-                const Icon = role.icon;
-                return (
-                  <div key={role.key}>
-                    <div className="flex items-center gap-2 px-3 pt-2 pb-1">
-                      <Icon size={14} className="text-secondary" />
-                      <span className="text-xs font-medium text-secondary">{role.label}</span>
-                    </div>
+            <button
+              onClick={() => handleMenuAction("profile")}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+            >
+              <User size={14} />
+              {tNav("profile")}
+            </button>
+            <button
+              onClick={() => handleMenuAction("preferences")}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+            >
+              <Settings size={14} />
+              {tUserMenu("preferences")}
+            </button>
+
+            {roleConfigs.length > 1 && (
+              <div
+                className="mt-1 pt-1"
+                style={{ borderTop: "1px solid var(--color-glass-border)" }}
+              >
+                {roleConfigs.map((role) => {
+                  const Icon = role.icon;
+                  return (
                     <button
+                      key={role.key}
                       onClick={() => handleMenuAction(`role:${role.key}`)}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 pl-9 text-sm transition-all cursor-pointer text-secondary"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
                     >
-                      <User size={12} />
-                      {tNav("profile")}
+                      <Icon size={14} />
+                      {role.label}
                     </button>
-                    <button
-                      onClick={() => handleMenuAction("preferences")}
-                      className="flex items-center gap-2 w-full px-3 py-1.5 pl-9 text-sm transition-all cursor-pointer text-secondary"
-                    >
-                      <Settings size={12} />
-                      {tUserMenu("preferences")}
-                    </button>
-                  </div>
-                );
-              })
-            ) : (
-              <>
-                <button
-                  onClick={() => handleMenuAction("profile")}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
-                >
-                  <User size={14} />
-                  {tNav("profile")}
-                </button>
-                <button
-                  onClick={() => handleMenuAction("preferences")}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
-                >
-                  <Settings size={14} />
-                  {tUserMenu("preferences")}
-                </button>
-              </>
+                  );
+                })}
+              </div>
             )}
 
             <div

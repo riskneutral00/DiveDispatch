@@ -54,7 +54,7 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
   return (
     <nav
       aria-label="Role switcher"
-      className="flex items-center gap-1.5 px-4 py-1 overflow-x-auto flex-shrink-0 max-w-4xl mx-auto w-full"
+      className="relative flex items-center gap-2 overflow-x-auto px-4 py-0.5 flex-shrink-0 max-w-4xl mx-auto w-full"
       data-testid="role-switcher"
     >
       {showTabs &&
@@ -90,12 +90,15 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
           )
         })}
 
-      <span
-        className="ml-auto text-sm font-medium truncate text-primary"
-        data-testid="role-switcher-name"
-      >
-        {displayName}
-      </span>
+      {/* Show name here only when HierarchySubBar won't render it */}
+      {(showTabs || !roles || roles.length <= 1) && (
+        <span
+          className="absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
+          data-testid="role-switcher-name"
+        >
+          {displayName}
+        </span>
+      )}
     </nav>
   )
 }

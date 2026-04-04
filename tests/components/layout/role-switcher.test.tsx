@@ -90,12 +90,12 @@ describe('RoleSwitcher', () => {
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 
-  it('renders business name without tabs for single-hierarchy multi-role', () => {
+  it('does not render business name for single-hierarchy multi-role (HierarchySubBar handles it)', () => {
     mockUseQueryReturn = SINGLE_HIERARCHY
 
     render(<RoleSwitcher slug="deep-blue" roleSlug="dive-center" />)
 
-    expect(screen.getByTestId('role-switcher-name')).toHaveTextContent('Deep Blue Scuba')
+    expect(screen.queryByTestId('role-switcher-name')).not.toBeInTheDocument()
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 
