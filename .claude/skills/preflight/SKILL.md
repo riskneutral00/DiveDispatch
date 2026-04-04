@@ -17,6 +17,29 @@ touch .car/heartbeat-driver
 
 Touch this first. The watchdog wrapper monitors this file — if it goes stale >60s, the process is killed. Touching it early prevents a false-stall kill during the longer preflight steps.
 
+## Run Knowledge Init
+
+If this is a fresh run (no `.car/manifest.json`):
+```bash
+mkdir -p .car/run-knowledge
+```
+
+If this is a restart (manifest exists), preserve existing `.car/run-knowledge/` files.
+
+## Handoff Context
+
+If `.car/handoff.json` exists (written by previous session's debrief):
+```bash
+cat .car/handoff.json 2>/dev/null
+```
+
+If found, print key highlights:
+```
+HANDOFF | last session: {last_ticket_outcome} | {first knowledge_highlight}
+```
+
+This gives Driver context about what the previous session learned. The handoff file is NOT deleted — it persists until the next debrief overwrites it.
+
 ## Stale Claim Recovery
 
 Scan `.tickets/DD-*.md` for `status: in_progress`. For each:

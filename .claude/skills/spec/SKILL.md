@@ -1,30 +1,78 @@
 ---
 name: spec
-description: "Write a feature spec via structured interview. Enforces data-first thinking, TDD test plan, universality across roles, supersession, and risk checks. Output goes to .tickets/DD-*.md for /board to pick up."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+description: "Write feature specs via structured interview. Deep codebase exploration, multi-ticket decomposition, executable acceptance criteria. Output goes to .tickets/DD-*.md — compatible with both Car workflow and /start-work."
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 user-invocable: true
 ---
 
-# /spec — Spec Builder
+# /spec — Universal Ticket Originator
 
-You are writing a feature spec for DiveDispatch. Conduct a structured interview — one question at a time, with a recommended answer, a second option, and free-form. Between answers, silently run lesson checks and codebase research. Only surface a flag if a check fails.
+You are writing feature specs for DiveDispatch. Conduct a structured interview — one question at a time, with a recommended answer, a second option, and free-form. Between answers, silently run lesson checks and codebase research. Only surface a flag if a check fails.
 
 **Do not skip questions. Do not batch questions. One at a time.**
+
+The tickets you produce must contain ALL information an agent needs to implement the work — file:line references, executable acceptance criteria, QA scenarios. Workers should never need to re-explore the codebase. This makes tickets compatible with both Car's jira-worker and OMOA's /start-work.
+
+---
+
+## Phase 0: Deep Exploration (before any questions)
+
+After reading the user's description, launch Explore agents to build a **context map** — a structured list of `file:line` references with one-line descriptions. This map powers every recommendation and populates ticket `**References:**` sections.
+
+**Scaling by scope:**
+- Narrow/specific change → 1 Explore agent (relevant area only)
+- Broad feature or cross-cutting concern → up to 3 agents in parallel:
+
+```
+Agent 1 (convex/): mutations, queries, schema tables, validators → file:line map
+Agent 2 (src/): components, hooks, utilities, pages → file:line map
+Agent 3 (tests/): existing coverage, fixtures, test patterns → coverage map
+```
+
+Use `model: "sonnet"` for all Explore agents.
+
+Merge results into a single context map. Do NOT show the raw map to the user — use it to make informed, specific recommendations in every question.
+
+Also search in parallel (same as before):
+- `convex/schema.ts` — relevant tables
+- `.tickets/DD-*.md` — related or overlapping tickets (YAML frontmatter: status, priority, side_effects)
+- `src/components/` and `src/lib/constants/` — existing shared components and configs
+
+### Pre-Spec Scanning
+
+After building the context map, scan `.tickets/DD-*.md` for tickets with `needs_spec: true` in frontmatter. For each pre-spec found, check if its `**Problem:**` description or `area` field overlaps with the context map (mentions same tables, same feature area, same components).
+
+If overlapping pre-specs exist, present them:
+
+```
+Found {N} pre-specs that overlap with this exploration:
+  DD-{A}: "{title}" — touches {overlapping area}
+  DD-{B}: "{title}" — touches {overlapping area}
+
+Fill these in now? (Free — context already loaded)
+  A) Yes, fill in all (Recommended)
+  B) Pick specific ones
+  C) Skip
+```
+
+For accepted pre-specs, after the main spec interview is complete:
+1. Read the pre-spec's `**Deferred:**` section for unanswered questions
+2. Re-ask each deferred question (Matt can defer again → set `human_required: true`)
+3. Using the context map, fill in: `**References:**`, `**QA Scenarios:**`, executable `**Acceptance:**`, `**Test plan:**`
+4. Set: `area` (from code analysis), `wave`, `recommended_model`
+5. Remove `needs_spec: true` from frontmatter
+6. If no deferred questions remain: set `status: ready`
+7. If deferred questions remain and Matt deferred again: set `human_required: true`, keep `status: backlog`
 
 ---
 
 ## Phase 1: Understand the feature
 
-Before asking anything, read the user's description carefully. Then search in parallel:
-- `convex/schema.ts` — relevant tables
-- `.tickets/DD-*.md` — related or overlapping tickets (read YAML frontmatter for status, priority, side_effects)
-- `src/components/` and `src/lib/constants/` — existing shared components and configs
-
-Use this research to make informed recommendations in every question.
+Use the context map to present what you found — cite specific `file:line` locations.
 
 ---
 
-## Phase 2: Interview (7 questions)
+## Phase 2: Interview
 
 ### Q1: Classify
 
@@ -34,26 +82,54 @@ Options:
 - **New pattern** — creates new component, page, or flow (recommend if nothing similar exists in codebase)
 - **Extension** — adds behavior to an existing component or page
 
-**Silent check:** If the feature is cross-cutting (touches language matching, course catalog, session builder, or another foundational concern), search TODO.md for an item that covers that concern. If none exists, flag: "This depends on [X] which doesn't have its own spec yet. Should we write that first?"
+**Silent check:** If the feature is cross-cutting (touches language matching, course catalog, session builder, or another foundational concern), search `.tickets/` for an item that covers that concern. If none exists, flag: "This depends on [X] which doesn't have its own spec yet. Should we write that first?"
+
+### Q1.5: Decomposition (NEW)
+
+Based on the context map, assess whether the work is a single ticket or multiple.
+
+Ask: "Based on what I explored, this breaks into N pieces: [list with file:line evidence]. Should I spec each as a separate ticket, or bundle?"
+
+Present each piece with:
+- What it changes (with file references)
+- Size estimate (S/M/L)
+- Whether it depends on another piece
+
+If **single ticket**: proceed to Q2 as normal.
+
+If **multi-ticket**: assign wave numbers:
+- Independent pieces → same wave (can run in parallel)
+- Dependent pieces → later wave (sequenced). Auto-populate `blocked_by` from wave ordering.
+
+Then interview each ticket in sequence through Q2-Q6, using the shared context map. Label each sub-interview: `"Ticket 1 of N: {title}"`
 
 ### Q2: Data model
 
 Ask: "What data does this need?"
 
-Present what you found in `convex/schema.ts` — relevant tables, fields, indexes. Recommend one of:
-- "Looks like `[table]` already has `[fields]`, so we'd add `[X]`"
-- "This needs a new query/mutation: `[name]`"
+Present what you found in `convex/schema.ts` — relevant tables, fields, indexes. **Cite file:line.** Recommend one of:
+- "Looks like `{table}` already has `{fields}` at `schema.ts:{line}`, so we'd add `{X}`"
+- "This needs a new query/mutation: `{name}` (similar to `{existing}` at `{file}:{line}`)"
 - "No schema changes — this is purely UI"
 
 **If the user describes UI interactions** ("when I click this...", "there should be a button that..."), gently redirect: "Got it — let me map that to the data model first, then we'll spec the UI." Do not proceed to UI details until the data model is settled.
 
-**Silent check (UI-First Without Guardrails):** Is the data model thought through before UI? If not, keep asking data questions.
+**Silent violation detection:** Check the context map for:
 
-### Q2.5: Test plan
+| Violation | Detection | Action |
+|---|---|---|
+| Core → Adapter import direction | Change requires importing from `convex/bookings/` (Core) into an adapter | Flag: "This would violate dependency direction. Recommend moving shared logic to `convex/lib/`." |
+| IMMUTABLE file modification | Change touches `scripts/**`, `.claude/agents/**`, `.claude/hooks/**`, `.claude/settings.json` | Flag: "Requires interactive implementation — will set `human_required: true`." |
+| Booking invariant risk | Change modifies reservation/availability/snapshot logic | Flag which of the 3 invariants is at risk, add to `side_effects` |
+| Missing index | New query pattern on a field without an index | Flag: "Needs index on `{table}.{field}` — adding to schema change." |
+
+Raise violations inline during the question — don't batch them.
+
+### Q2.5: Test plan + QA scenarios
 
 Ask: "What should the tests verify?"
 
-Based on the data model answer, recommend test types using CLAUDE.md's test type selection rules (cheapest test that catches the bug):
+Based on the data model answer, recommend test types (cheapest test that catches the bug):
 
 | Data model change | Test type | Template |
 |---|---|---|
@@ -63,15 +139,21 @@ Based on the data model answer, recommend test types using CLAUDE.md's test type
 | New component calling useMutation | Component + Contract | Component renders correctly, contract test verifies data transformation |
 | State machine change | Hardening | Every valid transition tested, every invalid rejected |
 
-Present a recommended test plan:
+Present a recommended test plan with **executable acceptance criteria**:
 ```
 Test plan:
-- Unit: tests/{module}.test.ts — {function} returns {expected} when {input}
-- Integration: tests/{feature}.test.ts — {mutation} creates {outcome}
-- Component: tests/components/{component}.test.tsx — renders {state}, calls {mutation}
+- Unit: `tests/{module}.test.ts` — `npx vitest run tests/{module}.test.ts -- --grep "{function}"`
+- Integration: `tests/{feature}.test.ts` — `npx vitest run tests/{feature}.test.ts`
 ```
 
-The user can adjust. The test plan goes into the final spec output.
+Then present **QA Scenarios** (at least 2, mandatory):
+```
+QA Scenarios:
+1. {exact function/API call with specific inputs} → {exact expected output/state}
+2. {exact function/API call with specific inputs} → {exact expected output/state}
+```
+
+QA scenarios must be agent-executable — specific enough that Patrol can verify them post-merge against a live deployment. No vague descriptions.
 
 ### Q3: Universality
 
@@ -87,7 +169,7 @@ Recommend based on feature type:
 - Request handling → resources only
 - Profile feature → check which role types have the relevant profile fields
 
-**If multiple roles:** Search the codebase for existing shared components and config files that already serve this pattern. Surface what you find.
+**If multiple roles:** Search the codebase for existing shared components and config files that already serve this pattern. Surface what you find with file:line references.
 
 **Silent check (Specs Must Enforce Universality):** If Affected Roles > 1, the spec MUST name the ONE component and reference the config file driving role-specific behavior.
 
@@ -110,7 +192,7 @@ Assess based on everything learned so far. Ask only if there are flags to raise:
 
 - **Novel interaction** → "Recommend building a throwaway prototype first."
 - **High domain complexity** → "This needs real dive course knowledge."
-- **Shared component collision** → "Another TODO also touches [component]."
+- **Shared component collision** → "Another ticket also touches [component] at [file:line]."
 - **Batch operations** → "Spec needs batched mutations (Convex limits)."
 
 **Always ask:** "What shared modules or areas does this touch beyond its own scope?"
@@ -129,7 +211,7 @@ If no flags: Say "No risk flags" and move on.
 Ask: "Does this replace anything existing?"
 
 Present overlapping tickets from `.tickets/`. Recommend:
-- "This supersedes #[N]. Files to delete: [list]." or
+- "This supersedes DD-{N}. Files to delete: [list]." or
 - "No overlap found."
 
 ---
@@ -158,44 +240,84 @@ Before writing, verify each check passes. If any fail, raise it with the user.
 | 5 | Platform feature checked? | "Clerk/Convex already handles [X]" |
 | 6 | Multi-role → ONE component named? | Name the shared component and config |
 | 7 | Existing components referenced, not duplicated? | "Extend [component], don't create new" |
+| 8 | No violations flagged unresolved? | Revisit the violation from Q2 |
+| 9 | QA scenarios are executable? | Rewrite with specific inputs/outputs |
 
 ---
 
 ## Phase 5: Write to .tickets/
 
-`.tickets/` is the single source of truth for all work items. Read `.tickets/.counter` for the next ticket number. Increment the counter.
+`.tickets/` is the single source of truth for all work items. Read `.tickets/.counter` for the next ticket number. For multi-ticket specs, increment the counter once per ticket.
 
-Create `.tickets/DD-{NNN}.md` with YAML frontmatter + spec body:
+Create `.tickets/DD-{NNN}.md` with enriched YAML frontmatter + spec body:
 
 ```markdown
 ---
 id: DD-{NNN}
 title: "{Title}"
-status: ready          # backlog if human_required: true
+status: ready
 priority: {P0|P1|P2|P3}
 category: {feature|bugfix|security|performance|tooling|ux}
+area: {backend|frontend|schema|testing|fullstack}
 assigned_to: null
 branch: null
 blocked_by: [{DD-NNN dependencies, or empty}]
+blocks: [{DD-NNN tickets this blocks, or empty}]
 pr: null
 side_effects: [{areas from Q5, or empty}]
 human_required: false
 size: {S|M|L}
+wave: {1|2|3}
+recommended_model: {sonnet|opus}
 created: {YYYY-MM-DD}
 updated: {YYYY-MM-DD}
 ---
 
 **Spec:** {What to change, which files, what the outcome looks like.}
 
+**References:**
+- {file:line-range} — {what it is and why it's relevant}
+- {file:line-range} — {what it is and why it's relevant}
+
 **Acceptance:**
-- {Specific, testable bullets. Include "npm test passes".}
+- [ ] `{executable command}` (e.g., `npx vitest run tests/file.test.ts -- --grep "case"`)
+- [ ] `npx tsc --noEmit` (no new TS errors)
+- [ ] {specific, testable condition}
 
 **Test plan:**
 - {Type}: `{file}` — {what it tests}
 - {Type}: `{file}` — {what it tests}
+
+**QA Scenarios:**
+1. {exact input/action} → {exact expected output/state}
+2. {exact input/action} → {exact expected output/state}
+
+**Do Not Touch:** {files/areas explicitly out of scope, if any}
 ```
 
-### Priority selection
+### Field Selection Guide
+
+**`area`** (technical domain — drives worker context routing):
+
+| Area | When |
+|---|---|
+| `backend` | Primarily convex/ mutations, queries, validators |
+| `frontend` | Primarily src/ components, hooks, pages |
+| `schema` | Schema changes, index additions, migrations |
+| `testing` | Test-only changes, fixture updates |
+| `fullstack` | Mixed convex/ + src/ changes |
+
+**`wave`** (parallelization group):
+- `1` = can start immediately (no dependencies within this spec session)
+- `2` = depends on at least one wave-1 ticket
+- `3` = depends on at least one wave-2 ticket
+- Single-ticket specs always default to `wave: 1`
+
+**`recommended_model`:**
+- `sonnet` = default for S and M tickets
+- `opus` = for L tickets, security-category tickets, or tickets touching Core (booking state machine)
+
+**Priority:**
 
 | Priority | Use when |
 |---|---|
@@ -204,7 +326,7 @@ updated: {YYYY-MM-DD}
 | P2 | Polish, a11y, performance, post-launch features |
 | P3 | Nice-to-have, deferred, low-impact |
 
-### Category selection
+**Category** (change type):
 
 | Category | Use when |
 |---|---|
@@ -215,16 +337,63 @@ updated: {YYYY-MM-DD}
 | `tooling` | Skills, hooks, CI/CD, dev experience |
 | `ux` | Visual polish, a11y, responsive |
 
-After writing the ticket file, update `.tickets/.counter` with the new number.
+After writing each ticket file, update `.tickets/.counter` with the highest number used.
 
 ---
 
-## Phase 6: Confirm
+## Phase 6: Confirm + Estimate
 
-1. Report: "Created DD-{NNN}: {title} (P{X}, {category})"
-2. Walk through before → after from the user's perspective — what does each affected role see/do today vs. after this is built?
-3. If `human_required: true`: Note that this ticket needs Matt's input before Driver will pick it up.
-   If `human_required: false`: Note that Driver will pick this up automatically.
+### Single ticket:
+1. Report: "Created DD-{NNN}: {title} (P{X}, {category}, {area})"
+2. Walk through before → after from the user's perspective
+3. Note Driver pickup: `human_required: true` → needs Matt's input first; `false` → auto-pickup
+
+### Multi-ticket:
+1. Summary table with batch time estimation:
+
+```
+Created {N} tickets from "{topic}":
+  Wave 1: DD-{A} ({size}/{time}, {area}) + DD-{B} ({size}/{time}, {area})
+  Wave 2: DD-{C} ({size}/{time}, {area}, blocked by DD-{A})
+
+  Est. worker time: ~{total}m
+  Est. batches: {ceil(N/4)} (cap=4)
+  Models: {Nx Sonnet, Mx Opus}
+```
+
+Timing: S=5m, M=15m, L=30m. If any ticket has `side_effects` overlap with another ticket in this batch, add note: "+50% buffer for overlap risk".
+
+2. Walk through wave ordering and why
+3. Note Driver pickup for the batch
+
+### NotebookLM Ingest
+
+After confirming, write a spec session document:
+
+```
+~/Desktop/RiskNeutral/Vaults/DiveDispatch/Specs/{YYYY-MM-DD}-{slug}.md
+```
+
+Contents:
+```markdown
+# Spec Session: {topic}
+**Date:** {YYYY-MM-DD}
+**Tickets:** {DD-A, DD-B, DD-C}
+
+## Context Map Summary
+{Top 10-15 file:line references from exploration, grouped by area}
+
+## Decisions
+{Key decisions made during interview — data model choices, role scoping, risk mitigations}
+
+## Violations Detected
+{Any violations flagged during Q2-Q5, and how they were resolved}
+
+## Vault References Used
+{Lessons, patterns, or architecture docs that informed the spec}
+```
+
+This is ingested into NotebookLM on the next `/vault` run. Future `/spec` sessions can query past decisions.
 
 ---
 
@@ -233,6 +402,11 @@ After writing the ticket file, update `.tickets/.counter` with the new number.
 - **One question at a time.** Never batch.
 - **Data before UI.** Always.
 - **Tests before code.** The test plan is mandatory, not optional.
-- **`.tickets/` is the output.** One ticket file per spec. `/board` manages lifecycle, `/board sync` mirrors to vault TODO.md.
+- **`.tickets/` is the output.** `/board` manages lifecycle, `/board sync` mirrors to vault TODO.md.
 - **Cheapest test wins.** Don't spec a component test for something a unit test catches.
 - **Edge cases over happy paths.** The test plan should focus on what could go wrong.
+- **References mandatory for M/L.** Every M/L ticket must have at least one `file:line` reference. S tickets can omit if trivially scoped.
+- **QA scenarios mandatory.** At least 2 per ticket. Must be agent-executable (specific inputs → specific outputs).
+- **Violations caught here, not at worker time.** Flag dependency direction, IMMUTABLE files, invariant risk, missing indexes during the interview.
+- **One exploration, many tickets.** The context map from Phase 0 is shared across all tickets in a multi-ticket session. Never re-explore for the same topic.
+- **Batch estimate at confirmation.** Always show estimated worker time and batch count for multi-ticket specs.

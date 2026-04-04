@@ -82,6 +82,29 @@ Run these checks **once** after all events are ingested. Store results — do NO
 
 ---
 
+### Step 2.5 — QA Scenario Verification (NEW)
+
+For each ticket processed in this cycle (from Step 1 event data), check if the ticket has QA scenarios:
+
+```bash
+cat .tickets/done/DD-{id}.md 2>/dev/null | grep -A 50 '**QA Scenarios:**'
+```
+
+If QA scenarios exist, execute each one:
+- For mutation/query scenarios: use `npx convex run` or test helpers to call the function with the specified inputs
+- For assertion scenarios: verify the expected output/state matches
+- For test command scenarios (e.g., `npx vitest run ...`): run the command directly
+
+Record results:
+- All pass → Print: `QA-VERIFY | DD-{id} | {pass}/{total} scenarios passed`
+- Any fail → Skill("escalate") with findings as CRITICAL, `source: patrol`, `origin: DD-{id}`. Print: `QA-FAIL | DD-{id} | {fail}/{total} scenarios FAILED — escalated`
+
+Skip QA verification if:
+- Ticket has no `**QA Scenarios:**` section (older ticket format)
+- Ticket is not in `.tickets/done/` (still in progress)
+
+---
+
 ### Step 3 — Backseat queue check
 
 ```bash

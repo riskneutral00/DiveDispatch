@@ -25,7 +25,7 @@ IMMUTABLE=scripts/**, .claude/agents/**, .claude/hooks/**, .claude/settings.json
 
 ## Startup
 
-Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes done tickets.
+Invoke Skill("preflight"). Captures test baseline, resets stale claims, prunes done tickets, creates `.car/run-knowledge/` directory if fresh run, reads `.car/handoff.json` if resuming.
 
 ## Manifest
 
@@ -35,7 +35,7 @@ After preflight, check for an existing manifest:
 cat .car/manifest.json 2>/dev/null
 ```
 
-**Fresh run (no manifest):** Scan `.tickets/DD-*.md` (NOT `done/`) for all tickets that pass ticket-pick eligibility: `status: ready`, `assigned_to: null`, `human_required: false`, body >50 chars, `blocked_by` resolved. Write `.car/manifest.json`:
+**Fresh run (no manifest):** Scan `.tickets/DD-*.md` (NOT `done/`) for all tickets that pass ticket-pick eligibility: `status: ready`, `assigned_to: null`, `human_required: false`, body >50 chars, `blocked_by` resolved. Create `.car/run-knowledge/` directory. Write `.car/manifest.json`:
 
 ```json
 {
@@ -44,7 +44,12 @@ cat .car/manifest.json 2>/dev/null
   "initial_tickets": ["DD-448", "DD-449"],
   "completed": [],
   "blocked": [],
-  "deferred_fixes": []
+  "deferred_fixes": [],
+  "current_ticket": null,
+  "session_stats": {
+    "tickets_attempted": 0,
+    "nogo_count": 0
+  }
 }
 ```
 
@@ -63,11 +68,17 @@ Print: `MANIFEST | resuming phase {phase} | {remaining} initial tickets left`
 
 **Heartbeat:** `touch .car/heartbeat-driver` at the start of every loop iteration AND before/after each major operation (implement, review, merge). The wrapper script monitors this — if stale >60s, it kills and restarts your process automatically.
 
-**Recovery on restart:** Check for two crash scenarios before entering the main loop:
+**Recovery on restart:** Check for crash scenarios before entering the main loop:
 
-1. **Mid-implementation crash:** Find any ticket with `status: in_progress` AND `assigned_to: driver`. That ticket was being worked on when Driver crashed — re-pick it directly (skip scoring) and spawn a fresh worker.
+1. **Stage-aware recovery (preferred):** If `manifest.current_ticket` is non-null, resume based on stage:
+   - `stage: "implement"` → re-spawn worker in the existing worktree (partial work may exist). Run `git log --oneline -5` in the worktree first to check.
+   - `stage: "review"` → skip re-implementation, invoke Skill("pre-merge-review") directly.
+   - `stage: "merge"` → skip review, run `bash scripts/jira-merge.sh` directly.
+   Print: `RECOVERY | DD-{id} | resuming at stage: {stage}`
 
-2. **Post-merge event-loss:** Check for recent merges that landed in git but never got an event written for Backseat:
+2. **Fallback (no current_ticket in manifest):** Find any ticket with `status: in_progress` AND `assigned_to: driver`. That ticket was being worked on when Driver crashed — re-pick it directly (skip scoring) and spawn a fresh worker.
+
+3. **Post-merge event-loss:** Check for recent merges that landed in git but never got an event written for Backseat:
 ```bash
 git log --oneline origin/main..HEAD --merges --pretty=format:"%h %s" | grep "ticket/DD-"
 ```
@@ -118,24 +129,45 @@ If no fix events → Invoke Skill("ticket-pick") with no manifest constraint (pi
 
 After any ticket completes or is blocked, update manifest (`completed` or `blocked` arrays), persist to disk atomically (write to `.car/manifest.json.tmp` then `mv`).
 
-**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`). Spawn `jira-worker` agent — use **Opus** for fix tickets (Backseat-flagged HIGH/CRITICAL), Sonnet for normal tickets:
+**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`).
+
+**Update manifest** — write `current_ticket` before spawning worker:
+```json
+"current_ticket": {
+  "id": "DD-{id}",
+  "stage": "implement",
+  "retry_count": 0,
+  "model": "{sonnet|opus}",
+  "worktree": "{WORKTREE_PREFIX}{id}",
+  "started_at": "{ISO timestamp}"
+}
+```
+Persist manifest atomically (write `.car/manifest.json.tmp` then `mv`). Increment `session_stats.tickets_attempted`.
+
+**Build worker prompt.** The prompt includes three context layers:
+
+1. **Ticket spec** — the full `.tickets/DD-{id}.md` content
+2. **Run knowledge** — read `.car/run-knowledge/learnings.md` (if it exists and is non-empty), include as `## Run Context` section
+3. **Area context** — read ticket `area` field; if `.car/worker-context/{area}.md` exists, include as `## Area Context` section
+
+Select model: **Opus** for fix tickets, `size: L` tickets, tickets with `recommended_model: opus`, or retries. **Sonnet** for everything else.
+
+Spawn `jira-worker` agent:
 
 ```
-# Fix ticket (is_fix_ticket = true):
-Agent(
-  description: "DD-{id}: {title} [FIX]",
-  subagent_type: "jira-worker",
-  model: "opus",
-  prompt: "<full ticket spec + worktree path>",
-  run_in_background: false,
-  mode: "bypassPermissions"
-)
-
-# Normal ticket (is_fix_ticket = false):
 Agent(
   description: "DD-{id}: {title}",
   subagent_type: "jira-worker",
-  prompt: "<full ticket spec + worktree path>",
+  model: "{selected model}",
+  prompt: "<ticket spec>
+
+## Run Context
+{contents of .car/run-knowledge/learnings.md, or 'No prior learnings.'}
+
+## Area Context
+{contents of .car/worker-context/{area}.md, or omit section}
+
+Worktree: {WORKTREE_PREFIX}{id}",
   run_in_background: false,
   mode: "bypassPermissions"
 )
@@ -143,11 +175,30 @@ Agent(
 
 Timeout per size (S=5min, M=15min, L=30min).
 
+**Completion validation:** After worker returns, check output format:
+- Contains `"DD-{id} complete."` → proceed to knowledge capture, then review.
+- Contains `"DD-{id} blocked."` → proceed to stuck procedure.
+- **Neither** → worker exited prematurely. Re-spawn with CONTINUATION prompt (max 1 attempt):
+  ```
+  CONTINUATION — Your previous attempt exited without completing.
+  Worktree: {path}. Run `git log --oneline -5` and `git status` to see
+  your partial work, then finish the ticket.
+  ```
+  If second attempt also lacks signal → mark blocked with `stuck_reason: "worker exited without completion signal (2 attempts)"`.
+
+**Knowledge capture:** After a worker completes or blocks, append a 2-3 line summary to `.car/run-knowledge/learnings.md`:
+```
+## DD-{id}: {title} ({complete|blocked})
+- {What the worker discovered or what blocked it}
+- {Non-obvious pattern, fixture requirement, or file relationship}
+```
+Skip if the worker completed cleanly with no surprises (no retries, no unusual findings in output).
+
 - If blocked/timeout: **Stuck procedure:**
   1. Parse result:
      - Timeout → `stuck_reason = "timeout after {X}m (size: {size})"`, `attempted = "timed out"`, `suggestion = "inspect worktree at {WORKTREE_PREFIX}{id}"`
      - Self-report (`DD-{id} blocked.`) → extract `Reason:`, `Attempted:`, `Suggestion:` lines verbatim from jira-worker output
-  2. Update ticket frontmatter: `status: blocked`, `stuck_reason: "{stuck_reason}"`, `assigned_to: null`, `branch: null`, `updated: {today}`. Keep worktree intact for inspection.
+  2. Update ticket frontmatter: `status: blocked`, `stuck_reason: "{stuck_reason}"`, `assigned_to: null`, `branch: null`, `updated: {today}`. Clear `manifest.current_ticket = null`, persist. Keep worktree intact for inspection.
   3. Append to vault Lessons.md (`~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md`):
      ```
      ## Stuck: DD-{id} — {title}
@@ -161,11 +212,11 @@ Timeout per size (S=5min, M=15min, L=30min).
   5. Re-pick next ready ticket.
 - If complete: proceed to review.
 
-**Review:** Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
+**Review:** Update manifest: `current_ticket.stage = "review"`, persist atomically. Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
 
 - If GO: proceed to merge.
 - If NO-GO and `retry_count < 2`:
-  1. `retry_count++`
+  1. `retry_count++`. Update manifest: `current_ticket.retry_count = retry_count`, `current_ticket.stage = "implement"`, `session_stats.nogo_count++`. Persist.
   2. Print: `DD-{id}: NO-GO (attempt {retry_count}/2) — retrying with feedback`
   3. Spawn a **fresh** jira-worker in the **same worktree** (code is already there):
      ```
@@ -191,8 +242,8 @@ Timeout per size (S=5min, M=15min, L=30min).
 - If NO-GO and `retry_count >= 2`: set `stuck_reason` to the first CRITICAL or HIGH finding (or "NO-GO after 2 retries: {first finding}"), then run the **Stuck procedure** above (step 2 onward). Keep worktree intact.
   Print: `DD-{id}: NO-GO after 2 retries — marked blocked | stuck_reason: {first finding}`
 
-**Merge:** `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
-- Exit 0: move to `done/`, auto-unblock dependents, then remove the worktree:
+**Merge:** Update manifest: `current_ticket.stage = "merge"`, persist atomically. `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
+- Exit 0: clear `manifest.current_ticket = null`, persist. Move to `done/`, auto-unblock dependents, then remove the worktree:
   ```bash
   git worktree remove {WORKTREE_PREFIX}{id}
   git worktree prune

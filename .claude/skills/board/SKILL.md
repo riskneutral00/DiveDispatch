@@ -14,7 +14,7 @@ When invoked, parse the command and execute. No preamble.
 ### `/board` (no args) — Board summary
 
 1. Read all `.tickets/DD-*.md` files. Parse YAML frontmatter from each.
-2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog.
+2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog. Additionally, separate backlog tickets with `needs_spec: true` into a "Pre-Spec" group.
 3. Sort each group by priority (P0 first), then by id (lower first).
 4. Print:
 
@@ -29,6 +29,9 @@ In Progress ({count}):
 
 Ready ({count}):
   {id} [{priority}] {title} ({category}) {size} {🧑 human | ⚡ auto} {⚠ non-standard format — if missing **Spec:** or **Acceptance:** headers}
+
+Pre-Spec ({count} — needs /spec to fill in):
+  {id} [{priority}] {title} ({size}, {category})
 
 Black hole ({count}):
   {id} [{priority}] {title} — parked / deprioritized (excluded from /board pick)
@@ -48,6 +51,8 @@ In Review ({count}):
 Backlog ({count}): {count} items (use /board backlog to list)
 Done: {count} archived
 ```
+
+Pre-Spec tickets are backlog tickets with `needs_spec: true`. They show in their own section to make them visible. They are NOT included in the Backlog count.
 
 ### `/board pick` — Claim next ready ticket
 
@@ -197,6 +202,11 @@ updated: {today}
 | ID | Title | Priority | PR |
 |---|---|---|---|
 | {id} | {title} | {priority} | {pr} |
+
+## Pre-Spec (needs /spec)
+| ID | Title | Priority | Size | Category |
+|---|---|---|---|---|
+| {id} | {title} | {priority} | {size} | {category} |
 
 ## Backlog
 | ID | Title | Priority | Category |

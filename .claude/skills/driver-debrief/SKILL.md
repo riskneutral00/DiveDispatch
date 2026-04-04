@@ -9,6 +9,36 @@ user-invocable: false
 
 Called by `/driver` at batch cap or idle exit. Writes session stats to vault.
 
+## Promote Run Knowledge
+
+Read `.car/run-knowledge/learnings.md`. If it contains entries, extract the top 3-5 most generalizable learnings (ones that apply beyond this specific batch) and append them to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md`:
+
+```markdown
+## Car Run Learnings — {YYYY-MM-DD}
+- {learning 1}
+- {learning 2}
+```
+
+Skip learnings that are ticket-specific or already in Lessons.md.
+
+## Write Handoff
+
+Write `.car/handoff.json` for the next session's preflight to read:
+
+```json
+{
+  "written_at": "{ISO timestamp}",
+  "last_ticket": "DD-{id}",
+  "last_ticket_outcome": "{completed|blocked}",
+  "knowledge_highlights": ["{top 3 learnings from run-knowledge}"],
+  "pattern_warnings": ["{recurring issues, e.g. 'test fixture gaps caused 2 NO-GOs'}"],
+  "nogo_rate": {session_stats.nogo_count / session_stats.tickets_attempted},
+  "git_head": "{short sha from git rev-parse --short HEAD}"
+}
+```
+
+Read `session_stats` from `.car/manifest.json` for the nogo_rate calculation.
+
 ## Write Session Summary
 
 Append to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Sessions/{YYYY-MM-DD}-driver.md`. If file exists (multiple batches same day), append a `---` separator.

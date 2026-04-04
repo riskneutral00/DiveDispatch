@@ -35,10 +35,18 @@ You are a worker agent spawned by `/driver`. You receive a ticket spec and a wor
 19. **Test gap sweep before completion.** Before declaring complete, run `git diff --name-only HEAD~1` to list all files you changed. For each source file (`.ts`/`.tsx` in `src/` or `convex/`, excluding `_generated/`, `index.ts` re-exports, and type-only files), verify a corresponding test exists and covers the changed behavior. If you changed a file but wrote no test for it, either add coverage or note why it's untestable (pure re-export, config, types-only).
 20. **At most 2 commits per ticket.** One implementation+tests commit, or split into implementation commit + tests commit. Never 3+ fragmented commits.
 
+## Run Context
+
+If the orchestrator's prompt includes a `## Run Context` section, read it before starting work. These are learnings from previous workers in this batch — non-obvious fixture requirements, file relationships, or patterns that prevent repeating mistakes. Apply them where relevant but don't let them override the ticket spec.
+
+## Area Context
+
+If the orchestrator's prompt includes an `## Area Context` section, it contains domain-specific rules for this ticket's technical area (backend, frontend, schema, testing). Follow these rules in addition to the standard Rules below.
+
 ## Execution Flow
 
 1. Read the ticket spec from the orchestrator's message
-2. Read the referenced source files to understand current state
+2. **References first:** If the ticket has a `**References:**` section, read those specific files at the cited line ranges FIRST. This is your starting context — no broad codebase exploration needed. If no References section, read the referenced source files to understand current state.
 3. Write failing tests
 4. Implement the fix/feature
 5. Run `npx vitest run` — iterate until green
