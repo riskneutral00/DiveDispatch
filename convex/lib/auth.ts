@@ -1,6 +1,6 @@
 import { ConvexError } from 'convex/values'
 import type { QueryCtx, MutationCtx } from '../_generated/server'
-import type { Doc } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
 
@@ -75,4 +75,33 @@ export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
       q.eq('tokenIdentifier', identity.tokenIdentifier),
     )
     .unique()
+}
+
+/**
+ * Verifies that a user either owns the booking (ownerId match) or has a
+ * reservation on it via their inventory units. Throws FORBIDDEN if neither.
+ * Use in query/mutation handlers where both the booking owner and assigned
+ * resource stakeholders need access.
+ */
+export async function requireOwnerOrResourceAccess(
+  ctx: QueryCtx,
+  user: { slug: string },
+  bookingId: string | Id<'bookings'>,
+): Promise<void> {
+  const booking = await ctx.db.get(bookingId as Id<'bookings'>)
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+
+  if (booking.ownerId === user.slug) return
+
+  const callerUnits = await ctx.db
+    .query('inventoryUnits')
+    .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
+    .collect()
+  const callerUnitIds = new Set(callerUnits.map((u) => u._id))
+  const bookingReservations = await ctx.db
+    .query('reservations')
+    .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
+    .collect()
+  const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
+  if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 }

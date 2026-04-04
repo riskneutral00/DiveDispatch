@@ -7,6 +7,25 @@ import { ErrorCode } from './errorCodes'
 import { queryDynamicTable, insertDynamicTable, patchDynamic } from './typedDb'
 
 /**
+ * Maps stakeholder role strings to their Convex profile table names.
+ * Used to eliminate switch/if-else chains when resolving role → table.
+ */
+export const ROLE_TABLE_MAP: Record<string, TableNames> = {
+  Instructor: 'instructors',
+  Boat: 'boats',
+  Equipment: 'equipment',
+  Pool: 'venues',
+  DiveSite: 'venues',
+  Compressor: 'compressors',
+  DiveCenter: 'diveCenters',
+  DiveMaster: 'diveMasters',
+  Agent: 'agents',
+  Liveaboard: 'liveaboards',
+  DiveResort: 'diveResorts',
+  DiveHostel: 'diveHostels',
+}
+
+/**
  * Shared CRUD helpers for profile-style resource tables (instructors,
  * diveMasters, boats, equipment, compressors, diveCenters).
  *

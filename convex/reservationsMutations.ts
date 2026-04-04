@@ -12,6 +12,7 @@ import { getDatesInRange } from './shared/dateRange'
 import { notify } from './notifications'
 import { logBookingChange } from './lib/auditLog'
 import { ErrorCode } from './lib/errorCodes'
+import { ROLE_TABLE_MAP, profileByUserId } from './lib/profileHelpers'
 import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
 import { batchPatch } from './lib/batch'
@@ -49,35 +50,9 @@ async function getProfileCity(
   userId: Id<'users'>,
   ownerType: ResourceType,
 ): Promise<string | null> {
-  let profile: { placeName?: string } | null = null
-
-  if (ownerType === 'Instructor') {
-    profile = await ctx.db
-      .query('instructors')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
-  } else if (ownerType === 'Boat') {
-    profile = await ctx.db
-      .query('boats')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
-  } else if (ownerType === 'Equipment') {
-    profile = await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
-  } else if (ownerType === 'Pool') {
-    profile = await ctx.db
-      .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
-  } else if (ownerType === 'Compressor') {
-    profile = await ctx.db
-      .query('compressors')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .unique()
-  }
-
+  const tableName = ROLE_TABLE_MAP[ownerType]
+  if (!tableName) return null
+  const profile = await profileByUserId(ctx, userId, tableName) as { placeName?: string } | null
   return profile?.placeName ?? null
 }
 

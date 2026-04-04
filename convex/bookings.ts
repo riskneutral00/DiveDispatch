@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { UserDoc, BookingDoc, InventoryUnitDoc, ReservationDoc } from './lib/types'
-import { requireAuth } from './lib/auth'
+import { requireAuth, requireOwnerOrResourceAccess } from './lib/auth'
 import { checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import {
@@ -526,19 +526,7 @@ export async function _getBookingDetail(
   const b = booking as BookingDoc
 
   // Allow access if caller owns the booking OR has a reservation on it
-  if (b.ownerId !== user.slug) {
-    const callerUnits = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
-      .collect()
-    const callerUnitIds = new Set(callerUnits.map((u) => u._id))
-    const bookingReservations = await ctx.db
-      .query('reservations')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-      .collect()
-    const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
-    if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-  }
+  await requireOwnerOrResourceAccess(ctx, user, bookingId)
 
   // Fetch related rows in parallel
   const [sessions, reservations, customerProfiles, auditEntries] = await Promise.all([

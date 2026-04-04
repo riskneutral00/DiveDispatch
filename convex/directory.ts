@@ -5,6 +5,7 @@ import { requireAuth } from './lib/auth'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 import type { Doc, Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
+import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 
 /**
  * Maximum number of users returned per role in listByRole.
@@ -64,98 +65,62 @@ type ProfileData = {
 
 // Returns profile display fields (including role-specific extras) for a user.
 // Returns null if no profile row exists yet.
-/** Profile tables that have a `by_userId` index with userId: Id<'users'>. */
-type ProfileTable =
-  | 'instructors' | 'diveMasters' | 'diveCenters' | 'agents'
-  | 'boats' | 'equipment' | 'venues' | 'compressors'
-  | 'liveaboards' | 'diveResorts' | 'diveHostels'
 
 /** Query a single profile table by its `by_userId` index. */
-async function queryProfileByUser<T extends ProfileTable>(
-  db: DatabaseReader, table: T, userId: Id<'users'>,
-): Promise<Doc<T> | null> {
-  // All profile tables share `userId: v.id('users')` + `by_userId` index.
-  // queryDynamicTable accepts any index/field; the generic `T` narrows the
-  // return type to the correct Doc<T> via the cast below.
+async function queryProfileByUser(
+  db: DatabaseReader, role: StakeholderRole, userId: Id<'users'>,
+): Promise<Record<string, unknown> | null> {
+  const table = ROLE_TABLE_MAP[role]
+  if (!table) return null
   const result = await queryDynamicTable(db, table)
     .withIndex('by_userId', (q) => q.eq('userId', userId))
     .unique()
-  return result as Doc<T> | null
+  return result as Record<string, unknown> | null
 }
 
 async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole, slug?: string): Promise<ProfileData | null> {
+  const p = await queryProfileByUser(db, role, userId)
+  if (!p) return null
+
+  const base = {
+    name: p.name as string,
+    placeName: p.placeName as string,
+    country: p.country as string,
+    verified: p.verified as boolean,
+  }
+
   switch (role) {
     case 'Instructor': {
-      const p = await queryProfileByUser(db, 'instructors', userId)
-      if (!p) return null
+      const creds = (p.credential ?? []) as Array<{ agency: string; courses?: string[] }>
       return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        agencies: (p.credential ?? []).map((c: { agency: string }) => c.agency),
-        credentials: (p.credential ?? []).map((c) => ({ agency: c.agency, courses: c.courses ?? [] })),
-        teachingLanguages: p.teachingLanguages,
+        ...base,
+        agencies: creds.map((c) => c.agency),
+        credentials: creds.map((c) => ({ agency: c.agency, courses: c.courses ?? [] })),
+        teachingLanguages: p.teachingLanguages as string[] | undefined,
       }
     }
-    case 'DiveMaster': {
-      const p = await queryProfileByUser(db, 'diveMasters', userId)
-      if (!p) return null
-      return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        teachingLanguages: p.teachingLanguages,
-      }
-    }
-    case 'DiveCenter': {
-      const p = await queryProfileByUser(db, 'diveCenters', userId)
-      if (!p) return null
-      return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        customerLanguages: p.customerLanguages,
-      }
-    }
-    case 'Agent': {
-      const p = await queryProfileByUser(db, 'agents', userId)
-      if (!p) return null
-      return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        association: (p.associations ?? [])[0]?.agency,
-      }
-    }
+    case 'DiveMaster':
+      return { ...base, teachingLanguages: p.teachingLanguages as string[] | undefined }
+    case 'DiveCenter':
+      return { ...base, customerLanguages: p.customerLanguages as string[] | undefined }
+    case 'Agent':
+      return { ...base, association: ((p.associations ?? []) as Array<{ agency: string }>)[0]?.agency }
     case 'Boat': {
-      const p = await queryProfileByUser(db, 'boats', userId)
-      if (!p) return null
-      // Represent capacity as the max pax of the largest vessel in fleet.
-      const fleet: Array<{ boatName: string; maxPax: number; boatType: string }> = p.fleet ?? []
+      const fleet = (p.fleet ?? []) as Array<{ boatName: string; maxPax: number; boatType: string }>
       const largest = fleet.reduce(
         (best: typeof fleet[0] | null, b) => (!best || b.maxPax > best.maxPax ? b : best),
         null,
       )
       const boatTypes = [...new Set(fleet.map((b) => b.boatType))]
       return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
+        ...base,
         boatCapacity: largest?.maxPax,
         boatType: largest?.boatType,
         boatTypes,
-        hasCompressor: p.hasCompressor,
+        hasCompressor: p.hasCompressor as boolean | undefined,
       }
     }
     case 'Equipment': {
-      const p = await queryProfileByUser(db, 'equipment', userId)
-      if (!p) return null
-      // Aggregate inventory counts by gearType
       const inventoryCounts: Record<string, number> = {}
       if (slug) {
         const items = await db
@@ -168,62 +133,30 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
           inventoryCounts[gt] = (inventoryCounts[gt] ?? 0) + (units[i]?.totalUnits ?? 0)
         }
       }
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified, inventoryCounts }
+      return { ...base, inventoryCounts }
     }
-    case 'Pool': {
-      const p = await queryProfileByUser(db, 'venues', userId)
-      if (!p) return null
+    case 'Pool':
       return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        venueType: p.venueType,
-        confinedCapable: p.confinedCapable,
-        hasCompressor: p.hasCompressor,
-        maxDepth: p.maxDepth,
-        maxCapacity: p.maxCapacity,
+        ...base,
+        venueType: p.venueType as string | undefined,
+        confinedCapable: p.confinedCapable as boolean | undefined,
+        hasCompressor: p.hasCompressor as boolean | undefined,
+        maxDepth: p.maxDepth as number | undefined,
+        maxCapacity: p.maxCapacity as number | undefined,
       }
-    }
-    case 'Compressor': {
-      const p = await queryProfileByUser(db, 'compressors', userId)
-      if (!p) return null
+    case 'Compressor':
+      return { ...base, gasMixes: (p.gasMixes ?? []) as string[] }
+    case 'Liveaboard':
+    case 'DiveResort':
+    case 'DiveHostel':
+      return base
+    case 'DiveSite':
       return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        gasMixes: p.gasMixes ?? [],
+        ...base,
+        venueType: p.venueType as string | undefined,
+        confinedCapable: p.confinedCapable as boolean | undefined,
+        hasCompressor: p.hasCompressor as boolean | undefined,
       }
-    }
-    case 'Liveaboard': {
-      const p = await queryProfileByUser(db, 'liveaboards', userId)
-      if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
-    }
-    case 'DiveResort': {
-      const p = await queryProfileByUser(db, 'diveResorts', userId)
-      if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
-    }
-    case 'DiveHostel': {
-      const p = await queryProfileByUser(db, 'diveHostels', userId)
-      if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
-    }
-    case 'DiveSite': {
-      const p = await queryProfileByUser(db, 'venues', userId)
-      if (!p) return null
-      return {
-        name: p.name,
-        placeName: p.placeName,
-        country: p.country,
-        verified: p.verified,
-        venueType: p.venueType,
-        confinedCapable: p.confinedCapable,
-        hasCompressor: p.hasCompressor,
-      }
-    }
   }
 }
 

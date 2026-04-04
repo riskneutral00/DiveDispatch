@@ -7,6 +7,8 @@ import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } fr
 import { ErrorCode } from './lib/errorCodes'
 import { deriveDefaultRole } from './lib/rolePrecedence'
 import { batchGet, batchDelete } from './lib/batch'
+import { ROLE_TABLE_MAP } from './lib/profileHelpers'
+import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 
 // ─── Helpers (importable by other modules) ──────────────────────────────────
 
@@ -300,71 +302,16 @@ export const deleteRole = mutation({
 })
 
 // ─── Profile delete helper ───────────────────────────────────────────────────
-// Each branch queries the correct typed table — no unsafe cast needed.
 
 async function deleteProfileForRole(
   ctx: MutationCtx,
   role: Doc<'userRoles'>['role'],
   userId: Id<'users'>,
 ): Promise<void> {
-  switch (role) {
-    case 'DiveCenter': {
-      const p = await ctx.db.query('diveCenters').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Instructor': {
-      const p = await ctx.db.query('instructors').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Boat': {
-      const p = await ctx.db.query('boats').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Equipment': {
-      const p = await ctx.db.query('equipment').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Compressor': {
-      const p = await ctx.db.query('compressors').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'DiveSite':
-    case 'Pool': {
-      const p = await ctx.db.query('venues').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Agent': {
-      const p = await ctx.db.query('agents').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'DiveMaster': {
-      const p = await ctx.db.query('diveMasters').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'Liveaboard': {
-      const p = await ctx.db.query('liveaboards').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'DiveResort': {
-      const p = await ctx.db.query('diveResorts').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    case 'DiveHostel': {
-      const p = await ctx.db.query('diveHostels').withIndex('by_userId', (q) => q.eq('userId', userId)).unique()
-      if (p) await ctx.db.delete(p._id)
-      break
-    }
-    default:
-      break
-  }
+  const tableName = ROLE_TABLE_MAP[role]
+  if (!tableName) return
+  const p = await queryDynamicTable(ctx.db, tableName)
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .unique()
+  if (p) await deleteDynamic(ctx.db, p._id)
 }
