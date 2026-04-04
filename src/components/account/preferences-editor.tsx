@@ -66,8 +66,7 @@ const prefsSchema = z.object({
 
 type PrefsFormData = z.infer<typeof prefsSchema>
 
-type ResourceSubTab =
-  | 'readiness'
+export type ResourceSubTab =
   | 'instructors'
   | 'venues'
   | 'equipment'
@@ -89,18 +88,23 @@ const defaultFormData = (): PrefsFormData => ({
   autoAssignPreferred: true,
 })
 
-// ── Sub-components ────────────────────────────────────────────────────
+// ── Pure helpers ─────────────────────────────────────────────────────
 
-
-// ── Coverage Status ──────────────────────────────────────────────────
-
-interface CoverageStatusProps {
-  instructorSlugs: string[]
-  venueSlugs: string[]
-  equipmentSlugs: string[]
-  boatSlugs: string[]
-  compressorSlugs: string[]
+export function buildResourceSubTabs(clerkRole: string | undefined): { id: ResourceSubTab; label: string }[] {
+  const base: { id: ResourceSubTab; label: string }[] = [
+    { id: 'instructors', label: 'Instructors' },
+    { id: 'venues', label: 'Venues' },
+    { id: 'equipment', label: 'Equipment' },
+    { id: 'boats', label: 'Boats' },
+    { id: 'compressors', label: 'Compressors' },
+  ]
+  if (clerkRole === 'Agent') {
+    base.push({ id: 'operator', label: 'Operator' })
+  }
+  return base
 }
+
+// ── Sub-components ────────────────────────────────────────────────────
 
 function ResourceSectionTitle({
   children,
@@ -120,63 +124,6 @@ function ResourceSectionTitle({
         </span>
       ) : null}
     </h2>
-  )
-}
-
-function CoverageStatus({
-  instructorSlugs,
-  venueSlugs,
-  equipmentSlugs,
-  boatSlugs,
-  compressorSlugs,
-}: CoverageStatusProps) {
-  // Simplified client-side check: "has at least one" for each resource type.
-  // The detailed capability check (confinedCapable, venueType, hasCompressor)
-  // happens server-side at booking time via createDraftShell.
-  // A boat satisfies venue needs; a boat or venue with compressor satisfies compressor needs.
-  const hasBoat = boatSlugs.length > 0
-  const checks = [
-    { label: 'Instructor', met: instructorSlugs.length > 0 },
-    { label: 'Equipment Provider', met: equipmentSlugs.length > 0 },
-    { label: 'Venue or Boat', met: venueSlugs.length > 0 || hasBoat },
-    { label: 'Compressor', met: compressorSlugs.length > 0 || hasBoat },
-  ]
-  const allMet = checks.every((c) => c.met)
-
-  return (
-    <GlassCard padding="md">
-      <h2
-        className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-      >
-        Booking Readiness
-      </h2>
-      <p className="text-sm mb-4 text-secondary">
-        These resources must be configured before you can create bookings.
-        Detailed capability checks happen when you submit a booking.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {checks.map(({ label, met }) => (
-          <div
-            key={label}
-            className="flex items-center gap-2 text-sm px-3 py-2 rounded-[var(--border-radius)]"
-            style={{ background: 'var(--color-glass-bg-elevated)' }}
-          >
-            <span
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ background: met ? 'var(--color-success)' : 'var(--color-destructive)' }}
-            />
-            <span style={{ color: met ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-      {allMet && (
-        <p className="text-sm mt-3 font-medium" style={{ color: 'var(--color-success)' }}>
-          All coverage requirements met. You can create bookings.
-        </p>
-      )}
-    </GlassCard>
   )
 }
 
@@ -230,15 +177,18 @@ function PreferredOperatorPicker({
 
 // ── Main Component ────────────────────────────────────────────────────
 
-export function PreferencesEditor() {
+interface PreferencesEditorProps {
+  section?: 'booking' | 'resources'
+}
+
+export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProps) {
   const params = useParams()
   const roleSlug = params?.roleSlug as string | undefined
   const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
   const prefs = useQuery(api.stakeholderPreferences.mine)
   const upsert = useMutation(api.stakeholderPreferences.upsert)
 
-  const [activeTab, setActiveTab] = useState('booking')
-  const [resourceSubTab, setResourceSubTab] = useState<ResourceSubTab>('readiness')
+  const [resourceSubTab, setResourceSubTab] = useState<ResourceSubTab>('instructors')
   const [resourceSaving, setResourceSaving] = useState(false)
   const defaults = useMemo(() => defaultFormData(), [])
   const savePreferences = useCallback(
@@ -254,7 +204,6 @@ export function PreferencesEditor() {
   const {
     form,
     setField,
-    errors,
     footerErrorMessage,
     saving,
     saved,
@@ -291,20 +240,7 @@ export function PreferencesEditor() {
 
   const showResourcePrefs = activeRole != null && DISPLAY_OPERATOR_ROLE_KEYS.has(activeRole)
 
-  const resourceSubTabs = useMemo(() => {
-    const base: { id: ResourceSubTab; label: string }[] = [
-      { id: 'readiness', label: 'Readiness' },
-      { id: 'instructors', label: 'Instructors' },
-      { id: 'venues', label: 'Venues' },
-      { id: 'equipment', label: 'Equipment' },
-      { id: 'boats', label: 'Boats' },
-      { id: 'compressors', label: 'Compressors' },
-    ]
-    if (activeRole === 'Agent') {
-      base.push({ id: 'operator', label: 'Operator' })
-    }
-    return base
-  }, [activeRole])
+  const resourceSubTabs = useMemo(() => buildResourceSubTabs(activeRole), [activeRole])
 
   const saveStakeholderPreferences = useCallback(async () => {
     if (!activeRole) {
@@ -341,17 +277,9 @@ export function PreferencesEditor() {
 
   useEffect(() => {
     if (activeRole !== 'Agent' && resourceSubTab === 'operator') {
-      setResourceSubTab('readiness')
+      setResourceSubTab('instructors')
     }
   }, [activeRole, resourceSubTab])
-
-  const tabs = useMemo(() => {
-    const base = [
-      { id: 'booking', label: 'Booking' },
-    ]
-    if (showResourcePrefs) base.push({ id: 'resources', label: 'Resources' })
-    return base
-  }, [showResourcePrefs])
 
   return (
     <ProfileFormShell
@@ -364,15 +292,13 @@ export function PreferencesEditor() {
       isUpdate={isUpdate}
       disableSaveWhenInvalid
       isValid={isValid}
-      hideFooter={activeTab === 'resources'}
+      hideFooter={section === 'resources'}
       className="max-w-2xl mx-auto w-full px-4 pt-4 pb-28 md:pb-10"
     >
-      <ProfileSectionTabBar tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <div id={`tabpanel-${section}`} role="tabpanel" aria-labelledby={`tab-${section}`} className="space-y-6">
 
-      <div id={`tabpanel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} className="space-y-6">
-
-        {/* ── Booking tab ─────────────────────────────────────────── */}
-        {activeTab === 'booking' && (
+        {/* ── Booking section ─────────────────────────────────────────── */}
+        {section === 'booking' && (
           <>
             <GlassCard padding="md">
               <h2
@@ -477,8 +403,8 @@ export function PreferencesEditor() {
           </>
         )}
 
-        {/* ── Resources tab (organizer roles only) — horizontal sub-tabs, per-section save ── */}
-        {activeTab === 'resources' && showResourcePrefs && (
+        {/* ── Resources section (organizer roles only) — horizontal sub-tabs, per-section save ── */}
+        {section === 'resources' && showResourcePrefs && (
           <>
             <ProfileSectionTabBar
               tabs={resourceSubTabs}
@@ -492,16 +418,6 @@ export function PreferencesEditor() {
               aria-labelledby={`tab-${resourceSubTab}`}
               className="space-y-4"
             >
-              {resourceSubTab === 'readiness' && (
-                <CoverageStatus
-                  instructorSlugs={form.preferredInstructorSlugs ?? []}
-                  venueSlugs={form.preferredVenueSlugs ?? []}
-                  equipmentSlugs={form.preferredEquipmentSlugs ?? []}
-                  boatSlugs={form.preferredBoatSlugs ?? []}
-                  compressorSlugs={form.preferredCompressorSlugs ?? []}
-                />
-              )}
-
               {resourceSubTab === 'instructors' && (
                 <GlassCard padding="md">
                   <ResourceSectionTitle required>Preferred Instructors</ResourceSectionTitle>

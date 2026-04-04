@@ -82,7 +82,10 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
       if (activeSection === 'inventory') {
         return <ConnectedEquipmentInventory />
       }
-      // booking, availability, resources — PreferencesEditor reads roleSlug from URL params
+      if (activeSection === 'booking' || activeSection === 'resources') {
+        return <PreferencesEditor section={activeSection} />
+      }
+      // availability — PreferencesEditor default handles it
       return <PreferencesEditor />
     }
 
