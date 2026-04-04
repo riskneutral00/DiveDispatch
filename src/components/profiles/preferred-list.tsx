@@ -11,6 +11,8 @@ import type { StakeholderRole } from '@/lib/utils/role'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
+import { BOAT_TYPES, BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
+import { GAS_MIXES, GAS_MIX_LABELS } from '@/lib/constants/gas-mixes'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -676,10 +678,10 @@ export function PreferredInstructorList(props: ListProps) {
             <Plus size={14} className="mr-1" />
             Add Instructor
           </Button>
-          {props.required && <span className="text-xs" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
         </span>
         <span className="text-xs text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
+          {props.required && <span className="ml-1" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
         </span>
       </div>
 
@@ -872,10 +874,10 @@ function PreferredOverlayList({
             <Plus size={14} className="mr-1" />
             {addButtonLabel}
           </Button>
-          {required && <span className="text-xs" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
         </span>
         <span className="text-xs text-secondary">
           {slugs.length}/{maxItems}
+          {required && <span className="ml-1" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
         </span>
       </div>
 
@@ -1037,11 +1039,7 @@ export function PreferredVenueList(props: ListProps) {
 
 // ─── Boat list ──────────────────────────────────────────────────────────────
 
-const BOAT_TYPES = ['day_boat', 'speedboat', 'liveaboard', 'catamaran', 'rib', 'longtail'] as const
-const BOAT_TYPE_LABELS: Record<string, string> = {
-  day_boat: 'Day Boat', speedboat: 'Speedboat', liveaboard: 'Liveaboard',
-  catamaran: 'Catamaran', rib: 'RIB', longtail: 'Longtail',
-}
+// BOAT_TYPES + BOAT_TYPE_LABELS imported from @/lib/constants/boat-types
 
 function BoatBadge({ entry }: { entry: DirectoryEntry }) {
   const types = (entry.boatTypes ?? (entry.boatType ? [entry.boatType] : []))
@@ -1184,10 +1182,7 @@ export function PreferredEquipmentList(props: ListProps) {
 
 // ─── Compressor list ────────────────────────────────────────────────────────
 
-const GAS_MIXES = ['air', 'nitrox', 'trimix'] as const
-const GAS_MIX_LABELS: Record<string, string> = {
-  air: 'Air', nitrox: 'Nitrox', trimix: 'Trimix',
-}
+// GAS_MIXES + GAS_MIX_LABELS imported from @/lib/constants/gas-mixes
 
 function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
   const mixes = entry.gasMixes ?? []

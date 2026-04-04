@@ -69,9 +69,8 @@ type PrefsFormData = z.infer<typeof prefsSchema>
 
 export type ResourceSubTab =
   | 'instructors'
-  | 'venues'
+  | 'venues-boats'
   | 'equipment'
-  | 'boats'
   | 'compressors'
   | 'operator'
 
@@ -94,9 +93,8 @@ const defaultFormData = (): PrefsFormData => ({
 export function buildResourceSubTabs(clerkRole: string | undefined): { id: ResourceSubTab; label: string }[] {
   const base: { id: ResourceSubTab; label: string }[] = [
     { id: 'instructors', label: 'Instructors' },
-    { id: 'venues', label: 'Venues' },
+    { id: 'venues-boats', label: 'Venues & Boats' },
     { id: 'equipment', label: 'Equipment' },
-    { id: 'boats', label: 'Boats' },
     { id: 'compressors', label: 'Compressors' },
   ]
   if (clerkRole === 'Agent') {
@@ -105,11 +103,10 @@ export function buildResourceSubTabs(clerkRole: string | undefined): { id: Resou
   return base
 }
 
-const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData> = {
+const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData | (keyof PrefsFormData)[]> = {
   instructors: 'preferredInstructorSlugs',
-  venues: 'preferredVenueSlugs',
+  'venues-boats': ['preferredVenueSlugs', 'preferredBoatSlugs'],
   equipment: 'preferredEquipmentSlugs',
-  boats: 'preferredBoatSlugs',
   compressors: 'preferredCompressorSlugs',
   operator: 'preferredOperatorSlug',
 }
@@ -329,6 +326,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
   const isSectionDirty = useCallback((section: ResourceSubTab): boolean => {
     if (!resourceBaselineRef.current) return false
     const field = SECTION_FIELDS[section]
+    if (Array.isArray(field)) {
+      return field.some((f) => JSON.stringify(form[f]) !== JSON.stringify(resourceBaselineRef.current![f]))
+    }
     return JSON.stringify(form[field]) !== JSON.stringify(resourceBaselineRef.current[field])
   }, [form])
 
@@ -489,19 +489,32 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                 </Card>
               )}
 
-              {resourceSubTab === 'venues' && (
+              {resourceSubTab === 'venues-boats' && (
                 <Card padding="sm">
-                  <PreferredVenueList
-                    slugs={form.preferredVenueSlugs ?? []}
-                    onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
-                    required={(form.preferredBoatSlugs ?? []).length === 0}
-                  />
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">Venues</h3>
+                      <PreferredVenueList
+                        slugs={form.preferredVenueSlugs ?? []}
+                        onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+                        required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">Boats</h3>
+                      <PreferredBoatList
+                        slugs={form.preferredBoatSlugs ?? []}
+                        onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+                        required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
+                      />
+                    </div>
+                  </div>
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
-                      isDirty={isSectionDirty('venues')}
+                      isDirty={isSectionDirty('venues-boats')}
                       saving={resourceSaving}
-                      saved={savedSection === 'venues'}
-                      onSave={() => void handleSaveResourceSection('venues')}
+                      saved={savedSection === 'venues-boats'}
+                      onSave={() => void handleSaveResourceSection('venues-boats')}
                     />
                   </div>
                 </Card>
@@ -520,24 +533,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'equipment'}
                       onSave={() => void handleSaveResourceSection('equipment')}
-                    />
-                  </div>
-                </Card>
-              )}
-
-              {resourceSubTab === 'boats' && (
-                <Card padding="sm">
-                  <PreferredBoatList
-                    slugs={form.preferredBoatSlugs ?? []}
-                    onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
-                    required={(form.preferredVenueSlugs ?? []).length === 0}
-                  />
-                  <div className="flex justify-end pt-4">
-                    <ResourceSaveButton
-                      isDirty={isSectionDirty('boats')}
-                      saving={resourceSaving}
-                      saved={savedSection === 'boats'}
-                      onSave={() => void handleSaveResourceSection('boats')}
                     />
                   </div>
                 </Card>

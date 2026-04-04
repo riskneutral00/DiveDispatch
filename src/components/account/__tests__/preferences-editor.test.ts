@@ -26,13 +26,13 @@ describe('buildResourceSubTabs', () => {
   it('includes all resource sub-tabs for a non-Agent operator role', () => {
     const tabs = buildResourceSubTabs('DiveCenter')
     const ids = tabs.map((t) => t.id)
-    expect(ids).toEqual(['instructors', 'venues', 'equipment', 'boats', 'compressors'])
+    expect(ids).toEqual(['instructors', 'venues-boats', 'equipment', 'compressors'])
   })
 
   it('appends Operator tab for Agent role', () => {
     const tabs = buildResourceSubTabs('Agent')
     const ids = tabs.map((t) => t.id)
-    expect(ids).toEqual(['instructors', 'venues', 'equipment', 'boats', 'compressors', 'operator'])
+    expect(ids).toEqual(['instructors', 'venues-boats', 'equipment', 'compressors', 'operator'])
   })
 
   it('does not include Operator tab for DiveCenter role', () => {
@@ -52,9 +52,8 @@ describe('buildResourceSubTabs', () => {
     const tabs = buildResourceSubTabs('DiveCenter')
     expect(tabs).toEqual([
       { id: 'instructors', label: 'Instructors' },
-      { id: 'venues', label: 'Venues' },
+      { id: 'venues-boats', label: 'Venues & Boats' },
       { id: 'equipment', label: 'Equipment' },
-      { id: 'boats', label: 'Boats' },
       { id: 'compressors', label: 'Compressors' },
     ])
   })
