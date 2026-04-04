@@ -225,11 +225,12 @@ function PreferredOperatorPicker({
 
 interface PreferencesEditorProps {
   section?: 'booking' | 'resources'
+  roleSlug?: string
 }
 
-export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProps) {
+export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp }: PreferencesEditorProps) {
   const params = useParams()
-  const roleSlug = params?.roleSlug as string | undefined
+  const roleSlug = roleSlugProp ?? (params?.roleSlug as string | undefined)
   const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
   const prefs = useQuery(api.stakeholderPreferences.mine)
   const upsert = useMutation(api.stakeholderPreferences.upsert)

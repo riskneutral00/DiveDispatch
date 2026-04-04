@@ -124,10 +124,10 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           required
         />
         <GlassInput
-          label={agencyPrefix?.memberIdLabel ?? 'Member ID'}
+          label="Member Number"
           value={String((item as AgencyRow).number ?? '')}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
-          placeholder={agencyPrefix?.memberIdLabel ?? 'Member ID'}
+          placeholder="Member Number"
           required
         />
 

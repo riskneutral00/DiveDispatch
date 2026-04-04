@@ -269,7 +269,15 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
     })
 
   function handleAdd() {
-    setField('associations', [...form.associations, makeDefaultAssoc()])
+    const first = form.associations[0]
+    const newAssoc: DiveCenterAssociationItem = {
+      ...makeDefaultAssoc(),
+      owDays: first?.owDays,
+      aowDays: first?.aowDays,
+      oaDays: first?.oaDays,
+      selectedSpecialties: first?.selectedSpecialties ? [...first.selectedSpecialties] : [],
+    }
+    setField('associations', [...form.associations, newAssoc])
   }
 
   return (

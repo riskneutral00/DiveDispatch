@@ -28,7 +28,7 @@ interface LocationPickerProps {
 
 // ── FlyEffect: child of <Map> that imperatively pans/zooms ────────────────────
 
-function FlyEffect({ target, zoom = 15 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
+function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
     if (target && map) {
@@ -62,7 +62,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number } | null>(
     value ? { lat: value.lat, lng: value.lng } : null,
   )
-  const [flyZoom, setFlyZoom] = useState(15)
+  const [flyZoom, setFlyZoom] = useState(20)
   const [gpsLoading, setGpsLoading] = useState(false)
   const [suggestionsOpen, setSuggestionsOpen] = useState(false)
   const poiClickRef = useRef(false)
@@ -168,6 +168,8 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       const addr = place.formattedAddress ?? ''
       const display =
         name && addr && !addr.startsWith(name) ? `${name}, ${addr}` : addr || name
+      setFlyZoom(20)
+      setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
       setDisplayAddress(display)
     } catch {
       // Silent fail — user can still drag the map
@@ -356,7 +358,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
       <div className="flex-1 relative" style={{ minHeight: 0 }}>
         <Map
           defaultCenter={center}
-          defaultZoom={value ? 15 : 10}
+          defaultZoom={value ? 20 : 10}
           gestureHandling="greedy"
           disableDefaultUI
           mapId="dd-location-picker"

@@ -13,6 +13,7 @@ const CLERK_DOMAINS = '*.clerk.accounts.dev *.clerk.com'
 const CONVEX_HTTPS = '*.convex.cloud'
 const CONVEX_CONNECT = '*.convex.cloud wss://*.convex.cloud'
 const GOOGLE_MAPS_SCRIPT = 'maps.googleapis.com'
+const GOOGLE_PLACES_API = 'places.googleapis.com'
 const GOOGLE_MAPS_STATIC = 'maps.gstatic.com'
 
 // Clerk SDK injects inline scripts and styles at runtime.
@@ -28,7 +29,7 @@ const cspDirectives = [
   `style-src 'self' ${CLERK_INLINE} fonts.googleapis.com`,
   `img-src 'self' data: blob: ${CONVEX_HTTPS} ${GOOGLE_MAPS_SCRIPT} ${GOOGLE_MAPS_STATIC} ${CLERK_DOMAINS}`,
   `font-src 'self' fonts.gstatic.com`,
-  `connect-src 'self' ${CONVEX_CONNECT} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT}`,
+  `connect-src 'self' ${CONVEX_CONNECT} ${CLERK_DOMAINS} ${GOOGLE_MAPS_SCRIPT} ${GOOGLE_PLACES_API}`,
   `worker-src 'self' blob:`,
   `frame-src 'self' ${CLERK_DOMAINS}`,
   `object-src 'none'`,
@@ -71,7 +72,7 @@ export const securityHeaders: SecurityHeader[] = [
   },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=()',
+    value: 'camera=(), microphone=(), geolocation=(self)',
   },
 ]
 
