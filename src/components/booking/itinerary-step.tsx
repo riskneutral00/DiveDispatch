@@ -364,6 +364,23 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     cascadePrefs?.autoAssignPreferred,
   ])
 
+  // Sync boatHasCompressor — if any assigned boat has on-board compressor, skip compressor requirement
+  useEffect(() => {
+    const assignedBoatSlugs = new Set(
+      days.flatMap((d) =>
+        d.dives
+          .filter((dv) => (dv.venueType ?? (dv.isConfined ? 'pool' : 'boat')) === 'boat' && dv.resourceSlug)
+          .map((dv) => dv.resourceSlug!),
+      ),
+    )
+    const anyHasCompressor = boats.some(
+      (b) => assignedBoatSlugs.has(b.slug) && b.hasCompressor,
+    )
+    if (anyHasCompressor !== state.boatHasCompressor) {
+      dispatch({ type: 'SET_BOAT_HAS_COMPRESSOR', value: anyHasCompressor })
+    }
+  }, [days, boats, state.boatHasCompressor, dispatch])
+
   // Derive all course codes and date range
   const allCourseCodes: CourseCode[] = [...new Set(
     customers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode as CourseCode)).filter(Boolean),

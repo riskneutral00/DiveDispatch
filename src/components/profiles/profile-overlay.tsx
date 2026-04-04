@@ -17,7 +17,7 @@ import { PreferencesEditor } from '@/components/account/preferences-editor'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ProfileOverlayTab = 'profile' | 'preferences' | 'roles'
+export type ProfileOverlayTab = 'profile' | 'preferences' | 'roles' | `role:${RoleKey}`
 
 interface ProfileOverlayProps {
   open: boolean

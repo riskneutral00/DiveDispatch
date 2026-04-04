@@ -69,7 +69,8 @@ export function ProfileBasicInfo({
       />
       <GlassInput
         label="Phone"
-        type="tel"
+        type="text"
+        inputMode="tel"
         placeholder="+66 81 234 5678"
         value={phoneValue}
         onChange={(e) => onPhoneChange(e.target.value)}
@@ -80,7 +81,8 @@ export function ProfileBasicInfo({
       {onEmailChange !== undefined && (
         <GlassInput
           label="Email"
-          type="email"
+          type="text"
+          inputMode="email"
           placeholder="info@example.com"
           value={emailValue ?? ''}
           onChange={(e) => onEmailChange(e.target.value)}

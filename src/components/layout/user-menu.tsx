@@ -1,10 +1,12 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { LogOut, Settings, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import type { RoleKey } from "@/lib/constants/roles";
+import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from "@/lib/constants/roles";
+import { api } from "@/lib/convex-generated";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
 import type { ProfileOverlayTab } from "../profiles/profile-overlay";
 
@@ -21,6 +23,10 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
   const { user: convexUser } = useCurrentUser();
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
+  const userRoles = useQuery(api.userRoles.myRoles);
+  const roleConfigs = (userRoles ?? [])
+    .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
+    .filter(Boolean);
 
   // Close on Escape key
   useEffect(() => {
@@ -95,21 +101,50 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               </p>
             </div>
 
-            <button
-              onClick={() => handleMenuAction("profile")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
-            >
-              <User size={14} />
-              {tNav("profile")}
-            </button>
-
-            <button
-              onClick={() => handleMenuAction("preferences")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
-            >
-              <Settings size={14} />
-              {tUserMenu("preferences")}
-            </button>
+            {roleConfigs.length > 1 ? (
+              roleConfigs.map((role) => {
+                const Icon = role.icon;
+                return (
+                  <div key={role.key}>
+                    <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                      <Icon size={14} className="text-secondary" />
+                      <span className="text-xs font-medium text-secondary">{role.label}</span>
+                    </div>
+                    <button
+                      onClick={() => handleMenuAction(`role:${role.key}`)}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 pl-9 text-sm transition-all cursor-pointer text-secondary"
+                    >
+                      <User size={12} />
+                      {tNav("profile")}
+                    </button>
+                    <button
+                      onClick={() => handleMenuAction("preferences")}
+                      className="flex items-center gap-2 w-full px-3 py-1.5 pl-9 text-sm transition-all cursor-pointer text-secondary"
+                    >
+                      <Settings size={12} />
+                      {tUserMenu("preferences")}
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <>
+                <button
+                  onClick={() => handleMenuAction("profile")}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+                >
+                  <User size={14} />
+                  {tNav("profile")}
+                </button>
+                <button
+                  onClick={() => handleMenuAction("preferences")}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+                >
+                  <Settings size={14} />
+                  {tUserMenu("preferences")}
+                </button>
+              </>
+            )}
 
             <div
               className="mt-1"

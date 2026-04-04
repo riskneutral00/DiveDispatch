@@ -96,6 +96,7 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGpsLoading(false)
+        setFlyZoom(15)
         setFlyTarget({ lat: pos.coords.latitude, lng: pos.coords.longitude })
       },
       () => setGpsLoading(false),
@@ -108,13 +109,13 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
     setQuery(suggestion.description, false)
     clearSuggestions()
     setSuggestionsOpen(false)
+    poiClickRef.current = true
+    setPoiSelected(true)
 
     try {
       const place = new google.maps.places.Place({ id: suggestion.place_id })
       await place.fetchFields({ fields: ['location', 'formattedAddress'] })
       if (!place.location) return
-      poiClickRef.current = true
-      setPoiSelected(true)
       setFlyZoom(20)
       setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
       setDisplayAddress(place.formattedAddress ?? suggestion.description)
@@ -465,7 +466,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
           id={inputId}
           type="button"
           onClick={onOpen}
-          className="glass glass-field w-full text-sm py-2.5 pl-9 pr-9 text-left cursor-pointer"
+          className="glass glass-field w-full text-sm py-2.5 pl-9 pr-9 h-[42px] text-left truncate cursor-pointer"
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
