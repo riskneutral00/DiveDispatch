@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
@@ -22,6 +22,7 @@ import {
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { Check, Save } from 'lucide-react'
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -104,7 +105,52 @@ export function buildResourceSubTabs(clerkRole: string | undefined): { id: Resou
   return base
 }
 
+const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData> = {
+  instructors: 'preferredInstructorSlugs',
+  venues: 'preferredVenueSlugs',
+  equipment: 'preferredEquipmentSlugs',
+  boats: 'preferredBoatSlugs',
+  compressors: 'preferredCompressorSlugs',
+  operator: 'preferredOperatorSlug',
+}
+
 // ── Sub-components ────────────────────────────────────────────────────
+
+function ResourceSaveButton({
+  isDirty,
+  saving,
+  saved,
+  onSave,
+}: {
+  isDirty: boolean
+  saving: boolean
+  saved: boolean
+  onSave: () => void
+}) {
+  return (
+    <GlassButton
+      type="button"
+      variant="primary"
+      size="sm"
+      loading={saving}
+      disabled={!isDirty || saving}
+      onClick={onSave}
+      style={saved ? { background: 'var(--color-active-fg)', borderColor: 'var(--color-active-fg)' } : undefined}
+    >
+      {saved ? (
+        <>
+          <Check size={16} />
+          Saved
+        </>
+      ) : (
+        <>
+          <Save size={16} />
+          Save
+        </>
+      )}
+    </GlassButton>
+  )
+}
 
 function ResourceSectionTitle({
   children,
@@ -190,6 +236,8 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
 
   const [resourceSubTab, setResourceSubTab] = useState<ResourceSubTab>('instructors')
   const [resourceSaving, setResourceSaving] = useState(false)
+  const [savedSection, setSavedSection] = useState<ResourceSubTab | null>(null)
+  const resourceBaselineRef = useRef<PrefsFormData | null>(null)
   const defaults = useMemo(() => defaultFormData(), [])
   const savePreferences = useCallback(
     async (payload: PrefsFormData) => {
@@ -262,24 +310,47 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
     })
   }, [activeRole, form, upsert])
 
-  const handleSaveResourceSection = useCallback(async () => {
+  const handleSaveResourceSection = useCallback(async (section: ResourceSubTab) => {
     setResourceSaving(true)
     try {
       await saveStakeholderPreferences()
       markBaselineCurrent()
+      resourceBaselineRef.current = { ...form }
+      setSavedSection(section)
       toast.success('Preferences saved')
     } catch (err: unknown) {
       toast.error(parseConvexError(err, 'Save failed'))
     } finally {
       setResourceSaving(false)
     }
-  }, [markBaselineCurrent, saveStakeholderPreferences])
+  }, [form, markBaselineCurrent, saveStakeholderPreferences])
 
   useEffect(() => {
     if (activeRole !== 'Agent' && resourceSubTab === 'operator') {
       setResourceSubTab('instructors')
     }
   }, [activeRole, resourceSubTab])
+
+  // Initialize resource baseline when form finishes loading
+  useEffect(() => {
+    if (!loading && resourceBaselineRef.current === null) {
+      resourceBaselineRef.current = { ...form }
+    }
+  }, [loading, form])
+
+  // Auto-clear saved indicator after 2 seconds
+  useEffect(() => {
+    if (savedSection) {
+      const timer = setTimeout(() => setSavedSection(null), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [savedSection])
+
+  const isSectionDirty = useCallback((section: ResourceSubTab): boolean => {
+    if (!resourceBaselineRef.current) return false
+    const field = SECTION_FIELDS[section]
+    return JSON.stringify(form[field]) !== JSON.stringify(resourceBaselineRef.current[field])
+  }, [form])
 
   return (
     <ProfileFormShell
@@ -429,15 +500,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
                   />
                   <div className="flex justify-end pt-4">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('instructors')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'instructors'}
+                      onSave={() => void handleSaveResourceSection('instructors')}
+                    />
                   </div>
                 </GlassCard>
               )}
@@ -453,15 +521,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
                   />
                   <div className="flex justify-end pt-4">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('venues')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'venues'}
+                      onSave={() => void handleSaveResourceSection('venues')}
+                    />
                   </div>
                 </GlassCard>
               )}
@@ -477,15 +542,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
                   />
                   <div className="flex justify-end pt-4">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('equipment')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'equipment'}
+                      onSave={() => void handleSaveResourceSection('equipment')}
+                    />
                   </div>
                 </GlassCard>
               )}
@@ -501,15 +563,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
                   />
                   <div className="flex justify-end pt-4">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('boats')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'boats'}
+                      onSave={() => void handleSaveResourceSection('boats')}
+                    />
                   </div>
                 </GlassCard>
               )}
@@ -525,15 +584,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
                   />
                   <div className="flex justify-end pt-4">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('compressors')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'compressors'}
+                      onSave={() => void handleSaveResourceSection('compressors')}
+                    />
                   </div>
                 </GlassCard>
               )}
@@ -545,15 +601,12 @@ export function PreferencesEditor({ section = 'booking' }: PreferencesEditorProp
                     onChange={(slug) => setField('preferredOperatorSlug', slug)}
                   />
                   <div className="flex justify-end">
-                    <GlassButton
-                      type="button"
-                      variant="primary"
-                      size="sm"
-                      loading={resourceSaving}
-                      onClick={() => void handleSaveResourceSection()}
-                    >
-                      Save this section
-                    </GlassButton>
+                    <ResourceSaveButton
+                      isDirty={isSectionDirty('operator')}
+                      saving={resourceSaving}
+                      saved={savedSection === 'operator'}
+                      onSave={() => void handleSaveResourceSection('operator')}
+                    />
                   </div>
                 </>
               )}
