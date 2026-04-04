@@ -28,6 +28,15 @@ log "=== Car launch $(date) ==="
 
 # Ensure event directories exist
 mkdir -p "$DIR/.car"/{merged,reviewed,fixes,deferred,processed}
+rm -f "$DIR/.car/heartbeat-"*
+
+# Rotate oversized watchdog logs (keep last 2MB)
+for WLOG in "$DIR/.car/watchdog-memory.log" "$DIR/.car/watchdog.log"; do
+  if [ -f "$WLOG" ] && [ "$(stat -f %z "$WLOG" 2>/dev/null || echo 0)" -gt 5242880 ]; then
+    tail -c 2097152 "$WLOG" > "$WLOG.tmp" && mv "$WLOG.tmp" "$WLOG"
+    log "Rotated $(basename $WLOG) (trimmed to 2MB)"
+  fi
+done
 
 # Reset stale in_progress tickets from crashed runs
 STALE=$(grep -rl "^status: in_progress" "$DIR/.tickets/" 2>/dev/null | wc -l | tr -d ' ')
@@ -38,6 +47,25 @@ if [ "$STALE" -gt 0 ]; then
   log "Reset $STALE stale in_progress tickets → ready."
 fi
 
+# Recover stale .processing files (backseat crashed mid-review)
+for f in "$DIR/.car/merged/"*.json.processing "$DIR/.car/reviewed/"*.json.processing; do
+  [ -f "$f" ] && mv "$f" "${f%.processing}" && log "Recovered stale processing file: $(basename $f)" || true
+done
+
+# Clean up orphaned ticket worktrees from crashed runs
+for wt in "$DIR"/../DD-worktree-*; do
+  [ -d "$wt" ] && git -C "$DIR" worktree remove --force "$wt" 2>/dev/null && log "Removed orphaned worktree: $(basename $wt)" || true
+done
+git -C "$DIR" worktree prune 2>/dev/null || true
+
+# Delete ticket branches for completed tickets
+for branch in $(git -C "$DIR" branch --list 'ticket/DD-*' --format='%(refname:short)' 2>/dev/null); do
+  ticket=$(echo "$branch" | sed 's|ticket/||')
+  if [ -f "$DIR/.tickets/done/${ticket}.md" ]; then
+    git -C "$DIR" branch -D "$branch" 2>/dev/null && log "Cleaned up branch for completed ticket: $branch" || true
+  fi
+done
+
 # Kill existing session if present
 tmux kill-session -t "$SESSION" 2>/dev/null && log "Killed existing car session." || true
 
@@ -47,22 +75,37 @@ cat > "$DIR/.car/start-driver.sh" << 'AGENTEOF'
 cd "$(dirname "$0")/.."
 while true; do
   echo "[$(date '+%H:%M:%S')] Driver starting..."
-  rm -f .car/exit-driver
+  rm -f .car/exit-driver .car/heartbeat-driver
   PROMPT=$(cat .claude/agents/driver.md)
   claude \
     --append-system-prompt "$PROMPT" \
     --model sonnet \
     --permission-mode bypassPermissions \
     --name Driver \
-    "You are the Driver agent running autonomously in a tmux pane. CRITICAL: Do NOT invoke ANY of these launcher skills — they all kill the current tmux session by re-running scripts/car.sh: 'driver', 'first', 'backseat', 'patrol', 'gate'. You ARE the driver; do not restart it. The only skills you may invoke are: preflight, ticket-pick, pre-merge-review, escalate, driver-debrief. Begin immediately: invoke Skill('preflight') first to reset stale claims and capture test baseline. Then check for .car/manifest.json to determine phase. Then enter the main ticket processing loop: check .car/fixes/ for backseat fix requests (priority), invoke Skill('ticket-pick') to pick the next ready ticket, spawn a jira-worker agent in a worktree to implement it, run Skill('pre-merge-review'), merge with bash scripts/jira-merge.sh, write .car/merged/DD-{NNN}.json event, run tsc gate, repeat. On NO-GO: retry up to 2 times with fresh jira-worker passing review findings. Keep going until board is empty or batch cap (4) is reached." &
+    "You are the Driver agent running autonomously in a tmux pane. CRITICAL: Do NOT invoke ANY of these launcher skills — they all kill the current tmux session by re-running scripts/car.sh: 'driver', 'first', 'backseat', 'patrol', 'gate'. You ARE the driver; do not restart it. The only skills you may invoke are: preflight, ticket-pick, pre-merge-review, escalate, driver-debrief. Begin immediately: invoke Skill('preflight') first to reset stale claims and capture test baseline. Then check for .car/manifest.json to determine phase. Then enter the main ticket processing loop: invoke Skill('ticket-pick') to pick the next ready ticket, spawn a jira-worker agent in a worktree to implement it, run Skill('pre-merge-review'), merge with bash scripts/jira-merge.sh, write .car/merged/DD-{NNN}.json event, run tsc gate, repeat. On NO-GO: retry up to 2 times with fresh jira-worker passing review findings. Keep going until board is empty or batch cap (4) is reached." &
   CLAUDE_PID=$!
   while kill -0 $CLAUDE_PID 2>/dev/null; do
     if [ -f .car/exit-driver ]; then
-      echo "[$(date '+%H:%M:%S')] Driver signaled exit ($(cat .car/exit-driver)) — killing process..."
+      EXIT_SIGNAL=$(cat .car/exit-driver)
+      echo "[$(date '+%H:%M:%S')] Driver signaled exit ($EXIT_SIGNAL) — killing process..."
       kill $CLAUDE_PID 2>/dev/null
       wait $CLAUDE_PID 2>/dev/null
-      rm -f .car/exit-driver
+      rm -f .car/exit-driver .car/heartbeat-driver
+      if [ "$EXIT_SIGNAL" = "idle" ]; then
+        echo "[$(date '+%H:%M:%S')] Driver exited cleanly (board empty) — stopping."
+        exit 0
+      fi
       break
+    fi
+    # Heartbeat enforcement — kill stalled agent
+    if [ -f .car/heartbeat-driver ]; then
+      HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-driver) ))
+      if [ "$HB_AGE" -gt 120 ]; then
+        echo "[$(date '+%H:%M:%S')] Driver heartbeat stale (${HB_AGE}s) — killing..."
+        kill $CLAUDE_PID 2>/dev/null
+        wait $CLAUDE_PID 2>/dev/null
+        break
+      fi
     fi
     sleep 5
   done
@@ -82,7 +125,7 @@ cat > "$DIR/.car/start-backseat.sh" << 'AGENTEOF'
 cd "$(dirname "$0")/.."
 while true; do
   echo "[$(date '+%H:%M:%S')] Backseat starting..."
-  rm -f .car/exit-backseat
+  rm -f .car/exit-backseat .car/heartbeat-backseat
   PROMPT=$(cat .claude/agents/backseat.md)
   claude \
     --append-system-prompt "$PROMPT" \
@@ -96,46 +139,47 @@ while true; do
       echo "[$(date '+%H:%M:%S')] Backseat signaled exit ($(cat .car/exit-backseat)) — killing process..."
       kill $CLAUDE_PID 2>/dev/null
       wait $CLAUDE_PID 2>/dev/null
-      rm -f .car/exit-backseat
+      rm -f .car/exit-backseat .car/heartbeat-backseat
       break
+    fi
+    # Heartbeat enforcement — kill stalled agent
+    if [ -f .car/heartbeat-backseat ]; then
+      HB_AGE=$(( $(date +%s) - $(stat -f %m .car/heartbeat-backseat) ))
+      if [ "$HB_AGE" -gt 120 ]; then
+        echo "[$(date '+%H:%M:%S')] Backseat heartbeat stale (${HB_AGE}s) — killing..."
+        kill $CLAUDE_PID 2>/dev/null
+        wait $CLAUDE_PID 2>/dev/null
+        break
+      fi
     fi
     sleep 5
   done
   wait $CLAUDE_PID 2>/dev/null
+  # Idle check: stop if no pending events and Driver is inactive
+  MERGED_PENDING=$(ls .car/merged/*.json 2>/dev/null | wc -l | tr -d ' ')
+  DRIVER_ALIVE=false
+  [ -f .car/heartbeat-driver ] && [ $(( $(date +%s) - $(stat -f %m .car/heartbeat-driver) )) -lt 120 ] && DRIVER_ALIVE=true
+  if [ "$MERGED_PENDING" -eq 0 ] && [ "$DRIVER_ALIVE" = "false" ]; then
+    echo "[$(date '+%H:%M:%S')] No pending events, Driver inactive — Backseat stopping."
+    exit 0
+  fi
   echo "[$(date '+%H:%M:%S')] Backseat exited — restarting in 5s..."
   sleep 5
 done
 AGENTEOF
 
-cat > "$DIR/.car/start-patrol.sh" << 'AGENTEOF'
+# Patrol launcher lives in .car/patrol-hybrid.sh (not regenerated — edited manually)
+# Copy it to start-patrol.sh if the hybrid version exists, otherwise use inline fallback
+if [ -f "$DIR/.car/patrol-hybrid.sh" ]; then
+  cp "$DIR/.car/patrol-hybrid.sh" "$DIR/.car/start-patrol.sh"
+else
+  cat > "$DIR/.car/start-patrol.sh" << 'AGENTEOF'
 #!/bin/bash
 cd "$(dirname "$0")/.."
-while true; do
-  echo "[$(date '+%H:%M:%S')] Patrol starting..."
-  rm -f .car/exit-patrol
-  PROMPT=$(cat .claude/agents/patrol.md)
-  claude \
-    --append-system-prompt "$PROMPT" \
-    --model sonnet \
-    --permission-mode bypassPermissions \
-    --name Patrol \
-    "IMPORTANT: Do NOT invoke launcher skills (/patrol, /backseat, /gate, /driver, /first). You MAY use Skill() calls as instructed in your system prompt (qa, review-tests, reconcile, escalate). Start the Patrol validation loop. Poll .car/reviewed/ every 30 seconds for new JSON event files. When you find one, run the gate checks: tsc --noEmit, npx vitest run, and invariant grep. Write .patrol-ran with CLEAN, BLOCKED, or WAIT verdict. Move the reviewed event to .car/processed/. Keep polling until batch cap is reached." &
-  CLAUDE_PID=$!
-  while kill -0 $CLAUDE_PID 2>/dev/null; do
-    if [ -f .car/exit-patrol ]; then
-      echo "[$(date '+%H:%M:%S')] Patrol signaled exit ($(cat .car/exit-patrol)) — killing process..."
-      kill $CLAUDE_PID 2>/dev/null
-      wait $CLAUDE_PID 2>/dev/null
-      rm -f .car/exit-patrol
-      break
-    fi
-    sleep 5
-  done
-  wait $CLAUDE_PID 2>/dev/null
-  echo "[$(date '+%H:%M:%S')] Patrol exited — restarting in 5s..."
-  sleep 5
-done
+echo "ERROR: .car/patrol-hybrid.sh not found. Patrol disabled."
+sleep 3600
 AGENTEOF
+fi
 
 chmod +x "$DIR/.car/start-driver.sh" "$DIR/.car/start-backseat.sh" "$DIR/.car/start-patrol.sh"
 
@@ -144,6 +188,8 @@ tmux new-session -d -s "$SESSION" -c "$DIR" -n "Dev"
 
 # Keep windows alive if command exits (so you can see errors)
 tmux set-option -t "$SESSION" remain-on-exit on
+# Visual indicator when a pane's process exits
+tmux set-hook -t "$SESSION" pane-died 'select-pane -P bg=red' 
 
 tmux new-window -t "$SESSION" -n "Driver" -c "$DIR"
 tmux new-window -t "$SESSION" -n "Backseat" -c "$DIR"

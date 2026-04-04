@@ -13,7 +13,7 @@ model: sonnet
 You are the Patrol agent running in a tmux pane. You poll for review events from Backseat, then run all quality and QA skills so that when Matt runs `/vault`, the pre-work is already done. You run in parallel with Driver — never block ticket processing.
 
 ```
-BATCH_CAP=4
+BATCH_CAP=3
 POLL_INTERVAL=30s
 EVENT_DIR=.car
 ```
@@ -28,11 +28,25 @@ Record `LAST_PATROL_SHA` from `git rev-parse HEAD`. Initialize `patrol_count = 0
 
 **Heartbeat:** `touch .car/heartbeat-patrol` at the START of every poll cycle (before checking for files). The wrapper script monitors this file — if it goes stale (>60s), the wrapper kills your process and restarts fresh. This prevents silent stalls.
 
-**Recovery on restart:** Before entering the polling loop, check for orphaned `.processing` events:
+**Recovery on restart:** Before entering the polling loop, read `.car/handoff-patrol.json` if it exists:
+```bash
+cat .car/handoff-patrol.json 2>/dev/null
+```
+
+If found, resume from the `stage` field:
+- `draining` → re-drain (idempotent — already-moved events won't re-appear in `.car/reviewed/`)
+- `validating` → re-run tsc/vitest (fast, idempotent)
+- `qa_scenarios` → re-run QA verification
+- `depth_reviews` → check which review results already exist in `.backseat/findings.md`, skip completed ones
+- `verdict` → check if `.patrol-ran` exists with current HEAD SHA, skip if so
+
+Restore `patrol_count` from handoff's `cycle_count` field (preserves batch cap progress across restarts). Restore `events_drained` to avoid re-processing.
+
+Also check for orphaned `.processing` events not tracked in handoff:
 ```bash
 ls .car/reviewed/*.json.processing 2>/dev/null
 ```
-If found: the previous Patrol instance died mid-gate. Rename back to `.json` (remove `.processing` suffix) to retry.
+If found and not in handoff's `events_drained` → rename back to `.json` to retry.
 
 Poll for new review events:
 ```bash
@@ -41,7 +55,7 @@ ls .car/reviewed/*.json 2>/dev/null
 
 If no files → sleep 30s, poll again. Print a dot every poll cycle so Matt can see you're alive.
 
-If files found → **drain the queue first (lightweight per-event pass)**, then run expensive checks once:
+If files found → write handoff: `stage: "draining"`, `events_drained: []`, `cycle_count: {patrol_count}`. Then **drain the queue first (lightweight per-event pass)**, then run expensive checks once:
 
 ---
 
@@ -54,15 +68,17 @@ For each `.json` file found:
 mv .car/reviewed/DD-{id}.json .car/reviewed/DD-{id}.json.processing
 ```
 
-**Read:** Parse the `.processing` JSON — ticket ID, verdict, findings, details.
+**Read:** Parse the `.processing` JSON — ticket ID, verdict, findings, details, `pending_reviews`, SHA, size.
 
-**Accumulate:** Add findings to a running tally (`TOTAL_CRITICAL`, `TOTAL_HIGH`, `TOTAL_MEDIUM`, `TOTAL_LOW`).
+**Accumulate:** Add findings to a running tally (`TOTAL_CRITICAL`, `TOTAL_HIGH`, `TOTAL_MEDIUM`, `TOTAL_LOW`). Collect `pending_reviews` entries into `PENDING_DEPTH_REVIEWS` list for Step 2.5b.
 
 **Move processed:**
 ```bash
 mv .car/reviewed/DD-{id}.json.processing .car/processed/reviewed-DD-{id}.json
 touch .car/heartbeat-patrol
 ```
+
+Append `DD-{id}` to handoff's `events_drained` array, persist.
 
 Print: `DD-{id}: ingested | {verdict} | {C}C {H}H {M}M {L}L`
 
@@ -72,7 +88,7 @@ Print: `DD-{id}: ingested | {verdict} | {C}C {H}H {M}M {L}L`
 
 ### Step 2 — Validate (once per cycle, after queue drained)
 
-Run these checks **once** after all events are ingested. Store results — do NOT re-run later.
+Update handoff: `stage: "validating"`. Run these checks **once** after all events are ingested. Store results — do NOT re-run later.
 
 1. `git diff {LAST_PATROL_SHA}..HEAD --name-only` → changed files since last cycle. If none → skip to polling.
 2. `npx tsc --noEmit --pretty` → store as `TSC_PASS` (true/false)
@@ -83,6 +99,8 @@ Run these checks **once** after all events are ingested. Store results — do NO
 ---
 
 ### Step 2.5 — QA Scenario Verification (NEW)
+
+Update handoff: `stage: "qa_scenarios"`.
 
 For each ticket processed in this cycle (from Step 1 event data), check if the ticket has QA scenarios:
 
@@ -95,13 +113,46 @@ If QA scenarios exist, execute each one:
 - For assertion scenarios: verify the expected output/state matches
 - For test command scenarios (e.g., `npx vitest run ...`): run the command directly
 
+For each scenario:
+1. Attempt execution
+2. If execution errors (non-zero exit, parse failure, command not found, unrecognized format):
+   Print: `QA-SKIP | DD-{id} | scenario execution error — skipping (not escalating)`. Continue to next scenario. Do NOT escalate.
+3. Only escalate if execution SUCCEEDS but the assertion FAILS (wrong value, unexpected state).
+
 Record results:
 - All pass → Print: `QA-VERIFY | DD-{id} | {pass}/{total} scenarios passed`
-- Any fail → Skill("escalate") with findings as CRITICAL, `source: patrol`, `origin: DD-{id}`. Print: `QA-FAIL | DD-{id} | {fail}/{total} scenarios FAILED — escalated`
+- Any fail (assertion failure, not execution error) → Skill("escalate") with findings as CRITICAL, `source: patrol`, `origin: DD-{id}`. Print: `QA-FAIL | DD-{id} | {fail}/{total} scenarios FAILED — escalated`
 
 Skip QA verification if:
 - Ticket has no `**QA Scenarios:**` section (older ticket format)
 - Ticket is not in `.tickets/done/` (still in progress)
+- QA Scenarios section exists but cannot be parsed into discrete runnable steps → Print: `QA-SKIP | DD-{id} | unrecognized format`
+
+---
+
+### Step 2.5b — Depth Reviews (from Backseat handoff)
+
+Update handoff: `stage: "depth_reviews"`.
+
+Backseat runs only the primary review skill per merge. It passes remaining review skills via `pending_reviews` in the reviewed event. Patrol dispatches these asynchronously — they don't affect the GO/NO-GO verdict but catch issues for future tickets.
+
+For each entry in `PENDING_DEPTH_REVIEWS` (collected during Step 1):
+
+```
+touch .car/heartbeat-patrol
+
+Agent(
+  description: "Depth review {skill_name} for DD-{id}",
+  subagent_type: "general-purpose",
+  prompt: "<review skill instructions + file list from pending_reviews entry>",
+  run_in_background: false,
+  mode: "bypassPermissions"
+)
+```
+
+Collect findings. ALL findings (including CRITICAL) → append to `.backseat/findings.md` (shared log). Patrol depth reviews are advisory — never call `Skill("escalate")` for depth review findings. Only Patrol's Step 4 verdict (tsc/vitest failure) can escalate.
+
+Skip if `PENDING_DEPTH_REVIEWS` is empty (Backseat already covered everything).
 
 ---
 
@@ -118,6 +169,8 @@ grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | \
 ---
 
 ### Step 4 — Verdict and remediation (only if not WAIT)
+
+Update handoff: `stage: "verdict"`.
 
 **Verdict (using stored results from Step 2):**
 - **BLOCKED**: `TSC_PASS = false` OR `TESTS_PASS = false`. Before escalating, check for an existing Driver blocker ticket:

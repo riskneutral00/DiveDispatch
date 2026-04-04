@@ -17,6 +17,7 @@ WORKTREE_PREFIX=../DD-worktree-
 BATCH_CAP=4
 TIMEOUTS: S=5min, M=15min, L=30min
 MAX_MERGE_ATTEMPTS=3
+MAX_SLOTS=3
 EVENT_DIR=.car
 IMMUTABLE=scripts/**, .claude/agents/**, .claude/hooks/**, .claude/settings.json, .claude/settings.local.json
 ```
@@ -45,7 +46,7 @@ cat .car/manifest.json 2>/dev/null
   "completed": [],
   "blocked": [],
   "deferred_fixes": [],
-  "current_ticket": null,
+  "slots": [null, null, null],
   "session_stats": {
     "tickets_attempted": 0,
     "nogo_count": 0
@@ -58,9 +59,25 @@ Print: `MANIFEST | phase 1 | {N} initial tickets: {list}`
 If the initial_tickets list is empty → skip Phase 1, go straight to Phase 2.
 
 **Restart (manifest exists):** Read manifest. Resume the current phase.
+
+**Old manifest migration:** If manifest has `current_ticket` instead of `slots`, migrate: set `slots: [current_ticket, null, null]`, delete `current_ticket` key, persist atomically. If manifest has `slots` with only 2 entries, extend to 3: append `null`.
+
 Print: `MANIFEST | resuming phase {phase} | {remaining} initial tickets left`
 
 `idle_count = 0` (tracks consecutive idle results within current phase)
+
+## 3-Slot Parallel Execution
+
+Driver supports up to 3 concurrent workers in separate worktrees. Parallelism requires tickets with non-overlapping `touches` arrays — if a slot can't be verified safe, Driver falls back to fewer slots.
+
+**Slot rules:**
+- Slot 0 always fills first (standard ticket-pick scoring)
+- Slot 1 fills only if slot 0's ticket has a `touches` field AND ticket-pick finds a non-overlapping candidate
+- Slot 2 fills only if slot 1 is filled AND slot 1's ticket has a `touches` field AND ticket-pick finds a candidate non-overlapping with BOTH slot 0 and slot 1
+- Workers in occupied slots run with `run_in_background: true`
+- **Merges are always serial** — only one merge at a time, process completions in order received
+- Phase 2 is always single-slot — sequential cleanup
+- Retries are single-slot — the retrying slot blocks while the others may continue implementing
 
 ## Main Loop
 
@@ -70,13 +87,15 @@ Print: `MANIFEST | resuming phase {phase} | {remaining} initial tickets left`
 
 **Recovery on restart:** Check for crash scenarios before entering the main loop:
 
-1. **Stage-aware recovery (preferred):** If `manifest.current_ticket` is non-null, resume based on stage:
+1. **Stage-aware recovery (preferred):** For each non-null entry in `manifest.slots`, resume based on stage:
    - `stage: "implement"` → re-spawn worker in the existing worktree (partial work may exist). Run `git log --oneline -5` in the worktree first to check.
    - `stage: "review"` → skip re-implementation, invoke Skill("pre-merge-review") directly.
    - `stage: "merge"` → skip review, run `bash scripts/jira-merge.sh` directly.
-   Print: `RECOVERY | DD-{id} | resuming at stage: {stage}`
+   Print: `RECOVERY | DD-{id} (slot {N}) | resuming at stage: {stage}`
 
-2. **Fallback (no current_ticket in manifest):** Find any ticket with `status: in_progress` AND `assigned_to: driver`. That ticket was being worked on when Driver crashed — re-pick it directly (skip scoring) and spawn a fresh worker.
+   If recovering 2 slots both at "implement" stage, re-spawn both workers with `run_in_background: true`.
+
+2. **Fallback (no slots occupied in manifest):** Find any ticket with `status: in_progress` AND `assigned_to: driver`. That ticket was being worked on when Driver crashed — re-pick it directly (skip scoring) and spawn a fresh worker in slot 0.
 
 3. **Post-merge event-loss:** Check for recent merges that landed in git but never got an event written for Backseat:
 ```bash
@@ -92,32 +111,35 @@ If none exist → the merge landed but Backseat never saw it. Write `.car/merged
 
 **Phase 1 pick:**
 
-Check for backseat fix tickets:
-```bash
-ls .car/fixes/*.json 2>/dev/null
-```
-If fix events exist → **defer each one** (do NOT process in Phase 1):
-- Append fix ticket ID to manifest `deferred_fixes` array, persist manifest
-- Move event: `mv .car/fixes/DD-{NNN}.json .car/deferred/DD-{NNN}.json`
-- Print: `DD-{NNN}: fix deferred to Phase 2`
-
-Invoke Skill("ticket-pick"), then filter result to manifest `initial_tickets` only. If ticket-pick returns a ticket NOT in `initial_tickets`, treat as idle.
+**Fill slot 0:** Invoke Skill("ticket-pick"), then filter result to manifest `initial_tickets` only. If ticket-pick returns a ticket NOT in `initial_tickets`, treat as idle.
 
 - If "idle": `idle_count++`.
   - If there are `initial_tickets` not yet in `completed` or `blocked` AND `idle_count < 3`: sleep 30s, re-pick. Print: `PHASE1-WAIT | {remaining} initial tickets pending | idle {idle_count}/3`
   - If `idle_count >= 3` AND remaining initial tickets: mark each remaining initial ticket `status: blocked`, `stuck_reason: "not reachable after 3 idle scans"`, move to `blocked` in manifest. Transition to Phase 2 (see below).
   - If no remaining initial tickets (all in `completed` or `blocked`): transition to Phase 2.
-- If ticket: `idle_count = 0`. Read `.tickets/DD-{id}.md`, claim it. Set `is_fix_ticket = false`.
+- If ticket: `idle_count = 0`. Read `.tickets/DD-{id}.md`, claim it. Write to `slots[0]`.
+
+**Fill slot 1 (Phase 1 only):** After slot 0 is filled, check if slot 0's ticket has a `touches` field. If yes:
+
+Invoke Skill("ticket-pick") with `parallel_check: DD-{slot_0_id}`. Filter result to `initial_tickets` only.
+
+- If ticket returned → read `.tickets/DD-{id}.md`, claim it, write to `slots[1]`. Print: `SLOT-1 | DD-{id} | parallel with DD-{slot_0_id} (non-overlapping touches)`
+- If "idle" → leave `slots[1]` null. Print: `SLOT-1 | no safe parallel candidate | running single-slot`
+
+If slot 0's ticket has no `touches` field → skip slot 1 and slot 2 filling. Print: `SLOT-1 | DD-{slot_0_id} has no touches field | running single-slot`
+
+**Fill slot 2 (Phase 1 only):** After slot 1 is filled, check if slot 1's ticket has a `touches` field. If yes:
+
+Invoke Skill("ticket-pick") with `parallel_check: DD-{slot_0_id},DD-{slot_1_id}` (comma-separated — ticket-pick checks non-overlap against both). Filter result to `initial_tickets` only.
+
+- If ticket returned → read `.tickets/DD-{id}.md`, claim it, write to `slots[2]`. Print: `SLOT-2 | DD-{id} | parallel with DD-{slot_0_id}+DD-{slot_1_id} (non-overlapping touches)`
+- If "idle" → leave `slots[2]` null. Print: `SLOT-2 | no safe candidate | running 2-slot`
+
+If slot 1's ticket has no `touches` field → skip slot 2. Print: `SLOT-2 | DD-{slot_1_id} has no touches field | running 2-slot`
 
 **Phase 2 pick:**
 
-Drain all deferred fix events first:
-```bash
-ls .car/deferred/*.json 2>/dev/null && ls .car/fixes/*.json 2>/dev/null
-```
-If any exist → read the fix ticket file, pick that ticket directly (skip ticket-pick scoring). **Drain ALL before picking new work.** After processing, move events: `mv .car/deferred/DD-{NNN}.json .car/processed/fix-DD-{NNN}.json` (or `fixes/` → `processed/`). Set `is_fix_ticket = true`.
-
-If no fix events → Invoke Skill("ticket-pick") with no manifest constraint (picks any ready ticket, including `source: backseat` tickets). Set `is_fix_ticket = false`.
+Invoke Skill("ticket-pick") with no manifest constraint (picks any ready ticket). **Single-slot only** — write to `slots[0]`.
 
 - If "idle": print status, write sentinel file `echo "idle" > .car/exit-driver`, delete manifest (`rm -f .car/manifest.json`), then stop.
   ```
@@ -129,20 +151,24 @@ If no fix events → Invoke Skill("ticket-pick") with no manifest constraint (pi
 
 After any ticket completes or is blocked, update manifest (`completed` or `blocked` arrays), persist to disk atomically (write to `.car/manifest.json.tmp` then `mv`).
 
-**Implement:** `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`).
+**Implement:** For each occupied slot: `retry_count = 0`. Create worktree (`git worktree add {WORKTREE_PREFIX}{id} -b ticket/DD-{id} main`).
 
-**Update manifest** — write `current_ticket` before spawning worker:
+**Update manifest** — write slot entry before spawning worker:
 ```json
-"current_ticket": {
-  "id": "DD-{id}",
-  "stage": "implement",
-  "retry_count": 0,
-  "model": "{sonnet|opus}",
-  "worktree": "{WORKTREE_PREFIX}{id}",
-  "started_at": "{ISO timestamp}"
-}
+"slots": [
+  {
+    "id": "DD-{id}",
+    "stage": "implement",
+    "retry_count": 0,
+    "model": "{sonnet|opus}",
+    "worktree": "{WORKTREE_PREFIX}{id}",
+    "started_at": "{ISO timestamp}",
+    "touches": ["{from ticket frontmatter}"]
+  },
+  null
+]
 ```
-Persist manifest atomically (write `.car/manifest.json.tmp` then `mv`). Increment `session_stats.tickets_attempted`.
+Persist manifest atomically (write `.car/manifest.json.tmp` then `mv`). Increment `session_stats.tickets_attempted` for each slot.
 
 **Build worker prompt.** The prompt includes three context layers:
 
@@ -150,24 +176,37 @@ Persist manifest atomically (write `.car/manifest.json.tmp` then `mv`). Incremen
 2. **Run knowledge** — read `.car/run-knowledge/learnings.md` (if it exists and is non-empty), include as `## Run Context` section
 3. **Area context** — read ticket `area` field; if `.car/worker-context/{area}.md` exists, include as `## Area Context` section
 
-Select model: **Opus** for fix tickets, `size: L` tickets, tickets with `recommended_model: opus`, or retries. **Sonnet** for everything else.
+Select model: **Opus** for `size: L` tickets, tickets with `recommended_model: opus`, or retries. **Sonnet** for everything else.
 
-Spawn `jira-worker` agent:
+**Spawn workers:**
 
+If all 3 slots occupied:
+```
+Agent(name: "worker-0", description: "DD-{id_0}: {title_0}", subagent_type: "jira-worker",
+      model: "{model_0}", prompt: "<ticket spec 0>...", run_in_background: true, mode: "bypassPermissions")
+Agent(name: "worker-1", description: "DD-{id_1}: {title_1}", subagent_type: "jira-worker",
+      model: "{model_1}", prompt: "<ticket spec 1>...", run_in_background: true, mode: "bypassPermissions")
+Agent(name: "worker-2", description: "DD-{id_2}: {title_2}", subagent_type: "jira-worker",
+      model: "{model_2}", prompt: "<ticket spec 2>...", run_in_background: true, mode: "bypassPermissions")
+```
+Print: `PARALLEL | DD-{id_0} + DD-{id_1} + DD-{id_2} | 3 workers spawned`
+
+If slots 0 and 1 occupied (slot 2 empty):
+```
+Agent(name: "worker-0", description: "DD-{id_0}: {title_0}", subagent_type: "jira-worker",
+      model: "{model_0}", prompt: "<ticket spec 0>...", run_in_background: true, mode: "bypassPermissions")
+Agent(name: "worker-1", description: "DD-{id_1}: {title_1}", subagent_type: "jira-worker",
+      model: "{model_1}", prompt: "<ticket spec 1>...", run_in_background: true, mode: "bypassPermissions")
+```
+Print: `PARALLEL | DD-{id_0} + DD-{id_1} | 2 workers spawned`
+
+If only slot 0 occupied (single ticket):
 ```
 Agent(
   description: "DD-{id}: {title}",
   subagent_type: "jira-worker",
   model: "{selected model}",
-  prompt: "<ticket spec>
-
-## Run Context
-{contents of .car/run-knowledge/learnings.md, or 'No prior learnings.'}
-
-## Area Context
-{contents of .car/worker-context/{area}.md, or omit section}
-
-Worktree: {WORKTREE_PREFIX}{id}",
+  prompt: "<ticket spec> ...",
   run_in_background: false,
   mode: "bypassPermissions"
 )
@@ -175,8 +214,12 @@ Worktree: {WORKTREE_PREFIX}{id}",
 
 Timeout per size (S=5min, M=15min, L=30min).
 
+**Completion handling (parallel mode):** When a background worker completes (notification arrives), identify which slot it belongs to and process it immediately (review → merge). The other slot may still be implementing — that's fine. Process completions in the order they arrive.
+
+**Completion handling (single mode):** Same as before — worker returns synchronously.
+
 **Completion validation:** After worker returns, check output format:
-- Contains `"DD-{id} complete."` → proceed to knowledge capture, then review.
+- Contains `"DD-{id} complete."` → check for `Touches overflow:` line. If overflow is not "none", mark this slot as `touches_dirty = true` (the other slot must finish and merge before this one merges — no parallel merge). Proceed to knowledge capture, then review.
 - Contains `"DD-{id} blocked."` → proceed to stuck procedure.
 - **Neither** → worker exited prematurely. Re-spawn with CONTINUATION prompt (max 1 attempt):
   ```
@@ -198,7 +241,7 @@ Skip if the worker completed cleanly with no surprises (no retries, no unusual f
   1. Parse result:
      - Timeout → `stuck_reason = "timeout after {X}m (size: {size})"`, `attempted = "timed out"`, `suggestion = "inspect worktree at {WORKTREE_PREFIX}{id}"`
      - Self-report (`DD-{id} blocked.`) → extract `Reason:`, `Attempted:`, `Suggestion:` lines verbatim from jira-worker output
-  2. Update ticket frontmatter: `status: blocked`, `stuck_reason: "{stuck_reason}"`, `assigned_to: null`, `branch: null`, `updated: {today}`. Clear `manifest.current_ticket = null`, persist. Keep worktree intact for inspection.
+  2. Update ticket frontmatter: `status: blocked`, `stuck_reason: "{stuck_reason}"`, `assigned_to: null`, `branch: null`, `updated: {today}`. Clear the slot (`slots[N] = null`), persist. Keep worktree intact for inspection.
   3. Append to vault Lessons.md (`~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Lessons.md`):
      ```
      ## Stuck: DD-{id} — {title}
@@ -209,16 +252,21 @@ Skip if the worker completed cleanly with no surprises (no retries, no unusual f
      **Suggestion:** {suggestion}
      ```
   4. Print: `DD-{id}: blocked | stuck_reason: {stuck_reason} | lesson → Lessons.md`
-  5. Re-pick next ready ticket.
+  5. If the other slot is still running, wait for it. Otherwise re-pick.
 - If complete: proceed to review.
 
-**Review:** Update manifest: `current_ticket.stage = "review"`, persist atomically. Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
+**Review:** Update manifest: `slots[N].stage = "review"`, persist atomically. Invoke Skill("pre-merge-review") with args `{id} {size} {category} {worktree_path}`.
 
 - If GO: proceed to merge.
 - If NO-GO and `retry_count < 2`:
-  1. `retry_count++`. Update manifest: `current_ticket.retry_count = retry_count`, `current_ticket.stage = "implement"`, `session_stats.nogo_count++`. Persist.
-  2. Print: `DD-{id}: NO-GO (attempt {retry_count}/2) — retrying with feedback`
-  3. Spawn a **fresh** jira-worker in the **same worktree** (code is already there):
+  1. `retry_count++`. Update manifest: `slots[N].retry_count = retry_count`, `slots[N].stage = "implement"`, `session_stats.nogo_count++`. Persist.
+  2. **Classify and learn:** Classify the NO-GO pattern into one of: `react-rules`, `type-safety`, `cleanup-safety`, `test-gap`, `architectural`, `performance`. Append a 1-line preventive rule to the matching worker-context file:
+     - `react-rules`, `type-safety`, `cleanup-safety` → `.car/worker-context/frontend.md`
+     - `test-gap` → `.car/worker-context/testing.md`
+     - `performance`, `architectural` → `.car/worker-context/backend.md`
+     Format: `- {Preventive rule derived from this failure — general, not ticket-specific}`
+  3. Print: `DD-{id}: NO-GO (attempt {retry_count}/2) — pattern: {category} — retrying with feedback`
+  4. Spawn a **fresh** jira-worker in the **same worktree** (code is already there):
      ```
      Agent(
        description: "DD-{id}: retry {retry_count} — fix review findings",
@@ -230,25 +278,28 @@ Skip if the worker completed cleanly with no surprises (no retries, no unusual f
      The worktree already has a partial implementation. Fix the
      specific issues below, not start over.
 
+     FAILURE PATTERN: {category} — {1-line description of the general pattern}
+
      REVIEW FINDINGS:
      {paste the full pre-merge-review output}
+
+     {For L-size tickets on retry >= 1, add:}
+     Before fixing: re-read ALL changed files and write a corrective plan
+     explaining WHY the review failed and what general principle was violated.
+     Then fix each finding.
 
      Fix each finding, run tests, commit on top of existing work.",
        run_in_background: false,
        mode: "bypassPermissions"
      )
      ```
-  4. Loop back to **Review** (run pre-merge-review again).
+  5. Loop back to **Review** (run pre-merge-review again).
 - If NO-GO and `retry_count >= 2`: set `stuck_reason` to the first CRITICAL or HIGH finding (or "NO-GO after 2 retries: {first finding}"), then run the **Stuck procedure** above (step 2 onward). Keep worktree intact.
   Print: `DD-{id}: NO-GO after 2 retries — marked blocked | stuck_reason: {first finding}`
 
-**Merge:** Update manifest: `current_ticket.stage = "merge"`, persist atomically. `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
-- Exit 0: clear `manifest.current_ticket = null`, persist. Move to `done/`, auto-unblock dependents, then remove the worktree:
-  ```bash
-  git worktree remove {WORKTREE_PREFIX}{id}
-  git worktree prune
-  ```
-- Exit 1: retry up to MAX_MERGE_ATTEMPTS (rebase, then fix agent). On exhaustion: mark blocked, keep worktree.
+**Merge:** Update manifest: `slots[N].stage = "merge"`, persist atomically. `bash scripts/jira-merge.sh ticket/DD-{id} main`. **Always use the script — never run raw `git checkout`/`git merge`/`git rebase` commands.** The script handles auto-stashing local changes, rebasing onto moved main, logging, and test verification. Running raw commands bypasses these safety nets. Handle exit codes:
+- Exit 0: clear the slot (`slots[N] = null`), persist. Move to `done/`, auto-unblock dependents. (Worktree cleanup is handled by jira-merge.sh before rebase.)
+- Exit 1: retry up to MAX_MERGE_ATTEMPTS (script already rebases; on repeated failure use fix agent). On exhaustion: mark blocked, keep worktree.
 - Exit 2: test failure post-merge (script reverts). Mark blocked, keep worktree.
 
 **After successful merge — write event file and touch heartbeat:**
@@ -284,15 +335,17 @@ npx tsc --noEmit 2>&1 | head -30
 
 This catches cumulative TS errors from multiple merges even if Backseat/Patrol are not running.
 
-**Batch cap:** `batch_count++`. If `batch_count >= BATCH_CAP` → persist manifest to disk (atomic write), Skill("driver-debrief"), then print `DRIVER-RESTART | batch cap reached | manifest saved | phase {phase} | {remaining} tickets left`, write sentinel file `echo "batch_cap" > .car/exit-driver`, and **stop processing**. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window — it will read the manifest and resume the correct phase. Do not continue the loop.
+**Batch cap:** `batch_count++` (per completed ticket, not per slot). If `batch_count >= BATCH_CAP` → persist manifest to disk (atomic write), Skill("driver-debrief"), then print `DRIVER-RESTART | batch cap reached | manifest saved | phase {phase} | {remaining} tickets left`, write sentinel file `echo "batch_cap" > .car/exit-driver`, and **stop processing**. If the other slot has a running worker, wait for it to complete and process it before stopping. The watchdog will kill this process and the restart loop will relaunch you with a fresh context window — it will read the manifest and resume the correct phase. Do not continue the loop.
 
 Re-pick next ticket.
 
 ## Rules
 
-- **Fully autonomous.** Never ask for confirmation. Sequential — one ticket at a time.
+- **Fully autonomous.** Never ask for confirmation. Up to 3 parallel slots when all have non-overlapping touches, fewer slots as fallback.
 - **You are a dispatcher, not an implementer.** Never write application code yourself.
-- **Fix tickets from .car/fixes/ have hard priority.** Drain all before picking new work.
+- **Merges are always serial.** Never run two jira-merge.sh instances at once.
+- **Parallel only with `touches`.** Each slot fills only when all occupied slots have `touches` and they don't overlap. No `touches` = single-slot.
+- **Phase 2 is single-slot.** Cleanup is sequential.
 - **Auto-unblock dependents on done.** Scan blocked_by arrays.
 - **Clean worktrees on success.** Keep on block for inspection.
 - **Print status.** Every ticket gets a one-line status update.

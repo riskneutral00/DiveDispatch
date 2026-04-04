@@ -1,6 +1,6 @@
 ---
 name: pre-merge-review
-description: "Pre-merge review. S: tsc + invariant grep. M/L: full review agent. Returns GO/NO-GO."
+description: "Pre-merge review. All sizes: tsc + invariant grep + review skill by category. Returns GO/NO-GO."
 allowed-tools: Read, Bash, Grep, Glob, Agent
 user-invocable: false
 ---
@@ -25,17 +25,15 @@ If matches, grep the diff for:
 
 Flag matches as `INVARIANT CHECK: {invariant N} — {file} touches {concept}`.
 
-## Size S — Lightweight Review
+## All Sizes — Full Review
 
 ```bash
 cd {worktree_path} && npx tsc --noEmit 2>&1
 ```
 
-If tsc fails → **NO-GO** with errors. If passes + no invariant flags → **GO**.
+If tsc fails → **NO-GO** with errors.
 
-## Size M/L — Full Review Agent
-
-Dispatch review skill(s) by category:
+Dispatch review skill(s) by category (ALL sizes — Backseat is advisory-only, so pre-merge is the only gate that can NO-GO a worker):
 
 | Category | Skills |
 |----------|--------|
