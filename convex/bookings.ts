@@ -176,6 +176,22 @@ export async function buildInstructorNameMap(
   return map
 }
 
+/**
+ * Batch-fetches resources for a set of bookings and builds a name map for
+ * all referenced resource slugs. Eliminates the repeated 4-line pattern
+ * across list handlers.
+ */
+async function buildResourceContext(
+  ctx: QueryCtx,
+  bookingIds: string[],
+): Promise<{ resourceMap: Map<string, BookingResource[]>; nameMap: Map<string, string> }> {
+  const resourceMap = await getResourcesForBookings(ctx, bookingIds)
+  const allResources = [...resourceMap.values()].flat()
+  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
+  const nameMap = await buildInstructorNameMap(ctx, slugs)
+  return { resourceMap, nameMap }
+}
+
 /** Build CalendarBookingResource[] from bookingResources rows + name map. */
 function buildCalendarResources(
   resources: BookingResource[],
@@ -307,12 +323,7 @@ export async function _listByOwner(
 
   // Batch-fetch resources for all bookings upfront
   const allBookings = [...ownedBookings, ...referralBookings]
-  const resourceMap = await getResourcesForBookings(ctx, allBookings.map((b) => b._id as string))
-  const allResources = [...resourceMap.values()].flat()
-  const slugs = allResources
-    .map((r) => r.resourceSlug)
-    .filter(Boolean) as string[]
-  const nameMap = await buildInstructorNameMap(ctx, slugs)
+  const { resourceMap, nameMap } = await buildResourceContext(ctx, allBookings.map((b) => b._id as string))
 
   const result: CalendarBooking[] = [
     ...ownedBookings.map((b) => toCalendarBooking(b, nameMap, resourceMap, false)),
@@ -336,10 +347,7 @@ export async function _listByStatus(
   const allBookings = await resolveCallerBookings(ctx, user, args.activeRole)
   const filtered = allBookings.filter((b) => b.status === args.status)
 
-  const resourceMap = await getResourcesForBookings(ctx, filtered.map((b) => b._id as string))
-  const allResources = [...resourceMap.values()].flat()
-  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
-  const nameMap = await buildInstructorNameMap(ctx, slugs)
+  const { resourceMap, nameMap } = await buildResourceContext(ctx, filtered.map((b) => b._id as string))
 
   return filtered.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
