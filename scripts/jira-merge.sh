@@ -16,6 +16,13 @@ cd "$PROJECT_DIR"
 
 log() { echo "[$(date '+%H:%M:%S')] $1" | tee -a "$LOG"; }
 
+# Merge mutex — only one jira-merge.sh at a time (mkdir is atomic on all filesystems)
+LOCK="$PROJECT_DIR/.car/merge.lock"
+while ! mkdir "$LOCK" 2>/dev/null; do
+  log "Another merge in progress — waiting..."
+  sleep 2
+done
+
 # Auto-stash dirty working tree (interactive edits shouldn't block merges)
 STASHED=false
 if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclude-standard)" ]; then
@@ -25,6 +32,7 @@ if ! git diff --quiet HEAD 2>/dev/null || [ -n "$(git ls-files --others --exclud
 fi
 
 cleanup() {
+  rmdir "$LOCK" 2>/dev/null || true
   if [ "$STASHED" = true ]; then
     log "Restoring stashed changes"
     git stash pop 2>>"$LOG" || log "WARNING: stash pop conflict — run 'git stash pop' manually"
@@ -34,7 +42,24 @@ trap cleanup EXIT
 
 log "── Merging $BRANCH → $TARGET ──"
 
+# Detach worktree HEAD so branch is free for rebase (worktree stays for inspection if merge fails)
+WORKTREE_PATH=$(git worktree list --porcelain | grep -B2 "branch refs/heads/$BRANCH" | grep "^worktree " | sed 's/^worktree //')
+if [ -n "$WORKTREE_PATH" ]; then
+  log "Detaching worktree at $WORKTREE_PATH so $BRANCH is free for rebase"
+  git -C "$WORKTREE_PATH" checkout --detach 2>>"$LOG" || true
+fi
+
 # Ensure we're on target
+git checkout "$TARGET" 2>>"$LOG"
+
+# Rebase branch onto target so squash-merge is clean against moved main
+log "Rebasing $BRANCH onto $TARGET..."
+if ! git rebase "$TARGET" "$BRANCH" 2>>"$LOG"; then
+  log "REBASE CONFLICT: $BRANCH cannot rebase onto $TARGET"
+  git rebase --abort 2>/dev/null || true
+  git checkout "$TARGET" 2>>"$LOG"
+  exit 1
+fi
 git checkout "$TARGET" 2>>"$LOG"
 
 # Squash-merge: collapse all branch commits into a single staged changeset
@@ -52,6 +77,13 @@ git commit -m "$COMMIT_MSG" 2>>"$LOG"
 log "Running tests on $TARGET..."
 if npx vitest run 2>&1 | tee -a "$LOG" | tail -5; then
   log "Tests passed. $BRANCH merged successfully."
+  # Clean up worktree after successful merge
+  if [ -n "$WORKTREE_PATH" ]; then
+    git worktree remove "$WORKTREE_PATH" 2>>"$LOG" || git worktree remove --force "$WORKTREE_PATH" 2>>"$LOG"
+    git worktree prune 2>>"$LOG"
+  fi
+  # Clean up the ticket branch
+  git branch -D "$BRANCH" 2>>"$LOG" || log "WARNING: could not delete branch $BRANCH"
   exit 0
 else
   log "Tests FAILED after merging $BRANCH. Reverting."

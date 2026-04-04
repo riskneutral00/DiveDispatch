@@ -12,6 +12,7 @@ When invoked, parse the command and execute. No preamble.
 ## Commands
 
 ### `/board` (no args) — Board summary
+### `/board --black_hole` — Board summary including black hole tickets
 
 1. Read all `.tickets/DD-*.md` files. Parse YAML frontmatter from each.
 2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog. Additionally, separate backlog tickets with `needs_spec: true` into a "Pre-Spec" group.
@@ -33,7 +34,8 @@ Ready ({count}):
 Pre-Spec ({count} — needs /spec to fill in):
   {id} [{priority}] {title} ({size}, {category})
 
-Black hole ({count}):
+Black hole ({count}): {count} items parked — use /board --black_hole to list
+  ← default: one summary line only. With --black_hole flag, expand to full list:
   {id} [{priority}] {title} — parked / deprioritized (excluded from /board pick)
 
 Happy path ({count}):
@@ -53,6 +55,8 @@ Done: {count} archived
 ```
 
 Pre-Spec tickets are backlog tickets with `needs_spec: true`. They show in their own section to make them visible. They are NOT included in the Backlog count.
+
+**Black hole visibility rule:** By default, black_hole tickets are collapsed to a single count line. Only expand to full list when `--black_hole` flag is passed. This keeps the default board focused on actionable tickets.
 
 ### `/board pick` — Claim next ready ticket
 
@@ -236,8 +240,23 @@ Gather:
 4. **Oldest event age:** Find the oldest `.json` file in `merged/` and `reviewed/`. Age in seconds.
 5. **Patrol verdict:** Read `.patrol-ran` JSON for `verdict` field.
 
-Print one line with format `Car: {status} | D{hb} B{hb} P{hb} | {PROCESSED} processed`:
+Print one status line followed by a pipeline block if any tickets are in-flight:
 
+```
+Car: {status} | D{hb} B{hb} P{hb} | {PROCESSED} processed
+  Driver:   DD-{NNN} [P{X}] {title} ...          ← in_progress tickets (from ticket files)
+  Backseat: DD-{NNN}, DD-{NNN}                   ← filenames in .car/merged/*.json
+  Patrol:   DD-{NNN}                             ← filenames in .car/reviewed/*.json
+```
+
+Only print pipeline rows that have tickets. If all three are empty, omit the pipeline block. Ticket IDs come from:
+- **Driver:** `status: in_progress` ticket files (`assigned_to` field confirms)
+- **Backseat:** `.car/merged/DD-{NNN}.json` filenames (extract the DD-NNN part)
+- **Patrol:** `.car/reviewed/DD-{NNN}.json` filenames (extract the DD-NNN part)
+
+For Driver row: show ID + priority + title (truncated to 50 chars). For Backseat/Patrol: IDs only.
+
+Status line formats:
 - **STALL** (any event age >600s, OR `.processing` file exists with agent heartbeat >60s):
   `Car: STALL — {filename} waiting {N}m | D✓ B✗(62s) P✓ | 175 processed`
 - **IN-FLIGHT** (`.processing` files exist, heartbeat OK):

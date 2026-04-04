@@ -69,7 +69,7 @@ cd "$WORKTREE_DIR"
 PROMPT=\$(cat "$DIR/.claude/agents/researcher.md")
 claude \\
   --append-system-prompt "\$PROMPT" \\
-  --model opus \\
+  --model sonnet \\
   --permission-mode bypassPermissions \\
   --name Researcher \\
   "Start. Collect signals, pick a target, measure baseline, begin the experiment loop. Stay quiet — one line per experiment. Run indefinitely."

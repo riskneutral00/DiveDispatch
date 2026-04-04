@@ -30,9 +30,33 @@ For each eligible ticket, compute:
 | Unblock bonus | +15 per ticket listing this one in `blocked_by` |
 | Size: S/M/L | +5/0/-5 |
 | Age (days since created) | +1 per day, cap at +10 |
-| Overlap penalty | -10 if `side_effects` overlap with any `in_progress` ticket |
+| Overlap penalty | -10 if `side_effects` overlap with any `in_progress` ticket (soft) |
 
-Sort descending. Break ties by lower ID.
+**Sort order (primary → tiebreak):**
+
+1. **Priority band** — P0 > P1 > P2 > P3
+2. **Has dependents** — tickets that unblock at least one non-done ticket sort above tickets that unblock nothing, within the same priority band
+3. **Point score** — descending (from the table above)
+4. **Ticket ID** — ascending (lower ID wins ties)
+
+This ensures blocking tickets are always picked before non-blocking tickets at the same priority level, regardless of point score.
+
+## Parallel Safety (slot-1 only)
+
+When invoked with `parallel_check: DD-{NNN}` argument, run an additional overlap gate AFTER scoring. This check is only used by Driver when filling slot 1.
+
+For each eligible ticket, check its `touches` array against the `touches` array of DD-{NNN} (the ticket already running in slot 0).
+
+**Overlap detection:** Two touches overlap if:
+- They are the same path
+- One is a directory prefix of the other (e.g., `convex/bookings/` overlaps `convex/bookings/create.ts`)
+- Both reference `convex/schema.ts`
+
+**Hard skip** any ticket whose touches overlap with DD-{NNN}. Also hard skip any ticket that has no `touches` field (cannot verify safety).
+
+If all eligible tickets are skipped → return "idle" (slot 1 stays empty, Driver runs single-slot).
+
+Normal invocation (no `parallel_check` arg) is unchanged — existing behavior preserved.
 
 ## Output
 

@@ -174,74 +174,37 @@ tag(action="add", notebook_id=..., tags="matrix,youtube,{TOPIC}")
 
 ## Phase 2: Extract Outline
 
-### 2a. Primary Extraction
+### 2a. Single Comprehensive Extraction
 
-Query the notebook for a structured, deduplicated outline of ALL knowledge:
+One query captures everything. Do NOT split into multiple queries — prior runs showed 80%+ overlap between separate technique/implementation/organizational queries, wasting ~30K tokens.
 
 ```
 notebook_query(notebook_id=..., query="From the video '{TITLE}':
-Create a comprehensive outline of EVERYTHING taught, recommended, or explained.
-This includes but is not limited to:
-- Techniques, tools, commands, libraries
-- Organizational principles (what goes where, how to structure files/directories)
-- Decision frameworks (when to use X vs Y, and why)
-- Anti-patterns and warnings (what NOT to do, and why)
-- Mental models and conceptual frameworks
-- Workflow sequences (multi-step processes, not just individual tools)
-- Opinions, philosophy, and reasoning about why something matters
-- Configuration examples (actual file contents, directory layouts shown)
-- Rules of thumb, heuristics, and thresholds mentioned
+Create a comprehensive, deduplicated outline of EVERYTHING taught. Cover ALL of these dimensions in a SINGLE pass:
+- Techniques, tools, commands, libraries — with implementation steps, prerequisites, gotchas
+- Organizational principles — what goes where, file/directory structure, routing rules
+- Decision frameworks — when to use X vs Y, criteria, thresholds, rules of thumb
+- Anti-patterns and warnings — what NOT to do, failure modes, and why
+- Mental models, philosophy, and reasoning about why things matter
+- Configuration examples — actual file contents, directory layouts shown
+- Workflow sequences — multi-step processes, not just individual tools
 
 Rules:
-- Remove ALL repetition, filler, promotional content, and verbal padding
+- Remove ALL repetition, filler, promotional content, verbal padding
 - Preserve EXACT tool names, library names, commands, configuration details
-- Preserve EXACT actionable steps and implementation details
-- Preserve EXACT organizational advice (what content belongs where, and why)
+- Preserve EXACT implementation steps and organizational advice
 - Include timestamps for key moments (e.g., [12:34])
 - Group by TOPIC, not by video timeline
-- Each point should be a distinct, non-overlapping idea
-- If a concept is mentioned multiple times, consolidate into one entry with all details
+- Each point = one distinct idea. Consolidate repeats into single entries.
 
-Format as a structured outline with clear headers and bullet points.")
+Format as structured outline with clear headers and bullet points.")
 ```
 
-### 2b. Depth Extraction
+**IMPORTANT — NLM response handling:** Extract ONLY the `answer` field from the NLM response. Discard the `references`, `citations`, and `cited_text` arrays entirely — they contain raw transcript excerpts (~15K tokens per query) that are never used downstream. The answer field contains everything needed for the outline.
 
-Second query for implementation-level detail:
+### 2b. Assemble Outline
 
-```
-notebook_query(notebook_id=..., query="From the video '{TITLE}':
-What specific implementation details are demonstrated or recommended?
-For each technique or tool mentioned:
-- What problem does it solve?
-- What are the prerequisites or dependencies?
-- What are the exact steps to implement it?
-- What are the gotchas, warnings, or failure modes mentioned?
-- Are there specific code patterns, architecture decisions, or configuration shown?
-Cite timestamps where available.")
-```
-
-### 2c. Organizational & Decision Extraction
-
-Third query for advice that doesn't fit the "technique" lens:
-
-```
-notebook_query(notebook_id=..., query="From the video '{TITLE}':
-What organizational advice, decision rules, and content-routing guidance is given?
-Specifically:
-- What content should go in which files or directories? (e.g., 'put X in global, Y in local')
-- What are the decision criteria for choosing between approaches?
-- What anti-patterns or mistakes does the speaker warn against?
-- What mental models or frameworks for thinking are introduced?
-- What heuristics, thresholds, or rules of thumb are stated? (e.g., 'if loop takes >30s, it won't work')
-- What opinions does the speaker express about WHY certain approaches matter?
-- What specific file contents, directory layouts, or configuration examples are shown?
-Include every detail — this is the knowledge that falls between 'techniques' and 'implementation steps'.")
-```
-
-### 2d. Assemble Outline
-
-Merge responses from 2a, 2b, and 2c into a single structured outline. Deduplicate any overlap across the three queries. This merged outline is the permanent library content. Every distinct idea from the video must appear — if it was said and it's not filler, it belongs in the outline.
+The single query response IS the outline. Clean up formatting if needed but do not re-query. This is the permanent library content.
 
 Derive `TOPIC` from the outline content. Use a short slug:
 - `ai-agents`, `testing`, `architecture`, `devops`, `design`, `performance`, `security`, `database`, `frontend`, `backend`, `business`, `diving`, `workflow`, `deployment`, `observability`, `other`
@@ -250,19 +213,11 @@ Not a fixed set — pick the most accurate slug. Create topic folder on demand.
 
 ---
 
-## Phase 3: NLM Deep Query
+## Phase 3: Cross-Video Query (conditional)
 
-After Phase 2 completes, query the `Matrix — YouTube` notebook for deeper understanding before project analysis.
+Phase 2's single comprehensive query already covers techniques, implementation details, AND organizational/philosophical content. No additional video-scoped query is needed.
 
-### 3a. Video-Scoped Query
-
-```
-notebook_query(notebook_id=..., query="From '{TITLE}': What knowledge from this video is NOT captured by listing techniques, tools, and implementation steps? Look for: organizational advice, file content routing rules, decision criteria, anti-patterns, mental models, philosophy, heuristics, and any specific examples or demonstrations that illustrate a point.")
-```
-
-Use to catch anything the Phase 2 queries missed. Phase 2 is biased toward discrete techniques — this query sweeps for everything else.
-
-### 3b. Cross-Video Query (conditional)
+### 3a. Cross-Video Query (conditional)
 
 When `.claude/runs/yt-*.md` files exist with the same `topic:` field, query across videos:
 
@@ -278,11 +233,13 @@ This works because all prior videos' transcripts are already in the shared NLM n
 
 ---
 
-## Phase 4: Project Analysis — 2 Parallel Agents
+## Phase 4: Project Analysis — Sequential Agents
 
-Launch both simultaneously with `model: "sonnet"` after Phase 3 completes.
+**IMPORTANT: Sequential, not parallel.** Agent 1 classifies first. Agent 2 specs ONLY applicable techniques. Prior runs showed parallel execution wasted ~70% of Agent 2's work speccing techniques that turned out to be already-done.
 
-### Agent 1: Technique Mapping
+### Agent 1: Technique Mapping (run first)
+
+Launch with `model: "sonnet"`.
 
 **Prompt the agent with:** Read the outline below and classify each technique against {PROJECT}'s current codebase.
 
@@ -308,11 +265,13 @@ Classification rules:
 - `not-applicable` — **Architecturally incompatible** with the project: requires a completely different tech stack, targets a domain that doesn't exist here, or is physically impossible given the project's constraints (e.g., Java-specific technique in a Node project, mobile-native API on a web app). "I can't immediately see how" is NOT sufficient — default to `applicable` or `future` when uncertain. Reserve `not-applicable` only for techniques that could never apply regardless of future project direction.
 - `future` — Would be valuable but depends on features {PROJECT} doesn't have yet. Note the dependency.
 
-### Agent 2: Implementation Specs
+### Agent 2: Implementation Specs (run after Agent 1 completes)
 
-**Prompt the agent with:** For each technique classified as `applicable` by Agent 1, design a concrete {PROJECT} implementation.
+Launch with `model: "sonnet"` ONLY after Agent 1 returns classifications.
 
-**Note:** Agent 2 must wait for Agent 1's classification output. If running in parallel, Agent 2 should read the same outline and project files, and produce specs for ALL techniques — the applicable filter is applied when merging results in Phase 4.
+**Prompt the agent with:** Agent 1 classified these techniques as `applicable`: {list only the applicable technique names and their one-line reasoning}. For each, design a concrete {PROJECT} implementation.
+
+Have the agent read the files listed in `{KEY_FILES}` relevant to the applicable techniques' `project_layers`.
 
 For each applicable technique, produce:
 
@@ -345,6 +304,8 @@ SPECS:
       when: {when to spawn}
       autonomy: {interactive|autonomous}
 ```
+
+If there are 0 applicable techniques, skip Agent 2 entirely.
 
 ---
 
@@ -516,6 +477,8 @@ mkdir -p ~/Desktop/RiskNeutral/Vaults/Matrix-YouTube/{TOPIC}/
 
 Write `~/Desktop/RiskNeutral/Vaults/Matrix-YouTube/{TOPIC}/{slug}.md`:
 
+**Vault file is a summary + pointer — NOT a duplicate of the outline.** The full outline lives only in the detail file (`.claude/runs/yt-{VIDEO_ID}.md`). This saves ~2-5K tokens per video.
+
 ```markdown
 # {Video Title}
 
@@ -524,9 +487,9 @@ Write `~/Desktop/RiskNeutral/Vaults/Matrix-YouTube/{TOPIC}/{slug}.md`:
 **Analyzed:** {YYYY-MM-DD}
 **Topic:** {topic}
 
-## Outline
+## Key Takeaways
 
-{the full deduplicated structured outline from Phase 2 -- this IS the permanent value}
+{3-5 bullet points — the most important non-obvious insights from the video}
 
 ## Project Applicability
 
@@ -538,7 +501,7 @@ Write `~/Desktop/RiskNeutral/Vaults/Matrix-YouTube/{TOPIC}/{slug}.md`:
 | {name} | already-done | {where in {PROJECT}} |
 | ...    | ... | ... |
 
-Detail: `.claude/runs/yt-{VIDEO_ID}.md`
+**Full outline:** `.claude/runs/yt-{VIDEO_ID}.md`
 ```
 
 ### 6c. Vault Index
@@ -945,3 +908,7 @@ Run /board to review and queue.
 10. **Topic folders are dynamic.** Created on demand, not a fixed set. Pick the most accurate topic.
 11. **Cross-video queries are native.** All videos share one NLM notebook. Query patterns across videos.
 12. **Outline before analysis.** Never skip the outline step. Even if no techniques apply to {PROJECT}, the outline has standalone value.
+13. **Strip NLM citation blocks.** Every `notebook_query` response contains an `answer` field (~1K tokens) and a `references` array (~15K tokens of raw transcript excerpts). Use ONLY `answer`. Discard `references`, `citations`, and `cited_text` — they are never used downstream and waste ~15K tokens per query.
+14. **One NLM query, not three.** Phase 2 uses a single comprehensive query. Prior runs showed 80%+ overlap between technique/implementation/organizational queries. One well-structured query captures everything.
+15. **Sequential agents, not parallel.** Agent 1 (classification) must complete before Agent 2 (specs) starts. Agent 2 specs ONLY applicable techniques. Prior runs wasted ~70% of Agent 2's work speccing already-done techniques.
+16. **Vault file = summary + pointer.** Full outline lives in the detail file only. Vault file gets key takeaways + applicability table + pointer. No content duplication.

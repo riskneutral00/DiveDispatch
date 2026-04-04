@@ -28,17 +28,33 @@ If this is a restart (manifest exists), preserve existing `.car/run-knowledge/` 
 
 ## Handoff Context
 
-If `.car/handoff.json` exists (written by previous session's debrief):
+Read all handoff files for crash recovery context:
+
+**Driver (debrief handoff):** `.car/handoff.json` — cross-session learnings from previous debrief:
 ```bash
 cat .car/handoff.json 2>/dev/null
 ```
+If found, print: `HANDOFF | last session: {last_ticket_outcome} | {first knowledge_highlight}`
 
-If found, print key highlights:
-```
-HANDOFF | last session: {last_ticket_outcome} | {first knowledge_highlight}
-```
+**Driver (crash state):** `.car/manifest.json` — contains `slots` with per-slot `stage` fields. Driver's own recovery logic reads this (see driver.md Recovery on restart). Preflight does NOT reset manifest — Driver handles its own stage-aware recovery.
 
-This gives Driver context about what the previous session learned. The handoff file is NOT deleted — it persists until the next debrief overwrites it.
+**Backseat (crash state):** `.car/handoff-backseat.json` — contains `current_event`, `stage`, `events_completed`, `review_count`:
+```bash
+cat .car/handoff-backseat.json 2>/dev/null
+```
+If found, print: `HANDOFF-BACKSEAT | stage: {stage} | event: {current_event} | {review_count} reviewed`
+
+Backseat reads this on its own startup and handles stage-aware recovery. Preflight surfaces it for visibility but does NOT modify it.
+
+**Patrol (crash state):** `.car/handoff-patrol.json` — contains `stage`, `events_drained`, `cycle_count`:
+```bash
+cat .car/handoff-patrol.json 2>/dev/null
+```
+If found, print: `HANDOFF-PATROL | stage: {stage} | {len(events_drained)} events drained | cycle {cycle_count}`
+
+Patrol reads this on its own startup and handles stage-aware recovery. Preflight surfaces it for visibility but does NOT modify it.
+
+Each agent owns its own recovery logic. Preflight's role is to surface the state so Driver (the first agent to start) has awareness of what Backseat/Patrol will resume.
 
 ## Stale Claim Recovery
 

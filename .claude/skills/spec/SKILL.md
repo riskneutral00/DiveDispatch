@@ -15,6 +15,14 @@ The tickets you produce must contain ALL information an agent needs to implement
 
 ---
 
+## Entry Modes
+
+- **`/spec {description}`** — Standard: explore for new feature, opportunistically fill overlapping pre-specs
+- **`/spec fill`** — Batch fill: no new feature, scan all `needs_spec: true` tickets, cluster by area, one deep exploration per cluster, fill them all
+- **`/spec DD-{NNN}`** — Single fill: explore and fill one specific ticket
+
+---
+
 ## Phase 0: Deep Exploration (before any questions)
 
 After reading the user's description, launch Explore agents to build a **context map** — a structured list of `file:line` references with one-line descriptions. This map powers every recommendation and populates ticket `**References:**` sections.
@@ -32,6 +40,24 @@ Agent 3 (tests/): existing coverage, fixtures, test patterns → coverage map
 Use `model: "sonnet"` for all Explore agents.
 
 Merge results into a single context map. Do NOT show the raw map to the user — use it to make informed, specific recommendations in every question.
+
+### Touches Prediction
+
+Using the context map, predict which files and directories this ticket will CREATE or MODIFY (not just read). Write these as a `touches` array in frontmatter. This enables the Driver to run non-overlapping tickets in parallel.
+
+Rules:
+- Use directory-level paths for broad changes (e.g., `convex/bookings/`)
+- Use exact file paths for targeted changes (e.g., `convex/schema.ts`)
+- Always include test files that will be created or modified
+- Include `convex/schema.ts` if any schema change is needed
+- Be conservative — over-predict rather than under-predict
+- Shared utilities (`convex/lib/`, `src/lib/`) count as touches if modified
+- Do NOT include files that are only read as references
+
+Examples:
+- Backend mutation + test: `["convex/bookings/create.ts", "tests/bookings/create.test.ts"]`
+- Schema change + fullstack: `["convex/schema.ts", "convex/equipment/", "src/components/equipment/", "tests/equipment/"]`
+- Frontend-only: `["src/components/profile/", "tests/components/profile.test.tsx"]`
 
 Also search in parallel (same as before):
 - `convex/schema.ts` — relevant tables
@@ -55,6 +81,29 @@ Fill these in now? (Free — context already loaded)
   C) Skip
 ```
 
+### Pre-Spec Merge Detection
+
+After building the context map, predict which files each pre-spec would modify (same logic as Touches Prediction). If two or more pre-specs share predicted affected files, recommend merging:
+
+```
+These pre-specs overlap on affected files:
+  DD-{A} + DD-{B}: both modify {shared files}
+
+Recommend combining into one ticket to prevent worktree merge conflicts.
+  A) Merge (Recommended — one ticket, reassess size)
+  B) Keep separate (will need wave sequencing to avoid conflicts)
+```
+
+If merged:
+- Combine `**Problem:**` sections (preserve both verbatim, labeled by original ticket ID)
+- Union the `**Deferred:**` questions
+- Reassess `size` based on combined scope (two S tickets sharing files → likely M)
+- Reassess `recommended_model` (combined M/L → may need opus)
+- Delete the absorbed ticket file, keep the lower-numbered ID
+
+If kept separate:
+- Put in different waves and auto-populate `blocked_by` so they never run in parallel worktrees
+
 For accepted pre-specs, after the main spec interview is complete:
 1. Read the pre-spec's `**Deferred:**` section for unanswered questions
 2. Re-ask each deferred question (Matt can defer again → set `human_required: true`)
@@ -63,6 +112,39 @@ For accepted pre-specs, after the main spec interview is complete:
 5. Remove `needs_spec: true` from frontmatter
 6. If no deferred questions remain: set `status: ready`
 7. If deferred questions remain and Matt deferred again: set `human_required: true`, keep `status: backlog`
+
+---
+
+## Phase 0-B: Batch Fill Mode (`/spec fill`)
+
+When invoked as `/spec fill` (no feature description), skip Phase 1-2 interview for a new feature. Instead:
+
+1. Scan all `.tickets/DD-*.md` with `needs_spec: true` in frontmatter
+2. If none found → report "No pre-specs to fill" → exit
+3. Present list to Matt:
+   ```
+   Found {N} pre-specs:
+     DD-{A}: "{title}" ({area})
+     DD-{B}: "{title}" ({area})
+     DD-{C}: "{title}" ({area})
+
+   Fill all, pick specific ones, or filter by area?
+   ```
+4. Cluster selected tickets by `area` field overlap (same area → same cluster, overlapping `side_effects` → same cluster)
+5. **Merge detection:** Within each cluster, predict which files each ticket would modify based on `**Problem:**` + `**Pre-spec notes:**` domain descriptions matched against the codebase area. If tickets share predicted files, recommend merging (same format as Pre-Spec Merge Detection above). If merged: combine problems, union deferred questions, reassess size/model, delete absorbed ticket file. If kept separate: sequence into different waves, set `blocked_by`.
+6. Per cluster: build ONE context map using Explore agents (up to 3, model: sonnet) — scope exploration to the areas referenced by the cluster's tickets
+7. Per ticket in cluster:
+   - Read `**Deferred:**` section for unanswered questions
+   - Re-ask each deferred question **one at a time** (Matt can defer again → `human_required: true`)
+   - Using the context map, fill in: `**Spec:**`, `**References:**`, `**Acceptance:**`, `**Test plan:**`, `**QA Scenarios:**`, `touches`
+   - Set: `area` (from code analysis), `wave`, `recommended_model`
+   - Remove `needs_spec: true` from frontmatter
+   - If no deferred questions remain: set `status: ready`
+   - If deferred questions remain and Matt deferred again: set `human_required: true`, keep `status: backlog`
+8. Context map is shared across all tickets in the cluster — never re-explore for the same area
+9. After all tickets filled, show summary table (same format as Phase 6 multi-ticket)
+
+Then proceed to Phase 5 (write) and Phase 6 (confirm) as normal.
 
 ---
 
@@ -100,6 +182,7 @@ If **single ticket**: proceed to Q2 as normal.
 If **multi-ticket**: assign wave numbers:
 - Independent pieces → same wave (can run in parallel)
 - Dependent pieces → later wave (sequenced). Auto-populate `blocked_by` from wave ordering.
+- Same-wave tickets MUST have non-overlapping `touches` arrays. If two pieces modify the same files, put them in different waves.
 
 Then interview each ticket in sequence through Q2-Q6, using the shared context map. Label each sub-interview: `"Ticket 1 of N: {title}"`
 
@@ -265,6 +348,7 @@ blocked_by: [{DD-NNN dependencies, or empty}]
 blocks: [{DD-NNN tickets this blocks, or empty}]
 pr: null
 side_effects: [{areas from Q5, or empty}]
+touches: [{predicted modified files/dirs from Phase 0 Touches Prediction}]
 human_required: false
 size: {S|M|L}
 wave: {1|2|3}

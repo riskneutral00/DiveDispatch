@@ -1,48 +1,47 @@
 ---
 name: pre-spec
-description: "Lightweight batch idea capture. Matt describes problems, Claude infers all metadata. Creates backlog tickets with needs_spec: true for /spec to fill in later."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+description: "Single-ticket idea capture. Matt describes a problem or desired outcome. Claude infers all metadata and produces exactly one ticket with needs_spec: true for /spec to fill in later."
+allowed-tools: Read, Write, Edit, Bash
 user-invocable: true
 ---
 
-# /pre-spec — Batch Idea Capture
+# /pre-spec — Single-Ticket Idea Capture
 
-Matt describes problems, complaints, or desired outcomes. You infer ALL metadata. Matt only confirms or overrides — never fills in fields.
+Matt describes a problem, complaint, or desired outcome. You infer ALL metadata. Matt only confirms or overrides — never fills in fields.
 
-**Max 2 questions per issue. Everything else you figure out.**
+**One ticket per invocation. Always.**
+
+**Max 2 questions. Everything else you figure out.**
+
+**No code exploration. No Grep. No Glob. No Agent. No file:line references.**
+Pre-spec captures Matt's words and infers metadata from domain knowledge only.
+/spec does all codebase exploration later.
 
 ---
 
 ## Step 1: Dump
 
-Let Matt talk. He may list one issue or ten. He may be vague ("the availability thing is broken") or specific ("after confirming a booking, the instructor calendar still shows the old availability for 30 seconds"). Accept whatever he gives you.
-
-If Matt hasn't provided anything yet, ask: "What's bugging you? List everything — one-liners are fine."
+Let Matt talk. Accept whatever he gives you — vague or specific, one sentence or a wall of text. If Matt hasn't provided anything yet, ask: "What's the idea or problem?"
 
 ---
 
-## Step 2: Decompose
+## Step 2: Confirm the one-liner
 
-Parse Matt's dump into discrete issues. Present back:
+Reflect back a single sentence summarizing the ticket:
 
 ```
-I see {N} issues:
-1. {one-line summary}
-2. {one-line summary}
-3. {one-line summary}
+One ticket: "{one-line summary}"
 
-Correct, or should I split/merge any?
+Correct?
 ```
 
-Wait for confirmation before proceeding.
+Wait for confirmation. If Matt says "actually that's two things" → ask which one to capture now; the other gets a separate /pre-spec call.
 
 ---
 
-## Step 3: Quick interview (per issue, max 2 questions each)
+## Step 3: Quick interview (max 2 questions)
 
-For each issue, ask at most 2 questions:
-
-**Q1 (always ask):** "What should {issue} look like when it's fixed?"
+**Q1 (always ask):** "What should this look like when it's done?"
 
 Matt can:
 - Describe the desired outcome → record it
@@ -61,13 +60,13 @@ Matt answers in plain language. Map to priority:
 - "it's annoying but not blocking" → P2
 - "whenever, no rush" → P3
 
-**That's it. Move to the next issue. Do NOT ask about size, category, area, dependencies, or side effects.**
+**That's it. Do NOT ask about size, category, area, dependencies, or side effects.**
 
 ---
 
 ## Step 4: Infer all metadata
 
-For each issue, infer every field silently:
+Infer every field silently:
 
 | Field | How to infer |
 |---|---|
@@ -81,31 +80,28 @@ For each issue, infer every field silently:
 
 ---
 
-## Step 5: Confirm batch
+## Step 5: Confirm
 
-Present all tickets with inferred metadata in one block:
+Present the single ticket:
 
 ```
-Pre-specs ready:
-  DD-{A}: "{title}" ({priority}, {size}, {category}, {area})
-  DD-{B}: "{title}" ({priority}, {size}, {category}, {area})
-  DD-{C}: "{title}" ({priority}, {size}, {category}, {area}, blocked by DD-{X})
+Pre-spec ready:
+  DD-{N}: "{title}" ({priority}, {size}, {category}, {area})
 
-Any corrections? (k to confirm all)
+Any corrections? (k to confirm)
 ```
 
 Matt can:
-- "k" → confirm all, proceed to write
-- Override specific fields: "C is P0" or "A is actually frontend" → update and re-present
-- Split or merge: "A and B are the same thing" → merge and re-present
+- "k" → confirm, proceed to write
+- Override specific fields → update and re-present
 
 ---
 
-## Step 6: Write tickets
+## Step 6: Write the ticket
 
-Read `.tickets/.counter` for next number. Increment once per ticket.
+Read `.tickets/.counter` for next number. Increment by 1.
 
-For each issue, create `.tickets/DD-{NNN}.md`:
+Create `.tickets/DD-{NNN}.md`:
 
 ```yaml
 ---
@@ -138,34 +134,30 @@ updated: {YYYY-MM-DD}
 - {list of questions Matt deferred, for /spec to re-ask}
 - {if none deferred, omit this section entirely}
 
-**Pre-spec notes:** {Your initial analysis: what area of code is likely involved, which tables/mutations might be affected, preliminary thoughts on approach. Do NOT include file:line refs — those come from /spec's exploration.}
+**Pre-spec notes:** {Domain-level guess: which area of the app this likely touches (e.g., "booking flow", "user profile", "availability calendar"). No file paths, no line numbers, no code analysis.}
 ```
 
-Update `.tickets/.counter` with the highest number used.
+Update `.tickets/.counter` with the new number.
 
 ---
 
 ## Step 7: Summary
 
 ```
-Created {N} pre-specs:
-  DD-{A}: {title} (backlog, needs_spec)
-  DD-{B}: {title} (backlog, needs_spec)
-  DD-{C}: {title} (backlog, needs_spec)
+Created DD-{N}: {title} (backlog, needs_spec)
 
-Next: run /spec on a related topic — it will find these and offer to fill them in.
-Or: run /spec DD-{A} to fill in a specific one.
+Next: run /spec DD-{N} to fill it in, or run /spec on a related topic and it will find this one.
 ```
 
 ---
 
 ## Rules
 
-- **Max 2 questions per issue.** Q1 (desired outcome) + Q2 (urgency, only if ambiguous). That's it.
+- **One ticket per invocation.** Never decompose a single idea into implementation sub-tickets — that's /spec's job. If Matt's description has backend + frontend parts, it's still one ticket.
+- **Max 2 questions.** Q1 (desired outcome) + Q2 (urgency, only if ambiguous). That's it.
 - **Infer everything.** Matt doesn't know the field taxonomy. You do.
 - **Preserve Matt's words.** The `**Problem:**` field is verbatim — don't rephrase into technical language.
-- **No code exploration.** Pre-spec is fast and cheap. /spec does the expensive exploration later.
-- **Batch is the default.** Always accept multiple issues in one session.
+- **No code exploration, period.** No reading source files. No grepping. No exploring. The only files you read are `.tickets/.counter` and `.tickets/DD-*.md` (for blocked_by dedup). Pre-spec is a 30-second conversation, not a research session. /spec does all exploration.
 - **Deferred is OK.** If Matt defers Q1, record it. /spec will re-ask. If deferred at /spec time too → `human_required: true`.
 - **needs_spec: true is the marker.** This is how /spec and /board identify pre-specs.
 - **Don't over-infer blocked_by.** Only set it if the dependency is obvious. False positives are worse than missing deps — /spec will catch real deps during exploration.
