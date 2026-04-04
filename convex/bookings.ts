@@ -389,10 +389,7 @@ export async function _myDashboard(
   const allBookings = await resolveCallerBookings(ctx, user, activeRole)
 
   // Batch-fetch all resources upfront
-  const resourceMap = await getResourcesForBookings(ctx, allBookings.map((b) => b._id as string))
-  const allResources = [...resourceMap.values()].flat()
-  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
-  const nameMap = await buildInstructorNameMap(ctx, slugs)
+  const { resourceMap, nameMap } = await buildResourceContext(ctx, allBookings.map((b) => b._id as string))
 
   const isResourceRole = !await checkHasAnyOperatorRole(ctx, user._id)
 

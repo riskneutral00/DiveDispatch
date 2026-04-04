@@ -6,6 +6,7 @@ import { HOLD_TTL_MS } from './lib/auth'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 import { type CourseCode } from './shared/courseCodes'
 import { batchDelete } from './lib/batch'
+import { dateStr, addDays, COURSE_DURATIONS } from './lib/seedUtils'
 
 type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
 
@@ -35,10 +36,6 @@ const DEMO_BOOKINGS_CONFIG: {
   { activityType: ['AOW'], status: 'Draft', dayOffset: 7, diverCount: 2 },
 ]
 
-const COURSE_DURATIONS: Record<string, number> = {
-  DSD: 1, TRY_DIVE: 1, OW: 3, AOW: 2, FD: 1, RESCUE: 3, DM: 5, REFRESH: 1, SPECIALTY: 2,
-}
-
 const DEMO_NAMES = [
   { first: 'Wei', last: 'Wang' }, { first: 'Emma', last: 'Smith' },
   { first: 'Joon', last: 'Kim' }, { first: 'Marie', last: 'Dupont' },
@@ -54,19 +51,9 @@ const COUNTRY_LABELS: Record<string, string> = {
   JP: 'Japan', DE: 'Germany', AU: 'Australia', BR: 'Brazil', SA: 'Saudi Arabia', RU: 'Russia',
 }
 
-function dateStr(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-}
-
 function todayStr(): string {
   const d = new Date(NOW)
   return dateStr(d.getFullYear(), d.getMonth() + 1, d.getDate())
-}
-
-function addDays(date: string, days: number): string {
-  const [y, m, d] = date.split('-').map(Number)
-  const dt = new Date(y, m - 1, d + days)
-  return dateStr(dt.getFullYear(), dt.getMonth() + 1, dt.getDate())
 }
 
 // ── scheduleDemoBookings ──────────────────────────────────────────────
