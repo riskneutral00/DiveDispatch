@@ -3,8 +3,8 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
+import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { Card } from '@/components/ui/card'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import {
   compressorContactSchema,
@@ -18,15 +18,7 @@ import {
 import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
-// ── Constants ────────────────────────────────────────────────────────
-
-const GAS_MIXES = [
-  { value: 'air', label: 'Air' },
-  { value: 'nitrox', label: 'Nitrox' },
-  { value: 'trimix', label: 'Trimix' },
-] as const
-
-type GasMix = 'air' | 'nitrox' | 'trimix'
+import { GAS_MIX_OPTIONS, type GasMix } from '@/lib/constants/gas-mixes'
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -178,7 +170,7 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
         <FormSectionHeader label="Gas Mixes Available" />
         <CheckboxGroup
           label="Select the gas mixes you supply"
-          items={GAS_MIXES.map(({ value, label }) => ({ value, label }))}
+          items={GAS_MIX_OPTIONS.map(({ value, label }) => ({ value, label }))}
           selected={form.gasMixes}
           onChange={(values) => setField('gasMixes', values as GasMix[])}
           error={errors.gasMixes}

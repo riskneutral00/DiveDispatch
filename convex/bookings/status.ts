@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { internalMutation, mutation } from '../_generated/server'
 import { internal } from '../_generated/api'
-import { requireAuth, assertOwnership } from '../lib/auth'
+import { requireAuth, assertOwnership, requireOwnerOrResourceAccess } from '../lib/auth'
 import {
   canBookingTransition,
   releaseBookingReservations,
@@ -94,19 +94,7 @@ export const checkAndExpireBooking = mutation({
     if (!isBookingExpired(booking)) return
 
     // Verify caller has access: owns the booking or has a reservation on it
-    if (booking.ownerId !== user.slug) {
-      const callerUnits = await ctx.db
-        .query('inventoryUnits')
-        .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
-        .collect()
-      const callerUnitIds = new Set(callerUnits.map((u) => u._id))
-      const bookingReservations = await ctx.db
-        .query('reservations')
-        .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-        .collect()
-      const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
-      if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
 
     // Perform expiry inline (same logic as internalMutation expireBooking)
     await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.HoldExpired)
