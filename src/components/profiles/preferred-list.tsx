@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, Plus } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
 import { GlassCard } from '@/components/ui/glass-card'
 import { GlassInput } from '@/components/ui/glass-input'
+import { GlassDialog } from '@/components/ui/glass-dialog'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { GlassButton } from '@/components/ui/glass-button'
 import { Spinner } from '@/components/ui/spinner'
@@ -318,7 +319,7 @@ function InstructorFilterBar({
   )
 }
 
-// ─── Rich badge for instructor cards ────────────────────────────────────────
+// ─── Rich badge for instructor cards (browse results in overlay) ─────────────
 
 function InstructorBadge({
   entry,
@@ -328,94 +329,120 @@ function InstructorBadge({
   activeAgency: string | null
 }) {
   return (
-    <span className="flex flex-wrap gap-1 items-center">
-      {/* Agency pills */}
-      {entry.agencies?.map((a) => (
-        <span
-          key={a}
-          className="text-xs px-1.5 py-0.5 rounded shrink-0"
-          style={{
-            background: 'var(--color-glass-bg-elevated)',
-            color: 'var(--color-text-secondary)',
-          }}
-        >
-          {a}
-        </span>
-      ))}
-      {/* Specialty codes for selected agency */}
-      {activeAgency && entry.credentials
-        ?.filter((c) => c.agency === activeAgency)
-        .flatMap((c) => c.courses)
-        .map((course) => (
+    <div className="space-y-1">
+      {/* Agency + specialty row */}
+      <span className="flex flex-wrap gap-1 items-center">
+        {entry.agencies?.map((a) => (
           <span
-            key={course}
+            key={a}
             className="text-xs px-1.5 py-0.5 rounded shrink-0"
             style={{
-              background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)',
+              background: 'var(--color-glass-bg-elevated)',
               color: 'var(--color-text-secondary)',
-              border: '1px solid',
             }}
           >
-            {course}
+            {a}
           </span>
         ))}
-      {/* Language chips */}
-      {entry.languages?.map((langCode) => {
-        const scriptLabel = CHINESE_SCRIPT_LABELS[langCode as LanguageCode]
-        const lang = ALL_LANGUAGES.find((l) => l.code === langCode)
-        if (!lang) return null
-        return (
-          <FlagPill
-            key={langCode}
-            lang={{ code: lang.code, label: scriptLabel ?? lang.label }}
-            active={false}
-            onToggle={() => {}}
-            disabled
-          />
-        )
-      })}
-    </span>
+        {activeAgency && entry.credentials
+          ?.filter((c) => c.agency === activeAgency)
+          .flatMap((c) => c.courses)
+          .map((course) => (
+            <span
+              key={course}
+              className="text-xs px-1.5 py-0.5 rounded shrink-0"
+              style={{
+                background: 'var(--color-glass-bg)',
+                borderColor: 'var(--color-glass-border)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid',
+              }}
+            >
+              {course}
+            </span>
+          ))}
+      </span>
+      {/* Language flags — standalone row */}
+      {(entry.languages?.length ?? 0) > 0 && (
+        <span className="flex flex-wrap gap-1 items-center">
+          {entry.languages?.map((langCode) => {
+            const scriptLabel = CHINESE_SCRIPT_LABELS[langCode as LanguageCode]
+            const lang = ALL_LANGUAGES.find((l) => l.code === langCode)
+            if (!lang) return null
+            return (
+              <FlagPill
+                key={langCode}
+                lang={{ code: lang.code, label: scriptLabel ?? lang.label }}
+                active={false}
+                onToggle={() => {}}
+                disabled
+              />
+            )
+          })}
+        </span>
+      )}
+    </div>
   )
 }
 
-// ─── PreferredInstructorList (full implementation) ──────────────────────────
+// ─── Compact badge for ranked list cards ─────────────────────────────────────
+
+function InstructorRankedBadge({ entry }: { entry: DirectoryEntry }) {
+  return (
+    <div className="space-y-1">
+      {(entry.agencies?.length ?? 0) > 0 && (
+        <span className="flex flex-wrap gap-1 items-center">
+          {entry.agencies?.map((a) => (
+            <span
+              key={a}
+              className="text-xs px-1.5 py-0.5 rounded shrink-0"
+              style={{
+                background: 'var(--color-glass-bg-elevated)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
+              {a}
+            </span>
+          ))}
+        </span>
+      )}
+      {(entry.languages?.length ?? 0) > 0 && (
+        <span className="flex flex-wrap gap-1 items-center">
+          {entry.languages?.map((langCode) => {
+            const scriptLabel = CHINESE_SCRIPT_LABELS[langCode as LanguageCode]
+            const lang = ALL_LANGUAGES.find((l) => l.code === langCode)
+            if (!lang) return null
+            return (
+              <FlagPill
+                key={langCode}
+                lang={{ code: lang.code, label: scriptLabel ?? lang.label }}
+                active={false}
+                onToggle={() => {}}
+                disabled
+              />
+            )
+          })}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── PreferredInstructorList (overlay pattern) ──────────────────────────────
 
 export function PreferredInstructorList(props: ListProps) {
   const { slugs, onChange } = props
 
-  // Fetch operator's dive center for defaults
-  const dcProfile = useQuery(api.diveCenters.mine)
   const entries = useQuery(api.directory.listByRole, { role: 'Instructor' as StakeholderRole })
 
-  // Filter state
+  // Overlay open state
+  const [showOverlay, setShowOverlay] = useState(false)
+
+  // Filter state — only active inside the overlay
   const [agency, setAgency] = useState<string | null>(null)
   const [specialty, setSpecialty] = useState<string | null>(null)
-  const [activeLangs, setActiveLangs] = useState<Set<string> | null>(null)
+  const [activeLangs, setActiveLangs] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
-  const [defaultsInitialized, setDefaultsInitialized] = useState(false)
-
-  // Initialize defaults from operator profile (only once when data arrives)
-  const defaultAgency = useMemo(() => {
-    if (!dcProfile) return 'PADI'
-    const associations = dcProfile.associations ?? []
-    return associations.length === 1 ? associations[0].agency : 'PADI'
-  }, [dcProfile])
-
-  const defaultLangs = useMemo(() => {
-    if (!dcProfile) return []
-    return dcProfile.customerLanguages ?? []
-  }, [dcProfile])
-
-  useEffect(() => {
-    if (dcProfile !== undefined && !defaultsInitialized) {
-      setAgency(defaultAgency)
-      if (defaultLangs.length > 0) {
-        setActiveLangs(new Set(defaultLangs))
-      }
-      setDefaultsInitialized(true)
-    }
-  }, [dcProfile, defaultsInitialized, defaultAgency, defaultLangs])
 
   // Derive filter options from full unfiltered entries
   const allAgencies = useMemo(() => {
@@ -449,13 +476,11 @@ export function PreferredInstructorList(props: ListProps) {
     return Array.from(set).sort()
   }, [entries])
 
-  // On agency change → reset specialty
   const handleAgencyChange = (newAgency: string | null) => {
     setAgency(newAgency)
     setSpecialty(null)
   }
 
-  // Guard: no specialty without agency
   const handleSpecialtyChange = useCallback((s: string | null) => {
     if (!agency) return
     setSpecialty(s)
@@ -463,47 +488,35 @@ export function PreferredInstructorList(props: ListProps) {
 
   const handleLangToggle = (code: string) => {
     setActiveLangs((prev) => {
-      const next = new Set(prev ?? [])
-      if (next.has(code)) {
-        next.delete(code)
-      } else {
-        next.add(code)
-      }
+      const next = new Set(prev)
+      if (next.has(code)) next.delete(code)
+      else next.add(code)
       return next
     })
   }
 
-  // Determine if we're in browse mode: any filter active OR text typed
-  const hasActiveFilter = agency !== null || specialty !== null || (activeLangs !== null && activeLangs.size > 0) || search.trim().length > 0
-  const effectiveLangs = useMemo(() => activeLangs ?? new Set<string>(), [activeLangs])
+  // Results only when user has interacted with at least one filter
+  const hasActiveFilter =
+    agency !== null ||
+    specialty !== null ||
+    activeLangs.size > 0 ||
+    search.trim().length > 0
 
-  // Filter entries in memory
   const filteredEntries = useMemo(() => {
     if (!entries || !hasActiveFilter) return []
     let result = entries.filter((e) => !slugs.includes(e.slug))
 
-    // Agency filter
     if (agency) {
       result = result.filter((e) => e.agencies?.includes(agency))
     }
-
-    // Specialty filter
     if (agency && specialty) {
       result = result.filter((e) =>
-        e.credentials?.some(
-          (c) => c.agency === agency && c.courses.includes(specialty),
-        ),
+        e.credentials?.some((c) => c.agency === agency && c.courses.includes(specialty)),
       )
     }
-
-    // Language filter
-    if (effectiveLangs.size > 0) {
-      result = result.filter((e) =>
-        e.languages?.some((l) => effectiveLangs.has(l)),
-      )
+    if (activeLangs.size > 0) {
+      result = result.filter((e) => e.languages?.some((l) => activeLangs.has(l)))
     }
-
-    // Text search
     const trimmed = search.trim().toLowerCase()
     if (trimmed) {
       result = result.filter(
@@ -512,9 +525,8 @@ export function PreferredInstructorList(props: ListProps) {
           e.placeName.toLowerCase().includes(trimmed),
       )
     }
-
     return result
-  }, [entries, hasActiveFilter, slugs, agency, specialty, effectiveLangs, search])
+  }, [entries, hasActiveFilter, slugs, agency, specialty, activeLangs, search])
 
   if (entries === undefined) {
     return (
@@ -549,68 +561,21 @@ export function PreferredInstructorList(props: ListProps) {
     if (!slugs.includes(slug) && !atMax) {
       onChange([...slugs, slug])
     }
+    setShowOverlay(false)
+    setSearch('')
+  }
+
+  const closeOverlay = () => {
+    setShowOverlay(false)
     setSearch('')
   }
 
   return (
     <div className="space-y-3">
-      {/* Filter bar */}
-      <InstructorFilterBar
-        agencies={allAgencies}
-        activeAgency={agency}
-        onAgencyChange={handleAgencyChange}
-        specialties={specialtiesForAgency}
-        activeSpecialty={specialty}
-        onSpecialtyChange={handleSpecialtyChange}
-        languageCodes={allLanguageCodes}
-        activeLangs={effectiveLangs}
-        onLangToggle={handleLangToggle}
-        currentCount={slugs.length}
-      />
-
-      {/* Search input */}
-      <GlassInput
-        label="Search instructors"
-        placeholder="Search by name or city..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {/* Browse results */}
-      {hasActiveFilter && filteredEntries.length > 0 && (
-        <div
-          className="rounded-[var(--border-radius)] border overflow-hidden"
-          style={{
-            background: 'var(--color-glass-bg)',
-            backdropFilter: 'blur(var(--glass-blur))',
-            WebkitBackdropFilter: 'blur(var(--glass-blur))',
-            borderColor: 'var(--color-glass-border)',
-          }}
-        >
-          {filteredEntries.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
-            <button
-              key={entry.slug}
-              type="button"
-              onClick={() => add(entry.slug)}
-              disabled={atMax}
-              className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80 text-primary disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{entry.name}</span>
-                <span className="text-xs text-secondary">{entry.placeName}</span>
-              </div>
-              <div className="mt-0.5">
-                <InstructorBadge entry={entry} activeAgency={agency} />
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Ranked list (separate from search results) */}
+      {/* Ranked list or empty state */}
       {slugs.length === 0 ? (
         <p className="text-sm text-secondary">
-          No preferred instructors added yet.
+          No preferred instructors yet — Add one to get started.
         </p>
       ) : (
         <div className="space-y-2">
@@ -623,30 +588,43 @@ export function PreferredInstructorList(props: ListProps) {
                     {index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate text-primary">
-                        {entry?.name ?? slug}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium truncate text-primary">
+                      {entry?.name ?? slug}
+                    </p>
                     {entry && (
                       <div className="mt-0.5">
-                        <InstructorBadge entry={entry} activeAgency={agency} />
+                        <InstructorRankedBadge entry={entry} />
                       </div>
-                    )}
-                    {entry?.placeName && (
-                      <p className="text-xs truncate text-secondary">
-                        {entry.placeName}
-                      </p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
+                    <GlassButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => moveUp(index)}
+                      disabled={index === 0}
+                      aria-label="Move up"
+                    >
                       <ChevronUp size={16} />
                     </GlassButton>
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
+                    <GlassButton
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => moveDown(index)}
+                      disabled={index === slugs.length - 1}
+                      aria-label="Move down"
+                    >
                       <ChevronDown size={16} />
                     </GlassButton>
-                    <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label="Remove instructor">
+                    <GlassButton
+                      variant="destructive-ghost"
+                      size="sm"
+                      type="button"
+                      onClick={() => remove(index)}
+                      aria-label="Remove instructor"
+                    >
                       <Trash2 size={16} />
                     </GlassButton>
                   </div>
@@ -656,6 +634,88 @@ export function PreferredInstructorList(props: ListProps) {
           })}
         </div>
       )}
+
+      {/* Add button + count */}
+      <div className="flex items-center justify-between">
+        {!atMax && (
+          <GlassButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowOverlay(true)}
+          >
+            <Plus size={14} className="mr-1" />
+            Add Instructor
+          </GlassButton>
+        )}
+        <span className="ml-auto text-xs text-secondary">
+          {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
+        </span>
+      </div>
+
+      {/* Add instructor overlay */}
+      <GlassDialog
+        open={showOverlay}
+        onClose={closeOverlay}
+        title="Add Instructor"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <InstructorFilterBar
+            agencies={allAgencies}
+            activeAgency={agency}
+            onAgencyChange={handleAgencyChange}
+            specialties={specialtiesForAgency}
+            activeSpecialty={specialty}
+            onSpecialtyChange={handleSpecialtyChange}
+            languageCodes={allLanguageCodes}
+            activeLangs={activeLangs}
+            onLangToggle={handleLangToggle}
+            currentCount={slugs.length}
+          />
+
+          <GlassInput
+            label="Search instructors"
+            placeholder="Search by name or city..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          {hasActiveFilter ? (
+            filteredEntries.length > 0 ? (
+              <div
+                className="rounded-[var(--border-radius)] border overflow-hidden"
+                style={{
+                  background: 'var(--color-glass-bg)',
+                  backdropFilter: 'blur(var(--glass-blur))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
+                  borderColor: 'var(--color-glass-border)',
+                }}
+              >
+                {filteredEntries.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
+                  <button
+                    key={entry.slug}
+                    type="button"
+                    onClick={() => add(entry.slug)}
+                    disabled={atMax}
+                    className="w-full text-left px-3 py-2.5 text-sm transition-colors hover:opacity-80 text-primary disabled:opacity-40 disabled:cursor-not-allowed border-b last:border-b-0"
+                    style={{ borderColor: 'var(--color-glass-border)' }}
+                  >
+                    <span className="font-medium">{entry.name}</span>
+                    <div className="mt-0.5">
+                      <InstructorBadge entry={entry} activeAgency={agency} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-secondary py-2">No instructors match these filters.</p>
+            )
+          ) : (
+            <p className="text-sm text-secondary py-2">Select filters above to browse instructors.</p>
+          )}
+        </div>
+      </GlassDialog>
     </div>
   )
 }
