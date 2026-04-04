@@ -3,8 +3,11 @@
 # tickets (working items for parallel Claude terminals)
 .tickets/
 
-# car workflow event files (tmux inter-agent communication)
+# car workflow event files (retired — replaced by /post-spec)
 .car/
+
+# post-spec working directory (plans, review findings, baseline refs)
+.post-spec/
 
 # lifecycle sentinel files (written by /last, /gate, /patrol, /vault, consumed by /first)
 .last-ran
