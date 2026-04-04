@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
 import { type RoleKey, type ClerkRole, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
+import { deriveDefaultRole } from '@/lib/utils/role'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { ProfileCompletionPill } from '../profiles/profile-completion-pill'
@@ -70,14 +71,28 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       router.replace('/sign-up')
       return
     }
+    if (myRoles === undefined) return // user exists but roles still loading
     if (user.slug !== slug) {
-      // Post-unification: all roles share the user's slug.
-      // If the URL slug doesn't match, redirect to the user's primary dashboard.
       router.replace(`/${user.slug}/${roleSlug}/dashboard`)
+      return
     }
-  }, [user, isLoading, router, slug, roleSlug])
+    // Guard: redirect if user does not hold the requested role
+    const holdsRole = myRoles.some((r) => r.role === clerkRole)
+    if (!holdsRole) {
+      const heldRoles = myRoles.map((r) => r.role)
+      if (heldRoles.length > 0) {
+        const defaultRole = deriveDefaultRole(heldRoles)
+        const defaultCfg = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
+        if (defaultCfg) {
+          router.replace(`/${user.slug}/${defaultCfg.key}/dashboard`)
+          return
+        }
+      }
+      router.replace('/sign-up')
+    }
+  }, [user, isLoading, myRoles, router, slug, roleSlug, clerkRole])
 
-  if (isLoading || !user) {
+  if (isLoading || !user || myRoles === undefined) {
     return <FullPageSpinner label={t('loading')} />
   }
 

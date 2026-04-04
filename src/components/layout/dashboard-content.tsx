@@ -75,11 +75,11 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
       ? { ownerId: slug, ownerType: clerkRole as OperatorType }
       : 'skip',
   )
-  const { data: dashboardData } = useStableQuery(
+  const { data: dashboardData, isError: isDashboardError } = useStableQuery(
     api.bookings.myDashboard,
     isResourceOnly && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
-  const { data: bookingTemplates } = useStableQuery(
+  const { data: bookingTemplates, isError: isTemplatesError } = useStableQuery(
     api.bookingTemplates.list,
     isOperator && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
@@ -200,6 +200,9 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     },
     [],
   )
+
+  // Shell guard handles ROLE_NOT_HELD via redirect; render nothing during that window
+  if (isDashboardError || isTemplatesError) return null
 
   const calendarAndRail = isBoatRole ? (
     <BookingCalendar

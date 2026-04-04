@@ -14,11 +14,17 @@ vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockUseCurrentUser(),
 }))
 
+let mockMyRoles: unknown = [{ role: 'DiveCenter' }]
+
 vi.mock('convex/react', async () => {
   const actual = await vi.importActual<typeof import('convex/react')>('convex/react')
   return {
     ...actual,
-    useQuery: () => undefined,
+    useQuery: (_query: unknown, args?: unknown) => {
+      // No-args query = myRoles; return configurable mock
+      if (args === undefined) return mockMyRoles
+      return undefined
+    },
   }
 })
 
@@ -37,6 +43,7 @@ import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockMyRoles = [{ role: 'DiveCenter' }]
 })
 
 describe('DashboardShell redirect logic', () => {
@@ -94,6 +101,55 @@ describe('DashboardShell redirect logic', () => {
 
     expect(getByText('dashboard content')).toBeInTheDocument()
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('shows spinner while myRoles is loading', () => {
+    mockMyRoles = undefined
+    mockUseCurrentUser.mockReturnValue({
+      user: { slug: 'abc', role: 'DiveCenter' },
+      isLoading: false,
+    })
+
+    const { queryByText } = render(
+      <DashboardShell roleSlug="dive-center" slug="abc">
+        <div>dashboard content</div>
+      </DashboardShell>,
+    )
+
+    expect(queryByText('dashboard content')).not.toBeInTheDocument()
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('redirects to default role when user does not hold requested role', () => {
+    mockMyRoles = [{ role: 'Instructor' }]
+    mockUseCurrentUser.mockReturnValue({
+      user: { slug: 'abc', role: 'Instructor' },
+      isLoading: false,
+    })
+
+    render(
+      <DashboardShell roleSlug="dive-center" slug="abc">
+        <div>dashboard content</div>
+      </DashboardShell>,
+    )
+
+    expect(mockReplace).toHaveBeenCalledWith('/abc/instructor/dashboard')
+  })
+
+  it('redirects to /sign-up when user holds zero roles', () => {
+    mockMyRoles = []
+    mockUseCurrentUser.mockReturnValue({
+      user: { slug: 'abc', role: 'DiveCenter' },
+      isLoading: false,
+    })
+
+    render(
+      <DashboardShell roleSlug="dive-center" slug="abc">
+        <div>dashboard content</div>
+      </DashboardShell>,
+    )
+
+    expect(mockReplace).toHaveBeenCalledWith('/sign-up')
   })
 
   it('NEVER redirects to /role-select in any scenario', () => {
