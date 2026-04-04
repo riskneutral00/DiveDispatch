@@ -32,6 +32,11 @@ interface MockRole {
   createdAt: number
 }
 
+interface MockRoleCompletion {
+  role: ClerkRole
+  percentage: number
+}
+
 function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
   return {
     _id: `role_${role}` as Id<'userRoles'>,
@@ -45,6 +50,7 @@ function makeRole(role: ClerkRole, opts: Partial<MockRole> = {}): MockRole {
 describe('ManageRoles', () => {
   const defaultProps = {
     roles: [makeRole('DiveCenter', { profileComplete: true })],
+    roleCompletions: [{ role: 'DiveCenter', percentage: 100 }] as MockRoleCompletion[],
     onAddRole: vi.fn(),
     onNavigateToOnboarding: vi.fn(),
     onDeleteRole: vi.fn().mockResolvedValue(undefined),
@@ -83,18 +89,30 @@ describe('ManageRoles', () => {
     expect(screen.queryByText('Primary')).not.toBeInTheDocument()
   })
 
-  it('shows completion status for each role', () => {
+  it('renders canonical percent badge copy for each role row', () => {
     render(
       <ManageRoles
         {...defaultProps}
         roles={[
+          makeRole('Instructor', { profileComplete: false }),
           makeRole('DiveCenter', { profileComplete: true }),
           makeRole('Boat', { profileComplete: false }),
         ]}
+        roleCompletions={[
+          { role: 'Instructor', percentage: 0 },
+          { role: 'DiveCenter', percentage: 100 },
+          { role: 'Boat', percentage: 33 },
+        ]}
       />,
     )
-    expect(screen.getByText('Complete')).toBeInTheDocument()
-    expect(screen.getByText('Incomplete')).toBeInTheDocument()
+    expect(screen.getByText('Instructor')).toBeInTheDocument()
+    expect(screen.getByText('Dive Center')).toBeInTheDocument()
+    expect(screen.getByText('Boat')).toBeInTheDocument()
+    expect(screen.getByText('0%')).toBeInTheDocument()
+    expect(screen.getByText('100%')).toBeInTheDocument()
+    expect(screen.getByText('33%')).toBeInTheDocument()
+    expect(screen.queryByText('Complete')).not.toBeInTheDocument()
+    expect(screen.queryByText('Incomplete')).not.toBeInTheDocument()
   })
 
   it('renders an "Add Role" button', () => {

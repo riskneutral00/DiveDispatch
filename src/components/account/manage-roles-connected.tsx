@@ -21,6 +21,7 @@ import { ErrorCode } from '@/lib/errors'
 export function ManageRolesConnected() {
   const roles = useQuery(api.userRoles.myRoles)
   const bookingCounts = useQuery(api.userRoles.bookingCountsForMyRoles)
+  const roleCompleteness = useQuery(api.users.getAllRolesCompleteness)
   const addRole = useMutation(api.userRoles.addRole)
   const deleteRole = useMutation(api.userRoles.deleteRole)
 
@@ -30,6 +31,10 @@ export function ManageRolesConnected() {
   const [onboardingRole, setOnboardingRole] = useState<ClerkRole | null>(null)
 
   const heldRoles = (roles ?? []).map((r) => r.role as ClerkRole)
+  const roleCompletions = (roleCompleteness?.roles ?? []).map((entry) => ({
+    role: entry.role as ClerkRole,
+    percentage: entry.percentage,
+  }))
 
   const handleSelectRole = useCallback(
     async (role: ClerkRole) => {
@@ -82,7 +87,7 @@ export function ManageRolesConnected() {
     setOnboardingRole(null)
   }, [])
 
-  if (roles === undefined || bookingCounts === undefined) {
+  if (roles === undefined || bookingCounts === undefined || roleCompleteness === undefined) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
         <Spinner />
@@ -104,6 +109,7 @@ export function ManageRolesConnected() {
     <>
       <ManageRoles
         roles={roles}
+        roleCompletions={roleCompletions}
         onAddRole={() => {
           setError(null)
           setModalOpen(true)

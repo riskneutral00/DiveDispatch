@@ -15,8 +15,14 @@ interface RoleEntry {
   createdAt: number
 }
 
+interface RoleCompletionEntry {
+  role: ClerkRole
+  percentage: number
+}
+
 interface ManageRolesProps {
   roles: RoleEntry[]
+  roleCompletions: RoleCompletionEntry[]
   onAddRole: () => void
   onNavigateToOnboarding: (role: ClerkRole) => void
   onDeleteRole: (roleId: Id<'userRoles'>) => Promise<void>
@@ -25,6 +31,7 @@ interface ManageRolesProps {
 
 export function ManageRoles({
   roles,
+  roleCompletions,
   onAddRole,
   onNavigateToOnboarding,
   onDeleteRole,
@@ -38,6 +45,7 @@ export function ManageRoles({
   const [deletingId, setDeletingId] = useState<Id<'userRoles'> | null>(null)
 
   const canDelete = roles.length > 1
+  const completionByRole = new Map(roleCompletions.map((entry) => [entry.role, entry.percentage]))
 
   async function handleDeleteConfirm(roleId: Id<'userRoles'>) {
     setDeletingId(roleId)
@@ -75,6 +83,7 @@ export function ManageRoles({
           const isConfirming = confirmingId === entry._id
           const isDeleting = deletingId === entry._id
           const isPrimary = entry.role === primaryRoleStr && roles.length > 1
+          const percentage = completionByRole.get(entry.role) ?? 0
 
           return (
             <GlassCard key={entry._id} padding="md">
@@ -97,10 +106,10 @@ export function ManageRoles({
                   </div>
                 </div>
                 <GlassBadge
-                  variant={entry.profileComplete ? 'success' : 'warning'}
+                  variant={percentage === 100 ? 'success' : 'warning'}
                   size="sm"
                 >
-                  {entry.profileComplete ? 'Complete' : 'Incomplete'}
+                  {percentage}%
                 </GlassBadge>
                 {!entry.profileComplete && (
                   <GlassButton
