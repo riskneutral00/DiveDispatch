@@ -38,27 +38,17 @@ If no untracked files, skip Round 0. If no git changes after Round 2, skip Round
 
 ## Instructions
 
-### Pre-flight: Patrol Verdict Check
+### Pre-flight: Quality Check
 
-Before anything else, check Patrol's sentinel and merge backlog:
+Before anything else, check if `/gate` has been run:
 
 ```bash
-PATROL=$(cat .patrol-ran 2>/dev/null)
-UNPROCESSED=$(ls .car/merged/*.json 2>/dev/null | wc -l | tr -d ' ')
+GATE=$(cat .patrol-ran 2>/dev/null)
 ```
-
-**Verdict dispatch (4 cases):**
 
 1. If `.patrol-ran` exists and `verdict` is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently.
-2. If `.patrol-ran` exists and `verdict` is `BLOCKED` → block: `❌ Patrol reports build/test failure. Fix before vaulting.` Stop.
-3. If `.patrol-ran` is missing AND `UNPROCESSED > 0` → warn: `⚠ {UNPROCESSED} tickets merged but not reviewed by Patrol. Run /gate to check safety, or /driver to process the backlog. Continue anyway? (y/n)` If the user says no, stop.
-4. If `.patrol-ran` is missing AND `UNPROCESSED = 0` → proceed silently (Car agents never ran or already fully completed).
-
-**Quick sanity** — even if Patrol says CLEAN, double-check:
-```bash
-grep -rl 'source: backseat' .tickets/DD-*.md 2>/dev/null | xargs grep -l 'status: ready' 2>/dev/null | xargs grep -L 'human_required: true' 2>/dev/null
-```
-If any unresolved non-human_required backseat tickets exist → warn: `⚠ {N} backseat fix tickets still open. Driver may not have finished. Continue anyway? (y/n)` If the user says no, stop.
+2. If `.patrol-ran` exists and `verdict` is `BLOCKED` → block: `Build/test failure detected. Fix before vaulting.` Stop.
+3. If `.patrol-ran` is missing → proceed silently (gate wasn't run this session).
 
 After Job 4 (commit) succeeds, clean up sentinels and write session timestamp:
 ```bash
@@ -160,9 +150,9 @@ If less than 24 hours since last summary → skip silently.
 
 If ≥ 24 hours → generate summary. Gather data in Round 1 (parallel with Job 1 reads):
 
-1. **Sessions since last summary:** Read session files (`Sessions/YYYY-MM-DD*.md`), driver debriefs, and backseat debriefs dated after last summary timestamp.
+1. **Sessions since last summary:** Read session files (`Sessions/YYYY-MM-DD*.md`) dated after last summary timestamp.
 
-2. **Project vitals:** Read `.SKELETON.md` (already in Round 1) for launch gates and ticket counts. Get test count from most recent session or driver debrief.
+2. **Project vitals:** Read `.SKELETON.md` (already in Round 1) for launch gates and ticket counts. Get test count from most recent session.
 
 3. **Skill ecosystem:**
    ```bash
@@ -421,28 +411,6 @@ CRITICAL FORMAT RULES — you MUST preserve these in every skill file you modify
 
 ---
 
-### Job 5: Shutdown Car Team
+### Job 5: Clean Up Post-Spec Artifacts
 
-Run **after** all other jobs complete. Check if a Car tmux session is active:
-
-```bash
-tmux has-session -t car 2>/dev/null
-```
-
-If the session exists:
-
-1. Write exit sentinels so agents shut down gracefully:
-   ```bash
-   echo "vault" > .car/exit-driver
-   echo "vault" > .car/exit-backseat
-   echo "vault" > .car/exit-patrol
-   ```
-
-2. Wait up to 30 seconds for agents to finish current work, then kill the session:
-   ```bash
-   sleep 10 && tmux kill-session -t car 2>/dev/null
-   ```
-
-3. Print: `Car team shut down.`
-
-If no tmux session exists, skip this job silently.
+Run **after** all other jobs complete. If `.post-spec/` exists, clean up working files (keep `plan.md` and `review-findings.md` for inspection). Remove stale sentinels.

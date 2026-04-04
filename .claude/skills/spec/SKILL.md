@@ -1,6 +1,6 @@
 ---
 name: spec
-description: "Write feature specs via structured interview. Deep codebase exploration, multi-ticket decomposition, executable acceptance criteria. Output goes to .tickets/DD-*.md — compatible with both Car workflow and /start-work."
+description: "Write feature specs via structured interview. Deep codebase exploration, multi-ticket decomposition, executable acceptance criteria. Output goes to .tickets/DD-*.md — consumed by /post-spec."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Agent
 user-invocable: true
 ---
@@ -11,7 +11,7 @@ You are writing feature specs for DiveDispatch. Conduct a structured interview �
 
 **Do not skip questions. Do not batch questions. One at a time.**
 
-The tickets you produce must contain ALL information an agent needs to implement the work — file:line references, executable acceptance criteria, QA scenarios. Workers should never need to re-explore the codebase. This makes tickets compatible with both Car's jira-worker and OMOA's /start-work.
+The tickets you produce must contain ALL information an agent needs to implement the work — file:line references, executable acceptance criteria, QA scenarios. Workers should never need to re-explore the codebase. `/post-spec` consumes these tickets directly.
 
 ---
 
@@ -43,7 +43,7 @@ Merge results into a single context map. Do NOT show the raw map to the user —
 
 ### Touches Prediction
 
-Using the context map, predict which files and directories this ticket will CREATE or MODIFY (not just read). Write these as a `touches` array in frontmatter. This enables the Driver to run non-overlapping tickets in parallel.
+Using the context map, predict which files and directories this ticket will CREATE or MODIFY (not just read). Write these as a `touches` array in frontmatter. This enables `/post-spec` to detect cross-ticket file conflicts and sequence execution correctly.
 
 Rules:
 - Use directory-level paths for broad changes (e.g., `convex/bookings/`)
@@ -89,7 +89,7 @@ After building the context map, predict which files each pre-spec would modify (
 These pre-specs overlap on affected files:
   DD-{A} + DD-{B}: both modify {shared files}
 
-Recommend combining into one ticket to prevent worktree merge conflicts.
+Recommend combining into one ticket to prevent cross-ticket file conflicts.
   A) Merge (Recommended — one ticket, reassess size)
   B) Keep separate (will need wave sequencing to avoid conflicts)
 ```
@@ -102,7 +102,7 @@ If merged:
 - Delete the absorbed ticket file, keep the lower-numbered ID
 
 If kept separate:
-- Put in different waves and auto-populate `blocked_by` so they never run in parallel worktrees
+- Put in different waves and auto-populate `blocked_by` so they execute sequentially
 
 For accepted pre-specs, after the main spec interview is complete:
 1. Read the pre-spec's `**Deferred:**` section for unanswered questions
@@ -436,25 +436,19 @@ After writing each ticket file, update `.tickets/.counter` with the highest numb
 ### Single ticket:
 1. Report: "Created DD-{NNN}: {title} (P{X}, {category}, {area})"
 2. Walk through before → after from the user's perspective
-3. Note Driver pickup: `human_required: true` → needs Matt's input first; `false` → auto-pickup
+3. Note: `human_required: true` → needs Matt's input before `/post-spec` can execute; `false` → auto-pickup
 
 ### Multi-ticket:
 1. Summary table with batch time estimation:
 
 ```
 Created {N} tickets from "{topic}":
-  Wave 1: DD-{A} ({size}/{time}, {area}) + DD-{B} ({size}/{time}, {area})
-  Wave 2: DD-{C} ({size}/{time}, {area}, blocked by DD-{A})
-
-  Est. worker time: ~{total}m
-  Est. batches: {ceil(N/4)} (cap=4)
-  Models: {Nx Sonnet, Mx Opus}
+  Wave 1: DD-{A} ({size}, {area}) + DD-{B} ({size}, {area})
+  Wave 2: DD-{C} ({size}, {area}, blocked by DD-{A})
 ```
 
-Timing: S=5m, M=15m, L=30m. If any ticket has `side_effects` overlap with another ticket in this batch, add note: "+50% buffer for overlap risk".
-
 2. Walk through wave ordering and why
-3. Note Driver pickup for the batch
+3. Note `/post-spec` pickup for the batch
 
 ### NotebookLM Ingest
 
@@ -495,8 +489,8 @@ This is ingested into NotebookLM on the next `/vault` run. Future `/spec` sessio
 - **`.tickets/` is the output.** `/board` manages lifecycle, `/board sync` mirrors to vault TODO.md.
 - **Cheapest test wins.** Don't spec a component test for something a unit test catches.
 - **Edge cases over happy paths.** The test plan should focus on what could go wrong.
-- **References mandatory for M/L.** Every M/L ticket must have at least one `file:line` reference with an embedded code snippet. S tickets can omit if trivially scoped. Snippets must include function signatures, prop types, and return types — the parts a worker needs to code without re-reading the file.
+- **References mandatory for M/L.** Every M/L ticket must have at least one `file:line` reference with an embedded code snippet. S tickets can omit if trivially scoped. Snippets must include function signatures, prop types, and return types — enough context to code without re-reading the file.
 - **QA scenarios mandatory.** At least 2 per ticket. Must be agent-executable (specific inputs → specific outputs).
-- **Violations caught here, not at worker time.** Flag dependency direction, IMMUTABLE files, invariant risk, missing indexes during the interview.
+- **Violations caught here, not at execution time.** Flag dependency direction, IMMUTABLE files, invariant risk, missing indexes during the interview.
 - **One exploration, many tickets.** The context map from Phase 0 is shared across all tickets in a multi-ticket session. Never re-explore for the same topic.
-- **Batch estimate at confirmation.** Always show estimated worker time and batch count for multi-ticket specs.
+- **Wave ordering at confirmation.** Always show wave ordering and dependency reasoning for multi-ticket specs.

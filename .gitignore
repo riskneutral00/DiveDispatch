@@ -128,4 +128,5 @@ docs/LLM_HANDOFF.md
 
 # Ephemeral directories
 .research/
+.sisyphus/
 .tmp/

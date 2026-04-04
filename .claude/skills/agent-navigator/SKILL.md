@@ -3,7 +3,7 @@ name: agent-navigator
 description: >
   QA + ticket creation agent. Matt browses the app via Playwright,
   describes issues, Claude creates tickets instantly with screenshots.
-  Works alongside the Car team via shared .tickets/ directory.
+  Writes tickets to shared .tickets/ directory for /post-spec execution.
 allowed-tools: Agent, Bash
 user-invocable: true
 ---
@@ -18,7 +18,7 @@ user-invocable: true
 Agent(
   description: "Navigator: interactive QA + ticket creation",
   subagent_type: "navigator",
-  prompt: "Start Navigator. Authenticate as Hug Ocean, present dashboard, wait for Matt's instructions. You create tickets via the ticket-create skill which writes to .tickets/. If the Car team is running in tmux (./scripts/car.sh), Driver will automatically pick up new tickets on its next cycle — no notification needed.",
+  prompt: "Start Navigator. Authenticate as Hug Ocean, present dashboard, wait for Matt's instructions. You create tickets via the ticket-create skill which writes to .tickets/. Tickets are executed later via /post-spec.",
   run_in_background: false,
   mode: "auto"
 )
