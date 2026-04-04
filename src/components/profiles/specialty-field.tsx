@@ -31,8 +31,8 @@ interface OverflowResult {
   containerRef: React.RefObject<HTMLDivElement | null>
   registerPill: (idx: number, el: HTMLElement | null) => void
   registerMandatory: (idx: number, el: HTMLElement | null) => void
-  row1Count: number
-  row2Count: number
+  /** First toggleable index that doesn't fit in 2 rows */
+  overflowStart: number
   measured: boolean
 }
 
@@ -40,8 +40,7 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
   const containerRef = useRef<HTMLDivElement>(null)
   const pillEls = useRef<Map<number, HTMLElement>>(new Map())
   const mandatoryEls = useRef<Map<number, HTMLElement>>(new Map())
-  const [row1Count, setRow1Count] = useState(toggleableCount)
-  const [row2Count, setRow2Count] = useState(0)
+  const [overflowStart, setOverflowStart] = useState(toggleableCount)
   const [measured, setMeasured] = useState(false)
 
   const registerPill = useCallback((idx: number, el: HTMLElement | null) => {
@@ -81,37 +80,27 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
       r1++
     }
 
-    // Row 2: mandatory pills are always present.
-    // Calculate reserved space = mandatory + More button (if there will be overflow)
-    // Fill remaining space from the left with toggleable overflow pills.
+    // Row 2: fill remaining toggleable pills alongside mandatory + More button
     const remaining = toggleableCount - r1
     let r2 = 0
 
     if (remaining > 0) {
-      // We'll always show More... since we need to figure out how many fit first
-      // Reserved = mandatory pills + gap + More button
       const reservedBase = mandatoryWidth + (mandatoryWidth > 0 ? PILL_GAP : 0) + MORE_BTN_WIDTH
       let used = 0
 
       for (let i = r1; i < toggleableCount; i++) {
         const el = pillEls.current.get(i)
         if (!el) continue
-        const pillW = el.offsetWidth
-        const needed = used === 0 ? pillW : PILL_GAP + pillW
-        // Check if adding this pill + reserved still fits
-        const totalNeeded = used + needed + (used === 0 && reservedBase > 0 ? PILL_GAP : 0) + reservedBase
-        // Actually: used + needed is the toggleable portion, then gap + reserved
+        const needed = used === 0 ? el.offsetWidth : PILL_GAP + el.offsetWidth
         const afterAdd = used + needed
-        const withReserved = afterAdd + PILL_GAP + reservedBase
-        if (withReserved > containerWidth && used > 0) break
+        if (afterAdd + PILL_GAP + reservedBase > containerWidth && used > 0) break
         if (afterAdd + PILL_GAP + reservedBase > containerWidth && used === 0) break
         used += needed
         r2++
       }
 
-      // If all remaining fit on row 2, no More... button needed — reclaim that space
+      // If all remaining fit, no More button needed — reclaim that space
       if (r2 === remaining) {
-        // Verify they fit without More button
         const reservedNoMore = mandatoryWidth
         let checkUsed = 0
         let fits = 0
@@ -128,8 +117,7 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
       }
     }
 
-    setRow1Count(r1)
-    setRow2Count(r2)
+    setOverflowStart(r1 + r2)
     setMeasured(true)
   }, [toggleableCount, mandatoryCount])
 
@@ -137,17 +125,20 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
     const container = containerRef.current
     if (!container) return
 
-    const raf = requestAnimationFrame(() => measure())
-    const ro = new ResizeObserver(() => measure())
+    let rafId = requestAnimationFrame(() => measure())
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => measure())
+    })
     ro.observe(container)
 
     return () => {
-      cancelAnimationFrame(raf)
+      cancelAnimationFrame(rafId)
       ro.disconnect()
     }
   }, [measure])
 
-  return { containerRef, registerPill, registerMandatory, row1Count, row2Count, measured }
+  return { containerRef, registerPill, registerMandatory, overflowStart, measured }
 }
 
 /* ── SpecialtyField ───────────────────────────────────────────────────────── */
@@ -174,12 +165,10 @@ export function SpecialtyField({
   const toggleable = reorderToggleable(specialties, agencyCode || 'PADI', mandatoryCodes)
   const mandatorySpecs = specialties.filter((s) => s.mandatory || mandatoryCodes.has(s.code))
 
-  const { containerRef, registerPill, registerMandatory, row1Count, row2Count, measured } =
+  const { containerRef, registerPill, registerMandatory, overflowStart, measured } =
     useTwoRowOverflow(toggleable.length, mandatorySpecs.length)
 
-  const row1Pills = toggleable.slice(0, row1Count)
-  const row2Pills = toggleable.slice(row1Count, row1Count + row2Count)
-  const overflowPills = toggleable.slice(row1Count + row2Count)
+  const overflowPills = toggleable.slice(overflowStart)
 
   function toggle(code: string) {
     if (mandatoryCodes.has(code)) return
@@ -198,7 +187,7 @@ export function SpecialtyField({
         <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span>
       </p>
 
-      {/* Hidden measurement layer */}
+      {/* Hidden measurement layer — always in DOM, never conditional */}
       <div
         ref={containerRef}
         aria-hidden
@@ -225,26 +214,12 @@ export function SpecialtyField({
         ))}
       </div>
 
-      {/* Visible layout */}
-      <div className="flex flex-col gap-2" style={{ opacity: measured ? 1 : 0 }}>
-        {/* Row 1: toggleable specialties */}
-        {row1Pills.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {row1Pills.map(({ code, label }) => (
-              <SpecialtyPill
-                key={code}
-                label={label}
-                checked={value.includes(code)}
-                disabled={disabled || (!value.includes(code) && atMax)}
-                onToggle={() => toggle(code)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Row 2: [overflow toggleable] ... Nav, Deep, More... */}
-        <div className="flex flex-wrap gap-2 items-center">
-          {row2Pills.map(({ code, label }) => (
+      {/* Visible layout — ONE container, no row splitting.
+          Pills never move between parent elements, preventing insertBefore crashes. */}
+      <div className="flex flex-wrap gap-2 items-center" style={{ opacity: measured ? 1 : 0 }}>
+        {toggleable.map(({ code, label }, i) => {
+          if (i >= overflowStart) return null
+          return (
             <SpecialtyPill
               key={code}
               label={label}
@@ -252,30 +227,30 @@ export function SpecialtyField({
               disabled={disabled || (!value.includes(code) && atMax)}
               onToggle={() => toggle(code)}
             />
-          ))}
-          {mandatorySpecs.map(({ code, label }) => (
-            <MandatoryPill key={code} label={label} />
-          ))}
-          {overflowPills.length > 0 && (
-            <PillToggleGroup
-              overflowItems={
-                <>
-                  {overflowPills.map(({ code, label }) => (
-                    <SpecialtyPill
-                      key={code}
-                      label={label}
-                      checked={value.includes(code)}
-                      disabled={disabled || (!value.includes(code) && atMax)}
-                      onToggle={() => toggle(code)}
-                    />
-                  ))}
-                </>
-              }
-            >
-              <></>
-            </PillToggleGroup>
-          )}
-        </div>
+          )
+        })}
+        {mandatorySpecs.map(({ code, label }) => (
+          <MandatoryPill key={code} label={label} />
+        ))}
+        {overflowPills.length > 0 && (
+          <PillToggleGroup
+            overflowItems={
+              <>
+                {overflowPills.map(({ code, label }) => (
+                  <SpecialtyPill
+                    key={code}
+                    label={label}
+                    checked={value.includes(code)}
+                    disabled={disabled || (!value.includes(code) && atMax)}
+                    onToggle={() => toggle(code)}
+                  />
+                ))}
+              </>
+            }
+          >
+            <></>
+          </PillToggleGroup>
+        )}
       </div>
     </div>
   )
