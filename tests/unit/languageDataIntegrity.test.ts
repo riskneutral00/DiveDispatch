@@ -1,17 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import {
   ALL_LANGUAGES,
-  TOP_LANGUAGES,
-  OTHER_LANGUAGES,
-  VALID_LANGUAGE_CODE_SET,
   POPULAR_ROW1_CODES,
   POPULAR_ROW2_CODES,
   POPULAR_LANGUAGE_CODES,
-  PROFILE_LANGUAGE_OPTIONS,
   CHINESE_SCRIPT_LABELS,
   languageToCode,
   type LanguageCode,
 } from '../../src/lib/constants/dive-languages'
+
+// Reconstruct validation set from ALL_LANGUAGES (the internal VALID_LANGUAGE_CODE_SET is no longer exported)
+const VALID_LANGUAGE_CODE_SET = new Set(ALL_LANGUAGES.map((l: { code: string }) => l.code))
 import { LANGUAGE_FILTER, INSTRUCTOR_FILTERS, ROLE_FILTERS } from '../../src/lib/constants/resource-filters'
 import { DIVE_AGENCIES, DIVE_AGENCIES_EXTENDED } from '../../src/lib/constants/agencies'
 import { SUPPORTED_LOCALES } from '../../src/lib/constants/locales'
@@ -31,17 +30,6 @@ describe('ALL_LANGUAGES structural integrity', () => {
     }
   })
 
-  it('ALL_LANGUAGES = TOP_LANGUAGES + OTHER_LANGUAGES (no overlap)', () => {
-    const topCodes = new Set(TOP_LANGUAGES.map((l) => l.code))
-    const otherCodes = new Set(OTHER_LANGUAGES.map((l) => l.code))
-    // No overlap
-    for (const code of topCodes) {
-      expect(otherCodes.has(code), `${code} is in both TOP and OTHER`).toBe(false)
-    }
-    // Complete
-    expect(TOP_LANGUAGES.length + OTHER_LANGUAGES.length).toBe(ALL_LANGUAGES.length)
-  })
-
   it('codes follow locale format (xx-YY or xxx-YY)', () => {
     for (const lang of ALL_LANGUAGES) {
       expect(lang.code).toMatch(/^[a-z]{2,3}-[A-Z]{2}$/)
@@ -49,15 +37,10 @@ describe('ALL_LANGUAGES structural integrity', () => {
   })
 })
 
-// ── VALID_LANGUAGE_CODE_SET alignment ───────────────────────────────────────
+// ── Language code set alignment ────────────────────────────────────────────
 
-describe('VALID_LANGUAGE_CODE_SET', () => {
-  it('matches ALL_LANGUAGES codes exactly', () => {
-    const fromAll = new Set(ALL_LANGUAGES.map((l) => l.code))
-    expect(VALID_LANGUAGE_CODE_SET).toEqual(fromAll)
-  })
-
-  it('has the same size as ALL_LANGUAGES', () => {
+describe('VALID_LANGUAGE_CODE_SET (derived)', () => {
+  it('has the same size as ALL_LANGUAGES (no duplicate codes)', () => {
     expect(VALID_LANGUAGE_CODE_SET.size).toBe(ALL_LANGUAGES.length)
   })
 })
@@ -96,34 +79,6 @@ describe('POPULAR_LANGUAGE_CODES', () => {
   })
 })
 
-// ── PROFILE_LANGUAGE_OPTIONS ────────────────────────────────────────────────
-
-describe('PROFILE_LANGUAGE_OPTIONS', () => {
-  it('all codes are valid language codes', () => {
-    for (const opt of PROFILE_LANGUAGE_OPTIONS) {
-      expect(VALID_LANGUAGE_CODE_SET.has(opt.code), `${opt.code} not in VALID_LANGUAGE_CODE_SET`).toBe(true)
-    }
-  })
-
-  it('no duplicates', () => {
-    const codes = PROFILE_LANGUAGE_OPTIONS.map((o) => o.code)
-    expect(new Set(codes).size).toBe(codes.length)
-  })
-
-  it('labels match ALL_LANGUAGES labels (except Chinese which use script)', () => {
-    for (const opt of PROFILE_LANGUAGE_OPTIONS) {
-      const match = ALL_LANGUAGES.find((l) => l.code === opt.code)
-      expect(match, `${opt.code} not found in ALL_LANGUAGES`).toBeDefined()
-      // Chinese labels are overridden in resolveLanguages; profile options keep English labels
-      expect(opt.label.length).toBeGreaterThan(0)
-    }
-  })
-
-  it('includes English as first option', () => {
-    expect(PROFILE_LANGUAGE_OPTIONS[0].code).toBe('en-GB')
-    expect(PROFILE_LANGUAGE_OPTIONS[0].label).toBe('English')
-  })
-})
 
 // ── CHINESE_SCRIPT_LABELS ───────────────────────────────────────────────────
 

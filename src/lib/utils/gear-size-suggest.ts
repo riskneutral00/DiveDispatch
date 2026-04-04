@@ -1,7 +1,8 @@
 // Pure TS utility — no Convex, no React.
 // Matches customer body measurements to gear sizes from the EM's gearSizingLookup entries.
 
-export type GearType = 'wetsuit' | 'bcd' | 'fins' | 'mask' | 'regulator'
+import type { GearType } from '@/lib/constants/gear-sizing'
+export type { GearType } from '@/lib/constants/gear-sizing'
 
 export interface DiverMeasurements {
   heightCm?: number

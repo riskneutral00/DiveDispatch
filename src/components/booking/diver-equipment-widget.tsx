@@ -9,8 +9,8 @@ import { Spinner } from '@/components/ui/spinner'
 import {
   suggestGearSizes,
   type DiverMeasurements,
-  type GearType,
 } from '@/lib/utils/gear-size-suggest'
+import { GEAR_TYPE_LABELS, GEAR_TYPES, type GearType } from '@/lib/constants/gear-sizing'
 import type {
   DiverEquipmentWidgetData,
   BookingRow,
@@ -19,13 +19,9 @@ import type {
   GearSizingRow,
 } from '../../../convex/equipmentWidget'
 import type { Id } from '@/lib/convex-generated'
-// ── Helpers ───────────────────────────────────────────────────────────────────
+import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 
-function countryCodeToFlag(code: string): string {
-  return [...code.toUpperCase()]
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('')
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function inventoryCount(
   inventory: GearInventoryItem[],
@@ -42,16 +38,6 @@ function inventoryCount(
     )
     .reduce((sum, item) => sum + item.totalUnits, 0)
 }
-
-const GEAR_LABELS: Record<string, string> = {
-  mask: 'Mask',
-  bcd: 'BCD',
-  wetsuit: 'Wetsuit',
-  fins: 'Fins',
-  regulator: 'Regulator',
-}
-
-const RENTING_TYPES: GearType[] = ['mask', 'bcd', 'wetsuit', 'fins', 'regulator']
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -94,7 +80,7 @@ function DiverCard({
   }
 
   const rentingTypes: GearType[] = diver.rentalChecklist
-    ? RENTING_TYPES.filter(
+    ? GEAR_TYPES.filter(
         (g) => (diver.rentalChecklist as Record<string, string>)[g] === 'rent',
       )
     : []
@@ -114,7 +100,7 @@ function DiverCard({
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl" aria-label={diver.flag.label}>
-            {countryCodeToFlag(diver.flag.code)}
+            {countryCodeToEmoji(diver.flag.code)}
           </span>
           <div>
             <p className="font-medium text-sm text-primary">
@@ -245,7 +231,7 @@ function MeasurementChip({ label, value }: { label: string; value: string }) {
 }
 
 interface GearSizeRowProps {
-  gearType: string
+  gearType: GearType
   suggestion: ReturnType<typeof suggestGearSizes>[string]
   inventory: GearInventoryItem[]
   overrideSize?: string
@@ -285,7 +271,7 @@ function GearSizeRow({
   return (
     <div className="flex items-center justify-between gap-2">
       <span className="text-xs font-medium text-primary">
-        {GEAR_LABELS[gearType] ?? gearType}
+        {GEAR_TYPE_LABELS[gearType] ?? gearType}
       </span>
 
       <div className="flex items-center gap-1.5">

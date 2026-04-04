@@ -24,19 +24,7 @@ import {
 } from '@/lib/profile-form/location'
 import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-
-// ── Constants ────────────────────────────────────────────────────────
-
-const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
-type GearType = (typeof GEAR_TYPES)[number]
-
-const GEAR_TYPE_LABELS: Record<GearType, string> = {
-  bcd: 'BCD',
-  wetsuit: 'Wetsuit',
-  fins: 'Fins',
-  regulator: 'Regulator',
-  mask: 'Mask',
-}
+import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 
 // ── Types ────────────────────────────────────────────────────────────
 

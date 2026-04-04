@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { languageFlagText } from '../src/components/profiles/language-flags'
-import { languageToCode, resolveLanguages, PROFILE_LANGUAGE_OPTIONS, localeToCountryCode } from '../src/lib/constants/dive-languages'
+import { languageToCode, resolveLanguages, localeToCountryCode } from '../src/lib/constants/dive-languages'
 
 describe('languageFlagText', () => {
   it('returns empty string for empty array', () => {
@@ -147,9 +147,13 @@ describe('localeToCountryCode', () => {
   })
 })
 
-describe('PROFILE_LANGUAGE_OPTIONS round-trip', () => {
-  for (const { code, label } of PROFILE_LANGUAGE_OPTIONS) {
-    it(`${label} (${code}) resolves via languageToCode`, () => {
+describe('curated language codes round-trip', () => {
+  const CURATED_CODES = [
+    'en-GB', 'th-TH', 'zh-CN', 'ja-JP', 'ko-KR', 'fr-FR', 'de-DE',
+    'ru-RU', 'it-IT', 'es-ES', 'pt-BR', 'nl-NL', 'ar-SA', 'he-IL', 'sv-SE', 'pl-PL',
+  ]
+  for (const code of CURATED_CODES) {
+    it(`${code} resolves via languageToCode`, () => {
       expect(languageToCode(code)).toBe(code)
     })
   }

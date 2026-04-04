@@ -14,15 +14,9 @@ import type {
   ManifestGroup,
   ManifestDiver,
 } from '../../../convex/boatWidget'
+import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function countryCodeToFlag(code: string): string {
-  if (!code || code.length !== 2) return ''
-  return [...code.toUpperCase()]
-    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
-    .join('')
-}
 
 function formatDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00')
@@ -61,7 +55,7 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
       <td className="py-1.5 px-2 text-secondary">
         {diver.nationality && (
           <>
-            {countryCodeToFlag(diver.nationality)}{' '}
+            {diver.nationality.length === 2 && countryCodeToEmoji(diver.nationality)}{' '}
             <span className="text-[10px]">{diver.nationality}</span>
           </>
         )}

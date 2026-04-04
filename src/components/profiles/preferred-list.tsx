@@ -1108,10 +1108,7 @@ export function PreferredBoatList(props: ListProps) {
 
 // ─── Equipment list ─────────────────────────────────────────────────────────
 
-const GEAR_TYPES = ['bcd', 'wetsuit', 'fins', 'regulator', 'mask'] as const
-const GEAR_TYPE_LABELS: Record<string, string> = {
-  bcd: 'BCD', wetsuit: 'Wetsuit', fins: 'Fins', regulator: 'Regulator', mask: 'Mask',
-}
+import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 
 function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
   const counts = entry.inventoryCounts
@@ -1123,7 +1120,7 @@ function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
   return (
     <div className="flex flex-wrap items-center gap-1">
       {shown.map(([gt, count]) => (
-        <Badge key={gt}>{GEAR_TYPE_LABELS[gt] ?? gt} ×{count}</Badge>
+        <Badge key={gt}>{GEAR_TYPE_LABELS[gt as GearType] ?? gt} ×{count}</Badge>
       ))}
       {remaining > 0 && <Badge>+{remaining} more</Badge>}
     </div>

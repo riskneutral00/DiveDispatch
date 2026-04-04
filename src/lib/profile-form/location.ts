@@ -1,4 +1,4 @@
-import { locationSchema as profileLocationFieldsSchema } from '@/lib/schemas/location'
+import { locationSchema } from '@/lib/schemas/location'
 
 /** Same shape as `LocationValue` from `location-picker` — keep in sync. */
 export type ProfileLocationValue = {
@@ -9,15 +9,13 @@ export type ProfileLocationValue = {
   placeId?: string
 }
 
-export { profileLocationFieldsSchema }
-
 const DEFAULT_LOCATION_REQUIRED = 'Location is required'
 
 /** Nullable location field with “must pick a location” refine — use inside larger `z.object({ ... })`. */
 export function nullableProfileLocation(
   message: string = DEFAULT_LOCATION_REQUIRED,
 ) {
-  return profileLocationFieldsSchema
+  return locationSchema
     .nullable()
     .refine((v) => v !== null, { message })
 }

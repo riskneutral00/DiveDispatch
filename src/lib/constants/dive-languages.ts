@@ -131,11 +131,11 @@ const withSearchTerms = (
     ...(SEARCH_TERMS[e.code] ? { searchTerms: SEARCH_TERMS[e.code] } : {}),
   }))
 
-export const TOP_LANGUAGES: DiveLanguage[] = withSearchTerms(TOP_LANGUAGE_ENTRIES)
-export const OTHER_LANGUAGES: DiveLanguage[] = withSearchTerms(OTHER_LANGUAGE_ENTRIES)
+const TOP_LANGUAGES: DiveLanguage[] = withSearchTerms(TOP_LANGUAGE_ENTRIES)
+const OTHER_LANGUAGES: DiveLanguage[] = withSearchTerms(OTHER_LANGUAGE_ENTRIES)
 export const ALL_LANGUAGES: DiveLanguage[] = [...TOP_LANGUAGES, ...OTHER_LANGUAGES]
 
-export const VALID_LANGUAGE_CODE_SET = new Set<string>(ALL_LANGUAGES.map((l) => l.code))
+const VALID_LANGUAGE_CODE_SET = new Set<string>(ALL_LANGUAGES.map((l) => l.code))
 
 // Build reverse lookup: language label → ISO locale code (case-insensitive)
 const _labelToCode = new Map<string, string>(
@@ -213,26 +213,6 @@ export function resolveLanguages(codes: string[]): { code: string; label: string
     .filter((l): l is DiveLanguage => l !== undefined)
     .map((l) => ({ code: l.code, label: CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label }))
 }
-
-/** Curated list for profile forms — matches the original 17-language set. */
-export const PROFILE_LANGUAGE_OPTIONS = [
-  { code: 'en-GB' as LanguageCode, label: 'English' },
-  { code: 'th-TH' as LanguageCode, label: 'Thai' },
-  { code: 'zh-CN' as LanguageCode, label: 'Mandarin' },
-  { code: 'ja-JP' as LanguageCode, label: 'Japanese' },
-  { code: 'ko-KR' as LanguageCode, label: 'Korean' },
-  { code: 'fr-FR' as LanguageCode, label: 'French' },
-  { code: 'de-DE' as LanguageCode, label: 'German' },
-  { code: 'ru-RU' as LanguageCode, label: 'Russian' },
-  { code: 'it-IT' as LanguageCode, label: 'Italian' },
-  { code: 'es-ES' as LanguageCode, label: 'Spanish' },
-  { code: 'pt-BR' as LanguageCode, label: 'Portuguese' },
-  { code: 'nl-NL' as LanguageCode, label: 'Dutch' },
-  { code: 'ar-SA' as LanguageCode, label: 'Arabic' },
-  { code: 'he-IL' as LanguageCode, label: 'Hebrew' },
-  { code: 'sv-SE' as LanguageCode, label: 'Swedish' },
-  { code: 'pl-PL' as LanguageCode, label: 'Polish' },
-] as const
 
 /** Row 1: Asian languages (Chinese Simplified leads) */
 export const POPULAR_ROW1_CODES: LanguageCode[] = ['zh-CN', 'th-TH', 'ja-JP', 'ko-KR', 'id-ID', 'ru-RU', 'dv-MV', 'vi-VN']

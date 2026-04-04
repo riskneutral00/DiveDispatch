@@ -14,6 +14,7 @@ export {
   ALL_GEAR_SIZING,
   MANUFACTURERS,
   GEAR_TYPES,
+  GEAR_TYPE_LABELS,
   type GearSizingEntry,
   type FinSizingEntry,
   type Manufacturer,
