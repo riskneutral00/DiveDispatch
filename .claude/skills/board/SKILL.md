@@ -15,7 +15,7 @@ When invoked, parse the command and execute. No preamble.
 ### `/board --black_hole` — Board summary including black hole tickets
 
 1. Read all `.tickets/DD-*.md` files. Parse YAML frontmatter from each.
-2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog. Additionally, separate backlog tickets with `needs_spec: true` into a "Pre-Spec" group.
+2. Group by status: in_progress, ready, blocked, black_hole, happy_path, review, backlog. Additionally, separate backlog tickets with empty body (<50 chars below frontmatter) into a "Pre-Spec" group — these are idea captures from `/pre-spec` awaiting `/spec`.
 3. Sort each group by priority (P0 first), then by id (lower first).
 4. Print:
 
@@ -54,7 +54,7 @@ Backlog ({count}): {count} items (use /board backlog to list)
 Done: {count} archived
 ```
 
-Pre-Spec tickets are backlog tickets with `needs_spec: true`. They show in their own section to make them visible. They are NOT included in the Backlog count.
+Pre-Spec tickets are backlog tickets with empty body (<50 chars). They show in their own section to make them visible. They are NOT included in the Backlog count.
 
 **Black hole visibility rule:** By default, black_hole tickets are collapsed to a single count line. Only expand to full list when `--black_hole` flag is passed. This keeps the default board focused on actionable tickets.
 
@@ -64,7 +64,7 @@ Pre-Spec tickets are backlog tickets with `needs_spec: true`. They show in their
 2. **Skip** any ticket where `human_required: true` — print: `Skipped DD-{NNN} (human required)`
    **Skip** any ticket where `stuck_reason` is non-null — print: `Skipped DD-{NNN} (stuck: {stuck_reason})` — these require human intervention before re-picking
 3. **Spec guard** — For each candidate, read the ticket body (below the closing `---`). If body has <50 chars of content → skip: `Skipped DD-{NNN} (empty spec)`. If body has content but is missing `**Spec:**` or `**Acceptance:**` headers → warn `⚠ DD-{NNN} has non-standard format` but still include in scoring.
-4. **Score** remaining tickets:
+4. **Score** remaining tickets (human-facing — no source/age bonuses; `ticket-pick` adds those for autonomous agents):
    - **Priority:** P0=40, P1=30, P2=20, P3=10
    - **Unblock bonus:** +15 per other ticket that lists this one in its `blocked_by`
    - **Size preference:** S=+5, M=0, L=-5

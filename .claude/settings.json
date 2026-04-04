@@ -68,6 +68,12 @@
             "command": "bash .claude/hooks/scripts-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking infrastructure scripts…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/spec-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking ticket write authorization…"
           }
         ]
       },
@@ -85,6 +91,12 @@
             "command": "bash .claude/hooks/scripts-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking infrastructure scripts…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/spec-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking ticket write authorization…"
           }
         ]
       }
@@ -151,6 +163,12 @@
             "command": "bash .claude/hooks/skeleton-stale-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking skeleton freshness…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/dry-check.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for DRY violations…"
           }
         ]
       }

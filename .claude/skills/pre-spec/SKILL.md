@@ -118,7 +118,6 @@ blocks: []
 pr: null
 side_effects: [{inferred, or empty}]
 human_required: false
-needs_spec: true
 size: {inferred}
 wave: 1
 recommended_model: null
@@ -144,7 +143,7 @@ Update `.tickets/.counter` with the new number.
 ## Step 7: Summary
 
 ```
-Created DD-{N}: {title} (backlog, needs_spec)
+Created DD-{N}: {title} (backlog)
 
 Next: run /spec DD-{N} to fill it in, or run /spec on a related topic and it will find this one.
 ```
@@ -159,5 +158,4 @@ Next: run /spec DD-{N} to fill it in, or run /spec on a related topic and it wil
 - **Preserve Matt's words.** The `**Problem:**` field is verbatim — don't rephrase into technical language.
 - **No code exploration, period.** No reading source files. No grepping. No exploring. The only files you read are `.tickets/.counter` and `.tickets/DD-*.md` (for blocked_by dedup). Pre-spec is a 30-second conversation, not a research session. /spec does all exploration.
 - **Deferred is OK.** If Matt defers Q1, record it. /spec will re-ask. If deferred at /spec time too → `human_required: true`.
-- **needs_spec: true is the marker.** This is how /spec and /board identify pre-specs.
 - **Don't over-infer blocked_by.** Only set it if the dependency is obvious. False positives are worse than missing deps — /spec will catch real deps during exploration.

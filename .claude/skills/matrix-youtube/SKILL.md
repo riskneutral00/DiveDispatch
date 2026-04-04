@@ -634,7 +634,8 @@ for i in 1 2 3 4 5; do
   if (set -C; echo $$ > "$LOCK") 2>/dev/null; then break; fi
   sleep 0.1
 done
-NUM=$(cat "$COUNTER" 2>/dev/null || echo "366")
+ACTUAL_MAX=$(ls .tickets/DD-*.md 2>/dev/null | sed 's/.*DD-//;s/\.md//' | sort -n | tail -1)
+NUM=$(cat "$COUNTER" 2>/dev/null || echo "${ACTUAL_MAX:-0}")
 NEXT=$((NUM + 1))
 echo "$NEXT" > "$COUNTER"
 rm -f "$LOCK"
