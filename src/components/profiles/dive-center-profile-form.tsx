@@ -16,6 +16,7 @@ import {
   contactFieldsFromProfile,
   locationToPayload,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import {
   languagesFromProfile,
   languagesToPayload,
@@ -29,13 +30,7 @@ import type { Language } from '@/lib/types/language'
 
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 
-export type DiveCenterSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
+export type DiveCenterSectionProps = BaseProfileSectionProps
 
 // ---------------------------------------------------------------------------
 // Contact section
