@@ -367,10 +367,7 @@ export async function _listByResource(
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
   const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as BookingDoc[]
 
-  const resourceMap = await getResourcesForBookings(ctx, bookings.map((b) => b._id as string))
-  const allResources = [...resourceMap.values()].flat()
-  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
-  const nameMap = await buildInstructorNameMap(ctx, slugs)
+  const { resourceMap, nameMap } = await buildResourceContext(ctx, bookings.map((b) => b._id as string))
 
   return bookings.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
