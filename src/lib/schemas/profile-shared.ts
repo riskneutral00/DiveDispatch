@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { locationSchema } from './location'
 import { AGENCIES } from '@/lib/constants/agencies'
+import { BOAT_TYPES } from '@/lib/constants/boat-types'
+import { GAS_MIXES } from '@/lib/constants/gas-mixes'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -8,7 +10,7 @@ import {
 
 export { locationSchema, type LocationValue } from './location'
 
-/** Base contact fields shared by all 8 profile forms. */
+/** Base contact fields shared by all profile forms. */
 export const contactSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
@@ -38,13 +40,8 @@ export const instructorCredentialSchema = credentialSchema.extend({
 // DiveCenter per-section schemas
 // ---------------------------------------------------------------------------
 
-/** DiveCenter contact section. */
-export const diveCenterContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
-})
+/** DiveCenter contact section — same as base contact. */
+export const diveCenterContactSchema = contactSchema
 
 /** DiveCenter languages section. */
 export const diveCenterLanguagesSchema = z.object({
@@ -79,11 +76,7 @@ export const diveCenterAffiliationsSchema = z
 // ---------------------------------------------------------------------------
 
 /** Agent contact section — extends base contact with defaultReferralMode. */
-export const agentContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
+export const agentContactSchema = contactSchema.extend({
   defaultReferralMode: z.enum(['independent', 'referral']),
 })
 
@@ -102,11 +95,8 @@ export const agentAssociationsSchema = z.object({
 // ---------------------------------------------------------------------------
 
 /** Personal contact section (Instructor and DiveMaster). */
-export const personalContactSchema = z.object({
+export const personalContactSchema = contactSchema.extend({
   name: z.string().min(1, 'Name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
 })
 
 /** Personal languages section — teaching languages for Instructor/DiveMaster. */
@@ -128,15 +118,10 @@ export const instructorCredentialsSchema = z.object({
 // Boat per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Boat contact section. */
-export const boatContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
-})
+/** Boat contact section — same as base contact. */
+export const boatContactSchema = contactSchema
 
-const BOAT_TYPES_TUPLE = ['day_boat', 'speedboat', 'longtail', 'liveaboard', 'catamaran', 'rib'] as const
+const BOAT_TYPES_TUPLE = BOAT_TYPES
 
 const boatRouteSchema = z.object({
   diveSite: z.string().min(1, 'Dive site required'),
@@ -161,30 +146,20 @@ export const boatFleetSchema = z.object({
 // Compressor per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Compressor contact section. */
-export const compressorContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
-})
+/** Compressor contact section — same as base contact. */
+export const compressorContactSchema = contactSchema
 
 /** Compressor gas mixes section. */
 export const compressorGasMixesSchema = z.object({
-  gasMixes: z.array(z.enum(['air', 'nitrox', 'trimix'])).min(1, 'Select at least one gas mix'),
+  gasMixes: z.array(z.enum(GAS_MIXES)).min(1, 'Select at least one gas mix'),
 })
 
 // ---------------------------------------------------------------------------
 // Equipment per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Equipment contact section. */
-export const equipmentContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
-})
+/** Equipment contact section — same as base contact. */
+export const equipmentContactSchema = contactSchema
 
 /** Equipment gear catalog section. */
 export const equipmentGearCatalogSchema = z.object({
@@ -195,13 +170,8 @@ export const equipmentGearCatalogSchema = z.object({
 // Pool per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Pool contact section. */
-export const poolContactSchema = z.object({
-  name: z.string().min(1, 'Business name is required'),
-  location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Contact phone is required'),
-})
+/** Pool contact section — same as base contact. */
+export const poolContactSchema = contactSchema
 
 /** Pool capabilities section. */
 export const poolCapabilitiesSchema = z.object({

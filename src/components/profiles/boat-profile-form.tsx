@@ -19,7 +19,10 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ---------------------------------------------------------------------------
@@ -28,15 +31,7 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type BoatProfileSection = 'contact' | 'fleet'
 
-export type BoatSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
-
-type BoatType = 'day_boat' | 'speedboat' | 'longtail' | 'liveaboard' | 'catamaran' | 'rib'
+export type BoatSectionProps = BaseProfileSectionProps
 
 interface RouteState {
   diveSite: string
@@ -56,14 +51,7 @@ interface FleetState {
 // Constants
 // ---------------------------------------------------------------------------
 
-const BOAT_TYPE_OPTIONS: { value: BoatType; label: string }[] = [
-  { value: 'day_boat', label: 'Day Boat' },
-  { value: 'speedboat', label: 'Speedboat' },
-  { value: 'longtail', label: 'Longtail' },
-  { value: 'liveaboard', label: 'Liveaboard' },
-  { value: 'catamaran', label: 'Catamaran' },
-  { value: 'rib', label: 'RIB' },
-]
+// BOAT_TYPE_OPTIONS imported from @/lib/constants/boat-types
 
 const DAYS = [
   { value: 1, label: 'Mon' },
@@ -137,11 +125,7 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
       schema: boatContactSchema,
       defaults: INITIAL_BOAT_CONTACT_FORM,
       fromProfile: boatContactFromProfile,
-      fromMe: (u, defaults) => ({
-        ...defaults,
-        email: (u.email as string) ?? '',
-        phone: (u.phone as string) ?? '',
-      }),
+      fromMe: defaultFromMe,
       toPayload: boatContactToPayload,
       create,
       update,

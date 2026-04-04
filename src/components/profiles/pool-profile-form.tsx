@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { Card } from '@/components/ui/card'
+import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,20 +16,17 @@ import {
   contactFieldsFromProfile,
   locationToPayload,
   nullableProfileLocation,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Types ────────────────────────────────────────────────────────────
 
 export type PoolProfileSection = 'contact' | 'capabilities'
 
-export type PoolSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
+export type PoolSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
@@ -83,11 +80,7 @@ export function PoolContactSection({ profile: existing, me, create, update, onSa
       schema: poolContactSchema,
       defaults: INITIAL_POOL_CONTACT_FORM,
       fromProfile: poolContactFromProfile,
-      fromMe: (u, defaults) => ({
-        ...defaults,
-        email: (u.email as string) ?? '',
-        phone: (u.phone as string) ?? '',
-      }),
+      fromMe: defaultFromMe,
       toPayload: poolContactToPayload,
       create: (payload) => create(buildPoolCreatePayload(payload)),
       update,
@@ -165,12 +158,6 @@ export function poolCapabilitiesToPayload(f: PoolCapabilitiesFormState): Record<
   }
 }
 
-function parseNumber(raw: string, isInt: boolean): number {
-  if (raw === '') return 0
-  const parsed = isInt ? parseInt(raw, 10) : parseFloat(raw)
-  return isNaN(parsed) ? 0 : parsed
-}
-
 export function PoolCapabilitiesSection({ profile: existing, create, update }: PoolSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
     useProfileForm({
@@ -183,13 +170,7 @@ export function PoolCapabilitiesSection({ profile: existing, create, update }: P
       update,
     })
 
-  if (!existing) {
-    return (
-      <Card padding="md">
-        <p className="text-sm text-secondary">Complete contact info first</p>
-      </Card>
-    )
-  }
+  if (!existing) return <ProfileIncompleteGuard />
 
   return (
     <ProfileFormShell

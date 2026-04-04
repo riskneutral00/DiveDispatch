@@ -6,9 +6,9 @@ import { useTranslations } from 'next-intl'
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { PillToggle } from '@/components/ui/pill-toggle'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -19,7 +19,9 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -39,13 +41,7 @@ const GEAR_TYPE_LABELS: Record<GearType, string> = {
 
 export type EquipmentProfileSection = 'contact' | 'gear-catalog'
 
-export type EquipmentSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
+export type EquipmentSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
@@ -92,11 +88,7 @@ export function EquipmentContactSection({ profile: existing, me, create, update,
       schema: equipmentContactSchema,
       defaults: INITIAL_EQUIPMENT_CONTACT_FORM,
       fromProfile: equipmentContactFromProfile,
-      fromMe: (u, defaults) => ({
-        ...defaults,
-        email: (u.email as string) ?? '',
-        phone: (u.phone as string) ?? '',
-      }),
+      fromMe: defaultFromMe,
       toPayload: equipmentContactToPayload,
       create,
       update,
@@ -193,13 +185,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
 
   const [mfrInputs, setMfrInputs] = useState<Partial<Record<GearType, string>>>({})
 
-  if (!existing) {
-    return (
-      <Card padding="md">
-        <p className="text-sm text-secondary">Complete contact info first</p>
-      </Card>
-    )
-  }
+  if (!existing) return <ProfileIncompleteGuard />
 
   function toggleGearType(gt: GearType) {
     setForm((prev) => {

@@ -13,7 +13,9 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
+  defaultFromMe,
 } from '@/lib/profile-form/location'
+import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -30,13 +32,7 @@ type GasMix = 'air' | 'nitrox' | 'trimix'
 
 export type CompressorProfileSection = 'contact' | 'gas-mixes'
 
-export type CompressorSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me?: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-  onSaved?: () => void
-}
+export type CompressorSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
@@ -81,11 +77,7 @@ export function CompressorContactSection({ profile: existing, me, create, update
       schema: compressorContactSchema,
       defaults: INITIAL_COMPRESSOR_CONTACT_FORM,
       fromProfile: compressorContactFromProfile,
-      fromMe: (u, defaults) => ({
-        ...defaults,
-        email: (u.email as string) ?? '',
-        phone: (u.phone as string) ?? '',
-      }),
+      fromMe: defaultFromMe,
       toPayload: compressorContactToPayload,
       create,
       update,
@@ -167,13 +159,7 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
       update,
     })
 
-  if (!existing) {
-    return (
-      <Card padding="md">
-        <p className="text-sm text-secondary">Complete contact info first</p>
-      </Card>
-    )
-  }
+  if (!existing) return <ProfileIncompleteGuard />
 
   return (
     <ProfileFormShell

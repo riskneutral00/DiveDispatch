@@ -1,0 +1,6 @@
+/** Parse a numeric string, returning 0 for empty or invalid input. */
+export function parseNumber(raw: string, isInt: boolean): number {
+  if (raw === '') return 0
+  const parsed = isInt ? parseInt(raw, 10) : parseFloat(raw)
+  return isNaN(parsed) ? 0 : parsed
+}

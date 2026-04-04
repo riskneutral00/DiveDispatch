@@ -152,27 +152,6 @@ function ResourceSaveButton({
   )
 }
 
-function ResourceSectionTitle({
-  children,
-  required,
-}: {
-  children: ReactNode
-  required?: boolean
-}) {
-  return (
-    <h2
-      className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary flex items-center gap-1"
-    >
-      {children}
-      {required ? (
-        <span style={{ color: 'var(--color-destructive)' }} aria-hidden>
-          *
-        </span>
-      ) : null}
-    </h2>
-  )
-}
-
 // ── Agent: preferred target operator (DD-355) ───────────────────────────
 
 function PreferredOperatorPicker({
@@ -198,7 +177,7 @@ function PreferredOperatorPicker({
   }, [dc, lb, dr, dh])
 
   return (
-    <Card padding="md">
+    <Card padding="sm">
       <h2
         className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
       >
@@ -372,7 +351,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
         {/* ── Booking section ─────────────────────────────────────────── */}
         {section === 'booking' && (
           <>
-            <Card padding="md">
+            <Card padding="sm">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
@@ -418,7 +397,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
             {showResourcePrefs && (
               <>
                 <ProfileFormSectionDivider show />
-                <Card padding="md">
+                <Card padding="sm">
                   <h2
                     className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
                   >
@@ -443,7 +422,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
 
             <ProfileFormSectionDivider show />
 
-            <Card padding="md">
+            <Card padding="sm">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
@@ -493,14 +472,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               className="space-y-4"
             >
               {resourceSubTab === 'instructors' && (
-                <Card padding="md">
-                  <ResourceSectionTitle required>Preferred Instructors</ResourceSectionTitle>
-                  <p className="text-sm mb-4 text-secondary">
-                    Rank instructors in order of booking priority. The wizard will suggest them first.
-                  </p>
+                <Card padding="sm">
                   <PreferredInstructorList
                     slugs={form.preferredInstructorSlugs ?? []}
                     onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
+                    required
                   />
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
@@ -514,14 +490,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               )}
 
               {resourceSubTab === 'venues' && (
-                <Card padding="md">
-                  <ResourceSectionTitle required>Preferred Venues</ResourceSectionTitle>
-                  <p className="text-sm mb-4 text-secondary">
-                    Pools and dive sites, ranked by preference. At least one venue or boat is required.
-                  </p>
+                <Card padding="sm">
                   <PreferredVenueList
                     slugs={form.preferredVenueSlugs ?? []}
                     onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+                    required={(form.preferredBoatSlugs ?? []).length === 0}
                   />
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
@@ -535,14 +508,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               )}
 
               {resourceSubTab === 'equipment' && (
-                <Card padding="md">
-                  <ResourceSectionTitle required>Preferred Equipment Providers</ResourceSectionTitle>
-                  <p className="text-sm mb-4 text-secondary">
-                    At least one equipment provider is required before creating bookings.
-                  </p>
+                <Card padding="sm">
                   <PreferredEquipmentList
                     slugs={form.preferredEquipmentSlugs ?? []}
                     onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
+                    required
                   />
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
@@ -556,14 +526,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               )}
 
               {resourceSubTab === 'boats' && (
-                <Card padding="md">
-                  <ResourceSectionTitle required>Preferred Boats</ResourceSectionTitle>
-                  <p className="text-sm mb-4 text-secondary">
-                    A boat satisfies the venue requirement. Captain picks the dive site.
-                  </p>
+                <Card padding="sm">
                   <PreferredBoatList
                     slugs={form.preferredBoatSlugs ?? []}
                     onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+                    required={(form.preferredVenueSlugs ?? []).length === 0}
                   />
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
@@ -577,11 +544,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               )}
 
               {resourceSubTab === 'compressors' && (
-                <Card padding="md">
-                  <ResourceSectionTitle required>Preferred Compressors</ResourceSectionTitle>
-                  <p className="text-sm mb-4 text-secondary">
-                    Not required if a preferred boat or venue has a compressor.
-                  </p>
+                <Card padding="sm">
                   <PreferredCompressorList
                     slugs={form.preferredCompressorSlugs ?? []}
                     onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}

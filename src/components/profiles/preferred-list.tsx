@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronUp, ChevronDown, Trash2, Plus, Wind } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
+import { DragDropProvider } from '@dnd-kit/react'
+import { useSortable } from '@dnd-kit/react/sortable'
 import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
@@ -17,9 +19,14 @@ import {
   ALL_LANGUAGES,
   CHINESE_SCRIPT_LABELS,
   type LanguageCode,
+  resolveLanguages,
 } from '@/lib/constants/dive-languages'
 
 const MAX_PREFERRED_INSTRUCTORS = 10
+const MAX_PREFERRED_VENUES = 10
+const MAX_PREFERRED_BOATS = 10
+const MAX_PREFERRED_EQUIPMENT = 10
+const MAX_PREFERRED_COMPRESSORS = 10
 const chipBase = 'px-2 py-1 text-xs rounded-full border transition-colors cursor-pointer'
 
 // ─── Badge helper ────────────────────────────────────────────────────────────
@@ -213,6 +220,7 @@ function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, rend
 interface ListProps {
   slugs: string[]
   onChange: (slugs: string[]) => void
+  required?: boolean
 }
 
 // ─── Instructor filter bar (presentational) ────────────────────────────────
@@ -384,44 +392,121 @@ function InstructorBadge({
   )
 }
 
-// ─── Compact badge for ranked list cards ─────────────────────────────────────
+// ─── Sortable instructor row ────────────────────────────────────────────────
 
-function InstructorRankedBadge({ entry }: { entry: DirectoryEntry }) {
+function SortableInstructorRow({
+  slug,
+  index,
+  entry,
+  onRemove,
+  isLast,
+}: {
+  slug: string
+  index: number
+  entry: DirectoryEntry | undefined
+  onRemove: () => void
+  isLast: boolean
+}) {
+  const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group: 'instructors' })
+
+  const uniqueCourses = [...new Set(entry?.credentials?.flatMap((c) => c.courses) ?? [])]
+  const resolvedLangs = resolveLanguages(entry?.languages ?? [])
+
   return (
-    <div className="space-y-1">
-      {(entry.agencies?.length ?? 0) > 0 && (
-        <span className="flex flex-wrap gap-1 items-center">
-          {entry.agencies?.map((a) => (
-            <span
-              key={a}
-              className="text-xs px-1.5 py-0.5 rounded shrink-0"
-              style={{
-                background: 'var(--color-glass-bg-elevated)',
-                color: 'var(--color-text-secondary)',
-              }}
+    <div
+      ref={ref}
+      className="py-2.5"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
+      <div className="flex gap-2">
+        {/* Drag handle */}
+        <button
+          ref={handleRef}
+          type="button"
+          className="shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical size={16} />
+        </button>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-1">
+          {/* Line 1: Name + trash */}
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium truncate text-primary">
+              {entry?.name ?? slug}
+            </p>
+            <Button
+              variant="destructive-ghost"
+              size="sm"
+              type="button"
+              onClick={onRemove}
+              aria-label="Remove instructor"
+              className="shrink-0"
             >
-              {a}
-            </span>
-          ))}
-        </span>
-      )}
-      {(entry.languages?.length ?? 0) > 0 && (
-        <span className="flex flex-wrap gap-1 items-center">
-          {entry.languages?.map((langCode) => {
-            const scriptLabel = CHINESE_SCRIPT_LABELS[langCode as LanguageCode]
-            const lang = ALL_LANGUAGES.find((l) => l.code === langCode)
-            if (!lang) return null
-            return (
-              <FlagPill
-                key={langCode}
-                lang={{ code: lang.code, label: scriptLabel ?? lang.label }}
-                active={false}
-                onToggle={() => {}}
-                disabled
-              />
-            )
-          })}
-        </span>
+              <Trash2 size={16} />
+            </Button>
+          </div>
+
+          {/* Line 2: Agencies (left) + Languages (right) */}
+          {entry && ((entry.agencies?.length ?? 0) > 0 || resolvedLangs.length > 0) && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-1 items-center">
+                {entry.agencies?.map((a) => (
+                  <span
+                    key={a}
+                    className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                    style={{
+                      background: 'var(--color-glass-bg-elevated)',
+                      color: 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {a}
+                  </span>
+                ))}
+              </div>
+              {resolvedLangs.length > 0 && (
+                <div className="flex flex-wrap gap-1 items-center shrink-0">
+                  {resolvedLangs.map((lang) => (
+                    <FlagPill
+                      key={lang.code}
+                      lang={lang}
+                      active={false}
+                      onToggle={() => {}}
+                      disabled
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Line 3: Specialties */}
+          {uniqueCourses.length > 0 && (
+            <div className="flex flex-wrap gap-1 items-center">
+              {uniqueCourses.map((course) => (
+                <span
+                  key={course}
+                  className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                  style={{
+                    background: 'var(--color-glass-bg)',
+                    color: 'var(--color-text-secondary)',
+                  }}
+                >
+                  {course}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Divider line */}
+      {!isLast && (
+        <div
+          className="mt-2.5"
+          style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+        />
       )}
     </div>
   )
@@ -433,15 +518,27 @@ export function PreferredInstructorList(props: ListProps) {
   const { slugs, onChange } = props
 
   const entries = useQuery(api.directory.listByRole, { role: 'Instructor' as StakeholderRole })
+  const diveCenterProfile = useQuery(api.diveCenters.mine)
 
   // Overlay open state
   const [showOverlay, setShowOverlay] = useState(false)
 
-  // Filter state — only active inside the overlay
+  // Derive operator defaults
+  const operatorDefaultAgency = useMemo(() => {
+    const assocs = diveCenterProfile?.associations ?? []
+    return assocs.length === 1 ? assocs[0].agency : null
+  }, [diveCenterProfile])
+
+  const operatorDefaultLangs = useMemo(() => {
+    return new Set(diveCenterProfile?.customerLanguages ?? [])
+  }, [diveCenterProfile])
+
+  // Filter state — initialized from operator defaults
   const [agency, setAgency] = useState<string | null>(null)
   const [specialty, setSpecialty] = useState<string | null>(null)
   const [activeLangs, setActiveLangs] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
+  const [defaultsApplied, setDefaultsApplied] = useState(false)
 
   // Derive filter options from full unfiltered entries
   const allAgencies = useMemo(() => {
@@ -538,20 +635,6 @@ export function PreferredInstructorList(props: ListProps) {
   const atMax = slugs.length >= MAX_PREFERRED_INSTRUCTORS
   const slugToEntry = Object.fromEntries(entries.map((e) => [e.slug, e]))
 
-  const moveUp = (index: number) => {
-    if (index === 0) return
-    const next = [...slugs]
-    ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
-    onChange(next)
-  }
-
-  const moveDown = (index: number) => {
-    if (index === slugs.length - 1) return
-    const next = [...slugs]
-    ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
-    onChange(next)
-  }
-
   const remove = (index: number) => {
     onChange(slugs.filter((_, i) => i !== index))
   }
@@ -564,6 +647,15 @@ export function PreferredInstructorList(props: ListProps) {
     setSearch('')
   }
 
+  const openOverlay = () => {
+    if (!defaultsApplied && diveCenterProfile) {
+      setAgency(operatorDefaultAgency)
+      setActiveLangs(operatorDefaultLangs)
+      setDefaultsApplied(true)
+    }
+    setShowOverlay(true)
+  }
+
   const closeOverlay = () => {
     setShowOverlay(false)
     setSearch('')
@@ -571,86 +663,57 @@ export function PreferredInstructorList(props: ListProps) {
 
   return (
     <div className="space-y-3">
-      {/* Ranked list or empty state */}
-      {slugs.length === 0 ? (
-        <p className="text-sm text-secondary">
-          No preferred instructors yet — Add one to get started.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {slugs.map((slug, index) => {
-            const entry = slugToEntry[slug]
-            return (
-              <Card key={slug} padding="sm">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold w-5 text-center shrink-0 text-secondary">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-primary">
-                      {entry?.name ?? slug}
-                    </p>
-                    {entry && (
-                      <div className="mt-0.5">
-                        <InstructorRankedBadge entry={entry} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      onClick={() => moveUp(index)}
-                      disabled={index === 0}
-                      aria-label="Move up"
-                    >
-                      <ChevronUp size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      type="button"
-                      onClick={() => moveDown(index)}
-                      disabled={index === slugs.length - 1}
-                      aria-label="Move down"
-                    >
-                      <ChevronDown size={16} />
-                    </Button>
-                    <Button
-                      variant="destructive-ghost"
-                      size="sm"
-                      type="button"
-                      onClick={() => remove(index)}
-                      aria-label="Remove instructor"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Add button + count */}
+      {/* Add button + count — always at top, disabled at max */}
       <div className="flex items-center justify-between">
-        {!atMax && (
+        <span className="flex items-center gap-1">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setShowOverlay(true)}
+            onClick={openOverlay}
+            disabled={atMax}
           >
             <Plus size={14} className="mr-1" />
             Add Instructor
           </Button>
-        )}
-        <span className="ml-auto text-xs text-secondary">
+          {props.required && <span className="text-xs" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
+        </span>
+        <span className="text-xs text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
         </span>
       </div>
+
+      {/* Sortable ranked list */}
+      {slugs.length > 0 && (
+        <DragDropProvider
+          onDragEnd={(event) => {
+            const { source, target } = event.operation
+            if (source && target && source.id !== target.id) {
+              const oldIndex = slugs.indexOf(source.id as string)
+              const newIndex = slugs.indexOf(target.id as string)
+              if (oldIndex !== -1 && newIndex !== -1) {
+                const next = [...slugs]
+                const [moved] = next.splice(oldIndex, 1)
+                next.splice(newIndex, 0, moved)
+                onChange(next)
+              }
+            }
+          }}
+        >
+          <div>
+            {slugs.map((slug, index) => (
+              <SortableInstructorRow
+                key={slug}
+                slug={slug}
+                index={index}
+                entry={slugToEntry[slug]}
+                onRemove={() => remove(index)}
+                isLast={index === slugs.length - 1}
+              />
+            ))}
+          </div>
+        </DragDropProvider>
+      )}
 
       {/* Add instructor overlay */}
       <Dialog
@@ -745,6 +808,8 @@ interface OverlayListProps {
   emptyText: string
   addButtonLabel: string
   dialogTitle: string
+  maxItems: number
+  required?: boolean
   renderRankedBadge: (entry: DirectoryEntry) => React.ReactNode
   renderBrowseBadge: (entry: DirectoryEntry) => React.ReactNode
   filterBar: React.ReactNode
@@ -758,12 +823,16 @@ interface OverlayListProps {
 }
 
 function PreferredOverlayList({
-  slugs, onChange, entries, emptyText, addButtonLabel, dialogTitle,
+  slugs, onChange, entries, emptyText, addButtonLabel, dialogTitle, maxItems, required,
   renderRankedBadge, renderBrowseBadge, filterBar,
   hasActiveFilter, filteredEntries, search, onSearchChange, onResetFilters,
   noResultsText, promptText,
 }: OverlayListProps) {
   const [showOverlay, setShowOverlay] = useState(false)
+  const slugToEntry = useMemo(
+    () => entries ? Object.fromEntries(entries.map((e) => [e.slug, e])) : {},
+    [entries],
+  )
 
   if (entries === undefined) {
     return (
@@ -773,8 +842,7 @@ function PreferredOverlayList({
     )
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- entries identity stable from useQuery
-  const slugToEntry = useMemo(() => Object.fromEntries(entries.map((e) => [e.slug, e])), [entries])
+  const atMax = slugs.length >= maxItems
 
   const moveUp = (index: number) => {
     if (index === 0) return
@@ -790,16 +858,28 @@ function PreferredOverlayList({
   }
   const remove = (index: number) => onChange(slugs.filter((_, i) => i !== index))
   const add = (slug: string) => {
-    if (!slugs.includes(slug)) onChange([...slugs, slug])
+    if (!slugs.includes(slug) && !atMax) onChange([...slugs, slug])
     setShowOverlay(false)
     onSearchChange('')
   }
 
   return (
     <div className="space-y-3">
-      {slugs.length === 0 ? (
-        <p className="text-sm text-secondary">{emptyText}</p>
-      ) : (
+      {/* Add button + count — always at top, disabled at max */}
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setShowOverlay(true)} disabled={atMax}>
+            <Plus size={14} className="mr-1" />
+            {addButtonLabel}
+          </Button>
+          {required && <span className="text-xs" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
+        </span>
+        <span className="text-xs text-secondary">
+          {slugs.length}/{maxItems}
+        </span>
+      </div>
+
+      {slugs.length > 0 && (
         <div className="space-y-2">
           {slugs.map((slug, index) => {
             const entry = slugToEntry[slug]
@@ -832,11 +912,6 @@ function PreferredOverlayList({
           })}
         </div>
       )}
-
-      <Button type="button" variant="ghost" size="sm" onClick={() => setShowOverlay(true)}>
-        <Plus size={14} className="mr-1" />
-        {addButtonLabel}
-      </Button>
 
       <Dialog open={showOverlay} onClose={() => { setShowOverlay(false); onSearchChange(''); onResetFilters?.() }} title={dialogTitle} size="lg">
         <div className="space-y-4">
@@ -944,6 +1019,8 @@ export function PreferredVenueList(props: ListProps) {
       emptyText="No preferred venues yet — Add one to get started."
       addButtonLabel="Add Venue"
       dialogTitle="Add Venue"
+      maxItems={MAX_PREFERRED_VENUES}
+      required={props.required}
       renderRankedBadge={(e) => <VenueBadge entry={e} />}
       renderBrowseBadge={(e) => <VenueBadge entry={e} />}
       filterBar={filterBar}
@@ -1015,6 +1092,8 @@ export function PreferredBoatList(props: ListProps) {
       emptyText="No preferred boats yet — Add one to get started."
       addButtonLabel="Add Boat"
       dialogTitle="Add Boat"
+      maxItems={MAX_PREFERRED_BOATS}
+      required={props.required}
       renderRankedBadge={(e) => <BoatBadge entry={e} />}
       renderBrowseBadge={(e) => <BoatBadge entry={e} />}
       filterBar={filterBar}
@@ -1087,6 +1166,8 @@ export function PreferredEquipmentList(props: ListProps) {
       emptyText="No preferred equipment providers yet — Add one to get started."
       addButtonLabel="Add Equipment Provider"
       dialogTitle="Add Equipment Provider"
+      maxItems={MAX_PREFERRED_EQUIPMENT}
+      required={props.required}
       renderRankedBadge={(e) => <EquipmentBadge entry={e} />}
       renderBrowseBadge={(e) => <EquipmentBadge entry={e} />}
       filterBar={filterBar}
@@ -1154,6 +1235,7 @@ export function PreferredCompressorList(props: ListProps) {
       emptyText="No preferred compressors yet — Add one to get started."
       addButtonLabel="Add Compressor"
       dialogTitle="Add Compressor"
+      maxItems={MAX_PREFERRED_COMPRESSORS}
       renderRankedBadge={(e) => <CompressorBadge entry={e} />}
       renderBrowseBadge={(e) => <CompressorBadge entry={e} />}
       filterBar={filterBar}

@@ -2,7 +2,7 @@
 /**
  * PreferredInstructorList — behavior tests
  *
- * 1. Empty state shows placeholder message (no instructor dump)
+ * 1. Empty state does not dump all instructors
  * 2. Ranked list renders preferred instructors (no browse results)
  * 3. No placeName shown on ranked list cards
  * 4. Language flags render as FlagPills on ranked cards
@@ -84,13 +84,6 @@ vi.mock('convex/react', async (importOriginal) => {
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe('PreferredInstructorList — empty state', () => {
-  it('shows placeholder message when no preferred instructors', () => {
-    render(<PreferredInstructorList slugs={[]} onChange={() => {}} />)
-    expect(
-      screen.getByText(/No preferred instructors yet — Add one to get started/i),
-    ).toBeInTheDocument()
-  })
-
   it('does not dump all instructors by default', () => {
     render(<PreferredInstructorList slugs={[]} onChange={() => {}} />)
     // The unfiltered list (Pierre Dubois, Lee Min-Ho, Yuki Tanaka) must NOT appear

@@ -72,9 +72,9 @@ import {
 // ─── Venue tests ────────────────────────────────────────────────────────────
 
 describe('PreferredVenueList', () => {
-  it('shows empty state message', () => {
+  it('shows Add Venue button when empty', () => {
     render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByText(/No preferred venues yet/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add venue/i })).toBeInTheDocument()
   })
 
   it('shows Add Venue button', () => {
@@ -112,9 +112,9 @@ describe('PreferredVenueList', () => {
 // ─── Boat tests ─────────────────────────────────────────────────────────────
 
 describe('PreferredBoatList', () => {
-  it('shows empty state message', () => {
+  it('shows Add Boat button when empty', () => {
     render(<PreferredBoatList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByText(/No preferred boats yet/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add boat/i })).toBeInTheDocument()
   })
 
   it('renders ranked boats with deduplicated type badges', () => {
@@ -140,9 +140,9 @@ describe('PreferredBoatList', () => {
 // ─── Equipment tests ────────────────────────────────────────────────────────
 
 describe('PreferredEquipmentList', () => {
-  it('shows empty state message', () => {
+  it('shows Add Equipment button when empty', () => {
     render(<PreferredEquipmentList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByText(/No preferred equipment providers yet/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add equipment/i })).toBeInTheDocument()
   })
 
   it('renders ranked equipment with gear type counts', () => {
@@ -165,9 +165,9 @@ describe('PreferredEquipmentList', () => {
 // ─── Compressor tests ───────────────────────────────────────────────────────
 
 describe('PreferredCompressorList', () => {
-  it('shows empty state message', () => {
+  it('shows Add Compressor button when empty', () => {
     render(<PreferredCompressorList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByText(/No preferred compressors yet/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add compressor/i })).toBeInTheDocument()
   })
 
   it('renders ranked compressor with gas mix pills', () => {

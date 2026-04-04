@@ -59,6 +59,18 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
   }
 }
 
+/** Default `fromMe` callback shared by all contact-section profile forms. */
+export function defaultFromMe(
+  u: Record<string, unknown>,
+  defaults: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...defaults,
+    email: (u.email as string) ?? '',
+    phone: (u.phone as string) ?? '',
+  }
+}
+
 /** Spread into toPayload return — replaces the 5-field loc spread duplicated across all profile forms. */
 export function locationToPayload(loc: ProfileLocationValue) {
   return {

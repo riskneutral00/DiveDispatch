@@ -10,6 +10,7 @@ import {
   type RoleKey,
 } from '@/lib/constants/roles'
 import { Tooltip } from '@/components/ui'
+import { cn } from '@/lib/utils/cn'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -93,7 +94,12 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
       {/* Show name here only when HierarchySubBar won't render it */}
       {(showTabs || !roles || roles.length <= 1) && (
         <span
-          className="absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
+          className={cn(
+            "text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary",
+            showTabs
+              ? "absolute inset-x-0 pointer-events-none"
+              : "mx-auto",
+          )}
           data-testid="role-switcher-name"
         >
           {displayName}
