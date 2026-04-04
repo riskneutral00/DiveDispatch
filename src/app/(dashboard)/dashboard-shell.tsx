@@ -3,16 +3,21 @@
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { DevSwitcher } from '@/components/dev/dev-switcher'
 import { DevSwitchProvider } from '@/components/dev/dev-switch-context'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
 
 function OnboardingBanner() {
+  const [mounted, setMounted] = useState(false)
   const t = useTranslations('onboarding')
   const { user, isLoading } = useCurrentUser()
   const pathname = usePathname()
   const router = useRouter()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Completed user who somehow lands on /onboarding → send to dashboard
   useEffect(() => {
@@ -21,8 +26,10 @@ function OnboardingBanner() {
     }
   }, [user, isLoading, router, pathname])
 
-  // Don't show banner on /onboarding itself or for seeded/complete users
+  // Don't render before mount (prevents SSR/client hydration mismatch),
+  // or on /onboarding itself, or for seeded/complete users
   if (
+    !mounted ||
     isLoading ||
     !user ||
     user.isSeeded ||

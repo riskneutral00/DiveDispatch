@@ -247,9 +247,15 @@ body {
   transition: opacity 0.25s ease;
 }
 
-/* Glass Air: fade page content when a dialog is open, revealing the brand background */
-html[data-dialog-open] .app-shell {
+/* Glass Air: fade page content when a dialog is open, revealing the brand background.
+   CSS-only: no JS required. Targets any open native <dialog> element. */
+html:has(dialog[open]) .app-shell {
   opacity: 0;
+}
+
+/* Scroll lock — prevent body scroll when any dialog is open */
+body:has(dialog[open]) {
+  overflow: hidden;
 }
 
 /* GlassDialog native backdrop — activated when dialog.showModal() is open */

@@ -26,7 +26,7 @@ export default async function RootLayout({
   const messages = await getMessages()
 
   return (
-    <html lang={locale}>
+    <html lang={locale} data-theme="ocean-dark" data-mode="dark">
       <body className={inter.className}>
         {/* Provider order is critical: ClerkProvider > ConvexClerkProvider > ThemeProvider */}
         <ClerkProvider

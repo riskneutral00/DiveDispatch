@@ -3,25 +3,6 @@
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 
-// ── Ref-counted backdrop content fade ────────────────────────────────────────
-// When any GlassDialog is open, [data-dialog-open] is set on <html> so CSS can
-// fade .app-shell content to zero, revealing the brand background (Glass Air).
-// Ref-counted so nested dialogs don't flash content on inner close.
-
-let dialogOpenCount = 0;
-
-function incrementDialogOpen() {
-  dialogOpenCount++;
-  document.documentElement.setAttribute("data-dialog-open", "");
-}
-
-function decrementDialogOpen() {
-  dialogOpenCount = Math.max(0, dialogOpenCount - 1);
-  if (dialogOpenCount === 0) {
-    document.documentElement.removeAttribute("data-dialog-open");
-  }
-}
-
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface GlassDialogProps {
@@ -57,27 +38,23 @@ export function GlassDialog({
   const titleId = useId();
   const descId = useId();
 
-  // Manage native <dialog> open/close + manual scroll lock
+  // Manage native <dialog> open/close.
+  // Scroll lock and content fade are handled by CSS:
+  //   body:has(dialog[open]) { overflow: hidden }
+  //   html:has(dialog[open]) .app-shell { opacity: 0 }
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
-      document.body.style.overflow = 'hidden';
     } else if (!open && dialog.open) {
       dialog.close();
-      document.body.style.overflow = '';
     }
+    // Cleanup: ensure dialog is closed if component unmounts while open
+    // (e.g. error boundary mid-render) so CSS :has(dialog[open]) clears
     return () => {
-      document.body.style.overflow = '';
+      if (dialog.open) dialog.close();
     };
-  }, [open]);
-
-  // Ref-counted backdrop content fade
-  useEffect(() => {
-    if (!open) return;
-    incrementDialogOpen();
-    return () => decrementDialogOpen();
   }, [open]);
 
   // Close on backdrop click

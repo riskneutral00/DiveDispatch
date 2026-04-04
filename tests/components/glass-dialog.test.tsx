@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 /**
- * GlassDialog — backdrop content fade behavior
+ * GlassDialog — behavior tests
  *
- * When a GlassDialog opens, it sets [data-dialog-open] on <html> so CSS can
- * fade the .app-shell content to zero opacity. Ref-counted so nested dialogs
- * (e.g., booking detail > cancel confirmation) don't flash content on inner close.
+ * Scroll lock and content fade are now CSS-only (body:has(dialog[open]) and
+ * html:has(dialog[open]) .app-shell). No JS mutations on body.style.overflow
+ * or data-dialog-open — those leaks were the source of hydration errors.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { screen } from '@testing-library/react'
-import { render, cleanup } from '../helpers/render'
+import { screen, act } from '@testing-library/react'
+import { render } from '../helpers/render'
 import { GlassDialog } from '@/components/ui/glass-dialog'
 
 // jsdom doesn't implement HTMLDialogElement.show / .showModal / .close
@@ -23,132 +23,102 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close ??= function () {
     this.removeAttribute('open')
   }
-  // Clean up attribute between tests
+  // Ensure clean state between tests
   document.documentElement.removeAttribute('data-dialog-open')
+  document.body.style.overflow = ''
 })
 
-describe('GlassDialog backdrop content fade', () => {
-  it('adds [data-dialog-open] to <html> when opened', () => {
+describe('GlassDialog — CSS-only scroll lock (no JS body mutations)', () => {
+  it('does NOT set body.style.overflow when a dialog opens', () => {
     render(
       <GlassDialog open onClose={() => {}}>
         <p>Content</p>
       </GlassDialog>,
     )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
+    // CSS handles scroll lock via body:has(dialog[open]) { overflow: hidden }
+    // JS must not touch body.style.overflow
+    expect(document.body.style.overflow).toBe('')
   })
 
-  it('removes [data-dialog-open] from <html> when closed', () => {
+  it('does NOT leave body.style.overflow set after dialog closes', () => {
     const { rerender } = render(
       <GlassDialog open onClose={() => {}}>
         <p>Content</p>
       </GlassDialog>,
     )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-
     rerender(
       <GlassDialog open={false} onClose={() => {}}>
         <p>Content</p>
       </GlassDialog>,
     )
-    expect(document.documentElement).not.toHaveAttribute('data-dialog-open')
+    expect(document.body.style.overflow).toBe('')
   })
 
-  it('ref-counts: two dialogs open, closing one keeps the attribute', () => {
-    const { rerender } = render(
-      <>
-        <GlassDialog open onClose={() => {}}>
-          <p>Dialog A</p>
-        </GlassDialog>
-        <GlassDialog open onClose={() => {}}>
-          <p>Dialog B</p>
-        </GlassDialog>
-      </>,
-    )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-
-    // Close dialog B, dialog A still open
-    rerender(
-      <>
-        <GlassDialog open onClose={() => {}}>
-          <p>Dialog A</p>
-        </GlassDialog>
-        <GlassDialog open={false} onClose={() => {}}>
-          <p>Dialog B</p>
-        </GlassDialog>
-      </>,
-    )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-  })
-
-  it('ref-counts: closing all dialogs removes the attribute', () => {
-    const { rerender } = render(
-      <>
-        <GlassDialog open onClose={() => {}}>
-          <p>Dialog A</p>
-        </GlassDialog>
-        <GlassDialog open onClose={() => {}}>
-          <p>Dialog B</p>
-        </GlassDialog>
-      </>,
-    )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-
-    rerender(
-      <>
-        <GlassDialog open={false} onClose={() => {}}>
-          <p>Dialog A</p>
-        </GlassDialog>
-        <GlassDialog open={false} onClose={() => {}}>
-          <p>Dialog B</p>
-        </GlassDialog>
-      </>,
-    )
-    expect(document.documentElement).not.toHaveAttribute('data-dialog-open')
-  })
-
-  it('cleans up on unmount while open', () => {
+  it('does NOT set body.style.overflow on unmount while open', () => {
     const { unmount } = render(
       <GlassDialog open onClose={() => {}}>
         <p>Content</p>
       </GlassDialog>,
     )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-
-    unmount()
-    expect(document.documentElement).not.toHaveAttribute('data-dialog-open')
-  })
-
-  it('nested unmount with outer still open preserves attribute', () => {
-    const Inner = ({ show }: { show: boolean }) =>
-      show ? (
-        <GlassDialog open onClose={() => {}}>
-          <p>Inner</p>
-        </GlassDialog>
-      ) : null
-
-    const { rerender } = render(
-      <>
-        <GlassDialog open onClose={() => {}}>
-          <p>Outer</p>
-        </GlassDialog>
-        <Inner show />
-      </>,
-    )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
-
-    rerender(
-      <>
-        <GlassDialog open onClose={() => {}}>
-          <p>Outer</p>
-        </GlassDialog>
-        <Inner show={false} />
-      </>,
-    )
-    expect(document.documentElement).toHaveAttribute('data-dialog-open')
+    act(() => { unmount() })
+    expect(document.body.style.overflow).toBe('')
   })
 })
 
-describe('GlassDialog a11y and scroll lock', () => {
+describe('GlassDialog — cleanup on unmount (error boundary safety)', () => {
+  it('closes the native dialog element when component unmounts while open', () => {
+    const { unmount } = render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    const dialog = document.querySelector('dialog')!
+    expect(dialog.hasAttribute('open')).toBe(true)
+
+    act(() => { unmount() })
+
+    // After unmount, the dialog's open attribute must be removed
+    // so CSS :has(dialog[open]) evaluates to false and scroll lock releases
+    expect(dialog.open).toBe(false)
+  })
+})
+
+describe('GlassDialog — no data-dialog-open JS attribute (CSS :has() handles fade)', () => {
+  it('does NOT set data-dialog-open on html when a dialog opens', () => {
+    render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
+  })
+
+  it('does NOT leave data-dialog-open after dialog closes', () => {
+    const { rerender } = render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    rerender(
+      <GlassDialog open={false} onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
+  })
+
+  it('does NOT leave data-dialog-open after unmount while open', () => {
+    const { unmount } = render(
+      <GlassDialog open onClose={() => {}}>
+        <p>Content</p>
+      </GlassDialog>,
+    )
+    act(() => { unmount() })
+    expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
+  })
+})
+
+describe('GlassDialog a11y', () => {
   it('has aria-modal="true" on the dialog element', () => {
     render(
       <GlassDialog open onClose={() => {}}>
@@ -156,43 +126,6 @@ describe('GlassDialog a11y and scroll lock', () => {
       </GlassDialog>,
     )
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
-  })
-
-  it('locks scroll on open', () => {
-    render(
-      <GlassDialog open onClose={() => {}}>
-        <p>Content</p>
-      </GlassDialog>,
-    )
-    expect(document.body.style.overflow).toBe('hidden')
-  })
-
-  it('releases scroll lock on close', () => {
-    const { rerender } = render(
-      <GlassDialog open onClose={() => {}}>
-        <p>Content</p>
-      </GlassDialog>,
-    )
-    expect(document.body.style.overflow).toBe('hidden')
-
-    rerender(
-      <GlassDialog open={false} onClose={() => {}}>
-        <p>Content</p>
-      </GlassDialog>,
-    )
-    expect(document.body.style.overflow).toBe('')
-  })
-
-  it('releases scroll lock on unmount while open', () => {
-    const { unmount } = render(
-      <GlassDialog open onClose={() => {}}>
-        <p>Content</p>
-      </GlassDialog>,
-    )
-    expect(document.body.style.overflow).toBe('hidden')
-
-    unmount()
-    expect(document.body.style.overflow).toBe('')
   })
 
   it('calls onClose when Escape fires the cancel event', () => {
