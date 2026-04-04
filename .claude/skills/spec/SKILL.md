@@ -25,7 +25,7 @@ The tickets you produce must contain ALL information an agent needs to implement
 
 ## Phase 0: Deep Exploration (before any questions)
 
-After reading the user's description, launch Explore agents to build a **context map** — a structured list of `file:line` references with one-line descriptions. This map powers every recommendation and populates ticket `**References:**` sections.
+After reading the user's description, launch Explore agents to build a **context map** — a structured list of `file:line` references, each with a one-line description AND the relevant code snippet (3-10 lines). Capture function signatures, prop types, return types, and key logic — the parts a worker needs to start coding without re-reading the file. This map powers every recommendation and populates ticket `**References:**` sections.
 
 **Scaling by scope:**
 - Narrow/specific change → 1 Explore agent (relevant area only)
@@ -360,8 +360,14 @@ updated: {YYYY-MM-DD}
 **Spec:** {What to change, which files, what the outcome looks like.}
 
 **References:**
-- {file:line-range} — {what it is and why it's relevant}
-- {file:line-range} — {what it is and why it's relevant}
+- `{file:line-range}` — {what it is and why it's relevant}
+  ```tsx
+  {3-10 lines of the relevant code: signatures, types, key logic}
+  ```
+- `{file:line-range}` — {what it is and why it's relevant}
+  ```tsx
+  {3-10 lines of the relevant code: signatures, types, key logic}
+  ```
 
 **Acceptance:**
 - [ ] `{executable command}` (e.g., `npx vitest run tests/file.test.ts -- --grep "case"`)
@@ -489,7 +495,7 @@ This is ingested into NotebookLM on the next `/vault` run. Future `/spec` sessio
 - **`.tickets/` is the output.** `/board` manages lifecycle, `/board sync` mirrors to vault TODO.md.
 - **Cheapest test wins.** Don't spec a component test for something a unit test catches.
 - **Edge cases over happy paths.** The test plan should focus on what could go wrong.
-- **References mandatory for M/L.** Every M/L ticket must have at least one `file:line` reference. S tickets can omit if trivially scoped.
+- **References mandatory for M/L.** Every M/L ticket must have at least one `file:line` reference with an embedded code snippet. S tickets can omit if trivially scoped. Snippets must include function signatures, prop types, and return types — the parts a worker needs to code without re-reading the file.
 - **QA scenarios mandatory.** At least 2 per ticket. Must be agent-executable (specific inputs → specific outputs).
 - **Violations caught here, not at worker time.** Flag dependency direction, IMMUTABLE files, invariant risk, missing indexes during the interview.
 - **One exploration, many tickets.** The context map from Phase 0 is shared across all tickets in a multi-ticket session. Never re-explore for the same topic.

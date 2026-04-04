@@ -52,7 +52,7 @@ If the orchestrator's prompt includes an `## Area Context` section, it contains 
 ## Execution Flow
 
 1. Read the ticket spec from the orchestrator's message
-2. **References first:** If the ticket has a `**References:**` section, read those specific files at the cited line ranges FIRST. This is your starting context — no broad codebase exploration needed. If no References section, read the referenced source files to understand current state.
+2. **References first:** If the ticket has a `**References:**` section, the embedded code snippets ARE your starting context — start coding from them without reading the referenced files. Only read a referenced file if the snippet doesn't contain enough context (e.g., you need to see imports or surrounding logic). If no References section, read the referenced source files to understand current state.
 3. **Size L only — plan before coding:** Read ALL files in the ticket's `touches` list plus files they import. Write a 3-5 line implementation plan identifying: (1) state interactions between components, (2) memoization boundaries and dependency chains, (3) side effects that need cleanup. Proceed only after the plan is written.
 4. Write failing tests
 5. Implement the fix/feature
