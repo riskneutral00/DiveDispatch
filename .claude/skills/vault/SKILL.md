@@ -1,7 +1,7 @@
 ---
 name: vault
 description: "End-of-session closer. Commits code, captures observations to Vaults, updates TODO, manages memory, syncs NotebookLM. Execute immediately, no prompts."
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, mcp__openspace__execute_task
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill, mcp__openspace__execute_task
 user-invocable: true
 ---
 
@@ -38,17 +38,20 @@ If no untracked files, skip Round 0. If no git changes after Round 2, skip Round
 
 ## Instructions
 
-### Pre-flight: Quality Check
+### Pre-flight: Quality Gate (auto-gates if needed)
 
-Before anything else, check if `/gate` has been run:
+Before anything else, check if `/gate` has been run and is still current:
 
 ```bash
+DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
 GATE=$(cat .patrol-ran 2>/dev/null)
 ```
 
-1. If `.patrol-ran` exists and `verdict` is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently.
-2. If `.patrol-ran` exists and `verdict` is `BLOCKED` → block: `Build/test failure detected. Fix before vaulting.` Stop.
-3. If `.patrol-ran` is missing → proceed silently (gate wasn't run this session).
+1. If `.patrol-ran` exists AND `verdict` is `BLOCKED` → stop: `Build/test failure detected. Fix before vaulting.`
+2. If `.patrol-ran` exists AND `diffHash` matches `$DIFF_HASH` AND verdict is `CLEAN` or `CLEAN_UNREVIEWED` → proceed silently (gate is current).
+3. Otherwise (missing OR stale — `diffHash` doesn't match) → run `/gate` via Skill tool. Then re-read `.patrol-ran`:
+   - `CLEAN` or `CLEAN_UNREVIEWED` → proceed.
+   - `BLOCKED` → stop.
 
 After Job 4 (commit) succeeds, clean up sentinels and write session timestamp:
 ```bash

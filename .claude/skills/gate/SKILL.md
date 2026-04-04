@@ -13,11 +13,41 @@ You are a senior architect reviewing uncommitted changes before they reach `git 
 
 ---
 
-## Phase 0: Test Verification
+## Phase 0: Cache Check + Test Verification
 
-Run the test suite first. If tests fail, nothing else matters.
+### Step 0a — Compute diff hash
 
-**5-minute skip:** Before running tests, check if `.vitest-last-pass` exists and its timestamp is within the last 5 minutes:
+Compute a single hash of the full working-tree state (unstaged + staged + untracked file names):
+
+```bash
+DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+```
+
+Store `DIFF_HASH` for the entire gate run — it's reused in the sentinel write.
+
+### Step 0b — Full short-circuit
+
+Read `.patrol-ran` if it exists. If **all three** conditions are true:
+1. File exists
+2. `diffHash` field matches `$DIFF_HASH`
+3. `verdict` is not `BLOCKED`
+
+Then **stop immediately** with cached output:
+
+```
+Gate — {YYYY-MM-DD}
+Cached: {verdict} (unchanged since {ran timestamp})
+Critical: {N} | High: {N}
+Ready for /vault: YES
+```
+
+No skills dispatched. No tests run. No phases executed. Done.
+
+### Step 0c — Test verification (on cache miss)
+
+If no cache hit, run the test suite. If tests fail, nothing else matters.
+
+**5-minute skip:** Check if `.vitest-last-pass` exists and its timestamp is within the last 5 minutes:
 
 ```bash
 if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -lt 300 ]; then echo "SKIP"; else echo "RUN"; fi
@@ -25,7 +55,7 @@ if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -
 
 - If **SKIP** → print `Tests: skipped (passed {N}s ago)` and continue to Phase 1.
 - If **RUN** → execute `npx vitest run 2>&1`:
-  - If **any tests fail** → immediate **NO-GO (BLOCKED)**. Output the failure summary and stop. Write `.patrol-ran` with `BLOCKED`. Do not proceed to Phase 1.
+  - If **any tests fail** → immediate **NO-GO (BLOCKED)**. Output the failure summary and stop. Write `.patrol-ran` with `BLOCKED` (include `diffHash`). Do not proceed to Phase 1.
   - If all tests pass → write timestamp: `date +%s > .vitest-last-pass` → capture pass count and continue.
 
 ---
@@ -59,31 +89,49 @@ A file can land in multiple buckets.
 
 6. Deduplicate the skill list.
 
+7. Compute per-bucket diff hashes for incremental caching:
+
+```bash
+SCHEMA_HASH=$( (git diff -- convex/schema.ts; git diff --cached -- convex/schema.ts) | shasum -a 256 | awk '{print $1}' )
+BACKEND_HASH=$( (git diff -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**'; git diff --cached -- 'convex/**/*.ts' ':!convex/schema.ts' ':!convex/_generated/**') | shasum -a 256 | awk '{print $1}' )
+FRONTEND_HASH=$( (git diff -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**'; git diff --cached -- 'src/app/**' 'src/components/**' 'src/lib/**' 'design-system/**') | shasum -a 256 | awk '{print $1}' )
+TESTS_HASH=$( (git diff -- 'tests/**' 'e2e/**'; git diff --cached -- 'tests/**' 'e2e/**') | shasum -a 256 | awk '{print $1}' )
+```
+
+8. Read `.patrol-ran`'s `bucketHashes` and `skillResults` (if file exists). For each bucket that has files in it:
+   - If the bucket's hash matches the cached `bucketHashes` entry → **skip** that bucket's skills. Reuse `skillResults` from the cached sentinel.
+   - If the bucket's hash differs or the bucket has no cached entry → **dispatch** that bucket's skills.
+
+This produces two lists: `skillsToDispatch` (fresh) and `skillsCached` (reused from sentinel).
+
 **Do not output anything yet.**
 
 ---
 
-## Phase 2: Dispatch Reviews
+## Phase 2: Scoped Dispatch
 
-Display the dispatch header:
+Display the dispatch header. Show both fresh and cached skills:
 
 ```
 Gate — {YYYY-MM-DD}
-Changed: {N} files
-Dispatching: {comma-separated skill list}
+Changed: {N} files ({schema: N, backend: N, frontend: N, tests: N, config: N})
+Dispatching: {comma-separated skillsToDispatch list}
+Cached: {comma-separated skillsCached list} (unchanged since {ran timestamp})
 ───────────────────────
 ```
 
-Invoke all triggered skills **in parallel** using the Skill tool. Each skill runs its full process: inventory → audit → vault review → H-specs → baseline update.
+If `skillsCached` is empty (first run or all buckets changed), omit the Cached line.
 
-Skills to dispatch (only those triggered by Phase 1):
+Invoke only `skillsToDispatch` skills **in parallel** using the Skill tool. Each skill runs its full process: inventory → audit → vault review → H-specs → baseline update.
+
+Possible skills (only those in `skillsToDispatch`):
 - `/review-backend-schema`
 - `/review-backend-auth`
 - `/review-backend-mutations`
 - `/review-frontend`
 - `/review-tests`
 
-After all skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW counts from its final output line.
+After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW counts from its final output line. Merge with cached `skillResults` from the sentinel for the full picture.
 
 ---
 
@@ -148,7 +196,8 @@ Quality Gate — {YYYY-MM-DD}
 ═══════════════════════════════
 
 Changed: {N} files ({schema: N, backend: N, frontend: N, tests: N, config: N})
-Skills dispatched: {list}
+Skills dispatched: {freshly-run list}
+Skills cached: {reused-from-sentinel list, or "none" if all fresh}
 
 {GO or NO-GO}
 ───────────────────────
@@ -191,7 +240,7 @@ Ready for /vault: {YES or NO}
 
 ## Write Sentinel
 
-After printing the verdict, write `.patrol-ran`:
+After printing the verdict, write `.patrol-ran` with cache data for incremental reuse:
 
 ```bash
 VERDICT="CLEAN"
@@ -202,8 +251,35 @@ elif [ {UNREVIEWED_COUNT} -gt 0 ]; then
 fi
 
 FILE_HASH=$(git log --oneline -1 --format=%h 2>/dev/null || echo "unknown")
-echo '{"ran":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'","verdict":"'$VERDICT'","headSha":"'$FILE_HASH'","critical":'$CRITICAL_COUNT',"high":'$HIGH_COUNT',"tests":true,"invariants":true}' > .patrol-ran
 ```
+
+Write the sentinel as JSON with these fields:
+
+```json
+{
+  "ran": "{ISO timestamp}",
+  "verdict": "{CLEAN|CLEAN_UNREVIEWED|BLOCKED}",
+  "headSha": "{short hash}",
+  "diffHash": "{DIFF_HASH from Phase 0}",
+  "critical": {N},
+  "high": {N},
+  "tests": true,
+  "invariants": true,
+  "bucketHashes": {
+    "schema": "{SCHEMA_HASH}",
+    "backend": "{BACKEND_HASH}",
+    "frontend": "{FRONTEND_HASH}",
+    "tests": "{TESTS_HASH}"
+  },
+  "skillResults": {
+    "{skill-name}": {"critical": N, "high": N, "medium": N, "low": N}
+  }
+}
+```
+
+`skillResults` includes both freshly-dispatched and cached skill results (merged). This is what future gate runs read for incremental dispatch.
+
+`DIFF_HASH` and bucket hashes were computed in Phase 0 / Phase 1 and reused here.
 
 Exit code: 0 on GO, 1 on NO-GO.
 
