@@ -25,7 +25,12 @@ export type DirectoryEntry = {
   credentials?: { agency: string; courses: string[] }[]  // Instructor: full credential details
   boatCapacity?: number     // Boat: max pax of largest vessel in fleet
   boatType?: string         // Boat: type of largest vessel
+  boatTypes?: string[]      // Boat: all fleet types deduplicated
+  hasCompressor?: boolean   // Boat/Venue: has on-board compressor
   gasMixes?: string[]       // Compressor: supported gas mixes
+  inventoryCounts?: Record<string, number> // Equipment: gearType → total unit count
+  venueType?: string        // Pool/DiveSite: venue type (Pool, Shore, Reef, etc.)
+  confinedCapable?: boolean // Pool/DiveSite: suitable for confined water training
   maxDepth?: number         // Pool: max depth in metres
   maxCapacity?: number      // Pool: max capacity in pax
   association?: string      // Agent: primary association agency name
@@ -43,7 +48,12 @@ type ProfileData = {
   credentials?: { agency: string; courses: string[] }[]
   boatCapacity?: number
   boatType?: string
+  boatTypes?: string[]
+  hasCompressor?: boolean
   gasMixes?: string[]
+  inventoryCounts?: Record<string, number>
+  venueType?: string
+  confinedCapable?: boolean
   maxDepth?: number
   maxCapacity?: number
   association?: string
@@ -73,7 +83,7 @@ async function queryProfileByUser<T extends ProfileTable>(
   return result as Doc<T> | null
 }
 
-async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole): Promise<ProfileData | null> {
+async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole, slug?: string): Promise<ProfileData | null> {
   switch (role) {
     case 'Instructor': {
       const p = await queryProfileByUser(db, 'instructors', userId)
@@ -130,6 +140,7 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
         (best: typeof fleet[0] | null, b) => (!best || b.maxPax > best.maxPax ? b : best),
         null,
       )
+      const boatTypes = [...new Set(fleet.map((b) => b.boatType))]
       return {
         name: p.name,
         placeName: p.placeName,
@@ -137,12 +148,27 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
         verified: p.verified,
         boatCapacity: largest?.maxPax,
         boatType: largest?.boatType,
+        boatTypes,
+        hasCompressor: p.hasCompressor,
       }
     }
     case 'Equipment': {
       const p = await queryProfileByUser(db, 'equipment', userId)
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
+      // Aggregate inventory counts by gearType
+      const inventoryCounts: Record<string, number> = {}
+      if (slug) {
+        const items = await db
+          .query('equipmentInventory')
+          .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', slug))
+          .collect()
+        const units = await Promise.all(items.map((item) => db.get(item.inventoryUnitId)))
+        for (let i = 0; i < items.length; i++) {
+          const gt = items[i].gearType
+          inventoryCounts[gt] = (inventoryCounts[gt] ?? 0) + (units[i]?.totalUnits ?? 0)
+        }
+      }
+      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified, inventoryCounts }
     }
     case 'Pool': {
       const p = await queryProfileByUser(db, 'venues', userId)
@@ -152,6 +178,9 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
         placeName: p.placeName,
         country: p.country,
         verified: p.verified,
+        venueType: p.venueType,
+        confinedCapable: p.confinedCapable,
+        hasCompressor: p.hasCompressor,
         maxDepth: p.maxDepth,
         maxCapacity: p.maxCapacity,
       }
@@ -185,7 +214,15 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
     case 'DiveSite': {
       const p = await queryProfileByUser(db, 'venues', userId)
       if (!p) return null
-      return { name: p.name, placeName: p.placeName, country: p.country, verified: p.verified }
+      return {
+        name: p.name,
+        placeName: p.placeName,
+        country: p.country,
+        verified: p.verified,
+        venueType: p.venueType,
+        confinedCapable: p.confinedCapable,
+        hasCompressor: p.hasCompressor,
+      }
     }
   }
 }
@@ -225,7 +262,7 @@ export const listByRole = query({
     const results = await Promise.all(
       users
         .map(async (u): Promise<DirectoryEntry | null> => {
-          const profile = await fetchProfile(ctx.db, u._id, args.role)
+          const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug)
           if (!profile) return null
 
           // ── Text filters ──────────────────────────────────────────────
@@ -257,7 +294,12 @@ export const listByRole = query({
             credentials: profile.credentials,
             boatCapacity: profile.boatCapacity,
             boatType: profile.boatType,
+            boatTypes: profile.boatTypes,
+            hasCompressor: profile.hasCompressor,
+            inventoryCounts: profile.inventoryCounts,
             gasMixes: profile.gasMixes,
+            venueType: profile.venueType,
+            confinedCapable: profile.confinedCapable,
             maxDepth: profile.maxDepth,
             maxCapacity: profile.maxCapacity,
             association: profile.association,

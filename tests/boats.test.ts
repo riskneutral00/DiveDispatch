@@ -47,9 +47,41 @@ describe('boats.create', () => {
       expect(boat).not.toBeNull()
       expect(boat!.name).toBe('MV Seatran')
       expect(boat!.userId).toEqual(userId)
-      expect(boat!.hasCompressor).toBe(false)
+      expect(boat!.hasCompressor).toBe(true) // day_boat → smart default true
       expect(boat!.verified).toBe(false)
       expect(boat!.fleet).toHaveLength(1)
+    })
+  })
+
+  it('derives hasCompressor=false for non-day-boat/liveaboard fleet', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'speedboat-owner') })
+
+    const boatId = await t.withIdentity({ tokenIdentifier: 'clerk|speedboat-owner' })
+      .mutation(api.boats.create, {
+        ...VALID_BOAT_ARGS,
+        fleet: [{ boatName: 'Speedster', maxPax: 8, boatType: 'speedboat' as const }],
+      })
+
+    await t.run(async (ctx) => {
+      const boat = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
+      expect(boat!.hasCompressor).toBe(false)
+    })
+  })
+
+  it('derives hasCompressor=true for liveaboard fleet', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => { await seedUser(ctx, 'liveaboard-owner') })
+
+    const boatId = await t.withIdentity({ tokenIdentifier: 'clerk|liveaboard-owner' })
+      .mutation(api.boats.create, {
+        ...VALID_BOAT_ARGS,
+        fleet: [{ boatName: 'MV Explorer', maxPax: 30, boatType: 'liveaboard' as const }],
+      })
+
+    await t.run(async (ctx) => {
+      const boat = await ctx.db.get(boatId as Id<'boats'>) as Doc<'boats'> | null
+      expect(boat!.hasCompressor).toBe(true)
     })
   })
 
@@ -76,6 +108,48 @@ describe('boats.update', () => {
     await expect(
       t.withIdentity({ tokenIdentifier: 'clerk|no-profile' }).mutation(api.boats.update, { name: 'New' }),
     ).rejects.toThrow(/NOT_FOUND/)
+  })
+
+  it('re-derives hasCompressor when fleet changes', async () => {
+    const t = makeT()
+    let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'fleet-change-boat')
+      boatId = await seedBoatProfile(ctx, userId)
+    })
+
+    // Update fleet to include a day_boat → hasCompressor should become true
+    await t.withIdentity({ tokenIdentifier: 'clerk|fleet-change-boat' })
+      .mutation(api.boats.update, {
+        fleet: [{ boatName: 'Day Runner', maxPax: 12, boatType: 'day_boat' as const }],
+      })
+
+    await t.run(async (ctx) => {
+      const boat = await ctx.db.get(boatId!) as Doc<'boats'> | null
+      expect(boat!.hasCompressor).toBe(true)
+    })
+  })
+
+  it('allows explicit hasCompressor override on update', async () => {
+    const t = makeT()
+    let boatId: Awaited<ReturnType<typeof seedBoatProfile>> | undefined
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, 'explicit-comp-boat')
+      // Seed with speedboat fleet (no day_boat/liveaboard) and hasCompressor=false
+      boatId = await seedBoatProfile(ctx, userId, {
+        fleet: [{ boatName: 'Speedster', maxPax: 8, boatType: 'speedboat' }],
+        hasCompressor: false,
+      })
+    })
+
+    // Explicitly set hasCompressor=true even without day_boat/liveaboard fleet
+    await t.withIdentity({ tokenIdentifier: 'clerk|explicit-comp-boat' })
+      .mutation(api.boats.update, { hasCompressor: true })
+
+    await t.run(async (ctx) => {
+      const boat = await ctx.db.get(boatId!) as Doc<'boats'> | null
+      expect(boat!.hasCompressor).toBe(true)
+    })
   })
 
   it('updates boat profile fields', async () => {

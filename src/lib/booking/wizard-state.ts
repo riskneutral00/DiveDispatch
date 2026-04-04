@@ -129,6 +129,7 @@ export interface WizardState {
   compressorIsExternal: boolean
   externalEquipmentName: string
   externalCompressorName: string
+  boatHasCompressor: boolean
 
   sameForAll: boolean
   saveAttempted: boolean
@@ -179,6 +180,7 @@ export type WizardAction =
   | { type: 'SET_COMPRESSOR'; value: string }
   | { type: 'SET_COMPRESSOR_EXTERNAL'; value: boolean }
   | { type: 'SET_EXTERNAL_COMPRESSOR_NAME'; value: string }
+  | { type: 'SET_BOAT_HAS_COMPRESSOR'; value: boolean }
   | { type: 'SET_SUBMITTING'; value: boolean }
   | { type: 'SET_CONFLICT_ERROR'; errors: BookingConflictDetail[] | null }
   | { type: 'SET_SUBMITTED_BOOKING_ID'; id: string }
@@ -235,6 +237,7 @@ export function makeInitialState(bookingId: string | null = null): WizardState {
     compressorIsExternal: false,
     externalEquipmentName: '',
     externalCompressorName: '',
+    boatHasCompressor: false,
     sameForAll: true,
     saveAttempted: false,
     submitting: false,
@@ -425,6 +428,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
 
     case 'SET_EXTERNAL_COMPRESSOR_NAME':
       return { ...state, externalCompressorName: action.value }
+
+    case 'SET_BOAT_HAS_COMPRESSOR':
+      return { ...state, boatHasCompressor: action.value }
 
     case 'SET_SUBMITTING':
       return { ...state, submitting: action.value }
@@ -697,10 +703,12 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
     (state.equipment === '__external__' && state.externalEquipmentName?.trim())
   if (!hasEquipment) return false
 
-  // Compressor required (system or external with name)
-  const hasCompressor = (state.compressor && state.compressor !== '__external__') ||
-    (state.compressor === '__external__' && state.externalCompressorName?.trim())
-  if (!hasCompressor) return false
+  // Compressor required — skip if selected boat has on-board compressor
+  if (!state.boatHasCompressor) {
+    const hasCompressor = (state.compressor && state.compressor !== '__external__') ||
+      (state.compressor === '__external__' && state.externalCompressorName?.trim())
+    if (!hasCompressor) return false
+  }
 
   return true
 }

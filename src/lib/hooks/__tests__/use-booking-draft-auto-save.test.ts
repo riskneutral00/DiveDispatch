@@ -44,6 +44,7 @@ function makeWizardState(overrides: Partial<WizardState> = {}): WizardState {
     compressorIsExternal: false,
     externalEquipmentName: '',
     externalCompressorName: '',
+    boatHasCompressor: false,
     sameForAll: false,
     saveAttempted: false,
     submitting: false,

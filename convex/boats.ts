@@ -45,11 +45,15 @@ export const create = mutation({
     phone: v.string(),
     fleet: v.array(fleetEntryValidator),
   },
-  handler: async (ctx, args) =>
-    profileCreate(ctx, args, 'boats', 'Boat', {
-      hasCompressor: false,
+  handler: async (ctx, args) => {
+    const hasCompressor = args.fleet.some(
+      (v) => v.boatType === 'day_boat' || v.boatType === 'liveaboard',
+    )
+    return profileCreate(ctx, args, 'boats', 'Boat', {
+      hasCompressor,
       verified: false,
-    }),
+    })
+  },
 })
 
 export const update = mutation({
@@ -63,8 +67,20 @@ export const update = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     fleet: v.optional(v.array(fleetEntryValidator)),
+    hasCompressor: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => profileUpdate(ctx, args, 'boats'),
+  handler: async (ctx, args) => {
+    const { hasCompressor, ...rest } = args
+    const extras: Record<string, boolean> = {}
+    if (hasCompressor !== undefined) {
+      extras.hasCompressor = hasCompressor
+    } else if (rest.fleet) {
+      extras.hasCompressor = rest.fleet.some(
+        (v) => v.boatType === 'day_boat' || v.boatType === 'liveaboard',
+      )
+    }
+    return profileUpdate(ctx, { ...rest, ...extras }, 'boats')
+  },
 })
 
 export const byUserId = query({
