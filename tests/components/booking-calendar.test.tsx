@@ -71,7 +71,7 @@ vi.mock('@/components/booking/urgent-booking-strip', () => ({
   UrgentBookingStrip: () => null,
 }))
 vi.mock('@/components/ui', () => ({
-  GlassCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
 // Convex — no backend needed

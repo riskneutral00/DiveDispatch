@@ -7,7 +7,7 @@ import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { GlassButton, GlassBadge, RoleIcon } from '@/components/ui'
+import { Button, Badge, RoleIcon } from '@/components/ui'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
@@ -115,9 +115,9 @@ export function CustomerTable({
                 </p>
               </div>
             </div>
-            <GlassBadge variant={portalComplete ? 'success' : 'default'} size="sm" dot>
+            <Badge variant={portalComplete ? 'success' : 'default'} size="sm" dot>
               {portalComplete ? 'Completed' : 'Pending'}
-            </GlassBadge>
+            </Badge>
           </div>
         )
       })}
@@ -169,9 +169,9 @@ export function StakeholderList({
                   {s.name}
                 </p>
                 {s.isExternal && (
-                  <GlassBadge variant="default" size="sm">
+                  <Badge variant="default" size="sm">
                     External
-                  </GlassBadge>
+                  </Badge>
                 )}
               </div>
               <p className="text-xs text-secondary">
@@ -181,9 +181,9 @@ export function StakeholderList({
             </div>
           </div>
           {s.reservationStatus && (
-            <GlassBadge variant={reservationVariant(s.reservationStatus)} size="sm" dot>
+            <Badge variant={reservationVariant(s.reservationStatus)} size="sm" dot>
               {s.reservationStatus === 'PendingAcceptance' ? 'Pending' : s.reservationStatus}
-            </GlassBadge>
+            </Badge>
           )}
         </li>
       ))}
@@ -269,13 +269,13 @@ export function PortalLinkSection({
           </p>
         )}
         <div className="flex gap-2 flex-wrap">
-          <GlassButton variant="secondary" size="sm" onClick={handleCopy}>
+          <Button variant="secondary" size="sm" onClick={handleCopy}>
             {copied ? <Check size={buttonIconSize} /> : <Copy size={buttonIconSize} />}
             {copied ? 'Copied!' : 'Copy Link'}
-          </GlassButton>
-          <GlassButton variant="ghost" size="sm" onClick={() => setShowCreateForm(true)}>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(true)}>
             Regenerate
-          </GlassButton>
+          </Button>
         </div>
       </div>
     )
@@ -321,26 +321,26 @@ export function PortalLinkSection({
           </p>
         )}
         <div className="flex gap-2">
-          <GlassButton type="submit" variant="primary" size="sm" loading={creating}>
+          <Button type="submit" variant="primary" size="sm" loading={creating}>
             Generate Link
-          </GlassButton>
-          <GlassButton
+          </Button>
+          <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => setShowCreateForm(false)}
           >
             Cancel
-          </GlassButton>
+          </Button>
         </div>
       </form>
     )
   }
 
   return (
-    <GlassButton variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}>
+    <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}>
       <ExternalLink size={buttonIconSize} />
       Send Portal Link
-    </GlassButton>
+    </Button>
   )
 }

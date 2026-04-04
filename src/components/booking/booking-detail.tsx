@@ -6,7 +6,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GlassCard, GlassButton, GlassBadge, GlassDialog } from '@/components/ui'
+import { Card, Button, Badge, Dialog } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -40,13 +40,13 @@ function LoadingSkeleton() {
   return (
     <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
       {[1, 2, 3].map((i) => (
-        <GlassCard key={i} padding="md">
+        <Card key={i} padding="md">
           <div className="animate-pulse space-y-3">
             <div className="h-4 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
             <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-glass-border)' }} />
             <div className="h-3 rounded w-1/2" style={{ background: 'var(--color-glass-border)' }} />
           </div>
-        </GlassCard>
+        </Card>
       ))}
     </div>
   )
@@ -83,7 +83,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
   if (booking === null) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <GlassCard padding="lg" className="max-w-sm w-full text-center">
+        <Card padding="lg" className="max-w-sm w-full text-center">
           <p
             className="text-lg font-semibold mb-2 text-primary"
           >
@@ -92,11 +92,11 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
           <p className="text-sm mb-4 text-secondary">
             This booking does not exist or you do not have access.
           </p>
-          <GlassButton variant="secondary" onClick={() => router.push('/dashboard')}>
+          <Button variant="secondary" onClick={() => router.push('/dashboard')}>
             <ArrowLeft size={16} />
             Back to Dashboard
-          </GlassButton>
-        </GlassCard>
+          </Button>
+        </Card>
       </div>
     )
   }
@@ -137,13 +137,13 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       </div>
 
       {/* Status card */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <GlassBadge variant={statusVariant(booking.status)} dot>
+              <Badge variant={statusVariant(booking.status)} dot>
                 {booking.status}
-              </GlassBadge>
+              </Badge>
               {booking.status === 'Draft' && ttlLabel && (
                 <span
                   className="text-xs"
@@ -170,69 +170,69 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
           {/* Action buttons */}
           <div className="flex gap-2 flex-wrap">
             {canEdit && (
-              <GlassButton
+              <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => router.push(`/booking/${bookingId}/edit`)}
               >
                 <Edit2 size={14} />
                 Edit
-              </GlassButton>
+              </Button>
             )}
             {canClearMedical && (
-              <GlassButton
+              <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => clearMedicalBlock({ bookingId: bookingId as Id<'bookings'> })}
               >
                 <ShieldCheck size={14} />
                 Clear Medical Block
-              </GlassButton>
+              </Button>
             )}
             {canCancel && (
-              <GlassButton
+              <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowCancelDialog(true)}
               >
                 <X size={14} />
                 Cancel
-              </GlassButton>
+              </Button>
             )}
           </div>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Customers */}
       {booking.divers.length > 0 && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <FormSectionHeader label="Customers" />
           <CustomerTable booking={booking} />
-        </GlassCard>
+        </Card>
       )}
 
       {/* Sessions */}
       {booking.sessions.length > 0 && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <FormSectionHeader label="Schedule" />
           <SessionTimeline sessions={booking.sessions} />
-        </GlassCard>
+        </Card>
       )}
 
       {/* Stakeholders */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <FormSectionHeader label="Stakeholders" />
         <StakeholderList stakeholders={booking.stakeholders} />
-      </GlassCard>
+      </Card>
 
       {/* Reservations */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <FormSectionHeader label="Reservations" />
         <ReservationStatusList reservations={booking.reservations} />
-      </GlassCard>
+      </Card>
 
       {/* Portal progress */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <FormSectionHeader label="Customer Portal" />
         <PortalProgressCard
           portalContact={booking.portalContact}
@@ -260,16 +260,16 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
             />
           )}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Audit trail */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <FormSectionHeader label="Audit Trail" />
         <AuditTrailTable bookingId={bookingId} />
-      </GlassCard>
+      </Card>
 
       {/* Cancel dialog */}
-      <GlassDialog
+      <Dialog
         open={showCancelDialog}
         onClose={() => setShowCancelDialog(false)}
         title="Cancel booking?"
@@ -283,7 +283,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
             </p>
           )}
           <div className="flex gap-3">
-            <GlassButton
+            <Button
               variant="destructive"
               size="md"
               fullWidth
@@ -291,18 +291,18 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
               onClick={handleCancel}
             >
               Yes, cancel booking
-            </GlassButton>
-            <GlassButton
+            </Button>
+            <Button
               variant="secondary"
               size="md"
               fullWidth
               onClick={() => setShowCancelDialog(false)}
             >
               Keep booking
-            </GlassButton>
+            </Button>
           </div>
         </div>
-      </GlassDialog>
+      </Dialog>
     </div>
   )
 }

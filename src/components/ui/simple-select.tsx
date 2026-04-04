@@ -4,7 +4,7 @@
  * Simple native <select> with glass styling. For basic string-option dropdowns
  * in profile forms and portal steps.
  *
- * NOT the same as GlassSelect (glass-select.tsx) which is a tiered instructor
+ * NOT the same as Select (select.tsx) which is a tiered instructor
  * select with keyboard navigation and language matching.
  *
  * Extracted by L8-27 from 4 inline copies across agent, instructor, divemaster
@@ -12,7 +12,7 @@
  */
 
 import { useId } from 'react'
-import { GlassFieldError, GlassFieldLabel } from '@/components/ui/field-shell'
+import { FieldError, FieldLabel } from '@/components/ui/field-shell'
 
 interface OptionItem {
   value: string
@@ -20,7 +20,7 @@ interface OptionItem {
   disabled?: boolean
 }
 
-interface GlassSimpleSelectProps {
+interface SimpleSelectProps {
   label?: string
   value: string
   onChange: (value: string) => void
@@ -36,7 +36,7 @@ interface GlassSimpleSelectProps {
   'data-testid'?: string
 }
 
-export function GlassSimpleSelect({
+export function SimpleSelect({
   label,
   value,
   onChange,
@@ -48,16 +48,16 @@ export function GlassSimpleSelect({
   className,
   'aria-label': ariaLabel,
   'data-testid': testId,
-}: GlassSimpleSelectProps) {
+}: SimpleSelectProps) {
   const generatedId = useId()
   const id = generatedId
 
   return (
     <div className={`flex flex-col gap-1.5 w-full${className ? ` ${className}` : ''}`}>
       {label && (
-        <GlassFieldLabel htmlFor={id} required={required}>
+        <FieldLabel htmlFor={id} required={required}>
           {label}
-        </GlassFieldLabel>
+        </FieldLabel>
       )}
       <select
         id={label ? id : undefined}
@@ -92,7 +92,7 @@ export function GlassSimpleSelect({
           )
         })}
       </select>
-      <GlassFieldError id={`${id}-error`} message={error} />
+      <FieldError id={`${id}-error`} message={error} />
     </div>
   )
 }

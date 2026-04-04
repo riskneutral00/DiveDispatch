@@ -5,10 +5,10 @@ import { useMutation } from 'convex/react'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GlassDialog } from '@/components/ui/glass-dialog'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Dialog } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { GlassTextarea } from '@/components/ui/glass-textarea'
+import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 
@@ -65,7 +65,7 @@ export function CancelBookingDialog({
   }
 
   return (
-    <GlassDialog
+    <Dialog
       open={open}
       onClose={handleClose}
       title="Cancel booking"
@@ -74,7 +74,7 @@ export function CancelBookingDialog({
     >
       <div className="flex flex-col gap-4">
         {/* Reason field */}
-        <GlassTextarea
+        <Textarea
           label="Reason (optional)"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -88,19 +88,19 @@ export function CancelBookingDialog({
 
         {/* Actions */}
         <div className="flex justify-end gap-3 mt-1">
-          <GlassButton variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
+          <Button variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
             Keep booking
-          </GlassButton>
-          <GlassButton
+          </Button>
+          <Button
             variant="destructive"
             size="sm"
             onClick={handleConfirm}
             loading={submitting}
           >
             Cancel booking
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }

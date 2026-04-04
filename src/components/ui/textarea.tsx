@@ -1,14 +1,14 @@
 import React, { useId } from "react";
-import { GlassFieldError, GlassFieldLabel } from "@/components/ui/field-shell";
+import { FieldError, FieldLabel } from "@/components/ui/field-shell";
 
-interface GlassTextareaProps
+interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helperText?: string;
 }
 
-export function GlassTextarea({
+export function Textarea({
   label,
   error,
   helperText,
@@ -18,16 +18,16 @@ export function GlassTextarea({
   rows = 3,
   required,
   ...props
-}: GlassTextareaProps) {
+}: TextareaProps) {
   const generatedId = useId();
   const id = externalId ?? generatedId;
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <GlassFieldLabel htmlFor={id} required={required}>
+        <FieldLabel htmlFor={id} required={required}>
           {label}
-        </GlassFieldLabel>
+        </FieldLabel>
       )}
 
       <textarea
@@ -57,7 +57,7 @@ export function GlassTextarea({
         }
       />
 
-      <GlassFieldError id={`${id}-error`} message={error} />
+      <FieldError id={`${id}-error`} message={error} />
       {!error && helperText && (
         <p
           id={`${id}-helper`}

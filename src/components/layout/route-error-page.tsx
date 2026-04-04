@@ -3,8 +3,8 @@
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassErrorCard } from '@/components/ui/glass-error-card'
+import { Button } from '@/components/ui/button'
+import { ErrorCard } from '@/components/ui/error-card'
 
 interface RouteErrorPageProps {
   error: Error & { digest?: string }
@@ -30,12 +30,12 @@ export function RouteErrorPage({
   }, [error, logLabel])
 
   return (
-    <GlassErrorCard
+    <ErrorCard
       icon={AlertTriangle}
       title={title}
       message={message}
       minHeight={minHeight}
-      action={<GlassButton onClick={reset}>{t('retry')}</GlassButton>}
+      action={<Button onClick={reset}>{t('retry')}</Button>}
     />
   )
 }

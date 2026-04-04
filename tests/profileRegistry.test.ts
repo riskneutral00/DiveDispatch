@@ -51,7 +51,6 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'contact', label: 'Contact' },
       { id: 'capabilities', label: 'Capabilities' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ])
   })
 
@@ -62,7 +61,6 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'gear-catalog', label: 'Gear Catalog' },
       { id: 'inventory', label: 'Inventory' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ])
   })
 
@@ -72,16 +70,14 @@ describe('PROFILE_REGISTRY', () => {
       { id: 'contact', label: 'Contact' },
       { id: 'gas-mixes', label: 'Gas Mixes' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ])
   })
 
-  it('boat has contact, fleet, booking, availability tabs', () => {
+  it('boat has contact, fleet, booking tabs', () => {
     expect(PROFILE_REGISTRY.boat.tabs).toEqual([
       { id: 'contact', label: 'Contact' },
       { id: 'fleet', label: 'Fleet' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ])
   })
 

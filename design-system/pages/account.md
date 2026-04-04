@@ -24,12 +24,12 @@ not clarity.
 DashboardShell
 └── page container  max-w-lg mx-auto px-4 pt-6 pb-10
     ├── Page title    "Account"  — 28px / 700 / -0.03em
-    ├── GlassCard     contains all fields in a single-column stack
+    ├── Card     contains all fields in a single-column stack
     │   ├── Section: Identity
     │   ├── ── (divider)
     │   ├── Section: App preferences
     │   └── ── (divider)
-    └── Save row      right-aligned GlassButton, inside the GlassCard at the bottom
+    └── Save row      right-aligned Button, inside the Card at the bottom
 ```
 
 Max-width `max-w-lg` (672px) — narrower than Profile/Settings because this is a simple form,
@@ -42,10 +42,10 @@ not a multi-section layout. Full-width on mobile.
 Fields that match the Clerk identity layer and business presentation:
 
 ```
-First name      GlassInput  type="text"   required
-Last name       GlassInput  type="text"   required
-Business name   GlassInput  type="text"   required (hidden for personal roles: Instructor, DiveMaster)
-Contact email   GlassInput  type="email"  optional  (note: not Clerk auth email — a contact address)
+First name      Input  type="text"   required
+Last name       Input  type="text"   required
+Business name   Input  type="text"   required (hidden for personal roles: Instructor, DiveMaster)
+Contact email   Input  type="email"  optional  (note: not Clerk auth email — a contact address)
 ```
 
 - 16px gap between fields.
@@ -70,13 +70,13 @@ enough context.
 ## Section: App Preferences
 
 ```
-App language    GlassSelect   label="App language"
+App language    Select   label="App language"
                               Options: same language list as sign-up wizard (flag + native name)
                               Current value: user.appLanguage
 
-Theme           [ThemeSwitcher inline or GlassSelect]
+Theme           [ThemeSwitcher inline or Select]
                               Already accessible via header icon — surface here too for discoverability.
-                              If using GlassSelect: option labels = theme display names.
+                              If using Select: option labels = theme display names.
 ```
 
 - App language: render the same flag + native script label style as the sign-up wizard.
@@ -89,7 +89,7 @@ Theme           [ThemeSwitcher inline or GlassSelect]
 
 ## Save
 
-Single Save button at the bottom of the GlassCard. Right-aligned on desktop, full-width on mobile.
+Single Save button at the bottom of the Card. Right-aligned on desktop, full-width on mobile.
 
 Same feedback pattern as Profile and Settings:
 - In-flight: disabled + spinner.
@@ -103,7 +103,7 @@ that a single submit is the correct UX.
 
 ## Loading State
 
-Skeleton for each field (single-line shimmer, 40px height, 100% width) inside the GlassCard.
+Skeleton for each field (single-line shimmer, 40px height, 100% width) inside the Card.
 Render 5 skeleton rows while data loads. Same shimmer spec as Profile/Settings.
 
 ---
@@ -118,7 +118,7 @@ Not implemented now — placeholder only if the section is scaffolded.
 ## Accessibility
 
 - All inputs have `<label>` elements with `for` pointing to input `id`.
-- GlassSelect uses native `<select>` or ARIA combobox — not a custom click-outside-to-close div.
+- Select uses native `<select>` or ARIA combobox — not a custom click-outside-to-close div.
 - No placeholder-only inputs.
 - Tab order: First name → Last name → Business name → Contact email → App language → Channel → Theme → Save.
 

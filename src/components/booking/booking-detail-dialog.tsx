@@ -8,7 +8,7 @@ import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { DISCARD_DRAFT_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GlassButton, GlassButtonGroup, GlassBadge, GlassDialog, ErrorAlert, EmptyState } from '@/components/ui'
+import { Button, ButtonGroup, Badge, Dialog, ErrorAlert, EmptyState } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -54,7 +54,7 @@ function SectionTabs({
   onChange: (id: SectionId) => void
 }) {
   return (
-    <GlassButtonGroup
+    <ButtonGroup
       variant="tabs"
       value={active}
       onChange={(v) => onChange(v as SectionId)}
@@ -103,7 +103,7 @@ function DiscardDraftDialog({
   }
 
   return (
-    <GlassDialog
+    <Dialog
       open={open}
       onClose={handleClose}
       title="Discard draft?"
@@ -114,14 +114,14 @@ function DiscardDraftDialog({
         <ErrorAlert className="mb-3">{error}</ErrorAlert>
       )}
       <div className="flex justify-end gap-3">
-        <GlassButton variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
+        <Button variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
           Keep draft
-        </GlassButton>
-        <GlassButton variant="destructive" size="sm" onClick={handleDiscard} loading={submitting}>
+        </Button>
+        <Button variant="destructive" size="sm" onClick={handleDiscard} loading={submitting}>
           Discard
-        </GlassButton>
+        </Button>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }
 
@@ -206,9 +206,9 @@ function BookingDetailContent({
             {/* Status + summary */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <GlassBadge variant={statusVariant(booking.status)} dot>
+                <Badge variant={statusVariant(booking.status)} dot>
                   {booking.status}
-                </GlassBadge>
+                </Badge>
                 {isDraft && ttlLabel && (
                   <span
                     className="text-xs"
@@ -239,7 +239,7 @@ function BookingDetailContent({
             <div className="flex flex-wrap gap-2">
               {isDraft ? (
                 <>
-                  <GlassButton
+                  <Button
                     variant="primary"
                     size="sm"
                     onClick={() => {
@@ -249,19 +249,19 @@ function BookingDetailContent({
                   >
                     <Play size={13} />
                     Resume
-                  </GlassButton>
-                  <GlassButton
+                  </Button>
+                  <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => setShowDiscardDialog(true)}
                   >
                     <Trash2 size={13} />
                     Discard
-                  </GlassButton>
+                  </Button>
                 </>
               ) : (
                 canEdit && (
-                  <GlassButton
+                  <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => {
@@ -271,17 +271,17 @@ function BookingDetailContent({
                   >
                     <Edit2 size={13} />
                     Edit Booking
-                  </GlassButton>
+                  </Button>
                 )
               )}
               {canCancel && !isDraft && (
-                <GlassButton
+                <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowCancelDialog(true)}
                 >
                   Cancel Booking
-                </GlassButton>
+                </Button>
               )}
             </div>
 
@@ -383,7 +383,7 @@ function BookingDetailContent({
 
 export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogProps) {
   return (
-    <GlassDialog
+    <Dialog
       open={bookingId !== null}
       onClose={onClose}
       title="Booking Detail"
@@ -392,6 +392,6 @@ export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogP
       {bookingId !== null && (
         <BookingDetailContent bookingId={bookingId} onClose={onClose} />
       )}
-    </GlassDialog>
+    </Dialog>
   )
 }

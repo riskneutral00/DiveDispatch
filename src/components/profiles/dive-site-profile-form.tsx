@@ -4,10 +4,10 @@ import { z } from 'zod'
 
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassCheckbox } from '@/components/ui/glass-checkbox'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSelect, type GlassSelectOption } from '@/components/ui/glass-select'
+import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Select, type SelectOption } from '@/components/ui/select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
   diveSiteDetailsSchema,
@@ -15,7 +15,6 @@ import {
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
@@ -23,7 +22,7 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ─────────────────────────────────────────────────────────
 
-const VENUE_TYPE_OPTIONS: GlassSelectOption[] = [
+const VENUE_TYPE_OPTIONS: SelectOption[] = [
   { id: 'Shore', label: 'Shore' },
   { id: 'Reef', label: 'Reef' },
   { id: 'Lake', label: 'Lake' },
@@ -97,7 +96,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -114,7 +113,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
     >
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-          <GlassInput
+          <Input
             label="Site Name"
             placeholder="Shark Bay Reef"
             value={form.name}
@@ -133,7 +132,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
 
         <ProfileFormSectionDivider show />
 
-        <GlassSelect
+        <Select
           label="Site Type"
           value={form.venueType}
           onChange={(val) => setField('venueType', val as DiveSiteDetailsFormState['venueType'])}
@@ -200,9 +199,9 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
 
   if (!existing) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm text-secondary">Complete details first</p>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -225,7 +224,7 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
             Site Capabilities
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GlassCheckbox
+            <Checkbox
               label="Confined Water Capable"
               checked={form.confinedCapable}
               onChange={(v) => setField('confinedCapable', v)}
@@ -234,7 +233,7 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <GlassInput
+          <Input
             label="Max Depth (m)"
             type="number"
             min="0.1"
@@ -244,7 +243,7 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
             error={errors.maxDepth}
             placeholder="18"
           />
-          <GlassInput
+          <Input
             label="Max Capacity (divers)"
             type="number"
             min="1"
@@ -263,7 +262,7 @@ export function DiveSiteCapabilitiesSection({ profile: existing, create, update 
           <span className="text-sm font-medium text-secondary">
             Visibility
           </span>
-          <GlassCheckbox
+          <Checkbox
             label="List this site publicly in the booking wizard"
             checked={form.isPublic}
             onChange={(v) => setField('isPublic', v)}

@@ -1,5 +1,5 @@
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
-import { GlassTooltip } from './glass-tooltip'
+import { Tooltip } from './tooltip'
 
 interface RoleIconComponentProps {
   role: ClerkRole
@@ -15,7 +15,7 @@ export function RoleIcon({ role, size, showTooltip = false }: RoleIconComponentP
   const icon = <IconComponent size={size} />
 
   if (showTooltip) {
-    return <GlassTooltip label={cfg.label}>{icon}</GlassTooltip>
+    return <Tooltip label={cfg.label}>{icon}</Tooltip>
   }
 
   return icon

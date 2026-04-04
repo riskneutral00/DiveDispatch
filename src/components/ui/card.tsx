@@ -1,7 +1,7 @@
 import React from 'react'
 import { cn } from '@/lib/utils/cn'
 
-interface GlassCardProps {
+interface CardProps {
   children: React.ReactNode;
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
@@ -18,7 +18,7 @@ const paddingMap = {
   lg: 'p-6 sm:p-8',
 }
 
-export function GlassCard({
+export function Card({
   children,
   className = '',
   padding = 'md',
@@ -26,7 +26,7 @@ export function GlassCard({
   as: Tag = 'div',
   style,
   onClick,
-}: GlassCardProps) {
+}: CardProps) {
   return (
     <Tag
       style={style}

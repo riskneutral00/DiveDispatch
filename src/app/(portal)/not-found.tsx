@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { Search } from 'lucide-react'
-import { GlassErrorCard } from '@/components/ui/glass-error-card'
+import { ErrorCard } from '@/components/ui/error-card'
 
 export default function PortalNotFound() {
   return (
-    <GlassErrorCard
+    <ErrorCard
       icon={Search}
       iconColor="var(--color-text-secondary)"
       title="Page not found"

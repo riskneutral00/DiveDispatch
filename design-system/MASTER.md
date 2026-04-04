@@ -254,7 +254,7 @@ No color inversion. No opacity fog. Just light.
 ```
 
 **Container** — readability surface with ghost border. No blur, no shadow.
-Used by `GlassCard`, `GlassDialog`, and any non-interactive wrapper.
+Used by `Card`, `Dialog`, and any non-interactive wrapper.
 The semi-transparent background provides a readability floor so text inside
 cards is always visible regardless of the background image.
 
@@ -365,16 +365,16 @@ WCAG contrast validated in `tests/skin-contrast.test.ts`.
 
 ## Component Catalog
 
-All glass components live in `src/components/glass/`:
+All glass components live in `src/components/ui/`:
 
 | Component | File | Glass class | Hoverable |
 |-----------|------|-------------|-----------|
-| `GlassCard` | `glass-card.tsx` | `.glass-container` (transparent, ghost border) | Optional via `hoverable` prop |
-| `GlassButton` | `glass-button.tsx` | Custom per variant | N/A (has own hover states) |
-| `GlassInput` | `glass-input.tsx` | `.glass .glass-field` | N/A (focus ring) |
-| `GlassBadge` | `glass-badge.tsx` | Inline tint (no blur) | No |
-| `GlassSelect` | `glass-select.tsx` | `.glass .glass-field` | N/A (focus ring) |
-| `GlassDialog` | `glass-dialog.tsx` | `.glass-container` (transparent, ghost border) | N/A |
+| `Card` | `card.tsx` | `.glass-container` (transparent, ghost border) | Optional via `hoverable` prop |
+| `Button` | `button.tsx` | Custom per variant | N/A (has own hover states) |
+| `Input` | `input.tsx` | `.glass .glass-field` | N/A (focus ring) |
+| `Badge` | `badge.tsx` | Inline tint (no blur) | No |
+| `Select` | `select.tsx` | `.glass .glass-field` | N/A (focus ring) |
+| `Dialog` | `dialog.tsx` | `.glass-container` (transparent, ghost border) | N/A |
 
 ### Common Components (`src/components/common/`)
 
@@ -400,9 +400,9 @@ Canonical states for every feature surface. Use these exact labels in implementa
 |---|---|---|
 | `loading.initial` | Route/shell is waiting for first render data | `FullPageSpinner` (or `Spinner` with label when scoped) |
 | `loading.inline` | Panel/list subsection is loading | `Spinner` in local container |
-| `loading.action` | User-triggered mutation in progress | `GlassButton` with `loading` |
+| `loading.action` | User-triggered mutation in progress | `Button` with `loading` |
 | `error.inline` | Recoverable feature-level error | `ErrorAlert` |
-| `error.global` | Route-level uncaught error | `RouteErrorPage` / `GlassErrorCard` |
+| `error.global` | Route-level uncaught error | `RouteErrorPage` / `ErrorCard` |
 | `empty` | Valid no-data result | `EmptyState` |
 | `success.transient` | Short-lived completion feedback | `SaveButton` state or surface toast policy |
 
@@ -507,7 +507,7 @@ Stripped values (not supported): "lift", "ripple", "slide", "bubbles", "particle
 | `src/themes/theme-provider.tsx` | React context provider, injects vars on `:root` |
 | `src/themes/theme-loader.ts` | Google Fonts loader (Inter via next/font, fallback only) |
 | `src/app/globals.css` | CSS variable fallbacks, glass utility classes, hover behavior |
-| `src/components/glass/` | React glass component library |
+| `src/components/ui/` | React glass component library |
 
 ---
 

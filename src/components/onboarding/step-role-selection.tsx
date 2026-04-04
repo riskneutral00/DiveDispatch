@@ -5,8 +5,8 @@ import {
   DISPLAY_RESOURCE_ROLES,
   type RoleConfig,
 } from '@/lib/constants/roles'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 // ── Role tile ─────────────────────────────────────────────────────────────────
 
@@ -105,21 +105,21 @@ export function StepRoleSelection({
       </div>
 
       <div className="flex gap-3 w-full" data-testid="wizard-nav">
-        <GlassButton
+        <Button
           variant="secondary"
           fullWidth
           onClick={onBack}
         >
           Back
-        </GlassButton>
-        <GlassButton
+        </Button>
+        <Button
           variant="primary"
           fullWidth
           disabled={!canContinue}
           onClick={onContinue}
         >
           Next
-        </GlassButton>
+        </Button>
       </div>
 
       {/* Role descriptions below button */}

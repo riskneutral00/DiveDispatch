@@ -1,5 +1,5 @@
 import { Check, Save } from 'lucide-react'
-import { GlassButton } from '@/components/ui'
+import { Button } from '@/components/ui'
 
 interface SaveButtonProps {
   saving: boolean
@@ -13,7 +13,7 @@ interface SaveButtonProps {
 export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }: SaveButtonProps) {
   return (
     <div className="flex justify-end">
-      <GlassButton
+      <Button
         type="submit"
         loading={saving}
         disabled={disabled || (isUpdate ? (!isDirty || saving) : saving)}
@@ -30,7 +30,7 @@ export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }
             {label ?? (isUpdate ? 'Save' : 'Create Profile')}
           </>
         )}
-      </GlassButton>
+      </Button>
     </div>
   )
 }

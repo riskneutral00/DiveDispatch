@@ -1,10 +1,10 @@
 /**
  * Single checkbox with glass styling. For boolean toggles in forms.
  *
- * For multi-select checkbox groups, use GlassCheckboxGroup instead.
+ * For multi-select checkbox groups, use CheckboxGroup instead.
  */
 
-interface GlassCheckboxProps {
+interface CheckboxProps {
   label: string | React.ReactNode
   checked: boolean
   onChange: (checked: boolean) => void
@@ -12,13 +12,13 @@ interface GlassCheckboxProps {
   className?: string
 }
 
-export function GlassCheckbox({
+export function Checkbox({
   label,
   checked,
   onChange,
   disabled,
   className,
-}: GlassCheckboxProps) {
+}: CheckboxProps) {
   return (
     <label
       className={`flex items-center gap-2 cursor-pointer select-none text-sm text-primary${disabled ? ' opacity-50 cursor-not-allowed' : ''}${className ? ` ${className}` : ''}`}

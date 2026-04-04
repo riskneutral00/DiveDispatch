@@ -19,7 +19,7 @@ export function formatDateRange(start: string, end: string): string {
 
 export type BadgeVariant = 'success' | 'info' | 'warning' | 'destructive' | 'default'
 
-/** Map booking status string to a GlassBadge variant. */
+/** Map booking status string to a Badge variant. */
 export function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case 'Draft':
@@ -35,7 +35,7 @@ export function statusVariant(status: string): BadgeVariant {
   }
 }
 
-/** Map reservation status string to a GlassBadge variant. */
+/** Map reservation status string to a Badge variant. */
 export function reservationVariant(
   status: string | undefined,
 ): 'success' | 'warning' | 'destructive' | 'default' {

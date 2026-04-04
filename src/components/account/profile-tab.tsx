@@ -4,8 +4,8 @@ import { useQuery, useMutation } from 'convex/react'
 import { z } from 'zod'
 import { isValidPhoneNumber } from 'libphonenumber-js'
 import { api } from '@/lib/convex-generated'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -149,21 +149,21 @@ export function ProfileTab() {
     >
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <GlassInput
+          <Input
             label="First name"
             value={form.firstName}
             onChange={(e) => setField('firstName', e.target.value)}
             autoComplete="given-name"
             required
           />
-          <GlassInput
+          <Input
             label="Last name"
             value={form.lastName}
             onChange={(e) => setField('lastName', e.target.value)}
             autoComplete="family-name"
             required
           />
-          <GlassInput
+          <Input
             label="Nickname"
             value={form.nickname}
             onChange={(e) => setField('nickname', e.target.value)}
@@ -171,7 +171,7 @@ export function ProfileTab() {
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassInput
+          <Input
             label="Phone"
             type="tel"
             value={form.phone}
@@ -183,7 +183,7 @@ export function ProfileTab() {
             maxLength={16}
             required
           />
-          <GlassInput
+          <Input
             label="Email"
             type="email"
             value={form.email}
@@ -193,21 +193,21 @@ export function ProfileTab() {
         </div>
         <p className="text-sm font-medium text-secondary">Date of birth</p>
         <div className="grid grid-cols-3 gap-4">
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Month"
             value={form.dobMonth}
             onChange={(v) => setField('dobMonth', v)}
             options={MONTHS}
             placeholder="Month"
           />
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Day"
             value={form.dobDay}
             onChange={(v) => setField('dobDay', v)}
             options={DAYS}
             placeholder="Day"
           />
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Year"
             value={form.dobYear}
             onChange={(v) => setField('dobYear', v)}

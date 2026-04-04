@@ -7,25 +7,25 @@ const SIZE_CLASS = {
   sm: 'w-8 h-8',
 } as const
 
-export type GlassIconButtonSize = keyof typeof SIZE_CLASS
+export type IconButtonSize = keyof typeof SIZE_CLASS
 
-export interface GlassIconButtonProps
+export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   /** Lucide icon or similar */
   children: ReactNode
-  size?: GlassIconButtonSize
+  size?: IconButtonSize
 }
 
 /**
  * Circular glass control used for theme, background, and compact toggles in the shell header.
  */
-export function GlassIconButton({
+export function IconButton({
   children,
   className = '',
   size = 'md',
   type = 'button',
   ...rest
-}: GlassIconButtonProps) {
+}: IconButtonProps) {
   return (
     <button
       type={type}

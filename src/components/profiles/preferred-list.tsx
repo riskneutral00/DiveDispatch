@@ -6,11 +6,11 @@ import { ChevronUp, ChevronDown, Trash2, Plus, Wind } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassDialog } from '@/components/ui/glass-dialog'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Dialog } from '@/components/ui/dialog'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { FlagPill } from '@/components/profiles/language-picker'
 import {
@@ -90,7 +90,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
   return (
     <div className="space-y-3">
       <div className="relative">
-        <GlassInput
+        <Input
           label={label}
           placeholder="Search by name or city…"
           value={search}
@@ -133,7 +133,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
           {slugs.map((slug, index) => {
             const entry = slugToEntry[slug]
             return (
-              <GlassCard key={slug} padding="sm">
+              <Card key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span
                     className="text-xs font-bold w-5 text-center shrink-0 text-secondary"
@@ -154,18 +154,18 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
+                    <Button variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
                       <ChevronUp size={16} />
-                    </GlassButton>
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
+                    </Button>
+                    <Button variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
                       <ChevronDown size={16} />
-                    </GlassButton>
-                    <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label={`Remove ${emptyNoun.replace(/s$/, '')}`}>
+                    </Button>
+                    <Button variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label={`Remove ${emptyNoun.replace(/s$/, '')}`}>
                       <Trash2 size={16} />
-                    </GlassButton>
+                    </Button>
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
             )
           })}
         </div>
@@ -581,7 +581,7 @@ export function PreferredInstructorList(props: ListProps) {
           {slugs.map((slug, index) => {
             const entry = slugToEntry[slug]
             return (
-              <GlassCard key={slug} padding="sm">
+              <Card key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold w-5 text-center shrink-0 text-secondary">
                     {index + 1}
@@ -597,7 +597,7 @@ export function PreferredInstructorList(props: ListProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <GlassButton
+                    <Button
                       variant="ghost"
                       size="sm"
                       type="button"
@@ -606,8 +606,8 @@ export function PreferredInstructorList(props: ListProps) {
                       aria-label="Move up"
                     >
                       <ChevronUp size={16} />
-                    </GlassButton>
-                    <GlassButton
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="sm"
                       type="button"
@@ -616,8 +616,8 @@ export function PreferredInstructorList(props: ListProps) {
                       aria-label="Move down"
                     >
                       <ChevronDown size={16} />
-                    </GlassButton>
-                    <GlassButton
+                    </Button>
+                    <Button
                       variant="destructive-ghost"
                       size="sm"
                       type="button"
@@ -625,10 +625,10 @@ export function PreferredInstructorList(props: ListProps) {
                       aria-label="Remove instructor"
                     >
                       <Trash2 size={16} />
-                    </GlassButton>
+                    </Button>
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
             )
           })}
         </div>
@@ -637,7 +637,7 @@ export function PreferredInstructorList(props: ListProps) {
       {/* Add button + count */}
       <div className="flex items-center justify-between">
         {!atMax && (
-          <GlassButton
+          <Button
             type="button"
             variant="ghost"
             size="sm"
@@ -645,7 +645,7 @@ export function PreferredInstructorList(props: ListProps) {
           >
             <Plus size={14} className="mr-1" />
             Add Instructor
-          </GlassButton>
+          </Button>
         )}
         <span className="ml-auto text-xs text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
@@ -653,7 +653,7 @@ export function PreferredInstructorList(props: ListProps) {
       </div>
 
       {/* Add instructor overlay */}
-      <GlassDialog
+      <Dialog
         open={showOverlay}
         onClose={closeOverlay}
         title="Add Instructor"
@@ -673,7 +673,7 @@ export function PreferredInstructorList(props: ListProps) {
             currentCount={slugs.length}
           />
 
-          <GlassInput
+          <Input
             label="Search instructors"
             placeholder="Search by name or city..."
             value={search}
@@ -714,7 +714,7 @@ export function PreferredInstructorList(props: ListProps) {
             <p className="text-sm text-secondary py-2">Select filters above to browse instructors.</p>
           )}
         </div>
-      </GlassDialog>
+      </Dialog>
     </div>
   )
 }
@@ -804,7 +804,7 @@ function PreferredOverlayList({
           {slugs.map((slug, index) => {
             const entry = slugToEntry[slug]
             return (
-              <GlassCard key={slug} padding="sm">
+              <Card key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold w-5 text-center shrink-0 text-secondary">
                     {index + 1}
@@ -816,32 +816,32 @@ function PreferredOverlayList({
                     {entry && <div className="mt-0.5">{renderRankedBadge(entry)}</div>}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
+                    <Button variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
                       <ChevronUp size={16} />
-                    </GlassButton>
-                    <GlassButton variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
+                    </Button>
+                    <Button variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
                       <ChevronDown size={16} />
-                    </GlassButton>
-                    <GlassButton variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label="Remove">
+                    </Button>
+                    <Button variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label="Remove">
                       <Trash2 size={16} />
-                    </GlassButton>
+                    </Button>
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
             )
           })}
         </div>
       )}
 
-      <GlassButton type="button" variant="ghost" size="sm" onClick={() => setShowOverlay(true)}>
+      <Button type="button" variant="ghost" size="sm" onClick={() => setShowOverlay(true)}>
         <Plus size={14} className="mr-1" />
         {addButtonLabel}
-      </GlassButton>
+      </Button>
 
-      <GlassDialog open={showOverlay} onClose={() => { setShowOverlay(false); onSearchChange(''); onResetFilters?.() }} title={dialogTitle} size="lg">
+      <Dialog open={showOverlay} onClose={() => { setShowOverlay(false); onSearchChange(''); onResetFilters?.() }} title={dialogTitle} size="lg">
         <div className="space-y-4">
           {filterBar}
-          <GlassInput
+          <Input
             label={`Search ${dialogTitle.toLowerCase().replace('add ', '')}`}
             placeholder="Search by name or city..."
             value={search}
@@ -878,7 +878,7 @@ function PreferredOverlayList({
             <p className="text-sm text-secondary py-2">{promptText}</p>
           )}
         </div>
-      </GlassDialog>
+      </Dialog>
     </div>
   )
 }

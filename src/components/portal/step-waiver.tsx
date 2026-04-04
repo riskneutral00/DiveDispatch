@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
-import { GlassCard } from '../ui/glass-card'
-import { GlassCheckbox } from '../ui/glass-checkbox'
-import { GlassInput } from '../ui/glass-input'
+import { Card } from '../ui/card'
+import { Checkbox } from '../ui/checkbox'
+import { Input } from '../ui/input'
 import { SignaturePad, SignaturePadHandle } from './signature-pad'
 import { ShieldCheck } from 'lucide-react'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
@@ -173,7 +173,7 @@ export function StepWaiver({
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* Section: Non-Agency Disclosure */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} style={{ color: 'var(--color-accent)' }} />
@@ -197,10 +197,10 @@ export function StepWaiver({
             text={NON_AGENCY_DISCLOSURE.replace(/____________/g, operatorName)}
           />
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Section: Liability Release */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="space-y-3">
           <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
             Release of Liability / Assumption of Risk
@@ -221,7 +221,7 @@ export function StepWaiver({
           />
 
           {/* Acknowledgment checkbox */}
-          <GlassCheckbox
+          <Checkbox
             label={
               <span className="text-sm leading-snug text-secondary">
                 I have read and fully understand this Release of Liability / Assumption of Risk
@@ -240,10 +240,10 @@ export function StepWaiver({
             </p>
           )}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Section: Diver Accident Insurance */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="space-y-3">
           <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
             Diver Accident Insurance
@@ -282,7 +282,7 @@ export function StepWaiver({
           )}
 
           {hasInsurance === 'yes' && (
-            <GlassInput
+            <Input
               label="Policy Number"
               value={insurancePolicyNumber}
               onChange={(e) => {
@@ -294,10 +294,10 @@ export function StepWaiver({
             />
           )}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Section: Participant Signature */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="space-y-4">
           <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
             Participant Signature
@@ -314,7 +314,7 @@ export function StepWaiver({
             error={errors.signature}
           />
 
-          <GlassInput
+          <Input
             type="date"
             label="Date"
             value={date}
@@ -323,11 +323,11 @@ export function StepWaiver({
             max={todayISO()}
           />
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Section: Guardian (under-18 only) */}
       {isUnder18 && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <div className="space-y-4">
             <div>
               <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
@@ -338,7 +338,7 @@ export function StepWaiver({
               </p>
             </div>
 
-            <GlassInput
+            <Input
               label="Parent / Guardian Full Name"
               value={guardianName}
               onChange={(e) => {
@@ -359,7 +359,7 @@ export function StepWaiver({
               error={errors.guardianSignature}
             />
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       <PortalStepShell

@@ -3,7 +3,7 @@ import React from "react";
 type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info";
 type BadgeSize = "sm" | "md";
 
-interface GlassBadgeProps {
+interface BadgeProps {
   variant?: BadgeVariant;
   size?: BadgeSize;
   children: React.ReactNode;
@@ -52,13 +52,13 @@ const dotColorVar: Record<BadgeVariant, string> = {
   info: "var(--color-secondary)",
 };
 
-export const GlassBadge = React.memo(function GlassBadge({
+export const Badge = React.memo(function Badge({
   variant = "default",
   size = "md",
   dot = false,
   children,
   className = "",
-}: GlassBadgeProps) {
+}: BadgeProps) {
   return (
     <span
       className={[

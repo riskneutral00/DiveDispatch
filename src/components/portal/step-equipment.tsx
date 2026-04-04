@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { GlassCard } from '../ui/glass-card'
-import { GlassInput } from '../ui/glass-input'
-import { GlassButton } from '../ui/glass-button'
-import { GlassTextarea } from '../ui/glass-textarea'
+import { Card } from '../ui/card'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { Textarea } from '../ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
@@ -300,7 +300,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   return (
     <div className="space-y-6">
       {/* ── Body Measurements ─────────────────────────────────────────── */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading note="(required when renting)">Body Measurements</SectionHeading>
 
         <div className="space-y-4">
@@ -313,7 +313,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               Height
             </label>
             <div className="flex gap-2 items-center">
-              <GlassInput
+              <Input
                 type="number"
                 inputMode="decimal"
                 placeholder={heightUnit === 'cm' ? '175' : '5.9'}
@@ -342,7 +342,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               Weight
             </label>
             <div className="flex gap-2 items-center">
-              <GlassInput
+              <Input
                 type="number"
                 inputMode="decimal"
                 placeholder={weightUnit === 'kg' ? '70' : '154'}
@@ -371,7 +371,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               Shoe Size
             </label>
             <div className="flex gap-2 items-center">
-              <GlassInput
+              <Input
                 type="text"
                 inputMode="decimal"
                 placeholder={
@@ -392,10 +392,10 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             </div>
           </fieldset>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* ── Corrective Lenses ─────────────────────────────────────────── */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Corrective Lenses</SectionHeading>
         <p className="text-sm mb-4 text-secondary">
           Do you need prescription (powered) lenses in your mask?
@@ -444,7 +444,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
         {needsPoweredLenses === true && (
           <div className="mt-4">
-            <GlassTextarea
+            <Textarea
               label={`Prescription Details${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
@@ -454,10 +454,10 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             />
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* ── Equipment Rental ──────────────────────────────────────────── */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Equipment Rental</SectionHeading>
         <p className="text-sm mb-4 text-secondary">
           Will you bring your own gear or rent from us?
@@ -503,7 +503,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             className="mt-4 pt-4 border-t"
             style={{ borderColor: 'var(--color-glass-border)' }}
           >
-            <GlassInput
+            <Input
               label="Mask Prescription"
               type="text"
               placeholder="e.g. −2.00 / −2.50"
@@ -513,19 +513,19 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             />
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Continue button — only rendered when parent passes onComplete */}
       {onComplete && (
         <div className="flex justify-end">
-          <GlassButton
+          <Button
             type="button"
             variant="primary"
             size="md"
             onClick={handleComplete}
           >
             Continue
-          </GlassButton>
+          </Button>
         </div>
       )}
     </div>

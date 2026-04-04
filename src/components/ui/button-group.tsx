@@ -1,12 +1,12 @@
 import React from "react";
 
-export interface GlassButtonGroupOption {
+export interface ButtonGroupOption {
   value: string;
   label: React.ReactNode;
 }
 
-interface GlassButtonGroupProps {
-  options: GlassButtonGroupOption[];
+interface ButtonGroupProps {
+  options: ButtonGroupOption[];
   value: string;
   onChange: (value: string) => void;
   /** segment = contained pill group | tabs = underline tab bar */
@@ -16,7 +16,7 @@ interface GlassButtonGroupProps {
   "aria-label"?: string;
 }
 
-export function GlassButtonGroup({
+export function ButtonGroup({
   options,
   value,
   onChange,
@@ -24,7 +24,7 @@ export function GlassButtonGroup({
   size = "sm",
   className = "",
   "aria-label": ariaLabel,
-}: GlassButtonGroupProps) {
+}: ButtonGroupProps) {
   const textSize = size === "sm" ? "text-xs" : "text-sm";
 
   if (variant === "tabs") {

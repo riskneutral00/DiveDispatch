@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { GlassButton, GlassCard, GlassInput } from '@/components/ui'
+import { Button, Card, Input } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
@@ -134,7 +134,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
   const firstAgency = existing?.associations?.[0]?.agency ?? 'PADI'
 
   return (
-    <GlassCard padding="lg">
+    <Card padding="lg">
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-1 text-primary">
           Languages & Preferences
@@ -163,7 +163,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                   Used when creating bookings.
                 </p>
                 <div className="grid grid-cols-3 gap-3">
-                  <GlassInput
+                  <Input
                     label="OW Days"
                     type="number"
                     min={1}
@@ -172,7 +172,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                     onChange={(e) => setOwDays(e.target.value)}
                     placeholder="4"
                   />
-                  <GlassInput
+                  <Input
                     label="AOW Days"
                     type="number"
                     min={1}
@@ -181,7 +181,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                     onChange={(e) => setAowDays(e.target.value)}
                     placeholder="2"
                   />
-                  <GlassInput
+                  <Input
                     label="Adv. Days"
                     type="number"
                     min={1}
@@ -216,19 +216,19 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
         )}
 
         <div className="flex gap-3">
-          <GlassButton variant="secondary" fullWidth onClick={onBack}>
+          <Button variant="secondary" fullWidth onClick={onBack}>
             Back
-          </GlassButton>
-          <GlassButton
+          </Button>
+          <Button
             variant="primary"
             fullWidth
             loading={saving}
             onClick={handleNext}
           >
             Next
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }

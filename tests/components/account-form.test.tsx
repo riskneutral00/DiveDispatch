@@ -107,7 +107,7 @@ describe('AccountForm', () => {
     setMockUser()
     const { container } = await renderForm()
 
-    // The field group inside GlassCard should use gap-3
+    // The field group inside Card should use gap-3
     const fieldGroup = container.querySelector('.flex.flex-col.gap-3')
     expect(fieldGroup).toBeTruthy()
   })

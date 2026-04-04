@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-interface GlassFieldLabelProps {
+interface FieldLabelProps {
   htmlFor?: string
   children: ReactNode
   /** When true, shows a required asterisk */
@@ -10,7 +10,7 @@ interface GlassFieldLabelProps {
 }
 
 /** Shared label row for glass form fields */
-export function GlassFieldLabel({ htmlFor, children, required, className, style }: GlassFieldLabelProps) {
+export function FieldLabel({ htmlFor, children, required, className, style }: FieldLabelProps) {
   return (
     <label
       htmlFor={htmlFor}
@@ -23,12 +23,12 @@ export function GlassFieldLabel({ htmlFor, children, required, className, style 
   )
 }
 
-interface GlassFieldErrorProps {
+interface FieldErrorProps {
   id: string
   message?: string
 }
 
-export function GlassFieldError({ id, message }: GlassFieldErrorProps) {
+export function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null
   return (
     <p id={id} role="alert" className="text-sm" style={{ color: 'var(--color-destructive)' }}>
@@ -49,7 +49,7 @@ interface FieldShellProps {
 
 /**
  * Shared wrapper for label + control + error/helper text stack.
- * Use this for composite controls that cannot directly use GlassInput/Textarea.
+ * Use this for composite controls that cannot directly use Input/Textarea.
  */
 export function FieldShell({
   id,
@@ -66,12 +66,12 @@ export function FieldShell({
   return (
     <div className={className ?? 'flex flex-col gap-1.5 w-full'}>
       {label && (
-        <GlassFieldLabel htmlFor={id} required={required}>
+        <FieldLabel htmlFor={id} required={required}>
           {label}
-        </GlassFieldLabel>
+        </FieldLabel>
       )}
       {children}
-      <GlassFieldError id={errorId} message={error} />
+      <FieldError id={errorId} message={error} />
       {!error && helperText && (
         <p id={helperId} className="text-xs text-secondary">
           {helperText}

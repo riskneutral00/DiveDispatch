@@ -6,7 +6,7 @@ import { getLocale, getMessages } from "next-intl/server"
 import { ConvexClerkProvider } from "../lib/convex"
 import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
-import { GlassToaster } from "../components/ui/glass-toaster"
+import { AppToaster } from "../components/ui/app-toaster"
 import { OfflineIndicator } from "../components/pwa/offline-indicator"
 import "./globals.css"
 
@@ -41,7 +41,7 @@ export default async function RootLayout({
                 <LocaleSyncProvider>
                   <OfflineIndicator />
                   {children}
-                  <GlassToaster />
+                  <AppToaster />
                 </LocaleSyncProvider>
               </NextIntlClientProvider>
             </ThemeProvider>

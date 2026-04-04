@@ -26,7 +26,7 @@ DashboardShell
     ├── Page title          "Workspace"  — 28px / 700 / -0.03em
     ├── Page subtitle       Role label  — 13px / secondary text
     ├── ProfileSectionTabBar  horizontal tab strip (shared component with Profile page)
-    └── Tab content pane    GlassCard
+    └── Tab content pane    Card
         └── Save row        right-aligned, or sticky mobile footer (same spec as Profile)
 ```
 
@@ -67,7 +67,7 @@ For all roles. Controls how the stakeholder's availability is offered and confir
 
 ### Acceptance Mode
 
-Three-option radio card group. Each option is a `GlassCard` tile — NOT a standard radio input.
+Three-option radio card group. Each option is a `Card` tile — NOT a standard radio input.
 
 ```
 ┌───────────────────────────────┐  ┌───────────────────────────────┐  ┌───────────────────────────────┐
@@ -107,8 +107,8 @@ on desktop only — not on mobile (spacing alone suffices).
 Controls working hours and buffer time.
 
 ```
-Max hours per day     GlassInput  type="number"  min=1 max=16   suffix="hrs"
-Post-job buffer       GlassInput  type="number"  min=0 max=480  suffix="min"
+Max hours per day     Input  type="number"  min=1 max=16   suffix="hrs"
+Post-job buffer       Input  type="number"  min=0 max=480  suffix="min"
 ```
 
 - Both fields in a single-column stack, 16px gap.
@@ -135,9 +135,9 @@ SECTION HEADER (11px / 600 / 0.08em / uppercase) — e.g. "INSTRUCTORS"
 ```
 
 - Section header: `var(--color-text-secondary)` at the section header style from MASTER.
-- Add button: `GlassButton` secondary, compact (32px height). Sits at top-right of section on desktop, full-width below header on mobile.
+- Add button: `Button` secondary, compact (32px height). Sits at top-right of section on desktop, full-width below header on mobile.
 - Resource slug cards: displayed as a wrapping tag cloud, not a list.
-  Each tag: `GlassCard` micro (28px height, 8px h-padding), role icon (16px) + slug text (12px).
+  Each tag: `Card` micro (28px height, 8px h-padding), role icon (16px) + slug text (12px).
   Remove `×` on each tag: 24px touch target, `var(--color-text-secondary)` color.
 - Empty section: "None added yet" in secondary text (no empty state illustration needed).
 
@@ -155,7 +155,7 @@ These are operational specs, not public identity:
 - **Pool:** dimensions, depth range, filtration type.
 - **Compressor:** fill types, max pressure, fill stations count.
 
-Layout: single-column GlassInput stack within the GlassCard. Same field spacing as other tabs (16px).
+Layout: single-column Input stack within the Card. Same field spacing as other tabs (16px).
 
 ---
 

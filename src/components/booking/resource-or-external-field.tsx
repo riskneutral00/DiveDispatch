@@ -4,9 +4,9 @@
  * "Switch to system" link.
  */
 
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassLink } from '@/components/ui/glass-link'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { Input } from '@/components/ui/input'
+import { ActionLink } from '@/components/ui/action-link'
+import { SimpleSelect } from '@/components/ui/simple-select'
 
 interface ResourceOption {
   id: string
@@ -39,15 +39,15 @@ export function ResourceOrExternalField({
   if (isExternal) {
     return (
       <div className="flex flex-col gap-1">
-        <GlassInput
+        <Input
           label={`${label} (external)`}
           value={externalName}
           onChange={(e) => onExternalNameChange(e.target.value)}
           placeholder={placeholder ?? `${label} name`}
         />
-        <GlassLink onClick={() => onSetExternal(false)}>
+        <ActionLink onClick={() => onSetExternal(false)}>
           Switch to system
-        </GlassLink>
+        </ActionLink>
       </div>
     )
   }
@@ -59,7 +59,7 @@ export function ResourceOrExternalField({
 
   return (
     <div className="flex flex-col gap-1">
-      <GlassSimpleSelect
+      <SimpleSelect
         label={label}
         value={selectedId}
         onChange={(v) => {

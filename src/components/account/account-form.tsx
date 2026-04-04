@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -84,17 +84,17 @@ export function AccountForm() {
       isValid={isValid}
       className="flex flex-col gap-6"
     >
-      <GlassCard>
+      <Card>
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
-            <GlassInput
+            <Input
               label="Nickname"
               value={form.nickname}
               onChange={(e) => setField('nickname', e.target.value)}
               autoComplete="nickname"
               error={errors.nickname}
             />
-            <GlassInput
+            <Input
               label="Business name"
               value={form.businessName}
               onChange={(e) => setField('businessName', e.target.value)}
@@ -104,7 +104,7 @@ export function AccountForm() {
             />
           </div>
         </div>
-      </GlassCard>
+      </Card>
     </ProfileFormShell>
   )
 }

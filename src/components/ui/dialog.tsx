@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface GlassDialogProps {
+interface DialogProps {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -24,7 +24,7 @@ const sizeMap = {
   xl: "max-w-xl",
 };
 
-export function GlassDialog({
+export function Dialog({
   open,
   onClose,
   title,
@@ -33,7 +33,7 @@ export function GlassDialog({
   size = "md",
   fullScreen = false,
   className = "",
-}: GlassDialogProps) {
+}: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();

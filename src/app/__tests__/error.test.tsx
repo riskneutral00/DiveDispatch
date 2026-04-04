@@ -15,8 +15,8 @@ vi.mock('lucide-react', () => ({
 }))
 
 // Mock glass components to avoid theme dependency
-vi.mock('@/components/ui/glass-error-card', () => ({
-  GlassErrorCard: ({
+vi.mock('@/components/ui/error-card', () => ({
+  ErrorCard: ({
     title,
     message,
     action,
@@ -34,8 +34,8 @@ vi.mock('@/components/ui/glass-error-card', () => ({
   ),
 }))
 
-vi.mock('@/components/ui/glass-button', () => ({
-  GlassButton: ({
+vi.mock('@/components/ui/button', () => ({
+  Button: ({
     children,
     onClick,
   }: {

@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useId } from 'react'
-import { GlassFieldError, GlassFieldLabel } from '@/components/ui/field-shell'
+import { FieldError, FieldLabel } from '@/components/ui/field-shell'
 import { cn } from '@/lib/utils/cn'
 
-interface GlassInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
   helperText?: string
@@ -12,7 +12,7 @@ interface GlassInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   trailingIcon?: React.ReactNode
 }
 
-export function GlassInput({
+export function Input({
   label,
   error,
   helperText,
@@ -24,7 +24,7 @@ export function GlassInput({
   type,
   onClick,
   ...props
-}: GlassInputProps) {
+}: InputProps) {
   const generatedId = useId();
   const id = externalId ?? generatedId;
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
@@ -32,9 +32,9 @@ export function GlassInput({
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <GlassFieldLabel htmlFor={id} required={props.required}>
+        <FieldLabel htmlFor={id} required={props.required}>
           {label}
-        </GlassFieldLabel>
+        </FieldLabel>
       )}
 
       <div className="relative flex items-center">
@@ -87,7 +87,7 @@ export function GlassInput({
         )}
       </div>
 
-      <GlassFieldError id={`${id}-error`} message={error} />
+      <FieldError id={`${id}-error`} message={error} />
       {!error && helperText && (
         <p id={`${id}-helper`} className="text-sm text-secondary">
           {helperText}

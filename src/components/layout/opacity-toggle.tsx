@@ -2,7 +2,7 @@
 
 import { Layers, Layers2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { GlassIconButton } from '@/components/ui/glass-icon-button'
+import { IconButton } from '@/components/ui/icon-button'
 
 const STORAGE_KEY = 'divedispatch-hover-effect'
 
@@ -25,13 +25,13 @@ export function OpacityToggle() {
   }
 
   return (
-    <GlassIconButton
+    <IconButton
       size="sm"
       aria-label={hoverOn ? 'Disable border glow on hover' : 'Enable border glow on hover'}
       onClick={toggle}
       className="cursor-pointer"
     >
       {hoverOn ? <Layers size={15} /> : <Layers2 size={15} />}
-    </GlassIconButton>
+    </IconButton>
   )
 }

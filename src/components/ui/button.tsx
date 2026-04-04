@@ -5,7 +5,7 @@ import { Spinner } from '@/components/ui/spinner'
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'destructive-ghost'
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
-interface GlassButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   fullWidth?: boolean
@@ -50,7 +50,7 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   },
 }
 
-export function GlassButton({
+export function Button({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
@@ -60,7 +60,7 @@ export function GlassButton({
   className = '',
   style,
   ...props
-}: GlassButtonProps) {
+}: ButtonProps) {
   const isDisabled = disabled || loading
 
   return (

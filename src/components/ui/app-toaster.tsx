@@ -2,7 +2,7 @@
 
 import { Toaster } from 'sonner'
 
-export function GlassToaster() {
+export function AppToaster() {
   return (
     <Toaster
       position="bottom-right"

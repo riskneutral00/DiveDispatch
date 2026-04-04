@@ -2,7 +2,7 @@
 
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import { GlassCard } from '@/components/ui'
+import { Card } from '@/components/ui'
 
 interface FaqItem {
   question: string
@@ -70,7 +70,7 @@ function FaqItemRow({ item }: FaqItemRowProps) {
   const [open, setOpen] = useState(false)
 
   return (
-    <GlassCard padding="none" className="overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <button
         className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-all text-primary"
         onClick={() => setOpen((o) => !o)}
@@ -95,7 +95,7 @@ function FaqItemRow({ item }: FaqItemRowProps) {
           {item.answer}
         </div>
       )}
-    </GlassCard>
+    </Card>
   )
 }
 

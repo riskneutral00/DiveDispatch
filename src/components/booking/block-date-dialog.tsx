@@ -1,4 +1,4 @@
-import { GlassDialog, GlassButton } from '@/components/ui'
+import { Dialog, Button } from '@/components/ui'
 
 interface BlockDateDialogProps {
   pendingToggle: { date: string; mode: 'block' | 'unblock' }
@@ -9,7 +9,7 @@ interface BlockDateDialogProps {
 
 export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel }: BlockDateDialogProps) {
   return (
-    <GlassDialog
+    <Dialog
       open
       onClose={onCancel}
       title={pendingToggle.mode === 'block' ? 'Block this date?' : 'Unblock this date?'}
@@ -21,10 +21,10 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
           : `Unblock ${pendingToggle.date}? You will become available for bookings on this date again.`}
       </p>
       <div className="flex justify-end gap-2">
-        <GlassButton size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>
+        <Button size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>
           Cancel
-        </GlassButton>
-        <GlassButton
+        </Button>
+        <Button
           size="sm"
           variant={pendingToggle.mode === 'block' ? 'destructive' : 'primary'}
           onClick={onConfirm}
@@ -35,8 +35,8 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
             : pendingToggle.mode === 'block'
               ? 'Block'
               : 'Unblock'}
-        </GlassButton>
+        </Button>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }

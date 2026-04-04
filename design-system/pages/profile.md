@@ -1,7 +1,7 @@
 # Profile Page — Design Override
 
 > Route: `/{slug}/{roleSlug}/profile`
-> Also rendered inside: `ProfileOverlay` (fullscreen GlassDialog from dashboard)
+> Also rendered inside: `ProfileOverlay` (fullscreen Dialog from dashboard)
 > Overrides: MASTER.md
 > Purpose: Public role identity — location, contact, credentials/associations, languages.
 
@@ -28,7 +28,7 @@ DashboardShell (bg-image + bg-overlay already handled by shell)
     ├── Page subtitle       Role label (e.g. "Dive Center") — 13px / secondary text
     ├── SettingsTabBar      horizontal tab strip (Contact | Languages | Affiliations)
     └── Tab content pane    Active tab's section from the profile form
-        └── Save row        right-aligned GlassButton "Save Changes" + saved confirmation
+        └── Save row        right-aligned Button "Save Changes" + saved confirmation
 ```
 
 Each tab renders one `section` of the profile form. Tabs defined in `PROFILE_REGISTRY`.
@@ -36,7 +36,7 @@ Each tab renders one `section` of the profile form. Tabs defined in `PROFILE_REG
 ### 2. Profile Overlay (slide-out panel)
 
 ```
-GlassDialog fullScreen
+Dialog fullScreen
 ├── Tab bar             Profile | Preferences | Account (overlay-level tabs)
 └── Scrollable panel    max-w-3xl mx-auto px-4 py-6
     └── Profile tab     Full profile form (all sections in one scroll, no section filter)
@@ -110,7 +110,7 @@ Business Name (lg)     Location (lg)           — FormField size="lg" (full row
 Contact Email (md)     Contact Phone (sm)      — side-by-side on desktop
 ```
 
-Uses `GlassInput` for text fields, `LocationPicker` for location.
+Uses `Input` for text fields, `LocationPicker` for location.
 
 ---
 
@@ -132,7 +132,7 @@ role-specific profile.
 Add/remove rows. No card wrapper — fields sit directly on the page. Multiple credentials
 separated by `<hr className="form-divider">` between each row (not before first).
 
-- "Add credential" button: `GlassButton` variant secondary, full-width on mobile, left-aligned on desktop.
+- "Add credential" button: `Button` variant secondary, full-width on mobile, left-aligned on desktop.
 - Remove: `Trash2` icon button, top-right of each row. 44px touch target.
 - Empty state: "No credentials added yet" in secondary text, centered.
 - No maximum row count enforced in UI (backend validates).
@@ -145,7 +145,7 @@ Add/remove pattern. No card wrapper — fields sit directly on the page. Multipl
 affiliations separated by `<hr className="form-divider">` between each group (not before first).
 
 ```
-Agency (GlassSelect)     Member ID (GlassInput)    — side-by-side, pr-10 for remove button
+Agency (Select)     Member ID (Input)    — side-by-side, pr-10 for remove button
 Default course #days     OW / AOW / O+A            — DayPicker selects
 Default specialties      Toggle pill chips          — with "More..." overflow
 ```
@@ -169,7 +169,7 @@ Button is disabled (and shows spinner) while the mutation is in-flight.
 
 ## Empty / Loading States
 
-- Tab content loading: skeleton rows (2–3 placeholder lines) inside the GlassCard.
+- Tab content loading: skeleton rows (2–3 placeholder lines) inside the Card.
   Use `var(--color-glass-bg)` animated shimmer (opacity 0.5 → 1 → 0.5, 1.5s, `prefers-reduced-motion` respected).
 - If user has no data yet for a tab, show the blank form — not an empty state illustration.
   Profile editing is always available; emptiness is the natural starting state.

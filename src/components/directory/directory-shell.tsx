@@ -5,7 +5,7 @@ import { Search, ShieldCheck, Waves } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { api } from '@/lib/convex-generated'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Input } from '@/components/ui/input'
 import { useSessionRoleContext } from '@/components/layout/session-dashboard-shell'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { ROLE_FILTERS } from '@/lib/constants/resource-filters'
@@ -170,7 +170,7 @@ export function DirectoryShell() {
         </Link>
 
         <div className="flex-1 max-w-sm">
-          <GlassInput
+          <Input
             placeholder="Search by name, city, or country…"
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}

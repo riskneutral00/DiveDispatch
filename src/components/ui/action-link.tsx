@@ -1,11 +1,11 @@
 import React from "react";
 
-interface GlassLinkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ActionLinkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
 /** Hyperlink-style action button. Use for low-hierarchy toggles and inline switches. */
-export function GlassLink({ children, className = "", ...props }: GlassLinkProps) {
+export function ActionLink({ children, className = "", ...props }: ActionLinkProps) {
   return (
     <button
       type="button"

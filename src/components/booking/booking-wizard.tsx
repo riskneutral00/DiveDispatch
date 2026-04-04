@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
-import { GlassCard, GlassButton, ErrorAlert } from "@/components/ui";
+import { Card, Button, ErrorAlert } from "@/components/ui";
 import { SendPortalLink } from "./send-portal-link";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
@@ -254,7 +254,7 @@ export function BookingWizard({
     if (!state.bookingId) {
       return (
         <div className="mt-4">
-          <GlassButton
+          <Button
             variant="secondary"
             size="sm"
             type="button"
@@ -262,7 +262,7 @@ export function BookingWizard({
             onClick={() => void ensureDraftForPortalLink()}
           >
             {t("wizard.preparePortalLink")}
-          </GlassButton>
+          </Button>
           <p
             className="text-xs mt-2 text-secondary"
             style={{ fontFamily: "var(--font-body)" }}
@@ -337,7 +337,7 @@ export function BookingWizard({
   if (showEditConfirm) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16">
-        <GlassCard padding="lg">
+        <Card padding="lg">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <AlertTriangle
@@ -364,23 +364,23 @@ export function BookingWizard({
               <ErrorAlert>{editResetError}</ErrorAlert>
             )}
             <div className="flex gap-3">
-              <GlassButton
+              <Button
                 variant="primary"
                 size="md"
                 onClick={() => void handleConfirmEdit()}
               >
                 {t("wizard.editConfirmYes")}
-              </GlassButton>
-              <GlassButton
+              </Button>
+              <Button
                 variant="secondary"
                 size="md"
                 onClick={() => router.back()}
               >
                 {tCommon("cancel")}
-              </GlassButton>
+              </Button>
             </div>
           </div>
-        </GlassCard>
+        </Card>
       </div>
     );
   }
@@ -421,7 +421,7 @@ export function BookingWizard({
 
         {!isReviewStep && (
           <div className="flex justify-between items-center mt-4 gap-4">
-            <GlassButton
+            <Button
               variant="secondary"
               onClick={isFirstStep ? () => void handleCancel() : handleBack}
               disabled={isSaving}
@@ -429,9 +429,9 @@ export function BookingWizard({
             >
               <ChevronLeft size={16} />
               {isFirstStep ? tCommon("cancel") : tCommon("back")}
-            </GlassButton>
+            </Button>
 
-            <GlassButton
+            <Button
               variant="primary"
               onClick={handleNext}
               disabled={advanceDisabled || isSaving}
@@ -440,7 +440,7 @@ export function BookingWizard({
             >
               {tCommon("next")}
               <ChevronRight size={16} />
-            </GlassButton>
+            </Button>
           </div>
         )}
       </div>
@@ -459,7 +459,7 @@ export function BookingWizard({
               ? t("wizard.editingTitle", { ref: bookingRef })
               : t("new")}
           </h1>
-          <GlassButton
+          <Button
             variant="ghost"
             size="sm"
             type="button"
@@ -469,7 +469,7 @@ export function BookingWizard({
             aria-label={t("wizard.cancelBookingAria")}
           >
             <X size={16} />
-          </GlassButton>
+          </Button>
         </div>
         {bookingRef && (
           <p
@@ -497,7 +497,7 @@ export function BookingWizard({
 
       {!isReviewStep && (
         <div className="flex justify-between items-center mt-6 gap-4">
-          <GlassButton
+          <Button
             variant="secondary"
             onClick={isFirstStep ? () => void handleCancel() : handleBack}
             disabled={isSaving}
@@ -505,9 +505,9 @@ export function BookingWizard({
           >
             <ChevronLeft size={16} />
             {isFirstStep ? tCommon("cancel") : tCommon("back")}
-          </GlassButton>
+          </Button>
 
-          <GlassButton
+          <Button
             variant="primary"
             onClick={handleNext}
             disabled={advanceDisabled || isSaving}
@@ -516,7 +516,7 @@ export function BookingWizard({
           >
             {tCommon("next")}
             <ChevronRight size={16} />
-          </GlassButton>
+          </Button>
         </div>
       )}
     </div>

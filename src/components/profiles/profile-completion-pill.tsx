@@ -17,7 +17,7 @@ export function ProfileCompletionPill({ percentage, onOpenOverlay }: ProfileComp
         backdropFilter: 'blur(var(--glass-blur, 12px))',
         WebkitBackdropFilter: 'blur(var(--glass-blur, 12px))',
         border: '1px solid var(--color-warning)',
-        boxShadow: '0 0 12px rgba(251, 191, 36, 0.35), 0 4px 12px var(--color-glass-shadow)',
+        boxShadow: '0 0 12px var(--color-warning-glow), 0 4px 12px var(--color-glass-shadow)',
       }}
       aria-label={`Profile ${percentage}% complete — click to complete your profile`}
     >

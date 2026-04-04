@@ -1,7 +1,7 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets } from 'lucide-react'
-import { GlassCard, GlassInput, GlassSelect, GlassSimpleSelect } from '@/components/ui'
+import { Card, Input, Select, SimpleSelect } from '@/components/ui'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
@@ -106,7 +106,7 @@ function SelectField({
     })),
   ]
   return (
-    <GlassSimpleSelect
+    <SimpleSelect
       label={label}
       value={value}
       onChange={onChange}
@@ -187,7 +187,7 @@ export function DayRow({
   }
 
   return (
-    <GlassCard padding="sm">
+    <Card padding="sm">
       {/* Header */}
       <div
         className="flex items-center justify-between pb-2 mb-2 border-b"
@@ -234,13 +234,13 @@ export function DayRow({
 
       {/* Row 1: Time fields */}
       <div className="grid grid-cols-2 gap-3 mb-3">
-        <GlassInput
+        <Input
           label="Start time"
           type="time"
           value={day.startTime}
           onChange={(e) => dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { startTime: e.target.value } })}
         />
-        <GlassInput
+        <Input
           label="End time"
           type="time"
           value={day.endTime}
@@ -254,7 +254,7 @@ export function DayRow({
         <div className="flex flex-col gap-1">
           {day.instructorSlug === '__external__' ? (
             <>
-              <GlassInput
+              <Input
                 label="Instructor (external)"
                 value={day.externalInstructorName ?? ''}
                 onChange={(e) =>
@@ -275,7 +275,7 @@ export function DayRow({
               </button>
             </>
           ) : (
-            <GlassSelect
+            <Select
               label="Instructor"
               data-testid="instructor-select"
               value={day.instructorSlug ?? ''}
@@ -339,7 +339,7 @@ export function DayRow({
         <div className="mb-3">
           {day.diveMasterSlug === '__external__' ? (
             <>
-              <GlassInput
+              <Input
                 label="Dive Master (external)"
                 value={day.externalDiveMasterName ?? ''}
                 onChange={(e) =>
@@ -360,7 +360,7 @@ export function DayRow({
               </button>
             </>
           ) : (
-            <GlassSimpleSelect
+            <SimpleSelect
               label="Dive Master (optional)"
               value={day.diveMasterSlug ?? ''}
               onChange={(v) => dispatch({ type: 'SET_DAY_DIVE_MASTER', dayIndex, slug: v })}
@@ -442,7 +442,7 @@ export function DayRow({
                       })}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <GlassSimpleSelect
+                      <SimpleSelect
                         value={dive.resourceSlug ?? ''}
                         onChange={(slug) => {
                           const val = slug || undefined
@@ -475,6 +475,6 @@ export function DayRow({
           </div>
         )
       })()}
-    </GlassCard>
+    </Card>
   )
 }

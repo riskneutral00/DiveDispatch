@@ -5,16 +5,15 @@ import { z } from 'zod'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassCheckbox } from '@/components/ui/glass-checkbox'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import {
   poolContactSchema,
   poolCapabilitiesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
   nullableProfileLocation,
 } from '@/lib/profile-form/location'
@@ -95,7 +94,7 @@ export function PoolContactSection({ profile: existing, me, create, update, onSa
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -186,9 +185,9 @@ export function PoolCapabilitiesSection({ profile: existing, create, update }: P
 
   if (!existing) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm text-secondary">Complete contact info first</p>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -211,7 +210,7 @@ export function PoolCapabilitiesSection({ profile: existing, create, update }: P
             Venue Capabilities
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <GlassCheckbox
+            <Checkbox
               label="Confined Water Capable"
               checked={form.confinedCapable}
               onChange={(v) => setField('confinedCapable', v)}
@@ -220,7 +219,7 @@ export function PoolCapabilitiesSection({ profile: existing, create, update }: P
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <GlassInput
+          <Input
             label="Max Depth (m)"
             type="number"
             min="0.1"
@@ -230,7 +229,7 @@ export function PoolCapabilitiesSection({ profile: existing, create, update }: P
             error={errors.maxDepth}
             placeholder="5"
           />
-          <GlassInput
+          <Input
             label="Max Capacity (divers)"
             type="number"
             min="1"

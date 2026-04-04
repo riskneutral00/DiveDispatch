@@ -12,7 +12,6 @@ import {
 } from '@/lib/profile-form/languages'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -182,7 +181,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     update,
   })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell

@@ -7,9 +7,9 @@ import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { MapPin, CheckCircle2, Clock, Users } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
-import { GlassCard } from '../../../../components/ui/glass-card'
-import { GlassBadge } from '../../../../components/ui/glass-badge'
-import { GlassButton } from '../../../../components/ui/glass-button'
+import { Card } from '../../../../components/ui/card'
+import { Badge } from '../../../../components/ui/badge'
+import { Button } from '../../../../components/ui/button'
 import { StepContact } from '../../../../components/portal/step-contact'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/onboarding/step-indicator'
@@ -136,7 +136,7 @@ export default function PortalTokenPage() {
 
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
-        <GlassCard className="max-w-md w-full text-center" padding="lg">
+        <Card className="max-w-md w-full text-center" padding="lg">
           <div className="mb-4 flex justify-center">
             <CheckCircle2 size={40} style={{ color: 'var(--color-success)' }} />
           </div>
@@ -152,10 +152,10 @@ export default function PortalTokenPage() {
           <p className="text-sm leading-relaxed mb-6 text-secondary">
             {body}
           </p>
-          <GlassButton variant="primary" size="md" onClick={() => window.close()}>
+          <Button variant="primary" size="md" onClick={() => window.close()}>
             {tCommon('close')}
-          </GlassButton>
-        </GlassCard>
+          </Button>
+        </Card>
       </div>
     )
   }
@@ -175,7 +175,7 @@ export default function PortalTokenPage() {
   if (result.status === 'closed') {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
-        <GlassCard className="max-w-md w-full text-center" padding="lg">
+        <Card className="max-w-md w-full text-center" padding="lg">
           <div className="mb-4 flex justify-center">
             <Clock size={40} style={{ color: 'var(--color-warning)' }} />
           </div>
@@ -188,7 +188,7 @@ export default function PortalTokenPage() {
           <p className="text-sm leading-relaxed text-secondary">
             {t('bookingClosed.message')}
           </p>
-        </GlassCard>
+        </Card>
       </div>
     )
   }
@@ -284,13 +284,13 @@ export default function PortalTokenPage() {
         </header>
 
         {/* Booking summary card */}
-        <GlassCard padding="md">
+        <Card padding="md">
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               {activityType.map((type) => (
-                <GlassBadge key={type} variant="info" size="sm">
+                <Badge key={type} variant="info" size="sm">
                   {type}
-                </GlassBadge>
+                </Badge>
               ))}
             </div>
             <div
@@ -308,7 +308,7 @@ export default function PortalTokenPage() {
               </div>
             </div>
           </div>
-        </GlassCard>
+        </Card>
 
         {/* Step progress */}
         <StepIndicator

@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalMedical } from '@/lib/hooks/use-portal-medical'
@@ -125,7 +125,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
   if (hardBlock) {
     return (
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <div className="flex flex-col items-center gap-4 text-center">
           <AlertTriangle
             className="w-12 h-12"
@@ -139,11 +139,11 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
             A medical condition requires physician clearance before diving. Your dive center has
             been notified and will contact you with next steps.
           </p>
-          <GlassButton variant="primary" onClick={onComplete}>
+          <Button variant="primary" onClick={onComplete}>
             Continue
-          </GlassButton>
+          </Button>
         </div>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -157,7 +157,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       continueFullWidth
     >
       {/* Intro text — verbatim from PADI 10346 */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm leading-relaxed text-primary">
           Recreational scuba diving and freediving requires good physical and mental health. There
           are a few medical conditions which can be hazardous while diving. This questionnaire
@@ -168,10 +168,10 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
           <strong>Note to women:</strong> If you are pregnant, or attempting to become pregnant, do
           not dive.
         </p>
-      </GlassCard>
+      </Card>
 
       {/* Privacy consent acknowledgment — informational, not a gate */}
-      <GlassCard padding="sm">
+      <Card padding="sm">
         <p className="text-xs leading-relaxed text-secondary">
           Your answers are shared with your dive center to ensure your safety, as required by
           PADI medical standards.{' '}
@@ -184,7 +184,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
             Privacy Policy
           </a>
         </p>
-      </GlassCard>
+      </Card>
 
       {/* 10 yes/no questions — all required */}
       <div className="flex flex-col gap-3">
@@ -193,7 +193,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
           const showError = touched && value === undefined
 
           return (
-            <GlassCard key={q.key} padding="md">
+            <Card key={q.key} padding="md">
               <div className="flex flex-col gap-3">
                 <p className="text-sm leading-relaxed text-primary">
                   <span
@@ -244,19 +244,19 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                   )}
                 </div>
               </div>
-            </GlassCard>
+            </Card>
           )
         })}
       </div>
 
       {/* Participant statement — verbatim */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm leading-relaxed italic text-secondary">
           &ldquo;I have answered all questions honestly, and understand that I accept responsibility
           for any consequences resulting from any questions I may have answered inaccurately or for
           my failure to disclose any existing or past health conditions.&rdquo;
         </p>
-      </GlassCard>
+      </Card>
 
       <div aria-live="polite">
         {touched && unanswered.length > 0 && !error && (

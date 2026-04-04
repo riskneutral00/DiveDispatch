@@ -1,7 +1,7 @@
 'use client'
 
 import type { FormEventHandler, ReactNode } from 'react'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Button } from '@/components/ui/button'
 
 export interface PortalStepShellProps {
   children: ReactNode
@@ -57,11 +57,11 @@ export function PortalStepShell({
 
       <div className={`flex gap-3 ${onBack ? 'justify-between' : 'justify-end'}`}>
         {onBack && (
-          <GlassButton type="button" variant={backVariant} size="md" onClick={onBack} disabled={submitting}>
+          <Button type="button" variant={backVariant} size="md" onClick={onBack} disabled={submitting}>
             {backLabel}
-          </GlassButton>
+          </Button>
         )}
-        <GlassButton
+        <Button
           type={continueType}
           variant={continueVariant}
           size={continueSize}
@@ -72,7 +72,7 @@ export function PortalStepShell({
           className={continueClassName}
         >
           {continueLabel}
-        </GlassButton>
+        </Button>
       </div>
     </>
   )

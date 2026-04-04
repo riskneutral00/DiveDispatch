@@ -1,6 +1,6 @@
 "use client";
 
-import { GlassDialog } from "@/components/ui";
+import { Dialog } from "@/components/ui";
 import { BookingWizard } from "./booking-wizard";
 import type { BookingPreFill } from "@/lib/booking/wizard-state";
 
@@ -23,7 +23,7 @@ export function BookingOverlay({
   wizardKey = 0,
 }: BookingOverlayProps) {
   return (
-    <GlassDialog
+    <Dialog
       open={open}
       onClose={onClose}
       title="New Booking"
@@ -37,6 +37,6 @@ export function BookingOverlay({
         initialCourses={initialCourses}
         initialPreFill={initialPreFill}
       />
-    </GlassDialog>
+    </Dialog>
   );
 }

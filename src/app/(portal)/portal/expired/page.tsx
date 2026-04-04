@@ -1,10 +1,10 @@
 import { Link2Off } from 'lucide-react'
-import { GlassErrorCard } from '@/components/ui/glass-error-card'
+import { ErrorCard } from '@/components/ui/error-card'
 
 // Static page — no client-side JS needed.
 export default function PortalExpiredPage() {
   return (
-    <GlassErrorCard
+    <ErrorCard
       icon={Link2Off}
       iconColor="var(--color-text-secondary)"
       title="This link has expired"

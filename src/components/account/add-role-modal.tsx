@@ -1,6 +1,6 @@
 'use client'
 
-import { GlassDialog } from '@/components/ui'
+import { Dialog } from '@/components/ui'
 import { getAvailableRoles } from '@/lib/utils/available-roles'
 import type { ClerkRole, RoleConfig } from '@/lib/constants/roles'
 
@@ -64,7 +64,7 @@ export function AddRoleModal({
   const availableRoles = getAvailableRoles(heldRoles)
 
   return (
-    <GlassDialog
+    <Dialog
       open={open}
       onClose={onClose}
       title="Add a Role"
@@ -106,6 +106,6 @@ export function AddRoleModal({
           ))}
         </div>
       )}
-    </GlassDialog>
+    </Dialog>
   )
 }

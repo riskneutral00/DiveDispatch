@@ -19,7 +19,7 @@ const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([
 ])
 import { ALL_STAKEHOLDERS, type SeedUser, type SeedStakeholder } from '../../../convex/seedData'
 import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
-import { GlassCard } from '@/components/ui/glass-card'
+import { Card } from '@/components/ui/card'
 import { parseConvexError } from '@/lib/utils/convex-error'
 
 // Guard: dev-only component
@@ -155,7 +155,7 @@ function DevSwitcherInner() {
       {/* Panel */}
       {open && (
         <div ref={panelRef} className="fixed bottom-12 right-4 z-50 w-80">
-          <GlassCard padding="none" className="overflow-hidden">
+          <Card padding="none" className="overflow-hidden">
             <div
               className="px-4 py-2 text-xs font-semibold border-b text-secondary"
               style={{ borderColor: 'var(--color-glass-border)' }}
@@ -231,7 +231,7 @@ function DevSwitcherInner() {
                 )
               })}
             </div>
-          </GlassCard>
+          </Card>
         </div>
       )}
     </>

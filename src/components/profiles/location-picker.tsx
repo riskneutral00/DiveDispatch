@@ -5,7 +5,8 @@ import { useTranslations } from 'next-intl'
 import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@vis.gl/react-google-maps'
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
-import { GlassDialog } from '@/components/ui/glass-dialog'
+import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -44,11 +45,12 @@ function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number }
 interface ModalInnerProps {
   value: LocationValue | null
   onConfirm: (loc: LocationValue) => void
+  onCancel: () => void
 }
 
 const DEFAULT_CENTER = { lat: 13.7563, lng: 100.5018 } // Bangkok fallback
 
-function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
+function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProps) {
   const inputId = useId()
   const listboxId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -403,15 +405,14 @@ function LocationPickerModalInner({ value, onConfirm }: ModalInnerProps) {
             {displayAddress || 'Drag the map to set location…'}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={!displayAddress}
-          className="glass flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-40 flex-shrink-0 cursor-pointer"
-          style={{ color: 'var(--color-accent)', borderColor: 'var(--color-accent)' }}
-        >
-          Confirm
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button variant="ghost" size="sm" type="button" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="primary" size="sm" type="button" onClick={handleConfirm} disabled={!displayAddress}>
+            Save
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -525,7 +526,7 @@ export function LocationPicker({ value, onChange, error, label, required }: Loca
         label={label}
         required={required}
       />
-      <GlassDialog open={open} onClose={() => setOpen(false)} title="Set Location" fullScreen>
+      <Dialog open={open} onClose={() => setOpen(false)} title="Set Location" fullScreen>
         <APIProvider apiKey={API_KEY} libraries={['places']}>
           <LocationPickerGate
             value={value}
@@ -533,9 +534,10 @@ export function LocationPicker({ value, onChange, error, label, required }: Loca
               onChange(loc)
               setOpen(false)
             }}
+            onCancel={() => setOpen(false)}
           />
         </APIProvider>
-      </GlassDialog>
+      </Dialog>
     </>
   )
 }

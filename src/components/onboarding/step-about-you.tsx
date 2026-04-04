@@ -2,8 +2,8 @@
 
 import type { Language } from '@/lib/types/language'
 import { LanguageField } from '@/components/profiles/language-field'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export interface AboutYouValues {
   operatingLanguage: Language | null
@@ -57,27 +57,27 @@ export function StepAboutYou({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-        <GlassInput
+        <Input
           label="First name"
           value={values.firstName}
           onChange={(e) => set('firstName', e.target.value)}
           autoComplete="given-name"
           required
         />
-        <GlassInput
+        <Input
           label="Last name"
           value={values.lastName}
           onChange={(e) => set('lastName', e.target.value)}
           autoComplete="family-name"
           required
         />
-        <GlassInput
+        <Input
           label="Nickname / display name"
           value={values.nickname}
           onChange={(e) => set('nickname', e.target.value)}
           placeholder='e.g. "Captain Mike"'
         />
-        <GlassInput
+        <Input
           label="Phone"
           value={values.phone}
           onChange={(e) => set('phone', e.target.value)}
@@ -86,7 +86,7 @@ export function StepAboutYou({
         />
       </div>
 
-      <GlassButton
+      <Button
         variant="primary"
         fullWidth
         disabled={!isComplete}
@@ -94,7 +94,7 @@ export function StepAboutYou({
         className="mt-2"
       >
         Next
-      </GlassButton>
+      </Button>
     </div>
   )
 }

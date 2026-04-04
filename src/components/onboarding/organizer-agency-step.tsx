@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
-import { GlassButton, GlassCard, GlassInput, GlassSimpleSelect } from '@/components/ui'
+import { Button, Card, Input, SimpleSelect } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
@@ -103,7 +103,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
   }
 
   return (
-    <GlassCard padding="lg">
+    <Card padding="lg">
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-1 text-primary">
           Agency Affiliations
@@ -118,14 +118,14 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
           <div key={idx}>
             {idx > 0 && <hr className="form-divider mb-4" />}
             <div className="grid grid-cols-2 gap-3">
-              <GlassSimpleSelect
+              <SimpleSelect
                 label="Agency"
                 value={assoc.agency}
                 onChange={(v) => updateRow(idx, 'agency', v)}
                 options={DIVE_AGENCIES_EXTENDED.map(a => a)}
                 placeholder="Select agency…"
               />
-              <GlassInput
+              <Input
                 label="Member Number"
                 value={assoc.number}
                 onChange={(e) => updateRow(idx, 'number', e.target.value)}
@@ -150,20 +150,20 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
           </div>
         ))}
 
-        <GlassButton type="button" variant="secondary" size="sm" onClick={addRow} className="self-start">
+        <Button type="button" variant="secondary" size="sm" onClick={addRow} className="self-start">
           <Plus size={14} />
           Add another
-        </GlassButton>
+        </Button>
 
         {error && (
           <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
         )}
 
         <div className="flex gap-3 mt-2">
-          <GlassButton variant="secondary" fullWidth onClick={onBack}>
+          <Button variant="secondary" fullWidth onClick={onBack}>
             Back
-          </GlassButton>
-          <GlassButton
+          </Button>
+          <Button
             variant="primary"
             fullWidth
             disabled={!isComplete || saving}
@@ -171,9 +171,9 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
             onClick={handleNext}
           >
             Next
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }

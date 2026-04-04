@@ -1,9 +1,9 @@
 'use client'
 
 import { useId } from 'react'
-import { GlassFieldError } from '@/components/ui/field-shell'
+import { FieldError } from '@/components/ui/field-shell'
 
-interface GlassCheckboxGroupProps {
+interface CheckboxGroupProps {
   label: string
   items: { value: string; label: string }[]
   selected: string[]
@@ -12,7 +12,7 @@ interface GlassCheckboxGroupProps {
   columns?: 2 | 3
 }
 
-function GlassCheckboxGroup({ label, items, selected, onChange, error, columns = 2 }: GlassCheckboxGroupProps) {
+function CheckboxGroup({ label, items, selected, onChange, error, columns = 2 }: CheckboxGroupProps) {
   const baseId = useId()
   const toggle = (value: string) => {
     onChange(
@@ -47,10 +47,10 @@ function GlassCheckboxGroup({ label, items, selected, onChange, error, columns =
           )
         })}
       </div>
-      <GlassFieldError id={`${baseId}-error`} message={error} />
+      <FieldError id={`${baseId}-error`} message={error} />
     </fieldset>
   )
 }
 
-export { GlassCheckboxGroup }
-export type { GlassCheckboxGroupProps }
+export { CheckboxGroup }
+export type { CheckboxGroupProps }

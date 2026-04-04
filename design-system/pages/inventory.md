@@ -27,8 +27,8 @@ DashboardPageFrame (max-w-3xl)
   EquipmentProfileForm (existing)
   InventorySection (NEW)
     FormSectionHeader   "Inventory"  + [+ Add Item] button (secondary, sm)
-    Filter bar          GlassSelect for gear type filter
-    GlassCard
+    Filter bar          Select for gear type filter
+    Card
       Table             single table, all gear types, sortable columns
     Empty state         when no inventory rows exist
   PreferencesEditor (existing)
@@ -38,7 +38,7 @@ DashboardPageFrame (max-w-3xl)
 
 ## Filter Bar
 
-Single `GlassSelect` dropdown:
+Single `Select` dropdown:
 - Options: `All`, `Wetsuit`, `BCD`, `Fins`, `Mask`, `Regulator`
 - Default: `All`
 - Resets to `All` when items are added
@@ -47,7 +47,7 @@ Single `GlassSelect` dropdown:
 
 ## Table
 
-Single table inside a `GlassCard` (`.glass-container`).
+Single table inside a `Card` (`.glass-container`).
 
 ### Columns
 
@@ -62,7 +62,7 @@ Single table inside a `GlassCard` (`.glass-container`).
 
 ### Row behavior
 
-- Rows are read-only by default. Units column is an inline `GlassInput` (type number, min 1).
+- Rows are read-only by default. Units column is an inline `Input` (type number, min 1).
 - Changing units calls `updateItem` on blur or Enter.
 - Manufacturer is displayed as text (editing manufacturer requires delete + re-add to keep it simple).
 
@@ -74,18 +74,18 @@ Single table inside a `GlassCard` (`.glass-container`).
 
 ## Add Item Dialog
 
-Triggered by the [+ Add Item] button. Uses `GlassDialog`.
+Triggered by the [+ Add Item] button. Uses `Dialog`.
 
 ### Fields
 
 | Field | Type | Required |
 |-------|------|----------|
-| Gear Type | `GlassSelect` (5 canonical types) | Yes |
-| Manufacturer | `GlassInput` (free text) | No |
-| Size | `GlassInput` (free text) | No |
+| Gear Type | `Select` (5 canonical types) | Yes |
+| Manufacturer | `Input` (free text) | No |
+| Size | `Input` (free text) | No |
 | Prescription | Checkbox | No |
-| Diopter | `GlassInput` (number, shown when prescription checked) | Conditional |
-| Total Units | `GlassInput` (number, min 1) | Yes |
+| Diopter | `Input` (number, shown when prescription checked) | Conditional |
+| Total Units | `Input` (number, min 1) | Yes |
 
 ### Submit
 
@@ -96,7 +96,7 @@ reactively via Convex subscription.
 
 ## Delete
 
-Trash2 button per row. Confirmation via `GlassDialog`:
+Trash2 button per row. Confirmation via `Dialog`:
 "Remove {manufacturer} {gearType} {size}? This cannot be undone."
 
 If backend returns CONFLICT (active reservations), show inline error:
@@ -117,7 +117,7 @@ If backend returns CONFLICT (active reservations), show inline error:
 - Trash button: `aria-label="Remove {gearType} {size}"`
 - Filter select: `aria-label="Filter by gear type"`
 - Units input: `aria-label="Total units for {gearType} {size}"`
-- Dialog focus trap via GlassDialog
+- Dialog focus trap via Dialog
 
 ---
 
@@ -125,8 +125,8 @@ If backend returns CONFLICT (active reservations), show inline error:
 
 | State | Visual |
 |-------|--------|
-| `loading.initial` | Spinner inside GlassCard |
+| `loading.initial` | Spinner inside Card |
 | `empty` | EmptyState component |
 | `error.inline` | Red text below units input on save failure |
 | `success.transient` | Brief green check on units input after save |
-| `loading.action` | GlassButton loading state on Add/Delete |
+| `loading.action` | Button loading state on Add/Delete |

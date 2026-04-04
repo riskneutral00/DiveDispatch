@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { Star, ExternalLink } from 'lucide-react'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 interface PostTripPageProps {
   operatorName: string
@@ -16,7 +16,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4" data-testid="post-trip-page">
-      <GlassCard className="max-w-md w-full text-center" padding="lg">
+      <Card className="max-w-md w-full text-center" padding="lg">
         <div className="mb-4 flex justify-center">
           <Star size={40} style={{ color: 'var(--color-warning)' }} />
         </div>
@@ -49,10 +49,10 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full"
           >
-            <GlassButton variant="secondary" size="md" fullWidth>
+            <Button variant="secondary" size="md" fullWidth>
               <ExternalLink size={16} />
               {t('googleMaps')}
-            </GlassButton>
+            </Button>
           </a>
 
           <a
@@ -61,10 +61,10 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full"
           >
-            <GlassButton variant="secondary" size="md" fullWidth>
+            <Button variant="secondary" size="md" fullWidth>
               <ExternalLink size={16} />
               {t('facebook')}
-            </GlassButton>
+            </Button>
           </a>
         </div>
 
@@ -73,11 +73,11 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
         </p>
 
         <a href="/sign-up">
-          <GlassButton variant="primary" size="md" fullWidth>
+          <Button variant="primary" size="md" fullWidth>
             {t('signupCta')}
-          </GlassButton>
+          </Button>
         </a>
-      </GlassCard>
+      </Card>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import type { BookingDetailReservation } from '../../../convex/bookings'
-import { GlassBadge } from '@/components/ui'
+import { Badge } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -83,9 +83,9 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
               </p>
             )}
           </div>
-          <GlassBadge variant={reservationVariant(res.status)} size="sm" dot>
+          <Badge variant={reservationVariant(res.status)} size="sm" dot>
             {statusLabel(res.status)}
-          </GlassBadge>
+          </Badge>
         </li>
       ))}
     </ul>

@@ -4,13 +4,13 @@ import { useState, useEffect, useRef, useId, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { TOUCH_TOOLTIP_MS } from '@/lib/constants/ui-timings'
 
-interface GlassTooltipProps {
+interface TooltipProps {
   label: string
   children: ReactNode
   className?: string
 }
 
-export function GlassTooltip({ label, children, className }: GlassTooltipProps) {
+export function Tooltip({ label, children, className }: TooltipProps) {
   const tooltipId = useId()
   const [showTouch, setShowTouch] = useState(false)
   const [hovered, setHovered] = useState(false)

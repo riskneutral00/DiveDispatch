@@ -5,7 +5,7 @@ import { useMutation } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { RequestItem } from '../../../convex/bookings'
-import { GlassCard, GlassButton, GlassBadge, ErrorAlert, EmptyState } from '@/components/ui'
+import { Card, Button, Badge, ErrorAlert, EmptyState } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { Check, X, Calendar } from 'lucide-react'
 import { parseConvexError } from '@/lib/utils/convex-error'
@@ -77,23 +77,23 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
           : `${req.dates[0]} — ${req.dates[req.dates.length - 1]}`
 
         return (
-          <GlassCard key={req._id} padding="sm">
+          <Card key={req._id} padding="sm">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-primary truncate">
                     {req.ownerName}
                   </p>
-                  <GlassBadge variant="warning" size="sm" dot>
+                  <Badge variant="warning" size="sm" dot>
                     Pending
-                  </GlassBadge>
+                  </Badge>
                 </div>
                 <p className="text-xs text-secondary">
                   {req.activityType.map(courseLabel).join(', ')} · {dateLabel}
                 </p>
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <GlassButton
+                <Button
                   size="sm"
                   variant="primary"
                   onClick={() => handleAccept(req.bookingId)}
@@ -102,8 +102,8 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
                 >
                   <Check size={14} />
                   Accept
-                </GlassButton>
-                <GlassButton
+                </Button>
+                <Button
                   size="sm"
                   variant="destructive"
                   onClick={() => handleDecline(req.bookingId)}
@@ -112,10 +112,10 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
                 >
                   <X size={14} />
                   Decline
-                </GlassButton>
+                </Button>
               </div>
             </div>
-          </GlassCard>
+          </Card>
         )
       })}
     </div>

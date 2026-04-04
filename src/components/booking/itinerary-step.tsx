@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
-import { GlassCard, GlassButton, GlassCheckbox, GlassSimpleSelect } from '@/components/ui'
+import { Card, Button, Checkbox, SimpleSelect } from '@/components/ui'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
@@ -154,7 +154,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {/* Course picker */}
         <div className="min-w-0">
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Activity"
             value={entry.activityCode}
             onChange={handleCourseChange}
@@ -201,7 +201,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               style={{ caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (
-              <GlassButton
+              <Button
                 variant="destructive-ghost"
                 size="sm"
                 type="button"
@@ -209,7 +209,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
                 aria-label="Remove course"
               >
                 <Trash2 size={16} />
-              </GlassButton>
+              </Button>
             )}
           </div>
         </div>
@@ -540,7 +540,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
         <div title="Coming soon">
-          <GlassCheckbox
+          <Checkbox
             label={
               <>
                 Same courses for all customers
@@ -596,7 +596,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             })}
           </div>
 
-          <GlassButton
+          <Button
             variant="ghost"
             size="sm"
             type="button"
@@ -605,7 +605,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
           >
             <Plus size={16} />
             Add activity
-          </GlassButton>
+          </Button>
         </div>
       ))}
 
@@ -663,10 +663,10 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             >
               Schedule ({days.length} day{days.length !== 1 ? 's' : ''})
             </h3>
-            <GlassButton variant="secondary" size="sm" onClick={handleRebuild}>
+            <Button variant="secondary" size="sm" onClick={handleRebuild}>
               <RotateCw size={12} />
               Rebuild
-            </GlassButton>
+            </Button>
           </div>
           {days.map((day, idx) => (
             <DayRow

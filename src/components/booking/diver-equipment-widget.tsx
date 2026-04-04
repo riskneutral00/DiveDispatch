@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { GlassCard, GlassBadge, GlassButton, EmptyState, ErrorAlert } from '@/components/ui'
+import { Card, Badge, Button, EmptyState, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -59,9 +59,9 @@ function BagStatusBadge({ status }: { status: 'Assigned' | 'InUse' | 'Returned' 
   const variant =
     status === 'Returned' ? 'success' : status === 'InUse' ? 'warning' : 'default'
   return (
-    <GlassBadge variant={variant} size="sm" dot>
+    <Badge variant={variant} size="sm" dot>
       {status}
-    </GlassBadge>
+    </Badge>
   )
 }
 
@@ -109,7 +109,7 @@ function DiverCard({
   const hasMeasurements = diver.heightCm != null || diver.weightKg != null || diver.shoeSize != null
 
   return (
-    <GlassCard padding="md">
+    <Card padding="md">
       {/* Diver header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
@@ -139,30 +139,30 @@ function DiverCard({
               <BagStatusBadge status={diver.bag.status} />
             </div>
             {diver.bag.status === 'Assigned' && (
-              <GlassButton
+              <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => onPickUp(diver.bag!.bagId)}
                 disabled={isActing}
               >
                 Mark Picked Up
-              </GlassButton>
+              </Button>
             )}
             {diver.bag.status === 'InUse' && (
-              <GlassButton
+              <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => onReturn(diver.bag!.bagId)}
                 disabled={isActing}
               >
                 Mark Returned
-              </GlassButton>
+              </Button>
             )}
           </div>
         ) : (
-          <GlassBadge variant="default" size="sm">
+          <Badge variant="default" size="sm">
             No bag assigned
-          </GlassBadge>
+          </Badge>
         )}
       </div>
 
@@ -223,7 +223,7 @@ function DiverCard({
           </div>
         </div>
       )}
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -451,29 +451,29 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   // Loading state
   if (data === undefined) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
           <Spinner />
         </div>
-      </GlassCard>
+      </Card>
     )
   }
 
   // No EM profile
   if (data === null) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <EmptyState message="Equipment profile not set up." />
-      </GlassCard>
+      </Card>
     )
   }
 
   // No bookings in range
   if (data.bookings.length === 0) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <EmptyState message="No bookings in this date range." />
-      </GlassCard>
+      </Card>
     )
   }
 

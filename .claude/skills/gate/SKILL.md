@@ -1,7 +1,7 @@
 ---
 name: gate
-description: "Pre-commit quality gate. Classifies changes, dispatches review skills, sweeps invariants, detects test gaps, produces GO/NO-GO verdict with CRITICAL/HIGH counts. Writes .patrol-ran sentinel. Run before /vault."
-allowed-tools: Read, Glob, Grep, Bash, Skill, Agent
+description: "Pre-commit quality gate. Classifies changes, dispatches review skills, sweeps invariants, detects test gaps, produces GO/NO-GO verdict with CRITICAL/HIGH counts. On NO-GO, auto-fixes fixable findings (max 2 cycles) before reporting. Writes .patrol-ran sentinel. Run before /vault."
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Skill, Agent
 user-invocable: true
 ---
 
@@ -55,7 +55,7 @@ if [ -f .vitest-last-pass ] && [ $(( $(date +%s) - $(cat .vitest-last-pass) )) -
 
 - If **SKIP** → print `Tests: skipped (passed {N}s ago)` and continue to Phase 1.
 - If **RUN** → execute `npx vitest run 2>&1`:
-  - If **any tests fail** → immediate **NO-GO (BLOCKED)**. Output the failure summary and stop. Write `.patrol-ran` with `BLOCKED` (include `diffHash`). Do not proceed to Phase 1.
+  - If **any tests fail** → mark `TESTS_FAIL = true`. Store the failure output for Phase 7. Continue to Phase 1 (review skills still run — they may find related issues). Phase 7 will attempt to fix test failures before the final verdict.
   - If all tests pass → write timestamp: `date +%s > .vitest-last-pass` → capture pass count and continue.
 
 ---
@@ -236,6 +236,109 @@ Ready for /vault: {YES or NO}
 - **NO-GO** → Any CRITICAL or HIGH finding from any dispatched skill OR tests fail. Verdict = `BLOCKED`.
 - **GO** → No CRITICAL or HIGH findings. Verdict = `CLEAN` or `CLEAN_UNREVIEWED` (if unreviewed merges exist).
 
+**If GO** → skip to Write Sentinel.
+**If NO-GO** → fall through to Phase 7 (Auto-Fix Loop).
+
+---
+
+## Phase 7: Auto-Fix Loop (NO-GO only)
+
+Gate stays an orchestrator — all code changes are delegated to spawned fix agents. Max **2 fix-verify cycles**.
+
+### Step 7a — Fixability Triage
+
+Classify each CRITICAL and HIGH finding as `AUTO` or `MANUAL`:
+
+**AUTO** — all of these must be true:
+- Has a specific `file:line` reference
+- Has a concrete fix description (single action: rename, add call, add guard)
+- Targets ≤ 3 files
+- Does NOT involve: schema migration, new table/index creation, multi-file architectural refactor, product intent decision
+
+**MANUAL** — any of these:
+- No file:line reference (general/architectural concern)
+- Fix requires schema migration, new tables, or new indexes
+- Finding is invariant-adjacent (from Phase 3 invariant sweep)
+- Fix requires product intent decision ("should this notify the customer?")
+- Finding spans files across > 2 buckets
+- Finding involves state machine transitions in `convex/bookings/`
+
+If **ALL** findings are MANUAL → skip fix loop entirely. Report them and proceed to Write Sentinel as BLOCKED.
+
+### Step 7b — Fix Test Failures First
+
+If tests failed in Phase 0:
+
+1. Spawn 1 fix agent (`model: "sonnet"`, `subagent_type: "build-error-resolver"`) with the test failure output.
+   - Agent fixes minimally — no refactoring, just get tests green.
+2. After agent completes, re-run `npx vitest run`.
+   - If tests **still fail** → exit loop. Proceed to Step 7f (Report) as BLOCKED.
+   - If tests **pass** → write timestamp to `.vitest-last-pass`, continue to Step 7c.
+
+### Step 7c — Fix Review Findings
+
+Group `AUTO` findings by the review skill that produced them:
+
+| Skill | Fix Agent Scope |
+|-------|----------------|
+| `/review-backend-schema` | Schema + data integrity fixes |
+| `/review-backend-auth` | Auth, role gate, validator fixes |
+| `/review-backend-mutations` | Performance, side effect fixes |
+| `/review-frontend` | Component, a11y, design system fixes |
+| `/review-tests` | Test health fixes |
+
+For each bucket with `AUTO` findings, spawn **1 fix agent in parallel** (`model: "sonnet"`).
+
+Each fix agent receives:
+- The list of findings for its bucket (severity, file:line, description, fix instruction)
+- `CLAUDE.md` context (invariants, dependency direction)
+- Instruction: **"Apply each fix. Minimal diff. Run `npx tsc --noEmit` after all fixes to verify type safety. Do not change unrelated code."**
+
+After **all** fix agents complete, run `npx vitest run` once to check for regressions.
+- If tests fail → treat as a test failure for the next cycle (Step 7b handles it).
+
+### Step 7d — Re-Verify
+
+Re-dispatch **only** the review skills whose buckets had `AUTO` fixes applied. Do not re-dispatch skills for unchanged buckets or MANUAL-only buckets.
+
+Collect new CRITICAL/HIGH counts from re-dispatched skills. Merge with MANUAL findings carried forward.
+
+### Step 7e — Loop or Exit
+
+```
+remaining_critical = new CRITICAL count + MANUAL CRITICAL count
+remaining_high = new HIGH count + MANUAL HIGH count
+
+if remaining_critical == 0 AND remaining_high == 0:
+    → verdict = GO (auto-fixed)
+    → exit loop → Write Sentinel
+elif cycle < 2:
+    → cycle++
+    → goto Step 7a with new findings
+else:
+    → verdict = BLOCKED
+    → exit loop → Step 7f → Write Sentinel
+```
+
+### Step 7f — Auto-Fix Report
+
+Append to the Phase 6 verdict output:
+
+```
+AUTO-FIX REPORT:
+───────────────────────
+Cycles: {N}/2
+Fixed: {N} findings ({comma-separated list})
+Remaining: {N} findings ({comma-separated list})
+
+{If MANUAL findings exist:}
+REQUIRES HUMAN:
+  [{skill-name}] {summary} — {reason it cannot be auto-fixed}
+
+{Updated verdict: GO | BLOCKED}
+Ready for /vault: {YES or NO}
+```
+
 ---
 
 ## Write Sentinel
@@ -253,6 +356,12 @@ fi
 FILE_HASH=$(git log --oneline -1 --format=%h 2>/dev/null || echo "unknown")
 ```
 
+**If Phase 7 ran**, recompute `DIFF_HASH` and bucket hashes — the fix agents changed files:
+
+```bash
+DIFF_HASH=$( (git diff; git diff --cached; git ls-files --others --exclude-standard) | shasum -a 256 | awk '{print $1}' )
+```
+
 Write the sentinel as JSON with these fields:
 
 ```json
@@ -260,11 +369,14 @@ Write the sentinel as JSON with these fields:
   "ran": "{ISO timestamp}",
   "verdict": "{CLEAN|CLEAN_UNREVIEWED|BLOCKED}",
   "headSha": "{short hash}",
-  "diffHash": "{DIFF_HASH from Phase 0}",
+  "diffHash": "{DIFF_HASH — recomputed if Phase 7 ran}",
   "critical": {N},
   "high": {N},
   "tests": true,
   "invariants": true,
+  "fixCycles": 0,
+  "fixedFindings": [],
+  "manualFindings": [],
   "bucketHashes": {
     "schema": "{SCHEMA_HASH}",
     "backend": "{BACKEND_HASH}",
@@ -277,9 +389,13 @@ Write the sentinel as JSON with these fields:
 }
 ```
 
+- `fixCycles`: number of auto-fix cycles executed (0 if Phase 7 did not run)
+- `fixedFindings`: list of finding descriptions that were resolved by auto-fix
+- `manualFindings`: list of finding descriptions classified as MANUAL (require human)
+
 `skillResults` includes both freshly-dispatched and cached skill results (merged). This is what future gate runs read for incremental dispatch.
 
-`DIFF_HASH` and bucket hashes were computed in Phase 0 / Phase 1 and reused here.
+`DIFF_HASH` and bucket hashes were computed in Phase 0 / Phase 1 and recomputed after Phase 7 if fixes were applied.
 
 Exit code: 0 on GO, 1 on NO-GO.
 
@@ -292,5 +408,5 @@ Exit code: 0 on GO, 1 on NO-GO.
 - **Invariant sweep is always on.** Fast safety net even if skills already ran.
 - **Test gaps are informational.** They appear in verdict but never block.
 - **Config-only changes skip review.** Report them and skip to verdict.
-- **Gate is read-only.** Dispatched skills handle their own vault writes + H-specs + baseline updates.
+- **Gate orchestrates, not edits.** Gate classifies, dispatches, and orchestrates. Code fixes are delegated to spawned fix agents. Dispatched skills handle their own vault writes + H-specs + baseline updates.
 - **Execute immediately.** No preamble. Classify, dispatch, verdict.

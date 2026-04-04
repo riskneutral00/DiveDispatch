@@ -6,8 +6,8 @@ import { mapPortalMutationError } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -80,18 +80,18 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
 
   if (status === null) {
     return (
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
           {TOKEN_EXPIRED_MESSAGE}
         </p>
-      </GlassCard>
+      </Card>
     )
   }
 
   // Already submitted — show success page
   if (status.alreadySubmitted || submitted) {
     return (
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <div className="flex flex-col items-center gap-4 text-center">
           {medicalHardBlock || status.medicalHardBlock ? (
             <>
@@ -132,7 +132,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
             </>
           )}
         </div>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -157,7 +157,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <GlassCard padding="md">
+      <Card padding="md">
         <h2
           className="text-base font-semibold mb-4 text-primary"
           style={{ fontFamily: 'var(--font-heading)' }}
@@ -181,7 +181,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
             required={status.portalWaiver}
           />
         </div>
-      </GlassCard>
+      </Card>
 
       {!allComplete && (
         <p className="text-sm text-center text-secondary">
@@ -199,7 +199,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
         </p>
       )}
 
-      <GlassButton
+      <Button
         variant="primary"
         fullWidth
         size="lg"
@@ -208,7 +208,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
         onClick={handleSubmit}
       >
         Submit My Forms
-      </GlassButton>
+      </Button>
     </div>
   )
 }

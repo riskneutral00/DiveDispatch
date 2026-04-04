@@ -4,11 +4,11 @@ import { Plus } from 'lucide-react'
 import { SpecialtyField } from '@/components/profiles/specialty-field'
 import { DayPicker } from '@/components/ui/day-picker'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassSelect } from '@/components/ui/glass-select'
+import { Button } from '@/components/ui/button'
+import { CheckboxGroup } from '@/components/ui/checkbox-group'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Select } from '@/components/ui/select'
 import { ItemCard } from '@/components/ui/item-card'
 import {
   AGENCIES,
@@ -113,7 +113,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     return (
       <div className="grid grid-cols-2 gap-x-2 gap-y-4 items-start">
         {/* Row 1 */}
-        <GlassSelect
+        <Select
           label="Agency"
           value={String((item as AgencyRow).agency ?? '')}
           onChange={(v) => handleUpdate(idx, { agency: v })}
@@ -123,7 +123,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           placeholder="Select agency"
           required
         />
-        <GlassInput
+        <Input
           label="Member Number"
           value={String((item as AgencyRow).number ?? '')}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
@@ -172,7 +172,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   function renderAgentFields(item: AgencyRow, idx: number) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-        <GlassSimpleSelect
+        <SimpleSelect
           label="Agency"
           value={String((item as AgencyRow).agency ?? '')}
           onChange={(v) => handleUpdate(idx, { agency: v })}
@@ -181,7 +181,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           error={errors[`associations.${idx}.agency`]}
           required
         />
-        <GlassInput
+        <Input
           label="Agency Member ID"
           placeholder="e.g. 12345678"
           value={String((item as AgencyRow).number ?? '')}
@@ -198,7 +198,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     return (
       <Fragment>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Agency"
             value={String((item as AgencyRow).agency ?? '')}
             onChange={(v) => handleUpdate(idx, { agency: v })}
@@ -207,7 +207,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             error={errors[`credential.${idx}.agency`]}
             required
           />
-          <GlassInput
+          <Input
             label="Certification Level"
             placeholder={variant === 'instructor' ? 'e.g. Open Water Instructor' : 'e.g. Divemaster'}
             value={String((item as AgencyRow).level ?? '')}
@@ -215,7 +215,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             error={errors[`credential.${idx}.level`]}
             required
           />
-          <GlassInput
+          <Input
             label={variant === 'instructor' ? 'Agency Instructor ID' : 'Agency Member ID'}
             placeholder="e.g. 12345678"
             value={String((item as AgencyRow).agencyID ?? '')}
@@ -226,7 +226,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           />
         </div>
         {variant === 'instructor' && (
-          <GlassCheckboxGroup
+          <CheckboxGroup
             label="Courses Taught"
             items={courseItems}
             selected={((item as AgencyRow).courses as string[] | undefined) ?? []}
@@ -251,10 +251,10 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         <FormSectionHeader
           label={sectionLabel}
           action={
-            <GlassButton type="button" variant="secondary" size="sm" onClick={handleAdd}>
+            <Button type="button" variant="secondary" size="sm" onClick={handleAdd}>
               <Plus size={14} />
               {addLabel}
-            </GlassButton>
+            </Button>
           }
         />
       )}

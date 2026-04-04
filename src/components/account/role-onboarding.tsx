@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassCard, GlassButton } from '@/components/ui'
+import { Card, Button } from '@/components/ui'
 import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step'
 import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-step'
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
@@ -66,11 +66,11 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
   }
 
   return (
-    <GlassCard padding="md">
+    <Card padding="md">
       <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
         Profile setup for <strong>{cfg?.label ?? role}</strong> is available from your dashboard.
       </p>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -105,9 +105,9 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
       <ProfileFormForRole role={role} onComplete={onComplete} />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <GlassButton variant="secondary" onClick={onComplete}>
+        <Button variant="secondary" onClick={onComplete}>
           Done
-        </GlassButton>
+        </Button>
       </div>
     </div>
   )

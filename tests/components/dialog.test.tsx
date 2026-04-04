@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * GlassDialog — behavior tests
+ * Dialog — behavior tests
  *
  * Scroll lock and content fade are now CSS-only (body:has(dialog[open]) and
  * html:has(dialog[open]) .app-shell). No JS mutations on body.style.overflow
@@ -10,7 +10,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { screen, act } from '@testing-library/react'
 import { render } from '../helpers/render'
-import { GlassDialog } from '@/components/ui/glass-dialog'
+import { Dialog } from '@/components/ui/dialog'
 
 // jsdom doesn't implement HTMLDialogElement.show / .showModal / .close
 beforeEach(() => {
@@ -28,12 +28,12 @@ beforeEach(() => {
   document.body.style.overflow = ''
 })
 
-describe('GlassDialog — CSS-only scroll lock (no JS body mutations)', () => {
+describe('Dialog — CSS-only scroll lock (no JS body mutations)', () => {
   it('does NOT set body.style.overflow when a dialog opens', () => {
     render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     // CSS handles scroll lock via body:has(dialog[open]) { overflow: hidden }
     // JS must not touch body.style.overflow
@@ -42,35 +42,35 @@ describe('GlassDialog — CSS-only scroll lock (no JS body mutations)', () => {
 
   it('does NOT leave body.style.overflow set after dialog closes', () => {
     const { rerender } = render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     rerender(
-      <GlassDialog open={false} onClose={() => {}}>
+      <Dialog open={false} onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     expect(document.body.style.overflow).toBe('')
   })
 
   it('does NOT set body.style.overflow on unmount while open', () => {
     const { unmount } = render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     act(() => { unmount() })
     expect(document.body.style.overflow).toBe('')
   })
 })
 
-describe('GlassDialog — cleanup on unmount (error boundary safety)', () => {
+describe('Dialog — cleanup on unmount (error boundary safety)', () => {
   it('closes the native dialog element when component unmounts while open', () => {
     const { unmount } = render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const dialog = document.querySelector('dialog')!
     expect(dialog.hasAttribute('open')).toBe(true)
@@ -83,47 +83,47 @@ describe('GlassDialog — cleanup on unmount (error boundary safety)', () => {
   })
 })
 
-describe('GlassDialog — no data-dialog-open JS attribute (CSS :has() handles fade)', () => {
+describe('Dialog — no data-dialog-open JS attribute (CSS :has() handles fade)', () => {
   it('does NOT set data-dialog-open on html when a dialog opens', () => {
     render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
   })
 
   it('does NOT leave data-dialog-open after dialog closes', () => {
     const { rerender } = render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     rerender(
-      <GlassDialog open={false} onClose={() => {}}>
+      <Dialog open={false} onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
   })
 
   it('does NOT leave data-dialog-open after unmount while open', () => {
     const { unmount } = render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     act(() => { unmount() })
     expect(document.documentElement.hasAttribute('data-dialog-open')).toBe(false)
   })
 })
 
-describe('GlassDialog a11y', () => {
+describe('Dialog a11y', () => {
   it('has aria-modal="true" on the dialog element', () => {
     render(
-      <GlassDialog open onClose={() => {}}>
+      <Dialog open onClose={() => {}}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
   })
@@ -131,9 +131,9 @@ describe('GlassDialog a11y', () => {
   it('calls onClose when Escape fires the cancel event', () => {
     const onClose = vi.fn()
     render(
-      <GlassDialog open onClose={onClose}>
+      <Dialog open onClose={onClose}>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const dialog = screen.getByRole('dialog')
     dialog.dispatchEvent(new Event('cancel', { cancelable: true, bubbles: false }))
@@ -141,12 +141,12 @@ describe('GlassDialog a11y', () => {
   })
 })
 
-describe('GlassDialog design compliance', () => {
+describe('Dialog design compliance', () => {
   it('standard dialog panel has no inline backdropFilter', () => {
     render(
-      <GlassDialog open onClose={() => {}} title="Test">
+      <Dialog open onClose={() => {}} title="Test">
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const panel = document.querySelector('.glass-container') as HTMLElement
     expect(panel).toBeInTheDocument()
@@ -156,9 +156,9 @@ describe('GlassDialog design compliance', () => {
 
   it('fullScreen dialog panel has no inline backdropFilter', () => {
     render(
-      <GlassDialog open onClose={() => {}} title="Test" fullScreen>
+      <Dialog open onClose={() => {}} title="Test" fullScreen>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const panel = document.querySelector('.glass-container') as HTMLElement
     expect(panel).toBeInTheDocument()
@@ -168,9 +168,9 @@ describe('GlassDialog design compliance', () => {
 
   it('close button has adequate touch target (p-2)', () => {
     render(
-      <GlassDialog open onClose={() => {}} title="Test">
+      <Dialog open onClose={() => {}} title="Test">
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const closeBtn = screen.getByLabelText('Close dialog')
     expect(closeBtn.className).toContain('p-2')
@@ -179,9 +179,9 @@ describe('GlassDialog design compliance', () => {
 
   it('fullScreen close button has adequate touch target (p-2)', () => {
     render(
-      <GlassDialog open onClose={() => {}} title="Test" fullScreen>
+      <Dialog open onClose={() => {}} title="Test" fullScreen>
         <p>Content</p>
-      </GlassDialog>,
+      </Dialog>,
     )
     const closeBtn = screen.getByLabelText('Close dialog')
     expect(closeBtn.className).toContain('p-2')

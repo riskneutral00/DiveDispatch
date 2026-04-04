@@ -4,15 +4,14 @@ import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassCheckboxGroup } from '@/components/ui/glass-checkbox-group'
+import { Card } from '@/components/ui/card'
+import { CheckboxGroup } from '@/components/ui/checkbox-group'
 import {
   compressorContactSchema,
   compressorGasMixesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -93,7 +92,7 @@ export function CompressorContactSection({ profile: existing, me, create, update
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -170,9 +169,9 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
 
   if (!existing) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm text-secondary">Complete contact info first</p>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -189,9 +188,9 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
       isValid={isValid}
       className="space-y-6"
     >
-      <GlassCard padding="md">
+      <Card padding="md">
         <FormSectionHeader label="Gas Mixes Available" />
-        <GlassCheckboxGroup
+        <CheckboxGroup
           label="Select the gas mixes you supply"
           items={GAS_MIXES.map(({ value, label }) => ({ value, label }))}
           selected={form.gasMixes}
@@ -199,7 +198,7 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
           error={errors.gasMixes}
           columns={2}
         />
-      </GlassCard>
+      </Card>
     </ProfileFormShell>
   )
 }

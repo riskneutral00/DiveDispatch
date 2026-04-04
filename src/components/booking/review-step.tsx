@@ -7,7 +7,7 @@ import { Calendar, Users, Send, ChevronLeft } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GlassCard, GlassButton } from '@/components/ui'
+import { Card, Button } from '@/components/ui'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { deriveActivityType } from '@/lib/booking/wizard-state'
@@ -257,7 +257,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
   return (
     <div className="flex flex-col gap-4">
       {/* Customers */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
             <Users size={11} />
@@ -287,10 +287,10 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
             ))}
           </div>
         )}
-      </GlassCard>
+      </Card>
 
       {/* Date range + courses */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
             <Calendar size={11} />
@@ -317,11 +317,11 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
             </div>
           )}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Days */}
       {days.length > 0 && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <SectionLabel>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</SectionLabel>
           <div className="flex flex-col gap-1.5">
             {days.map((d, i) => (
@@ -340,7 +340,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
               </div>
             ))}
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Error */}
@@ -348,7 +348,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
       {/* Navigation */}
       <div className="flex justify-between items-center gap-4 mt-2">
-        <GlassButton
+        <Button
           variant="secondary"
           size="md"
           disabled={submitting}
@@ -356,8 +356,8 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         >
           <ChevronLeft size={16} />
           Back
-        </GlassButton>
-        <GlassButton
+        </Button>
+        <Button
           variant="primary"
           size="md"
           disabled={submitting || !bookingId || !!validationError}
@@ -366,7 +366,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         >
           <Send size={16} />
           {isEditMode ? 'Update Booking' : 'Submit Booking'}
-        </GlassButton>
+        </Button>
       </div>
 
       {!submitting && validationError && (

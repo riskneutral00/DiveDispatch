@@ -1,5 +1,5 @@
 import { getDaysOfWeek } from '@/lib/utils/calendar-range'
-import { GlassCard } from '@/components/ui'
+import { Card } from '@/components/ui'
 
 interface CalendarShellProps {
   header: React.ReactNode
@@ -19,7 +19,7 @@ export function CalendarShell({
   const dayHeaders = getDaysOfWeek()
 
   return (
-    <GlassCard className={className} hoverable>
+    <Card className={className} hoverable>
       {header}
 
       <div className="overflow-x-auto">
@@ -58,6 +58,6 @@ export function CalendarShell({
         </div>
       )}
 
-    </GlassCard>
+    </Card>
   )
 }

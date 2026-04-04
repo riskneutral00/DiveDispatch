@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '@/lib/convex-generated'
-import { GlassButton, GlassCard } from '@/components/ui'
+import { Button, Card } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { ROLE_BY_CLERK_ROLE, ROLES, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
@@ -38,11 +38,11 @@ function ProfileFormForRole({ role }: { role: string; onSaved: () => void }) {
     return <RoleProfileForm roleSlug={key} />
   }
   return (
-    <GlassCard padding="md">
+    <Card padding="md">
       <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
         Profile setup for <strong>{role}</strong> is available from your dashboard settings.
       </p>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -243,9 +243,9 @@ export function OnboardingWizard() {
           )}
 
           {stepKey === 'preferences' && (
-            <GlassCard padding="lg">
+            <Card padding="lg">
               <StepPreferences userRole={roleNames[0] ?? 'DiveCenter'} />
-            </GlassCard>
+            </Card>
           )}
 
           {stepKey === 'review' && (
@@ -263,7 +263,7 @@ export function OnboardingWizard() {
                   Your account is configured. Click below to open your dashboard.
                 </p>
               </div>
-              <GlassCard padding="md">
+              <Card padding="md">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="text-secondary" style={{ fontSize: 13 }}>
@@ -286,9 +286,9 @@ export function OnboardingWizard() {
                     </span>
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
               {onboardingStatus.incomplete.length > 0 && (
-                <GlassCard padding="sm">
+                <Card padding="sm">
                   <p className="text-secondary" style={{ fontSize: 12, marginBottom: 6 }}>
                     You can complete these later from your profile settings:
                   </p>
@@ -303,7 +303,7 @@ export function OnboardingWizard() {
                       </li>
                     ))}
                   </ul>
-                </GlassCard>
+                </Card>
               )}
               {error && (
                 <p style={{ fontSize: 13, color: 'var(--color-destructive)' }}>{error}</p>
@@ -322,21 +322,21 @@ export function OnboardingWizard() {
               gap: 8,
             }}
           >
-            <GlassButton variant="secondary" onClick={goBack}>
+            <Button variant="secondary" onClick={goBack}>
               Back
-            </GlassButton>
+            </Button>
             {stepKey !== 'review' ? (
-              <GlassButton variant="primary" onClick={goNext}>
+              <Button variant="primary" onClick={goNext}>
                 Next
-              </GlassButton>
+              </Button>
             ) : (
-              <GlassButton
+              <Button
                 variant="primary"
                 loading={completing}
                 onClick={handleComplete}
               >
                 Go to dashboard
-              </GlassButton>
+              </Button>
             )}
           </div>
         )}

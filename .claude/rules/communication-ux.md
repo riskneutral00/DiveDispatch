@@ -9,7 +9,7 @@ Don't ask Matt UI placement questions (where buttons go, layout choices). Defer 
 Matt is a domain expert, not a UX designer. Lead with design recommendations and explain why: "Bottom nav because of thumb reach" not "top or bottom?"
 
 ## Toast means any pop-up
-Matt uses "toast" for any confirmation pop-up. Don't ask which UI pattern — pick the right one for the context (GlassDialog for confirmations, Sonner toast for notifications).
+Matt uses "toast" for any confirmation pop-up. Don't ask which UI pattern — pick the right one for the context (Dialog for confirmations, Sonner toast for notifications).
 
 ## Never auto-queue POST specs
 POST-tier specs must be reviewed before queuing. When loading tasks, exclude POST-* specs and mention they exist separately.

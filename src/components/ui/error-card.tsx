@@ -7,9 +7,9 @@
  */
 
 import type { LucideIcon } from 'lucide-react'
-import { GlassCard } from './glass-card'
+import { Card } from './card'
 
-interface GlassErrorCardProps {
+interface ErrorCardProps {
   icon: LucideIcon
   iconColor?: string
   title: string
@@ -19,17 +19,17 @@ interface GlassErrorCardProps {
   minHeight?: string
 }
 
-export function GlassErrorCard({
+export function ErrorCard({
   icon: Icon,
   iconColor = 'var(--color-destructive)',
   title,
   message,
   action,
   minHeight = 'min-h-screen',
-}: GlassErrorCardProps) {
+}: ErrorCardProps) {
   return (
     <div className={`flex items-center justify-center ${minHeight} px-4`}>
-      <GlassCard className="max-w-md w-full text-center" padding="lg">
+      <Card className="max-w-md w-full text-center" padding="lg">
         <div className="mb-4 flex justify-center">
           <Icon size={40} style={{ color: iconColor }} />
         </div>
@@ -45,7 +45,7 @@ export function GlassErrorCard({
           {message}
         </p>
         {action && <div className="mt-6">{action}</div>}
-      </GlassCard>
+      </Card>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { GlassInput } from '@/components/ui/glass-input'
+import { Input } from '@/components/ui/input'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 
 interface ProfileBasicInfoProps {
@@ -51,7 +51,7 @@ export function ProfileBasicInfo({
 }: ProfileBasicInfoProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-      <GlassInput
+      <Input
         label={nameLabel}
         placeholder={namePlaceholder}
         value={nameValue}
@@ -67,7 +67,7 @@ export function ProfileBasicInfo({
         error={locationError}
         required={locationRequired}
       />
-      <GlassInput
+      <Input
         label="Phone"
         type="text"
         inputMode="tel"
@@ -79,7 +79,7 @@ export function ProfileBasicInfo({
         required={phoneRequired}
       />
       {onEmailChange !== undefined && (
-        <GlassInput
+        <Input
           label="Email"
           type="text"
           inputMode="email"

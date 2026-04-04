@@ -4,8 +4,8 @@ import { useState } from 'react'
 import type { Language } from '@/lib/types/language'
 import type { RoleConfig } from '@/lib/constants/roles'
 import { LanguageField } from '@/components/profiles/language-field'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 export interface BusinessInfoValues {
   businessName: string
@@ -44,12 +44,12 @@ export function StepBusinessInfo({
         </div>
 
         <div className="flex gap-3 mt-2" data-testid="wizard-nav">
-          <GlassButton type="button" variant="secondary" fullWidth onClick={onBack}>
+          <Button type="button" variant="secondary" fullWidth onClick={onBack}>
             Back
-          </GlassButton>
-          <GlassButton variant="primary" fullWidth onClick={onContinue}>
+          </Button>
+          <Button variant="primary" fullWidth onClick={onContinue}>
             Next
-          </GlassButton>
+          </Button>
         </div>
       </div>
     )
@@ -71,7 +71,7 @@ export function StepBusinessInfo({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-        <GlassInput
+        <Input
           label="Business name"
           value={values.businessName}
           onChange={(e) => onChange({ ...values, businessName: e.target.value })}
@@ -86,17 +86,17 @@ export function StepBusinessInfo({
       </div>
 
       <div className="flex gap-3 mt-2" data-testid="wizard-nav">
-        <GlassButton type="button" variant="secondary" fullWidth onClick={onBack}>
+        <Button type="button" variant="secondary" fullWidth onClick={onBack}>
           Back
-        </GlassButton>
-        <GlassButton
+        </Button>
+        <Button
           variant="primary"
           fullWidth
           disabled={!isComplete}
           onClick={onContinue}
         >
           Next
-        </GlassButton>
+        </Button>
       </div>
     </div>
   )

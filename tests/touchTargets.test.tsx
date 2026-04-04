@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Button } from '@/components/ui/button'
 
 const sizes = ['sm', 'md', 'lg', 'icon'] as const
 
 describe('Touch targets — WCAG 2.5.8 (44x44px minimum)', () => {
-  it.each(sizes)('GlassButton size="%s" applies 44px minimum touch target', (size) => {
+  it.each(sizes)('Button size="%s" applies 44px minimum touch target', (size) => {
     const { container } = render(
-      <GlassButton size={size}>Test</GlassButton>,
+      <Button size={size}>Test</Button>,
     )
     const btn = container.firstElementChild as HTMLElement
     expect(btn.className).toContain('min-h-[44px]')
@@ -17,7 +17,7 @@ describe('Touch targets — WCAG 2.5.8 (44x44px minimum)', () => {
 
   it('touch target classes are on the button element itself, not a wrapper', () => {
     const { container } = render(
-      <GlassButton size="sm">Test</GlassButton>,
+      <Button size="sm">Test</Button>,
     )
     const btn = container.querySelector('button')
     expect(btn).not.toBeNull()

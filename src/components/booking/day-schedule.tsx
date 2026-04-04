@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock, MapPin, Lock, Waves, Anchor, Footprints } from 'lucide-react'
-import { GlassCard, GlassBadge, GlassInput, GlassSimpleSelect } from '@/components/ui'
+import { Card, Badge, Input, SimpleSelect } from '@/components/ui'
 import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
 import { VenueToggle } from './venue-toggle'
 
@@ -68,21 +68,21 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
           {formatDisplayDate(date)}
         </span>
         {sessions.some(s => s.isConfinedDay) && (
-          <GlassBadge variant="info" size="sm" dot>
+          <Badge variant="info" size="sm" dot>
             <Lock size={10} />
             Confined Water
-          </GlassBadge>
+          </Badge>
         )}
         {sessions.some(s => !s.isConfinedDay && s.resourceType === 'boat') && (
-          <GlassBadge variant="success" size="sm" dot>
+          <Badge variant="success" size="sm" dot>
             Open Water
-          </GlassBadge>
+          </Badge>
         )}
       </div>
 
       {/* Session cards */}
       {sessions.map((session, idx) => (
-        <GlassCard key={idx} padding="sm" className="mb-2">
+        <Card key={idx} padding="sm" className="mb-2">
           <div className="flex flex-col gap-3">
             {/* Location row */}
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -131,14 +131,14 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
 
             {/* Time + timezone inputs */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              <GlassInput
+              <Input
                 label="Start time"
                 type="time"
                 value={session.startTime}
                 onChange={e => onUpdate(idx, 'startTime', e.target.value)}
                 leadingIcon={<Clock size={13} />}
               />
-              <GlassInput
+              <Input
                 label="End time"
                 type="time"
                 value={session.endTime}
@@ -147,7 +147,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
               />
               {/* Timezone selector */}
               <div className="col-span-2 sm:col-span-1">
-                <GlassSimpleSelect
+                <SimpleSelect
                   label="Timezone"
                   value={session.timezone}
                   onChange={v => onUpdate(idx, 'timezone', v)}
@@ -184,7 +184,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
               </div>
             )}
           </div>
-        </GlassCard>
+        </Card>
       ))}
     </div>
   )

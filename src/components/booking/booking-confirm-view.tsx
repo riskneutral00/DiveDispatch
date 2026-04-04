@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Check, Send, Users, Calendar } from 'lucide-react'
-import { GlassCard, GlassButton } from '@/components/ui'
+import { Card, Button } from '@/components/ui'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { formatDateRange } from '@/lib/booking/booking-display'
 import type { WizardState } from '@/lib/booking/wizard-state'
@@ -33,7 +33,7 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
       </div>
 
       {/* Customer list */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="flex items-center gap-1.5 mb-3">
           <Users className="text-secondary" size={13} />
           <p
@@ -76,19 +76,19 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
                     Link sent
                   </span>
                 ) : (
-                  <GlassButton variant="ghost" size="sm" className="flex-shrink-0">
+                  <Button variant="ghost" size="sm" className="flex-shrink-0">
                     <Send size={11} />
                     Send link
-                  </GlassButton>
+                  </Button>
                 )}
               </div>
             )
           })}
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Booking summary */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="flex items-center gap-1.5 mb-3">
           <Calendar className="text-secondary" size={13} />
           <p
@@ -142,13 +142,13 @@ export function BookingConfirmView({ state }: BookingConfirmViewProps) {
             ))}
           </div>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Done button */}
       <div className="flex justify-center pt-2">
-        <GlassButton variant="primary" size="md" onClick={() => router.push('/dashboard')}>
+        <Button variant="primary" size="md" onClick={() => router.push('/dashboard')}>
           Done
-        </GlassButton>
+        </Button>
       </div>
     </div>
   )

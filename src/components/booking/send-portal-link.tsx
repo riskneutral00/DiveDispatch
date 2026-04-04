@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { GlassDialog, GlassButton, ErrorAlert } from '@/components/ui'
+import { Dialog, Button, ErrorAlert } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
 import { GENERATE_LINK_ERROR_MESSAGE } from '@/lib/constants/error-messages'
@@ -192,12 +192,12 @@ export function SendPortalLink({
 
   return (
     <>
-      <GlassButton size="sm" variant="secondary" onClick={handleOpen}>
+      <Button size="sm" variant="secondary" onClick={handleOpen}>
         <Link2 size={14} />
         Send Portal Link
-      </GlassButton>
+      </Button>
 
-      <GlassDialog
+      <Dialog
         open={open}
         onClose={handleClose}
         title="Send Portal Link"
@@ -248,7 +248,7 @@ export function SendPortalLink({
           )}
 
           <div className="flex gap-2 flex-wrap">
-            <GlassButton
+            <Button
               size="sm"
               variant="secondary"
               onClick={handleCopy}
@@ -257,10 +257,10 @@ export function SendPortalLink({
             >
               {copyDone ? <Check size={14} /> : <Copy size={14} />}
               {copyDone ? 'Copied!' : 'Copy Link'}
-            </GlassButton>
+            </Button>
 
             {hasWhatsApp && (
-              <GlassButton
+              <Button
                 size="sm"
                 variant="primary"
                 onClick={handleSendWhatsApp}
@@ -269,11 +269,11 @@ export function SendPortalLink({
               >
                 <MessageCircle size={14} />
                 WhatsApp
-              </GlassButton>
+              </Button>
             )}
 
             {hasLine && (
-              <GlassButton
+              <Button
                 size="sm"
                 variant="primary"
                 onClick={handleSendLine}
@@ -282,11 +282,11 @@ export function SendPortalLink({
               >
                 <Send size={14} />
                 LINE
-              </GlassButton>
+              </Button>
             )}
 
             {hasEmail && (
-              <GlassButton
+              <Button
                 size="sm"
                 variant={hasWhatsApp || hasLine ? 'secondary' : 'primary'}
                 onClick={handleSendEmail}
@@ -295,11 +295,11 @@ export function SendPortalLink({
               >
                 <Mail size={14} />
                 Email
-              </GlassButton>
+              </Button>
             )}
           </div>
         </div>
-      </GlassDialog>
+      </Dialog>
     </>
   )
 }

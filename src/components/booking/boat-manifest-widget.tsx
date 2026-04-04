@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { Ship, ChevronDown, ChevronRight, AlertTriangle, Heart } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
-import { GlassCard, EmptyState } from '@/components/ui'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { Card, EmptyState } from '@/components/ui'
+import { SimpleSelect } from '@/components/ui/simple-select'
 import { Spinner } from '@/components/ui/spinner'
 import type {
   ManifestData,
@@ -198,7 +198,7 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
   const totalPax = vessel.dates.reduce((sum, d) => sum + d.totalPax, 0)
 
   return (
-    <GlassCard padding="md" className="mb-4">
+    <Card padding="md" className="mb-4">
       <div className="flex items-center gap-3 mb-3">
         <Ship size={18} style={{ color: 'var(--color-primary)' }} />
         <h3 className="text-base font-semibold text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -217,7 +217,7 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
           <DateSection key={dateEntry.date} entry={dateEntry} groupBy={groupBy} />
         ))
       )}
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -262,11 +262,11 @@ export function BoatManifestWidget({ visibleRange }: BoatManifestWidgetProps) {
 
   if (data === undefined) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="flex items-center justify-center py-8">
           <Spinner />
         </div>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -277,7 +277,7 @@ export function BoatManifestWidget({ visibleRange }: BoatManifestWidgetProps) {
   return (
     <div data-testid="boat-manifest-widget" className="space-y-3">
       <div className="flex items-center gap-3">
-        <GlassSimpleSelect
+        <SimpleSelect
           label="Group by"
           value={groupBy}
           onChange={(v) => setGroupBy(v as GroupByMode)}

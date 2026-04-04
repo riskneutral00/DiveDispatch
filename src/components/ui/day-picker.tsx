@@ -1,4 +1,4 @@
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { SimpleSelect } from '@/components/ui/simple-select'
 
 interface DayPickerProps {
   label: string
@@ -14,7 +14,7 @@ export function DayPicker({ label, value, min, max, onChange }: DayPickerProps) 
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <GlassSimpleSelect
+      <SimpleSelect
         label={label}
         value={String(value)}
         onChange={(v) => onChange(Number(v))}

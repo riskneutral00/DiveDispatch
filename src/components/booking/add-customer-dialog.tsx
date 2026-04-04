@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassDialog, GlassButton, GlassInput, GlassButtonGroup } from '@/components/ui'
-import type { GlassButtonGroupOption } from '@/components/ui'
+import { Dialog, Button, Input, ButtonGroup } from '@/components/ui'
+import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
 import type { Language } from '@/lib/types/language'
 import type { CustomerContact } from '@/lib/booking/wizard-state'
@@ -60,12 +60,12 @@ export function AddCustomerDialog({
   const canSubmit = name.trim().length > 0
 
   return (
-    <GlassDialog open={open} onClose={handleClose} title="Add Customer" size="sm">
+    <Dialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
         {/* Name + Contact paired with Languages */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
           <div className="flex flex-col gap-3 min-w-0">
-            <GlassInput
+            <Input
               label="Full name"
               value={name}
               onChange={(e) => {
@@ -83,7 +83,7 @@ export function AddCustomerDialog({
               >
                 Contact (optional)
               </p>
-              <GlassButtonGroup
+              <ButtonGroup
                 variant="segment"
                 value={contactType}
                 onChange={(v) => setContactType(v as ContactType)}
@@ -92,9 +92,9 @@ export function AddCustomerDialog({
                   { value: 'email', label: 'Email' },
                   { value: 'whatsapp', label: 'WhatsApp' },
                   { value: 'line', label: 'LINE' },
-                ] satisfies GlassButtonGroupOption[]}
+                ] satisfies ButtonGroupOption[]}
               />
-              <GlassInput
+              <Input
                 value={contactValue}
                 onChange={(e) => setContactValue(e.target.value)}
                 placeholder={
@@ -120,14 +120,14 @@ export function AddCustomerDialog({
 
         {/* Actions */}
         <div className="flex gap-2 justify-end">
-          <GlassButton variant="secondary" size="md" onClick={handleClose}>
+          <Button variant="secondary" size="md" onClick={handleClose}>
             Cancel
-          </GlassButton>
-          <GlassButton variant="primary" size="md" onClick={handleSubmit} disabled={!canSubmit}>
+          </Button>
+          <Button variant="primary" size="md" onClick={handleSubmit} disabled={!canSubmit}>
             Add Customer
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }

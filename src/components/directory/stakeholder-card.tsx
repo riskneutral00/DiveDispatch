@@ -2,8 +2,8 @@
 
 import React from 'react'
 import { BadgeCheck, MapPin, Star } from 'lucide-react'
-import { GlassBadge } from '@/components/ui/glass-badge'
-import { GlassCard } from '@/components/ui/glass-card'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import type { RichDirectoryEntry } from '@/lib/types/directory'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { LanguageFlags } from '@/components/profiles/language-flags'
@@ -47,7 +47,7 @@ export const StakeholderCard = React.memo(function StakeholderCard({
   const primaryAgency = entry.agencies?.[0]
 
   return (
-    <GlassCard hoverable className="h-full flex flex-col">
+    <Card hoverable className="h-full flex flex-col">
       {/* Non-navigating card body */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-3">
@@ -98,18 +98,18 @@ export const StakeholderCard = React.memo(function StakeholderCard({
 
             {/* Role badge + agency badge for instructors */}
             <div className="mt-1 flex items-center gap-1 flex-wrap">
-              <GlassBadge size="sm" variant={entry.verified ? 'success' : 'default'}>
+              <Badge size="sm" variant={entry.verified ? 'success' : 'default'}>
                 {roleLabel}
-              </GlassBadge>
+              </Badge>
               {entry.role === 'Instructor' && primaryAgency && (
-                <GlassBadge size="sm" variant="info">
+                <Badge size="sm" variant="info">
                   {primaryAgency}
-                </GlassBadge>
+                </Badge>
               )}
               {entry.role === 'Agent' && entry.association && (
-                <GlassBadge size="sm" variant="default">
+                <Badge size="sm" variant="default">
                   {entry.association}
-                </GlassBadge>
+                </Badge>
               )}
             </div>
 
@@ -198,6 +198,6 @@ export const StakeholderCard = React.memo(function StakeholderCard({
           </button>
         </div>
       )}
-    </GlassCard>
+    </Card>
   )
 })

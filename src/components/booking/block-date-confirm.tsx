@@ -1,6 +1,6 @@
 'use client'
 
-import { GlassDialog, GlassButton } from '@/components/ui'
+import { Dialog, Button } from '@/components/ui'
 
 interface BlockDateConfirmProps {
   date: string
@@ -24,7 +24,7 @@ export function BlockDateConfirm({
   })
 
   return (
-    <GlassDialog
+    <Dialog
       open
       onClose={onCancel}
       title={mode === 'block' ? 'Block this date?' : 'Unblock this date?'}
@@ -36,7 +36,7 @@ export function BlockDateConfirm({
       size="sm"
     >
       <div className="flex gap-3 justify-end">
-        <GlassButton
+        <Button
           variant="ghost"
           size="sm"
           onClick={onCancel}
@@ -44,8 +44,8 @@ export function BlockDateConfirm({
           type="button"
         >
           Cancel
-        </GlassButton>
-        <GlassButton
+        </Button>
+        <Button
           variant={mode === 'block' ? 'destructive' : 'primary'}
           size="sm"
           onClick={onConfirm}
@@ -53,8 +53,8 @@ export function BlockDateConfirm({
           type="button"
         >
           {mode === 'block' ? 'Block date' : 'Unblock'}
-        </GlassButton>
+        </Button>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }

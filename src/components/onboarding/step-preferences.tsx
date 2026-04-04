@@ -4,7 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '@/lib/convex-generated'
-import { GlassButton, GlassCard } from '@/components/ui'
+import { Button, Card } from '@/components/ui'
 import type { Id } from '@/lib/convex-generated'
 const QUICK_BOOK_OPTIONS = [
   { code: 'DSD' as const, label: 'Discover Scuba Diving' },
@@ -81,7 +81,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
         <p className="text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
           {isOrganizer
             ? 'Set up Quick Book pills for your most common bookings. You can always add more later.'
-            : 'Your preferences are ready. You can update your availability settings from the dashboard.'}
+            : 'Your preferences are ready. You can update your booking settings from the dashboard.'}
         </p>
       </div>
 
@@ -101,7 +101,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {templates.map((t) => (
-                  <GlassCard key={t._id} padding="sm" className="flex items-center gap-2" style={{ borderRadius: 'var(--border-radius-pill)' }}>
+                  <Card key={t._id} padding="sm" className="flex items-center gap-2" style={{ borderRadius: 'var(--border-radius-pill)' }}>
                     <span className="text-primary" style={{ fontSize: 13 }}>{t.name}</span>
                     <button className="text-secondary"
                       onClick={() => handleRemove(t._id)}
@@ -115,7 +115,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                     >
                       <Trash2 size={12} strokeWidth={1.75} />
                     </button>
-                  </GlassCard>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -123,7 +123,7 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
 
           {/* Add pill form */}
           {showForm ? (
-            <GlassCard padding="md">
+            <Card padding="md">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <p className="text-primary" style={{ fontSize: 13, fontWeight: 500 }}>
                   Select activity types for this pill:
@@ -169,26 +169,26 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                     outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <GlassButton
+                  <Button
                     variant="primary"
                     size="sm"
                     onClick={handleAddPill}
                     disabled={selectedCodes.size === 0 || adding}
                   >
                     {adding ? 'Adding…' : 'Add pill'}
-                  </GlassButton>
-                  <GlassButton
+                  </Button>
+                  <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => { setShowForm(false); setSelectedCodes(new Set()); setPillName('') }}
                   >
                     Cancel
-                  </GlassButton>
+                  </Button>
                 </div>
               </div>
-            </GlassCard>
+            </Card>
           ) : (
-            <GlassButton
+            <Button
               variant="secondary"
               size="sm"
               onClick={() => setShowForm(true)}
@@ -196,16 +196,16 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
             >
               <Plus size={14} strokeWidth={1.75} />
               Add Quick Book pill
-            </GlassButton>
+            </Button>
           )}
         </div>
       )}
 
       {onComplete && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <GlassButton variant="primary" size="md" onClick={onComplete}>
+          <Button variant="primary" size="md" onClick={onComplete}>
             Continue
-          </GlassButton>
+          </Button>
         </div>
       )}
     </div>

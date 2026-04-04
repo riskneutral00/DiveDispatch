@@ -7,18 +7,18 @@ import { LanguageFlags } from '@/components/profiles/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
 import { scoreLanguageMatch, type MatchTier } from '@/lib/utils/language-matching'
 
-export interface GlassSelectOption {
+export interface SelectOption {
   id: string
   label: string
   languages?: string[]
   isPreferred?: boolean
 }
 
-interface GlassSelectProps {
+interface SelectProps {
   label?: string
   value: string
   onChange: (v: string) => void
-  options: GlassSelectOption[]
+  options: SelectOption[]
   placeholder?: string
   /** When provided, splits options into 4 tiers by language match + preferred status */
   customerLanguages?: string[]
@@ -46,7 +46,7 @@ const OptionRow = memo(function OptionRow({
   id,
   matchTier,
 }: {
-  opt: GlassSelectOption
+  opt: SelectOption
   isSelected: boolean
   isFocused: boolean
   onSelect: () => void
@@ -100,7 +100,7 @@ function TierSection({
   customerLanguages,
 }: {
   title: string
-  items: GlassSelectOption[]
+  items: SelectOption[]
   defaultOpen: boolean
   value: string
   onSelect: (id: string) => void
@@ -168,7 +168,7 @@ function TierSection({
   )
 }
 
-export function GlassSelect({
+export function Select({
   label,
   value,
   onChange,
@@ -179,7 +179,7 @@ export function GlassSelect({
   required,
   error,
   helperText,
-}: GlassSelectProps) {
+}: SelectProps) {
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)

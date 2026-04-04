@@ -262,7 +262,7 @@ describe('ManageRoles', () => {
     const deletePermBtn = screen.getByRole('button', { name: /delete permanently/i })
     await user.click(deletePermBtn)
 
-    // Button should be disabled while pending (GlassButton sets disabled when loading)
+    // Button should be disabled while pending (Button sets disabled when loading)
     expect(deletePermBtn).toBeDisabled()
 
     // Resolve the promise to clean up

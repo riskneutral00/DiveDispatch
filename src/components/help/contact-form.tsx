@@ -5,11 +5,11 @@ import { useRef, useState } from 'react'
 import { useMutation } from 'convex/react'
 import type { Id } from '@/lib/convex-generated'
 import { api } from '@/lib/convex-generated'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassTextarea } from '@/components/ui/glass-textarea'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Textarea } from '@/components/ui/textarea'
 import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
 
 const CATEGORIES = [
@@ -141,7 +141,7 @@ export function ContactForm() {
 
   if (submitted) {
     return (
-      <GlassCard padding="lg" className="text-center">
+      <Card padding="lg" className="text-center">
         <p
           className="font-semibold text-base mb-1 text-primary"
           style={{ fontFamily: 'var(--font-heading)' }}
@@ -151,15 +151,15 @@ export function ContactForm() {
         <p className="text-sm text-secondary">
           {"Your request has been submitted. We'll get back to you soon."}
         </p>
-      </GlassCard>
+      </Card>
     )
   }
 
   return (
-    <GlassCard padding="lg">
+    <Card padding="lg">
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {/* Subject */}
-        <GlassInput
+        <Input
           label="Subject"
           placeholder="Brief summary of your issue"
           value={form.subject}
@@ -168,7 +168,7 @@ export function ContactForm() {
         />
 
         {/* Category */}
-        <GlassSimpleSelect
+        <SimpleSelect
           label="Category"
           value={form.category}
           onChange={(v) => setForm((f) => ({ ...f, category: v }))}
@@ -178,7 +178,7 @@ export function ContactForm() {
         />
 
         {/* Message */}
-        <GlassTextarea
+        <Textarea
           label="Message"
           value={form.message}
           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
@@ -237,10 +237,10 @@ export function ContactForm() {
           )}
         </div>
 
-        <GlassButton type="submit" fullWidth loading={submitting}>
+        <Button type="submit" fullWidth loading={submitting}>
           Submit request
-        </GlassButton>
+        </Button>
       </form>
-    </GlassCard>
+    </Card>
   )
 }

@@ -7,9 +7,9 @@ import { useTranslations } from 'next-intl'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { PillToggle } from '@/components/ui/pill-toggle'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
@@ -18,7 +18,6 @@ import {
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -104,7 +103,7 @@ export function EquipmentContactSection({ profile: existing, me, create, update,
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -196,9 +195,9 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
 
   if (!existing) {
     return (
-      <GlassCard padding="md">
+      <Card padding="md">
         <p className="text-sm text-secondary">Complete contact info first</p>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -254,7 +253,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
       isValid={isValid}
       className="space-y-6"
     >
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <FormSectionHeader label="Gear Catalog" />
         <p className="text-xs mb-4 text-secondary">
           Select the gear types you stock and add manufacturer brands per type.
@@ -277,15 +276,15 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
                   {GEAR_TYPE_LABELS[gt]}
                 </p>
                 <div className="flex gap-2 mb-2">
-                  <GlassInput
+                  <Input
                     value={mfrInputs[gt] ?? ''}
                     onChange={(e) => setMfrInputs((prev) => ({ ...prev, [gt]: e.target.value }))}
                     placeholder="e.g. ScubaPro, Mares, Aqualung"
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addManufacturer(gt) } }}
                   />
-                  <GlassButton type="button" variant="secondary" size="sm" onClick={() => addManufacturer(gt)}>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => addManufacturer(gt)}>
                     <Plus size={14} />
-                  </GlassButton>
+                  </Button>
                 </div>
                 {(form.manufacturersByGearType[gt] ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
@@ -303,7 +302,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
             ))}
           </div>
         )}
-      </GlassCard>
+      </Card>
     </ProfileFormShell>
   )
 }

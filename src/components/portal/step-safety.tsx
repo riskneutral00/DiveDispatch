@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassTextarea } from '@/components/ui/glass-textarea'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
@@ -102,7 +102,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
       onContinue={handleContinue}
       submitting={submitting}
     >
-      <GlassCard padding="md">
+      <Card padding="md">
         <div className="mb-5">
           <h2
             className="text-base font-semibold mb-1 text-primary"
@@ -118,7 +118,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
         <div className="space-y-5">
           {/* Blood type */}
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Blood Type (Optional)"
             value={form.bloodType}
             onChange={(v) => setField('bloodType', v)}
@@ -127,7 +127,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           />
 
           {/* Allergies */}
-          <GlassTextarea
+          <Textarea
             label="Allergies (Optional)"
             value={form.allergies}
             onChange={(e) => setField('allergies', e.target.value)}
@@ -137,7 +137,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           />
 
           {/* Medications */}
-          <GlassTextarea
+          <Textarea
             label="Current Medications (Optional)"
             value={form.medications}
             onChange={(e) => setField('medications', e.target.value)}
@@ -147,7 +147,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           />
 
           {/* Insurance */}
-          <GlassInput
+          <Input
             label="Travel Insurance Policy Number"
             type="text"
             placeholder="Policy number"
@@ -156,7 +156,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             helperText="Optional — enter your dive/travel insurance policy number."
           />
         </div>
-      </GlassCard>
+      </Card>
     </PortalStepShell>
   )
 }

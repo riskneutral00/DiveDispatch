@@ -45,7 +45,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
     <div
       ref={tablistRef}
       role="tablist"
-      className="flex overflow-x-auto mb-4"
+      className="flex overflow-x-auto mb-4 justify-center"
       onKeyDown={handleKeyDown}
       style={{
         borderBottom: '1px solid var(--color-glass-border)',

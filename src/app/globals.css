@@ -69,6 +69,7 @@
   --color-destructive-glow: color-mix(in srgb, var(--color-destructive) 30%, transparent);
   --color-warning-bg: color-mix(in srgb, var(--color-warning) 12%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 25%, transparent);
+  --color-warning-glow: color-mix(in srgb, var(--color-warning) 35%, transparent);
   --color-primary-muted: color-mix(in srgb, var(--color-primary) 15%, transparent);
   --color-primary-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
   --color-accent-muted: color-mix(in srgb, var(--color-accent) 15%, transparent);
@@ -258,7 +259,7 @@ body:has(dialog[open]) {
   overflow: hidden;
 }
 
-/* GlassDialog native backdrop — activated when dialog.showModal() is open */
+/* Dialog native backdrop — activated when dialog.showModal() is open */
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(var(--glass-blur));
@@ -387,7 +388,7 @@ dialog::backdrop {
 }
 
 /* ── Button variant hover states ─────────────────────────────────────────────
-   Base variant styles are applied via inline styles on GlassButton.
+   Base variant styles are applied via inline styles on Button.
    Hover/focus states must be CSS classes due to pseudo-selector requirements.
    ──────────────────────────────────────────────────────────────────────────── */
 .glass-btn {

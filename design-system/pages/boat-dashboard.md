@@ -85,14 +85,14 @@ the calendar's visible 2-week date range.
 
 ### Per-vessel section
 
-Each vessel gets its own `GlassCard` section, stacked vertically.
+Each vessel gets its own `Card` section, stacked vertically.
 
 - **Header row:** vessel name (heading), boatType badge, total pax summary for the range
 - Vessels with zero bookings in the range: collapsed with "No bookings" message
 
 ### Filter controls
 
-Single `GlassSimpleSelect` at the top of the widget:
+Single `SimpleSelect` at the top of the widget:
 
 | Option | Grouping |
 |--------|----------|
@@ -160,4 +160,4 @@ Columns:
 | `loading.manifest` | Spinner inside each vessel section |
 | `empty.calendar` | All cells show `0/N` in muted style |
 | `empty.manifest` | EmptyState "No bookings for this period" |
-| `error` | GlassCard with error message + retry button |
+| `error` | Card with error message + retry button |

@@ -2,7 +2,7 @@
 
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { GlassCard } from '@/components/ui'
+import { Card } from '@/components/ui'
 import { ResourceOrExternalField } from './resource-or-external-field'
 import type { WizardState, WizardAction } from '@/lib/booking/wizard-state'
 import type { Dispatch } from 'react'
@@ -21,7 +21,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <GlassCard padding="md">
+      <Card padding="md">
         <h3
           className="text-sm font-semibold mb-3 text-primary"
           style={{ fontFamily: 'var(--font-heading)' }}
@@ -52,7 +52,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
             placeholder="Select compressor…"
           />
         </div>
-      </GlassCard>
+      </Card>
     </div>
   )
 }

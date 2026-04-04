@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
-import { GlassCard, GlassButton, GlassBadge } from '@/components/ui'
+import { Card, Button, Badge } from '@/components/ui'
 import { RoleIcon } from '@/components/ui/role-icon'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -68,9 +68,9 @@ export function ManageRoles({
         >
           Manage Roles
         </h2>
-        <GlassButton variant="primary" onClick={onAddRole}>
+        <Button variant="primary" onClick={onAddRole}>
           Add Role
-        </GlassButton>
+        </Button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -86,7 +86,7 @@ export function ManageRoles({
           const percentage = completionByRole.get(entry.role) ?? 0
 
           return (
-            <GlassCard key={entry._id} padding="md">
+            <Card key={entry._id} padding="md">
               {/* Main row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <RoleIcon role={entry.role} size={20} />
@@ -99,28 +99,28 @@ export function ManageRoles({
                       {config.label}
                     </span>
                     {isPrimary && (
-                      <GlassBadge variant="info" size="sm">
+                      <Badge variant="info" size="sm">
                         Primary
-                      </GlassBadge>
+                      </Badge>
                     )}
                   </div>
                 </div>
-                <GlassBadge
+                <Badge
                   variant={percentage === 100 ? 'success' : 'warning'}
                   size="sm"
                 >
                   {percentage}%
-                </GlassBadge>
+                </Badge>
                 {!entry.profileComplete && (
-                  <GlassButton
+                  <Button
                     variant="secondary"
                     onClick={() => onNavigateToOnboarding(entry.role)}
                   >
                     Set up
-                  </GlassButton>
+                  </Button>
                 )}
                 {canDelete && (
-                  <GlassButton
+                  <Button
                     variant="destructive-ghost"
                     size="icon"
                     aria-label={`Delete ${config.label} role`}
@@ -128,7 +128,7 @@ export function ManageRoles({
                     onClick={() => setConfirmingId(isConfirming ? null : entry._id)}
                   >
                     <Trash2 size={16} />
-                  </GlassButton>
+                  </Button>
                 )}
               </div>
 
@@ -177,25 +177,25 @@ export function ManageRoles({
                     {`Delete ${config.label} and all its data? This cannot be undone.`}
                   </span>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <GlassButton
+                    <Button
                       variant="secondary"
                       size="sm"
                       onClick={() => setConfirmingId(null)}
                     >
                       Cancel
-                    </GlassButton>
-                    <GlassButton
+                    </Button>
+                    <Button
                       variant="destructive"
                       size="sm"
                       loading={isDeleting}
                       onClick={() => handleDeleteConfirm(entry._id)}
                     >
                       Delete permanently
-                    </GlassButton>
+                    </Button>
                   </div>
                 </div>
               )}
-            </GlassCard>
+            </Card>
           )
         })}
       </div>

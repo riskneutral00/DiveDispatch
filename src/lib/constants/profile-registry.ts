@@ -11,7 +11,7 @@ export interface ProfileConfig {
 }
 
 /** Tabs that only appear in the overlay — not on standalone profile pages. */
-export const OVERLAY_ONLY_SECTIONS = new Set(['booking', 'availability', 'resources', 'inventory'])
+export const OVERLAY_ONLY_SECTIONS = new Set(['booking', 'resources', 'inventory'])
 
 export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
   'dive-center': {
@@ -22,7 +22,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'associations', label: 'Affiliations' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   agent: {
@@ -33,7 +32,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'associations', label: 'Memberships' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   instructor: {
@@ -43,7 +41,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   'dive-master': {
@@ -53,7 +50,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   boat: {
@@ -62,7 +58,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'fleet', label: 'Fleet' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   compressor: {
@@ -71,7 +66,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'gas-mixes', label: 'Gas Mixes' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   equipment: {
@@ -81,7 +75,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'gear-catalog', label: 'Gear Catalog' },
       { id: 'inventory', label: 'Inventory' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   pool: {
@@ -90,7 +83,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'capabilities', label: 'Capabilities' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   'dive-site': {
@@ -100,7 +92,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'capabilities', label: 'Capabilities' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   liveaboard: {
@@ -109,7 +100,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   'dive-resort': {
@@ -118,7 +108,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
   'dive-hostel': {
@@ -127,7 +116,6 @@ export const PROFILE_REGISTRY: Record<string, ProfileConfig> = {
       { id: 'contact', label: 'Contact' },
       { id: 'resources', label: 'Resources' },
       { id: 'booking', label: 'Booking' },
-      { id: 'availability', label: 'Availability' },
     ],
   },
 } satisfies Partial<Record<RoleKey, ProfileConfig>>

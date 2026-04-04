@@ -3,7 +3,7 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Plus } from 'lucide-react'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Button } from '@/components/ui/button'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -14,7 +14,6 @@ import {
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
 } from '@/lib/profile-form/location'
 import {
@@ -95,7 +94,7 @@ export function DiveCenterContactSection({ profile: existing, me, create, update
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -293,10 +292,10 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
       isValid={isValid}
       className="space-y-6"
       footerLeftAction={
-        <GlassButton type="button" variant="secondary" size="sm" onClick={handleAdd}>
+        <Button type="button" variant="secondary" size="sm" onClick={handleAdd}>
           <Plus size={14} />
           Add
-        </GlassButton>
+        </Button>
       }
     >
       <ProfileAgencyInfo

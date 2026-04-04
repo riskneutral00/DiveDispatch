@@ -19,7 +19,7 @@ Build the frontend map:
 
 1. Read `design-system/MASTER.md` — brand identity, color tokens, glass formula, skins
 2. Glob `design-system/pages/*.md` — page-specific overrides
-3. Glob `src/components/**/*.tsx` — collect all components, count by domain (glass/, booking/, dashboard/, portal/, common/)
+3. Glob `src/components/**/*.tsx` — collect all components, count by domain (ui/, booking/, dashboard/, portal/, common/)
 4. Glob `src/app/**/*.tsx` — collect all pages, layouts, error.tsx, loading.tsx
 5. Glob `src/lib/hooks/*.ts`, `src/hooks/*.ts` — all custom hooks
 6. Glob `src/lib/**/*.ts` — shared utilities, constants

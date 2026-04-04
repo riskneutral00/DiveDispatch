@@ -37,7 +37,7 @@ Scan all UI components for two classes of layout defect:
 Launch 1 Explore agent to scan for these violations:
 
 ### Check 1: Input type violations
-Grep for `type="email"`, `type="tel"`, `type="url"` on raw `<input>` elements (not GlassInput — that auto-converts). Pattern: `type="(email|tel|url)"` in `.tsx` files. Exclude `glass-input.tsx` itself.
+Grep for `type="email"`, `type="tel"`, `type="url"` on raw `<input>` elements (not Input — that auto-converts). Pattern: `type="(email|tel|url)"` in `.tsx` files. Exclude `input.tsx` itself.
 
 ### Check 2: Flex columns with percentage widths
 Grep for `flex-row` combined with `w-1/`, `w-2/`, `w-3/` on children. These should be CSS Grid instead. Pattern: containers using `flex` + `sm:flex-row` where children have `sm:w-*` percentage classes.
@@ -60,10 +60,10 @@ For each finding, report: `file:line — [CHECK N] description — current code 
 Launch 1 Explore agent to scan for vertical waste:
 
 ### Check 6: Isolated dense blocks
-Find `LanguageField`, `LanguagePicker`, `SpecialtyField`, `GlassCheckboxGroup`, or file upload components that are the sole child of a grid or flex container, with short text inputs (`GlassInput`, `<input>`) in a separate container above or below.
+Find `LanguageField`, `LanguagePicker`, `SpecialtyField`, `CheckboxGroup`, or file upload components that are the sole child of a grid or flex container, with short text inputs (`Input`, `<input>`) in a separate container above or below.
 
 ### Check 7: Stacked short fields above/below dense blocks
-Find 3+ consecutive `GlassInput` or `<input>` elements stacked in a single column (`flex-col` or `grid-cols-1`) where a dense block exists in the same form card but isn't paired.
+Find 3+ consecutive `Input` or `<input>` elements stacked in a single column (`flex-col` or `grid-cols-1`) where a dense block exists in the same form card but isn't paired.
 
 ### Check 8: Single-column grids wasting space
 Find `grid grid-cols-1 sm:grid-cols-2` where only one column is populated (e.g., LanguageField alone in a 2-col grid with no sibling).
@@ -117,4 +117,4 @@ Report: `Applied N fixes across M files. Build: PASS/FAIL`
 - Silent research — only the scoreboard is output.
 - Every finding must cite file:line + specific code.
 - `--fix` applies mechanical fixes only. Complex restructuring (ambiguous pairing choices) is reported but not auto-fixed — flagged as `MANUAL`.
-- Never modify `glass-input.tsx` — it already handles type interception at the component level.
+- Never modify `input.tsx` — it already handles type interception at the component level.

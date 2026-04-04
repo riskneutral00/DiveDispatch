@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { COUNTRY_NAMES } from '@/lib/constants/countries'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassTextarea } from '@/components/ui/glass-textarea'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Textarea } from '@/components/ui/textarea'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
@@ -244,11 +244,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
   if (context === null) {
     return (
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
           {TOKEN_EXPIRED_MESSAGE}
         </p>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -266,7 +266,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     >
       {/* Returning customer banner */}
       {showReturningBanner && returningCustomer && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-primary">
               Welcome back! We found your info from a previous booking.
@@ -275,15 +275,15 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
             </p>
             <div className="flex gap-2">
-              <GlassButton type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
+              <Button type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
                 Yes, that&apos;s me
-              </GlassButton>
-              <GlassButton type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
+              </Button>
+              <Button type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
                 Not me
-              </GlassButton>
+              </Button>
             </div>
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {returningConfirmed && (
@@ -293,10 +293,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       {/* Personal Information */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Personal Information</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassInput
+          <Input
             label="Legal First Name *"
             placeholder="As on passport"
             value={form.legalFirstName}
@@ -304,7 +304,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.legalFirstName}
             autoComplete="given-name"
           />
-          <GlassInput
+          <Input
             label="Legal Last Name *"
             placeholder="As on passport"
             value={form.legalLastName}
@@ -312,7 +312,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.legalLastName}
             autoComplete="family-name"
           />
-          <GlassInput
+          <Input
             label="Preferred Name"
             placeholder="Nickname or preferred name"
             value={form.preferredName ?? ''}
@@ -321,7 +321,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="sm:col-span-2"
             autoComplete="nickname"
           />
-          <GlassInput
+          <Input
             label="Email *"
             type="email"
             placeholder="you@example.com"
@@ -330,7 +330,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.email}
             autoComplete="email"
           />
-          <GlassInput
+          <Input
             label="Phone *"
             type="tel"
             placeholder="+1 555 000 0000"
@@ -341,7 +341,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             autoComplete="tel"
           />
           <div>
-            <GlassInput
+            <Input
               label="Date of Birth *"
               type="date"
               value={form.dateOfBirth}
@@ -357,7 +357,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               )}
             </div>
           </div>
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Gender"
             data-testid="portal-gender-select"
             value={form.gender}
@@ -366,7 +366,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.gender}
             required
           />
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Nationality"
             data-testid="portal-nationality-select"
             value={form.nationality}
@@ -377,20 +377,20 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             required
           />
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Passport / ID */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Passport / ID</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassInput
+          <Input
             label="Passport Number *"
             placeholder="e.g. AB1234567"
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
           />
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Issuing Country"
             data-testid="portal-issuing-country-select"
             value={form.passportIssuingCountry}
@@ -401,7 +401,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             required
           />
           <div className="sm:col-span-2">
-            <GlassInput
+            <Input
               label="Expiration Date *"
               type="date"
               value={form.passportExpirationDate}
@@ -426,13 +426,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             )}
           </div>
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Emergency Contact */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Emergency Contact</SectionHeading>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <GlassInput
+          <Input
             label="Full Name *"
             placeholder="Emergency contact's full name"
             value={form.emergencyContactName}
@@ -441,7 +441,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="sm:col-span-2"
             autoComplete="off"
           />
-          <GlassInput
+          <Input
             label="Phone *"
             type="tel"
             placeholder="+1 555 000 0000"
@@ -450,7 +450,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.emergencyContactPhone}
             helperText="International format with country code"
           />
-          <GlassInput
+          <Input
             label="Relationship *"
             placeholder="e.g. Spouse, Parent, Friend"
             value={form.emergencyContactRelation}
@@ -458,14 +458,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             error={errors.emergencyContactRelation}
           />
         </div>
-      </GlassCard>
+      </Card>
 
       {/* Diving Certification (conditional) */}
       {requiresCert && (
-        <GlassCard padding="md">
+        <Card padding="md">
           <SectionHeading>Diving Certification</SectionHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <GlassSimpleSelect
+            <SimpleSelect
               label="Certifying Agency"
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}
@@ -474,7 +474,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               error={errors.agency}
               required
             />
-            <GlassInput
+            <Input
               label="Agency Diver ID *"
               placeholder="e.g. 12345678"
               value={form.agencyID ?? ''}
@@ -482,20 +482,20 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               error={errors.agencyID}
             />
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {/* Health Information */}
-      <GlassCard padding="md">
+      <Card padding="md">
         <SectionHeading>Health Information</SectionHeading>
-        <GlassTextarea
+        <Textarea
           label="Known Allergies"
           rows={DEFAULT_TEXTAREA_ROWS}
           placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
         />
-      </GlassCard>
+      </Card>
 
     </PortalStepShell>
   )

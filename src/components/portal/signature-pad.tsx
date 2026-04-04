@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useEffect, useImperativeHandle, useCallback, useState } from 'react'
-import { GlassButton } from '../ui/glass-button'
+import { Button } from '../ui/button'
 import { Trash2 } from 'lucide-react'
 
 export interface SignaturePadHandle {
@@ -224,7 +224,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
             </p>
           )}
           {!error && <span />}
-          <GlassButton
+          <Button
             type="button"
             variant="ghost"
             size="sm"
@@ -234,7 +234,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           >
             <Trash2 size={14} />
             Clear
-          </GlassButton>
+          </Button>
         </div>
       </div>
     )

@@ -8,8 +8,8 @@ import { z } from 'zod'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassCard } from '@/components/ui/glass-card'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { parseConvexError } from '@/lib/utils/convex-error'
@@ -21,7 +21,7 @@ import {
   PreferredCompressorList,
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { SimpleSelect } from '@/components/ui/simple-select'
 import { Check, Save } from 'lucide-react'
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ function ResourceSaveButton({
   onSave: () => void
 }) {
   return (
-    <GlassButton
+    <Button
       type="button"
       variant="primary"
       size="sm"
@@ -148,7 +148,7 @@ function ResourceSaveButton({
           Save
         </>
       )}
-    </GlassButton>
+    </Button>
   )
 }
 
@@ -198,7 +198,7 @@ function PreferredOperatorPicker({
   }, [dc, lb, dr, dh])
 
   return (
-    <GlassCard padding="md">
+    <Card padding="md">
       <h2
         className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
       >
@@ -207,7 +207,7 @@ function PreferredOperatorPicker({
       <p className="text-sm mb-4 text-secondary">
         When set, the booking wizard can pre-fill resources from this operator&apos;s preferences (referral-style cascade).
       </p>
-      <GlassSimpleSelect
+      <SimpleSelect
         label="Target operator"
         value={value ?? ''}
         onChange={(v) => onChange(v ? v : undefined)}
@@ -217,7 +217,7 @@ function PreferredOperatorPicker({
         ]}
         placeholder="Select an operator…"
       />
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -365,14 +365,14 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
       disableSaveWhenInvalid
       isValid={isValid}
       hideFooter={section === 'resources'}
-      className="max-w-2xl mx-auto w-full px-4 pt-4 pb-28 md:pb-10"
+      className="max-w-2xl mx-auto w-full px-4 pb-28 md:pb-10"
     >
       <div id={`tabpanel-${section}`} role="tabpanel" aria-labelledby={`tab-${section}`} className="space-y-6">
 
         {/* ── Booking section ─────────────────────────────────────────── */}
         {section === 'booking' && (
           <>
-            <GlassCard padding="md">
+            <Card padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
@@ -411,14 +411,14 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                   )
                 })}
               </div>
-            </GlassCard>
+            </Card>
 
             <ProfileFormSectionDivider show />
 
             {showResourcePrefs && (
               <>
                 <ProfileFormSectionDivider show />
-                <GlassCard padding="md">
+                <Card padding="md">
                   <h2
                     className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
                   >
@@ -437,13 +437,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       available
                     </span>
                   </label>
-                </GlassCard>
+                </Card>
               </>
             )}
 
             <ProfileFormSectionDivider show />
 
-            <GlassCard padding="md">
+            <Card padding="md">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
               >
@@ -471,18 +471,20 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                   </label>
                 ))}
               </div>
-            </GlassCard>
+            </Card>
           </>
         )}
 
         {/* ── Resources section (organizer roles only) — horizontal sub-tabs, per-section save ── */}
         {section === 'resources' && showResourcePrefs && (
           <>
-            <ProfileSectionTabBar
-              tabs={resourceSubTabs}
-              activeTab={resourceSubTab}
-              onChange={(id) => setResourceSubTab(id as ResourceSubTab)}
-            />
+            <div className="max-w-xl mx-auto">
+              <ProfileSectionTabBar
+                tabs={resourceSubTabs}
+                activeTab={resourceSubTab}
+                onChange={(id) => setResourceSubTab(id as ResourceSubTab)}
+              />
+            </div>
 
             <div
               id={`tabpanel-${resourceSubTab}`}
@@ -491,7 +493,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               className="space-y-4"
             >
               {resourceSubTab === 'instructors' && (
-                <GlassCard padding="md">
+                <Card padding="md">
                   <ResourceSectionTitle required>Preferred Instructors</ResourceSectionTitle>
                   <p className="text-sm mb-4 text-secondary">
                     Rank instructors in order of booking priority. The wizard will suggest them first.
@@ -508,11 +510,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('instructors')}
                     />
                   </div>
-                </GlassCard>
+                </Card>
               )}
 
               {resourceSubTab === 'venues' && (
-                <GlassCard padding="md">
+                <Card padding="md">
                   <ResourceSectionTitle required>Preferred Venues</ResourceSectionTitle>
                   <p className="text-sm mb-4 text-secondary">
                     Pools and dive sites, ranked by preference. At least one venue or boat is required.
@@ -529,11 +531,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('venues')}
                     />
                   </div>
-                </GlassCard>
+                </Card>
               )}
 
               {resourceSubTab === 'equipment' && (
-                <GlassCard padding="md">
+                <Card padding="md">
                   <ResourceSectionTitle required>Preferred Equipment Providers</ResourceSectionTitle>
                   <p className="text-sm mb-4 text-secondary">
                     At least one equipment provider is required before creating bookings.
@@ -550,11 +552,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('equipment')}
                     />
                   </div>
-                </GlassCard>
+                </Card>
               )}
 
               {resourceSubTab === 'boats' && (
-                <GlassCard padding="md">
+                <Card padding="md">
                   <ResourceSectionTitle required>Preferred Boats</ResourceSectionTitle>
                   <p className="text-sm mb-4 text-secondary">
                     A boat satisfies the venue requirement. Captain picks the dive site.
@@ -571,11 +573,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('boats')}
                     />
                   </div>
-                </GlassCard>
+                </Card>
               )}
 
               {resourceSubTab === 'compressors' && (
-                <GlassCard padding="md">
+                <Card padding="md">
                   <ResourceSectionTitle required>Preferred Compressors</ResourceSectionTitle>
                   <p className="text-sm mb-4 text-secondary">
                     Not required if a preferred boat or venue has a compressor.
@@ -592,7 +594,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('compressors')}
                     />
                   </div>
-                </GlassCard>
+                </Card>
               )}
 
               {resourceSubTab === 'operator' && activeRole === 'Agent' && (

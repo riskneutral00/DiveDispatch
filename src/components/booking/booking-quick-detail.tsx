@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GlassDialog, GlassButton } from '@/components/ui'
+import { Dialog, Button } from '@/components/ui'
 import { BookingStatusBadge } from '@/components/ui/booking-status-badge'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import type { CalendarBooking } from '../../../convex/bookings'
@@ -42,7 +42,7 @@ export function BookingQuickDetail({
 
   return (
     <>
-      <GlassDialog
+      <Dialog
         open={booking !== null && !showFullDetail}
         onClose={isLoading ? () => {} : onClose}
         title={booking?.activityType.map(courseLabel).join(', ') ?? ''}
@@ -116,7 +116,7 @@ export function BookingQuickDetail({
               {hasActions ? (
                 <>
                   {onAccept && (
-                    <GlassButton
+                    <Button
                       size="sm"
                       variant="primary"
                       onClick={() => onAccept(booking._id)}
@@ -124,7 +124,7 @@ export function BookingQuickDetail({
                       disabled={isDeclining}
                     >
                       Accept
-                    </GlassButton>
+                    </Button>
                   )}
                   <button
                     type="button"
@@ -135,7 +135,7 @@ export function BookingQuickDetail({
                     View Full Detail
                   </button>
                   {onDecline && (
-                    <GlassButton
+                    <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => onDecline(booking._id)}
@@ -143,13 +143,13 @@ export function BookingQuickDetail({
                       disabled={isAccepting}
                     >
                       Decline
-                    </GlassButton>
+                    </Button>
                   )}
                 </>
               ) : (
-                <GlassButton size="sm" variant="primary" onClick={handleViewDetail}>
+                <Button size="sm" variant="primary" onClick={handleViewDetail}>
                   View Full Detail
-                </GlassButton>
+                </Button>
               )}
             </div>
 
@@ -160,7 +160,7 @@ export function BookingQuickDetail({
             )}
           </div>
         )}
-      </GlassDialog>
+      </Dialog>
 
       {booking && (
         <BookingDetailDialog

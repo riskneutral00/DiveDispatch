@@ -13,19 +13,18 @@ describe('OVERLAY_ONLY_SECTIONS export', () => {
     expect(OVERLAY_ONLY_SECTIONS).toBeInstanceOf(Set)
   })
 
-  it('contains booking, availability, resources, inventory', () => {
+  it('contains booking, resources, inventory', () => {
     expect(OVERLAY_ONLY_SECTIONS.has('booking')).toBe(true)
-    expect(OVERLAY_ONLY_SECTIONS.has('availability')).toBe(true)
     expect(OVERLAY_ONLY_SECTIONS.has('resources')).toBe(true)
     expect(OVERLAY_ONLY_SECTIONS.has('inventory')).toBe(true)
   })
 
-  it('has exactly 4 members', () => {
-    expect(OVERLAY_ONLY_SECTIONS.size).toBe(4)
+  it('has exactly 3 members', () => {
+    expect(OVERLAY_ONLY_SECTIONS.size).toBe(3)
   })
 })
 
-describe('Every role has booking and availability tabs appended', () => {
+describe('Every role has booking tab', () => {
   const allRoles: RoleKey[] = [
     'dive-center',
     'agent',
@@ -42,17 +41,19 @@ describe('Every role has booking and availability tabs appended', () => {
   ]
 
   for (const role of allRoles) {
-    it(`${role} tabs include booking and availability`, () => {
+    it(`${role} tabs include booking`, () => {
       const ids = tabIds(role)
       expect(ids).toContain('booking')
-      expect(ids).toContain('availability')
     })
 
-    it(`${role} has booking before availability`, () => {
+    it(`${role} does not have availability tab`, () => {
       const ids = tabIds(role)
-      const bookingIdx = ids.indexOf('booking')
-      const availabilityIdx = ids.indexOf('availability')
-      expect(bookingIdx).toBeLessThan(availabilityIdx)
+      expect(ids).not.toContain('availability')
+    })
+
+    it(`${role} has booking as last tab`, () => {
+      const ids = tabIds(role)
+      expect(ids[ids.length - 1]).toBe('booking')
     })
   }
 })
@@ -121,9 +122,9 @@ describe('Non-equipment roles do not have inventory tab', () => {
 })
 
 describe('Dive Center tab ordering', () => {
-  it('has contact → languages → associations → booking → availability in order', () => {
+  it('has contact → languages → associations → booking in order', () => {
     const ids = tabIds('dive-center')
-    const expected = ['contact', 'languages', 'associations', 'booking', 'availability']
+    const expected = ['contact', 'languages', 'associations', 'booking']
     const filtered = ids.filter((id) => expected.includes(id))
     expect(filtered).toEqual(expected)
   })
@@ -134,9 +135,9 @@ describe('Dive Center tab ordering', () => {
 })
 
 describe('Instructor tab ordering', () => {
-  it('has contact → languages → credentials → booking → availability in order', () => {
+  it('has contact → languages → credentials → booking in order', () => {
     const ids = tabIds('instructor')
-    const expected = ['contact', 'languages', 'credentials', 'booking', 'availability']
+    const expected = ['contact', 'languages', 'credentials', 'booking']
     const filtered = ids.filter((id) => expected.includes(id))
     expect(filtered).toEqual(expected)
   })

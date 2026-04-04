@@ -3,10 +3,10 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { GlassButton, GlassCard } from '@/components/ui'
+import { Button, Card } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { GlassInput } from '@/components/ui/glass-input'
+import { Input } from '@/components/ui/input'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
@@ -53,7 +53,7 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
   // Roles without Convex modules get a placeholder
   if (!mutations) {
     return (
-      <GlassCard padding="lg">
+      <Card padding="lg">
         <div className="mb-6">
           <h2 className="text-xl font-bold mb-1 text-primary">Basic Information</h2>
           <p className="text-sm text-secondary">
@@ -62,11 +62,11 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
         </div>
         <div className="flex gap-3 mt-2">
           {onBack && (
-            <GlassButton variant="secondary" fullWidth onClick={onBack}>Back</GlassButton>
+            <Button variant="secondary" fullWidth onClick={onBack}>Back</Button>
           )}
-          <GlassButton variant="primary" fullWidth onClick={onSaved}>Next</GlassButton>
+          <Button variant="primary" fullWidth onClick={onSaved}>Next</Button>
         </div>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -171,7 +171,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
   const { displayLabel: roleLabel } = getOrganizerRoleFlags(role)
 
   return (
-    <GlassCard padding="lg">
+    <Card padding="lg">
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-1 text-primary">
           Basic Information
@@ -182,7 +182,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       </div>
 
       <div className="flex flex-col gap-4" data-testid="wizard-content">
-        <GlassInput
+        <Input
           label="Business Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -194,7 +194,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           value={location}
           onChange={setLocation}
         />
-        <GlassInput
+        <Input
           label="Contact Email"
           type="email"
           value={email}
@@ -202,7 +202,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           placeholder="dive@example.com"
           required
         />
-        <GlassInput
+        <Input
           label="Contact Phone"
           type="tel"
           value={phone}
@@ -217,15 +217,15 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
 
         <div className="flex gap-3 mt-2" data-testid="wizard-nav">
           {onBack && (
-            <GlassButton
+            <Button
               variant="secondary"
               fullWidth
               onClick={onBack}
             >
               Back
-            </GlassButton>
+            </Button>
           )}
-          <GlassButton
+          <Button
             variant="primary"
             fullWidth
             disabled={!isComplete || saving}
@@ -233,9 +233,9 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
             onClick={handleNext}
           >
             Next
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }

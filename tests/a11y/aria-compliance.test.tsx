@@ -36,12 +36,12 @@ vi.mock('convex/react', async (importOriginal) => {
 vi.mock('@/components/booking/calendar-legend', () => ({ CalendarLegend: () => null }))
 vi.mock('@/components/booking/urgent-booking-strip', () => ({ UrgentBookingStrip: () => null }))
 vi.mock('@/components/ui', () => ({
-  GlassCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  GlassDialog: ({ children, open, title }: { children: React.ReactNode; open: boolean; title?: string }) =>
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Dialog: ({ children, open, title }: { children: React.ReactNode; open: boolean; title?: string }) =>
     open ? <dialog open aria-label={title}>{children}</dialog> : null,
-  GlassButton: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) =>
+  Button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) =>
     <button {...props}>{children}</button>,
-  GlassInput: ({ label, ...props }: { label?: string; [key: string]: unknown }) =>
+  Input: ({ label, ...props }: { label?: string; [key: string]: unknown }) =>
     <div><label>{label}<input {...props} /></label></div>,
 }))
 
@@ -87,8 +87,8 @@ describe('A11y: Interactive elements have accessible names', () => {
 })
 
 describe('A11y: Form inputs have associated labels', () => {
-  it('GlassInput component always renders with a label element', () => {
-    // Verified by reading glass-input.tsx source:
+  it('Input component always renders with a label element', () => {
+    // Verified by reading input.tsx source:
     // - Renders <label> wrapping the input when label prop is provided
     // - Uses htmlFor to associate label with input
     // The mock above confirms the pattern: label wraps input
@@ -150,8 +150,8 @@ describe('A11y: Keyboard navigation patterns', () => {
 })
 
 describe('A11y: Semantic HTML structure', () => {
-  it('GlassDialog renders as <dialog> element with aria-labelledby', () => {
-    // Verified by reading glass-dialog.tsx source:
+  it('Dialog renders as <dialog> element with aria-labelledby', () => {
+    // Verified by reading dialog.tsx source:
     // - Uses native <dialog> element (line 64/122)
     // - Sets aria-labelledby when title is provided (line 68/126)
     // - Handles Escape via onCancel (native dialog behavior)

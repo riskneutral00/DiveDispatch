@@ -3,7 +3,7 @@
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { GlassTooltip } from '@/components/ui/glass-tooltip'
+import { Tooltip } from '@/components/ui/tooltip'
 import { DraggablePill } from '@/components/booking/draggable-pill'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
@@ -57,9 +57,9 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
 
           if (!canBook) {
             return (
-              <GlassTooltip key={template.id} label={TOOLTIP_LABEL}>
+              <Tooltip key={template.id} label={TOOLTIP_LABEL}>
                 {pill}
-              </GlassTooltip>
+              </Tooltip>
             )
           }
 
@@ -81,9 +81,9 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
 
         if (!canBook) {
           return (
-            <GlassTooltip key={template.id} label={TOOLTIP_LABEL}>
+            <Tooltip key={template.id} label={TOOLTIP_LABEL}>
               {btn}
-            </GlassTooltip>
+            </Tooltip>
           )
         }
 
@@ -111,7 +111,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           )}
         </span>
       ) : (
-        <GlassTooltip label={TOOLTIP_LABEL} className="ml-auto">
+        <Tooltip label={TOOLTIP_LABEL} className="ml-auto">
           <button
             type="button"
             disabled
@@ -120,7 +120,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           >
             + Booking
           </button>
-        </GlassTooltip>
+        </Tooltip>
       )}
     </div>
   )

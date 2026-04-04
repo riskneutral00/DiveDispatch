@@ -3,11 +3,11 @@
 import { useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Package } from 'lucide-react'
-import { GlassCard } from '@/components/ui/glass-card'
-import { GlassButton } from '@/components/ui/glass-button'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
-import { GlassDialog } from '@/components/ui/glass-dialog'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
+import { Dialog } from '@/components/ui/dialog'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Spinner } from '@/components/ui/spinner'
@@ -101,14 +101,14 @@ export function EquipmentInventoryTable({
       <FormSectionHeader
         label="Inventory"
         action={
-          <GlassButton variant="secondary" size="sm" onClick={() => setAddOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setAddOpen(true)}>
             <Plus size={16} />
             Add Item
-          </GlassButton>
+          </Button>
         }
       />
 
-      <GlassSimpleSelect
+      <SimpleSelect
         value={filterType}
         onChange={setFilterType}
         options={GEAR_TYPE_OPTIONS}
@@ -116,13 +116,13 @@ export function EquipmentInventoryTable({
       />
 
       {isLoading ? (
-        <GlassCard>
+        <Card>
           <div className="flex items-center justify-center py-12">
             <Spinner label={t('loadingInventory')} />
           </div>
-        </GlassCard>
+        </Card>
       ) : filteredItems.length === 0 ? (
-        <GlassCard>
+        <Card>
           <EmptyState
             icon={Package}
             message={
@@ -131,9 +131,9 @@ export function EquipmentInventoryTable({
                 : 'No inventory items yet. Add your first item to get started.'
             }
           />
-        </GlassCard>
+        </Card>
       ) : (
-        <GlassCard padding="none">
+        <Card padding="none">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-primary">
               <thead>
@@ -168,7 +168,7 @@ export function EquipmentInventoryTable({
               </tbody>
             </table>
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       <AddItemDialog
@@ -177,7 +177,7 @@ export function EquipmentInventoryTable({
         onAdd={onAddItem}
       />
 
-      <GlassDialog
+      <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         title="Remove Item"
@@ -198,19 +198,19 @@ export function EquipmentInventoryTable({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <GlassButton variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
             Cancel
-          </GlassButton>
-          <GlassButton
+          </Button>
+          <Button
             variant="destructive"
             size="sm"
             loading={isDeleting}
             onClick={handleDelete}
           >
             Remove
-          </GlassButton>
+          </Button>
         </div>
-      </GlassDialog>
+      </Dialog>
     </div>
   )
 }
@@ -380,9 +380,9 @@ function AddItemDialog({
   }
 
   return (
-    <GlassDialog open={open} onClose={handleClose} title="Add Inventory Item" size="sm">
+    <Dialog open={open} onClose={handleClose} title="Add Inventory Item" size="sm">
       <div className="space-y-4">
-        <GlassSimpleSelect
+        <SimpleSelect
           label="Gear Type"
           value={gearType}
           onChange={setGearType}
@@ -390,13 +390,13 @@ function AddItemDialog({
           placeholder="Select gear type"
           required
         />
-        <GlassInput
+        <Input
           label="Manufacturer"
           value={manufacturer}
           onChange={(e) => setManufacturer(e.target.value)}
           placeholder="e.g. ScubaPro, Aqua Lung"
         />
-        <GlassInput
+        <Input
           label="Size"
           value={size}
           onChange={(e) => setSize(e.target.value)}
@@ -415,7 +415,7 @@ function AddItemDialog({
           </label>
         </div>
         {isPrescription && (
-          <GlassInput
+          <Input
             label="Diopter"
             type="number"
             step="0.5"
@@ -424,7 +424,7 @@ function AddItemDialog({
             placeholder="e.g. -3.5"
           />
         )}
-        <GlassInput
+        <Input
           label="Total Units"
           type="number"
           min={1}
@@ -436,14 +436,14 @@ function AddItemDialog({
           <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
         )}
         <div className="flex justify-end gap-2 pt-2">
-          <GlassButton variant="ghost" size="sm" onClick={handleClose}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             Cancel
-          </GlassButton>
-          <GlassButton variant="primary" size="sm" loading={isAdding} onClick={handleSubmit}>
+          </Button>
+          <Button variant="primary" size="sm" loading={isAdding} onClick={handleSubmit}>
             Add Item
-          </GlassButton>
+          </Button>
         </div>
       </div>
-    </GlassDialog>
+    </Dialog>
   )
 }

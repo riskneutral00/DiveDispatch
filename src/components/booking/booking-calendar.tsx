@@ -399,7 +399,7 @@ export function BookingCalendar({
               )}
             </div>
 
-            {/* Day island grid — no wrapping GlassCard */}
+            {/* Day island grid — no wrapping Card */}
             <div className="grid grid-cols-7 gap-1.5 min-w-[320px]">
               {week.map((day, di) => {
                 const isLocked = lockedDatesSet.has(day.dateString)

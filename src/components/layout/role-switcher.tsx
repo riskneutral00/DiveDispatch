@@ -9,7 +9,7 @@ import {
   type ClerkRole,
   type RoleKey,
 } from '@/lib/constants/roles'
-import { GlassTooltip } from '@/components/ui'
+import { Tooltip } from '@/components/ui'
 import { hasMultipleHierarchies, groupRolesByHierarchy } from '@/lib/utils/role-hierarchy'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
@@ -83,9 +83,9 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
               aria-label={cfg.label}
               aria-current={isActive ? 'page' : undefined}
             >
-              <GlassTooltip label={cfg.label}>
+              <Tooltip label={cfg.label}>
                 <Icon size={20} />
-              </GlassTooltip>
+              </Tooltip>
             </Link>
           )
         })}

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
-import { GlassTooltip } from '@/components/ui'
+import { Tooltip } from '@/components/ui'
 import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 
 interface HierarchySubBarProps {
@@ -68,9 +68,9 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: H
               aria-label={cfg.label}
               aria-current={isActive ? 'page' : undefined}
             >
-              <GlassTooltip label={cfg.label}>
+              <Tooltip label={cfg.label}>
                 <Icon size={20} />
-              </GlassTooltip>
+              </Tooltip>
             </Link>
           </span>
         )

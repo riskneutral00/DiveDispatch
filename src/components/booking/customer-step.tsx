@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Plus, Trash2, ChevronDown } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { GlassButton, GlassButtonGroup, GlassCard, GlassInput } from '@/components/ui'
-import type { GlassButtonGroupOption } from '@/components/ui'
+import { Button, ButtonGroup, Card, Input } from '@/components/ui'
+import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
@@ -59,10 +59,10 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
         </ErrorAlert>
       )}
 
-      <GlassButton variant="secondary" size="md" onClick={handleAddCustomer} className="w-full">
+      <Button variant="secondary" size="md" onClick={handleAddCustomer} className="w-full">
         <Plus size={16} />
         Add Customer
-      </GlassButton>
+      </Button>
     </div>
   )
 }
@@ -130,12 +130,12 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
     flags.length > 0
 
   return (
-    <GlassCard padding="md">
+    <Card padding="md">
       <div className="flex flex-col gap-3">
         {/* Full name + remove */}
         <div className="flex items-end gap-2">
           <div className="flex-1">
-            <GlassInput
+            <Input
               label="Full name *"
               value={customer.name}
               onChange={(e) => handleNameChange(e.target.value)}
@@ -144,7 +144,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
             />
           </div>
           {canRemove && (
-            <GlassButton
+            <Button
               variant="destructive-ghost"
               size="sm"
               type="button"
@@ -152,7 +152,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
               aria-label={`Remove ${customer.name || `customer ${index + 1}`}`}
             >
               <Trash2 size={16} />
-            </GlassButton>
+            </Button>
           )}
         </div>
 
@@ -167,7 +167,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
             Contact *
           </label>
           <div className="flex gap-2">
-            <GlassButtonGroup
+            <ButtonGroup
               variant="segment"
               value={contactType}
               onChange={(v) => handleContactTypeChange(v as ContactType)}
@@ -176,7 +176,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
                 { value: 'email', label: 'Email' },
                 { value: 'whatsapp', label: 'WhatsApp' },
                 { value: 'line', label: 'LINE' },
-              ] satisfies GlassButtonGroupOption[]}
+              ] satisfies ButtonGroupOption[]}
             />
             <input
               value={getContactValue()}
@@ -208,7 +208,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
           />
         </div>
       </div>
-    </GlassCard>
+    </Card>
   )
 }
 

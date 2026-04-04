@@ -6,10 +6,10 @@ import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { GlassButton } from '@/components/ui/glass-button'
+import { Button } from '@/components/ui/button'
 import { FormGrid, FormField } from '@/components/ui/form-grid'
-import { GlassInput } from '@/components/ui/glass-input'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { Input } from '@/components/ui/input'
+import { SimpleSelect } from '@/components/ui/simple-select'
 import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
@@ -18,7 +18,6 @@ import {
 } from '@/lib/schemas/profile-shared'
 import {
   contactFieldsFromProfile,
-  createOptimisticLocationOnChange,
   locationToPayload,
 } from '@/lib/profile-form/location'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -149,7 +148,7 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
       onSaved,
     })
 
-  const onLocationChange = createOptimisticLocationOnChange({ setField, update, isUpdate })
+  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
 
   return (
     <ProfileFormShell
@@ -304,10 +303,10 @@ function BoatFleetSectionForm({
         <FormSectionHeader
           label="Fleet"
           action={
-            <GlassButton type="button" size="sm" variant="secondary" onClick={addFleet}>
+            <Button type="button" size="sm" variant="secondary" onClick={addFleet}>
               <Plus size={14} />
               Add Vessel
-            </GlassButton>
+            </Button>
           }
         />
         <div className="space-y-4 mt-3">
@@ -360,10 +359,10 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
 
       <FormGrid className="mb-5">
         <FormField size="lg">
-          <GlassInput label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
+          <Input label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
         </FormField>
         <FormField size="lg">
-          <GlassSimpleSelect
+          <SimpleSelect
             label="Boat Type"
             value={vessel.boatType}
             onChange={(v) => onUpdate({ boatType: v as BoatType })}
@@ -373,13 +372,13 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
           />
         </FormField>
         <FormField size="lg">
-          <GlassInput label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
+          <Input label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
         </FormField>
         <FormField size="lg">
-          <GlassInput label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
+          <Input label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
         </FormField>
         <FormField size="full">
-          <GlassInput label="Cutoff Hours (optional)" type="number" min={0} value={vessel.cutoffHours} onChange={(e) => onUpdate({ cutoffHours: e.target.value })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
+          <Input label="Cutoff Hours (optional)" type="number" min={0} value={vessel.cutoffHours} onChange={(e) => onUpdate({ cutoffHours: e.target.value })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
         </FormField>
       </FormGrid>
 
@@ -422,7 +421,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
   return (
     <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
       <div className="flex-1">
-        <GlassInput value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
+        <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
       </div>
       <div className="flex flex-wrap gap-1.5">
         {DAYS.map((d) => {

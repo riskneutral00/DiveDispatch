@@ -61,7 +61,7 @@ If args provided specific files, use those instead.
 | `src/lib/hooks/*.ts` | `hook` | `renderHook()`, mock `useQuery`/`useMutation`/`useCurrentUser` |
 | `src/components/booking/*.tsx` | `component` | jsdom, mock Convex hooks, `render` from `tests/helpers/render` |
 | `src/components/dashboard/*.tsx` | `component` | jsdom, mock Convex hooks, stub heavy children |
-| `src/components/glass/*.tsx` | `component` | jsdom, minimal mocks, test ARIA |
+| `src/components/ui/*.tsx` | `component` | jsdom, minimal mocks, test ARIA |
 | `src/components/common/*.tsx` | `component` | jsdom, mock heavy dependencies |
 
 Output the classification table silently. Do not display to user yet.

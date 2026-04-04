@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, ChevronDown } from 'lucide-react'
-import { GlassButton, GlassInput, GlassBadge } from '@/components/ui'
+import { Button, Input, Badge } from '@/components/ui'
 import { Spinner } from '@/components/ui/spinner'
 import type { ResourcePickerEntry } from '@/lib/types/booking'
 
@@ -92,14 +92,14 @@ export function ResourcePicker({
             <span className="ml-1 text-xs font-normal opacity-60">(optional)</span>
           )}
         </span>
-        <GlassButton variant="ghost" size="sm" onClick={toggleExternal} type="button">
+        <Button variant="ghost" size="sm" onClick={toggleExternal} type="button">
           {isExternal ? 'In system' : 'Not in system'}
-        </GlassButton>
+        </Button>
       </div>
 
       {isExternal ? (
         /* Freeform name input */
-        <GlassInput
+        <Input
           placeholder={`Enter ${label.toLowerCase()} name`}
           value={freeformName ?? ''}
           onChange={(e) => onFreeformChange(e.target.value)}
@@ -240,14 +240,14 @@ export function ResourcePicker({
             {selectedEntry.placeName}, {selectedEntry.country}
           </span>
           {selectedEntry.verified && (
-            <GlassBadge variant="success" size="sm" dot>
+            <Badge variant="success" size="sm" dot>
               Verified
-            </GlassBadge>
+            </Badge>
           )}
           {selectedEntry.subItems?.map((item) => (
-            <GlassBadge key={item} variant="info" size="sm">
+            <Badge key={item} variant="info" size="sm">
               {item}
-            </GlassBadge>
+            </Badge>
           ))}
         </div>
       )}
@@ -306,14 +306,14 @@ function PickerRow({
             {entry.name}
           </span>
           {entry.verified && (
-            <GlassBadge variant="success" size="sm">
+            <Badge variant="success" size="sm">
               Verified
-            </GlassBadge>
+            </Badge>
           )}
           {isUnavailable && (
-            <GlassBadge variant="destructive" size="sm">
+            <Badge variant="destructive" size="sm">
               {unavailableLabel}
-            </GlassBadge>
+            </Badge>
           )}
         </div>
 
@@ -328,9 +328,9 @@ function PickerRow({
         {entry.subItems && entry.subItems.length > 0 && (
           <div className="flex gap-1 mt-1 flex-wrap">
             {entry.subItems.map((item) => (
-              <GlassBadge key={item} variant="info" size="sm">
+              <Badge key={item} variant="info" size="sm">
                 {item}
-              </GlassBadge>
+              </Badge>
             ))}
           </div>
         )}

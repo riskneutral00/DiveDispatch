@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { FilterDef } from '@/lib/constants/resource-filters'
-import { GlassSimpleSelect } from '@/components/ui/glass-simple-select'
+import { SimpleSelect } from '@/components/ui/simple-select'
 
 interface FilterBarProps {
   filters: FilterDef[]
@@ -242,7 +242,7 @@ export function FilterBar({ filters, values, onChange }: FilterBarProps) {
           />
         ) : (
           <div key={filter.id} className="w-40">
-            <GlassSimpleSelect
+            <SimpleSelect
               value={values[filter.id] ?? filter.options[0]?.value ?? ''}
               onChange={(v) => onChange(filter.id, v)}
               aria-label={filter.label}

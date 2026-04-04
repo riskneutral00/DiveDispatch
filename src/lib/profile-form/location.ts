@@ -70,33 +70,3 @@ export function locationToPayload(loc: ProfileLocationValue) {
   }
 }
 
-export type OptimisticLocationPatch = {
-  placeName: string
-  country: string
-  lat: number
-  lng: number
-  placeId?: string
-}
-
-/**
- * Sets `location` on the form and, when editing an existing profile, patches Convex
- * with the same coordinates (same pattern across role profile forms).
- */
-export function createOptimisticLocationOnChange(opts: {
-  setField: (key: 'location', value: ProfileLocationValue | null) => void
-  update: (patch: OptimisticLocationPatch) => Promise<unknown>
-  isUpdate: boolean
-}) {
-  return (loc: ProfileLocationValue | null) => {
-    opts.setField('location', loc)
-    if (loc && opts.isUpdate) {
-      void opts.update({
-        placeName: loc.placeName,
-        country: loc.country,
-        lat: loc.lat,
-        lng: loc.lng,
-        placeId: loc.placeId,
-      })
-    }
-  }
-}
