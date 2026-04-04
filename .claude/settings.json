@@ -98,6 +98,12 @@
             "command": "bash .claude/hooks/skill-usage-logger.sh",
             "timeout": 5,
             "statusMessage": "Logging skill usage…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/turbopack-cache-clean.sh",
+            "timeout": 5,
+            "statusMessage": "Clearing Turbopack cache…"
           }
         ]
       },
