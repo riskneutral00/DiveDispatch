@@ -23,7 +23,7 @@ function isTodayDate(date: Date): boolean {
   )
 }
 
-function getFloorDate(): Date {
+export function getFloorDate(): Date {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   d.setFullYear(d.getFullYear() - 1)
@@ -69,8 +69,15 @@ export function getRangeForDate(date: Date): { start: Date; end: Date } {
   start.setDate(start.getDate() - 7)
   if (start < floor) start = floor
 
-  const end = new Date(sunday)
+  let end = new Date(sunday)
   end.setDate(end.getDate() + 20)
+
+  // Safeguard: if floor-clamp pushed start past end, recompute end from start
+  if (end < start) {
+    end = new Date(start)
+    end.setDate(end.getDate() + MAX_RANGE_DAYS - 1)
+  }
+
   return { start, end }
 }
 

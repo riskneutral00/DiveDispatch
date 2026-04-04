@@ -11,7 +11,7 @@ import {
 } from '@/lib/utils/calendar-range'
 
 export type { CalendarDay, CalendarWeek } from '@/lib/utils/calendar-range'
-export { deriveStatus, getDaysOfWeek } from '@/lib/utils/calendar-range'
+export { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 

@@ -11,7 +11,7 @@ import { courseLabel } from '@/lib/constants/course-catalog'
 import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
 import { getBarBorderColor } from '@/lib/booking/bar-styles'
 import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
-import { deriveStatus, getDaysOfWeek } from '@/lib/utils/calendar-range'
+import { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
 import { parseDateLocal, toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { StatusColorSet } from '@/lib/constants/vessel-colors'
@@ -317,15 +317,19 @@ export function BookingCalendar({
                 {MONTH_LABELS.map((label, i) => {
                   const isCurrentMonth = pickerYear === currentYear && i === currentMonth
                   const isViewMonth = pickerYear === viewYear && i === viewMonth
+                  const floor = getFloorDate()
+                  const isBeforeFloor = pickerYear < floor.getFullYear() ||
+                    (pickerYear === floor.getFullYear() && i < floor.getMonth())
                   return (
                     <button
                       key={label}
                       type="button"
+                      disabled={isBeforeFloor}
                       onClick={() => {
                         jumpToDate(new Date(pickerYear, i, 1))
                         setExpanded(false)
                       }}
-                      className="glass-container glass-surface transition rounded-md py-1.5 text-xs font-medium"
+                      className={`glass-container glass-surface transition rounded-md py-1.5 text-xs font-medium${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
                       style={{
                         color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
                         background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,
