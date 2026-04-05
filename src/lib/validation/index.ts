@@ -10,6 +10,8 @@ export {
   bookingDetailsSchema,
   diverEntrySchema,
   profileFieldsSchema,
+  bookingSessionsSchema,
+  makeBookingDiversSchema,
 } from './schemas'
 
 export type {
@@ -20,6 +22,8 @@ export type {
   BookingDetailsData,
   DiverEntryData,
   ProfileFieldsData,
+  BookingSessionsData,
+  BookingDiversData,
 } from './schemas'
 
 export { useFormValidation } from './useFormValidation'

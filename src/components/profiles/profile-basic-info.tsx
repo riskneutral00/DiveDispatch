@@ -50,7 +50,7 @@ export function ProfileBasicInfo({
   children,
 }: ProfileBasicInfoProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+    <div className="flex flex-wrap gap-4 w-full">
       <Input
         label={nameLabel}
         placeholder={namePlaceholder}
@@ -59,6 +59,7 @@ export function ProfileBasicInfo({
         error={nameError}
         autoComplete="organization"
         required={nameRequired}
+        className="field-name"
       />
       <LocationPicker
         label="Location"
@@ -66,6 +67,7 @@ export function ProfileBasicInfo({
         onChange={onLocationChange}
         error={locationError}
         required={locationRequired}
+        className="field-location"
       />
       <Input
         label="Phone"
@@ -77,6 +79,7 @@ export function ProfileBasicInfo({
         error={phoneError}
         autoComplete="tel"
         required={phoneRequired}
+        className="field-phone"
       />
       {onEmailChange !== undefined && (
         <Input
@@ -89,6 +92,7 @@ export function ProfileBasicInfo({
           error={emailError}
           autoComplete="email"
           required={emailRequired}
+          className="field-email"
         />
       )}
       {children}

@@ -25,11 +25,11 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
               {/* Step node */}
               <div className="flex flex-col items-center gap-1.5 relative">
                 <div
-                  className={[
+                  className={cn(
                     'flex items-center justify-center w-8 h-8 rounded-full',
                     'border-2 text-sm font-semibold transition-all',
                     'shrink-0',
-                  ].join(' ')}
+                  )}
                   style={{
                     background: isCompleted
                       ? 'var(--color-success)'
@@ -44,7 +44,6 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
                     color: isCompleted || isActive
                       ? 'var(--color-text-on-primary)'
                       : 'var(--color-text-secondary)',
-                    backdropFilter: !isCompleted && !isActive ? 'blur(var(--glass-blur))' : undefined,
                   }}
                   aria-current={isActive ? 'step' : undefined}
                 >

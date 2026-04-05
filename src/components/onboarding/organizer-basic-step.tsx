@@ -3,13 +3,13 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { Button, Card } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Input } from '@/components/ui/input'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
+import { OrganizerStepCard } from './organizer-step-card'
 
 interface OrganizerBasicStepProps {
   role: ClerkRole
@@ -53,20 +53,14 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
   // Roles without Convex modules get a placeholder
   if (!mutations) {
     return (
-      <Card padding="lg">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold mb-1 text-primary">Basic Information</h2>
-          <p className="text-sm text-secondary">
-            Profile setup for this role is coming soon.
-          </p>
-        </div>
-        <div className="flex gap-3 mt-2">
-          {onBack && (
-            <Button variant="secondary" fullWidth onClick={onBack}>Back</Button>
-          )}
-          <Button variant="primary" fullWidth onClick={onSaved}>Next</Button>
-        </div>
-      </Card>
+      <OrganizerStepCard
+        title="Basic Information"
+        subtitle="Coming soon."
+        onBack={onBack}
+        onNext={onSaved}
+      >
+        <div />
+      </OrganizerStepCard>
     )
   }
 
@@ -171,16 +165,14 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
   const { displayLabel: roleLabel } = getOrganizerRoleFlags(role)
 
   return (
-    <Card padding="lg">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1 text-primary">
-          Basic Information
-        </h2>
-        <p className="text-sm text-secondary">
-          Tell us about your {roleLabel}.
-        </p>
-      </div>
-
+    <OrganizerStepCard
+      title="Basic Information"
+      subtitle={`Tell us about your ${roleLabel}.`}
+      onBack={onBack}
+      onNext={handleNext}
+      loading={saving}
+      disabled={!isComplete}
+    >
       <div className="flex flex-col gap-4" data-testid="wizard-content">
         <Input
           label="Business Name"
@@ -214,28 +206,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         {error && (
           <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
         )}
-
-        <div className="flex gap-3 mt-2" data-testid="wizard-nav">
-          {onBack && (
-            <Button
-              variant="secondary"
-              fullWidth
-              onClick={onBack}
-            >
-              Back
-            </Button>
-          )}
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={!isComplete || saving}
-            loading={saving}
-            onClick={handleNext}
-          >
-            Next
-          </Button>
-        </div>
       </div>
-    </Card>
+    </OrganizerStepCard>
   )
 }

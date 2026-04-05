@@ -141,12 +141,8 @@ function DevSwitcherInner() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg border text-primary"
-        style={{ background: 'var(--color-glass-bg)',
-          backdropFilter: 'blur(var(--glass-blur))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur))',
-          borderColor: 'var(--color-glass-border)',
-          transition: 'opacity var(--transition-speed)' }}
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg glass text-primary"
+        style={{ transition: 'opacity var(--transition-speed)' }}
       >
         <Bug className="h-3.5 w-3.5" />
         <span>{user?.firstName ?? 'Dev'}</span>

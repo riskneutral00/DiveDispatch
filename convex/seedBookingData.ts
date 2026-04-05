@@ -31,7 +31,7 @@ type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
 type ReservationStatus = 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
 type Gender = 'M' | 'F' | 'Other'
 type ShoeSizeUnit = 'EU' | 'US' | 'CM'
-type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
+import type { OperatorType } from './shared/operatorTypes'
 
 // ── Exported Types ──────────────────────────────────────────────────
 

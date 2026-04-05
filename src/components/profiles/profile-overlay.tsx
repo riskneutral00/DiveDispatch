@@ -99,8 +99,8 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
       <div className="flex flex-col h-full">
         {/* Tab bar */}
         <div
-          className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b overflow-x-auto justify-center"
-          style={{ borderColor: 'var(--color-glass-border)', scrollbarWidth: 'none' }}
+          className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ borderColor: 'var(--color-glass-border)' }}
           role="tablist"
         >
           {STATIC_TAB_IDS.map((tab) => {

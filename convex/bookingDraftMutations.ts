@@ -17,13 +17,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, NAME_MAX, DRAFT_STATE_MAX } from './lib/sanitize'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
-
-type OperatorType =
-  | 'DiveCenter'
-  | 'Agent'
-  | 'Liveaboard'
-  | 'DiveResort'
-  | 'DiveHostel'
+import type { OperatorType } from './shared/operatorTypes'
 
 /**
  * Creates a minimal Draft booking shell. Called once when the wizard first opens

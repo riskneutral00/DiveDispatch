@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  compressorContactSchema,
+  contactSchema,
   compressorGasMixesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -32,7 +32,7 @@ const VALID_LOCATION = {
 
 // ── Contact schema ────────────────────────────────────────────────────────────
 
-describe('compressorContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: 'Phuket Gas Services',
     location: VALID_LOCATION,
@@ -41,27 +41,27 @@ describe('compressorContactSchema', () => {
   }
 
   it('accepts a fully valid contact payload', () => {
-    expect(compressorContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects missing name', () => {
-    expect(compressorContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    expect(compressorContactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
   })
 
   it('rejects null location', () => {
-    expect(compressorContactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
   it('rejects missing phone', () => {
-    expect(compressorContactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
   })
 
   it('does not require gasMixes', () => {
-    expect(compressorContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
 

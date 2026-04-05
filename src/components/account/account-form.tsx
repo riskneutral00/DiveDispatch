@@ -86,13 +86,14 @@ export function AccountForm() {
     >
       <Card>
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-wrap gap-3">
             <Input
               label="Nickname"
               value={form.nickname}
               onChange={(e) => setField('nickname', e.target.value)}
               autoComplete="nickname"
               error={errors.nickname}
+              className="field-text-short"
             />
             <Input
               label="Business name"
@@ -101,6 +102,7 @@ export function AccountForm() {
               autoComplete="organization"
               required
               error={errors.businessName}
+              className="field-name"
             />
           </div>
         </div>

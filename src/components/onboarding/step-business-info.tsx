@@ -70,13 +70,14 @@ export function StepBusinessInfo({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <div className="flex flex-wrap gap-4 w-full">
         <Input
           label="Business name"
           value={values.businessName}
           onChange={(e) => onChange({ ...values, businessName: e.target.value })}
           autoComplete="organization"
           required
+          className="field-name"
         />
         <LanguageField
           variant="customer"

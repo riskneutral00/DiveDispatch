@@ -55,13 +55,13 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
 
       {conflict && (
         <ErrorAlert variant="warning">
-          Customers share no common language — consider revising assignments.
+          No common language — review assignments.
         </ErrorAlert>
       )}
 
       <Button variant="secondary" size="md" onClick={handleAddCustomer} className="w-full">
         <Plus size={16} />
-        Add Customer
+        Add
       </Button>
     </div>
   )
@@ -136,7 +136,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <Input
-              label="Full name *"
+              label="Name *"
               value={customer.name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="e.g. Sara Kim"
@@ -200,7 +200,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         <hr className="form-divider" />
 
         {/* Languages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div className="flex flex-wrap gap-4 w-full">
           <LanguageField
             variant="customer"
             value={flags.map((f) => ({ code: f.code, label: f.label }))}

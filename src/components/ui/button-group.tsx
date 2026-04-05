@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils/cn";
 
 export interface ButtonGroupOption {
   value: string;
@@ -32,12 +33,10 @@ export function ButtonGroup({
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className={[
+        className={cn(
           "flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0",
           className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        )}
         style={{ borderBottom: "1px solid var(--color-glass-border)" }}
       >
         {options.map(({ value: v, label }) => (
@@ -47,10 +46,10 @@ export function ButtonGroup({
             role="tab"
             aria-selected={value === v}
             onClick={() => onChange(v)}
-            className={[
+            className={cn(
               "px-3 py-1.5 font-medium rounded-t-md whitespace-nowrap transition-colors",
               textSize,
-            ].join(" ")}
+            )}
             style={{
               color:
                 value === v
@@ -77,12 +76,10 @@ export function ButtonGroup({
     <div
       role="group"
       aria-label={ariaLabel}
-      className={[
+      className={cn(
         "inline-flex rounded-[var(--border-radius)] overflow-hidden border flex-shrink-0",
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       style={{ borderColor: "var(--color-glass-border)" }}
     >
       {options.map(({ value: v, label }) => (
@@ -90,10 +87,10 @@ export function ButtonGroup({
           key={v}
           type="button"
           onClick={() => onChange(v)}
-          className={[
+          className={cn(
             "px-2.5 py-2 font-medium capitalize transition-all border-l first:border-l-0",
             textSize,
-          ].join(" ")}
+          )}
           style={{
             background:
               value === v ? "var(--color-accent)" : "var(--color-glass-bg)",

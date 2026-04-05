@@ -4,11 +4,10 @@ import { z } from 'zod'
 
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, type SelectOption } from '@/components/ui/select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
+import { VenueCapabilitiesSection } from '@/components/profiles/venue-capabilities-section'
 import {
   diveSiteDetailsSchema,
   diveSiteCapabilitiesSchema,
@@ -19,7 +18,6 @@ import {
   nullableProfileLocation,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
-import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 // ── Constants ─────────────────────────────────────────────────────────
@@ -108,7 +106,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div className="flex flex-wrap gap-4 w-full">
           <Input
             label="Site Name"
             placeholder="Shark Bay Reef"
@@ -116,6 +114,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
             onChange={(e) => setField('name', e.target.value)}
             error={errors.name}
             required
+            className="field-name"
           />
           <LocationPicker
             label="Location"
@@ -123,6 +122,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
             onChange={onLocationChange}
             error={errors.location}
             required
+            className="field-location"
           />
         </div>
 
@@ -175,85 +175,20 @@ export function diveSiteCapabilitiesToPayload(f: DiveSiteCapabilitiesFormState):
   }
 }
 
-export function DiveSiteCapabilitiesSection({ profile: existing, create, update }: DiveSiteSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
-    useProfileForm({
-      profile: existing,
-      schema: diveSiteCapabilitiesSchema,
-      defaults: INITIAL_DIVE_SITE_CAPABILITIES_FORM,
-      fromProfile: diveSiteCapabilitiesFromProfile,
-      toPayload: diveSiteCapabilitiesToPayload,
-      create,
-      update,
-    })
-
-  if (!existing) return <ProfileIncompleteGuard message="Complete details first" />
-
+export function DiveSiteCapabilitiesSection(props: DiveSiteSectionProps) {
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-secondary">
-            Site Capabilities
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Checkbox
-              label="Confined Water Capable"
-              checked={form.confinedCapable}
-              onChange={(v) => setField('confinedCapable', v)}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input
-            label="Max Depth (m)"
-            type="number"
-            min="0.1"
-            step="0.1"
-            value={form.maxDepth || ''}
-            onChange={(e) => setField('maxDepth', parseNumber(e.target.value, false))}
-            error={errors.maxDepth}
-            placeholder="18"
-          />
-          <Input
-            label="Max Capacity (divers)"
-            type="number"
-            min="1"
-            step="1"
-            value={form.maxCapacity || ''}
-            onChange={(e) => setField('maxCapacity', parseNumber(e.target.value, true))}
-            error={errors.maxCapacity}
-            placeholder="20"
-            required
-          />
-        </div>
-
-        <ProfileFormSectionDivider show />
-
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-secondary">
-            Visibility
-          </span>
-          <Checkbox
-            label="List this site publicly in the booking wizard"
-            checked={form.isPublic}
-            onChange={(v) => setField('isPublic', v)}
-          />
-        </div>
-      </div>
-    </ProfileFormShell>
+    <VenueCapabilitiesSection
+      {...props}
+      schema={diveSiteCapabilitiesSchema}
+      defaults={INITIAL_DIVE_SITE_CAPABILITIES_FORM}
+      fromProfile={diveSiteCapabilitiesFromProfile}
+      toPayload={diveSiteCapabilitiesToPayload}
+      venueType="diveSite"
+      incompleteMessage="Complete details first"
+      capabilitiesLabel="Site Capabilities"
+      depthPlaceholder="18"
+      capacityPlaceholder="20"
+    />
   )
 }
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  diveCenterContactSchema,
+  contactSchema,
   diveCenterLanguagesSchema,
   diveCenterAffiliationsSchema,
   agentContactSchema,
@@ -20,10 +20,10 @@ const validLocation = { placeName: 'Koh Tao', country: 'TH', lat: 10.09, lng: 99
 const validLang = { code: 'en', label: 'English' }
 
 // ---------------------------------------------------------------------------
-// diveCenterContactSchema
+// contactSchema
 // ---------------------------------------------------------------------------
 
-describe('diveCenterContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: 'Ocean Divers',
     location: validLocation,
@@ -32,26 +32,26 @@ describe('diveCenterContactSchema', () => {
   }
 
   it('accepts valid contact data', () => {
-    expect(diveCenterContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects empty name', () => {
-    const result = diveCenterContactSchema.safeParse({ ...valid, name: '' })
+    const result = contactSchema.safeParse({ ...valid, name: '' })
     expect(result.success).toBe(false)
   })
 
   it('rejects null location', () => {
-    const result = diveCenterContactSchema.safeParse({ ...valid, location: null })
+    const result = contactSchema.safeParse({ ...valid, location: null })
     expect(result.success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    const result = diveCenterContactSchema.safeParse({ ...valid, email: 'not-an-email' })
+    const result = contactSchema.safeParse({ ...valid, email: 'not-an-email' })
     expect(result.success).toBe(false)
   })
 
   it('rejects empty phone', () => {
-    const result = diveCenterContactSchema.safeParse({ ...valid, phone: '' })
+    const result = contactSchema.safeParse({ ...valid, phone: '' })
     expect(result.success).toBe(false)
   })
 })

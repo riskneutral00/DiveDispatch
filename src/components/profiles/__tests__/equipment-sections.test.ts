@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  equipmentContactSchema,
+  contactSchema,
   equipmentGearCatalogSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -32,7 +32,7 @@ const VALID_LOCATION = {
 
 // ── Contact schema ────────────────────────────────────────────────────────────
 
-describe('equipmentContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: 'Phuket Gear Rental',
     location: VALID_LOCATION,
@@ -41,27 +41,27 @@ describe('equipmentContactSchema', () => {
   }
 
   it('accepts a fully valid contact payload', () => {
-    expect(equipmentContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects missing name', () => {
-    expect(equipmentContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    expect(equipmentContactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
   })
 
   it('rejects null location', () => {
-    expect(equipmentContactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
   it('rejects missing phone', () => {
-    expect(equipmentContactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
   })
 
   it('does not require manufacturersByGearType', () => {
-    expect(equipmentContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
 

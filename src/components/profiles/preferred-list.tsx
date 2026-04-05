@@ -109,13 +109,8 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
         />
         {searchResults.length > 0 && (
           <div
-            className="absolute z-10 left-0 right-0 mt-1 rounded-[var(--border-radius)] border overflow-hidden"
-            style={{
-              background: 'var(--color-glass-bg)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
-              borderColor: 'var(--color-glass-border)',
-            }}
+            className="absolute z-10 left-0 right-0 mt-1 rounded-[var(--border-radius)] overflow-hidden glass-elevated"
+            style={{ background: 'var(--color-surface-elevated)' }}
           >
             {searchResults.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
               <button
@@ -673,14 +668,11 @@ export function PreferredInstructorList(props: ListProps) {
           />
 
           <div
-            className="rounded-[var(--border-radius)] border overflow-hidden flex flex-col"
+            className="rounded-[var(--border-radius)] overflow-hidden flex flex-col glass-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,
-              background: 'var(--color-glass-bg)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
-              borderColor: 'var(--color-glass-border)',
+              background: 'var(--color-surface-elevated)',
             }}
           >
             <div className="flex-1 overflow-y-auto">
@@ -912,14 +904,11 @@ function PreferredOverlayList({
             onChange={(e) => onSearchChange(e.target.value)}
           />
           <div
-            className="rounded-[var(--border-radius)] border overflow-hidden flex flex-col"
+            className="rounded-[var(--border-radius)] overflow-hidden flex flex-col glass-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,
-              background: 'var(--color-glass-bg)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
-              borderColor: 'var(--color-glass-border)',
+              background: 'var(--color-surface-elevated)',
             }}
           >
             <div className="flex-1 overflow-y-auto">

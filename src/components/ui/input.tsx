@@ -30,7 +30,7 @@ export function Input({
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       {label && (
         <FieldLabel htmlFor={id} required={props.required}>
           {label}
@@ -65,7 +65,6 @@ export function Input({
             trailingIcon ? 'pr-9' : 'pr-3',
             'py-2.5',
             isDateLike && 'cursor-pointer',
-            className,
           )}
           style={{ caretColor: 'var(--color-accent)',
             ...(error ? {

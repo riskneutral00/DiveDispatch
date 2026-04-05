@@ -4,6 +4,7 @@ import { internalAction, internalMutation, internalQuery } from './_generated/se
 import type { MutationCtx } from './_generated/server'
 import { internal } from './_generated/api'
 import { OPERATOR_ROLE_SET } from './lib/auth'
+import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
@@ -511,7 +512,7 @@ export const seedBookingTemplates = internalMutation({
 
       await ctx.db.insert('bookingTemplates', { // batch-exempt
         ownerId: s.user.slug,
-        ownerType: primaryRole as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
+        ownerType: primaryRole as OperatorType,
         name: 'DSD',
         activityType: ['DSD'],
         createdAt: Date.now(),

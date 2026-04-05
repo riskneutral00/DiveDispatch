@@ -85,6 +85,7 @@ const TYPOGRAPHY = {
 // ── Shared shape ────────────────────────────────────────────────────────────
 const SHAPE = {
   borderRadius: "16px",
+  borderRadiusButton: "4px",
   buttonStyle: "rounded" as const,
   dividerStyle: "line" as const,
   iconStyle: "outlined" as const,

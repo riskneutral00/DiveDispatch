@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  diveCenterContactSchema,
+  contactSchema,
   diveCenterLanguagesSchema,
   diveCenterAffiliationsSchema,
 } from '@/lib/schemas/profile-shared'
@@ -37,7 +37,7 @@ const VALID_LOCATION = {
 
 // ── Contact schema ────────────────────────────────────────────────────────────
 
-describe('diveCenterContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: "Ms. Mermaids' DC",
     location: VALID_LOCATION,
@@ -46,28 +46,28 @@ describe('diveCenterContactSchema', () => {
   }
 
   it('accepts a fully valid contact payload', () => {
-    expect(diveCenterContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects missing name', () => {
-    expect(diveCenterContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    expect(diveCenterContactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
   })
 
   it('rejects null location', () => {
-    expect(diveCenterContactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
   it('rejects missing phone', () => {
-    expect(diveCenterContactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
   })
 
   it('does not require customerLanguages or associations', () => {
     // Contact section is isolated — should not care about other sections
-    expect(diveCenterContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
 

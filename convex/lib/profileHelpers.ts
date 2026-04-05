@@ -60,6 +60,17 @@ export async function profileByUserId<T extends TableNames>(
   return doc as Doc<T> | null
 }
 
+/** Resolve a user slug to their profile in a given table. Returns null if user or profile not found. */
+export async function profileBySlug(
+  ctx: QueryCtx,
+  slug: string,
+  tableName: TableNames,
+) {
+  const user = await ctx.db.query('users').withIndex('by_slug', (q) => q.eq('slug', slug)).unique()
+  if (!user) return null
+  return profileByUserId(ctx, user._id, tableName)
+}
+
 /** Handler for the `update` mutation — patches the caller's own profile. */
 export async function profileUpdate(
   ctx: MutationCtx,

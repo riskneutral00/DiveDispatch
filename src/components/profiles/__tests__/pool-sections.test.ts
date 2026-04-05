@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  poolContactSchema,
+  contactSchema,
   poolCapabilitiesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -33,7 +33,7 @@ const VALID_LOCATION = {
 
 // ── Contact schema ────────────────────────────────────────────────────────────
 
-describe('poolContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: 'Blue Lagoon Training Pool',
     location: VALID_LOCATION,
@@ -42,27 +42,27 @@ describe('poolContactSchema', () => {
   }
 
   it('accepts a fully valid contact payload', () => {
-    expect(poolContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects missing name', () => {
-    expect(poolContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    expect(poolContactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
   })
 
   it('rejects null location', () => {
-    expect(poolContactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
   it('rejects missing phone', () => {
-    expect(poolContactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
   })
 
   it('does not require capabilities fields', () => {
-    expect(poolContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
 

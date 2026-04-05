@@ -192,7 +192,7 @@ export function OnboardingWizard() {
               letterSpacing: '-0.03em',
               marginBottom: 8 }}
           >
-            Welcome to DiveDispatch
+            Welcome
           </h1>
         </div>
 

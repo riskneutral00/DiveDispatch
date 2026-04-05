@@ -4,11 +4,12 @@ import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
-import { Button, Card, Input, SimpleSelect } from '@/components/ui'
+import { Button, Input, SimpleSelect } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { OrganizerStepCard } from './organizer-step-card'
 
 type Association = { agency: string; number: string }
 
@@ -34,15 +35,14 @@ export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencySt
 
   // Shouldn't happen — agency step is only in the config for DiveCenter/Agent
   if (!roleApi) {
-    return <AgencyStepSkip onSaved={onSaved} />
+    return (
+      <OrganizerStepCard title="" subtitle="" onNext={onSaved} autoAdvance>
+        <div />
+      </OrganizerStepCard>
+    )
   }
 
   return <AgencyStepInner roleApi={roleApi} onSaved={onSaved} onBack={onBack} />
-}
-
-function AgencyStepSkip({ onSaved }: { onSaved: () => void }) {
-  useEffect(() => { onSaved() }, [onSaved])
-  return null
 }
 
 interface AgencyStepInnerProps {
@@ -103,32 +103,32 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
   }
 
   return (
-    <Card padding="lg">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1 text-primary">
-          Agency Affiliations
-        </h2>
-        <p className="text-sm text-secondary">
-          Add your dive agency membership numbers.
-        </p>
-      </div>
-
+    <OrganizerStepCard
+      title="Agency Affiliations"
+      subtitle="Add your dive agency membership numbers."
+      onBack={onBack}
+      onNext={handleNext}
+      loading={saving}
+      disabled={!isComplete}
+    >
       <div className="flex flex-col gap-4">
         {associations.map((assoc, idx) => (
           <div key={idx}>
             {idx > 0 && <hr className="form-divider mb-4" />}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-wrap gap-3">
               <SimpleSelect
                 label="Agency"
                 value={assoc.agency}
                 onChange={(v) => updateRow(idx, 'agency', v)}
                 options={DIVE_AGENCIES_EXTENDED.map(a => a)}
-                placeholder="Select agency…"
+                placeholder="Select agency..."
+                className="field-select-short"
               />
               <Input
                 label="Member Number"
                 value={assoc.number}
                 onChange={(e) => updateRow(idx, 'number', e.target.value)}
+                className="field-text-short"
                 placeholder="e.g. TH-0012345"
               />
             </div>
@@ -138,7 +138,8 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
                   type="button"
                   onClick={() => removeRow(idx)}
                   aria-label="Remove affiliation"
-                  className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors duration-150 text-secondary"
+                  className="flex items-center gap-1.5 text-xs cursor-pointer rounded px-2 py-1.5 transition-colors text-secondary"
+                  style={{ transitionDuration: 'var(--transition-speed)' }}
                   onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
                   onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
                 >
@@ -158,22 +159,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
         {error && (
           <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
         )}
-
-        <div className="flex gap-3 mt-2">
-          <Button variant="secondary" fullWidth onClick={onBack}>
-            Back
-          </Button>
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={!isComplete || saving}
-            loading={saving}
-            onClick={handleNext}
-          >
-            Next
-          </Button>
-        </div>
       </div>
-    </Card>
+    </OrganizerStepCard>
   )
 }

@@ -59,7 +59,7 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
       {unique.map((res) => (
         <li
           key={res._id}
-          className="flex items-center justify-between gap-3 p-3 rounded-lg border"
+          className="flex items-center justify-between gap-3 p-3 rounded-[var(--border-radius)] border"
           style={{
             background: 'var(--color-glass-bg)',
             borderColor: 'var(--color-glass-border)',

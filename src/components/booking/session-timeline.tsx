@@ -78,7 +78,7 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                   />
 
                   <div
-                    className="p-3 rounded-lg border"
+                    className="p-3 rounded-[var(--border-radius)] border"
                     style={{
                       background: 'var(--color-glass-bg)',
                       borderColor: 'var(--color-glass-border)',

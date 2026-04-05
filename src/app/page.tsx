@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { Anchor } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export default async function Home() {
   const t = await getTranslations()
@@ -40,31 +41,14 @@ export default async function Home() {
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
         <Link href="/sign-up" className="flex-1">
-          <button
-            className="w-full inline-flex items-center justify-center px-6 py-3 text-base font-medium leading-none border rounded-[var(--border-radius)] transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-            style={{
-              background: "var(--color-primary)",
-              color: "var(--color-text-on-primary)",
-              borderColor: "var(--color-primary)",
-              transitionDuration: "var(--transition-speed)",
-              outlineColor: "var(--color-accent)",
-            }}
-          >
+          <Button variant="primary" size="lg" fullWidth>
             {t("auth.signUp")}
-          </button>
+          </Button>
         </Link>
         <Link href="/sign-in" className="flex-1">
-          <button
-            className="w-full inline-flex items-center justify-center px-6 py-3 text-base font-medium leading-none border rounded-[var(--border-radius)] transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 text-primary"
-            style={{ background: "var(--color-glass-bg)",
-              borderColor: "var(--color-glass-border)",
-              backdropFilter: "blur(var(--glass-blur))",
-              WebkitBackdropFilter: "blur(var(--glass-blur))",
-              transitionDuration: "var(--transition-speed)",
-              outlineColor: "var(--color-accent)" }}
-          >
+          <Button variant="secondary" size="lg" fullWidth>
             {t("auth.signIn")}
-          </button>
+          </Button>
         </Link>
       </div>
     </main>

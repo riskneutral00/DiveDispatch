@@ -78,7 +78,7 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: H
 
       {businessName && (
         <span
-          className="absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
+          className="hidden sm:block absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
           data-testid="hierarchy-bar-name"
         >
           {businessName}

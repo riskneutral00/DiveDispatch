@@ -1,4 +1,5 @@
 import React, { useId } from "react";
+import { cn } from "@/lib/utils/cn";
 import { FieldError, FieldLabel } from "@/components/ui/field-shell";
 
 interface TextareaProps
@@ -36,14 +37,12 @@ export function Textarea({
         rows={rows}
         disabled={disabled}
         required={required}
-        className={[
+        className={cn(
           "glass glass-field w-full text-sm text-primary px-3 py-2.5 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "placeholder:opacity-50",
           className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        )}
         style={{ caretColor: "var(--color-accent)",
           ...(error
             ? {

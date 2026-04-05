@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  boatContactSchema,
+  contactSchema,
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -32,10 +32,10 @@ const VALID_LOCATION = {
 }
 
 // ---------------------------------------------------------------------------
-// boatContactSchema
+// contactSchema
 // ---------------------------------------------------------------------------
 
-describe('boatContactSchema', () => {
+describe('contactSchema', () => {
   const valid = {
     name: 'Phuket Boat Co.',
     location: VALID_LOCATION,
@@ -44,27 +44,27 @@ describe('boatContactSchema', () => {
   }
 
   it('accepts a fully valid contact payload', () => {
-    expect(boatContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 
   it('rejects missing name', () => {
-    expect(boatContactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, name: '' }).success).toBe(false)
   })
 
   it('rejects invalid email', () => {
-    expect(boatContactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false)
   })
 
   it('rejects null location', () => {
-    expect(boatContactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, location: null }).success).toBe(false)
   })
 
   it('rejects missing phone', () => {
-    expect(boatContactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
+    expect(contactSchema.safeParse({ ...valid, phone: '' }).success).toBe(false)
   })
 
   it('does not require fleet field', () => {
-    expect(boatContactSchema.safeParse(valid).success).toBe(true)
+    expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
 

@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth, getAuthUser } from './lib/auth'
+import { requireAuth } from './lib/auth'
+import { profileByUserId, profileMine } from './lib/profileHelpers'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
 import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
@@ -65,10 +66,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
 
-    const profile = await ctx.db
-      .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
+    const profile = await profileByUserId(ctx, user._id, 'venues')
     if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
     const { venueType, ...rest } = args
@@ -83,22 +81,13 @@ export const update = mutation({
 export const byUserId = query({
   args: { userId: v.id('users') },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
-      .unique()
+    return await profileByUserId(ctx, args.userId, 'venues')
   },
 })
 
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    const user = await getAuthUser(ctx)
-    if (!user) return null
-
-    return await ctx.db
-      .query('venues')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
+    return await profileMine(ctx, 'venues')
   },
 })

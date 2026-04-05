@@ -63,7 +63,7 @@ export function AddCustomerDialog({
     <Dialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
         {/* Name + Contact paired with Languages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div className="flex flex-wrap gap-4 w-full">
           <div className="flex flex-col gap-3 min-w-0">
             <Input
               label="Full name"

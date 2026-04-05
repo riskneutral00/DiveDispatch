@@ -15,9 +15,9 @@ const ROLE_ACTION: Record<string, string | null> = {
   Instructor: null,
   DiveMaster: null,
   Boat: 'Assign',
-  Equipment: 'View Inventory',
-  Pool: 'Reserve Lane',
-  Compressor: 'Book Fill',
+  Equipment: 'Inventory',
+  Pool: 'Reserve',
+  Compressor: 'Fill',
 }
 
 interface StakeholderCardProps {

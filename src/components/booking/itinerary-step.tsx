@@ -170,7 +170,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
         {/* Start date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+          <label className="text-sm font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             Start date
           </label>
           <input
@@ -187,7 +187,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
         {/* End date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-xs font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+          <label className="text-sm font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
             End date
           </label>
           <div className="flex gap-1 items-center">
@@ -604,7 +604,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             className="mt-2"
           >
             <Plus size={16} />
-            Add activity
+            Add
           </Button>
         </div>
       ))}
@@ -721,7 +721,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {/* Empty state if no customers */}
       {customers.length === 0 && (
         <p className="text-sm text-center py-6 text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
-          Add customers in step 1 first.
+          Add customers first.
         </p>
       )}
     </div>

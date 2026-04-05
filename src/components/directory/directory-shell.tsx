@@ -151,11 +151,8 @@ export function DirectoryShell() {
     <div className="flex flex-col flex-1 min-h-0 w-full">
       {/* Top bar */}
       <header
-        className="sticky top-0 z-20 flex items-center gap-4 px-4 py-3 sm:px-6"
+        className="sticky top-0 z-20 glass flex items-center gap-4 px-4 py-3 sm:px-6"
         style={{
-          background: 'var(--color-glass-bg)',
-          backdropFilter: 'blur(var(--glass-blur))',
-          WebkitBackdropFilter: 'blur(var(--glass-blur))',
           borderBottom: '1px solid var(--color-glass-border)',
         }}
       >

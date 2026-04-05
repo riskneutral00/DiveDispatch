@@ -80,6 +80,7 @@ export interface ThemeConfig {
   // === Shape & Decoration ===
   shape: {
     borderRadius: string;
+    borderRadiusButton: string;
     buttonStyle: "pill" | "rounded" | "sharp";
     dividerStyle: "line" | "wave" | "dots" | "none";
     iconStyle: "outlined" | "filled";

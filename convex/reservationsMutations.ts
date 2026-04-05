@@ -122,7 +122,7 @@ async function batchGetTeachingLanguages(
     slugs.map((slug) => {
       const user = userMap.get(slug)
       return user
-        ? ctx.db.query('instructors' as const).withIndex('by_userId', (q) => q.eq('userId', user._id)).unique()
+        ? profileByUserId(ctx, user._id, 'instructors')
         : Promise.resolve(null)
     }),
   )

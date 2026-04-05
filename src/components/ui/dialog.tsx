@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,6 +15,9 @@ interface DialogProps {
   size?: "sm" | "md" | "lg" | "xl";
   /** Full-screen variant: full viewport on mobile, 90vw×90vh (max 800px) on desktop */
   fullScreen?: boolean;
+  /** When true, content behind the dialog fades out — dialog floats alone on background.
+   *  Default false — content stays visible behind the blurred backdrop. */
+  scrim?: boolean;
   className?: string;
 }
 
@@ -32,6 +36,7 @@ export function Dialog({
   children,
   size = "md",
   fullScreen = false,
+  scrim = false,
   className = "",
 }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -79,7 +84,8 @@ export function Dialog({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descId : undefined}
         aria-modal="true"
-        className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[9999]"
+        data-scrim={scrim || undefined}
+        className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[var(--z-modal)]"
         style={{ border: "none" }}
       >
         <div
@@ -87,15 +93,13 @@ export function Dialog({
           onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
           <div
-            className={[
+            className={cn(
               "glass-container flex flex-col shadow-2xl",
               "w-full h-full rounded-none",
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
               className,
-            ]
-              .filter(Boolean)
-              .join(" ")}
+            )}
             style={{ backgroundColor: "var(--color-surface-elevated)" }}
           >
             <div
@@ -142,18 +146,17 @@ export function Dialog({
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={description ? descId : undefined}
       aria-modal="true"
-      className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[9999]"
+      data-scrim={scrim || undefined}
+      className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[var(--z-modal)]"
       style={{ border: "none" }}
     >
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={[
+          className={cn(
             "glass-container w-full shadow-2xl",
             sizeMap[size],
             className,
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          )}
           style={{ backgroundColor: "var(--color-surface-elevated)" }}
         >
           {(title || description) && (

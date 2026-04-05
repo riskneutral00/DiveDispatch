@@ -12,6 +12,7 @@
  */
 
 import { useId } from 'react'
+import { cn } from '@/lib/utils/cn'
 import { FieldError, FieldLabel } from '@/components/ui/field-shell'
 
 interface OptionItem {
@@ -53,7 +54,7 @@ export function SimpleSelect({
   const id = generatedId
 
   return (
-    <div className={`flex flex-col gap-1.5 w-full${className ? ` ${className}` : ''}`}>
+    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       {label && (
         <FieldLabel htmlFor={id} required={required}>
           {label}

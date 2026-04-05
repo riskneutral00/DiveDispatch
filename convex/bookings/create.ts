@@ -20,6 +20,8 @@ import { logBookingChange } from '../lib/auditLog'
 import { notifyReleasedInventory } from '../notifications'
 import { deleteResourcesForBooking, insertBookingResource } from '../bookingResources'
 import { ErrorCode } from '../lib/errorCodes'
+import { profileBySlug } from '../lib/profileHelpers'
+import type { Doc } from '../_generated/dataModel'
 import { canTeachCourses, type Credential } from '../lib/credentialMatch'
 import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
@@ -307,16 +309,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const warnings: Array<{ type: string; missing: string[] }> = []
 
   for (const ir of instructorResources) { // batch-exempt: typically 1 instructor per booking
-    const instructorUser = await ctx.db
-      .query('users')
-      .withIndex('by_slug', (q) => q.eq('slug', ir.resourceSlug!))
-      .unique()
-    if (!instructorUser) continue
-
-    const instructor = await ctx.db
-      .query('instructors')
-      .withIndex('by_userId', (q) => q.eq('userId', instructorUser._id))
-      .unique()
+    const instructor = await profileBySlug(ctx, ir.resourceSlug!, 'instructors') as Doc<'instructors'> | null
     if (!instructor) continue
 
     const result = canTeachCourses(
@@ -360,15 +353,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
         diff: JSON.stringify(diff),
       })
     }
-  }
-
-  if (!isResubmit) {
-    await logBookingChange(ctx, {
-      bookingId: args.bookingId as Id<'bookings'>,
-      action: 'created',
-      actorSlug: user.slug,
-      actorType: 'operator',
-    })
   }
 
   await logBookingChange(ctx, {

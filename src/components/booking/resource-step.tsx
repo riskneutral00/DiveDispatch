@@ -26,9 +26,9 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
           className="text-sm font-semibold mb-3 text-primary"
           style={{ fontFamily: 'var(--font-heading)' }}
         >
-          Equipment & Compressor
+          Equipment
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="flex flex-wrap gap-3">
           <ResourceOrExternalField
             label="Equipment Manager"
             resources={equipmentOptions}
@@ -38,7 +38,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
             onSelectResource={(v) => dispatch({ type: 'SET_EQUIPMENT', value: v })}
             onSetExternal={(v) => dispatch({ type: 'SET_EQUIPMENT_EXTERNAL', value: v })}
             onExternalNameChange={(v) => dispatch({ type: 'SET_EXTERNAL_EQUIPMENT_NAME', value: v })}
-            placeholder="Select equipment manager…"
+            placeholder="Equipment manager…"
           />
           <ResourceOrExternalField
             label="Compressor"
@@ -49,7 +49,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
             onSelectResource={(v) => dispatch({ type: 'SET_COMPRESSOR', value: v })}
             onSetExternal={(v) => dispatch({ type: 'SET_COMPRESSOR_EXTERNAL', value: v })}
             onExternalNameChange={(v) => dispatch({ type: 'SET_EXTERNAL_COMPRESSOR_NAME', value: v })}
-            placeholder="Select compressor…"
+            placeholder="Compressor…"
           />
         </div>
       </Card>

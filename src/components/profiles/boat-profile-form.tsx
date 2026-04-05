@@ -14,7 +14,7 @@ import { ItemCard } from '@/components/ui/item-card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import {
-  boatContactSchema,
+  contactSchema,
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -92,7 +92,7 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
     useProfileForm({
       profile: existing,
       me,
-      schema: boatContactSchema,
+      schema: contactSchema,
       defaults: INITIAL_CONTACT_FORM,
       fromProfile: contactFromProfile,
       fromMe: defaultFromMe,

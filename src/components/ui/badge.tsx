@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils/cn";
 
 type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info";
 type BadgeSize = "sm" | "md";
@@ -61,14 +62,12 @@ export const Badge = React.memo(function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={[
+      className={cn(
         "inline-flex items-center border font-medium",
         "rounded-full",
         sizeMap[size],
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       style={variantStyles[variant]}
     >
       {dot && (

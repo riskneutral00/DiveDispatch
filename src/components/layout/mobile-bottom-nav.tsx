@@ -18,11 +18,8 @@ export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-20 flex items-center justify-around px-2 pt-2"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-20 glass flex items-center justify-around px-2 pt-2"
       style={{
-        background: 'var(--color-glass-bg)',
-        backdropFilter: 'blur(var(--glass-blur))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur))',
         borderTop: '1px solid var(--color-glass-border)',
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
         willChange: 'transform',

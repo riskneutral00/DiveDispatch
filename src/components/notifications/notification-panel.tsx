@@ -116,14 +116,8 @@ export function NotificationPanel({ userId, onClose, triggerRef }: NotificationP
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 top-full mt-2 z-50 w-80 max-h-[28rem] flex flex-col overflow-hidden shadow-xl"
-      style={{
-        background: 'var(--color-glass-bg)',
-        backdropFilter: 'blur(var(--glass-blur))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        border: '1px solid var(--color-glass-border)',
-        borderRadius: 'var(--border-radius)',
-      }}
+      className="absolute right-0 top-full mt-2 z-50 w-80 max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated rounded-[var(--border-radius)]"
+      style={{ background: 'var(--color-surface-elevated)' }}
       role="dialog"
       aria-modal="true"
       aria-label="Notifications"
@@ -144,7 +138,7 @@ export function NotificationPanel({ userId, onClose, triggerRef }: NotificationP
             className="text-xs font-medium transition-opacity hover:opacity-70"
             style={{ color: 'var(--color-primary)' }}
           >
-            Clear all
+            Clear
           </button>
         )}
       </div>
@@ -160,7 +154,7 @@ export function NotificationPanel({ userId, onClose, triggerRef }: NotificationP
           <p
             className="text-sm text-center py-6 text-secondary"
           >
-            No notifications yet.
+            No notifications.
           </p>
         )}
         {notifications?.map((n) => (

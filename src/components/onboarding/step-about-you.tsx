@@ -46,7 +46,7 @@ export function StepAboutYou({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <div className="flex flex-wrap gap-4 w-full">
         <LanguageField
           variant="app"
           value={values.operatingLanguage ? [values.operatingLanguage] : []}
@@ -56,13 +56,14 @@ export function StepAboutYou({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <div className="flex flex-wrap gap-4 w-full">
         <Input
           label="First name"
           value={values.firstName}
           onChange={(e) => set('firstName', e.target.value)}
           autoComplete="given-name"
           required
+          className="field-name"
         />
         <Input
           label="Last name"
@@ -70,12 +71,14 @@ export function StepAboutYou({
           onChange={(e) => set('lastName', e.target.value)}
           autoComplete="family-name"
           required
+          className="field-name"
         />
         <Input
           label="Nickname / display name"
           value={values.nickname}
           onChange={(e) => set('nickname', e.target.value)}
           placeholder='e.g. "Captain Mike"'
+          className="field-text-short"
         />
         <Input
           label="Phone"
@@ -83,6 +86,7 @@ export function StepAboutYou({
           onChange={(e) => set('phone', e.target.value)}
           autoComplete="tel"
           type="tel"
+          className="field-phone"
         />
       </div>
 

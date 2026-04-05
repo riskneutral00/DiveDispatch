@@ -56,11 +56,11 @@
 :root {
   /* Palette */
   --color-primary: #60a5fa;
-  --color-secondary: #fbbf24;
-  --color-accent: #fbbf24;
+  --color-secondary: #60a5fa;
+  --color-accent: #60a5fa;
   --color-text-primary: #ffffff;
   --color-text-secondary: #a8a29e;
-  --color-text-on-primary: #ffffff;
+  --color-text-on-primary: #000000;
   --color-surface: #111820;
   --color-surface-elevated: #1a2230;
   --color-success: #34d399;
@@ -112,6 +112,15 @@
   --font-heading: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --border-radius: 16px;
+  --border-radius-button: 4px;
+
+  /* Z-index scale */
+  --z-bg: 0;
+  --z-content: 2;
+  --z-sticky: 20;
+  --z-dropdown: 50;
+  --z-modal: 70;
+  --z-dev: 100;
   --transition-speed: 0.3s;
 
   /* Type scale */
@@ -175,6 +184,55 @@
 
 .text-secondary {
   color: var(--color-text-secondary);
+}
+
+/* ── Field width scale — mobile-first, proportional to content ────────────
+   Mobile: fraction of viewport (via grid).  Desktop: fixed px width.
+   Apply to the field's WRAPPER div (Input/SimpleSelect outer container).
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* number: units, days, depth, capacity, diopter */
+.field-number { width: 33.333%; }
+/* select-short: month, day, year, agency, gender, gear type */
+.field-select-short { width: 33.333%; }
+/* name: first name, last name, business name, boat name */
+.field-name { width: 50%; }
+/* phone */
+.field-phone { width: 50%; }
+/* text-short: nickname, member ID, passport, cert level */
+.field-text-short { width: 50%; }
+/* date: start date, end date, DOB, expiry */
+.field-date { width: 50%; }
+/* email */
+.field-email { width: 100%; }
+/* select-long: nationality, instructor, venue */
+.field-select-long { width: 100%; }
+/* location: LocationPicker */
+.field-location { width: 100%; }
+/* text-long: textarea, message, allergies */
+.field-text-long { width: 100%; }
+
+@media (min-width: 640px) {
+  .field-number { width: 80px; }
+  .field-select-short { width: 112px; }
+  .field-name { width: 176px; }
+  .field-phone { width: 176px; }
+  .field-text-short { width: 176px; }
+  .field-date { width: 176px; }
+  .field-email { width: 256px; }
+  .field-select-long { width: 256px; }
+  .field-location { width: 256px; }
+  .field-text-long { width: 100%; }
+}
+
+/* ── Mobile-first input sizing — prevents iOS auto-zoom (requires ≥16px) ─ */
+input, textarea, select {
+  font-size: 16px;
+}
+@media (min-width: 640px) {
+  input, textarea, select {
+    font-size: 14px;
+  }
 }
 
 /* ── Urgent Draft pulse animation ────────────────────────────────────────── */
@@ -250,12 +308,13 @@ body {
 
 /* Glass Air: fade page content when a dialog is open, revealing the brand background.
    CSS-only: no JS required. Targets any open native <dialog> element. */
-html:has(dialog[open]) .app-shell {
+html:has(dialog[open][data-scrim]) .app-shell {
   opacity: 0;
 }
 
-/* Scroll lock — prevent body scroll when any dialog is open */
-body:has(dialog[open]) {
+/* Scroll lock — only for scrim dialogs (fullscreen overlays).
+   Non-scrim dialogs (confirmations) leave body scrollable to prevent layout shake. */
+body:has(dialog[open][data-scrim]) {
   overflow: hidden;
 }
 
@@ -298,7 +357,6 @@ dialog::backdrop {
    Shared backdrop-filter composites. Components import these via cn().
    ──────────────────────────────────────────────────────────────────────────── */
 .glass {
-  position: relative;
   background-color: var(--color-glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -330,7 +388,6 @@ dialog::backdrop {
 }
 
 .glass-elevated {
-  position: relative;
   background-color: var(--color-glass-bg-elevated);
   backdrop-filter: blur(var(--glass-blur-elevated));
   -webkit-backdrop-filter: blur(var(--glass-blur-elevated));
@@ -362,7 +419,6 @@ dialog::backdrop {
 
 /* ── Glass container (readability surface — no blur, semi-transparent bg) ───*/
 .glass-container {
-  position: relative;
   background-color: var(--color-glass-container-bg);
   border: 1px solid var(--color-glass-container-border);
   border-radius: var(--border-radius);

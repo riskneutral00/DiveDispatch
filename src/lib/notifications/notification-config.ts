@@ -47,7 +47,7 @@ export interface NotificationTypeConfig {
   tier: SeverityTier
 }
 
-import type { NotificationType } from '../../../convex/shared/statuses'
+import type { NotificationType } from '@/lib/constants/statuses'
 
 /**
  * All 14 notification types from the schema, each with an icon and severity tier.

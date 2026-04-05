@@ -80,8 +80,8 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
         </h2>
         <p className="text-secondary" style={{ fontSize: 14, lineHeight: 1.6 }}>
           {isOrganizer
-            ? 'Set up Quick Book pills for your most common bookings. You can always add more later.'
-            : 'Your preferences are ready. You can update your booking settings from the dashboard.'}
+            ? 'Set up Quick Book shortcuts. More can be added later.'
+            : 'Preferences saved. Update anytime from dashboard.'}
         </p>
       </div>
 
@@ -145,8 +145,6 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                           fontSize: 13,
                           cursor: 'pointer',
                           transition: 'all var(--transition-speed) ease',
-                          backdropFilter: 'blur(var(--glass-blur))',
-                          WebkitBackdropFilter: 'blur(var(--glass-blur))',
                         }}
                       >
                         {opt.label}
@@ -164,8 +162,6 @@ export function StepPreferences({ userRole, onComplete }: StepPreferencesProps) 
                     background: 'var(--color-glass-bg)',
                     border: '1px solid var(--color-glass-border)',
                     borderRadius: 'var(--border-radius-sm)',
-                    backdropFilter: 'blur(var(--glass-blur))',
-                    WebkitBackdropFilter: 'blur(var(--glass-blur))',
                     outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: 8 }}>

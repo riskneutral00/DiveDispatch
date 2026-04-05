@@ -15,7 +15,7 @@ import type { Language } from '@/lib/types/language'
 export type { Language }
 
 const FLAG_TILE =
-  'h-9 w-9 rounded-[6px] flex items-center justify-center text-[1.2rem] leading-none transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+  'h-9 w-9 rounded-[6px] flex items-center justify-center text-[1.2rem] leading-none transition-colors border outline-none glass-field'
 
 interface LanguagePickerProps {
   value: Language[]
@@ -169,7 +169,7 @@ export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
       aria-pressed={active}
       translate="no"
       className={isText
-        ? 'h-9 px-1.5 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        ? 'h-9 px-1.5 rounded-[6px] flex items-center justify-center text-xs font-medium leading-none transition-colors border outline-none glass-field'
         : FLAG_TILE}
       style={{
         background: active ? 'var(--color-primary-muted)' : 'transparent',

@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils/cn";
 
 interface ActionLinkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
@@ -9,12 +10,10 @@ export function ActionLink({ children, className = "", ...props }: ActionLinkPro
   return (
     <button
       type="button"
-      className={[
+      className={cn(
         "text-xs underline underline-offset-2 text-left transition-opacity hover:opacity-70",
         className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      )}
       style={{ color: "var(--color-accent)", fontFamily: "var(--font-body)" }}
       {...props}
     >

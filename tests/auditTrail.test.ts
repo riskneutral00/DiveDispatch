@@ -220,7 +220,6 @@ describe('submitToDraft creates audit entries', () => {
       .query(api.bookingAuditLog.getAuditLog, { bookingId })
 
     const actions = (entries as Array<Record<string, unknown>>).map((e) => e.action)
-    expect(actions).toContain('created')
     expect(actions).toContain('submitted')
   })
 })

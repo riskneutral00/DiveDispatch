@@ -8,6 +8,7 @@ import {
   type InventoryRow,
 } from '@/components/inventory/equipment-inventory-table'
 import type { Id } from '@/lib/convex-generated'
+import type { GearType } from '@/lib/constants/gear-sizing'
 export function ConnectedEquipmentInventory() {
   const grouped = useQuery(api.equipmentInventory.listMyInventory)
   const addItemMutation = useMutation(api.equipmentInventory.addItem)
@@ -28,7 +29,7 @@ export function ConnectedEquipmentInventory() {
       totalUnits: number
     }) => {
       await addItemMutation({
-        gearType: item.gearType as 'wetsuit' | 'bcd' | 'fins' | 'mask' | 'regulator',
+        gearType: item.gearType as GearType,
         ...(item.manufacturer !== undefined ? { manufacturer: item.manufacturer } : {}),
         ...(item.size !== undefined ? { size: item.size } : {}),
         ...(item.diopter !== undefined ? { diopter: item.diopter } : {}),

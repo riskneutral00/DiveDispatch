@@ -40,8 +40,7 @@ export const instructorCredentialSchema = credentialSchema.extend({
 // DiveCenter per-section schemas
 // ---------------------------------------------------------------------------
 
-/** DiveCenter contact section — same as base contact. */
-export const diveCenterContactSchema = contactSchema
+// DiveCenter contact section uses contactSchema directly (no alias needed).
 
 /** DiveCenter languages section. */
 export const diveCenterLanguagesSchema = z.object({
@@ -118,8 +117,7 @@ export const instructorCredentialsSchema = z.object({
 // Boat per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Boat contact section — same as base contact. */
-export const boatContactSchema = contactSchema
+// Boat contact section uses contactSchema directly (no alias needed).
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 
@@ -146,8 +144,7 @@ export const boatFleetSchema = z.object({
 // Compressor per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Compressor contact section — same as base contact. */
-export const compressorContactSchema = contactSchema
+// Compressor contact section uses contactSchema directly (no alias needed).
 
 /** Compressor gas mixes section. */
 export const compressorGasMixesSchema = z.object({
@@ -158,8 +155,7 @@ export const compressorGasMixesSchema = z.object({
 // Equipment per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Equipment contact section — same as base contact. */
-export const equipmentContactSchema = contactSchema
+// Equipment contact section uses contactSchema directly (no alias needed).
 
 /** Equipment gear catalog section. */
 export const equipmentGearCatalogSchema = z.object({
@@ -170,8 +166,7 @@ export const equipmentGearCatalogSchema = z.object({
 // Pool per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Pool contact section — same as base contact. */
-export const poolContactSchema = contactSchema
+// Pool contact section uses contactSchema directly (no alias needed).
 
 /** Pool capabilities section. */
 export const poolCapabilitiesSchema = z.object({

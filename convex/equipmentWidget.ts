@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import type { Id, Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
 import { requireAuth } from './lib/auth'
+import { profileByUserId } from './lib/profileHelpers'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS, type BagStatus } from './shared/statuses'
@@ -99,10 +100,7 @@ export const getDiverEquipmentData = query({
     const { user } = await requireAuth(ctx)
 
     // EM profile (manufacturersByGearType preference)
-    const emProfile = await ctx.db
-      .query('equipment')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
+    const emProfile = await profileByUserId(ctx, user._id, 'equipment')
     if (!emProfile) return null
 
     // Bookings for this EM via bookingResources junction table

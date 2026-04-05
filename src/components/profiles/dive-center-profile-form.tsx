@@ -1,15 +1,14 @@
 'use client'
 
-import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Plus } from 'lucide-react'
+import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { Button } from '@/components/ui/button'
-import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
   diveCenterAffiliationsSchema,
-  diveCenterContactSchema,
+  contactSchema,
   diveCenterLanguagesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
@@ -20,6 +19,7 @@ import {
   languagesFromProfile,
   languagesToPayload,
   type BaseProfileSectionProps,
+  type ContactFormState,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
@@ -39,64 +39,22 @@ type DiveCenterSectionProps = BaseProfileSectionProps
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
-export function DiveCenterContactSection({ profile: existing, me, create, update, onSaved }: DiveCenterSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
-    useProfileForm({
-      profile: existing,
-      me,
-      schema: diveCenterContactSchema,
-      defaults: INITIAL_CONTACT_FORM,
-      fromProfile: contactFromProfile,
-      fromMe: (u, defaults) => ({
-        ...defaults,
-        name: (u.businessName as string) ?? '',
-        email: (u.email as string) ?? '',
-        phone: (u.phone as string) ?? '',
-      }),
-      toPayload: contactToPayload,
-      create,
-      update,
-      onSaved,
-    })
+const diveCenterFromMe = (u: Record<string, unknown>, defaults: ContactFormState): ContactFormState => ({
+  ...defaults,
+  name: (u.businessName as string) ?? '',
+  email: (u.email as string) ?? '',
+  phone: (u.phone as string) ?? '',
+})
 
-  const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
-
+export function DiveCenterContactSection(props: DiveCenterSectionProps) {
   return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <div className="space-y-4">
-        <ProfileBasicInfo
-          nameValue={form.name}
-          onNameChange={(val) => setField('name', val)}
-          nameError={errors.name}
-          nameLabel="Business Name"
-          namePlaceholder="Ms. Mermaids' DC"
-          nameRequired
-          locationValue={form.location}
-          onLocationChange={onLocationChange}
-          locationError={errors.location}
-          locationRequired
-          emailValue={form.email}
-          onEmailChange={(val) => setField('email', val)}
-          emailError={errors.email}
-          emailRequired
-          phoneValue={form.phone}
-          onPhoneChange={(val) => setField('phone', val)}
-          phoneError={errors.phone}
-          phoneRequired
-        />
-      </div>
-    </ProfileFormShell>
+    <BusinessContactSection
+      {...props}
+      nameLabel="Business Name"
+      namePlaceholder="Ms. Mermaids' DC"
+      schema={contactSchema}
+      fromMe={diveCenterFromMe}
+    />
   )
 }
 

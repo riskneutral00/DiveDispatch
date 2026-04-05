@@ -1,13 +1,6 @@
-import { locationSchema } from '@/lib/schemas/location'
+import { locationSchema, type LocationValue } from '@/lib/schemas/location'
 
-/** Same shape as `LocationValue` from `location-picker` — keep in sync. */
-export type ProfileLocationValue = {
-  placeName: string
-  country: string
-  lat: number
-  lng: number
-  placeId?: string
-}
+export type ProfileLocationValue = LocationValue
 
 const DEFAULT_LOCATION_REQUIRED = 'Location is required'
 
@@ -58,15 +51,15 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
 }
 
 /** Default `fromMe` callback shared by all contact-section profile forms. */
-export function defaultFromMe(
+export function defaultFromMe<T extends Record<string, unknown>>(
   u: Record<string, unknown>,
-  defaults: Record<string, unknown>,
-): Record<string, unknown> {
+  defaults: T,
+): T {
   return {
     ...defaults,
     email: (u.email as string) ?? '',
     phone: (u.phone as string) ?? '',
-  }
+  } as T
 }
 
 /** Spread into toPayload return — replaces the 5-field loc spread duplicated across all profile forms. */

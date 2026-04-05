@@ -107,7 +107,7 @@ export function ResourcePicker({
       ) : isLoading ? (
         /* Loading skeleton */
         <div
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-secondary"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--border-radius)] text-secondary"
           style={{ background: 'var(--color-glass-bg)',
             border: '1px solid var(--color-glass-border)' }}
         >
@@ -122,7 +122,7 @@ export function ResourcePicker({
           <button
             type="button"
             onClick={() => setIsOpen((o) => !o)}
-            className="w-full text-left px-3 py-2.5 text-sm rounded-lg flex items-center justify-between gap-2 transition-opacity hover:opacity-90"
+            className="w-full text-left px-3 py-2.5 text-sm rounded-[var(--border-radius)] flex items-center justify-between gap-2 transition-opacity hover:opacity-90"
             style={{
               background: 'var(--color-glass-bg)',
               border: '1px solid var(--color-glass-border)',
@@ -142,7 +142,7 @@ export function ResourcePicker({
           {isOpen && (
             /* Dropdown list */
             <div
-              className="absolute z-50 left-0 right-0 top-full mt-1 rounded-lg shadow-xl overflow-hidden"
+              className="absolute z-50 left-0 right-0 top-full mt-1 rounded-[var(--border-radius)] shadow-xl overflow-hidden"
               style={{
                 background: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-glass-border)',

@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   bookingSessionsSchema,
   makeBookingDiversSchema,
+} from '../src/lib/validation/schemas'
+import {
   INSTRUCTOR_REQUIRED_CODES,
   CONFINED_ACTIVITY_CODES,
-} from '../src/lib/validation/bookingSchemas'
+} from '../src/lib/constants/activity-rules'
 import { testDate } from './helpers/dates'
 
 describe('INSTRUCTOR_REQUIRED_CODES', () => {

@@ -8,6 +8,7 @@ import { ErrorCode } from './lib/errorCodes'
 import { sanitizeFields, BOOKING_TEMPLATE_FIELDS } from './lib/sanitize'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
+import type { OperatorType } from './shared/operatorTypes'
 
 export const list = query({
   args: { activeRole: stakeholderType },
@@ -52,7 +53,7 @@ export const create = mutation({
     const sanitized = sanitizeFields(args, BOOKING_TEMPLATE_FIELDS)
     return ctx.db.insert('bookingTemplates', {
       ownerId: user.slug,
-      ownerType: args.activeRole as 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel',
+      ownerType: args.activeRole as OperatorType,
       name: sanitized.name,
       activityType: args.activityType,
       ...(args.resources?.length ? { resources: args.resources } : {}),

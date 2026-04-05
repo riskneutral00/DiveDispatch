@@ -3,7 +3,7 @@ import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, type CourseCode }
 import { COURSE_CODES } from '../../convex/shared/courseCodes'
 import { AGENCIES, AGENCY_CODES, COURSE_DAY_RANGES, getMandatorySpecialties, getDefaultSpecialties } from '../../convex/shared/agencies'
 import { AOW_SPECIALTY_VALUES, MANDATORY_AOW_SPECIALTIES } from '../../convex/shared/aowSpecialties'
-import { INSTRUCTOR_REQUIRED_CODES, CONFINED_ACTIVITY_CODES } from '../../src/lib/validation/bookingSchemas'
+import { INSTRUCTOR_REQUIRED_CODES, CONFINED_ACTIVITY_CODES } from '../../src/lib/constants/activity-rules'
 import { CERT_REQUIRED_ACTIVITIES, NO_CERT_ACTIVITIES } from '../../src/lib/constants/activity-rules'
 import { DIVE_AGENCIES, DIVE_AGENCIES_EXTENDED } from '../../src/lib/constants/agencies'
 import { BOOKING_LINK_TTL_MS } from '../../convex/lib/timeConstants'

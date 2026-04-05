@@ -66,7 +66,7 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
           <span className="ml-1 text-[10px]">{diver.passportIssuingCountry}</span>
         )}
       </td>
-      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'text-red-400 font-bold' : 'text-secondary'}`}>
+      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'font-bold' : 'text-secondary'}`} style={passportExpiring ? { color: 'var(--color-destructive)' } : undefined}>
         {diver.passportExpirationDate ?? '—'}
         {passportExpiring && (
           <span role="alert" className="ml-1" title="Expires within 6 months">
@@ -88,10 +88,10 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
       <td className="py-1.5 px-2">
         <span className="flex items-center gap-1">
           {diver.medicalFlags?.includes('medical_block') && (
-            <span aria-label="Medical block"><Heart size={12} className="text-red-400" /></span>
+            <span aria-label="Medical block"><Heart size={12} style={{ color: 'var(--color-destructive)' }} /></span>
           )}
           {diver.allergies && (
-            <span aria-label={`Allergies: ${diver.allergies}`}><AlertTriangle size={12} className="text-amber-400" /></span>
+            <span aria-label={`Allergies: ${diver.allergies}`}><AlertTriangle size={12} style={{ color: 'var(--color-warning)' }} /></span>
           )}
           {!diver.medicalFlags?.length && !diver.allergies && (
             <span className="text-secondary text-[11px]">—</span>
@@ -125,7 +125,8 @@ function GroupSection({ group }: { group: ManifestGroup }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded transition-colors hover:bg-white/5"
+        className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded transition-colors"
+        style={{ transitionDuration: 'var(--transition-speed)' }}
         aria-expanded={expanded}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

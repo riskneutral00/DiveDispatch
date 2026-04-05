@@ -1,4 +1,5 @@
 import type { ClerkRole } from './roles'
+import { DIVE_AGENCIES_EXTENDED } from './agencies'
 
 export type FilterOption = {
   label: string
@@ -48,15 +49,7 @@ export const INSTRUCTOR_FILTERS: FilterDef[] = [
     multiSelect: true,
     options: [
       { label: 'All Agencies', value: 'all' },
-      { label: 'PADI', value: 'PADI' },
-      { label: 'SSI', value: 'SSI' },
-      { label: 'NAUI', value: 'NAUI' },
-      { label: 'CMAS', value: 'CMAS' },
-      { label: 'IANTD', value: 'IANTD' },
-      { label: 'TDI', value: 'TDI' },
-      { label: 'SDI', value: 'SDI' },
-      { label: 'RAID', value: 'RAID' },
-      { label: 'BSAC', value: 'BSAC' },
+      ...DIVE_AGENCIES_EXTENDED.map((a) => ({ label: a, value: a })),
     ],
   },
   LANGUAGE_FILTER,

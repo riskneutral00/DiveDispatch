@@ -56,11 +56,11 @@ function LogisticsSection({ logistics }: { logistics: NotificationLogistics }) {
   const rows: Array<{ label: string; value: string }> = []
 
   if (logistics.pickupTime) rows.push({ label: 'Pickup', value: logistics.pickupTime })
-  if (logistics.pickupLocation) rows.push({ label: 'Pickup location', value: logistics.pickupLocation })
+  if (logistics.pickupLocation) rows.push({ label: 'Pickup', value: logistics.pickupLocation })
   if (logistics.departureTime) rows.push({ label: 'Departure', value: logistics.departureTime })
-  if (logistics.departureLocation) rows.push({ label: 'Departure location', value: logistics.departureLocation })
+  if (logistics.departureLocation) rows.push({ label: 'Departure', value: logistics.departureLocation })
   if (logistics.boatName) rows.push({ label: 'Boat', value: logistics.boatName })
-  if (logistics.meetingPoint) rows.push({ label: 'Meeting point', value: logistics.meetingPoint })
+  if (logistics.meetingPoint) rows.push({ label: 'Meeting', value: logistics.meetingPoint })
 
   if (rows.length === 0) return null
 

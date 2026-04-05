@@ -157,13 +157,14 @@ export function ProfileTab() {
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-4">
           <Input
             label="First name"
             value={form.firstName}
             onChange={(e) => setField('firstName', e.target.value)}
             autoComplete="given-name"
             required
+            className="field-name"
           />
           <Input
             label="Last name"
@@ -171,15 +172,15 @@ export function ProfileTab() {
             onChange={(e) => setField('lastName', e.target.value)}
             autoComplete="family-name"
             required
+            className="field-name"
           />
           <Input
             label="Nickname"
             value={form.nickname}
             onChange={(e) => setField('nickname', e.target.value)}
             autoComplete="nickname"
+            className="field-text-short"
           />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Phone"
             type="tel"
@@ -191,6 +192,7 @@ export function ProfileTab() {
             autoComplete="tel"
             maxLength={16}
             required
+            className="field-phone"
           />
           <Input
             label="Email"
@@ -198,16 +200,18 @@ export function ProfileTab() {
             value={form.email}
             onChange={(e) => setField('email', e.target.value)}
             required
+            className="field-email"
           />
         </div>
         <p className="text-sm font-medium text-secondary">Date of birth</p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="flex flex-wrap gap-3">
           <SimpleSelect
             label="Month"
             value={form.dobMonth}
             onChange={(v) => setField('dobMonth', v)}
             options={MONTHS}
             placeholder="Month"
+            className="field-select-short"
           />
           <SimpleSelect
             label="Day"
@@ -215,6 +219,7 @@ export function ProfileTab() {
             onChange={(v) => setField('dobDay', v)}
             options={DAYS}
             placeholder="Day"
+            className="field-select-short"
           />
           <SimpleSelect
             label="Year"
@@ -222,6 +227,7 @@ export function ProfileTab() {
             onChange={(v) => setField('dobYear', v)}
             options={YEARS}
             placeholder="Year"
+            className="field-select-short"
           />
         </div>
         <LanguageField

@@ -148,6 +148,7 @@ export function themeToVars(
     "--font-heading": theme.typography.fontHeading,
     "--font-body": theme.typography.fontBody,
     "--border-radius": theme.shape.borderRadius,
+    "--border-radius-button": theme.shape.borderRadiusButton,
     "--transition-speed":
       TRANSITION_SPEED_MAP[theme.motion.transitionSpeed] ?? "0.3s",
   };

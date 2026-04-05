@@ -12,8 +12,10 @@ export default function AuthLayout({
       <div className="bg-image" />
       <div className="bg-overlay" />
 
+      {/* Content shell — app-shell class enables Glass Air scrim on dialogs */}
+      <div className="app-shell flex flex-col flex-1">
       {/* Back to home */}
-      <div className="relative z-10 px-6 pt-5">
+      <div className="px-6 pt-5">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70 text-secondary"
@@ -24,11 +26,12 @@ export default function AuthLayout({
       </div>
 
       {/* Centered glass container */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4">
         <div className="glass-container w-full max-w-lg p-8 flex flex-col items-center">
           {children}
         </div>
       </main>
+      </div>
     </div>
   )
 }

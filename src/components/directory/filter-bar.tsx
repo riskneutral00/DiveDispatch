@@ -11,10 +11,6 @@ interface FilterBarProps {
 }
 
 const glassStyle = {
-  background: 'var(--color-glass-bg)',
-  backdropFilter: 'blur(var(--glass-blur))',
-  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-  border: '1px solid var(--color-glass-border)',
   color: 'var(--color-text-primary)',
   outlineColor: 'var(--color-accent)',
   transitionDuration: 'var(--transition-speed)',
@@ -158,7 +154,7 @@ function MultiSelectFilter({
           if (!isOpen) setFocusedIndex(0)
         }}
         onKeyDown={handleKeyDown}
-        className="w-full text-left appearance-none pl-3 pr-7 py-1.5 text-sm rounded-[var(--border-radius)] focus:outline-none focus-visible:ring-2 cursor-pointer"
+        className="w-full text-left appearance-none pl-3 pr-7 py-1.5 text-sm rounded-[var(--border-radius)] focus:outline-none focus-visible:ring-2 cursor-pointer glass"
         style={glassStyle}
       >
         {label}
@@ -186,9 +182,10 @@ function MultiSelectFilter({
           aria-label={filter.label}
           aria-multiselectable="true"
           onKeyDown={handleKeyDown}
-          className="absolute left-0 top-full mt-1 w-48 rounded-[var(--border-radius)] py-1 z-30 max-h-60 overflow-y-auto"
+          className="absolute left-0 top-full mt-1 w-48 rounded-[var(--border-radius)] py-1 z-30 max-h-60 overflow-y-auto glass-elevated"
           style={{
             ...glassStyle,
+            background: 'var(--color-surface-elevated)',
             boxShadow: '0 4px 12px var(--color-glass-shadow)',
           }}
         >

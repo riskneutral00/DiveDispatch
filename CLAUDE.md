@@ -8,6 +8,10 @@ Multi-stakeholder booking platform for scuba diving. Operator stakeholder create
 
 All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
 
+## Mobile First
+
+The app is 90% mobile. Every decision — layout, input types, touch targets, field sizing — defaults to mobile and scales up to desktop. Unprefixed Tailwind classes are the mobile baseline. `sm:` and `md:` add desktop overrides. When mobile UX and desktop aesthetics conflict, mobile wins.
+
 ## Dependency Direction
 
 `convex/ ← lib/ ← components/ ← app/` — Never import upstream. (PostToolUse hook enforces this.)

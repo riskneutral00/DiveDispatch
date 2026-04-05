@@ -18,6 +18,18 @@ export const CERT_REQUIRED_ACTIVITIES = [
 // Activities that do NOT require a pre-existing certification.
 export const NO_CERT_ACTIVITIES = ['DSD', 'TRY_DIVE', 'OW'] as const satisfies readonly CourseCode[]
 
+/** Activities that require an in-system or external instructor. FD is excluded
+ *  (Fun Dive is recreational — certified divers need no instruction). */
+export const INSTRUCTOR_REQUIRED_CODES = [
+  'DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'REFRESH', 'SPECIALTY',
+] as const satisfies readonly CourseCode[]
+
+/** Activities that require confined water (pool). Determines whether the pool
+ *  picker is shown and required. */
+export const CONFINED_ACTIVITY_CODES = [
+  'DSD', 'TRY_DIVE', 'OW', 'REFRESH',
+] as const satisfies readonly CourseCode[]
+
 // PADI/universal age minimums per activity.
 // Age is calculated against booking startDate (not Date.now()).
 export const ACTIVITY_MIN_AGE: Record<CourseCode, number> = {

@@ -116,18 +116,11 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
 
 type AgentContactSectionProps = BaseProfileSectionProps
 
-export type AgentLanguagesSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  update: (payload: Record<string, unknown>) => Promise<unknown>
+export type AgentLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'update'> & {
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
 }
 
-export type AgentAssociationsSectionProps = {
-  profile: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
+export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'>
 
 // ---------------------------------------------------------------------------
 // AgentContactSection
@@ -214,7 +207,6 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
                   background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
                   borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
                   color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                  backdropFilter: active ? undefined : 'blur(var(--glass-blur))',
                   transitionDuration: 'var(--transition-speed)',
                 }}
               >
