@@ -1,7 +1,5 @@
 'use client'
 
-import { z } from 'zod'
-
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -13,12 +11,12 @@ import {
   poolCapabilitiesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFieldsFromProfile,
-  locationToPayload,
-  nullableProfileLocation,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
   defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -26,42 +24,10 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type PoolProfileSection = 'contact' | 'capabilities'
 
-export type PoolSectionProps = BaseProfileSectionProps
+type PoolSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
-export type PoolContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_POOL_CONTACT_FORM: PoolContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function poolContactFromProfile(p: Record<string, unknown>): PoolContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function poolContactToPayload(f: PoolContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
 
 export function buildPoolCreatePayload<T extends Record<string, unknown>>(payload: T) {
   return {
@@ -78,10 +44,10 @@ export function PoolContactSection({ profile: existing, me, create, update, onSa
       profile: existing,
       me,
       schema: poolContactSchema,
-      defaults: INITIAL_POOL_CONTACT_FORM,
-      fromProfile: poolContactFromProfile,
+      defaults: INITIAL_CONTACT_FORM,
+      fromProfile: contactFromProfile,
       fromMe: defaultFromMe,
-      toPayload: poolContactToPayload,
+      toPayload: contactToPayload,
       create: (payload) => create(buildPoolCreatePayload(payload)),
       update,
       onSaved,
@@ -247,64 +213,3 @@ export function PoolProfileForm({
   return <PoolContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }
 
-// ── Legacy monolithic exports (backward-compat for existing tests) ────
-
-/** @deprecated Use poolContactSchema + poolCapabilitiesSchema instead. */
-export const poolSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  location: nullableProfileLocation(),
-  email: z.string().email('Invalid email'),
-  phone: z.string().min(1, 'Phone is required'),
-  maxDepth: z.number().positive('Must be greater than 0'),
-  maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
-  confinedCapable: z.boolean(),
-})
-
-/** @deprecated Use PoolContactFormState + PoolCapabilitiesFormState instead. */
-export type PoolFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-  maxDepth: number
-  maxCapacity: number
-  confinedCapable: boolean
-}
-
-/** @deprecated Use INITIAL_POOL_CONTACT_FORM + INITIAL_POOL_CAPABILITIES_FORM instead. */
-export const INITIAL_POOL_FORM: PoolFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-  maxDepth: 0,
-  maxCapacity: 0,
-  confinedCapable: false,
-}
-
-/** @deprecated Use poolContactFromProfile + poolCapabilitiesFromProfile instead. */
-export function poolFromProfile(p: Record<string, unknown>): PoolFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: (p.email as string) ?? '',
-    phone: (p.phone as string) ?? '',
-    maxDepth: (p.maxDepth as number) ?? 0,
-    maxCapacity: (p.maxCapacity as number) ?? 0,
-    confinedCapable: (p.confinedCapable as boolean) ?? false,
-  }
-}
-
-/** @deprecated Use poolContactToPayload + poolCapabilitiesToPayload instead. */
-export function poolToPayload(f: PoolFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-    maxDepth: f.maxDepth,
-    maxCapacity: f.maxCapacity,
-    confinedCapable: f.confinedCapable,
-  }
-}

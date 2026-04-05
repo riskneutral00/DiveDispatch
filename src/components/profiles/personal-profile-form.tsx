@@ -7,15 +7,15 @@ import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  type ContactFormState as PersonalContactFormState,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
+  defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
-} from '@/lib/profile-form/languages'
-import {
-  contactFieldsFromProfile,
-  locationToPayload,
-  defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import {
   personalContactSchema,
   personalLanguagesSchema,
@@ -42,38 +42,8 @@ export type PersonalCredential = DmCredential | InstCredential
 
 // ── Contact ──────────────────────────────────────────────────────────────────
 
-export type PersonalContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_CONTACT_FORM: PersonalContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function contactFromProfile(p: Record<string, unknown>): PersonalContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function contactToPayload(f: PersonalContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
+export type { PersonalContactFormState }
+export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
 // ── Languages ─────────────────────────────────────────────────────────────────
 
@@ -341,28 +311,8 @@ export function PersonalCredentialsSection({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Re-exported types for barrel files
-// ---------------------------------------------------------------------------
-
 export type DiveMasterProfileSection = PersonalSection
 export type InstructorProfileSection = PersonalSection
-
-export type DiveMasterProfileFormProps = {
-  section?: DiveMasterProfileSection
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
-
-export type InstructorProfileFormProps = {
-  section?: InstructorProfileSection
-  profile: Record<string, unknown> | null | undefined
-  me: Record<string, unknown> | null | undefined
-  create: (payload: Record<string, unknown>) => Promise<unknown>
-  update: (payload: Record<string, unknown>) => Promise<unknown>
-}
 
 // ---------------------------------------------------------------------------
 // DiveMasterProfileForm — dispatches to the correct section component
@@ -374,7 +324,7 @@ export function DiveMasterProfileForm({
   me,
   create,
   update,
-}: DiveMasterProfileFormProps) {
+}: BaseProfileSectionProps & { section?: DiveMasterProfileSection }) {
   if (section === 'languages')
     return <PersonalLanguagesSection profile={profile} create={create} update={update} />
   if (section === 'credentials')
@@ -407,7 +357,7 @@ export function InstructorProfileForm({
   me,
   create,
   update,
-}: InstructorProfileFormProps) {
+}: BaseProfileSectionProps & { section?: InstructorProfileSection }) {
   if (section === 'languages')
     return <PersonalLanguagesSection profile={profile} create={create} update={update} />
   if (section === 'credentials')

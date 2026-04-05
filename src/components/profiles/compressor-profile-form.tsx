@@ -12,11 +12,12 @@ import {
   compressorGasMixesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFieldsFromProfile,
-  locationToPayload,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
   defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 import { GAS_MIX_OPTIONS, type GasMix } from '@/lib/constants/gas-mixes'
@@ -25,42 +26,10 @@ import { GAS_MIX_OPTIONS, type GasMix } from '@/lib/constants/gas-mixes'
 
 export type CompressorProfileSection = 'contact' | 'gas-mixes'
 
-export type CompressorSectionProps = BaseProfileSectionProps
+type CompressorSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
-export type CompressorContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_COMPRESSOR_CONTACT_FORM: CompressorContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function compressorContactFromProfile(p: Record<string, unknown>): CompressorContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function compressorContactToPayload(f: CompressorContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
 
 export function CompressorContactSection({ profile: existing, me, create, update, onSaved }: CompressorSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
@@ -68,10 +37,10 @@ export function CompressorContactSection({ profile: existing, me, create, update
       profile: existing,
       me,
       schema: compressorContactSchema,
-      defaults: INITIAL_COMPRESSOR_CONTACT_FORM,
-      fromProfile: compressorContactFromProfile,
+      defaults: INITIAL_CONTACT_FORM,
+      fromProfile: contactFromProfile,
       fromMe: defaultFromMe,
-      toPayload: compressorContactToPayload,
+      toPayload: contactToPayload,
       create,
       update,
       onSaved,

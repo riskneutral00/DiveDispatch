@@ -80,3 +80,28 @@ export function locationToPayload(loc: ProfileLocationValue) {
   }
 }
 
+// ── Shared contact form state (used by 6+ profile forms) ───────────
+
+export type ContactFormState = {
+  name: string
+  location: ProfileLocationValue | null
+  email: string
+  phone: string
+}
+
+export const INITIAL_CONTACT_FORM: ContactFormState = {
+  name: '',
+  location: null,
+  email: '',
+  phone: '',
+}
+
+export function contactFromProfile(p: Record<string, unknown>): ContactFormState {
+  const c = contactFieldsFromProfile(p)
+  return { name: c.name, location: c.location, email: c.email, phone: c.phone }
+}
+
+export function contactToPayload(f: ContactFormState): Record<string, unknown> {
+  return { name: f.name, ...locationToPayload(f.location!), email: f.email, phone: f.phone }
+}
+

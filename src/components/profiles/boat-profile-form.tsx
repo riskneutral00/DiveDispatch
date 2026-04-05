@@ -18,11 +18,12 @@ import {
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFieldsFromProfile,
-  locationToPayload,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
   defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -32,7 +33,7 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 export type BoatProfileSection = 'contact' | 'fleet'
 
-export type BoatSectionProps = BaseProfileSectionProps
+type BoatSectionProps = BaseProfileSectionProps
 
 interface RouteState {
   diveSite: string
@@ -85,38 +86,6 @@ function parseOptionalInt(s: string): number | undefined {
 // Contact section
 // ---------------------------------------------------------------------------
 
-export type BoatContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_BOAT_CONTACT_FORM: BoatContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function boatContactFromProfile(p: Record<string, unknown>): BoatContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function boatContactToPayload(f: BoatContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
 
 export function BoatContactSection({ profile: existing, me, create, update, onSaved }: BoatSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
@@ -124,10 +93,10 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
       profile: existing,
       me,
       schema: boatContactSchema,
-      defaults: INITIAL_BOAT_CONTACT_FORM,
-      fromProfile: boatContactFromProfile,
+      defaults: INITIAL_CONTACT_FORM,
+      fromProfile: contactFromProfile,
       fromMe: defaultFromMe,
-      toPayload: boatContactToPayload,
+      toPayload: contactToPayload,
       create,
       update,
       onSaved,

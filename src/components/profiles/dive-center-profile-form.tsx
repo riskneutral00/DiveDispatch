@@ -13,14 +13,14 @@ import {
   diveCenterLanguagesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFieldsFromProfile,
-  locationToPayload,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
-import {
+  type ContactFormState as DiveCenterContactFormState,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
   languagesFromProfile,
   languagesToPayload,
-} from '@/lib/profile-form/languages'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
 
@@ -30,44 +30,14 @@ import type { Language } from '@/lib/types/language'
 
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 
-export type DiveCenterSectionProps = BaseProfileSectionProps
+type DiveCenterSectionProps = BaseProfileSectionProps
 
 // ---------------------------------------------------------------------------
 // Contact section
 // ---------------------------------------------------------------------------
 
-export type DiveCenterContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_CONTACT_FORM: DiveCenterContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function contactFromProfile(p: Record<string, unknown>): DiveCenterContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function contactToPayload(f: DiveCenterContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
+export type { DiveCenterContactFormState }
+export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
 export function DiveCenterContactSection({ profile: existing, me, create, update, onSaved }: DiveCenterSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =

@@ -7,15 +7,15 @@ import { ProfileLanguagesSection } from '@/components/profiles/profile-languages
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
+  type ContactFormState,
+  INITIAL_CONTACT_FORM as BASE_INITIAL_CONTACT,
+  contactFromProfile as baseContactFromProfile,
+  contactToPayload as baseContactToPayload,
+  defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
-} from '@/lib/profile-form/languages'
-import {
-  contactFieldsFromProfile,
-  locationToPayload,
-  defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import {
   agentContactSchema,
@@ -34,11 +34,7 @@ export type AgentProfileSection = 'contact' | 'languages' | 'associations'
 
 type AssociationData = z.infer<typeof associationSchema>
 
-export type AgentContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
+export type AgentContactFormState = ContactFormState & {
   defaultReferralMode: 'independent' | 'referral'
 }
 
@@ -55,10 +51,7 @@ export type AgentAssociationsFormState = {
 // ---------------------------------------------------------------------------
 
 export const INITIAL_CONTACT_FORM: AgentContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
+  ...BASE_INITIAL_CONTACT,
   defaultReferralMode: 'independent',
 }
 
@@ -75,22 +68,15 @@ export const INITIAL_ASSOCIATIONS_FORM: AgentAssociationsFormState = {
 // ---------------------------------------------------------------------------
 
 export function contactFromProfile(p: Record<string, unknown>): AgentContactFormState {
-  const c = contactFieldsFromProfile(p)
   return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
+    ...baseContactFromProfile(p),
     defaultReferralMode: (p.defaultReferralMode as 'independent' | 'referral') ?? 'independent',
   }
 }
 
 export function contactToPayload(f: AgentContactFormState): Record<string, unknown> {
   return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
+    ...baseContactToPayload(f),
     defaultReferralMode: f.defaultReferralMode,
   }
 }
@@ -128,7 +114,7 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
 // Section prop types
 // ---------------------------------------------------------------------------
 
-export type AgentContactSectionProps = BaseProfileSectionProps
+type AgentContactSectionProps = BaseProfileSectionProps
 
 export type AgentLanguagesSectionProps = {
   profile: Record<string, unknown> | null | undefined
@@ -361,14 +347,7 @@ export function AgentAssociationsSection({ profile, create, update }: AgentAssoc
   )
 }
 
-// ---------------------------------------------------------------------------
-// Compat alias — dispatches to the correct section component.
-// The app-layer ConnectedAgentForm short-circuits before this is reached
-// at runtime; this export exists so that the lib-layer registry in
-// connected-role-forms.tsx continues to type-check without modification.
-// ---------------------------------------------------------------------------
-
-export type AgentProfileFormProps = {
+type AgentProfileFormProps = {
   section?: AgentProfileSection
   profile: Record<string, unknown> | null | undefined
   me: Record<string, unknown> | null | undefined

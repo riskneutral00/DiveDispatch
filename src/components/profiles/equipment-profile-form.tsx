@@ -18,11 +18,12 @@ import {
   equipmentGearCatalogSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  contactFieldsFromProfile,
-  locationToPayload,
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
   defaultFromMe,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 
@@ -30,42 +31,10 @@ import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gea
 
 export type EquipmentProfileSection = 'contact' | 'gear-catalog'
 
-export type EquipmentSectionProps = BaseProfileSectionProps
+type EquipmentSectionProps = BaseProfileSectionProps
 
 // ── Contact section ──────────────────────────────────────────────────
 
-export type EquipmentContactFormState = {
-  name: string
-  location: LocationValue | null
-  email: string
-  phone: string
-}
-
-export const INITIAL_EQUIPMENT_CONTACT_FORM: EquipmentContactFormState = {
-  name: '',
-  location: null,
-  email: '',
-  phone: '',
-}
-
-export function equipmentContactFromProfile(p: Record<string, unknown>): EquipmentContactFormState {
-  const c = contactFieldsFromProfile(p)
-  return {
-    name: c.name,
-    location: c.location as LocationValue,
-    email: c.email,
-    phone: c.phone,
-  }
-}
-
-export function equipmentContactToPayload(f: EquipmentContactFormState): Record<string, unknown> {
-  return {
-    name: f.name,
-    ...locationToPayload(f.location!),
-    email: f.email,
-    phone: f.phone,
-  }
-}
 
 export function EquipmentContactSection({ profile: existing, me, create, update, onSaved }: EquipmentSectionProps) {
   const t = useTranslations('common')
@@ -75,10 +44,10 @@ export function EquipmentContactSection({ profile: existing, me, create, update,
       profile: existing,
       me,
       schema: equipmentContactSchema,
-      defaults: INITIAL_EQUIPMENT_CONTACT_FORM,
-      fromProfile: equipmentContactFromProfile,
+      defaults: INITIAL_CONTACT_FORM,
+      fromProfile: contactFromProfile,
       fromMe: defaultFromMe,
-      toPayload: equipmentContactToPayload,
+      toPayload: contactToPayload,
       create,
       update,
       onSaved,

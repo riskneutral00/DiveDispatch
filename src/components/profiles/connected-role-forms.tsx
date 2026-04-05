@@ -8,15 +8,11 @@ import { AgentProfileForm, type AgentProfileSection } from '@/components/profile
 import { DiveCenterProfileForm, type DiveCenterProfileSection } from '@/components/profiles/dive-center-profile-form'
 import { InstructorProfileForm, type InstructorProfileSection } from '@/components/profiles/instructor-profile-form'
 import { DiveMasterProfileForm, type DiveMasterProfileSection } from '@/components/profiles/divemaster-profile-form'
-import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
-import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
-import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
-import { PoolProfileForm } from '@/components/profiles/pool-profile-form'
-import {
-  DiveSiteDetailsSection,
-  DiveSiteCapabilitiesSection,
-  type DiveSiteProfileSection,
-} from '@/components/profiles/dive-site-profile-form'
+import { BoatProfileForm, type BoatProfileSection } from '@/components/profiles/boat-profile-form'
+import { CompressorProfileForm, type CompressorProfileSection } from '@/components/profiles/compressor-profile-form'
+import { EquipmentProfileForm, type EquipmentProfileSection } from '@/components/profiles/equipment-profile-form'
+import { PoolProfileForm, type PoolProfileSection } from '@/components/profiles/pool-profile-form'
+import { DiveSiteProfileForm, type DiveSiteProfileSection } from '@/components/profiles/dive-site-profile-form'
 
 import type { RoleKey } from '@/lib/constants/roles'
 
@@ -100,6 +96,7 @@ function ConnectedBoatForm({ section }: { section?: string }) {
   const update = useMutation(api.boats.update)
   return (
     <BoatProfileForm
+      section={section as BoatProfileSection}
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -115,6 +112,7 @@ function ConnectedCompressorForm({ section }: { section?: string }) {
   const update = useMutation(api.compressors.update)
   return (
     <CompressorProfileForm
+      section={section as CompressorProfileSection}
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -130,6 +128,7 @@ function ConnectedEquipmentForm({ section }: { section?: string }) {
   const update = useMutation(api.equipment.update)
   return (
     <EquipmentProfileForm
+      section={section as EquipmentProfileSection}
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -145,6 +144,7 @@ function ConnectedPoolForm({ section }: { section?: string }) {
   const update = useMutation(api.venues.update)
   return (
     <PoolProfileForm
+      section={section as PoolProfileSection}
       profile={profile}
       me={me}
       create={asLooseMut(create)}
@@ -158,19 +158,20 @@ function ConnectedDiveSiteForm({ section }: { section?: string }) {
   const me = useQuery(api.users.me)
   const create = useMutation(api.venues.create)
   const update = useMutation(api.venues.update)
-  const sectionKey = (section ?? 'details') as DiveSiteProfileSection
-  const props = {
-    profile,
-    me,
-    create: asLooseMut(create),
-    update: asLooseMut(update),
-  }
-  if (sectionKey === 'capabilities') return <DiveSiteCapabilitiesSection {...props} />
-  return <DiveSiteDetailsSection {...props} />
+  return (
+    <DiveSiteProfileForm
+      section={section as DiveSiteProfileSection}
+      profile={profile}
+      me={me}
+      create={asLooseMut(create)}
+      update={asLooseMut(update)}
+    />
+  )
 }
 
 type RoleProfileRegistryEntry = {
   renderFull: (section: string | undefined) => ReactNode
+  embedInWorkspace?: boolean
 }
 
 const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = {
@@ -188,15 +189,19 @@ const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> 
   },
   boat: {
     renderFull: (section) => <ConnectedBoatForm section={section} />,
+    embedInWorkspace: true,
   },
   compressor: {
     renderFull: (section) => <ConnectedCompressorForm section={section} />,
+    embedInWorkspace: true,
   },
   equipment: {
     renderFull: (section) => <ConnectedEquipmentForm section={section} />,
+    embedInWorkspace: true,
   },
   pool: {
     renderFull: (section) => <ConnectedPoolForm section={section} />,
+    embedInWorkspace: true,
   },
   'dive-site': {
     renderFull: (section) => <ConnectedDiveSiteForm section={section} />,
@@ -217,4 +222,10 @@ export function RoleProfileForm({
 }) {
   const entry = ROLE_PROFILE_REGISTRY[roleSlug]
   return entry ? <>{entry.renderFull(section)}</> : null
+}
+
+export function WorkspaceEmbeddedProfileForm({ roleSlug }: { roleSlug: RoleKey }) {
+  const entry = ROLE_PROFILE_REGISTRY[roleSlug]
+  if (!entry?.embedInWorkspace) return null
+  return <>{entry.renderFull(undefined)}</>
 }

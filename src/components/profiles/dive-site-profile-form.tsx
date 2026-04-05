@@ -17,8 +17,8 @@ import {
   contactFieldsFromProfile,
   locationToPayload,
   nullableProfileLocation,
-} from '@/lib/profile-form/location'
-import type { BaseProfileSectionProps } from '@/lib/profile-form/types'
+  type BaseProfileSectionProps,
+} from '@/lib/profile-form'
 import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
@@ -37,7 +37,7 @@ const VENUE_TYPE_OPTIONS: SelectOption[] = [
 
 export type DiveSiteProfileSection = 'details' | 'capabilities'
 
-export type DiveSiteSectionProps = BaseProfileSectionProps
+type DiveSiteSectionProps = BaseProfileSectionProps
 
 // ── Details section ───────────────────────────────────────────────────
 
