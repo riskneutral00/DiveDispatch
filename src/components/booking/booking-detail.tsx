@@ -6,7 +6,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Card, Button, Badge, Dialog } from '@/components/ui'
+import { Card, Button, Badge } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -17,7 +17,7 @@ import {
 } from './booking-detail-shared'
 import { SendPortalLink } from './send-portal-link'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { CANCEL_BOOKING_ERROR_MESSAGE } from '@/lib/constants/error-messages'
+import { CancelBookingDialog } from './cancel-booking-dialog'
 import { ReservationStatusList } from './reservation-status-list'
 import { SessionTimeline } from './session-timeline'
 import { PortalProgressCard } from './portal-progress-card'
@@ -57,8 +57,6 @@ function LoadingSkeleton() {
 export function BookingDetail({ bookingId }: BookingDetailProps) {
   const router = useRouter()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const booking = useQuery(api.bookings.getBookingDetail, {
     bookingId: bookingId as Id<'bookings'>,
@@ -71,7 +69,6 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
   const userRoles = useQuery(api.userRoles.myRoles)
 
-  const cancelBooking = useMutation(api.bookings.status.cancelBooking)
   const clearMedicalBlock = useMutation(api.bookings.status.clearMedicalBlock)
 
   const ttlLabel = useTTLCountdown(
@@ -105,20 +102,6 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
   const canCancel = booking.status !== 'Cancelled'
   const isOperator = (userRoles ?? []).some((r) => OPERATOR_CLERK_ROLES.has(r.role))
   const canClearMedical = booking.medicalHardBlock && isOperator
-
-  async function handleCancel() {
-    setCancelError(null)
-    setCancelling(true)
-    try {
-      await cancelBooking({ bookingId: bookingId as Id<'bookings'> })
-      setShowCancelDialog(false)
-      router.push('/dashboard')
-    } catch {
-      setCancelError(CANCEL_BOOKING_ERROR_MESSAGE)
-    } finally {
-      setCancelling(false)
-    }
-  }
 
   return (
     <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
@@ -269,40 +252,12 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       </Card>
 
       {/* Cancel dialog */}
-      <Dialog
+      <CancelBookingDialog
         open={showCancelDialog}
         onClose={() => setShowCancelDialog(false)}
-        title="Cancel booking?"
-        description="This will vacate all resource reservations and cannot be undone."
-        size="sm"
-      >
-        <div className="p-4 sm:p-6 space-y-4">
-          {cancelError && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-              {cancelError}
-            </p>
-          )}
-          <div className="flex gap-3">
-            <Button
-              variant="destructive"
-              size="md"
-              fullWidth
-              loading={cancelling}
-              onClick={handleCancel}
-            >
-              Yes, cancel booking
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              fullWidth
-              onClick={() => setShowCancelDialog(false)}
-            >
-              Keep booking
-            </Button>
-          </div>
-        </div>
-      </Dialog>
+        bookingId={bookingId as Id<'bookings'>}
+        onSuccess={() => router.push('/dashboard')}
+      />
     </div>
   )
 }

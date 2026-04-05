@@ -12,7 +12,7 @@ import {
 // ── Location ──────────────────────────────────────────────────────────────────
 // Re-exported from the canonical definition in schemas/location.ts.
 
-export { locationSchema, type LocationValue as LocationData } from '@/lib/schemas/location'
+export { locationSchema } from '@/lib/schemas/location'
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 
