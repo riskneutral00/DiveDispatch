@@ -1,8 +1,7 @@
 /**
  * preferences-editor — buildResourceSubTabs unit tests
  *
- * Verifies the resource sub-tab configuration after DD-455:
- * - Readiness tab is removed
+ * Verifies the resource sub-tab configuration:
  * - Default first tab is Instructors
  * - Agent role gets an additional Operator tab
  * - Non-Agent roles do not get the Operator tab
@@ -18,7 +17,7 @@ describe('buildResourceSubTabs', () => {
     expect(ids).not.toContain('readiness')
   })
 
-  it('defaults first sub-tab to instructors (not readiness)', () => {
+  it('defaults first sub-tab to instructors', () => {
     const tabs = buildResourceSubTabs('DiveCenter')
     expect(tabs[0].id).toBe('instructors')
   })

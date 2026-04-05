@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../../../../convex/shared/aowSpecialties'
 
 describe('AOW specialties', () => {
-  it('has 13 total specialties', () => {
-    expect(AOW_SPECIALTIES).toHaveLength(13)
+  it('has 14 total specialties', () => {
+    expect(AOW_SPECIALTIES).toHaveLength(14)
   })
 
   it('main + overflow = total', () => {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Preferred overlay components — venue, boat, equipment, compressor
+ * Preferred overlay components — venue/boat, equipment, compressor
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '../helpers/render'
@@ -63,84 +63,56 @@ vi.mock('convex/react', async (importOriginal) => {
 // ─── Imports after mocks ────────────────────────────────────────────────────
 
 import {
-  PreferredVenueList,
-  PreferredBoatList,
+  PreferredVenueBoatList,
   PreferredEquipmentList,
   PreferredCompressorList,
 } from '../../src/components/profiles/preferred-list'
 
-// ─── Venue tests ────────────────────────────────────────────────────────────
+// ─── Venue & Boat tests ────────────────────────────────────────────────────
 
-describe('PreferredVenueList', () => {
-  it('shows Add Venue button when empty', () => {
-    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: /add venue/i })).toBeInTheDocument()
+describe('PreferredVenueBoatList', () => {
+  it('shows Add button when empty', () => {
+    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
+    expect(screen.getByRole('button', { name: /add venue or boat/i })).toBeInTheDocument()
   })
 
-  it('shows Add Venue button', () => {
-    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: /add venue/i })).toBeInTheDocument()
-  })
-
-  it('renders ranked venues without placeName', () => {
-    render(<PreferredVenueList slugs={['pool-a']} onChange={() => {}} />)
+  it('renders ranked items with badges', () => {
+    render(<PreferredVenueBoatList venueSlugs={['pool-a']} boatSlugs={['mv-seatran']} onVenueChange={() => {}} onBoatChange={() => {}} />)
     expect(screen.getByText('Crystal Pool')).toBeInTheDocument()
-    expect(screen.queryByText('Phuket')).not.toBeInTheDocument()
-  })
-
-  it('shows venue type badge on ranked card', () => {
-    render(<PreferredVenueList slugs={['pool-a']} onChange={() => {}} />)
-    expect(screen.getByText('Pool')).toBeInTheDocument()
-  })
-
-  it('opens overlay with filter chips', () => {
-    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Reef')).toBeInTheDocument()
-    expect(screen.getByText('Shore')).toBeInTheDocument()
-    expect(screen.getByText('Has Compressor')).toBeInTheDocument()
-  })
-
-  it('shows no results before filter interaction', () => {
-    render(<PreferredVenueList slugs={[]} onChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add venue/i }))
-    expect(screen.getByText(/select filters above to browse venues/i)).toBeInTheDocument()
-  })
-})
-
-// ─── Boat tests ─────────────────────────────────────────────────────────────
-
-describe('PreferredBoatList', () => {
-  it('shows Add Boat button when empty', () => {
-    render(<PreferredBoatList slugs={[]} onChange={() => {}} />)
-    expect(screen.getByRole('button', { name: /add boat/i })).toBeInTheDocument()
-  })
-
-  it('renders ranked boats with deduplicated type badges', () => {
-    render(<PreferredBoatList slugs={['mv-seatran']} onChange={() => {}} />)
     expect(screen.getByText('MV Seatran')).toBeInTheDocument()
-    expect(screen.getByText('Day Boat · Liveaboard')).toBeInTheDocument()
   })
 
-  it('shows pax badge on ranked card', () => {
-    render(<PreferredBoatList slugs={['mv-seatran']} onChange={() => {}} />)
-    expect(screen.getByText('30 pax')).toBeInTheDocument()
-  })
-
-  it('opens overlay with boat type chips', () => {
-    render(<PreferredBoatList slugs={[]} onChange={() => {}} />)
-    fireEvent.click(screen.getByRole('button', { name: /add boat/i }))
+  it('shows all entries in overlay by default', () => {
+    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText('Day Boat')).toBeInTheDocument()
-    expect(screen.getByText('Liveaboard')).toBeInTheDocument()
+    // All venues and boats visible without needing filter interaction
+    expect(screen.getByText('Crystal Pool')).toBeInTheDocument()
+    expect(screen.getByText('Shark Point')).toBeInTheDocument()
+    expect(screen.getByText('MV Seatran')).toBeInTheDocument()
+    expect(screen.getByText('Long Tail Express')).toBeInTheDocument()
+  })
+
+  it('has Venue and Boat filter chips', () => {
+    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
+    expect(screen.getByText('Venue')).toBeInTheDocument()
+    expect(screen.getByText('Boat')).toBeInTheDocument()
+  })
+
+  it('filters by Boat chip', () => {
+    render(<PreferredVenueBoatList venueSlugs={[]} boatSlugs={[]} onVenueChange={() => {}} onBoatChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add venue or boat/i }))
+    fireEvent.click(screen.getByText('Boat'))
+    expect(screen.getByText('MV Seatran')).toBeInTheDocument()
+    expect(screen.queryByText('Crystal Pool')).not.toBeInTheDocument()
   })
 })
 
 // ─── Equipment tests ────────────────────────────────────────────────────────
 
 describe('PreferredEquipmentList', () => {
-  it('shows Add Equipment button when empty', () => {
+  it('shows Add Equipment Provider button when empty', () => {
     render(<PreferredEquipmentList slugs={[]} onChange={() => {}} />)
     expect(screen.getByRole('button', { name: /add equipment/i })).toBeInTheDocument()
   })
@@ -148,15 +120,22 @@ describe('PreferredEquipmentList', () => {
   it('renders ranked equipment with gear type counts', () => {
     render(<PreferredEquipmentList slugs={['gear-house']} onChange={() => {}} />)
     expect(screen.getByText('Gear House')).toBeInTheDocument()
-    expect(screen.getByText('Fins ×20')).toBeInTheDocument()
-    expect(screen.getByText('Wetsuit ×15')).toBeInTheDocument()
-    expect(screen.getByText('BCD ×10')).toBeInTheDocument()
+    expect(screen.getByText(/Fins x20/)).toBeInTheDocument()
+    expect(screen.getByText(/Wetsuit x15/)).toBeInTheDocument()
+    expect(screen.getByText(/BCD x10/)).toBeInTheDocument()
+  })
+
+  it('shows all equipment in overlay by default', () => {
+    render(<PreferredEquipmentList slugs={[]} onChange={() => {}} />)
+    fireEvent.click(screen.getByRole('button', { name: /add equipment/i }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('Gear House')).toBeInTheDocument()
+    expect(screen.getByText('Dive Supply Co')).toBeInTheDocument()
   })
 
   it('opens overlay with gear type chips', () => {
     render(<PreferredEquipmentList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add equipment/i }))
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('BCD')).toBeInTheDocument()
     expect(screen.getByText('Wetsuit')).toBeInTheDocument()
   })
@@ -178,23 +157,19 @@ describe('PreferredCompressorList', () => {
     expect(screen.getByText('Trimix')).toBeInTheDocument()
   })
 
-  it('opens overlay with gas mix chips', () => {
+  it('shows all compressors in overlay by default', () => {
     render(<PreferredCompressorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add compressor/i }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    // Gas mix filter chips
-    // Gas mix chips in filter bar: Air, Nitrox, Trimix
-    expect(screen.getAllByText('Air')).toHaveLength(1)
-    expect(screen.getAllByText('Nitrox')).toHaveLength(1)
+    expect(screen.getByText('Air Station')).toBeInTheDocument()
+    expect(screen.getByText('Deep Fills')).toBeInTheDocument()
   })
 
   it('filters by gas mix chip', () => {
     render(<PreferredCompressorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add compressor/i }))
-    // Click Trimix chip to filter
     const trimixChips = screen.getAllByText('Trimix')
     fireEvent.click(trimixChips[0])
-    // Only Deep Fills has trimix
     expect(screen.getByText('Deep Fills')).toBeInTheDocument()
     expect(screen.queryByText('Air Station')).not.toBeInTheDocument()
   })

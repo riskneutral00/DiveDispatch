@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronUp, ChevronDown, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { api } from '@/lib/convex-generated'
@@ -13,16 +13,13 @@ import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
 import { BOAT_TYPES, BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
 import { GAS_MIXES, GAS_MIX_LABELS } from '@/lib/constants/gas-mixes'
+import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
-import { FlagPill } from '@/components/profiles/language-picker'
-import {
-  ALL_LANGUAGES,
-  CHINESE_SCRIPT_LABELS,
-  type LanguageCode,
-  resolveLanguages,
-} from '@/lib/constants/dive-languages'
+import { LanguagePicker, type Language } from '@/components/profiles/language-picker'
+import { InstructorCardContent } from '@/components/profiles/instructor-card'
+import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
 
 const MAX_PREFERRED_INSTRUCTORS = 10
 const MAX_PREFERRED_VENUES = 10
@@ -31,11 +28,16 @@ const MAX_PREFERRED_EQUIPMENT = 10
 const MAX_PREFERRED_COMPRESSORS = 10
 const chipBase = 'px-2 py-1 text-xs rounded-full border transition-colors cursor-pointer'
 
+const BASE_COURSES = new Set(['OW', 'AOW'])
+const OVERLAY_LIST_HEIGHT = 380 // px — fixed so filters don't resize overlay
+const PAGE_SIZE = 10
+
 // ─── Badge helper ────────────────────────────────────────────────────────────
 
 const badgeStyle = {
   background: 'var(--color-glass-bg-elevated)',
 } as const
+
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
@@ -232,12 +234,13 @@ interface FilterBarProps {
   activeAgency: string | null
   onAgencyChange: (agency: string | null) => void
   specialties: string[]
-  activeSpecialty: string | null
-  onSpecialtyChange: (specialty: string | null) => void
-  languageCodes: string[]
-  activeLangs: Set<string>
-  onLangToggle: (code: string) => void
+  activeSpecialties: Set<string>
+  onSpecialtyToggle: (specialty: string) => void
+  activeLangs: Language[]
+  onLangsChange: (langs: Language[]) => void
+  customerLanguageCodes: string[]
   currentCount: number
+  required?: boolean
 }
 
 
@@ -246,12 +249,13 @@ function InstructorFilterBar({
   activeAgency,
   onAgencyChange,
   specialties,
-  activeSpecialty,
-  onSpecialtyChange,
-  languageCodes,
+  activeSpecialties,
+  onSpecialtyToggle,
   activeLangs,
-  onLangToggle,
+  onLangsChange,
+  customerLanguageCodes,
   currentCount,
+  required,
 }: FilterBarProps) {
   return (
     <div className="space-y-2">
@@ -278,20 +282,21 @@ function InstructorFilterBar({
         })}
         <span className="ml-auto text-xs text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
+          {required && <span className="ml-0.5" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
         </span>
       </div>
 
-      {/* Specialty chips (visible only when agency selected) */}
+      {/* Specialties chips (visible only when agency selected) */}
       {activeAgency && specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-secondary mr-1">Specialty</span>
+          <span className="text-xs text-secondary mr-1">Specialties</span>
           {specialties.map((spec) => {
-            const isActive = activeSpecialty === spec
+            const isActive = activeSpecialties.has(spec)
             return (
               <button
                 key={spec}
                 type="button"
-                onClick={() => onSpecialtyChange(isActive ? null : spec)}
+                onClick={() => onSpecialtyToggle(spec)}
                 className={chipBase}
                 style={{
                   background: isActive ? 'var(--color-primary-muted)' : 'transparent',
@@ -306,89 +311,59 @@ function InstructorFilterBar({
         </div>
       )}
 
-      {/* Language chips */}
-      {languageCodes.length > 0 && (
-        <div className="flex flex-wrap gap-1 items-center">
-          <span className="text-xs text-secondary mr-1">Language</span>
-          {languageCodes.map((code) => {
-            const lang = ALL_LANGUAGES.find((l) => l.code === code)
-            if (!lang) return null
-            return (
-              <FlagPill
-                key={code}
-                lang={{ code: lang.code, label: lang.label }}
-                active={activeLangs.has(code)}
-                onToggle={() => onLangToggle(code)}
-              />
-            )
-          })}
-        </div>
-      )}
+      {/* Languages picker */}
+      <div className="space-y-1">
+        <span className="text-xs text-secondary">Languages</span>
+        <LanguagePicker
+          value={activeLangs}
+          onChange={onLangsChange}
+          max={4}
+          popularCodes={customerLanguageCodes}
+        />
+      </div>
     </div>
   )
 }
 
-// ─── Rich badge for instructor cards (browse results in overlay) ─────────────
+// ─── Candidate row (overlay) ──────────────────────────────────────────────────
 
-function InstructorBadge({
+function InstructorCandidateRow({
   entry,
-  activeAgency,
+  slug,
+  onAdd,
+  disabled,
+  isLast,
 }: {
-  entry: DirectoryEntry
-  activeAgency: string | null
+  entry: DirectoryEntry | undefined
+  slug: string
+  onAdd: () => void
+  disabled: boolean
+  isLast: boolean
 }) {
   return (
-    <div className="space-y-1">
-      {/* Agency + specialty row */}
-      <span className="flex flex-wrap gap-1 items-center">
-        {entry.agencies?.map((a) => (
-          <span
-            key={a}
-            className="text-xs px-1.5 py-0.5 rounded shrink-0"
-            style={{
-              background: 'var(--color-glass-bg-elevated)',
-              color: 'var(--color-text-secondary)',
-            }}
+    <div className="py-2.5 px-3">
+      <InstructorCardContent
+        entry={entry}
+        slug={slug}
+        action={
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            onClick={onAdd}
+            disabled={disabled}
+            aria-label="Add instructor"
+            className="shrink-0"
           >
-            {a}
-          </span>
-        ))}
-        {activeAgency && entry.credentials
-          ?.filter((c) => c.agency === activeAgency)
-          .flatMap((c) => c.courses)
-          .map((course) => (
-            <span
-              key={course}
-              className="text-xs px-1.5 py-0.5 rounded shrink-0"
-              style={{
-                background: 'var(--color-glass-bg)',
-                borderColor: 'var(--color-glass-border)',
-                color: 'var(--color-text-secondary)',
-                border: '1px solid',
-              }}
-            >
-              {course}
-            </span>
-          ))}
-      </span>
-      {/* Language flags — standalone row */}
-      {(entry.languages?.length ?? 0) > 0 && (
-        <span className="flex flex-wrap gap-1 items-center">
-          {entry.languages?.map((langCode) => {
-            const scriptLabel = CHINESE_SCRIPT_LABELS[langCode as LanguageCode]
-            const lang = ALL_LANGUAGES.find((l) => l.code === langCode)
-            if (!lang) return null
-            return (
-              <FlagPill
-                key={langCode}
-                lang={{ code: lang.code, label: scriptLabel ?? lang.label }}
-                active={false}
-                onToggle={() => {}}
-                disabled
-              />
-            )
-          })}
-        </span>
+            <Plus size={16} />
+          </Button>
+        }
+      />
+      {!isLast && (
+        <div
+          className="mt-2.5"
+          style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+        />
       )}
     </div>
   )
@@ -411,9 +386,6 @@ function SortableInstructorRow({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group: 'instructors' })
 
-  const uniqueCourses = [...new Set(entry?.credentials?.flatMap((c) => c.courses) ?? [])]
-  const resolvedLangs = resolveLanguages(entry?.languages ?? [])
-
   return (
     <div
       ref={ref}
@@ -431,13 +403,11 @@ function SortableInstructorRow({
           <GripVertical size={16} />
         </button>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 space-y-1">
-          {/* Line 1: Name + trash */}
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium truncate text-primary">
-              {entry?.name ?? slug}
-            </p>
+        {/* Shared card content */}
+        <InstructorCardContent
+          entry={entry}
+          slug={slug}
+          action={
             <Button
               variant="destructive-ghost"
               size="sm"
@@ -448,59 +418,8 @@ function SortableInstructorRow({
             >
               <Trash2 size={16} />
             </Button>
-          </div>
-
-          {/* Line 2: Agencies (left) + Languages (right) */}
-          {entry && ((entry.agencies?.length ?? 0) > 0 || resolvedLangs.length > 0) && (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-1 items-center">
-                {entry.agencies?.map((a) => (
-                  <span
-                    key={a}
-                    className="text-xs px-1.5 py-0.5 rounded shrink-0"
-                    style={{
-                      background: 'var(--color-glass-bg-elevated)',
-                      color: 'var(--color-text-secondary)',
-                    }}
-                  >
-                    {a}
-                  </span>
-                ))}
-              </div>
-              {resolvedLangs.length > 0 && (
-                <div className="flex flex-wrap gap-1 items-center shrink-0">
-                  {resolvedLangs.map((lang) => (
-                    <FlagPill
-                      key={lang.code}
-                      lang={lang}
-                      active={false}
-                      onToggle={() => {}}
-                      disabled
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Line 3: Specialties */}
-          {uniqueCourses.length > 0 && (
-            <div className="flex flex-wrap gap-1 items-center">
-              {uniqueCourses.map((course) => (
-                <span
-                  key={course}
-                  className="text-xs px-1.5 py-0.5 rounded shrink-0"
-                  style={{
-                    background: 'var(--color-glass-bg)',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  {course}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+          }
+        />
       </div>
 
       {/* Divider line */}
@@ -532,15 +451,21 @@ export function PreferredInstructorList(props: ListProps) {
   }, [diveCenterProfile])
 
   const operatorDefaultLangs = useMemo(() => {
-    return new Set(diveCenterProfile?.customerLanguages ?? [])
+    return (diveCenterProfile?.customerLanguages ?? [])
+      .map((code) => {
+        const lang = ALL_LANGUAGES.find((l) => l.code === code)
+        return lang ? { code: lang.code, label: lang.label } : null
+      })
+      .filter(Boolean) as Language[]
   }, [diveCenterProfile])
 
   // Filter state — initialized from operator defaults
   const [agency, setAgency] = useState<string | null>(null)
-  const [specialty, setSpecialty] = useState<string | null>(null)
-  const [activeLangs, setActiveLangs] = useState<Set<string>>(new Set())
+  const [activeSpecialties, setActiveSpecialties] = useState<Set<string>>(new Set())
+  const [activeLangs, setActiveLangs] = useState<Language[]>([])
   const [search, setSearch] = useState('')
   const [defaultsApplied, setDefaultsApplied] = useState(false)
+  const [page, setPage] = useState(0)
 
   // Derive filter options from full unfiltered entries
   const allAgencies = useMemo(() => {
@@ -558,62 +483,56 @@ export function PreferredInstructorList(props: ListProps) {
     for (const e of entries) {
       for (const c of e.credentials ?? []) {
         if (c.agency === agency) {
-          for (const course of c.courses) set.add(course)
+          for (const course of c.courses) {
+            if (!BASE_COURSES.has(course)) set.add(course)
+          }
         }
       }
     }
     return Array.from(set).sort()
   }, [entries, agency])
 
-  const allLanguageCodes = useMemo(() => {
-    if (!entries) return []
-    const set = new Set<string>()
-    for (const e of entries) {
-      for (const l of e.languages ?? []) set.add(l)
-    }
-    return Array.from(set).sort()
-  }, [entries])
-
   const handleAgencyChange = (newAgency: string | null) => {
     setAgency(newAgency)
-    setSpecialty(null)
+    setActiveSpecialties(new Set())
+    setPage(0)
   }
 
-  const handleSpecialtyChange = useCallback((s: string | null) => {
+  const handleSpecialtyToggle = useCallback((spec: string) => {
     if (!agency) return
-    setSpecialty(s)
-  }, [agency])
-
-  const handleLangToggle = (code: string) => {
-    setActiveLangs((prev) => {
+    setActiveSpecialties((prev) => {
       const next = new Set(prev)
-      if (next.has(code)) next.delete(code)
-      else next.add(code)
+      if (next.has(spec)) next.delete(spec)
+      else next.add(spec)
       return next
     })
+    setPage(0)
+  }, [agency])
+
+  const handleLangsChange = (langs: Language[]) => {
+    setActiveLangs(langs)
+    setPage(0)
   }
 
-  // Results only when user has interacted with at least one filter
-  const hasActiveFilter =
-    agency !== null ||
-    specialty !== null ||
-    activeLangs.size > 0 ||
-    search.trim().length > 0
-
   const filteredEntries = useMemo(() => {
-    if (!entries || !hasActiveFilter) return []
+    if (!entries) return []
     let result = entries.filter((e) => !slugs.includes(e.slug))
 
     if (agency) {
       result = result.filter((e) => e.agencies?.includes(agency))
     }
-    if (agency && specialty) {
+    // AND logic: instructor must have ALL selected specialties
+    if (agency && activeSpecialties.size > 0) {
       result = result.filter((e) =>
-        e.credentials?.some((c) => c.agency === agency && c.courses.includes(specialty)),
+        e.credentials?.some((c) =>
+          c.agency === agency && [...activeSpecialties].every((s) => c.courses.includes(s))
+        )
       )
     }
-    if (activeLangs.size > 0) {
-      result = result.filter((e) => e.languages?.some((l) => activeLangs.has(l)))
+    // OR logic: instructor must speak at least one selected language
+    if (activeLangs.length > 0) {
+      const codes = new Set(activeLangs.map((l) => l.code))
+      result = result.filter((e) => e.languages?.some((l) => codes.has(l)))
     }
     const trimmed = search.trim().toLowerCase()
     if (trimmed) {
@@ -624,7 +543,7 @@ export function PreferredInstructorList(props: ListProps) {
       )
     }
     return result
-  }, [entries, hasActiveFilter, slugs, agency, specialty, activeLangs, search])
+  }, [entries, slugs, agency, activeSpecialties, activeLangs, search])
 
   if (entries === undefined) {
     return (
@@ -637,6 +556,9 @@ export function PreferredInstructorList(props: ListProps) {
   const atMax = slugs.length >= MAX_PREFERRED_INSTRUCTORS
   const slugToEntry = Object.fromEntries(entries.map((e) => [e.slug, e]))
 
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE))
+  const paginatedEntries = filteredEntries.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
   const remove = (index: number) => {
     onChange(slugs.filter((_, i) => i !== index))
   }
@@ -644,9 +566,12 @@ export function PreferredInstructorList(props: ListProps) {
   const add = (slug: string) => {
     if (!slugs.includes(slug) && !atMax) {
       onChange([...slugs, slug])
+      // If adding empties the current page, step back
+      const remainingOnPage = paginatedEntries.filter((e) => e.slug !== slug).length
+      if (remainingOnPage === 0 && page > 0) setPage((p) => p - 1)
     }
-    setShowOverlay(false)
     setSearch('')
+    // Keep overlay open — user may add more
   }
 
   const openOverlay = () => {
@@ -655,6 +580,7 @@ export function PreferredInstructorList(props: ListProps) {
       setActiveLangs(operatorDefaultLangs)
       setDefaultsApplied(true)
     }
+    setPage(0)
     setShowOverlay(true)
   }
 
@@ -730,54 +656,78 @@ export function PreferredInstructorList(props: ListProps) {
             activeAgency={agency}
             onAgencyChange={handleAgencyChange}
             specialties={specialtiesForAgency}
-            activeSpecialty={specialty}
-            onSpecialtyChange={handleSpecialtyChange}
-            languageCodes={allLanguageCodes}
+            activeSpecialties={activeSpecialties}
+            onSpecialtyToggle={handleSpecialtyToggle}
             activeLangs={activeLangs}
-            onLangToggle={handleLangToggle}
+            onLangsChange={handleLangsChange}
+            customerLanguageCodes={diveCenterProfile?.customerLanguages ?? []}
             currentCount={slugs.length}
+            required={props.required}
           />
 
           <Input
             label="Search instructors"
             placeholder="Search by name or city..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(0) }}
           />
 
-          {hasActiveFilter ? (
-            filteredEntries.length > 0 ? (
-              <div
-                className="rounded-[var(--border-radius)] border overflow-hidden"
-                style={{
-                  background: 'var(--color-glass-bg)',
-                  backdropFilter: 'blur(var(--glass-blur))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-                  borderColor: 'var(--color-glass-border)',
-                }}
-              >
-                {filteredEntries.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
-                  <button
+          <div
+            className="rounded-[var(--border-radius)] border overflow-hidden flex flex-col"
+            style={{
+              minHeight: OVERLAY_LIST_HEIGHT,
+              maxHeight: OVERLAY_LIST_HEIGHT,
+              background: 'var(--color-glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur))',
+              borderColor: 'var(--color-glass-border)',
+            }}
+          >
+            <div className="flex-1 overflow-y-auto">
+              {filteredEntries.length > 0 ? (
+                paginatedEntries.map((entry, i) => (
+                  <InstructorCandidateRow
                     key={entry.slug}
-                    type="button"
-                    onClick={() => add(entry.slug)}
+                    entry={entry}
+                    slug={entry.slug}
+                    onAdd={() => add(entry.slug)}
                     disabled={atMax}
-                    className="w-full text-left px-3 py-2.5 text-sm transition-colors hover:opacity-80 text-primary disabled:opacity-40 disabled:cursor-not-allowed border-b last:border-b-0"
-                    style={{ borderColor: 'var(--color-glass-border)' }}
-                  >
-                    <span className="font-medium">{entry.name}</span>
-                    <div className="mt-0.5">
-                      <InstructorBadge entry={entry} activeAgency={agency} />
-                    </div>
-                  </button>
-                ))}
+                    isLast={i === paginatedEntries.length - 1}
+                  />
+                ))
+              ) : (
+                <p className="text-sm text-secondary py-6 px-3">No instructors match these filters.</p>
+              )}
+            </div>
+            {totalPages > 1 && (
+              <div
+                className="flex items-center justify-between px-3 py-2 shrink-0 border-t"
+                style={{ borderColor: 'var(--color-glass-border)' }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 0}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={14} />
+                </Button>
+                <span className="text-xs text-secondary">{page + 1} / {totalPages}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page >= totalPages - 1}
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={14} />
+                </Button>
               </div>
-            ) : (
-              <p className="text-sm text-secondary py-2">No instructors match these filters.</p>
-            )
-          ) : (
-            <p className="text-sm text-secondary py-2">Select filters above to browse instructors.</p>
-          )}
+            )}
+          </div>
         </div>
       </Dialog>
     </div>
@@ -803,38 +753,90 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   )
 }
 
+// ─── Shared overlay pattern (DnD, pagination, multi-add, show-all) ──────────
+
 interface OverlayListProps {
   slugs: string[]
   onChange: (slugs: string[]) => void
   entries: DirectoryEntry[] | undefined
-  emptyText: string
   addButtonLabel: string
   dialogTitle: string
   maxItems: number
   required?: boolean
-  renderRankedBadge: (entry: DirectoryEntry) => React.ReactNode
-  renderBrowseBadge: (entry: DirectoryEntry) => React.ReactNode
+  renderBadge: (entry: DirectoryEntry) => React.ReactNode
   filterBar: React.ReactNode
-  hasActiveFilter: boolean
   filteredEntries: DirectoryEntry[]
   search: string
   onSearchChange: (v: string) => void
   onResetFilters?: () => void
   noResultsText: string
-  promptText: string
+  dndGroup: string
+}
+
+function SortableOverlayRow({
+  slug,
+  index,
+  entry,
+  onRemove,
+  isLast,
+  renderBadge,
+  group,
+}: {
+  slug: string
+  index: number
+  entry: DirectoryEntry | undefined
+  onRemove: () => void
+  isLast: boolean
+  renderBadge: (entry: DirectoryEntry) => React.ReactNode
+  group: string
+}) {
+  const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group })
+  return (
+    <div ref={ref} className="py-2" style={{ opacity: isDragging ? 0.5 : 1 }}>
+      <div className="flex items-center gap-3">
+        <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors" aria-label="Drag to reorder">
+          <GripVertical size={16} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate text-primary">{entry?.name ?? slug}</p>
+          {entry && <div className="mt-0.5">{renderBadge(entry)}</div>}
+        </div>
+        <Button variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label="Remove" className="shrink-0">
+          <Trash2 size={16} />
+        </Button>
+      </div>
+      {!isLast && <div className="mt-2" style={{ borderBottom: '1px solid var(--color-glass-border)' }} />}
+    </div>
+  )
 }
 
 function PreferredOverlayList({
-  slugs, onChange, entries, emptyText, addButtonLabel, dialogTitle, maxItems, required,
-  renderRankedBadge, renderBrowseBadge, filterBar,
-  hasActiveFilter, filteredEntries, search, onSearchChange, onResetFilters,
-  noResultsText, promptText,
+  slugs, onChange, entries, addButtonLabel, dialogTitle, maxItems, required,
+  renderBadge, filterBar,
+  filteredEntries, search, onSearchChange, onResetFilters,
+  noResultsText, dndGroup,
 }: OverlayListProps) {
   const [showOverlay, setShowOverlay] = useState(false)
+  const [page, setPage] = useState(0)
+  const prevSearchRef = useRef(search)
+
+  if (search !== prevSearchRef.current) {
+    prevSearchRef.current = search
+    setPage(0)
+  }
+
   const slugToEntry = useMemo(
     () => entries ? Object.fromEntries(entries.map((e) => [e.slug, e])) : {},
     [entries],
   )
+
+  const prevFilterLenRef = useRef(filteredEntries.length)
+  useEffect(() => {
+    if (filteredEntries.length !== prevFilterLenRef.current) {
+      prevFilterLenRef.current = filteredEntries.length
+      setPage(0)
+    }
+  }, [filteredEntries.length])
 
   if (entries === undefined) {
     return (
@@ -845,36 +847,22 @@ function PreferredOverlayList({
   }
 
   const atMax = slugs.length >= maxItems
-
-  const moveUp = (index: number) => {
-    if (index === 0) return
-    const next = [...slugs]
-    ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
-    onChange(next)
-  }
-  const moveDown = (index: number) => {
-    if (index === slugs.length - 1) return
-    const next = [...slugs]
-    ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
-    onChange(next)
-  }
   const remove = (index: number) => onChange(slugs.filter((_, i) => i !== index))
   const add = (slug: string) => {
     if (!slugs.includes(slug) && !atMax) onChange([...slugs, slug])
-    setShowOverlay(false)
-    onSearchChange('')
   }
+
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE))
+  const safePage = Math.min(page, Math.max(0, totalPages - 1))
+  const paginatedEntries = filteredEntries.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
 
   return (
     <div className="space-y-3">
-      {/* Add button + count — always at top, disabled at max */}
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1">
-          <Button type="button" variant="ghost" size="sm" onClick={() => setShowOverlay(true)} disabled={atMax}>
-            <Plus size={14} className="mr-1" />
-            {addButtonLabel}
-          </Button>
-        </span>
+        <Button type="button" variant="ghost" size="sm" onClick={() => { setPage(0); setShowOverlay(true) }} disabled={atMax}>
+          <Plus size={14} className="mr-1" />
+          {addButtonLabel}
+        </Button>
         <span className="text-xs text-secondary">
           {slugs.length}/{maxItems}
           {required && <span className="ml-1" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
@@ -882,37 +870,36 @@ function PreferredOverlayList({
       </div>
 
       {slugs.length > 0 && (
-        <div className="space-y-2">
-          {slugs.map((slug, index) => {
-            const entry = slugToEntry[slug]
-            return (
-              <Card key={slug} padding="sm">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-bold w-5 text-center shrink-0 text-secondary">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate text-primary">
-                      {entry?.name ?? slug}
-                    </p>
-                    {entry && <div className="mt-0.5">{renderRankedBadge(entry)}</div>}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
-                      <ChevronUp size={16} />
-                    </Button>
-                    <Button variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
-                      <ChevronDown size={16} />
-                    </Button>
-                    <Button variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label="Remove">
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
+        <DragDropProvider
+          onDragEnd={(event) => {
+            const { source, target } = event.operation
+            if (source && target && source.id !== target.id) {
+              const oldIndex = slugs.indexOf(source.id as string)
+              const newIndex = slugs.indexOf(target.id as string)
+              if (oldIndex !== -1 && newIndex !== -1) {
+                const next = [...slugs]
+                const [moved] = next.splice(oldIndex, 1)
+                next.splice(newIndex, 0, moved)
+                onChange(next)
+              }
+            }
+          }}
+        >
+          <div>
+            {slugs.map((slug, index) => (
+              <SortableOverlayRow
+                key={slug}
+                slug={slug}
+                index={index}
+                entry={slugToEntry[slug]}
+                onRemove={() => remove(index)}
+                isLast={index === slugs.length - 1}
+                renderBadge={renderBadge}
+                group={dndGroup}
+              />
+            ))}
+          </div>
+        </DragDropProvider>
       )}
 
       <Dialog open={showOverlay} onClose={() => { setShowOverlay(false); onSearchChange(''); onResetFilters?.() }} title={dialogTitle} size="lg">
@@ -924,45 +911,59 @@ function PreferredOverlayList({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
-          {hasActiveFilter ? (
-            filteredEntries.length > 0 ? (
-              <div
-                className="rounded-[var(--border-radius)] border overflow-hidden"
-                style={{
-                  background: 'var(--color-glass-bg)',
-                  backdropFilter: 'blur(var(--glass-blur))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-                  borderColor: 'var(--color-glass-border)',
-                }}
-              >
-                {filteredEntries.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
+          <div
+            className="rounded-[var(--border-radius)] border overflow-hidden flex flex-col"
+            style={{
+              minHeight: OVERLAY_LIST_HEIGHT,
+              maxHeight: OVERLAY_LIST_HEIGHT,
+              background: 'var(--color-glass-bg)',
+              backdropFilter: 'blur(var(--glass-blur))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur))',
+              borderColor: 'var(--color-glass-border)',
+            }}
+          >
+            <div className="flex-1 overflow-y-auto">
+              {paginatedEntries.length > 0 ? (
+                paginatedEntries.map((entry) => (
                   <button
                     key={entry.slug}
                     type="button"
                     onClick={() => add(entry.slug)}
+                    disabled={atMax}
                     className="w-full text-left px-3 py-2.5 text-sm transition-colors hover:opacity-80 text-primary border-b last:border-b-0"
                     style={{ borderColor: 'var(--color-glass-border)' }}
                   >
                     <span className="font-medium">{entry.name}</span>
-                    <div className="mt-0.5">{renderBrowseBadge(entry)}</div>
+                    <span className="ml-2 text-xs text-secondary">{entry.placeName}</span>
+                    <div className="mt-0.5">{renderBadge(entry)}</div>
                   </button>
-                ))}
+                ))
+              ) : (
+                <p className="text-sm text-secondary py-6 px-3">{noResultsText}</p>
+              )}
+            </div>
+            {totalPages > 1 && (
+              <div
+                className="flex items-center justify-between px-3 py-2 shrink-0 border-t"
+                style={{ borderColor: 'var(--color-glass-border)' }}
+              >
+                <Button variant="ghost" size="sm" type="button" onClick={() => setPage((p) => p - 1)} disabled={safePage === 0} aria-label="Previous page">
+                  <ChevronLeft size={14} />
+                </Button>
+                <span className="text-xs text-secondary">{safePage + 1} / {totalPages}</span>
+                <Button variant="ghost" size="sm" type="button" onClick={() => setPage((p) => p + 1)} disabled={safePage >= totalPages - 1} aria-label="Next page">
+                  <ChevronRight size={14} />
+                </Button>
               </div>
-            ) : (
-              <p className="text-sm text-secondary py-2">{noResultsText}</p>
-            )
-          ) : (
-            <p className="text-sm text-secondary py-2">{promptText}</p>
-          )}
+            )}
+          </div>
         </div>
       </Dialog>
     </div>
   )
 }
 
-// ─── Venue list ─────────────────────────────────────────────────────────────
-
-const VENUE_TYPES = ['Pool', 'Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other'] as const
+// ─── Venues & Boats list ───────────────────────────────────────────────────
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
   return (
@@ -974,72 +975,6 @@ function VenueBadge({ entry }: { entry: DirectoryEntry }) {
     </div>
   )
 }
-
-export function PreferredVenueList(props: ListProps) {
-  const { slugs, onChange } = props
-  const pools = useQuery(api.directory.listByRole, { role: 'Pool' as StakeholderRole })
-  const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' as StakeholderRole })
-
-  const [activeVenueType, setActiveVenueType] = useState<string | null>(null)
-  const [hasCompressorFilter, setHasCompressorFilter] = useState(false)
-  const [confinedFilter, setConfinedFilter] = useState(false)
-  const [search, setSearch] = useState('')
-
-  const allVenues = useMemo(() => {
-    if (pools === undefined || diveSites === undefined) return undefined
-    return [...(pools ?? []), ...(diveSites ?? [])]
-  }, [pools, diveSites])
-
-  const hasActiveFilter = activeVenueType !== null || hasCompressorFilter || confinedFilter || search.trim().length > 0
-
-  const filteredEntries = useMemo(() => {
-    if (!allVenues || !hasActiveFilter) return []
-    let result = allVenues.filter((e) => !slugs.includes(e.slug))
-    if (activeVenueType) result = result.filter((e) => e.venueType === activeVenueType)
-    if (hasCompressorFilter) result = result.filter((e) => e.hasCompressor)
-    if (confinedFilter) result = result.filter((e) => e.confinedCapable)
-    const trimmed = search.trim().toLowerCase()
-    if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
-    return result
-  }, [allVenues, hasActiveFilter, slugs, activeVenueType, hasCompressorFilter, confinedFilter, search])
-
-  const filterBar = (
-    <div className="flex flex-wrap gap-1.5">
-      {VENUE_TYPES.map((vt) => (
-        <Chip key={vt} label={vt} active={activeVenueType === vt} onClick={() => setActiveVenueType(activeVenueType === vt ? null : vt)} />
-      ))}
-      <Chip label="Has Compressor" active={hasCompressorFilter} onClick={() => setHasCompressorFilter(!hasCompressorFilter)} />
-      <Chip label="Confined Capable" active={confinedFilter} onClick={() => setConfinedFilter(!confinedFilter)} />
-    </div>
-  )
-
-  return (
-    <PreferredOverlayList
-      slugs={slugs}
-      onChange={onChange}
-      entries={allVenues}
-      emptyText="No preferred venues yet — Add one to get started."
-      addButtonLabel="Add Venue"
-      dialogTitle="Add Venue"
-      maxItems={MAX_PREFERRED_VENUES}
-      required={props.required}
-      renderRankedBadge={(e) => <VenueBadge entry={e} />}
-      renderBrowseBadge={(e) => <VenueBadge entry={e} />}
-      filterBar={filterBar}
-      hasActiveFilter={hasActiveFilter}
-      filteredEntries={filteredEntries}
-      search={search}
-      onSearchChange={setSearch}
-      onResetFilters={() => { setActiveVenueType(null); setHasCompressorFilter(false); setConfinedFilter(false) }}
-      noResultsText="No venues match these filters."
-      promptText="Select filters above to browse venues."
-    />
-  )
-}
-
-// ─── Boat list ──────────────────────────────────────────────────────────────
-
-// BOAT_TYPES + BOAT_TYPE_LABELS imported from @/lib/constants/boat-types
 
 function BoatBadge({ entry }: { entry: DirectoryEntry }) {
   const types = (entry.boatTypes ?? (entry.boatType ? [entry.boatType] : []))
@@ -1053,74 +988,98 @@ function BoatBadge({ entry }: { entry: DirectoryEntry }) {
   )
 }
 
-export function PreferredBoatList(props: ListProps) {
-  const { slugs, onChange } = props
-  const entries = useQuery(api.directory.listByRole, { role: 'Boat' as StakeholderRole })
+function VenueOrBoatBadge({ entry }: { entry: DirectoryEntry }) {
+  return entry.role === 'Boat' ? <BoatBadge entry={entry} /> : <VenueBadge entry={entry} />
+}
 
-  const [activeBoatType, setActiveBoatType] = useState<string | null>(null)
-  const [hasCompressorFilter, setHasCompressorFilter] = useState(false)
+type VenueBoatFilter = 'all' | 'venue' | 'boat'
+
+export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, onBoatChange, required }: {
+  venueSlugs: string[]
+  boatSlugs: string[]
+  onVenueChange: (slugs: string[]) => void
+  onBoatChange: (slugs: string[]) => void
+  required?: boolean
+}) {
+  const pools = useQuery(api.directory.listByRole, { role: 'Pool' as StakeholderRole })
+  const diveSites = useQuery(api.directory.listByRole, { role: 'DiveSite' as StakeholderRole })
+  const boats = useQuery(api.directory.listByRole, { role: 'Boat' as StakeholderRole })
+
+  const [typeFilter, setTypeFilter] = useState<VenueBoatFilter>('all')
   const [search, setSearch] = useState('')
 
-  const hasActiveFilter = activeBoatType !== null || hasCompressorFilter || search.trim().length > 0
+  const allSlugs = useMemo(() => [...venueSlugs, ...boatSlugs], [venueSlugs, boatSlugs])
+
+  const allEntries = useMemo(() => {
+    if (pools === undefined || diveSites === undefined || boats === undefined) return undefined
+    return [...(pools ?? []), ...(diveSites ?? []), ...(boats ?? [])]
+  }, [pools, diveSites, boats])
 
   const filteredEntries = useMemo(() => {
-    if (!entries || !hasActiveFilter) return []
-    let result = entries.filter((e) => !slugs.includes(e.slug))
-    if (activeBoatType) result = result.filter((e) => (e.boatTypes ?? []).includes(activeBoatType))
-    if (hasCompressorFilter) result = result.filter((e) => e.hasCompressor)
+    if (!allEntries) return []
+    let result = allEntries.filter((e) => !allSlugs.includes(e.slug))
+    if (typeFilter === 'venue') result = result.filter((e) => e.role !== 'Boat')
+    if (typeFilter === 'boat') result = result.filter((e) => e.role === 'Boat')
     const trimmed = search.trim().toLowerCase()
     if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
     return result
-  }, [entries, hasActiveFilter, slugs, activeBoatType, hasCompressorFilter, search])
+  }, [allEntries, allSlugs, typeFilter, search])
+
+  const handleChange = useCallback((slugs: string[]) => {
+    if (!allEntries) return
+    const entryBySlug = Object.fromEntries(allEntries.map((e) => [e.slug, e]))
+    const nextVenues: string[] = []
+    const nextBoats: string[] = []
+    for (const s of slugs) {
+      const e = entryBySlug[s]
+      if (e?.role === 'Boat') nextBoats.push(s)
+      else nextVenues.push(s)
+    }
+    onVenueChange(nextVenues)
+    onBoatChange(nextBoats)
+  }, [allEntries, onVenueChange, onBoatChange])
 
   const filterBar = (
     <div className="flex flex-wrap gap-1.5">
-      {BOAT_TYPES.map((bt) => (
-        <Chip key={bt} label={BOAT_TYPE_LABELS[bt]} active={activeBoatType === bt} onClick={() => setActiveBoatType(activeBoatType === bt ? null : bt)} />
-      ))}
-      <Chip label="Has Compressor" active={hasCompressorFilter} onClick={() => setHasCompressorFilter(!hasCompressorFilter)} />
+      <Chip label="All" active={typeFilter === 'all'} onClick={() => setTypeFilter('all')} />
+      <Chip label="Venue" active={typeFilter === 'venue'} onClick={() => setTypeFilter(typeFilter === 'venue' ? 'all' : 'venue')} />
+      <Chip label="Boat" active={typeFilter === 'boat'} onClick={() => setTypeFilter(typeFilter === 'boat' ? 'all' : 'boat')} />
     </div>
   )
 
   return (
     <PreferredOverlayList
-      slugs={slugs}
-      onChange={onChange}
-      entries={entries}
-      emptyText="No preferred boats yet — Add one to get started."
-      addButtonLabel="Add Boat"
-      dialogTitle="Add Boat"
-      maxItems={MAX_PREFERRED_BOATS}
-      required={props.required}
-      renderRankedBadge={(e) => <BoatBadge entry={e} />}
-      renderBrowseBadge={(e) => <BoatBadge entry={e} />}
+      slugs={allSlugs}
+      onChange={handleChange}
+      entries={allEntries}
+      addButtonLabel="Add Venue or Boat"
+      dialogTitle="Add Venue or Boat"
+      maxItems={MAX_PREFERRED_VENUES + MAX_PREFERRED_BOATS}
+      required={required}
+      renderBadge={(e) => <VenueOrBoatBadge entry={e} />}
       filterBar={filterBar}
-      hasActiveFilter={hasActiveFilter}
       filteredEntries={filteredEntries}
       search={search}
       onSearchChange={setSearch}
-      onResetFilters={() => { setActiveBoatType(null); setHasCompressorFilter(false) }}
-      noResultsText="No boats match these filters."
-      promptText="Select filters above to browse boats."
+      onResetFilters={() => setTypeFilter('all')}
+      noResultsText="No venues or boats match these filters."
+      dndGroup="venues-boats"
     />
   )
 }
 
-// ─── Equipment list ─────────────────────────────────────────────────────────
-
-import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
+// ─── Equipment list ────────────────────────────────────────────────────────
 
 function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
   const counts = entry.inventoryCounts
   if (!counts || Object.keys(counts).length === 0) return null
-  const items = Object.entries(counts)
-    .sort(([, a], [, b]) => b - a)
+  const items = Object.entries(counts).sort(([, a], [, b]) => b - a)
   const shown = items.slice(0, 3)
   const remaining = items.length - 3
   return (
     <div className="flex flex-wrap items-center gap-1">
       {shown.map(([gt, count]) => (
-        <Badge key={gt}>{GEAR_TYPE_LABELS[gt as GearType] ?? gt} ×{count}</Badge>
+        <Badge key={gt}>{GEAR_TYPE_LABELS[gt as GearType] ?? gt} x{count}</Badge>
       ))}
       {remaining > 0 && <Badge>+{remaining} more</Badge>}
     </div>
@@ -1134,16 +1093,14 @@ export function PreferredEquipmentList(props: ListProps) {
   const [activeGearType, setActiveGearType] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const hasActiveFilter = activeGearType !== null || search.trim().length > 0
-
   const filteredEntries = useMemo(() => {
-    if (!entries || !hasActiveFilter) return []
+    if (!entries) return []
     let result = entries.filter((e) => !slugs.includes(e.slug))
     if (activeGearType) result = result.filter((e) => (e.inventoryCounts?.[activeGearType] ?? 0) > 0)
     const trimmed = search.trim().toLowerCase()
     if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
     return result
-  }, [entries, hasActiveFilter, slugs, activeGearType, search])
+  }, [entries, slugs, activeGearType, search])
 
   const filterBar = (
     <div className="flex flex-wrap gap-1.5">
@@ -1158,28 +1115,23 @@ export function PreferredEquipmentList(props: ListProps) {
       slugs={slugs}
       onChange={onChange}
       entries={entries}
-      emptyText="No preferred equipment providers yet — Add one to get started."
       addButtonLabel="Add Equipment Provider"
       dialogTitle="Add Equipment Provider"
       maxItems={MAX_PREFERRED_EQUIPMENT}
       required={props.required}
-      renderRankedBadge={(e) => <EquipmentBadge entry={e} />}
-      renderBrowseBadge={(e) => <EquipmentBadge entry={e} />}
+      renderBadge={(e) => <EquipmentBadge entry={e} />}
       filterBar={filterBar}
-      hasActiveFilter={hasActiveFilter}
       filteredEntries={filteredEntries}
       search={search}
       onSearchChange={setSearch}
       onResetFilters={() => setActiveGearType(null)}
       noResultsText="No equipment providers match these filters."
-      promptText="Select filters above to browse equipment providers."
+      dndGroup="equipment"
     />
   )
 }
 
-// ─── Compressor list ────────────────────────────────────────────────────────
-
-// GAS_MIXES + GAS_MIX_LABELS imported from @/lib/constants/gas-mixes
+// ─── Compressor list ───────────────────────────────────────────────────────
 
 function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
   const mixes = entry.gasMixes ?? []
@@ -1200,16 +1152,14 @@ export function PreferredCompressorList(props: ListProps) {
   const [activeGasMix, setActiveGasMix] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
-  const hasActiveFilter = activeGasMix !== null || search.trim().length > 0
-
   const filteredEntries = useMemo(() => {
-    if (!entries || !hasActiveFilter) return []
+    if (!entries) return []
     let result = entries.filter((e) => !slugs.includes(e.slug))
     if (activeGasMix) result = result.filter((e) => (e.gasMixes ?? []).includes(activeGasMix))
     const trimmed = search.trim().toLowerCase()
     if (trimmed) result = result.filter((e) => e.name.toLowerCase().includes(trimmed) || e.placeName.toLowerCase().includes(trimmed))
     return result
-  }, [entries, hasActiveFilter, slugs, activeGasMix, search])
+  }, [entries, slugs, activeGasMix, search])
 
   const filterBar = (
     <div className="flex flex-wrap gap-1.5">
@@ -1224,20 +1174,17 @@ export function PreferredCompressorList(props: ListProps) {
       slugs={slugs}
       onChange={onChange}
       entries={entries}
-      emptyText="No preferred compressors yet — Add one to get started."
       addButtonLabel="Add Compressor"
       dialogTitle="Add Compressor"
       maxItems={MAX_PREFERRED_COMPRESSORS}
-      renderRankedBadge={(e) => <CompressorBadge entry={e} />}
-      renderBrowseBadge={(e) => <CompressorBadge entry={e} />}
+      renderBadge={(e) => <CompressorBadge entry={e} />}
       filterBar={filterBar}
-      hasActiveFilter={hasActiveFilter}
       filteredEntries={filteredEntries}
       search={search}
       onSearchChange={setSearch}
       onResetFilters={() => setActiveGasMix(null)}
       noResultsText="No compressors match these filters."
-      promptText="Select filters above to browse compressors."
+      dndGroup="compressors"
     />
   )
 }

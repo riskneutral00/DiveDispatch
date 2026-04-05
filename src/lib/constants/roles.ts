@@ -83,7 +83,7 @@ export const ROLES: RoleConfig[] = [
       { id: 'contact', label: 'Contact' },
       { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -104,7 +104,7 @@ export const ROLES: RoleConfig[] = [
       { id: 'contact', label: 'Contact' },
       { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -123,7 +123,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Run multi-day dive expeditions with onboard accommodation and guided services.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -142,7 +142,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Offer dive packages, courses, and guided dives from a resort base.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -161,7 +161,7 @@ export const ROLES: RoleConfig[] = [
     description: 'Provide budget-friendly accommodation and dive services to traveling divers.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },
@@ -181,7 +181,7 @@ export const ROLES: RoleConfig[] = [
     profileTabs: [
       { id: 'details', label: 'Details' },
       { id: 'capabilities', label: 'Capabilities' },
-      { id: 'resources', label: 'Resources' },
+      { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
     ],
   },

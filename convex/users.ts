@@ -137,6 +137,7 @@ export const createUser = mutation({
 export const updateProfile = mutation({
   args: {
     businessName: v.optional(v.string()),
+    email: v.optional(v.string()),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     nickname: v.optional(v.string()),
@@ -159,6 +160,7 @@ export const updateProfile = mutation({
 
     await ctx.db.patch(user._id, {
       ...(args.businessName !== undefined && { businessName: args.businessName }),
+      ...(args.email !== undefined && { email: args.email }),
       ...(args.firstName !== undefined && { firstName: args.firstName }),
       ...(args.lastName !== undefined && { lastName: args.lastName }),
       ...(args.nickname !== undefined && { nickname: args.nickname }),

@@ -15,9 +15,8 @@ import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-se
 import { parseConvexError } from '@/lib/utils/convex-error'
 import {
   PreferredInstructorList,
-  PreferredVenueList,
+  PreferredVenueBoatList,
   PreferredEquipmentList,
-  PreferredBoatList,
   PreferredCompressorList,
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
@@ -491,24 +490,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
 
               {resourceSubTab === 'venues-boats' && (
                 <Card padding="sm">
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">Venues</h3>
-                      <PreferredVenueList
-                        slugs={form.preferredVenueSlugs ?? []}
-                        onChange={(slugs) => setField('preferredVenueSlugs', slugs)}
-                        required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-secondary mb-2">Boats</h3>
-                      <PreferredBoatList
-                        slugs={form.preferredBoatSlugs ?? []}
-                        onChange={(slugs) => setField('preferredBoatSlugs', slugs)}
-                        required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
-                      />
-                    </div>
-                  </div>
+                  <PreferredVenueBoatList
+                    venueSlugs={form.preferredVenueSlugs ?? []}
+                    boatSlugs={form.preferredBoatSlugs ?? []}
+                    onVenueChange={(slugs) => setField('preferredVenueSlugs', slugs)}
+                    onBoatChange={(slugs) => setField('preferredBoatSlugs', slugs)}
+                    required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
+                  />
                   <div className="flex justify-end pt-4">
                     <ResourceSaveButton
                       isDirty={isSectionDirty('venues-boats')}

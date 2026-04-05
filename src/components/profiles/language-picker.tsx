@@ -22,6 +22,7 @@ interface LanguagePickerProps {
   onChange: (languages: Language[]) => void
   max?: number
   disabled?: boolean
+  popularCodes?: string[]
 }
 
 export function LanguagePicker({
@@ -29,6 +30,7 @@ export function LanguagePicker({
   onChange,
   max = 4,
   disabled = false,
+  popularCodes,
 }: LanguagePickerProps) {
   const [query, setQuery] = useState('')
   const gridRef = useRef<HTMLDivElement>(null)
@@ -129,6 +131,11 @@ export function LanguagePicker({
           ) : (
             renderFlagGroup(searchResults)
           )
+        ) : popularCodes ? (
+          <div className="flex flex-col gap-1.5">
+            {renderFlagGroup(overflowLanguages)}
+            {renderFlagGroup(popularCodes.map(resolveDiveLanguage).filter(Boolean) as DiveLanguage[])}
+          </div>
         ) : (
           <div className="flex flex-col gap-1.5">
             {renderFlagGroup(overflowLanguages)}

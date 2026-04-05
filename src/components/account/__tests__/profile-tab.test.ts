@@ -42,6 +42,7 @@ describe('profileFromUser', () => {
       dobMonth: '06',
       dobDay: '15',
       dobYear: '1990',
+      appLanguage: 'en',
     })
   })
 
@@ -66,6 +67,7 @@ describe('profileFromUser', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     })
   })
 
@@ -117,9 +119,10 @@ describe('profileToPayload', () => {
       dobMonth: '06',
       dobDay: '15',
       dobYear: '1990',
+      appLanguage: 'en',
     }
 
-    const result = profileToPayload(form, 'en')
+    const result = profileToPayload(form)
 
     expect(result).toEqual({
       firstName: 'Jane',
@@ -144,9 +147,10 @@ describe('profileToPayload', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
-    const result = profileToPayload(form, 'en')
+    const result = profileToPayload(form)
 
     expect(result).not.toHaveProperty('role')
   })
@@ -162,9 +166,10 @@ describe('profileToPayload', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
-    const result = profileToPayload(form, 'en')
+    const result = profileToPayload(form)
 
     expect(result.nickname).toBeUndefined()
   })
@@ -180,9 +185,10 @@ describe('profileToPayload', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
-    const result = profileToPayload(form, 'en')
+    const result = profileToPayload(form)
 
     expect(result.phone).toBeUndefined()
   })
@@ -198,14 +204,15 @@ describe('profileToPayload', () => {
       dobMonth: '06',
       dobDay: '',
       dobYear: '1990',
+      appLanguage: 'en',
     }
 
-    const result = profileToPayload(form, 'en')
+    const result = profileToPayload(form)
 
     expect(result.dateOfBirth).toBeUndefined()
   })
 
-  it('passes appLanguage from user record', () => {
+  it('passes appLanguage from form state', () => {
     const form: ProfileValues = {
       firstName: 'Jane',
       lastName: 'Doe',
@@ -216,9 +223,10 @@ describe('profileToPayload', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'th',
     }
 
-    const result = profileToPayload(form, 'th')
+    const result = profileToPayload(form)
 
     expect(result.appLanguage).toBe('th')
   })
@@ -238,6 +246,7 @@ describe('profileTabSchema', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
     expect(profileTabSchema.safeParse(valid).success).toBe(true)
@@ -254,6 +263,7 @@ describe('profileTabSchema', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
     expect(profileTabSchema.safeParse(invalid).success).toBe(false)
@@ -270,6 +280,7 @@ describe('profileTabSchema', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
     expect(profileTabSchema.safeParse(invalid).success).toBe(false)
@@ -286,6 +297,7 @@ describe('profileTabSchema', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
     expect(profileTabSchema.safeParse(invalid).success).toBe(false)
@@ -302,6 +314,7 @@ describe('profileTabSchema', () => {
       dobMonth: '',
       dobDay: '',
       dobYear: '',
+      appLanguage: 'en',
     }
 
     expect(profileTabSchema.safeParse(invalid).success).toBe(false)

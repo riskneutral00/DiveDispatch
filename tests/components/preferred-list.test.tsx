@@ -143,27 +143,26 @@ describe('PreferredInstructorList — overlay', () => {
   it('renders filter chips inside overlay', () => {
     render(<PreferredInstructorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add instructor/i }))
-    // Agency chips should render (PADI is in ENTRIES)
-    expect(screen.getByText('PADI')).toBeInTheDocument()
-    expect(screen.getByText('SSI')).toBeInTheDocument()
+    // Agency chips render in filter bar + on entry badges — multiple elements expected
+    expect(screen.getAllByText('PADI').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('SSI').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows no results before any filter interaction', () => {
+  it('shows all instructors before any filter interaction', () => {
     render(<PreferredInstructorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add instructor/i }))
-    // Prompt message should appear instead of results
-    expect(
-      screen.getByText(/select filters above to browse instructors/i),
-    ).toBeInTheDocument()
-    // No instructor names rendered in browse results
-    expect(screen.queryByText('Pierre Dubois')).not.toBeInTheDocument()
+    // All instructors are shown in the overlay before filtering
+    expect(screen.getByText('Pierre Dubois')).toBeInTheDocument()
+    expect(screen.getByText('Yuki Tanaka')).toBeInTheDocument()
+    expect(screen.getByText('Lee Min-Ho')).toBeInTheDocument()
   })
 
-  it('shows results after a filter chip is activated', () => {
+  it('filters results after a filter chip is activated', () => {
     render(<PreferredInstructorList slugs={[]} onChange={() => {}} />)
     fireEvent.click(screen.getByRole('button', { name: /add instructor/i }))
-    // Click PADI agency chip
-    fireEvent.click(screen.getByRole('button', { name: 'PADI' }))
+    // Click PADI agency chip (target the filter button, not all PADI text)
+    const padiButtons = screen.getAllByRole('button', { name: 'PADI' })
+    fireEvent.click(padiButtons[0])
     // Pierre Dubois and Yuki Tanaka are PADI — both should appear
     expect(screen.getByText('Pierre Dubois')).toBeInTheDocument()
     expect(screen.getByText('Yuki Tanaka')).toBeInTheDocument()
@@ -171,17 +170,18 @@ describe('PreferredInstructorList — overlay', () => {
     expect(screen.queryByText('Lee Min-Ho')).not.toBeInTheDocument()
   })
 
-  it('selecting an instructor adds to the ranked list and closes overlay', () => {
+  it('selecting an instructor adds to the ranked list and keeps overlay open', () => {
     const onChange = vi.fn()
     render(<PreferredInstructorList slugs={[]} onChange={onChange} />)
     fireEvent.click(screen.getByRole('button', { name: /add instructor/i }))
-    // Activate PADI filter to get results
-    fireEvent.click(screen.getByRole('button', { name: 'PADI' }))
-    // Click Pierre Dubois in the results list
-    fireEvent.click(screen.getByText('Pierre Dubois'))
+    // Click Pierre Dubois add button in the results list
+    const addButtons = screen.getAllByRole('button', { name: /add instructor/i })
+    // The first is the main "Add Instructor" button, subsequent ones are per-row add buttons
+    const rowAddButton = addButtons.find((btn) => btn.closest('[class*="py-2.5"]'))
+    if (rowAddButton) fireEvent.click(rowAddButton)
     // onChange called with the new slug
     expect(onChange).toHaveBeenCalledWith(['pierre-dubois'])
-    // Overlay should be closed
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    // Overlay stays open for multi-add
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 })

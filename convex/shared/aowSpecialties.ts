@@ -20,6 +20,7 @@ export const AOW_SPECIALTIES = [
   { value: 'Drift', label: 'Drift' },
   { value: 'Dry Suit', label: 'Dry Suit' },
   { value: 'Fish ID', label: 'Fish ID' },
+  { value: 'DPV', label: 'DPV' },
   // "More..." overflow
   { value: 'Photography', label: 'Photography', overflow: true },
   { value: 'S&R', label: 'S&R', overflow: true },

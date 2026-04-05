@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import { ALL_LANGUAGES, languageToCode } from '@/lib/constants/dive-languages'
+import { LanguageField } from '@/components/profiles/language-field'
 
 const MONTHS = [
   { value: '01', label: 'January' },
@@ -47,6 +49,7 @@ export type ProfileValues = {
   dobMonth: string
   dobDay: string
   dobYear: string
+  appLanguage: string
 }
 
 export const profileTabSchema = z.object({
@@ -59,6 +62,7 @@ export const profileTabSchema = z.object({
   dobMonth: z.string(),
   dobDay: z.string(),
   dobYear: z.string(),
+  appLanguage: z.string().min(1, 'App language is required'),
 })
 
 export const PROFILE_DEFAULTS: ProfileValues = {
@@ -71,6 +75,7 @@ export const PROFILE_DEFAULTS: ProfileValues = {
   dobMonth: '',
   dobDay: '',
   dobYear: '',
+  appLanguage: 'en',
 }
 
 export function profileFromUser(p: Record<string, unknown>): ProfileValues {
@@ -85,10 +90,11 @@ export function profileFromUser(p: Record<string, unknown>): ProfileValues {
     dobMonth: dob?.split('-')[1] ?? '',
     dobDay: dob?.split('-')[2] ?? '',
     dobYear: dob?.split('-')[0] ?? '',
+    appLanguage: (typeof p.appLanguage === 'string' ? p.appLanguage : '') || 'en',
   }
 }
 
-export function profileToPayload(form: ProfileValues, appLanguage: string) {
+export function profileToPayload(form: ProfileValues) {
   return {
     firstName: form.firstName.trim(),
     lastName: form.lastName.trim(),
@@ -96,7 +102,7 @@ export function profileToPayload(form: ProfileValues, appLanguage: string) {
     businessName: form.businessName.trim(),
     phone: form.phone.trim() || undefined,
     email: form.email.trim(),
-    appLanguage,
+    appLanguage: form.appLanguage,
     dateOfBirth: form.dobYear && form.dobMonth && form.dobDay
       ? `${form.dobYear}-${form.dobMonth}-${form.dobDay}`
       : undefined,
@@ -109,8 +115,6 @@ export function ProfileTab() {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
   const updateProfile = useMutation(api.users.updateProfile)
-
-  const appLanguage = (user as Record<string, unknown> | undefined)?.appLanguage as string | undefined
 
   const {
     form,
@@ -128,10 +132,15 @@ export function ProfileTab() {
     schema: profileTabSchema,
     defaults: PROFILE_DEFAULTS,
     fromProfile: profileFromUser,
-    toPayload: (f) => profileToPayload(f, appLanguage ?? 'en'),
+    toPayload: profileToPayload,
     create: (payload) => createUser({ ...payload, role: 'DiveCenter' }),
     update: (payload) => updateProfile(payload),
   })
+
+  const selectedLocaleObj = ALL_LANGUAGES.find((l) => l.code === languageToCode(form.appLanguage))
+  const selectedLocale = selectedLocaleObj
+    ? [{ code: selectedLocaleObj.code, label: selectedLocaleObj.label }]
+    : []
 
   return (
     <ProfileFormShell
@@ -215,6 +224,13 @@ export function ProfileTab() {
             placeholder="Year"
           />
         </div>
+        <LanguageField
+          variant="app"
+          value={selectedLocale}
+          onChange={(langs) => {
+            if (langs[0]) setField('appLanguage', langs[0].code)
+          }}
+        />
       </div>
     </ProfileFormShell>
   )

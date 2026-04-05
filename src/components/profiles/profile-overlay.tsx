@@ -7,7 +7,6 @@ import { Dialog } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
-import { PreferencesTab } from '@/components/account/preferences-tab'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
 import { ROLE_BY_KEY } from '@/lib/constants/roles'
@@ -18,7 +17,7 @@ import { PreferencesEditor } from '@/components/account/preferences-editor'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type ProfileOverlayTab = 'profile' | 'preferences' | 'roles' | `role:${RoleKey}`
+export type ProfileOverlayTab = 'profile' | 'roles' | `role:${RoleKey}`
 
 interface ProfileOverlayProps {
   open: boolean
@@ -28,9 +27,8 @@ interface ProfileOverlayProps {
   slug: string
 }
 
-const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'preferences' | 'roles' }[] = [
+const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[] = [
   { id: 'profile', labelKey: 'profile' },
-  { id: 'preferences', labelKey: 'preferences' },
   { id: 'roles', labelKey: 'roles' },
 ]
 
@@ -166,7 +164,6 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
         >
           <div className="max-w-3xl mx-auto px-4 pt-2 pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab />}
-            {activeTab === 'preferences' && <PreferencesTab />}
             {activeTab === 'roles' && <ManageRolesConnected />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
               <div className="max-w-2xl mx-auto">
