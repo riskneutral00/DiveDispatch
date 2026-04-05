@@ -47,13 +47,6 @@
       "confirmed": "已确认",
       "vacated": "已释放"
     },
-    "actions": {
-      "confirm": "确认",
-      "decline": "拒绝",
-      "cancel": "取消预订",
-      "save": "保存",
-      "submit": "提交"
-    },
     "wizard": {
       "editConfirmTitle": "编辑此预订？",
       "editConfirmBody": "编辑将把预订恢复为草稿并释放所有资源预留。已分配的资源需重新确认。",
@@ -73,8 +66,10 @@
   },
   "common": {
     "loading": "加载中…",
+    "saving": "保存中…",
     "redirecting": "正在跳转…",
     "error": "出了点问题",
+    "errorRetry": "出了点问题，请重试。",
     "retry": "重试",
     "cancel": "取消",
     "save": "保存",
@@ -83,28 +78,32 @@
     "view": "查看",
     "back": "返回",
     "next": "下一步",
+    "continue": "继续",
     "confirm": "确认",
+    "submit": "提交",
+    "accept": "接受",
+    "decline": "拒绝",
+    "add": "添加",
+    "remove": "移除",
     "close": "关闭",
     "search": "搜索",
     "filter": "筛选",
-    "noResults": "未找到结果",
-    "loadingDashboard": "正在加载仪表板…",
-    "loadingProfile": "正在加载资料…",
-    "loadingInventory": "正在加载库存…",
-    "loadingMap": "正在加载地图…"
+    "copy": "复制",
+    "copied": "已复制！",
+    "yes": "是",
+    "no": "否",
+    "verified": "已验证",
+    "required": "必填。",
+    "noResults": "未找到结果"
   },
   "onboarding": {
     "bannerMessage": "请完善资料以开始创建或接收预订。",
     "bannerCta": "完善资料 →"
   },
   "errors": {
-    "root": {
+    "generic": {
       "title": "出了点问题",
-      "message": "发生意外错误。请刷新页面，若问题持续请联系支持。"
-    },
-    "dashboard": {
-      "title": "出了点问题",
-      "message": "发生意外错误。请刷新页面，若问题持续请联系支持。"
+      "message": "出了点问题，请重试。"
     },
     "portal": {
       "title": "出了点问题",

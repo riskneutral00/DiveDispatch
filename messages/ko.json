@@ -47,13 +47,6 @@
       "confirmed": "확정",
       "vacated": "해제됨"
     },
-    "actions": {
-      "confirm": "확인",
-      "decline": "거절",
-      "cancel": "예약 취소",
-      "save": "저장",
-      "submit": "제출"
-    },
     "wizard": {
       "editConfirmTitle": "이 예약을 편집할까요?",
       "editConfirmBody": "편집하면 예약이 초안으로 되돌아가고 모든 리소스 예약이 해제됩니다. 배정된 리소스는 다시 확인이 필요합니다.",
@@ -73,8 +66,10 @@
   },
   "common": {
     "loading": "로딩 중…",
+    "saving": "저장 중…",
     "redirecting": "이동 중…",
     "error": "문제가 발생했습니다",
+    "errorRetry": "문제가 발생했습니다. 다시 시도해 주세요.",
     "retry": "다시 시도",
     "cancel": "취소",
     "save": "저장",
@@ -83,28 +78,32 @@
     "view": "보기",
     "back": "뒤로",
     "next": "다음",
+    "continue": "계속",
     "confirm": "확인",
+    "submit": "제출",
+    "accept": "수락",
+    "decline": "거절",
+    "add": "추가",
+    "remove": "제거",
     "close": "닫기",
     "search": "검색",
     "filter": "필터",
-    "noResults": "결과 없음",
-    "loadingDashboard": "대시보드 로딩 중…",
-    "loadingProfile": "프로필 로딩 중…",
-    "loadingInventory": "장비 목록 로딩 중…",
-    "loadingMap": "지도 로딩 중…"
+    "copy": "복사",
+    "copied": "복사됨!",
+    "yes": "예",
+    "no": "아니오",
+    "verified": "인증됨",
+    "required": "필수.",
+    "noResults": "결과 없음"
   },
   "onboarding": {
     "bannerMessage": "예약을 만들거나 받으려면 프로필을 완성하세요.",
     "bannerCta": "프로필 완성 →"
   },
   "errors": {
-    "root": {
+    "generic": {
       "title": "문제가 발생했습니다",
-      "message": "예기치 않은 오류가 발생했습니다. 새로고침하거나 문제가 계속되면 지원팀에 문의하세요."
-    },
-    "dashboard": {
-      "title": "문제가 발생했습니다",
-      "message": "예기치 않은 오류가 발생했습니다. 새로고침하거나 지원팀에 문의하세요."
+      "message": "문제가 발생했습니다. 다시 시도해 주세요."
     },
     "portal": {
       "title": "문제가 발생했습니다",

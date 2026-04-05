@@ -47,13 +47,6 @@
       "confirmed": "已確認",
       "vacated": "已釋放"
     },
-    "actions": {
-      "confirm": "確認",
-      "decline": "拒絕",
-      "cancel": "取消預訂",
-      "save": "儲存",
-      "submit": "提交"
-    },
     "wizard": {
       "editConfirmTitle": "編輯此預訂？",
       "editConfirmBody": "編輯將把預訂恢復為草稿並釋放所有資源預留。已分配的資源需重新確認。",
@@ -73,8 +66,10 @@
   },
   "common": {
     "loading": "載入中…",
+    "saving": "儲存中…",
     "redirecting": "正在重新導向…",
     "error": "發生錯誤",
+    "errorRetry": "發生錯誤，請再試一次。",
     "retry": "重試",
     "cancel": "取消",
     "save": "儲存",
@@ -83,28 +78,32 @@
     "view": "檢視",
     "back": "返回",
     "next": "下一步",
+    "continue": "繼續",
     "confirm": "確認",
+    "submit": "提交",
+    "accept": "接受",
+    "decline": "拒絕",
+    "add": "新增",
+    "remove": "移除",
     "close": "關閉",
     "search": "搜尋",
     "filter": "篩選",
-    "noResults": "找不到結果",
-    "loadingDashboard": "正在載入儀表板…",
-    "loadingProfile": "正在載入個人資料…",
-    "loadingInventory": "正在載入庫存…",
-    "loadingMap": "正在載入地圖…"
+    "copy": "複製",
+    "copied": "已複製！",
+    "yes": "是",
+    "no": "否",
+    "verified": "已驗證",
+    "required": "必填。",
+    "noResults": "找不到結果"
   },
   "onboarding": {
     "bannerMessage": "請完成個人資料以開始建立或接收預訂。",
     "bannerCta": "完成資料 →"
   },
   "errors": {
-    "root": {
+    "generic": {
       "title": "發生錯誤",
-      "message": "發生未預期的錯誤。請重新整理頁面，若問題持續請聯絡支援。"
-    },
-    "dashboard": {
-      "title": "發生錯誤",
-      "message": "發生未預期的錯誤。請重新整理頁面，若問題持續請聯絡支援。"
+      "message": "發生錯誤，請再試一次。"
     },
     "portal": {
       "title": "發生錯誤",

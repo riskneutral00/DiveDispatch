@@ -47,13 +47,6 @@
       "confirmed": "Confirmée",
       "vacated": "Libérée"
     },
-    "actions": {
-      "confirm": "Confirmer",
-      "decline": "Refuser",
-      "cancel": "Annuler la réservation",
-      "save": "Enregistrer",
-      "submit": "Soumettre"
-    },
     "wizard": {
       "editConfirmTitle": "Modifier cette réservation ?",
       "editConfirmBody": "La modification repassera la réservation en brouillon et libérera toutes les réservations de ressources. Les ressources affectées devront être reconfirmées.",
@@ -73,8 +66,10 @@
   },
   "common": {
     "loading": "Chargement…",
+    "saving": "Enregistrement…",
     "redirecting": "Redirection…",
     "error": "Une erreur est survenue",
+    "errorRetry": "Une erreur est survenue. Veuillez réessayer.",
     "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
@@ -83,28 +78,32 @@
     "view": "Voir",
     "back": "Retour",
     "next": "Suivant",
+    "continue": "Continuer",
     "confirm": "Confirmer",
+    "submit": "Soumettre",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "add": "Ajouter",
+    "remove": "Retirer",
     "close": "Fermer",
     "search": "Rechercher",
     "filter": "Filtrer",
-    "noResults": "Aucun résultat trouvé",
-    "loadingDashboard": "Chargement du tableau de bord…",
-    "loadingProfile": "Chargement du profil…",
-    "loadingInventory": "Chargement de l'inventaire…",
-    "loadingMap": "Chargement de la carte…"
+    "copy": "Copier",
+    "copied": "Copié !",
+    "yes": "Oui",
+    "no": "Non",
+    "verified": "Vérifié",
+    "required": "Obligatoire.",
+    "noResults": "Aucun résultat trouvé"
   },
   "onboarding": {
     "bannerMessage": "Complétez votre profil pour créer ou recevoir des réservations.",
     "bannerCta": "Compléter le profil →"
   },
   "errors": {
-    "root": {
+    "generic": {
       "title": "Une erreur est survenue",
-      "message": "Une erreur inattendue s'est produite. Actualisez la page ou contactez le support si le problème persiste."
-    },
-    "dashboard": {
-      "title": "Une erreur est survenue",
-      "message": "Une erreur inattendue s'est produite. Actualisez ou contactez le support si le problème persiste."
+      "message": "Une erreur est survenue. Veuillez réessayer."
     },
     "portal": {
       "title": "Une erreur est survenue",
