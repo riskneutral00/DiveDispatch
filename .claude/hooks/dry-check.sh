@@ -47,6 +47,23 @@ if grep -qE "type .*(SectionProps|FormProps) = \{" "$FILE_PATH" 2>/dev/null; the
   fi
 fi
 
+# ContactFormState local definitions in profile form files
+case "$FILE_PATH" in
+  */components/profiles/*-profile-form.tsx)
+    if grep -qE "type \w+ContactFormState = \{" "$FILE_PATH" 2>/dev/null; then
+      DUPES="${DUPES}ContactFormState (canonical: ContactFormState from @/lib/profile-form), "
+    fi
+    # Local contact conversion functions
+    if grep -qE "function \w+[Cc]ontact(From|To)(Profile|Payload)" "$FILE_PATH" 2>/dev/null; then
+      DUPES="${DUPES}contact conversion functions (use shared from @/lib/profile-form), "
+    fi
+    # Direct profile-form submodule imports (must use barrel)
+    if grep -qE "from '@/lib/profile-form/(types|location|languages|save-feedback)'" "$FILE_PATH" 2>/dev/null; then
+      DUPES="${DUPES}direct profile-form submodule import (use @/lib/profile-form barrel), "
+    fi
+    ;;
+esac
+
 # Role-to-table switch in convex/
 case "$FILE_PATH" in
   */convex/*)

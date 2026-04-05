@@ -14,6 +14,25 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "convex/_generated/**",
   ]),
+  // Profile form DRY enforcement — force barrel imports, prevent bypassing shared components
+  {
+    files: ["src/components/profiles/*-profile-form.tsx"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [
+          {
+            group: [
+              "@/lib/profile-form/types",
+              "@/lib/profile-form/location",
+              "@/lib/profile-form/languages",
+              "@/lib/profile-form/save-feedback",
+            ],
+            message: "Import from '@/lib/profile-form' (barrel) instead of individual submodules.",
+          },
+        ],
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;
