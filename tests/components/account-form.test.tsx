@@ -72,18 +72,17 @@ describe('AccountForm', () => {
     expect(screen.getByLabelText(/nickname/i)).toBeInTheDocument()
   })
 
-  it('renders nickname + business name in a grid-cols-2 container', async () => {
+  it('renders nickname + business name in a flex container', async () => {
     setMockUser()
     await renderForm()
     const nickname = screen.getByLabelText(/nickname/i)
     const businessName = screen.getByLabelText(/business name/i)
 
-    // Both inputs should share a common grid parent with grid-cols-2
-    const nicknameParent = nickname.closest('.grid')
-    const businessParent = businessName.closest('.grid')
+    // Both inputs should share a common flex-wrap parent
+    const nicknameParent = nickname.closest('.flex-wrap')
+    const businessParent = businessName.closest('.flex-wrap')
     expect(nicknameParent).toBeTruthy()
     expect(nicknameParent).toBe(businessParent)
-    expect(nicknameParent!.className).toMatch(/grid-cols-2/)
   })
 
   it('submits nickname value to createUser mutation', async () => {

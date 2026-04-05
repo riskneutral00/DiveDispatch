@@ -27,6 +27,7 @@ describe('profileFromUser', () => {
       dobMonth: '06',
       dobDay: '15',
       dobYear: '1990',
+      appLanguage: 'en',
     })
   })
 
@@ -65,10 +66,11 @@ describe('profileToPayload', () => {
     dobMonth: '06',
     dobDay: '15',
     dobYear: '1990',
+    appLanguage: 'en',
   }
 
   it('trims all string fields', () => {
-    const payload = profileToPayload(fullForm, 'en')
+    const payload = profileToPayload(fullForm)
     expect(payload.firstName).toBe('Jane')
     expect(payload.lastName).toBe('Doe')
     expect(payload.businessName).toBe('Blue Ocean')
@@ -76,27 +78,27 @@ describe('profileToPayload', () => {
   })
 
   it('builds dateOfBirth from dob parts', () => {
-    const payload = profileToPayload(fullForm, 'en')
+    const payload = profileToPayload(fullForm)
     expect(payload.dateOfBirth).toBe('1990-06-15')
   })
 
   it('sets dateOfBirth to undefined when parts are missing', () => {
-    const payload = profileToPayload({ ...fullForm, dobYear: '' }, 'en')
+    const payload = profileToPayload({ ...fullForm, dobYear: '' })
     expect(payload.dateOfBirth).toBeUndefined()
   })
 
   it('sets nickname to undefined when empty after trim', () => {
-    const payload = profileToPayload({ ...fullForm, nickname: '   ' }, 'en')
+    const payload = profileToPayload({ ...fullForm, nickname: '   ' })
     expect(payload.nickname).toBeUndefined()
   })
 
   it('passes appLanguage through', () => {
-    const payload = profileToPayload(fullForm, 'th-TH')
+    const payload = profileToPayload({ ...fullForm, appLanguage: 'th-TH' })
     expect(payload.appLanguage).toBe('th-TH')
   })
 
   it('sets phone to undefined when empty after trim', () => {
-    const payload = profileToPayload({ ...fullForm, phone: '   ' }, 'en')
+    const payload = profileToPayload({ ...fullForm, phone: '   ' })
     expect(payload.phone).toBeUndefined()
   })
 })

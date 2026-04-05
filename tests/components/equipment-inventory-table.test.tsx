@@ -63,7 +63,7 @@ describe('EquipmentInventoryTable', () => {
     )
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(screen.getByText('Loading inventory…')).toBeInTheDocument()
+    expect(screen.getByText('Loading…')).toBeInTheDocument()
   })
 
   it('shows empty state when no items', () => {
@@ -77,7 +77,7 @@ describe('EquipmentInventoryTable', () => {
       />,
     )
 
-    expect(screen.getByText(/No inventory items yet/)).toBeInTheDocument()
+    expect(screen.getByText(/No inventory yet/)).toBeInTheDocument()
   })
 
   it('filters by gear type', async () => {

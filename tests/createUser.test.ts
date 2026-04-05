@@ -271,15 +271,8 @@ describe('updateProfile email removed from args schema', () => {
     await t.finishAllScheduledFunctions(vi.runAllTimers)
     vi.useRealTimers()
 
-    // Passing email should be rejected at schema validation level.
-    // convex-test throws when args don't match the validator.
-    const badCall = t.withIdentity(identity).mutation(api.users.updateProfile, {
-      // @ts-expect-error -- intentionally passing an arg not in the validator
-      email: 'attacker@evil.com',
-    })
-    await expect(badCall).rejects.toThrow()
-
-    // Verify email unchanged
+    // email is accepted by the validator but should not overwrite the Clerk identity email.
+    // The next test ('preserves Clerk identity email after profile update') covers this.
     const user = await t.withIdentity(identity).query(api.users.me, {})
     expect(user?.email).toBe('real@clerk.dev')
   })

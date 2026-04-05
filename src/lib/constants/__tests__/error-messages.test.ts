@@ -12,7 +12,7 @@ import {
 describe('error-messages constants', () => {
   describe('TOKEN_EXPIRED_MESSAGE', () => {
     it('mentions the link expiry', () => {
-      expect(TOKEN_EXPIRED_MESSAGE).toContain('expired')
+      expect(TOKEN_EXPIRED_MESSAGE).toContain('no longer valid')
     })
 
     it('directs user to contact dive center', () => {
@@ -27,7 +27,7 @@ describe('error-messages constants', () => {
 
   describe('BOOKING_CLOSED_MESSAGE', () => {
     it('communicates that submissions are no longer accepted', () => {
-      expect(BOOKING_CLOSED_MESSAGE.toLowerCase()).toContain('no longer')
+      expect(BOOKING_CLOSED_MESSAGE.toLowerCase()).toContain('closed')
     })
 
     it('is a non-empty string', () => {

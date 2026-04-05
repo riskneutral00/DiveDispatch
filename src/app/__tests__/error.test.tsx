@@ -73,7 +73,7 @@ describe('RootError boundary', () => {
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
     expect(
-      screen.getByText(/An unexpected error occurred/)
+      screen.getByText(/Please try again/)
     ).toBeInTheDocument()
   })
 

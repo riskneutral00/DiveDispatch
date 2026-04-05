@@ -227,7 +227,7 @@ describe('NotificationPanel aria-live announcements', () => {
   it('announces when all notifications are cleared', async () => {
     render(<NotificationPanel userId="test-user" onClose={vi.fn()} />)
 
-    const clearButton = screen.getByText('Clear all')
+    const clearButton = screen.getByText('Clear')
     const user = userEvent.setup()
     await user.click(clearButton)
 
