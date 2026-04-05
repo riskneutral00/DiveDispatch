@@ -87,6 +87,7 @@ import type * as shared_coverageValidation from "../shared/coverageValidation.js
 import type * as shared_dateRange from "../shared/dateRange.js";
 import type * as shared_gearSizing from "../shared/gearSizing.js";
 import type * as shared_notificationLogistics from "../shared/notificationLogistics.js";
+import type * as shared_operatorTypes from "../shared/operatorTypes.js";
 import type * as shared_ratioRules from "../shared/ratioRules.js";
 import type * as shared_resourceOwnerTypes from "../shared/resourceOwnerTypes.js";
 import type * as shared_statuses from "../shared/statuses.js";
@@ -184,6 +185,7 @@ declare const fullApi: ApiFromModules<{
   "shared/dateRange": typeof shared_dateRange;
   "shared/gearSizing": typeof shared_gearSizing;
   "shared/notificationLogistics": typeof shared_notificationLogistics;
+  "shared/operatorTypes": typeof shared_operatorTypes;
   "shared/ratioRules": typeof shared_ratioRules;
   "shared/resourceOwnerTypes": typeof shared_resourceOwnerTypes;
   "shared/statuses": typeof shared_statuses;
