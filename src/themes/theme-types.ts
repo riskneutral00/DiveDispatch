@@ -29,6 +29,7 @@ export interface ColorPalette {
   glassBlurHover: number; // px
   bgImage?: string; // optional — some skins use solid bodyBg only
   bgOverlay?: string; // optional
+  bgPosition?: string; // optional — CSS background-position (default: "center")
   bodyBg: string;
   // Luminance class — selects which glass formula tier applies to this palette.
   // Set at design time per-skin, not calculated at runtime.

@@ -137,10 +137,10 @@ export const SKINS: ThemeConfig[] = [
         glassBorderHover: "rgba(96, 165, 250, 0.35)",
         surface: "#111820",
         surfaceElevated: "#1a2230",
-        bgImage:
-          "linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%)",
+        bgImage: "url('/backgrounds/ocean-dark.jpg')",
+        bgPosition: "center 70%",
         bgOverlay:
-          "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(15, 35, 60, 0.5) 0%, rgba(10, 25, 45, 0.25) 40%, transparent 100%)",
+          "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%)",
         bodyBg: "#000000",
         luminanceClass: "dark",
       },
@@ -168,10 +168,9 @@ export const SKINS: ThemeConfig[] = [
         glassBorderHover: "rgba(37, 99, 235, 0.25)",
         surface: "#dbeafe",
         surfaceElevated: "#eff6ff",
-        bgImage:
-          "linear-gradient(to bottom, #eff6ff 0%, #e0edf8 25%, #d0e4f2 50%, #bfdbfe 100%)",
+        bgImage: "url('/backgrounds/ocean-light.jpg')",
         bgOverlay:
-          "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(96, 165, 250, 0.12) 0%, rgba(59, 130, 246, 0.06) 40%, transparent 100%)",
+          "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(219, 234, 254, 0.4) 0%, rgba(219, 234, 254, 0.6) 60%, rgba(219, 234, 254, 0.75) 100%)",
         bodyBg: "#dbeafe",
         luminanceClass: "bright",
       },

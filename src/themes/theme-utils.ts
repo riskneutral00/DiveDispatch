@@ -130,6 +130,7 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;
+  if (palette.bgPosition !== undefined) vars["--bg-position"] = palette.bgPosition;
   return vars;
 }
 

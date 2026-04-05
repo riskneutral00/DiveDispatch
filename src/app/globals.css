@@ -102,10 +102,10 @@
   --opacity-subtle: 0.14;
   --opacity-muted: 0.50;
 
-  /* Background — ocean depth gradient: surface blue → twilight → abyss */
-  --bg-image: linear-gradient(to bottom, #081220 0%, #061018 30%, #040a14 50%, #010306 65%, #000000 80%, #000000 100%);
-  /* Sunlight beam — radial glow from top-center, fades to transparent */
-  --bg-overlay: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(15, 35, 60, 0.5) 0%, rgba(10, 25, 45, 0.25) 40%, transparent 100%);
+  /* Background — photo skin (light painting on void) */
+  --bg-image: url('/backgrounds/ocean-dark.jpg');
+  /* Vignette overlay — darkens edges for text readability */
+  --bg-overlay: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%);
   --body-bg: #000000;
 
   /* Typography */
@@ -288,8 +288,11 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: var(--bg-image) center / cover no-repeat;
   background-color: var(--body-bg);
+  background-image: var(--bg-image);
+  background-position: var(--bg-position, center);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .bg-overlay {
