@@ -557,9 +557,8 @@ export async function _markNoShowHandler(
 
   // Ownership check: only booking owner can mark NoShow
   const booking = await ctx.db.get(reservation.bookingId)
-  if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only the booking owner can mark NoShow.' })
-  }
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  assertOwnership(booking, user, 'Only the booking owner can mark NoShow.')
 
   // State guard
   const status = reservation.status as ReservationStatus
@@ -617,9 +616,8 @@ export async function _revertNoShowHandler(
 
   // Ownership check
   const booking = await ctx.db.get(reservation.bookingId)
-  if (!booking || booking.ownerId !== user.slug) {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Only the booking owner can revert NoShow.' })
-  }
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  assertOwnership(booking, user, 'Only the booking owner can revert NoShow.')
 
   // State guard
   const status = reservation.status as ReservationStatus

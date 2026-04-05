@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { type QueryCtx, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { UserDoc, BookingDoc, InventoryUnitDoc, ReservationDoc } from './lib/types'
-import { requireAuth, requireOwnerOrResourceAccess } from './lib/auth'
+import { requireAuth, requireOwnerOrResourceAccess, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import {
@@ -251,7 +251,7 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
   const slug = user.slug
 
   // Operator roles: query bookings by ownerId index
-  if (role === 'DiveCenter' || role === 'Liveaboard' || role === 'DiveResort' || role === 'DiveHostel') {
+  if (OPERATOR_ROLE_SET.has(role) && role !== 'Agent') {
     return ctx.db
       .query('bookings')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))

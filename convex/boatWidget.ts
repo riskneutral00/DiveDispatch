@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import type { Id, Doc } from './_generated/dataModel'
 import { query } from './_generated/server'
+import type { QueryCtx } from './_generated/server'
 import { requireAuth } from './lib/auth'
 import { batchGet } from './lib/batch'
 import { getResourcesForBooking } from './bookingResources'
@@ -74,6 +75,23 @@ export type ManifestData = {
   vessels: ManifestVessel[]
 }
 
+// ── Private helpers ────────────────────────────────────────────────────────────
+
+async function getBoatContext(ctx: QueryCtx, user: { _id: Id<'users'>; slug: string }) {
+  const boatProfile = await ctx.db
+    .query('boats')
+    .withIndex('by_userId', (q) => q.eq('userId', user._id))
+    .unique()
+  if (!boatProfile) return null
+  const units = await ctx.db
+    .query('inventoryUnits')
+    .withIndex('by_ownerId_resourceType', (q) =>
+      q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
+    )
+    .collect()
+  return { boatProfile, unitMap: new Map(units.map((u) => [u.displayName, u])) }
+}
+
 // ── Queries ────────────────────────────────────────────────────────────────────
 
 /**
@@ -90,22 +108,11 @@ export const getVesselCalendarData = query({
   handler: async (ctx, args): Promise<VesselCalendarData | null> => {
     const { user } = await requireAuth(ctx)
 
-    const boatProfile = await ctx.db
-      .query('boats')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-    if (!boatProfile) return null
+    const boatCtx = await getBoatContext(ctx, user)
+    if (!boatCtx) return null
+    const { boatProfile, unitMap } = boatCtx
 
     const dates = buildDateRange(args.dateRangeStart, args.dateRangeEnd)
-
-    const units = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_ownerId_resourceType', (q) =>
-        q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
-      )
-      .collect()
-
-    const unitMap = new Map(units.map((u) => [u.displayName, u]))
 
     const vessels: VesselCalendarRow[] = await Promise.all(
       boatProfile.fleet.map(async (vessel) => {
@@ -172,22 +179,11 @@ export const getManifestData = query({
   handler: async (ctx, args): Promise<ManifestData | null> => {
     const { user } = await requireAuth(ctx)
 
-    const boatProfile = await ctx.db
-      .query('boats')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-    if (!boatProfile) return null
+    const boatCtx = await getBoatContext(ctx, user)
+    if (!boatCtx) return null
+    const { boatProfile, unitMap } = boatCtx
 
     const dates = buildDateRange(args.dateRangeStart, args.dateRangeEnd)
-
-    const units = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_ownerId_resourceType', (q) =>
-        q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
-      )
-      .collect()
-
-    const unitMap = new Map(units.map((u) => [u.displayName, u]))
 
     const vessels: ManifestVessel[] = await Promise.all(
       boatProfile.fleet.map(async (vessel) => {
@@ -333,22 +329,11 @@ export const getVesselCalendarTrips = query({
   handler: async (ctx, args): Promise<CalendarBooking[]> => {
     const { user } = await requireAuth(ctx)
 
-    const boatProfile = await ctx.db
-      .query('boats')
-      .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .unique()
-    if (!boatProfile) return []
+    const boatCtx = await getBoatContext(ctx, user)
+    if (!boatCtx) return []
+    const { boatProfile, unitMap } = boatCtx
 
     const dates = buildDateRange(args.dateRangeStart, args.dateRangeEnd)
-
-    const units = await ctx.db
-      .query('inventoryUnits')
-      .withIndex('by_ownerId_resourceType', (q) =>
-        q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
-      )
-      .collect()
-
-    const unitMap = new Map(units.map((u) => [u.displayName, u]))
 
     const trips: CalendarBooking[] = []
 

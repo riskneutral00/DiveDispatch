@@ -3,15 +3,11 @@ import { mutation, query } from './_generated/server'
 import { requireAuth, getAuthUser } from './lib/auth'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
 
 export const create = mutation({
   args: {
-    name: v.string(),
-    placeName: v.string(),
-    country: v.string(),
-    lat: v.number(),
-    lng: v.number(),
-    placeId: v.optional(v.string()),
+    ...BASE_PROFILE_CREATE_FIELDS,
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     venueType: v.string(),
@@ -58,14 +54,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    name: v.optional(v.string()),
-    placeName: v.optional(v.string()),
-    country: v.optional(v.string()),
-    lat: v.optional(v.number()),
-    lng: v.optional(v.number()),
-    placeId: v.optional(v.string()),
-    email: v.optional(v.string()),
-    phone: v.optional(v.string()),
+    ...BASE_PROFILE_UPDATE_FIELDS,
     venueType: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
     confinedCapable: v.optional(v.boolean()),

@@ -6,19 +6,13 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
 
 const associationValidator = v.object({ agency: v.string(), number: v.string() })
 
 export const create = mutation({
   args: {
-    name: v.string(),
-    placeName: v.string(),
-    country: v.string(),
-    lat: v.number(),
-    lng: v.number(),
-    placeId: v.optional(v.string()),
-    email: v.string(),
-    phone: v.string(),
+    ...BASE_PROFILE_CREATE_FIELDS,
     associations: v.array(associationValidator),
     defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
   },
@@ -30,14 +24,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    name: v.optional(v.string()),
-    placeName: v.optional(v.string()),
-    country: v.optional(v.string()),
-    lat: v.optional(v.number()),
-    lng: v.optional(v.number()),
-    placeId: v.optional(v.string()),
-    email: v.optional(v.string()),
-    phone: v.optional(v.string()),
+    ...BASE_PROFILE_UPDATE_FIELDS,
     associations: v.optional(v.array(associationValidator)),
     defaultReferralMode: v.optional(
       v.union(v.literal('independent'), v.literal('referral')),

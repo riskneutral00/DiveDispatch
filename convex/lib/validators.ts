@@ -72,3 +72,27 @@ export const rentalChecklistValidator = v.object({
   regulator: gearRentalValidator,
   maskPrescription: v.optional(v.string()),
 })
+
+/** Base fields required on all profile create mutations. */
+export const BASE_PROFILE_CREATE_FIELDS = {
+  name: v.string(),
+  placeName: v.string(),
+  country: v.string(),
+  lat: v.number(),
+  lng: v.number(),
+  placeId: v.optional(v.string()),
+  email: v.string(),
+  phone: v.string(),
+}
+
+/** Base fields (all optional) for all profile update mutations. */
+export const BASE_PROFILE_UPDATE_FIELDS = {
+  name: v.optional(v.string()),
+  placeName: v.optional(v.string()),
+  country: v.optional(v.string()),
+  lat: v.optional(v.number()),
+  lng: v.optional(v.number()),
+  placeId: v.optional(v.string()),
+  email: v.optional(v.string()),
+  phone: v.optional(v.string()),
+}

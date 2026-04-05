@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { requireAuth, assertCallerIsUser } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
@@ -75,9 +75,7 @@ export async function _createNotificationHandler(
   },
 ): Promise<void> {
   const { user } = await requireAuth(ctx)
-  if (args.userId !== user.slug) {
-    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-  }
+  assertCallerIsUser(user, args.userId)
 
   if (!CLIENT_NOTIFICATION_TYPES.has(args.type)) {
     throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: `Invalid notification type for client creation: ${args.type}` })
@@ -114,7 +112,7 @@ export async function _markAsReadHandler(
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (notification.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertCallerIsUser(caller, notification.userId)
 
   await ctx.db.patch(notifId, { readAt: Date.now() })
 }
@@ -136,7 +134,7 @@ export async function _deleteNotificationHandler(
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  if (notification.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertCallerIsUser(caller, notification.userId)
 
   await ctx.db.delete(notifId)
 }
@@ -154,7 +152,7 @@ export async function _clearAllHandler(
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
 
-  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertCallerIsUser(caller, args.userId)
 
   const all = await ctx.db
     .query('notifications')
@@ -178,7 +176,7 @@ export async function _getUnreadCountHandler(
   args: { userId: string },
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
-  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertCallerIsUser(caller, args.userId)
 
   const unread = await ctx.db
     .query('notifications')
@@ -202,7 +200,7 @@ export async function _listNotificationsHandler(
   args: { userId: string; limit?: number },
 ): Promise<unknown[]> {
   const { user: caller } = await requireAuth(ctx)
-  if (args.userId !== caller.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  assertCallerIsUser(caller, args.userId)
 
   const limit = args.limit ?? DEFAULT_LIMIT
 

@@ -11,7 +11,7 @@ export type { StakeholderRole }
 
 // ── Shared Defaults ─────────────────────────────────────────────────
 
-const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
+export const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
 const VERIFIED = true
 

@@ -1,9 +1,7 @@
 // 15 freelance instructors + 3 DiveMasters for seed data.
 // DCs pull instructors by language match.
 
-import { SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
-
-const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
+import { PHUKET, SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
 
 interface InstructorDef {
   firstName: string

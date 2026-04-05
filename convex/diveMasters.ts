@@ -6,6 +6,7 @@ import {
   profileUpdate,
   profileCreate,
 } from './lib/profileHelpers'
+import { BASE_PROFILE_CREATE_FIELDS, BASE_PROFILE_UPDATE_FIELDS } from './lib/validators'
 
 const credentialValidator = v.object({
   agency: v.string(),
@@ -15,14 +16,7 @@ const credentialValidator = v.object({
 
 export const create = mutation({
   args: {
-    name: v.string(),
-    placeName: v.string(),
-    country: v.string(),
-    lat: v.number(),
-    lng: v.number(),
-    placeId: v.optional(v.string()),
-    email: v.string(),
-    phone: v.string(),
+    ...BASE_PROFILE_CREATE_FIELDS,
     credential: v.array(credentialValidator),
     teachingLanguages: v.array(v.string()),
   },
@@ -34,14 +28,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    name: v.optional(v.string()),
-    placeName: v.optional(v.string()),
-    country: v.optional(v.string()),
-    lat: v.optional(v.number()),
-    lng: v.optional(v.number()),
-    placeId: v.optional(v.string()),
-    email: v.optional(v.string()),
-    phone: v.optional(v.string()),
+    ...BASE_PROFILE_UPDATE_FIELDS,
     credential: v.optional(v.array(credentialValidator)),
     teachingLanguages: v.optional(v.array(v.string())),
   },

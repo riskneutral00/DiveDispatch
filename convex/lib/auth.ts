@@ -78,6 +78,25 @@ export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
 }
 
 /**
+ * Asserts that a subject's userId (slug) matches the caller's slug.
+ * Throws ConvexError with FORBIDDEN if they do not match.
+ * Replaces inline `if (userId !== caller.slug) throw ...` checks.
+ */
+export function assertCallerIsUser(
+  caller: { slug: string },
+  subjectUserId: string,
+  reason?: string,
+): void {
+  if (subjectUserId !== caller.slug) {
+    throw new ConvexError(
+      reason
+        ? { code: ErrorCode.FORBIDDEN, reason }
+        : { code: ErrorCode.FORBIDDEN },
+    )
+  }
+}
+
+/**
  * Verifies that a user either owns the booking (ownerId match) or has a
  * reservation on it via their inventory units. Throws FORBIDDEN if neither.
  * Use in query/mutation handlers where both the booking owner and assigned
