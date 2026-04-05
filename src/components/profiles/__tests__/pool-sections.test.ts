@@ -11,18 +11,18 @@ import {
   poolCapabilitiesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  poolContactFromProfile,
-  poolContactToPayload,
+  contactFromProfile as poolContactFromProfile,
+  contactToPayload as poolContactToPayload,
+  INITIAL_CONTACT_FORM as INITIAL_POOL_CONTACT_FORM,
+  type ContactFormState as PoolContactFormState,
+} from '@/lib/profile-form'
+import {
   poolCapabilitiesFromProfile,
   poolCapabilitiesToPayload,
   buildPoolCreatePayload,
-  INITIAL_POOL_CONTACT_FORM,
   INITIAL_POOL_CAPABILITIES_FORM,
 } from '../pool-profile-form'
-import type {
-  PoolContactFormState,
-  PoolCapabilitiesFormState,
-} from '../pool-profile-form'
+import type { PoolCapabilitiesFormState } from '../pool-profile-form'
 
 const VALID_LOCATION = {
   placeName: 'Blue Lagoon',

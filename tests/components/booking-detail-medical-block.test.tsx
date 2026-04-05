@@ -20,21 +20,18 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, back: mockBack }),
 }))
 
-// The component calls useQuery 3 times and useMutation 2 times per render.
-// The counter resets at the START of each component render (via useRef trick below).
+// The component calls useQuery 3 times and useMutation 1 time per render.
 // Order: useQuery(getBookingDetail), useQuery(getByBookingId), useQuery(myRoles)
-//        useMutation(cancelBooking), useMutation(clearMedicalBlock)
+//        useMutation(clearMedicalBlock)
 
 let mockBooking: unknown = undefined
 let mockPortalLink: unknown = undefined
 let mockUserRoles: unknown = undefined
-const mockCancelBooking = vi.fn()
 const mockClearMedicalBlock = vi.fn()
 
 // Reset counters on every useQuery/useMutation cycle (handles re-renders).
 // We track per-render-cycle by resetting when we see query index 0 again.
 let qIdx = 0
-let mIdx = 0
 
 vi.mock('convex/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('convex/react')>()
@@ -50,18 +47,17 @@ vi.mock('convex/react', async (importOriginal) => {
       if (idx === 1) return mockPortalLink
       return mockUserRoles
     },
-    useMutation: () => {
-      if (mIdx >= 2) mIdx = 0
-      const idx = mIdx++
-      if (idx === 0) return mockCancelBooking
-      return mockClearMedicalBlock
-    },
+    useMutation: () => mockClearMedicalBlock,
   }
 })
 
 // Stub child components that make their own useQuery/useMutation calls
 vi.mock('@/components/booking/audit-trail-table', () => ({
   AuditTrailTable: () => <div data-testid="audit-trail-stub" />,
+}))
+
+vi.mock('@/components/booking/cancel-booking-dialog', () => ({
+  CancelBookingDialog: () => <div data-testid="cancel-dialog-stub" />,
 }))
 
 vi.mock('@/components/booking/booking-detail-shared', async (importOriginal) => {
@@ -122,7 +118,6 @@ function makeResourceRoles() {
 beforeEach(() => {
   vi.clearAllMocks()
   qIdx = 0
-  mIdx = 0
   mockBooking = undefined
   mockPortalLink = undefined
   mockUserRoles = undefined
@@ -136,7 +131,7 @@ describe('BookingDetail — Clear medical block button', () => {
 
     render(<BookingDetail bookingId="booking123" />)
 
-    expect(screen.getByRole('button', { name: /clear medical block/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /clear medical block/i })).toBeInTheDocument()
   })
 
   it('hides button when medicalHardBlock is false', () => {

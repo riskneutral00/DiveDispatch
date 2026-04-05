@@ -14,16 +14,19 @@ import {
 import {
   contactFromProfile,
   contactToPayload,
+  INITIAL_CONTACT_FORM,
+  type ContactFormState,
+} from '@/lib/profile-form'
+import {
   affiliationsFromProfile,
   affiliationsToPayload,
   languagesFromProfileDC,
   languagesToPayloadDC,
   makeDefaultAssoc,
-  INITIAL_CONTACT_FORM,
   INITIAL_AFFILIATIONS_FORM,
   INITIAL_LANGUAGES_FORM,
 } from '../dive-center-profile-form'
-import type { DiveCenterContactFormState, DiveCenterAffiliationsFormState } from '../dive-center-profile-form'
+import type { DiveCenterAffiliationsFormState } from '../dive-center-profile-form'
 
 const VALID_LOCATION = {
   placeName: 'Koh Tao',
@@ -185,7 +188,7 @@ describe('contactFromProfile', () => {
 
 describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
-    const form: DiveCenterContactFormState = {
+    const form: ContactFormState = {
       name: "Ms. Mermaids' DC",
       location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8, placeId: 'abc' },
       email: 'contact@mermaids.com',
@@ -203,7 +206,7 @@ describe('contactToPayload', () => {
   })
 
   it('does not include associations or customerLanguages', () => {
-    const form: DiveCenterContactFormState = {
+    const form: ContactFormState = {
       name: 'Test',
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
       email: 'a@b.com',

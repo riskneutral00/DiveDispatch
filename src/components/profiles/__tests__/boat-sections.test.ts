@@ -11,15 +11,18 @@ import {
   boatFleetSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  boatContactFromProfile,
-  boatContactToPayload,
+  contactFromProfile as boatContactFromProfile,
+  contactToPayload as boatContactToPayload,
+  INITIAL_CONTACT_FORM as INITIAL_BOAT_CONTACT_FORM,
+  type ContactFormState as BoatContactFormState,
+} from '@/lib/profile-form'
+import {
   boatFleetFromProfile,
   boatFleetToPayload,
   emptyFleet,
-  INITIAL_BOAT_CONTACT_FORM,
   INITIAL_BOAT_FLEET_FORM,
 } from '../boat-profile-form'
-import type { BoatContactFormState, BoatFleetFormState } from '../boat-profile-form'
+import type { BoatFleetFormState } from '../boat-profile-form'
 
 const VALID_LOCATION = {
   placeName: 'Phuket',

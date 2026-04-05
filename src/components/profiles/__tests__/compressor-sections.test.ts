@@ -11,17 +11,17 @@ import {
   compressorGasMixesSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  compressorContactFromProfile,
-  compressorContactToPayload,
+  contactFromProfile as compressorContactFromProfile,
+  contactToPayload as compressorContactToPayload,
+  INITIAL_CONTACT_FORM as INITIAL_COMPRESSOR_CONTACT_FORM,
+  type ContactFormState as CompressorContactFormState,
+} from '@/lib/profile-form'
+import {
   compressorGasMixesFromProfile,
   compressorGasMixesToPayload,
-  INITIAL_COMPRESSOR_CONTACT_FORM,
   INITIAL_COMPRESSOR_GAS_MIXES_FORM,
 } from '../compressor-profile-form'
-import type {
-  CompressorContactFormState,
-  CompressorGasMixesFormState,
-} from '../compressor-profile-form'
+import type { CompressorGasMixesFormState } from '../compressor-profile-form'
 
 const VALID_LOCATION = {
   placeName: 'Koh Tao',

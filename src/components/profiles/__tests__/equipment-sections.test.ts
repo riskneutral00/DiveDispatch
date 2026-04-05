@@ -11,17 +11,17 @@ import {
   equipmentGearCatalogSchema,
 } from '@/lib/schemas/profile-shared'
 import {
-  equipmentContactFromProfile,
-  equipmentContactToPayload,
+  contactFromProfile as equipmentContactFromProfile,
+  contactToPayload as equipmentContactToPayload,
+  INITIAL_CONTACT_FORM as INITIAL_EQUIPMENT_CONTACT_FORM,
+  type ContactFormState as EquipmentContactFormState,
+} from '@/lib/profile-form'
+import {
   equipmentGearCatalogFromProfile,
   equipmentGearCatalogToPayload,
-  INITIAL_EQUIPMENT_CONTACT_FORM,
   INITIAL_EQUIPMENT_GEAR_CATALOG_FORM,
 } from '../equipment-profile-form'
-import type {
-  EquipmentContactFormState,
-  EquipmentGearCatalogFormState,
-} from '../equipment-profile-form'
+import type { EquipmentGearCatalogFormState } from '../equipment-profile-form'
 
 const VALID_LOCATION = {
   placeName: 'Koh Tao',

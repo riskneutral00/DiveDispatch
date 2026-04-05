@@ -15,19 +15,21 @@ import {
 import {
   contactFromProfile,
   contactToPayload,
+  INITIAL_CONTACT_FORM,
+  type ContactFormState,
+} from '@/lib/profile-form'
+import {
   languagesFromProfilePersonal,
   languagesToPayloadPersonal,
   credentialsFromProfile,
   credentialsToPayload,
   makeEmptyDmCredential,
   makeEmptyInstCredential,
-  INITIAL_CONTACT_FORM,
   INITIAL_LANGUAGES_FORM,
   INITIAL_DM_CREDENTIALS_FORM,
   INITIAL_INST_CREDENTIALS_FORM,
 } from '../personal-profile-form'
 import type {
-  PersonalContactFormState,
   PersonalLanguagesFormState,
   PersonalCredentialsFormState,
 } from '../personal-profile-form'
@@ -213,7 +215,7 @@ describe('contactFromProfile', () => {
 
 describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
-    const form: PersonalContactFormState = {
+    const form: ContactFormState = {
       name: 'Ariel Nemo',
       location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8, placeId: 'abc' },
       email: 'ariel@dive.com',
@@ -231,7 +233,7 @@ describe('contactToPayload', () => {
   })
 
   it('does not include credentials or teachingLanguages', () => {
-    const form: PersonalContactFormState = {
+    const form: ContactFormState = {
       name: 'Test',
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
       email: 'a@b.com',
