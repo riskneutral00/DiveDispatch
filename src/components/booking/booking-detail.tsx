@@ -14,6 +14,7 @@ import {
   CustomerTable,
   StakeholderList,
   PortalLinkSection,
+  BookingDetailSkeleton,
 } from './booking-detail-shared'
 import { SendPortalLink } from './send-portal-link'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -32,24 +33,6 @@ const OPERATOR_CLERK_ROLES = new Set(
 
 interface BookingDetailProps {
   bookingId: string
-}
-
-// ── Loading skeleton ───────────────────────────────────────────────────────────
-
-function LoadingSkeleton() {
-  return (
-    <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
-      {[1, 2, 3].map((i) => (
-        <Card key={i} padding="md">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
-            <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-glass-border)' }} />
-            <div className="h-3 rounded w-1/2" style={{ background: 'var(--color-glass-border)' }} />
-          </div>
-        </Card>
-      ))}
-    </div>
-  )
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -75,7 +58,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     booking?.status === 'Draft' ? booking.expiresAt : undefined,
   )
 
-  if (booking === undefined) return <LoadingSkeleton />
+  if (booking === undefined) return <BookingDetailSkeleton />
 
   if (booking === null) {
     return (
@@ -87,7 +70,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
             Booking not found
           </p>
           <p className="text-sm mb-4 text-secondary">
-            This booking does not exist or you do not have access.
+            This booking doesn&apos;t exist or you don&apos;t have access.
           </p>
           <Button variant="secondary" onClick={() => router.push('/dashboard')}>
             <ArrowLeft size={16} />
@@ -109,13 +92,13 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       <div className="flex items-center gap-3 mb-2">
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-lg transition-colors text-secondary"
+          className="p-2 rounded-md transition-colors text-secondary"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-xl font-semibold text-primary">
-          Booking Detail
+          Booking Details
         </h1>
       </div>
 

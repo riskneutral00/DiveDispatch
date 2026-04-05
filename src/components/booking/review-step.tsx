@@ -41,8 +41,8 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
   function validate(): string | null {
     if (customers.length === 0) return 'Add at least one customer'
-    if (!startDate || !endDate) return 'No date range — add course entries in the Itinerary step'
-    if (days.length === 0) return 'No days scheduled — build the schedule in the Itinerary step'
+    if (!startDate || !endDate) return 'No date range.'
+    if (days.length === 0) return 'No days scheduled.'
     return null
   }
 
@@ -248,7 +248,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       router.push(isEditMode ? `/booking/${bookingId}` : '/dashboard')
     } catch (err) {
       dispatch({ type: 'SET_SUBMITTING', value: false })
-      setSubmitError(parseConvexError(err, 'Submission failed. Please try again.'))
+      setSubmitError(parseConvexError(err, 'Submission failed. Try again.'))
     }
   }
 
@@ -294,7 +294,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         <SectionLabel>
           <span className="flex items-center gap-1.5">
             <Calendar size={11} />
-            Booking Overview
+            Overview
           </span>
         </SectionLabel>
         <div className="text-sm text-primary">
@@ -365,7 +365,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
           onClick={() => void handleSubmit()}
         >
           <Send size={16} />
-          {isEditMode ? 'Update Booking' : 'Submit Booking'}
+          {isEditMode ? 'Update' : 'Submit'}
         </Button>
       </div>
 

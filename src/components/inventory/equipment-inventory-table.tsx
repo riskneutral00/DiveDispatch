@@ -87,7 +87,7 @@ export function EquipmentInventoryTable({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes('active reservations')) {
-        setDeleteError('Cannot remove — active reservations exist for this item.')
+        setDeleteError('Cannot remove — active reservations exist.')
       } else {
         setDeleteError(message)
       }
@@ -118,7 +118,7 @@ export function EquipmentInventoryTable({
       {isLoading ? (
         <Card>
           <div className="flex items-center justify-center py-12">
-            <Spinner label={t('loadingInventory')} />
+            <Spinner label={t('loading')} />
           </div>
         </Card>
       ) : filteredItems.length === 0 ? (
@@ -128,7 +128,7 @@ export function EquipmentInventoryTable({
             message={
               filterType
                 ? `No ${filterType} items found.`
-                : 'No inventory items yet. Add your first item to get started.'
+                : 'No inventory yet. Add your first item to get started.'
             }
           />
         </Card>
@@ -282,7 +282,7 @@ function InventoryTableRow({
           onKeyDown={(e) => { if (e.key === 'Enter') commitUnits() }}
           disabled={isSaving}
           aria-label={`Total units for ${item.gearType} ${item.size ?? ''}`}
-          className="w-16 text-sm text-center px-2 py-1 rounded-lg glass"
+          className="w-16 text-sm text-center px-2 py-1 rounded-[var(--border-radius-button)] glass"
           style={{
             color: 'var(--color-text-primary)',
             border: saveError ? '1px solid var(--color-destructive)' : '1px solid var(--color-glass-border)',
@@ -295,7 +295,7 @@ function InventoryTableRow({
         <button
           onClick={onDeleteClick}
           aria-label={`Remove ${item.gearType} ${item.size ?? ''}`}
-          className="p-2 rounded-lg cursor-pointer"
+          className="p-2 rounded-md cursor-pointer"
           style={{
             color: 'var(--color-text-secondary)',
             minWidth: 44,

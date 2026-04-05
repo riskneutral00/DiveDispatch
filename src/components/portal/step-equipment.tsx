@@ -146,7 +146,7 @@ function validateEquipment(
   // All 5 rental items must be answered
   const missingItems = RENTAL_ITEMS.filter((item) => !rentalChecklist[item.key])
   if (missingItems.length > 0) {
-    errs.rentalChecklist = 'Please select Own or Rent for all equipment items.'
+    errs.rentalChecklist = 'Please select Own or Rent for each item.'
   }
 
   const hasAnyRental = RENTAL_ITEMS.some((item) => rentalChecklist[item.key] === 'rent')
@@ -154,8 +154,8 @@ function validateEquipment(
   if (hasAnyRental) {
     const heightCm = toHeightCm(heightValue, heightUnit)
     const weightKg = toWeightKg(weightValue, weightUnit)
-    if (!heightCm) errs.heightCm = 'Height is required when renting equipment.'
-    if (!weightKg) errs.weightKg = 'Weight is required when renting equipment.'
+    if (!heightCm) errs.heightCm = 'Height is required for rentals.'
+    if (!weightKg) errs.weightKg = 'Weight is required for rentals.'
 
     if (rentalChecklist.fins === 'rent') {
       const shoeSize = toShoeSizeNum(shoeSizeValue)
@@ -164,7 +164,7 @@ function validateEquipment(
 
     if (rentalChecklist.mask === 'rent' && needsPoweredLenses === true) {
       if (!prescriptionDetails.trim()) {
-        errs.prescriptionStrength = 'Prescription details are required for powered lens rental.'
+        errs.prescriptionStrength = 'Prescription details are required for lens rental.'
       }
     }
   }
@@ -301,7 +301,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
     <div className="space-y-6">
       {/* ── Body Measurements ─────────────────────────────────────────── */}
       <Card padding="md">
-        <SectionHeading note="(required when renting)">Body Measurements</SectionHeading>
+        <SectionHeading note="(required for rentals)">Body Measurements</SectionHeading>
 
         <div className="space-y-4">
           {/* Height */}
@@ -396,9 +396,9 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
       {/* ── Corrective Lenses ─────────────────────────────────────────── */}
       <Card padding="md">
-        <SectionHeading>Corrective Lenses</SectionHeading>
+        <SectionHeading>Prescription Lenses</SectionHeading>
         <p className="text-sm mb-4 text-secondary">
-          Do you need prescription (powered) lenses in your mask?
+          Do you need prescription lenses in your mask?
         </p>
 
         <fieldset>
@@ -448,7 +448,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               label={`Prescription Details${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
-              placeholder="e.g. Left: −2.00, Right: −2.50"
+              placeholder="e.g. L: −2.00 / R: −2.50"
               rows={DEFAULT_TEXTAREA_ROWS}
               error={displayErrors.prescriptionStrength}
             />
@@ -460,7 +460,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       <Card padding="md">
         <SectionHeading>Equipment Rental</SectionHeading>
         <p className="text-sm mb-4 text-secondary">
-          Will you bring your own gear or rent from us?
+          For each item, choose Own or Rent.
         </p>
 
         <div className="space-y-3">
@@ -506,10 +506,10 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             <Input
               label="Mask Prescription"
               type="text"
-              placeholder="e.g. −2.00 / −2.50"
+              placeholder="e.g. L: −2.00 / R: −2.50"
               value={maskPrescription}
               onChange={(e) => setMaskPrescription(e.target.value)}
-              helperText="Enter your prescription strength for the rental mask."
+              helperText="Enter your prescription for the rental mask."
             />
           </div>
         )}

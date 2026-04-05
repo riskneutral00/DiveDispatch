@@ -75,7 +75,7 @@ export function PortalProgressCard({
         <span className="text-sm text-secondary">
           {totalProfiles > 0
             ? `${submittedCount} / ${totalProfiles} submitted`
-            : 'No portal submissions yet'}
+            : 'No submissions yet.'}
         </span>
         {customerFormComplete && (
           <span

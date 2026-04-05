@@ -8,7 +8,8 @@ import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { DISCARD_DRAFT_ERROR_MESSAGE } from '@/lib/constants/error-messages'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Button, ButtonGroup, Badge, Dialog, ErrorAlert, EmptyState } from '@/components/ui'
+import { Button, ButtonGroup, Badge, Dialog, EmptyState } from '@/components/ui'
+import { ConfirmActionDialog } from './confirm-action-dialog'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import {
@@ -17,6 +18,7 @@ import {
   StakeholderList,
   PortalLinkSection,
   PortalPills,
+  BookingDetailSkeleton,
   type PortalPill,
 } from './booking-detail-shared'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -43,7 +45,7 @@ const SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: 'schedule', label: 'Schedule' },
   { id: 'resources', label: 'Resources' },
   { id: 'reservations', label: 'Reservations' },
-  { id: 'audit', label: 'Audit Trail' },
+  { id: 'audit', label: 'Audit' },
 ]
 
 function SectionTabs({
@@ -78,65 +80,29 @@ function DiscardDraftDialog({
   onSuccess: () => void
 }) {
   const discardDraft = useMutation(api.bookingDraftMutations.discardDraft)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  async function handleDiscard() {
-    setError(null)
-    setSubmitting(true)
+  async function handleConfirm() {
     try {
       await discardDraft({ bookingId: bookingId as Id<'bookings'> })
       onSuccess()
       onClose()
     } catch (err) {
       const code = getConvexErrorCode(err)
-      setError(code === 'INVALID_STATUS' ? 'This booking is no longer a draft.' : DISCARD_DRAFT_ERROR_MESSAGE)
-    } finally {
-      setSubmitting(false)
+      throw new Error(code === 'INVALID_STATUS' ? 'This booking is no longer a draft.' : DISCARD_DRAFT_ERROR_MESSAGE)
     }
   }
 
-  function handleClose() {
-    if (submitting) return
-    setError(null)
-    onClose()
-  }
-
   return (
-    <Dialog
+    <ConfirmActionDialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       title="Discard draft?"
-      description="This will permanently delete the draft and release all resource holds."
-      size="sm"
-    >
-      {error && (
-        <ErrorAlert className="mb-3">{error}</ErrorAlert>
-      )}
-      <div className="flex justify-end gap-3">
-        <Button variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
-          Keep draft
-        </Button>
-        <Button variant="destructive" size="sm" onClick={handleDiscard} loading={submitting}>
-          Discard
-        </Button>
-      </div>
-    </Dialog>
-  )
-}
-
-// ── Loading skeleton ─────────────────────────────────────────────────────────
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-4 animate-pulse">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="space-y-2">
-          <div className="h-3 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
-          <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-glass-border)' }} />
-        </div>
-      ))}
-    </div>
+      description="This will delete the draft and release all holds."
+      confirmLabel="Discard"
+      cancelLabel="Keep"
+      variant="destructive"
+      onConfirm={handleConfirm}
+    />
   )
 }
 
@@ -165,11 +131,11 @@ function BookingDetailContent({
 
   const ttlLabel = useTTLCountdown(booking?.status === 'Draft' ? booking.expiresAt : undefined)
 
-  if (booking === undefined) return <LoadingSkeleton />
+  if (booking === undefined) return <BookingDetailSkeleton />
 
   if (booking === null) {
     return (
-      <EmptyState message="Booking not found. This booking does not exist or you do not have access." />
+      <EmptyState message="Booking not found." />
     )
   }
 
@@ -270,7 +236,7 @@ function BookingDetailContent({
                     }}
                   >
                     <Edit2 size={13} />
-                    Edit Booking
+                    Edit
                   </Button>
                 )
               )}
@@ -280,14 +246,14 @@ function BookingDetailContent({
                   size="sm"
                   onClick={() => setShowCancelDialog(true)}
                 >
-                  Cancel Booking
+                  Cancel
                 </Button>
               )}
             </div>
 
             {/* Portal completion pills */}
             <div>
-              <FormSectionHeader label="Customer Portal" />
+              <FormSectionHeader label="Portal" />
               <PortalPills pills={portalPills} />
               <div className="mt-3 space-y-3">
                 <PortalLinkSection
@@ -322,7 +288,7 @@ function BookingDetailContent({
         {/* ── Schedule ─────────────────────────────────────────────────── */}
         {activeSection === 'schedule' && (
           <div>
-            <FormSectionHeader label="Session Schedule" />
+            <FormSectionHeader label="Schedule" />
             {booking.sessions.length === 0 ? (
               <p className="text-sm text-secondary">
                 No sessions scheduled.
@@ -336,7 +302,7 @@ function BookingDetailContent({
         {/* ── Resources ────────────────────────────────────────────────── */}
         {activeSection === 'resources' && (
           <div>
-            <FormSectionHeader label="Stakeholders" />
+            <FormSectionHeader label="Resources" />
             <StakeholderList stakeholders={booking.stakeholders} compact />
           </div>
         )}
@@ -386,7 +352,7 @@ export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogP
     <Dialog
       open={bookingId !== null}
       onClose={onClose}
-      title="Booking Detail"
+      title="Booking"
       fullScreen
     >
       {bookingId !== null && (

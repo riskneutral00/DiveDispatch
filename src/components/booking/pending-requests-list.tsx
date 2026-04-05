@@ -54,7 +54,7 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
     return (
       <EmptyState
         icon={Calendar}
-        message="No pending requests — when operators book you for a dive, requests will appear here."
+        message="No pending requests yet."
       />
     )
   }

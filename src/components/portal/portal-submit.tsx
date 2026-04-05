@@ -107,9 +107,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 Submission Received
               </h2>
               <p className="text-sm leading-relaxed text-secondary">
-                Your forms have been submitted. However, your medical questionnaire
-                indicates that physician clearance is required before diving. Your dive
-                center has been notified and will contact you with next steps.
+                Your forms have been submitted. Your medical questionnaire requires physician clearance before diving. Your dive center has been notified and will be in touch.
               </p>
             </>
           ) : (
@@ -123,11 +121,10 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 className="text-xl font-semibold text-primary"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Submission Complete
+                All Done!
               </h2>
               <p className="text-sm leading-relaxed text-secondary">
-                Your booking paperwork is complete. Your dive center will confirm the
-                final details and reach out with any questions. See you in the water!
+                Your paperwork is complete. Your dive center will confirm the details and reach out if needed. See you in the water!
               </p>
             </>
           )}
@@ -185,7 +182,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
 
       {!allComplete && (
         <p className="text-sm text-center text-secondary">
-          Complete all required steps above before submitting.
+          Please complete all steps above before submitting.
         </p>
       )}
 
@@ -207,7 +204,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
         loading={submitting}
         onClick={handleSubmit}
       >
-        Submit My Forms
+        Submit
       </Button>
     </div>
   )

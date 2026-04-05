@@ -49,7 +49,7 @@ export function ManageRolesConnected() {
         if (code === ErrorCode.DUPLICATE_ROLE) {
           setError('You already hold this role.')
         } else {
-          setError(parseConvexError(e, 'Failed to add role.'))
+          setError(parseConvexError(e, 'Failed to add role. Please try again.'))
         }
       } finally {
         setLoading(false)
@@ -74,9 +74,9 @@ export function ManageRolesConnected() {
       } catch (e: unknown) {
         const code = getConvexErrorCode(e)
         if (code === ErrorCode.LAST_ROLE) {
-          toast.error('Cannot delete your only role.')
+          toast.error('You must have at least one role.')
         } else {
-          toast.error(parseConvexError(e, 'Failed to delete role.'))
+          toast.error(parseConvexError(e, 'Failed to delete role. Please try again.'))
         }
       }
     },

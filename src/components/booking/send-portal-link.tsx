@@ -33,7 +33,7 @@ function buildLineUrl(message: string): string {
 }
 
 function buildMessage(customerName: string, operatorName: string, portalUrl: string): string {
-  return `Hi ${customerName}, ${operatorName} has created a dive booking for you. Please complete your details here:\n\n${portalUrl}`
+  return `Hi ${customerName}, ${operatorName} has booked you for a dive. Please complete your details here:\n\n${portalUrl}`
 }
 
 export function SendPortalLink({
@@ -103,7 +103,7 @@ export function SendPortalLink({
       }
       setCopyDone(true)
     } catch {
-      setError('Clipboard access denied. Copy the link manually.')
+      setError('Copy failed. Please paste manually.')
     } finally {
       setBusy(null)
     }
@@ -124,7 +124,7 @@ export function SendPortalLink({
       })
       setSentChannel('email')
     } catch (e) {
-      setError(parseConvexError(e, 'Failed to send email'))
+      setError(parseConvexError(e, 'Failed to send email. Please try again.'))
     } finally {
       setBusy(null)
     }
@@ -135,7 +135,7 @@ export function SendPortalLink({
     setBusy('whatsapp')
     const phone = contactType === 'whatsapp' ? contactValue : undefined
     if (!phone) {
-      setError('No WhatsApp number available for this customer')
+      setError('No WhatsApp number on file for this customer.')
       setBusy(null)
       return
     }
@@ -194,13 +194,13 @@ export function SendPortalLink({
     <>
       <Button size="sm" variant="secondary" onClick={handleOpen}>
         <Link2 size={14} />
-        Send Portal Link
+        Send Link
       </Button>
 
       <Dialog
         open={open}
         onClose={handleClose}
-        title="Send Portal Link"
+        title="Send Link"
         size="sm"
       >
         <div className="space-y-4">
@@ -256,7 +256,7 @@ export function SendPortalLink({
               disabled={busy !== null && busy !== 'copy'}
             >
               {copyDone ? <Check size={14} /> : <Copy size={14} />}
-              {copyDone ? 'Copied!' : 'Copy Link'}
+              {copyDone ? 'Copied!' : 'Copy'}
             </Button>
 
             {hasWhatsApp && (

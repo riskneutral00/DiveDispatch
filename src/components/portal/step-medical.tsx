@@ -173,7 +173,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       {/* Privacy consent acknowledgment — informational, not a gate */}
       <Card padding="sm">
         <p className="text-xs leading-relaxed text-secondary">
-          Your answers are shared with your dive center to ensure your safety, as required by
+          Your answers are shared with your dive center as required by
           PADI medical standards.{' '}
           <a
             href="/privacy"
@@ -239,7 +239,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                 <div aria-live="polite">
                   {showError && (
                     <p className="text-xs" style={{ color: 'var(--color-destructive)' }} role="alert">
-                      This field is required.
+                      Please answer this question.
                     </p>
                   )}
                 </div>
@@ -261,7 +261,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       <div aria-live="polite">
         {touched && unanswered.length > 0 && !error && (
           <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-            Please answer all {unanswered.length} remaining question{unanswered.length !== 1 ? 's' : ''}.
+            Please answer all {unanswered.length} remaining questions.
           </p>
         )}
       </div>

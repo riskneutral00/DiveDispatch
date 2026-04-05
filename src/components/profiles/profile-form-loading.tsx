@@ -35,7 +35,7 @@ export function ProfileFormLoading({
     return (
       <div className={`flex items-center justify-center ${paddingClassName} ${className}`.trim()}>
         <span className="text-sm animate-pulse text-secondary">
-          {message ?? t('loadingProfile')}
+          {message ?? t('loading')}
         </span>
       </div>
     )

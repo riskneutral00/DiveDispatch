@@ -53,13 +53,8 @@ function todayISO(): string {
 function LegalBlock({ text }: { text: string }) {
   return (
     <div
-      className="rounded-[var(--border-radius)] p-3 text-xs leading-relaxed overflow-y-auto text-secondary"
-      style={{ background: 'var(--color-glass-bg)',
-        border: '1px solid var(--color-glass-border)',
-        backdropFilter: 'blur(var(--glass-blur))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        maxHeight: 140,
-        whiteSpace: 'pre-wrap' }}
+      className="rounded-[var(--border-radius)] p-3 text-xs leading-relaxed overflow-y-auto text-secondary glass"
+      style={{ maxHeight: 140, whiteSpace: 'pre-wrap' }}
     >
       {text}
     </div>
@@ -118,15 +113,15 @@ export function StepWaiver({
 
   const validate = (): boolean => {
     const next: Record<string, string> = {}
-    if (!acknowledged) next.acknowledged = 'You must acknowledge the agreement.'
-    if (!hasSig) next.signature = 'Participant signature is required.'
+    if (!acknowledged) next.acknowledged = 'Please acknowledge the agreement above.'
+    if (!hasSig) next.signature = 'Please sign above.'
     if (!date) next.date = 'Date is required.'
-    if (hasInsurance === null) next.hasInsurance = 'Please indicate whether you have diver accident insurance.'
+    if (hasInsurance === null) next.hasInsurance = 'Please select Yes or No.'
     if (hasInsurance === 'yes' && !insurancePolicyNumber.trim()) {
-      next.insurancePolicyNumber = 'Policy number is required.'
+      next.insurancePolicyNumber = 'Please enter your policy number.'
     }
     if (isUnder18) {
-      if (!guardianName.trim()) next.guardianName = 'Guardian name is required.'
+      if (!guardianName.trim()) next.guardianName = 'Please enter the guardian\'s name.'
       if (!hasGuardianSig) next.guardianSignature = 'Guardian signature is required.'
     }
     setErrors(next)
@@ -139,7 +134,7 @@ export function StepWaiver({
 
     const signatureBlob = await signatureRef.current?.getBlob()
     if (!signatureBlob) {
-      setErrors({ ...errors, signature: 'Participant signature is required.' })
+      setErrors({ ...errors, signature: 'Please sign above.' })
       return
     }
 
@@ -334,7 +329,7 @@ export function StepWaiver({
                 Parent / Guardian Signature
               </h2>
               <p className="text-sm mt-1 text-secondary">
-                Required because the participant is under 18 years of age.
+                Required because the participant is under 18.
               </p>
             </div>
 

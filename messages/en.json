@@ -23,15 +23,15 @@
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
-    "creatingAccount": "Creating account…",
+    "creatingAccount": "Creating…",
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password?",
-    "noAccount": "Don't have an account?",
-    "hasAccount": "Already have an account?",
+    "noAccount": "No account?",
+    "hasAccount": "Have an account?",
     "selectRole": "Select your role",
-    "roleOrganizer": "I create dive bookings",
-    "roleResource": "I provide dive services"
+    "roleOrganizer": "Create bookings",
+    "roleResource": "Provide services"
   },
   "booking": {
     "new": "New Booking",
@@ -47,34 +47,29 @@
       "confirmed": "Confirmed",
       "vacated": "Vacated"
     },
-    "actions": {
-      "confirm": "Confirm",
-      "decline": "Decline",
-      "cancel": "Cancel Booking",
-      "save": "Save",
-      "submit": "Submit"
-    },
     "wizard": {
-      "editConfirmTitle": "Edit this booking?",
-      "editConfirmBody": "Editing will reset this booking to Draft and vacate all resource reservations. All assigned resources will need to re-confirm.",
-      "editConfirmYes": "Yes, edit booking",
-      "preparing": "Preparing booking…",
-      "preparePortalLink": "Prepare portal link",
+      "editConfirmTitle": "Edit booking?",
+      "editConfirmBody": "Resets to Draft. Resources must re-confirm.",
+      "editConfirmYes": "Edit",
+      "preparing": "Loading…",
+      "preparePortalLink": "Send Link",
       "preparePortalHint": "Creates a draft booking so you can copy or send the customer portal link before finishing the itinerary.",
       "portalLinkDelivery": "Portal link delivery",
       "operatorFallback": "Operator",
       "editingTitle": "Editing: {ref}",
       "cancelBookingAria": "Cancel booking",
       "errors": {
-        "resetBooking": "Failed to reset booking",
-        "saveProgress": "Failed to save progress"
+        "resetBooking": "Failed to reset booking. Please try again.",
+        "saveProgress": "Failed to save. Please try again."
       }
     }
   },
   "common": {
     "loading": "Loading…",
+    "saving": "Saving…",
     "redirecting": "Redirecting…",
     "error": "Something went wrong",
+    "errorRetry": "Something went wrong. Please try again.",
     "retry": "Try again",
     "cancel": "Cancel",
     "save": "Save",
@@ -83,49 +78,53 @@
     "view": "View",
     "back": "Back",
     "next": "Next",
+    "continue": "Continue",
     "confirm": "Confirm",
+    "submit": "Submit",
+    "accept": "Accept",
+    "decline": "Decline",
+    "add": "Add",
+    "remove": "Remove",
     "close": "Close",
     "search": "Search",
     "filter": "Filter",
-    "noResults": "No results found",
-    "loadingDashboard": "Loading dashboard…",
-    "loadingProfile": "Loading profile…",
-    "loadingInventory": "Loading inventory…",
-    "loadingMap": "Loading map…"
+    "copy": "Copy",
+    "copied": "Copied!",
+    "yes": "Yes",
+    "no": "No",
+    "verified": "Verified",
+    "required": "Required.",
+    "noResults": "No results found."
   },
   "onboarding": {
-    "bannerMessage": "Complete your profile to start creating or receiving bookings.",
-    "bannerCta": "Complete profile →"
+    "bannerMessage": "Complete your profile to get started.",
+    "bannerCta": "Complete →"
   },
   "errors": {
-    "root": {
+    "generic": {
       "title": "Something went wrong",
-      "message": "An unexpected error occurred. Try refreshing the page or contact support if this persists."
-    },
-    "dashboard": {
-      "title": "Something went wrong",
-      "message": "An unexpected error occurred. Try refreshing or contact support if this persists."
+      "message": "Something went wrong. Please try again."
     },
     "portal": {
       "title": "Something went wrong",
-      "message": "We couldn't load your booking form. Please try the link again or contact your dive center."
+      "message": "Something went wrong. Please contact your dive center."
     },
     "auth": {
       "title": "Authentication error",
-      "message": "Something went wrong during sign in. Please try again."
+      "message": "Sign-in failed. Please try again."
     }
   },
   "portal": {
-    "loadingBooking": "Loading your booking…",
+    "loadingBooking": "Loading…",
     "submissionComplete": {
-      "title": "Submission Complete",
-      "bodyWithOperator": "Your submission is complete. {operatorName} will be in touch before your activity{datePart}.",
-      "bodyNoOperator": "Your submission is complete. We will be in touch before your activity{datePart}."
+      "title": "All Done!",
+      "bodyWithOperator": "You're all set! {operatorName} will be in touch before your activity{datePart}.",
+      "bodyNoOperator": "You're all set! We'll be in touch before your activity{datePart}."
     },
     "dateSuffix": " on {date}",
     "bookingClosed": {
       "title": "Booking Closed",
-      "message": "This booking is no longer accepting submissions. Please contact your dive operator for assistance."
+      "message": "This booking is closed. Please contact your dive center for help."
     },
     "steps": {
       "contact": "Contact",

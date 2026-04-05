@@ -39,10 +39,10 @@ interface FormErrors {
 
 function validate(form: FormState): FormErrors {
   const errors: FormErrors = {}
-  if (!form.subject.trim()) errors.subject = 'Subject is required.'
-  if (!form.category) errors.category = 'Category is required.'
-  if (!form.message.trim()) errors.message = 'Message is required.'
-  else if (form.message.trim().length < 10) errors.message = 'Message must be at least 10 characters.'
+  if (!form.subject.trim()) errors.subject = 'Required.'
+  if (!form.category) errors.category = 'Required.'
+  if (!form.message.trim()) errors.message = 'Required.'
+  else if (form.message.trim().length < 10) errors.message = 'At least 10 characters.'
   return errors
 }
 
@@ -83,12 +83,12 @@ export function ContactForm() {
       return
     }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setScreenshotError('Only PNG, JPG, and WEBP images are allowed.')
+      setScreenshotError('PNG, JPG, or WEBP only.')
       setScreenshot(null)
       return
     }
     if (file.size > MAX_FILE_SIZE) {
-      setScreenshotError('Image must be under 5 MB.')
+      setScreenshotError('Max 5 MB.')
       setScreenshot(null)
       return
     }
@@ -127,11 +127,11 @@ export function ContactForm() {
       const code = getConvexErrorCode(err)
       if (code === 'RATE_LIMITED') {
         setErrors({
-          subject: 'Too many requests. Please wait a minute and try again.',
+          subject: 'Too many requests. Please wait and try again.',
         })
       } else {
         setErrors({
-          subject: parseConvexError(err, 'Submission failed. Please try again.'),
+          subject: parseConvexError(err, 'Failed to submit. Please try again.'),
         })
       }
     } finally {
@@ -146,10 +146,10 @@ export function ContactForm() {
           className="font-semibold text-base mb-1 text-primary"
           style={{ fontFamily: 'var(--font-heading)' }}
         >
-          Request submitted
+          Submitted
         </p>
         <p className="text-sm text-secondary">
-          {"Your request has been submitted. We'll get back to you soon."}
+          {"Submitted. We'll be in touch."}
         </p>
       </Card>
     )
@@ -161,7 +161,7 @@ export function ContactForm() {
         {/* Subject */}
         <Input
           label="Subject"
-          placeholder="Brief summary of your issue"
+          placeholder="Brief summary"
           value={form.subject}
           onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
           error={errors.subject}
@@ -182,7 +182,7 @@ export function ContactForm() {
           label="Message"
           value={form.message}
           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-          placeholder="Describe your issue in detail (minimum 10 characters)"
+          placeholder="Describe in detail (min 10 chars)"
           rows={5}
           error={errors.message}
         />
@@ -192,7 +192,7 @@ export function ContactForm() {
           <span className="text-sm font-medium text-secondary">
             Screenshot{' '}
             <span className="text-secondary" style={{ fontWeight: 400 }}>
-              (optional — PNG, JPG, WEBP, max 5 MB)
+              (PNG/JPG/WEBP ≤ 5 MB)
             </span>
           </span>
 
@@ -238,7 +238,7 @@ export function ContactForm() {
         </div>
 
         <Button type="submit" fullWidth loading={submitting}>
-          Submit request
+          Submit
         </Button>
       </form>
     </Card>

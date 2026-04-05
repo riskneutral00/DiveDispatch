@@ -12,13 +12,13 @@ export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel
     <Dialog
       open
       onClose={onCancel}
-      title={pendingToggle.mode === 'block' ? 'Block this date?' : 'Unblock this date?'}
+      title={pendingToggle.mode === 'block' ? 'Block date?' : 'Unblock date?'}
       size="sm"
     >
       <p className="text-sm mb-4 text-secondary">
         {pendingToggle.mode === 'block'
-          ? `Block ${pendingToggle.date}? Operators will not be able to book you on this date.`
-          : `Unblock ${pendingToggle.date}? You will become available for bookings on this date again.`}
+          ? `Block ${pendingToggle.date}? You won't receive booking requests.`
+          : `Unblock ${pendingToggle.date}? You'll be available for bookings again.`}
       </p>
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>

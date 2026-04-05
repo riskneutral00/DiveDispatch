@@ -111,7 +111,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             Safety Information
           </h2>
           <p className="text-sm text-secondary">
-            All fields are optional. This information helps your dive operator respond in an
+            All fields are optional. This information helps your dive center respond in an
             emergency.
           </p>
         </div>
@@ -119,7 +119,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
         <div className="space-y-5">
           {/* Blood type */}
           <SimpleSelect
-            label="Blood Type (Optional)"
+            label="Blood Type"
             value={form.bloodType}
             onChange={(v) => setField('bloodType', v)}
             options={BLOOD_TYPES}
@@ -128,7 +128,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
           {/* Allergies */}
           <Textarea
-            label="Allergies (Optional)"
+            label="Allergies"
             value={form.allergies}
             onChange={(e) => setField('allergies', e.target.value)}
             placeholder="e.g., penicillin, shellfish"
@@ -138,7 +138,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
           {/* Medications */}
           <Textarea
-            label="Current Medications (Optional)"
+            label="Current Medications"
             value={form.medications}
             onChange={(e) => setField('medications', e.target.value)}
             placeholder="e.g., aspirin, blood thinners"
@@ -148,12 +148,11 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
           {/* Insurance */}
           <Input
-            label="Travel Insurance Policy Number"
+            label="Insurance Policy Number"
             type="text"
-            placeholder="Policy number"
+            placeholder="e.g. DAN-123456"
             value={form.insurancePolicyNumber}
             onChange={(e) => setField('insurancePolicyNumber', e.target.value)}
-            helperText="Optional — enter your dive/travel insurance policy number."
           />
         </div>
       </Card>

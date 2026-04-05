@@ -29,7 +29,7 @@ function capacityBg(booked: number, total: number): string | undefined {
 }
 
 function capacityTextColor(booked: number, total: number): string {
-  if (total > 0 && booked >= total) return '#ffffff'
+  if (total > 0 && booked >= total) return 'var(--color-text-on-primary)'
   return capacityColor(booked, total)
 }
 
@@ -55,11 +55,11 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
       {/* Nav bar */}
       <div className="flex flex-col items-center py-2">
-        <div className="glass-container glass-surface transition rounded-lg inline-flex items-center gap-3 px-3 py-1">
+        <div className="glass-container glass-surface transition rounded-[var(--border-radius)] inline-flex items-center gap-3 px-3 py-1">
           <button
             type="button"
             onClick={() => shiftRange(-1)}
-            className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-md transition-opacity hover:opacity-70 text-secondary"
             aria-label="Previous 2 weeks"
           >
             <ChevronLeft size={16} />
@@ -73,7 +73,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
           <button
             type="button"
             onClick={() => shiftRange(1)}
-            className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-md transition-opacity hover:opacity-70 text-secondary"
             aria-label="Next 2 weeks"
           >
             <ChevronRight size={16} />
@@ -178,7 +178,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
             {/* Empty fleet message */}
             {vessels.length === 0 && (
               <div className="col-span-8 text-center text-sm text-secondary py-4">
-                No vessels found. Set up your fleet in Workspace.
+                No vessels found. Add boats in Workspace.
               </div>
             )}
           </div>

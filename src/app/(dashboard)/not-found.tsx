@@ -8,7 +8,7 @@ export default function DashboardNotFound() {
       icon={Search}
       iconColor="var(--color-text-secondary)"
       title="Page not found"
-      message="The page you're looking for doesn't exist or has been moved."
+      message="This page doesn't exist or has been moved."
       minHeight="min-h-[60vh]"
       action={
         <Link

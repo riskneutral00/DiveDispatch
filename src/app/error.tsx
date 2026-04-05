@@ -17,8 +17,8 @@ export default function RootError({
       error={error}
       reset={reset}
       logLabel="Root Error"
-      title={t('root.title')}
-      message={t('root.message')}
+      title={t('generic.title')}
+      message={t('generic.message')}
       minHeight="min-h-screen"
     />
   )

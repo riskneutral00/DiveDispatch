@@ -269,14 +269,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         <Card padding="md">
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-primary">
-              Welcome back! We found your info from a previous booking.
+              Welcome back! We found your details from a previous booking.
             </p>
             <p className="text-sm text-secondary">
               {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
             </p>
             <div className="flex gap-2">
               <Button type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
-                Yes, that&apos;s me
+                That&apos;s me
               </Button>
               <Button type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
                 Not me
@@ -288,61 +288,65 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {returningConfirmed && (
         <p className="text-sm px-1" style={{ color: 'var(--color-success)' }}>
-          Your previous info has been loaded. Review and update anything that&apos;s changed.
+          Your previous details have been loaded. Please review and update anything that&apos;s changed.
         </p>
       )}
 
-      {/* Personal Information */}
+      {/* Personal Details */}
       <Card padding="md">
-        <SectionHeading>Personal Information</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <SectionHeading>Personal Details</SectionHeading>
+        <div className="flex flex-wrap gap-4">
           <Input
-            label="Legal First Name *"
-            placeholder="As on passport"
+            label="Legal First Name"
+            placeholder="As shown on passport"
             value={form.legalFirstName}
             onChange={(e) => setField('legalFirstName', e.target.value)}
             error={errors.legalFirstName}
             autoComplete="given-name"
+            className="field-name"
           />
           <Input
-            label="Legal Last Name *"
-            placeholder="As on passport"
+            label="Legal Last Name"
+            placeholder="As shown on passport"
             value={form.legalLastName}
             onChange={(e) => setField('legalLastName', e.target.value)}
             error={errors.legalLastName}
             autoComplete="family-name"
+            className="field-name"
           />
           <Input
             label="Preferred Name"
-            placeholder="Nickname or preferred name"
+            placeholder="What you'd like to be called"
             value={form.preferredName ?? ''}
             onChange={(e) => setField('preferredName', e.target.value)}
             error={errors.preferredName}
-            className="sm:col-span-2"
             autoComplete="nickname"
+            className="field-text-short"
           />
           <Input
-            label="Email *"
+            label="Phone"
+            type="tel"
+            placeholder="+66 81 234 5678"
+            value={form.phone}
+            onChange={(e) => setField('phone', e.target.value)}
+            error={errors.phone}
+            helperText="Include country code (e.g. +66, +1)"
+            autoComplete="tel"
+            className="field-phone"
+          />
+          <Input
+            label="Email"
             type="email"
             placeholder="you@example.com"
             value={form.email}
             onChange={(e) => setField('email', e.target.value)}
             error={errors.email}
             autoComplete="email"
+            className="field-email"
           />
-          <Input
-            label="Phone *"
-            type="tel"
-            placeholder="+1 555 000 0000"
-            value={form.phone}
-            onChange={(e) => setField('phone', e.target.value)}
-            error={errors.phone}
-            helperText="International format with country code"
-            autoComplete="tel"
-          />
-          <div>
+          <div className="field-date">
             <Input
-              label="Date of Birth *"
+              label="Date of Birth"
               type="date"
               value={form.dateOfBirth}
               onChange={(e) => setField('dateOfBirth', e.target.value)}
@@ -365,6 +369,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             options={['M', 'F', 'Other']}
             error={errors.gender}
             required
+            className="field-select-short"
           />
           <SimpleSelect
             label="Nationality"
@@ -375,6 +380,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder="Select country…"
             error={errors.nationality}
             required
+            className="field-select-long"
           />
         </div>
       </Card>
@@ -382,13 +388,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {/* Passport / ID */}
       <Card padding="md">
         <SectionHeading>Passport / ID</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-wrap gap-4">
           <Input
-            label="Passport Number *"
+            label="Passport Number"
             placeholder="e.g. AB1234567"
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
+            className="field-text-short"
           />
           <SimpleSelect
             label="Issuing Country"
@@ -399,10 +406,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             placeholder="Select country…"
             error={errors.passportIssuingCountry}
             required
+            className="field-select-long"
           />
-          <div className="sm:col-span-2">
+          <div className="field-date">
             <Input
-              label="Expiration Date *"
+              label="Expiry Date"
               type="date"
               value={form.passportExpirationDate}
               onChange={(e) => setField('passportExpirationDate', e.target.value)}
@@ -419,8 +427,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               >
                 <AlertTriangle size={16} aria-hidden />
                 <span>
-                  Your passport expires within 6 months. Some destinations require at least 6 months
-                  validity. Please check requirements or renew before your dive trip.
+                  Your passport expires within 6 months. Some destinations require longer validity — please check before your trip.
                 </span>
               </div>
             )}
@@ -431,31 +438,33 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {/* Emergency Contact */}
       <Card padding="md">
         <SectionHeading>Emergency Contact</SectionHeading>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-wrap gap-4">
           <Input
-            label="Full Name *"
-            placeholder="Emergency contact's full name"
+            label="Full Name"
+            placeholder="Contact's full name"
             value={form.emergencyContactName}
             onChange={(e) => setField('emergencyContactName', e.target.value)}
             error={errors.emergencyContactName}
-            className="sm:col-span-2"
             autoComplete="off"
+            className="field-name"
           />
           <Input
-            label="Phone *"
+            label="Phone"
             type="tel"
-            placeholder="+1 555 000 0000"
+            placeholder="+66 81 234 5678"
             value={form.emergencyContactPhone}
             onChange={(e) => setField('emergencyContactPhone', e.target.value)}
             error={errors.emergencyContactPhone}
-            helperText="International format with country code"
+            helperText="Include country code (e.g. +66, +1)"
+            className="field-phone"
           />
           <Input
-            label="Relationship *"
-            placeholder="e.g. Spouse, Parent, Friend"
+            label="Relationship"
+            placeholder="e.g. spouse, parent, partner"
             value={form.emergencyContactRelation}
             onChange={(e) => setField('emergencyContactRelation', e.target.value)}
             error={errors.emergencyContactRelation}
+            className="field-text-short"
           />
         </div>
       </Card>
@@ -464,7 +473,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {requiresCert && (
         <Card padding="md">
           <SectionHeading>Diving Certification</SectionHeading>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-wrap gap-4">
             <SimpleSelect
               label="Certifying Agency"
               value={form.agency ?? ''}
@@ -473,9 +482,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               placeholder="Select agency…"
               error={errors.agency}
               required
+              className="field-select-short"
             />
             <Input
-              label="Agency Diver ID *"
+              label="Diver ID"
+              className="field-text-short"
               placeholder="e.g. 12345678"
               value={form.agencyID ?? ''}
               onChange={(e) => setField('agencyID', e.target.value)}
@@ -491,7 +502,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         <Textarea
           label="Known Allergies"
           rows={DEFAULT_TEXTAREA_ROWS}
-          placeholder='Food, medication, or environmental allergies. Enter "None" if none.'
+          placeholder="List any allergies, or leave blank if none."
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
         />

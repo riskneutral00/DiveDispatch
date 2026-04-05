@@ -56,8 +56,8 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   const sectionLabel = isPro ? 'Dive Credentials' : 'Affiliations'
   const addLabel = isPro ? 'Add Credential' : 'Add'
   const emptyMessage = isPro
-    ? 'No credentials added. Click Add to register one.'
-    : 'No affiliations added. Click Add to register one.'
+    ? 'No credentials yet. Tap Add to get started.'
+    : 'No affiliations yet. Tap Add to get started.'
 
   let keyCounter = 0
   function nextKey() { return `item-${Date.now()}-${++keyCounter}` }
@@ -111,8 +111,9 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   function renderDiveCenterFields(item: AgencyRow, idx: number) {
     const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES]
     return (
-      <div className="grid grid-cols-2 gap-x-2 gap-y-4 items-start">
-        {/* Row 1 */}
+      <div className="flex flex-col gap-4 items-start">
+        {/* Agency + Member Number */}
+        <div className="flex flex-wrap gap-2">
         <Select
           label="Agency"
           value={String((item as AgencyRow).agency ?? '')}
@@ -129,7 +130,9 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           placeholder="Member Number"
           required
+          className="field-text-short"
         />
+        </div>
 
         {/* Row 2 */}
         <div>
@@ -171,7 +174,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
   function renderAgentFields(item: AgencyRow, idx: number) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         <SimpleSelect
           label="Agency"
           value={String((item as AgencyRow).agency ?? '')}
@@ -180,6 +183,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           placeholder="Select agency…"
           error={errors[`associations.${idx}.agency`]}
           required
+          className="field-select-short"
         />
         <Input
           label="Agency Member ID"
@@ -188,6 +192,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           error={errors[`associations.${idx}.number`]}
           required
+          className="field-text-short"
         />
       </div>
     )
@@ -197,7 +202,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     const courseItems = COURSE_CODES.map((code) => ({ value: code, label: COURSE_LABELS[code] ?? code }))
     return (
       <Fragment>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
           <SimpleSelect
             label="Agency"
             value={String((item as AgencyRow).agency ?? '')}
@@ -206,6 +211,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             placeholder="Select agency…"
             error={errors[`credential.${idx}.agency`]}
             required
+            className="field-select-short"
           />
           <Input
             label="Certification Level"
@@ -214,6 +220,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             onChange={(e) => handleUpdate(idx, { level: e.target.value })}
             error={errors[`credential.${idx}.level`]}
             required
+            className="field-text-short"
           />
           <Input
             label={variant === 'instructor' ? 'Agency Instructor ID' : 'Agency Member ID'}
@@ -221,7 +228,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             value={String((item as AgencyRow).agencyID ?? '')}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}
-            className="sm:col-span-1"
+            className="field-text-short"
             required
           />
         </div>

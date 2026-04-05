@@ -6,18 +6,14 @@ import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@v
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export interface LocationValue {
-  placeName: string
-  country: string
-  lat: number
-  lng: number
-  placeId?: string
-}
+import type { LocationValue } from '@/lib/schemas/location'
+export type { LocationValue }
 
 interface LocationPickerProps {
   value: LocationValue | null
@@ -25,6 +21,7 @@ interface LocationPickerProps {
   error?: string
   label?: string
   required?: boolean
+  className?: string
 }
 
 // ── FlyEffect: child of <Map> that imperatively pans/zooms ────────────────────
@@ -374,7 +371,8 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
         {/* Crosshair overlay — stays centered while map moves */}
         <div
-          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
+          style={{ transitionDuration: 'var(--transition-speed)' }}
           aria-hidden
         >
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="map-crosshair">
@@ -428,7 +426,7 @@ function LocationPickerGate(props: ModalInnerProps) {
       <div
         className="flex items-center justify-center h-full text-secondary"
       >
-        <span className="text-sm">{t('loadingMap')}</span>
+        <span className="text-sm">{t('loading')}</span>
       </div>
     )
   }
@@ -444,12 +442,13 @@ interface TriggerProps {
   error?: string
   label?: string
   required?: boolean
+  className?: string
 }
 
-function LocationPickerTrigger({ value, onOpen, onClear, error, label, required }: TriggerProps) {
+function LocationPickerTrigger({ value, onOpen, onClear, error, label, required, className }: TriggerProps) {
   const inputId = useId()
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       {label && (
         <label
           htmlFor={inputId}
@@ -469,7 +468,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
           id={inputId}
           type="button"
           onClick={onOpen}
-          className="glass glass-field w-full text-sm py-2.5 pl-9 pr-9 h-[42px] text-left truncate cursor-pointer"
+          className="glass glass-field w-full text-sm py-2.5 pl-9 pr-9 text-left truncate cursor-pointer"
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
@@ -514,7 +513,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required 
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 
-export function LocationPicker({ value, onChange, error, label, required }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, error, label, required, className }: LocationPickerProps) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -525,6 +524,7 @@ export function LocationPicker({ value, onChange, error, label, required }: Loca
         error={error}
         label={label}
         required={required}
+        className={className}
       />
       <Dialog open={open} onClose={() => setOpen(false)} title="Set Location" fullScreen>
         <APIProvider apiKey={API_KEY} libraries={['places']}>

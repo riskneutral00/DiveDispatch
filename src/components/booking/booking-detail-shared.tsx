@@ -7,7 +7,7 @@ import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { Button, Badge, RoleIcon } from '@/components/ui'
+import { Button, Badge, Card, RoleIcon } from '@/components/ui'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
@@ -92,7 +92,7 @@ export function CustomerTable({
         return (
           <div
             key={idx}
-            className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-lg border`}
+            className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-[var(--border-radius)] border`}
             style={{
               background: 'var(--color-glass-bg)',
               borderColor: 'var(--color-glass-border)',
@@ -147,7 +147,7 @@ export function StakeholderList({
       {stakeholders.map((s, idx) => (
         <li
           key={idx}
-          className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-lg border`}
+          className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-[var(--border-radius)] border`}
           style={{
             background: 'var(--color-glass-bg)',
             borderColor: 'var(--color-glass-border)',
@@ -256,7 +256,7 @@ export function PortalLinkSection({
       <div className="space-y-2">
         <div
           data-testid="portal-link-url"
-          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-lg border font-mono break-all text-secondary`}
+          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-[var(--border-radius)] border font-mono break-all text-secondary`}
           style={{ background: 'var(--color-glass-bg)',
             borderColor: 'var(--color-glass-border)' }}
         >
@@ -271,10 +271,10 @@ export function PortalLinkSection({
         <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" size="sm" onClick={handleCopy}>
             {copied ? <Check size={buttonIconSize} /> : <Copy size={buttonIconSize} />}
-            {copied ? 'Copied!' : 'Copy Link'}
+            {copied ? 'Copied!' : 'Copy'}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setShowCreateForm(true)}>
-            Regenerate
+            New Link
           </Button>
         </div>
       </div>
@@ -294,7 +294,7 @@ export function PortalLinkSection({
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg border text-sm text-primary"
+            className="w-full px-3 py-2.5 rounded-[var(--border-radius)] border text-sm text-primary"
             style={{ background: 'var(--color-glass-bg)',
               borderColor: 'var(--color-glass-border)' }}
           />
@@ -310,7 +310,7 @@ export function PortalLinkSection({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded-lg border text-sm text-primary"
+            className="w-full px-3 py-2.5 rounded-[var(--border-radius)] border text-sm text-primary"
             style={{ background: 'var(--color-glass-bg)',
               borderColor: 'var(--color-glass-border)' }}
           />
@@ -340,7 +340,25 @@ export function PortalLinkSection({
   return (
     <Button variant="secondary" size="sm" onClick={() => setShowCreateForm(true)}>
       <ExternalLink size={buttonIconSize} />
-      Send Portal Link
+      Send Link
     </Button>
+  )
+}
+
+// ── Booking detail skeleton ─────────────────────────────────────────────────
+
+export function BookingDetailSkeleton() {
+  return (
+    <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} padding="md">
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
+            <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-glass-border)' }} />
+            <div className="h-3 rounded w-1/2" style={{ background: 'var(--color-glass-border)' }} />
+          </div>
+        </Card>
+      ))}
+    </div>
   )
 }

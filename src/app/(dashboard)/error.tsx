@@ -17,8 +17,8 @@ export default function DashboardError({
       error={error}
       reset={reset}
       logLabel="Dashboard Error"
-      title={t('dashboard.title')}
-      message={t('dashboard.message')}
+      title={t('generic.title')}
+      message={t('generic.message')}
       minHeight="min-h-[60vh]"
     />
   )

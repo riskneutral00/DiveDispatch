@@ -36,7 +36,7 @@ export function StakeholderGrid({
       >
         <Users size={40} strokeWidth={1.5} />
         <p className="text-sm font-medium">No results found</p>
-        <p className="text-xs">Try a different role or search term.</p>
+        <p className="text-xs">Try a different search or filter.</p>
       </div>
     )
   }

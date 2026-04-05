@@ -39,7 +39,7 @@ export default function DashboardRedirectPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <Spinner label={t('loadingDashboard')} />
+      <Spinner label={t('loading')} />
     </div>
   )
 }
