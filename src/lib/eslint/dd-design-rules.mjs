@@ -14,7 +14,6 @@ const PALETTE_RE = new RegExp(
 )
 const OFF_LADDER_GAP_RE = /\bgap-(0\.5|2\.5|5)\b/
 const BACKWARD_SPACING_RE = /\bp-(5|6|8)\s+(sm|md):p-(3|4)\b/
-const SMALL_HEIGHT_RE = /\b(h-6|h-7|h-8|w-6|w-7|w-8)\b/
 
 /** Check if a node or any ancestor has a design-ok comment */
 function hasDesignOk(node, sourceCode) {

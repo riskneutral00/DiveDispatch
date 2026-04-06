@@ -37,12 +37,12 @@ function groupByDate(sessions: BookingDetailSession[]): Map<string, BookingDetai
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
+  const byDate = useMemo(() => groupByDate(sessions), [sessions])
+  const sortedDates = useMemo(() => [...byDate.keys()].sort(), [byDate])
+
   if (sessions.length === 0) {
     return <EmptyState message="No sessions scheduled." />
   }
-
-  const byDate = useMemo(() => groupByDate(sessions), [sessions])
-  const sortedDates = useMemo(() => [...byDate.keys()].sort(), [byDate])
 
   return (
     <div className="space-y-4">
@@ -50,7 +50,6 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
         const daySessions = byDate.get(date)!
         return (
           <div key={date}>
-            {/* Date header */}
             <div
               className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wide text-secondary"
             >
@@ -58,14 +57,12 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
               <span>{date}</span>
             </div>
 
-            {/* Sessions for this date */}
             <div className="space-y-2 pl-4 border-l-2 border-glass-border">
               {daySessions.map((s) => (
                 <div
                   key={s._id}
                   className="relative pl-3"
                 >
-                  {/* Timeline dot */}
                   <span
                     className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2 bg-glass-bg"
                     style={{ borderColor: 'var(--color-primary)' }}

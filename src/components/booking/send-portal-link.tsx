@@ -89,16 +89,7 @@ export function SendPortalLink({
     const url = await ensureLink()
     if (!url) { setBusy(null); return }
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(url)
-      } else {
-        const el = document.createElement('textarea')
-        el.value = url
-        document.body.appendChild(el)
-        el.select()
-        document.execCommand('copy')
-        document.body.removeChild(el)
-      }
+      await navigator.clipboard.writeText(url)
       markCopyDone()
     } catch {
       setError(tErrors('copyFailed'))
@@ -219,9 +210,7 @@ export function SendPortalLink({
           {resolvedUrl && (
             <div
               data-testid="portal-link-url"
-              className="text-xs font-mono p-2 rounded break-all text-secondary"
-              style={{ background: 'var(--color-glass-bg)',
-                border: '1px solid var(--color-glass-border)' }}
+              className="text-xs font-mono p-2 rounded break-all text-secondary bg-glass-bg border border-glass-border"
             >
               {resolvedUrl}
             </div>

@@ -18,12 +18,6 @@ const customTwMerge = extendTailwindMerge({
   },
 })
 
-/**
- * Concatenate class names with conflict resolution.
- * Uses clsx for conditional logic + tailwind-merge to deduplicate conflicting utilities.
- *
- * Usage: cn('base', condition && 'conditional', className)
- */
 export function cn(...inputs: ClassValue[]): string {
   return customTwMerge(clsx(inputs))
 }

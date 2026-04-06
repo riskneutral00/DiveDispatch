@@ -14,7 +14,7 @@ import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
 import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 
-export const SIGNUP_STEPS = [
+const SIGNUP_STEPS = [
   { key: 'signup', label: 'Sign Up' },
   { key: 'role', label: 'Role' },
 ] as const

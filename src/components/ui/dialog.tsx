@@ -43,10 +43,7 @@ export function Dialog({
   const titleId = useId();
   const descId = useId();
 
-  // Manage native <dialog> open/close.
-  // Scroll lock and content fade are handled by CSS:
-  //   body:has(dialog[open]) { overflow: hidden }
-  //   html:has(dialog[open]) .app-shell { opacity: 0 }
+  // Sync native <dialog> open/close state
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
