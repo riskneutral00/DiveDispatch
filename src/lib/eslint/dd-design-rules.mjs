@@ -80,7 +80,7 @@ const noHardcodedPalette = {
     docs: { description: 'Disallow hardcoded Tailwind palette colors; use design tokens.' },
     messages: {
       paletteColor:
-        "Hardcoded palette color '{{match}}' — use semantic tokens (bg-primary, text-secondary, etc.). Add {/* design-ok */} to suppress.",
+        "Hardcoded palette color '{{match}}' — use semantic tokens (text-primary, text-secondary, bg-accent, etc.). Add {/* design-ok */} to suppress.",
     },
   },
   create(context) {

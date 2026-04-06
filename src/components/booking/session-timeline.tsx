@@ -67,7 +67,8 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                 >
                   {/* Timeline dot */}
                   <span
-                    className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2 bg-glass-bg border-primary"
+                    className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2 bg-glass-bg"
+                    style={{ borderColor: 'var(--color-primary)' }}
                   />
 
                   <div

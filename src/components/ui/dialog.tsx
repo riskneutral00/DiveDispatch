@@ -94,7 +94,7 @@ export function Dialog({
         >
           <div
             className={cn(
-              "glass-container flex flex-col shadow-2xl",
+              "glass-container flex flex-col shadow-2xl text-primary",
               "w-full h-full rounded-none", // design-ok: fullscreen mobile mode
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
@@ -152,7 +152,7 @@ export function Dialog({
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           className={cn(
-            "glass-container w-full shadow-2xl",
+            "glass-container w-full shadow-2xl text-primary",
             sizeMap[size],
             className,
           )}

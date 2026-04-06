@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
-/* Wire Tailwind color/font utilities to runtime CSS custom properties (theme-driven) */
+/* Wire Tailwind color/font utilities to runtime CSS custom properties (theme-driven).
+   --color-primary and --color-secondary are EXCLUDED because Tailwind auto-generates
+   text-primary / text-secondary utilities from them, which collide with our semantic
+   text-color utilities (.text-primary → --color-text-primary, .text-secondary →
+   --color-text-secondary). Removing them from @theme prevents the collision.
+   Use var(--color-primary) / var(--color-secondary) via inline styles instead. */
 @theme inline {
-  --color-primary: var(--color-primary);
-  --color-secondary: var(--color-secondary);
   --color-accent: var(--color-accent);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -176,17 +179,14 @@
   --color-date-blocked: var(--color-text-secondary);
 }
 
-/* ── Color text utilities ───────────────────────────────────────────────────
-   Map CSS custom properties to utility classes. Replaces inline
-   style={{ color: 'var(--color-text-primary)' }} across the codebase.
+/* ── Semantic text color utilities ──────────────────────────────────────────
+   Map CSS custom properties to utility classes. These are the ONLY text-primary
+   and text-secondary definitions — no conflict with @theme since --color-primary
+   and --color-secondary are excluded from @theme inline.
    ──────────────────────────────────────────────────────────────────────────── */
-.text-primary {
-  color: var(--color-text-primary);
-}
-
-.text-secondary {
-  color: var(--color-text-secondary);
-}
+.text-primary    { color: var(--color-text-primary); }
+.text-secondary  { color: var(--color-text-secondary); }
+.text-on-primary { color: var(--color-text-on-primary); }
 
 /* ── Field width scale — mobile-first, proportional to content ────────────
    Mobile: fraction of viewport (via grid).  Desktop: fixed px width.
