@@ -26,6 +26,7 @@ import { VesselCalendar } from '@/components/booking/vessel-calendar'
 import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { LoadingCard } from '@/components/ui/loading-card'
 import { api } from '@/lib/convex-generated'
 import type { CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { CalendarBooking } from '../../../convex/bookings'
@@ -83,6 +84,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     api.bookingTemplates.list,
     isOperator && clerkRole && !isSwitching ? { activeRole: clerkRole } : 'skip',
   )
+  const isBookingsLoading = isOperator ? bookings === undefined : dashboardData === undefined
   const calendarBookings: CalendarBooking[] = isOperator ? (bookings ?? []) : (dashboardData?.bookings ?? [])
   const legendStatuses = dashConfig?.legendStatuses ?? DEFAULT_LEGEND_STATUSES
 
@@ -203,6 +205,14 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   // Shell guard handles ROLE_NOT_HELD via redirect; render nothing during that window
   if (isDashboardError || isTemplatesError) return null
+
+  if (isBookingsLoading) {
+    return (
+      <DashboardPageFrame maxWidth="4xl" padding="none">
+        <LoadingCard />
+      </DashboardPageFrame>
+    )
+  }
 
   const calendarAndRail = isBoatRole ? (
     <BookingCalendar
