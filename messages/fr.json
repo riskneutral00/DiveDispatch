@@ -38,6 +38,7 @@
     "complete": "Complet",
     "notRequired": "non requis",
     "error": "Une erreur est survenue",
+    "retry": "Réessayer",
     "errorRetry": "Une erreur est survenue. Veuillez réessayer.",
     "errorContact": "Une erreur est survenue. Contactez votre centre de plongée.",
     "actionFailed": "{action} a échoué. Veuillez réessayer.",
@@ -54,6 +55,7 @@
     "bookingClosed": "Cette réservation est clôturée. Veuillez contacter votre centre de plongée.",
     "formsIncomplete": "Veuillez compléter toutes les étapes ci-dessus avant de soumettre.",
     "linkExpired": "Lien expiré.",
+    "linkExpiredTitle": "Lien expiré",
     "copyFailed": "Échec de la copie. Veuillez coller manuellement.",
     "duplicateRole": "Vous détenez déjà ce rôle.",
     "lastRole": "Vous devez avoir au moins un rôle.",
@@ -77,6 +79,8 @@
     "roles": "Rôles"
   },
   "auth": {
+    "signUp": "S'inscrire",
+    "signIn": "Se connecter",
     "creatingAccount": "Création…",
     "forgotPassword": "Mot de passe oublié ?",
     "noAccount": "Pas de compte ?",
@@ -192,6 +196,7 @@
     "intro": "La plongée sous-marine et l'apnée nécessitent une bonne santé physique et mentale. Certaines conditions médicales présentent un danger en plongée. Ce questionnaire détermine si une évaluation par un médecin est nécessaire. Répondez à toutes les questions honnêtement.",
     "pregnancy": "Si vous êtes enceinte ou essayez de le devenir, ne plongez pas.",
     "privacy": "Les réponses sont partagées avec votre centre de plongée conformément aux normes médicales PADI.",
+    "privacyLink": "Politique de confidentialité",
     "q1": "J'ai eu des problèmes pulmonaires/respiratoires, cardiaques, sanguins, ou j'ai reçu un diagnostic de COVID-19.",
     "q2": "J'ai plus de 45 ans.",
     "q3": "J'ai des difficultés avec un exercice modéré (marcher 1,6 km en 14 min) ou nager 200 m sans pause.",

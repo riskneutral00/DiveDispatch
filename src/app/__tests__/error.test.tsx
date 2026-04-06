@@ -101,7 +101,7 @@ describe('RootError boundary', () => {
     )
 
     const button = screen.getByTestId('glass-button')
-    expect(button.textContent).toBe('common.retry')
+    expect(button.textContent).toBe('Retry')
 
     fireEvent.click(button)
     expect(reset).toHaveBeenCalledOnce()

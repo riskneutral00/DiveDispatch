@@ -38,6 +38,7 @@
     "complete": "Complete",
     "notRequired": "not required",
     "error": "An error occurred",
+    "retry": "Retry",
     "errorRetry": "An error occurred. Try again.",
     "errorContact": "An error occurred. Contact your dive center.",
     "actionFailed": "{action} failed. Try again.",
@@ -54,6 +55,7 @@
     "bookingClosed": "This booking is closed. Contact your dive center for help.",
     "formsIncomplete": "Complete all steps above before submitting.",
     "linkExpired": "Link expired.",
+    "linkExpiredTitle": "Link Expired",
     "copyFailed": "Copy failed. Paste manually.",
     "duplicateRole": "You already hold this role.",
     "lastRole": "You must have at least one role.",
@@ -77,6 +79,8 @@
     "roles": "Roles"
   },
   "auth": {
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
     "creatingAccount": "Creating…",
     "forgotPassword": "Forgot password?",
     "noAccount": "No account?",
@@ -192,6 +196,7 @@
     "intro": "Scuba diving and freediving require good physical and mental health. Some medical conditions are hazardous while diving. This questionnaire determines if a physician evaluation is needed. Answer all questions honestly.",
     "pregnancy": "If you are pregnant or trying to become pregnant, do not dive.",
     "privacy": "Answers are shared with your dive center per PADI medical standards.",
+    "privacyLink": "Privacy Policy",
     "q1": "I have had problems with my lungs/breathing, heart, blood, or have been diagnosed with COVID-19.",
     "q2": "I am over 45 years of age.",
     "q3": "I struggle with moderate exercise (walk 1.6 km / 1 mile in 14 min) or swimming 200 m without resting.",

@@ -38,6 +38,7 @@
     "complete": "已完成",
     "notRequired": "非必要",
     "error": "發生錯誤",
+    "retry": "重試",
     "errorRetry": "發生錯誤，請重試。",
     "errorContact": "發生錯誤，請聯絡您的潛水中心。",
     "actionFailed": "{action}失敗，請重試。",
@@ -54,6 +55,7 @@
     "bookingClosed": "此預約已關閉。請聯絡您的潛水中心尋求協助。",
     "formsIncomplete": "請在提交前完成以上所有步驟。",
     "linkExpired": "連結已過期。",
+    "linkExpiredTitle": "連結已過期",
     "copyFailed": "複製失敗，請手動貼上。",
     "duplicateRole": "您已擁有此角色。",
     "lastRole": "您必須至少擁有一個角色。",
@@ -77,6 +79,8 @@
     "roles": "角色"
   },
   "auth": {
+    "signUp": "註冊",
+    "signIn": "登入",
     "creatingAccount": "建立中…",
     "forgotPassword": "忘記密碼？",
     "noAccount": "沒有帳號？",
@@ -192,6 +196,7 @@
     "intro": "水肺潛水和自由潛水需要良好的身體與心理健康狀態。某些健康問題在潛水時具有危險性。本問卷用於判斷是否需要醫師評估。請誠實回答所有問題。",
     "pregnancy": "若您已懷孕或正在備孕，請勿潛水。",
     "privacy": "您的回答將依 PADI 醫療標準與您的潛水中心共享。",
+    "privacyLink": "隱私權政策",
     "q1": "我曾有肺部／呼吸系統、心臟、血液方面的問題，或曾被診斷為 COVID-19。",
     "q2": "我的年齡超過 45 歲。",
     "q3": "我無法進行中等強度運動（14 分鐘內步行 1.6 公里／1 英里），或無法不休息地游泳 200 公尺。",

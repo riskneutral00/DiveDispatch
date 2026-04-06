@@ -193,13 +193,13 @@ export function SendPortalLink({
     <>
       <Button size="sm" variant="secondary" onClick={handleOpen}>
         <Link2 size={14} />
-        {tBooking('sendLink')}
+        {tCommon('sendLink')}
       </Button>
 
       <Dialog
         open={open}
         onClose={handleClose}
-        title={tBooking('sendLink')}
+        title={tCommon('sendLink')}
         size="sm"
       >
         <div className="space-y-4">

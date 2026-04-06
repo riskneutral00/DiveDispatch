@@ -6,8 +6,7 @@ import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
-import { deriveDefaultRole } from '@/lib/utils/role'
+import { type RoleConfig } from '@/lib/constants/roles'
 import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
 import { StepIndicator } from '@/components/ui/step-indicator'
@@ -34,12 +33,10 @@ export default function SignUpPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  // Any user with a record → dashboard (banner handles incomplete state)
+  // Any user with a record → dashboard (proxy resolves to /{slug}/{role}/dashboard)
   useEffect(() => {
     if (user && userRoles && userRoles.length > 0) {
-      const defaultRole = deriveDefaultRole(userRoles.map((r) => r.role))
-      const roleConfig = ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole]
-      router.replace(roleConfig ? `/${user.slug}/${roleConfig.key}` : '/dashboard')
+      router.replace('/dashboard')
     }
   }, [user, userRoles, router])
 
@@ -63,7 +60,7 @@ export default function SignUpPage() {
         role: primaryRole.clerkRole,
         roles: selectedRoles.map((r) => r.clerkRole),
       })
-      // The user useEffect above will redirect to dashboard once the record appears
+      // The useEffect above will redirect to /dashboard once the record appears
     } catch (err) {
       setError(parseConvexErrorI18n(err, tErr))
       setSubmitting(false)
@@ -96,7 +93,7 @@ export default function SignUpPage() {
     return <Spinner label={t('loading')} />
   }
 
-  // User record exists — redirecting via useEffect
+  // User record exists — useEffect is redirecting to /dashboard
   if (user) {
     return <Spinner label={t('redirecting')} />
   }

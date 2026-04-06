@@ -39,7 +39,7 @@ vi.mock('next-intl', async (importOriginal) => {
     ...actual,
     useTranslations: (ns: string) => (key: string, _params?: Record<string, unknown>) => {
       const map: Record<string, string> = {
-        'booking:sendLink': 'Send Link',
+        'common:sendLink': 'Send Link',
         'booking:linkExpires': 'Expires soon',
         'booking:emailSent': 'Email sent',
         'booking:whatsAppOpened': 'WhatsApp opened',

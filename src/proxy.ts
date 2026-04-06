@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { ROLE_BY_CLERK_ROLE, ROLE_BY_KEY, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -34,20 +34,48 @@ export default clerkMiddleware(async (auth, req) => {
     )
   }
 
-  // Server-side redirect: /dashboard → /{slug}/{roleSlug}/dashboard
-  // Eliminates the client-side Convex query that hangs when tokenIdentifiers are out of sync.
-  if (req.nextUrl.pathname === '/dashboard') {
-    const meta = sessionClaims?.publicMetadata as { slug?: string; role?: string } | undefined
-    const slug = meta?.slug
-    const role = meta?.role as ClerkRole | undefined
-    const roleConfig = role ? ROLE_BY_CLERK_ROLE[role] : undefined
+  // ── Proxy-as-authority: single routing state machine ─────────────────────
 
-    if (slug && roleConfig) {
-      return NextResponse.redirect(new URL(`/${slug}/${roleConfig.key}/dashboard`, req.url))
+  const meta = sessionClaims?.publicMetadata as { slug?: string; role?: string } | undefined
+  const claimsSlug = meta?.slug
+  const claimsRole = meta?.role as ClerkRole | undefined
+  const claimsRoleConfig = claimsRole ? ROLE_BY_CLERK_ROLE[claimsRole] : undefined
+
+  // /dashboard → /{slug}/{role}/dashboard (resolve from session claims)
+  if (req.nextUrl.pathname === '/dashboard') {
+    if (claimsSlug && claimsRoleConfig) {
+      return NextResponse.redirect(new URL(`/${claimsSlug}/${claimsRoleConfig.key}/dashboard`, req.url))
     }
     // No metadata — fall through to client-side trampoline as fallback
   }
 
+  // Match /{slug}/{role} or /{slug}/{role}/* patterns
+  const dashboardPath = /^\/([^/]+)\/([^/]+)(\/.*)?$/.exec(req.nextUrl.pathname)
+
+  if (dashboardPath) {
+    const [, urlSlug, urlRole, subPath] = dashboardPath
+
+    // Only treat as a dashboard route if the second segment is a valid role key.
+    // This lets non-dashboard two-segment routes (/admin/*, /api/*, etc.) pass through.
+    if (ROLE_BY_KEY[urlRole as RoleKey]) {
+      // Slug ownership: URL slug must match session claims slug
+      if (claimsSlug && urlSlug !== claimsSlug) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+
+      // Role-root catch: /{slug}/{role} without sub-path → append /dashboard
+      if (!subPath || subPath === '/') {
+        return NextResponse.redirect(
+          new URL(`/${urlSlug}/${urlRole}/dashboard`, req.url),
+        )
+      }
+    } else if (claimsSlug && urlSlug === claimsSlug) {
+      // User's slug + invalid role → redirect to their dashboard
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+  }
+
+  // All other authenticated routes → pass through to Next.js (not-found.tsx handles 404s)
   return NextResponse.next()
 })
 

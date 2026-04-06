@@ -38,6 +38,7 @@
     "complete": "已完成",
     "notRequired": "非必填",
     "error": "发生错误",
+    "retry": "重试",
     "errorRetry": "发生错误，请重试。",
     "errorContact": "发生错误，请联系您的潜水中心。",
     "actionFailed": "{action}失败，请重试。",
@@ -54,6 +55,7 @@
     "bookingClosed": "此预订已关闭，请联系您的潜水中心寻求帮助。",
     "formsIncomplete": "请在提交前完成以上所有步骤。",
     "linkExpired": "链接已过期。",
+    "linkExpiredTitle": "链接已过期",
     "copyFailed": "复制失败，请手动粘贴。",
     "duplicateRole": "您已拥有此角色。",
     "lastRole": "您必须至少拥有一个角色。",
@@ -77,6 +79,8 @@
     "roles": "角色"
   },
   "auth": {
+    "signUp": "注册",
+    "signIn": "登录",
     "creatingAccount": "创建中…",
     "forgotPassword": "忘记密码？",
     "noAccount": "没有账号？",
@@ -192,6 +196,7 @@
     "intro": "水肺潜水和自由潜水要求良好的身体和心理健康。某些健康状况在潜水时可能存在危险。本问卷用于确定您是否需要进行医生评估。请如实回答所有问题。",
     "pregnancy": "如果您已怀孕或正在备孕，请勿潜水。",
     "privacy": "您的回答将按照 PADI 医学标准与您的潜水中心共享。",
+    "privacyLink": "隐私政策",
     "q1": "我曾有肺部/呼吸系统、心脏、血液方面的问题，或曾被诊断为 COVID-19。",
     "q2": "我的年龄超过45岁。",
     "q3": "我在中等强度运动中感到困难（步行1.6公里/1英里用时14分钟），或无法不休息地游泳200米。",

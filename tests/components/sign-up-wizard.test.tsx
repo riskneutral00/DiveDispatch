@@ -124,7 +124,7 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
     expect(queryByText('Start over')).toBeNull()
   })
 
-  it('redirects fully completed users to dashboard', () => {
+  it('redirects fully completed users to /dashboard (proxy resolves)', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
       onboardingComplete: true,
@@ -134,10 +134,10 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
     mockUserRoles = [{ role: 'DiveCenter' }]
 
     render(<SignUpPage />)
-    expect(mockReplace).toHaveBeenCalledWith('/deep-blue-diving/dive-center')
+    expect(mockReplace).toHaveBeenCalledWith('/dashboard')
   })
 
-  it('redirects partial users (role set, onboarding not complete) to dashboard — no /onboarding detour', () => {
+  it('redirects partial users (role set, onboarding not complete) to /dashboard — no /onboarding detour', () => {
     mockConvexAuth.mockReturnValue({ isLoading: false, isAuthenticated: true })
     mockUserMe = {
       onboardingComplete: undefined,
@@ -147,7 +147,7 @@ describe('Sign-up wizard (2-step: Clerk + Role)', () => {
     mockUserRoles = [{ role: 'DiveCenter' }]
 
     render(<SignUpPage />)
-    expect(mockReplace).toHaveBeenCalledWith('/mike-smith/dive-center')
+    expect(mockReplace).toHaveBeenCalledWith('/dashboard')
     expect(mockReplace).not.toHaveBeenCalledWith('/onboarding')
   })
 
