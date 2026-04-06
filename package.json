@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "bash scripts/dev-auto.sh",
+    "dev:port": "next dev",
     "build": "next build",
     "analyze": "ANALYZE=true next build",
     "start": "next start",
@@ -20,6 +21,7 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "i18n:verify": "node scripts/verify-i18n-keys.mjs",
+    "i18n:check-usage": "node scripts/verify-i18n-usage.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:isolated": "bash scripts/e2e-preview.sh",
     "test:e2e:quick": "npm run seed:force && npx playwright test"
