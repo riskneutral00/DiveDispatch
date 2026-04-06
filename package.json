@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "car": "bash scripts/car.sh",
     "dev": "next dev",
     "build": "next build",
     "analyze": "ANALYZE=true next build",
@@ -12,7 +11,6 @@
     "seed": "npm run seed:force",
     "seed:force": "npx convex run seed:wipeAll && npx convex dev --once && npx convex run seed:seedAll && tsx scripts/seed-clerk.ts --force && npx convex run seed:seedVerify",
     "seed:clerk": "tsx scripts/seed-clerk.ts",
-    "seed:force:all": "npm run seed:force",
     "seed:verify": "npx convex run seed:seedVerify",
     "dev:token": "tsx scripts/get-signin-token.ts",
     "test": "vitest run --passWithNoTests",

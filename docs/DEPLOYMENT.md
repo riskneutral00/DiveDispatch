@@ -35,6 +35,8 @@ In the Convex dashboard, go to **Settings > Environment Variables** and set:
 |---|---|
 | `RESEND_API_KEY` | Your Resend API key (used by Convex actions to send email) |
 | `SITE_URL` | Your production URL, e.g. `https://divedispatch.com` (used to construct portal links in emails) |
+| `CLERK_WEBHOOK_SECRET` | Clerk webhook signing secret (`whsec_...`). Required for user sync — without it the webhook endpoint returns 500 on all Clerk events. Get it from Clerk dashboard > Webhooks. |
+| `MEDICAL_ENCRYPTION_KEY` | AES-256-GCM encryption key for medical questionnaire data. Required for all portal medical submissions. Generate with `openssl rand -base64 32`. |
 
 These are **not** set in `.env.local` — they live in the Convex dashboard because Convex actions run server-side on Convex infrastructure.
 

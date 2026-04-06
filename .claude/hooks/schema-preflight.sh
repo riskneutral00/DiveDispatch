@@ -13,7 +13,7 @@ esac
 
 cat <<'MSG'
 [Hook] Schema changed — pre-flight checklist:
- [ ] Seed data updated? (seed:seedAll populates new/changed tables)
+ [ ] Seed data updated? (npm run seed:force populates new/changed tables)
  [ ] E2E helpers updated? (tests/helpers/ reflects new schema)
  [ ] Queries audited? (any query touching this table still works)
  [ ] Validators updated? (convex/shared/ validators match new shape)

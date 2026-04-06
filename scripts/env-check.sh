@@ -67,6 +67,11 @@ check_var "RESEND_API_KEY" false
 check_var "NEXT_PUBLIC_CONVEX_SITE_URL" false
 
 echo ""
+echo "Convex dashboard env vars (verify manually in Convex dashboard):"
+echo "  [INFO] CLERK_WEBHOOK_SECRET — required for Clerk webhook user sync"
+echo "  [INFO] MEDICAL_ENCRYPTION_KEY — required for portal medical data encryption"
+
+echo ""
 echo "Integrity:"
 if [ -f ".clerk/.tmp/keyless.json" ]; then
   echo "  [WARN] .clerk/.tmp/keyless.json exists — Clerk auto-provisioned a keyless instance."
