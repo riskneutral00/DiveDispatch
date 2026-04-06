@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import ddDesign from "./src/lib/eslint/dd-design-rules.mjs";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -14,6 +15,18 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "convex/_generated/**",
   ]),
+  // ── DiveDispatch design system rules ──────────────────────────────────────
+  // Mirrors Claude Code hooks so enforcement works in ANY editor and CI.
+  {
+    files: ["src/**/*.tsx"],
+    plugins: { "dd-design": ddDesign },
+    rules: {
+      "dd-design/no-hardcoded-palette": "error",
+      "dd-design/no-off-ladder-spacing": "error",
+      "dd-design/no-bare-form-elements": "error",
+      "dd-design/no-inline-color": "error",
+    },
+  },
   // Profile form DRY enforcement — force barrel imports, prevent bypassing shared components
   {
     files: ["src/components/profiles/*-profile-form.tsx"],

@@ -81,12 +81,28 @@ if echo "$CLEAN" | sed -E 's/(sm|md|lg|xl):grid-cols-[0-9]+//g' | grep -qE 'grid
   exit 0
 fi
 
-# 6. Undersized touch targets on interactive elements
-if echo "$CLEAN" | grep -iE '(button|btn|input|select|textarea|clickable|interactive|trigger)' | grep -qE "\b(h-6|h-7|h-8)\b"; then
-  WARNINGS="${WARNINGS}[mobile] Small touch target (h-6/h-7/h-8) near interactive element — minimum h-10 (40px) for touch. "
+# 6. Undersized touch targets — BLOCKING
+# Raw <button> with small height classes and no min-h-[44px]
+if echo "$CLEAN" | grep -E '<button\b' | grep -vE 'min-h-\[4[4-9]' | grep -qE "\b(h-6|h-7|h-8|w-6|w-7|w-8)\b"; then
+  echo '{"decision":"block","reason":"Interactive <button> with h-6/h-7/h-8 detected — minimum touch target is 44px (min-h-[44px] min-w-[44px]). See design-system/MASTER.md Mobile-First Sizing. Add {/* design-ok */} to suppress."}'
+  exit 0
 fi
 
-# 7. Fixed pixel widths on interactive elements
+# 7. Off-ladder spacing values — BLOCKING
+# gap-0.5, gap-2.5, gap-5 are almost always wrong per MASTER.md spacing ladder
+if echo "$CLEAN" | grep -qE "\bgap-(0\.5|2\.5|5)\b"; then
+  MATCH=$(echo "$CLEAN" | grep -oE "\bgap-(0\.5|2\.5|5)\b" | head -1)
+  echo "{\"decision\":\"block\",\"reason\":\"Off-ladder spacing '${MATCH}' detected. Use the nearest ladder value: gap-1, gap-1.5, gap-2, gap-3, gap-4, gap-6, gap-8. See design-system/MASTER.md Spacing Scale. Add {/* design-ok */} to suppress.\"}"
+  exit 0
+fi
+
+# 8. Backward spacing (mobile tighter than desktop is wrong)
+if echo "$CLEAN" | grep -qE "\bp-(5|6|8)\s+(sm|md):p-(3|4)\b"; then
+  echo '{"decision":"block","reason":"Backward spacing detected (desktop padding smaller than mobile). Spacing must be additive — mobile is the tightest. See .claude/rules/spacing-tokens.md. Add {/* design-ok */} to suppress."}'
+  exit 0
+fi
+
+# 9. Fixed pixel widths on interactive elements (warning only)
 if echo "$CLEAN" | grep -iE '(button|btn|input|select)' | grep -qE "\bw-\[[0-9]+px\]"; then
   WARNINGS="${WARNINGS}[mobile] Fixed pixel width on interactive element — use w-full, percentage, or field-width classes. "
 fi
