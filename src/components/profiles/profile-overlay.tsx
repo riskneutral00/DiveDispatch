@@ -110,7 +110,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer flex-shrink-0"
+                className="px-4 py-1.5 rounded-full text-body font-medium transition-colors cursor-pointer flex-shrink-0"
                 style={{
                   background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
                   color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
@@ -141,7 +141,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                       const first = ROLE_BY_KEY[role.key]?.profileTabs?.[0]?.id ?? ''
                       setRoleProfileSection(first)
                     }}
-                    className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer flex-shrink-0"
+                    className="px-3 py-1.5 rounded-full text-label font-medium transition-colors cursor-pointer flex-shrink-0"
                     style={{
                       background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
                       color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',

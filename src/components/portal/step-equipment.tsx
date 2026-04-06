@@ -84,7 +84,7 @@ function SectionHeading({
         {children}
       </h3>
       {note && (
-        <span className="text-sm text-secondary">
+        <span className="text-body text-secondary">
           {note}
         </span>
       )}
@@ -301,7 +301,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Height</legend>
             <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
+              className="text-body font-medium block mb-1.5 text-secondary"
             >
               Height
             </label>
@@ -330,7 +330,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Weight</legend>
             <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
+              className="text-body font-medium block mb-1.5 text-secondary"
             >
               Weight
             </label>
@@ -359,7 +359,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Shoe Size</legend>
             <label
-              className="text-sm font-medium block mb-1.5 text-secondary"
+              className="text-body font-medium block mb-1.5 text-secondary"
             >
               Shoe Size
             </label>
@@ -390,7 +390,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       {/* ── Corrective Lenses ─────────────────────────────────────────── */}
       <Card padding="md">
         <SectionHeading>Prescription Lenses</SectionHeading>
-        <p className="text-sm mb-4 text-secondary">
+        <p className="text-body mb-4 text-secondary">
           Do you need prescription lenses in your mask?
         </p>
 
@@ -425,7 +425,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                     )}
                   </span>
                   <span
-                    className="text-sm font-medium text-primary"
+                    className="text-body font-medium text-primary"
                   >
                     {opt}
                   </span>
@@ -452,7 +452,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       {/* ── Equipment Rental ──────────────────────────────────────────── */}
       <Card padding="md">
         <SectionHeading>Equipment Rental</SectionHeading>
-        <p className="text-sm mb-4 text-secondary">
+        <p className="text-body mb-4 text-secondary">
           Select Own or Rent for each item.
         </p>
 
@@ -462,7 +462,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             return (
               <div key={key} className="flex items-center justify-between gap-4">
                 <span
-                  className="text-sm font-medium"
+                  className="text-body font-medium"
                   style={{
                     color: unanswered ? 'var(--color-destructive)' : 'var(--color-text-primary)',
                   }}

@@ -23,7 +23,7 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
     <div className="flex flex-col gap-6">
       <Card padding="md">
         <h3
-          className="text-sm font-semibold mb-3 text-primary font-heading"
+          className="text-body font-semibold mb-3 text-primary font-heading"
         >
           Equipment
         </h3>

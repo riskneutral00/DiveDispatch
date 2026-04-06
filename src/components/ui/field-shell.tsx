@@ -81,7 +81,7 @@ export function FieldShell({
       {error || !helperText ? (
         <FieldError id={errorId} message={error} />
       ) : (
-        <p id={helperId} className="h-4 text-xs text-secondary truncate">
+        <p id={helperId} className="h-4 text-label text-secondary truncate">
           {helperText}
         </p>
       )}

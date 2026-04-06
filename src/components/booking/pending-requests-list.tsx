@@ -81,14 +81,14 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="min-w-0 space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-primary truncate">
+                  <p className="text-body font-medium text-primary truncate">
                     {req.ownerName}
                   </p>
                   <Badge variant="warning" size="sm" dot>
                     Pending
                   </Badge>
                 </div>
-                <p className="text-xs text-secondary">
+                <p className="text-label text-secondary">
                   {req.activityType.map(courseLabel).join(', ')} · {dateLabel}
                 </p>
               </div>

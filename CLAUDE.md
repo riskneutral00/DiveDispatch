@@ -4,6 +4,21 @@ Multi-stakeholder booking platform for scuba diving. Operator stakeholder create
 
 > **Scope:** Permanent architectural decisions, non-obvious business logic invariants, and project constraints only. Workflow how-tos, skill pointers, dev commands, and process steps do NOT belong here — put those in skills.
 
+## Architecture Invariants (LAW — do not deviate)
+
+These are settled architectural decisions. Do not re-litigate. Do not propose alternatives.
+Read the relevant file BEFORE modifying code in that domain.
+
+- Schema: `Architecture/schema-invariants.md`
+- Queries: `Architecture/query-invariants.md`
+- Auth: `Architecture/auth-model.md`
+- Components + State: `Architecture/component-invariants.md`
+- FSM: `Architecture/fsm-invariants.md`
+- Errors: `Architecture/error-invariants.md`
+- Testing: `Architecture/testing-invariants.md`
+
+Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Industry-Alignment-Decisions.md`
+
 ## Product Knowledge
 
 All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`

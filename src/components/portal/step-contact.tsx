@@ -262,10 +262,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {showReturningBanner && returningCustomer && (
         <Card padding="md">
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-primary">
+            <p className="text-body font-medium text-primary">
               {t('returnBanner')}
             </p>
-            <p className="text-sm text-secondary">
+            <p className="text-body text-secondary">
               {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
             </p>
             <div className="flex gap-2">
@@ -281,7 +281,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       {returningConfirmed && (
-        <p className="text-sm px-1" style={{ color: 'var(--color-success)' }}>
+        <p className="text-body px-1" style={{ color: 'var(--color-success)' }}>
           {t('returnLoaded')}
         </p>
       )}

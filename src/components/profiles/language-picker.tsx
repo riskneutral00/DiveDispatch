@@ -113,10 +113,10 @@ export function LanguagePicker({
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
           placeholder={placeholderText}
-          className={`glass glass-field w-full text-sm py-2.5 pl-3 pr-12 text-primary focus:outline-none focus:ring-1 focus:ring-accent ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
+          className={`glass glass-field w-full text-body py-2.5 pl-3 pr-12 text-primary focus:outline-none focus:ring-1 focus:ring-accent ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
           style={{ caretColor: 'var(--color-accent)' }}
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs pointer-events-none text-secondary">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-label pointer-events-none text-secondary">
           {value.length} / {max}
         </span>
       </div>
@@ -127,7 +127,7 @@ export function LanguagePicker({
       >
         {searchResults !== null ? (
           searchResults.length === 0 ? (
-            <p className="text-xs px-1 text-secondary">No languages match &ldquo;{query}&rdquo;</p>
+            <p className="text-label px-1 text-secondary">No languages match &ldquo;{query}&rdquo;</p>
           ) : (
             renderFlagGroup(searchResults)
           )
@@ -169,7 +169,7 @@ export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
       aria-pressed={active}
       translate="no"
       className={isText
-        ? 'h-9 px-1.5 rounded-[var(--border-radius-button)] flex items-center justify-center text-xs font-medium leading-none transition-colors border outline-none glass-field'
+        ? 'h-9 px-1.5 rounded-[var(--border-radius-button)] flex items-center justify-center text-label font-medium leading-none transition-colors border outline-none glass-field'
         : FLAG_TILE}
       style={{
         background: active ? 'var(--color-primary-muted)' : 'transparent',

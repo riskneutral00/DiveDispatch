@@ -290,20 +290,20 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { if (pickerYear > currentYear - 1) setPickerYear((y) => y - 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Previous year"
                 >
                   <ChevronLeft size={14} />
                 </button>
                 <span
-                  className="text-sm font-semibold text-primary font-heading"
+                  className="text-body font-semibold text-primary font-heading"
                 >
                   {pickerYear}
                 </span>
                 <button
                   type="button"
                   onClick={() => { if (pickerYear < currentYear + 1) setPickerYear((y) => y + 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Next year"
                 >
                   <ChevronRight size={14} />
@@ -327,7 +327,7 @@ export function BookingCalendar({
                         jumpToDate(new Date(pickerYear, i, 1))
                         setExpanded(false)
                       }}
-                      className={`glass-container glass-surface transition rounded-[var(--border-radius-button)] py-1.5 text-sm font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
+                      className={`glass-container glass-surface transition rounded-[var(--border-radius-button)] py-1.5 text-body font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
                       style={{
                         color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
                         background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,
@@ -345,7 +345,7 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
-                  className="text-sm font-medium transition-opacity hover:opacity-80 min-h-[44px] min-w-[44px]"
+                  className="text-body font-medium transition-opacity hover:opacity-80 min-h-[44px] min-w-[44px]"
                   style={{ color: 'var(--color-primary)' }}
                 >
                   Today
@@ -363,7 +363,7 @@ export function BookingCalendar({
             {dayHeaders.map((day, i) => (
               <div
                 key={day}
-                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest" /* design-ok */
+                className="py-1.5 text-center text-[10px] sm:text-label font-bold uppercase tracking-widest" /* design-ok */
                 style={{
                   color:
                     i === todayCol

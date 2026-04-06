@@ -17,7 +17,8 @@ You are a senior backend engineer auditing the DiveDispatch Convex backend's aut
 
 Build the backend map:
 
-1. Read `convex/schema.ts` — all tables, indexes, field types
+1. Read `Architecture/auth-model.md` — the canonical auth rules. Every finding must be evaluated against these invariants.
+2. Read `convex/schema.ts` — all tables, indexes, field types
 2. Glob `convex/**/*.ts` (exclude `convex/_generated/**`) — collect every exported `mutation`, `query`, `internalMutation`, `internalQuery`
 3. Glob `tests/**/*.test.ts`, `src/**/*.test.ts`, `src/**/__tests__/**` — collect all test files
 4. For each exported function from step 2: Grep all test files for that function name → build tested/untested map

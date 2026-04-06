@@ -151,7 +151,7 @@ function DiffExpander({ diff }: { diff: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-xs transition-colors text-secondary min-h-[44px]"
+        className="flex items-center gap-1 text-label transition-colors text-secondary min-h-[44px]"
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {open ? 'Hide changes' : `${entries.length} field${entries.length > 1 ? 's' : ''} changed`}
@@ -161,7 +161,7 @@ function DiffExpander({ diff }: { diff: string }) {
           {entries.map(([field, change]) => (
             <div
               key={field}
-              className="flex items-baseline gap-2 text-xs font-mono px-2 py-1 rounded text-secondary bg-glass-bg"
+              className="flex items-baseline gap-2 text-label font-mono px-2 py-1 rounded-[var(--border-radius-button)] text-secondary bg-glass-bg"
             >
               <span className="font-semibold text-primary min-w-24">
                 {field}
@@ -220,17 +220,17 @@ function TimelineEntry({
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex items-baseline justify-between gap-2 flex-wrap">
           <span
-            className="text-sm font-medium text-primary"
+            className="text-body font-medium text-primary"
           >
             {actionLabel(entry.action)}
           </span>
           <span
-            className="text-xs flex-shrink-0 text-secondary"
+            className="text-label flex-shrink-0 text-secondary"
           >
             {timeAgo(entry.timestamp)}
           </span>
         </div>
-        <p className="text-xs mt-0.5 text-secondary">
+        <p className="text-label mt-0.5 text-secondary">
           {actorLabel(entry)}
           {entry.note && <> · {entry.note}</>}
         </p>
@@ -265,7 +265,7 @@ export function AuditTrailTable({ bookingId }: AuditTrailTableProps) {
 
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-secondary">
+      <p className="text-body text-secondary">
         No activity recorded yet.
       </p>
     )

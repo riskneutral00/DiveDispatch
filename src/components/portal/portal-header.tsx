@@ -29,7 +29,7 @@ export function PortalHeader({
       {/* Header */}
       <header className="text-center space-y-2">
         <p
-          className="text-sm font-medium uppercase tracking-widest text-secondary"
+          className="text-body font-medium uppercase tracking-widest text-secondary"
         >
           {operatorName}
         </p>
@@ -38,7 +38,7 @@ export function PortalHeader({
         >
           {t('welcome', { name: customerName })}
         </h1>
-        <p className="text-sm text-secondary">
+        <p className="text-body text-secondary">
           {t('subtitle')}
         </p>
       </header>
@@ -54,7 +54,7 @@ export function PortalHeader({
             ))}
           </div>
           <div
-            className="flex flex-col gap-1.5 text-sm text-secondary"
+            className="flex flex-col gap-1.5 text-body text-secondary"
           >
             <div className="flex items-center gap-2">
               <MapPin size={14} />

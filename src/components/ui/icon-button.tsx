@@ -8,31 +8,39 @@ const SIZE_CLASS = {
 } as const
 
 export type IconButtonSize = keyof typeof SIZE_CLASS
+export type IconButtonVariant = 'glass' | 'ghost'
 
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   /** Lucide icon or similar */
   children: ReactNode
   size?: IconButtonSize
+  variant?: IconButtonVariant
 }
 
 /**
- * Circular glass control used for theme, background, and compact toggles in the shell header.
+ * Tap-target button for icon-only actions. 44px minimum touch target enforced.
+ * - glass (default): glass background + border, used in shell header
+ * - ghost: transparent, no background/border, used inline in content
  */
 export function IconButton({
   children,
   className = '',
   size = 'md',
+  variant = 'glass',
   type = 'button',
   ...rest
 }: IconButtonProps) {
+  const isGlass = variant === 'glass'
   return (
     <button
       type={type}
-      className={`flex items-center justify-center cursor-pointer ${SIZE_CLASS[size]} rounded-full transition-all text-secondary ${className}`.trim()}
-      style={{
+      className={`flex items-center justify-center cursor-pointer ${SIZE_CLASS[size]} rounded-full transition-all text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] ${className}`.trim()}
+      style={isGlass ? {
         background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
+        transitionDuration: 'var(--transition-speed)',
+      } : {
         transitionDuration: 'var(--transition-speed)',
       }}
       {...rest}

@@ -53,6 +53,12 @@ Capture: total spec count, pass count, fail count, duration.
 
 ---
 
+## Phase 1.5 — Read Testing Invariants
+
+Read `Architecture/testing-invariants.md` — the canonical testing rules. Use these as the quality criteria for Phase 2 scanning. Violations of these rules are findings.
+
+---
+
 ## Phase 2 — Test Quality Scan
 
 Scan all files matching `tests/**/*.test.ts`, `tests/**/*.test.tsx`, `e2e/**/*.spec.ts`.

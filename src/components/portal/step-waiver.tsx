@@ -54,7 +54,7 @@ const todayLocal = () => toISODateString(new Date())
 function LegalBlock({ text }: { text: string }) {
   return (
     <div
-      className="rounded-theme p-3 text-sm leading-relaxed overflow-y-auto text-secondary glass"
+      className="rounded-theme p-3 text-body leading-relaxed overflow-y-auto text-secondary glass"
       style={{ maxHeight: 140, whiteSpace: 'pre-wrap' }}
     >
       {text}
@@ -164,7 +164,7 @@ export function StepWaiver({
     })
   }
 
-  const labelClass = 'text-sm font-medium'
+  const labelClass = 'text-body font-medium'
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -183,7 +183,7 @@ export function StepWaiver({
               PADI Member / Store / Resort Name
             </p>
             <p
-              className="mt-1 text-sm font-medium text-primary"
+              className="mt-1 text-body font-medium text-primary"
             >
               {operatorName}
             </p>
@@ -202,7 +202,7 @@ export function StepWaiver({
             Release of Liability / Assumption of Risk
           </h2>
 
-          <p className="text-sm text-secondary">
+          <p className="text-body text-secondary">
             {tPortal('agreeTo', { name: participantName })}
           </p>
 
@@ -213,7 +213,7 @@ export function StepWaiver({
           {/* Acknowledgment checkbox */}
           <Checkbox
             label={
-              <span className="text-sm leading-snug text-secondary">
+              <span className="text-body leading-snug text-secondary">
                 {tWaiver('ackCheckbox')}
               </span>
             }
@@ -235,7 +235,7 @@ export function StepWaiver({
           <h2 className="text-base font-semibold font-heading">
             Diver Accident Insurance
           </h2>
-          <p className="text-sm text-secondary">
+          <p className="text-body text-secondary">
             Do you have diver accident insurance?
           </p>
           <div className="flex gap-6">
@@ -254,7 +254,7 @@ export function StepWaiver({
                   style={{ accentColor: 'var(--color-primary)' }}
                 />
                 <span
-                  className="text-sm capitalize text-primary"
+                  className="text-body capitalize text-primary"
                 >
                   {val === 'yes' ? tCommon('yes') : tCommon('no')}
                 </span>
@@ -318,7 +318,7 @@ export function StepWaiver({
               <h2 className="text-base font-semibold font-heading">
                 Parent / Guardian Signature
               </h2>
-              <p className="text-sm mt-1 text-secondary">
+              <p className="text-body mt-1 text-secondary">
                 {tPortal('guardianReason')}
               </p>
             </div>

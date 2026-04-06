@@ -208,6 +208,12 @@
           },
           {
             "type": "command",
+            "command": "bash .claude/hooks/type-scale-enforcement.sh",
+            "timeout": 5,
+            "statusMessage": "Checking type scale tokens…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/route-component-enforcement.sh",
             "timeout": 5,
             "statusMessage": "Checking route page components…"

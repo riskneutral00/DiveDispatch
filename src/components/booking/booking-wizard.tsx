@@ -264,7 +264,7 @@ export function BookingWizard({
             Send Link
           </Button>
           <p
-            className="text-xs mt-2 text-secondary"
+            className="text-label mt-2 text-secondary"
           >
             {t("preparePortalHint")}
           </p>
@@ -275,7 +275,7 @@ export function BookingWizard({
     return (
       <div className="mt-4 space-y-2">
         <p
-          className="text-xs font-medium text-secondary"
+          className="text-label font-medium text-secondary"
         >
           Portal link delivery
         </p>
@@ -350,7 +350,7 @@ export function BookingWizard({
                   {t("editConfirmTitle")}
                 </h2>
                 <p
-                  className="text-sm mt-1 text-secondary"
+                  className="text-body mt-1 text-secondary"
                 >
                   {t("editConfirmBody")}
                 </p>
@@ -414,7 +414,7 @@ export function BookingWizard({
             </Button>
           </div>
           {bookingRef && (
-            <p className="text-xs font-mono mt-1 text-secondary">
+            <p className="text-label font-mono mt-1 text-secondary">
               {bookingRef}
             </p>
           )}
@@ -422,7 +422,7 @@ export function BookingWizard({
       )}
 
       {isOverlay && bookingRef && (
-        <p className="text-xs font-mono mb-3 text-secondary">
+        <p className="text-label font-mono mb-3 text-secondary">
           {bookingRef}
         </p>
       )}
@@ -435,7 +435,7 @@ export function BookingWizard({
         <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
       )}
       {autoSaveError && !saveError && !isReviewStep && (
-        <p className="mt-3 text-xs text-secondary">
+        <p className="mt-3 text-label text-secondary">
           {autoSaveError}
         </p>
       )}

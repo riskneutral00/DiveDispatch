@@ -79,10 +79,10 @@ function CustomerTable({
                   .join('')}
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-medium truncate text-primary">
+                <p className="text-body font-medium truncate text-primary">
                   {diver.name}
                 </p>
-                <p className="text-xs text-secondary">
+                <p className="text-label text-secondary">
                   {diver.activityType.map(courseLabel).join(', ')}
                 </p>
               </div>
@@ -122,7 +122,7 @@ function StakeholderList({
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium truncate text-primary">
+                <p className="text-body font-medium truncate text-primary">
                   {s.name}
                 </p>
                 {s.isExternal && (
@@ -131,7 +131,7 @@ function StakeholderList({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-secondary">
+              <p className="text-label text-secondary">
                 {s.role}
                 {s.displaySub && <> · {s.displaySub}</>}
               </p>
@@ -210,13 +210,13 @@ function PortalLinkSection({
       <div className="space-y-2">
         <div
           data-testid="portal-link-url"
-          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-theme border font-mono break-all text-secondary bg-glass-bg border-glass-border`}
+          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-label' : 'p-3 text-body'} rounded-theme border font-mono break-all text-secondary bg-glass-bg border-glass-border`}
         >
           <ExternalLink size={iconSize} className="flex-shrink-0" />
           <span className={`flex-1${compact ? ' truncate' : ''}`}>{portalUrl}</span>
         </div>
         {!compact && isExpired && (
-          <p className="text-xs text-destructive">
+          <p className="text-label text-destructive">
             {tErrors('linkExpired')}
           </p>
         )}
@@ -238,7 +238,7 @@ function PortalLinkSection({
       <form onSubmit={handleCreate} className="space-y-3">
         <div>
           <label
-            className="text-xs font-medium block mb-1 text-secondary"
+            className="text-label font-medium block mb-1 text-secondary"
           >
             Customer name
           </label>
@@ -250,7 +250,7 @@ function PortalLinkSection({
         </div>
         <div>
           <label
-            className="text-xs font-medium block mb-1 text-secondary"
+            className="text-label font-medium block mb-1 text-secondary"
           >
             Customer email
           </label>
@@ -262,7 +262,7 @@ function PortalLinkSection({
           />
         </div>
         {createError && (
-          <p className="text-xs text-destructive">
+          <p className="text-label text-destructive">
             {createError}
           </p>
         )}
@@ -366,7 +366,7 @@ function ScheduleSection({ booking }: { booking: BookingDetail }) {
     <>
       <FormSectionHeader label="Schedule" />
       {booking.sessions.length === 0 ? (
-        <p className="text-sm text-secondary">No sessions scheduled.</p>
+        <p className="text-body text-secondary">No sessions scheduled.</p>
       ) : (
         <SessionTimeline sessions={booking.sessions} />
       )}

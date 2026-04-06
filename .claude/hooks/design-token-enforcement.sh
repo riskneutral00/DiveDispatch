@@ -62,10 +62,23 @@ esac
 
 WARNINGS=""
 
-# 3. Hardcoded border-radius (excluding rounded-full which is valid for avatars)
+# 3. Hardcoded border-radius — BLOCKING (promoted from warning)
 if echo "$CLEAN" | grep -qE "\brounded-(sm|md|lg|xl|2xl|3xl|none)\b"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\brounded-(sm|md|lg|xl|2xl|3xl|none)\b" | head -1)
-  WARNINGS="${WARNINGS}[radius] '${MATCH}' — use rounded-theme or rounded-[var(--border-radius-button)]. "
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded radius '${MATCH}' detected. Use rounded-theme (containers) or rounded-[var(--border-radius-button)] (buttons/inputs). rounded-full is OK for pills/avatars. Add {/* design-ok */} to suppress.\"}"
+  exit 0
+fi
+
+# 3b. Bare 'rounded' (4px) without token — WARNING (migrate to rounded-[var(--border-radius-button)])
+if echo "$CLEAN" | grep -qE '\brounded\b' | grep -qvE 'rounded-'; then
+  COUNT=$(echo "$CLEAN" | grep -oE '\brounded\b' | grep -v 'rounded-' | wc -l | tr -d ' ')
+  WARNINGS="${WARNINGS}[radius] bare 'rounded' (${COUNT}x) — use rounded-[var(--border-radius-button)] for skin-compatible radius. "
+fi
+
+# 3c. Hardcoded transition durations — WARNING (migrate to --transition-speed token)
+if echo "$CLEAN" | grep -qE '\bduration-(75|100|150|200|300|500|700|1000)\b'; then
+  MATCH=$(echo "$CLEAN" | grep -oE '\bduration-[0-9]+\b' | head -1)
+  WARNINGS="${WARNINGS}[motion] '${MATCH}' — use var(--transition-speed) for skin-compatible transitions. "
 fi
 
 # 4. Hardcoded z-index (raw numbers instead of CSS variable scale)

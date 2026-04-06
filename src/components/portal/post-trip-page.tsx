@@ -22,7 +22,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
         </div>
 
         <p
-          className="text-sm font-medium uppercase tracking-widest text-secondary mb-2"
+          className="text-body font-medium uppercase tracking-widest text-secondary mb-2"
         >
           {operatorName}
         </p>
@@ -33,11 +33,11 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
           {t('title')}
         </h1>
 
-        <p className="text-sm leading-relaxed mb-6 text-secondary">
+        <p className="text-body leading-relaxed mb-6 text-secondary">
           {t('subtitle')}
         </p>
 
-        <p className="text-sm font-medium mb-4 text-primary">
+        <p className="text-body font-medium mb-4 text-primary">
           {t('reviewPrompt')}
         </p>
 
@@ -67,7 +67,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
           </a>
         </div>
 
-        <p className="text-sm text-secondary mb-3">
+        <p className="text-body text-secondary mb-3">
           {t('signupPrompt')}
         </p>
 

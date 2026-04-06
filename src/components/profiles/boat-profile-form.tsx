@@ -296,7 +296,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
   return (
     <ItemCard onRemove={onRemove} canRemove={canRemove} aria-label={`Remove vessel ${fi + 1}`}>
       <div className="mb-4">
-        <span className="text-sm font-medium text-primary">
+        <span className="text-body font-medium text-primary">
           Vessel {fi + 1}{vessel.boatName ? ` — ${vessel.boatName}` : ''}
         </span>
       </div>
@@ -330,14 +330,14 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         <FormSectionHeader
           label="Routes"
           action={
-            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 min-h-[44px] rounded border transition-opacity hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
+            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-label px-2 py-1 min-h-[44px] rounded-[var(--border-radius-button)] border transition-opacity hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
               <Plus size={11} />
               Add Route
             </button>
           }
         />
         {vessel.routes.length === 0 && (
-          <p className="text-xs text-secondary">
+          <p className="text-label text-secondary">
             No routes added. Routes define which dive sites this vessel visits and on which days.
           </p>
         )}
@@ -371,7 +371,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
         {DAYS.map((d) => {
           const active = route.daysOfWeek.includes(d.value)
           return (
-            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-xs rounded border transition-all min-h-[44px] min-w-[44px]"
+            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-label rounded-[var(--border-radius-button)] border transition-all min-h-[44px] min-w-[44px]"
               style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}>
               {d.label}
             </button>

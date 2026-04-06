@@ -64,7 +64,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
             id={`tab-${tab.id}`}
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(tab.id)}
-            className="px-4 h-10 text-sm whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none"
+            className="px-4 h-10 text-body whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none"
             style={{
               color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               fontWeight: isActive ? 600 : 400,

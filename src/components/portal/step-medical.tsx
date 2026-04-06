@@ -100,7 +100,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
             className="w-12 h-12 text-warning"
             aria-hidden="true"
           />
-          <h2 className="text-xl font-semibold text-primary">
+          <h2 className="text-card-title font-heading font-semibold text-primary">
             {tPortal('hardBlockTitle')}
           </h2>
           <p className="text-secondary">
@@ -125,17 +125,17 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
     >
       {/* Intro text — verbatim from PADI 10346 */}
       <Card padding="md">
-        <p className="text-sm leading-relaxed text-primary">
+        <p className="text-body leading-relaxed text-primary">
           {t('intro')}
         </p>
-        <p className="mt-3 text-sm text-secondary">
+        <p className="mt-3 text-body text-secondary">
           {t('pregnancy')}
         </p>
       </Card>
 
       {/* Privacy consent acknowledgment — informational, not a gate */}
       <Card padding="sm">
-        <p className="text-xs leading-relaxed text-secondary">
+        <p className="text-label leading-relaxed text-secondary">
           {t('privacy')}{' '}
           <a
             href="/privacy"
@@ -158,7 +158,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
           return (
             <Card key={key} padding="md">
               <div className="flex flex-col gap-3">
-                <p className="text-sm leading-relaxed text-primary">
+                <p className="text-body leading-relaxed text-primary">
                   <span
                     className="font-semibold mr-1 text-secondary"
                   >
@@ -178,7 +178,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
-                    <span className="text-sm text-primary">
+                    <span className="text-body text-primary">
                       {tCommon('yes')}
                     </span>
                   </label>
@@ -193,7 +193,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
-                    <span className="text-sm text-primary">
+                    <span className="text-body text-primary">
                       {tCommon('no')}
                     </span>
                   </label>
@@ -212,7 +212,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
       {/* Participant statement — verbatim */}
       <Card padding="md">
-        <p className="text-sm leading-relaxed italic text-secondary">
+        <p className="text-body leading-relaxed italic text-secondary">
           &ldquo;{t('statement')}&rdquo;
         </p>
       </Card>

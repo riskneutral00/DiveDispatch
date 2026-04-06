@@ -11,6 +11,12 @@ user-invocable: true
 
 **Execute immediately.** No preamble.
 
+## Phase 0: Read Component Invariants
+
+Read `Architecture/component-invariants.md` — the canonical component + design token rules. Every finding must be evaluated against these invariants. Key checks: no raw interactive elements, all visual values through tokens, one component all roles, no className for visual properties.
+
+---
+
 ## Phase 1: Programmatic Layout Checks
 
 Run BEFORE any visual inspection. Check the target page/component for:

@@ -203,7 +203,7 @@ export function ProfileTab() {
             className="field-email"
           />
         </div>
-        <p className="text-sm font-medium text-secondary">Date of birth</p>
+        <p className="text-body font-medium text-secondary">Date of birth</p>
         <div className="flex flex-wrap gap-3">
           <SimpleSelect
             label="Month"

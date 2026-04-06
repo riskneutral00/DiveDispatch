@@ -23,7 +23,7 @@ export function InstructorCardContent({ entry, slug, action }: InstructorCardCon
     <div className="flex-1 min-w-0 space-y-1">
       {/* Line 1: Name + action button */}
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium truncate text-primary">{entry?.name ?? slug}</p>
+        <p className="text-body font-medium truncate text-primary">{entry?.name ?? slug}</p>
         {action}
       </div>
 
@@ -34,7 +34,7 @@ export function InstructorCardContent({ entry, slug, action }: InstructorCardCon
             {entry.agencies?.map((a) => (
               <span
                 key={a}
-                className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
                 style={{
                   background: 'var(--color-glass-bg-elevated)',
                   color: 'var(--color-text-secondary)',
@@ -60,7 +60,7 @@ export function InstructorCardContent({ entry, slug, action }: InstructorCardCon
           {uniqueRatings.map((rating) => (
             <span
               key={rating}
-              className="text-xs px-1.5 py-0.5 rounded shrink-0"
+              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
               style={{
                 background: 'var(--color-glass-bg)',
                 color: 'var(--color-text-secondary)',

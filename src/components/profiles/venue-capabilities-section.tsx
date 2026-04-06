@@ -73,7 +73,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
       <div className="space-y-4">
         {venueType === 'diveSite' && (
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-secondary">
+            <span className="text-body font-medium text-secondary">
               {capabilitiesLabel}
             </span>
             <div className="flex flex-wrap gap-3">

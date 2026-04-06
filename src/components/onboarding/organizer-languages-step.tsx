@@ -144,10 +144,10 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                 onChange={setFocusedLanguages}
               />
               <div>
-                <p className="text-sm font-medium mb-1 text-secondary">
+                <p className="text-body font-medium mb-1 text-secondary">
                   Default Course Durations <span className="font-normal">(optional)</span>
                 </p>
-                <p className="text-xs mb-3 text-secondary">
+                <p className="text-label mb-3 text-secondary">
                   Used when creating bookings.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

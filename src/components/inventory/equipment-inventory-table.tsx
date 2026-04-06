@@ -130,7 +130,7 @@ export function EquipmentInventoryTable({
       ) : (
         <Card padding="none">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-primary">
+            <table className="w-full text-body text-primary">
               <thead>
                 <tr
                   style={{
@@ -178,7 +178,7 @@ export function EquipmentInventoryTable({
         title="Remove Item"
         size="sm"
       >
-        <p className="text-sm mb-4 text-primary">
+        <p className="text-body mb-4 text-primary">
           Remove{' '}
           <strong>
             {deleteTarget?.manufacturer ? `${deleteTarget.manufacturer} ` : ''}
@@ -389,7 +389,7 @@ function AddItemDialog({
             onChange={(e) => setIsPrescription(e.target.checked)}
             className="w-5 h-5 accent-[var(--color-primary)]"
           />
-          <label htmlFor="add-prescription" className="text-sm text-primary">
+          <label htmlFor="add-prescription" className="text-body text-primary">
             Prescription mask
           </label>
         </div>

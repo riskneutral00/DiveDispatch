@@ -184,7 +184,7 @@ export function SpecialtyField({
 
   return (
     <div className="relative flex flex-col gap-1.5 min-w-0">
-      <p className="text-sm font-medium text-secondary">
+      <p className="text-body font-medium text-secondary">
         Default Specialties<span className="text-destructive"> *</span>
         <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
       </p>
@@ -200,7 +200,7 @@ export function SpecialtyField({
           <span
             key={code}
             ref={(el) => registerPill(i, el)}
-            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-transparent"
+            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium border border-transparent"
           >
             {label}
           </span>
@@ -209,7 +209,7 @@ export function SpecialtyField({
           <span
             key={code}
             ref={(el) => registerMandatory(i, el)}
-            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-transparent"
+            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium border border-transparent"
           >
             {label}
           </span>
@@ -270,7 +270,7 @@ interface SpecialtyPillProps {
 function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProps) {
   return (
     <label
-      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium transition-all ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       style={{
         background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
@@ -297,7 +297,7 @@ function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProp
 function MandatoryPill({ label }: { label: string }) {
   return (
     <span
-      className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium cursor-not-allowed"
+      className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium cursor-not-allowed"
       style={{
         background: 'var(--color-primary)',
         color: 'var(--color-text-on-primary)',

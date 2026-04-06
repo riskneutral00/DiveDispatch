@@ -109,7 +109,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           >
             Safety Information
           </h2>
-          <p className="text-sm text-secondary">
+          <p className="text-body text-secondary">
             All optional. Helps your dive center respond in emergencies.
           </p>
         </div>

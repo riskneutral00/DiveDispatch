@@ -178,7 +178,7 @@ function PreferredOperatorPicker({
   return (
     <Card padding="sm">
       <FormSectionHeader className="mb-4" label={t('preferredOperator')} />
-      <p className="text-sm mb-4 text-secondary">
+      <p className="text-body mb-4 text-secondary">
         {t('preferredOperatorDesc')}
       </p>
       <SimpleSelect
@@ -376,10 +376,10 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                         style={{ accentColor: 'var(--color-primary)' }}
                       />
                       <div>
-                        <p className="text-sm font-medium text-primary">
+                        <p className="text-body font-medium text-primary">
                           {label}
                         </p>
-                        <p className="text-xs mt-0.5 text-secondary">
+                        <p className="text-label mt-0.5 text-secondary">
                           {description}
                         </p>
                       </div>
@@ -396,12 +396,12 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                 <ProfileFormSectionDivider show />
                 <Card padding="sm">
                   <FormSectionHeader className="mb-4" label={tBooking('preferredResources')} />
-                  <label className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary">
+                  <label className="flex items-center gap-3 cursor-pointer select-none text-body text-primary">
                     {/* design-ok */}<input
                       type="checkbox"
                       checked={form.autoAssignPreferred}
                       onChange={(e) => setField('autoAssignPreferred', e.target.checked)}
-                      className="rounded"
+                      className="rounded-[var(--border-radius-button)]"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
                     <span>
@@ -425,13 +425,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                 ).map(({ key, label }) => (
                   <label
                     key={key}
-                    className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary"
+                    className="flex items-center gap-3 cursor-pointer select-none text-body text-primary"
                   >
                     {/* design-ok */}<input
                       type="checkbox"
                       checked={form[key]}
                       onChange={(e) => setField(key, e.target.checked)}
-                      className="rounded"
+                      className="rounded-[var(--border-radius-button)]"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
                     <span>{label}</span>

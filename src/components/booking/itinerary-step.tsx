@@ -169,7 +169,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
         {/* Start date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-sm font-medium text-secondary">
+          <label className="text-body font-medium text-secondary">
             Start date
           </label>
           <input /* design-ok: native date picker */
@@ -179,14 +179,14 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             onChange={(e) => handleStartDateChange(e.target.value)}
             onClick={(e) => e.currentTarget.showPicker()}
             data-testid="course-start-date"
-            className="glass glass-field w-full text-sm py-2.5 px-3 cursor-pointer text-primary"
+            className="glass glass-field w-full text-body py-2.5 px-3 cursor-pointer text-primary"
             style={{ caretColor: 'var(--color-accent)' }}
           />
         </div>
 
         {/* End date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-sm font-medium text-secondary">
+          <label className="text-body font-medium text-secondary">
             End date
           </label>
           <div className="flex gap-1 items-center">
@@ -196,7 +196,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               min={entry.dates[0]}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              className="glass glass-field flex-1 text-sm py-2.5 px-3 cursor-pointer text-primary"
+              className="glass glass-field flex-1 text-body py-2.5 px-3 cursor-pointer text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (
@@ -543,7 +543,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             label={
               <>
                 Same courses for all customers
-                <span className="text-xs px-1.5 py-0.5 rounded text-secondary" style={{ background: 'var(--color-glass-border)' }}>
+                <span className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] text-secondary" style={{ background: 'var(--color-glass-border)' }}>
                   Coming soon
                 </span>
               </>
@@ -560,12 +560,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         <div key={customer.id}>
           <div className="flex items-center justify-between mb-2">
             <h3
-              className="text-sm font-semibold text-primary font-heading"
+              className="text-body font-semibold text-primary font-heading"
             >
               {sameForAll && customers.length > 1 ? 'All customers' : customer.name}
             </h3>
             {sameForAll && customers.length > 1 && (
-              <span className="text-xs text-secondary">
+              <span className="text-label text-secondary">
                 <Copy size={10} className="inline mr-1" />
                 Applies to {customers.length} customers
               </span>
@@ -634,7 +634,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3
-              className="text-sm font-semibold text-primary font-heading"
+              className="text-body font-semibold text-primary font-heading"
             >
               Schedule ({days.length} day{days.length !== 1 ? 's' : ''})
             </h3>
@@ -684,7 +684,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
       {/* Empty state if no customers */}
       {customers.length === 0 && (
-        <p className="text-sm text-center py-6 text-secondary">
+        <p className="text-body text-center py-6 text-secondary">
           Add customers first.
         </p>
       )}

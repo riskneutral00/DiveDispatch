@@ -35,10 +35,10 @@ export function OrganizerStepCard({
   return (
     <Card padding="lg">
       <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1 text-primary">
+        <h2 className="text-card-title font-heading font-bold mb-1 text-primary">
           {title}
         </h2>
-        <p className="text-sm text-secondary">
+        <p className="text-body text-secondary">
           {subtitle}
         </p>
       </div>

@@ -193,7 +193,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
       {/* Default referral */}
       <div>
         <FormSectionHeader label="Default Referral" />
-        <p className="text-xs mt-2 text-secondary">
+        <p className="text-label mt-2 text-secondary">
           {form.defaultReferral
             ? 'Bookings cascade from your preferred operator. Change in Preferences → Resources → Operator.'
             : 'You create and manage bookings independently.'}

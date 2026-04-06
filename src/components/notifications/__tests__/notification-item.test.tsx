@@ -55,8 +55,9 @@ describe('NotificationItem', () => {
     )
 
     const deleteButton = screen.getByRole('button', { name: 'Delete notification' })
-    expect(deleteButton.className).toContain('min-h-[44px]')
-    expect(deleteButton.className).toContain('min-w-[44px]')
+    // IconButton uses w-11 h-11 (44px) for touch target
+    expect(deleteButton.className).toContain('w-11')
+    expect(deleteButton.className).toContain('h-11')
   })
 
   it('delete button centers its icon content', () => {

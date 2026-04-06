@@ -27,7 +27,7 @@ const MAX_PREFERRED_VENUES = 10
 const MAX_PREFERRED_BOATS = 10
 const MAX_PREFERRED_EQUIPMENT = 10
 const MAX_PREFERRED_COMPRESSORS = 10
-const chipBase = 'px-2 py-1 text-xs rounded-full border transition-colors cursor-pointer'
+const chipBase = 'px-2 py-1 text-label rounded-full border transition-colors cursor-pointer'
 
 const OVERLAY_LIST_HEIGHT = 380 // px — fixed so filters don't resize overlay
 const PAGE_SIZE = 10
@@ -41,7 +41,7 @@ const badgeStyle = {
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="ml-2 text-xs px-1.5 py-0.5 rounded shrink-0 text-secondary" style={badgeStyle}>
+    <span className="ml-2 text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 text-secondary" style={badgeStyle}>
       {children}
     </span>
   )
@@ -117,10 +117,10 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
                 key={entry.slug}
                 type="button"
                 onClick={() => add(entry.slug)}
-                className="w-full text-left px-3 py-2 text-sm transition-colors hover:opacity-80 text-primary"
+                className="w-full text-left px-3 py-2 text-body transition-colors hover:opacity-80 text-primary"
               >
                 <span className="font-medium">{entry.name}</span>
-                <span className="ml-2 text-xs text-secondary">
+                <span className="ml-2 text-label text-secondary">
                   {entry.placeName}
                 </span>
                 {renderBadge?.(entry)}
@@ -131,7 +131,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
       </div>
 
       {slugs.length === 0 ? (
-        <p className="text-sm text-secondary">
+        <p className="text-body text-secondary">
           No preferred {emptyNoun} added yet.
         </p>
       ) : (
@@ -142,19 +142,19 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
               <Card key={slug} padding="sm">
                 <div className="flex items-center gap-3">
                   <span
-                    className="text-xs font-bold w-5 text-center shrink-0 text-secondary"
+                    className="text-label font-bold w-5 text-center shrink-0 text-secondary"
                   >
                     {index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate text-primary">
+                      <p className="text-body font-medium truncate text-primary">
                         {entry?.name ?? slug}
                       </p>
                       {entry && renderBadge?.(entry)}
                     </div>
                     {entry?.placeName && (
-                      <p className="text-xs truncate text-secondary">
+                      <p className="text-label truncate text-secondary">
                         {entry.placeName}
                       </p>
                     )}
@@ -256,7 +256,7 @@ function InstructorFilterBar({
     <div className="space-y-2">
       {/* Agency chips */}
       <div className="flex flex-wrap gap-1.5 items-center">
-        <span className="text-xs text-secondary mr-1">Agency</span>
+        <span className="text-label text-secondary mr-1">Agency</span>
         {agencies.map((agency) => {
           const isActive = activeAgency === agency
           return (
@@ -275,7 +275,7 @@ function InstructorFilterBar({
             </button>
           )
         })}
-        <span className="ml-auto text-xs text-secondary">
+        <span className="ml-auto text-label text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
           {required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
         </span>
@@ -284,7 +284,7 @@ function InstructorFilterBar({
       {/* Specialties chips (visible only when agency selected) */}
       {activeAgency && specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-secondary mr-1">Specialties</span>
+          <span className="text-label text-secondary mr-1">Specialties</span>
           {specialties.map((spec) => {
             const isActive = activeSpecialties.has(spec)
             return (
@@ -308,7 +308,7 @@ function InstructorFilterBar({
 
       {/* Languages picker */}
       <div className="space-y-1">
-        <span className="text-xs text-secondary">Languages</span>
+        <span className="text-label text-secondary">Languages</span>
         <LanguagePicker
           value={activeLangs}
           onChange={onLangsChange}
@@ -600,7 +600,7 @@ export function PreferredInstructorList(props: ListProps) {
             Add Instructor
           </Button>
         </span>
-        <span className="text-xs text-secondary">
+        <span className="text-label text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
           {props.required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
         </span>
@@ -706,7 +706,7 @@ export function PreferredInstructorList(props: ListProps) {
                 >
                   <ChevronLeft size={14} />
                 </Button>
-                <span className="text-xs text-secondary">{page + 1} / {totalPages}</span>
+                <span className="text-label text-secondary">{page + 1} / {totalPages}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -790,7 +790,7 @@ function SortableOverlayRow({
           <GripVertical size={16} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate text-primary">{entry?.name ?? slug}</p>
+          <p className="text-body font-medium truncate text-primary">{entry?.name ?? slug}</p>
           {entry && <div className="mt-0.5">{renderBadge(entry)}</div>}
         </div>
         <Button variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label="Remove" className="shrink-0">
@@ -855,7 +855,7 @@ function PreferredOverlayList({
           <Plus size={14} className="mr-1" />
           {addButtonLabel}
         </Button>
-        <span className="text-xs text-secondary">
+        <span className="text-label text-secondary">
           {slugs.length}/{maxItems}
           {required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
         </span>
@@ -919,16 +919,16 @@ function PreferredOverlayList({
                     type="button"
                     onClick={() => add(entry.slug)}
                     disabled={atMax}
-                    className="w-full text-left px-3 py-2.5 text-sm transition-colors hover:opacity-80 text-primary border-b last:border-b-0"
+                    className="w-full text-left px-3 py-2.5 text-body transition-colors hover:opacity-80 text-primary border-b last:border-b-0"
                     style={{ borderColor: 'var(--color-glass-border)' }}
                   >
                     <span className="font-medium">{entry.name}</span>
-                    <span className="ml-2 text-xs text-secondary">{entry.placeName}</span>
+                    <span className="ml-2 text-label text-secondary">{entry.placeName}</span>
                     <div className="mt-0.5">{renderBadge(entry)}</div>
                   </button>
                 ))
               ) : (
-                <p className="text-sm text-secondary py-6 px-3">{noResultsText}</p>
+                <p className="text-body text-secondary py-6 px-3">{noResultsText}</p>
               )}
             </div>
             {totalPages > 1 && (
@@ -939,7 +939,7 @@ function PreferredOverlayList({
                 <Button variant="ghost" size="sm" type="button" onClick={() => setPage((p) => p - 1)} disabled={safePage === 0} aria-label="Previous page">
                   <ChevronLeft size={14} />
                 </Button>
-                <span className="text-xs text-secondary">{safePage + 1} / {totalPages}</span>
+                <span className="text-label text-secondary">{safePage + 1} / {totalPages}</span>
                 <Button variant="ghost" size="sm" type="button" onClick={() => setPage((p) => p + 1)} disabled={safePage >= totalPages - 1} aria-label="Next page">
                   <ChevronRight size={14} />
                 </Button>

@@ -78,7 +78,7 @@ export function AddCustomerDialog({
             />
             <div className="flex flex-col gap-2">
               <p
-                className="text-sm font-medium text-secondary"
+                className="text-body font-medium text-secondary"
               >
                 Contact (optional)
               </p>

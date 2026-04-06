@@ -37,7 +37,7 @@ function StepRow({ label, required, complete }: StepRowProps) {
     <div className="flex items-center gap-3">
       {icon}
       <span
-        className="text-sm flex-1"
+        className="text-body flex-1"
         style={{
           color: complete ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
           opacity: !required && !complete ? 0.5 : 1,
@@ -45,13 +45,13 @@ function StepRow({ label, required, complete }: StepRowProps) {
       >
         {label}
         {!required && (
-          <span className="text-xs ml-1 text-secondary">
+          <span className="text-label ml-1 text-secondary">
             ({t('notRequired')})
           </span>
         )}
       </span>
       {complete && (
-        <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>
+        <span className="text-label font-medium" style={{ color: 'var(--color-success)' }}>
           {t('done')}
         </span>
       )}
@@ -77,14 +77,14 @@ export function PortalProgressCard({
     <div className="space-y-3">
       {/* Overall status */}
       <div className="flex items-center justify-between">
-        <span className="text-sm text-secondary">
+        <span className="text-body text-secondary">
           {totalProfiles > 0
             ? tPortal('submitted', { count: String(submittedCount), total: String(totalProfiles) })
             : tPortal('noSubmissions')}
         </span>
         {customerFormComplete && (
           <span
-            className="text-xs font-semibold"
+            className="text-label font-semibold"
             style={{ color: 'var(--color-success)' }}
           >
             {tCommon('complete')}
@@ -107,14 +107,14 @@ export function PortalProgressCard({
             {customerProfiles.map((profile, i) => {
               const submitted = profile.submittedAt != null
               return (
-                <div key={profile._id} className="flex items-center gap-2 text-sm">
+                <div key={profile._id} className="flex items-center gap-2 text-body">
                   {submitted ? (
                     <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
                   ) : (
                     <Circle className="text-secondary" size={14} />
                   )}
                   <span className="text-primary">{tPortal('diver', { number: String(i + 1) })}</span>
-                  <span className="text-xs text-secondary">
+                  <span className="text-label text-secondary">
                     {submitted
                       ? tPortal('submittedOn', { date: new Date(profile.submittedAt!).toLocaleDateString() })
                       : profile.waiverSignedAt

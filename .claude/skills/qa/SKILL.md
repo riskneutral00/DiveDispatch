@@ -34,6 +34,12 @@ When `--from-assessment` is used:
 
 ---
 
+## Phase 0.5 — Read Testing Invariants
+
+Read `Architecture/testing-invariants.md` — the canonical testing rules. Generated tests MUST comply with these rules: real Convex contexts via `makeT()`, use `seedFixture.ts` for shared setup, time tests use `vi.setSystemTime`, test names are domain propositions.
+
+---
+
 ## Phase 1 — Classify Changes
 
 ### 1a: Collect changed files

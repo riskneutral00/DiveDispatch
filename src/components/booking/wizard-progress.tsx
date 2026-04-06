@@ -27,7 +27,7 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
                 <div
                   className={cn(
                     'flex items-center justify-center w-8 h-8 rounded-full',
-                    'border-2 text-sm font-semibold transition-all',
+                    'border-2 text-body font-semibold transition-all',
                     'shrink-0',
                   )}
                   style={{
@@ -55,7 +55,7 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
                 </div>
 
                 <span
-                  className="text-xs font-medium hidden sm:block whitespace-nowrap"
+                  className="text-label font-medium hidden sm:block whitespace-nowrap"
                   style={{
                     color: isActive
                       ? 'var(--color-text-primary)'

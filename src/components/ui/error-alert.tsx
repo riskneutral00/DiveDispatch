@@ -6,7 +6,7 @@ interface ErrorAlertProps {
   children: ReactNode
   /** 'error' uses destructive color, 'warning' uses warning color. Default: 'error'. */
   variant?: 'error' | 'warning'
-  /** 'sm' uses text-xs with tighter padding. Default: 'md'. */
+  /** 'sm' uses text-label with tighter padding. Default: 'md'. */
   size?: 'sm' | 'md'
   /** Override the default AlertTriangle icon. */
   icon?: LucideIcon
@@ -20,7 +20,7 @@ interface ErrorAlertProps {
  * Consolidates the repeated pattern of AlertTriangle + styled div
  * found across booking, portal, and dialog components.
  */
-const sizeMap = { sm: 'text-xs py-2', md: 'text-body py-2.5' } as const
+const sizeMap = { sm: 'text-label py-2', md: 'text-body py-2.5' } as const
 
 export function ErrorAlert({
   children,

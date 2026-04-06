@@ -9,7 +9,7 @@ export function ProfileFormHeader({ isUpdate, roleName }: { isUpdate: boolean; r
       >
         {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
       </h1>
-      <p className="text-sm text-secondary">
+      <p className="text-body text-secondary">
         {isUpdate
           ? 'Keep your profile current so dive centers can find you.'
           : `Set up your ${roleName} profile to start receiving booking requests.`}

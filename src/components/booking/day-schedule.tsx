@@ -54,12 +54,12 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
       {/* Day header */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span
-          className="text-sm font-semibold text-primary font-heading"
+          className="text-body font-semibold text-primary font-heading"
         >
           Day {dayNumber}
         </span>
         <span
-          className="text-sm text-secondary"
+          className="text-body text-secondary"
         >
           {formatDisplayDate(date)}
         </span>
@@ -91,7 +91,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                   <Anchor size={14} style={{ color: 'var(--color-accent)' }} />
                 )}
                 <span
-                  className="text-xs font-medium text-primary"
+                  className="text-label font-medium text-primary"
                 >
                   {session.isConfinedDay
                     ? 'Pool / Confined'
@@ -100,7 +100,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                       : 'Boat / Open Water'}
                 </span>
                 <span
-                  className="flex items-center gap-1 text-xs text-secondary"
+                  className="flex items-center gap-1 text-label text-secondary"
                 >
                   <MapPin size={11} />
                   {session.deliveryLocation === 'BoatPier'
@@ -116,7 +116,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                   />
                 )}
                 <span
-                  className="text-xs text-secondary"
+                  className="text-label text-secondary"
                 >
                   {session.unitsRequested} diver{session.unitsRequested !== 1 ? 's' : ''}
                 </span>
@@ -159,7 +159,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                 {session.diveSlots.map((slot, si) => (
                   <span
                     key={si}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border text-secondary"
+                    className="inline-flex items-center gap-1 text-label px-2 py-0.5 rounded-full border text-secondary"
                     style={CHIP_STYLE}
                   >
                     <Waves size={10} />

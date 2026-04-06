@@ -6,7 +6,7 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Card, Button, Badge, EmptyState } from '@/components/ui'
+import { Card, Button, Badge, EmptyState, IconButton } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import { TERMINAL_STATUSES, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
@@ -74,14 +74,10 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
     <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
-        <button
-          onClick={() => router.back()}
-          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-colors text-secondary"
-          aria-label="Go back"
-        >
+        <IconButton variant="ghost" onClick={() => router.back()} aria-label="Go back">
           <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-xl font-semibold text-primary">
+        </IconButton>
+        <h1 className="text-page-title font-heading font-semibold text-primary">
           Booking Details
         </h1>
       </div>
@@ -96,7 +92,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
               </Badge>
               {booking.status === 'Draft' && ttlLabel && (
                 <span
-                  className="text-xs"
+                  className="text-label"
                   style={{
                     color:
                       ttlLabel === 'Expired'
@@ -108,10 +104,10 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
                 </span>
               )}
             </div>
-            <p className="text-sm font-medium mt-1 text-primary">
+            <p className="text-body font-medium mt-1 text-primary">
               {booking.activityType.map(courseLabel).join(', ')}
             </p>
-            <p className="text-sm text-secondary">
+            <p className="text-body text-secondary">
               {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
               {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
             </p>

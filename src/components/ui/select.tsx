@@ -80,7 +80,7 @@ const OptionRow = memo(function OptionRow({
         )}
       </span>
       {opt.languages && opt.languages.length > 0 && (
-        <LanguageFlags languages={opt.languages} className="text-sm flex-shrink-0" />
+        <LanguageFlags languages={opt.languages} className="text-body flex-shrink-0" />
       )}
     </li>
   )
@@ -154,7 +154,7 @@ function TierSection({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setShowAll(true) }}
-              className="w-full px-3 py-1.5 text-xs text-left text-accent"
+              className="w-full px-3 py-1.5 text-label text-left text-accent"
             >
               Show {hiddenCount} more…
             </button>
@@ -270,7 +270,7 @@ export function Select({
         <span className="flex items-center justify-between gap-2">
           <span className="truncate">{selectedOption?.label ?? placeholder}</span>
           {selectedOption?.languages && selectedOption.languages.length > 0 && (
-            <LanguageFlags languages={selectedOption.languages} className="text-sm flex-shrink-0" />
+            <LanguageFlags languages={selectedOption.languages} className="text-body flex-shrink-0" />
           )}
         </span>
         <ChevronDown

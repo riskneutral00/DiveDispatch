@@ -53,16 +53,16 @@ export function BookingQuickDetail({
             <div className="flex items-center gap-2">
               <Badge variant={statusVariant(booking.status)} size="md">{booking.status}</Badge>
               {booking.operatorName && (
-                <span className="text-xs text-secondary">
+                <span className="text-label text-secondary">
                   by {booking.operatorName}
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-body">
               <div>
                 <p
-                  className="text-xs font-semibold uppercase text-secondary"
+                  className="text-label font-semibold uppercase text-secondary"
                 >
                   Dates
                 </p>
@@ -73,7 +73,7 @@ export function BookingQuickDetail({
               </div>
               <div>
                 <p
-                  className="text-xs font-semibold uppercase text-secondary"
+                  className="text-label font-semibold uppercase text-secondary"
                 >
                   Customers
                 </p>
@@ -82,7 +82,7 @@ export function BookingQuickDetail({
               {booking.customerName && (
                 <div>
                   <p
-                    className="text-xs font-semibold uppercase text-secondary"
+                    className="text-label font-semibold uppercase text-secondary"
                   >
                     Lead Customer
                   </p>
@@ -92,7 +92,7 @@ export function BookingQuickDetail({
               {booking.instructorName && (
                 <div>
                   <p
-                    className="text-xs font-semibold uppercase text-secondary"
+                    className="text-label font-semibold uppercase text-secondary"
                   >
                     Instructor
                   </p>
@@ -102,7 +102,7 @@ export function BookingQuickDetail({
               {booking.boatName && (
                 <div>
                   <p
-                    className="text-xs font-semibold uppercase text-secondary"
+                    className="text-label font-semibold uppercase text-secondary"
                   >
                     Boat
                   </p>
@@ -129,7 +129,7 @@ export function BookingQuickDetail({
                   <button
                     type="button"
                     onClick={handleViewDetail}
-                    className="text-xs underline underline-offset-4 transition-opacity hover:opacity-70 text-secondary"
+                    className="text-label underline underline-offset-4 transition-opacity hover:opacity-70 text-secondary"
                     disabled={isLoading}
                   >
                     View Full Detail
@@ -154,7 +154,7 @@ export function BookingQuickDetail({
             </div>
 
             {error && (
-              <p className="text-xs text-center pt-1 text-[var(--color-status-cancelled)]">
+              <p className="text-label text-center pt-1 text-[var(--color-status-cancelled)]">
                 {error}
               </p>
             )}

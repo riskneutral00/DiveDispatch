@@ -28,7 +28,7 @@ export function Checkbox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
-        className="rounded"
+        className="rounded-[var(--border-radius-button)]"
         style={{ accentColor: 'var(--color-primary)' }}
       />
       <span>{label}</span>

@@ -285,7 +285,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                 blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
               }}
-              className="glass glass-field w-full text-sm py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
+              className="glass glass-field w-full text-body py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
@@ -323,7 +323,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                   aria-selected={isHighlighted}
                   aria-posinset={index + 1}
                   aria-setsize={data.length}
-                  className="px-3 py-2.5 text-sm cursor-pointer text-primary"
+                  className="px-3 py-2.5 text-body cursor-pointer text-primary"
                   style={{
                     background: isHighlighted
                       ? 'var(--color-glass-container-border)'
@@ -342,7 +342,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 >
                   <span className="font-medium">{s.structured_formatting.main_text}</span>
                   {s.structured_formatting.secondary_text && (
-                    <span className="ml-1.5 opacity-60 text-xs">
+                    <span className="ml-1.5 opacity-60 text-label">
                       {s.structured_formatting.secondary_text}
                     </span>
                   )}
@@ -393,7 +393,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
         <div className="flex items-center gap-2 min-w-0">
           <MapPin size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
           <span
-            className="text-sm truncate"
+            className="text-body truncate"
             style={{
               color: displayAddress
                 ? 'var(--color-text-primary)'
@@ -426,7 +426,7 @@ function LocationPickerGate(props: ModalInnerProps) {
       <div
         className="flex items-center justify-center h-full text-secondary"
       >
-        <span className="text-sm">{t('loading')}</span>
+        <span className="text-body">{t('loading')}</span>
       </div>
     )
   }
@@ -452,7 +452,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
       {label && (
         <label
           htmlFor={inputId}
-          className="text-sm font-medium text-secondary"
+          className="text-body font-medium text-secondary"
         >
           {label}
           {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
@@ -468,7 +468,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           id={inputId}
           type="button"
           onClick={onOpen}
-          className="glass glass-field w-full text-sm py-2.5 pl-9 pr-9 text-left truncate cursor-pointer"
+          className="glass glass-field w-full text-body py-2.5 pl-9 pr-9 text-left truncate cursor-pointer"
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
@@ -501,7 +501,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
         )}
       </div>
       {error && (
-        <p role="alert" className="text-sm" style={{ color: 'var(--color-destructive)' }}>
+        <p role="alert" className="text-body" style={{ color: 'var(--color-destructive)' }}>
           {error}
         </p>
       )}

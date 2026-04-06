@@ -18,7 +18,7 @@ export function StepIndicator({ steps, currentIndex }: StepIndicatorProps) {
             <div className="flex flex-col items-center gap-1">
               {/* Step circle */}
               <div
-                className="flex items-center justify-center w-7 h-7 rounded-full border text-xs font-semibold transition-all"
+                className="flex items-center justify-center w-7 h-7 rounded-full border text-label font-semibold transition-all"
                 style={{
                   background: isCompleted
                     ? 'var(--color-success)'
@@ -41,7 +41,7 @@ export function StepIndicator({ steps, currentIndex }: StepIndicatorProps) {
 
               {/* Step label */}
               <span
-                className="text-xs font-medium whitespace-nowrap"
+                className="text-label font-medium whitespace-nowrap"
                 style={{
                   color: isActive
                     ? 'var(--color-text-primary)'

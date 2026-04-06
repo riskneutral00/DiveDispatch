@@ -117,7 +117,7 @@ function BookingDetailContent({
           </Badge>
           {isDraft && ttlLabel && (
             <span
-              className={`text-xs ${ttlLabel === 'Expired' ? 'text-destructive' : 'text-secondary'}`}
+              className={`text-label ${ttlLabel === 'Expired' ? 'text-destructive' : 'text-secondary'}`}
             >
               {ttlLabel}
             </span>
@@ -126,11 +126,11 @@ function BookingDetailContent({
         <p className="text-base font-semibold text-primary">
           {booking.activityType.map(courseLabel).join(', ')}
         </p>
-        <p className="text-sm text-secondary">
+        <p className="text-body text-secondary">
           {formatDateRange(booking.startDate, booking.endDate)} ·{' '}
           {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
         </p>
-        <p className="text-xs text-secondary">
+        <p className="text-label text-secondary">
           Operator: {booking.operatorName}
         </p>
       </div>

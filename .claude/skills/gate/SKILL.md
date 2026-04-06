@@ -137,6 +137,20 @@ After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW 
 
 ## Phase 3: Invariant Sweep
 
+### Step 3a — Read canonical invariant files
+
+Read ALL architecture invariant files before scanning. These are LAW — violations are findings:
+
+- `Architecture/schema-invariants.md`
+- `Architecture/query-invariants.md`
+- `Architecture/auth-model.md`
+- `Architecture/component-invariants.md`
+- `Architecture/fsm-invariants.md`
+- `Architecture/error-invariants.md`
+- `Architecture/testing-invariants.md`
+
+### Step 3b — Scan for invariant violations
+
 Regardless of which skills ran, if ANY file in the `schema` or `backend` bucket changed:
 
 1. Run `git diff -U0` + `git diff --cached -U0` to get the minimal diff of `convex/` files.
@@ -147,8 +161,13 @@ Regardless of which skills ran, if ANY file in the `schema` or `backend` bucket 
 | 1: Exclusive overlap | `inventoryUnits`, `Exclusive`, `inventoryType`, `overlapping` |
 | 2: Pooled blocking | `pooledCount`, `decrement`, `availableCount`, `pooled` |
 | 3: Snapshot atomicity | `AvailabilitySnapshot` AND `Reservation` in same hunk |
+| 4: Direct status patch | `.patch(` + `status:` on bookings/reservations outside `bookings/status.ts` (fsm-invariants Rule 1) |
+| 5: Unbounded collect | `.collect()` without `.take(` on same chain (query-invariants Rule 1) |
+| 6: Raw interactive element | `<button`, `<input`, `<select`, `<textarea` in `src/app/` or `src/components/booking/` or `src/components/profiles/` (component-invariants Rule 1) |
+| 7: Error shape | `ConvexError` with `message:` instead of `reason:` (error-invariants Rule 1) |
+| 8: Auth bypass | `getAuthUser` in mutation files, `checkHasRole` or `assertOwnership` without `authorize()` (auth-model Rule 1) |
 
-3. If any match, add an INVARIANT CHECK entry to the verdict. These are review flags, not auto-blocks.
+3. If any match, add an INVARIANT CHECK entry to the verdict. Items 4-8 are hard blocks (CRITICAL), not informational.
 
 ---
 

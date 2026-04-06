@@ -34,9 +34,9 @@ export function AddRoleModal({
     >
       {error && (
         <div
-          className="px-3 py-2 mb-3 rounded-theme text-sm text-destructive"
+          className="px-3 py-2 mb-3 rounded-theme text-body text-destructive"
           style={{
-            background: 'color-mix(in srgb, var(--color-destructive) 15%, transparent)',
+            background: 'var(--color-destructive-muted)',
           }}
         >
           {error}
@@ -44,7 +44,7 @@ export function AddRoleModal({
       )}
 
       {availableRoles.length === 0 ? (
-        <p className="text-secondary text-center text-sm py-6">
+        <p className="text-secondary text-center text-body py-6">
           You already hold all roles.
         </p>
       ) : (

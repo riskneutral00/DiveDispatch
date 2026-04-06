@@ -27,14 +27,14 @@ export function ProfileFormLoading({
   const t = useTranslations('common')
   if (variant === 'plain') {
     return (
-      <p className={`text-sm text-secondary ${className}`.trim()}>{message ?? t('loading')}</p>
+      <p className={`text-body text-secondary ${className}`.trim()}>{message ?? t('loading')}</p>
     )
   }
 
   if (variant === 'pulse-text') {
     return (
       <div className={`flex items-center justify-center ${paddingClassName} ${className}`.trim()}>
-        <span className="text-sm animate-pulse text-secondary">
+        <span className="text-body animate-pulse text-secondary">
           {message ?? t('loading')}
         </span>
       </div>

@@ -11,7 +11,7 @@ export function ActionLink({ children, className = "", ...props }: ActionLinkPro
     <button
       type="button"
       className={cn(
-        "text-xs underline underline-offset-2 text-left transition-opacity hover:opacity-70 text-accent",
+        "text-label underline underline-offset-2 text-left transition-opacity hover:opacity-70 text-accent",
         className,
       )}
       {...props}

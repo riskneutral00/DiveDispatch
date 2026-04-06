@@ -10,7 +10,7 @@ export function ProfileIncompleteGuard({
 }: ProfileIncompleteGuardProps) {
   return (
     <Card padding="md">
-      <p className="text-sm text-secondary">{message}</p>
+      <p className="text-body text-secondary">{message}</p>
     </Card>
   )
 }

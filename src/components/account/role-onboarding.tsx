@@ -56,7 +56,7 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
 
   return (
     <Card padding="md">
-      <p className="text-sm text-secondary text-center">
+      <p className="text-body text-secondary text-center">
         Profile setup for <strong>{cfg?.label ?? role}</strong> is available from your dashboard.
       </p>
     </Card>
@@ -78,10 +78,10 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold text-primary mb-1">
+        <h2 className="text-card-title font-heading font-semibold text-primary mb-1">
           Set up your {config?.label ?? role} profile
         </h2>
-        <p className="text-xs text-secondary">
+        <p className="text-label text-secondary">
           Complete your profile details for this role. You can always finish later from your Roles tab.
         </p>
       </div>

@@ -17,6 +17,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { IconButton } from '@/components/ui'
 import type { IconName } from '@/lib/notifications/notification-config'
 import { getNotificationStyle } from '@/lib/notifications/notification-config'
 import { timeAgo } from '@/lib/utils/time-ago'
@@ -72,8 +73,8 @@ function LogisticsSection({ logistics }: { logistics: NotificationLogistics }) {
     >
       {rows.map(({ label, value }) => (
         <div key={label} className="contents">
-          <dt className="text-xs text-secondary whitespace-nowrap">{label}</dt>
-          <dd className="text-xs text-primary">{value}</dd>
+          <dt className="text-label text-secondary whitespace-nowrap">{label}</dt>
+          <dd className="text-label text-primary">{value}</dd>
         </div>
       ))}
     </dl>
@@ -85,11 +86,10 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
 
   return (
     <div
-      className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors"
-      style={{
-        background: isUnread ? 'var(--color-surface-elevated)' : 'transparent',
-        borderBottom: '1px solid var(--color-glass-border)',
-      }}
+      className={cn(
+        "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-glass-border",
+        isUnread ? 'bg-surface-elevated' : 'bg-transparent',
+      )}
     >
       <button
         onClick={() => onClick(notification._id)}
@@ -101,14 +101,14 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
 
         <div className="flex-1 min-w-0">
           <p
-            className={cn("text-sm leading-snug text-primary", isUnread ? 'font-semibold' : 'font-normal')}
+            className={cn("text-body leading-snug text-primary", isUnread ? 'font-semibold' : 'font-normal')}
           >
             {notification.message}
           </p>
           {notification.logistics && (
             <LogisticsSection logistics={notification.logistics} />
           )}
-          <p className="text-xs mt-0.5 text-secondary">
+          <p className="text-label mt-0.5 text-secondary">
             {timeAgo(notification.createdAt)}
           </p>
         </div>
@@ -116,22 +116,23 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
         {isUnread && (
           <div
             className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full"
-            style={{ background: 'var(--color-primary)' }}
+            style={{ background: 'var(--color-primary)' }} /* design-ok: --color-primary excluded from @theme inline */
             aria-hidden="true"
           />
         )}
       </button>
 
-      <button
+      <IconButton
+        variant="ghost"
         onClick={(e) => {
           e.stopPropagation()
           onDelete(notification._id)
         }}
-        className="flex-shrink-0 flex items-center justify-center min-h-[44px] min-w-[44px] rounded transition-opacity opacity-40 hover:opacity-100"
+        className="flex-shrink-0 opacity-40 hover:opacity-100"
         aria-label="Delete notification"
       >
         <Trash2 className="text-secondary" size={14} />
-      </button>
+      </IconButton>
     </div>
   )
 }

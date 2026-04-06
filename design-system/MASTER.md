@@ -80,7 +80,7 @@ These are computed from the base palette via `color-mix()` in globals.css:
 | Page title | 28px | 700 | -0.03em | `--font-size-page-title` |
 | Card title | 16px | 600 | -0.01em | `--font-size-card-title` |
 | Body | 14px | 400 | -0.01em | `--font-size-body` |
-| Label | 13px | 500 | -0.01em | `--font-size-label` |
+| Label | 12px | 500 | -0.01em | `--font-size-label` |
 | Section header | 11px | 600 | 0.08em + uppercase | `--font-size-section-header` |
 
 ### Dense Data Exception

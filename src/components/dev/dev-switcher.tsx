@@ -141,7 +141,7 @@ function DevSwitcherInner() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-[var(--z-dropdown)] flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg glass text-primary"
+        className="fixed bottom-4 right-4 z-[var(--z-dropdown)] flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-medium shadow-lg glass text-primary"
         style={{ transition: 'opacity var(--transition-speed)' }}
       >
         <Bug className="h-3.5 w-3.5" />
@@ -153,7 +153,7 @@ function DevSwitcherInner() {
         <div ref={panelRef} className="fixed bottom-12 right-4 z-[var(--z-dropdown)] w-80">
           <Card padding="none" overflow="hidden">
             <div
-              className="px-4 py-2 text-xs font-semibold border-b text-secondary"
+              className="px-4 py-2 text-label font-semibold border-b text-secondary"
               style={{ borderColor: 'var(--color-glass-border)' }}
             >
               Dev Switcher
@@ -196,7 +196,7 @@ function DevSwitcherInner() {
                       value={selectedSlug}
                       onChange={(e) => setSelected(config.key, e.target.value)}
                       disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary"
+                      className="flex-1 min-w-0 text-[11px] rounded-[var(--border-radius-button)] px-1 py-0.5 border text-primary"
                       style={{ background: 'var(--color-surface)',
                         borderColor: 'var(--color-glass-border)' }}
                     >
@@ -209,7 +209,7 @@ function DevSwitcherInner() {
                     <button
                       onClick={() => handleSwitch(selectedSlug)}
                       disabled={!!switching}
-                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded disabled:opacity-40 text-primary"
+                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-[var(--border-radius-button)] disabled:opacity-40 text-primary"
                       aria-label={`Switch to ${selectedSlug}`}
                     >
                       {isLoading ? (

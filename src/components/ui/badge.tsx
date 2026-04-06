@@ -49,7 +49,7 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
 };
 
 const sizeMap: Record<BadgeSize, string> = {
-  sm: "px-2 py-0.5 text-xs gap-1",
+  sm: "px-2 py-0.5 text-label gap-1",
   md: "px-2.5 py-1 text-body gap-1.5",
 };
 

@@ -19,7 +19,7 @@ export function ProfileCompletionPill({ percentage, onOpenOverlay }: ProfileComp
       aria-label={`${percentage}% complete`}
     >
       <span
-        className="text-xs font-semibold whitespace-nowrap"
+        className="text-label font-semibold whitespace-nowrap"
         style={{ color: 'var(--color-warning)' }}
       >
         Complete profile

@@ -62,7 +62,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
       <button
         aria-label="User menu"
         onClick={() => setOpen((o) => !o)}
-        className="w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-label font-bold flex-shrink-0"
         style={{
           background: "var(--color-primary)",
           color: "var(--color-text-on-primary)",
@@ -90,24 +90,24 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               className="px-3 py-2"
               style={{ borderBottom: "1px solid var(--color-glass-border)" }}
             >
-              <p className="text-sm font-medium truncate leading-tight text-primary">
+              <p className="text-body font-medium truncate leading-tight text-primary">
                 {displayName}
               </p>
-              <p className={`text-xs truncate leading-tight mt-0.5 text-secondary h-4 ${subLabel ? "opacity-100" : "opacity-0"}`}>
+              <p className={`text-label truncate leading-tight mt-0.5 text-secondary h-4 ${subLabel ? "opacity-100" : "opacity-0"}`}>
                 {subLabel ?? "\u00A0"}
               </p>
             </div>
 
             <button
               onClick={() => handleMenuAction("profile")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
             >
               <User size={14} />
               {tNav("profile")}
             </button>
             <button
               onClick={() => handleMenuAction(`role:${roleSlug}`)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
             >
               <Settings size={14} />
               {tNav("preferences")}
@@ -124,7 +124,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
                     <button
                       key={role.key}
                       onClick={() => handleMenuAction(`role:${role.key}`)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
                     >
                       <Icon size={14} />
                       {role.label}
@@ -140,7 +140,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
             >
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
+                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
               >
                 <LogOut size={14} />
                 {tNav("signOut")}

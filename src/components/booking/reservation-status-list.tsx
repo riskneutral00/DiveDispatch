@@ -40,17 +40,17 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
       {unique.map((res) => (
         <ListRow key={res._id} as="li">
           <div className="min-w-0">
-            <p className="text-sm font-medium truncate text-primary">
+            <p className="text-body font-medium truncate text-primary">
               {res.inventoryUnitName}
             </p>
-            <p className="text-xs mt-0.5 text-secondary">
+            <p className="text-label mt-0.5 text-secondary">
               {ROLE_BY_CLERK_ROLE[res.resourceType as ClerkRole]?.label ?? res.resourceType}
               {res.stakeholderName && (
                 <> · <span className="text-secondary">{res.stakeholderName}</span></>
               )}
             </p>
             {res.vacatedBy && (
-              <p className="text-xs mt-0.5 text-destructive">
+              <p className="text-label mt-0.5 text-destructive">
                 Reason: {res.vacatedBy.replace(/_/g, ' ')}
               </p>
             )}

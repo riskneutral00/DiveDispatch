@@ -71,13 +71,16 @@
   --color-success: #34d399;
   --color-warning: #fbbf24;
   --color-destructive: #dc2626;
+  --color-destructive-muted: color-mix(in srgb, var(--color-destructive) 15%, transparent);
   --color-destructive-glow: color-mix(in srgb, var(--color-destructive) 30%, transparent);
+  --color-warning-muted: color-mix(in srgb, var(--color-warning) 15%, transparent);
   --color-warning-bg: color-mix(in srgb, var(--color-warning) 12%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 25%, transparent);
   --color-warning-glow: color-mix(in srgb, var(--color-warning) 35%, transparent);
   --color-primary-muted: color-mix(in srgb, var(--color-primary) 15%, transparent);
   --color-primary-border: color-mix(in srgb, var(--color-primary) 40%, transparent);
   --color-accent-muted: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  --color-accent-border: color-mix(in srgb, var(--color-accent) 30%, transparent);
   --color-accent-glow: color-mix(in srgb, var(--color-accent) 15%, transparent);
 
   /* Glass */
@@ -133,7 +136,7 @@
   --font-size-page-title: 28px;
   --font-size-card-title: 16px;
   --font-size-body: 14px;
-  --font-size-label: 13px;
+  --font-size-label: 12px;
   --font-size-section-header: 11px;
   --letter-spacing-tight: -0.03em;
   --letter-spacing-normal: -0.01em;

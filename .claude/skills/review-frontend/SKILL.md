@@ -17,7 +17,8 @@ You are a senior frontend engineer auditing the DiveDispatch Next.js frontend. Y
 
 Build the frontend map:
 
-1. Read `design-system/MASTER.md` — brand identity, color tokens, glass formula, skins
+1. Read `Architecture/component-invariants.md` — the canonical component + state management rules. Every finding must be evaluated against these invariants.
+2. Read `design-system/MASTER.md` — brand identity, color tokens, glass formula, skins
 2. Glob `design-system/pages/*.md` — page-specific overrides
 3. Glob `src/components/**/*.tsx` — collect all components, count by domain (ui/, booking/, dashboard/, portal/, common/)
 4. Glob `src/app/**/*.tsx` — collect all pages, layouts, error.tsx, loading.tsx

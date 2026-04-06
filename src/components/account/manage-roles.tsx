@@ -62,7 +62,7 @@ export function ManageRoles({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-primary">
+        <h2 className="text-card-title font-heading font-semibold text-primary">
           Manage Roles
         </h2>
         <Button variant="primary" onClick={onAddRole}>
@@ -89,7 +89,7 @@ export function ManageRoles({
                 <RoleIcon role={entry.role} size={20} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-primary">
+                    <span className="text-body font-medium text-primary">
                       {config.label}
                     </span>
                     {isPrimary && (
@@ -129,7 +129,7 @@ export function ManageRoles({
               {/* Booking-blocked hint — always rendered when canDelete, toggle via opacity */}
               {canDelete && (
                 <div
-                  className="text-xs text-secondary pl-8 overflow-hidden transition-opacity"
+                  className="text-label text-secondary pl-8 overflow-hidden transition-opacity"
                   aria-hidden={!isBlocked}
                   data-blocked={isBlocked}
                   style={{
@@ -157,7 +157,7 @@ export function ManageRoles({
                     borderTop: isConfirming && !isBlocked ? '1px solid var(--color-glass-border)' : 'none',
                   }}
                 >
-                  <span className="text-xs text-secondary">
+                  <span className="text-label text-secondary">
                     {`Delete ${config.label} and all its data? This cannot be undone.`}
                   </span>
                   <div className="flex gap-2 shrink-0">

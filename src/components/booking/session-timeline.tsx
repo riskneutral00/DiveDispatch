@@ -51,7 +51,7 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
         return (
           <div key={date}>
             <div
-              className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wide text-secondary"
+              className="flex items-center gap-2 mb-2 text-label font-semibold uppercase tracking-wide text-secondary"
             >
               <Calendar size={12} />
               <span>{date}</span>
@@ -72,12 +72,12 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                     className="p-3 rounded-theme border bg-glass-bg border-glass-border"
                   >
                     <p
-                      className="text-sm font-medium text-primary"
+                      className="text-body font-medium text-primary"
                     >
                       {s.inventoryUnitName}
                     </p>
                     <div
-                      className="flex items-center gap-3 mt-1 text-xs flex-wrap text-secondary"
+                      className="flex items-center gap-3 mt-1 text-label flex-wrap text-secondary"
                     >
                       <span className="flex items-center gap-1">
                         <Clock size={11} />

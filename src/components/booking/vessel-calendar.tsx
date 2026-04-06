@@ -91,7 +91,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                 {daysOfWeek.map((label, i) => (
                   <div
                     key={label}
-                    className={`text-center text-xs font-medium py-1 ${
+                    className={`text-center text-label font-medium py-1 ${
                       i === todayCol ? 'text-accent' : 'text-secondary'
                     }`}
                   >
@@ -107,7 +107,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
               {week.map((day) => (
                 <div
                   key={day.dateString}
-                  className={`text-center text-xs ${
+                  className={`text-center text-label ${
                     day.isToday
                       ? 'text-accent font-bold'
                       : day.isCurrentMonth
@@ -130,7 +130,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                 <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface" /* design-ok */>
                   {weekIdx === 0 && (
                     <>
-                      <span className="text-xs font-medium text-primary truncate">
+                      <span className="text-label font-medium text-primary truncate">
                         {vessel.name}
                       </span>
                       <span className="text-[10px] text-secondary shrink-0"> {/* design-ok */}
@@ -163,7 +163,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                       aria-label={`${vessel.name}, ${day.dateString}, ${cap.booked} of ${cap.total} seats booked`}
                     >
                       <span
-                        className="text-xs font-mono tabular-nums"
+                        className="text-label font-mono tabular-nums"
                         style={{ color: textColor }}
                       >
                         {cap.booked}/{cap.total}
@@ -176,7 +176,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
 
             {/* Empty fleet message */}
             {vessels.length === 0 && (
-              <div className="col-span-8 text-center text-sm text-secondary py-4">
+              <div className="col-span-8 text-center text-body text-secondary py-4">
                 No vessels found. Add boats in Workspace.
               </div>
             )}

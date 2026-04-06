@@ -179,7 +179,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
       <div className="flex flex-col gap-2">
         {label && (
           <span
-            className="text-sm font-medium text-secondary"
+            className="text-body font-medium text-secondary"
           >
             {label}
           </span>
@@ -212,7 +212,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           {/* Sign-here guide line */}
           {empty && (
             <span
-              className="absolute bottom-5 left-4 right-4 text-xs pointer-events-none select-none text-secondary"
+              className="absolute bottom-5 left-4 right-4 text-label pointer-events-none select-none text-secondary"
             >
               Sign here ✕
             </span>

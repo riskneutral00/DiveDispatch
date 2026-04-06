@@ -145,7 +145,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
     >
       <Card padding="lg">
         <FormSectionHeader label="Gear Catalog" />
-        <p className="text-xs mb-4 text-secondary">
+        <p className="text-label mb-4 text-secondary">
           Select the gear types you stock and add manufacturer brands per type.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">

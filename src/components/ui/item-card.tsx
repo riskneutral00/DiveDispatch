@@ -16,7 +16,7 @@ export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': a
           type="button"
           onClick={onRemove}
           aria-label={ariaLabel}
-          className="float-right -mt-1 -mr-1 cursor-pointer rounded p-1 transition-colors text-secondary"
+          className="float-right -mt-1 -mr-1 cursor-pointer rounded-[var(--border-radius-button)] p-1 transition-colors text-secondary"
           style={{ transitionDuration: 'var(--transition-speed)' }}
         >
           <Trash2 size={14} />

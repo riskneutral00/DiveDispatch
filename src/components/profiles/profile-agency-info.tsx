@@ -124,7 +124,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
         {/* Row 2 */}
         <div>
-          <p className="text-sm font-medium mb-2 text-secondary">
+          <p className="text-body font-medium mb-2 text-secondary">
             Default course #days<span className="text-destructive"> *</span>
           </p>
           <div className="flex gap-2">
@@ -265,7 +265,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       {errors.credential && <InlineError>{errors.credential}</InlineError>}
 
       {items.length === 0 ? (
-        <p className="text-sm text-secondary">{emptyMessage}</p>
+        <p className="text-body text-secondary">{emptyMessage}</p>
       ) : (
         <div className="space-y-4">
           {items.map((item, idx) => (

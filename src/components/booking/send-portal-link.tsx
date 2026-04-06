@@ -195,10 +195,10 @@ export function SendPortalLink({
       >
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-primary">
+            <p className="text-body font-medium text-primary">
               {customerName}
             </p>
-            <p className="text-xs text-secondary">
+            <p className="text-label text-secondary">
               {contactType === 'whatsapp' && contactValue
                 ? `WhatsApp: ${contactValue}`
                 : contactType === 'line' && contactValue
@@ -210,14 +210,14 @@ export function SendPortalLink({
           {resolvedUrl && (
             <div
               data-testid="portal-link-url"
-              className="text-xs font-mono p-2 rounded break-all text-secondary bg-glass-bg border border-glass-border"
+              className="text-label font-mono p-2 rounded-[var(--border-radius-button)] break-all text-secondary bg-glass-bg border border-glass-border"
             >
               {resolvedUrl}
             </div>
           )}
 
           {expiryLabel && (
-            <p className="text-xs text-secondary">
+            <p className="text-label text-secondary">
               {expiryLabel}
             </p>
           )}
@@ -227,7 +227,7 @@ export function SendPortalLink({
           )}
 
           {isSent && (
-            <p className="text-xs text-success flex items-center gap-1.5">
+            <p className="text-label text-success flex items-center gap-1.5">
               <Check size={12} />
               {sentChannel === 'email' && tBooking('emailSent')}
               {sentChannel === 'whatsapp' && tBooking('whatsAppOpened')}

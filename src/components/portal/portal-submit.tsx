@@ -43,13 +43,13 @@ function StepRow({ label, complete, required, incompleteLabel }: StepRowProps) {
         />
       )}
       <span
-        className={`text-sm ${complete ? 'text-primary' : 'text-secondary'}`}
+        className={`text-body ${complete ? 'text-primary' : 'text-secondary'}`}
       >
         {label}
       </span>
       {!complete && (
         <span
-          className="ml-auto text-xs text-warning"
+          className="ml-auto text-label text-warning"
         >
           {incompleteLabel}
         </span>
@@ -104,7 +104,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
               >
                 Submitted
               </h2>
-              <p className="text-sm leading-relaxed text-secondary">
+              <p className="text-body leading-relaxed text-secondary">
                 {tPortal('medicalBlockMessage')}
               </p>
             </>
@@ -119,7 +119,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
               >
                 Complete!
               </h2>
-              <p className="text-sm leading-relaxed text-secondary">
+              <p className="text-body leading-relaxed text-secondary">
                 {tPortal('successMessage')}
               </p>
             </>
@@ -179,7 +179,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
       </Card>
 
       {!allComplete && (
-        <p className="text-sm text-center text-secondary">
+        <p className="text-body text-center text-secondary">
           {tPortal('formsIncomplete')}
         </p>
       )}

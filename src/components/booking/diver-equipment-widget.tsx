@@ -103,11 +103,11 @@ function DiverCard({
             {countryCodeToEmoji(diver.flag.code)}
           </span>
           <div>
-            <p className="font-medium text-sm text-primary">
+            <p className="font-medium text-body text-primary">
               {diver.name}
             </p>
             {diver.needsPoweredLenses && (
-              <p className="text-xs" style={{ color: 'var(--color-warning)' }}>
+              <p className="text-label text-warning">
                 Prescription lens
                 {diver.prescriptionStrength ? ` ${diver.prescriptionStrength}` : ''}
               </p>
@@ -119,7 +119,7 @@ function DiverCard({
         {diver.bag ? (
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-secondary">
+              <span className="text-label text-secondary">
                 Bag {diver.bag.bagNumber}
               </span>
               <BagStatusBadge status={diver.bag.status} />
@@ -167,7 +167,7 @@ function DiverCard({
           />
         )}
         {!hasMeasurements && (
-          <p className="text-xs italic text-secondary">
+          <p className="text-label italic text-secondary">
             Measurements not submitted yet
           </p>
         )}
@@ -212,7 +212,7 @@ function DiverCard({
 function MeasurementChip({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="px-2 py-1 rounded-[var(--border-radius-button)] text-xs glass-container"
+      className="px-2 py-1 rounded-[var(--border-radius-button)] text-label glass-container"
     >
       <span className="text-secondary">{label}: </span>
       <span className="font-medium text-primary">
@@ -262,7 +262,7 @@ function GearSizeRow({
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-xs font-medium text-primary">
+      <span className="text-label font-medium text-primary">
         {GEAR_TYPE_LABELS[gearType] ?? gearType}
       </span>
 
@@ -270,14 +270,15 @@ function GearSizeRow({
         {/* Suggestion display */}
         {effectiveSuggestion.status === 'match' && !editing && (
           <>
+            {/* design-ok: conditional variant dispatch — tokens not in @theme inline */}
             <span
-              className="text-xs px-2 py-0.5 rounded"
+              className="text-label px-2 py-0.5 rounded-[var(--border-radius-button)]"
               style={{
                 background: isManualOverride
-                  ? 'color-mix(in srgb, var(--color-warning) 15%, transparent)'
-                  : 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+                  ? 'var(--color-warning-muted)'
+                  : 'var(--color-primary-muted)',
                 color: isManualOverride ? 'var(--color-warning)' : 'var(--color-primary)',
-                border: `1px solid ${isManualOverride ? 'color-mix(in srgb, var(--color-warning) 30%, transparent)' : 'color-mix(in srgb, var(--color-primary) 30%, transparent)'}`,
+                border: `1px solid ${isManualOverride ? 'var(--color-warning-border)' : 'var(--color-primary-border)'}`,
               }}
             >
               {isManualOverride ? '✏ ' : ''}
@@ -287,7 +288,7 @@ function GearSizeRow({
             {/* Inventory availability (only for auto-suggested, not manual override) */}
             {!isManualOverride && (effectiveSuggestion.status === 'match') && (
               <span
-                className="text-xs"
+                className="text-label"
                 style={{
                   color: inventoryCount_ > 0 ? 'var(--color-success)' : 'var(--color-destructive)',
                 }}
@@ -300,15 +301,14 @@ function GearSizeRow({
 
         {effectiveSuggestion.status === 'no_match' && !editing && (
           <span
-            className="text-xs italic"
-            style={{ color: 'var(--color-destructive)' }}
+            className="text-label italic text-destructive"
           >
             No match — manual sizing needed
           </span>
         )}
 
         {effectiveSuggestion.status === 'no_data' && !editing && (
-          <span className="text-xs text-secondary">
+          <span className="text-label text-secondary">
             —
           </span>
         )}
@@ -316,14 +316,13 @@ function GearSizeRow({
         {/* Inline edit */}
         {editing && (
           <div className="flex items-center gap-1">
-            <input /* design-ok: inline size edit in equipment row */
+            <input /* design-ok: inline size edit in equipment row, --color-primary border not in @theme inline */
               type="text"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               placeholder="e.g. M"
-              className="text-xs px-2 py-0.5 rounded w-16 outline-none text-primary"
-              style={{ background: 'var(--color-glass-bg)',
-                border: '1px solid var(--color-primary)' }}
+              className="text-label px-2 py-0.5 rounded-[var(--border-radius-button)] w-16 outline-none text-primary bg-glass-bg"
+              style={{ border: '1px solid var(--color-primary)' }}
               autoFocus
             />
             <button
@@ -332,7 +331,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center rounded"
+              className="text-label min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)]"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
@@ -345,9 +344,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-secondary"
-              style={{ background: 'var(--color-glass-bg)',
-                border: '1px solid var(--color-glass-border)' }}
+              className="text-label min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] text-secondary bg-glass-bg border-glass-border border"
             >
               ✕
             </button>
@@ -362,7 +359,7 @@ function GearSizeRow({
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
               }}
-              className="text-xs text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Override size"
             >
               ✏
@@ -370,7 +367,7 @@ function GearSizeRow({
             {isManualOverride && (
               <button
                 onClick={onClearOverride}
-                className="text-xs text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Clear override"
               >
                 ↺
@@ -430,7 +427,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
   if (data === undefined) {
     return (
       <Card padding="md">
-        <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+        <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>{/* design-ok: --color-primary not in @theme inline */}
           <Spinner />
         </div>
       </Card>
@@ -481,7 +478,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
               <button
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
-                className="px-3 py-1 rounded-full text-xs font-medium border transition-all min-h-[44px]"
+                className="px-3 py-1 rounded-full text-label font-medium border transition-all min-h-[44px]"
                 style={{
                   background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
                   color: isActive
@@ -508,10 +505,10 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
       {/* Booking header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">
+          <p className="text-body font-medium text-primary">
             {activeBooking.operatorName}
           </p>
-          <p className="text-xs text-secondary">
+          <p className="text-label text-secondary">
             {activeBooking.activityType.join(', ')} ·{' '}
             {activeBooking.startDate === activeBooking.endDate
               ? activeBooking.startDate

@@ -32,7 +32,7 @@ export function CalendarShell({
             {dayHeaders.map((day, i) => (
               <div
                 key={day}
-                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest" /* design-ok */
+                className="py-1.5 text-center text-[10px] sm:text-label font-bold uppercase tracking-widest" /* design-ok */
                 style={{
                   color:
                     i === todayCol

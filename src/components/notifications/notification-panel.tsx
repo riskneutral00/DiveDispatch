@@ -60,14 +60,14 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
         <span
-          className="text-sm font-semibold text-primary"
+          className="text-body font-semibold text-primary"
         >
           Notifications
         </span>
         {hasNotifications && (
           <button
             onClick={handleClearAllClick}
-            className="text-sm font-medium transition-opacity hover:opacity-70 text-primary min-h-[44px] min-w-[44px]"
+            className="text-body font-medium transition-opacity hover:opacity-70 text-primary min-h-[44px] min-w-[44px]"
           >
             Clear
           </button>
@@ -83,7 +83,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         )}
         {notifications?.length === 0 && (
           <p
-            className="text-sm text-center py-6 text-secondary"
+            className="text-body text-center py-6 text-secondary"
           >
             No notifications.
           </p>

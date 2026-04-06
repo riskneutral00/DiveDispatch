@@ -64,7 +64,7 @@ function deriveDayLabel(_day: DayConfig): string {
 /** Extracted from map-loop inline styles — one allocation, shared by all renders. */
 const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const DAY_LABEL_CLASS = 'glass-container'
-const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)', color: 'var(--color-warning)' }
+const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'var(--color-warning-muted)', color: 'var(--color-warning)' }
 const REMOVE_BTN_STYLE: React.CSSProperties = { color: 'var(--color-destructive)' }
 const SWITCH_LINK_STYLE: React.CSSProperties = { color: 'var(--color-accent)' }
 const VENUE_SECTION_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
@@ -192,15 +192,15 @@ export function DayRow({
       >
         <div className="flex items-center gap-2">
           <span
-            className="text-xs font-bold uppercase tracking-wide text-secondary font-heading"
+            className="text-label font-bold uppercase tracking-wide text-secondary font-heading"
           >
             Day {dayNumber}
           </span>
-          <span className="text-xs text-secondary">
+          <span className="text-label text-secondary">
             {formatDate(day.date)}
           </span>
           <span
-            className={`text-xs px-1.5 py-0.5 rounded-full text-secondary ${DAY_LABEL_CLASS}`}
+            className={`text-label px-1.5 py-0.5 rounded-full text-secondary ${DAY_LABEL_CLASS}`}
           >
             {deriveDayLabel(day)}
           </span>
@@ -217,7 +217,7 @@ export function DayRow({
           <button
             type="button"
             onClick={() => dispatch({ type: 'REMOVE_DAY', dayIndex })}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded opacity-50 hover:opacity-100 transition-opacity"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] opacity-50 hover:opacity-100 transition-opacity"
             style={REMOVE_BTN_STYLE}
             title="Remove day"
             aria-label={`Remove day ${dayNumber}`}
@@ -263,7 +263,7 @@ export function DayRow({
                   dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: '' })
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
                 }}
-                className="text-xs underline underline-offset-2 text-left"
+                className="text-label underline underline-offset-2 text-left"
                 style={SWITCH_LINK_STYLE}
               >
                 Switch to system instructor
@@ -296,7 +296,7 @@ export function DayRow({
           if (displaySlots.length === 0) {
             return (
               <p
-                className="text-xs text-center py-2 text-secondary"
+                className="text-label text-center py-2 text-secondary"
               >
                 No dives scheduled
               </p>
@@ -347,7 +347,7 @@ export function DayRow({
                   dispatch({ type: 'SET_DAY_DIVE_MASTER', dayIndex, slug: '' })
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: '' } })
                 }}
-                className="text-xs underline underline-offset-2 text-left mt-1"
+                className="text-label underline underline-offset-2 text-left mt-1"
                 style={SWITCH_LINK_STYLE}
               >
                 Switch to system dive master
@@ -408,7 +408,7 @@ export function DayRow({
               return (
                 <div key={`venue-${dive.courseCode}-${dive.diveNumber}-${dive.isConfined}`} className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium w-16 shrink-0 text-primary">
+                    <span className="text-label font-medium w-16 shrink-0 text-primary">
                       {diveLabel}
                     </span>
                     <div className="flex gap-1">
@@ -420,7 +420,7 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded text-[10px] font-medium transition-colors border"
+                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors border"
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',

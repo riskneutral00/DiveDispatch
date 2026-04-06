@@ -44,7 +44,7 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
   const passportExpiring = isPassportExpiringSoon(diver.passportExpirationDate)
 
   return (
-    <tr className="border-t border-white/5 text-xs">
+    <tr className="border-t border-white/5 text-label">
       <td className="py-1.5 px-2 text-primary">
         {diver.legalFirstName && diver.legalLastName
           ? `${diver.legalFirstName} ${diver.legalLastName}`
@@ -126,13 +126,13 @@ function GroupSection({ group }: { group: ManifestGroup }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded transition-colors"
+        className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-[var(--border-radius-button)] transition-colors"
         style={{ transitionDuration: 'var(--transition-speed)' }}
         aria-expanded={expanded}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span className="text-sm font-medium text-primary">{group.operatorName}</span>
-        <span className="text-xs text-secondary">
+        <span className="text-body font-medium text-primary">{group.operatorName}</span>
+        <span className="text-label text-secondary">
           {group.activityType.join(', ')} — {group.diverCount} diver{group.diverCount !== 1 ? 's' : ''}
         </span>
       </button>
@@ -178,10 +178,10 @@ function DateSection({ entry, groupBy }: { entry: ManifestDateEntry; groupBy: Gr
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-1.5">
-        <h4 className="text-sm font-semibold text-primary font-heading">
+        <h4 className="text-body font-semibold text-primary font-heading">
           {formatDate(entry.date)}
         </h4>
-        <span className="text-xs text-secondary">{entry.totalPax} pax</span>
+        <span className="text-label text-secondary">{entry.totalPax} pax</span>
       </div>
       {groups.map((group) => (
         <GroupSection key={`${group.bookingId}-${entry.date}`} group={group} />
@@ -200,10 +200,10 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
         <h3 className="text-base font-semibold text-primary font-heading">
           {vessel.vesselName}
         </h3>
-        <span className="text-xs text-secondary px-2 py-0.5 rounded glass-surface">
+        <span className="text-label text-secondary px-2 py-0.5 rounded-[var(--border-radius-button)] glass-surface">
           {vessel.boatType.replace('_', ' ')}
         </span>
-        <span className="text-xs text-secondary ml-auto">{totalPax} pax total</span>
+        <span className="text-label text-secondary ml-auto">{totalPax} pax total</span>
       </div>
 
       {vessel.dates.length === 0 ? (
