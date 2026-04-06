@@ -16,7 +16,7 @@ export function EmptyState({ message, icon: Icon, className }: EmptyStateProps) 
           style={{ opacity: 0.6 }}
         />
       )}
-      <p className="text-sm text-center text-secondary">
+      <p className="text-body text-center text-secondary">
         {message}
       </p>
     </div>

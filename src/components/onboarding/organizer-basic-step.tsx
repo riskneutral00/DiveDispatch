@@ -109,7 +109,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         await create({
           ...basePayload,
           venueType: 'Shore',
-          isPublic: false,
           confinedCapable: false,
           hasCompressor: false,
         })
@@ -117,7 +116,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         await create({
           ...basePayload,
           associations: [],
-          ...(role === 'Agent' ? { defaultReferralMode: 'independent' as const } : {}),
         })
       }
       onSaved()

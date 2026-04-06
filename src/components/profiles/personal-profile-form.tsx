@@ -77,7 +77,7 @@ export function makeEmptyDmCredential(): DmCredential {
 }
 
 export function makeEmptyInstCredential(): InstCredential {
-  return { agency: '', level: '', agencyID: '', courses: [] }
+  return { agency: '', level: '', agencyID: '', specialtyRatings: [] }
 }
 
 export const INITIAL_DM_CREDENTIALS_FORM: PersonalCredentialsFormState = {

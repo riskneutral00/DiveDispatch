@@ -35,7 +35,7 @@ export function Spinner({ size = 'md', label, className = '' }: SpinnerProps) {
   return (
     <div role="status" aria-live="polite" className="flex items-center gap-3 text-secondary">
       {spinner}
-      <span className="text-sm">{label}</span>
+      <span className="text-body">{label}</span>
     </div>
   )
 }

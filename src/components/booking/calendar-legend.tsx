@@ -31,7 +31,7 @@ const BLOCKED_COLOR = {
   borderVar: 'var(--color-blocked-border)',
 }
 
-const PILL_FONT: React.CSSProperties = { fontSize: 'clamp(9px, 1.8vw, 12px)' }
+const PILL_FONT: React.CSSProperties = { fontSize: 'clamp(9px, 1.8vw, 12px)' } /* design-ok: responsive legend pill */
 
 export function CalendarLegend({
   statuses = DEFAULT_STATUSES,

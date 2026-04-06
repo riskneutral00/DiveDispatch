@@ -8,7 +8,7 @@ interface InlineErrorProps {
   className?: string
 }
 
-const sizeMap = { sm: 'text-xs', md: 'text-sm' } as const
+const sizeMap = { sm: 'text-xs', md: 'text-body' } as const
 
 /**
  * Simple inline error text with role="alert".

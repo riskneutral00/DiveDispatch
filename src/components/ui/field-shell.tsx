@@ -35,7 +35,7 @@ export function FieldError({ id, message }: FieldErrorProps) {
       id={id}
       role="alert"
       className={cn(
-        'h-4 text-sm text-destructive truncate transition-opacity',
+        'h-4 text-body text-destructive truncate transition-opacity',
         message ? 'opacity-100' : 'opacity-0',
       )}
     >

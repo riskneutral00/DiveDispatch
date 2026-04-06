@@ -38,7 +38,7 @@ export function Textarea({
         disabled={disabled}
         required={required}
         className={cn(
-          "glass glass-field w-full text-sm text-primary px-3 py-2.5 resize-none",
+          "glass glass-field w-full text-body text-primary px-3 py-2.5 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "placeholder:opacity-50",
           className,
@@ -60,7 +60,7 @@ export function Textarea({
       {!error && helperText && (
         <p
           id={`${id}-helper`}
-          className="text-sm text-secondary"
+          className="text-body text-secondary"
         >
           {helperText}
         </p>

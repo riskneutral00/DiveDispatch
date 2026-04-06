@@ -1,5 +1,5 @@
-export const BOAT_TYPES = ['day_boat', 'speedboat', 'longtail', 'liveaboard', 'catamaran', 'rib'] as const
-export type BoatType = (typeof BOAT_TYPES)[number]
+import { BOAT_TYPES } from '../../../convex/shared/boatTypes'
+export { BOAT_TYPES, type BoatType } from '../../../convex/shared/boatTypes'
 
 export const BOAT_TYPE_LABELS: Record<string, string> = {
   day_boat: 'Day Boat',

@@ -5,7 +5,6 @@ import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { ButtonGroup } from '@/components/ui/button-group'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
   type ContactFormState,
@@ -37,7 +36,7 @@ export type AgentProfileSection = 'contact' | 'languages' | 'associations'
 type AssociationData = z.infer<typeof associationSchema>
 
 export type AgentContactFormState = ContactFormState & {
-  defaultReferralMode: 'independent' | 'referral'
+  defaultReferral: string | null
 }
 
 export type AgentLanguagesFormState = {
@@ -54,7 +53,7 @@ export type AgentAssociationsFormState = {
 
 export const INITIAL_CONTACT_FORM: AgentContactFormState = {
   ...BASE_INITIAL_CONTACT,
-  defaultReferralMode: 'independent',
+  defaultReferral: null,
 }
 
 export const INITIAL_LANGUAGES_FORM: AgentLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
@@ -70,14 +69,14 @@ export const INITIAL_ASSOCIATIONS_FORM: AgentAssociationsFormState = {
 export function contactFromProfile(p: Record<string, unknown>): AgentContactFormState {
   return {
     ...baseContactFromProfile(p),
-    defaultReferralMode: (p.defaultReferralMode as 'independent' | 'referral') ?? 'independent',
+    defaultReferral: (p.defaultReferral as string) ?? null,
   }
 }
 
 export function contactToPayload(f: AgentContactFormState): Record<string, unknown> {
   return {
     ...baseContactToPayload(f),
-    defaultReferralMode: f.defaultReferralMode,
+    ...(f.defaultReferral ? { defaultReferral: f.defaultReferral } : {}),
   }
 }
 
@@ -191,33 +190,14 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
 
       <hr className="form-divider" />
 
-      {/* Referral mode */}
+      {/* Default referral */}
       <div>
-        <FormSectionHeader label="Default Booking Mode" />
-        <div className="mt-2">
-          <ButtonGroup
-            options={[
-              { value: 'independent', label: 'Independent' },
-              { value: 'referral', label: 'Referral Only' },
-            ]}
-            value={form.defaultReferralMode}
-            onChange={(v) => setField('defaultReferralMode', v as 'independent' | 'referral')}
-            variant="segment"
-            size="md"
-            aria-label="Default booking mode"
-            className="w-full [&>button]:flex-1"
-          />
-        </div>
+        <FormSectionHeader label="Default Referral" />
         <p className="text-xs mt-2 text-secondary">
-          {form.defaultReferralMode === 'independent'
-            ? 'You create and manage bookings directly.'
-            : 'You refer customers to operators who manage the booking.'}
+          {form.defaultReferral
+            ? 'Bookings cascade from your preferred operator. Change in Preferences → Resources → Operator.'
+            : 'You create and manage bookings independently.'}
         </p>
-        {errors.defaultReferralMode && (
-          <p className="text-sm mt-1" style={{ color: 'var(--color-destructive)' }}>
-            {errors.defaultReferralMode}
-          </p>
-        )}
       </div>
     </ProfileFormShell>
   )

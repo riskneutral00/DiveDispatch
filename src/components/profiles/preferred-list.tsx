@@ -29,7 +29,6 @@ const MAX_PREFERRED_EQUIPMENT = 10
 const MAX_PREFERRED_COMPRESSORS = 10
 const chipBase = 'px-2 py-1 text-xs rounded-full border transition-colors cursor-pointer'
 
-const BASE_COURSES = new Set(['OW', 'AOW'])
 const OVERLAY_LIST_HEIGHT = 380 // px — fixed so filters don't resize overlay
 const PAGE_SIZE = 10
 
@@ -111,7 +110,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
         {searchResults.length > 0 && (
           <div
             className="absolute z-[var(--z-dropdown)] left-0 right-0 mt-1 rounded-theme overflow-hidden glass-elevated"
-            style={{ background: 'var(--color-surface-elevated)' }}
+            style={{ background: 'var(--color-surface-elevated)' } /* design-ok */}
           >
             {searchResults.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
               <button
@@ -197,7 +196,7 @@ function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, rend
 
   if (entries === undefined) {
     return (
-      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+      <div className="flex items-center justify-center py-6 text-primary">
         <Spinner />
       </div>
     )
@@ -278,7 +277,7 @@ function InstructorFilterBar({
         })}
         <span className="ml-auto text-xs text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
-          {required && <span className="ml-0.5" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
+          {required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
         </span>
       </div>
 
@@ -479,8 +478,8 @@ export function PreferredInstructorList(props: ListProps) {
     for (const e of entries) {
       for (const c of e.credentials ?? []) {
         if (c.agency === agency) {
-          for (const course of c.courses) {
-            if (!BASE_COURSES.has(course)) set.add(course)
+          for (const rating of c.specialtyRatings) {
+            set.add(rating)
           }
         }
       }
@@ -521,7 +520,7 @@ export function PreferredInstructorList(props: ListProps) {
     if (agency && activeSpecialties.size > 0) {
       result = result.filter((e) =>
         e.credentials?.some((c) =>
-          c.agency === agency && [...activeSpecialties].every((s) => c.courses.includes(s))
+          c.agency === agency && [...activeSpecialties].every((s) => c.specialtyRatings.includes(s))
         )
       )
     }
@@ -543,7 +542,7 @@ export function PreferredInstructorList(props: ListProps) {
 
   if (entries === undefined) {
     return (
-      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+      <div className="flex items-center justify-center py-6 text-primary">
         <Spinner />
       </div>
     )
@@ -603,7 +602,7 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
         <span className="text-xs text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
-          {props.required && <span className="ml-1" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
+          {props.required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
         </span>
       </div>
 
@@ -833,7 +832,7 @@ function PreferredOverlayList({
 
   if (entries === undefined) {
     return (
-      <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>
+      <div className="flex items-center justify-center py-6 text-primary">
         <Spinner />
       </div>
     )
@@ -858,7 +857,7 @@ function PreferredOverlayList({
         </Button>
         <span className="text-xs text-secondary">
           {slugs.length}/{maxItems}
-          {required && <span className="ml-1" style={{ color: 'var(--color-destructive)' }} aria-hidden>*</span>}
+          {required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
         </span>
       </div>
 

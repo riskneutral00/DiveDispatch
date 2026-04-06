@@ -13,10 +13,9 @@ import type { ZodType } from 'zod'
 // ── Types ────────────────────────────────────────────────────────────
 
 export type VenueCapabilitiesFormState = {
-  confinedCapable: boolean
+  confinedCapable?: boolean
   maxDepth: number
   maxCapacity: number
-  isPublic?: boolean
 }
 
 interface VenueCapabilitiesSectionProps<T extends VenueCapabilitiesFormState = VenueCapabilitiesFormState> extends BaseProfileSectionProps {
@@ -72,18 +71,20 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-secondary">
-            {capabilitiesLabel}
-          </span>
-          <div className="flex flex-wrap gap-3">
-            <Checkbox
-              label="Confined Water Capable"
-              checked={form.confinedCapable}
-              onChange={(v) => setField('confinedCapable', v)}
-            />
+        {venueType === 'diveSite' && (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-secondary">
+              {capabilitiesLabel}
+            </span>
+            <div className="flex flex-wrap gap-3">
+              <Checkbox
+                label="Confined Water Capable"
+                checked={form.confinedCapable ?? false}
+                onChange={(v) => setField('confinedCapable', v)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap gap-3">
           <Input
@@ -111,22 +112,6 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
           />
         </div>
 
-        {venueType === 'diveSite' && (
-          <>
-            <ProfileFormSectionDivider show />
-
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-secondary">
-                Visibility
-              </span>
-              <Checkbox
-                label="List this site publicly in the booking wizard"
-                checked={form.isPublic ?? false}
-                onChange={(v) => setField('isPublic', v)}
-              />
-            </div>
-          </>
-        )}
       </div>
     </ProfileFormShell>
   )

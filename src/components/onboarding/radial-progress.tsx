@@ -42,14 +42,8 @@ export function RadialProgress({ percentage, size = 40 }: RadialProgressProps) {
       </svg>
       {/* Percentage label in center */}
       <span
-        style={{
-          position: 'absolute',
-          fontSize: '10px',
-          fontWeight: 600,
-          color: isComplete ? 'var(--color-success)' : 'var(--color-text-secondary)',
-          lineHeight: 1,
-          pointerEvents: 'none',
-        }}
+        className="absolute font-semibold leading-none pointer-events-none"
+        style={{ fontSize: '10px', color: isComplete ? 'var(--color-success)' : 'var(--color-text-secondary)' }} /* design-ok: SVG radial label, sub-scale for 40px widget */
       >
         {percentage}%
       </span>

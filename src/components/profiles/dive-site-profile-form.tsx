@@ -147,14 +147,12 @@ export type DiveSiteCapabilitiesFormState = {
   confinedCapable: boolean
   maxDepth: number
   maxCapacity: number
-  isPublic: boolean
 }
 
 export const INITIAL_DIVE_SITE_CAPABILITIES_FORM: DiveSiteCapabilitiesFormState = {
   confinedCapable: false,
   maxDepth: 0,
   maxCapacity: 0,
-  isPublic: false,
 }
 
 export function diveSiteCapabilitiesFromProfile(p: Record<string, unknown>): DiveSiteCapabilitiesFormState {
@@ -162,7 +160,6 @@ export function diveSiteCapabilitiesFromProfile(p: Record<string, unknown>): Div
     confinedCapable: (p.confinedCapable as boolean) ?? false,
     maxDepth: (p.maxDepth as number) ?? 0,
     maxCapacity: (p.maxCapacity as number) ?? 0,
-    isPublic: (p.isPublic as boolean) ?? false,
   }
 }
 
@@ -171,7 +168,6 @@ export function diveSiteCapabilitiesToPayload(f: DiveSiteCapabilitiesFormState):
     confinedCapable: f.confinedCapable,
     ...(f.maxDepth > 0 ? { maxDepth: f.maxDepth } : {}),
     maxCapacity: f.maxCapacity,
-    isPublic: f.isPublic,
   }
 }
 

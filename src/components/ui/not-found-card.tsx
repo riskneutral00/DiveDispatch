@@ -28,7 +28,7 @@ export function NotFoundCard({
       action={
         <Link
           href={href}
-          className="text-sm font-medium underline"
+          className="text-body font-medium underline"
           style={{ color: 'var(--color-text-link, var(--color-primary))' }} // design-ok — cascading var() fallback
         >
           {linkText}

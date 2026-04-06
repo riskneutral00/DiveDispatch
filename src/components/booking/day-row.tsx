@@ -206,7 +206,7 @@ export function DayRow({
           </span>
           {day.isAutoAppended && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full"
+              className="text-[10px] px-1.5 py-0.5 rounded-full" /* design-ok: dense calendar auto-added badge */
               style={AUTO_APPENDED_STYLE}
             >
               Auto-added

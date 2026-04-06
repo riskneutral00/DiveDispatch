@@ -116,7 +116,7 @@ export function Dialog({
                   </h2>
                 )}
                 {description && (
-                  <p id={descId} className="mt-1 text-sm text-secondary">
+                  <p id={descId} className="mt-1 text-body text-secondary">
                     {description}
                   </p>
                 )}
@@ -173,7 +173,7 @@ export function Dialog({
                   </h2>
                 )}
                 {description && (
-                  <p id={descId} className="mt-1 text-sm text-secondary">
+                  <p id={descId} className="mt-1 text-body text-secondary">
                     {description}
                   </p>
                 )}

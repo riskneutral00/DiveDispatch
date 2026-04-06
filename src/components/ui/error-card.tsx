@@ -39,7 +39,7 @@ export function ErrorCard({
           {title}
         </h2>
         <p
-          className="text-sm leading-relaxed text-secondary"
+          className="text-body leading-relaxed text-secondary"
         >
           {message}
         </p>

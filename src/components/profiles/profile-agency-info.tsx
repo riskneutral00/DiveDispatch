@@ -19,19 +19,6 @@ import {
   getDefaultSpecialties,
   type AgencyCourse,
 } from '@/lib/constants/agencies'
-import { COURSE_CODES } from '@/lib/constants/course-catalog'
-
-const COURSE_LABELS: Record<string, string> = {
-  DSD: 'Discover Scuba Diving',
-  TRY_DIVE: 'Try Dive',
-  OW: 'Open Water',
-  AOW: 'Advanced Open Water',
-  RESCUE: 'Rescue Diver',
-  DM: 'Divemaster',
-  FD: 'Fun Dive',
-  REFRESH: 'Refresher / ReActivate',
-  SPECIALTY: 'Specialty',
-}
 
 export type ProfileAgencyInfoVariant = 'dive-center' | 'agent' | 'instructor' | 'divemaster'
 
@@ -80,7 +67,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       return { _key, agency: '', number: '' }
     }
     if (variant === 'instructor') {
-      return { _key, agency: '', level: '', agencyID: '', courses: [] }
+      return { _key, agency: '', level: '', agencyID: '', specialtyRatings: [] }
     }
     // divemaster
     return { _key, agency: '', level: '', agencyID: '' }
@@ -138,7 +125,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         {/* Row 2 */}
         <div>
           <p className="text-sm font-medium mb-2 text-secondary">
-            Default course #days<span style={{ color: 'var(--color-destructive)' }}> *</span>
+            Default course #days<span className="text-destructive"> *</span>
           </p>
           <div className="flex gap-2">
             <DayPicker
@@ -200,13 +187,18 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   }
 
   function renderProFields(item: AgencyRow, idx: number) {
-    const courseItems = COURSE_CODES.map((code) => ({ value: code, label: COURSE_LABELS[code] ?? code }))
+    const selectedAgency = String((item as AgencyRow).agency ?? '')
+    const agencyDef = selectedAgency ? AGENCIES[selectedAgency] : undefined
+    const ratingItems = (agencyDef?.specialties ?? [])
+      .filter((s) => s.specialtyCourseName !== null)
+      .map((s) => ({ value: s.code, label: s.label }))
+
     return (
       <Fragment>
         <div className="flex flex-wrap gap-3 mb-4">
           <SimpleSelect
             label="Agency"
-            value={String((item as AgencyRow).agency ?? '')}
+            value={selectedAgency}
             onChange={(v) => handleUpdate(idx, { agency: v })}
             options={DIVE_AGENCIES}
             placeholder="Select agency…"
@@ -234,14 +226,16 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           />
         </div>
         {variant === 'instructor' && (
-          <CheckboxGroup
-            label="Courses Taught"
-            items={courseItems}
-            selected={((item as AgencyRow).courses as string[] | undefined) ?? []}
-            onChange={(values) => handleUpdate(idx, { courses: values })}
-            error={errors[`credential.${idx}.courses`]}
-            columns={3}
-          />
+          <div className={ratingItems.length > 0 ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}>
+            <CheckboxGroup
+              label="Specialty Instructor Ratings"
+              items={ratingItems}
+              selected={((item as AgencyRow).specialtyRatings as string[] | undefined) ?? []}
+              onChange={(values) => handleUpdate(idx, { specialtyRatings: values })}
+              error={errors[`credential.${idx}.specialtyRatings`]}
+              columns={3}
+            />
+          </div>
         )}
       </Fragment>
     )

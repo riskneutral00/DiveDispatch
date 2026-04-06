@@ -26,7 +26,7 @@ export function ButtonGroup({
   className = "",
   "aria-label": ariaLabel,
 }: ButtonGroupProps) {
-  const textSize = size === "sm" ? "text-xs" : "text-sm";
+  const textSize = size === "sm" ? "text-xs" : "text-body";
 
   if (variant === "tabs") {
     return (

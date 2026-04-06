@@ -11,12 +11,12 @@ interface InstructorCardContentProps {
 }
 
 /**
- * Shared instructor card display rows (name + action, agencies + flags, courses).
+ * Shared instructor card display rows (name + action, agencies + flags, specialty ratings).
  * No outer wrapper, no divider — callers handle their own padding and separators.
  * Used by SortableInstructorRow (drag+trash) and InstructorCandidateRow (plus).
  */
 export function InstructorCardContent({ entry, slug, action }: InstructorCardContentProps) {
-  const uniqueCourses = [...new Set(entry?.credentials?.flatMap((c) => c.courses) ?? [])]
+  const uniqueRatings = [...new Set(entry?.credentials?.flatMap((c) => c.specialtyRatings) ?? [])]
   const resolvedLangs = resolveLanguages(entry?.languages ?? [])
 
   return (
@@ -54,19 +54,19 @@ export function InstructorCardContent({ entry, slug, action }: InstructorCardCon
         </div>
       )}
 
-      {/* Line 3: Course/specialty badges */}
-      {uniqueCourses.length > 0 && (
+      {/* Line 3: Specialty rating badges */}
+      {uniqueRatings.length > 0 && (
         <div className="flex flex-wrap gap-1 items-center">
-          {uniqueCourses.map((course) => (
+          {uniqueRatings.map((rating) => (
             <span
-              key={course}
+              key={rating}
               className="text-xs px-1.5 py-0.5 rounded shrink-0"
               style={{
                 background: 'var(--color-glass-bg)',
                 color: 'var(--color-text-secondary)',
               }}
             >
-              {course}
+              {rating}
             </span>
           ))}
         </div>

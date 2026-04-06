@@ -19,14 +19,14 @@ export interface QuickBookRailProps {
 }
 
 export const PILL_STYLE: React.CSSProperties = {
-  fontSize: '12px',
+  fontSize: 'var(--font-size-label)', /* design-ok: dense pill, uses label token */
   color: 'var(--color-text-primary)',
   background: 'var(--color-primary-glow)',
   border: '2px solid var(--color-glass-border-hover)',
 }
 
 export const ACCENT_PILL_STYLE: React.CSSProperties = {
-  fontSize: '12px',
+  fontSize: 'var(--font-size-label)', /* design-ok: dense pill, uses label token */
   color: 'var(--color-accent)',
   background: 'var(--color-glass-bg)',
   border: '1px solid var(--color-accent)',

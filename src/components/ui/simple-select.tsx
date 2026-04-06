@@ -70,7 +70,7 @@ export function SimpleSelect({
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         data-testid={testId}
-        className="glass w-full text-sm px-3 py-2.5 focus:outline-none focus:ring-2 rounded-theme"
+        className="glass w-full text-body px-3 py-2.5 focus:outline-none focus:ring-2 rounded-theme"
         style={{
           color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
           outlineColor: error ? 'var(--color-destructive)' : 'var(--color-accent)',

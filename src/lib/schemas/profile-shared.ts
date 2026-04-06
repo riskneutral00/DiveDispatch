@@ -1,8 +1,9 @@
 import { z } from 'zod'
 import { locationSchema } from './location'
-import { AGENCIES } from '@/lib/constants/agencies'
+import { AGENCIES, AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
+import { VENUE_TYPES } from '../../../convex/shared/venueTypes'
 import {
   customerLanguagesFieldSchema,
   teachingLanguagesFieldSchema,
@@ -24,16 +25,16 @@ export const associationSchema = z.object({
   number: z.string().min(1, 'Member ID is required'),
 })
 
-/** DiveMaster credential — agency + level + ID (no courses). */
+/** DiveMaster credential — agency + level + ID (no specialty ratings). */
 export const credentialSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
   level: z.string().min(1, 'Certification level is required'),
   agencyID: z.string().min(1, 'Agency ID is required'),
 })
 
-/** Instructor credential — extends DM credential with courses. */
+/** Instructor credential — extends DM credential with specialty ratings. */
 export const instructorCredentialSchema = credentialSchema.extend({
-  courses: z.array(z.string()).min(1, 'Select at least one course'),
+  specialtyRatings: z.array(z.string()),
 })
 
 // ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ export const diveCenterAffiliationsSchema = z
   .refine(
     (data) =>
       data.associations.every((a) => {
-        const required = AGENCIES[a.agency]?.specialtyCount ?? 5
+        const required = AOW_REQUIRED_SPECIALTY_COUNT
         return a.selectedSpecialties.length >= required
       }),
     { message: 'Not enough specialties selected', path: ['associations'] },
@@ -74,9 +75,9 @@ export const diveCenterAffiliationsSchema = z
 // Agent per-section schemas
 // ---------------------------------------------------------------------------
 
-/** Agent contact section — extends base contact with defaultReferralMode. */
+/** Agent contact section — extends base contact with optional defaultReferral (DC slug). */
 export const agentContactSchema = contactSchema.extend({
-  defaultReferralMode: z.enum(['independent', 'referral']),
+  defaultReferral: z.string().nullable().optional(),
 })
 
 /** Agent languages section. */
@@ -130,6 +131,7 @@ const boatFleetEntrySchema = z.object({
   boatName: z.string().min(1, 'Boat name required'),
   maxPax: z.number().int().min(1, 'At least 1 passenger'),
   minPax: z.number().int().min(1).optional(),
+  seatCapacity: z.number().int().min(0).optional(),
   boatType: z.enum(BOAT_TYPES_TUPLE),
   routes: z.array(boatRouteSchema).optional(),
   cutoffHours: z.number().min(0).optional(),
@@ -170,7 +172,6 @@ export const equipmentGearCatalogSchema = z.object({
 
 /** Pool capabilities section. */
 export const poolCapabilitiesSchema = z.object({
-  confinedCapable: z.boolean(),
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
 })
@@ -183,7 +184,7 @@ export const poolCapabilitiesSchema = z.object({
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
-  venueType: z.enum(['Shore', 'Reef', 'Lake', 'River', 'Quarry', 'Other']),
+  venueType: z.enum(VENUE_TYPES),
 })
 
 /** Dive Site capabilities section. */
@@ -191,5 +192,4 @@ export const diveSiteCapabilitiesSchema = z.object({
   confinedCapable: z.boolean(),
   maxDepth: z.number().min(0).optional(),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
-  isPublic: z.boolean(),
 })

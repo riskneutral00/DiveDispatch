@@ -59,7 +59,7 @@ export function Input({
             onClick?.(e);
           }}
           className={cn(
-            'glass glass-field w-full text-sm text-primary',
+            'glass glass-field w-full text-body text-primary',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             'placeholder:opacity-50',
             leadingIcon ? 'pl-9' : 'pl-3',
@@ -90,7 +90,7 @@ export function Input({
       {error || !helperText ? (
         <FieldError id={`${id}-error`} message={error} />
       ) : (
-        <p id={`${id}-helper`} className="h-4 text-sm text-secondary truncate">
+        <p id={`${id}-helper`} className="h-4 text-body text-secondary truncate">
           {helperText}
         </p>
       )}

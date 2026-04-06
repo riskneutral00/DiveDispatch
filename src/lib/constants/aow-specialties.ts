@@ -9,4 +9,4 @@ export {
   MANDATORY_AOW_SPECIALTIES,
   AOW_SPECIALTY_VALUES,
   type AowSpecialty,
-} from '../../../convex/shared/aowSpecialties'
+} from '../../../convex/shared/aowSelection'

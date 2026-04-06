@@ -62,7 +62,7 @@ const OptionRow = memo(function OptionRow({
       aria-selected={isSelected}
       onClick={onSelect}
       onMouseEnter={onHover}
-      className="flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-colors text-primary"
+      className="flex items-center justify-between gap-2 px-3 py-2 text-body cursor-pointer transition-colors text-primary"
       style={{ background: isFocused ? 'var(--color-accent-muted)' : 'transparent' }}
     >
       <span className="flex items-center gap-2 min-w-0">
@@ -262,7 +262,7 @@ export function Select({
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
-        className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 text-left"
+        className="glass glass-field w-full text-body py-2.5 pl-3 pr-8 text-left"
         style={{
           color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
         }}

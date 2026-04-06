@@ -104,7 +104,7 @@ function ActionIcon({ action }: { action: AuditAction }) {
   }
 }
 
-function iconColor(action: AuditAction): string {
+function iconColor(action: AuditAction): string { /* design-ok: variant dispatch for style prop */
   switch (action) {
     case 'created':
     case 'submitted':
@@ -112,15 +112,15 @@ function iconColor(action: AuditAction): string {
     case 'completed':
     case 'reservation_accepted':
     case 'medical_cleared':
-      return 'var(--color-status-confirmed-icon, var(--color-success))'
+      return 'var(--color-success)'
     case 'cancelled':
     case 'expired':
     case 'reservation_declined':
     case 'medical_blocked':
-      return 'var(--color-status-cancelled-icon, var(--color-destructive))'
+      return 'var(--color-destructive)'
     case 'edited':
     case 'portal_submitted':
-      return 'var(--color-status-upcoming-icon, var(--color-status-upcoming))'
+      return 'var(--color-status-upcoming)'
     default:
       return 'var(--color-text-secondary)'
   }
@@ -161,17 +161,16 @@ function DiffExpander({ diff }: { diff: string }) {
           {entries.map(([field, change]) => (
             <div
               key={field}
-              className="flex items-baseline gap-2 text-xs font-mono px-2 py-1 rounded text-secondary"
-              style={{ background: 'var(--color-glass-bg)' }}
+              className="flex items-baseline gap-2 text-xs font-mono px-2 py-1 rounded text-secondary bg-glass-bg"
             >
-              <span className="font-semibold text-primary" style={{ minWidth: '6rem' }}>
+              <span className="font-semibold text-primary min-w-24">
                 {field}
               </span>
-              <span style={{ color: 'var(--color-destructive)', textDecoration: 'line-through' }}>
+              <span className="text-destructive line-through">
                 {String(change.old ?? '—')}
               </span>
               <span className="text-secondary">→</span>
-              <span style={{ color: 'var(--color-success)' }}>
+              <span className="text-success">
                 {String(change.new ?? '—')}
               </span>
             </div>

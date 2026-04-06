@@ -1,5 +1,5 @@
-export const GAS_MIXES = ['air', 'nitrox', 'trimix'] as const
-export type GasMix = (typeof GAS_MIXES)[number]
+import { GAS_MIXES } from '../../../convex/shared/gasMixes'
+export { GAS_MIXES, type GasMix } from '../../../convex/shared/gasMixes'
 
 export const GAS_MIX_LABELS: Record<string, string> = {
   air: 'Air',

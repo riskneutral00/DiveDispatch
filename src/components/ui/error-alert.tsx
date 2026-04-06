@@ -20,7 +20,7 @@ interface ErrorAlertProps {
  * Consolidates the repeated pattern of AlertTriangle + styled div
  * found across booking, portal, and dialog components.
  */
-const sizeMap = { sm: 'text-xs py-2', md: 'text-sm py-2.5' } as const
+const sizeMap = { sm: 'text-xs py-2', md: 'text-body py-2.5' } as const
 
 export function ErrorAlert({
   children,

@@ -58,13 +58,13 @@ export function RoleTile({
         />
         {showDescription ? (
           <div className="flex flex-col gap-1">
-            <span className="font-medium text-sm leading-tight">{role.label}</span>
+            <span className="font-medium text-body leading-tight">{role.label}</span>
             <span className="text-xs leading-snug text-secondary">
               {role.description}
             </span>
           </div>
         ) : (
-          <span className="font-medium text-sm leading-tight">{role.label}</span>
+          <span className="font-medium text-body leading-tight">{role.label}</span>
         )}
       </div>
     </button>

@@ -29,7 +29,7 @@ export function PageTitle({ title, description, leading, className }: PageTitleP
         heading
       )}
       {description != null && description !== '' && (
-        <p className={`text-sm text-secondary ${leading != null ? 'mt-2' : ''}`}>{description}</p>
+        <p className={`text-body text-secondary ${leading != null ? 'mt-2' : ''}`}>{description}</p>
       )}
     </div>
   )

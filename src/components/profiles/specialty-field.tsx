@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
-import { AGENCIES, getMandatorySpecialties, type AgencySpecialty } from '@/lib/constants/agencies'
+import { AGENCIES, AOW_REQUIRED_SPECIALTY_COUNT, getMandatorySpecialties, type AgencySpecialty } from '@/lib/constants/agencies'
 
 /* ── Display-layer reorder (presentation only — agencies.ts untouched) ────── */
 
 const PADI_DISPLAY_ORDER = [
   'PPB', 'Night', 'Drift', 'Wreck',
-  'Fish ID', 'Boat', 'Dry Suit', 'Photography', 'S&R', 'DUW Photo',
+  'Fish ID', 'Boat', 'Dry Suit', 'Photo/Video', 'S&R', 'Enriched Air',
+  'Altitude', 'Marine Ecology', 'Shark/Turtle', 'DPV', 'Ice',
+  'Sidemount', 'Self-Reliant', 'Rebreather', 'O2 Provider', 'Equipment', 'Science of Diving',
 ]
 
 function reorderToggleable(specs: AgencySpecialty[], agencyCode: string, mandatoryCodes: Set<string>): AgencySpecialty[] {
-  const toggleable = specs.filter((s) => !s.mandatory && !mandatoryCodes.has(s.code))
+  const toggleable = specs.filter((s) => !s.requiredForAOW && !mandatoryCodes.has(s.code))
   if (agencyCode !== 'PADI') return toggleable
   const order = PADI_DISPLAY_ORDER
   return [...toggleable].sort((a, b) => {
@@ -159,11 +161,11 @@ export function SpecialtyField({
   const agency = AGENCIES[agencyCode]
   const specialties = agency?.specialties ?? AGENCIES.PADI.specialties
   const mandatoryCodes = getMandatorySpecialties(agencyCode || 'PADI')
-  const requiredCount = agency?.specialtyCount ?? 5
+  const requiredCount = AOW_REQUIRED_SPECIALTY_COUNT
   const atMax = value.length >= requiredCount
 
   const toggleable = reorderToggleable(specialties, agencyCode || 'PADI', mandatoryCodes)
-  const mandatorySpecs = specialties.filter((s) => s.mandatory || mandatoryCodes.has(s.code))
+  const mandatorySpecs = specialties.filter((s) => s.requiredForAOW || mandatoryCodes.has(s.code))
 
   const { containerRef, registerPill, registerMandatory, overflowStart, measured } =
     useTwoRowOverflow(toggleable.length, mandatorySpecs.length)
@@ -183,7 +185,7 @@ export function SpecialtyField({
   return (
     <div className="relative flex flex-col gap-1.5 min-w-0">
       <p className="text-sm font-medium text-secondary">
-        Default Specialties<span style={{ color: 'var(--color-destructive)' }}> *</span>
+        Default Specialties<span className="text-destructive"> *</span>
         <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
       </p>
 

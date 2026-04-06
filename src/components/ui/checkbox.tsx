@@ -21,7 +21,7 @@ export function Checkbox({
 }: CheckboxProps) {
   return (
     <label
-      className={`flex items-center gap-2 cursor-pointer select-none text-sm text-primary${disabled ? ' opacity-50 cursor-not-allowed' : ''}${className ? ` ${className}` : ''}`}
+      className={`flex items-center gap-2 cursor-pointer select-none text-body text-primary${disabled ? ' opacity-50 cursor-not-allowed' : ''}${className ? ` ${className}` : ''}`}
     >
       <input
         type="checkbox"

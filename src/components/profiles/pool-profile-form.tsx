@@ -23,7 +23,7 @@ export function buildPoolCreatePayload<T extends Record<string, unknown>>(payloa
   return {
     ...payload,
     venueType: 'Pool' as const,
-    isPublic: false,
+    confinedCapable: true,
     hasCompressor: false,
   }
 }
@@ -44,20 +44,17 @@ export function PoolContactSection({ create, ...props }: PoolSectionProps) {
 // ── Capabilities section ─────────────────────────────────────────────
 
 export type PoolCapabilitiesFormState = {
-  confinedCapable: boolean
   maxDepth: number
   maxCapacity: number
 }
 
 export const INITIAL_POOL_CAPABILITIES_FORM: PoolCapabilitiesFormState = {
-  confinedCapable: false,
   maxDepth: 0,
   maxCapacity: 0,
 }
 
 export function poolCapabilitiesFromProfile(p: Record<string, unknown>): PoolCapabilitiesFormState {
   return {
-    confinedCapable: (p.confinedCapable as boolean) ?? false,
     maxDepth: (p.maxDepth as number) ?? 0,
     maxCapacity: (p.maxCapacity as number) ?? 0,
   }
@@ -65,7 +62,6 @@ export function poolCapabilitiesFromProfile(p: Record<string, unknown>): PoolCap
 
 export function poolCapabilitiesToPayload(f: PoolCapabilitiesFormState): Record<string, unknown> {
   return {
-    confinedCapable: f.confinedCapable,
     maxDepth: f.maxDepth,
     maxCapacity: f.maxCapacity,
   }
