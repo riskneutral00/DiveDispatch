@@ -1,60 +1,24 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
+import { operatorTypeValidator as operatorType } from './shared/operatorTypes'
 import { resourceOwnerTypeValidator as resourceOwnerType } from './shared/resourceOwnerTypes'
+import { boatTypeValidator as boatTypeUnion } from './shared/boatTypes'
+import { gasMixValidator as gasMix } from './shared/gasMixes'
+import { venueTypeValidator as venueType } from './shared/venueTypes'
+import { capacityModelValidator as capacityModel, genderValidator as gender, shoeSizeUnitValidator as shoeSizeUnit, acceptanceModeValidator as acceptanceMode } from './shared/schemaEnums'
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
 
 // ── Typed Unions ────────────────────────────────────────────────────
-
-const operatorType = v.union(
-  v.literal('DiveCenter'),
-  v.literal('Agent'),
-  v.literal('Liveaboard'),
-  v.literal('DiveResort'),
-  v.literal('DiveHostel'),
-  v.literal('DiveSite'),
-)
-
-// Liveaboard is a pure operator; DiveSite is a pure resource.
-// DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT added to this union.
-// DiveHostel inherits DiveResort's path — NOT added to this union.
-
-const capacityModel = v.union(v.literal('Exclusive'), v.literal('Pooled'))
-
-const gender = v.union(v.literal('M'), v.literal('F'), v.literal('Other'))
-
-const shoeSizeUnit = v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))
-
-const boatTypeUnion = v.union(
-  v.literal('day_boat'),
-  v.literal('speedboat'),
-  v.literal('longtail'),
-  v.literal('liveaboard'),
-  v.literal('catamaran'),
-  v.literal('rib'),
-)
-
-const venueType = v.union(
-  v.literal('Pool'),
-  v.literal('Shore'),
-  v.literal('Reef'),
-  v.literal('Lake'),
-  v.literal('River'),
-  v.literal('Quarry'),
-  v.literal('Other'),
-)
-
-const gasMix = v.union(v.literal('air'), v.literal('nitrox'), v.literal('trimix'))
+// DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT in operatorType.
+// DiveHostel inherits DiveResort's path — NOT in operatorType.
 
 
-// PrePayRequired and PostPayAllowed behave identically to Auto until Stripe integration. Schema placeholders retained.
-const acceptanceMode = v.union(
-  v.literal('Auto'),
-  v.literal('PrePayRequired'),
-  v.literal('PostPayAllowed'),
-)
-
+const accessControlFields = {
+  isAllowed: v.optional(v.array(v.string())),
+  notAllowed: v.optional(v.array(v.string())),
+}
 
 // ── Schema ──────────────────────────────────────────────────────────
 
@@ -384,6 +348,7 @@ export default defineSchema({
       selectedSpecialties: v.optional(v.array(v.string())),
     })),
     customerLanguages: v.optional(v.array(v.string())),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -401,10 +366,11 @@ export default defineSchema({
         agency: v.string(),
         level: v.string(),
         agencyID: v.string(),
-        courses: v.array(v.string()),
+        specialtyRatings: v.array(v.string()),
       }),
     ),
     teachingLanguages: v.array(v.string()),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -436,6 +402,7 @@ export default defineSchema({
       }),
     ),
     hasCompressor: v.boolean(),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -449,6 +416,7 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -463,7 +431,7 @@ export default defineSchema({
     phone: v.optional(v.string()),
     verified: v.boolean(),
     venueType: venueType,
-    isPublic: v.boolean(),
+    ...accessControlFields,
     confinedCapable: v.boolean(),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
@@ -480,6 +448,7 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     gasMixes: v.optional(v.array(gasMix)),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -570,7 +539,8 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
-    defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
+    defaultReferral: v.optional(v.string()),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -593,6 +563,7 @@ export default defineSchema({
       }),
     ),
     teachingLanguages: v.array(v.string()),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -607,6 +578,7 @@ export default defineSchema({
     lng: v.number(),
     email: v.string(),
     phone: v.string(),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -651,6 +623,7 @@ export default defineSchema({
     lng: v.number(),
     email: v.string(),
     phone: v.string(),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
@@ -680,6 +653,7 @@ export default defineSchema({
     phone: v.string(),
     bedCount: v.number(),
     dormCount: v.number(),
+    ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 

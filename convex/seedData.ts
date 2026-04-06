@@ -13,6 +13,7 @@ export type { StakeholderRole }
 
 export const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
+const KATA = { placeName: 'Phuket', country: 'Thailand', lat: 7.8202, lng: 98.3062 } as const
 const VERIFIED = true
 
 const PADI_PREFS = { owDays: 3, aowDays: 2, oaDays: 4, selectedSpecialties: ['Deep', 'Drift', 'Wreck', 'Navigation'] }
@@ -85,7 +86,6 @@ interface VenueProfile {
   phone: string
   verified: boolean
   venueType: 'Pool' | 'Shore' | 'Reef' | 'Lake' | 'River' | 'Quarry' | 'Other'
-  isPublic: boolean
   confinedCapable: boolean
   hasCompressor: boolean
   maxDepth?: number
@@ -112,6 +112,8 @@ interface EquipmentProfile {
   phone: string
   manufacturersByGearType?: Record<string, string[]>
   inventoryOverrides?: SeedInventoryLine[]
+  isAllowed?: string[]
+  notAllowed?: string[]
   verified: boolean
 }
 
@@ -158,7 +160,7 @@ interface AgentProfile {
   email: string
   phone: string
   associations: { agency: string; number: string }[]
-  defaultReferralMode: 'independent' | 'referral'
+  defaultReferral?: string
   verified: boolean
 }
 
@@ -176,7 +178,7 @@ interface InstructorProfile {
     agency: string
     level: string
     agencyID: string
-    courses: string[]
+    specialtyRatings: string[]
   }[]
   verified: boolean
 }
@@ -235,11 +237,13 @@ function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
   }
 
   lines.push({ gearType: 'mask', isPrescription: false, totalUnits: 10, displayName: 'Mask + Snorkel (Regular)' })
-  lines.push({ gearType: 'mask', diopter: -3.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -3.5)' })
-  lines.push({ gearType: 'mask', diopter: -4.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -4.5)' })
-  lines.push({ gearType: 'mask', diopter: -5.5, isPrescription: true, totalUnits: 1, displayName: 'Mask (Rx -5.5)' })
+  for (let d = -2.0; d >= -6.0; d -= 0.5) {
+    lines.push({ gearType: 'mask', diopter: d, isPrescription: true, totalUnits: 2, displayName: `Mask (Rx ${d})` })
+  }
 
-  lines.push({ gearType: 'regulator', manufacturer: 'ScubaPro', totalUnits: 50, displayName: 'ScubaPro Regulator Set' })
+  lines.push({ gearType: 'regulator', manufacturer: 'ScubaPro', totalUnits: 20, displayName: 'ScubaPro Regulator Set' })
+  lines.push({ gearType: 'regulator', manufacturer: 'Aqua Lung', totalUnits: 20, displayName: 'Aqua Lung Regulator Set' })
+  lines.push({ gearType: 'regulator', manufacturer: 'Mares', totalUnits: 20, displayName: 'Mares Regulator Set' })
 
   return lines
 }
@@ -304,7 +308,6 @@ export const HUG_OCEAN: SeedStakeholder = {
     maxCapacity: 15,
     verified: VERIFIED,
     venueType: 'Pool',
-    isPublic: false,
     confinedCapable: true,
 
     hasCompressor: false,
@@ -315,6 +318,7 @@ export const HUG_OCEAN: SeedStakeholder = {
     email: 'hug-ocean@divedispatch.dev',
     phone: '+66-76-381-103',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
+    isAllowed: ['n7rq5j'],
     verified: VERIFIED,
   },
 }
@@ -355,7 +359,6 @@ export const NEPTUNE: SeedStakeholder = {
     maxCapacity: 6,
     verified: VERIFIED,
     venueType: 'Pool',
-    isPublic: false,
     confinedCapable: true,
 
     hasCompressor: false,
@@ -366,6 +369,7 @@ export const NEPTUNE: SeedStakeholder = {
     email: 'neptune@divedispatch.dev',
     phone: '+66-76-383-003',
     manufacturersByGearType: { wetsuit: ['Aqua Lung'], bcd: ['Aqua Lung'] },
+    isAllowed: ['z8mv4c'],
     verified: VERIFIED,
   },
 }
@@ -398,13 +402,13 @@ export const PHUKET_DC: SeedStakeholder = {
     verified: VERIFIED,
   },
   boat: {
-    name: 'Phuket Dive Center',
+    name: 'Mandarin Queen',
     ...PHUKET,
     email: 'phuket-dive-center@divedispatch.dev',
     phone: '+66-76-385-002',
     fleet: [
       {
-        boatName: 'M.V.MQ5',
+        boatName: 'M.V. Mandarin Queen 5',
         maxPax: 70,
         boatType: 'day_boat',
         routes: [
@@ -414,17 +418,17 @@ export const PHUKET_DC: SeedStakeholder = {
         ],
       },
       {
-        boatName: 'M.V.MQ7',
+        boatName: 'M.V. Mandarin Queen 7',
         maxPax: 90,
         boatType: 'day_boat',
         routes: [
-          { diveSite: RACHA, daysOfWeek: [2, 5] },
+          { diveSite: RACHA, daysOfWeek: [2, 5, 0] },
           { diveSite: SHARK_KC, daysOfWeek: [3] },
-          { diveSite: PHI_PHI, daysOfWeek: [1, 4, 6, 0] },
+          { diveSite: PHI_PHI, daysOfWeek: [1, 4, 6] },
         ],
       },
     ],
-    hasCompressor: false,
+    hasCompressor: true,
     verified: VERIFIED,
   },
   equipment: {
@@ -433,6 +437,7 @@ export const PHUKET_DC: SeedStakeholder = {
     email: 'phuket-dive-center@divedispatch.dev',
     phone: '+66-76-385-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
+    isAllowed: ['p5ky3w'],
     verified: VERIFIED,
   },
 }
@@ -536,6 +541,7 @@ export const SCUBANICKS: SeedStakeholder = {
     email: 'scubanicks@divedispatch.dev',
     phone: '+66-76-388-002',
     manufacturersByGearType: { wetsuit: ['ScubaPro'], bcd: ['ScubaPro'] },
+    isAllowed: ['m4fx8d'],
     verified: VERIFIED,
   },
 }
@@ -575,6 +581,7 @@ export const SCUBA_DEEP: SeedStakeholder = {
     email: 'scuba-deep@divedispatch.dev',
     phone: '+66-76-389-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
+    isAllowed: ['h3cp6n'],
     verified: VERIFIED,
   },
 }
@@ -602,7 +609,10 @@ export const SIROLO: SeedStakeholder = {
     ...CHALONG,
     email: 'sirolo@divedispatch.dev',
     phone: '+66-76-391-001',
-    associations: [{ agency: 'PADI', number: 'S-70123', ...PADI_PREFS }],
+    associations: [
+      { agency: 'SSI', number: 'DC-70123', ...SSI_PREFS },
+      { agency: 'PADI', number: 'S-70124', ...PADI_PREFS },
+    ],
     customerLanguages: ['th', 'en', 'zh-CN', 'zh-TW'],
     verified: VERIFIED,
   },
@@ -623,7 +633,7 @@ export const SIROLO: SeedStakeholder = {
         ],
       },
     ],
-    hasCompressor: false,
+    hasCompressor: true,
     verified: VERIFIED,
   },
   equipment: {
@@ -632,6 +642,7 @@ export const SIROLO: SeedStakeholder = {
     email: 'sirolo@divedispatch.dev',
     phone: '+66-76-391-003',
     manufacturersByGearType: { wetsuit: ['Mares'], bcd: ['Mares'] },
+    isAllowed: ['sirolo'],
     verified: VERIFIED,
   },
 }
@@ -658,12 +669,162 @@ export const PRAY_DC: SeedStakeholder = {
     email: 'pray-dive-center@divedispatch.dev',
     phone: '+66-76-390-001',
     associations: [{ agency: 'PADI', number: 'S-48203', ...PADI_PREFS }],
-    customerLanguages: ['en', 'th'],
+    customerLanguages: ['en', 'th', 'fr', 'de'],
     verified: VERIFIED,
   },
 }
 
-// ── 10. Amanda (Agent) ─────────────────────────────────────────────
+// ── 10. Hanul Dive (Korean-focused DC) ──────────────────────────────
+
+export const HANUL_DIVE: SeedStakeholder = {
+  user: {
+    slug: 'w3kn7p',
+    email: 'hanul-dive+clerk_test@divedispatch.dev',
+    name: 'Park Joon-Woo',
+    firstName: 'Joon-Woo',
+    lastName: 'Park',
+    businessName: 'Hanul Dive',
+    appLanguage: 'ko',
+    phone: '+66-81-234-5013',
+  },
+  roles: [
+    { role: 'DiveCenter' },
+  ],
+  diveCenter: {
+    name: 'Hanul Dive',
+    ...PHUKET,
+    email: 'hanul-dive@divedispatch.dev',
+    phone: '+66-76-396-001',
+    associations: [
+      { agency: 'PADI', number: 'S-82301', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-82302', ...SSI_PREFS },
+    ],
+    customerLanguages: ['ko'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 11. Umi Dive Center (Japanese-focused DC) ──────────────────────
+
+export const UMI_DIVE: SeedStakeholder = {
+  user: {
+    slug: 'b6um4j',
+    email: 'umi-dive+clerk_test@divedispatch.dev',
+    name: 'Tanaka Haruto',
+    firstName: 'Haruto',
+    lastName: 'Tanaka',
+    businessName: 'Umi Dive Center',
+    appLanguage: 'ja',
+    phone: '+66-81-234-5015',
+  },
+  roles: [
+    { role: 'DiveCenter' },
+  ],
+  diveCenter: {
+    name: 'Umi Dive Center',
+    ...PHUKET,
+    email: 'umi-dive@divedispatch.dev',
+    phone: '+66-76-396-002',
+    associations: [
+      { agency: 'PADI', number: 'S-83101', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-83102', ...SSI_PREFS },
+    ],
+    customerLanguages: ['ja'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 12. Aqua Pro Dive (Russian-focused DC) ─────────────────────────
+
+export const AQUA_PRO: SeedStakeholder = {
+  user: {
+    slug: 'r9aq5v',
+    email: 'aqua-pro+clerk_test@divedispatch.dev',
+    name: 'Sergei Kozlov',
+    firstName: 'Sergei',
+    lastName: 'Kozlov',
+    businessName: 'Aqua Pro Dive',
+    appLanguage: 'ru',
+    phone: '+66-81-234-5016',
+  },
+  roles: [
+    { role: 'DiveCenter' },
+  ],
+  diveCenter: {
+    name: 'Aqua Pro Dive',
+    ...PHUKET,
+    email: 'aqua-pro@divedispatch.dev',
+    phone: '+66-76-396-003',
+    associations: [
+      { agency: 'PADI', number: 'S-84203', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-84204', ...SSI_PREFS },
+    ],
+    customerLanguages: ['ru'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 13. Pacific Divers (ko, ja, es combo DC) ───────────────────────
+
+export const PACIFIC_DIVERS: SeedStakeholder = {
+  user: {
+    slug: 'c2pd8x',
+    email: 'pacific-divers+clerk_test@divedispatch.dev',
+    name: 'Carlos Mendoza',
+    firstName: 'Carlos',
+    lastName: 'Mendoza',
+    businessName: 'Pacific Divers',
+    appLanguage: 'es',
+    phone: '+66-81-234-5017',
+  },
+  roles: [
+    { role: 'DiveCenter' },
+  ],
+  diveCenter: {
+    name: 'Pacific Divers',
+    ...PHUKET,
+    email: 'pacific-divers@divedispatch.dev',
+    phone: '+66-76-396-004',
+    associations: [
+      { agency: 'PADI', number: 'S-85104', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-85105', ...SSI_PREFS },
+    ],
+    customerLanguages: ['ko', 'ja', 'es'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 14. Blue Planet Diving (ru, id, nl combo DC) ───────────────────
+
+export const BLUE_PLANET: SeedStakeholder = {
+  user: {
+    slug: 'f7bp3g',
+    email: 'blue-planet+clerk_test@divedispatch.dev',
+    name: 'Willem de Groot',
+    firstName: 'Willem',
+    lastName: 'de Groot',
+    businessName: 'Blue Planet Diving',
+    appLanguage: 'nl',
+    phone: '+66-81-234-5018',
+  },
+  roles: [
+    { role: 'DiveCenter' },
+  ],
+  diveCenter: {
+    name: 'Blue Planet Diving',
+    ...PHUKET,
+    email: 'blue-planet@divedispatch.dev',
+    phone: '+66-76-396-005',
+    associations: [
+      { agency: 'PADI', number: 'S-86200', ...PADI_PREFS },
+      { agency: 'SSI', number: 'DC-86201', ...SSI_PREFS },
+    ],
+    customerLanguages: ['ru', 'id', 'nl'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 15. Amanda (Agent) ─────────────────────────────────────────────
 
 export const AMANDA: SeedStakeholder = {
   user: {
@@ -686,7 +847,100 @@ export const AMANDA: SeedStakeholder = {
     email: 'amanda@divedispatch.dev',
     phone: '+66-81-555-0012',
     associations: [{ agency: 'PADI', number: 'A-10482' }],
-    defaultReferralMode: 'independent',
+    defaultReferral: 'q9bz7r',  // Nicole DC
+    verified: VERIFIED,
+  },
+}
+
+// ── 16. Ji-Yeon Park (Agent, Korean/English) ─────────────────────
+export const JIYEON_AGENT: SeedStakeholder = {
+  user: {
+    slug: 'k4ko9j',
+    email: 'jiyeon+clerk_test@divedispatch.dev',
+    name: 'Ji-Yeon Park',
+    firstName: 'Ji-Yeon',
+    lastName: 'Park',
+    businessName: 'JY Dive Travel',
+    appLanguage: 'ko',
+    phone: '+82-10-3456-7890',
+    customerLanguages: ['ko', 'en'],
+  },
+  roles: [{ role: 'Agent' }],
+  agent: {
+    name: 'JY Dive Travel',
+    placeName: 'Seoul',
+    country: 'South Korea',
+    lat: 37.5665,
+    lng: 126.9780,
+    email: 'jiyeon@divedispatch.dev',
+    phone: '+82-10-3456-7890',
+    associations: [
+      { agency: 'PADI', number: 'A-20501' },
+      { agency: 'SSI', number: 'A-20502' },
+    ],
+    defaultReferral: 'w3kn7p',  // Hanul Dive
+    verified: VERIFIED,
+  },
+}
+
+// ── 17. Kenji Watanabe (Agent, Japanese/English) ──────────────────
+export const KENJI_AGENT: SeedStakeholder = {
+  user: {
+    slug: 'a7ja2m',
+    email: 'kenji+clerk_test@divedispatch.dev',
+    name: 'Kenji Watanabe',
+    firstName: 'Kenji',
+    lastName: 'Watanabe',
+    businessName: 'Watanabe Dive',
+    appLanguage: 'ja',
+    phone: '+81-90-1234-5678',
+    customerLanguages: ['ja', 'en'],
+  },
+  roles: [{ role: 'Agent' }],
+  agent: {
+    name: 'Watanabe Dive',
+    placeName: 'Tokyo',
+    country: 'Japan',
+    lat: 35.6762,
+    lng: 139.6503,
+    email: 'kenji@divedispatch.dev',
+    phone: '+81-90-1234-5678',
+    associations: [
+      { agency: 'PADI', number: 'A-20503' },
+      { agency: 'SSI', number: 'A-20504' },
+    ],
+    defaultReferral: 'b6um4j',  // Umi Dive
+    verified: VERIFIED,
+  },
+}
+
+// ── 18. Eva Klein (Agent, German/French/Dutch) ────────────────────
+export const EVA_AGENT: SeedStakeholder = {
+  user: {
+    slug: 'e6eu5z',
+    email: 'eva+clerk_test@divedispatch.dev',
+    name: 'Eva Klein',
+    firstName: 'Eva',
+    lastName: 'Klein',
+    businessName: 'Klein Dive Europe',
+    appLanguage: 'de',
+    phone: '+49-170-1234567',
+    customerLanguages: ['de', 'fr', 'nl'],
+  },
+  roles: [{ role: 'Agent' }],
+  agent: {
+    name: 'Klein Dive Europe',
+    placeName: 'Berlin',
+    country: 'Germany',
+    lat: 52.5200,
+    lng: 13.4050,
+    email: 'eva@divedispatch.dev',
+    phone: '+49-170-1234567',
+    associations: [
+      { agency: 'PADI', number: 'A-20505' },
+      { agency: 'SSI', number: 'A-20506' },
+    ],
+    defaultReferral: 't7gw1k',  // Pray DC
     verified: VERIFIED,
   },
 }
@@ -740,7 +994,31 @@ export const CHALONG_COMPRESSOR: SeedStakeholder = {
   },
 }
 
-// ── 13. Coral Bay Resort (DiveResort) ─────────────────────────────
+// ── 13. Scuba Market Thailand — standalone compressor (Kata) ─────
+
+export const SCUBA_MARKET: SeedStakeholder = {
+  user: {
+    slug: 'q7sm3k',
+    email: 'scuba-market+clerk_test@divedispatch.dev',
+    name: 'Prawit Suksawat',
+    firstName: 'Prawit',
+    lastName: 'Suksawat',
+    businessName: 'Scuba Market Thailand',
+    appLanguage: 'th',
+    phone: '+66-76-330-345',
+  },
+  roles: [{ role: 'Compressor' }],
+  compressor: {
+    name: 'Scuba Market Thailand',
+    ...KATA,
+    email: 'scuba-market@divedispatch.dev',
+    phone: '+66-76-330-345',
+    gasMixes: ['air', 'nitrox', 'trimix'],
+    verified: VERIFIED,
+  },
+}
+
+// ── 14. Coral Bay Resort (DiveResort) ─────────────────────────────
 
 export const CORAL_BAY_RESORT: SeedStakeholder = {
   user: {
@@ -765,6 +1043,96 @@ export const CORAL_BAY_RESORT: SeedStakeholder = {
   },
 }
 
+// ── 15. Water Pro — standalone shared pool ──────────────────────────
+
+export const WATER_PRO: SeedStakeholder = {
+  user: {
+    slug: 'b3wt9f',
+    email: 'water-pro+clerk_test@divedispatch.dev',
+    name: 'Niran Jantarakul',
+    firstName: 'Niran',
+    lastName: 'Jantarakul',
+    businessName: 'Water Pro',
+    appLanguage: 'th',
+    phone: '+66-76-394-001',
+  },
+  roles: [
+    { role: 'Pool' },
+  ],
+  pool: {
+    name: 'Water Pro',
+    ...PHUKET,
+    email: 'water-pro@divedispatch.dev',
+    phone: '+66-76-394-001',
+    maxDepth: 2.5,
+    maxCapacity: 25,
+    verified: VERIFIED,
+    venueType: 'Pool',
+    confinedCapable: true,
+    hasCompressor: false,
+  },
+}
+
+// ── 16. Shark Bites — standalone shared pool ────────────────────────
+
+export const SHARK_BITES: SeedStakeholder = {
+  user: {
+    slug: 'g2hn6x',
+    email: 'shark-bites+clerk_test@divedispatch.dev',
+    name: 'Kittisak Wongsawat',
+    firstName: 'Kittisak',
+    lastName: 'Wongsawat',
+    businessName: 'Shark Bites',
+    appLanguage: 'th',
+    phone: '+66-76-394-002',
+  },
+  roles: [
+    { role: 'Pool' },
+  ],
+  pool: {
+    name: 'Shark Bites',
+    ...PHUKET,
+    email: 'shark-bites@divedispatch.dev',
+    phone: '+66-76-394-002',
+    maxDepth: 2.5,
+    maxCapacity: 8,
+    verified: VERIFIED,
+    venueType: 'Pool',
+    confinedCapable: true,
+    hasCompressor: false,
+  },
+}
+
+// ── 19. Scuba Revolution Phuket — standalone equipment manager ───────
+
+export const SCUBA_REVOLUTION: SeedStakeholder = {
+  user: {
+    slug: 'v8sr2p',
+    email: 'scuba-revolution+clerk_test@divedispatch.dev',
+    name: 'Anong Petcharat',
+    firstName: 'Anong',
+    lastName: 'Petcharat',
+    businessName: 'Scuba Revolution Phuket',
+    appLanguage: 'th',
+    phone: '+66-76-330-678',
+  },
+  roles: [{ role: 'Equipment' }],
+  equipment: {
+    name: 'Scuba Revolution Phuket',
+    placeName: 'Phuket',
+    country: 'Thailand',
+    lat: 7.8207,
+    lng: 98.3425,
+    email: 'scuba-revolution@divedispatch.dev',
+    phone: '+66-76-330-678',
+    manufacturersByGearType: {
+      wetsuit: ['ScubaPro', 'Aqua Lung', 'Mares'],
+      bcd: ['ScubaPro', 'Aqua Lung', 'Mares'],
+    },
+    verified: VERIFIED,
+  },
+}
+
 // ── Unowned Dive Sites (no user account) ────────────────────────────
 
 export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
@@ -784,7 +1152,19 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   SIROLO,
   PRAY_DC,
   AMANDA,
+  JIYEON_AGENT,
+  KENJI_AGENT,
+  EVA_AGENT,
+  HANUL_DIVE,
+  UMI_DIVE,
+  AQUA_PRO,
+  PACIFIC_DIVERS,
+  BLUE_PLANET,
+  WATER_PRO,
+  SHARK_BITES,
   CHALONG_COMPRESSOR,
+  SCUBA_MARKET,
+  SCUBA_REVOLUTION,
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
 ]

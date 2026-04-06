@@ -1,4 +1,4 @@
-// 45 freelance instructors + 3 DiveMasters for seed data.
+// 45 freelance instructors + 5 DiveMasters for seed data.
 // DCs pull instructors by language match.
 
 import { PHUKET, SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
@@ -6,9 +6,8 @@ import { PHUKET, SeedStakeholder, SeedUser, StakeholderRole } from './seedData'
 interface InstructorDef {
   firstName: string
   lastName: string
-  credentials: { agency: string; level: string }[]
-  courses: string[]
-  teachingLanguages?: string[]
+  credentials: { agency: string; level: string; specialtyRatings: string[] }[]
+  teachingLanguages: string[]
   role?: 'Instructor' | 'DiveMaster'
 }
 
@@ -33,15 +32,11 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
     phone,
   }
 
-  const instructorCourses =
-    role === 'DiveMaster' ? ([] as string[]) : def.courses.length > 0 ? def.courses : ['OW']
-
   const credential = def.credentials.map((c, i) => ({
     agency: c.agency,
     level: c.level,
     agencyID: c.agency === 'PADI' ? `PADI-${300000 + index * 10 + i}` : `SSI-${500000 + index * 10 + i}`,
-    // DiveMasters have no courses; Instructors need at least one course code (completeness + schema semantics)
-    courses: instructorCourses,
+    specialtyRatings: role === 'DiveMaster' ? [] : c.specialtyRatings,
   }))
 
   return {
@@ -52,7 +47,7 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
       ...PHUKET,
       email,
       phone,
-      teachingLanguages: def.teachingLanguages ?? ['en'],
+      teachingLanguages: def.teachingLanguages,
       credential,
       verified: true,
     },
@@ -60,93 +55,64 @@ function buildInstructor(def: InstructorDef, index: number): SeedStakeholder {
 }
 
 const ROSTER: InstructorDef[] = [
-  // ── Original Instructors (1-15) ───────────────────────────────────
+  // ── Original Instructors (1–15) ──────────────────────────────────
 
-  // 1. Ryan Clarke
-  { firstName: 'Ryan', lastName: 'Clarke', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'RESCUE'], teachingLanguages: ['en', 'th'] },
-  // 2. Nattaya Srisuk
-  { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'RESCUE', 'REFRESH'], teachingLanguages: ['th', 'en', 'zh-CN'] },
-  // 3. Wei Chen
-  { firstName: 'Wei', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Nitrox', 'Deep', 'Wreck'], teachingLanguages: ['zh-CN', 'zh-TW', 'en', 'th'] },
-  // 4. Li Ming
-  { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['OW', 'AOW'], teachingLanguages: ['zh-CN', 'en', 'ko'] },
-  // 5. Zhang Yong
-  { firstName: 'Zhang', lastName: 'Yong', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Deep'], teachingLanguages: ['zh-CN', 'zh-TW', 'en'] },
-  // 6. Nicole Tam
-  { firstName: 'Nicole', lastName: 'Tam', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['PPB'], teachingLanguages: ['zh-TW', 'en', 'zh-CN', 'th'] },
-  // 7. Pierre Dubois
-  { firstName: 'Pierre', lastName: 'Dubois', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Deep', 'Wreck', 'Nitrox'], teachingLanguages: ['fr', 'en', 'de'] },
-  // 8. Stefan Braun
-  { firstName: 'Stefan', lastName: 'Braun', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Deep'], teachingLanguages: ['de', 'en', 'fr'] },
-  // 9. Somphon Kaew
-  { firstName: 'Somphon', lastName: 'Kaew', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'REFRESH'], teachingLanguages: ['th', 'en'] },
-  // 10. Mike Chen (dual)
-  { firstName: 'Mike', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Nitrox', 'Deep', 'Wreck', 'PPB', 'Sidemount'], teachingLanguages: ['zh-CN', 'zh-TW', 'en', 'th'] },
-  // 11. Rachel Nguyen (dual)
-  { firstName: 'Rachel', lastName: 'Nguyen', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['en', 'fr', 'th', 'zh-CN'] },
-  // 12. Lee Min-Ho (dual)
-  { firstName: 'Lee', lastName: 'Min-Ho', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'Advanced OWI' }], courses: ['Deep', 'PPB'], teachingLanguages: ['ko', 'en', 'zh-CN', 'ja'] },
-  // 13. David Schmidt (dual)
-  { firstName: 'David', lastName: 'Schmidt', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['Nitrox'], teachingLanguages: ['de', 'en', 'fr', 'es'] },
-  // 14. Yuki Tanaka (dual)
-  { firstName: 'Yuki', lastName: 'Tanaka', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'Wreck'], teachingLanguages: ['ja', 'en', 'ko', 'zh-CN'] },
-  // 15. Maria Santos (dual)
-  { firstName: 'Maria', lastName: 'Santos', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'Advanced OWI' }], courses: ['Nitrox', 'Deep', 'PPB', 'Sidemount'], teachingLanguages: ['es', 'en', 'fr', 'de'] },
+  { firstName: 'Ryan', lastName: 'Clarke', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Navigation'] }], teachingLanguages: ['en', 'th'] },
+  { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air', 'Night'] }], teachingLanguages: ['th', 'en', 'zh-CN'] },
+  { firstName: 'Wei', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Navigation', 'Night'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['zh-CN', 'en', 'ko'] },
+  { firstName: 'Zhang', lastName: 'Yong', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Drift'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'en'] },
+  { firstName: 'Nicole', lastName: 'Tam', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Night', 'Fish ID'] }], teachingLanguages: ['zh-TW', 'zh-CN', 'th'] },
+  { firstName: 'Pierre', lastName: 'Dubois', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Wreck', 'Enriched Air', 'S&R', 'Drift'] }], teachingLanguages: ['fr', 'en', 'de'] },
+  { firstName: 'Stefan', lastName: 'Braun', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['de', 'en', 'fr', 'ru'] },
+  { firstName: 'Somphon', lastName: 'Kaew', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Navigation', 'Boat'] }], teachingLanguages: ['th', 'en'] },
+  { firstName: 'Mike', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Wreck', 'Sidemount', 'DPV', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Rachel', lastName: 'Nguyen', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Navigation', 'Night', 'Photo/Video'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['fr', 'th', 'zh-CN'] },
+  { firstName: 'Lee', lastName: 'Min-Ho', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck'] }, { agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Navigation', 'Enriched Air', 'Altitude', 'S&R'] }], teachingLanguages: ['ko', 'zh-CN', 'ja'] },
+  { firstName: 'David', lastName: 'Schmidt', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Enriched Air', 'Drift'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Enriched Air'] }], teachingLanguages: ['de', 'fr', 'es'] },
+  { firstName: 'Yuki', lastName: 'Tanaka', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Wreck', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Wreck'] }], teachingLanguages: ['ja', 'ko', 'zh-CN'] },
+  { firstName: 'Maria', lastName: 'Santos', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'DPV', 'Wreck'] }, { agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Enriched Air', 'Sidemount', 'Navigation', 'S&R'] }], teachingLanguages: ['es', 'fr', 'de'] },
 
-  // ── Original DiveMasters (16-18) ──────────────────────────────────
+  // ── DiveMasters (16–20) ──────────────────────────────────────────
 
-  // 16. Arisa Kanchanaburi
-  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'Divemaster' }], courses: [], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
-  // 17. Kittipong Jaidee
-  { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide' }], courses: [], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
-  // 18. Prasit Rattana
-  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'Divemaster' }], courses: [], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
+  { firstName: 'Arisa', lastName: 'Kanchanaburi', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
+  { firstName: 'Kittipong', lastName: 'Jaidee', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
+  { firstName: 'Prasit', lastName: 'Rattana', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en'], role: 'DiveMaster' },
+  { firstName: 'Tanawat', lastName: 'Boon', credentials: [{ agency: 'PADI', level: 'Divemaster', specialtyRatings: [] }], teachingLanguages: ['th', 'en', 'zh-CN'], role: 'DiveMaster' },
+  { firstName: 'Sato', lastName: 'Kenji', credentials: [{ agency: 'SSI', level: 'Dive Guide', specialtyRatings: [] }], teachingLanguages: ['ja', 'en', 'ko'], role: 'DiveMaster' },
 
-  // ── New Instructors (19-48) — 4 languages + 2 specialties each ────
+  // ── Instructors (21–50) ──────────────────────────────────────────
 
-  // Group A: zh-CN, zh-TW, th, en
-  { firstName: 'Mei', lastName: 'Lin', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Jiahao', lastName: 'Wu', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Wreck', 'PPB'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Xiao', lastName: 'Lei', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Deep', 'DPV'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Zhen', lastName: 'Liu', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Navigation', 'Wreck'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Suporn', lastName: 'Thani', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Night', 'Deep'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Natpawee', lastName: 'Chai', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Sidemount', 'Deep'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Pimchanok', lastName: 'Sri', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Nitrox', 'Fish ID'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-  { firstName: 'Wanchai', lastName: 'Pong', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'Drift'], teachingLanguages: ['zh-CN', 'zh-TW', 'th', 'en'] },
-
-  // Group B: ko, ja, zh-CN, en
-  { firstName: 'Kim', lastName: 'Ji-Soo', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Deep', 'PPB'], teachingLanguages: ['ko', 'ja', 'zh-CN', 'en'] },
-  { firstName: 'Park', lastName: 'Soo-Jin', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Nitrox', 'Night'], teachingLanguages: ['ko', 'ja', 'zh-CN', 'en'] },
-  { firstName: 'Hiroshi', lastName: 'Kato', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Wreck', 'Deep'], teachingLanguages: ['ko', 'ja', 'zh-CN', 'en'] },
-  { firstName: 'Yuko', lastName: 'Yamamoto', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['DPV', 'Navigation'], teachingLanguages: ['ko', 'ja', 'zh-CN', 'en'] },
-  { firstName: 'Aiko', lastName: 'Fujita', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Sidemount', 'Wreck'], teachingLanguages: ['ko', 'ja', 'zh-CN', 'en'] },
-
-  // Group C: fr, de, en, es
-  { firstName: 'Camille', lastName: 'Moreau', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['fr', 'de', 'en', 'es'] },
-  { firstName: 'Hans', lastName: 'Weber', credentials: [{ agency: 'SSI', level: 'Advanced OWI' }], courses: ['Wreck', 'PPB'], teachingLanguages: ['fr', 'de', 'en', 'es'] },
-  { firstName: 'Sophie', lastName: 'Laurent', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['Navigation', 'Deep'], teachingLanguages: ['fr', 'de', 'en', 'es'] },
-  { firstName: 'Klaus', lastName: 'Fischer', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Drift', 'Night'], teachingLanguages: ['fr', 'de', 'en', 'es'] },
-  { firstName: 'Ana', lastName: 'Garcia', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Sidemount', 'Deep'], teachingLanguages: ['fr', 'de', 'en', 'es'] },
-
-  // Group D: ru, de, en, fr
-  { firstName: 'Alexei', lastName: 'Volkov', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Deep', 'Wreck'], teachingLanguages: ['ru', 'de', 'en', 'fr'] },
-  { firstName: 'Natasha', lastName: 'Ivanova', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Nitrox', 'DPV'], teachingLanguages: ['ru', 'de', 'en', 'fr'] },
-  { firstName: 'Dmitri', lastName: 'Petrov', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'Night'], teachingLanguages: ['ru', 'de', 'en', 'fr'] },
-
-  // Group E: id, zh-CN, th, en
-  { firstName: 'Budi', lastName: 'Santoso', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['id', 'zh-CN', 'th', 'en'] },
-  { firstName: 'Dewi', lastName: 'Rahayu', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Wreck', 'PPB'], teachingLanguages: ['id', 'zh-CN', 'th', 'en'] },
-  { firstName: 'Andi', lastName: 'Firmansyah', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'DPV'], teachingLanguages: ['id', 'zh-CN', 'th', 'en'] },
-  { firstName: 'Ratih', lastName: 'Kusuma', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Navigation', 'Sidemount'], teachingLanguages: ['id', 'zh-CN', 'th', 'en'] },
-
-  // Group F: nl, de, en, fr
-  { firstName: 'Lars', lastName: 'van-Dijk', credentials: [{ agency: 'SSI', level: 'Advanced OWI' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['nl', 'de', 'en', 'fr'] },
-  { firstName: 'Ingrid', lastName: 'Bakker', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Wreck', 'Night'], teachingLanguages: ['nl', 'de', 'en', 'fr'] },
-  { firstName: 'Pieter', lastName: 'de-Boer', credentials: [{ agency: 'PADI', level: 'OWSI' }, { agency: 'SSI', level: 'OWI' }], courses: ['PPB', 'Deep'], teachingLanguages: ['nl', 'de', 'en', 'fr'] },
-
-  // Group G: ko, zh-TW, en, ja
-  { firstName: 'Seo', lastName: 'Min-Ji', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['DPV', 'Wreck'], teachingLanguages: ['ko', 'zh-TW', 'en', 'ja'] },
-  { firstName: 'Oh', lastName: 'Sang-Hoon', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Deep', 'Nitrox'], teachingLanguages: ['ko', 'zh-TW', 'en', 'ja'] },
+  { firstName: 'Mei', lastName: 'Lin', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Jiahao', lastName: 'Wu', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Wreck', 'Boat'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Xiao', lastName: 'Lei', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'DPV', 'Navigation', 'Enriched Air', 'Wreck'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Zhen', lastName: 'Liu', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Navigation', 'Wreck', 'Boat', 'Night'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Navigation'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Suporn', lastName: 'Thani', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Night', 'Deep'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Natpawee', lastName: 'Chai', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Sidemount', 'Deep'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Pimchanok', lastName: 'Sri', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Enriched Air', 'Fish ID'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Wanchai', lastName: 'Pong', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Drift', 'Boat'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['zh-CN', 'zh-TW', 'th'] },
+  { firstName: 'Kim', lastName: 'Ji-Soo', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Navigation'] }], teachingLanguages: ['ko', 'ja', 'zh-CN'] },
+  { firstName: 'Park', lastName: 'Soo-Jin', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Enriched Air', 'Night'] }], teachingLanguages: ['ko', 'ja', 'zh-CN'] },
+  { firstName: 'Hiroshi', lastName: 'Kato', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Wreck', 'Navigation', 'Enriched Air', 'Fish ID'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Wreck'] }], teachingLanguages: ['ko', 'ja', 'zh-CN'] },
+  { firstName: 'Yuko', lastName: 'Yamamoto', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['DPV', 'Navigation'] }], teachingLanguages: ['ko', 'ja', 'zh-CN'] },
+  { firstName: 'Aiko', lastName: 'Fujita', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Sidemount', 'Wreck'] }], teachingLanguages: ['ko', 'ja', 'zh-CN'] },
+  { firstName: 'Camille', lastName: 'Moreau', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Enriched Air', 'Navigation', 'Drift', 'S&R'] }], teachingLanguages: ['fr', 'de', 'es'] },
+  { firstName: 'Hans', lastName: 'Weber', credentials: [{ agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Wreck', 'Navigation', 'Enriched Air', 'Dry Suit'] }], teachingLanguages: ['fr', 'de', 'es', 'ru'] },
+  { firstName: 'Sophie', lastName: 'Laurent', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Navigation', 'Deep', 'Boat'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['fr', 'de', 'es'] },
+  { firstName: 'Klaus', lastName: 'Fischer', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Drift', 'Night'] }], teachingLanguages: ['fr', 'de', 'es'] },
+  { firstName: 'Ana', lastName: 'Garcia', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Sidemount', 'Deep'] }], teachingLanguages: ['fr', 'de', 'es'] },
+  { firstName: 'Alexei', lastName: 'Volkov', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'Wreck', 'Navigation', 'Dry Suit', 'Ice'] }], teachingLanguages: ['ru', 'de', 'fr'] },
+  { firstName: 'Natasha', lastName: 'Ivanova', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Enriched Air', 'DPV'] }], teachingLanguages: ['ru', 'de', 'fr'] },
+  { firstName: 'Dmitri', lastName: 'Petrov', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Night', 'Enriched Air'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['ru', 'de', 'fr'] },
+  { firstName: 'Budi', lastName: 'Santoso', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['id', 'zh-CN', 'th'] },
+  { firstName: 'Dewi', lastName: 'Rahayu', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Wreck', 'Night'] }], teachingLanguages: ['id', 'zh-CN', 'th'] },
+  { firstName: 'Andi', lastName: 'Firmansyah', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'DPV', 'Navigation', 'Enriched Air', 'Boat'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['id', 'zh-CN', 'th'] },
+  { firstName: 'Ratih', lastName: 'Kusuma', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Navigation', 'Sidemount'] }], teachingLanguages: ['id', 'zh-CN', 'th'] },
+  { firstName: 'Lars', lastName: 'van-Dijk', credentials: [{ agency: 'SSI', level: 'Advanced OWI', specialtyRatings: ['Deep', 'Enriched Air', 'Navigation', 'Night', 'DPV'] }], teachingLanguages: ['nl', 'de', 'fr', 'ru'] },
+  { firstName: 'Ingrid', lastName: 'Bakker', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Wreck', 'Night'] }], teachingLanguages: ['nl', 'de', 'fr'] },
+  { firstName: 'Pieter', lastName: 'de-Boer', credentials: [{ agency: 'PADI', level: 'OWSI', specialtyRatings: ['Deep', 'Boat'] }, { agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep'] }], teachingLanguages: ['nl', 'de', 'fr'] },
+  { firstName: 'Seo', lastName: 'Min-Ji', credentials: [{ agency: 'PADI', level: 'MSDT', specialtyRatings: ['Deep', 'DPV', 'Wreck', 'Navigation', 'Photo/Video'] }], teachingLanguages: ['ko', 'zh-TW', 'ja'] },
+  { firstName: 'Oh', lastName: 'Sang-Hoon', credentials: [{ agency: 'SSI', level: 'OWI', specialtyRatings: ['Deep', 'Enriched Air'] }], teachingLanguages: ['ko', 'zh-TW', 'ja'] },
 ]
 
 export const ALL_INSTRUCTORS: SeedStakeholder[] = ROSTER.map((def, i) => buildInstructor(def, i))

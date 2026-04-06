@@ -12,7 +12,7 @@ const credentialValidator = v.object({
   agency: v.string(),
   level: v.string(),
   agencyID: v.string(),
-  courses: v.array(v.string()),
+  specialtyRatings: v.array(v.string()),
 })
 
 export const create = mutation({

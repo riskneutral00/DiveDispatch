@@ -22,10 +22,16 @@ import {
 // ── Equipment Inventory Generation ──────────────────────────────────
 
 const FIN_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46']
-const PRESCRIPTION_MASKS: { diopter: number; qty: number }[] = [
-  { diopter: -2.0, qty: 2 },
-  { diopter: -3.0, qty: 2 },
-  { diopter: -4.0, qty: 1 },
+const PRESCRIPTION_MASKS: { diopter: number }[] = [
+  { diopter: -2.0 },
+  { diopter: -2.5 },
+  { diopter: -3.0 },
+  { diopter: -3.5 },
+  { diopter: -4.0 },
+  { diopter: -4.5 },
+  { diopter: -5.0 },
+  { diopter: -5.5 },
+  { diopter: -6.0 },
 ]
 
 type GearTypeValue = 'wetsuit' | 'bcd' | 'fins' | 'mask' | 'regulator'
@@ -38,10 +44,6 @@ interface InventoryLine {
   isPrescription?: boolean
   totalUnits: number
   displayName: string
-}
-
-function randInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function wetsuitSizesFor(manufacturer: string): GearSizingEntry[] {
@@ -71,7 +73,7 @@ function buildEquipmentLines(
           gearType: gearType as GearTypeValue,
           manufacturer: brand,
           size: entry.size,
-          totalUnits: randInt(3, 8),
+          totalUnits: gearType === 'wetsuit' ? 5 : 6,
           displayName: `${brand} ${gearType === 'wetsuit' ? 'Wetsuit' : 'BCD'} ${entry.size}`,
         })
       }
@@ -82,7 +84,7 @@ function buildEquipmentLines(
     lines.push({
       gearType: 'fins',
       size: `EU ${finSize}`,
-      totalUnits: randInt(3, 8),
+      totalUnits: 4,
       displayName: `Fins EU ${finSize}`,
     })
   }
@@ -90,7 +92,7 @@ function buildEquipmentLines(
   lines.push({
     gearType: 'mask',
     isPrescription: false,
-    totalUnits: randInt(8, 20),
+    totalUnits: 10,
     displayName: 'Mask (Regular)',
   })
 
@@ -99,16 +101,24 @@ function buildEquipmentLines(
       gearType: 'mask',
       diopter: pm.diopter,
       isPrescription: true,
-      totalUnits: randInt(1, 3),
+      totalUnits: 2,
       displayName: `Mask (Rx ${pm.diopter})`,
     })
   }
 
-  lines.push({
-    gearType: 'regulator',
-    totalUnits: randInt(10, 30),
-    displayName: 'Regulator Set',
-  })
+  // One regulator set per brand (same brands as wetsuits/BCDs)
+  const allBrands = new Set<string>()
+  for (const brands of Object.values(manufacturers)) {
+    for (const b of brands) allBrands.add(b)
+  }
+  for (const brand of allBrands) {
+    lines.push({
+      gearType: 'regulator',
+      manufacturer: brand,
+      totalUnits: 20,
+      displayName: `${brand} Regulator Set`,
+    })
+  }
 
   return lines
 }
@@ -280,8 +290,8 @@ export const seedInstructors = internalMutation({
       const userId = await insertUser(ctx, s)
       const primaryRole = s.roles?.[0]?.role
       if (primaryRole === 'DiveMaster' && s.instructor) {
-        // DiveMasters use diveMasters table — credential has no courses
-        const { courses: _ignored, ...credNoCourses } = s.instructor.credential[0] ?? {}
+        // DiveMasters use diveMasters table — credential has no specialtyRatings
+        const { specialtyRatings: _ignored, ...credNoRatings } = s.instructor.credential[0] ?? {}
         await ctx.db.insert('diveMasters', { // batch-exempt
           userId,
           name: s.instructor.name,
@@ -438,6 +448,19 @@ export const seedResourceInventory = internalMutation({
         ownerId: '__unowned__',
         ownerType: 'DiveSite',
       })
+      // Also seed as a venue row so it can be a preferred confined water location
+      await ctx.db.insert('venues', { // batch-exempt
+        name: site.name,
+        placeName: 'Phuket',
+        country: 'Thailand',
+        lat: 7.8206,
+        lng: 98.3003,
+        verified: true,
+        venueType: 'Shore',
+        confinedCapable: true,
+        hasCompressor: false,
+        maxCapacity: site.capacity,
+      })
     }
   },
 })
@@ -447,33 +470,106 @@ export const seedResourceInventory = internalMutation({
 export const seedStakeholderPreferences = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Language-based preferred instructor mapping for operators
-    // Pattern: all instructors sharing at least one customer language
-    const OPERATOR_PREFERRED_INSTRUCTORS: Record<string, string[]> = {
-      // Hug Ocean: CN, TW, TH, GB
-      'n7rq5j': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'mike-chen', 'rachel-nguyen', 'maria-santos'],
-      // Neptune: CN, TW, GB
-      'z8mv4c': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen', 'lee-min-ho'],
-      // Phuket DC: TH, GB
-      'p5ky3w': ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'stefan-braun', 'maria-santos'],
-      // Nicole DC: TW, CN, GB
-      'q9bz7r': ['nicole-tam', 'zhang-yong', 'wei-chen', 'li-ming', 'mike-chen', 'rachel-nguyen'],
-      // Manta DC: FR, GB
-      'v6js2t': ['pierre-dubois', 'maria-santos', 'ryan-clarke'],
-      // ScubaNicks: GB
-      'm4fx8d': ['ryan-clarke', 'mike-chen', 'rachel-nguyen', 'david-schmidt', 'yuki-tanaka'],
-      // Scuba Deep: GB, CN, TW
-      'h3cp6n': ['ryan-clarke', 'wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
-      // Sirolo: GB, CN, TW
-      'sirolo': ['ryan-clarke', 'wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
-      // Pray DC: DE, FR, GB, TH
-      't7gw1k': ['stefan-braun', 'david-schmidt', 'pierre-dubois', 'maria-santos', 'ryan-clarke', 'nattaya-srisuk'],
-      // Amanda (Agent): CN, TW
-      'r5yz4q': ['wei-chen', 'li-ming', 'zhang-yong', 'nicole-tam', 'mike-chen', 'rachel-nguyen'],
-      // Andaman Explorer (Liveaboard): EN
-      'k8lv3a': ['ryan-clarke', 'mike-chen', 'rachel-nguyen', 'david-schmidt', 'yuki-tanaka'],
-      // Coral Bay Resort (DiveResort): TH, EN
-      'j2dn9f': ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'stefan-braun', 'maria-santos'],
+    // Consolidated preferred-resource map per operator/agent
+    // Instructors: language-overlap; Boats: own→self; Venues: own pool or nearest;
+    // Compressors: Kata→Scuba Market, else→Chalong; Equipment: own→self or open rental
+    // Boat owners: n7rq5j, p5ky3w, sirolo | Pool owners: n7rq5j, z8mv4c, b3wt9f, g2hn6x
+    // Compressors: x4kp2m=Chalong, q7sm3k=Scuba Market | Equipment: q9bz7r=Nicole(open), v8sr2p=Revolution(open)
+    const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
+      'n7rq5j': { // Hug Ocean — zh-CN, zh-TW, th, en — owns boat, pool, gear
+        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu', 'mei-lin', 'suporn-thani', 'pimchanok-sri', 'ryan-clarke', 'rachel-nguyen'],
+        boats: ['n7rq5j'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['n7rq5j'],
+      },
+      'z8mv4c': { // Neptune — zh-CN, zh-TW, en, th — owns pool, gear
+        instructors: ['wei-chen', 'zhang-yong', 'mike-chen', 'xiao-lei', 'wanchai-pong', 'mei-lin', 'nicole-tam', 'budi-santoso'],
+        boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['z8mv4c'],
+      },
+      'p5ky3w': { // Phuket DC — th, en, zh-CN, ko — owns boat, gear
+        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'kim-ji-soo', 'hiroshi-kato', 'lee-min-ho', 'budi-santoso', 'andi-firmansyah'],
+        boats: ['p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['p5ky3w'],
+      },
+      'q9bz7r': { // Nicole DC — zh-TW, zh-CN, en, th — owns gear (open)
+        instructors: ['nicole-tam', 'wei-chen', 'mike-chen', 'zhang-yong', 'xiao-lei', 'pimchanok-sri', 'seo-min-ji', 'mei-lin'],
+        boats: ['sirolo', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
+      },
+      'v6js2t': { // Manta DC — fr, en, th
+        instructors: ['pierre-dubois', 'rachel-nguyen', 'camille-moreau', 'stefan-braun', 'ryan-clarke', 'sophie-laurent'],
+        boats: ['n7rq5j', 'sirolo'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
+      },
+      'm4fx8d': { // ScubaNicks — en, th, zh-CN — owns gear
+        instructors: ['ryan-clarke', 'nattaya-srisuk', 'li-ming', 'mike-chen', 'wei-chen', 'yuki-tanaka', 'mei-lin'],
+        boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['m4fx8d'],
+      },
+      'h3cp6n': { // Scuba Deep — en, th, zh-CN, fr — owns gear
+        instructors: ['ryan-clarke', 'wei-chen', 'mike-chen', 'rachel-nguyen', 'pierre-dubois', 'xiao-lei', 'mei-lin', 'camille-moreau'],
+        boats: ['n7rq5j', 'p5ky3w'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['h3cp6n'],
+      },
+      'sirolo': { // Sirolo — th, en, zh-CN, zh-TW — owns boat, gear
+        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu', 'ryan-clarke', 'mei-lin', 'wanchai-pong'],
+        boats: ['sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['sirolo'],
+      },
+      't7gw1k': { // Pray DC — en, th, fr, de
+        instructors: ['pierre-dubois', 'stefan-braun', 'camille-moreau', 'ryan-clarke', 'nattaya-srisuk', 'sophie-laurent', 'klaus-fischer', 'alexei-volkov'],
+        boats: ['sirolo', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['q9bz7r'],
+      },
+      'r5yz4q': { // Amanda (Agent) — zh-CN, zh-TW, en, th
+        instructors: ['wei-chen', 'zhang-yong', 'nicole-tam', 'mike-chen', 'xiao-lei', 'mei-lin', 'pimchanok-sri'],
+        boats: ['n7rq5j', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
+      },
+      'w3kn7p': { // Hanul Dive — ko
+        instructors: ['kim-ji-soo', 'park-soo-jin', 'hiroshi-kato', 'lee-min-ho', 'seo-min-ji', 'li-ming'],
+        boats: ['p5ky3w', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
+      },
+      'b6um4j': { // Umi Dive — ja
+        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'seo-min-ji', 'oh-sang-hoon'],
+        boats: ['sirolo', 'p5ky3w'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
+      },
+      'r9aq5v': { // Aqua Pro Dive — ru
+        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'stefan-braun', 'hans-weber', 'lars-van-dijk'],
+        boats: ['n7rq5j', 'sirolo'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
+      },
+      'c2pd8x': { // Pacific Divers — ko, ja, es
+        instructors: ['kim-ji-soo', 'hiroshi-kato', 'yuki-tanaka', 'seo-min-ji', 'david-schmidt', 'maria-santos', 'camille-moreau', 'ana-garcia'],
+        boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'f7bp3g': { // Blue Planet Diving — ru, id, nl
+        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'budi-santoso', 'andi-firmansyah', 'lars-van-dijk', 'ingrid-bakker', 'pieter-de-boer'],
+        boats: ['sirolo', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'k4ko9j': { // Ji-Yeon (Agent) — ko, en
+        instructors: ['kim-ji-soo', 'park-soo-jin', 'lee-min-ho', 'seo-min-ji', 'oh-sang-hoon', 'ryan-clarke'],
+        boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'a7ja2m': { // Kenji (Agent) — ja, en
+        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'ryan-clarke', 'seo-min-ji'],
+        boats: ['sirolo', 'n7rq5j'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'e6eu5z': { // Eva (Agent) — de, fr, nl
+        instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber', 'lars-van-dijk', 'ingrid-bakker', 'pieter-de-boer'],
+        boats: ['n7rq5j', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
+      },
+      'k8lv3a': { // Andaman Explorer (Liveaboard) — en — instructors only
+        instructors: ['ryan-clarke', 'somphon-kaew', 'nattaya-srisuk', 'pierre-dubois', 'li-ming'],
+      },
+      'j2dn9f': { // Coral Bay Resort (DiveResort) — th, en — instructors only
+        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'mei-lin', 'budi-santoso'],
+      },
+    }
+
+    // Agent → preferred operator (referral mode DC)
+    const AGENT_PREFERRED_OPERATOR: Record<string, string> = {
+      'r5yz4q': 'q9bz7r',             // Amanda → Nicole DC
+      'k4ko9j': 'w3kn7p',             // Ji-Yeon → Hanul Dive
+      'a7ja2m': 'b6um4j',             // Kenji → Umi Dive
+      'e6eu5z': 't7gw1k',             // Eva → Pray DC
+    }
+
+    // Agent defaultReferral → preferredOperatorSlug mapping
+    const agentReferralMap = new Map<string, string>()
+    for (const s of ALL_STAKEHOLDERS) {
+      if (s.agent?.defaultReferral) {
+        agentReferralMap.set(s.user.slug, s.agent.defaultReferral)
+      }
     }
 
     const allStakeholders: { slug: string; role: StakeholderRole }[] = [
@@ -490,8 +586,23 @@ export const seedStakeholderPreferences = internalMutation({
         commonLanguageCodes: [],
         confirmOnAccept: false,
         confirmOnDecline: false,
-        ...(OPERATOR_PREFERRED_INSTRUCTORS[slug] && {
-          preferredInstructorSlugs: OPERATOR_PREFERRED_INSTRUCTORS[slug],
+        ...(OPERATOR_PREFERRED[slug]?.instructors && {
+          preferredInstructorSlugs: OPERATOR_PREFERRED[slug].instructors,
+        }),
+        ...(OPERATOR_PREFERRED[slug]?.boats && {
+          preferredBoatSlugs: OPERATOR_PREFERRED[slug].boats,
+        }),
+        ...(OPERATOR_PREFERRED[slug]?.venues && {
+          preferredVenueSlugs: OPERATOR_PREFERRED[slug].venues,
+        }),
+        ...(OPERATOR_PREFERRED[slug]?.compressors && {
+          preferredCompressorSlugs: OPERATOR_PREFERRED[slug].compressors,
+        }),
+        ...(OPERATOR_PREFERRED[slug]?.equipment && {
+          preferredEquipmentSlugs: OPERATOR_PREFERRED[slug].equipment,
+        }),
+        ...(agentReferralMap.has(slug) && {
+          preferredOperatorSlug: agentReferralMap.get(slug),
         }),
       })
     }

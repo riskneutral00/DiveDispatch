@@ -12,9 +12,9 @@ import type { Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
 import { OPERATOR_ROLE_SET } from './auth'
-import { AGENCIES } from '../shared/agencies'
 import { profileBySlug } from './profileHelpers'
 import { ROLE_TABLE_MAP } from './profileHelpers'
+import { AOW_REQUIRED_SPECIALTY_COUNT } from '../shared/agencies'
 
 /**
  * Check completeness for a single role. Three layers for all roles,
@@ -38,13 +38,11 @@ export async function checkProfileCompleteness(
       const c = e as Record<string, unknown>
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
-  /** Instructor credentials must include at least one course code per row (schema + forms). */
+  /** Instructor credentials: agency, level, agencyID required; specialtyRatings can be empty. */
   const isInstructorCredentialDeepValid = (entries: unknown[]) =>
     entries.every((e) => {
       const c = e as Record<string, unknown>
-      const courses = c.courses
-      if (!Array.isArray(courses) || courses.length === 0) return false
-      if (!courses.every((x) => typeof x === 'string' && str(x))) return false
+      if (!Array.isArray(c.specialtyRatings)) return false
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
   // DiveCenter associations include selectedSpecialties; Agent associations do not.
@@ -55,8 +53,7 @@ export async function checkProfileCompleteness(
       if (checkRole === 'DiveCenter') {
         const specs = a.selectedSpecialties
         if (!Array.isArray(specs)) return false
-        const agencyDef = AGENCIES[a.agency as string]
-        const requiredCount = agencyDef?.specialtyCount ?? 5
+        const requiredCount = AOW_REQUIRED_SPECIALTY_COUNT
         if (specs.length < requiredCount) return false
       }
       return true

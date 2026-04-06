@@ -6,6 +6,7 @@ import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators
 import type { Doc, Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
+import { isResourceAccessible } from './lib/accessControl'
 
 /**
  * Maximum number of users returned per role in listByRole.
@@ -23,7 +24,7 @@ export type DirectoryEntry = {
   role: StakeholderRole
   // Role-specific extras
   agencies?: string[]       // Instructor: credential agencies (e.g. ['PADI', 'SSI'])
-  credentials?: { agency: string; courses: string[] }[]  // Instructor: full credential details
+  credentials?: { agency: string; specialtyRatings: string[] }[]  // Instructor: full credential details
   boatCapacity?: number     // Boat: max pax of largest vessel in fleet
   boatType?: string         // Boat: type of largest vessel
   boatTypes?: string[]      // Boat: all fleet types deduplicated
@@ -46,7 +47,7 @@ type ProfileData = {
   verified: boolean
   // Extras (populated per-role)
   agencies?: string[]
-  credentials?: { agency: string; courses: string[] }[]
+  credentials?: { agency: string; specialtyRatings: string[] }[]
   boatCapacity?: number
   boatType?: string
   boatTypes?: string[]
@@ -78,8 +79,11 @@ async function queryProfileByUser(
   return result as Record<string, unknown> | null
 }
 
-async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole, slug?: string): Promise<ProfileData | null> {
-  const p = await queryProfileByUser(db, role, userId)
+async function fetchProfile(
+  db: DatabaseReader, userId: Id<'users'>, role: StakeholderRole, slug?: string,
+  rawDoc?: Record<string, unknown> | null,
+): Promise<ProfileData | null> {
+  const p = rawDoc ?? await queryProfileByUser(db, role, userId)
   if (!p) return null
 
   const base = {
@@ -91,11 +95,11 @@ async function fetchProfile(db: DatabaseReader, userId: Id<'users'>, role: Stake
 
   switch (role) {
     case 'Instructor': {
-      const creds = (p.credential ?? []) as Array<{ agency: string; courses?: string[] }>
+      const creds = (p.credential ?? []) as Array<{ agency: string; specialtyRatings?: string[] }>
       return {
         ...base,
         agencies: creds.map((c) => c.agency),
-        credentials: creds.map((c) => ({ agency: c.agency, courses: c.courses ?? [] })),
+        credentials: creds.map((c) => ({ agency: c.agency, specialtyRatings: c.specialtyRatings ?? [] })),
         teachingLanguages: p.teachingLanguages as string[] | undefined,
       }
     }
@@ -195,7 +199,15 @@ export const listByRole = query({
     const results = await Promise.all(
       users
         .map(async (u): Promise<DirectoryEntry | null> => {
-          const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug)
+          // Access control — check isAllowed/notAllowed before building display data
+          const rawProfile = await queryProfileByUser(ctx.db, args.role, u._id)
+          if (!rawProfile) return null
+          if (!isResourceAccessible(
+            rawProfile as { isAllowed?: string[]; notAllowed?: string[] },
+            caller.slug,
+          )) return null
+
+          const profile = await fetchProfile(ctx.db, u._id, args.role, u.slug, rawProfile)
           if (!profile) return null
 
           // ── Text filters ──────────────────────────────────────────────
@@ -246,6 +258,37 @@ export const listByRole = query({
     )
 
     const filtered = results.filter((r): r is DirectoryEntry => r !== null)
+
+    // Unowned venues (no user account, e.g. Kata Beach) — supplement for Pool/DiveSite roles
+    if (args.role === 'Pool' || args.role === 'DiveSite') {
+      const allVenues = await ctx.db.query('venues').take(200)
+      const unowned = allVenues.filter((v) => !v.userId)
+      for (const venue of unowned) {
+        if (!isResourceAccessible(venue, caller.slug)) continue
+        if (args.role === 'Pool' && venue.venueType !== 'Pool') continue
+        if (args.role === 'DiveSite' && venue.venueType === 'Pool') continue
+        // Resolve slug from inventoryUnits (resourceId = slug for unowned venues)
+        const invUnit = await ctx.db
+          .query('inventoryUnits')
+          .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', '__unowned__'))
+          .filter((q) => q.eq(q.field('displayName'), venue.name))
+          .first()
+        const slug = invUnit?.resourceId ?? venue.name.toLowerCase().replace(/\s+/g, '-')
+        filtered.push({
+          slug,
+          name: venue.name,
+          placeName: venue.placeName,
+          country: venue.country,
+          verified: venue.verified,
+          role: args.role,
+          venueType: venue.venueType,
+          confinedCapable: venue.confinedCapable,
+          hasCompressor: venue.hasCompressor,
+          maxDepth: venue.maxDepth,
+          maxCapacity: venue.maxCapacity,
+        })
+      }
+    }
 
     // Sort preferred instructors to the top.
     if (args.role === 'Instructor') {

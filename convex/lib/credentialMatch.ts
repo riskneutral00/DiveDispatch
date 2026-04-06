@@ -9,7 +9,7 @@ export type Credential = {
   agency: string
   level: string
   agencyID: string
-  courses: string[]
+  specialtyRatings: string[]
 }
 
 export type CredentialMatchResult = {
@@ -32,11 +32,11 @@ const UNIVERSAL_COURSES: ReadonlySet<string> = new Set([
  * Check whether an instructor's credentials cover all required courses.
  *
  * An instructor can teach a course if ANY of their credentials includes
- * that course in its `courses` array.
+ * that course in its `specialtyRatings` array.
  *
  * Universal courses (DSD, TRY_DIVE, FD, REFRESH) are always considered
  * teachable by any certified instructor — they don't require an explicit
- * entry in credential[].courses.
+ * entry in credential[].specialtyRatings.
  */
 export function canTeachCourses(
   credentials: Credential[],
@@ -49,7 +49,7 @@ export function canTeachCourses(
   // Build set of all courses this instructor can teach
   const teachable = new Set<string>()
   for (const cred of credentials) {
-    for (const course of cred.courses) {
+    for (const course of cred.specialtyRatings) {
       teachable.add(course)
     }
   }

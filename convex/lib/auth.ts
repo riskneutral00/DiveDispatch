@@ -3,6 +3,7 @@ import type { QueryCtx, MutationCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
+import { OPERATOR_TYPES } from '../shared/operatorTypes'
 
 /**
  * Asserts that a resource's ownerId matches the user's slug.
@@ -30,14 +31,8 @@ export function assertOwnership(
  */
 export type DbCtx = QueryCtx | MutationCtx
 
-/** Roles that can create and own bookings. */
-export const OPERATOR_ROLE_SET = new Set([
-  'DiveCenter',
-  'Agent',
-  'Liveaboard',
-  'DiveResort',
-  'DiveHostel',
-])
+/** Roles that can create and own bookings. Derived from OPERATOR_TYPES. */
+export const OPERATOR_ROLE_SET: ReadonlySet<string> = new Set(OPERATOR_TYPES)
 
 /** Default hold TTL: 12 hours. */
 export const HOLD_TTL_MS = 43200000

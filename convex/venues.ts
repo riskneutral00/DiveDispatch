@@ -12,7 +12,6 @@ export const create = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     venueType: v.string(),
-    isPublic: v.boolean(),
     confinedCapable: v.boolean(),
     hasCompressor: v.boolean(),
     maxDepth: v.optional(v.number()),
@@ -57,7 +56,6 @@ export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
     venueType: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
     confinedCapable: v.optional(v.boolean()),
     hasCompressor: v.optional(v.boolean()),
     maxDepth: v.optional(v.number()),

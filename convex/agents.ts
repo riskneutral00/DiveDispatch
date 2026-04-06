@@ -14,7 +14,7 @@ export const create = mutation({
   args: {
     ...BASE_PROFILE_CREATE_FIELDS,
     associations: v.array(associationValidator),
-    defaultReferralMode: v.union(v.literal('independent'), v.literal('referral')),
+    defaultReferral: v.optional(v.string()),
   },
   handler: async (ctx, args) =>
     profileCreate(ctx, args, 'agents', 'Agent', {
@@ -26,9 +26,7 @@ export const update = mutation({
   args: {
     ...BASE_PROFILE_UPDATE_FIELDS,
     associations: v.optional(v.array(associationValidator)),
-    defaultReferralMode: v.optional(
-      v.union(v.literal('independent'), v.literal('referral')),
-    ),
+    defaultReferral: v.optional(v.string()),
   },
   handler: async (ctx, args) => profileUpdate(ctx, args, 'agents'),
 })

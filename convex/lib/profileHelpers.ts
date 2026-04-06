@@ -71,6 +71,15 @@ export async function profileBySlug(
   return profileByUserId(ctx, user._id, tableName)
 }
 
+/** System-managed fields — stripped before user-initiated patches. */
+const PROTECTED_FIELDS = new Set([
+  'verified',
+  'profileComplete',
+  'userId',
+  '_id',
+  '_creationTime',
+])
+
 /** Handler for the `update` mutation — patches the caller's own profile. */
 export async function profileUpdate(
   ctx: MutationCtx,
@@ -84,7 +93,11 @@ export async function profileUpdate(
     .unique()
   if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  await patchDynamic(ctx.db, profile._id, args)
+  const safeArgs: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(args)) {
+    if (!PROTECTED_FIELDS.has(key)) safeArgs[key] = value
+  }
+  await patchDynamic(ctx.db, profile._id, safeArgs)
 }
 
 /**
