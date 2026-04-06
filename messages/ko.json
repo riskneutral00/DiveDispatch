@@ -43,6 +43,7 @@
     "actionFailed": "{action}에 실패했습니다. 다시 시도해 주세요.",
     "fieldRequired": "{field}은(는) 필수 항목입니다.",
     "sendLink": "링크 전송",
+    "createProfile": "Create Profile",
     "addItem": "항목 추가",
     "inventory": "장비 재고",
     "groupBy": "그룹 기준"
@@ -143,6 +144,12 @@
     "noItemsFound": "{type} 항목을 찾을 수 없습니다."
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "환영합니다, {name}님",
     "subtitle": "예약 서류를 작성해 주세요.",
     "diverCount": "{count, plural, one {다이버 #명} other {다이버 #명}}",

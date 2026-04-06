@@ -217,7 +217,7 @@ describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: ContactFormState = {
       name: 'Ariel Nemo',
-      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8, placeId: 'abc' },
+      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
       email: 'ariel@dive.com',
       phone: '+66 81 234 5678',
     }
@@ -227,7 +227,7 @@ describe('contactToPayload', () => {
     expect(payload.country).toBe('Thailand')
     expect(payload.lat).toBe(10.1)
     expect(payload.lng).toBe(99.8)
-    expect(payload.placeId).toBe('abc')
+    
     expect(payload.email).toBe('ariel@dive.com')
     expect(payload.phone).toBe('+66 81 234 5678')
   })

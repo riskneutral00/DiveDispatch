@@ -43,6 +43,7 @@
     "actionFailed": "{action}失败，请重试。",
     "fieldRequired": "{field}为必填项。",
     "sendLink": "发送链接",
+    "createProfile": "Create Profile",
     "addItem": "添加项目",
     "inventory": "库存",
     "groupBy": "分组方式"
@@ -143,6 +144,12 @@
     "noItemsFound": "未找到{type}项目。"
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "欢迎，{name}",
     "subtitle": "请完成您的预订文件。",
     "diverCount": "{count, plural, one {# 名潜水员} other {# 名潜水员}}",

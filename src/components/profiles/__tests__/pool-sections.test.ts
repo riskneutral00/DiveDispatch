@@ -154,7 +154,7 @@ describe('poolContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: PoolContactFormState = {
       name: 'Blue Lagoon Training Pool',
-      location: { placeName: 'Blue Lagoon', country: 'Thailand', lat: 7.88, lng: 98.39, placeId: 'xyz' },
+      location: { placeName: 'Blue Lagoon', country: 'Thailand', lat: 7.88, lng: 98.39 },
       email: 'pool@bluelagoon.com',
       phone: '+66 81 234 5678',
     }
@@ -164,7 +164,7 @@ describe('poolContactToPayload', () => {
     expect(payload.country).toBe('Thailand')
     expect(payload.lat).toBe(7.88)
     expect(payload.lng).toBe(98.39)
-    expect(payload.placeId).toBe('xyz')
+    
     expect(payload.email).toBe('pool@bluelagoon.com')
     expect(payload.phone).toBe('+66 81 234 5678')
   })

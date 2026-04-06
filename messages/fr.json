@@ -43,6 +43,7 @@
     "actionFailed": "{action} a échoué. Veuillez réessayer.",
     "fieldRequired": "{field} obligatoire.",
     "sendLink": "Envoyer le lien",
+    "createProfile": "Create Profile",
     "addItem": "Ajouter un article",
     "inventory": "Inventaire",
     "groupBy": "Grouper par"
@@ -143,6 +144,12 @@
     "noItemsFound": "Aucun article de type {type} trouvé."
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "Bienvenue, {name}",
     "subtitle": "Complétez vos documents de réservation.",
     "diverCount": "{count, plural, one {# plongeur} other {# plongeurs}}",

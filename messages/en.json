@@ -43,6 +43,7 @@
     "actionFailed": "{action} failed. Try again.",
     "fieldRequired": "{field} required.",
     "sendLink": "Send Link",
+    "createProfile": "Create Profile",
     "addItem": "Add Item",
     "inventory": "Inventory",
     "groupBy": "Group by"
@@ -143,6 +144,12 @@
     "noItemsFound": "No {type} items found."
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "Welcome, {name}",
     "subtitle": "Complete your booking paperwork.",
     "diverCount": "{count, plural, one {# diver} other {# divers}}",

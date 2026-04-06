@@ -130,7 +130,7 @@ describe('equipmentContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: EquipmentContactFormState = {
       name: 'Phuket Gear Rental',
-      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8, placeId: 'xyz' },
+      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
       email: 'gear@phuket.com',
       phone: '+66 81 234 5678',
     }
@@ -140,7 +140,7 @@ describe('equipmentContactToPayload', () => {
     expect(payload.country).toBe('Thailand')
     expect(payload.lat).toBe(10.1)
     expect(payload.lng).toBe(99.8)
-    expect(payload.placeId).toBe('xyz')
+    
     expect(payload.email).toBe('gear@phuket.com')
     expect(payload.phone).toBe('+66 81 234 5678')
   })

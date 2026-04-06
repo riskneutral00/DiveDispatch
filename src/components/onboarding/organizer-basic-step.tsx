@@ -71,7 +71,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
             country: existing.country,
             lat: existing.lat,
             lng: existing.lng,
-            placeId: existing.placeId ?? undefined,
           })
         }
         setContactEmail(existing.email ?? '')
@@ -98,7 +97,6 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
         country: location.country,
         lat: location.lat,
         lng: location.lng,
-        placeId: location.placeId,
         email,
         phone,
       }

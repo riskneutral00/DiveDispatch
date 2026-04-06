@@ -180,7 +180,7 @@ describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened and defaultReferralMode', () => {
     const form: AgentContactFormState = {
       name: 'Scuba Bob Agency',
-      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8, placeId: 'abc' },
+      location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
       email: 'bob@scubabob.com',
       phone: '+66 81 234 5678',
       defaultReferralMode: 'referral',
@@ -191,7 +191,7 @@ describe('contactToPayload', () => {
     expect(payload.country).toBe('Thailand')
     expect(payload.lat).toBe(10.1)
     expect(payload.lng).toBe(99.8)
-    expect(payload.placeId).toBe('abc')
+    
     expect(payload.email).toBe('bob@scubabob.com')
     expect(payload.phone).toBe('+66 81 234 5678')
     expect(payload.defaultReferralMode).toBe('referral')

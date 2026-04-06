@@ -1,4 +1,3 @@
-// 25 required color properties (14 original + 11 glass/glow/bg additions)
 export interface ColorPalette {
   primary: string;
   secondary: string;
@@ -60,7 +59,7 @@ export interface ThemeConfig {
 
   // === Colors ===
   colors: {
-    light?: ColorPalette; // Deferred — dark-only for now
+    light?: ColorPalette;
     dark: ColorPalette;
   };
 

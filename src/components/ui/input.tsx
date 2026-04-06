@@ -87,9 +87,10 @@ export function Input({
         )}
       </div>
 
-      <FieldError id={`${id}-error`} message={error} />
-      {!error && helperText && (
-        <p id={`${id}-helper`} className="text-sm text-secondary">
+      {error || !helperText ? (
+        <FieldError id={`${id}-error`} message={error} />
+      ) : (
+        <p id={`${id}-helper`} className="h-4 text-sm text-secondary truncate">
           {helperText}
         </p>
       )}

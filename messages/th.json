@@ -43,6 +43,7 @@
     "actionFailed": "{action} ล้มเหลว กรุณาลองอีกครั้ง",
     "fieldRequired": "กรุณากรอก{field}",
     "sendLink": "ส่งลิงก์",
+    "createProfile": "Create Profile",
     "addItem": "เพิ่มรายการ",
     "inventory": "อุปกรณ์",
     "groupBy": "จัดกลุ่มตาม"
@@ -143,6 +144,12 @@
     "noItemsFound": "ไม่พบรายการ{type}"
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "ยินดีต้อนรับ {name}",
     "subtitle": "กรุณากรอกเอกสารสำหรับการจองของคุณ",
     "diverCount": "{count, plural, one {# นักดำน้ำ} other {# นักดำน้ำ}}",

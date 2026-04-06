@@ -170,7 +170,7 @@ describe('diveSiteDetailsToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: DiveSiteDetailsFormState = {
       name: 'Shark Bay Reef',
-      location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07, placeId: 'abc' },
+      location: { placeName: 'Shark Bay', country: 'Malaysia', lat: 5.97, lng: 116.07 },
       venueType: 'Reef',
     }
     const payload = diveSiteDetailsToPayload(form)
@@ -179,7 +179,7 @@ describe('diveSiteDetailsToPayload', () => {
     expect(payload.country).toBe('Malaysia')
     expect(payload.lat).toBe(5.97)
     expect(payload.lng).toBe(116.07)
-    expect(payload.placeId).toBe('abc')
+    
     expect(payload.venueType).toBe('Reef')
   })
 

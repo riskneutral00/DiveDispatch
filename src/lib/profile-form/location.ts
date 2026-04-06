@@ -18,14 +18,12 @@ export function locationFromProfileDoc(p: {
   country: string
   lat: number
   lng: number
-  placeId?: string | null
 }): ProfileLocationValue {
   return {
     placeName: p.placeName,
     country: p.country,
     lat: p.lat,
     lng: p.lng,
-    ...(p.placeId != null && p.placeId !== '' ? { placeId: p.placeId } : {}),
   }
 }
 
@@ -43,7 +41,6 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
       country: p.country as string,
       lat: p.lat as number,
       lng: p.lng as number,
-      placeId: p.placeId as string | null | undefined,
     }),
     email: p.email as string,
     phone: p.phone as string,
@@ -62,14 +59,13 @@ export function defaultFromMe<T extends Record<string, unknown>>(
   } as T
 }
 
-/** Spread into toPayload return — replaces the 5-field loc spread duplicated across all profile forms. */
+/** Spread into toPayload return — replaces the 4-field loc spread duplicated across all profile forms. */
 export function locationToPayload(loc: ProfileLocationValue) {
   return {
     placeName: loc.placeName,
     country: loc.country,
     lat: loc.lat,
     lng: loc.lng,
-    placeId: loc.placeId,
   }
 }
 

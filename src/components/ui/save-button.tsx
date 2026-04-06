@@ -1,4 +1,7 @@
+'use client'
+
 import { Check, Save } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui'
 
 interface SaveButtonProps {
@@ -11,6 +14,8 @@ interface SaveButtonProps {
 }
 
 export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }: SaveButtonProps) {
+  const t = useTranslations('common')
+
   return (
     <div className="flex justify-end">
       <Button
@@ -21,13 +26,13 @@ export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }
       >
         {saved ? (
           <>
-            <Check size={16} />
-            Saved
+            <Check size={16} aria-hidden />
+            {t('saved')}
           </>
         ) : (
           <>
-            <Save size={16} />
-            {label ?? (isUpdate ? 'Save' : 'Create Profile')}
+            <Save size={16} aria-hidden />
+            {label ?? (isUpdate ? t('save') : t('createProfile'))}
           </>
         )}
       </Button>

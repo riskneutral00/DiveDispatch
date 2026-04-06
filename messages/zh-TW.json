@@ -43,6 +43,7 @@
     "actionFailed": "{action}失敗，請重試。",
     "fieldRequired": "{field}為必填。",
     "sendLink": "傳送連結",
+    "createProfile": "Create Profile",
     "addItem": "新增項目",
     "inventory": "庫存",
     "groupBy": "分組依據"
@@ -143,6 +144,12 @@
     "noItemsFound": "找不到{type}項目。"
   },
   "portal": {
+    "stepContact": "Contact",
+    "stepMedical": "Medical",
+    "stepWaiver": "Waiver",
+    "stepEquipment": "Equipment",
+    "stepSafety": "Safety",
+    "stepSubmit": "Submit",
     "welcome": "歡迎，{name}",
     "subtitle": "請完成您的預約文件。",
     "diverCount": "{count, plural, one {# 位潛水員} other {# 位潛水員}}",

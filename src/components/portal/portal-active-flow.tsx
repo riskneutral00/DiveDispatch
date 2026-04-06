@@ -15,7 +15,7 @@ import type { EquipmentData } from './step-equipment'
 import type { PortalProgress } from '../../../convex/portalDraft'
 
 function PortalStepLoading() {
-  return <Spinner label="Loading…" />
+  return <Spinner />
 }
 
 const StepMedical = dynamic(
@@ -91,16 +91,18 @@ export function PortalActiveFlow({
   const [stepOverride, setStepOverride] = useState<PortalStep | null>(null)
   const currentStep = stepOverride ?? serverStep
 
+  const t = useTranslations('portal')
+
   const steps: { key: PortalStep; label: string }[] = useMemo(
     () => [
-      { key: 'contact', label: 'Contact' },
-      { key: 'medical', label: 'Medical' },
-      { key: 'waiver', label: 'Waiver' },
-      { key: 'equipment', label: 'Equipment' },
-      { key: 'safety', label: 'Safety' },
-      { key: 'submit', label: 'Submit' },
+      { key: 'contact', label: t('stepContact') },
+      { key: 'medical', label: t('stepMedical') },
+      { key: 'waiver', label: t('stepWaiver') },
+      { key: 'equipment', label: t('stepEquipment') },
+      { key: 'safety', label: t('stepSafety') },
+      { key: 'submit', label: t('stepSubmit') },
     ],
-    [],
+    [t],
   )
 
   function renderStep() {
