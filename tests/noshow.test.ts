@@ -162,9 +162,11 @@ describe('markNoShow', () => {
 
       const notifications = await ctx.db.query('notifications').collect()
       const noShowNotif = notifications.find((n) => n.type === 'noshow_marked')
-      expect(noShowNotif).toBeTruthy()
-      expect(noShowNotif!.userId).toBe(TEST_SLUGS.instructor)
-      expect(noShowNotif!.bookingId).toBe(bookingId)
+      expect(noShowNotif).toMatchObject({
+        type: 'noshow_marked',
+        userId: TEST_SLUGS.instructor,
+        bookingId,
+      })
       expect(noShowNotif!.message).toContain('NoShow')
       expect(noShowNotif!.createdAt).toBeTypeOf('number')
     })
@@ -279,9 +281,11 @@ describe('revertNoShow', () => {
 
       const notifications = await ctx.db.query('notifications').collect()
       const revertNotif = notifications.find((n) => n.type === 'noshow_reverted')
-      expect(revertNotif).toBeTruthy()
-      expect(revertNotif!.userId).toBe(TEST_SLUGS.instructor)
-      expect(revertNotif!.bookingId).toBe(bookingId)
+      expect(revertNotif).toMatchObject({
+        type: 'noshow_reverted',
+        userId: TEST_SLUGS.instructor,
+        bookingId,
+      })
       expect(revertNotif!.message).toContain('reverted')
       expect(revertNotif!.createdAt).toBeTypeOf('number')
     })

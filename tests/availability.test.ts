@@ -506,8 +506,8 @@ describe('_toggleBlockedDate', () => {
 
       // Neither reservation should be touched
       const reservations = await ctx.db.query('reservations').collect()
-      expect(reservations.find((r) => r.status === 'Confirmed')).toBeTruthy()
-      expect(reservations.find((r) => r.status === 'PendingAcceptance')).toBeTruthy()
+      expect(reservations.find((r) => r.status === 'Confirmed')).toMatchObject({ status: 'Confirmed' })
+      expect(reservations.find((r) => r.status === 'PendingAcceptance')).toMatchObject({ status: 'PendingAcceptance' })
     })
   })
 

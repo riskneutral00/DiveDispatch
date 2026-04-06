@@ -62,8 +62,8 @@ describe('SKINS data integrity', () => {
   for (const skin of SKINS) {
     describe(`${skin.name}`, () => {
       it('has a non-empty id and name', () => {
-        expect(skin.id).toBeTruthy()
-        expect(skin.name).toBeTruthy()
+        expect(skin.id).toMatch(/\S/)
+        expect(skin.name).toMatch(/\S/)
       })
 
       it('has a dark palette', () => {
@@ -72,30 +72,33 @@ describe('SKINS data integrity', () => {
 
       it('dark palette has all required status colors', () => {
         const p = skin.colors.dark
-        expect(p.statusActive).toBeTruthy()
-        expect(p.statusDraft).toBeTruthy()
-        expect(p.statusUpcoming).toBeTruthy()
-        expect(p.statusCompleted).toBeTruthy()
-        expect(p.statusCancelled).toBeTruthy()
-        expect(p.statusUrgent).toBeTruthy()
-        expect(p.statusBlocked).toBeTruthy()
-        expect(p.statusMultidayBorder).toBeTruthy()
+        const colorPattern = /^(#|rgba?\(|oklch\(|hsl\()/
+        expect(p.statusActive).toMatch(colorPattern)
+        expect(p.statusDraft).toMatch(colorPattern)
+        expect(p.statusUpcoming).toMatch(colorPattern)
+        expect(p.statusCompleted).toMatch(colorPattern)
+        expect(p.statusCancelled).toMatch(colorPattern)
+        expect(p.statusUrgent).toMatch(colorPattern)
+        expect(p.statusBlocked).toMatch(colorPattern)
+        expect(p.statusMultidayBorder).toMatch(colorPattern)
       })
 
       it('dark palette has primary glow and hover border', () => {
         const p = skin.colors.dark
-        expect(p.primaryGlow).toBeTruthy()
-        expect(p.glassBorderHover).toBeTruthy()
+        const colorPattern = /^(#|rgba?\(|oklch\(|hsl\()/
+        expect(p.primaryGlow).toMatch(colorPattern)
+        expect(p.glassBorderHover).toMatch(colorPattern)
       })
 
       it('dark palette has surface and surfaceElevated', () => {
         const p = skin.colors.dark
-        expect(p.surface).toBeTruthy()
-        expect(p.surfaceElevated).toBeTruthy()
+        const colorPattern = /^(#|rgba?\(|oklch\(|hsl\()/
+        expect(p.surface).toMatch(colorPattern)
+        expect(p.surfaceElevated).toMatch(colorPattern)
       })
 
       it('dark palette has bodyBg', () => {
-        expect(skin.colors.dark.bodyBg).toBeTruthy()
+        expect(skin.colors.dark.bodyBg).toMatch(/^(#|rgba?\(|oklch\(|hsl\()/)
       })
 
       it('has valid typography weights', () => {
@@ -111,13 +114,14 @@ describe('SKINS data integrity', () => {
       if (skin.colors.light) {
         it('light palette has all required status colors', () => {
           const p = skin.colors.light!
-          expect(p.statusActive).toBeTruthy()
-          expect(p.statusDraft).toBeTruthy()
-          expect(p.statusUpcoming).toBeTruthy()
-          expect(p.statusCompleted).toBeTruthy()
-          expect(p.statusCancelled).toBeTruthy()
-          expect(p.statusUrgent).toBeTruthy()
-          expect(p.statusBlocked).toBeTruthy()
+          const colorPattern = /^(#|rgba?\(|oklch\(|hsl\()/
+          expect(p.statusActive).toMatch(colorPattern)
+          expect(p.statusDraft).toMatch(colorPattern)
+          expect(p.statusUpcoming).toMatch(colorPattern)
+          expect(p.statusCompleted).toMatch(colorPattern)
+          expect(p.statusCancelled).toMatch(colorPattern)
+          expect(p.statusUrgent).toMatch(colorPattern)
+          expect(p.statusBlocked).toMatch(colorPattern)
         })
 
         it('light palette has different primary than dark', () => {

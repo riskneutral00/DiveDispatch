@@ -29,9 +29,11 @@ describe('FieldLabel', () => {
 })
 
 describe('FieldError', () => {
-  it('renders nothing when message is undefined', () => {
+  it('renders space-reserving element with opacity-0 when message is undefined', () => {
     const { container } = render(<FieldError id="e1" />)
-    expect(container.firstChild).toBeNull()
+    const el = container.querySelector('#e1')!
+    expect(el).toBeTruthy()
+    expect(el.className).toContain('opacity-0')
   })
 
   it('renders alert with id and message when provided', () => {

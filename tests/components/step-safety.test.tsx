@@ -78,9 +78,7 @@ describe('StepSafety', () => {
     mockUseQuery.mockReturnValue(null)
     render(<StepSafety {...defaultProps} />)
 
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'An unexpected error occurred. Please try again.',
-    )
+    expect(screen.getByText('An unexpected error occurred. Please try again.')).toBeTruthy()
   })
 
   it('calls handleMutationError when save rejects', async () => {
