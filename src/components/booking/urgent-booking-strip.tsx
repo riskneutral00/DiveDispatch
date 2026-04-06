@@ -20,7 +20,6 @@ function formatDateRange(startDate: string, endDate: string): string {
   const end = parseDateLocal(endDate)
   const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   if (startDate === endDate) return startLabel
-  // Same month — collapse
   if (start.getMonth() === end.getMonth()) {
     return `${startLabel}\u2013${end.getDate()}`
   }
@@ -38,11 +37,9 @@ export function UrgentBookingStrip({
   return (
     <div className="flex items-center justify-center gap-2 px-2">
       {sorted.map((b) => (
-        <button
+        <div
           key={b._id}
-          type="button"
-          onClick={() => onBookingClick?.(b._id)}
-          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80" /* design-ok */
+          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold" /* design-ok */
           style={{
             background: 'var(--color-status-urgent)',
             color: 'var(--color-text-on-primary)',
@@ -51,27 +48,29 @@ export function UrgentBookingStrip({
             lineHeight: '1.2',
           }}
         >
-          {formatDateRange(b.startDate, b.endDate)}
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.stopPropagation()
-              onCancel(b._id)
-            }}
+          <button
+            type="button"
+            onClick={() => onBookingClick?.(b._id)}
+            className="bg-transparent border-none p-0 font-inherit text-inherit cursor-pointer"
+          >
+            {formatDateRange(b.startDate, b.endDate)}
+          </button>
+          <button
+            type="button"
+            onClick={() => onCancel(b._id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                e.stopPropagation()
                 e.preventDefault()
                 onCancel(b._id)
               }
             }}
-            className="inline-flex items-center justify-center rounded-full text-white/50 transition-colors hover:text-white"
+            className="inline-flex items-center justify-center rounded-full bg-transparent border-none p-0 cursor-pointer opacity-50 transition-opacity hover:opacity-100"
+            style={{ color: 'inherit' }}
             aria-label="Cancel urgent booking"
           >
             <X size={12} />
-          </span>
-        </button>
+          </button>
+        </div>
       ))}
     </div>
   )
