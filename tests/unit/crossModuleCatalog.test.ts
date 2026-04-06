@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, type CourseCode } from '../../src/lib/constants/course-catalog'
 import { COURSE_CODES } from '../../convex/shared/courseCodes'
 import { AGENCIES, AGENCY_CODES, COURSE_DAY_RANGES, getMandatorySpecialties, getDefaultSpecialties } from '../../convex/shared/agencies'
-import { AOW_SPECIALTY_VALUES, MANDATORY_AOW_SPECIALTIES } from '../../convex/shared/aowSpecialties'
+import { AOW_SPECIALTY_VALUES, MANDATORY_AOW_SPECIALTIES } from '../../convex/shared/aowSelection'
 import { INSTRUCTOR_REQUIRED_CODES, CONFINED_ACTIVITY_CODES } from '../../src/lib/constants/activity-rules'
 import { CERT_REQUIRED_ACTIVITIES, NO_CERT_ACTIVITIES } from '../../src/lib/constants/activity-rules'
 import { DIVE_AGENCIES, DIVE_AGENCIES_EXTENDED } from '../../src/lib/constants/agencies'
@@ -67,16 +67,24 @@ describe('COURSE_DISPLAY_LABELS completeness', () => {
 describe('agency specialty codes ↔ AOW_SPECIALTIES', () => {
   for (const [agencyCode, agency] of Object.entries(AGENCIES)) {
     describe(`${agencyCode}`, () => {
-      it('all specialty codes are valid AOW specialty values', () => {
-        for (const spec of agency.specialties) {
+      it('adventure-dive specialties are valid AOW specialty values', () => {
+        for (const spec of agency.specialties.filter(s => s.adventureDiveName !== null)) {
           expect(AOW_SPECIALTY_VALUES).toContain(spec.code)
         }
       })
 
-      it('mandatory specialties match the canonical MANDATORY_AOW_SPECIALTIES set', () => {
-        const mandatoryInAgency = agency.specialties.filter(s => s.mandatory).map(s => s.code)
-        for (const code of mandatoryInAgency) {
-          expect(MANDATORY_AOW_SPECIALTIES.has(code), `${agencyCode} marks "${code}" mandatory but it is not in MANDATORY_AOW_SPECIALTIES`).toBe(true)
+      it('every specialty has code, label, and requiredForAOW', () => {
+        for (const spec of agency.specialties) {
+          expect(spec.code.length).toBeGreaterThan(0)
+          expect(spec.label.length).toBeGreaterThan(0)
+          expect(typeof spec.requiredForAOW).toBe('boolean')
+        }
+      })
+
+      it('requiredForAOW specialties match the canonical MANDATORY_AOW_SPECIALTIES set', () => {
+        const requiredInAgency = agency.specialties.filter(s => s.requiredForAOW).map(s => s.code)
+        for (const code of requiredInAgency) {
+          expect(MANDATORY_AOW_SPECIALTIES.has(code), `${agencyCode} marks "${code}" requiredForAOW but it is not in MANDATORY_AOW_SPECIALTIES`).toBe(true)
         }
       })
 

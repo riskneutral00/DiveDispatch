@@ -4,8 +4,8 @@ import type { CourseCode } from '../convex/shared/courseCodes'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeCredential(courses: string[], agency = 'PADI'): Credential {
-  return { agency, level: 'OWSI', agencyID: 'TEST-001', courses }
+function makeCredential(specialtyRatings: string[], agency = 'PADI'): Credential {
+  return { agency, level: 'OWSI', agencyID: 'TEST-001', specialtyRatings }
 }
 
 // ── Universal courses (DSD, TRY_DIVE, FD, REFRESH) ──────────────────────────

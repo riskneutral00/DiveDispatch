@@ -43,7 +43,7 @@ const VALID_DIVE_SITE_ARGS = {
   lat: 10.09,
   lng: 99.84,
   venueType: 'Shore' as const,
-  isPublic: false,
+
   confinedCapable: false,
   hasCompressor: false,
   maxCapacity: 20,
@@ -56,7 +56,7 @@ const VALID_POOL_ARGS = {
   lat: 10.09,
   lng: 99.84,
   venueType: 'Pool' as const,
-  isPublic: false,
+
   confinedCapable: true,
   hasCompressor: false,
   maxCapacity: 15,

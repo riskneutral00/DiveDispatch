@@ -19,7 +19,6 @@ const VALID_AGENT_ARGS = {
   email: 'agent@test.com',
   phone: '+66123456789',
   associations: [{ agency: 'PADI', number: '12345' }],
-  defaultReferralMode: 'independent' as const,
 }
 
 // ─── agents.create ───────────────────────────────────────────────────────────
@@ -63,7 +62,7 @@ describe('agents.create', () => {
       expect(agent!.name).toBe('Test Agent')
       expect(agent!.userId).toEqual(userId)
       expect(agent!.verified).toBe(false)
-      expect(agent!.defaultReferralMode).toBe('independent')
+      expect(agent!.defaultReferral).toBeUndefined()
       expect(agent!.placeName).toBe('Koh Tao')
       expect(agent!.country).toBe('Thailand')
     })
@@ -122,13 +121,13 @@ describe('agents.update', () => {
     await t.withIdentity({ tokenIdentifier: 'clerk|upd-agent' })
       .mutation(api.agents.update, {
         name: 'Updated Agent',
-        defaultReferralMode: 'referral',
+        defaultReferral: 'some-dc-slug',
       })
 
     await t.run(async (ctx) => {
       const agent = await ctx.db.get(agentId!) as Doc<'agents'> | null
       expect(agent!.name).toBe('Updated Agent')
-      expect(agent!.defaultReferralMode).toBe('referral')
+      expect(agent!.defaultReferral).toBe('some-dc-slug')
       // Unchanged fields preserved
       expect(agent!.email).toBe('agent@test.com')
     })

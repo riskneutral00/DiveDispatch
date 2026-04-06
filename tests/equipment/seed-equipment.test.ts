@@ -9,8 +9,8 @@ import {
 const overrides = NICOLE_DC.equipment!.inventoryOverrides!
 
 describe('Nicole inventoryOverrides', () => {
-  it('produces exactly 62 lines', () => {
-    expect(overrides).toHaveLength(62)
+  it('produces exactly 70 lines', () => {
+    expect(overrides).toHaveLength(70)
   })
 
   it('has 21 wetsuit rows (ScubaPro 8 + Aqua Lung 7 + Mares 6)', () => {
@@ -78,27 +78,30 @@ describe('Nicole inventoryOverrides', () => {
     }
   })
 
-  it('has 4 mask rows: 1 regular (10 units) + 3 Rx (1 unit each)', () => {
+  it('has 10 mask rows: 1 regular + 9 Rx (diopter -2.0 to -6.0, step 0.5)', () => {
     const masks = overrides.filter((l) => l.gearType === 'mask')
-    expect(masks).toHaveLength(4)
+    expect(masks).toHaveLength(10)
 
     const regular = masks.filter((l) => !l.isPrescription)
     expect(regular).toHaveLength(1)
     expect(regular[0].totalUnits).toBe(10)
 
     const rx = masks.filter((l) => l.isPrescription)
-    expect(rx).toHaveLength(3)
-    expect(rx.map((l) => l.diopter).sort((a, b) => a! - b!)).toEqual([-5.5, -4.5, -3.5])
+    expect(rx).toHaveLength(9)
+    expect(rx.map((l) => l.diopter).sort((a, b) => a! - b!)).toEqual([-6, -5.5, -5, -4.5, -4, -3.5, -3, -2.5, -2])
     for (const mask of rx) {
-      expect(mask.totalUnits).toBe(1)
+      expect(mask.totalUnits).toBe(2)
     }
   })
 
-  it('has 1 regulator row: ScubaPro, 50 units', () => {
+  it('has 3 regulator rows: ScubaPro, Aqua Lung, Mares (20 units each)', () => {
     const regs = overrides.filter((l) => l.gearType === 'regulator')
-    expect(regs).toHaveLength(1)
-    expect(regs[0].manufacturer).toBe('ScubaPro')
-    expect(regs[0].totalUnits).toBe(50)
+    expect(regs).toHaveLength(3)
+    const manufacturers = regs.map((l) => l.manufacturer).sort()
+    expect(manufacturers).toEqual(['Aqua Lung', 'Mares', 'ScubaPro'])
+    for (const reg of regs) {
+      expect(reg.totalUnits).toBe(20)
+    }
   })
 })
 

@@ -42,12 +42,18 @@ describe('AGENCIES constants', () => {
     expect(Object.keys(AGENCIES)).toContain('SSI')
   })
 
-  it('PADI has the expected specialtyCount', () => {
-    expect(AGENCIES.PADI.specialtyCount).toBe(5)
+  it('PADI has 23 specialties from the full matrix', () => {
+    expect(AGENCIES.PADI.specialties).toHaveLength(23)
   })
 
-  it('SSI has the expected specialtyCount', () => {
-    expect(AGENCIES.SSI.specialtyCount).toBe(5)
+  it('SSI has 23 specialties from the full matrix', () => {
+    expect(AGENCIES.SSI.specialties).toHaveLength(23)
+  })
+
+  it('every PADI specialty has requiredForAOW boolean', () => {
+    for (const s of AGENCIES.PADI.specialties) {
+      expect(typeof s.requiredForAOW).toBe('boolean')
+    }
   })
 
   it('every agency has a non-empty memberIdLabel', () => {

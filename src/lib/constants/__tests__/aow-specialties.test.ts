@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../../../../convex/shared/aowSpecialties'
+import { AOW_SPECIALTIES, AOW_MAIN, AOW_OVERFLOW, MANDATORY_AOW_SPECIALTIES } from '../../../../convex/shared/aowSelection'
 
 describe('AOW specialties', () => {
-  it('has 14 total specialties', () => {
-    expect(AOW_SPECIALTIES).toHaveLength(14)
+  it('has 15 specialties', () => {
+    expect(AOW_SPECIALTIES.length).toBe(15)
   })
 
   it('main + overflow = total', () => {
@@ -27,9 +27,17 @@ describe('AOW specialties', () => {
     }
   })
 
-  it('overflow has 4 items: Photography, S&R, DUW Photo, Enriched Air', () => {
-    const values = AOW_OVERFLOW.map((s) => s.value).sort()
-    expect(values).toEqual(['DUW Photo', 'Enriched Air', 'Photography', 'S&R'])
+  it('overflow contains adventure-dive specialties not in main 10', () => {
+    const overflowValues = new Set(AOW_OVERFLOW.map((s) => s.value))
+    // These were in the original overflow and should still be there
+    for (const code of ['S&R', 'Altitude', 'Photo/Video']) {
+      expect(overflowValues.has(code)).toBe(true)
+    }
+    // Main codes should NOT be in overflow
+    const mainValues = new Set(AOW_MAIN.map((s) => s.value))
+    for (const s of AOW_OVERFLOW) {
+      expect(mainValues.has(s.value)).toBe(false)
+    }
   })
 
   it('every specialty has a unique value', () => {

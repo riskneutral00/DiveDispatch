@@ -44,7 +44,7 @@ export async function seedAgent(
     email?: string
     phone?: string
     associations?: Array<{ agency: string; number: string }>
-    defaultReferralMode?: Doc<'agents'>['defaultReferralMode']
+    defaultReferral?: string
     verified?: boolean
   } = {},
 ) {
@@ -58,7 +58,7 @@ export async function seedAgent(
     email: overrides.email ?? 'agent@test.com',
     phone: overrides.phone ?? '+66123456789',
     associations: overrides.associations ?? [{ agency: 'PADI', number: '12345' }],
-    defaultReferralMode: overrides.defaultReferralMode ?? 'independent',
+    ...(overrides.defaultReferral ? { defaultReferral: overrides.defaultReferral } : {}),
     verified: overrides.verified ?? false,
   })
 }
@@ -74,7 +74,6 @@ export async function seedVenue(
     lng?: number
     venueType?: Doc<'venues'>['venueType']
     verified?: boolean
-    isPublic?: boolean
     confinedCapable?: boolean
     hasCompressor?: boolean
   } = {},
@@ -87,7 +86,6 @@ export async function seedVenue(
     lng: overrides.lng ?? 99.8408,
     venueType: overrides.venueType ?? 'Pool',
     verified: overrides.verified ?? true,
-    isPublic: overrides.isPublic ?? true,
     confinedCapable: overrides.confinedCapable ?? true,
     hasCompressor: overrides.hasCompressor ?? false,
     ...(overrides.userId !== undefined ? { userId: overrides.userId } : {}),
@@ -103,7 +101,7 @@ export async function seedInstructorProfile(
     country?: string
     email?: string
     phone?: string
-    credential?: Array<{ agency: string; level: string; agencyID: string; courses: string[] }>
+    credential?: Array<{ agency: string; level: string; agencyID: string; specialtyRatings: string[] }>
     verified?: boolean
     teachingLanguages?: string[]
   } = {},
@@ -118,7 +116,7 @@ export async function seedInstructorProfile(
     email: overrides.email ?? 'instructor@test.com',
     phone: overrides.phone ?? '+66123456789',
     credential: overrides.credential ?? [
-      { agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] },
+      { agency: 'PADI', level: 'OWSI', agencyID: '12345', specialtyRatings: ['OW', 'AOW'] },
     ],
     verified: overrides.verified ?? true,
     teachingLanguages: overrides.teachingLanguages ?? ['en'],

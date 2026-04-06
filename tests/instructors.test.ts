@@ -16,7 +16,7 @@ const VALID_INSTRUCTOR_ARGS = {
   lng: 99.84,
   email: 'instr@test.com',
   phone: '+66123456789',
-  credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '12345', courses: ['OW', 'AOW'] }],
+  credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '12345', specialtyRatings: ['OW', 'AOW'] }],
   teachingLanguages: ['en'],
 }
 

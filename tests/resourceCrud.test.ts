@@ -59,7 +59,6 @@ const RESOURCE_CONFIGS: Array<{
       name: 'Test Venue',
       ...COMMON_LOCATION,
       venueType: 'Pool',
-      isPublic: true,
       confinedCapable: true,
       hasCompressor: false,
     },
@@ -78,7 +77,7 @@ const RESOURCE_CONFIGS: Array<{
       lng: 99.84,
       email: 'instr@test.com',
       phone: '+66123456789',
-      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', courses: ['OW', 'AOW'] }],
+      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', specialtyRatings: ['OW', 'AOW'] }],
       teachingLanguages: ['en'],
     },
     updateArgs: { name: 'Updated Instructor' },
@@ -231,6 +230,22 @@ for (const config of RESOURCE_CONFIGS) {
             config.updateArgs[config.uniqueField],
           )
         })
+      })
+
+      it('rejects protected fields (verified) in update args via validator', async () => {
+        const t = makeT()
+        const slug = `${config.name}-prot`
+        await t.run(async (ctx) => {
+          await seedUser(ctx, { slug, tokenIdentifier: `clerk|${slug}`, role: config.role })
+        })
+
+        await t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+          .mutation(config.apiModule.create, config.createArgs)
+
+        await expect(
+          t.withIdentity({ tokenIdentifier: `clerk|${slug}` })
+            .mutation(config.apiModule.update, { ...config.updateArgs, verified: true }),
+        ).rejects.toThrow(/verified/)
       })
     })
 

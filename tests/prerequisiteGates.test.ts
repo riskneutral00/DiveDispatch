@@ -22,7 +22,7 @@ describe('prerequisite gate: Instructor — credential depth', () => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedInstructorProfile(ctx, userId, {
-        credential: [{ agency: '', level: 'OWSI', agencyID: '550453', courses: [] }],
+        credential: [{ agency: '', level: 'OWSI', agencyID: '550453', specialtyRatings: [] }],
         teachingLanguages: ['en'],
       })
 
@@ -37,7 +37,7 @@ describe('prerequisite gate: Instructor — credential depth', () => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedInstructorProfile(ctx, userId, {
-        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '', courses: ['OW', 'AOW'] }],
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '', specialtyRatings: ['OW', 'AOW'] }],
         teachingLanguages: ['en'],
       })
 
@@ -47,12 +47,26 @@ describe('prerequisite gate: Instructor — credential depth', () => {
     })
   })
 
+  it('valid credential with empty specialtyRatings passes completeness', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'Instructor' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedInstructorProfile(ctx, userId, {
+        credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '550453', specialtyRatings: [] }],
+        teachingLanguages: ['en'],
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Instructor')
+      expect(result.incomplete).not.toContain('credential')
+    })
+  })
+
   it('credential with blank agency/level/agencyID must make completeness < 100%', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx, { role: 'Instructor' })
       await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
       await seedInstructorProfile(ctx, userId, {
-        credential: [{ agency: '', level: '', agencyID: '', courses: ['OW'] }],
+        credential: [{ agency: '', level: '', agencyID: '', specialtyRatings: ['OW'] }],
         teachingLanguages: ['en'],
       })
 

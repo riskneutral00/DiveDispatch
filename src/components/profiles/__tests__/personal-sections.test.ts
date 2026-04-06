@@ -135,10 +135,10 @@ describe('instructorCredentialsSchema', () => {
     agency: 'PADI',
     level: 'Open Water Scuba Instructor',
     agencyID: 'OWSI550453',
-    courses: ['Open Water', 'Advanced Open Water'],
+    specialtyRatings: ['Open Water', 'Advanced Open Water'],
   }
 
-  it('accepts a valid instructor credential with courses', () => {
+  it('accepts a valid instructor credential with specialtyRatings', () => {
     expect(instructorCredentialsSchema.safeParse({ credential: [validInstCred] }).success).toBe(true)
   })
 
@@ -161,14 +161,14 @@ describe('instructorCredentialsSchema', () => {
     expect(instructorCredentialsSchema.safeParse({ credential: [bad] }).success).toBe(false)
   })
 
-  it('rejects credential with empty courses array', () => {
-    const bad = { ...validInstCred, courses: [] }
-    expect(instructorCredentialsSchema.safeParse({ credential: [bad] }).success).toBe(false)
+  it('accepts credential with empty specialtyRatings array', () => {
+    const valid = { ...validInstCred, specialtyRatings: [] }
+    expect(instructorCredentialsSchema.safeParse({ credential: [valid] }).success).toBe(true)
   })
 
-  it('rejects credential without courses field', () => {
-    const { courses: _courses, ...withoutCourses } = validInstCred
-    expect(instructorCredentialsSchema.safeParse({ credential: [withoutCourses] }).success).toBe(false)
+  it('rejects credential without specialtyRatings field', () => {
+    const { specialtyRatings: _specialtyRatings, ...withoutSpecialtyRatings } = validInstCred
+    expect(instructorCredentialsSchema.safeParse({ credential: [withoutSpecialtyRatings] }).success).toBe(false)
   })
 })
 
@@ -202,7 +202,7 @@ describe('contactFromProfile', () => {
       lng: 100.5,
       email: 'a@b.com',
       phone: '+66 1',
-      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', courses: [] }],
+      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '123', specialtyRatings: [] }],
       teachingLanguages: ['en'],
     }
     const form = contactFromProfile(profile)
@@ -310,7 +310,7 @@ describe('credentialsFromProfile — divemaster variant', () => {
 describe('credentialsFromProfile — instructor variant', () => {
   it('maps credential array from profile for instructor', () => {
     const profile = {
-      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '550453', courses: ['Open Water'] }],
+      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '550453', specialtyRatings: ['Open Water'] }],
     }
     const form = credentialsFromProfile(profile, 'instructor')
     expect(form.credential).toHaveLength(1)
@@ -325,10 +325,10 @@ describe('credentialsFromProfile — instructor variant', () => {
     expect(form.credential[0]).toEqual(makeEmptyInstCredential())
   })
 
-  it('empty instructor credential has courses: []', () => {
+  it('empty instructor credential has specialtyRatings: []', () => {
     const empty = makeEmptyInstCredential()
-    expect(empty).toHaveProperty('courses')
-    expect(empty.courses).toEqual([])
+    expect(empty).toHaveProperty('specialtyRatings')
+    expect(empty.specialtyRatings).toEqual([])
   })
 })
 
@@ -360,22 +360,22 @@ describe('credentialsToPayload', () => {
 // ── makeEmptyDmCredential / makeEmptyInstCredential ───────────────────────────
 
 describe('makeEmptyDmCredential', () => {
-  it('has agency, level, agencyID as empty strings — no courses field', () => {
+  it('has agency, level, agencyID as empty strings — no specialtyRatings field', () => {
     const cred = makeEmptyDmCredential()
     expect(cred.agency).toBe('')
     expect(cred.level).toBe('')
     expect(cred.agencyID).toBe('')
-    expect(cred).not.toHaveProperty('courses')
+    expect(cred).not.toHaveProperty('specialtyRatings')
   })
 })
 
 describe('makeEmptyInstCredential', () => {
-  it('has agency, level, agencyID as empty strings — courses is empty array', () => {
+  it('has agency, level, agencyID as empty strings — specialtyRatings is empty array', () => {
     const cred = makeEmptyInstCredential()
     expect(cred.agency).toBe('')
     expect(cred.level).toBe('')
     expect(cred.agencyID).toBe('')
-    expect(cred.courses).toEqual([])
+    expect(cred.specialtyRatings).toEqual([])
   })
 })
 
@@ -404,7 +404,7 @@ describe('INITIAL_DM_CREDENTIALS_FORM', () => {
 })
 
 describe('INITIAL_INST_CREDENTIALS_FORM', () => {
-  it('starts with one empty instructor credential (with courses: [])', () => {
+  it('starts with one empty instructor credential (with specialtyRatings: [])', () => {
     expect(INITIAL_INST_CREDENTIALS_FORM.credential).toHaveLength(1)
     expect(INITIAL_INST_CREDENTIALS_FORM.credential[0]).toEqual(makeEmptyInstCredential())
   })

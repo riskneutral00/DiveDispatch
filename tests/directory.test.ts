@@ -38,7 +38,7 @@ async function seedInstructorProfile(ctx: SeedCtx, userId: Id<'users'>, name: st
     email: `${userId}@test.com`,
     phone: '+66000000000',
     credential: [
-      { agency: 'PADI', level: 'OWSI', agencyID: 'DIR-1', courses: ['OW'] },
+      { agency: 'PADI', level: 'OWSI', agencyID: 'DIR-1', specialtyRatings: ['OW'] },
     ],
     teachingLanguages: ['en'],
     verified,
@@ -293,8 +293,8 @@ describe('listByRole credentials passthrough', () => {
         email: 'multi@test.com',
         phone: '+66000000001',
         credential: [
-          { agency: 'PADI', level: 'OWSI', agencyID: 'P-123', courses: ['OW', 'AOW', 'Rescue'] },
-          { agency: 'SSI', level: 'Instructor', agencyID: 'S-456', courses: ['OW', 'Stress & Rescue'] },
+          { agency: 'PADI', level: 'OWSI', agencyID: 'P-123', specialtyRatings: ['OW', 'AOW', 'Rescue'] },
+          { agency: 'SSI', level: 'Instructor', agencyID: 'S-456', specialtyRatings: ['OW', 'Stress & Rescue'] },
         ],
         teachingLanguages: ['en-GB'],
         verified: true,
@@ -306,8 +306,8 @@ describe('listByRole credentials passthrough', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].credentials).toEqual([
-      { agency: 'PADI', courses: ['OW', 'AOW', 'Rescue'] },
-      { agency: 'SSI', courses: ['OW', 'Stress & Rescue'] },
+      { agency: 'PADI', specialtyRatings: ['OW', 'AOW', 'Rescue'] },
+      { agency: 'SSI', specialtyRatings: ['OW', 'Stress & Rescue'] },
     ])
   })
 

@@ -5,7 +5,7 @@ import {
   AOW_OVERFLOW,
   MANDATORY_AOW_SPECIALTIES,
   AOW_SPECIALTY_VALUES,
-} from '../convex/shared/aowSpecialties'
+} from '../convex/shared/aowSelection'
 
 describe('AOW_SPECIALTIES', () => {
   it('contains Navigation and Deep (mandatory)', () => {

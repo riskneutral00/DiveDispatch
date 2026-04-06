@@ -39,24 +39,20 @@ describe('agentContactSchema', () => {
     location: VALID_LOCATION,
     email: 'bob@scubabob.com',
     phone: '+66 81 234 5678',
-    defaultReferralMode: 'independent',
+    defaultReferral: 'some-dc-slug',
   }
 
   it('accepts a fully valid contact payload', () => {
     expect(agentContactSchema.safeParse(valid).success).toBe(true)
   })
 
-  it('accepts referral mode "referral"', () => {
-    expect(agentContactSchema.safeParse({ ...valid, defaultReferralMode: 'referral' }).success).toBe(true)
+  it('accepts null defaultReferral (independent)', () => {
+    expect(agentContactSchema.safeParse({ ...valid, defaultReferral: null }).success).toBe(true)
   })
 
-  it('rejects unknown defaultReferralMode value', () => {
-    expect(agentContactSchema.safeParse({ ...valid, defaultReferralMode: 'hybrid' }).success).toBe(false)
-  })
-
-  it('rejects missing defaultReferralMode', () => {
-    const { defaultReferralMode: _rm, ...withoutMode } = valid
-    expect(agentContactSchema.safeParse(withoutMode).success).toBe(false)
+  it('accepts missing defaultReferral (independent)', () => {
+    const { defaultReferral: _, ...withoutReferral } = valid
+    expect(agentContactSchema.safeParse(withoutReferral).success).toBe(true)
   })
 
   it('rejects missing name', () => {
@@ -121,7 +117,7 @@ describe('agentAssociationsSchema', () => {
 // ── contactFromProfile ────────────────────────────────────────────────────────
 
 describe('contactFromProfile', () => {
-  it('extracts name, location, email, phone, and defaultReferralMode', () => {
+  it('extracts name, location, email, phone, and defaultReferral', () => {
     const profile = {
       name: 'Scuba Bob Agency',
       placeName: 'Koh Tao',
@@ -130,18 +126,18 @@ describe('contactFromProfile', () => {
       lng: 99.8,
       email: 'bob@scubabob.com',
       phone: '+66 81 234 5678',
-      defaultReferralMode: 'referral',
+      defaultReferral: 'some-dc-slug',
     }
     const form = contactFromProfile(profile)
     expect(form.name).toBe('Scuba Bob Agency')
     expect(form.email).toBe('bob@scubabob.com')
     expect(form.phone).toBe('+66 81 234 5678')
-    expect(form.defaultReferralMode).toBe('referral')
+    expect(form.defaultReferral).toBe('some-dc-slug')
     expect(form.location?.placeName).toBe('Koh Tao')
     expect(form.location?.country).toBe('Thailand')
   })
 
-  it('defaults defaultReferralMode to "independent" when absent', () => {
+  it('defaults defaultReferral to null when absent', () => {
     const profile = {
       name: 'Agent',
       placeName: 'BKK',
@@ -152,7 +148,7 @@ describe('contactFromProfile', () => {
       phone: '+66 1',
     }
     const form = contactFromProfile(profile)
-    expect(form.defaultReferralMode).toBe('independent')
+    expect(form.defaultReferral).toBeNull()
   })
 
   it('does not include customerLanguages or associations', () => {
@@ -164,7 +160,7 @@ describe('contactFromProfile', () => {
       lng: 100.5,
       email: 'a@b.com',
       phone: '+66 1',
-      defaultReferralMode: 'independent',
+      defaultReferral: null,
       associations: [{ agency: 'PADI', number: 'X' }],
       customerLanguages: ['en'],
     }
@@ -177,13 +173,13 @@ describe('contactFromProfile', () => {
 // ── contactToPayload ──────────────────────────────────────────────────────────
 
 describe('contactToPayload', () => {
-  it('produces expected shape with location fields flattened and defaultReferralMode', () => {
+  it('produces expected shape with location fields flattened and defaultReferral', () => {
     const form: AgentContactFormState = {
       name: 'Scuba Bob Agency',
       location: { placeName: 'Koh Tao', country: 'Thailand', lat: 10.1, lng: 99.8 },
       email: 'bob@scubabob.com',
       phone: '+66 81 234 5678',
-      defaultReferralMode: 'referral',
+      defaultReferral: 'some-dc-slug',
     }
     const payload = contactToPayload(form)
     expect(payload.name).toBe('Scuba Bob Agency')
@@ -191,10 +187,10 @@ describe('contactToPayload', () => {
     expect(payload.country).toBe('Thailand')
     expect(payload.lat).toBe(10.1)
     expect(payload.lng).toBe(99.8)
-    
+
     expect(payload.email).toBe('bob@scubabob.com')
     expect(payload.phone).toBe('+66 81 234 5678')
-    expect(payload.defaultReferralMode).toBe('referral')
+    expect(payload.defaultReferral).toBe('some-dc-slug')
   })
 
   it('does not include customerLanguages or associations', () => {
@@ -203,7 +199,7 @@ describe('contactToPayload', () => {
       location: { placeName: 'BKK', country: 'TH', lat: 13.7, lng: 100.5 },
       email: 'a@b.com',
       phone: '+66 1',
-      defaultReferralMode: 'independent',
+      defaultReferral: null,
     }
     const payload = contactToPayload(form)
     expect(payload).not.toHaveProperty('associations')
@@ -305,19 +301,19 @@ describe('associationsToPayload', () => {
     expect(payload).not.toHaveProperty('name')
     expect(payload).not.toHaveProperty('email')
     expect(payload).not.toHaveProperty('customerLanguages')
-    expect(payload).not.toHaveProperty('defaultReferralMode')
+    expect(payload).not.toHaveProperty('defaultReferral')
   })
 })
 
 // ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_CONTACT_FORM', () => {
-  it('has empty string defaults and independent referral mode', () => {
+  it('has empty string defaults and null defaultReferral', () => {
     expect(INITIAL_CONTACT_FORM.name).toBe('')
     expect(INITIAL_CONTACT_FORM.email).toBe('')
     expect(INITIAL_CONTACT_FORM.phone).toBe('')
     expect(INITIAL_CONTACT_FORM.location).toBeNull()
-    expect(INITIAL_CONTACT_FORM.defaultReferralMode).toBe('independent')
+    expect(INITIAL_CONTACT_FORM.defaultReferral).toBeNull()
   })
 })
 

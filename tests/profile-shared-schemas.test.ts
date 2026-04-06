@@ -141,27 +141,22 @@ describe('agentContactSchema', () => {
     location: validLocation,
     email: 'agent@reef.com',
     phone: '+66-81-000-0000',
-    defaultReferralMode: 'referral' as const,
+    defaultReferral: 'some-dc-slug',
   }
 
-  it('accepts valid agent contact with referral mode', () => {
+  it('accepts valid agent contact with defaultReferral', () => {
     expect(agentContactSchema.safeParse(valid).success).toBe(true)
   })
 
-  it('accepts defaultReferralMode independent', () => {
-    const result = agentContactSchema.safeParse({ ...valid, defaultReferralMode: 'independent' })
+  it('accepts null defaultReferral (independent)', () => {
+    const result = agentContactSchema.safeParse({ ...valid, defaultReferral: null })
     expect(result.success).toBe(true)
   })
 
-  it('rejects invalid defaultReferralMode value', () => {
-    const result = agentContactSchema.safeParse({ ...valid, defaultReferralMode: 'direct' })
-    expect(result.success).toBe(false)
-  })
-
-  it('rejects missing defaultReferralMode', () => {
-    const { defaultReferralMode: _, ...rest } = valid
+  it('accepts missing defaultReferral (independent)', () => {
+    const { defaultReferral: _, ...rest } = valid
     const result = agentContactSchema.safeParse(rest)
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
   })
 
   it('rejects empty name', () => {
@@ -308,10 +303,10 @@ describe('instructorCredentialsSchema', () => {
     agency: 'PADI',
     level: 'Open Water Scuba Instructor',
     agencyID: 'I-550453',
-    courses: ['OW', 'AOW'],
+    specialtyRatings: ['Deep Diver', 'Wreck Diver'],
   }
 
-  it('accepts valid instructor credential with courses', () => {
+  it('accepts valid instructor credential with specialtyRatings', () => {
     const result = instructorCredentialsSchema.safeParse({ credential: [validCred] })
     expect(result.success).toBe(true)
   })
@@ -321,11 +316,11 @@ describe('instructorCredentialsSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects credential with no courses selected', () => {
+  it('accepts credential with empty specialtyRatings', () => {
     const result = instructorCredentialsSchema.safeParse({
-      credential: [{ ...validCred, courses: [] }],
+      credential: [{ ...validCred, specialtyRatings: [] }],
     })
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
   })
 
   it('rejects credential missing agencyID', () => {

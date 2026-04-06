@@ -75,7 +75,6 @@ describe('diveSiteCapabilitiesSchema', () => {
     confinedCapable: false,
     maxDepth: 18,
     maxCapacity: 20,
-    isPublic: true,
   }
 
   it('accepts a fully valid capabilities payload', () => {
@@ -84,10 +83,6 @@ describe('diveSiteCapabilitiesSchema', () => {
 
   it('accepts confinedCapable true', () => {
     expect(diveSiteCapabilitiesSchema.safeParse({ ...valid, confinedCapable: true }).success).toBe(true)
-  })
-
-  it('accepts isPublic false', () => {
-    expect(diveSiteCapabilitiesSchema.safeParse({ ...valid, isPublic: false }).success).toBe(true)
   })
 
   it('accepts optional maxDepth absent', () => {
@@ -122,7 +117,6 @@ describe('diveSiteDetailsFromProfile', () => {
       maxDepth: 18,
       maxCapacity: 20,
       confinedCapable: false,
-      isPublic: true,
     }
     const form = diveSiteDetailsFromProfile(profile)
     expect(form.name).toBe('Shark Bay Reef')
@@ -154,13 +148,11 @@ describe('diveSiteDetailsFromProfile', () => {
       maxDepth: 30,
       maxCapacity: 15,
       confinedCapable: false,
-      isPublic: true,
     }
     const form = diveSiteDetailsFromProfile(profile)
     expect(form).not.toHaveProperty('maxDepth')
     expect(form).not.toHaveProperty('maxCapacity')
     expect(form).not.toHaveProperty('confinedCapable')
-    expect(form).not.toHaveProperty('isPublic')
   })
 })
 
@@ -193,30 +185,27 @@ describe('diveSiteDetailsToPayload', () => {
     expect(payload).not.toHaveProperty('confinedCapable')
     expect(payload).not.toHaveProperty('maxDepth')
     expect(payload).not.toHaveProperty('maxCapacity')
-    expect(payload).not.toHaveProperty('isPublic')
   })
 })
 
 // ── diveSiteCapabilitiesFromProfile ───────────────────────────────────────────
 
 describe('diveSiteCapabilitiesFromProfile', () => {
-  it('extracts confinedCapable, maxDepth, maxCapacity, isPublic from profile', () => {
+  it('extracts confinedCapable, maxDepth, maxCapacity from profile', () => {
     const profile = {
       name: 'Shark Bay Reef',
       confinedCapable: true,
       maxDepth: 18,
       maxCapacity: 20,
-      isPublic: true,
     }
     const form = diveSiteCapabilitiesFromProfile(profile)
     expect(form.confinedCapable).toBe(true)
     expect(form.maxDepth).toBe(18)
     expect(form.maxCapacity).toBe(20)
-    expect(form.isPublic).toBe(true)
   })
 
   it('defaults confinedCapable to false when absent', () => {
-    const form = diveSiteCapabilitiesFromProfile({ maxDepth: 18, maxCapacity: 20, isPublic: false })
+    const form = diveSiteCapabilitiesFromProfile({ maxDepth: 18, maxCapacity: 20 })
     expect(form.confinedCapable).toBe(false)
   })
 
@@ -226,17 +215,11 @@ describe('diveSiteCapabilitiesFromProfile', () => {
     expect(form.maxCapacity).toBe(0)
   })
 
-  it('defaults isPublic to false when absent', () => {
-    const form = diveSiteCapabilitiesFromProfile({})
-    expect(form.isPublic).toBe(false)
-  })
-
   it('does not include details fields', () => {
     const form = diveSiteCapabilitiesFromProfile({
       confinedCapable: false,
       maxDepth: 18,
       maxCapacity: 20,
-      isPublic: true,
       name: 'Shark Bay Reef',
       venueType: 'Reef',
     })
@@ -254,13 +237,11 @@ describe('diveSiteCapabilitiesToPayload', () => {
       confinedCapable: true,
       maxDepth: 24,
       maxCapacity: 15,
-      isPublic: true,
     }
     const payload = diveSiteCapabilitiesToPayload(form)
     expect(payload.confinedCapable).toBe(true)
     expect(payload.maxDepth).toBe(24)
     expect(payload.maxCapacity).toBe(15)
-    expect(payload.isPublic).toBe(true)
   })
 
   it('omits maxDepth when zero', () => {
@@ -268,7 +249,6 @@ describe('diveSiteCapabilitiesToPayload', () => {
       confinedCapable: false,
       maxDepth: 0,
       maxCapacity: 10,
-      isPublic: false,
     }
     const payload = diveSiteCapabilitiesToPayload(form)
     expect(payload).not.toHaveProperty('maxDepth')
@@ -279,7 +259,6 @@ describe('diveSiteCapabilitiesToPayload', () => {
       confinedCapable: false,
       maxDepth: 10,
       maxCapacity: 8,
-      isPublic: false,
     }
     const payload = diveSiteCapabilitiesToPayload(form)
     expect(payload).not.toHaveProperty('name')
@@ -308,10 +287,9 @@ describe('buildDiveSiteCreatePayload', () => {
     expect(result.hasCompressor).toBe(false)
   })
 
-  it('does not inject venueType or isPublic (unlike pool)', () => {
+  it('does not inject venueType (unlike pool)', () => {
     const result = buildDiveSiteCreatePayload({ name: 'Test' })
     expect(result).not.toHaveProperty('venueType')
-    expect(result).not.toHaveProperty('isPublic')
   })
 })
 
@@ -333,6 +311,5 @@ describe('INITIAL_DIVE_SITE_CAPABILITIES_FORM', () => {
     expect(INITIAL_DIVE_SITE_CAPABILITIES_FORM.confinedCapable).toBe(false)
     expect(INITIAL_DIVE_SITE_CAPABILITIES_FORM.maxDepth).toBe(0)
     expect(INITIAL_DIVE_SITE_CAPABILITIES_FORM.maxCapacity).toBe(0)
-    expect(INITIAL_DIVE_SITE_CAPABILITIES_FORM.isPublic).toBe(false)
   })
 })

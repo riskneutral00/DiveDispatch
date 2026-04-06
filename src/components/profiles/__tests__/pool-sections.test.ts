@@ -70,17 +70,12 @@ describe('contactSchema', () => {
 
 describe('poolCapabilitiesSchema', () => {
   const valid = {
-    confinedCapable: true,
     maxDepth: 5,
     maxCapacity: 15,
   }
 
   it('accepts a fully valid capabilities payload', () => {
     expect(poolCapabilitiesSchema.safeParse(valid).success).toBe(true)
-  })
-
-  it('accepts confinedCapable false', () => {
-    expect(poolCapabilitiesSchema.safeParse({ ...valid, confinedCapable: false }).success).toBe(true)
   })
 
   it('rejects zero maxDepth', () => {
@@ -186,22 +181,15 @@ describe('poolContactToPayload', () => {
 // ── poolCapabilitiesFromProfile ───────────────────────────────────────────────
 
 describe('poolCapabilitiesFromProfile', () => {
-  it('extracts confinedCapable, maxDepth, maxCapacity from profile', () => {
+  it('extracts maxDepth, maxCapacity from profile', () => {
     const profile = {
       name: 'Blue Lagoon',
-      confinedCapable: true,
       maxDepth: 8,
       maxCapacity: 20,
     }
     const form = poolCapabilitiesFromProfile(profile)
-    expect(form.confinedCapable).toBe(true)
     expect(form.maxDepth).toBe(8)
     expect(form.maxCapacity).toBe(20)
-  })
-
-  it('defaults confinedCapable to false when absent', () => {
-    const form = poolCapabilitiesFromProfile({ maxDepth: 5, maxCapacity: 10 })
-    expect(form.confinedCapable).toBe(false)
   })
 
   it('defaults maxDepth and maxCapacity to 0 when absent', () => {
@@ -212,7 +200,6 @@ describe('poolCapabilitiesFromProfile', () => {
 
   it('does not include contact fields', () => {
     const form = poolCapabilitiesFromProfile({
-      confinedCapable: false,
       maxDepth: 3,
       maxCapacity: 8,
       name: 'Pool',
@@ -228,19 +215,16 @@ describe('poolCapabilitiesFromProfile', () => {
 describe('poolCapabilitiesToPayload', () => {
   it('serialises all capabilities fields', () => {
     const form: PoolCapabilitiesFormState = {
-      confinedCapable: true,
       maxDepth: 6.5,
       maxCapacity: 12,
     }
     const payload = poolCapabilitiesToPayload(form)
-    expect(payload.confinedCapable).toBe(true)
     expect(payload.maxDepth).toBe(6.5)
     expect(payload.maxCapacity).toBe(12)
   })
 
   it('does not include contact fields', () => {
     const form: PoolCapabilitiesFormState = {
-      confinedCapable: false,
       maxDepth: 3,
       maxCapacity: 8,
     }
@@ -259,9 +243,9 @@ describe('buildPoolCreatePayload', () => {
     expect(payload.venueType).toBe('Pool')
   })
 
-  it('always sets isPublic to false', () => {
+  it('always sets confinedCapable to true', () => {
     const payload = buildPoolCreatePayload({ name: 'Test Pool' })
-    expect(payload.isPublic).toBe(false)
+    expect(payload.confinedCapable).toBe(true)
   })
 
   it('always sets hasCompressor to false', () => {
@@ -280,7 +264,6 @@ describe('buildPoolCreatePayload', () => {
     expect(result.name).toBe('Blue Lagoon Training Pool')
     expect(result.email).toBe('pool@bluelagoon.com')
     expect(result.venueType).toBe('Pool')
-    expect(result.isPublic).toBe(false)
     expect(result.hasCompressor).toBe(false)
   })
 })
@@ -298,7 +281,6 @@ describe('INITIAL_POOL_CONTACT_FORM', () => {
 
 describe('INITIAL_POOL_CAPABILITIES_FORM', () => {
   it('has zero/false defaults', () => {
-    expect(INITIAL_POOL_CAPABILITIES_FORM.confinedCapable).toBe(false)
     expect(INITIAL_POOL_CAPABILITIES_FORM.maxDepth).toBe(0)
     expect(INITIAL_POOL_CAPABILITIES_FORM.maxCapacity).toBe(0)
   })
