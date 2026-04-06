@@ -51,6 +51,12 @@
             "command": "bash .claude/hooks/dependency-audit.sh",
             "timeout": 15,
             "statusMessage": "Auditing npm dependencies…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/i18n-pre-commit.sh",
+            "timeout": 15,
+            "statusMessage": "Verifying i18n key parity…"
           }
         ]
       },
@@ -74,6 +80,18 @@
             "command": "bash .claude/hooks/spec-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking ticket write authorization…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/css-file-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking CSS file creation…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/app-component-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking app/ component placement…"
           }
         ]
       },
@@ -97,6 +115,12 @@
             "command": "bash .claude/hooks/spec-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking ticket write authorization…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/css-file-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking CSS file creation…"
           }
         ]
       }
@@ -169,6 +193,42 @@
             "command": "bash .claude/hooks/dry-check.sh",
             "timeout": 5,
             "statusMessage": "Checking for DRY violations…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/glass-enforcement.sh",
+            "timeout": 5,
+            "statusMessage": "Checking glass system compliance…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/design-token-enforcement.sh",
+            "timeout": 5,
+            "statusMessage": "Checking design tokens + mobile-first…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/route-component-enforcement.sh",
+            "timeout": 5,
+            "statusMessage": "Checking route page components…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/inline-style-drift.sh",
+            "timeout": 5,
+            "statusMessage": "Checking inline style drift…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/style-classname-boundary.sh",
+            "timeout": 5,
+            "statusMessage": "Checking style↔className boundary…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/i18n-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking i18n patterns…"
           }
         ]
       }

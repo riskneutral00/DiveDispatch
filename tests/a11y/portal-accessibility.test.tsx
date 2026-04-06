@@ -125,7 +125,7 @@ describe('DD-262: Equipment step validation error aria-live', () => {
     // The error region should have aria-live="polite"
     const liveRegion = document.querySelector('[aria-live="polite"]')
     expect(liveRegion).toBeInTheDocument()
-    expect(liveRegion!.textContent).toContain('Please select Own or Rent')
+    expect(liveRegion!.textContent).toContain('Selection required for each item')
   })
 
   it('rental checklist error container is always rendered (not mount/unmount)', () => {
@@ -143,7 +143,7 @@ describe('DD-262: Equipment step validation error aria-live', () => {
 
     // After validation: same region should now have error text
     fireEvent.click(screen.getByRole('button', { name: /continue/i }))
-    expect(rentalRegion!.textContent).toContain('Please select Own or Rent')
+    expect(rentalRegion!.textContent).toContain('Selection required for each item')
   })
 })
 

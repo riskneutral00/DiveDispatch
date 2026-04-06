@@ -32,11 +32,11 @@ export function addDays(dateStr: string, days: number): string {
   return toISODateString(date)
 }
 
-/** Format ISO date string to short display (e.g. "Mon, Mar 16"). */
-export function formatDateShort(dateStr: string): string {
+/** Format ISO date string to short display (e.g. "Mon, Mar 16"). Uses browser locale by default. */
+export function formatDateShort(dateStr: string, locale?: string): string {
   if (!dateStr) return ''
   const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+  return new Date(year, month - 1, day).toLocaleDateString(locale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

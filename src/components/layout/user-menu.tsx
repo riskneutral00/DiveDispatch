@@ -18,7 +18,6 @@ interface UserMenuProps {
 
 export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
   const tNav = useTranslations("nav");
-  const tUserMenu = useTranslations("userMenu");
   const { user: clerkUser } = useUser();
   const { user: convexUser } = useCurrentUser();
   const { signOut } = useClerk();
@@ -75,17 +74,15 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
       {open && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[var(--z-dropdown)]"
             role="presentation"
             onClick={() => setOpen(false)}
           />
           <div
-            className="absolute right-0 top-10 z-50 min-w-[180px] py-1 shadow-xl"
+            className="absolute right-0 top-10 z-[var(--z-dropdown)] min-w-[180px] py-1 shadow-xl glass-elevated"
             style={{
               background: "var(--color-surface-elevated)",
               border: "1px solid var(--color-glass-border)",
-              backdropFilter: "blur(var(--glass-blur))",
-              WebkitBackdropFilter: "blur(var(--glass-blur))",
               borderRadius: "var(--border-radius)",
             }}
           >
@@ -109,11 +106,11 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
               {tNav("profile")}
             </button>
             <button
-              onClick={() => handleMenuAction("preferences")}
+              onClick={() => handleMenuAction(`role:${roleSlug}`)}
               className="flex items-center gap-2 w-full px-3 py-2 text-sm transition-all cursor-pointer text-secondary"
             >
               <Settings size={14} />
-              {tUserMenu("preferences")}
+              {tNav("preferences")}
             </button>
 
             {roleConfigs.length > 1 && (

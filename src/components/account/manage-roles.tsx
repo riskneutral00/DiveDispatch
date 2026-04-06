@@ -60,12 +60,9 @@ export function ManageRoles({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2
-          className="text-primary"
-          style={{ fontSize: 18, fontWeight: 600, margin: 0 }}
-        >
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-primary">
           Manage Roles
         </h2>
         <Button variant="primary" onClick={onAddRole}>
@@ -73,7 +70,7 @@ export function ManageRoles({
         </Button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="flex flex-col gap-2">
         {roles.map((entry) => {
           const config = ROLE_BY_CLERK_ROLE[entry.role]
           if (!config) return null
@@ -88,14 +85,11 @@ export function ManageRoles({
           return (
             <Card key={entry._id} padding="md">
               {/* Main row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="flex items-center gap-3">
                 <RoleIcon role={entry.role} size={20} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span
-                      className="text-primary"
-                      style={{ fontSize: 14, fontWeight: 500 }}
-                    >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-primary">
                       {config.label}
                     </span>
                     {isPrimary && (
@@ -132,51 +126,41 @@ export function ManageRoles({
                 )}
               </div>
 
-              {/* Booking-blocked hint — always rendered when canDelete, toggle via height+opacity */}
+              {/* Booking-blocked hint — always rendered when canDelete, toggle via opacity */}
               {canDelete && (
                 <div
-                  className="text-secondary"
+                  className="text-xs text-secondary pl-8 overflow-hidden transition-opacity"
                   aria-hidden={!isBlocked}
                   data-blocked={isBlocked}
                   style={{
-                    fontSize: 12,
-                    paddingLeft: 32,
                     height: isBlocked ? 'auto' : 0,
                     marginTop: isBlocked ? 6 : 0,
-                    overflow: 'hidden',
                     opacity: isBlocked ? 1 : 0,
-                    transition: 'opacity 150ms ease',
+                    transitionDuration: 'var(--transition-speed)',
                   }}
                 >
                   {`Cannot delete — ${blockingCount} active ${blockingCount === 1 ? 'booking' : 'bookings'} use this role's resources.`}
                 </div>
               )}
 
-              {/* Inline confirmation — always rendered when canDelete, toggle via visibility+height */}
+              {/* Inline confirmation — always rendered when canDelete, toggle via visibility */}
               {canDelete && (
                 <div
                   aria-hidden={!(isConfirming && !isBlocked)}
                   data-confirming={isConfirming && !isBlocked}
+                  className="flex items-center justify-between gap-3 overflow-hidden"
                   style={{
                     visibility: isConfirming && !isBlocked ? 'visible' : 'hidden',
                     height: isConfirming && !isBlocked ? 'auto' : 0,
-                    overflow: 'hidden',
                     marginTop: isConfirming && !isBlocked ? 10 : 0,
                     paddingTop: isConfirming && !isBlocked ? 10 : 0,
                     borderTop: isConfirming && !isBlocked ? '1px solid var(--color-glass-border)' : 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 12,
                   }}
                 >
-                  <span
-                    className="text-secondary"
-                    style={{ fontSize: 13 }}
-                  >
+                  <span className="text-xs text-secondary">
                     {`Delete ${config.label} and all its data? This cannot be undone.`}
                   </span>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div className="flex gap-2 shrink-0">
                     <Button
                       variant="secondary"
                       size="sm"

@@ -1,7 +1,9 @@
 'use client'
 
 import type { FormEventHandler, ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { ErrorAlert } from '@/components/ui/error-alert'
 
 export interface PortalStepShellProps {
   children: ReactNode
@@ -28,37 +30,35 @@ export function PortalStepShell({
   serverError,
   onSubmit,
   onBack,
-  backLabel = 'Back',
+  backLabel,
   backVariant = 'ghost',
   onContinue,
   continueType = 'button',
   submitting,
-  continueLabel = 'Continue',
+  continueLabel,
   continueVariant = 'primary',
   continueSize = 'md',
   continueFullWidth = false,
   continueClassName,
 }: PortalStepShellProps) {
+  const t = useTranslations('common')
+  const resolvedBackLabel = backLabel ?? t('back')
+  const resolvedContinueLabel = continueLabel ?? t('continue')
+
   const content = (
     <>
       {children}
 
       <div aria-live="polite">
         {serverError && (
-          <p
-            className="text-sm text-center"
-            style={{ color: 'var(--color-destructive)' }}
-            role="alert"
-          >
-            {serverError}
-          </p>
+          <ErrorAlert>{serverError}</ErrorAlert>
         )}
       </div>
 
       <div className={`flex gap-3 ${onBack ? 'justify-between' : 'justify-end'}`}>
         {onBack && (
           <Button type="button" variant={backVariant} size="md" onClick={onBack} disabled={submitting}>
-            {backLabel}
+            {resolvedBackLabel}
           </Button>
         )}
         <Button
@@ -71,7 +71,7 @@ export function PortalStepShell({
           fullWidth={continueFullWidth}
           className={continueClassName}
         >
-          {continueLabel}
+          {resolvedContinueLabel}
         </Button>
       </div>
     </>

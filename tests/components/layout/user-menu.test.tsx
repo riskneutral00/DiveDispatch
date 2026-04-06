@@ -117,7 +117,7 @@ describe('UserMenu', () => {
     expect(mockOnOpenOverlay).toHaveBeenCalledWith('role:dive-center')
   })
 
-  it('calls onOpenOverlay with preferences for Preferences link', async () => {
+  it('calls onOpenOverlay with active role tab for Preferences link', async () => {
     mockUseQueryReturn = MULTI_ROLE
     renderMenu()
 
@@ -126,7 +126,7 @@ describe('UserMenu', () => {
     const prefBtns = screen.getAllByText('Preferences')
     await userEvent.click(prefBtns[0])
 
-    expect(mockOnOpenOverlay).toHaveBeenCalledWith('preferences')
+    expect(mockOnOpenOverlay).toHaveBeenCalledWith('role:dive-center')
   })
 
   it('single-role Profile calls onOpenOverlay with profile', async () => {

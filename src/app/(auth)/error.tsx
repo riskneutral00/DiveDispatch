@@ -10,15 +10,15 @@ export default function AuthError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const t = useTranslations('errors')
+  const t = useTranslations('common')
 
   return (
     <RouteErrorPage
       error={error}
       reset={reset}
       logLabel="Auth Error"
-      title={t('auth.title')}
-      message={t('auth.message')}
+      title={t('error')}
+      message={t('errorRetry')}
       minHeight="min-h-[60vh]"
     />
   )

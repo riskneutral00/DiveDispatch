@@ -60,7 +60,6 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
                     color: isActive
                       ? 'var(--color-text-primary)'
                       : 'var(--color-text-secondary)',
-                    fontFamily: 'var(--font-body)',
                   }}
                 >
                   {WIZARD_STEP_LABELS[step]}

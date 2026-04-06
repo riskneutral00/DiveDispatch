@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest'
 import { render } from '../helpers/render'
-import { StepIndicator } from '@/components/onboarding/step-indicator'
+import { StepIndicator } from '@/components/ui/step-indicator'
 
 const STEPS = [
   { key: 'signup', label: 'Sign Up' },

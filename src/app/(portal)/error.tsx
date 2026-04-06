@@ -10,15 +10,15 @@ export default function PortalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const t = useTranslations('errors')
+  const t = useTranslations('common')
 
   return (
     <RouteErrorPage
       error={error}
       reset={reset}
       logLabel="Portal Error"
-      title={t('portal.title')}
-      message={t('portal.message')}
+      title={t('error')}
+      message={t('errorContact')}
       minHeight="min-h-screen"
     />
   )

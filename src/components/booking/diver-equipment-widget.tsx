@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/lib/convex-generated'
-import { Card, Badge, Button, EmptyState, ErrorAlert } from '@/components/ui'
+import { Card, Badge, Button, EmptyState, ErrorAlert, FormSectionHeader } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/ui/spinner'
 import {
@@ -176,11 +176,7 @@ function DiverCard({
       {/* Gear sizing suggestions */}
       {rentingTypes.length > 0 && (
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-glass-border)' }}>
-          <p
-            className="text-xs font-semibold uppercase mb-2 text-secondary"
-          >
-            Rental Gear
-          </p>
+          <FormSectionHeader label="Rental Gear" className="mb-2" />
           <div className="space-y-1.5">
             {rentingTypes.map((gearType) => {
               const suggestion = suggestions[gearType]
@@ -216,11 +212,7 @@ function DiverCard({
 function MeasurementChip({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="px-2 py-1 rounded-md text-xs"
-      style={{
-        background: 'var(--color-glass-bg)',
-        border: '1px solid var(--color-glass-border)',
-      }}
+      className="px-2 py-1 rounded-[var(--border-radius-button)] text-xs glass-container"
     >
       <span className="text-secondary">{label}: </span>
       <span className="font-medium text-primary">
@@ -340,7 +332,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-xs px-1.5 py-0.5 rounded"
+              className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center rounded"
               style={{
                 background: 'var(--color-primary)',
                 color: 'var(--color-text-on-primary)',
@@ -353,7 +345,7 @@ function GearSizeRow({
                 setEditing(false)
                 setEditValue('')
               }}
-              className="text-xs px-1.5 py-0.5 rounded text-secondary"
+              className="text-xs min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-secondary"
               style={{ background: 'var(--color-glass-bg)',
                 border: '1px solid var(--color-glass-border)' }}
             >
@@ -370,7 +362,7 @@ function GearSizeRow({
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
               }}
-              className="text-xs text-secondary"
+              className="text-xs text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Override size"
             >
               ✏
@@ -378,7 +370,7 @@ function GearSizeRow({
             {isManualOverride && (
               <button
                 onClick={onClearOverride}
-                className="text-xs text-secondary"
+                className="text-xs text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Clear override"
               >
                 ↺
@@ -489,7 +481,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
               <button
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
-                className="px-3 py-1 rounded-full text-xs font-medium border transition-all"
+                className="px-3 py-1 rounded-full text-xs font-medium border transition-all min-h-[44px]"
                 style={{
                   background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
                   color: isActive

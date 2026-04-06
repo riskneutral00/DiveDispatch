@@ -107,9 +107,7 @@ export function ResourcePicker({
       ) : isLoading ? (
         /* Loading skeleton */
         <div
-          className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--border-radius)] text-secondary"
-          style={{ background: 'var(--color-glass-bg)',
-            border: '1px solid var(--color-glass-border)' }}
+          className="flex items-center gap-2 px-3 py-2.5 rounded-theme text-secondary bg-glass-bg border border-glass-border"
         >
           <Spinner size="sm" />
           <span className="text-sm">
@@ -122,7 +120,7 @@ export function ResourcePicker({
           <button
             type="button"
             onClick={() => setIsOpen((o) => !o)}
-            className="w-full text-left px-3 py-2.5 text-sm rounded-[var(--border-radius)] flex items-center justify-between gap-2 transition-opacity hover:opacity-90"
+            className="w-full text-left px-3 py-2.5 text-sm rounded-theme flex items-center justify-between gap-2 transition-opacity hover:opacity-90"
             style={{
               background: 'var(--color-glass-bg)',
               border: '1px solid var(--color-glass-border)',
@@ -142,7 +140,7 @@ export function ResourcePicker({
           {isOpen && (
             /* Dropdown list */
             <div
-              className="absolute z-50 left-0 right-0 top-full mt-1 rounded-[var(--border-radius)] shadow-xl overflow-hidden"
+              className="absolute z-[var(--z-dropdown)] left-0 right-0 top-full mt-1 rounded-theme shadow-xl overflow-hidden"
               style={{
                 background: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-glass-border)',
@@ -233,8 +231,7 @@ export function ResourcePicker({
       {/* Selected entry detail strip */}
       {!isExternal && selectedEntry && (
         <div
-          className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-md"
-          style={{ background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)' }}
+          className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-[var(--border-radius-button)] bg-glass-bg border border-glass-border"
         >
           <span className="text-xs text-secondary">
             {selectedEntry.placeName}, {selectedEntry.country}
@@ -260,7 +257,7 @@ export function ResourcePicker({
 function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean }) {
   return (
     <div
-      className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-secondary"
+      className="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-secondary"
       style={{ borderTop: topBorder ? '1px solid var(--color-glass-border)' : undefined }}
     >
       {label}
@@ -339,8 +336,7 @@ function PickerRow({
       {isSelected && (
         <Check
           size={14}
-          className="flex-shrink-0 mt-0.5"
-          style={{ color: 'var(--color-primary)' }}
+          className="flex-shrink-0 mt-0.5 text-primary"
         />
       )}
     </button>

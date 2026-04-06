@@ -14,6 +14,22 @@ import {
 
 export { locationSchema } from '@/lib/schemas/location'
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** SuperRefine helper: rejects date ranges where endDate precedes startDate. */
+function requireEndAfterStart(
+  data: { startDate?: string; endDate?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (data.startDate && data.endDate && data.endDate < data.startDate) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['endDate'],
+      message: 'End date must be on or after start date',
+    })
+  }
+}
+
 // ── Primitives ────────────────────────────────────────────────────────────────
 
 const phoneRegex = /^\+?[\d\s\-().]{7,}$/
@@ -172,15 +188,7 @@ export const bookingDetailsSchema = z
     portalMedical: z.boolean(),
     portalWaiver: z.boolean(),
   })
-  .superRefine((data, ctx) => {
-    if (data.startDate && data.endDate && data.endDate < data.startDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['endDate'],
-        message: 'End date must be on or after start date',
-      })
-    }
-  })
+  .superRefine(requireEndAfterStart)
 
 export type BookingDetailsData = z.infer<typeof bookingDetailsSchema>
 
@@ -204,30 +212,9 @@ export const diverEntryBaseSchema = z.object({
 })
 
 export const diverEntrySchema = diverEntryBaseSchema
-  .superRefine((data, ctx) => {
-    if (data.startDate && data.endDate && data.endDate < data.startDate) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['endDate'],
-        message: 'End date must be on or after start date',
-      })
-    }
-  })
+  .superRefine(requireEndAfterStart)
 
 export type DiverEntryData = z.infer<typeof diverEntrySchema>
-
-// ── profileFieldsSchema ───────────────────────────────────────────────────────
-// Operator / user profile update fields (name, business details, locale).
-
-export const profileFieldsSchema = z.object({
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
-  nickname: z.string().optional(),
-  businessName: z.string().min(1, 'Required'),
-  appLanguage: z.string().min(1, 'Required'),
-})
-
-export type ProfileFieldsData = z.infer<typeof profileFieldsSchema>
 
 // ── bookingSessionsSchema ────────────────────────────────────────────────────
 // Wizard step: session scheduling. At least one session, each structurally valid.
@@ -303,14 +290,7 @@ export function makeBookingDiversSchema(
       }),
     })
     .superRefine((data, ctx) => {
-      // Diver date order
-      if (data.startDate && data.endDate && data.endDate < data.startDate) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['endDate'],
-          message: 'End date must be on or after start date',
-        })
-      }
+      requireEndAfterStart(data, ctx)
       // Diver dates within booking range
       if (data.startDate && bookingStartDate && data.startDate < bookingStartDate) {
         ctx.addIssue({

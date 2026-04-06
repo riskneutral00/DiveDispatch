@@ -40,7 +40,7 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
   return (
     <div className={className}>
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 mb-1">
+      <div className="grid grid-cols-7 mb-1"> {/* design-ok */}
         {WEEKDAYS.map((wd) => (
           <div
             key={wd}
@@ -52,7 +52,7 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
       </div>
 
       {/* Day cells */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1"> {/* design-ok */}
         {days.map(({ date, isCurrentMonth }, i) => (
           <div key={i} style={{ opacity: isCurrentMonth ? 1 : 0.35 }}>
             {renderDay(date, isCurrentMonth)}

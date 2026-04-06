@@ -79,7 +79,6 @@ export function AddCustomerDialog({
             <div className="flex flex-col gap-2">
               <p
                 className="text-sm font-medium text-secondary"
-                style={{ fontFamily: 'var(--font-body)' }}
               >
                 Contact (optional)
               </p>

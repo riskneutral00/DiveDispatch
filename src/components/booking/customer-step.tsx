@@ -59,7 +59,7 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
         </ErrorAlert>
       )}
 
-      <Button variant="secondary" size="md" onClick={handleAddCustomer} className="w-full">
+      <Button variant="secondary" size="md" onClick={handleAddCustomer} fullWidth>
         <Plus size={16} />
         Add
       </Button>
@@ -162,7 +162,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         <div className="flex flex-col gap-1.5">
           <label
             className="text-xs font-medium text-secondary"
-            style={{ fontFamily: 'var(--font-body)' }}
           >
             Contact *
           </label>
@@ -231,9 +230,8 @@ function ContactValidationHint({ contactType, value }: { contactType: ContactTyp
       className="text-xs min-h-[1rem]"
       style={{
         color: 'var(--color-destructive)',
-        fontFamily: 'var(--font-body)',
         opacity: valid ? 0 : 1,
-        transition: 'opacity 150ms ease',
+        transition: 'opacity var(--transition-speed) ease',
       }}
       aria-hidden={valid}
     >

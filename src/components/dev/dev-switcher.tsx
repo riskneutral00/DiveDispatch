@@ -131,7 +131,7 @@ function DevSwitcherInner() {
       {/* Full-screen overlay masks transitional query state during switch */}
       {switching && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
+          className="fixed inset-0 z-[var(--z-dev)] flex items-center justify-center"
           style={{ background: 'var(--body-bg, #0f172a)' }}
         >
           <Loader2 className="h-6 w-6 animate-spin text-secondary" />
@@ -141,7 +141,7 @@ function DevSwitcherInner() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg glass text-primary"
+        className="fixed bottom-4 right-4 z-[var(--z-dropdown)] flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium shadow-lg glass text-primary"
         style={{ transition: 'opacity var(--transition-speed)' }}
       >
         <Bug className="h-3.5 w-3.5" />
@@ -150,8 +150,8 @@ function DevSwitcherInner() {
 
       {/* Panel */}
       {open && (
-        <div ref={panelRef} className="fixed bottom-12 right-4 z-50 w-80">
-          <Card padding="none" className="overflow-hidden">
+        <div ref={panelRef} className="fixed bottom-12 right-4 z-[var(--z-dropdown)] w-80">
+          <Card padding="none" overflow="hidden">
             <div
               className="px-4 py-2 text-xs font-semibold border-b text-secondary"
               style={{ borderColor: 'var(--color-glass-border)' }}
@@ -160,7 +160,7 @@ function DevSwitcherInner() {
             </div>
             {error && (
               <div
-                className="px-3 py-1.5 text-[11px] border-b"
+                className="px-3 py-1.5 text-[11px] border-b" /* design-ok */
                 style={{
                   color: 'var(--color-destructive, #dc2626)',
                   borderColor: 'var(--color-glass-border)',
@@ -188,7 +188,7 @@ function DevSwitcherInner() {
                       className="h-3.5 w-3.5 shrink-0 text-secondary"
                     />
                     <span
-                      className="text-[11px] w-20 shrink-0 truncate text-secondary"
+                      className="text-[11px] w-20 shrink-0 truncate text-secondary" /* design-ok */
                     >
                       {config.label}
                     </span>
@@ -196,7 +196,7 @@ function DevSwitcherInner() {
                       value={selectedSlug}
                       onChange={(e) => setSelected(config.key, e.target.value)}
                       disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary"
+                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary" /* design-ok */
                       style={{ background: 'var(--color-surface)',
                         borderColor: 'var(--color-glass-border)' }}
                     >

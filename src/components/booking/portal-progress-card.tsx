@@ -1,6 +1,8 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import type { BookingDetailCustomerProfile } from '../../../convex/bookings'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -22,6 +24,7 @@ interface StepRowProps {
 // ── Step row ───────────────────────────────────────────────────────────────────
 
 function StepRow({ label, required, complete }: StepRowProps) {
+  const t = useTranslations('common')
   const icon = complete ? (
     <CheckCircle2 size={16} style={{ color: 'var(--color-success)' }} />
   ) : required ? (
@@ -43,13 +46,13 @@ function StepRow({ label, required, complete }: StepRowProps) {
         {label}
         {!required && (
           <span className="text-xs ml-1 text-secondary">
-            (not required)
+            ({t('notRequired')})
           </span>
         )}
       </span>
       {complete && (
         <span className="text-xs font-medium" style={{ color: 'var(--color-success)' }}>
-          Done
+          {t('done')}
         </span>
       )}
     </div>
@@ -65,6 +68,8 @@ export function PortalProgressCard({
   customerFormComplete,
   customerProfiles,
 }: PortalProgressCardProps) {
+  const tPortal = useTranslations('portal')
+  const tCommon = useTranslations('common')
   const submittedCount = customerProfiles.filter((p) => p.submittedAt != null).length
   const totalProfiles = customerProfiles.length
 
@@ -74,34 +79,30 @@ export function PortalProgressCard({
       <div className="flex items-center justify-between">
         <span className="text-sm text-secondary">
           {totalProfiles > 0
-            ? `${submittedCount} / ${totalProfiles} submitted`
-            : 'No submissions yet.'}
+            ? tPortal('submitted', { count: String(submittedCount), total: String(totalProfiles) })
+            : tPortal('noSubmissions')}
         </span>
         {customerFormComplete && (
           <span
             className="text-xs font-semibold"
             style={{ color: 'var(--color-success)' }}
           >
-            Complete
+            {tCommon('complete')}
           </span>
         )}
       </div>
 
       {/* Step checklist */}
       <div className="space-y-2 pt-1">
-        <StepRow label="Contact information" required={portalContact} complete={portalContact} />
-        <StepRow label="Medical questionnaire" required={portalMedical} complete={portalMedical} />
-        <StepRow label="Waiver & signature" required={portalWaiver} complete={portalWaiver} />
+        <StepRow label={tPortal('contactInfo')} required={portalContact} complete={portalContact} />
+        <StepRow label={tPortal('medicalQuestionnaire')} required={portalMedical} complete={portalMedical} />
+        <StepRow label={tPortal('waiverSignature')} required={portalWaiver} complete={portalWaiver} />
       </div>
 
       {/* Per-diver submission progress */}
       {customerProfiles.length > 0 && (
         <div className="pt-2" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
-          <p
-            className="text-xs font-semibold uppercase tracking-wider mb-2 text-secondary"
-          >
-            Diver submissions
-          </p>
+          <FormSectionHeader label={tPortal('diverSubmissions')} className="mb-2" />
           <div className="space-y-1">
             {customerProfiles.map((profile, i) => {
               const submitted = profile.submittedAt != null
@@ -112,13 +113,13 @@ export function PortalProgressCard({
                   ) : (
                     <Circle className="text-secondary" size={14} />
                   )}
-                  <span className="text-primary">Diver {i + 1}</span>
+                  <span className="text-primary">{tPortal('diver', { number: String(i + 1) })}</span>
                   <span className="text-xs text-secondary">
                     {submitted
-                      ? `Submitted ${new Date(profile.submittedAt!).toLocaleDateString()}`
+                      ? tPortal('submittedOn', { date: new Date(profile.submittedAt!).toLocaleDateString() })
                       : profile.waiverSignedAt
-                        ? 'Waiver signed'
-                        : 'Pending'}
+                        ? tPortal('waiverSigned')
+                        : tCommon('pending')}
                   </span>
                 </div>
               )

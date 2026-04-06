@@ -5,29 +5,22 @@ import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Package } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Dialog } from '@/components/ui/dialog'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Spinner } from '@/components/ui/spinner'
+import { InlineError } from '@/components/ui/inline-error'
+import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
 
 const GEAR_TYPE_OPTIONS = [
   { value: '', label: 'All' },
-  { value: 'wetsuit', label: 'Wetsuit' },
-  { value: 'bcd', label: 'BCD' },
-  { value: 'fins', label: 'Fins' },
-  { value: 'mask', label: 'Mask' },
-  { value: 'regulator', label: 'Regulator' },
+  ...GEAR_TYPES.map((gt) => ({ value: gt, label: GEAR_TYPE_LABELS[gt] })),
 ]
 
-const ADD_GEAR_TYPE_OPTIONS = [
-  { value: 'wetsuit', label: 'Wetsuit' },
-  { value: 'bcd', label: 'BCD' },
-  { value: 'fins', label: 'Fins' },
-  { value: 'mask', label: 'Mask' },
-  { value: 'regulator', label: 'Regulator' },
-]
+const ADD_GEAR_TYPE_OPTIONS = GEAR_TYPES.map((gt) => ({ value: gt, label: GEAR_TYPE_LABELS[gt] }))
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -67,6 +60,8 @@ export function EquipmentInventoryTable({
   onRemoveItem,
 }: EquipmentInventoryTableProps) {
   const t = useTranslations('common')
+  const tErrors = useTranslations('errors')
+  const tBooking = useTranslations('booking')
   const [filterType, setFilterType] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<InventoryRow | null>(null)
@@ -87,7 +82,7 @@ export function EquipmentInventoryTable({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes('active reservations')) {
-        setDeleteError('Cannot remove — active reservations exist.')
+        setDeleteError(tErrors('activeReservations'))
       } else {
         setDeleteError(message)
       }
@@ -127,8 +122,8 @@ export function EquipmentInventoryTable({
             icon={Package}
             message={
               filterType
-                ? `No ${filterType} items found.`
-                : 'No inventory yet. Add your first item to get started.'
+                ? tBooking('noItemsFound', { type: filterType })
+                : tBooking('noInventory')
             }
           />
         </Card>
@@ -192,11 +187,7 @@ export function EquipmentInventoryTable({
           </strong>
           ? This cannot be undone.
         </p>
-        {deleteError && (
-          <p className="text-sm mb-3" style={{ color: 'var(--color-destructive)' }}>
-            {deleteError}
-          </p>
-        )}
+        {deleteError && <InlineError className="mb-3">{deleteError}</InlineError>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
             Cancel
@@ -253,15 +244,7 @@ function InventoryTableRow({
   return (
     <tr style={{ borderBottom: '1px solid var(--color-glass-border)' }}>
       <td className="px-4 py-2.5">
-        <span
-          className="text-xs font-medium px-2 py-0.5 rounded-full"
-          style={{
-            background: 'var(--color-glass-bg)',
-            border: '1px solid var(--color-glass-border)',
-          }}
-        >
-          {gearLabel}
-        </span>
+        <Badge variant="default" size="sm">{gearLabel}</Badge>
       </td>
       <td className="px-4 py-2.5" style={{ color: item.manufacturer ? undefined : 'var(--color-text-secondary)' }}>
         {item.manufacturer || '—'}
@@ -273,7 +256,7 @@ function InventoryTableRow({
         {item.diopter != null ? item.diopter : '—'}
       </td>
       <td className="px-4 py-2.5">
-        <input
+        <Input
           type="number"
           min={1}
           value={localUnits}
@@ -281,21 +264,16 @@ function InventoryTableRow({
           onBlur={commitUnits}
           onKeyDown={(e) => { if (e.key === 'Enter') commitUnits() }}
           disabled={isSaving}
+          error={saveError || undefined}
           aria-label={`Total units for ${item.gearType} ${item.size ?? ''}`}
-          className="w-16 text-sm text-center px-2 py-1 rounded-[var(--border-radius-button)] glass"
-          style={{
-            color: 'var(--color-text-primary)',
-            border: saveError ? '1px solid var(--color-destructive)' : '1px solid var(--color-glass-border)',
-            background: 'var(--color-glass-bg)',
-            outline: 'none',
-          }}
+          className="w-16 text-center"
         />
       </td>
       <td className="px-4 py-2.5 text-center">
         <button
           onClick={onDeleteClick}
           aria-label={`Remove ${item.gearType} ${item.size ?? ''}`}
-          className="p-2 rounded-md cursor-pointer"
+          className="p-2 rounded-[var(--border-radius-button)] cursor-pointer"
           style={{
             color: 'var(--color-text-secondary)',
             minWidth: 44,
@@ -325,6 +303,7 @@ function AddItemDialog({
   onClose: () => void
   onAdd: EquipmentInventoryTableProps['onAddItem']
 }) {
+  const tCommon = useTranslations('common')
   const [gearType, setGearType] = useState('')
   const [manufacturer, setManufacturer] = useState('')
   const [size, setSize] = useState('')
@@ -351,12 +330,12 @@ function AddItemDialog({
 
   const handleSubmit = async () => {
     if (!gearType) {
-      setError('Gear type is required')
+      setError(tCommon('fieldRequired', { field: 'Gear type' }))
       return
     }
     const units = parseInt(totalUnits, 10)
     if (isNaN(units) || units < 1) {
-      setError('Units must be at least 1')
+      setError(tCommon('fieldRequired', { field: 'Units' }))
       return
     }
 
@@ -403,7 +382,7 @@ function AddItemDialog({
           placeholder="e.g. M, EU 42"
         />
         <div className="flex items-center gap-3">
-          <input
+          <input /* design-ok: native checkbox */
             type="checkbox"
             id="add-prescription"
             checked={isPrescription}
@@ -432,9 +411,7 @@ function AddItemDialog({
           onChange={(e) => setTotalUnits(e.target.value)}
           required
         />
-        {error && (
-          <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
-        )}
+        {error && <InlineError>{error}</InlineError>}
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" size="sm" onClick={handleClose}>
             Cancel

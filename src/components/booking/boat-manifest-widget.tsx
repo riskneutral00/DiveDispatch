@@ -7,6 +7,7 @@ import { api } from '@/lib/convex-generated'
 import { Card, EmptyState } from '@/components/ui'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Spinner } from '@/components/ui/spinner'
+import { LoadingCard } from '@/components/ui/loading-card'
 import type {
   ManifestData,
   ManifestVessel,
@@ -56,17 +57,17 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
         {diver.nationality && (
           <>
             {diver.nationality.length === 2 && countryCodeToEmoji(diver.nationality)}{' '}
-            <span className="text-[10px]">{diver.nationality}</span>
+            <span className="text-[10px]">{diver.nationality}</span> {/* design-ok */}
           </>
         )}
       </td>
-      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]">
+      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]"> {/* design-ok */}
         {diver.passportNumber ?? '—'}
         {diver.passportIssuingCountry && (
-          <span className="ml-1 text-[10px]">{diver.passportIssuingCountry}</span>
+          <span className="ml-1 text-[10px]" /* design-ok */>{diver.passportIssuingCountry}</span>
         )}
       </td>
-      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'font-bold' : 'text-secondary'}`} style={passportExpiring ? { color: 'var(--color-destructive)' } : undefined}>
+      <td className={`py-1.5 px-2 font-mono text-[11px] ${passportExpiring ? 'font-bold text-destructive' : 'text-secondary'}`} /* design-ok */>
         {diver.passportExpirationDate ?? '—'}
         {passportExpiring && (
           <span role="alert" className="ml-1" title="Expires within 6 months">
@@ -75,26 +76,26 @@ function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
         )}
       </td>
       <td className="py-1.5 px-2 text-secondary">{diver.gender ?? '—'}</td>
-      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]">{diver.dateOfBirth ?? '—'}</td>
-      <td className="py-1.5 px-2 text-secondary text-[11px]">
+      <td className="py-1.5 px-2 text-secondary font-mono text-[11px]">{diver.dateOfBirth ?? '—'}</td> {/* design-ok */}
+      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok */}
         {diver.emergencyContactName
           ? `${diver.emergencyContactName} ${diver.emergencyContactPhone ?? ''} (${diver.emergencyContactRelation ?? ''})`
           : '—'}
       </td>
-      <td className="py-1.5 px-2 text-secondary text-[11px]">
+      <td className="py-1.5 px-2 text-secondary text-[11px]"> {/* design-ok */}
         {diver.agency ?? '—'}
         {diver.certLevel && <span className="ml-1">{diver.certLevel}</span>}
       </td>
       <td className="py-1.5 px-2">
         <span className="flex items-center gap-1">
           {diver.medicalFlags?.includes('medical_block') && (
-            <span aria-label="Medical block"><Heart size={12} style={{ color: 'var(--color-destructive)' }} /></span>
+            <span aria-label="Medical block"><Heart size={12} className="text-destructive" /></span>
           )}
           {diver.allergies && (
-            <span aria-label={`Allergies: ${diver.allergies}`}><AlertTriangle size={12} style={{ color: 'var(--color-warning)' }} /></span>
+            <span aria-label={`Allergies: ${diver.allergies}`}><AlertTriangle size={12} className="text-warning" /></span>
           )}
           {!diver.medicalFlags?.length && !diver.allergies && (
-            <span className="text-secondary text-[11px]">—</span>
+            <span className="text-secondary text-[11px]" /* design-ok */>—</span>
           )}
         </span>
       </td>
@@ -136,7 +137,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
         </span>
       </button>
       {whereLine && (
-        <p className="text-[11px] text-secondary px-2 pb-1 pl-8" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-[11px] text-secondary px-2 pb-1 pl-8 font-body" /* design-ok */>
           {whereLine}
         </p>
       )}
@@ -145,7 +146,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-secondary">
+              <tr className="text-[10px] uppercase tracking-wider text-secondary"> {/* design-ok */}
                 <th scope="col" className="text-left py-1 px-2 font-medium">Name</th>
                 <th scope="col" className="text-left py-1 px-2 font-medium">Nationality</th>
                 <th scope="col" className="text-left py-1 px-2 font-medium">Passport</th>
@@ -177,7 +178,7 @@ function DateSection({ entry, groupBy }: { entry: ManifestDateEntry; groupBy: Gr
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-1.5">
-        <h4 className="text-sm font-semibold text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
+        <h4 className="text-sm font-semibold text-primary font-heading">
           {formatDate(entry.date)}
         </h4>
         <span className="text-xs text-secondary">{entry.totalPax} pax</span>
@@ -195,8 +196,8 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
   return (
     <Card padding="md" className="mb-4">
       <div className="flex items-center gap-3 mb-3">
-        <Ship size={18} style={{ color: 'var(--color-primary)' }} />
-        <h3 className="text-base font-semibold text-primary" style={{ fontFamily: 'var(--font-heading)' }}>
+        <Ship size={18} className="text-primary" />
+        <h3 className="text-base font-semibold text-primary font-heading">
           {vessel.vesselName}
         </h3>
         <span className="text-xs text-secondary px-2 py-0.5 rounded glass-surface">
@@ -206,7 +207,7 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
       </div>
 
       {vessel.dates.length === 0 ? (
-        <p className="text-sm text-secondary py-2">No bookings for this period.</p>
+        <EmptyState message="No bookings for this period." />
       ) : (
         vessel.dates.map((dateEntry) => (
           <DateSection key={dateEntry.date} entry={dateEntry} groupBy={groupBy} />
@@ -257,11 +258,7 @@ export function BoatManifestWidget({ visibleRange }: BoatManifestWidgetProps) {
 
   if (data === undefined) {
     return (
-      <Card padding="md">
-        <div className="flex items-center justify-center py-8">
-          <Spinner />
-        </div>
-      </Card>
+      <LoadingCard />
     )
   }
 

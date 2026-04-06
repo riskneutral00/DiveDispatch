@@ -1,81 +1,17 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "다이빙를 계획하고, 계획대로 다이빙하세요. 언제 어디서나."
-  },
-  "accountOverlay": {
-    "title": "계정"
-  },
-  "userMenu": {
-    "preferences": "환경설정"
-  },
-  "nav": {
-    "dashboard": "대시보드",
-    "bookings": "예약",
-    "directory": "디렉터리",
-    "resources": "리소스",
-    "profile": "프로필",
-    "preferences": "환경설정",
-    "signIn": "로그인",
-    "signOut": "로그아웃",
-    "roles": "역할"
-  },
-  "auth": {
-    "signIn": "로그인",
-    "signUp": "회원가입",
-    "creatingAccount": "계정 생성 중…",
-    "email": "이메일",
-    "password": "비밀번호",
-    "forgotPassword": "비밀번호를 잊으셨나요?",
-    "noAccount": "계정이 없으신가요?",
-    "hasAccount": "이미 계정이 있으신가요?",
-    "selectRole": "역할 선택",
-    "roleOrganizer": "다이빙 예약을 만듭니다",
-    "roleResource": "다이빙 서비스를 제공합니다"
-  },
-  "booking": {
-    "new": "새 예약",
-    "edit": "예약 수정",
-    "status": {
-      "draft": "초안",
-      "upcoming": "예정",
-      "completed": "완료",
-      "cancelled": "취소됨"
-    },
-    "reservation": {
-      "pending": "대기 중",
-      "confirmed": "확정",
-      "vacated": "해제됨"
-    },
-    "wizard": {
-      "editConfirmTitle": "이 예약을 편집할까요?",
-      "editConfirmBody": "편집하면 예약이 초안으로 되돌아가고 모든 리소스 예약이 해제됩니다. 배정된 리소스는 다시 확인이 필요합니다.",
-      "editConfirmYes": "예, 편집합니다",
-      "preparing": "예약 준비 중…",
-      "preparePortalLink": "포털 링크 준비",
-      "preparePortalHint": "일정을 완료하기 전에 고객 포털 링크를 복사하거나 보낼 수 있도록 초안 예약을 만듭니다.",
-      "portalLinkDelivery": "포털 링크 전달",
-      "operatorFallback": "운영자",
-      "editingTitle": "편집: {ref}",
-      "cancelBookingAria": "예약 취소",
-      "errors": {
-        "resetBooking": "예약 초기화 실패",
-        "saveProgress": "저장 실패"
-      }
-    }
+    "tagline": "다이빙을 계획하세요. 계획대로 다이빙하세요."
   },
   "common": {
     "loading": "로딩 중…",
     "saving": "저장 중…",
-    "redirecting": "이동 중…",
-    "error": "문제가 발생했습니다",
-    "errorRetry": "문제가 발생했습니다. 다시 시도해 주세요.",
-    "retry": "다시 시도",
+    "redirecting": "리디렉션 중…",
     "cancel": "취소",
     "save": "저장",
+    "saved": "저장됨",
     "delete": "삭제",
     "edit": "편집",
-    "view": "보기",
     "back": "뒤로",
     "next": "다음",
     "continue": "계속",
@@ -87,64 +23,181 @@
     "remove": "제거",
     "close": "닫기",
     "search": "검색",
-    "filter": "필터",
+    "clear": "초기화",
     "copy": "복사",
-    "copied": "복사됨!",
+    "copied": "복사 완료!",
     "yes": "예",
     "no": "아니오",
+    "none": "없음",
     "verified": "인증됨",
-    "required": "필수.",
-    "noResults": "결과 없음"
-  },
-  "onboarding": {
-    "bannerMessage": "예약을 만들거나 받으려면 프로필을 완성하세요.",
-    "bannerCta": "프로필 완성 →"
+    "required": "필수 항목입니다.",
+    "noResults": "결과가 없습니다.",
+    "incomplete": "미완료",
+    "pending": "대기 중",
+    "done": "완료",
+    "complete": "완료",
+    "notRequired": "필수 아님",
+    "error": "오류가 발생했습니다",
+    "errorRetry": "오류가 발생했습니다. 다시 시도해 주세요.",
+    "errorContact": "오류가 발생했습니다. 다이브 센터에 문의해 주세요.",
+    "actionFailed": "{action}에 실패했습니다. 다시 시도해 주세요.",
+    "fieldRequired": "{field}은(는) 필수 항목입니다.",
+    "sendLink": "링크 전송",
+    "addItem": "항목 추가",
+    "inventory": "장비 재고",
+    "groupBy": "그룹 기준"
   },
   "errors": {
-    "generic": {
-      "title": "문제가 발생했습니다",
-      "message": "문제가 발생했습니다. 다시 시도해 주세요."
+    "unexpected": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "tokenExpired": "이 링크는 더 이상 유효하지 않습니다. 다이브 센터에 새 링크를 요청해 주세요.",
+    "bookingClosed": "이 예약은 마감되었습니다. 다이브 센터에 문의해 주세요.",
+    "formsIncomplete": "제출 전에 위의 모든 단계를 완료해 주세요.",
+    "linkExpired": "링크가 만료되었습니다.",
+    "copyFailed": "복사에 실패했습니다. 수동으로 붙여넣기 해 주세요.",
+    "duplicateRole": "이미 보유한 역할입니다.",
+    "lastRole": "최소 하나의 역할이 필요합니다.",
+    "noWhatsApp": "이 고객의 WhatsApp 번호가 등록되어 있지 않습니다.",
+    "activeReservations": "제거할 수 없습니다 — 활성 예약이 존재합니다.",
+    "incomplete": "미완료: {reason}",
+    "pageNotFound": "페이지를 찾을 수 없습니다",
+    "pageNotFoundMessage": "이 페이지는 존재하지 않거나 이동되었습니다.",
+    "bookingClosedTitle": "예약 마감",
+    "completeTitle": "완료!",
+    "roleNotDetermined": "활성 역할을 확인할 수 없습니다."
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "bookings": "예약",
+    "resources": "자원",
+    "profile": "프로필",
+    "preferences": "환경설정",
+    "signIn": "로그인",
+    "signOut": "로그아웃",
+    "roles": "역할"
+  },
+  "auth": {
+    "creatingAccount": "생성 중…",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "noAccount": "계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "selectRole": "역할을 선택해 주세요",
+    "roleOrganizer": "예약 생성",
+    "roleResource": "서비스 제공"
+  },
+  "booking": {
+    "status": {
+      "draft": "임시저장",
+      "upcoming": "예정",
+      "completed": "완료",
+      "cancelled": "취소됨"
     },
-    "portal": {
-      "title": "문제가 발생했습니다",
-      "message": "예약 양식을 불러올 수 없습니다. 링크를 다시 시도하거나 다이빙 센터에 문의하세요."
+    "reservation": {
+      "pending": "대기 중",
+      "confirmed": "확정됨",
+      "vacated": "해제됨"
     },
-    "auth": {
-      "title": "인증 오류",
-      "message": "로그인 중 오류가 발생했습니다. 다시 시도해 주세요."
-    }
+    "editConfirmTitle": "예약을 편집하시겠습니까?",
+    "editConfirmBody": "임시저장 상태로 초기화됩니다. 자원 담당자가 다시 확인해야 합니다.",
+    "editingTitle": "편집 중: {ref}",
+    "preparePortalHint": "임시저장을 생성하여 예약 완료 전에 포털 링크를 공유할 수 있습니다.",
+    "dayNumber": "{number}일차",
+    "diveDay": "다이빙 일정",
+    "autoAdded": "자동 추가됨",
+    "noDivesScheduled": "예정된 다이빙이 없습니다",
+    "venueAssignment": "장소 배정",
+    "confined": "제한 수역",
+    "confinedWater": "제한 수역",
+    "openWater": "오픈워터",
+    "external": "외부 (시스템 미등록)",
+    "switchToSystemInstructor": "시스템 강사로 전환",
+    "switchToSystemDiveMaster": "시스템 다이브마스터로 전환",
+    "dayLimitReached": "일일 한도 도달 — 최대 3회 다이빙",
+    "startTime": "시작 시간",
+    "endTime": "종료 시간",
+    "removeDay": "일정 제거",
+    "acceptanceMode": "수락 방식",
+    "preferredResources": "선호 자원",
+    "autoAssignPreferred": "새 예약 시 선호 강사, 보트 및 장소를 자동 배정합니다 (가용 시)",
+    "confirmationAlerts": "확인 알림",
+    "notifyOnAccept": "예약이 수락되면 알림 받기",
+    "notifyOnDecline": "예약이 거절되면 알림 받기",
+    "preferredOperator": "선호 운영자",
+    "preferredOperatorDesc": "이 운영자의 환경설정에서 자원을 미리 채웁니다.",
+    "targetOperator": "대상 운영자",
+    "emailSent": "이메일이 전송되었습니다!",
+    "whatsAppOpened": "WhatsApp이 열렸습니다!",
+    "lineOpened": "LINE이 열렸습니다!",
+    "linkExpires": "링크 만료일: {date}",
+    "roleDeleted": "{role} 삭제됨",
+    "preferencesSaved": "환경설정이 저장되었습니다",
+    "noBookings": "해당 기간의 예약이 없습니다.",
+    "byDiveCenter": "다이브 센터별",
+    "byActivity": "활동별",
+    "pax": "{count}명",
+    "paxTotal": "총 {count}명",
+    "removeItem": "항목 제거",
+    "removeItemConfirm": "{item}을(를) 제거하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "prescriptionMask": "도수 마스크",
+    "addInventoryItem": "장비 항목 추가",
+    "noInventory": "등록된 장비가 없습니다. 첫 번째 항목을 추가해 주세요.",
+    "noItemsFound": "{type} 항목을 찾을 수 없습니다."
   },
   "portal": {
-    "loadingBooking": "예약 불러오는 중…",
+    "welcome": "환영합니다, {name}님",
+    "subtitle": "예약 서류를 작성해 주세요.",
+    "diverCount": "{count, plural, one {다이버 #명} other {다이버 #명}}",
+    "dateSuffix": " {date}",
     "submissionComplete": {
-      "title": "제출 완료",
-      "bodyWithOperator": "제출이 완료되었습니다. {operatorName}님이 활동 전{datePart} 연락드립니다.",
-      "bodyNoOperator": "제출이 완료되었습니다. 활동 전{datePart} 연락드립니다."
+      "withOperator": "제출이 완료되었습니다. {operatorName}에서 활동일{datePart} 전에 연락드리겠습니다.",
+      "withoutOperator": "제출이 완료되었습니다. 활동일{datePart} 전에 연락드리겠습니다."
     },
-    "dateSuffix": " ({date})",
-    "bookingClosed": {
-      "title": "예약 마감",
-      "message": "이 예약은 더 이상 제출을 받지 않습니다. 운영자에게 문의하세요."
-    },
-    "steps": {
-      "contact": "연락처",
-      "medical": "의료",
-      "waiver": "면책",
-      "equipment": "장비",
-      "safety": "안전",
-      "submit": "제출"
-    },
-    "welcome": "환영합니다, {name}",
-    "subtitle": "아래 예약 서류를 작성해 주세요",
-    "diverCount": "{count, plural, other {#명}}",
+    "bookingClosed": "이 예약은 마감되었습니다. 다이브 센터에 문의해 주세요.",
+    "tokenExpired": "이 링크는 만료되었습니다. 다이브 센터에 새 링크를 요청해 주세요.",
+    "formsIncomplete": "제출 전에 모든 단계를 완료해 주세요.",
+    "ageError": "최소 연령: {minAge}세. 활동일 기준 다이버 나이: {age} {age, plural, one {세} other {세}}.",
+    "answerAllRemaining": "미응답 질문이 {count}개 남아 있습니다.",
+    "successMessage": "서류 작성이 완료되었습니다. 다이브 센터에서 검토 후 확인해 드리겠습니다.",
+    "medicalBlockMessage": "서류가 제출되었습니다. 다이빙 전 의사 소견서가 필요합니다. 다이브 센터에 통보되었습니다.",
+    "hardBlockTitle": "의사 소견서 필요",
+    "hardBlockMessage": "다이빙 전 의사 소견서가 필요합니다. 다이브 센터에 통보되었으며 곧 연락드리겠습니다.",
+    "passportExpiryWarning": "여권이 6개월 이내에 만료됩니다. 출발 전 목적지 입국 요건을 확인해 주세요.",
+    "returnBanner": "다시 오신 것을 환영합니다! 이전 예약의 정보가 확인되었습니다.",
+    "returnLoaded": "이전 정보가 불러와졌습니다. 변경 사항이 있으면 검토 후 수정해 주세요.",
+    "agreeTo": "본인 {name}은(는) 다음 사항에 동의합니다:",
+    "guardianReason": "18세 미만 참가자의 경우 필수입니다.",
+    "contactInfo": "연락처 정보",
+    "medicalQuestionnaire": "건강 설문지",
+    "waiverSignature": "면책 동의 및 서명",
+    "diverSubmissions": "다이버 제출 내역",
+    "diver": "다이버 {number}",
+    "submitted": "{count} / {total} 제출됨",
+    "submittedOn": "{date}에 제출됨",
+    "waiverSigned": "면책 동의 완료",
+    "noSubmissions": "아직 제출된 내역이 없습니다.",
     "postTrip": {
-      "title": "함께 잠수해 주셔서 감사합니다!",
-      "subtitle": "멋진 경험이 되셨길 바랍니다.",
-      "reviewPrompt": "다른 분들도 좋은 다이빙을 발견할 수 있도록 리뷰를 남겨주세요.",
-      "googleMaps": "Google Maps에서 리뷰하기",
-      "facebook": "Facebook에서 리뷰하기",
-      "signupPrompt": "다음 다이빙 모험을 예약하고 싶으신가요?",
-      "signupCta": "DiveDispatch 회원가입"
+      "title": "함께 다이빙해 주셔서 감사합니다!",
+      "subtitle": "즐거운 경험이 되셨기를 바랍니다.",
+      "reviewPrompt": "다이빙이 즐거우셨나요? 리뷰를 남겨 주세요.",
+      "signupPrompt": "다음 다이빙을 준비하시겠습니까?"
     }
+  },
+  "medical": {
+    "intro": "스쿠버 다이빙과 프리다이빙은 양호한 신체적, 정신적 건강 상태를 필요로 합니다. 일부 의학적 상태는 다이빙 중 위험할 수 있습니다. 이 설문은 의사 평가가 필요한지를 판단하기 위한 것입니다. 모든 질문에 솔직하게 답변해 주세요.",
+    "pregnancy": "임신 중이거나 임신을 계획 중인 경우 다이빙을 하지 마세요.",
+    "privacy": "답변은 PADI 의료 기준에 따라 다이브 센터와 공유됩니다.",
+    "q1": "폐/호흡기, 심장, 혈액에 문제가 있었거나 COVID-19 진단을 받은 적이 있습니다.",
+    "q2": "45세 이상입니다.",
+    "q3": "중간 강도의 운동(1.6km를 14분 이내에 걷기) 또는 200m 수영을 쉬지 않고 완주하기 어렵습니다.",
+    "q4": "눈, 귀 또는 비강/부비동에 문제가 있었습니다.",
+    "q5": "최근 12개월 이내에 수술을 받았거나 과거 수술로 인한 지속적인 문제가 있습니다.",
+    "q6": "의식 소실, 편두통, 발작, 뇌졸중 또는 중대한 두부 외상을 경험한 적이 있습니다.",
+    "q7": "정신과적 질환, 공황 발작 또는 중독에 대한 치료를 받고 있습니다.",
+    "q8": "허리 질환, 탈장, 궤양 또는 당뇨병을 앓은 적이 있습니다.",
+    "q9": "위장 질환이 있었거나 최근 설사 증상이 있었습니다.",
+    "q10": "처방약을 복용 중입니다(피임약 또는 메플로퀸을 제외한 항말라리아제 제외).",
+    "statement": "모든 질문에 솔직하게 답변하였습니다. 부정확한 답변이나 미공개 건강 상태에 대한 책임을 수락합니다."
+  },
+  "waiver": {
+    "ackCheckbox": "본인은 이 책임 면제 / 위험 감수 동의서를 읽고 이해하였습니다. 본인은 법적 성인이며 자발적으로 서명합니다."
   }
 }

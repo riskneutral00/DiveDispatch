@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
+import { getConvexErrorCode, parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { ManageRoles } from './manage-roles'
@@ -19,6 +20,9 @@ import { ErrorCode } from '@/lib/errors'
  * to Convex queries and mutations.
  */
 export function ManageRolesConnected() {
+  const tErr = useTranslations('errors')
+  const tCommon = useTranslations('common')
+  const tBooking = useTranslations('booking')
   const roles = useQuery(api.userRoles.myRoles)
   const bookingCounts = useQuery(api.userRoles.bookingCountsForMyRoles)
   const roleCompleteness = useQuery(api.users.getAllRolesCompleteness)
@@ -47,9 +51,9 @@ export function ManageRolesConnected() {
       } catch (e: unknown) {
         const code = getConvexErrorCode(e)
         if (code === ErrorCode.DUPLICATE_ROLE) {
-          setError('You already hold this role.')
+          setError(tErr('duplicateRole'))
         } else {
-          setError(parseConvexError(e, 'Failed to add role. Please try again.'))
+          setError(tCommon('actionFailed', { action: 'Add role' }))
         }
       } finally {
         setLoading(false)
@@ -70,13 +74,13 @@ export function ManageRolesConnected() {
         if (result && 'blocked' in result && result.blocked) {
           return
         }
-        toast.success(`${roleLabel} deleted`)
+        toast.success(tBooking('roleDeleted', { role: roleLabel }))
       } catch (e: unknown) {
         const code = getConvexErrorCode(e)
         if (code === ErrorCode.LAST_ROLE) {
-          toast.error('You must have at least one role.')
+          toast.error(tErr('lastRole'))
         } else {
-          toast.error(parseConvexError(e, 'Failed to delete role. Please try again.'))
+          toast.error(tCommon('actionFailed', { action: 'Delete role' }))
         }
       }
     },
@@ -89,7 +93,7 @@ export function ManageRolesConnected() {
 
   if (roles === undefined || bookingCounts === undefined || roleCompleteness === undefined) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+      <div className="flex justify-center p-6">
         <Spinner />
       </div>
     )

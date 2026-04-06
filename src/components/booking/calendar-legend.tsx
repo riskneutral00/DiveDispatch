@@ -2,6 +2,7 @@
 
 import { STATUS_COLORS, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import type { StatusColorSet } from '@/lib/constants/vessel-colors'
+import { ColorBadge } from '@/components/ui/color-badge'
 
 export type CustomLegendItem = {
   key: string
@@ -24,6 +25,14 @@ interface CalendarLegendProps {
 
 const DEFAULT_STATUSES: CalendarDisplayStatus[] = ['Active', 'Draft', 'Upcoming', 'Completed']
 
+const BLOCKED_COLOR = {
+  textVar: 'var(--color-blocked)',
+  bgVar: 'var(--color-blocked-bg)',
+  borderVar: 'var(--color-blocked-border)',
+}
+
+const PILL_FONT: React.CSSProperties = { fontSize: 'clamp(9px, 1.8vw, 12px)' }
+
 export function CalendarLegend({
   statuses = DEFAULT_STATUSES,
   hiddenStatuses,
@@ -43,123 +52,48 @@ export function CalendarLegend({
       {/* Custom category pills (e.g., fleet vessels) */}
       {customItems ? customItems.map((item) => {
         const isHidden = hiddenKeys?.has(item.key) ?? false
-        const colors = item.color
-
-        const pillStyle: React.CSSProperties = isHidden
-          ? {
-              color: colors.textVar,
-              border: `1px solid ${colors.borderVar}`,
-              background: 'transparent',
-              opacity: 0.55,
-            }
-          : {
-              color: colors.textVar,
-              background: colors.bgVar,
-              border: `1px solid ${colors.borderVar}`,
-            }
-
-        if (onToggleKey) {
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onToggleKey(item.key)}
-              title={isHidden ? `Show ${item.label}` : `Hide ${item.label}`}
-              className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
-              style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
-            >
-              {item.label}
-            </button>
-          )
-        }
-
         return (
-          <div
+          <ColorBadge
             key={item.key}
-            className="rounded-full px-2 py-0.5 font-medium select-none"
-            style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
+            color={item.color}
+            dimmed={isHidden}
+            onClick={onToggleKey ? () => onToggleKey(item.key) : undefined}
+            title={onToggleKey ? (isHidden ? `Show ${item.label}` : `Hide ${item.label}`) : undefined}
+            style={PILL_FONT}
           >
             {item.label}
-          </div>
+          </ColorBadge>
         )
       }) :
 
       /* Status border pills */
       statuses.map((status) => {
         const isHidden = hiddenStatuses?.has(status) ?? false
-        const colors = STATUS_COLORS[status]
-
-        const pillStyle: React.CSSProperties = isHidden
-          ? {
-              color: colors.textVar,
-              border: `1px solid ${colors.borderVar}`,
-              background: 'transparent',
-              opacity: 0.55,
-            }
-          : {
-              color: colors.textVar,
-              background: colors.bgVar,
-              border: `1px solid ${colors.borderVar}`,
-            }
-
-        if (onToggle) {
-          return (
-            <button
-              key={status}
-              type="button"
-              onClick={() => onToggle(status)}
-              title={isHidden ? `Show ${status}` : `Hide ${status}`}
-              className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
-              style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
-            >
-              {status}
-            </button>
-          )
-        }
-
         return (
-          <div
+          <ColorBadge
             key={status}
-            className="rounded-full px-2 py-0.5 font-medium select-none"
-            style={{ ...pillStyle, fontSize: 'clamp(9px, 1.8vw, 12px)' }}
+            color={STATUS_COLORS[status]}
+            dimmed={isHidden}
+            onClick={onToggle ? () => onToggle(status) : undefined}
+            title={onToggle ? (isHidden ? `Show ${status}` : `Hide ${status}`) : undefined}
+            style={PILL_FONT}
           >
             {status}
-          </div>
+          </ColorBadge>
         )
       })}
 
-      {showBlocked &&
-        (onToggleBlocked ? (
-          <button
-            type="button"
-            onClick={onToggleBlocked}
-            title={blockedHidden ? 'Show Blocked' : 'Hide Blocked'}
-            className="rounded-full px-2 py-0.5 font-medium select-none transition-all cursor-pointer hover:brightness-125 hover:scale-105"
-            style={{
-              fontSize: 'clamp(9px, 1.8vw, 12px)',
-              color: 'var(--color-blocked)',
-              background: blockedHidden
-                ? 'transparent'
-                : 'var(--color-blocked-bg)',
-              border: '1px solid var(--color-blocked-border)',
-              opacity: blockedHidden ? 0.55 : 1,
-            }}
-          >
-            Blocked
-          </button>
-        ) : (
-          <div
-            className="rounded-full px-2 py-0.5 font-medium select-none"
-            style={{
-              fontSize: 'clamp(9px, 1.8vw, 12px)',
-              color: 'var(--color-blocked)',
-              background: 'var(--color-blocked-bg)',
-              border: '1px solid var(--color-blocked-border)',
-            }}
-          >
-            Blocked
-          </div>
-        ))}
+      {showBlocked && (
+        <ColorBadge
+          color={BLOCKED_COLOR}
+          dimmed={blockedHidden}
+          onClick={onToggleBlocked}
+          title={onToggleBlocked ? (blockedHidden ? 'Show Blocked' : 'Hide Blocked') : undefined}
+          style={PILL_FONT}
+        >
+          Blocked
+        </ColorBadge>
+      )}
     </div>
   )
 }

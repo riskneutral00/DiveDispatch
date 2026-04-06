@@ -14,6 +14,7 @@ import {
 import {
   type ContactFormState as DiveCenterContactFormState,
   INITIAL_CONTACT_FORM,
+  INITIAL_CUSTOMER_LANGUAGES,
   contactFromProfile,
   contactToPayload,
   languagesFromProfile,
@@ -66,9 +67,7 @@ export type DiveCenterLanguagesFormState = {
   customerLanguages: Language[]
 }
 
-export const INITIAL_LANGUAGES_FORM: DiveCenterLanguagesFormState = {
-  customerLanguages: [],
-}
+export const INITIAL_LANGUAGES_FORM: DiveCenterLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
 
 export function languagesFromProfileDC(p: Record<string, unknown>): DiveCenterLanguagesFormState {
   return {

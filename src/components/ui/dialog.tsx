@@ -95,7 +95,7 @@ export function Dialog({
           <div
             className={cn(
               "glass-container flex flex-col shadow-2xl",
-              "w-full h-full rounded-none",
+              "w-full h-full rounded-none", // design-ok: fullscreen mobile mode
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
               className,
@@ -110,8 +110,7 @@ export function Dialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight text-primary"
-                    style={{ fontFamily: "var(--font-heading)" }}
+                    className="text-lg font-semibold leading-tight text-primary font-heading"
                   >
                     {title}
                   </h2>
@@ -124,7 +123,7 @@ export function Dialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >
@@ -168,8 +167,7 @@ export function Dialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight text-primary"
-                    style={{ fontFamily: "var(--font-heading)" }}
+                    className="text-lg font-semibold leading-tight text-primary font-heading"
                   >
                     {title}
                   </h2>
@@ -182,7 +180,7 @@ export function Dialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-md transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >

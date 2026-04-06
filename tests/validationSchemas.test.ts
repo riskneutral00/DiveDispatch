@@ -7,7 +7,6 @@ import {
   equipmentSizingSchema,
   bookingDetailsSchema,
   diverEntrySchema,
-  profileFieldsSchema,
 } from '../src/lib/validation/schemas'
 
 describe('locationSchema', () => {
@@ -205,39 +204,6 @@ describe('bookingDetailsSchema', () => {
       portalWaiver: true,
     })
     expect(result.success).toBe(false)
-  })
-})
-
-describe('profileFieldsSchema', () => {
-  it('accepts valid profile fields', () => {
-    const result = profileFieldsSchema.safeParse({
-      firstName: 'Alice',
-      lastName: 'Smith',
-      businessName: 'Koh Tao Divers',
-      appLanguage: 'en',
-    })
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects missing firstName', () => {
-    const result = profileFieldsSchema.safeParse({
-      firstName: '',
-      lastName: 'Smith',
-      businessName: 'Test',
-      appLanguage: 'en',
-    })
-    expect(result.success).toBe(false)
-  })
-
-  it('allows optional nickname', () => {
-    const result = profileFieldsSchema.safeParse({
-      firstName: 'Alice',
-      lastName: 'Smith',
-      nickname: 'Al',
-      businessName: 'Test',
-      appLanguage: 'en',
-    })
-    expect(result.success).toBe(true)
   })
 })
 

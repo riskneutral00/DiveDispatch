@@ -2,17 +2,13 @@ import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 import { Anchor } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BackgroundLayout } from "@/components/layout/background-layout"
 
 export default async function Home() {
   const t = await getTranslations()
 
   return (
-    <div className="min-h-screen relative">
-      <div className="bg-image" />
-      <div className="bg-overlay" />
-      <main
-        className="app-shell min-h-screen flex flex-col items-center justify-center px-4 py-16 relative"
-      >
+    <BackgroundLayout className="items-center justify-center px-4 py-16">
       {/* Hero */}
       <div className="text-center mb-12 max-w-2xl">
         <div
@@ -20,19 +16,16 @@ export default async function Home() {
           aria-label="DiveDispatch"
         >
           <Anchor
-            className="w-5 h-5"
-            style={{ color: "var(--color-primary)" }}
+            className="w-5 h-5 text-primary"
           />
           <span
-            className="text-xl font-medium text-secondary"
-            style={{ fontFamily: "var(--font-heading)" }}
+            className="text-xl font-medium text-secondary font-heading"
           >
             DiveDispatch
           </span>
         </div>
         <h1
-          className="text-4xl font-bold tracking-tight text-primary"
-          style={{ fontFamily: "var(--font-heading)" }}
+          className="text-4xl font-bold tracking-tight text-primary font-heading"
         >
           {t("app.tagline")}
         </h1>
@@ -51,7 +44,6 @@ export default async function Home() {
           </Button>
         </Link>
       </div>
-    </main>
-    </div>
+    </BackgroundLayout>
   )
 }

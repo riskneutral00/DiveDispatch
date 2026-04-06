@@ -3,7 +3,7 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { Input } from '@/components/ui'
+import { Input, InlineError } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
 import { MAX_COURSE_DAYS } from '@/lib/constants/form-config'
@@ -12,19 +12,9 @@ import { SpecialtyField } from '@/components/profiles/specialty-field'
 import type { Language } from '@/lib/types/language'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { OrganizerStepCard } from './organizer-step-card'
-
-function useRoleApi(role: ClerkRole) {
-  switch (role) {
-    case 'DiveCenter':
-      return { mine: api.diveCenters.mine, update: api.diveCenters.update } as const
-    case 'Agent':
-      return { mine: api.agents.mine, update: api.agents.update } as const
-    default:
-      return null
-  }
-}
 
 interface OrganizerLanguagesStepProps {
   role: ClerkRole
@@ -33,7 +23,7 @@ interface OrganizerLanguagesStepProps {
 }
 
 export function OrganizerLanguagesStep({ role, onSaved, onBack }: OrganizerLanguagesStepProps) {
-  const roleApi = useRoleApi(role)
+  const roleApi = useOrganizerRoleApi(role)
 
   // Roles without a languages step shouldn't reach here (config guards this),
   // but if they do, skip forward on next tick
@@ -50,7 +40,7 @@ export function OrganizerLanguagesStep({ role, onSaved, onBack }: OrganizerLangu
 
 interface LanguagesStepInnerProps {
   role: ClerkRole
-  roleApi: NonNullable<ReturnType<typeof useRoleApi>>
+  roleApi: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
   onSaved: () => void
   onBack: () => void
 }
@@ -77,7 +67,8 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
       const langCodes: string[] = lang?.customerLanguages ?? me?.customerLanguages ?? []
       setFocusedLanguages(resolveLanguages(langCodes))
       if (supportsCoursePreferences) {
-        const firstAssoc = existing?.associations?.[0] as {
+        const assocs = existing && 'associations' in existing ? existing.associations : []
+        const firstAssoc = assocs?.[0] as {
           number: string; agency: string;
           owDays?: number; aowDays?: number; oaDays?: number; selectedSpecialties?: string[]
         } | undefined
@@ -101,7 +92,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
         const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
 
         // Patch the first association with updated preferences
-        const currentAssocs = existing?.associations ?? []
+        const currentAssocs = existing && 'associations' in existing ? existing.associations : []
         const firstAssoc = currentAssocs[0] ?? { agency: 'PADI', number: '' }
         const patchedFirst = {
           ...firstAssoc,
@@ -131,7 +122,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
     return <LoadingCard />
   }
 
-  const firstAgency = existing?.associations?.[0]?.agency ?? 'PADI'
+  const firstAgency = existing && 'associations' in existing ? existing.associations?.[0]?.agency ?? 'PADI' : 'PADI'
 
   return (
     <OrganizerStepCard
@@ -154,12 +145,12 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
               />
               <div>
                 <p className="text-sm font-medium mb-1 text-secondary">
-                  Default Course Durations <span style={{ fontWeight: 400 }}>(optional)</span>
+                  Default Course Durations <span className="font-normal">(optional)</span>
                 </p>
                 <p className="text-xs mb-3 text-secondary">
                   Used when creating bookings.
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
                     label="OW Days"
                     type="number"
@@ -208,9 +199,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
           </div>
         )}
 
-        {error && (
-          <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
-        )}
+        {error && <InlineError>{error}</InlineError>}
       </div>
     </OrganizerStepCard>
   )

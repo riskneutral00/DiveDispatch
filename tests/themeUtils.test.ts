@@ -145,6 +145,7 @@ describe('themeToVars', () => {
     backgrounds: { fallbackColor: '#111' },
     shape: {
       borderRadius: '12px',
+      borderRadiusButton: '999px',
       buttonStyle: 'pill',
       dividerStyle: 'line',
       iconStyle: 'outlined',

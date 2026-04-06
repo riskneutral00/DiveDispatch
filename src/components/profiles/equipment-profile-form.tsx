@@ -7,6 +7,7 @@ import { BusinessContactSection } from '@/components/profiles/business-contact-s
 import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { Card } from '@/components/ui/card'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PillToggle } from '@/components/ui/pill-toggle'
@@ -160,10 +161,8 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
         {activeGearTypes.length > 0 && (
           <div className="space-y-3">
             {activeGearTypes.map((gt) => (
-              <div key={gt} className="p-3 rounded-[var(--border-radius)]" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-glass-border)' }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2 text-secondary">
-                  {GEAR_TYPE_LABELS[gt]}
-                </p>
+              <div key={gt} className="p-3 rounded-theme" style={{ background: 'var(--color-surface-elevated)', border: '1px solid var(--color-glass-border)' }} /* design-ok: elevated surface container */>
+                <FormSectionHeader label={GEAR_TYPE_LABELS[gt]} className="mb-2" />
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={mfrInputs[gt] ?? ''}
@@ -178,12 +177,12 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
                 {(form.manufacturersByGearType[gt] ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {(form.manufacturersByGearType[gt] ?? []).map((mfr) => (
-                      <span key={mfr} className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border text-primary" style={{ background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)' }}>
+                      <Badge key={mfr} variant="default" size="sm">
                         {mfr}
                         <button className="text-secondary" type="button" aria-label={`Remove ${mfr}`} onClick={() => removeManufacturer(gt, mfr)}>
                           <X size={10} />
                         </button>
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 )}

@@ -307,7 +307,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             id={listboxId}
             role="listbox"
             aria-label="Address suggestions"
-            className="rounded-[var(--border-radius)] border overflow-hidden shadow-lg"
+            className="rounded-theme border overflow-hidden shadow-lg"
             style={{
               background: 'var(--color-surface-elevated)',
               borderColor: 'var(--color-glass-border)',

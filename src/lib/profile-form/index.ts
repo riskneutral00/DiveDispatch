@@ -25,6 +25,8 @@ export {
   teachingLanguagesFieldSchema,
   languagesFromProfile,
   languagesToPayload,
+  INITIAL_CUSTOMER_LANGUAGES,
+  INITIAL_TEACHING_LANGUAGES,
 } from './languages'
 
 // Toast copy

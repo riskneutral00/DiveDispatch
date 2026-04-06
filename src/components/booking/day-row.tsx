@@ -50,7 +50,7 @@ interface DayRowProps {
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -62,13 +62,11 @@ function deriveDayLabel(_day: DayConfig): string {
 }
 
 /** Extracted from map-loop inline styles — one allocation, shared by all renders. */
-const HEADING_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-heading)' }
-const BODY_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-body)' }
 const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
-const DAY_LABEL_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', border: '1px solid var(--color-glass-border)', fontFamily: 'var(--font-body)' }
-const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 15%, transparent)', color: 'var(--color-warning, #fbbf24)' }
+const DAY_LABEL_CLASS = 'glass-container'
+const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)', color: 'var(--color-warning)' }
 const REMOVE_BTN_STYLE: React.CSSProperties = { color: 'var(--color-destructive)' }
-const SWITCH_LINK_STYLE: React.CSSProperties = { color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }
+const SWITCH_LINK_STYLE: React.CSSProperties = { color: 'var(--color-accent)' }
 const VENUE_SECTION_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 
 const VENUE_ICONS = {
@@ -146,13 +144,12 @@ function DivePill({
           ? 'Day limit reached — max 3 dives'
           : getCourseByCode(slot.courseCode as CourseCode)?.name ?? slot.courseCode
       }
-      className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors"
+      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors"
       style={{
         background: active ? 'var(--color-accent)' : 'var(--color-glass-bg)',
         color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
         border: `1px ${active ? 'solid' : 'dashed'} ${active ? 'transparent' : 'var(--color-glass-border)'}`,
         opacity: active ? 1 : isCappedAndInactive ? 0.3 : 0.5,
-        fontFamily: 'var(--font-body)',
         cursor: isCappedAndInactive ? 'not-allowed' : 'pointer',
       }}
     >
@@ -195,17 +192,15 @@ export function DayRow({
       >
         <div className="flex items-center gap-2">
           <span
-            className="text-xs font-bold uppercase tracking-wider text-secondary"
-            style={HEADING_FONT_STYLE}
+            className="text-xs font-bold uppercase tracking-wide text-secondary font-heading"
           >
             Day {dayNumber}
           </span>
-          <span className="text-xs text-secondary" style={BODY_FONT_STYLE}>
+          <span className="text-xs text-secondary">
             {formatDate(day.date)}
           </span>
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full text-secondary"
-            style={DAY_LABEL_STYLE}
+            className={`text-xs px-1.5 py-0.5 rounded-full text-secondary ${DAY_LABEL_CLASS}`}
           >
             {deriveDayLabel(day)}
           </span>
@@ -233,7 +228,7 @@ export function DayRow({
       </div>
 
       {/* Row 1: Time fields */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Input
           label="Start time"
           type="time"
@@ -249,7 +244,7 @@ export function DayRow({
       </div>
 
       {/* Row 2: Instructor (left half) + Dive pills (right half) */}
-      <div className="grid grid-cols-2 gap-3 mb-3 items-end">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 items-end">
         {/* Instructor */}
         <div className="flex flex-col gap-1">
           {day.instructorSlug === '__external__' ? (
@@ -302,7 +297,6 @@ export function DayRow({
             return (
               <p
                 className="text-xs text-center py-2 text-secondary"
-                style={BODY_FONT_STYLE}
               >
                 No dives scheduled
               </p>
@@ -399,7 +393,7 @@ export function DayRow({
             className="flex flex-col gap-2 pt-3 border-t mt-1"
             style={VENUE_SECTION_BORDER_STYLE}
           >
-            <span className="text-[10px] uppercase tracking-wider font-bold text-secondary" style={HEADING_FONT_STYLE}>
+            <span className="text-[10px] uppercase tracking-wide font-bold text-secondary font-heading">
               Venue Assignment
             </span>
             {sortedDives.map((dive) => {
@@ -414,7 +408,7 @@ export function DayRow({
               return (
                 <div key={`venue-${dive.courseCode}-${dive.diveNumber}-${dive.isConfined}`} className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium w-16 shrink-0 text-primary" style={BODY_FONT_STYLE}>
+                    <span className="text-xs font-medium w-16 shrink-0 text-primary">
                       {diveLabel}
                     </span>
                     <div className="flex gap-1">
@@ -426,12 +420,11 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className="flex items-center gap-0.5 min-h-[44px] px-2.5 py-1.5 rounded text-[10px] font-medium transition-colors border"
+                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded text-[10px] font-medium transition-colors border"
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
                               borderColor: isVenueSelected ? 'transparent' : 'var(--color-glass-border)',
-                              fontFamily: 'var(--font-body)',
                             }}
                             title={VENUE_LABELS[vt]}
                           >

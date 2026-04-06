@@ -55,25 +55,24 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
       {/* Nav bar */}
       <div className="flex flex-col items-center py-2">
-        <div className="glass-container glass-surface transition rounded-[var(--border-radius)] inline-flex items-center gap-3 px-3 py-1">
+        <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
           <button
             type="button"
             onClick={() => shiftRange(-1)}
-            className="p-1.5 rounded-md transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 text-secondary"
             aria-label="Previous 2 weeks"
           >
             <ChevronLeft size={16} />
           </button>
           <span
-            className="font-semibold text-base sm:text-lg min-w-[12rem] text-center text-primary"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="font-semibold text-base sm:text-lg min-w-[12rem] text-center text-primary font-heading"
           >
             {headerLabel}
           </span>
           <button
             type="button"
             onClick={() => shiftRange(1)}
-            className="p-1.5 rounded-md transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 text-secondary"
             aria-label="Next 2 weeks"
           >
             <ChevronRight size={16} />
@@ -128,13 +127,13 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                 className="grid grid-cols-[120px_repeat(7,1fr)] gap-px"
               >
                 {/* Vessel label — only show on first week to avoid repetition */}
-                <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface">
+                <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface" /* design-ok */>
                   {weekIdx === 0 && (
                     <>
                       <span className="text-xs font-medium text-primary truncate">
                         {vessel.name}
                       </span>
-                      <span className="text-[10px] text-secondary shrink-0">
+                      <span className="text-[10px] text-secondary shrink-0"> {/* design-ok */}
                         {vessel.boatType.replace('_', ' ')}
                       </span>
                     </>
@@ -153,7 +152,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                   return (
                     <div
                       key={day.dateString}
-                      className="flex items-center justify-center min-h-[32px] rounded-sm transition-colors"
+                      className="flex items-center justify-center min-h-[32px] rounded-[var(--border-radius-button)] transition-colors"
                       style={{
                         backgroundColor: bg,
                         ...(day.isToday && !bg

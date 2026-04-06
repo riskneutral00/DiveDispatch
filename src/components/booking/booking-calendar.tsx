@@ -246,11 +246,11 @@ export function BookingCalendar({
       {/* ── Nav row — standalone island with popover ── */}
       <div className="flex flex-col items-center py-2" ref={pickerRef}>
         <div className="relative inline-flex">
-          <div className="glass-container glass-surface transition rounded-lg inline-flex items-center gap-3 px-3 py-1">
+          <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
-              className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
+              className="p-1.5 rounded-theme transition-opacity hover:opacity-70 text-secondary"
               aria-label="Previous 2 weeks"
             >
               <ChevronLeft size={16} />
@@ -259,8 +259,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="font-semibold text-base sm:text-lg min-w-[12rem] text-center hover:underline underline-offset-4 text-primary"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="font-semibold text-base sm:text-lg min-w-[12rem] text-center hover:underline underline-offset-4 text-primary font-heading"
             >
               {headerLabel}
             </button>
@@ -268,7 +267,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(1) }}
-              className="p-1.5 rounded-lg transition-opacity hover:opacity-70 text-secondary"
+              className="p-1.5 rounded-theme transition-opacity hover:opacity-70 text-secondary"
               aria-label="Next 2 weeks"
             >
               <ChevronRight size={16} />
@@ -278,7 +277,7 @@ export function BookingCalendar({
           {/* ── Month picker popover — true overlay ── */}
           {expanded && (
             <div
-              className="absolute z-50 left-1/2 -translate-x-1/2 mt-2 glass-elevated rounded-lg py-3 px-4"
+              className="absolute z-[var(--z-dropdown)] left-1/2 -translate-x-1/2 mt-2 glass-elevated rounded-theme py-3 px-4"
               style={{
                 position: 'absolute',
                 top: '100%',
@@ -297,8 +296,7 @@ export function BookingCalendar({
                   <ChevronLeft size={14} />
                 </button>
                 <span
-                  className="text-sm font-semibold text-primary"
-                  style={{ fontFamily: 'var(--font-heading)' }}
+                  className="text-sm font-semibold text-primary font-heading"
                 >
                   {pickerYear}
                 </span>
@@ -312,8 +310,8 @@ export function BookingCalendar({
                 </button>
               </div>
 
-              {/* Month grid 4×3 */}
-              <div className="grid grid-cols-4 gap-1">
+              {/* Month grid 4×3 — design-ok */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
                 {MONTH_LABELS.map((label, i) => {
                   const isCurrentMonth = pickerYear === currentYear && i === currentMonth
                   const isViewMonth = pickerYear === viewYear && i === viewMonth
@@ -329,11 +327,10 @@ export function BookingCalendar({
                         jumpToDate(new Date(pickerYear, i, 1))
                         setExpanded(false)
                       }}
-                      className={`glass-container glass-surface transition rounded-md py-1.5 text-xs font-medium${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
+                      className={`glass-container glass-surface transition rounded-[var(--border-radius-button)] py-1.5 text-sm font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
                       style={{
                         color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
                         background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,
-                        fontFamily: 'var(--font-body)',
                         borderColor: isViewMonth ? 'var(--color-primary)' : undefined,
                       }}
                     >
@@ -348,8 +345,8 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
-                  className="text-xs font-medium transition-opacity hover:opacity-80"
-                  style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-body)' }}
+                  className="text-sm font-medium transition-opacity hover:opacity-80 min-h-[44px] min-w-[44px]"
+                  style={{ color: 'var(--color-primary)' }}
                 >
                   Today
                 </button>
@@ -362,11 +359,11 @@ export function BookingCalendar({
       {/* ── Day-of-week labels — plain, no container, no hover ── */}
       <div className="overflow-x-auto mt-1">
         <div className="min-w-[320px]">
-          <div className="grid grid-cols-7">
+          <div className="grid grid-cols-7"> {/* design-ok */}
             {dayHeaders.map((day, i) => (
               <div
                 key={day}
-                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest"
+                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest" /* design-ok */
                 style={{
                   color:
                     i === todayCol
@@ -399,7 +396,7 @@ export function BookingCalendar({
               )}
             </div>
 
-            {/* Day island grid — no wrapping Card */}
+            {/* Day island grid — no wrapping Card — design-ok */}
             <div className="grid grid-cols-7 gap-1.5 min-w-[320px]">
               {week.map((day, di) => {
                 const isLocked = lockedDatesSet.has(day.dateString)
@@ -410,7 +407,7 @@ export function BookingCalendar({
                 const cellContent = (
                   <div
                     data-testid={`cell-${day.dateString}`}
-                    className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-lg ${
+                    className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-theme ${
                       isLocked
                         ? 'cursor-default'
                         : isPast
@@ -428,7 +425,7 @@ export function BookingCalendar({
                   >
                     {/* Date number */}
                     <span
-                      className="text-[10px] leading-none mb-1 select-none pointer-events-none"
+                      className="text-[10px] leading-none mb-1 select-none pointer-events-none" /* design-ok */
                       style={{
                         color: isBlocked
                           ? 'var(--color-date-blocked)'
@@ -479,7 +476,7 @@ export function BookingCalendar({
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
                           }}
-                          className={`w-full rounded-r-[6px] px-1.5 text-left transition-[filter] duration-150 ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
+                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-[filter] duration-150 ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
                             height: `${BAR_ROW_HEIGHT - 2}px`,
                             minHeight: '44px',

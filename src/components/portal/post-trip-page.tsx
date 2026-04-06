@@ -16,7 +16,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4" data-testid="post-trip-page">
-      <Card className="max-w-md w-full text-center" padding="lg">
+      <Card centered className="max-w-md w-full" padding="lg">
         <div className="mb-4 flex justify-center">
           <Star size={40} style={{ color: 'var(--color-warning)' }} />
         </div>
@@ -28,8 +28,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
         </p>
 
         <h1
-          className="text-xl font-semibold mb-2 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
+          className="text-xl font-semibold mb-2 text-primary font-heading"
         >
           {t('title')}
         </h1>
@@ -51,7 +50,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
           >
             <Button variant="secondary" size="md" fullWidth>
               <ExternalLink size={16} />
-              {t('googleMaps')}
+              Review on Google Maps
             </Button>
           </a>
 
@@ -63,7 +62,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
           >
             <Button variant="secondary" size="md" fullWidth>
               <ExternalLink size={16} />
-              {t('facebook')}
+              Review on Facebook
             </Button>
           </a>
         </div>
@@ -74,7 +73,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
 
         <a href="/sign-up">
           <Button variant="primary" size="md" fullWidth>
-            {t('signupCta')}
+            Sign Up for DiveDispatch
           </Button>
         </a>
       </Card>

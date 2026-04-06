@@ -5,12 +5,11 @@ import {
   getConvexErrorCode,
   mapPortalMutationError,
 } from '../src/lib/utils/convex-error'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-  FORMS_INCOMPLETE_FALLBACK_MESSAGE,
-} from '../src/lib/constants/error-messages'
+// Inline strings matching mapPortalMutationError output in convex-error.ts
+const TOKEN_EXPIRED_MESSAGE = 'This link is no longer valid. Contact your dive center for a new one.'
+const BOOKING_CLOSED_MESSAGE = 'This booking is closed. Contact your dive center for help.'
+const UNEXPECTED_ERROR_MESSAGE = 'Something went wrong. Try again.'
+const FORMS_INCOMPLETE_FALLBACK_MESSAGE = 'Complete all steps above before submitting.'
 
 describe('parseConvexError', () => {
   it('extracts reason from ConvexError', () => {
@@ -29,7 +28,7 @@ describe('parseConvexError', () => {
   })
 
   it('uses default fallback for non-ConvexError', () => {
-    expect(parseConvexError(new Error('random'))).toBe('Something went wrong. Please try again.')
+    expect(parseConvexError(new Error('random'))).toBe('Something went wrong. Try again.')
   })
 
   it('uses custom fallback for non-ConvexError', () => {
@@ -37,16 +36,16 @@ describe('parseConvexError', () => {
   })
 
   it('uses fallback for undefined', () => {
-    expect(parseConvexError(undefined)).toBe('Something went wrong. Please try again.')
+    expect(parseConvexError(undefined)).toBe('Something went wrong. Try again.')
   })
 
   it('uses fallback for null', () => {
-    expect(parseConvexError(null)).toBe('Something went wrong. Please try again.')
+    expect(parseConvexError(null)).toBe('Something went wrong. Try again.')
   })
 
   it('uses fallback for ConvexError with no recognized fields', () => {
     const err = new ConvexError({})
-    expect(parseConvexError(err)).toBe('Something went wrong. Please try again.')
+    expect(parseConvexError(err)).toBe('Something went wrong. Try again.')
   })
 })
 

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Calendar, Clock, MapPin } from 'lucide-react'
 import type { BookingDetailSession } from '../../../convex/bookings'
+import { EmptyState } from '@/components/ui'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -37,11 +38,7 @@ function groupByDate(sessions: BookingDetailSession[]): Map<string, BookingDetai
 
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
   if (sessions.length === 0) {
-    return (
-      <p className="text-sm text-secondary">
-        No sessions scheduled.
-      </p>
-    )
+    return <EmptyState message="No sessions scheduled." />
   }
 
   const byDate = useMemo(() => groupByDate(sessions), [sessions])
@@ -55,14 +52,14 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
           <div key={date}>
             {/* Date header */}
             <div
-              className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-secondary"
+              className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wide text-secondary"
             >
               <Calendar size={12} />
               <span>{date}</span>
             </div>
 
             {/* Sessions for this date */}
-            <div className="space-y-2 pl-4" style={{ borderLeft: '2px solid var(--color-glass-border)' }}>
+            <div className="space-y-2 pl-4 border-l-2 border-glass-border">
               {daySessions.map((s) => (
                 <div
                   key={s._id}
@@ -70,19 +67,11 @@ export function SessionTimeline({ sessions }: SessionTimelineProps) {
                 >
                   {/* Timeline dot */}
                   <span
-                    className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2"
-                    style={{
-                      background: 'var(--color-glass-bg)',
-                      borderColor: 'var(--color-primary)',
-                    }}
+                    className="absolute left-[-9px] top-2 w-3 h-3 rounded-full border-2 bg-glass-bg border-primary"
                   />
 
                   <div
-                    className="p-3 rounded-[var(--border-radius)] border"
-                    style={{
-                      background: 'var(--color-glass-bg)',
-                      borderColor: 'var(--color-glass-border)',
-                    }}
+                    className="p-3 rounded-theme border bg-glass-bg border-glass-border"
                   >
                     <p
                       className="text-sm font-medium text-primary"

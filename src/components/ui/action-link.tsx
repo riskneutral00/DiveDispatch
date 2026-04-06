@@ -11,10 +11,9 @@ export function ActionLink({ children, className = "", ...props }: ActionLinkPro
     <button
       type="button"
       className={cn(
-        "text-xs underline underline-offset-2 text-left transition-opacity hover:opacity-70",
+        "text-xs underline underline-offset-2 text-left transition-opacity hover:opacity-70 text-accent",
         className,
       )}
-      style={{ color: "var(--color-accent)", fontFamily: "var(--font-body)" }}
       {...props}
     >
       {children}

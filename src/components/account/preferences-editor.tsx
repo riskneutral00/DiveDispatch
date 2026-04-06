@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { z } from 'zod'
@@ -9,10 +10,10 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { Button } from '@/components/ui/button'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
-import { parseConvexError } from '@/lib/utils/convex-error'
 import {
   PreferredInstructorList,
   PreferredVenueBoatList,
@@ -123,6 +124,7 @@ function ResourceSaveButton({
   saved: boolean
   onSave: () => void
 }) {
+  const t = useTranslations('common')
   return (
     <Button
       type="button"
@@ -136,12 +138,12 @@ function ResourceSaveButton({
       {saved ? (
         <>
           <Check size={16} />
-          Saved
+          {t('saved')}
         </>
       ) : (
         <>
           <Save size={16} />
-          Save
+          {t('save')}
         </>
       )}
     </Button>
@@ -157,6 +159,7 @@ function PreferredOperatorPicker({
   value: string | undefined
   onChange: (slug: string | undefined) => void
 }) {
+  const t = useTranslations('booking')
   const dc = useQuery(api.directory.listByRole, { role: 'DiveCenter' }) ?? []
   const lb = useQuery(api.directory.listByRole, { role: 'Liveaboard' }) ?? []
   const dr = useQuery(api.directory.listByRole, { role: 'DiveResort' }) ?? []
@@ -174,16 +177,12 @@ function PreferredOperatorPicker({
 
   return (
     <Card padding="sm">
-      <h2
-        className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-      >
-        Preferred operator
-      </h2>
+      <FormSectionHeader className="mb-4" label={t('preferredOperator')} />
       <p className="text-sm mb-4 text-secondary">
-        When set, the booking wizard can pre-fill resources from this operator&apos;s preferences (referral-style cascade).
+        {t('preferredOperatorDesc')}
       </p>
       <SimpleSelect
-        label="Target operator"
+        label={t('targetOperator')}
         value={value ?? ''}
         onChange={(v) => onChange(v ? v : undefined)}
         options={[
@@ -204,6 +203,9 @@ interface PreferencesEditorProps {
 }
 
 export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp }: PreferencesEditorProps) {
+  const tErrors = useTranslations('errors')
+  const tCommon = useTranslations('common')
+  const tBooking = useTranslations('booking')
   const params = useParams()
   const roleSlug = roleSlugProp ?? (params?.roleSlug as string | undefined)
   const activeRole = roleSlug ? ROLE_BY_KEY[roleSlug as RoleKey]?.clerkRole : undefined
@@ -293,9 +295,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
       markBaselineCurrent()
       resourceBaselineRef.current = { ...form }
       setSavedSection(section)
-      toast.success('Preferences saved')
+      toast.success(tBooking('preferencesSaved'))
     } catch (err: unknown) {
-      toast.error(parseConvexError(err, 'Save failed'))
+      toast.error(tCommon('actionFailed', { action: tCommon('save') }))
     } finally {
       setResourceSaving(false)
     }
@@ -351,24 +353,20 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
         {section === 'booking' && (
           <>
             <Card padding="sm">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Acceptance Mode
-              </h2>
+              <FormSectionHeader className="mb-4" label={tBooking('acceptanceMode')} />
               <div className="space-y-2">
                 {ACCEPTANCE_MODES.map(({ value, label, description }) => {
                   const checked = form.acceptanceMode === value
                   return (
                     <label
                       key={value}
-                      className="flex items-start gap-3 cursor-pointer p-3 rounded-[var(--border-radius)] transition-colors"
+                      className="flex items-start gap-3 cursor-pointer p-3 rounded-theme transition-colors"
                       style={{
                         background: checked ? 'var(--color-glass-bg-elevated)' : 'transparent',
                         border: `1px solid ${checked ? 'var(--color-primary)' : 'transparent'}`,
                       }}
                     >
-                      <input
+                      {/* design-ok */}<input
                         type="radio"
                         name="acceptanceMode"
                         value={value}
@@ -397,13 +395,9 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
               <>
                 <ProfileFormSectionDivider show />
                 <Card padding="sm">
-                  <h2
-                    className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-                  >
-                    Preferred resources
-                  </h2>
+                  <FormSectionHeader className="mb-4" label={tBooking('preferredResources')} />
                   <label className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary">
-                    <input
+                    {/* design-ok */}<input
                       type="checkbox"
                       checked={form.autoAssignPreferred}
                       onChange={(e) => setField('autoAssignPreferred', e.target.checked)}
@@ -411,8 +405,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
                     <span>
-                      Auto-assign preferred instructors, boats, and venues in new bookings when
-                      available
+                      {tBooking('autoAssignPreferred')}
                     </span>
                   </label>
                 </Card>
@@ -422,23 +415,19 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
             <ProfileFormSectionDivider show />
 
             <Card padding="sm">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider mb-4 text-secondary"
-              >
-                Confirmation Alerts
-              </h2>
+              <FormSectionHeader className="mb-4" label={tBooking('confirmationAlerts')} />
               <div className="space-y-3">
                 {(
                   [
-                    { key: 'confirmOnAccept', label: 'Notify me when a booking is accepted' },
-                    { key: 'confirmOnDecline', label: 'Notify me when a booking is declined' },
+                    { key: 'confirmOnAccept', label: tBooking('notifyOnAccept') },
+                    { key: 'confirmOnDecline', label: tBooking('notifyOnDecline') },
                   ] as const
                 ).map(({ key, label }) => (
                   <label
                     key={key}
                     className="flex items-center gap-3 cursor-pointer select-none text-sm text-primary"
                   >
-                    <input
+                    {/* design-ok */}<input
                       type="checkbox"
                       checked={form[key]}
                       onChange={(e) => setField(key, e.target.checked)}
@@ -483,6 +472,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'instructors'}
                       onSave={() => void handleSaveResourceSection('instructors')}
+
                     />
                   </div>
                 </Card>
@@ -503,6 +493,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'venues-boats'}
                       onSave={() => void handleSaveResourceSection('venues-boats')}
+
                     />
                   </div>
                 </Card>
@@ -521,6 +512,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'equipment'}
                       onSave={() => void handleSaveResourceSection('equipment')}
+
                     />
                   </div>
                 </Card>
@@ -538,6 +530,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'compressors'}
                       onSave={() => void handleSaveResourceSection('compressors')}
+
                     />
                   </div>
                 </Card>
@@ -555,6 +548,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       saving={resourceSaving}
                       saved={savedSection === 'operator'}
                       onSave={() => void handleSaveResourceSection('operator')}
+
                     />
                   </div>
                 </>

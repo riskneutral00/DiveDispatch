@@ -32,8 +32,8 @@ interface SelectProps {
 const DEFAULT_VISIBLE = 2
 
 const MATCH_BADGE: Record<MatchTier, { label: string; color: string } | null> = {
-  full: { label: 'Full match', color: 'var(--color-success, #22c55e)' },
-  partial: { label: 'Partial', color: 'var(--color-warning, #f59e0b)' },
+  full: { label: 'Full match', color: 'var(--color-success)' },
+  partial: { label: 'Partial', color: 'var(--color-warning)' },
   none: null,
 }
 
@@ -63,17 +63,16 @@ const OptionRow = memo(function OptionRow({
       onClick={onSelect}
       onMouseEnter={onHover}
       className="flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-colors text-primary"
-      style={{ fontFamily: 'var(--font-body)',
-        background: isFocused ? 'var(--color-accent-muted)' : 'transparent' }}
+      style={{ background: isFocused ? 'var(--color-accent-muted)' : 'transparent' }}
     >
       <span className="flex items-center gap-2 min-w-0">
         <span className="w-3.5 flex-shrink-0">
-          {isSelected && <Check size={14} style={{ color: 'var(--color-accent)' }} />}
+          {isSelected && <Check size={14} className="text-accent" />}
         </span>
         <span className="truncate">{opt.label}</span>
         {badge && (
           <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0"
+            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" /* design-ok */
             style={{ color: badge.color, backgroundColor: `color-mix(in srgb, ${badge.color} 15%, transparent)` }}
           >
             {badge.label}
@@ -129,8 +128,7 @@ function TierSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary"
-        style={{ fontFamily: 'var(--font-heading)' }}
+        className="flex items-center gap-1.5 w-full px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-secondary font-heading" /* design-ok */
       >
         {isOpen ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
         {title} ({items.length})
@@ -156,8 +154,7 @@ function TierSection({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setShowAll(true) }}
-              className="w-full px-3 py-1.5 text-xs text-left"
-              style={{ color: 'var(--color-accent)', fontFamily: 'var(--font-body)' }}
+              className="w-full px-3 py-1.5 text-xs text-left text-accent"
             >
               Show {hiddenCount} more…
             </button>
@@ -252,7 +249,7 @@ export function Select({
 
   return (
     <FieldShell id={id} label={label} required={required} error={error} helperText={helperText} className="relative flex flex-col gap-1.5 w-full">
-      <div ref={containerRef}>
+      <div ref={containerRef} className="relative">
       <button
         id={id}
         type="button"
@@ -265,10 +262,9 @@ export function Select({
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
-        className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 text-left relative"
+        className="glass glass-field w-full text-sm py-2.5 pl-3 pr-8 text-left"
         style={{
           color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          fontFamily: 'var(--font-body)',
         }}
       >
         <span className="flex items-center justify-between gap-2">
@@ -290,7 +286,7 @@ export function Select({
           ref={listRef}
           role="listbox"
           aria-activedescendant={focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
-          className="absolute top-full left-0 w-full mt-1 rounded-lg overflow-auto z-50 py-1"
+          className="absolute top-full left-0 w-full mt-1 rounded-theme overflow-auto z-[var(--z-dropdown)] py-1"
           style={{
             maxHeight: '280px',
             backgroundColor: 'var(--color-surface-elevated)',

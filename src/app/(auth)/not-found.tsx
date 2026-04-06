@@ -1,24 +1,11 @@
-import Link from 'next/link'
-import { Search } from 'lucide-react'
-import { ErrorCard } from '@/components/ui/error-card'
+import { NotFoundCard } from '@/components/ui/not-found-card'
 
 export default function AuthNotFound() {
   return (
-    <ErrorCard
-      icon={Search}
-      iconColor="var(--color-text-secondary)"
-      title="Page not found"
+    <NotFoundCard
+      href="/sign-in"
+      linkText="Back to sign in"
       message="The page you're looking for doesn't exist or has been moved."
-      minHeight="min-h-[60vh]"
-      action={
-        <Link
-          href="/sign-in"
-          className="text-sm font-medium underline"
-          style={{ color: 'var(--color-text-link, var(--color-primary))' }}
-        >
-          Back to sign in
-        </Link>
-      }
     />
   )
 }

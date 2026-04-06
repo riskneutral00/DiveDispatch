@@ -46,6 +46,8 @@
   --letter-spacing-tight: var(--letter-spacing-tight);
   --letter-spacing-normal: var(--letter-spacing-normal);
   --letter-spacing-wide: var(--letter-spacing-wide);
+  /* Border radius alias: use `rounded-theme` instead of `rounded-[var(--border-radius)]` */
+  --radius-theme: var(--border-radius);
 }
 
 /* ── Theme fallbacks (Ocean Dark — pre-hydration SSR safety) ─────────────────

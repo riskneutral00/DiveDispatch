@@ -1,7 +1,8 @@
 # DiveDispatch — Design System
 
-> Canonical design source of truth. `/design-review` evaluates against this file.
-> Page overrides live in `design-system/pages/`.
+> Canonical design spec. Defines *what* the system is (tokens, glass, visual language).
+> Rules files (`.claude/rules/`) define *how to apply* it (layout stability, density, mobile-first).
+> `/design-review` evaluates against this file. Page overrides in `design-system/pages/`.
 
 ---
 
@@ -11,59 +12,42 @@
 
 **The background is the product.** Glass panels are lenses — barely-there containers that let users see through to the background. Backgrounds are sellable skins (eventually photos). Without a background image, glass is just a bordered box.
 
-**Two modes.** Night = deep void (dark). Day = shallow water (light blue monochromatic). Glass stays transparent in both so the background is always visible.
+**Two modes.** Dark and Light. Each skin provides distinct palettes and backgrounds per mode. Glass stays transparent in both so the background is always visible.
 
 ---
 
 ## Color Palette
 
-### Ocean Dark (default)
+> **Source of truth for values:** `src/themes/skins.ts` (palettes + glass formulas).
+> **SSR fallbacks:** `src/app/globals.css` `:root` block.
+> This section documents token *names* and *purpose*. Do not duplicate hex values here — they drift.
 
-| Token | Value | Purpose |
-|-------|-------|---------|
-| `--color-primary` | `#60a5fa` | Monochromatic blue — primary actions |
-| `--color-primary-glow` | `rgba(96,165,250,0.35)` | Hover glow, focus rings |
-| `--color-secondary` | `#60a5fa` | = primary (monochromatic) |
-| `--color-accent` | `#60a5fa` | = primary (monochromatic) |
-| `--color-text-primary` | `#ffffff` | Body text |
-| `--color-text-secondary` | `#a8a29e` | Secondary text |
-| `--color-text-on-primary` | `#000000` | Text on primary buttons |
-| `--color-surface` | `#111820` | Barely lighter than void |
-| `--color-surface-elevated` | `#1a2230` | Elevated panels, dropdown backgrounds |
-| `--body-bg` | `#000000` | Deep void background |
+### Palette Tokens
 
-### Ocean Light (day mode)
+| Token | Purpose |
+|-------|---------|
+| `--color-primary` | Primary actions, links |
+| `--color-primary-glow` | Hover glow, focus rings |
+| `--color-secondary` | Secondary accent (= primary in monochromatic skins) |
+| `--color-accent` | Tertiary accent (= primary in monochromatic skins) |
+| `--color-text-primary` | Body text |
+| `--color-text-secondary` | Secondary/muted text |
+| `--color-text-on-primary` | Text on primary-colored backgrounds |
+| `--color-surface` | Raised surface background |
+| `--color-surface-elevated` | Elevated panels, dropdown backgrounds |
+| `--body-bg` | Page background color |
 
-| Token | Value | Purpose |
-|-------|-------|---------|
-| `--color-primary` | `#2563eb` | Blue-600 — primary actions |
-| `--color-primary-glow` | `rgba(37,99,235,0.20)` | Hover glow, focus rings |
-| `--color-secondary` | `#3b82f6` | Blue-500 |
-| `--color-accent` | `#3b82f6` | = secondary (merged) |
-| `--color-text-primary` | `#1e3a5f` | Dark navy — body text |
-| `--color-text-secondary` | `#64748b` | Slate-500 |
-| `--color-text-on-primary` | `#ffffff` | Text on primary buttons |
-| `--color-surface` | `#dbeafe` | Blue-100 |
-| `--color-surface-elevated` | `#eff6ff` | Blue-50 |
-| `--body-bg` | `#dbeafe` | Light blue base |
+Each skin has **two palettes** (dark + light). Dark palettes typically use high-contrast text on deep backgrounds; light palettes use tinted monochromatic schemes. Values in `skins.ts`.
 
 ### Status Colors
 
-Hues shift per mode for contrast: 400-level on dark, 600-level on light.
+Seven status tokens, each with `-bg` and `-border` variants via `color-mix()`. Hues shift per mode: 400-level on dark, 600-level on light.
 
-| Status | Dark | Light |
-|--------|------|-------|
-| Active | `#34d399` | `#059669` |
-| Draft | `#fbbf24` | `#d97706` |
-| Upcoming | `#60a5fa` | `#2563eb` |
-| Completed | `#a78bfa` | `#7c3aed` |
-| Cancelled | `#a78bfa` | `#7c3aed` |
-| Urgent | `#dc2626` | `#dc2626` |
-| Blocked | `#dc2626` | `#dc2626` |
+Statuses: `active`, `draft`, `upcoming`, `completed`, `cancelled`, `urgent`, `blocked`.
 
-Status backgrounds use `--opacity-subtle` via `color-mix()`:
+Values: `src/lib/constants/status-colors.ts`. Background formula:
 ```css
---color-status-active-bg: color-mix(in srgb, var(--color-status-active) calc(var(--opacity-subtle) * 100%), transparent);
+--color-status-{name}-bg: color-mix(in srgb, var(--color-status-{name}) calc(var(--opacity-subtle) * 100%), transparent);
 ```
 
 ### Derived Color Tokens
@@ -99,6 +83,10 @@ These are computed from the base palette via `color-mix()` in globals.css:
 | Label | 13px | 500 | -0.01em | `--font-size-label` |
 | Section header | 11px | 600 | 0.08em + uppercase | `--font-size-section-header` |
 
+### Dense Data Exception
+
+Calendar grids, data tables, and compact indicators may use `text-[10px]` or `text-[11px]` when space is critical. These are below the type scale floor and must not be used for interactive labels or readable body text. Mark with `{/* design-ok */}` to suppress hook warnings.
+
 ### iOS Auto-Zoom Fix
 
 Global rule in globals.css — all `input`, `textarea`, `select` elements:
@@ -117,9 +105,9 @@ Global rule in globals.css — all `input`, `textarea`, `select` elements:
 
 ## Glass System
 
-### One Island Tier
+### Glass Tiers
 
-All containers use the same glass formula — semi-transparent background with ghost border, no blur. The background stays visible through everything.
+Four glass classes, each with a distinct visual weight. `.glass-container` is the workhorse (no blur, ghost border). `.glass` and `.glass-elevated` add blur + shadow for interactive/elevated elements. `.glass-field` is focus-only. The background stays visible through everything.
 
 ### Background Layer Stack
 
@@ -262,7 +250,7 @@ User-controlled via `data-hover-effect="on|off"` on `<html>`. Stored in `localSt
 }
 ```
 
-**Mobile** (`@media (hover: none)`) — slightly brighter border at rest, coral glow flash on `:active`.
+**Mobile** (`@media (hover: none)`) — slightly brighter border at rest, primary glow flash on `:active`.
 
 ---
 
@@ -278,6 +266,67 @@ User-controlled via `data-hover-effect="on|off"` on `<html>`. Stored in `localSt
 ```
 
 Dialog uses `z-[var(--z-modal)]`. Background stack uses hardcoded 0/1/2.
+
+---
+
+## Spacing Scale
+
+Gap values follow a 6-level ladder. Do not invent ad-hoc values.
+
+| Level | Values | Use |
+|-------|--------|-----|
+| Micro | `gap-1`, `gap-1.5` | Icon-to-text, tight inline items, label internals |
+| Compact | `gap-2` | Label-to-input, field internals, stacked tight items |
+| Standard | `gap-3`, `gap-4` | Between related fields, form group spacing |
+| Section | `gap-6` | Between major sections, card-to-card |
+| Page | `gap-8`+ | Page-level vertical rhythm (rare) |
+
+Padding follows "breathe more on bigger screens" — mobile is the floor, desktop adds space:
+
+| Context | Mobile (unprefixed) | Desktop (`sm:` / `md:`) |
+|---------|---------------------|-------------------------|
+| Page container | `px-4 pt-6 pb-28` | `sm:pb-10` |
+| Card / glass surface | `p-3` or `p-4` | `sm:p-4` or `sm:p-6` |
+| Input internal | `px-3 py-2` | (same) |
+| Button internal | `px-3 py-2` or `px-4 py-2.5` | (same) |
+
+Never use larger spacing unprefixed and smaller with a prefix (`p-6 sm:p-4` is backwards).
+
+---
+
+## Mobile-First Sizing
+
+The app is 90% mobile. Unprefixed Tailwind = the mobile experience. `sm:`/`md:`/`lg:` are enhancements.
+
+| Rule | Value |
+|------|-------|
+| Touch target minimum | `min-h-[44px] min-w-[44px]` (44px) all interactive elements |
+| Typography floor | `text-sm` (14px) minimum for readable/interactive text. `text-xs` only for non-interactive metadata |
+| Input font-size | 16px mobile (prevents iOS auto-zoom) — enforced in globals.css |
+| Primary actions | `w-full sm:w-auto` — full-width on mobile |
+| Button groups | `flex flex-col sm:flex-row` — stack on mobile |
+| Grid baseline | `grid-cols-1` unprefixed. Multi-column requires `sm:` or `md:` prefix |
+| Bottom actions | Primary save/submit in sticky/fixed bottom bar (thumb zone) |
+
+### Breakpoint Progression
+
+Use `sm:` (640px) as the primary breakpoint — it covers the phone → tablet transition. Use `md:` (768px) for layout changes that need more room (3+ column grids). Use `lg:` (1024px) sparingly — only for wide desktop optimizations.
+
+| Breakpoint | Use |
+|-----------|-----|
+| (none) | Mobile baseline — single column, full-width actions, compact spacing |
+| `sm:` | Tablet/landscape — multi-column grids, inline buttons, expanded padding |
+| `md:` | Desktop — 3+ column layouts, wider containers |
+| `lg:` | Wide desktop — rarely needed, max-width expansions only |
+
+Do not skip breakpoints. `sm:` → `lg:` with no `md:` means tablets get the phone layout.
+
+### Error/Hint Containers
+
+Validation messages, helper text, and error indicators that toggle visibility must use fixed-height containers. Rules in `.claude/rules/layout-stability.md`:
+- Fixed height (`h-4`, `h-5`) with `truncate` or `line-clamp-1`
+- Toggle with `opacity`, not conditional render (reserves space)
+- Never `min-h-*` (allows growth → layout shift)
 
 ---
 
@@ -302,35 +351,18 @@ Proportional field widths in globals.css. Mobile uses percentages, desktop uses 
 
 ## Component Catalog
 
-### UI Components (`src/components/ui/`)
+> **Full export list:** `src/components/ui/index.ts`
+> This section documents glass class assignments and component rules, not an exhaustive inventory.
 
-| Component | File | Glass class | Notes |
-|-----------|------|-------------|-------|
-| `Card` | `card.tsx` | `.glass-container` | `hoverable` prop adds `.glass-surface` |
-| `Button` | `button.tsx` | `.glass-btn .glass-btn-{variant}` | Inline `style` for variant colors |
-| `Input` | `input.tsx` | `.glass .glass-field` | Error state via inline border/shadow |
-| `Textarea` | `textarea.tsx` | `.glass .glass-field` | Same error pattern as Input |
-| `Select` | `select.tsx` | `.glass .glass-field` | Custom combobox, not native |
-| `SimpleSelect` | `simple-select.tsx` | `.glass` | Native `<select>` element |
-| `Dialog` | `dialog.tsx` | `.glass-container` | `scrim` prop controls melt behavior |
-| `Badge` | `badge.tsx` | None | Inline `color-mix()` for bg/border |
-| `FieldShell` | `field-shell.tsx` | None | Layout wrapper: `FieldLabel`, `FieldError` |
-| `ItemCard` | `item-card.tsx` | `.glass-container` | With destructive-ghost remove button |
-| `FormGrid` | `form-grid.tsx` | None | 12-col grid with `FormField` size helpers |
-| `FormSectionHeader` | `form-section-header.tsx` | None | 11px/600/uppercase/0.08em + action slot |
-| `PillToggle` | `pill-toggle.tsx` | None | Semantic checkbox pill, 44px touch target |
-| `SaveButton` | `save-button.tsx` | None | Primary submit with saved/check feedback |
-| `EmptyState` | `empty-state.tsx` | None | Centered secondary text + optional icon |
-| `DayPicker` | `day-picker.tsx` | None | Number range via SimpleSelect |
-| `Spinner` | `spinner.tsx` | None | `animate-spin` border ring |
-| `FullPageSpinner` | `full-page-spinner.tsx` | None | min-h-screen centered Spinner |
-| `ErrorAlert` | `error-alert.tsx` | None | Error/warning variant with border-radius token |
-| `ErrorCard` | `error-card.tsx` | None | Wraps Card |
-| `PageTitle` | `page-title.tsx` | None | Uses `--font-size-page-title` |
-| `Tooltip` | `tooltip.tsx` | None | Portalled, `--color-tooltip-*` vars |
-| `IconButton` | `icon-button.tsx` | None | Circular, inline glass-bg/border |
-| `ActionLink` | `action-link.tsx` | None | Underline-style, accent color |
-| `AppToaster` | `app-toaster.tsx` | None | Configures Sonner; `glass-toast-*` classes |
+### Glass Class Assignments
+
+| Glass class | Components |
+|-------------|-----------|
+| `.glass` + `.glass-field` | `Input`, `Textarea`, `Select`, `SimpleSelect` |
+| `.glass-container` | `Card`, `Dialog`, `ItemCard` |
+| `.glass-btn` + `.glass-btn-{variant}` | `Button` |
+| `.glass-surface` | `Card` (when `hoverable` prop is set) |
+| None (layout/semantic only) | `Badge`, `FieldShell`, `FormGrid`, `PillToggle`, `SaveButton`, `EmptyState`, `Spinner`, `PageTitle`, `Tooltip`, `IconButton` |
 
 ### Button Variants
 
@@ -342,7 +374,11 @@ Proportional field widths in globals.css. Mobile uses percentages, desktop uses 
 | `destructive` | `var(--color-destructive)` | Red glow + lift |
 | `destructive-ghost` | Transparent, muted text | Text turns red + soft glow |
 
-Sizes: `sm` (28px), `md` (36px), `lg` (44px), `icon` (36×36px).
+All sizes enforce `min-h-[44px] min-w-[44px]` touch target. Visual padding differs: `sm` (compact), `md` (standard), `lg` (spacious), `icon` (square).
+
+### Form Input Rule
+
+Use the `Input` component (glass system, error states, field-shell integration) for all text inputs. Raw `<input>` is only acceptable inside compound components (pickers, custom controls) where `Input`'s wrapper would conflict. Four picker components (`DayPicker`, `LocationPicker`, `EquipmentPicker`, `LanguagePicker`) use raw inputs with inline glass styles — this is the sanctioned pattern for compound controls.
 
 ---
 
@@ -372,7 +408,7 @@ Theme switching suppresses transitions via `.theme-switching` class (double-rAF 
 
 ## Skin Anatomy
 
-One skin exists: **Ocean** (`id: "ocean"`).
+Skins are defined in `src/themes/skins.ts` as `ThemeConfig[]` entries.
 
 A skin bundles:
 
@@ -385,15 +421,26 @@ A skin bundles:
 | Body fallback | Yes | `--body-bg` |
 | Glass formula | **Per-tier** | Selected by `luminanceClass`, constant within tier |
 | Typography | **Constant** | Inter everywhere |
-| Shape | **Constant** | `--border-radius: 16px`, `--border-radius-button: 4px` |
+| Shape | **Constant** | `--border-radius: 16px`, `--border-radius-button: 4px` (use `rounded-theme` and `rounded-[var(--border-radius-button)]`) |
 | Status colors | **Per-mode** | 400-level dark, 600-level light |
 
-Each skin has **two palettes** (dark + light), each with its own luminance class, background, and overlay. Ocean dark is `"dark"` class; Ocean light is `"bright"` class.
+Each skin has **two palettes** (dark + light), each with its own luminance class, background, and overlay. A skin's dark and light palettes may use different luminance classes (e.g., `"dark"` for a night palette, `"bright"` for a day palette). Glass formulas adjust automatically.
 
 Skin data: `src/themes/skins.ts` as `ThemeConfig[]`.
 Glass tiers: `GLASS_FORMULAS` in same file.
 Theme application: `ThemeProvider` injects CSS vars on `:root`.
 Contrast validation: `tests/skin-contrast.test.ts`.
+
+### Theme Mode vs Luminance Class
+
+Two independent axes — do not conflate.
+
+| Concept | What it is | Values | Set by |
+|---------|-----------|--------|--------|
+| Theme mode | User preference toggle | `"dark"` / `"light"` | User (localStorage) |
+| Luminance class | Glass formula selector | `"dark"` / `"medium"` / `"bright"` | Skin designer (per palette, design time) |
+
+A "dark" theme mode does not imply "dark" luminance class. A skin with a mid-tone underwater photo might use `"medium"` luminance in dark mode.
 
 ---
 
@@ -416,6 +463,7 @@ Contrast validation: `tests/skin-contrast.test.ts`.
 - **Never** nest ghost borders — `.glass-container .glass-container` auto-removes border
 - **Never** hardcode colors — use CSS variables exclusively
 - **Never** use inline `backdropFilter` styles — use glass CSS classes
+- **Inline `style` with CSS variables is the sanctioned pattern** for variant-driven components (Button, Badge). Inline `style` with hardcoded hex/rgb values is banned.
 - **Never** invert text colors on hover — border glow, not color flip
 - **Never** use `position: relative` on glass classes — it breaks overlay positioning
 - **Never** toggle `overflow` on body while content is visible — scrim-only scroll lock
@@ -436,5 +484,6 @@ Contrast validation: `tests/skin-contrast.test.ts`.
 
 ---
 
-> Documents what exists as of 2026-04-05.
-> Generated from code audit — not aspirational.
+> Design spec — documents what the system *should* be, not an audit of what exists.
+> Token values live in code (`skins.ts`, `globals.css`). This file owns names, purpose, and rules.
+> Last updated: 2026-04-05.

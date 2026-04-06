@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useImperativeHandle, useCallback, useState } from 'react'
 import { Button } from '../ui/button'
+import { InlineError } from '../ui/inline-error'
 import { Trash2 } from 'lucide-react'
 
 export interface SignaturePadHandle {
@@ -184,7 +185,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
           </span>
         )}
         <div
-          className="relative rounded-[var(--border-radius)] overflow-hidden"
+          className="relative rounded-theme overflow-hidden"
           style={{
             border: error
               ? '2px solid var(--color-destructive)'
@@ -219,9 +220,7 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
         </div>
         <div className="flex items-center justify-between">
           {error && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-              {error}
-            </p>
+            <InlineError>{error}</InlineError>
           )}
           {!error && <span />}
           <Button

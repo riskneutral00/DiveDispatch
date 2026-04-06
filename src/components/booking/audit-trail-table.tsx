@@ -22,6 +22,7 @@ import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { AuditAction } from '../../../convex/bookingAuditLog'
 import { timeAgo } from '@/lib/utils/time-ago'
+import { Skeleton } from '@/components/ui/skeleton'
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface AuditTrailTableProps {
@@ -111,15 +112,15 @@ function iconColor(action: AuditAction): string {
     case 'completed':
     case 'reservation_accepted':
     case 'medical_cleared':
-      return 'var(--color-status-confirmed-icon, var(--color-success, #34d399))'
+      return 'var(--color-status-confirmed-icon, var(--color-success))'
     case 'cancelled':
     case 'expired':
     case 'reservation_declined':
     case 'medical_blocked':
-      return 'var(--color-status-cancelled-icon, var(--color-destructive, #dc2626))'
+      return 'var(--color-status-cancelled-icon, var(--color-destructive))'
     case 'edited':
     case 'portal_submitted':
-      return 'var(--color-status-upcoming-icon, var(--color-info, #60a5fa))'
+      return 'var(--color-status-upcoming-icon, var(--color-status-upcoming))'
     default:
       return 'var(--color-text-secondary)'
   }
@@ -150,7 +151,7 @@ function DiffExpander({ diff }: { diff: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1 text-xs transition-colors text-secondary"
+        className="flex items-center gap-1 text-xs transition-colors text-secondary min-h-[44px]"
       >
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {open ? 'Hide changes' : `${entries.length} field${entries.length > 1 ? 's' : ''} changed`}
@@ -170,7 +171,7 @@ function DiffExpander({ diff }: { diff: string }) {
                 {String(change.old ?? '—')}
               </span>
               <span className="text-secondary">→</span>
-              <span style={{ color: 'var(--color-success, #34d399)' }}>
+              <span style={{ color: 'var(--color-success)' }}>
                 {String(change.new ?? '—')}
               </span>
             </div>
@@ -205,9 +206,8 @@ function TimelineEntry({
         />
       )}
 
-      {/* Icon dot */}
       <div
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10"
+        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10" /* design-ok */
         style={{
           background: 'var(--color-glass-bg-elevated)',
           border: '1px solid var(--color-glass-border)',
@@ -252,14 +252,11 @@ export function AuditTrailTable({ bookingId }: AuditTrailTableProps) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex gap-3 animate-pulse">
-            <div
-              className="w-8 h-8 rounded-full flex-shrink-0"
-              style={{ background: 'var(--color-glass-border)' }}
-            />
+          <div key={i} className="flex gap-3">
+            <Skeleton className="w-8 h-8 flex-shrink-0" shape="circle" />
             <div className="flex-1 space-y-2 pt-1">
-              <div className="h-3 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
-              <div className="h-2 rounded w-1/4" style={{ background: 'var(--color-glass-border)' }} />
+              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="h-2 w-1/4" />
             </div>
           </div>
         ))}

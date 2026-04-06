@@ -11,7 +11,7 @@ interface DroppableDateCellProps {
 
 const HIGHLIGHT_STYLE: React.CSSProperties = {
   boxShadow: 'inset 0 0 0 2px var(--color-primary), 0 0 12px var(--color-primary-glow)',
-  transition: 'box-shadow 150ms ease',
+  transition: 'box-shadow var(--transition-speed) ease',
 }
 
 export const DroppableDateCell = React.memo(function DroppableDateCell({ dateString, disabled, children }: DroppableDateCellProps) {

@@ -18,11 +18,9 @@ interface DayScheduleProps {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 /** Extracted from map-loop inline styles — one allocation, shared by all renders. */
-const HEADING_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-heading)' }
-const BODY_FONT_STYLE: React.CSSProperties = { fontFamily: 'var(--font-body)' }
-const TZ_SELECT_STYLE: React.CSSProperties = { outlineColor: 'var(--color-accent)', fontFamily: 'var(--font-body)' }
+const TZ_SELECT_STYLE: React.CSSProperties = { outlineColor: 'var(--color-accent)' }
 const CHIP_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
-const CHIP_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)', fontFamily: 'var(--font-body)' }
+const CHIP_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)' }
 const CHIP_NAME_STYLE: React.CSSProperties = { fontWeight: 500 }
 const CHIP_CONFINED_STYLE: React.CSSProperties = { color: 'var(--color-secondary)', fontWeight: 600 }
 
@@ -41,7 +39,7 @@ const TIMEZONES = [
 
 function formatDisplayDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -56,14 +54,12 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
       {/* Day header */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span
-          className="text-sm font-semibold text-primary"
-          style={HEADING_FONT_STYLE}
+          className="text-sm font-semibold text-primary font-heading"
         >
           Day {dayNumber}
         </span>
         <span
           className="text-sm text-secondary"
-          style={BODY_FONT_STYLE}
         >
           {formatDisplayDate(date)}
         </span>
@@ -96,7 +92,6 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                 )}
                 <span
                   className="text-xs font-medium text-primary"
-                  style={BODY_FONT_STYLE}
                 >
                   {session.isConfinedDay
                     ? 'Pool / Confined'
@@ -122,7 +117,6 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                 )}
                 <span
                   className="text-xs text-secondary"
-                  style={BODY_FONT_STYLE}
                 >
                   {session.unitsRequested} diver{session.unitsRequested !== 1 ? 's' : ''}
                 </span>
@@ -130,7 +124,7 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
             </div>
 
             {/* Time + timezone inputs */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Input
                 label="Start time"
                 type="time"

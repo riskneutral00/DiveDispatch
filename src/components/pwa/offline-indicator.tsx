@@ -24,7 +24,7 @@ export function OfflineIndicator({ isStale = false }: { isStale?: boolean }) {
     <div
       role="status"
       aria-live="polite"
-      className={`fixed top-0 left-0 right-0 z-50 px-4 py-1.5 text-center text-sm font-medium ${bgClass}`}
+      className={`fixed top-0 left-0 right-0 z-[var(--z-dropdown)] px-4 py-1.5 text-center text-sm font-medium ${bgClass}`}
     >
       {isOffline
         ? 'You are offline. Showing cached data.'

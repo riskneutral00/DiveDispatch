@@ -10,15 +10,15 @@ export default function RootError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const t = useTranslations('errors')
+  const t = useTranslations('common')
 
   return (
     <RouteErrorPage
       error={error}
       reset={reset}
       logLabel="Root Error"
-      title={t('generic.title')}
-      message={t('generic.message')}
+      title={t('error')}
+      message={t('errorRetry')}
       minHeight="min-h-screen"
     />
   )

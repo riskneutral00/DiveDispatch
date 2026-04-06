@@ -4,7 +4,7 @@ import { useDraggable } from '@dnd-kit/react'
 import { useRef } from 'react'
 import type { QuickBookTemplate } from '@/lib/booking/quick-book-templates'
 import type { CourseCode } from '@/lib/constants/course-catalog'
-import { PILL_BASE, DISABLED_OVERLAY } from '@/components/booking/pill-constants'
+import { PILL_BASE, DISABLED_OVERLAY } from '@/components/booking/quick-book-rail'
 
 interface DraggablePillProps {
   template: QuickBookTemplate

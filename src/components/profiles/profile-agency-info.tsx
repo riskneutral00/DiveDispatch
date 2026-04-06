@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 
 import { SpecialtyField } from '@/components/profiles/specialty-field'
 import { DayPicker } from '@/components/ui/day-picker'
+import { InlineError } from '@/components/ui/inline-error'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Button } from '@/components/ui/button'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
@@ -266,12 +267,8 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         />
       )}
 
-      {errors.associations && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.associations}</p>
-      )}
-      {errors.credential && (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{errors.credential}</p>
-      )}
+      {errors.associations && <InlineError>{errors.associations}</InlineError>}
+      {errors.credential && <InlineError>{errors.credential}</InlineError>}
 
       {items.length === 0 ? (
         <p className="text-sm text-secondary">{emptyMessage}</p>

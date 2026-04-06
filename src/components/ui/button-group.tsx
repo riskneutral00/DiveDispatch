@@ -47,7 +47,7 @@ export function ButtonGroup({
             aria-selected={value === v}
             onClick={() => onChange(v)}
             className={cn(
-              "px-3 py-1.5 font-medium rounded-t-md whitespace-nowrap transition-colors",
+              "px-3 py-1.5 font-medium rounded-t-[var(--border-radius-button)] whitespace-nowrap transition-colors",
               textSize,
             )}
             style={{
@@ -61,7 +61,6 @@ export function ButtonGroup({
                 value === v
                   ? "2px solid var(--color-accent)"
                   : "2px solid transparent",
-              fontFamily: "var(--font-body)",
             }}
           >
             {label}
@@ -77,7 +76,7 @@ export function ButtonGroup({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex rounded-[var(--border-radius)] overflow-hidden border flex-shrink-0",
+        "inline-flex rounded-theme overflow-hidden border flex-shrink-0",
         className,
       )}
       style={{ borderColor: "var(--color-glass-border)" }}
@@ -99,7 +98,6 @@ export function ButtonGroup({
                 ? "var(--color-text-on-primary)"
                 : "var(--color-text-secondary)",
             borderColor: "var(--color-glass-border)",
-            fontFamily: "var(--font-body)",
           }}
         >
           {label}

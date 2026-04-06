@@ -24,8 +24,8 @@ export function useSessionRoleContext(): SessionRoleContextValue | null {
 }
 
 /**
- * Resolves the signed-in user’s default role slug + slug from Convex (same rules as `/account`)
- * and wraps children in {@link DashboardShell}. Use for global `(dashboard)` routes that are
+ * Resolves the signed-in user’s default role slug + slug from Convex and wraps children in
+ * {@link DashboardShell}. Use for global `(dashboard)` routes that are
  * not under `/[slug]/[roleSlug]` so they share chrome, overlays, and role switchers.
  */
 export function SessionDashboardShell({ children }: { children: React.ReactNode }) {

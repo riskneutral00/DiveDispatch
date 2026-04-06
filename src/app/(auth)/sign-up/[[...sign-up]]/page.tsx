@@ -8,11 +8,12 @@ import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleConfig } from '@/lib/constants/roles'
 import { deriveDefaultRole } from '@/lib/utils/role'
+import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
-import { StepIndicator } from '@/components/onboarding/step-indicator'
+import { StepIndicator } from '@/components/ui/step-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { clerkGlassAppearance } from '../../clerk-glass-appearance'
-import { parseConvexError } from '@/lib/utils/convex-error'
+import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 
 export const SIGNUP_STEPS = [
   { key: 'signup', label: 'Sign Up' },
@@ -22,6 +23,7 @@ export const SIGNUP_STEPS = [
 export default function SignUpPage() {
   const t = useTranslations('common')
   const tAuth = useTranslations('auth')
+  const tErr = useTranslations('errors')
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
   const user = useQuery(api.users.me)
   const userRoles = useQuery(api.userRoles.myRoles)
@@ -63,7 +65,7 @@ export default function SignUpPage() {
       })
       // The user useEffect above will redirect to dashboard once the record appears
     } catch (err) {
-      setError(parseConvexError(err, 'Something went wrong. Please try again.'))
+      setError(parseConvexErrorI18n(err, tErr))
       setSubmitting(false)
     }
   }
@@ -113,11 +115,7 @@ export default function SignUpPage() {
         onContinue={handleRoleSubmit}
       />
       {submitting && <Spinner label={tAuth('creatingAccount')} />}
-      {error && (
-        <p className="text-sm mt-2 text-center" style={{ color: 'var(--color-destructive)' }}>
-          {error}
-        </p>
-      )}
+      {error && <InlineError centered className="mt-2">{error}</InlineError>}
     </>
   )
 }

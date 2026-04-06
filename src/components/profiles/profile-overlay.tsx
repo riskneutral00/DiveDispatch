@@ -36,7 +36,6 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
 
 export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug, slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
-  const tAccountOverlay = useTranslations('accountOverlay')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
   /** Section within a multi-tab role profile (Contact / Languages / …) — mirrors Profile page. */
   const [roleProfileSection, setRoleProfileSection] = useState<string>('')
@@ -95,7 +94,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title={tAccountOverlay('title')} fullScreen>
+    <Dialog open={open} onClose={onClose} title="Account" fullScreen>
       <div className="flex flex-col h-full">
         {/* Tab bar */}
         <div

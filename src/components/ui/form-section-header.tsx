@@ -1,28 +1,22 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 interface FormSectionHeaderProps {
   label: ReactNode
   action?: ReactNode
+  className?: string
 }
 
-export function FormSectionHeader({ label, action }: FormSectionHeaderProps) {
+export function FormSectionHeader({ label, action, className }: FormSectionHeaderProps) {
   return action ? (
-    <div className="flex items-center justify-between">
-      <h2
-        className="font-semibold uppercase text-secondary"
-        style={{ fontSize: 'var(--font-size-section-header)',
-          letterSpacing: '0.08em' }}
-      >
+    <div className={cn('flex items-center justify-between', className)}>
+      <h2 className="font-semibold uppercase text-secondary text-section-header tracking-wide">
         {label}
       </h2>
       {action}
     </div>
   ) : (
-    <h2
-      className="font-semibold uppercase text-secondary"
-      style={{ fontSize: 'var(--font-size-section-header)',
-        letterSpacing: '0.08em' }}
-    >
+    <h2 className={cn('font-semibold uppercase text-secondary text-section-header tracking-wide', className)}>
       {label}
     </h2>
   )

@@ -184,7 +184,7 @@ export function SpecialtyField({
     <div className="relative flex flex-col gap-1.5 min-w-0">
       <p className="text-sm font-medium text-secondary">
         Default Specialties<span style={{ color: 'var(--color-destructive)' }}> *</span>
-        <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span>
+        <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
       </p>
 
       {/* Hidden measurement layer — always in DOM, never conditional */}

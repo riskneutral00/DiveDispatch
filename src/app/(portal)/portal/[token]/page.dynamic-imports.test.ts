@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 const SOURCE = readFileSync(
-  resolve(__dirname, 'page.tsx'),
+  resolve(__dirname, '../../../../components/portal/portal-active-flow.tsx'),
   'utf-8',
 )
 
@@ -38,9 +38,9 @@ describe('DD-075: portal page dynamic imports', () => {
       expect(SOURCE).toMatch(dynamicPattern)
 
       // Should use ssr: false
-      // Look for the dynamic() call block containing ssr: false
+      // Match the dynamic() block up to a standalone closing )
       const dynamicBlock = SOURCE.match(
-        new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\)\\s*\\)`, 'm'),
+        new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\n\\)`, 'm'),
       )
       expect(dynamicBlock).not.toBeNull()
       expect(dynamicBlock![0]).toContain('ssr: false')
@@ -48,7 +48,7 @@ describe('DD-075: portal page dynamic imports', () => {
 
     it(`shows PortalStepLoading as loading fallback for ${name}`, () => {
       const dynamicBlock = SOURCE.match(
-        new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\)\\s*\\)`, 'm'),
+        new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\n\\)`, 'm'),
       )
       expect(dynamicBlock).not.toBeNull()
       expect(dynamicBlock![0]).toMatch(

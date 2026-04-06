@@ -3,11 +3,13 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
+import { InlineError } from '@/components/ui/inline-error'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Input } from '@/components/ui/input'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
 import { OrganizerStepCard } from './organizer-step-card'
 
@@ -17,38 +19,8 @@ interface OrganizerBasicStepProps {
   onBack?: () => void
 }
 
-/**
- * Resolves the Convex API module (create/update/mine) for a given organizer role.
- * Roles without a dedicated Convex module yet (Liveaboard, DiveResort, DiveHostel, DiveSite)
- * return null — the step renders a placeholder.
- */
-function useRoleMutations(role: ClerkRole) {
-  switch (role) {
-    case 'DiveCenter':
-      return {
-        mine: api.diveCenters.mine,
-        create: api.diveCenters.create,
-        update: api.diveCenters.update,
-      } as const
-    case 'Agent':
-      return {
-        mine: api.agents.mine,
-        create: api.agents.create,
-        update: api.agents.update,
-      } as const
-    case 'DiveSite':
-      return {
-        mine: api.venues.mine,
-        create: api.venues.create,
-        update: api.venues.update,
-      } as const
-    default:
-      return null
-  }
-}
-
 export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
-  const mutations = useRoleMutations(role)
+  const mutations = useOrganizerRoleApi(role)
 
   // Roles without Convex modules get a placeholder
   if (!mutations) {
@@ -69,7 +41,7 @@ export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStep
 
 interface BasicStepInnerProps {
   role: ClerkRole
-  mutations: NonNullable<ReturnType<typeof useRoleMutations>>
+  mutations: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
   onSaved: () => void
   onBack?: () => void
 }
@@ -203,9 +175,7 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
           required
         />
 
-        {error && (
-          <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
-        )}
+        {error && <InlineError>{error}</InlineError>}
       </div>
     </OrganizerStepCard>
   )

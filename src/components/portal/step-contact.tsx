@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { ErrorAlert } from '@/components/ui/error-alert'
+import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,16 +11,16 @@ import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { COUNTRY_NAMES } from '@/lib/constants/countries'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Textarea } from '@/components/ui/textarea'
+import { toISODateString } from '@/lib/utils/date'
 import { makeCustomerContactSchema, useFormValidation } from '@/lib/validation'
 import type { CustomerContactData } from '@/lib/validation'
 import { CERT_REQUIRED_ACTIVITIES, getMinAge, calcAgeAtDate, isPassportExpiringSoon } from '@/lib/constants/activity-rules'
 import { usePortalContact } from '@/lib/hooks/use-portal-contact'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { useReturningCustomer } from '@/lib/hooks/use-returning-customer'
-import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
-import { Spinner } from '@/components/ui/spinner'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 const defaultForm = (): CustomerContactData => ({
@@ -62,6 +64,7 @@ interface StepContactProps {
 }
 
 export function StepContact({ token, onComplete, bookingStartDate }: StepContactProps) {
+  const t = useTranslations('portal')
   const [form, setFormState] = useState<CustomerContactData>(defaultForm())
   const [ageError, setAgeError] = useState<string | null>(null)
   const {
@@ -189,14 +192,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
     // Age check: diver must meet minimum age for their activity types
     if (validated.dateOfBirth && context?.activityType?.length) {
-      const refDate = bookingStartDate ?? new Date().toISOString().slice(0, 10)
+      const refDate = bookingStartDate ?? toISODateString(new Date())
       const age = calcAgeAtDate(validated.dateOfBirth, refDate)
       const minAge = getMinAge(context.activityType as CourseCode[])
       if (age < minAge) {
-        setAgeError(
-          `Diver must be at least ${minAge} years old for this activity. ` +
-            `Age at dive start: ${age} year${age === 1 ? '' : 's'}.`,
-        )
+        setAgeError(t('ageError', { minAge, age }))
         return
       }
     }
@@ -235,19 +235,13 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   }
 
   if (context === undefined) {
-    return (
-      <div className="flex items-center justify-center py-16" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
-      </div>
-    )
+    return <FullPageSpinner />
   }
 
   if (context === null) {
     return (
       <Card padding="lg">
-        <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
-          {TOKEN_EXPIRED_MESSAGE}
-        </p>
+        <InlineError centered>{t('tokenExpired')}</InlineError>
       </Card>
     )
   }
@@ -269,17 +263,17 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         <Card padding="md">
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-primary">
-              Welcome back! We found your details from a previous booking.
+              {t('returnBanner')}
             </p>
             <p className="text-sm text-secondary">
               {returningCustomer.legalFirstName} {returningCustomer.legalLastName} ({returningCustomer.email})
             </p>
             <div className="flex gap-2">
               <Button type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
-                That&apos;s me
+                {"That's me"}
               </Button>
               <Button type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
-                Not me
+                {"Not me"}
               </Button>
             </div>
           </div>
@@ -288,17 +282,17 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {returningConfirmed && (
         <p className="text-sm px-1" style={{ color: 'var(--color-success)' }}>
-          Your previous details have been loaded. Please review and update anything that&apos;s changed.
+          {t('returnLoaded')}
         </p>
       )}
 
       {/* Personal Details */}
       <Card padding="md">
-        <SectionHeading>Personal Details</SectionHeading>
+        <SectionHeading>{"Personal Details"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
           <Input
             label="Legal First Name"
-            placeholder="As shown on passport"
+            placeholder="As on passport"
             value={form.legalFirstName}
             onChange={(e) => setField('legalFirstName', e.target.value)}
             error={errors.legalFirstName}
@@ -307,7 +301,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           />
           <Input
             label="Legal Last Name"
-            placeholder="As shown on passport"
+            placeholder="As on passport"
             value={form.legalLastName}
             onChange={(e) => setField('legalLastName', e.target.value)}
             error={errors.legalLastName}
@@ -316,7 +310,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           />
           <Input
             label="Preferred Name"
-            placeholder="What you'd like to be called"
+            placeholder="Nickname or preferred name"
             value={form.preferredName ?? ''}
             onChange={(e) => setField('preferredName', e.target.value)}
             error={errors.preferredName}
@@ -330,7 +324,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.phone}
             onChange={(e) => setField('phone', e.target.value)}
             error={errors.phone}
-            helperText="Include country code (e.g. +66, +1)"
+            helperText="Include country code (+66, +1)"
             autoComplete="tel"
             className="field-phone"
           />
@@ -355,9 +349,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             />
             <div aria-live="polite">
               {ageError && (
-                <p className="mt-1 text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-                  {ageError}
-                </p>
+                <ErrorAlert>{ageError}</ErrorAlert>
               )}
             </div>
           </div>
@@ -377,7 +369,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
             options={COUNTRY_NAMES}
-            placeholder="Select country…"
+            placeholder="Select…"
             error={errors.nationality}
             required
             className="field-select-long"
@@ -387,11 +379,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {/* Passport / ID */}
       <Card padding="md">
-        <SectionHeading>Passport / ID</SectionHeading>
+        <SectionHeading>{"Passport / ID"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
           <Input
             label="Passport Number"
-            placeholder="e.g. AB1234567"
+            placeholder="AB1234567"
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
@@ -403,7 +395,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
             options={COUNTRY_NAMES}
-            placeholder="Select country…"
+            placeholder="Select…"
             error={errors.passportIssuingCountry}
             required
             className="field-select-long"
@@ -417,19 +409,9 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
               error={errors.passportExpirationDate}
             />
             {passportExpiringSoon && !errors.passportExpirationDate && (
-              <div
-                className="flex items-center gap-2 mt-2 p-3 rounded-[var(--border-radius)] text-sm"
-                style={{
-                  background: 'color-mix(in srgb, var(--color-warning) 15%, transparent)',
-                  color: 'var(--color-warning)',
-                  border: '1px solid color-mix(in srgb, var(--color-warning) 40%, transparent)',
-                }}
-              >
-                <AlertTriangle size={16} aria-hidden />
-                <span>
-                  Your passport expires within 6 months. Some destinations require longer validity — please check before your trip.
-                </span>
-              </div>
+              <ErrorAlert variant="warning" iconSize={16} className="mt-2">
+                {t('passportExpiryWarning')}
+              </ErrorAlert>
             )}
           </div>
         </div>
@@ -437,11 +419,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {/* Emergency Contact */}
       <Card padding="md">
-        <SectionHeading>Emergency Contact</SectionHeading>
+        <SectionHeading>{"Emergency Contact"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
           <Input
             label="Full Name"
-            placeholder="Contact's full name"
+            placeholder="Full name"
             value={form.emergencyContactName}
             onChange={(e) => setField('emergencyContactName', e.target.value)}
             error={errors.emergencyContactName}
@@ -455,12 +437,12 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             value={form.emergencyContactPhone}
             onChange={(e) => setField('emergencyContactPhone', e.target.value)}
             error={errors.emergencyContactPhone}
-            helperText="Include country code (e.g. +66, +1)"
+            helperText="Include country code (+66, +1)"
             className="field-phone"
           />
           <Input
             label="Relationship"
-            placeholder="e.g. spouse, parent, partner"
+            placeholder="Spouse, parent, partner"
             value={form.emergencyContactRelation}
             onChange={(e) => setField('emergencyContactRelation', e.target.value)}
             error={errors.emergencyContactRelation}
@@ -472,14 +454,14 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {/* Diving Certification (conditional) */}
       {requiresCert && (
         <Card padding="md">
-          <SectionHeading>Diving Certification</SectionHeading>
+          <SectionHeading>{"Diving Certification"}</SectionHeading>
           <div className="flex flex-wrap gap-4">
             <SimpleSelect
               label="Certifying Agency"
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}
               options={DIVE_AGENCIES}
-              placeholder="Select agency…"
+              placeholder="Select…"
               error={errors.agency}
               required
               className="field-select-short"
@@ -487,7 +469,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             <Input
               label="Diver ID"
               className="field-text-short"
-              placeholder="e.g. 12345678"
+              placeholder="12345678"
               value={form.agencyID ?? ''}
               onChange={(e) => setField('agencyID', e.target.value)}
               error={errors.agencyID}
@@ -498,11 +480,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {/* Health Information */}
       <Card padding="md">
-        <SectionHeading>Health Information</SectionHeading>
+        <SectionHeading>{"Health Information"}</SectionHeading>
         <Textarea
           label="Known Allergies"
           rows={DEFAULT_TEXTAREA_ROWS}
-          placeholder="List any allergies, or leave blank if none."
+          placeholder="List allergies, or leave blank"
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
         />

@@ -17,6 +17,7 @@ import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gea
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { EmptyState } from '@/components/ui/empty-state'
 import { LanguagePicker, type Language } from '@/components/profiles/language-picker'
 import { InstructorCardContent } from '@/components/profiles/instructor-card'
 import { ALL_LANGUAGES } from '@/lib/constants/dive-languages'
@@ -109,7 +110,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
         />
         {searchResults.length > 0 && (
           <div
-            className="absolute z-10 left-0 right-0 mt-1 rounded-[var(--border-radius)] overflow-hidden glass-elevated"
+            className="absolute z-[var(--z-dropdown)] left-0 right-0 mt-1 rounded-theme overflow-hidden glass-elevated"
             style={{ background: 'var(--color-surface-elevated)' }}
           >
             {searchResults.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
@@ -668,7 +669,7 @@ export function PreferredInstructorList(props: ListProps) {
           />
 
           <div
-            className="rounded-[var(--border-radius)] overflow-hidden flex flex-col glass-elevated"
+            className="rounded-theme overflow-hidden flex flex-col glass-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,
@@ -688,7 +689,7 @@ export function PreferredInstructorList(props: ListProps) {
                   />
                 ))
               ) : (
-                <p className="text-sm text-secondary py-6 px-3">No instructors match these filters.</p>
+                <EmptyState message="No instructors match these filters." />
               )}
             </div>
             {totalPages > 1 && (
@@ -904,7 +905,7 @@ function PreferredOverlayList({
             onChange={(e) => onSearchChange(e.target.value)}
           />
           <div
-            className="rounded-[var(--border-radius)] overflow-hidden flex flex-col glass-elevated"
+            className="rounded-theme overflow-hidden flex flex-col glass-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,

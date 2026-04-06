@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 interface FieldLabelProps {
   htmlFor?: string
@@ -14,11 +15,11 @@ export function FieldLabel({ htmlFor, children, required, className, style }: Fi
   return (
     <label
       htmlFor={htmlFor}
-      className={className ?? 'text-sm font-medium text-secondary'}
+      className={cn('text-sm font-medium text-secondary', className)}
       style={style}
     >
       {children}
-      {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
+      {required && <span className="text-destructive"> *</span>}
     </label>
   )
 }
@@ -31,7 +32,7 @@ interface FieldErrorProps {
 export function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null
   return (
-    <p id={id} role="alert" className="text-sm" style={{ color: 'var(--color-destructive)' }}>
+    <p id={id} role="alert" className="text-sm text-destructive">
       {message}
     </p>
   )
@@ -64,7 +65,7 @@ export function FieldShell({
   const helperId = `${id}-help`
 
   return (
-    <div className={className ?? 'flex flex-col gap-1.5 w-full'}>
+    <div className={cn('flex flex-col gap-1.5 w-full', className)}>
       {label && (
         <FieldLabel htmlFor={id} required={required}>
           {label}

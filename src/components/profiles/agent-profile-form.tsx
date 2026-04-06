@@ -5,10 +5,12 @@ import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { ButtonGroup } from '@/components/ui/button-group'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
   type ContactFormState,
   INITIAL_CONTACT_FORM as BASE_INITIAL_CONTACT,
+  INITIAL_CUSTOMER_LANGUAGES,
   contactFromProfile as baseContactFromProfile,
   contactToPayload as baseContactToPayload,
   defaultFromMe,
@@ -55,9 +57,7 @@ export const INITIAL_CONTACT_FORM: AgentContactFormState = {
   defaultReferralMode: 'independent',
 }
 
-export const INITIAL_LANGUAGES_FORM: AgentLanguagesFormState = {
-  customerLanguages: [],
-}
+export const INITIAL_LANGUAGES_FORM: AgentLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
 
 export const INITIAL_ASSOCIATIONS_FORM: AgentAssociationsFormState = {
   associations: [],
@@ -194,26 +194,19 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
       {/* Referral mode */}
       <div>
         <FormSectionHeader label="Default Booking Mode" />
-        <div className="flex gap-3 mt-2">
-          {(['independent', 'referral'] as const).map((mode) => {
-            const active = form.defaultReferralMode === mode
-            return (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setField('defaultReferralMode', mode)}
-                className="flex-1 py-2.5 px-4 rounded-[var(--border-radius)] text-sm font-medium border transition-all"
-                style={{
-                  background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)',
-                  borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)',
-                  color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
-                  transitionDuration: 'var(--transition-speed)',
-                }}
-              >
-                {mode === 'independent' ? 'Independent' : 'Referral Only'}
-              </button>
-            )
-          })}
+        <div className="mt-2">
+          <ButtonGroup
+            options={[
+              { value: 'independent', label: 'Independent' },
+              { value: 'referral', label: 'Referral Only' },
+            ]}
+            value={form.defaultReferralMode}
+            onChange={(v) => setField('defaultReferralMode', v as 'independent' | 'referral')}
+            variant="segment"
+            size="md"
+            aria-label="Default booking mode"
+            className="w-full [&>button]:flex-1"
+          />
         </div>
         <p className="text-xs mt-2 text-secondary">
           {form.defaultReferralMode === 'independent'

@@ -20,11 +20,10 @@ export function ResourceStep({ state, dispatch }: ResourceStepProps) {
   const compressorOptions = compressors.map((r) => ({ id: r.slug, label: r.name }))
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <Card padding="md">
         <h3
-          className="text-sm font-semibold mb-3 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
+          className="text-sm font-semibold mb-3 text-primary font-heading"
         >
           Equipment
         </h3>

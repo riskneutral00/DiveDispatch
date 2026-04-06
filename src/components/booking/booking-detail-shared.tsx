@@ -7,15 +7,18 @@ import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
-import { Button, Badge, Card, RoleIcon } from '@/components/ui'
+import { Button, ButtonGroup, Badge, Card, RoleIcon, EmptyState, ListRow, Skeleton, Input } from '@/components/ui'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
-import { COPY_FEEDBACK_MS } from '@/lib/constants/ui-timings'
-import {
-  LINK_EXPIRED_LABEL,
-  GENERATE_LINK_ERROR_MESSAGE,
-} from '@/lib/constants/error-messages'
+import { useCopyFeedback } from '@/lib/hooks/use-copy-feedback'
+import { useTranslations } from 'next-intl'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { ReservationStatusList } from './reservation-status-list'
+import { SessionTimeline } from './session-timeline'
+import { AuditTrailTable } from './audit-trail-table'
+import { SendPortalLink } from './send-portal-link'
+import { PortalProgressCard } from './portal-progress-card'
 
 // ── TTL countdown hook ──────────────────────────────────────────────────────
 
@@ -33,32 +36,18 @@ export function useTTLCountdown(expiresAt: number | undefined): string | null {
 
 // ── Portal completion pills ──────────────────────────────────────────────────
 
-export interface PortalPill {
+interface PortalPill {
   label: string
   done: boolean
 }
 
-export function PortalPills({ pills }: { pills: PortalPill[] }) {
+function PortalPills({ pills }: { pills: PortalPill[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {pills.map(({ label, done }) => (
-        <span
-          key={label}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-          style={{
-            background: done
-              ? 'color-mix(in srgb, var(--color-success) 15%, transparent)'
-              : 'var(--color-glass-bg)',
-            color: done ? 'var(--color-success)' : 'var(--color-text-secondary)',
-            border: `1px solid ${done ? 'color-mix(in srgb, var(--color-success) 30%, transparent)' : 'var(--color-glass-border)'}`,
-          }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ background: done ? 'var(--color-success)' : 'var(--color-text-secondary)', opacity: done ? 1 : 0.4 }}
-          />
+        <Badge key={label} variant={done ? 'success' : 'muted'} size="sm" dot>
           {label}
-        </span>
+        </Badge>
       ))}
     </div>
   )
@@ -66,7 +55,7 @@ export function PortalPills({ pills }: { pills: PortalPill[] }) {
 
 // ── Customer table ──────────────────────────────────────────────────────────
 
-export function CustomerTable({
+function CustomerTable({
   booking,
   compact = false,
 }: {
@@ -76,28 +65,13 @@ export function CustomerTable({
   const divers = booking.divers
   const profiles = booking.customerProfiles
 
-  if (divers.length === 0) {
-    return (
-      <p className="text-sm text-secondary">
-        No customers added.
-      </p>
-    )
-  }
-
   return (
     <div className="space-y-2">
       {divers.map((diver, idx) => {
         const profile = profiles[idx]
         const portalComplete = profile?.submittedAt != null
         return (
-          <div
-            key={idx}
-            className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-[var(--border-radius)] border`}
-            style={{
-              background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)',
-            }}
-          >
+          <ListRow key={idx} compact={compact}>
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-base flex-shrink-0" aria-label={diver.flag.label}>
                 {[...diver.flag.code.toUpperCase()]
@@ -105,9 +79,7 @@ export function CustomerTable({
                   .join('')}
               </span>
               <div className="min-w-0">
-                <p
-                  className="text-sm font-medium truncate text-primary"
-                >
+                <p className="text-sm font-medium truncate text-primary">
                   {diver.name}
                 </p>
                 <p className="text-xs text-secondary">
@@ -118,7 +90,7 @@ export function CustomerTable({
             <Badge variant={portalComplete ? 'success' : 'default'} size="sm" dot>
               {portalComplete ? 'Completed' : 'Pending'}
             </Badge>
-          </div>
+          </ListRow>
         )
       })}
     </div>
@@ -127,7 +99,7 @@ export function CustomerTable({
 
 // ── Stakeholder list ────────────────────────────────────────────────────────
 
-export function StakeholderList({
+function StakeholderList({
   stakeholders,
   compact = false,
 }: {
@@ -135,37 +107,22 @@ export function StakeholderList({
   compact?: boolean
 }) {
   if (stakeholders.length === 0) {
-    return (
-      <p className="text-sm text-secondary">
-        No resources assigned.
-      </p>
-    )
+    return <EmptyState message="No resources assigned." />
   }
 
   return (
     <ul className="space-y-2">
       {stakeholders.map((s, idx) => (
-        <li
-          key={idx}
-          className={`flex items-center justify-between gap-3 ${compact ? 'p-2.5' : 'p-3'} rounded-[var(--border-radius)] border`}
-          style={{
-            background: 'var(--color-glass-bg)',
-            borderColor: 'var(--color-glass-border)',
-          }}
-        >
+        <ListRow key={idx} as="li" compact={compact}>
           <div className="flex items-center gap-2 min-w-0">
             <span
-              className={`flex-shrink-0 ${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-full flex items-center justify-center text-secondary`}
-              style={{ background: 'var(--color-glass-bg-elevated)',
-                border: '1px solid var(--color-glass-border)' }}
+              className={`flex-shrink-0 ${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-full flex items-center justify-center text-secondary bg-[var(--color-glass-bg-elevated)] border border-glass-border`}
             >
               <RoleIcon role={s.role as ClerkRole} size={18} />
             </span>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p
-                  className="text-sm font-medium truncate text-primary"
-                >
+                <p className="text-sm font-medium truncate text-primary">
                   {s.name}
                 </p>
                 {s.isExternal && (
@@ -185,7 +142,7 @@ export function StakeholderList({
               {s.reservationStatus === 'PendingAcceptance' ? 'Pending' : s.reservationStatus}
             </Badge>
           )}
-        </li>
+        </ListRow>
       ))}
     </ul>
   )
@@ -193,7 +150,7 @@ export function StakeholderList({
 
 // ── Portal link section ─────────────────────────────────────────────────────
 
-export function PortalLinkSection({
+function PortalLinkSection({
   bookingId,
   portalLink,
   divers,
@@ -203,8 +160,11 @@ export function PortalLinkSection({
   portalLink: BookingLinkInfo | null | undefined
   divers: BookingDetail['divers']
   compact?: boolean
+  // useTranslations called directly — no prop drilling
 }) {
-  const [copied, setCopied] = useState(false)
+  const tErrors = useTranslations('errors')
+  const tCommon = useTranslations('common')
+  const [copied, markCopied] = useCopyFeedback()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [customerName, setCustomerName] = useState(divers.length > 0 ? divers[0].name : '')
   const [email, setEmail] = useState('')
@@ -217,16 +177,10 @@ export function PortalLinkSection({
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/portal/${portalLink.token}`
     : null
 
-  useEffect(() => {
-    if (!copied) return
-    const timer = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS)
-    return () => clearTimeout(timer)
-  }, [copied])
-
   async function handleCopy() {
     if (!portalUrl) return
     await navigator.clipboard.writeText(portalUrl)
-    setCopied(true)
+    markCopied()
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -241,7 +195,7 @@ export function PortalLinkSection({
       })
       setShowCreateForm(false)
     } catch {
-      setCreateError(GENERATE_LINK_ERROR_MESSAGE)
+      setCreateError(tCommon('actionFailed', { action: 'Generate link' }))
     } finally {
       setCreating(false)
     }
@@ -256,16 +210,14 @@ export function PortalLinkSection({
       <div className="space-y-2">
         <div
           data-testid="portal-link-url"
-          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-[var(--border-radius)] border font-mono break-all text-secondary`}
-          style={{ background: 'var(--color-glass-bg)',
-            borderColor: 'var(--color-glass-border)' }}
+          className={`flex items-center gap-2 ${compact ? 'p-2.5 text-xs' : 'p-3 text-sm'} rounded-theme border font-mono break-all text-secondary bg-glass-bg border-glass-border`}
         >
           <ExternalLink size={iconSize} className="flex-shrink-0" />
           <span className={`flex-1${compact ? ' truncate' : ''}`}>{portalUrl}</span>
         </div>
         {!compact && isExpired && (
-          <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>
-            {LINK_EXPIRED_LABEL}
+          <p className="text-xs text-destructive">
+            {tErrors('linkExpired')}
           </p>
         )}
         <div className="flex gap-2 flex-wrap">
@@ -290,13 +242,10 @@ export function PortalLinkSection({
           >
             Customer name
           </label>
-          <input
+          <Input
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             required
-            className="w-full px-3 py-2.5 rounded-[var(--border-radius)] border text-sm text-primary"
-            style={{ background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)' }}
           />
         </div>
         <div>
@@ -305,18 +254,15 @@ export function PortalLinkSection({
           >
             Customer email
           </label>
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2.5 rounded-[var(--border-radius)] border text-sm text-primary"
-            style={{ background: 'var(--color-glass-bg)',
-              borderColor: 'var(--color-glass-border)' }}
           />
         </div>
         {createError && (
-          <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>
+          <p className="text-xs text-destructive">
             {createError}
           </p>
         )}
@@ -352,13 +298,290 @@ export function BookingDetailSkeleton() {
     <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
       {[1, 2, 3].map((i) => (
         <Card key={i} padding="md">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 rounded w-1/3" style={{ background: 'var(--color-glass-border)' }} />
-            <div className="h-3 rounded w-2/3" style={{ background: 'var(--color-glass-border)' }} />
-            <div className="h-3 rounded w-1/2" style={{ background: 'var(--color-glass-border)' }} />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
           </div>
         </Card>
       ))}
+    </div>
+  )
+}
+
+// ── Section tabs (dialog layout) ────────────────────────────────────────────
+
+export type SectionId = 'overview' | 'customers' | 'schedule' | 'resources' | 'reservations' | 'audit'
+
+const SECTIONS: Array<{ id: SectionId; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'customers', label: 'Customers' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'resources', label: 'Resources' },
+  { id: 'reservations', label: 'Reservations' },
+  { id: 'audit', label: 'Audit' },
+]
+
+function SectionTabs({
+  active,
+  onChange,
+}: {
+  active: SectionId
+  onChange: (id: SectionId) => void
+}) {
+  return (
+    <ButtonGroup
+      variant="tabs"
+      value={active}
+      onChange={(v) => onChange(v as SectionId)}
+      options={SECTIONS.map(({ id, label }) => ({ value: id, label }))}
+      aria-label="Booking sections"
+    />
+  )
+}
+
+// ── Shared section renderers ────────────────────────────────────────────────
+
+function CustomersSection({
+  booking,
+  compact,
+}: {
+  booking: BookingDetail
+  compact: boolean
+}) {
+  return (
+    <>
+      <FormSectionHeader label="Customers" />
+      {booking.divers.length === 0 ? (
+        <EmptyState message="No customers added." />
+      ) : (
+        <CustomerTable booking={booking} compact={compact} />
+      )}
+    </>
+  )
+}
+
+function ScheduleSection({ booking }: { booking: BookingDetail }) {
+  return (
+    <>
+      <FormSectionHeader label="Schedule" />
+      {booking.sessions.length === 0 ? (
+        <p className="text-sm text-secondary">No sessions scheduled.</p>
+      ) : (
+        <SessionTimeline sessions={booking.sessions} />
+      )}
+    </>
+  )
+}
+
+function ResourcesSection({
+  booking,
+  compact,
+}: {
+  booking: BookingDetail
+  compact: boolean
+}) {
+  return (
+    <>
+      <FormSectionHeader label={compact ? 'Resources' : 'Stakeholders'} />
+      <StakeholderList stakeholders={booking.stakeholders} compact={compact} />
+    </>
+  )
+}
+
+function ReservationsSection({ booking }: { booking: BookingDetail }) {
+  return (
+    <>
+      <FormSectionHeader label="Reservations" />
+      <ReservationStatusList reservations={booking.reservations} />
+    </>
+  )
+}
+
+function PortalSection({
+  booking,
+  bookingId,
+  portalLink,
+  compact,
+}: {
+  booking: BookingDetail
+  bookingId: string
+  portalLink: BookingLinkInfo | null | undefined
+  compact: boolean
+}) {
+  return (
+    <>
+      <FormSectionHeader label="Customer Portal" />
+      {!compact && (
+        <PortalProgressCard
+          portalContact={booking.portalContact}
+          portalMedical={booking.portalMedical}
+          portalWaiver={booking.portalWaiver}
+          customerFormComplete={booking.customerFormComplete}
+          customerProfiles={booking.customerProfiles}
+        />
+      )}
+      {compact && (
+        <PortalPills
+          pills={buildPortalPills(booking)}
+        />
+      )}
+      <div className={`${compact ? 'mt-3' : 'mt-4 pt-3 border-t border-glass-border'} space-y-3`}>
+        <PortalLinkSection
+          bookingId={bookingId}
+          portalLink={portalLink ?? null}
+          divers={booking.divers}
+          compact={compact}
+        />
+        {booking.divers.length > 0 && (
+          <SendPortalLink
+            bookingId={bookingId as Id<'bookings'>}
+            customerName={booking.divers[0].name}
+            email={booking.divers[0].contactType === 'email' ? (booking.divers[0].contactValue ?? '') : (portalLink?.email ?? '')}
+            operatorName={booking.operatorName}
+            contactType={booking.divers[0].contactType}
+            contactValue={booking.divers[0].contactValue}
+          />
+        )}
+      </div>
+    </>
+  )
+}
+
+function AuditSection({ bookingId }: { bookingId: string }) {
+  return (
+    <>
+      <FormSectionHeader label="Audit Trail" />
+      <AuditTrailTable bookingId={bookingId} />
+    </>
+  )
+}
+
+// ── Portal pill builder ─────────────────────────────────────────────────────
+
+function buildPortalPills(booking: BookingDetail): PortalPill[] {
+  const equipmentDone =
+    booking.customerProfiles.length > 0 &&
+    booking.customerProfiles.every((p) => p.submittedAt != null)
+
+  return [
+    { label: 'Contact', done: booking.portalContact },
+    { label: 'Medical', done: booking.portalMedical },
+    { label: 'Waiver', done: booking.portalWaiver },
+    { label: 'Equipment', done: equipmentDone },
+    { label: 'Payment', done: false },
+  ]
+}
+
+// ── BookingDetailBody ───────────────────────────────────────────────────────
+
+export interface BookingDetailBodyProps {
+  booking: BookingDetail
+  bookingId: string
+  portalLink: BookingLinkInfo | null | undefined
+  layout: 'page' | 'dialog'
+  compact?: boolean
+  /** Dialog-only: active section tab (controlled externally) */
+  activeSection?: SectionId
+  /** Dialog-only: callback when section tab changes */
+  onSectionChange?: (id: SectionId) => void
+  /** Dialog-only: content to render in the overview tab (status + actions) */
+  overviewSlot?: React.ReactNode
+}
+
+export function BookingDetailBody({
+  booking,
+  bookingId,
+  portalLink,
+  layout,
+  compact = false,
+  activeSection = 'overview',
+  onSectionChange,
+  overviewSlot,
+}: BookingDetailBodyProps) {
+  // ── Page layout: all sections stacked in cards ──────────────────────────
+  if (layout === 'page') {
+    return (
+      <>
+        {booking.divers.length > 0 && (
+          <Card padding="md">
+            <CustomersSection booking={booking} compact={compact} />
+          </Card>
+        )}
+
+        {booking.sessions.length > 0 && (
+          <Card padding="md">
+            <ScheduleSection booking={booking} />
+          </Card>
+        )}
+
+        <Card padding="md">
+          <ResourcesSection booking={booking} compact={compact} />
+        </Card>
+
+        <Card padding="md">
+          <ReservationsSection booking={booking} />
+        </Card>
+
+        <Card padding="md">
+          <PortalSection
+            booking={booking}
+            bookingId={bookingId}
+            portalLink={portalLink}
+            compact={compact}
+          />
+        </Card>
+
+        <Card padding="md">
+          <AuditSection bookingId={bookingId} />
+        </Card>
+      </>
+    )
+  }
+
+  // ── Dialog layout: tabbed sections ──────────────────────────────────────
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-4 sm:px-6 pt-3 flex-shrink-0">
+        <SectionTabs
+          active={activeSection}
+          onChange={(id) => onSectionChange?.(id)}
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+        {activeSection === 'overview' && overviewSlot && (
+          <>
+            {overviewSlot}
+            <PortalSection
+              booking={booking}
+              bookingId={bookingId}
+              portalLink={portalLink}
+              compact={compact}
+            />
+          </>
+        )}
+
+        {activeSection === 'customers' && (
+          <CustomersSection booking={booking} compact={compact} />
+        )}
+
+        {activeSection === 'schedule' && (
+          <ScheduleSection booking={booking} />
+        )}
+
+        {activeSection === 'resources' && (
+          <ResourcesSection booking={booking} compact={compact} />
+        )}
+
+        {activeSection === 'reservations' && (
+          <ReservationsSection booking={booking} />
+        )}
+
+        {activeSection === 'audit' && (
+          <AuditSection bookingId={bookingId} />
+        )}
+      </div>
     </div>
   )
 }

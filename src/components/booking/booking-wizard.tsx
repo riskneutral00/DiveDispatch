@@ -124,7 +124,7 @@ export function BookingWizard({
       await editBooking({ bookingId: initialBookingId as Id<"bookings"> });
     } catch (err: unknown) {
       setEditResetError(
-        parseConvexError(err, t("wizard.errors.resetBooking")),
+        parseConvexError(err, tCommon("actionFailed", { action: "Reset" })),
       );
       setIsResetting(false);
     }
@@ -199,7 +199,7 @@ export function BookingWizard({
         });
       }
     } catch (err: unknown) {
-      setSaveError(parseConvexError(err, t("wizard.errors.saveProgress")));
+      setSaveError(parseConvexError(err, tCommon("actionFailed", { action: "Save" })));
       setIsSaving(false);
       return;
     }
@@ -261,13 +261,12 @@ export function BookingWizard({
             loading={portalDraftBusy}
             onClick={() => void ensureDraftForPortalLink()}
           >
-            {t("wizard.preparePortalLink")}
+            Send Link
           </Button>
           <p
             className="text-xs mt-2 text-secondary"
-            style={{ fontFamily: "var(--font-body)" }}
           >
-            {t("wizard.preparePortalHint")}
+            {t("preparePortalHint")}
           </p>
         </div>
       );
@@ -277,16 +276,15 @@ export function BookingWizard({
       <div className="mt-4 space-y-2">
         <p
           className="text-xs font-medium text-secondary"
-          style={{ fontFamily: "var(--font-body)" }}
         >
-          {t("wizard.portalLinkDelivery")}
+          Portal link delivery
         </p>
         <SendPortalLink
           bookingId={state.bookingId as Id<"bookings">}
           customerName={c0.name}
           email={emailForResend}
           operatorName={
-            convexUserForPortal?.businessName ?? t("wizard.operatorFallback")
+            convexUserForPortal?.businessName ?? "Operator"
           }
           contactType={contactType}
           contactValue={contactValue || undefined}
@@ -343,20 +341,18 @@ export function BookingWizard({
               <AlertTriangle
                 size={20}
                 className="flex-shrink-0 mt-0.5"
-                style={{ color: "var(--color-warning, #fbbf24)" }}
+                style={{ color: "var(--color-warning)" }}
               />
               <div>
                 <h2
-                  className="text-lg font-semibold text-primary"
-                  style={{ fontFamily: "var(--font-heading)" }}
+                  className="text-lg font-semibold text-primary font-heading"
                 >
-                  {t("wizard.editConfirmTitle")}
+                  {t("editConfirmTitle")}
                 </h2>
                 <p
                   className="text-sm mt-1 text-secondary"
-                  style={{ fontFamily: "var(--font-body)" }}
                 >
-                  {t("wizard.editConfirmBody")}
+                  {t("editConfirmBody")}
                 </p>
               </div>
             </div>
@@ -369,7 +365,7 @@ export function BookingWizard({
                 size="md"
                 onClick={() => void handleConfirmEdit()}
               >
-                {t("wizard.editConfirmYes")}
+                {tCommon("edit")}
               </Button>
               <Button
                 variant="secondary"
@@ -390,113 +386,62 @@ export function BookingWizard({
       <div
         className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center text-secondary"
       >
-        <Spinner label={t("wizard.preparing")} />
-      </div>
-    );
-  }
-
-  if (isOverlay) {
-    return (
-      <div className="px-4 py-4 sm:px-6">
-        {bookingRef && (
-          <p
-            className="text-xs font-mono mb-3 text-secondary"
-          >
-            {bookingRef}
-          </p>
-        )}
-
-        <WizardProgress currentStep={state.step} />
-
-        <div className="mt-4">{renderStepContent()}</div>
-
-        {saveError && (
-          <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
-        )}
-        {autoSaveError && !saveError && !isReviewStep && (
-          <p className="mt-3 text-xs text-secondary">
-            {autoSaveError}
-          </p>
-        )}
-
-        {!isReviewStep && (
-          <div className="flex justify-between items-center mt-4 gap-4">
-            <Button
-              variant="secondary"
-              onClick={isFirstStep ? () => void handleCancel() : handleBack}
-              disabled={isSaving}
-              size="md"
-            >
-              <ChevronLeft size={16} />
-              {isFirstStep ? tCommon("cancel") : tCommon("back")}
-            </Button>
-
-            <Button
-              variant="primary"
-              onClick={handleNext}
-              disabled={advanceDisabled || isSaving}
-              loading={isSaving}
-              size="md"
-            >
-              {tCommon("next")}
-              <ChevronRight size={16} />
-            </Button>
-          </div>
-        )}
+        <Spinner label={tCommon("loading")} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1
-            className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            {isEditMode && bookingRef
-              ? t("wizard.editingTitle", { ref: bookingRef })
-              : t("new")}
-          </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            onClick={() => void handleCancel()}
-            disabled={state.submitting}
-            className="rounded-full"
-            aria-label={t("wizard.cancelBookingAria")}
-          >
-            <X size={16} />
-          </Button>
+    <div className={isOverlay ? "px-4 py-4 sm:px-6" : "max-w-3xl mx-auto px-4 py-8"}>
+      {!isOverlay && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-primary font-heading">
+              {isEditMode && bookingRef
+                ? t("editingTitle", { ref: bookingRef })
+                : "New Booking"}
+            </h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => void handleCancel()}
+              disabled={state.submitting}
+              className="rounded-full" /* design-ok: circular dismiss button */
+              aria-label="Cancel booking"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+          {bookingRef && (
+            <p className="text-xs font-mono mt-1 text-secondary">
+              {bookingRef}
+            </p>
+          )}
         </div>
-        {bookingRef && (
-          <p
-            className="text-xs font-mono mt-1 text-secondary"
-          >
-            {bookingRef}
-          </p>
-        )}
-      </div>
+      )}
+
+      {isOverlay && bookingRef && (
+        <p className="text-xs font-mono mb-3 text-secondary">
+          {bookingRef}
+        </p>
+      )}
 
       <WizardProgress currentStep={state.step} />
 
-      <div className="mt-6">{renderStepContent()}</div>
+      <div className={isOverlay ? "mt-4" : "mt-6"}>{renderStepContent()}</div>
 
       {saveError && (
         <ErrorAlert className="mt-3">{saveError}</ErrorAlert>
       )}
       {autoSaveError && !saveError && !isReviewStep && (
-        <p
-          className="mt-3 text-xs text-secondary"
-        >
+        <p className="mt-3 text-xs text-secondary">
           {autoSaveError}
         </p>
       )}
 
       {!isReviewStep && (
-        <div className="flex justify-between items-center mt-6 gap-4">
+        <div className={`flex justify-between items-center gap-4 ${isOverlay ? "mt-4" : "mt-6"}`}>
           <Button
             variant="secondary"
             onClick={isFirstStep ? () => void handleCancel() : handleBack}

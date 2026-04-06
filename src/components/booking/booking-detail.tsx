@@ -6,23 +6,16 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, Button, Badge, EmptyState } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
+import { TERMINAL_STATUSES, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import {
   useTTLCountdown,
-  CustomerTable,
-  StakeholderList,
-  PortalLinkSection,
   BookingDetailSkeleton,
+  BookingDetailBody,
 } from './booking-detail-shared'
-import { SendPortalLink } from './send-portal-link'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { CancelBookingDialog } from './cancel-booking-dialog'
-import { ReservationStatusList } from './reservation-status-list'
-import { SessionTimeline } from './session-timeline'
-import { PortalProgressCard } from './portal-progress-card'
-import { AuditTrailTable } from './audit-trail-table'
 import { ROLES } from '@/lib/constants/roles'
 
 const OPERATOR_CLERK_ROLES = new Set(
@@ -62,27 +55,18 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
   if (booking === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card padding="lg" className="max-w-sm w-full text-center">
-          <p
-            className="text-lg font-semibold mb-2 text-primary"
-          >
-            Booking not found
-          </p>
-          <p className="text-sm mb-4 text-secondary">
-            This booking doesn&apos;t exist or you don&apos;t have access.
-          </p>
-          <Button variant="secondary" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Button>
-        </Card>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 gap-4">
+        <EmptyState message="Booking not found or you don't have access." />
+        <Button variant="secondary" onClick={() => router.push('/dashboard')}>
+          <ArrowLeft size={16} />
+          Back to Dashboard
+        </Button>
       </div>
     )
   }
 
-  const canEdit = booking.status !== 'Cancelled'
-  const canCancel = booking.status !== 'Cancelled'
+  const canEdit = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
+  const canCancel = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
   const isOperator = (userRoles ?? []).some((r) => OPERATOR_CLERK_ROLES.has(r.role))
   const canClearMedical = booking.medicalHardBlock && isOperator
 
@@ -92,7 +76,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
       <div className="flex items-center gap-3 mb-2">
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-md transition-colors text-secondary"
+          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-colors text-secondary"
           aria-label="Go back"
         >
           <ArrowLeft size={20} />
@@ -169,70 +153,13 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         </div>
       </Card>
 
-      {/* Customers */}
-      {booking.divers.length > 0 && (
-        <Card padding="md">
-          <FormSectionHeader label="Customers" />
-          <CustomerTable booking={booking} />
-        </Card>
-      )}
-
-      {/* Sessions */}
-      {booking.sessions.length > 0 && (
-        <Card padding="md">
-          <FormSectionHeader label="Schedule" />
-          <SessionTimeline sessions={booking.sessions} />
-        </Card>
-      )}
-
-      {/* Stakeholders */}
-      <Card padding="md">
-        <FormSectionHeader label="Stakeholders" />
-        <StakeholderList stakeholders={booking.stakeholders} />
-      </Card>
-
-      {/* Reservations */}
-      <Card padding="md">
-        <FormSectionHeader label="Reservations" />
-        <ReservationStatusList reservations={booking.reservations} />
-      </Card>
-
-      {/* Portal progress */}
-      <Card padding="md">
-        <FormSectionHeader label="Customer Portal" />
-        <PortalProgressCard
-          portalContact={booking.portalContact}
-          portalMedical={booking.portalMedical}
-          portalWaiver={booking.portalWaiver}
-          customerFormComplete={booking.customerFormComplete}
-          customerProfiles={booking.customerProfiles}
-        />
-        <div className="mt-4 pt-3 space-y-3" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
-          {portalLink && (
-            <PortalLinkSection
-              bookingId={bookingId}
-              portalLink={portalLink}
-              divers={booking.divers}
-            />
-          )}
-          {booking.divers.length > 0 && (
-            <SendPortalLink
-              bookingId={bookingId as Id<'bookings'>}
-              customerName={booking.divers[0].name}
-              email={booking.divers[0].contactType === 'email' ? (booking.divers[0].contactValue ?? '') : (portalLink?.email ?? '')}
-              operatorName={booking.operatorName}
-              contactType={booking.divers[0].contactType}
-              contactValue={booking.divers[0].contactValue}
-            />
-          )}
-        </div>
-      </Card>
-
-      {/* Audit trail */}
-      <Card padding="md">
-        <FormSectionHeader label="Audit Trail" />
-        <AuditTrailTable bookingId={bookingId} />
-      </Card>
+      {/* Shared section body */}
+      <BookingDetailBody
+        booking={booking}
+        bookingId={bookingId}
+        portalLink={portalLink}
+        layout="page"
+      />
 
       {/* Cancel dialog */}
       <CancelBookingDialog

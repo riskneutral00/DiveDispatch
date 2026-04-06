@@ -14,6 +14,7 @@ import {
   defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
+  INITIAL_TEACHING_LANGUAGES,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import {
@@ -51,9 +52,7 @@ export type PersonalLanguagesFormState = {
   teachingLanguages: Language[]
 }
 
-export const INITIAL_LANGUAGES_FORM: PersonalLanguagesFormState = {
-  teachingLanguages: [],
-}
+export const INITIAL_LANGUAGES_FORM: PersonalLanguagesFormState = INITIAL_TEACHING_LANGUAGES
 
 export function languagesFromProfilePersonal(p: Record<string, unknown>): PersonalLanguagesFormState {
   return {
@@ -264,8 +263,6 @@ export function PersonalCredentialsSection({
   const schema = variant === 'divemaster' ? diveMasterCredentialsSchema : instructorCredentialsSchema
   const initialDefaults =
     variant === 'divemaster' ? INITIAL_DM_CREDENTIALS_FORM : INITIAL_INST_CREDENTIALS_FORM
-  const agencyVariant = variant === 'divemaster' ? 'divemaster' : 'instructor'
-
   const {
     form,
     setField,
@@ -302,7 +299,7 @@ export function PersonalCredentialsSection({
       className="space-y-6"
     >
       <ProfileAgencyInfo
-        variant={agencyVariant}
+        variant={variant}
         items={form.credential}
         onChange={(items) => setField('credential', items)}
         errors={errors as Record<string, string>}
@@ -315,22 +312,26 @@ export type DiveMasterProfileSection = PersonalSection
 export type InstructorProfileSection = PersonalSection
 
 // ---------------------------------------------------------------------------
-// DiveMasterProfileForm — dispatches to the correct section component
+// PersonalProfileForm — single dispatcher for divemaster + instructor
 // ---------------------------------------------------------------------------
 
-export function DiveMasterProfileForm({
+export function PersonalProfileForm({
+  variant,
   section,
   profile,
   me,
   create,
   update,
-}: BaseProfileSectionProps & { section?: DiveMasterProfileSection }) {
+}: BaseProfileSectionProps & {
+  variant: PersonalVariant
+  section?: PersonalSection
+}) {
   if (section === 'languages')
     return <PersonalLanguagesSection profile={profile} create={create} update={update} />
   if (section === 'credentials')
     return (
       <PersonalCredentialsSection
-        variant="divemaster"
+        variant={variant}
         profile={profile}
         create={create}
         update={update}
@@ -338,7 +339,7 @@ export function DiveMasterProfileForm({
     )
   return (
     <PersonalContactSection
-      variant="divemaster"
+      variant={variant}
       profile={profile}
       me={me}
       create={create}
@@ -348,34 +349,17 @@ export function DiveMasterProfileForm({
 }
 
 // ---------------------------------------------------------------------------
-// InstructorProfileForm — dispatches to the correct section component
+// Convenience wrappers — delegate to PersonalProfileForm with fixed variant
 // ---------------------------------------------------------------------------
 
-export function InstructorProfileForm({
-  section,
-  profile,
-  me,
-  create,
-  update,
-}: BaseProfileSectionProps & { section?: InstructorProfileSection }) {
-  if (section === 'languages')
-    return <PersonalLanguagesSection profile={profile} create={create} update={update} />
-  if (section === 'credentials')
-    return (
-      <PersonalCredentialsSection
-        variant="instructor"
-        profile={profile}
-        create={create}
-        update={update}
-      />
-    )
-  return (
-    <PersonalContactSection
-      variant="instructor"
-      profile={profile}
-      me={me}
-      create={create}
-      update={update}
-    />
-  )
+export function DiveMasterProfileForm(
+  props: BaseProfileSectionProps & { section?: DiveMasterProfileSection },
+) {
+  return <PersonalProfileForm variant="divemaster" {...props} />
+}
+
+export function InstructorProfileForm(
+  props: BaseProfileSectionProps & { section?: InstructorProfileSection },
+) {
+  return <PersonalProfileForm variant="instructor" {...props} />
 }

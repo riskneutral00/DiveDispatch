@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
 import { medicalAnswersSchema } from '@/lib/validation'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
@@ -11,50 +13,10 @@ import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
 // ── Questions ─────────────────────────────────────────────────────────────────
 
-const MEDICAL_QUESTIONS = [
-  {
-    key: 'medical_q1',
-    text: 'I have had problems with my lungs/breathing, heart, blood, or have been diagnosed with COVID-19.',
-  },
-  {
-    key: 'medical_q2',
-    text: 'I am over 45 years of age.',
-  },
-  {
-    key: 'medical_q3',
-    text: 'I struggle to perform moderate exercise (walk 1.6 km/one mile in 14 minutes) or swim 200 m/yards without resting.',
-  },
-  {
-    key: 'medical_q4',
-    text: 'I have had problems with my eyes, ears, or nasal passages/sinuses.',
-  },
-  {
-    key: 'medical_q5',
-    text: 'I have had surgery within the last 12 months, or ongoing problems related to past surgery.',
-  },
-  {
-    key: 'medical_q6',
-    text: 'I have lost consciousness, had migraine headaches, seizures, stroke, or significant head injury.',
-  },
-  {
-    key: 'medical_q7',
-    text: 'I am currently undergoing treatment for psychological problems, panic attacks, or addiction.',
-  },
-  {
-    key: 'medical_q8',
-    text: 'I have had back problems, hernia, ulcers, or diabetes.',
-  },
-  {
-    key: 'medical_q9',
-    text: 'I have had stomach or intestine problems, including recent diarrhea.',
-  },
-  {
-    key: 'medical_q10',
-    text: 'I am taking prescription medications (except birth control or anti-malarial drugs other than mefloquine).',
-  },
+const QUESTION_KEYS = [
+  'q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10',
 ] as const
-
-type QuestionKey = (typeof MEDICAL_QUESTIONS)[number]['key']
+type QuestionKey = `medical_${typeof QUESTION_KEYS[number]}`
 type Answers = Partial<Record<QuestionKey, boolean>>
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -65,6 +27,9 @@ interface StepMedicalProps {
 }
 
 export function StepMedical({ token, onComplete }: StepMedicalProps) {
+  const t = useTranslations('medical')
+  const tPortal = useTranslations('portal')
+  const tCommon = useTranslations('common')
   const { saved, save: saveMedicalAnswers } = usePortalMedical({ token })
 
   const [answers, setAnswers] = useState<Answers>({})
@@ -84,7 +49,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       ? (saved.answers as Answers)
       : answers
 
-  const unanswered = MEDICAL_QUESTIONS.filter((q) => effectiveAnswers[q.key] === undefined)
+  const unanswered = QUESTION_KEYS.filter((qKey) => effectiveAnswers[`medical_${qKey}` as QuestionKey] === undefined)
 
   function setAnswer(key: QuestionKey, value: boolean) {
     setAnswers((prev) => ({ ...prev, [key]: value }))
@@ -96,7 +61,10 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
     // Validate all 10 PADI medical questions are answered as booleans
     const answersForValidation = Object.fromEntries(
-      MEDICAL_QUESTIONS.map((q) => [q.key, effectiveAnswers[q.key]]),
+      QUESTION_KEYS.map((qKey) => {
+        const key = `medical_${qKey}` as QuestionKey
+        return [key, effectiveAnswers[key]]
+      }),
     )
     const schemaResult = medicalAnswersSchema.safeParse(answersForValidation)
     if (!schemaResult.success) return
@@ -106,8 +74,9 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
     try {
       const answersRecord: Record<string, boolean | string> = {}
-      for (const q of MEDICAL_QUESTIONS) {
-        answersRecord[q.key] = effectiveAnswers[q.key] ?? false
+      for (const qKey of QUESTION_KEYS) {
+        const key = `medical_${qKey}` as QuestionKey
+        answersRecord[key] = effectiveAnswers[key] ?? false
       }
 
       const result = await saveMedicalAnswers({ token, answers: answersRecord })
@@ -128,19 +97,17 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       <Card padding="lg">
         <div className="flex flex-col items-center gap-4 text-center">
           <AlertTriangle
-            className="w-12 h-12"
-            style={{ color: 'var(--color-warning)' }}
+            className="w-12 h-12 text-warning"
             aria-hidden="true"
           />
           <h2 className="text-xl font-semibold text-primary">
-            Physician Clearance Required
+            {tPortal('hardBlockTitle')}
           </h2>
           <p className="text-secondary">
-            A medical condition requires physician clearance before diving. Your dive center has
-            been notified and will contact you with next steps.
+            {tPortal('hardBlockMessage')}
           </p>
           <Button variant="primary" onClick={onComplete}>
-            Continue
+            {tCommon('continue')}
           </Button>
         </div>
       </Card>
@@ -159,41 +126,37 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       {/* Intro text — verbatim from PADI 10346 */}
       <Card padding="md">
         <p className="text-sm leading-relaxed text-primary">
-          Recreational scuba diving and freediving requires good physical and mental health. There
-          are a few medical conditions which can be hazardous while diving. This questionnaire
-          provides a basis to determine if you should seek out a physician&apos;s evaluation.
-          Answer all questions honestly.
+          {t('intro')}
         </p>
         <p className="mt-3 text-sm text-secondary">
-          <strong>Note to women:</strong> If you are pregnant, or attempting to become pregnant, do
-          not dive.
+          {t('pregnancy')}
         </p>
       </Card>
 
       {/* Privacy consent acknowledgment — informational, not a gate */}
       <Card padding="sm">
         <p className="text-xs leading-relaxed text-secondary">
-          Your answers are shared with your dive center as required by
-          PADI medical standards.{' '}
+          {t('privacy')}{' '}
           <a
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
             className="underline text-primary"
           >
-            Privacy Policy
+            {t('privacyLink')}
           </a>
         </p>
       </Card>
 
       {/* 10 yes/no questions — all required */}
       <div className="flex flex-col gap-3">
-        {MEDICAL_QUESTIONS.map((q, idx) => {
-          const value = effectiveAnswers[q.key]
+        {QUESTION_KEYS.map((qKey, idx) => {
+          const key = `medical_${qKey}` as QuestionKey
+          const value = effectiveAnswers[key]
           const showError = touched && value === undefined
 
           return (
-            <Card key={q.key} padding="md">
+            <Card key={key} padding="md">
               <div className="flex flex-col gap-3">
                 <p className="text-sm leading-relaxed text-primary">
                   <span
@@ -201,46 +164,44 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                   >
                     {idx + 1}.
                   </span>
-                  {q.text}
+                  {t(qKey)}
                 </p>
 
                 <div className="flex gap-6" role="group" aria-label={`Question ${idx + 1}`}>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="radio"
-                      name={q.key}
+                      name={key}
                       value="yes"
                       checked={value === true}
-                      onChange={() => setAnswer(q.key, true)}
+                      onChange={() => setAnswer(key, true)}
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
                     <span className="text-sm text-primary">
-                      Yes
+                      {tCommon('yes')}
                     </span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="radio"
-                      name={q.key}
+                      name={key}
                       value="no"
                       checked={value === false}
-                      onChange={() => setAnswer(q.key, false)}
+                      onChange={() => setAnswer(key, false)}
                       className="w-4 h-4"
                       style={{ accentColor: 'var(--color-primary)' }}
                     />
                     <span className="text-sm text-primary">
-                      No
+                      {tCommon('no')}
                     </span>
                   </label>
                 </div>
 
                 <div aria-live="polite">
                   {showError && (
-                    <p className="text-xs" style={{ color: 'var(--color-destructive)' }} role="alert">
-                      Please answer this question.
-                    </p>
+                    <InlineError size="sm">Answer required.</InlineError>
                   )}
                 </div>
               </div>
@@ -252,17 +213,15 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
       {/* Participant statement — verbatim */}
       <Card padding="md">
         <p className="text-sm leading-relaxed italic text-secondary">
-          &ldquo;I have answered all questions honestly, and understand that I accept responsibility
-          for any consequences resulting from any questions I may have answered inaccurately or for
-          my failure to disclose any existing or past health conditions.&rdquo;
+          &ldquo;{t('statement')}&rdquo;
         </p>
       </Card>
 
       <div aria-live="polite">
         {touched && unanswered.length > 0 && !error && (
-          <p className="text-sm text-center" style={{ color: 'var(--color-destructive)' }} role="alert">
-            Please answer all {unanswered.length} remaining questions.
-          </p>
+          <InlineError centered>
+            {tPortal('answerAllRemaining', { count: unanswered.length })}
+          </InlineError>
         )}
       </div>
     </PortalStepShell>

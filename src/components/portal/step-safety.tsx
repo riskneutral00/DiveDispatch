@@ -89,8 +89,8 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
 
   if (saved === undefined) {
     return (
-      <div className="flex justify-center py-8" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
+      <div className="flex items-center justify-center py-8">
+        <Spinner />
       </div>
     )
   }
@@ -105,14 +105,12 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
       <Card padding="md">
         <div className="mb-5">
           <h2
-            className="text-base font-semibold mb-1 text-primary"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="text-base font-semibold mb-1 text-primary font-heading"
           >
             Safety Information
           </h2>
           <p className="text-sm text-secondary">
-            All fields are optional. This information helps your dive center respond in an
-            emergency.
+            All optional. Helps your dive center respond in emergencies.
           </p>
         </div>
 
@@ -131,7 +129,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             label="Allergies"
             value={form.allergies}
             onChange={(e) => setField('allergies', e.target.value)}
-            placeholder="e.g., penicillin, shellfish"
+            placeholder="Penicillin, shellfish"
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
           />
@@ -141,7 +139,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             label="Current Medications"
             value={form.medications}
             onChange={(e) => setField('medications', e.target.value)}
-            placeholder="e.g., aspirin, blood thinners"
+            placeholder="Aspirin, blood thinners"
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
           />
@@ -150,7 +148,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           <Input
             label="Insurance Policy Number"
             type="text"
-            placeholder="e.g. DAN-123456"
+            placeholder="DAN-123456"
             value={form.insurancePolicyNumber}
             onChange={(e) => setField('insurancePolicyNumber', e.target.value)}
           />

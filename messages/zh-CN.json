@@ -1,81 +1,17 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "海未开，潜已定。随时随地。"
-  },
-  "accountOverlay": {
-    "title": "账户"
-  },
-  "userMenu": {
-    "preferences": "偏好设置"
-  },
-  "nav": {
-    "dashboard": "仪表板",
-    "bookings": "预订",
-    "directory": "目录",
-    "resources": "资源",
-    "profile": "个人资料",
-    "preferences": "偏好设置",
-    "signIn": "登录",
-    "signOut": "退出",
-    "roles": "角色"
-  },
-  "auth": {
-    "signIn": "登录",
-    "signUp": "注册",
-    "creatingAccount": "正在创建账户…",
-    "email": "电子邮箱",
-    "password": "密码",
-    "forgotPassword": "忘记密码？",
-    "noAccount": "还没有账户？",
-    "hasAccount": "已有账户？",
-    "selectRole": "选择您的角色",
-    "roleOrganizer": "我创建潜水预订",
-    "roleResource": "我提供潜水服务"
-  },
-  "booking": {
-    "new": "新建预订",
-    "edit": "编辑预订",
-    "status": {
-      "draft": "草稿",
-      "upcoming": "即将开始",
-      "completed": "已完成",
-      "cancelled": "已取消"
-    },
-    "reservation": {
-      "pending": "待确认",
-      "confirmed": "已确认",
-      "vacated": "已释放"
-    },
-    "wizard": {
-      "editConfirmTitle": "编辑此预订？",
-      "editConfirmBody": "编辑将把预订恢复为草稿并释放所有资源预留。已分配的资源需重新确认。",
-      "editConfirmYes": "是，编辑预订",
-      "preparing": "正在准备预订…",
-      "preparePortalLink": "准备门户链接",
-      "preparePortalHint": "创建草稿预订，以便在完成行程前复制或发送客户门户链接。",
-      "portalLinkDelivery": "门户链接发送",
-      "operatorFallback": "运营商",
-      "editingTitle": "编辑：{ref}",
-      "cancelBookingAria": "取消预订",
-      "errors": {
-        "resetBooking": "重置预订失败",
-        "saveProgress": "保存进度失败"
-      }
-    }
+    "tagline": "计划潜水，按计划下潜。"
   },
   "common": {
     "loading": "加载中…",
     "saving": "保存中…",
-    "redirecting": "正在跳转…",
-    "error": "出了点问题",
-    "errorRetry": "出了点问题，请重试。",
-    "retry": "重试",
+    "redirecting": "跳转中…",
     "cancel": "取消",
     "save": "保存",
+    "saved": "已保存",
     "delete": "删除",
     "edit": "编辑",
-    "view": "查看",
     "back": "返回",
     "next": "下一步",
     "continue": "继续",
@@ -87,64 +23,181 @@
     "remove": "移除",
     "close": "关闭",
     "search": "搜索",
-    "filter": "筛选",
+    "clear": "清除",
     "copy": "复制",
     "copied": "已复制！",
     "yes": "是",
     "no": "否",
+    "none": "无",
     "verified": "已验证",
     "required": "必填。",
-    "noResults": "未找到结果"
-  },
-  "onboarding": {
-    "bannerMessage": "请完善资料以开始创建或接收预订。",
-    "bannerCta": "完善资料 →"
+    "noResults": "无结果。",
+    "incomplete": "未完成",
+    "pending": "待处理",
+    "done": "完成",
+    "complete": "已完成",
+    "notRequired": "非必填",
+    "error": "发生错误",
+    "errorRetry": "发生错误，请重试。",
+    "errorContact": "发生错误，请联系您的潜水中心。",
+    "actionFailed": "{action}失败，请重试。",
+    "fieldRequired": "{field}为必填项。",
+    "sendLink": "发送链接",
+    "addItem": "添加项目",
+    "inventory": "库存",
+    "groupBy": "分组方式"
   },
   "errors": {
-    "generic": {
-      "title": "出了点问题",
-      "message": "出了点问题，请重试。"
+    "unexpected": "出了点问题，请重试。",
+    "tokenExpired": "此链接已失效，请联系您的潜水中心获取新链接。",
+    "bookingClosed": "此预订已关闭，请联系您的潜水中心寻求帮助。",
+    "formsIncomplete": "请在提交前完成以上所有步骤。",
+    "linkExpired": "链接已过期。",
+    "copyFailed": "复制失败，请手动粘贴。",
+    "duplicateRole": "您已拥有此角色。",
+    "lastRole": "您必须至少拥有一个角色。",
+    "noWhatsApp": "该客户没有登记 WhatsApp 号码。",
+    "activeReservations": "无法移除——存在进行中的预订。",
+    "incomplete": "未完成：{reason}",
+    "pageNotFound": "页面未找到",
+    "pageNotFoundMessage": "此页面不存在或已被移动。",
+    "bookingClosedTitle": "预订已关闭",
+    "completeTitle": "已完成！",
+    "roleNotDetermined": "无法确定当前活跃角色。"
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "bookings": "预订",
+    "resources": "资源",
+    "profile": "个人资料",
+    "preferences": "偏好设置",
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "roles": "角色"
+  },
+  "auth": {
+    "creatingAccount": "创建中…",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "没有账号？",
+    "hasAccount": "已有账号？",
+    "selectRole": "选择您的角色",
+    "roleOrganizer": "创建预订",
+    "roleResource": "提供服务"
+  },
+  "booking": {
+    "status": {
+      "draft": "草稿",
+      "upcoming": "即将进行",
+      "completed": "已完成",
+      "cancelled": "已取消"
     },
-    "portal": {
-      "title": "出了点问题",
-      "message": "无法加载预订表单。请重试链接或联系潜店。"
+    "reservation": {
+      "pending": "待确认",
+      "confirmed": "已确认",
+      "vacated": "已释放"
     },
-    "auth": {
-      "title": "身份验证错误",
-      "message": "登录时出错，请重试。"
-    }
+    "editConfirmTitle": "编辑预订？",
+    "editConfirmBody": "将重置为草稿状态，资源方需重新确认。",
+    "editingTitle": "编辑中：{ref}",
+    "preparePortalHint": "创建草稿，以便在完成前分享客户门户链接。",
+    "dayNumber": "第 {number} 天",
+    "diveDay": "潜水日",
+    "autoAdded": "自动添加",
+    "noDivesScheduled": "暂无潜水安排",
+    "venueAssignment": "场地分配",
+    "confined": "平静水域",
+    "confinedWater": "平静水域",
+    "openWater": "开放水域",
+    "external": "外部人员（不在系统中）",
+    "switchToSystemInstructor": "切换为系统内教练",
+    "switchToSystemDiveMaster": "切换为系统内潜水长",
+    "dayLimitReached": "已达每日上限——最多3次潜水",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "removeDay": "移除此日",
+    "acceptanceMode": "接受模式",
+    "preferredResources": "首选资源",
+    "autoAssignPreferred": "新预订时自动分配首选教练、船只和场地（如有空位）",
+    "confirmationAlerts": "确认通知",
+    "notifyOnAccept": "预订被接受时通知我",
+    "notifyOnDecline": "预订被拒绝时通知我",
+    "preferredOperator": "首选运营商",
+    "preferredOperatorDesc": "设置后，预订向导可从此运营商的偏好中预填资源。",
+    "targetOperator": "目标运营商",
+    "emailSent": "邮件已发送！",
+    "whatsAppOpened": "已打开 WhatsApp！",
+    "lineOpened": "已打开 LINE！",
+    "linkExpires": "链接过期时间：{date}",
+    "roleDeleted": "已删除{role}",
+    "preferencesSaved": "偏好设置已保存",
+    "noBookings": "该时间段没有预订。",
+    "byDiveCenter": "按潜水中心",
+    "byActivity": "按活动",
+    "pax": "{count} 人",
+    "paxTotal": "共 {count} 人",
+    "removeItem": "移除项目",
+    "removeItemConfirm": "移除 {item}？此操作不可撤销。",
+    "prescriptionMask": "度数面镜",
+    "addInventoryItem": "添加库存项目",
+    "noInventory": "暂无库存。添加您的第一个项目。",
+    "noItemsFound": "未找到{type}项目。"
   },
   "portal": {
-    "loadingBooking": "正在加载预订…",
-    "submissionComplete": {
-      "title": "提交完成",
-      "bodyWithOperator": "您的资料已提交。{operatorName} 将在活动前{datePart}与您联系。",
-      "bodyNoOperator": "您的资料已提交。我们将在活动前{datePart}与您联系。"
-    },
-    "dateSuffix": "（{date}）",
-    "bookingClosed": {
-      "title": "预订已关闭",
-      "message": "此预订不再接受提交。请联系潜店协助。"
-    },
-    "steps": {
-      "contact": "联系",
-      "medical": "健康",
-      "waiver": "免责",
-      "equipment": "装备",
-      "safety": "安全",
-      "submit": "提交"
-    },
     "welcome": "欢迎，{name}",
-    "subtitle": "请完成以下预订资料",
-    "diverCount": "{count, plural, other {# 位潜水员}}",
+    "subtitle": "请完成您的预订文件。",
+    "diverCount": "{count, plural, one {# 名潜水员} other {# 名潜水员}}",
+    "dateSuffix": "，日期：{date}",
+    "submissionComplete": {
+      "withOperator": "提交完成。{operatorName}将在活动{datePart}前与您联系。",
+      "withoutOperator": "提交完成。我们将在活动{datePart}前与您联系。"
+    },
+    "bookingClosed": "此预订已关闭，请联系您的潜水中心。",
+    "tokenExpired": "此链接已过期，请联系您的潜水中心获取新链接。",
+    "formsIncomplete": "请在提交前完成所有步骤。",
+    "ageError": "最低年龄要求：{minAge}岁。活动时潜水员年龄：{age} {age, plural, one {岁} other {岁}}。",
+    "answerAllRemaining": "还有 {count} 个未回答的问题。",
+    "successMessage": "文件已完成。您的潜水中心将审核并确认您的信息。",
+    "medicalBlockMessage": "表格已提交。潜水前需要医生许可。您的潜水中心已收到通知。",
+    "hardBlockTitle": "需要医生许可",
+    "hardBlockMessage": "潜水前需要医生许可。您的潜水中心已收到通知，将与您联系。",
+    "passportExpiryWarning": "护照将在6个月内到期。出行前请确认目的地的入境要求。",
+    "returnBanner": "欢迎回来！已找到您之前预订时填写的信息。",
+    "returnLoaded": "已加载之前的信息，请检查并更新变更内容。",
+    "agreeTo": "本人 {name} 同意以下内容：",
+    "guardianReason": "18岁以下参与者需由监护人签署。",
+    "contactInfo": "联系信息",
+    "medicalQuestionnaire": "健康问卷",
+    "waiverSignature": "免责声明与签名",
+    "diverSubmissions": "潜水员提交记录",
+    "diver": "潜水员 {number}",
+    "submitted": "{count} / {total} 已提交",
+    "submittedOn": "提交于 {date}",
+    "waiverSigned": "免责声明已签署",
+    "noSubmissions": "暂无提交记录。",
     "postTrip": {
-      "title": "感谢与我们一起潜水！",
-      "subtitle": "希望您度过了美好的体验。",
-      "reviewPrompt": "帮助其他人发现精彩潜水——为我们留下评价。",
-      "googleMaps": "在 Google Maps 上评价",
-      "facebook": "在 Facebook 上评价",
-      "signupPrompt": "想预订下一次潜水冒险吗？",
-      "signupCta": "注册 DiveDispatch"
+      "title": "感谢您与我们一起潜水！",
+      "subtitle": "希望您度过了愉快的体验。",
+      "reviewPrompt": "觉得潜水不错？请留下评价。",
+      "signupPrompt": "准备好下一次潜水了吗？"
     }
+  },
+  "medical": {
+    "intro": "水肺潜水和自由潜水要求良好的身体和心理健康。某些健康状况在潜水时可能存在危险。本问卷用于确定您是否需要进行医生评估。请如实回答所有问题。",
+    "pregnancy": "如果您已怀孕或正在备孕，请勿潜水。",
+    "privacy": "您的回答将按照 PADI 医学标准与您的潜水中心共享。",
+    "q1": "我曾有肺部/呼吸系统、心脏、血液方面的问题，或曾被诊断为 COVID-19。",
+    "q2": "我的年龄超过45岁。",
+    "q3": "我在中等强度运动中感到困难（步行1.6公里/1英里用时14分钟），或无法不休息地游泳200米。",
+    "q4": "我曾有眼睛、耳朵或鼻腔/鼻窦方面的问题。",
+    "q5": "我在过去12个月内做过手术，或因既往手术仍有持续问题。",
+    "q6": "我曾有过意识丧失、偏头痛、癫痫发作、中风或严重头部外伤。",
+    "q7": "我正在接受心理健康治疗、恐慌发作或成瘾方面的治疗。",
+    "q8": "我曾有背部问题、疝气、溃疡或糖尿病。",
+    "q9": "我曾有胃肠道问题，包括近期腹泻。",
+    "q10": "我正在服用处方药（避孕药或甲氟喹以外的抗疟药除外）。",
+    "statement": "本人如实回答了所有问题，并对不准确的回答或未披露的健康状况承担责任。"
+  },
+  "waiver": {
+    "ackCheckbox": "本人已阅读并理解此免责声明/风险承担协议。本人已达到法定年龄，系自愿签署。"
   }
 }

@@ -3,7 +3,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import type { DatabaseWriter } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
+import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
@@ -147,16 +147,7 @@ export const updateProfile = mutation({
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const { user } = await requireAuth(ctx)
 
     await ctx.db.patch(user._id, {
       ...(args.businessName !== undefined && { businessName: args.businessName }),
@@ -195,17 +186,7 @@ export const setRole = mutation({
     businessName: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-
-    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const { user } = await requireAuth(ctx)
 
     await ctx.db.patch(user._id, {
       businessName: args.businessName,

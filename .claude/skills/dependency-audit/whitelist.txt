@@ -4,6 +4,7 @@
 
 # === dependencies ===
 @clerk/nextjs
+clsx
 @dnd-kit/abstract
 @dnd-kit/dom
 @dnd-kit/react
@@ -19,6 +20,7 @@ react
 react-dom
 serwist
 sonner
+tailwind-merge
 use-places-autocomplete
 zod
 

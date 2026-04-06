@@ -29,13 +29,12 @@ export function ErrorCard({
 }: ErrorCardProps) {
   return (
     <div className={`flex items-center justify-center ${minHeight} px-4`}>
-      <Card className="max-w-md w-full text-center" padding="lg">
+      <Card centered className="max-w-md w-full" padding="lg">
         <div className="mb-4 flex justify-center">
           <Icon size={40} style={{ color: iconColor }} />
         </div>
         <h2
-          className="text-lg font-semibold mb-2 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
+          className="text-lg font-semibold mb-2 text-primary font-heading"
         >
           {title}
         </h2>

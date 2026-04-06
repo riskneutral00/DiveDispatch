@@ -1,6 +1,7 @@
 import type { BookingDetailReservation } from '../../../convex/bookings'
-import { Badge } from '@/components/ui'
+import { Badge, EmptyState, ListRow } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
+import { reservationVariant } from '@/lib/booking/booking-display'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -9,22 +10,6 @@ interface ReservationStatusListProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function reservationVariant(
-  status: BookingDetailReservation['status'],
-): 'success' | 'warning' | 'destructive' | 'default' {
-  switch (status) {
-    case 'Confirmed':
-      return 'success'
-    case 'PendingAcceptance':
-      return 'warning'
-    case 'Vacated':
-    case 'NoShow':
-      return 'destructive'
-    default:
-      return 'default'
-  }
-}
 
 function statusLabel(status: BookingDetailReservation['status']): string {
   switch (status) {
@@ -39,11 +24,7 @@ function statusLabel(status: BookingDetailReservation['status']): string {
 
 export function ReservationStatusList({ reservations }: ReservationStatusListProps) {
   if (reservations.length === 0) {
-    return (
-      <p className="text-sm text-secondary">
-        No resources assigned.
-      </p>
-    )
+    return <EmptyState message="No resources assigned." />
   }
 
   // Deduplicate by inventoryUnitId — one row per resource (multiple sessions share one reservation)
@@ -57,18 +38,9 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
   return (
     <ul className="space-y-2">
       {unique.map((res) => (
-        <li
-          key={res._id}
-          className="flex items-center justify-between gap-3 p-3 rounded-[var(--border-radius)] border"
-          style={{
-            background: 'var(--color-glass-bg)',
-            borderColor: 'var(--color-glass-border)',
-          }}
-        >
+        <ListRow key={res._id} as="li">
           <div className="min-w-0">
-            <p
-              className="text-sm font-medium truncate text-primary"
-            >
+            <p className="text-sm font-medium truncate text-primary">
               {res.inventoryUnitName}
             </p>
             <p className="text-xs mt-0.5 text-secondary">
@@ -78,7 +50,7 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
               )}
             </p>
             {res.vacatedBy && (
-              <p className="text-xs mt-0.5" style={{ color: 'var(--color-destructive)' }}>
+              <p className="text-xs mt-0.5 text-destructive">
                 Reason: {res.vacatedBy.replace(/_/g, ' ')}
               </p>
             )}
@@ -86,7 +58,7 @@ export function ReservationStatusList({ reservations }: ReservationStatusListPro
           <Badge variant={reservationVariant(res.status)} size="sm" dot>
             {statusLabel(res.status)}
           </Badge>
-        </li>
+        </ListRow>
       ))}
     </ul>
   )

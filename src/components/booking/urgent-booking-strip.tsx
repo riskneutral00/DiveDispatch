@@ -18,13 +18,13 @@ interface UrgentBookingStripProps {
 function formatDateRange(startDate: string, endDate: string): string {
   const start = parseDateLocal(startDate)
   const end = parseDateLocal(endDate)
-  const startLabel = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   if (startDate === endDate) return startLabel
   // Same month — collapse
   if (start.getMonth() === end.getMonth()) {
     return `${startLabel}\u2013${end.getDate()}`
   }
-  const endLabel = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const endLabel = end.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   return `${startLabel}\u2013${endLabel}`
 }
 
@@ -42,7 +42,7 @@ export function UrgentBookingStrip({
           key={b._id}
           type="button"
           onClick={() => onBookingClick?.(b._id)}
-          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80"
+          className="urgent-pulse inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-opacity hover:opacity-80" /* design-ok */
           style={{
             background: 'var(--color-status-urgent)',
             color: 'var(--color-text-on-primary)',

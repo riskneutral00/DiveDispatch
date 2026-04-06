@@ -1,6 +1,7 @@
 'use client'
 
 import { SaveButton } from '@/components/ui/save-button'
+import { InlineError } from '@/components/ui/inline-error'
 import { cn } from '@/lib/utils/cn'
 
 export interface ProfileFormFooterProps {
@@ -34,11 +35,7 @@ export function ProfileFormFooter({
 }: ProfileFormFooterProps) {
   return (
     <div className={cn('space-y-4', className)}>
-      {errorMessage ? (
-        <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>
-          {errorMessage}
-        </p>
-      ) : null}
+      {errorMessage ? <InlineError>{errorMessage}</InlineError> : null}
       {leftAction ? (
         <div className="flex items-center justify-between">
           {leftAction}

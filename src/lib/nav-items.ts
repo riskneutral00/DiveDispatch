@@ -1,7 +1,4 @@
-import {
-  LayoutDashboard,
-  Users,
-} from 'lucide-react'
+import { LayoutDashboard } from 'lucide-react'
 
 export interface NavItem {
   key: string
@@ -15,6 +12,5 @@ export function buildNavItems(roleSlug: string, slug: string): NavItem[] {
 
   return [
     { key: 'dashboard', label: 'Dashboard', href: base, Icon: LayoutDashboard },
-    { key: 'directory', label: 'Directory', href: `/directory`, Icon: Users },
   ]
 }

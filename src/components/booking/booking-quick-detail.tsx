@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, Button } from '@/components/ui'
-import { BookingStatusBadge } from '@/components/ui/booking-status-badge'
+import { Dialog, Button, Badge } from '@/components/ui'
+import { statusVariant } from '@/lib/booking/booking-display'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import type { CalendarBooking } from '../../../convex/bookings'
 import { BookingDetailDialog } from './booking-detail-dialog'
@@ -51,7 +51,7 @@ export function BookingQuickDetail({
         {booking && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BookingStatusBadge status={booking.status} size="md" />
+              <Badge variant={statusVariant(booking.status)} size="md">{booking.status}</Badge>
               {booking.operatorName && (
                 <span className="text-xs text-secondary">
                   by {booking.operatorName}
@@ -59,7 +59,7 @@ export function BookingQuickDetail({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <p
                   className="text-xs font-semibold uppercase text-secondary"
@@ -154,7 +154,7 @@ export function BookingQuickDetail({
             </div>
 
             {error && (
-              <p className="text-xs text-center pt-1" style={{ color: 'var(--color-status-cancelled)' }}>
+              <p className="text-xs text-center pt-1 text-[var(--color-status-cancelled)]">
                 {error}
               </p>
             )}

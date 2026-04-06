@@ -1,81 +1,17 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "Plan your dive, dive your plan. Anywhere, every time."
-  },
-  "accountOverlay": {
-    "title": "Account"
-  },
-  "userMenu": {
-    "preferences": "Preferences"
-  },
-  "nav": {
-    "dashboard": "Dashboard",
-    "bookings": "Bookings",
-    "directory": "Directory",
-    "resources": "Resources",
-    "profile": "Profile",
-    "preferences": "Preferences",
-    "signIn": "Sign In",
-    "signOut": "Sign Out",
-    "roles": "Roles"
-  },
-  "auth": {
-    "signIn": "Sign In",
-    "signUp": "Sign Up",
-    "creatingAccount": "Creating…",
-    "email": "Email",
-    "password": "Password",
-    "forgotPassword": "Forgot password?",
-    "noAccount": "No account?",
-    "hasAccount": "Have an account?",
-    "selectRole": "Select your role",
-    "roleOrganizer": "Create bookings",
-    "roleResource": "Provide services"
-  },
-  "booking": {
-    "new": "New Booking",
-    "edit": "Edit Booking",
-    "status": {
-      "draft": "Draft",
-      "upcoming": "Upcoming",
-      "completed": "Completed",
-      "cancelled": "Cancelled"
-    },
-    "reservation": {
-      "pending": "Pending",
-      "confirmed": "Confirmed",
-      "vacated": "Vacated"
-    },
-    "wizard": {
-      "editConfirmTitle": "Edit booking?",
-      "editConfirmBody": "Resets to Draft. Resources must re-confirm.",
-      "editConfirmYes": "Edit",
-      "preparing": "Loading…",
-      "preparePortalLink": "Send Link",
-      "preparePortalHint": "Creates a draft booking so you can copy or send the customer portal link before finishing the itinerary.",
-      "portalLinkDelivery": "Portal link delivery",
-      "operatorFallback": "Operator",
-      "editingTitle": "Editing: {ref}",
-      "cancelBookingAria": "Cancel booking",
-      "errors": {
-        "resetBooking": "Failed to reset booking. Please try again.",
-        "saveProgress": "Failed to save. Please try again."
-      }
-    }
+    "tagline": "Plan your dive. Dive your plan."
   },
   "common": {
     "loading": "Loading…",
     "saving": "Saving…",
     "redirecting": "Redirecting…",
-    "error": "Something went wrong",
-    "errorRetry": "Something went wrong. Please try again.",
-    "retry": "Try again",
     "cancel": "Cancel",
     "save": "Save",
+    "saved": "Saved",
     "delete": "Delete",
     "edit": "Edit",
-    "view": "View",
     "back": "Back",
     "next": "Next",
     "continue": "Continue",
@@ -87,64 +23,181 @@
     "remove": "Remove",
     "close": "Close",
     "search": "Search",
-    "filter": "Filter",
+    "clear": "Clear",
     "copy": "Copy",
     "copied": "Copied!",
     "yes": "Yes",
     "no": "No",
+    "none": "None",
     "verified": "Verified",
     "required": "Required.",
-    "noResults": "No results found."
-  },
-  "onboarding": {
-    "bannerMessage": "Complete your profile to get started.",
-    "bannerCta": "Complete →"
+    "noResults": "No results.",
+    "incomplete": "Incomplete",
+    "pending": "Pending",
+    "done": "Done",
+    "complete": "Complete",
+    "notRequired": "not required",
+    "error": "An error occurred",
+    "errorRetry": "An error occurred. Try again.",
+    "errorContact": "An error occurred. Contact your dive center.",
+    "actionFailed": "{action} failed. Try again.",
+    "fieldRequired": "{field} required.",
+    "sendLink": "Send Link",
+    "addItem": "Add Item",
+    "inventory": "Inventory",
+    "groupBy": "Group by"
   },
   "errors": {
-    "generic": {
-      "title": "Something went wrong",
-      "message": "Something went wrong. Please try again."
+    "unexpected": "Something went wrong. Try again.",
+    "tokenExpired": "This link is no longer valid. Contact your dive center for a new one.",
+    "bookingClosed": "This booking is closed. Contact your dive center for help.",
+    "formsIncomplete": "Complete all steps above before submitting.",
+    "linkExpired": "Link expired.",
+    "copyFailed": "Copy failed. Paste manually.",
+    "duplicateRole": "You already hold this role.",
+    "lastRole": "You must have at least one role.",
+    "noWhatsApp": "No WhatsApp number on file for this customer.",
+    "activeReservations": "Cannot remove — active reservations exist.",
+    "incomplete": "Incomplete: {reason}",
+    "pageNotFound": "Page not found",
+    "pageNotFoundMessage": "This page doesn't exist or has been moved.",
+    "bookingClosedTitle": "Booking Closed",
+    "completeTitle": "Complete!",
+    "roleNotDetermined": "Unable to determine active role."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "bookings": "Bookings",
+    "resources": "Resources",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "roles": "Roles"
+  },
+  "auth": {
+    "creatingAccount": "Creating…",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "No account?",
+    "hasAccount": "Have an account?",
+    "selectRole": "Select your role",
+    "roleOrganizer": "Create bookings",
+    "roleResource": "Provide services"
+  },
+  "booking": {
+    "status": {
+      "draft": "Draft",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
     },
-    "portal": {
-      "title": "Something went wrong",
-      "message": "Something went wrong. Please contact your dive center."
+    "reservation": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "vacated": "Vacated"
     },
-    "auth": {
-      "title": "Authentication error",
-      "message": "Sign-in failed. Please try again."
-    }
+    "editConfirmTitle": "Edit booking?",
+    "editConfirmBody": "Resets to Draft. Resources must re-confirm.",
+    "editingTitle": "Editing: {ref}",
+    "preparePortalHint": "Creates a draft so you can share the portal link before finishing.",
+    "dayNumber": "Day {number}",
+    "diveDay": "Dive Day",
+    "autoAdded": "Auto-added",
+    "noDivesScheduled": "No dives scheduled",
+    "venueAssignment": "Venue Assignment",
+    "confined": "Confined",
+    "confinedWater": "Confined Water",
+    "openWater": "Open Water",
+    "external": "External (not in system)",
+    "switchToSystemInstructor": "Switch to system instructor",
+    "switchToSystemDiveMaster": "Switch to system dive master",
+    "dayLimitReached": "Day limit reached — max 3 dives",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "removeDay": "Remove day",
+    "acceptanceMode": "Acceptance Mode",
+    "preferredResources": "Preferred resources",
+    "autoAssignPreferred": "Auto-assign preferred instructors, boats, and venues in new bookings when available",
+    "confirmationAlerts": "Confirmation Alerts",
+    "notifyOnAccept": "Notify me when a booking is accepted",
+    "notifyOnDecline": "Notify me when a booking is declined",
+    "preferredOperator": "Preferred operator",
+    "preferredOperatorDesc": "Pre-fill resources from this operator's preferences.",
+    "targetOperator": "Target operator",
+    "emailSent": "Email sent!",
+    "whatsAppOpened": "WhatsApp opened!",
+    "lineOpened": "LINE opened!",
+    "linkExpires": "Link expires: {date}",
+    "roleDeleted": "{role} deleted",
+    "preferencesSaved": "Preferences saved",
+    "noBookings": "No bookings for this period.",
+    "byDiveCenter": "By Dive Center",
+    "byActivity": "By Activity",
+    "pax": "{count} pax",
+    "paxTotal": "{count} pax total",
+    "removeItem": "Remove Item",
+    "removeItemConfirm": "Remove {item}? This cannot be undone.",
+    "prescriptionMask": "Prescription mask",
+    "addInventoryItem": "Add Inventory Item",
+    "noInventory": "No inventory yet. Add your first item.",
+    "noItemsFound": "No {type} items found."
   },
   "portal": {
-    "loadingBooking": "Loading…",
-    "submissionComplete": {
-      "title": "All Done!",
-      "bodyWithOperator": "You're all set! {operatorName} will be in touch before your activity{datePart}.",
-      "bodyNoOperator": "You're all set! We'll be in touch before your activity{datePart}."
-    },
-    "dateSuffix": " on {date}",
-    "bookingClosed": {
-      "title": "Booking Closed",
-      "message": "This booking is closed. Please contact your dive center for help."
-    },
-    "steps": {
-      "contact": "Contact",
-      "medical": "Medical",
-      "waiver": "Waiver",
-      "equipment": "Equipment",
-      "safety": "Safety",
-      "submit": "Submit"
-    },
     "welcome": "Welcome, {name}",
-    "subtitle": "Please complete your booking paperwork below",
+    "subtitle": "Complete your booking paperwork.",
     "diverCount": "{count, plural, one {# diver} other {# divers}}",
+    "dateSuffix": " on {date}",
+    "submissionComplete": {
+      "withOperator": "Submission complete. {operatorName} will contact you before your activity{datePart}.",
+      "withoutOperator": "Submission complete. We will contact you before your activity{datePart}."
+    },
+    "bookingClosed": "This booking is closed. Contact your dive center.",
+    "tokenExpired": "This link has expired. Contact your dive center for a new one.",
+    "formsIncomplete": "Complete all steps before submitting.",
+    "ageError": "Minimum age: {minAge}. Diver age at activity: {age} {age, plural, one {year} other {years}}.",
+    "answerAllRemaining": "{count} unanswered questions remaining.",
+    "successMessage": "Paperwork complete. Your dive center will review and confirm your details.",
+    "medicalBlockMessage": "Forms submitted. Physician clearance is required before diving. Your dive center has been notified.",
+    "hardBlockTitle": "Physician Clearance Required",
+    "hardBlockMessage": "Physician clearance is required before diving. Your dive center has been notified and will contact you.",
+    "passportExpiryWarning": "Passport expires within 6 months. Check destination requirements before travel.",
+    "returnBanner": "Welcome back! Your details from a previous booking were found.",
+    "returnLoaded": "Previous details loaded. Review and update if anything changed.",
+    "agreeTo": "I, {name}, agree to the following:",
+    "guardianReason": "Required for participants under 18.",
+    "contactInfo": "Contact information",
+    "medicalQuestionnaire": "Medical questionnaire",
+    "waiverSignature": "Waiver & signature",
+    "diverSubmissions": "Diver submissions",
+    "diver": "Diver {number}",
+    "submitted": "{count} / {total} submitted",
+    "submittedOn": "Submitted {date}",
+    "waiverSigned": "Waiver signed",
+    "noSubmissions": "No submissions yet.",
     "postTrip": {
       "title": "Thanks for diving with us!",
-      "subtitle": "We hope you had an amazing experience.",
-      "reviewPrompt": "Help others discover great diving — leave us a review.",
-      "googleMaps": "Review on Google Maps",
-      "facebook": "Review on Facebook",
-      "signupPrompt": "Want to book your next dive adventure?",
-      "signupCta": "Sign Up for DiveDispatch"
+      "subtitle": "We hope you had a great experience.",
+      "reviewPrompt": "Enjoyed your dive? Leave a review.",
+      "signupPrompt": "Ready for your next dive?"
     }
+  },
+  "medical": {
+    "intro": "Scuba diving and freediving require good physical and mental health. Some medical conditions are hazardous while diving. This questionnaire determines if a physician evaluation is needed. Answer all questions honestly.",
+    "pregnancy": "If you are pregnant or trying to become pregnant, do not dive.",
+    "privacy": "Answers are shared with your dive center per PADI medical standards.",
+    "q1": "I have had problems with my lungs/breathing, heart, blood, or have been diagnosed with COVID-19.",
+    "q2": "I am over 45 years of age.",
+    "q3": "I struggle with moderate exercise (walk 1.6 km / 1 mile in 14 min) or swimming 200 m without resting.",
+    "q4": "I have had problems with my eyes, ears, or nasal passages/sinuses.",
+    "q5": "I have had surgery within the last 12 months, or ongoing issues from past surgery.",
+    "q6": "I have lost consciousness, had migraines, seizures, stroke, or major head injury.",
+    "q7": "I am being treated for psychological conditions, panic attacks, or addiction.",
+    "q8": "I have had back problems, hernia, ulcers, or diabetes.",
+    "q9": "I have had stomach or intestinal problems, including recent diarrhea.",
+    "q10": "I take prescription medications (except birth control or anti-malarials other than mefloquine).",
+    "statement": "I answered all questions honestly. I accept responsibility for inaccurate answers or undisclosed health conditions."
+  },
+  "waiver": {
+    "ackCheckbox": "I have read and understand this Release of Liability / Assumption of Risk agreement. I am of legal age and signing voluntarily."
   }
 }

@@ -1,11 +1,14 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card } from '../ui/card'
+import { InlineError } from '../ui/inline-error'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { SignaturePad, SignaturePadHandle } from './signature-pad'
 import { ShieldCheck } from 'lucide-react'
+import { toISODateString } from '@/lib/utils/date'
 import { calcAgeAtDate } from '@/lib/constants/activity-rules'
 import { NON_AGENCY_DISCLOSURE, LIABILITY_RELEASE_TEXT } from '@/lib/constants/waiver-text'
 import { usePortalStep } from '@/lib/hooks/use-portal-step'
@@ -44,16 +47,14 @@ interface StepWaiverProps {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+const todayLocal = () => toISODateString(new Date())
 
 // ── Scrollable legal block ───────────────────────────────────────────────────
 
 function LegalBlock({ text }: { text: string }) {
   return (
     <div
-      className="rounded-[var(--border-radius)] p-3 text-xs leading-relaxed overflow-y-auto text-secondary glass"
+      className="rounded-theme p-3 text-sm leading-relaxed overflow-y-auto text-secondary glass"
       style={{ maxHeight: 140, whiteSpace: 'pre-wrap' }}
     >
       {text}
@@ -72,13 +73,17 @@ export function StepWaiver({
   submitting = false,
   bookingStartDate,
 }: StepWaiverProps) {
-  const refDate = bookingStartDate ?? todayISO()
+  const tWaiver = useTranslations('waiver')
+  const tPortal = useTranslations('portal')
+  const tCommon = useTranslations('common')
+
+  const refDate = bookingStartDate ?? todayLocal()
   const isUnder18 = dateOfBirth ? calcAgeAtDate(dateOfBirth, refDate) < 18 : false
 
   const [acknowledged, setAcknowledged] = useState(false)
   const [hasInsurance, setHasInsurance] = useState<'yes' | 'no' | null>(null)
   const [insurancePolicyNumber, setInsurancePolicyNumber] = useState('')
-  const [date, setDate] = useState(todayISO())
+  const [date, setDate] = useState(todayLocal())
   const [guardianName, setGuardianName] = useState('')
   const [hasSig, setHasSig] = useState(false)
   const [hasGuardianSig, setHasGuardianSig] = useState(false)
@@ -113,16 +118,16 @@ export function StepWaiver({
 
   const validate = (): boolean => {
     const next: Record<string, string> = {}
-    if (!acknowledged) next.acknowledged = 'Please acknowledge the agreement above.'
-    if (!hasSig) next.signature = 'Please sign above.'
-    if (!date) next.date = 'Date is required.'
-    if (hasInsurance === null) next.hasInsurance = 'Please select Yes or No.'
+    if (!acknowledged) next.acknowledged = tCommon('fieldRequired', { field: 'Acknowledgment' })
+    if (!hasSig) next.signature = tCommon('fieldRequired', { field: 'Signature' })
+    if (!date) next.date = tCommon('fieldRequired', { field: 'Date' })
+    if (hasInsurance === null) next.hasInsurance = tCommon('fieldRequired', { field: 'Selection' })
     if (hasInsurance === 'yes' && !insurancePolicyNumber.trim()) {
-      next.insurancePolicyNumber = 'Please enter your policy number.'
+      next.insurancePolicyNumber = tCommon('fieldRequired', { field: 'Policy number' })
     }
     if (isUnder18) {
-      if (!guardianName.trim()) next.guardianName = 'Please enter the guardian\'s name.'
-      if (!hasGuardianSig) next.guardianSignature = 'Guardian signature is required.'
+      if (!guardianName.trim()) next.guardianName = tCommon('fieldRequired', { field: 'Guardian name' })
+      if (!hasGuardianSig) next.guardianSignature = tCommon('fieldRequired', { field: 'Guardian signature' })
     }
     setErrors(next)
     return Object.keys(next).length === 0
@@ -134,7 +139,7 @@ export function StepWaiver({
 
     const signatureBlob = await signatureRef.current?.getBlob()
     if (!signatureBlob) {
-      setErrors({ ...errors, signature: 'Please sign above.' })
+      setErrors({ ...errors, signature: tCommon('fieldRequired', { field: 'Signature' }) })
       return
     }
 
@@ -142,7 +147,7 @@ export function StepWaiver({
     if (isUnder18) {
       const blob = await guardianSignatureRef.current?.getBlob()
       if (!blob) {
-        setErrors({ ...errors, guardianSignature: 'Guardian signature is required.' })
+        setErrors({ ...errors, guardianSignature: tCommon('fieldRequired', { field: 'Guardian signature' }) })
         return
       }
       guardianSignatureBlob = blob
@@ -160,10 +165,6 @@ export function StepWaiver({
   }
 
   const labelClass = 'text-sm font-medium'
-  const sectionHeadingStyle: React.CSSProperties = {
-    color: 'var(--color-text-primary)',
-    fontFamily: 'var(--font-heading)',
-  }
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -171,8 +172,8 @@ export function StepWaiver({
       <Card padding="md">
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck size={18} style={{ color: 'var(--color-accent)' }} />
-            <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
+            <ShieldCheck size={18} className="text-accent" />
+            <h2 className="text-base font-semibold font-heading">
               Non-Agency Disclosure
             </h2>
           </div>
@@ -197,18 +198,12 @@ export function StepWaiver({
       {/* Section: Liability Release */}
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
+          <h2 className="text-base font-semibold font-heading">
             Release of Liability / Assumption of Risk
           </h2>
 
           <p className="text-sm text-secondary">
-            I,{' '}
-            <span
-              className="font-semibold text-primary"
-            >
-              {participantName}
-            </span>
-            , agree to the following:
+            {tPortal('agreeTo', { name: participantName })}
           </p>
 
           <LegalBlock
@@ -219,8 +214,7 @@ export function StepWaiver({
           <Checkbox
             label={
               <span className="text-sm leading-snug text-secondary">
-                I have read and fully understand this Release of Liability / Assumption of Risk
-                Agreement. I am of lawful age and legally competent to sign it of my own free act.
+                {tWaiver('ackCheckbox')}
               </span>
             }
             checked={acknowledged}
@@ -230,9 +224,7 @@ export function StepWaiver({
             }}
           />
           {errors.acknowledged && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-              {errors.acknowledged}
-            </p>
+            <InlineError>{errors.acknowledged}</InlineError>
           )}
         </div>
       </Card>
@@ -240,7 +232,7 @@ export function StepWaiver({
       {/* Section: Diver Accident Insurance */}
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
+          <h2 className="text-base font-semibold font-heading">
             Diver Accident Insurance
           </h2>
           <p className="text-sm text-secondary">
@@ -249,7 +241,7 @@ export function StepWaiver({
           <div className="flex gap-6">
             {(['yes', 'no'] as const).map((val) => (
               <label key={val} className="flex items-center gap-2 cursor-pointer">
-                <input
+                <input /* design-ok: Batch 5 will replace with RadioGroup */
                   type="radio"
                   name="hasInsurance"
                   value={val}
@@ -264,16 +256,14 @@ export function StepWaiver({
                 <span
                   className="text-sm capitalize text-primary"
                 >
-                  {val === 'yes' ? 'Yes' : 'No'}
+                  {val === 'yes' ? tCommon('yes') : tCommon('no')}
                 </span>
               </label>
             ))}
           </div>
 
           {errors.hasInsurance && (
-            <p className="text-sm" style={{ color: 'var(--color-destructive)' }} role="alert">
-              {errors.hasInsurance}
-            </p>
+            <InlineError>{errors.hasInsurance}</InlineError>
           )}
 
           {hasInsurance === 'yes' && (
@@ -284,7 +274,7 @@ export function StepWaiver({
                 setInsurancePolicyNumber(e.target.value)
                 if (e.target.value.trim()) clearError('insurancePolicyNumber')
               }}
-              placeholder="e.g. DAN-123456"
+              placeholder="DAN-123456"
               error={errors.insurancePolicyNumber}
             />
           )}
@@ -294,7 +284,7 @@ export function StepWaiver({
       {/* Section: Participant Signature */}
       <Card padding="md">
         <div className="space-y-4">
-          <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
+          <h2 className="text-base font-semibold font-heading">
             Participant Signature
           </h2>
 
@@ -315,7 +305,7 @@ export function StepWaiver({
             value={date}
             onChange={(e) => setDate(e.target.value)}
             error={errors.date}
-            max={todayISO()}
+            max={todayLocal()}
           />
         </div>
       </Card>
@@ -325,11 +315,11 @@ export function StepWaiver({
         <Card padding="md">
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold" style={sectionHeadingStyle}>
+              <h2 className="text-base font-semibold font-heading">
                 Parent / Guardian Signature
               </h2>
               <p className="text-sm mt-1 text-secondary">
-                Required because the participant is under 18.
+                {tPortal('guardianReason')}
               </p>
             </div>
 
@@ -340,7 +330,7 @@ export function StepWaiver({
                 setGuardianName(e.target.value)
                 if (e.target.value.trim()) clearError('guardianName')
               }}
-              placeholder="Full legal name"
+              placeholder="Legal name"
               error={errors.guardianName}
             />
 

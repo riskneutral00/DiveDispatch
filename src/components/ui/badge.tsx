@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils/cn";
 
-type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info";
+export type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info" | "muted";
 type BadgeSize = "sm" | "md";
 
 interface BadgeProps {
@@ -10,6 +10,9 @@ interface BadgeProps {
   children: React.ReactNode;
   dot?: boolean;
   className?: string;
+  /** When provided, renders as interactive <button> with hover effects */
+  onClick?: () => void;
+  title?: string;
 }
 
 const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
@@ -38,6 +41,11 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
     color: "var(--color-secondary)",
     borderColor: "color-mix(in srgb, var(--color-secondary) 30%, transparent)",
   },
+  muted: {
+    background: "var(--color-glass-bg)",
+    color: "var(--color-text-secondary)",
+    borderColor: "var(--color-glass-border)",
+  },
 };
 
 const sizeMap: Record<BadgeSize, string> = {
@@ -51,6 +59,7 @@ const dotColorVar: Record<BadgeVariant, string> = {
   warning: "var(--color-warning)",
   destructive: "var(--color-destructive)",
   info: "var(--color-secondary)",
+  muted: "var(--color-text-secondary)",
 };
 
 export const Badge = React.memo(function Badge({
@@ -59,13 +68,19 @@ export const Badge = React.memo(function Badge({
   dot = false,
   children,
   className = "",
+  onClick,
+  title,
 }: BadgeProps) {
+  const Tag = onClick ? "button" : "span";
   return (
-    <span
+    <Tag
+      {...(onClick ? { type: "button" as const, onClick } : {})}
+      title={title}
       className={cn(
         "inline-flex items-center border font-medium",
         "rounded-full",
         sizeMap[size],
+        onClick && "cursor-pointer transition-all hover:brightness-125 hover:scale-105",
         className,
       )}
       style={variantStyles[variant]}
@@ -82,6 +97,6 @@ export const Badge = React.memo(function Badge({
         />
       )}
       {children}
-    </span>
+    </Tag>
   );
 })

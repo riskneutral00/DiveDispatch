@@ -1,81 +1,17 @@
 {
   "app": {
     "name": "DiveDispatch",
-    "tagline": "Planifiez votre plongée, plongez selon votre plan. Partout, à chaque fois."
-  },
-  "accountOverlay": {
-    "title": "Compte"
-  },
-  "userMenu": {
-    "preferences": "Préférences"
-  },
-  "nav": {
-    "dashboard": "Tableau de bord",
-    "bookings": "Réservations",
-    "directory": "Répertoire",
-    "resources": "Ressources",
-    "profile": "Profil",
-    "preferences": "Préférences",
-    "signIn": "Connexion",
-    "signOut": "Déconnexion",
-    "roles": "Rôles"
-  },
-  "auth": {
-    "signIn": "Connexion",
-    "signUp": "Inscription",
-    "creatingAccount": "Création du compte…",
-    "email": "E-mail",
-    "password": "Mot de passe",
-    "forgotPassword": "Mot de passe oublié ?",
-    "noAccount": "Vous n'avez pas de compte ?",
-    "hasAccount": "Vous avez déjà un compte ?",
-    "selectRole": "Sélectionnez votre rôle",
-    "roleOrganizer": "Je crée des réservations de plongée",
-    "roleResource": "Je fournis des services de plongée"
-  },
-  "booking": {
-    "new": "Nouvelle réservation",
-    "edit": "Modifier la réservation",
-    "status": {
-      "draft": "Brouillon",
-      "upcoming": "À venir",
-      "completed": "Terminée",
-      "cancelled": "Annulée"
-    },
-    "reservation": {
-      "pending": "En attente",
-      "confirmed": "Confirmée",
-      "vacated": "Libérée"
-    },
-    "wizard": {
-      "editConfirmTitle": "Modifier cette réservation ?",
-      "editConfirmBody": "La modification repassera la réservation en brouillon et libérera toutes les réservations de ressources. Les ressources affectées devront être reconfirmées.",
-      "editConfirmYes": "Oui, modifier",
-      "preparing": "Préparation de la réservation…",
-      "preparePortalLink": "Préparer le lien du portail",
-      "preparePortalHint": "Crée une réservation brouillon pour copier ou envoyer le lien client avant de terminer le programme.",
-      "portalLinkDelivery": "Envoi du lien du portail",
-      "operatorFallback": "Opérateur",
-      "editingTitle": "Modification : {ref}",
-      "cancelBookingAria": "Annuler la réservation",
-      "errors": {
-        "resetBooking": "Échec de la réinitialisation de la réservation",
-        "saveProgress": "Échec de l'enregistrement"
-      }
-    }
+    "tagline": "Planifiez votre plongée. Plongez selon votre plan."
   },
   "common": {
     "loading": "Chargement…",
     "saving": "Enregistrement…",
     "redirecting": "Redirection…",
-    "error": "Une erreur est survenue",
-    "errorRetry": "Une erreur est survenue. Veuillez réessayer.",
-    "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
+    "saved": "Enregistré",
     "delete": "Supprimer",
     "edit": "Modifier",
-    "view": "Voir",
     "back": "Retour",
     "next": "Suivant",
     "continue": "Continuer",
@@ -87,64 +23,181 @@
     "remove": "Retirer",
     "close": "Fermer",
     "search": "Rechercher",
-    "filter": "Filtrer",
+    "clear": "Effacer",
     "copy": "Copier",
     "copied": "Copié !",
     "yes": "Oui",
     "no": "Non",
+    "none": "Aucun",
     "verified": "Vérifié",
     "required": "Obligatoire.",
-    "noResults": "Aucun résultat trouvé"
-  },
-  "onboarding": {
-    "bannerMessage": "Complétez votre profil pour créer ou recevoir des réservations.",
-    "bannerCta": "Compléter le profil →"
+    "noResults": "Aucun résultat.",
+    "incomplete": "Incomplet",
+    "pending": "En attente",
+    "done": "Terminé",
+    "complete": "Complet",
+    "notRequired": "non requis",
+    "error": "Une erreur est survenue",
+    "errorRetry": "Une erreur est survenue. Veuillez réessayer.",
+    "errorContact": "Une erreur est survenue. Contactez votre centre de plongée.",
+    "actionFailed": "{action} a échoué. Veuillez réessayer.",
+    "fieldRequired": "{field} obligatoire.",
+    "sendLink": "Envoyer le lien",
+    "addItem": "Ajouter un article",
+    "inventory": "Inventaire",
+    "groupBy": "Grouper par"
   },
   "errors": {
-    "generic": {
-      "title": "Une erreur est survenue",
-      "message": "Une erreur est survenue. Veuillez réessayer."
+    "unexpected": "Un problème est survenu. Veuillez réessayer.",
+    "tokenExpired": "Ce lien n'est plus valide. Veuillez contacter votre centre de plongée pour en obtenir un nouveau.",
+    "bookingClosed": "Cette réservation est clôturée. Veuillez contacter votre centre de plongée.",
+    "formsIncomplete": "Veuillez compléter toutes les étapes ci-dessus avant de soumettre.",
+    "linkExpired": "Lien expiré.",
+    "copyFailed": "Échec de la copie. Veuillez coller manuellement.",
+    "duplicateRole": "Vous détenez déjà ce rôle.",
+    "lastRole": "Vous devez avoir au moins un rôle.",
+    "noWhatsApp": "Aucun numéro WhatsApp enregistré pour ce client.",
+    "activeReservations": "Suppression impossible — des réservations actives existent.",
+    "incomplete": "Incomplet : {reason}",
+    "pageNotFound": "Page introuvable",
+    "pageNotFoundMessage": "Cette page n'existe pas ou a été déplacée.",
+    "bookingClosedTitle": "Réservation clôturée",
+    "completeTitle": "Terminé !",
+    "roleNotDetermined": "Impossible de déterminer le rôle actif."
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "bookings": "Réservations",
+    "resources": "Ressources",
+    "profile": "Profil",
+    "preferences": "Préférences",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "roles": "Rôles"
+  },
+  "auth": {
+    "creatingAccount": "Création…",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas de compte ?",
+    "hasAccount": "Vous avez un compte ?",
+    "selectRole": "Sélectionnez votre rôle",
+    "roleOrganizer": "Créer des réservations",
+    "roleResource": "Fournir des services"
+  },
+  "booking": {
+    "status": {
+      "draft": "Brouillon",
+      "upcoming": "À venir",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
     },
-    "portal": {
-      "title": "Une erreur est survenue",
-      "message": "Impossible de charger le formulaire de réservation. Réessayez le lien ou contactez le centre de plongée."
+    "reservation": {
+      "pending": "En attente",
+      "confirmed": "Confirmée",
+      "vacated": "Libérée"
     },
-    "auth": {
-      "title": "Erreur d'authentification",
-      "message": "Une erreur s'est produite lors de la connexion. Veuillez réessayer."
-    }
+    "editConfirmTitle": "Modifier la réservation ?",
+    "editConfirmBody": "Réinitialise en Brouillon. Les ressources devront reconfirmer.",
+    "editingTitle": "Modification : {ref}",
+    "preparePortalHint": "Crée un brouillon pour que vous puissiez partager le lien du portail avant de finaliser.",
+    "dayNumber": "Jour {number}",
+    "diveDay": "Journée de plongée",
+    "autoAdded": "Ajouté automatiquement",
+    "noDivesScheduled": "Aucune plongée planifiée",
+    "venueAssignment": "Affectation du site",
+    "confined": "Confiné",
+    "confinedWater": "Milieu protégé",
+    "openWater": "Milieu naturel",
+    "external": "Externe (hors système)",
+    "switchToSystemInstructor": "Passer à un instructeur du système",
+    "switchToSystemDiveMaster": "Passer à un dive master du système",
+    "dayLimitReached": "Limite quotidienne atteinte — 3 plongées maximum",
+    "startTime": "Heure de début",
+    "endTime": "Heure de fin",
+    "removeDay": "Supprimer le jour",
+    "acceptanceMode": "Mode d'acceptation",
+    "preferredResources": "Ressources préférées",
+    "autoAssignPreferred": "Affecter automatiquement les instructeurs, bateaux et sites préférés aux nouvelles réservations lorsqu'ils sont disponibles",
+    "confirmationAlerts": "Alertes de confirmation",
+    "notifyOnAccept": "Me notifier lorsqu'une réservation est acceptée",
+    "notifyOnDecline": "Me notifier lorsqu'une réservation est refusée",
+    "preferredOperator": "Opérateur préféré",
+    "preferredOperatorDesc": "Pré-remplit les ressources à partir des préférences de cet opérateur.",
+    "targetOperator": "Opérateur cible",
+    "emailSent": "E-mail envoyé !",
+    "whatsAppOpened": "WhatsApp ouvert !",
+    "lineOpened": "LINE ouvert !",
+    "linkExpires": "Lien expire le : {date}",
+    "roleDeleted": "{role} supprimé",
+    "preferencesSaved": "Préférences enregistrées",
+    "noBookings": "Aucune réservation pour cette période.",
+    "byDiveCenter": "Par centre de plongée",
+    "byActivity": "Par activité",
+    "pax": "{count} pax",
+    "paxTotal": "{count} pax au total",
+    "removeItem": "Retirer l'article",
+    "removeItemConfirm": "Retirer {item} ? Cette action est irréversible.",
+    "prescriptionMask": "Masque correcteur",
+    "addInventoryItem": "Ajouter un article d'inventaire",
+    "noInventory": "Aucun inventaire. Ajoutez votre premier article.",
+    "noItemsFound": "Aucun article de type {type} trouvé."
   },
   "portal": {
-    "loadingBooking": "Chargement de la réservation…",
-    "submissionComplete": {
-      "title": "Envoi terminé",
-      "bodyWithOperator": "Votre envoi est complet. {operatorName} vous contactera avant l'activité{datePart}.",
-      "bodyNoOperator": "Votre envoi est complet. Nous vous contacterons avant l'activité{datePart}."
-    },
-    "dateSuffix": " le {date}",
-    "bookingClosed": {
-      "title": "Réservation fermée",
-      "message": "Cette réservation n'accepte plus d'envois. Contactez l'opérateur pour assistance."
-    },
-    "steps": {
-      "contact": "Contact",
-      "medical": "Médical",
-      "waiver": "Décharge",
-      "equipment": "Équipement",
-      "safety": "Sécurité",
-      "submit": "Envoyer"
-    },
     "welcome": "Bienvenue, {name}",
-    "subtitle": "Veuillez compléter les documents de réservation ci-dessous",
+    "subtitle": "Complétez vos documents de réservation.",
     "diverCount": "{count, plural, one {# plongeur} other {# plongeurs}}",
+    "dateSuffix": " le {date}",
+    "submissionComplete": {
+      "withOperator": "Soumission terminée. {operatorName} vous contactera avant votre activité{datePart}.",
+      "withoutOperator": "Soumission terminée. Nous vous contacterons avant votre activité{datePart}."
+    },
+    "bookingClosed": "Cette réservation est clôturée. Contactez votre centre de plongée.",
+    "tokenExpired": "Ce lien a expiré. Contactez votre centre de plongée pour en obtenir un nouveau.",
+    "formsIncomplete": "Veuillez compléter toutes les étapes avant de soumettre.",
+    "ageError": "Âge minimum : {minAge}. Âge du plongeur le jour de l'activité : {age} {age, plural, one {an} other {ans}}.",
+    "answerAllRemaining": "{count} questions sans réponse restantes.",
+    "successMessage": "Documents complétés. Votre centre de plongée examinera et confirmera vos informations.",
+    "medicalBlockMessage": "Formulaires soumis. Une autorisation médicale est requise avant de plonger. Votre centre de plongée a été informé.",
+    "hardBlockTitle": "Autorisation médicale requise",
+    "hardBlockMessage": "Une autorisation médicale est requise avant de plonger. Votre centre de plongée a été informé et vous contactera.",
+    "passportExpiryWarning": "Le passeport expire dans moins de 6 mois. Vérifiez les exigences de la destination avant de voyager.",
+    "returnBanner": "Bon retour ! Vos informations d'une réservation précédente ont été retrouvées.",
+    "returnLoaded": "Informations précédentes chargées. Vérifiez et mettez à jour si nécessaire.",
+    "agreeTo": "Je soussigné(e), {name}, accepte ce qui suit :",
+    "guardianReason": "Obligatoire pour les participants de moins de 18 ans.",
+    "contactInfo": "Coordonnées",
+    "medicalQuestionnaire": "Questionnaire médical",
+    "waiverSignature": "Décharge et signature",
+    "diverSubmissions": "Soumissions des plongeurs",
+    "diver": "Plongeur {number}",
+    "submitted": "{count} / {total} soumis",
+    "submittedOn": "Soumis le {date}",
+    "waiverSigned": "Décharge signée",
+    "noSubmissions": "Aucune soumission pour le moment.",
     "postTrip": {
       "title": "Merci d'avoir plongé avec nous !",
-      "subtitle": "Nous espérons que vous avez vécu une expérience incroyable.",
-      "reviewPrompt": "Aidez d'autres plongeurs à nous trouver — laissez un avis.",
-      "googleMaps": "Avis sur Google Maps",
-      "facebook": "Avis sur Facebook",
-      "signupPrompt": "Envie de réserver votre prochaine aventure ?",
-      "signupCta": "S'inscrire sur DiveDispatch"
+      "subtitle": "Nous espérons que vous avez passé une excellente expérience.",
+      "reviewPrompt": "Vous avez apprécié votre plongée ? Laissez un avis.",
+      "signupPrompt": "Prêt pour votre prochaine plongée ?"
     }
+  },
+  "medical": {
+    "intro": "La plongée sous-marine et l'apnée nécessitent une bonne santé physique et mentale. Certaines conditions médicales présentent un danger en plongée. Ce questionnaire détermine si une évaluation par un médecin est nécessaire. Répondez à toutes les questions honnêtement.",
+    "pregnancy": "Si vous êtes enceinte ou essayez de le devenir, ne plongez pas.",
+    "privacy": "Les réponses sont partagées avec votre centre de plongée conformément aux normes médicales PADI.",
+    "q1": "J'ai eu des problèmes pulmonaires/respiratoires, cardiaques, sanguins, ou j'ai reçu un diagnostic de COVID-19.",
+    "q2": "J'ai plus de 45 ans.",
+    "q3": "J'ai des difficultés avec un exercice modéré (marcher 1,6 km en 14 min) ou nager 200 m sans pause.",
+    "q4": "J'ai eu des problèmes aux yeux, aux oreilles ou aux voies nasales/sinus.",
+    "q5": "J'ai subi une intervention chirurgicale au cours des 12 derniers mois, ou j'ai des séquelles d'une chirurgie antérieure.",
+    "q6": "J'ai perdu connaissance, eu des migraines, des convulsions, un AVC ou un traumatisme crânien majeur.",
+    "q7": "Je suis en traitement pour des troubles psychologiques, des crises de panique ou une dépendance.",
+    "q8": "J'ai eu des problèmes de dos, une hernie, des ulcères ou du diabète.",
+    "q9": "J'ai eu des problèmes gastro-intestinaux, y compris une diarrhée récente.",
+    "q10": "Je prends des médicaments sur ordonnance (hors contraceptifs ou antipaludéens autres que la méfloquine).",
+    "statement": "J'ai répondu à toutes les questions honnêtement. J'accepte la responsabilité en cas de réponses inexactes ou de conditions de santé non divulguées."
+  },
+  "waiver": {
+    "ackCheckbox": "J'ai lu et compris cet accord de Décharge de Responsabilité / Acceptation des Risques. Je suis majeur(e) et signe de mon plein gré."
   }
 }

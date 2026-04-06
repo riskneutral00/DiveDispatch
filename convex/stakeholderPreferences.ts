@@ -1,7 +1,6 @@
-import { ConvexError, v } from 'convex/values'
+import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { ErrorCode } from './lib/errorCodes'
-import { requireAuth } from './lib/auth'
+import { getAuthUser, requireAuth } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
@@ -14,15 +13,7 @@ const acceptanceModeValidator = v.union(
 export const mine = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) return null
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
+    const user = await getAuthUser(ctx)
     if (!user) return null
 
     return await ctx.db
@@ -61,16 +52,7 @@ export const upsert = mutation({
     autoAssignPreferred: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_tokenIdentifier', (q) =>
-        q.eq('tokenIdentifier', identity.tokenIdentifier),
-      )
-      .unique()
-    if (!user) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const { user } = await requireAuth(ctx)
     await requireActiveRole(ctx, user._id, args.activeRole)
 
     const existing = await ctx.db

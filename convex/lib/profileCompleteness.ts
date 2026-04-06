@@ -13,6 +13,7 @@ import type { QueryCtx } from '../_generated/server'
 import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
 import { OPERATOR_ROLE_SET } from './auth'
 import { AGENCIES } from '../shared/agencies'
+import { profileBySlug } from './profileHelpers'
 import { ROLE_TABLE_MAP } from './profileHelpers'
 
 /**
@@ -20,7 +21,7 @@ import { ROLE_TABLE_MAP } from './profileHelpers'
  * plus two additional layers (preferences + coverage) for operator roles.
  */
 export async function checkProfileCompleteness(
-  ctx: Pick<QueryCtx, 'db'>,
+  ctx: QueryCtx,
   user: { _id: Id<'users'> },
   role: string,
 ): Promise<{ percentage: number; incomplete: string[] }> {
@@ -181,19 +182,10 @@ export async function checkProfileCompleteness(
     let hasCompressor = compSlugs.length > 0
     if (!hasCompressor) {
       for (const slug of boatSlugs) {
-        const boatUser = await ctx.db
-          .query('users')
-          .withIndex('by_slug', (q) => q.eq('slug', slug))
-          .unique()
-        if (boatUser) {
-          const boat = await ctx.db
-            .query('boats')
-            .withIndex('by_userId', (q) => q.eq('userId', boatUser._id))
-            .unique()
-          if (boat && boat.hasCompressor) {
-            hasCompressor = true
-            break
-          }
+        const boat = await profileBySlug(ctx, slug, 'boats')
+        if (boat && (boat as { hasCompressor?: boolean }).hasCompressor) {
+          hasCompressor = true
+          break
         }
       }
     }
@@ -212,7 +204,7 @@ export async function checkProfileCompleteness(
  * Returns allComplete: true only when every role is at 100%.
  */
 export async function checkAllRolesCompleteness(
-  ctx: Pick<QueryCtx, 'db'>,
+  ctx: QueryCtx,
   userId: Id<'users'>,
 ): Promise<{
   allComplete: boolean

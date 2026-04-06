@@ -56,7 +56,7 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
 
   return (
     <Card padding="md">
-      <p className="text-secondary" style={{ fontSize: 14, textAlign: 'center' }}>
+      <p className="text-sm text-secondary text-center">
         Profile setup for <strong>{cfg?.label ?? role}</strong> is available from your dashboard.
       </p>
     </Card>
@@ -76,24 +76,19 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
   const config = ROLE_BY_CLERK_ROLE[role]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-primary"
-          style={{ fontSize: 18,
-            fontWeight: 600,
-            margin: 0,
-            marginBottom: 4 }}
-        >
+        <h2 className="text-lg font-semibold text-primary mb-1">
           Set up your {config?.label ?? role} profile
         </h2>
-        <p className="text-secondary" style={{ fontSize: 13, margin: 0 }}>
+        <p className="text-xs text-secondary">
           Complete your profile details for this role. You can always finish later from your Roles tab.
         </p>
       </div>
 
       <ProfileFormForRole role={role} onComplete={onComplete} />
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="flex justify-end">
         <Button variant="secondary" onClick={onComplete}>
           Done
         </Button>

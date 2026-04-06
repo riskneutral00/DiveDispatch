@@ -16,6 +16,7 @@ import {
   UsersRound,
   XCircle,
 } from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
 import type { IconName } from '@/lib/notifications/notification-config'
 import { getNotificationStyle } from '@/lib/notifications/notification-config'
 import { timeAgo } from '@/lib/utils/time-ago'
@@ -100,8 +101,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
 
         <div className="flex-1 min-w-0">
           <p
-            className="text-sm leading-snug text-primary"
-            style={{ fontWeight: isUnread ? 600 : 400 }}
+            className={cn("text-sm leading-snug text-primary", isUnread ? 'font-semibold' : 'font-normal')}
           >
             {notification.message}
           </p>

@@ -5,41 +5,8 @@ import {
   DISPLAY_RESOURCE_ROLES,
   type RoleConfig,
 } from '@/lib/constants/roles'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-
-// ── Role tile ─────────────────────────────────────────────────────────────────
-
-function RoleTile({
-  role,
-  selected,
-  onToggle,
-}: {
-  role: RoleConfig
-  selected: boolean
-  onToggle: (role: RoleConfig) => void
-}) {
-  const Icon = role.icon
-  return (
-    <button
-      type="button"
-      onClick={() => onToggle(role)}
-      className="glass-container relative w-full rounded-[var(--border-radius)] p-4 text-left transition-all focus-visible:outline-2 text-primary"
-      style={{ borderColor: selected ? 'var(--color-primary)' : 'var(--color-glass-border)',
-        background: selected ? 'var(--color-primary-glow)' : 'var(--color-glass-bg)',
-        outlineColor: 'var(--color-accent)' }}
-      aria-pressed={selected}
-    >
-      <div className="flex items-center gap-3">
-        <Icon
-          size={20}
-          style={{ color: selected ? 'var(--color-primary)' : 'var(--color-text-secondary)', flexShrink: 0 }}
-        />
-        <span className="font-medium text-sm leading-tight">{role.label}</span>
-      </div>
-    </button>
-  )
-}
+import { RoleTile } from '@/components/ui/role-tile'
 
 // ── Step: Role selection ──────────────────────────────────────────────────────
 
@@ -72,7 +39,7 @@ export function StepRoleSelection({
         </p>
       </div>
 
-      <div className="w-full grid grid-cols-2 gap-2.5 mb-4" data-testid="wizard-content">
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4" data-testid="wizard-content">
         {/* Organizers */}
         <div className="col-span-2 mb-0.5">
           <p className="text-xs font-medium uppercase tracking-wider text-secondary">
@@ -84,7 +51,7 @@ export function StepRoleSelection({
             key={role.key}
             role={role}
             selected={selectedSet.has(role.key)}
-            onToggle={onToggle}
+            onClick={() => onToggle(role)}
           />
         ))}
 
@@ -99,7 +66,7 @@ export function StepRoleSelection({
             key={role.key}
             role={role}
             selected={selectedSet.has(role.key)}
-            onToggle={onToggle}
+            onClick={() => onToggle(role)}
           />
         ))}
       </div>

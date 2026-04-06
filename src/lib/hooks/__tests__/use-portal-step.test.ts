@@ -3,12 +3,11 @@ import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { usePortalStep } from '../use-portal-step'
 import { ConvexError } from 'convex/values'
-import {
-  TOKEN_EXPIRED_MESSAGE,
-  BOOKING_CLOSED_MESSAGE,
-  UNEXPECTED_ERROR_MESSAGE,
-  FORMS_INCOMPLETE_FALLBACK_MESSAGE,
-} from '@/lib/constants/error-messages'
+// Legacy error strings — matches mapPortalMutationError output in convex-error.ts
+const TOKEN_EXPIRED_MESSAGE = 'This link is no longer valid. Contact your dive center for a new one.'
+const BOOKING_CLOSED_MESSAGE = 'This booking is closed. Contact your dive center for help.'
+const UNEXPECTED_ERROR_MESSAGE = 'Something went wrong. Try again.'
+const FORMS_INCOMPLETE_FALLBACK_MESSAGE = 'Complete all steps above before submitting.'
 
 // ── Error state management ──────────────────────────────────────────────────
 

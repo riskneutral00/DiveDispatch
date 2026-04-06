@@ -70,7 +70,7 @@ export function Button({
       className={cn(
         'inline-flex items-center justify-center',
         'border font-medium leading-none',
-        'rounded-[var(--border-radius)]',
+        'rounded-theme',
         'transition-all',
         'glass-btn',
         `glass-btn-${variant}`,

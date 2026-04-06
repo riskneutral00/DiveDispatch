@@ -1,11 +1,12 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-
+import { parseOptionalInt } from '@/lib/utils/numbers'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
+import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
 import { FormGrid, FormField } from '@/components/ui/form-grid'
 import { Input } from '@/components/ui/input'
@@ -75,11 +76,6 @@ export function emptyFleet(): FleetState {
 
 export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
-}
-
-function parseOptionalInt(s: string): number | undefined {
-  const n = parseInt(s, 10)
-  return isNaN(n) ? undefined : n
 }
 
 // ---------------------------------------------------------------------------
@@ -334,7 +330,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         <FormSectionHeader
           label="Routes"
           action={
-            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-opacity hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
+            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-xs px-2 py-1 min-h-[44px] rounded border transition-opacity hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
               <Plus size={11} />
               Add Route
             </button>
@@ -375,7 +371,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
         {DAYS.map((d) => {
           const active = route.daysOfWeek.includes(d.value)
           return (
-            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-xs rounded border transition-all"
+            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-xs rounded border transition-all min-h-[44px] min-w-[44px]"
               style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}>
               {d.label}
             </button>
@@ -383,7 +379,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
         })}
       </div>
       {errors[`fleet.${fi}.routes.${ri}.daysOfWeek`] && (
-        <p className="text-xs" style={{ color: 'var(--color-destructive)' }}>{errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}</p>
+        <InlineError size="sm">{errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}</InlineError>
       )}
     </ItemCard>
   )

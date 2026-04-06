@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useMutation } from 'convex/react'
-import { getConvexErrorCode, parseConvexError } from '@/lib/utils/convex-error'
+import { useTranslations } from 'next-intl'
+import { getConvexErrorCode, parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
-import { UNEXPECTED_ERROR_MESSAGE } from '@/lib/constants/error-messages'
-import { ConfirmActionDialog } from './confirm-action-dialog'
+import { ConfirmActionDialog } from '@/components/ui/confirm-dialog'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,7 @@ export function CancelBookingDialog({
   bookingId,
   onSuccess,
 }: CancelBookingDialogProps) {
+  const tErrors = useTranslations('errors')
   const cancelBooking = useMutation(api.bookings.status.cancelBooking)
   const [reason, setReason] = useState('')
 
@@ -48,7 +49,7 @@ export function CancelBookingDialog({
       } else if (code === 'FORBIDDEN') {
         throw new Error('No permission to cancel.')
       } else {
-        throw new Error(parseConvexError(err, UNEXPECTED_ERROR_MESSAGE))
+        throw new Error(parseConvexErrorI18n(err, tErrors))
       }
     }
   }

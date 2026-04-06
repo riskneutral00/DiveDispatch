@@ -3,9 +3,12 @@ import { cn } from '@/lib/utils/cn'
 
 interface CardProps {
   children: React.ReactNode;
+  /** Layout only — no visual overrides (colors, typography, radii, animation). */
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   hoverable?: boolean;
+  centered?: boolean;
+  overflow?: "visible" | "hidden";
   as?: React.ElementType
   style?: React.CSSProperties
   onClick?: React.MouseEventHandler
@@ -23,6 +26,8 @@ export function Card({
   className = '',
   padding = 'md',
   hoverable = false,
+  centered = false,
+  overflow = 'visible',
   as: Tag = 'div',
   style,
   onClick,
@@ -37,6 +42,8 @@ export function Card({
         hoverable && 'glass-surface cursor-pointer',
         'relative',
         paddingMap[padding],
+        centered && 'text-center',
+        overflow === 'hidden' && 'overflow-hidden',
         className,
       )}
     >

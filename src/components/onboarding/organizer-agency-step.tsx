@@ -3,12 +3,12 @@
 import { useMutation, useQuery } from 'convex/react'
 import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { api } from '@/lib/convex-generated'
-import { Button, Input, SimpleSelect } from '@/components/ui'
+import { Button, Input, InlineError, SimpleSelect } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
+import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { OrganizerStepCard } from './organizer-step-card'
 
 type Association = { agency: string; number: string }
@@ -19,19 +19,8 @@ interface OrganizerAgencyStepProps {
   onBack: () => void
 }
 
-function useRoleApi(role: ClerkRole) {
-  switch (role) {
-    case 'DiveCenter':
-      return { mine: api.diveCenters.mine, update: api.diveCenters.update } as const
-    case 'Agent':
-      return { mine: api.agents.mine, update: api.agents.update } as const
-    default:
-      return null
-  }
-}
-
 export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencyStepProps) {
-  const roleApi = useRoleApi(role)
+  const roleApi = useOrganizerRoleApi(role)
 
   // Shouldn't happen — agency step is only in the config for DiveCenter/Agent
   if (!roleApi) {
@@ -46,7 +35,7 @@ export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencySt
 }
 
 interface AgencyStepInnerProps {
-  roleApi: NonNullable<ReturnType<typeof useRoleApi>>
+  roleApi: NonNullable<ReturnType<typeof useOrganizerRoleApi>>
   onSaved: () => void
   onBack: () => void
 }
@@ -62,7 +51,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
 
   useEffect(() => {
     if (existing !== undefined && !initialized) {
-      if (existing && existing.associations.length > 0) {
+      if (existing && 'associations' in existing && existing.associations.length > 0) {
         setAssociations(existing.associations)
       }
       setInitialized(true)
@@ -156,9 +145,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
           Add another
         </Button>
 
-        {error && (
-          <p className="text-sm" style={{ color: 'var(--color-destructive)' }}>{error}</p>
-        )}
+        {error && <InlineError>{error}</InlineError>}
       </div>
     </OrganizerStepCard>
   )

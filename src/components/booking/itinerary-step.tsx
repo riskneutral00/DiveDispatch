@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
-import { Card, Button, Checkbox, SimpleSelect } from '@/components/ui'
+import { Card, Button, Checkbox, SimpleSelect, ErrorAlert } from '@/components/ui'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
@@ -15,7 +15,7 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } from '@/lib/constants/course-catalog'
 import { addDays } from '@/lib/utils/date'
 import type { Dispatch } from 'react'
-import { AlertTriangle, Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
+import { Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
 
 interface ItineraryStepProps {
   state: WizardState
@@ -148,8 +148,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-[var(--border-radius)] border"
-      style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}
+      className="flex flex-col gap-2 p-3 rounded-theme glass-container"
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {/* Course picker */}
@@ -170,7 +169,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
         {/* Start date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-sm font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+          <label className="text-sm font-medium text-secondary">
             Start date
           </label>
           <input
@@ -187,7 +186,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
         {/* End date */}
         <div className="flex flex-col gap-1 min-w-0">
-          <label className="text-sm font-medium text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+          <label className="text-sm font-medium text-secondary">
             End date
           </label>
           <div className="flex gap-1 items-center">
@@ -536,7 +535,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
         <div title="Coming soon">
@@ -561,13 +560,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         <div key={customer.id}>
           <div className="flex items-center justify-between mb-2">
             <h3
-              className="text-sm font-semibold text-primary"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="text-sm font-semibold text-primary font-heading"
             >
               {sameForAll && customers.length > 1 ? 'All customers' : customer.name}
             </h3>
             {sameForAll && customers.length > 1 && (
-              <span className="text-xs text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+              <span className="text-xs text-secondary">
                 <Copy size={10} className="inline mr-1" />
                 Applies to {customers.length} customers
               </span>
@@ -613,20 +611,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {uniqueOrderingErrors.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {uniqueOrderingErrors.map((error, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
-              role="alert"
-              style={{
-                background: 'color-mix(in srgb, var(--color-destructive, #dc2626) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-destructive, #dc2626) 30%, transparent)',
-                color: 'var(--color-destructive, #dc2626)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <OctagonX size={13} className="flex-shrink-0 mt-0.5" aria-hidden />
-              <span>{error}</span>
-            </div>
+            <ErrorAlert key={i} icon={OctagonX} iconSize={13} size="sm">
+              {error}
+            </ErrorAlert>
           ))}
         </div>
       )}
@@ -635,20 +622,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {allWarnings.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {allWarnings.map((warning, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
-              role="alert"
-              style={{
-                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-warning, #fbbf24) 30%, transparent)',
-                color: 'var(--color-warning, #fbbf24)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" aria-hidden />
-              <span>{warning}</span>
-            </div>
+            <ErrorAlert key={i} variant="warning" iconSize={13} size="sm">
+              {warning}
+            </ErrorAlert>
           ))}
         </div>
       )}
@@ -658,8 +634,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h3
-              className="text-sm font-semibold text-primary"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="text-sm font-semibold text-primary font-heading"
             >
               Schedule ({days.length} day{days.length !== 1 ? 's' : ''})
             </h3>
@@ -695,20 +670,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       {emptyDayWarnings.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {emptyDayWarnings.map((warning, i) => (
-            <div
-              key={`empty-${i}`}
-              className="flex items-start gap-2 px-3 py-2 rounded-[var(--border-radius)] text-xs"
-              role="alert"
-              style={{
-                background: 'color-mix(in srgb, var(--color-warning, #fbbf24) 12%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--color-warning, #fbbf24) 30%, transparent)',
-                color: 'var(--color-warning, #fbbf24)',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" aria-hidden />
-              <span>{warning}</span>
-            </div>
+            <ErrorAlert key={`empty-${i}`} variant="warning" iconSize={13} size="sm">
+              {warning}
+            </ErrorAlert>
           ))}
         </div>
       )}
@@ -720,7 +684,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
       {/* Empty state if no customers */}
       {customers.length === 0 && (
-        <p className="text-sm text-center py-6 text-secondary" style={{ fontFamily: 'var(--font-body)' }}>
+        <p className="text-sm text-center py-6 text-secondary">
           Add customers first.
         </p>
       )}

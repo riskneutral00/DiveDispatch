@@ -2,9 +2,9 @@
  * Notification icon + severity tier configuration.
  *
  * Three tiers:
- *   - action:  urgent items requiring immediate response  (--color-status-urgent, red)
- *   - attention: notable events worth reviewing           (--color-status-warning, amber)
- *   - info:    success / informational confirmations       (--color-status-success, green)
+ *   - action:  urgent items requiring immediate response  (--color-status-urgent)
+ *   - attention: notable events worth reviewing           (--color-status-warning)
+ *   - info:    success / informational confirmations       (--color-status-success)
  *
  * Read notifications always use --color-text-secondary regardless of tier.
  */
@@ -60,7 +60,7 @@ export const NOTIFICATION_CONFIG = {
   hold_declined: { icon: 'XCircle', tier: 'action' },
   min_pax_not_met: { icon: 'UsersRound', tier: 'action' },
 
-  // Attention (warning / amber)
+  // Attention (warning)
   noshow_marked: { icon: 'UserX', tier: 'attention' },
   noshow_reverted: { icon: 'RotateCcw', tier: 'attention' },
   booking_updated: { icon: 'FileText', tier: 'attention' },

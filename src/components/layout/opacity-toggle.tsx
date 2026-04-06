@@ -29,7 +29,6 @@ export function OpacityToggle() {
       size="sm"
       aria-label={hoverOn ? 'Disable border glow on hover' : 'Enable border glow on hover'}
       onClick={toggle}
-      className="cursor-pointer"
     >
       {hoverOn ? <Layers size={15} /> : <Layers2 size={15} />}
     </IconButton>

@@ -82,7 +82,7 @@ export function PillToggleGroup({ children, overflowItems, className }: PillTogg
           </button>
           {open && (
             <div
-              className="absolute top-full right-0 mt-1 z-50 rounded-lg p-2 flex flex-wrap gap-1.5"
+              className="absolute top-full right-0 mt-1 z-[var(--z-dropdown)] rounded-theme p-2 flex flex-wrap gap-1.5"
               style={{
                 backgroundColor: 'var(--color-surface-elevated)',
                 border: '1px solid var(--color-glass-border)',

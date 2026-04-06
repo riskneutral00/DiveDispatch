@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
 import { mapPortalMutationError } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
-import { TOKEN_EXPIRED_MESSAGE } from '@/lib/constants/error-messages'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -22,37 +23,35 @@ interface StepRowProps {
   label: string
   complete: boolean
   required: boolean
+  incompleteLabel: string
 }
 
-function StepRow({ label, complete, required }: StepRowProps) {
+function StepRow({ label, complete, required, incompleteLabel }: StepRowProps) {
   if (!required) return null
   return (
     <div className="flex items-center gap-3">
       {complete ? (
         <CheckCircle
           size={18}
-          style={{ color: 'var(--color-success)', flexShrink: 0 }}
+          className="text-success shrink-0"
           aria-hidden
         />
       ) : (
-        <Circle className="text-secondary"
+        <Circle className="text-secondary shrink-0"
           size={18}
-          style={{ flexShrink: 0 }}
           aria-hidden
         />
       )}
       <span
-        className="text-sm"
-        style={{ color: complete ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
+        className={`text-sm ${complete ? 'text-primary' : 'text-secondary'}`}
       >
         {label}
       </span>
       {!complete && (
         <span
-          className="ml-auto text-xs"
-          style={{ color: 'var(--color-warning)' }}
+          className="ml-auto text-xs text-warning"
         >
-          Incomplete
+          {incompleteLabel}
         </span>
       )}
     </div>
@@ -62,6 +61,9 @@ function StepRow({ label, complete, required }: StepRowProps) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export function PortalSubmit({ token }: PortalSubmitProps) {
+  const tPortal = useTranslations('portal')
+  const tCommon = useTranslations('common')
+
   const status = useQuery(api.portalSubmission.getPortalStatus, { token })
   const submitPortal = useMutation(api.portalSubmission.submitPortal)
 
@@ -72,8 +74,8 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
 
   if (status === undefined) {
     return (
-      <div className="flex items-center justify-center py-8" style={{ color: 'var(--color-primary)' }}>
-        <Spinner size="lg" />
+      <div className="flex items-center justify-center py-8">
+        <Spinner />
       </div>
     )
   }
@@ -81,9 +83,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
   if (status === null) {
     return (
       <Card padding="lg">
-        <p className="text-center" style={{ color: 'var(--color-destructive)' }}>
-          {TOKEN_EXPIRED_MESSAGE}
-        </p>
+        <InlineError centered>{tPortal('tokenExpired')}</InlineError>
       </Card>
     )
   }
@@ -96,35 +96,31 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
           {medicalHardBlock || status.medicalHardBlock ? (
             <>
               <AlertTriangle
-                className="w-12 h-12"
-                style={{ color: 'var(--color-warning)' }}
+                className="w-12 h-12 text-warning"
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold text-primary"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                className="text-xl font-semibold text-primary font-heading"
               >
-                Submission Received
+                Submitted
               </h2>
               <p className="text-sm leading-relaxed text-secondary">
-                Your forms have been submitted. Your medical questionnaire requires physician clearance before diving. Your dive center has been notified and will be in touch.
+                {tPortal('medicalBlockMessage')}
               </p>
             </>
           ) : (
             <>
               <PartyPopper
-                className="w-12 h-12"
-                style={{ color: 'var(--color-success)' }}
+                className="w-12 h-12 text-success"
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold text-primary"
-                style={{ fontFamily: 'var(--font-heading)' }}
+                className="text-xl font-semibold text-primary font-heading"
               >
-                All Done!
+                Complete!
               </h2>
               <p className="text-sm leading-relaxed text-secondary">
-                Your paperwork is complete. Your dive center will confirm the details and reach out if needed. See you in the water!
+                {tPortal('successMessage')}
               </p>
             </>
           )}
@@ -156,45 +152,39 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     <div className="flex flex-col gap-4">
       <Card padding="md">
         <h2
-          className="text-base font-semibold mb-4 text-primary"
-          style={{ fontFamily: 'var(--font-heading)' }}
+          className="text-base font-semibold mb-4 text-primary font-heading"
         >
           Review &amp; Submit
         </h2>
         <div className="flex flex-col gap-3">
           <StepRow
-            label="Contact &amp; Certification"
+            label="Contact & Certification"
             complete={status.contactComplete}
             required={status.portalContact}
+            incompleteLabel={tCommon('incomplete')}
           />
           <StepRow
             label="Medical Questionnaire"
             complete={status.medicalComplete}
             required={status.portalMedical}
+            incompleteLabel={tCommon('incomplete')}
           />
           <StepRow
             label="Liability Waiver"
             complete={status.waiverComplete}
             required={status.portalWaiver}
+            incompleteLabel={tCommon('incomplete')}
           />
         </div>
       </Card>
 
       {!allComplete && (
         <p className="text-sm text-center text-secondary">
-          Please complete all steps above before submitting.
+          {tPortal('formsIncomplete')}
         </p>
       )}
 
-      {error && (
-        <p
-          className="text-sm text-center"
-          style={{ color: 'var(--color-destructive)' }}
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
+      {error && <InlineError centered>{error}</InlineError>}
 
       <Button
         variant="primary"
@@ -204,7 +194,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
         loading={submitting}
         onClick={handleSubmit}
       >
-        Submit
+        {tCommon('submit')}
       </Button>
     </div>
   )

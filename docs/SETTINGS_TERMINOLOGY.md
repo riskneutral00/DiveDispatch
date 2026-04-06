@@ -34,10 +34,7 @@ This document inventories how **Account**, **Workspace**, **Preferences**, and r
 |------|------|--------|
 | `components/account/` | Shared UI: account form, profile/preferences tabs, **PreferencesEditor**, **ManageRoles**, **ProfileSectionTabBar** | [`src/components/account/`](../src/components/account/) |
 | `ProfileSectionTabBar` | ARIA tab list — Profile page sections, **PreferencesEditor**, overlay | [`src/components/account/profile-section-tab-bar.tsx`](../src/components/account/profile-section-tab-bar.tsx) |
-| `WorkspaceEmbeddedProfileForm` | Embeds role profile form on **`/workspace`** when `PROFILE_REGISTRY.workspaceIncludesEmbeddedProfile` | [`src/lib/profile/connected-role-forms.tsx`](../src/lib/profile/connected-role-forms.tsx), [`src/lib/constants/profile-registry.ts`](../src/lib/constants/profile-registry.ts) |
-| `embedInWorkspace` | Registry flag for embedded forms on Workspace | [`src/lib/profile/connected-role-forms.tsx`](../src/lib/profile/connected-role-forms.tsx) |
-| `ProfileOverlayTab` | `'profile' \| 'preferences'` | [`src/components/profiles/profile-overlay.tsx`](../src/components/profiles/profile-overlay.tsx) |
-| E2E `workspaceRoute()` | **`/{userSlug}/{roleSlug}/workspace`** | [`e2e/helpers/routes.ts`](../e2e/helpers/routes.ts) |
+| `ProfileOverlayTab` | `'profile' \| 'roles' \| \`role:${RoleKey}\`` | [`src/components/profiles/profile-overlay.tsx`](../src/components/profiles/profile-overlay.tsx) |
 
 ---
 
@@ -53,24 +50,14 @@ This document inventories how **Account**, **Workspace**, **Preferences**, and r
 
 ```mermaid
 flowchart LR
-  subgraph nav [Primary nav]
-    NavWs["Nav item Workspace"]
-    RouteWs["Route /slug/role/workspace"]
-    NavWs --> RouteWs
-  end
   subgraph menu [User menu]
+    MenuProfile["Menu Profile"]
     MenuPrefs["Menu Preferences"]
+    MenuRole["Menu Role"]
     Overlay["ProfileOverlay Account"]
-    PrefsTab["Tab preferences"]
-    PreferencesTab["PreferencesTab"]
-    MenuPrefs --> Overlay
-    Overlay --> PrefsTab
-    PrefsTab --> PreferencesTab
-  end
-  subgraph profilePage [Role profile route]
-    RouteProfile["Route /slug/role/profile"]
-    PSTB["ProfileSectionTabBar sections"]
-    RouteProfile --> PSTB
+    MenuProfile -->|"tab: profile"| Overlay
+    MenuPrefs -->|"tab: role:activeRole"| Overlay
+    MenuRole -->|"tab: role:X"| Overlay
   end
 ```
 

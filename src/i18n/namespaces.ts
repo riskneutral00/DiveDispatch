@@ -4,13 +4,14 @@
  */
 export const I18N_NAMESPACES = [
   "app",
+  "common",
+  "errors",
   "nav",
   "auth",
   "booking",
-  "common",
-  "onboarding",
-  "errors",
   "portal",
+  "medical",
+  "waiver",
 ] as const;
 
 export type I18nNamespace = (typeof I18N_NAMESPACES)[number];

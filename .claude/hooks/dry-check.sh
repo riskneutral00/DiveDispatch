@@ -86,6 +86,29 @@ case "$FILE_PATH" in
     ;;
 esac
 
+# Gear types — local arrays that duplicate GEAR_TYPES from gear-sizing
+if grep -qE "(GEAR_TYPE|RENTAL_ITEM|gearType).*=.*\[" "$FILE_PATH" 2>/dev/null; then
+  if grep -qE "'(wetsuit|bcd|fins|mask|regulator)'" "$FILE_PATH" 2>/dev/null; then
+    if ! grep -q "from.*gear-sizing" "$FILE_PATH" 2>/dev/null; then
+      DUPES="${DUPES}gear type array (canonical: GEAR_TYPES from @/lib/constants/gear-sizing), "
+    fi
+  fi
+fi
+
+# Inline booking status predicates — should use TERMINAL_STATUSES
+if grep -qE "status !== ['\"]Cancelled['\"]" "$FILE_PATH" 2>/dev/null; then
+  if ! grep -q "TERMINAL_STATUSES\|LOCKING_STATUSES\|ACTIVE_STATUSES" "$FILE_PATH" 2>/dev/null; then
+    DUPES="${DUPES}inline status predicate (canonical: TERMINAL_STATUSES from @/lib/constants/status-colors), "
+  fi
+fi
+
+# Section label drift — tracking-wider should be tracking-wide (matches FormSectionHeader)
+if grep -qE "tracking-wider" "$FILE_PATH" 2>/dev/null; then
+  if ! grep -q "design-ok" "$FILE_PATH" 2>/dev/null; then
+    DUPES="${DUPES}tracking-wider (should be tracking-wide per FormSectionHeader), "
+  fi
+fi
+
 if [ -n "$DUPES" ]; then
   # Trim trailing comma-space
   DUPES="${DUPES%, }"

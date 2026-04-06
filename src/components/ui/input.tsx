@@ -23,6 +23,7 @@ export function Input({
   id: externalId,
   type,
   onClick,
+  style: externalStyle,
   ...props
 }: InputProps) {
   const generatedId = useId();
@@ -66,7 +67,7 @@ export function Input({
             'py-2.5',
             isDateLike && 'cursor-pointer',
           )}
-          style={{ caretColor: 'var(--color-accent)',
+          style={{ ...externalStyle, caretColor: 'var(--color-accent)',
             ...(error ? {
               borderColor: "var(--color-destructive)",
               boxShadow: `0 0 0 3px var(--color-destructive-glow)`,

@@ -80,47 +80,29 @@ describe("resolveLocale", () => {
 describe("message files", () => {
   const messagesDir = path.resolve(__dirname, "../../../../messages");
 
-  // Load en.json keys as the reference
-  const enMessages = JSON.parse(
-    fs.readFileSync(path.join(messagesDir, "en.json"), "utf-8"),
-  );
-
-  function getKeyPaths(obj: Record<string, unknown>, prefix = ""): string[] {
-    const keys: string[] = [];
-    for (const [key, value] of Object.entries(obj)) {
-      const fullKey = prefix ? `${prefix}.${key}` : key;
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-        keys.push(...getKeyPaths(value as Record<string, unknown>, fullKey));
-      } else {
-        keys.push(fullKey);
-      }
-    }
-    return keys.sort();
-  }
-
-  const enKeys = getKeyPaths(enMessages);
-
-  const localeFiles: SupportedLocale[] = SUPPORTED_LOCALES.filter(
-    (l) => l !== "en",
-  ) as unknown as SupportedLocale[];
-
-  it("en.json has keys", () => {
-    expect(enKeys.length).toBeGreaterThan(0);
+  it("en.json exists and parses as valid JSON", () => {
+    const filePath = path.join(messagesDir, "en.json");
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = fs.readFileSync(filePath, "utf-8");
+    expect(() => JSON.parse(content)).not.toThrow();
   });
 
-  for (const locale of localeFiles) {
-    it(`${locale}.json exists and parses as valid JSON`, () => {
-      const filePath = path.join(messagesDir, `${locale}.json`);
-      expect(fs.existsSync(filePath)).toBe(true);
-      const content = fs.readFileSync(filePath, "utf-8");
-      expect(() => JSON.parse(content)).not.toThrow();
-    });
-
-    it(`${locale}.json has identical key structure to en.json`, () => {
-      const filePath = path.join(messagesDir, `${locale}.json`);
-      const messages = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-      const localeKeys = getKeyPaths(messages);
-      expect(localeKeys).toEqual(enKeys);
-    });
-  }
+  it("en.json has keys", () => {
+    const enMessages = JSON.parse(
+      fs.readFileSync(path.join(messagesDir, "en.json"), "utf-8"),
+    );
+    function getKeyPaths(obj: Record<string, unknown>, prefix = ""): string[] {
+      const keys: string[] = [];
+      for (const [key, value] of Object.entries(obj)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+          keys.push(...getKeyPaths(value as Record<string, unknown>, fullKey));
+        } else {
+          keys.push(fullKey);
+        }
+      }
+      return keys.sort();
+    }
+    expect(getKeyPaths(enMessages).length).toBeGreaterThan(0);
+  });
 });

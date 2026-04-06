@@ -71,9 +71,9 @@ describe('RootError boundary', () => {
       </NextIntlClientProvider>,
     )
 
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument()
+    expect(screen.getByText('An error occurred')).toBeInTheDocument()
     expect(
-      screen.getByText(/Please try again/)
+      screen.getByText('An error occurred. Try again.')
     ).toBeInTheDocument()
   })
 
@@ -101,7 +101,7 @@ describe('RootError boundary', () => {
     )
 
     const button = screen.getByTestId('glass-button')
-    expect(button.textContent).toBe('Try again')
+    expect(button.textContent).toBe('common.retry')
 
     fireEvent.click(button)
     expect(reset).toHaveBeenCalledOnce()

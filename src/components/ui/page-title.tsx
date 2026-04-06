@@ -12,8 +12,7 @@ interface PageTitleProps {
 export function PageTitle({ title, description, leading, className }: PageTitleProps) {
   const heading = (
     <h1
-      className={`font-bold text-primary ${leading == null ? 'mb-1' : ''}`}
-      style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--font-size-page-title)' }}
+      className={`font-bold text-primary font-heading text-page-title ${leading == null ? 'mb-1' : ''}`}
     >
       {title}
     </h1>

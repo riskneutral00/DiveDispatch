@@ -104,17 +104,16 @@ describe('NotificationPanel focus management', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
-  it('restores focus to trigger ref when panel unmounts', () => {
-    const triggerRef = document.createElement('button')
-    triggerRef.textContent = 'Trigger'
-    document.body.appendChild(triggerRef)
-    triggerRef.focus()
+  it('restores focus to previously-focused element when panel unmounts', () => {
+    const trigger = document.createElement('button')
+    trigger.textContent = 'Trigger'
+    document.body.appendChild(trigger)
+    trigger.focus()
 
     const { unmount } = render(
       <NotificationPanel
         userId="test-user"
         onClose={vi.fn()}
-        triggerRef={{ current: triggerRef }}
       />,
     )
 
@@ -125,10 +124,10 @@ describe('NotificationPanel focus management', () => {
     // Unmount simulates parent setting open=false after onClose
     unmount()
 
-    // Focus should be restored to the trigger element
-    expect(document.activeElement).toBe(triggerRef)
+    // Focus should be restored to the previously-focused element
+    expect(document.activeElement).toBe(trigger)
 
-    document.body.removeChild(triggerRef)
+    document.body.removeChild(trigger)
   })
 })
 

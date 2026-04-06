@@ -69,7 +69,7 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
 
   return (
     <div className="space-y-2">
-      {error && <ErrorAlert className="text-xs">{error}</ErrorAlert>}
+      {error && <ErrorAlert size="sm">{error}</ErrorAlert>}
       {unique.map((req) => {
         const isBusy = busyId === req.bookingId
         const dateLabel = req.dates.length === 1

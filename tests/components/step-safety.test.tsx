@@ -69,7 +69,7 @@ describe('StepSafety', () => {
     render(<StepSafety {...defaultProps} />)
 
     // Insurance input should be pre-filled
-    const insuranceInput = screen.getByPlaceholderText('e.g. DAN-123456')
+    const insuranceInput = screen.getByPlaceholderText('DAN-123456')
     expect(insuranceInput).toHaveValue('POL-123')
   })
 
@@ -141,7 +141,7 @@ describe('StepSafety', () => {
     render(<StepSafety {...defaultProps} />)
 
     // Clear the insurance field
-    const insuranceInput = screen.getByPlaceholderText('e.g. DAN-123456')
+    const insuranceInput = screen.getByPlaceholderText('DAN-123456')
     fireEvent.change(insuranceInput, { target: { value: '' } })
 
     fireEvent.click(screen.getByRole('button', { name: /continue/i }))

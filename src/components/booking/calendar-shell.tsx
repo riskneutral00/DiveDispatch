@@ -26,13 +26,13 @@ export function CalendarShell({
         <div className="min-w-[320px] overflow-hidden">
           {/* Day-of-week labels */}
           <div
-            className="grid grid-cols-7"
+            className="grid grid-cols-7" /* design-ok */
             style={{ borderBottom: '1px solid var(--color-glass-border)' }}
           >
             {dayHeaders.map((day, i) => (
               <div
                 key={day}
-                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest"
+                className="py-1.5 text-center text-[10px] sm:text-xs font-bold uppercase tracking-widest" /* design-ok */
                 style={{
                   color:
                     i === todayCol

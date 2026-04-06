@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useAction, useQuery } from 'convex/react'
+import { useTranslations } from 'next-intl'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import { Dialog, Button, ErrorAlert } from '@/components/ui'
-import { parseConvexError } from '@/lib/utils/convex-error'
-import { COPY_FEEDBACK_MS, PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
-import { GENERATE_LINK_ERROR_MESSAGE } from '@/lib/constants/error-messages'
+import { PORTAL_LINK_EXPIRY_MS } from '@/lib/constants/ui-timings'
+import { useCopyFeedback } from '@/lib/hooks/use-copy-feedback'
 import { Link2, Mail, Copy, Check, MessageCircle, Send } from 'lucide-react'
 
 type Channel = 'email' | 'whatsapp' | 'line'
@@ -44,11 +44,14 @@ export function SendPortalLink({
   contactType,
   contactValue,
 }: SendPortalLinkProps) {
+  const tErrors = useTranslations('errors')
+  const tCommon = useTranslations('common')
+  const tBooking = useTranslations('booking')
   const [open, setOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState<string | null>(null)
   const [expiresAt, setExpiresAt] = useState<number | null>(null)
   const [busy, setBusy] = useState<Busy>(null)
-  const [copyDone, setCopyDone] = useState(false)
+  const [copyDone, markCopyDone] = useCopyFeedback()
   const [sentChannel, setSentChannel] = useState<Channel | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,11 +67,6 @@ export function SendPortalLink({
     (existingLink ? `${window.location.origin}/portal/${existingLink.token}` : null)
   const resolvedExpiry = expiresAt ?? existingLink?.expiresAt ?? null
 
-  useEffect(() => {
-    if (!copyDone) return
-    const timer = setTimeout(() => setCopyDone(false), COPY_FEEDBACK_MS)
-    return () => clearTimeout(timer)
-  }, [copyDone])
 
   async function ensureLink(channel?: Channel): Promise<string | null> {
     if (resolvedUrl) return resolvedUrl
@@ -80,7 +78,7 @@ export function SendPortalLink({
       setExpiresAt(expiry)
       return url
     } catch (e) {
-      setError(parseConvexError(e, GENERATE_LINK_ERROR_MESSAGE))
+      setError(tCommon('actionFailed', { action: 'Generate link' }))
       return null
     }
   }
@@ -101,9 +99,9 @@ export function SendPortalLink({
         document.execCommand('copy')
         document.body.removeChild(el)
       }
-      setCopyDone(true)
+      markCopyDone()
     } catch {
-      setError('Copy failed. Please paste manually.')
+      setError(tErrors('copyFailed'))
     } finally {
       setBusy(null)
     }
@@ -124,7 +122,7 @@ export function SendPortalLink({
       })
       setSentChannel('email')
     } catch (e) {
-      setError(parseConvexError(e, 'Failed to send email. Please try again.'))
+      setError(tCommon('actionFailed', { action: 'Send email' }))
     } finally {
       setBusy(null)
     }
@@ -135,7 +133,7 @@ export function SendPortalLink({
     setBusy('whatsapp')
     const phone = contactType === 'whatsapp' ? contactValue : undefined
     if (!phone) {
-      setError('No WhatsApp number on file for this customer.')
+      setError(tErrors('noWhatsApp'))
       setBusy(null)
       return
     }
@@ -162,7 +160,6 @@ export function SendPortalLink({
     setLinkUrl(null)
     setExpiresAt(null)
     setBusy(null)
-    setCopyDone(false)
     setSentChannel(null)
     setError(null)
   }
@@ -178,11 +175,13 @@ export function SendPortalLink({
   }
 
   const expiryLabel = resolvedExpiry
-    ? `Link expires: ${new Date(resolvedExpiry).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })}`
+    ? tBooking('linkExpires', {
+        date: new Date(resolvedExpiry).toLocaleDateString(undefined, {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      })
     : null
 
   const hasWhatsApp = contactType === 'whatsapp' && !!contactValue
@@ -194,13 +193,13 @@ export function SendPortalLink({
     <>
       <Button size="sm" variant="secondary" onClick={handleOpen}>
         <Link2 size={14} />
-        Send Link
+        {tBooking('sendLink')}
       </Button>
 
       <Dialog
         open={open}
         onClose={handleClose}
-        title="Send Link"
+        title={tBooking('sendLink')}
         size="sm"
       >
         <div className="space-y-4">
@@ -235,15 +234,15 @@ export function SendPortalLink({
           )}
 
           {error && (
-            <ErrorAlert className="text-xs">{error}</ErrorAlert>
+            <ErrorAlert size="sm">{error}</ErrorAlert>
           )}
 
           {isSent && (
             <p className="text-xs text-success flex items-center gap-1.5">
               <Check size={12} />
-              {sentChannel === 'email' && 'Email sent!'}
-              {sentChannel === 'whatsapp' && 'WhatsApp opened!'}
-              {sentChannel === 'line' && 'LINE opened!'}
+              {sentChannel === 'email' && tBooking('emailSent')}
+              {sentChannel === 'whatsapp' && tBooking('whatsAppOpened')}
+              {sentChannel === 'line' && tBooking('lineOpened')}
             </p>
           )}
 
@@ -256,7 +255,7 @@ export function SendPortalLink({
               disabled={busy !== null && busy !== 'copy'}
             >
               {copyDone ? <Check size={14} /> : <Copy size={14} />}
-              {copyDone ? 'Copied!' : 'Copy'}
+              {copyDone ? tCommon('copied') : tCommon('copy')}
             </Button>
 
             {hasWhatsApp && (

@@ -1,6 +1,6 @@
 ---
 name: consolidate
-description: "Codebase DRY audit + auto-fix. Finds duplicated constants, types, schemas, components, helpers, and backend dispatch. Auto-fixes mechanical duplication, reports structural duplication. Runs /ai-slop-cleaner on changes."
+description: "Codebase DRY audit + auto-fix. Finds and fixes all duplication: constants, types, schemas, components, helpers, and backend dispatch. Makes design decisions autonomously. Runs /ai-slop-cleaner on changes."
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash, Agent, Skill
 user-invocable: true
 ---
@@ -81,9 +81,7 @@ For each finding, assign:
 - **MEDIUM** — Structurally similar but not mechanical to fix
 - **LOW** — Minor cleanup (cosmetic, small savings)
 
-**Fix type:**
-- **AUTO** — Can be fixed mechanically: constant extraction, type alias extraction, import replacement, dead code deletion, schema `.extend()` wiring, utility extraction
-- **MANUAL** — Requires design decisions: component abstraction, new helper API design, cross-cutting refactors
+All findings are fixable. When a fix requires a design decision (prop API, function signature, abstraction boundary), make it — use existing codebase patterns as precedent, prefer the simpler option.
 
 ---
 
@@ -96,18 +94,13 @@ Output a single scoreboard:
 
 ### Summary
 CRITICAL: N  |  HIGH: N  |  MEDIUM: N  |  LOW: N
-Auto-fixable: N  |  Manual: N  |  Est. lines saved: N
+Findings: N  |  Est. lines saved: N
 
 ### Findings
 
-| # | Severity | Fix | Layer | Type | Files | Description | Lines |
-|---|----------|-----|-------|------|-------|-------------|-------|
-| 1 | CRITICAL | AUTO | frontend | constant | file1, file2, file3 | BOAT_TYPES defined 3x | ~30 |
-| ... |
-
-### MANUAL Findings (report only)
-| # | Severity | Layer | Files | Description | Recommendation |
-|---|----------|-------|-------|-------------|----------------|
+| # | Severity | Layer | Type | Files | Description | Lines |
+|---|----------|-------|------|-------|-------------|-------|
+| 1 | CRITICAL | frontend | constant | file1, file2, file3 | BOAT_TYPES defined 3x | ~30 |
 | ... |
 ```
 
@@ -146,6 +139,21 @@ For each AUTO-fixable finding, in order from lowest-risk to highest:
 - Replace switch/if-else chains with `ROLE_TABLE_MAP` lookups
 - Replace inline auth checks with shared helpers
 
+### 5g. Component abstraction
+- Identify the shared structure across near-identical components
+- Design a unified component with a prop API that covers all variants (use existing codebase patterns as precedent)
+- Extract to a shared file, update all consumers to use the new component
+- Delete the now-redundant component files
+
+### 5h. Helper API extraction
+- Design function signature based on existing call patterns
+- Extract to the appropriate shared module (`src/lib/utils/` or `convex/lib/`)
+- Update all call sites to use the new helper
+
+### 5i. Cross-cutting refactors
+- Execute multi-file refactors with consistent patterns
+- When choosing between approaches, prefer the simpler option with fewer moving parts
+
 After all fixes:
 1. Run `npx tsc --noEmit` — must have zero *new* errors (pre-existing errors are acceptable)
 2. Run `npx vitest run` — must have zero *new* failures
@@ -168,8 +176,7 @@ Invoke `/ai-slop-cleaner` on the changed files to clean up any AI-generated arti
 ```
 Consolidation — {date}
   CRITICAL: N  |  HIGH: N  |  MEDIUM: N  |  LOW: N
-  Auto-fixed: N findings across M files
-  Manual (report only): N findings
+  Fixed: N findings across M files
   Lines saved: ~N
   Build: PASS  |  Tests: PASS (N/N)
   Slop clean: done
@@ -184,7 +191,7 @@ Consolidation — {date}
 - Execute immediately. No preamble.
 - Silent research — only the scoreboard + final summary are output.
 - Every finding must cite file:line + specific code.
-- AUTO fixes are mechanical only. If a fix requires choosing between designs, it's MANUAL.
+- All findings are fixable. When a fix requires a design decision, make it — use existing codebase patterns as precedent, prefer the simpler option.
 - Never modify `.claude/`, `scripts/`, `design-system/`, or test files during auto-fix.
 - Never introduce new abstractions for one-time use. Three copies = extract. Two copies = report.
 - Complement sibling review skills — don't audit auth, performance, or test quality. Only duplication and consolidation.
