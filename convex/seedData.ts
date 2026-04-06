@@ -40,7 +40,6 @@ interface DiveCenterProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   associations: {
@@ -61,7 +60,6 @@ interface BoatProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   fleet: {
@@ -83,7 +81,6 @@ interface VenueProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   verified: boolean
@@ -111,7 +108,6 @@ interface EquipmentProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   manufacturersByGearType?: Record<string, string[]>
@@ -125,7 +121,6 @@ interface CompressorProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   gasMixes?: GasMixType[]
@@ -138,7 +133,6 @@ interface LiveaboardProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   verified: boolean
@@ -150,7 +144,6 @@ interface DiveResortProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   verified: boolean
@@ -162,7 +155,6 @@ interface AgentProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   associations: { agency: string; number: string }[]
@@ -176,7 +168,6 @@ interface InstructorProfile {
   country: string
   lat: number
   lng: number
-  placeId?: string
   email: string
   phone: string
   /** ISO-ish codes, aligned with `users.customerLanguages` / directory. */

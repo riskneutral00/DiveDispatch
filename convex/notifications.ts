@@ -154,14 +154,15 @@ export async function _clearAllHandler(
 
   assertCallerIsUser(caller, args.userId)
 
-  const all = await ctx.db
+  const BATCH = 500
+  const batch = await ctx.db
     .query('notifications')
     .withIndex('by_userId', (q) => q.eq('userId', args.userId))
-    .collect()
+    .take(BATCH)
 
-  await batchDelete(ctx, all)
+  await batchDelete(ctx, batch)
 
-  return all.length
+  return batch.length
 }
 
 export const clearAll = mutation({
@@ -178,10 +179,11 @@ export async function _getUnreadCountHandler(
   const { user: caller } = await requireAuth(ctx)
   assertCallerIsUser(caller, args.userId)
 
+  const MAX_COUNT = 999
   const unread = await ctx.db
     .query('notifications')
     .withIndex('by_userId_readAt', (q) => q.eq('userId', args.userId).eq('readAt', undefined))
-    .collect()
+    .take(MAX_COUNT)
 
   return unread.length
 }

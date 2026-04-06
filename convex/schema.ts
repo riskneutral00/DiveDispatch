@@ -373,7 +373,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({
@@ -395,7 +394,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     credential: v.array(
@@ -417,7 +415,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     fleet: v.array(
@@ -449,7 +446,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     manufacturersByGearType: v.optional(v.record(v.string(), v.array(v.string()))),
@@ -463,7 +459,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     verified: v.boolean(),
@@ -482,7 +477,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     gasMixes: v.optional(v.array(gasMix)),
@@ -573,7 +567,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     associations: v.array(v.object({ agency: v.string(), number: v.string() })),
@@ -590,7 +583,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     credential: v.array(
@@ -613,7 +605,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     verified: v.boolean(),
@@ -658,7 +649,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     verified: v.boolean(),
@@ -686,7 +676,6 @@ export default defineSchema({
     country: v.string(),
     lat: v.number(),
     lng: v.number(),
-    placeId: v.optional(v.string()),
     email: v.string(),
     phone: v.string(),
     bedCount: v.number(),
@@ -735,7 +724,8 @@ export default defineSchema({
     key: v.string(),
     tokens: v.number(),
     lastRefill: v.number(),
-  }).index('by_key', ['key']),
+  }).index('by_key', ['key'])
+    .index('by_lastRefill', ['lastRefill']),
 
   // ── L7: Audit Trail ──────────────────────────────────────────────────────────
 

@@ -78,6 +78,21 @@ export const saveMedicalAnswers = mutation({
       portalMedical: true,
     }
 
+    // When customer re-submits with all "No" answers after a prior "Yes",
+    // clean up the medical_block flag on the customer record so state is consistent.
+    // (physicianClearanceRequired is already set above via the profile patch.)
+    if (!hasYes && booking.medicalHardBlock && profile.customerId) {
+      const customer = await ctx.db.get(profile.customerId)
+      if (customer) {
+        const flags = customer.flags ?? []
+        if (flags.includes('medical_block')) {
+          await ctx.db.patch(profile.customerId, {
+            flags: flags.filter((f) => f !== 'medical_block') as ('medical_block')[],
+          })
+        }
+      }
+    }
+
     // DD-170: Extend hold TTL when medical hard block detected (36h + 8pm ceiling)
     if (hasYes) {
       const sessions = await ctx.db
@@ -342,7 +357,7 @@ export const migratePlaintextMedical = internalMutation({
         if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
           // Legacy plaintext record — re-encrypt
           const encrypted = await encryptMedical(parsed)
-          await ctx.db.patch(profile._id, { medicalAnswers: encrypted })
+          await ctx.db.patch(profile._id, { medicalAnswers: encrypted }) // batch-exempt: sequential migration — each row needs individual encrypt + conditional patch
           migrated++
         } else {
           skipped++

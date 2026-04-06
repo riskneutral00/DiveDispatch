@@ -110,11 +110,11 @@ export const purgeStaleRateLimits = internalMutation({
     const cutoff = Date.now() - MAX_WINDOW_MS * 2
     const stale = await ctx.db
       .query('rateLimits')
-      .filter((q) => q.lt(q.field('lastRefill'), cutoff))
+      .withIndex('by_lastRefill', (q) => q.lt('lastRefill', cutoff))
       .take(1000)
 
     for (const entry of stale) {
-      await ctx.db.delete(entry._id)
+      await ctx.db.delete(entry._id) // batch-exempt: bounded by .take(1000), simple sequential delete
     }
 
     return stale.length

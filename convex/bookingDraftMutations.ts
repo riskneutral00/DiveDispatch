@@ -68,21 +68,22 @@ export const createDraftShell = mutation({
     const prefBoats = prefs?.preferredBoatSlugs ?? []
     const prefCompressors = prefs?.preferredCompressorSlugs ?? []
 
-    // Build boat capabilities from the boats table
+    // Build boat capabilities from the boats table (parallel to avoid N+1)
     const boatCapabilities: Record<string, BoatCapabilities> = {}
-    for (const slug of prefBoats) {
-      const boatUser = await ctx.db
-        .query('users')
-        .withIndex('by_slug', (q) => q.eq('slug', slug))
-        .unique()
-      if (boatUser) {
+    const boatEntries = await Promise.all(
+      prefBoats.map(async (slug) => {
+        const boatUser = await ctx.db
+          .query('users')
+          .withIndex('by_slug', (q) => q.eq('slug', slug))
+          .unique()
+        if (!boatUser) return null
         const boat = await profileByUserId(ctx, boatUser._id, 'boats')
-        if (boat) {
-          boatCapabilities[slug] = {
-            hasCompressor: boat.hasCompressor,
-          }
-        }
-      }
+        if (!boat) return null
+        return { slug, hasCompressor: boat.hasCompressor } as const
+      }),
+    )
+    for (const entry of boatEntries) {
+      if (entry) boatCapabilities[entry.slug] = { hasCompressor: entry.hasCompressor }
     }
 
     const coverageInput: CoverageInput = {

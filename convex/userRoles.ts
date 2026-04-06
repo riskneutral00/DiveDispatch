@@ -257,6 +257,23 @@ export const deleteRole = mutation({
     // 2. Delete profile record (table varies by role)
     await deleteProfileForRole(ctx, roleRow.role, user._id)
 
+    // 2a. Delete stakeholderPreferences for this user slug + role type
+    const prefs = await ctx.db
+      .query('stakeholderPreferences')
+      .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
+      .collect()
+    const rolePrefs = prefs.filter((p) => p.stakeholderType === roleRow.role)
+    await batchDelete(ctx, rolePrefs)
+
+    // 2b. Delete stakeholderBlockedDates for this user slug + role type
+    const blockedDates = await ctx.db
+      .query('stakeholderBlockedDates')
+      .withIndex('by_ownerSlug_roleType', (q) =>
+        q.eq('ownerSlug', user.slug).eq('roleType', roleRow.role),
+      )
+      .collect()
+    await batchDelete(ctx, blockedDates)
+
     // 3. Delete inventoryUnits + their reservations + snapshots for this user slug + resource type
     if (resourceType) {
       const units = await ctx.db

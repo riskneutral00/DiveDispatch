@@ -115,12 +115,12 @@ export async function requireOwnerOrResourceAccess(
   const callerUnits = await ctx.db
     .query('inventoryUnits')
     .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
-    .collect()
+    .take(200)
   const callerUnitIds = new Set(callerUnits.map((u) => u._id))
   const bookingReservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+    .take(100)
   const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
   if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 }

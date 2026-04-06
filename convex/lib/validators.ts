@@ -80,7 +80,6 @@ export const BASE_PROFILE_CREATE_FIELDS = {
   country: v.string(),
   lat: v.number(),
   lng: v.number(),
-  placeId: v.optional(v.string()),
   email: v.string(),
   phone: v.string(),
 }
@@ -92,7 +91,6 @@ export const BASE_PROFILE_UPDATE_FIELDS = {
   country: v.optional(v.string()),
   lat: v.optional(v.number()),
   lng: v.optional(v.number()),
-  placeId: v.optional(v.string()),
   email: v.optional(v.string()),
   phone: v.optional(v.string()),
 }

@@ -63,13 +63,13 @@ const ROSTER: InstructorDef[] = [
   // ── Original Instructors (1-15) ───────────────────────────────────
 
   // 1. Ryan Clarke
-  { firstName: 'Ryan', lastName: 'Clarke', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: [], teachingLanguages: ['en', 'th'] },
+  { firstName: 'Ryan', lastName: 'Clarke', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'RESCUE'], teachingLanguages: ['en', 'th'] },
   // 2. Nattaya Srisuk
-  { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: [], teachingLanguages: ['th', 'en', 'zh-CN'] },
+  { firstName: 'Nattaya', lastName: 'Srisuk', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'RESCUE', 'REFRESH'], teachingLanguages: ['th', 'en', 'zh-CN'] },
   // 3. Wei Chen
   { firstName: 'Wei', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT' }], courses: ['Nitrox', 'Deep', 'Wreck'], teachingLanguages: ['zh-CN', 'zh-TW', 'en', 'th'] },
   // 4. Li Ming
-  { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: [], teachingLanguages: ['zh-CN', 'en', 'ko'] },
+  { firstName: 'Li', lastName: 'Ming', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['OW', 'AOW'], teachingLanguages: ['zh-CN', 'en', 'ko'] },
   // 5. Zhang Yong
   { firstName: 'Zhang', lastName: 'Yong', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['Deep'], teachingLanguages: ['zh-CN', 'zh-TW', 'en'] },
   // 6. Nicole Tam
@@ -79,7 +79,7 @@ const ROSTER: InstructorDef[] = [
   // 8. Stefan Braun
   { firstName: 'Stefan', lastName: 'Braun', credentials: [{ agency: 'SSI', level: 'OWI' }], courses: ['Deep'], teachingLanguages: ['de', 'en', 'fr'] },
   // 9. Somphon Kaew
-  { firstName: 'Somphon', lastName: 'Kaew', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: [], teachingLanguages: ['th', 'en'] },
+  { firstName: 'Somphon', lastName: 'Kaew', credentials: [{ agency: 'PADI', level: 'OWSI' }], courses: ['OW', 'AOW', 'REFRESH'], teachingLanguages: ['th', 'en'] },
   // 10. Mike Chen (dual)
   { firstName: 'Mike', lastName: 'Chen', credentials: [{ agency: 'PADI', level: 'MSDT' }, { agency: 'SSI', level: 'OWI' }], courses: ['Nitrox', 'Deep', 'Wreck', 'PPB', 'Sidemount'], teachingLanguages: ['zh-CN', 'zh-TW', 'en', 'th'] },
   // 11. Rachel Nguyen (dual)

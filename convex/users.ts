@@ -16,6 +16,7 @@ import { logBookingChange } from './lib/auditLog'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
 import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
+import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 
 /** Strip sensitive fields from a user document for public consumption. */
 function publicUser(user: Doc<'users'>) {
@@ -148,14 +149,15 @@ export const updateProfile = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await requireAuth(ctx)
+    const sanitized = sanitizeFields(args, USER_FIELDS)
 
     await ctx.db.patch(user._id, {
-      ...(args.businessName !== undefined && { businessName: args.businessName }),
-      ...(args.email !== undefined && { email: args.email }),
-      ...(args.firstName !== undefined && { firstName: args.firstName }),
-      ...(args.lastName !== undefined && { lastName: args.lastName }),
-      ...(args.nickname !== undefined && { nickname: args.nickname }),
-      ...(args.phone !== undefined && { phone: args.phone }),
+      ...(sanitized.businessName !== undefined && { businessName: sanitized.businessName }),
+      ...(sanitized.email !== undefined && { email: sanitized.email }),
+      ...(sanitized.firstName !== undefined && { firstName: sanitized.firstName }),
+      ...(sanitized.lastName !== undefined && { lastName: sanitized.lastName }),
+      ...(sanitized.nickname !== undefined && { nickname: sanitized.nickname }),
+      ...(sanitized.phone !== undefined && { phone: sanitized.phone }),
       ...(args.dateOfBirth !== undefined && { dateOfBirth: args.dateOfBirth }),
       ...(args.appLanguage !== undefined && { appLanguage: args.appLanguage }),
       ...(args.customerLanguages !== undefined && { customerLanguages: args.customerLanguages }),
@@ -171,9 +173,10 @@ export const updateBusinessInfo = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx)
     if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const sanitized = sanitizeFields(args, USER_FIELDS)
 
     await ctx.db.patch(user._id, {
-      businessName: args.businessName,
+      businessName: sanitized.businessName as string,
     })
   },
 })

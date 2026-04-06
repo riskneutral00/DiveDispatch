@@ -65,7 +65,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
       const allReservations = await ctx.db
         .query('reservations')
         .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-        .collect()
+        .take(100)
 
       // DD-291: seenSnapshotIds prevents double-patching when two reservations share a snapshot
       const seenSnapshotIds = new Set<string>()
@@ -112,7 +112,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
   const reservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+    .take(100)
 
   const active = reservations.filter(
     (r) => r.status !== RESERVATION_STATUS.Vacated && r.status !== RESERVATION_STATUS.NoShow,
