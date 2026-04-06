@@ -172,7 +172,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           <label className="text-sm font-medium text-secondary">
             Start date
           </label>
-          <input
+          <input /* design-ok: native date picker */
             type="date"
             value={entry.dates[0] ?? ''}
             min={minStartDate}
@@ -190,7 +190,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             End date
           </label>
           <div className="flex gap-1 items-center">
-            <input
+            <input /* design-ok: native date picker */
               type="date"
               value={entry.dates[1] ?? entry.dates[0] ?? ''}
               min={entry.dates[0]}

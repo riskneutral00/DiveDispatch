@@ -169,7 +169,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
 
                 <div className="flex gap-6" role="group" aria-label={`Question ${idx + 1}`}>
                   <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
+                    <input /* design-ok: native radio for medical yes/no */
                       type="radio"
                       name={key}
                       value="yes"
@@ -184,7 +184,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
+                    <input /* design-ok: native radio for medical yes/no */
                       type="radio"
                       name={key}
                       value="no"

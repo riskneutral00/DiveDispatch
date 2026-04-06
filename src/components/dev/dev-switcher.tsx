@@ -192,11 +192,11 @@ function DevSwitcherInner() {
                     >
                       {config.label}
                     </span>
-                    <select
+                    <select /* design-ok: dev-only tenant switcher */
                       value={selectedSlug}
                       onChange={(e) => setSelected(config.key, e.target.value)}
                       disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary" /* design-ok */
+                      className="flex-1 min-w-0 text-[11px] rounded px-1 py-0.5 border text-primary"
                       style={{ background: 'var(--color-surface)',
                         borderColor: 'var(--color-glass-border)' }}
                     >

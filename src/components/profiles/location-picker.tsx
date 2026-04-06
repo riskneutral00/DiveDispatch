@@ -256,7 +256,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             >
               <Search size={15} />
             </span>
-            <input
+            <input /* design-ok: compound picker search filter */
               ref={inputRef}
               id={inputId}
               type="text"

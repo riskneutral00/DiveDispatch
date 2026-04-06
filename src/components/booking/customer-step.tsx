@@ -177,7 +177,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
                 { value: 'line', label: 'LINE' },
               ] satisfies ButtonGroupOption[]}
             />
-            <input
+            <input /* design-ok: dynamic contact input tied to button group */
               value={getContactValue()}
               onChange={(e) => handleContactValueChange(e.target.value)}
               placeholder={

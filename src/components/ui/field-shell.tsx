@@ -15,7 +15,7 @@ export function FieldLabel({ htmlFor, children, required, className, style }: Fi
   return (
     <label
       htmlFor={htmlFor}
-      className={cn('text-sm font-medium text-secondary', className)}
+      className={cn('text-label font-medium text-secondary', className)}
       style={style}
     >
       {children}

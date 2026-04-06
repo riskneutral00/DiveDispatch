@@ -42,7 +42,7 @@ export function StepRoleSelection({
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4" data-testid="wizard-content">
         {/* Organizers */}
         <div className="col-span-2 mb-0.5">
-          <p className="text-xs font-medium uppercase tracking-wider text-secondary">
+          <p className="text-xs font-medium uppercase tracking-wide text-secondary">
             Organizers
           </p>
         </div>
@@ -57,7 +57,7 @@ export function StepRoleSelection({
 
         {/* Resources */}
         <div className="col-span-2 mt-3 mb-0.5">
-          <p className="text-xs font-medium uppercase tracking-wider text-secondary">
+          <p className="text-xs font-medium uppercase tracking-wide text-secondary">
             Resources
           </p>
         </div>

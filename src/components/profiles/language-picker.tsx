@@ -107,7 +107,7 @@ export function LanguagePicker({
     <div className="flex flex-col gap-2">
       {/* Search input with counter */}
       <div className="relative max-w-xs">
-        <input
+        <input /* design-ok: compound picker search filter */
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

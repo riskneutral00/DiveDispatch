@@ -316,7 +316,7 @@ function GearSizeRow({
         {/* Inline edit */}
         {editing && (
           <div className="flex items-center gap-1">
-            <input
+            <input /* design-ok: inline size edit in equipment row */
               type="text"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}

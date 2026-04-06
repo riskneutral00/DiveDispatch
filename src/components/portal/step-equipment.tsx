@@ -401,7 +401,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
               const isSelected = needsPoweredLenses === (opt === 'Yes')
               return (
                 <label key={opt} className="flex items-center gap-2 cursor-pointer">
-                  <input
+                  <input /* design-ok: sr-only radio with custom indicator */
                     type="radio"
                     name="poweredLenses"
                     value={opt}

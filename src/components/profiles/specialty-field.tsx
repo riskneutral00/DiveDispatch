@@ -278,7 +278,7 @@ function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProp
       }}
       aria-disabled={disabled || undefined}
     >
-      <input
+      <input /* design-ok: sr-only toggle inside compound pill picker */
         type="checkbox"
         className="sr-only"
         checked={checked}
