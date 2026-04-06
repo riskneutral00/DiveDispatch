@@ -127,6 +127,8 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-status-urgent": palette.statusUrgent,
     "--color-blocked": palette.statusBlocked,
     "--color-status-multiday-border": palette.statusMultidayBorder,
+    "--color-tooltip-bg": palette.tooltipBg,
+    "--color-tooltip-text": palette.tooltipText,
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;

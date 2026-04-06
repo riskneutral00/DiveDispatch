@@ -26,6 +26,8 @@ export const GLASS_FORMULAS = {
     opacityWatermark: 0.18,
     opacitySubtle: 0.14,
     opacityMuted: 0.50,
+    tooltipBg: "rgba(255, 255, 255, 0.92)",
+    tooltipText: "#0f172a",
   },
 
   // Mid-tone backgrounds (underwater photos, twilight, blue water column)
@@ -48,6 +50,8 @@ export const GLASS_FORMULAS = {
     opacityWatermark: 0.40,
     opacitySubtle: 0.30,
     opacityMuted: 0.55,
+    tooltipBg: "rgba(255, 255, 255, 0.92)",
+    tooltipText: "#0f172a",
   },
 
   // Bright backgrounds (shallow reef, tropical surface, sand)
@@ -71,6 +75,8 @@ export const GLASS_FORMULAS = {
     opacityWatermark: 0.55,
     opacitySubtle: 0.10,
     opacityMuted: 0.70,
+    tooltipBg: "rgba(15, 23, 42, 0.92)",
+    tooltipText: "#f8fafc",
   },
 } as const;
 

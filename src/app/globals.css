@@ -125,6 +125,7 @@
   --z-sticky: 20;
   --z-dropdown: 50;
   --z-modal: 70;
+  --z-tooltip: 80;
   --z-dev: 100;
   --transition-speed: 0.3s;
 
@@ -343,9 +344,6 @@ dialog::backdrop {
 /* ── Glass toast accents ────────────────────────────────────────────────────
    Left border accent for sonner toasts to match Glass Air design.
    ──────────────────────────────────────────────────────────────────────────── */
-.glass-toast-success [data-content] {
-  /* parent toast gets the accent via border-left */
-}
 .glass-toast-success {
   border-left: 3px solid var(--color-active-fg) !important;
 }

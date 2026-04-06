@@ -43,6 +43,8 @@ const palette: ColorPalette = {
   statusUrgent: '#f43f5e',
   statusBlocked: '#6366f1',
   statusMultidayBorder: '#8b5cf6',
+  tooltipBg: 'rgba(255, 255, 255, 0.92)',
+  tooltipText: '#0f172a',
 }
 
 describe('contrastRatio', () => {
@@ -127,6 +129,30 @@ describe('paletteToVars', () => {
   it('omits bgImage when undefined', () => {
     const vars = paletteToVars(palette)
     expect(vars['--bg-image']).toBeUndefined()
+  })
+
+  it('includes tooltip token CSS variables', () => {
+    const vars = paletteToVars(palette)
+    expect(vars['--color-tooltip-bg']).toBeDefined()
+    expect(vars['--color-tooltip-text']).toBeDefined()
+  })
+
+  it('tooltip bg differs between dark and bright luminance tiers', () => {
+    const brightPalette: ColorPalette = {
+      ...palette,
+      luminanceClass: 'bright',
+      tooltipBg: 'rgba(15, 23, 42, 0.92)',
+      tooltipText: '#f8fafc',
+    }
+    const darkPalette: ColorPalette = {
+      ...palette,
+      luminanceClass: 'dark',
+      tooltipBg: 'rgba(255, 255, 255, 0.92)',
+      tooltipText: '#0f172a',
+    }
+    const darkVars = paletteToVars(darkPalette)
+    const brightVars = paletteToVars(brightPalette)
+    expect(darkVars['--color-tooltip-bg']).not.toBe(brightVars['--color-tooltip-bg'])
   })
 })
 

@@ -50,6 +50,9 @@ export interface ColorPalette {
   statusUrgent: string;
   statusBlocked: string;
   statusMultidayBorder: string;
+  // Tooltip — adapts per luminance (light bg on dark, dark bg on bright)
+  tooltipBg: string;
+  tooltipText: string;
 }
 
 export interface ThemeConfig {

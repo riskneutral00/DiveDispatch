@@ -80,7 +80,7 @@ export function Tooltip({ label, children, className }: TooltipProps) {
             top: pos.top,
             left: pos.left,
             transform: 'translate(-50%, -100%)',
-            zIndex: 99999,
+            zIndex: 'var(--z-tooltip)',
             background: 'var(--color-tooltip-bg)',
             color: 'var(--color-tooltip-text)',
           }}
