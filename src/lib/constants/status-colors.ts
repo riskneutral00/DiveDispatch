@@ -13,15 +13,17 @@ export const ACTIVE_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set(['Dra
 export const TERMINAL_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set([
   'Cancelled',
   'Completed',
+  'Archived',
 ])
 
-// Opacity for booking bars — Draft faded, Completed muted, others full
+// Opacity for booking bars — Draft faded, Completed/Archived muted, others full
 export const STATUS_OPACITY: Record<CalendarDisplayStatus, number> = {
   Active: 1.0,
   Draft: 1.0,
   Upcoming: 1.0,
   Completed: 0.6,
   Cancelled: 0,
+  Archived: 0.4,
   Urgent: 1.0,
 }
 
@@ -32,6 +34,7 @@ export const STATUS_BORDER_STYLE: Record<CalendarDisplayStatus, 'dashed' | 'soli
   Upcoming: 'solid',
   Completed: 'solid',
   Cancelled: 'solid',
+  Archived: 'solid',
   Urgent: 'solid',
 }
 
@@ -74,6 +77,12 @@ export const STATUS_COLORS: Record<
     bgVar: 'var(--color-status-cancelled-bg)',
     borderVar: 'var(--color-status-cancelled-border)',
     dotVar: 'var(--color-status-cancelled)',
+  },
+  Archived: {
+    textVar: 'var(--color-status-completed)',
+    bgVar: 'var(--color-status-completed-bg)',
+    borderVar: 'var(--color-status-completed-border)',
+    dotVar: 'var(--color-status-completed)',
   },
   Urgent: {
     textVar: 'var(--color-status-urgent)',

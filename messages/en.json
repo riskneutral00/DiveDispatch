@@ -66,7 +66,21 @@
     "pageNotFoundMessage": "This page doesn't exist or has been moved.",
     "bookingClosedTitle": "Booking Closed",
     "completeTitle": "Complete!",
-    "roleNotDetermined": "Unable to determine active role."
+    "roleNotDetermined": "Unable to determine active role.",
+    "unauthenticated": "You must be signed in to do this.",
+    "forbidden": "You don't have permission to do this.",
+    "notFound": "Not found.",
+    "validation": "Invalid input.",
+    "invalidStatus": "This action isn't available right now.",
+    "invalidTransition": "This action isn't available right now.",
+    "invalidInput": "Invalid input.",
+    "blockedDate": "One or more dates are unavailable.",
+    "pastDate": "Cannot book dates in the past.",
+    "revertWindowExpired": "The revert window has expired.",
+    "conflict": "Resource conflict — someone else booked it first.",
+    "profileIncomplete": "Complete your profile before continuing.",
+    "resourcesIncomplete": "Assign all required resources before confirming.",
+    "rateLimited": "Too many requests. Wait a moment and try again."
   },
   "nav": {
     "dashboard": "Dashboard",

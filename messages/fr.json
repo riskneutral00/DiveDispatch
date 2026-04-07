@@ -66,7 +66,21 @@
     "pageNotFoundMessage": "Cette page n'existe pas ou a été déplacée.",
     "bookingClosedTitle": "Réservation clôturée",
     "completeTitle": "Terminé !",
-    "roleNotDetermined": "Impossible de déterminer le rôle actif."
+    "roleNotDetermined": "Impossible de déterminer le rôle actif.",
+    "unauthenticated": "Vous devez être connecté pour effectuer cette action.",
+    "forbidden": "Vous n'avez pas la permission d'effectuer cette action.",
+    "notFound": "Introuvable.",
+    "validation": "Saisie invalide.",
+    "invalidStatus": "Cette action n'est pas disponible pour le moment.",
+    "invalidTransition": "Cette action n'est pas disponible pour le moment.",
+    "invalidInput": "Saisie invalide.",
+    "blockedDate": "Une ou plusieurs dates ne sont pas disponibles.",
+    "pastDate": "Impossible de réserver des dates passées.",
+    "revertWindowExpired": "Le délai d'annulation a expiré.",
+    "conflict": "Conflit de ressource — quelqu'un d'autre l'a réservée en premier.",
+    "profileIncomplete": "Complétez votre profil avant de continuer.",
+    "resourcesIncomplete": "Assignez toutes les ressources requises avant de confirmer.",
+    "rateLimited": "Trop de requêtes. Patientez un instant et réessayez."
   },
   "nav": {
     "dashboard": "Tableau de bord",

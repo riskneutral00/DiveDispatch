@@ -66,7 +66,21 @@
     "pageNotFoundMessage": "此页面不存在或已被移动。",
     "bookingClosedTitle": "预订已关闭",
     "completeTitle": "已完成！",
-    "roleNotDetermined": "无法确定当前活跃角色。"
+    "roleNotDetermined": "无法确定当前活跃角色。",
+    "unauthenticated": "您必须登录才能执行此操作。",
+    "forbidden": "您没有权限执行此操作。",
+    "notFound": "未找到。",
+    "validation": "输入无效。",
+    "invalidStatus": "此操作目前不可用。",
+    "invalidTransition": "此操作目前不可用。",
+    "invalidInput": "输入无效。",
+    "blockedDate": "一个或多个日期不可用。",
+    "pastDate": "无法预订过去的日期。",
+    "revertWindowExpired": "撤销窗口已过期。",
+    "conflict": "资源冲突——其他人已抢先预订。",
+    "profileIncomplete": "请先完善您的个人资料再继续。",
+    "resourcesIncomplete": "请在确认前分配所有必需资源。",
+    "rateLimited": "请求过多，请稍后再试。"
   },
   "nav": {
     "dashboard": "仪表盘",

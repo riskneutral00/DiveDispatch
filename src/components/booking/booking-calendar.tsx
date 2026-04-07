@@ -11,6 +11,7 @@ import { courseLabel } from '@/lib/constants/course-catalog'
 import { buildBarSubLabel } from '@/lib/utils/build-bar-sub-label'
 import { getBarBorderColor } from '@/lib/booking/bar-styles'
 import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
+import { useClickOutside } from '@/lib/hooks/use-click-outside'
 import { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
 import { parseDateLocal, toISODateString } from '@/lib/utils/date'
 import { LOCKING_STATUSES, STATUS_COLORS, STATUS_OPACITY, STATUS_BORDER_STYLE, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
@@ -83,16 +84,8 @@ export function BookingCalendar({
   useEffect(() => { setPickerYear(viewYear) }, [viewYear])
 
   // Click-outside dismiss
-  useEffect(() => {
-    if (!expanded) return
-    function handleClick(e: MouseEvent) {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setExpanded(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [expanded])
+  const collapseExpanded = useCallback(() => setExpanded(false), [])
+  useClickOutside(pickerRef, collapseExpanded, expanded)
 
   useEffect(() => {
     onRangeChange?.(toISODateString(range.start), toISODateString(range.end))
@@ -476,8 +469,9 @@ export function BookingCalendar({
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
                           }}
-                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-[filter] duration-150 ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
+                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-[filter] ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
+                            transitionDuration: 'var(--transition-speed)',
                             height: `${BAR_ROW_HEIGHT - 2}px`,
                             minHeight: '44px',
                             opacity: isReferral ? (opacity * 0.8) : opacity,

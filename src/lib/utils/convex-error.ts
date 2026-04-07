@@ -13,11 +13,33 @@ type TranslateFn = (key: string, values?: Record<string, string>) => string
  * Map known Convex error codes to errors.* i18n keys.
  */
 const CODE_TO_KEY: Record<string, string> = {
-  TOKEN_EXPIRED: 'tokenExpired',
+  // Auth
+  UNAUTHENTICATED: 'unauthenticated',
+  FORBIDDEN: 'forbidden',
+  // Lookup
+  NOT_FOUND: 'notFound',
+  // Validation
+  VALIDATION: 'validation',
+  INVALID_STATUS: 'invalidStatus',
+  INVALID_TRANSITION: 'invalidTransition',
+  INVALID_INPUT: 'invalidInput',
+  // Booking lifecycle
   BOOKING_CLOSED: 'bookingClosed',
+  BLOCKED_DATE: 'blockedDate',
+  PAST_DATE: 'pastDate',
+  REVERT_WINDOW_EXPIRED: 'revertWindowExpired',
+  // Inventory / reservations
+  CONFLICT: 'conflict',
+  // Portal
+  TOKEN_EXPIRED: 'tokenExpired',
   FORMS_INCOMPLETE: 'formsIncomplete',
+  // Profile / roles
+  PROFILE_INCOMPLETE: 'profileIncomplete',
+  RESOURCES_INCOMPLETE: 'resourcesIncomplete',
   DUPLICATE_ROLE: 'duplicateRole',
   LAST_ROLE: 'lastRole',
+  // Rate limiting
+  RATE_LIMITED: 'rateLimited',
 }
 
 /**
@@ -64,7 +86,7 @@ export function parseConvexError(
 ): string {
   if (!(err instanceof ConvexError)) return fallback
   const data = err.data as ConvexErrorData
-  return data.reason ?? data.message ?? data.code ?? fallback
+  return data.reason ?? data.code ?? fallback
 }
 
 /**

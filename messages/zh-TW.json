@@ -66,7 +66,21 @@
     "pageNotFoundMessage": "此頁面不存在或已被移動。",
     "bookingClosedTitle": "預約已關閉",
     "completeTitle": "完成！",
-    "roleNotDetermined": "無法判斷目前的有效角色。"
+    "roleNotDetermined": "無法判斷目前的有效角色。",
+    "unauthenticated": "您必須登入才能執行此操作。",
+    "forbidden": "您沒有權限執行此操作。",
+    "notFound": "找不到。",
+    "validation": "輸入無效。",
+    "invalidStatus": "此操作目前無法使用。",
+    "invalidTransition": "此操作目前無法使用。",
+    "invalidInput": "輸入無效。",
+    "blockedDate": "一個或多個日期無法使用。",
+    "pastDate": "無法預約過去的日期。",
+    "revertWindowExpired": "復原期限已過期。",
+    "conflict": "資源衝突——其他人已搶先預訂。",
+    "profileIncomplete": "請先完善您的個人資料再繼續。",
+    "resourcesIncomplete": "請在確認前指派所有必要資源。",
+    "rateLimited": "請求過多，請稍後再試。"
   },
   "nav": {
     "dashboard": "儀表板",

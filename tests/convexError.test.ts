@@ -17,9 +17,9 @@ describe('parseConvexError', () => {
     expect(parseConvexError(err)).toBe('Slot taken')
   })
 
-  it('falls back to message when no reason', () => {
+  it('falls back to code when no reason', () => {
     const err = new ConvexError({ code: 'CONFLICT', message: 'Error occurred' })
-    expect(parseConvexError(err)).toBe('Error occurred')
+    expect(parseConvexError(err)).toBe('CONFLICT')
   })
 
   it('falls back to code when no reason or message', () => {
