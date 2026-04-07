@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
 import { authorize } from './lib/auth'
+import { requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 
 export const listActive = query({
@@ -11,6 +12,33 @@ export const listActive = query({
       .query('themes')
       .withIndex('by_isActive', (q) => q.eq('isActive', true))
       .take(100)
+  },
+})
+
+export const listStore = query({
+  args: {},
+  handler: async (ctx) => {
+    const themes = await ctx.db
+      .query('themes')
+      .withIndex('by_isActive', (q) => q.eq('isActive', true))
+      .take(100)
+    return themes.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      slug: t.slug,
+      tier: t.tier ?? 'free' as const,
+      price: t.price ?? 0,
+      previewUrl: t.previewUrl,
+    }))
+  },
+})
+
+export const getConfig = query({
+  args: { id: v.id('themes') },
+  handler: async (ctx, args) => {
+    const theme = await ctx.db.get(args.id)
+    if (!theme) return null
+    return JSON.parse(theme.config)
   },
 })
 
@@ -28,6 +56,16 @@ export const byId = query({
   args: { id: v.id('themes') },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id)
+  },
+})
+
+export const selectTheme = mutation({
+  args: { themeId: v.id('themes') },
+  handler: async (ctx, args) => {
+    const { user } = await requireAuth(ctx)
+    const theme = await ctx.db.get(args.themeId)
+    if (!theme) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    await ctx.db.patch(user._id, { selectedThemeId: args.themeId })
   },
 })
 

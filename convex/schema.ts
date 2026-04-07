@@ -45,6 +45,9 @@ export default defineSchema({
     config: v.string(),
     isActive: v.boolean(),
     createdAt: v.number(),
+    tier: v.optional(v.union(v.literal('free'), v.literal('premium'), v.literal('exclusive'))),
+    price: v.optional(v.number()),
+    previewUrl: v.optional(v.string()),
   })
     .index('by_slug', ['slug'])
     .index('by_isActive', ['isActive']),

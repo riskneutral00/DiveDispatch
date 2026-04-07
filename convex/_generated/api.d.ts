@@ -51,6 +51,7 @@ import type * as lib_batch from "../lib/batch.js";
 import type * as lib_constantTimeEqual from "../lib/constantTimeEqual.js";
 import type * as lib_credentialMatch from "../lib/credentialMatch.js";
 import type * as lib_crypto from "../lib/crypto.js";
+import type * as lib_defaultThemes from "../lib/defaultThemes.js";
 import type * as lib_devGuard from "../lib/devGuard.js";
 import type * as lib_errorClassification from "../lib/errorClassification.js";
 import type * as lib_errorCodes from "../lib/errorCodes.js";
@@ -157,6 +158,7 @@ declare const fullApi: ApiFromModules<{
   "lib/constantTimeEqual": typeof lib_constantTimeEqual;
   "lib/credentialMatch": typeof lib_credentialMatch;
   "lib/crypto": typeof lib_crypto;
+  "lib/defaultThemes": typeof lib_defaultThemes;
   "lib/devGuard": typeof lib_devGuard;
   "lib/errorClassification": typeof lib_errorClassification;
   "lib/errorCodes": typeof lib_errorCodes;

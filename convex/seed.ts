@@ -652,59 +652,21 @@ export const patchTokenIdentifiers = internalMutation({
   },
 })
 
-// ── GAP-25: Seed Default Theme ──────────────────────────────────────
-
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const { OCEAN_THEME_CONFIG } = await import('./lib/defaultThemes')
+
     const themeId = await ctx.db.insert('themes', {
-      name: 'Ocean Blue',
-      slug: 'ocean-blue',
-      config: JSON.stringify({
-        light: {
-          primary: '#0077B6',
-          secondary: '#00B4D8',
-          accent: '#90E0EF',
-          textPrimary: '#1A1A2E',
-          textSecondary: '#4A4A6A',
-          textOnPrimary: '#FFFFFF',
-          glassBg: 'rgba(255, 255, 255, 0.12)',
-          glassBorder: 'rgba(255, 255, 255, 0.2)',
-          glassBlur: '16px',
-          surface: '#F8FAFC',
-          surfaceElevated: '#FFFFFF',
-          success: '#10B981',
-          warning: '#F59E0B',
-          destructive: '#EF4444',
-        },
-        dark: {
-          primary: '#00B4D8',
-          secondary: '#0077B6',
-          accent: '#023E8A',
-          textPrimary: '#E0E7FF',
-          textSecondary: '#94A3B8',
-          textOnPrimary: '#FFFFFF',
-          glassBg: 'rgba(0, 0, 0, 0.3)',
-          glassBorder: 'rgba(255, 255, 255, 0.1)',
-          glassBlur: '20px',
-          surface: '#0F172A',
-          surfaceElevated: '#1E293B',
-          success: '#34D399',
-          warning: '#FBBF24',
-          destructive: '#F87171',
-        },
-        fonts: {
-          heading: 'Inter, system-ui, sans-serif',
-          body: 'Inter, system-ui, sans-serif',
-        },
-        borderRadius: '12px',
-        transitionSpeed: '0.2s',
-      }),
+      name: OCEAN_THEME_CONFIG.name,
+      slug: 'ocean',
+      config: JSON.stringify(OCEAN_THEME_CONFIG),
       isActive: true,
       createdAt: Date.now(),
+      tier: 'free',
     })
 
-    const allUsers = await ctx.db.query('users').collect() // bounded: seed script, dev-only
+    const allUsers = await ctx.db.query('users').collect()
     for (const user of allUsers) {
       await ctx.db.patch(user._id, { selectedThemeId: themeId }) // batch-exempt
     }
