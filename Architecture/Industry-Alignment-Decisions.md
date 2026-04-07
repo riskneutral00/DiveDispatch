@@ -13,8 +13,11 @@
 - Design token enforcement hooks active (text-sm, text-xs, rounded, color-mix, hex/rgb all blocked). Token migrations complete (140 + 158 + 41 + 15 + 4 files). IconButton ghost variant shipped.
 - Phase 1 complete: 7 invariant files written to `~/Desktop/RiskNeutral/DiveDispatch/Architecture/`. CLAUDE.md updated with pointer block. 9 skill definitions updated with invariant file references.
 - Phase 2 Tracks A–D complete. FSM sealed (declineReservation, Archived state). Schema hygiene (dead fields, naming). Error shape (message→reason, i18n). Frontend cleanup (duration-theme, data-luminance, DashboardPageFrame, step-indicator consolidation, form system migration, notification error feedback).
+- C2 server-enforced caps + `.collect()` audit complete. 107 calls audited with `// bounded:` annotations or `.take(N)` caps. Notifications, themes, bookingTemplates, availability all capped.
+- C8 FSM gateway invariant test added (`tests/fsmGateway.test.ts`).
+- C9 `stateMachineTime.test.ts` time guards added (`vi.useFakeTimers` + `vi.setSystemTime`).
 
-**Next:** Invariant test (C8 final checkbox). All other Phase 2 items complete.
+**Next:** Phase 3 — C3 (Clerk Organizations + `authorize()`), C5 (Storybook + Chromatic), C9 remainder (fixture migration + component tests). SkinCommerce theme unification (C2) deferred to own session.
 
 ---
 
@@ -107,12 +110,12 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [ ] **Store browsing ≠ theme rendering** (SkinCommerce):
   - [ ] `listStore` returns metadata only (name, slug, tier, price, preview, owned boolean)
   - [ ] `getConfig` / `byId` returns palette config only (no commerce fields)
-- [ ] Server-enforced caps:
-  - [ ] `notifications.ts:219` — clamp client-provided `limit` to server max (50)
-  - [ ] `themes.ts:15` — full table `.collect()` → `.take(100)`
-  - [ ] `bookingTemplates.ts:26` — per-user `.collect()` → add `.take(N)`
-  - [ ] `availability.ts:136,216` — internal `.collect()` → add `.take(N)` with bound reasoning
-- [ ] Audit all 107 `.collect()` calls across 28 files. For each: bounded by design → add comment. Needs cap → add `.take(N)`. **Do this AFTER naming unification (C1) since renames change query references.**
+- [x] Server-enforced caps:
+  - [x] `notifications.ts:219` — clamp client-provided `limit` to server max (50)
+  - [x] `themes.ts:15` — full table `.collect()` → `.take(100)`
+  - [x] `bookingTemplates.ts:26` — per-user `.collect()` → add `.take(N)`
+  - [x] `availability.ts:136,216` — internal `.collect()` → add `.take(N)` with bound reasoning
+- [x] Audit all 107 `.collect()` calls across 28 files. For each: bounded by design → add comment. Needs cap → add `.take(N)`.
 
 ---
 
@@ -226,7 +229,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [x] Route `declineReservation` through `canBookingTransition` (`convex/reservationsMutations.ts:306-310`). **Decision needed: use existing `edit` action or add `decline_cascade` action. Answer this in `fsm-invariants.md` before executing.**
 - [x] Add terminal `Archived` state. Remove `edit` transition from `Completed`.
 - [x] Grep for any other direct `.patch(` targeting `.status` on bookings/reservations outside gateway files
-- [ ] Add invariant test: scan codebase for `.status` patches, assert only in gateway files
+- [x] Add invariant test: scan codebase for `.status` patches, assert only in gateway files (`tests/fsmGateway.test.ts`)
 
 ---
 
@@ -240,7 +243,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 - [x] Write `Architecture/testing-invariants.md`
 - [x] Add CLAUDE.md pointer
-- [ ] Fix `stateMachineTime.test.ts` — add `vi.setSystemTime` guards
+- [x] Fix `stateMachineTime.test.ts` — add `vi.setSystemTime` guards
 - [ ] Migrate 10 most-changed test files to `seedFixture.ts`
 - [ ] Add tests for 3 highest-risk `useMutation` components
 
