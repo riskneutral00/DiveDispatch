@@ -62,14 +62,14 @@ export default defineSchema({
   bookingResources: defineTable({
     bookingId: v.id('bookings'),
     resourceType: resourceOwnerType,
-    resourceSlug: v.optional(v.string()),
+    resourceId: v.optional(v.string()),
     externalName: v.optional(v.string()),
     /** When resourceType is Instructor, distinguishes Dive Master helpers from lead instructors. */
     roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
   })
     .index('by_bookingId', ['bookingId'])
-    .index('by_resourceSlug', ['resourceSlug'])
-    .index('by_resourceType_resourceSlug', ['resourceType', 'resourceSlug']),
+    .index('by_resourceId', ['resourceId'])
+    .index('by_resourceType_resourceId', ['resourceType', 'resourceId']),
 
   // ── L1: Core Booking Tables ─────────────────────────────────────────
 
@@ -245,7 +245,6 @@ export default defineSchema({
     unitsRequested: v.number(),
     status: reservationStatus,
     confirmedAt: v.optional(v.number()),
-    expiresAt: v.optional(v.number()),
     noShowAt: v.optional(v.number()),
     vacatedAt: v.optional(v.number()),
     vacatedBy: v.optional(vacatedReasonValidator),
@@ -254,8 +253,7 @@ export default defineSchema({
     .index('by_bookingId_status', ['bookingId', 'status'])
     .index('by_bookingId_inventoryUnitId', ['bookingId', 'inventoryUnitId'])
     .index('by_inventoryUnitId_status', ['inventoryUnitId', 'status'])
-    .index('by_bookingSessionId', ['bookingSessionId'])
-    .index('by_expiresAt_status', ['expiresAt', 'status']),
+    .index('by_bookingSessionId', ['bookingSessionId']),
 
   availabilitySnapshots: defineTable({
     inventoryUnitId: v.id('inventoryUnits'),
@@ -273,10 +271,10 @@ export default defineSchema({
   // ── L1: Stakeholder Blocked Dates ───────────────────────────────────
 
   stakeholderBlockedDates: defineTable({
-    ownerSlug: v.string(),
+    stakeholderId: v.string(),
     roleType: stakeholderType,
     dates: v.array(v.string()),
-  }).index('by_ownerSlug_roleType', ['ownerSlug', 'roleType']),
+  }).index('by_stakeholderId_roleType', ['stakeholderId', 'roleType']),
 
   // ── L1: Stakeholder Preferences ─────────────────────────────────────
 
@@ -284,12 +282,6 @@ export default defineSchema({
     stakeholderId: v.string(),
     stakeholderType: stakeholderType,
     acceptanceMode: acceptanceMode,
-    /** @deprecated Removed from UI — availability handled by calendar. */
-    maxHoursPerDay: v.optional(v.number()),
-    /** @deprecated Removed from UI — availability handled by calendar. */
-    noWorkAfterTime: v.optional(v.string()),
-    /** @deprecated Removed from UI — availability handled by calendar. */
-    postJobBlockDuration: v.optional(v.number()),
     useNamedUnits: v.boolean(),
     commonLanguageCodes: v.optional(v.array(v.string())),
     preferredInstructorSlugs: v.optional(v.array(v.string())),
@@ -323,7 +315,6 @@ export default defineSchema({
       meetingPoint: v.optional(v.string()),
     })),
   })
-    .index('by_userId', ['userId'])
     .index('by_userId_readAt', ['userId', 'readAt'])
     .index('by_userId_createdAt', ['userId', 'createdAt'])
     .index('by_bookingId', ['bookingId']),
@@ -522,7 +513,7 @@ export default defineSchema({
     activityType: v.array(courseCode),
     resources: v.optional(v.array(v.object({
       resourceType: resourceOwnerType,
-      resourceSlug: v.string(),
+      resourceId: v.string(),
     }))),
     createdAt: v.number(),
   }).index('by_ownerId_ownerType', ['ownerId', 'ownerType']),

@@ -38,8 +38,8 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
   // rentalChecklist, and every gear type is 'own'. Missing checklist → keep hold.
   const bookingResourceRows = await getResourcesForBooking(ctx, bookingId)
   const hasInSystemEM = bookingResourceRows.some(
-    (r: { resourceType: string; resourceSlug?: string }) =>
-      r.resourceType === 'Equipment' && r.resourceSlug,
+    (r: { resourceType: string; resourceId?: string }) =>
+      r.resourceType === 'Equipment' && r.resourceId,
   )
   if (hasInSystemEM) {
     const profiles = await ctx.db
@@ -208,12 +208,12 @@ async function collectLogistics(
   if (boatResource) {
     if (boatResource.externalName) {
       logistics.boatName = boatResource.externalName
-    } else if (boatResource.resourceSlug) {
+    } else if (boatResource.resourceId) {
       // In-system boat: look up inventory unit displayName
       const unit = await ctx.db
         .query('inventoryUnits')
         .withIndex('by_ownerId_resourceType', (q) =>
-          q.eq('ownerId', boatResource.resourceSlug!).eq('resourceType', 'Boat'),
+          q.eq('ownerId', boatResource.resourceId!).eq('resourceType', 'Boat'),
         )
         .first() // batch-exempt: single first() read for one known boat slug
       if (unit) logistics.boatName = unit.displayName

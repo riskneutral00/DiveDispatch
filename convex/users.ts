@@ -527,12 +527,12 @@ export const cleanupDeletedUserData = internalMutation({
       ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).take(PROBE),
       ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', userSlug))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', userSlug))
         .filter((q) => q.eq(q.field('readAt'), undefined))
         .take(PROBE),
       ctx.db.query('stakeholderPreferences').withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', userSlug)).take(PROBE),
-      ctx.db.query('stakeholderBlockedDates').withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', userSlug)).take(PROBE),
-      ctx.db.query('bookingResources').withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', userSlug)).take(PROBE),
+      ctx.db.query('stakeholderBlockedDates').withIndex('by_stakeholderId_roleType', (q) => q.eq('stakeholderId', userSlug)).take(PROBE),
+      ctx.db.query('bookingResources').withIndex('by_resourceId', (q) => q.eq('resourceId', userSlug)).take(PROBE),
       ctx.db.query('inventoryUnits').withIndex('by_ownerId_resourceType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
       ctx.db.query('bookingTemplates').withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
     ])

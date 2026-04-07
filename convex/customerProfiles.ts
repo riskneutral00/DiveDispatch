@@ -243,6 +243,10 @@ export const saveSafetyInfo = mutation({
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(profile._id, patch)
     }
+
+    if (sanitized.allergies !== undefined && profile.customerId) {
+      await ctx.db.patch(profile.customerId, { allergies: sanitized.allergies as string })
+    }
   },
 })
 

@@ -436,21 +436,21 @@ export function DayRow({
                     </div>
                     <div className="flex-1 min-w-0">
                       <SimpleSelect
-                        value={dive.resourceSlug ?? ''}
+                        value={dive.resourceId ?? ''}
                         onChange={(slug) => {
                           const val = slug || undefined
                           // Set this dive's resource
-                          dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceSlug: val })
+                          dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceId: val })
                           // Waterfall: fill subsequent dives with same venue type (same day + later days)
                           if (val) {
                             for (let j = diveIdx + 1; j < day.dives.length; j++) {
                               const nextDive = day.dives[j]
                               const nextVenue = nextDive.venueType ?? (nextDive.isConfined ? 'pool' : 'boat')
-                              if (nextVenue === currentVenue && !nextDive.resourceSlug) {
-                                dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: j, venueType: nextVenue, resourceSlug: val })
+                              if (nextVenue === currentVenue && !nextDive.resourceId) {
+                                dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: j, venueType: nextVenue, resourceId: val })
                               }
                             }
-                            dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceSlug: val })
+                            dispatch({ type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: dayIndex + 1, venueType: currentVenue, resourceId: val })
                           }
                         }}
                         data-testid={`${currentVenue}-select`}

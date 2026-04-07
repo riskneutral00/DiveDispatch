@@ -153,8 +153,8 @@ export const bookingCountForRole = query({
     // Find all bookingResources for this user slug + resource type
     const resources = await ctx.db
       .query('bookingResources')
-      .withIndex('by_resourceType_resourceSlug', (q) =>
-        q.eq('resourceType', resourceType).eq('resourceSlug', user.slug),
+      .withIndex('by_resourceType_resourceId', (q) =>
+        q.eq('resourceType', resourceType).eq('resourceId', user.slug),
       )
       .collect()
 
@@ -203,8 +203,8 @@ async function countActiveBookings(
 ): Promise<number> {
   const resources = await ctx.db
     .query('bookingResources')
-    .withIndex('by_resourceType_resourceSlug', (q) =>
-      q.eq('resourceType', resourceType).eq('resourceSlug', slug),
+    .withIndex('by_resourceType_resourceId', (q) =>
+      q.eq('resourceType', resourceType).eq('resourceId', slug),
     )
     .take(500)
 
@@ -268,8 +268,8 @@ export const deleteRole = mutation({
     // 2b. Delete stakeholderBlockedDates for this user slug + role type
     const blockedDates = await ctx.db
       .query('stakeholderBlockedDates')
-      .withIndex('by_ownerSlug_roleType', (q) =>
-        q.eq('ownerSlug', user.slug).eq('roleType', roleRow.role),
+      .withIndex('by_stakeholderId_roleType', (q) =>
+        q.eq('stakeholderId', user.slug).eq('roleType', roleRow.role),
       )
       .collect()
     await batchDelete(ctx, blockedDates)

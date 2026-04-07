@@ -315,10 +315,10 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
       ...(inst ? { instructorSlug: inst } : {}),
       dives: day.dives.map((dive) => {
         const vt = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
-        const resourceSlug = vt === 'boat'
-          ? (boat || dive.resourceSlug)
-          : (venue || dive.resourceSlug)
-        return { ...dive, resourceSlug }
+        const resourceId = vt === 'boat'
+          ? (boat || dive.resourceId)
+          : (venue || dive.resourceId)
+        return { ...dive, resourceId }
       }),
     }))
     dispatch({ type: 'SET_DAYS', days: newDays })
@@ -368,8 +368,8 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     const assignedBoatSlugs = new Set(
       days.flatMap((d) =>
         d.dives
-          .filter((dv) => (dv.venueType ?? (dv.isConfined ? 'pool' : 'boat')) === 'boat' && dv.resourceSlug)
-          .map((dv) => dv.resourceSlug!),
+          .filter((dv) => (dv.venueType ?? (dv.isConfined ? 'pool' : 'boat')) === 'boat' && dv.resourceId)
+          .map((dv) => dv.resourceId!),
       ),
     )
     const anyHasCompressor = boats.some(
@@ -461,10 +461,10 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
           dives: day.dives.map((dive) => {
             const venueType = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
             // Pool/shore → use venue slug, boat → use boat slug
-            const resourceSlug = venueType === 'boat'
-              ? (preFillBoatSlug || dive.resourceSlug)
-              : (preFillVenueSlug || dive.resourceSlug)
-            return { ...dive, resourceSlug }
+            const resourceId = venueType === 'boat'
+              ? (preFillBoatSlug || dive.resourceId)
+              : (preFillVenueSlug || dive.resourceId)
+            return { ...dive, resourceId }
           }),
         }))
       }

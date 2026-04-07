@@ -40,12 +40,12 @@ export function computeDateRange(
 /** Map saved template resource rows onto pre-fill slugs (does not override non-empty defaults from operator prefs). */
 function applyTemplateResourceHints(
   pref: BookingPreFill,
-  hints: Array<{ resourceType: string; resourceSlug: string }> | undefined,
+  hints: Array<{ resourceType: string; resourceId: string }> | undefined,
 ): BookingPreFill {
   if (!hints?.length) return pref
   let next = { ...pref }
   for (const h of hints) {
-    const slug = h.resourceSlug
+    const slug = h.resourceId
     if (!slug) continue
     switch (h.resourceType) {
       case 'Instructor':
@@ -80,7 +80,7 @@ export function buildPreFill(
   courses: string[],
   startDate: string,
   defaults: OperatorDefaults,
-  templateResourceHints?: Array<{ resourceType: string; resourceSlug: string }>,
+  templateResourceHints?: Array<{ resourceType: string; resourceId: string }>,
 ): BookingPreFill {
   const { endDate } = computeDateRange(courses, startDate)
   const base: BookingPreFill = {

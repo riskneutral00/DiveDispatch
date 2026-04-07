@@ -34,7 +34,7 @@ import type { Id } from '@/lib/convex-generated'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
 // Mirrors the Convex listByOwner validator union — kept in sync with convex/bookings.ts:670
-type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite'
+type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
 
 // ── Main Component ──────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   const legendStatuses = dashConfig?.legendStatuses ?? DEFAULT_LEGEND_STATUSES
 
   const { blockedDates, pendingToggle, requestToggle, confirmToggle, cancelToggle, isToggling } =
-    useBlockedDateToggle({ ownerSlug: slug, roleType: clerkRole })
+    useBlockedDateToggle({ stakeholderId: slug, roleType: clerkRole })
 
   const isEquipmentRole = clerkRole === 'Equipment'
   const isBoatRole = clerkRole === 'Boat'
@@ -125,7 +125,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
       )
       return match?.resources?.map((r) => ({
         resourceType: r.resourceType,
-        resourceSlug: r.resourceSlug,
+        resourceId: r.resourceId,
       }))
     },
     [bookingTemplates],

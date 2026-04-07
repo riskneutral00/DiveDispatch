@@ -71,6 +71,8 @@ import type * as lib_types from "../lib/types.js";
 import type * as lib_validate from "../lib/validate.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as lib_webhookTimestamp from "../lib/webhookTimestamp.js";
+import type * as migrations_backfillResourceId from "../migrations/backfillResourceId.js";
+import type * as migrations_backfillStakeholderId from "../migrations/backfillStakeholderId.js";
 import type * as notifications from "../notifications.js";
 import type * as portalDraft from "../portalDraft.js";
 import type * as portalSubmission from "../portalSubmission.js";
@@ -96,6 +98,7 @@ import type * as shared_resourceOwnerTypes from "../shared/resourceOwnerTypes.js
 import type * as shared_schemaEnums from "../shared/schemaEnums.js";
 import type * as shared_statuses from "../shared/statuses.js";
 import type * as shared_venueTypes from "../shared/venueTypes.js";
+import type * as sketchTableGuards from "../sketchTableGuards.js";
 import type * as stakeholderPreferences from "../stakeholderPreferences.js";
 import type * as support from "../support.js";
 import type * as testHelpers from "../testHelpers.js";
@@ -174,6 +177,8 @@ declare const fullApi: ApiFromModules<{
   "lib/validate": typeof lib_validate;
   "lib/validators": typeof lib_validators;
   "lib/webhookTimestamp": typeof lib_webhookTimestamp;
+  "migrations/backfillResourceId": typeof migrations_backfillResourceId;
+  "migrations/backfillStakeholderId": typeof migrations_backfillStakeholderId;
   notifications: typeof notifications;
   portalDraft: typeof portalDraft;
   portalSubmission: typeof portalSubmission;
@@ -199,6 +204,7 @@ declare const fullApi: ApiFromModules<{
   "shared/schemaEnums": typeof shared_schemaEnums;
   "shared/statuses": typeof shared_statuses;
   "shared/venueTypes": typeof shared_venueTypes;
+  sketchTableGuards: typeof sketchTableGuards;
   stakeholderPreferences: typeof stakeholderPreferences;
   support: typeof support;
   testHelpers: typeof testHelpers;

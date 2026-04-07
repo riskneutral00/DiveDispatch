@@ -36,7 +36,7 @@ export const create = mutation({
       v.array(
         v.object({
           resourceType: resourceOwnerType,
-          resourceSlug: v.string(),
+          resourceId: v.string(),
         }),
       ),
     ),

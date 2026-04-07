@@ -133,7 +133,6 @@ export interface SeedReservation {
   unitsRequested: number
   status: ReservationStatus
   confirmedAt?: number
-  expiresAt?: number
   vacatedAt?: number
   vacatedBy?: 'booking_cancelled' | 'stakeholder_declined' | 'hold_expired' | 'operator_edit' | 'noshow_replacement'
 }
@@ -168,7 +167,7 @@ export interface SeedNotification {
 }
 
 export interface SeedBlockedDate {
-  ownerSlug: string
+  stakeholderId: string
   roleType: string
   dates: string[]
 }
@@ -176,7 +175,7 @@ export interface SeedBlockedDate {
 export interface SeedBookingResource {
   bookingIndex: number
   resourceType: string
-  resourceSlug?: string
+  resourceId?: string
   externalName?: string
 }
 
@@ -392,7 +391,7 @@ const HUG_OCEAN_BOOKINGS: {
 
 // Blocked dates for Hug Ocean Boat
 const HUG_OCEAN_BLOCKED_DATES: SeedBlockedDate[] = [
-  { ownerSlug: 'n7rq5j', roleType: 'Boat', dates: [relativeDate(-7), relativeDate(0), relativeDate(7)] },
+  { stakeholderId: 'n7rq5j', roleType: 'Boat', dates: [relativeDate(-7), relativeDate(0), relativeDate(7)] },
 ]
 
 // ── Name pools by region ────────────────────────────────────────────
@@ -1251,27 +1250,27 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
 
       // ── Booking resources (junction table dual-write) ───────────
       if (bookingInstructorId) {
-        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Instructor', resourceSlug: bookingInstructorId })
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Instructor', resourceId: bookingInstructorId })
       } else if (externalStakeholders?.instructorName) {
         bookingResources.push({ bookingIndex: bIdx, resourceType: 'Instructor', externalName: externalStakeholders.instructorName })
       }
       if (bookingBoatId) {
-        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Boat', resourceSlug: bookingBoatId })
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Boat', resourceId: bookingBoatId })
       } else if (externalStakeholders?.boatName) {
         bookingResources.push({ bookingIndex: bIdx, resourceType: 'Boat', externalName: externalStakeholders.boatName })
       }
       if (bookingEquipmentManagerId) {
-        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Equipment', resourceSlug: bookingEquipmentManagerId })
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Equipment', resourceId: bookingEquipmentManagerId })
       } else if (externalStakeholders?.equipmentManagerName) {
         bookingResources.push({ bookingIndex: bIdx, resourceType: 'Equipment', externalName: externalStakeholders.equipmentManagerName })
       }
       if (bookingPoolId) {
-        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Pool', resourceSlug: bookingPoolId })
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Pool', resourceId: bookingPoolId })
       } else if (externalStakeholders?.poolName) {
         bookingResources.push({ bookingIndex: bIdx, resourceType: 'Pool', externalName: externalStakeholders.poolName })
       }
       if (bookingCompressorId) {
-        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Compressor', resourceSlug: bookingCompressorId })
+        bookingResources.push({ bookingIndex: bIdx, resourceType: 'Compressor', resourceId: bookingCompressorId })
       } else if (externalStakeholders?.compressorName) {
         bookingResources.push({ bookingIndex: bIdx, resourceType: 'Compressor', externalName: externalStakeholders.compressorName })
       }
@@ -1338,17 +1337,17 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
 
         // For Draft bookings, auto-confirm resources owned by the booking operator
         // or resources with Auto acceptance preference (non-instructor types)
-        function resStatusForResource(resourceSlug: string, resourceType?: string): ReservationStatus {
+        function resStatusForResource(resourceId: string, resourceType?: string): ReservationStatus {
           if (status !== 'Draft') return baseResStatus
           // Self-booking: auto-confirm
-          if (resourceSlug === actualOwnerId) return 'Confirmed'
+          if (resourceId === actualOwnerId) return 'Confirmed'
           // Non-instructor resources have Auto acceptance preference
           if (resourceType && resourceType !== 'Instructor') return 'Confirmed'
           return baseResStatus
         }
-        function confirmedAtForResource(resourceSlug: string, resourceType?: string): number | undefined {
+        function confirmedAtForResource(resourceId: string, resourceType?: string): number | undefined {
           if (status !== 'Draft') return confirmedAt
-          if (resourceSlug === actualOwnerId) return createdAt
+          if (resourceId === actualOwnerId) return createdAt
           if (resourceType && resourceType !== 'Instructor') return createdAt
           return confirmedAt
         }
@@ -1383,7 +1382,6 @@ export function generateAllSeedData(customers: SeedCustomer[]): SeedData {
             unitsRequested: units,
             status: resStatusForResource(slug, type),
             ...(resConfirmedAt !== undefined && { confirmedAt: resConfirmedAt }),
-            ...(status === 'Draft' && { expiresAt: expiresAt }),
             ...(vacatedAt !== undefined && { vacatedAt }),
             ...(vacatedBy !== undefined && { vacatedBy }),
           })

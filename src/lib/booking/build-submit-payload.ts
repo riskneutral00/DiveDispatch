@@ -34,7 +34,7 @@ export interface DiverEntry {
 
 export interface ResourceEntry {
   resourceType: string
-  resourceSlug?: string
+  resourceId?: string
   externalName?: string
   roleType?: 'Instructor' | 'DiveMaster'
 }
@@ -182,8 +182,8 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
   // Per-day resources (instructors, boats, pools) extracted from days
   for (const d of days) {
     if (d.instructorSlug && d.instructorSlug !== '__external__') {
-      if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.instructorSlug && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
-        resources.push({ resourceType: 'Instructor', resourceSlug: d.instructorSlug })
+      if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceId === d.instructorSlug && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
+        resources.push({ resourceType: 'Instructor', resourceId: d.instructorSlug })
       }
     } else if (d.instructorSlug === '__external__' && d.externalInstructorName?.trim()) {
       if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalInstructorName && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
@@ -191,8 +191,8 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
     if (d.diveMasterSlug && d.diveMasterSlug !== '__external__') {
-      if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceSlug === d.diveMasterSlug && r.roleType === 'DiveMaster')) {
-        resources.push({ resourceType: 'Instructor', roleType: 'DiveMaster', resourceSlug: d.diveMasterSlug })
+      if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceId === d.diveMasterSlug && r.roleType === 'DiveMaster')) {
+        resources.push({ resourceType: 'Instructor', roleType: 'DiveMaster', resourceId: d.diveMasterSlug })
       }
     } else if (d.diveMasterSlug === '__external__' && d.externalDiveMasterName?.trim()) {
       if (!resources.some(r => r.resourceType === 'Instructor' && r.externalName === d.externalDiveMasterName && r.roleType === 'DiveMaster')) {
@@ -200,8 +200,8 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
     if (d.venueType === 'boat' && d.inventoryUnitId) {
-      if (!resources.some(r => r.resourceType === 'Boat' && r.resourceSlug === d.inventoryUnitId)) {
-        resources.push({ resourceType: 'Boat', resourceSlug: d.inventoryUnitId })
+      if (!resources.some(r => r.resourceType === 'Boat' && r.resourceId === d.inventoryUnitId)) {
+        resources.push({ resourceType: 'Boat', resourceId: d.inventoryUnitId })
       }
     } else if (d.venueType === 'boat' && d.externalVenueName?.trim()) {
       if (!resources.some(r => r.resourceType === 'Boat' && r.externalName === d.externalVenueName)) {
@@ -209,8 +209,8 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
     if (d.venueType === 'pool' && d.poolInventoryUnitId) {
-      if (!resources.some(r => r.resourceType === 'Pool' && r.resourceSlug === d.poolInventoryUnitId)) {
-        resources.push({ resourceType: 'Pool', resourceSlug: d.poolInventoryUnitId })
+      if (!resources.some(r => r.resourceType === 'Pool' && r.resourceId === d.poolInventoryUnitId)) {
+        resources.push({ resourceType: 'Pool', resourceId: d.poolInventoryUnitId })
       }
     } else if (d.venueType === 'pool' && d.externalPoolName?.trim()) {
       if (!resources.some(r => r.resourceType === 'Pool' && r.externalName === d.externalPoolName)) {
@@ -221,12 +221,12 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
 
   // Equipment + Compressor
   if (!equipmentIsExternal && equipment) {
-    resources.push({ resourceType: 'Equipment', resourceSlug: equipment })
+    resources.push({ resourceType: 'Equipment', resourceId: equipment })
   } else if (equipmentIsExternal && externalEquipmentName) {
     resources.push({ resourceType: 'Equipment', externalName: externalEquipmentName })
   }
   if (!compressorIsExternal && compressor) {
-    resources.push({ resourceType: 'Compressor', resourceSlug: compressor })
+    resources.push({ resourceType: 'Compressor', resourceId: compressor })
   } else if (compressorIsExternal && externalCompressorName) {
     resources.push({ resourceType: 'Compressor', externalName: externalCompressorName })
   }

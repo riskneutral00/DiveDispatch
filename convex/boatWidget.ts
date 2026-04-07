@@ -223,12 +223,12 @@ export const getManifestData = query({
               let diveSiteName: string | undefined
               const resRows = await getResourcesForBooking(ctx, String(booking._id))
               const diveSiteRow = resRows.find(
-                (r) => r.resourceType === 'DiveSite' && r.resourceSlug,
+                (r) => r.resourceType === 'DiveSite' && r.resourceId,
               )
-              if (diveSiteRow?.resourceSlug) {
+              if (diveSiteRow?.resourceId) {
                 const siteUser = await ctx.db
                   .query('users')
-                  .withIndex('by_slug', (q) => q.eq('slug', diveSiteRow.resourceSlug!))
+                  .withIndex('by_slug', (q) => q.eq('slug', diveSiteRow.resourceId!))
                   .unique()
                 if (siteUser) {
                   const venue = await ctx.db
@@ -282,7 +282,7 @@ export const getManifestData = query({
                     agency: customer?.agency ?? diver.agency,
                     certLevel: customer?.agencyID,
                     medicalFlags: customer?.flags,
-                    allergies: profile?.allergies ?? customer?.allergies,
+                    allergies: profile?.allergies,
                   }
                 },
               )

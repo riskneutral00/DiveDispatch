@@ -162,7 +162,7 @@ export async function _getCapacityForDates(
     uniqueOwnerSlugs.map((slug) =>
       ctx.db
         .query('stakeholderBlockedDates')
-        .withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', slug))
+        .withIndex('by_stakeholderId_roleType', (q) => q.eq('stakeholderId', slug))
         .take(BLOCKED_DATES_LIMIT),
     ),
   )
@@ -173,7 +173,7 @@ export async function _getCapacityForDates(
     for (const doc of blockedDocs) {
       const resourceType = effectiveResourceType(doc.roleType)
       if (!resourceType) continue // non-resource roles don't own inventory
-      const key = `${doc.ownerSlug}|${resourceType}`
+      const key = `${doc.stakeholderId}|${resourceType}`
       const existing = blockedLookup.get(key)
       if (existing) {
         for (const d of doc.dates) existing.add(d)
@@ -251,22 +251,22 @@ export async function _listInventoryByType(
  */
 export async function _getBlockedDatesForStakeholder(
   ctx: DbCtx,
-  args: { ownerSlug: string; roleType: StakeholderRole },
+  args: { stakeholderId: string; roleType: StakeholderRole },
 ): Promise<string[]> {
   const { user } = await requireAuth(ctx)
-  if (user.slug !== args.ownerSlug) return []
+  if (user.slug !== args.stakeholderId) return []
 
   const doc = await ctx.db
     .query('stakeholderBlockedDates')
-    .withIndex('by_ownerSlug_roleType', (q) =>
-      q.eq('ownerSlug', args.ownerSlug).eq('roleType', args.roleType),
+    .withIndex('by_stakeholderId_roleType', (q) =>
+      q.eq('stakeholderId', args.stakeholderId).eq('roleType', args.roleType),
     )
     .unique()
   return doc?.dates ?? []
 }
 
 export const getBlockedDatesForStakeholder = query({
-  args: { ownerSlug: v.string(), roleType: stakeholderType },
+  args: { stakeholderId: v.string(), roleType: stakeholderType },
   handler: async (ctx, args) => _getBlockedDatesForStakeholder(ctx, args),
 })
 
@@ -393,8 +393,8 @@ export async function _toggleBlockedDate(
 
   const existing = await ctx.db
     .query('stakeholderBlockedDates')
-    .withIndex('by_ownerSlug_roleType', (q) =>
-      q.eq('ownerSlug', user.slug).eq('roleType', args.roleType),
+    .withIndex('by_stakeholderId_roleType', (q) =>
+      q.eq('stakeholderId', user.slug).eq('roleType', args.roleType),
     )
     .unique()
 
@@ -426,7 +426,7 @@ export async function _toggleBlockedDate(
         await ctx.db.patch(existing._id, { dates: [...current, args.date] })
       } else {
         await ctx.db.insert('stakeholderBlockedDates', {
-          ownerSlug: user.slug,
+          stakeholderId: user.slug,
           roleType: args.roleType,
           dates: [args.date],
         })
@@ -488,7 +488,7 @@ export async function _toggleBlockedDate(
       await ctx.db.patch(existing._id, { dates: [...current, args.date] })
     } else {
       await ctx.db.insert('stakeholderBlockedDates', {
-        ownerSlug: user.slug,
+        stakeholderId: user.slug,
         roleType: args.roleType,
         dates: [args.date],
       })

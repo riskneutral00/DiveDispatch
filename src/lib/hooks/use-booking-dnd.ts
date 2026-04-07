@@ -30,7 +30,7 @@ interface UseBookingDndInput {
   /** Optional: resources from a matching booking template (same course set). */
   resolveTemplateResourceHints?: (
     courses: string[],
-  ) => Array<{ resourceType: string; resourceSlug: string }> | undefined
+  ) => Array<{ resourceType: string; resourceId: string }> | undefined
 }
 
 interface UseBookingDndReturn {

@@ -34,5 +34,8 @@
 
 ## Exceptions
 
-- `bookings.operatorName` is a legitimate snapshot (frozen at creation). Annotate it, don't eliminate it.
-- `bookingLinks.customerName/email` are legitimate snapshots.
+- `bookings.operatorName` is a legitimate snapshot (frozen at creation).
+- `bookings.startDate/endDate` are snapshots frozen at creation. Canonical truth is `bookingSessions.date`, but the booking-level fields serve the dashboard list view without joining sessions.
+- `bookingLinks.customerName/email` are legitimate snapshots (frozen at link creation).
+- `customers.allergies` / `customerProfiles.allergies`: snapshot pattern. `customerProfiles.allergies` is the per-booking canonical source for operational context (boat widget, safety forms). `customers.allergies` is the persistent customer record, synced from latest profile via `saveSafetyInfo` write-through when `customerId` is set. No read-time fallback chain — each consumer picks the right source.
+- `bookingLinks.token` / `customerProfiles.linkToken`: intentional dual-write. Same UUID, different access paths. `bookingLinks.by_token` for portal auth lookup, `customerProfiles.by_linkToken` for profile lookup. Created together in `bookingLinks.ts` — never diverge.

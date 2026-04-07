@@ -53,12 +53,12 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   assertOwnership(booking as BookingDoc, user)
 
   // 3. Identify external resource types — these skip the reservation pipeline entirely.
-  // A resource with externalName (no resourceSlug) is outside the system.
+  // A resource with externalName (no resourceId) is outside the system.
   // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
   const resources = args.bookingData?.resources ?? []
   const externalResourceTypes = new Set<string>()
   for (const r of resources) {
-    if (!r.resourceSlug && r.externalName) {
+    if (!r.resourceId && r.externalName) {
       externalResourceTypes.add(r.resourceType)
     }
   }
@@ -66,7 +66,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   // 4. Blocked dates — reject before touching inventory
   const blockedDateDocs = await ctx.db
     .query('stakeholderBlockedDates')
-    .withIndex('by_ownerSlug_roleType', (q) => q.eq('ownerSlug', user.slug))
+    .withIndex('by_stakeholderId_roleType', (q) => q.eq('stakeholderId', user.slug))
     .collect()
   const allBlocked = new Set<string>(blockedDateDocs.flatMap((d) => d.dates as string[]))
   if (allBlocked.size > 0) {
@@ -255,7 +255,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       unitsRequested: session.unitsRequested,
       status: reservationStatus,
       confirmedAt: isAutoAccept ? now : undefined,
-      expiresAt,
     })
   }
 
@@ -286,7 +285,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       ctx,
       args.bookingId,
       r.resourceType,
-      r.resourceSlug,
+      r.resourceId,
       r.externalName,
       r.roleType,
     )
@@ -302,14 +301,14 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const instructorResources = resources.filter(
     (r) =>
       r.resourceType === 'Instructor' &&
-      r.resourceSlug &&
+      r.resourceId &&
       (r.roleType ?? 'Instructor') !== 'DiveMaster',
   )
 
   const warnings: Array<{ type: string; missing: string[] }> = []
 
   for (const ir of instructorResources) { // batch-exempt: typically 1 instructor per booking
-    const instructor = await profileBySlug(ctx, ir.resourceSlug!, 'instructors') as Doc<'instructors'> | null
+    const instructor = await profileBySlug(ctx, ir.resourceId!, 'instructors') as Doc<'instructors'> | null
     if (!instructor) continue
 
     const result = canTeachCourses(

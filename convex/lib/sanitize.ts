@@ -80,6 +80,7 @@ export const PHONE_MAX = 30
 export const SHORT_TEXT_MAX = 100
 /** Long text: allergies, notes */
 export const LONG_TEXT_MAX = 2000
+export const CONFIG_JSON_MAX = 10_000
 /** Support messages */
 export const SUPPORT_MESSAGE_MAX = 5000
 
@@ -152,7 +153,7 @@ export const BOOKING_TEMPLATE_FIELDS: FieldConfig = {
 export const THEME_FIELDS: FieldConfig = {
   slug: SHORT_TEXT_MAX,
   name: NAME_MAX,
-  config: LONG_TEXT_MAX,
+  config: CONFIG_JSON_MAX,
 }
 
 export const PORTAL_CONTACT_FIELDS: FieldConfig = {

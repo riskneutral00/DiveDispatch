@@ -187,7 +187,7 @@ async function buildResourceContext(
 ): Promise<{ resourceMap: Map<string, BookingResource[]>; nameMap: Map<string, string> }> {
   const resourceMap = await getResourcesForBookings(ctx, bookingIds)
   const allResources = [...resourceMap.values()].flat()
-  const slugs = allResources.map((r) => r.resourceSlug).filter(Boolean) as string[]
+  const slugs = allResources.map((r) => r.resourceId).filter(Boolean) as string[]
   const nameMap = await buildInstructorNameMap(ctx, slugs)
   return { resourceMap, nameMap }
 }
@@ -199,10 +199,10 @@ function buildCalendarResources(
 ): CalendarBookingResource[] {
   return resources.map((r) => ({
     resourceType: r.resourceType,
-    name: r.resourceSlug
-      ? (nameMap.get(r.resourceSlug) ?? r.resourceSlug)
+    name: r.resourceId
+      ? (nameMap.get(r.resourceId) ?? r.resourceId)
       : (r.externalName ?? 'Unknown'),
-    isExternal: !r.resourceSlug,
+    isExternal: !r.resourceId,
   }))
 }
 
@@ -223,10 +223,10 @@ function toCalendarBooking(
   const boatRes = resources.find((r: BookingResource) => r.resourceType === 'Boat')
 
   const instructorName = instructorRes
-    ? (instructorRes.resourceSlug ? nameMap.get(instructorRes.resourceSlug) : instructorRes.externalName)
+    ? (instructorRes.resourceId ? nameMap.get(instructorRes.resourceId) : instructorRes.externalName)
     : undefined
   const boatName = boatRes
-    ? (boatRes.resourceSlug ? nameMap.get(boatRes.resourceSlug) : boatRes.externalName)
+    ? (boatRes.resourceId ? nameMap.get(boatRes.resourceId) : boatRes.externalName)
     : undefined
 
   return {
@@ -569,13 +569,13 @@ export async function _getBookingDetail(
   // Resolve stakeholders from bookingResources junction table
   const bookingResourceRows = await getResourcesForBooking(ctx, bookingId as string)
 
-  const resourceSlugs = bookingResourceRows
-    .map((r: BookingResource) => r.resourceSlug)
+  const resourceIds = bookingResourceRows
+    .map((r: BookingResource) => r.resourceId)
     .filter(Boolean) as string[]
 
   const userProfileMap = new Map<string, { name: string; displaySub: string | undefined }>()
   await Promise.all(
-    [...new Set(resourceSlugs)].map(async (slug) => {
+    [...new Set(resourceIds)].map(async (slug) => {
       const u = await ctx.db
         .query('users')
         .withIndex('by_slug', (q) => q.eq('slug', slug))
@@ -596,16 +596,16 @@ export async function _getBookingDetail(
   // Build structured stakeholders list from bookingResources
   const stakeholders: BookingDetailStakeholder[] = []
   for (const br of bookingResourceRows) {
-    if (br.resourceSlug) {
-      const profile = userProfileMap.get(br.resourceSlug)
+    if (br.resourceId) {
+      const profile = userProfileMap.get(br.resourceId)
       // Find reservation status for this stakeholder's inventory unit
       const stakeholderRes = reservations.find((r) => {
         const iu = iuMap.get(r.inventoryUnitId as string)
-        return (iu?.ownerId as string | undefined) === br.resourceSlug
+        return (iu?.ownerId as string | undefined) === br.resourceId
       })
       stakeholders.push({
-        slug: br.resourceSlug,
-        name: profile?.name ?? br.resourceSlug,
+        slug: br.resourceId,
+        name: profile?.name ?? br.resourceId,
         role: br.resourceType,
         isExternal: false,
         displaySub: profile?.displaySub,
@@ -649,25 +649,25 @@ export async function _getBookingDetail(
     portalContact: b.portalContact as boolean,
     portalMedical: b.portalMedical as boolean,
     portalWaiver: b.portalWaiver as boolean,
-    instructorId: instructorBR?.resourceSlug as string | undefined,
-    boatId: boatBR?.resourceSlug as string | undefined,
-    equipmentManagerId: emBR?.resourceSlug as string | undefined,
-    poolId: poolBR?.resourceSlug as string | undefined,
-    compressorId: compBR?.resourceSlug as string | undefined,
+    instructorId: instructorBR?.resourceId as string | undefined,
+    boatId: boatBR?.resourceId as string | undefined,
+    equipmentManagerId: emBR?.resourceId as string | undefined,
+    poolId: poolBR?.resourceId as string | undefined,
+    compressorId: compBR?.resourceId as string | undefined,
     instructorName: instructorBR
-      ? (instructorBR.resourceSlug ? nameMap.get(instructorBR.resourceSlug) : instructorBR.externalName)
+      ? (instructorBR.resourceId ? nameMap.get(instructorBR.resourceId) : instructorBR.externalName)
       : undefined,
     boatName: boatBR
-      ? (boatBR.resourceSlug ? nameMap.get(boatBR.resourceSlug) : boatBR.externalName)
+      ? (boatBR.resourceId ? nameMap.get(boatBR.resourceId) : boatBR.externalName)
       : undefined,
     equipmentManagerName: emBR
-      ? (emBR.resourceSlug ? nameMap.get(emBR.resourceSlug) : emBR.externalName)
+      ? (emBR.resourceId ? nameMap.get(emBR.resourceId) : emBR.externalName)
       : undefined,
     poolName: poolBR
-      ? (poolBR.resourceSlug ? nameMap.get(poolBR.resourceSlug) : poolBR.externalName)
+      ? (poolBR.resourceId ? nameMap.get(poolBR.resourceId) : poolBR.externalName)
       : undefined,
     compressorName: compBR
-      ? (compBR.resourceSlug ? nameMap.get(compBR.resourceSlug) : compBR.externalName)
+      ? (compBR.resourceId ? nameMap.get(compBR.resourceId) : compBR.externalName)
       : undefined,
     sessions: sessions.map((s) => ({
       _id: s._id as string,

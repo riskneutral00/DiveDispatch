@@ -20,14 +20,14 @@ interface UseBlockedDateToggleReturn {
  * maintains its own independent set of blocked dates.
  */
 export function useBlockedDateToggle({
-  ownerSlug,
+  stakeholderId,
   roleType,
 }: {
-  ownerSlug: string
+  stakeholderId: string
   roleType: StakeholderRole
 }): UseBlockedDateToggleReturn {
   const blockedDatesData = useQuery(api.availability.getBlockedDatesForStakeholder, {
-    ownerSlug,
+    stakeholderId,
     roleType,
   })
   const toggleBlockedDate = useMutation(api.availability.toggleBlockedDate)

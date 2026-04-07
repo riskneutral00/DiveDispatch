@@ -7,6 +7,7 @@ import { OPERATOR_ROLE_SET } from './lib/auth'
 import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
+import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -233,10 +234,10 @@ export const seedStakeholders = internalMutation({
         await ctx.db.insert('agents', { userId, ...s.agent }) // batch-exempt
       }
       if (s.liveaboard) {
-        await ctx.db.insert('liveaboards', { userId, ...s.liveaboard }) // batch-exempt
+        await insertLiveaboard(ctx, { userId, ...s.liveaboard }) // batch-exempt
       }
       if (s.diveResort) {
-        await ctx.db.insert('diveResorts', { userId, ...s.diveResort }) // batch-exempt
+        await insertDiveResort(ctx, { userId, ...s.diveResort }) // batch-exempt
       }
     }
   },

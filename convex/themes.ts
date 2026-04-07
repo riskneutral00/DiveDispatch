@@ -50,6 +50,12 @@ export const upsert = mutation({
 
     const sanitized = sanitizeFields(args, THEME_FIELDS)
 
+    try {
+      JSON.parse(sanitized.config)
+    } catch {
+      throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'Invalid theme config JSON' })
+    }
+
     const existing = await ctx.db
       .query('themes')
       .withIndex('by_slug', (q) => q.eq('slug', sanitized.slug))

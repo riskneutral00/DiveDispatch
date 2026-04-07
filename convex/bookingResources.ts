@@ -46,11 +46,11 @@ export async function getResourcesForBookings(
 /** All bookingIds where a given resource slug is assigned. */
 export async function getBookingIdsForResource(
   ctx: DbCtx,
-  resourceSlug: string,
+  resourceId: string,
 ): Promise<string[]> {
   const rows = await ctx.db
     .query('bookingResources')
-    .withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', resourceSlug))
+    .withIndex('by_resourceId', (q) => q.eq('resourceId', resourceId))
     .collect()
   return [...new Set(rows.map((r) => r.bookingId as string))]
 }
@@ -59,12 +59,12 @@ export async function getBookingIdsForResource(
 export async function getBookingIdsForResourceType(
   ctx: DbCtx,
   resourceType: ResourceOwnerType,
-  resourceSlug: string,
+  resourceId: string,
 ): Promise<string[]> {
   const rows = await ctx.db
     .query('bookingResources')
-    .withIndex('by_resourceType_resourceSlug', (q) =>
-      q.eq('resourceType', resourceType).eq('resourceSlug', resourceSlug),
+    .withIndex('by_resourceType_resourceId', (q) =>
+      q.eq('resourceType', resourceType).eq('resourceId', resourceId),
     )
     .collect()
   return [...new Set(rows.map((r) => r.bookingId as string))]
@@ -72,19 +72,19 @@ export async function getBookingIdsForResourceType(
 
 // ─── Write helpers ────────────────────────────────────────────────────────────
 
-/** Insert a bookingResource row. Exactly one of resourceSlug or externalName must be set. */
+/** Insert a bookingResource row. Exactly one of resourceId or externalName must be set. */
 export async function insertBookingResource(
   ctx: MutationCtx,
   bookingId: string,
   resourceType: string,
-  resourceSlug: string | undefined,
+  resourceId: string | undefined,
   externalName: string | undefined,
   roleType?: 'Instructor' | 'DiveMaster',
 ): Promise<string> {
   return ctx.db.insert('bookingResources', {
     bookingId: bookingId as Id<'bookings'>,
     resourceType: resourceType as ResourceOwnerType,
-    resourceSlug,
+    resourceId,
     externalName,
     ...(roleType ? { roleType } : {}),
   })

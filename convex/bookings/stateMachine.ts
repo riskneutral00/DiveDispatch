@@ -35,7 +35,7 @@ export type BookingResourceInput = {
   resourceType: string
   /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
   roleType?: BookingRoleType
-  resourceSlug?: string
+  resourceId?: string
   externalName?: string
 }
 
@@ -96,7 +96,7 @@ export const bookingResourceInputValidator = v.object({
   resourceType: v.string(),
   /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
   roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
-  resourceSlug: v.optional(v.string()),
+  resourceId: v.optional(v.string()),
   externalName: v.optional(v.string()),
 })
 

@@ -61,7 +61,7 @@ export interface DiveSlot {
   /** Per-dive venue: pool, boat, or shore. Defaults: confined → pool, non-confined → boat. */
   venueType?: 'pool' | 'boat' | 'shore'
   /** Slug of the selected resource (pool/boat/shore stakeholder). */
-  resourceSlug?: string
+  resourceId?: string
 }
 
 export interface DayConfig {
@@ -104,7 +104,7 @@ export interface BookingPreFill {
   equipmentSlug: string
   compressorSlug: string
   /** Optional hints from a saved booking template (merged on drag). */
-  templateResourceHints?: Array<{ resourceType: string; resourceSlug: string }>
+  templateResourceHints?: Array<{ resourceType: string; resourceId: string }>
 }
 
 // ── Root state ────────────────────────────────────────────────────────────────
@@ -187,8 +187,8 @@ export type WizardAction =
   | { type: 'SET_SAVE_ATTEMPTED'; value: boolean }
   | { type: 'TOGGLE_DIVE'; dayIndex: number; slot: DiveSlot }
   | { type: 'SET_DAYS'; days: DayConfig[] }
-  | { type: 'SET_DIVE_VENUE'; dayIndex: number; diveIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceSlug?: string }
-  | { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING'; fromDayIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceSlug: string }
+  | { type: 'SET_DIVE_VENUE'; dayIndex: number; diveIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceId?: string }
+  | { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING'; fromDayIndex: number; venueType: 'pool' | 'boat' | 'shore'; resourceId: string }
   | { type: 'SET_INVENTORY_MAP'; map: Record<string, string> }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
@@ -479,7 +479,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       if (!day) return state
       const dive = day.dives[action.diveIndex]
       if (!dive) return state
-      const updatedDive = { ...dive, venueType: action.venueType, resourceSlug: action.resourceSlug }
+      const updatedDive = { ...dive, venueType: action.venueType, resourceId: action.resourceId }
       const newDives = day.dives.map((d, i) => (i === action.diveIndex ? updatedDive : d))
       return {
         ...state,
@@ -496,8 +496,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
             ...d,
             dives: d.dives.map(dive => {
               const diveVenue = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
-              if (diveVenue === action.venueType && !dive.resourceSlug) {
-                return { ...dive, resourceSlug: action.resourceSlug }
+              if (diveVenue === action.venueType && !dive.resourceId) {
+                return { ...dive, resourceId: action.resourceId }
               }
               return dive
             }),
@@ -694,7 +694,7 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
 
     // Every dive with a venue type must have a resource selected
     for (const dive of day.dives) {
-      if (dive.venueType && !dive.resourceSlug) return false
+      if (dive.venueType && !dive.resourceId) return false
     }
   }
 

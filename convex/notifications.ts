@@ -157,7 +157,7 @@ export async function _clearAllHandler(
   const BATCH = 500
   const batch = await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+    .withIndex('by_userId_createdAt', (q) => q.eq('userId', args.userId))
     .take(BATCH)
 
   await batchDelete(ctx, batch)
@@ -208,7 +208,7 @@ export async function _listNotificationsHandler(
 
   return await ctx.db
     .query('notifications')
-    .withIndex('by_userId', (q) => q.eq('userId', args.userId))
+    .withIndex('by_userId_createdAt', (q) => q.eq('userId', args.userId))
     .order('desc')
     .take(limit)
 }
