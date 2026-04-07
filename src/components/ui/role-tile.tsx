@@ -39,7 +39,7 @@ export function RoleTile({
       onClick={onClick}
       aria-label={role.label}
       {...(hasSelection ? { 'aria-pressed': selected } : {})}
-      className="glass-container w-full rounded-theme p-4 text-left transition-all focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary"
+      className="glass-container w-full rounded-theme p-4 text-left transition-all duration-theme focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary"
       style={{
         borderColor,
         background,

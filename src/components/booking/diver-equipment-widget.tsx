@@ -478,7 +478,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
               <button
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
-                className="px-3 py-1 rounded-full text-label font-medium border transition-all min-h-[44px]"
+                className="px-3 py-1 rounded-full text-label font-medium border transition-all duration-theme min-h-[44px]"
                 style={{
                   background: isActive ? 'var(--color-primary)' : 'var(--color-glass-bg)',
                   color: isActive

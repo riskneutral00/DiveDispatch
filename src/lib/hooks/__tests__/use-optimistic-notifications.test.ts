@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
 
 let mockNotifications: Array<{
   _id: string
@@ -16,7 +15,6 @@ const mockMarkAsRead = vi.fn<(args: { notificationId: string }) => Promise<void>
 const mockDeleteNotification = vi.fn<(args: { notificationId: string }) => Promise<void>>()
 const mockClearAll = vi.fn<(args: { userId: string }) => Promise<void>>()
 
-// Argument-keyed mock: routes useMutation calls based on the Convex function name symbol
 const FUNCTION_NAME = Symbol.for('functionName')
 
 vi.mock('convex/react', async () => {
@@ -34,10 +32,8 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks
 import { useOptimisticNotifications } from '../use-optimistic-notifications'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeNotification(overrides: Partial<typeof mockNotifications extends (infer T)[] | undefined ? T : never> & { _id: string }) {
   return {
@@ -48,7 +44,6 @@ function makeNotification(overrides: Partial<typeof mockNotifications extends (i
   }
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('useOptimisticNotifications', () => {
   beforeEach(() => {
@@ -89,23 +84,16 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // Before: notification is unread
     expect(result.current.unreadCount).toBe(1)
 
-    // Trigger optimistic mark as read (synchronous act — no await).
-    // The deferred mock never resolves during this act(), so if the
-    // implementation set state AFTER await, readAt would still be undefined.
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
 
-    // Mutation was invoked but its promise is still pending (not resolved)
     expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
-    // Optimistic state is already visible while mutation is in-flight
     expect(result.current.notifications?.[0]?.readAt).toBeTypeOf('number')
     expect(result.current.unreadCount).toBe(0)
 
-    // Resolve and verify args
     await act(async () => {
       resolveMarkAsRead()
     })
@@ -127,7 +115,6 @@ describe('useOptimisticNotifications', () => {
       await result.current.handleMarkAsRead('n-1')
     })
 
-    // After rejection: reverts to server state (unread)
     expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
     expect(result.current.unreadCount).toBe(1)
   })
@@ -153,9 +140,7 @@ describe('useOptimisticNotifications', () => {
       result.current.handleDelete('n-1')
     })
 
-    // Mutation invoked but still pending (deferred promise)
     expect(mockDeleteNotification).toHaveBeenCalledTimes(1)
-    // Optimistic state visible while mutation is in-flight
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?._id).toBe('n-2')
 
@@ -180,7 +165,6 @@ describe('useOptimisticNotifications', () => {
       await result.current.handleDelete('n-1')
     })
 
-    // After rejection: notification restored
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?._id).toBe('n-1')
   })
@@ -204,9 +188,7 @@ describe('useOptimisticNotifications', () => {
       result.current.handleClearAll()
     })
 
-    // Mutation invoked but still pending (deferred promise)
     expect(mockClearAll).toHaveBeenCalledTimes(1)
-    // Optimistic state visible while mutation is in-flight
     expect(result.current.notifications).toHaveLength(0)
     expect(result.current.unreadCount).toBe(0)
 
@@ -232,7 +214,6 @@ describe('useOptimisticNotifications', () => {
       await result.current.handleClearAll()
     })
 
-    // After rejection: all restored
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -254,15 +235,12 @@ describe('useOptimisticNotifications', () => {
       result.current.handleMarkAsRead('n-1')
     })
 
-    // Optimistic readAt is a number while mutation is in-flight
     expect(result.current.notifications?.[0]?.readAt).toBeTypeOf('number')
 
-    // Resolve mutation — success path clears optimistic override
     await act(async () => {
       resolveMarkAsRead()
     })
 
-    // After success: override cleared, server data (readAt: undefined) shows through
     expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
   })
 
@@ -285,16 +263,12 @@ describe('useOptimisticNotifications', () => {
       result.current.handleDelete('n-1')
     })
 
-    // Optimistically removed
     expect(result.current.notifications).toHaveLength(1)
 
-    // Resolve mutation — success path clears optimistic delete
     await act(async () => {
       resolveDelete()
     })
 
-    // After success: override cleared, server data shows through again
-    // (server still has n-1 since we're using a mock query)
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -317,16 +291,12 @@ describe('useOptimisticNotifications', () => {
       result.current.handleClearAll()
     })
 
-    // Optimistically cleared
     expect(result.current.notifications).toHaveLength(0)
 
-    // Resolve mutation — success path resets optimisticClearedAll
     await act(async () => {
       resolveClearAll()
     })
 
-    // After success: flag cleared, server data shows through again
-    // (server still has notifications since we're using a mock query)
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -341,7 +311,6 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.unreadCount).toBe(0)
   })
 
-  // ─── Concurrency: ghost resurrection ──────────────────────────────────────
 
   it('concurrent markAsRead + delete on same ID: no ghost resurrection', async () => {
     mockNotifications = [
@@ -362,7 +331,6 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // Fire markAsRead and delete concurrently on the same notification
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
@@ -370,26 +338,18 @@ describe('useOptimisticNotifications', () => {
       result.current.handleDelete('n-1')
     })
 
-    // n-1 should be deleted (delete wins over mark-as-read visually)
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?._id).toBe('n-2')
 
-    // Resolve markAsRead first — n-1 must NOT reappear.
-    // INVARIANT: handleMarkAsRead.finally must NOT clear optimisticDeleted for the same ID.
-    // If it did, n-1 would ghost-resurrect here because the delete is still pending.
     await act(async () => {
       resolveMarkAsRead()
     })
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?._id).toBe('n-2')
 
-    // Resolve delete — n-1 still gone (server mock still has it, but delete cleanup is clean)
     await act(async () => {
       resolveDelete()
     })
-    // After both resolve, optimistic state is cleared. Server still has n-1 since
-    // the mock query doesn't change. Both notifications reappear — this is
-    // server passthrough (trust the server after success), NOT ghost resurrection.
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -418,31 +378,21 @@ describe('useOptimisticNotifications', () => {
       result.current.handleDelete('n-1')
     })
 
-    // Resolve delete first — should also clean up the overrides entry
     await act(async () => {
       resolveDelete()
     })
 
-    // DANGEROUS WINDOW: delete resolved but markAsRead is still pending.
-    // handleDelete.finally cross-operation cleanup must have cleared the readAt
-    // override. Without that cleanup, n-1 would reappear here with a stale
-    // optimistic readAt (a Date.now() timestamp, not 100).
-    // With cleanup: server baseline (100) shows through.
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?.readAt).toBe(100)
 
-    // Then resolve markAsRead
     await act(async () => {
       resolveMarkAsRead()
     })
 
-    // After both resolve, n-1 should show through from server with original readAt (100)
-    // i.e., no stale optimistic readAt override lingering
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?.readAt).toBe(100)
   })
 
-  // ─── Concurrency: rapid duplicate calls ───────────────────────────────────
 
   it('rapid double handleMarkAsRead on same ID: second call is idempotent', async () => {
     mockNotifications = [
@@ -463,17 +413,14 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // First call
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
 
-    // Second rapid call while first is in-flight — should be guarded
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
 
-    // Only one mutation should have fired
     expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
 
     await act(async () => {
@@ -532,24 +479,20 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // First call — takes the guard
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
     expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
 
-    // Second call while in-flight — deduplicated by guard
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
     expect(mockMarkAsRead).toHaveBeenCalledTimes(1)
 
-    // Resolve first call — releases the guard
     await act(async () => {
       resolveFirst()
     })
 
-    // Now a new call should go through (guard released)
     act(() => {
       result.current.handleMarkAsRead('n-1')
     })
@@ -560,7 +503,6 @@ describe('useOptimisticNotifications', () => {
     })
   })
 
-  // ─── Concurrency: rapid duplicate clearAll ─────────────────────────────────
 
   it('rapid double handleClearAll: second call is deduplicated, only one mutation fires', async () => {
     mockNotifications = [
@@ -577,27 +519,22 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // First call
     act(() => {
       result.current.handleClearAll()
     })
 
-    // Second rapid call while first is in-flight — should be guarded
     act(() => {
       result.current.handleClearAll()
     })
 
-    // Only one mutation should have fired
     expect(mockClearAll).toHaveBeenCalledTimes(1)
 
-    // UI still shows cleared
     expect(result.current.notifications).toHaveLength(0)
 
     await act(async () => {
       resolveFirst()
     })
 
-    // After resolve, server data shows through
     expect(result.current.notifications).toHaveLength(2)
   })
 
@@ -621,24 +558,20 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // First call
     act(() => {
       result.current.handleClearAll()
     })
     expect(mockClearAll).toHaveBeenCalledTimes(1)
 
-    // Second call while in-flight — deduplicated
     act(() => {
       result.current.handleClearAll()
     })
     expect(mockClearAll).toHaveBeenCalledTimes(1)
 
-    // Resolve first call — releases the guard
     await act(async () => {
       resolveFirst()
     })
 
-    // Now a new call should go through
     act(() => {
       result.current.handleClearAll()
     })
@@ -649,7 +582,6 @@ describe('useOptimisticNotifications', () => {
     })
   })
 
-  // ─── Concurrency: first succeeds, second errors ──────────────────────────
 
   it('first markAsRead succeeds, second errors: reflects server truth', async () => {
     mockNotifications = [
@@ -657,12 +589,10 @@ describe('useOptimisticNotifications', () => {
       makeNotification({ _id: 'n-2' }),
     ]
 
-    // n-1: succeeds
     let resolveFirst!: () => void
     mockMarkAsRead.mockImplementationOnce(
       () => new Promise<void>((resolve) => { resolveFirst = resolve }),
     )
-    // n-2: errors
     let rejectSecond!: (err: Error) => void
     mockMarkAsRead.mockImplementationOnce(
       () => new Promise<void>((_resolve, reject) => { rejectSecond = reject }),
@@ -672,7 +602,6 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // Track the promises so we can ensure they settle before asserting
     let promise1: Promise<void>
     let promise2: Promise<void>
     act(() => {
@@ -682,36 +611,25 @@ describe('useOptimisticNotifications', () => {
       promise2 = result.current.handleMarkAsRead('n-2')
     })
 
-    // Both optimistically read
     expect(result.current.unreadCount).toBe(0)
 
-    // First succeeds
     await act(async () => {
       resolveFirst()
       await promise1!
     })
 
-    // Second errors (hook swallows the error internally)
     await act(async () => {
       rejectSecond(new Error('Server error'))
       await promise2!
     })
 
-    // n-1 override cleared (success), server shows readAt=undefined
-    // n-2 override cleared (revert), server shows readAt=undefined
-    // Both reflect server truth
     expect(result.current.notifications?.[0]?.readAt).toBeUndefined()
     expect(result.current.notifications?.[1]?.readAt).toBeUndefined()
     expect(result.current.unreadCount).toBe(2)
   })
 
-  // ─── Mock is argument-keyed ───────────────────────────────────────────────
 
   it('mock routes by api reference name, not call order', () => {
-    // This test verifies the mock is argument-keyed.
-    // We call useMutation with different api refs and verify correct mock is returned.
-    // If the mock were position-keyed, reordering internal useMutation calls
-    // would break mock assignment. With argument-keyed mocks, order is irrelevant.
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
     ]
@@ -720,7 +638,6 @@ describe('useOptimisticNotifications', () => {
       useOptimisticNotifications({ userId: 'user-1', limit: 20 }),
     )
 
-    // Verify each handler invokes the correct mutation mock
     mockMarkAsRead.mockResolvedValue(undefined)
     mockDeleteNotification.mockResolvedValue(undefined)
 
@@ -734,5 +651,56 @@ describe('useOptimisticNotifications', () => {
       result.current.handleDelete('n-1')
     })
     expect(mockDeleteNotification).toHaveBeenCalledWith({ notificationId: 'n-1' })
+  })
+
+  it('markAsRead calls onError callback on server rejection', async () => {
+    mockNotifications = [makeNotification({ _id: 'n-1' })]
+    mockMarkAsRead.mockRejectedValue(new Error('Server error'))
+    const onError = vi.fn()
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20, onError }),
+    )
+
+    await act(async () => {
+      await result.current.handleMarkAsRead('n-1')
+    })
+
+    expect(onError).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledWith('markAsRead')
+  })
+
+  it('deleteNotification calls onError callback on server rejection', async () => {
+    mockNotifications = [makeNotification({ _id: 'n-1' })]
+    mockDeleteNotification.mockRejectedValue(new Error('Server error'))
+    const onError = vi.fn()
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20, onError }),
+    )
+
+    await act(async () => {
+      await result.current.handleDelete('n-1')
+    })
+
+    expect(onError).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledWith('delete')
+  })
+
+  it('clearAll calls onError callback on server rejection', async () => {
+    mockNotifications = [makeNotification({ _id: 'n-1' })]
+    mockClearAll.mockRejectedValue(new Error('Server error'))
+    const onError = vi.fn()
+
+    const { result } = renderHook(() =>
+      useOptimisticNotifications({ userId: 'user-1', limit: 20, onError }),
+    )
+
+    await act(async () => {
+      await result.current.handleClearAll()
+    })
+
+    expect(onError).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledWith('clearAll')
   })
 })

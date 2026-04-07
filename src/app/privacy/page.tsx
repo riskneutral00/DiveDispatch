@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { BackgroundLayout } from '@/components/layout/background-layout'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — DiveDispatch',
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <BackgroundLayout className="items-start px-4 py-16 max-w-3xl mx-auto">
+    <BackgroundLayout className="items-start px-4 py-16">
+      <DashboardPageFrame>
       <h1
         className="text-3xl font-bold tracking-tight text-primary mb-8 font-heading"
       >
@@ -16,7 +18,7 @@ export default function PrivacyPage() {
       </h1>
 
       <div className="flex flex-col gap-8 text-body leading-relaxed text-primary">
-        {/* What data is collected */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Data We Collect</h2>
           <p className="text-secondary">
@@ -30,7 +32,7 @@ export default function PrivacyPage() {
           </ul>
         </section>
 
-        {/* Why — purpose */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Why We Collect It</h2>
           <p className="text-secondary">
@@ -41,7 +43,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Who sees it */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Who Sees Your Data</h2>
           <p className="text-secondary">
@@ -52,7 +54,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Retention */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Data Retention</h2>
           <p className="text-secondary">
@@ -64,7 +66,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Deletion rights */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Your Rights</h2>
           <p className="text-secondary">
@@ -84,7 +86,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Legal basis */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Legal Basis</h2>
           <p className="text-secondary">
@@ -97,7 +99,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Contact */}
+
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Contact</h2>
           <p className="text-secondary">
@@ -105,6 +107,7 @@ export default function PrivacyPage() {
           </p>
         </section>
       </div>
+      </DashboardPageFrame>
     </BackgroundLayout>
   )
 }

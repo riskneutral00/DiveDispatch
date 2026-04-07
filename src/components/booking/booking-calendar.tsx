@@ -243,7 +243,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
-              className="p-1.5 rounded-theme transition-opacity hover:opacity-70 text-secondary"
+              className="p-1.5 rounded-theme transition-opacity duration-theme hover:opacity-70 text-secondary"
               aria-label="Previous 2 weeks"
             >
               <ChevronLeft size={16} />
@@ -260,7 +260,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(1) }}
-              className="p-1.5 rounded-theme transition-opacity hover:opacity-70 text-secondary"
+              className="p-1.5 rounded-theme transition-opacity duration-theme hover:opacity-70 text-secondary"
               aria-label="Next 2 weeks"
             >
               <ChevronRight size={16} />
@@ -283,7 +283,7 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { if (pickerYear > currentYear - 1) setPickerYear((y) => y - 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity duration-theme ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Previous year"
                 >
                   <ChevronLeft size={14} />
@@ -296,7 +296,7 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { if (pickerYear < currentYear + 1) setPickerYear((y) => y + 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity duration-theme ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
                   aria-label="Next year"
                 >
                   <ChevronRight size={14} />
@@ -338,7 +338,7 @@ export function BookingCalendar({
                 <button
                   type="button"
                   onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
-                  className="text-body font-medium transition-opacity hover:opacity-80 min-h-[44px] min-w-[44px]"
+                  className="text-body font-medium transition-opacity duration-theme hover:opacity-80 min-h-[44px] min-w-[44px]"
                   style={{ color: 'var(--color-primary)' }}
                 >
                   Today

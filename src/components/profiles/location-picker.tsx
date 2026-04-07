@@ -294,7 +294,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             onClick={handleGPS}
             disabled={gpsLoading}
             title="Use my current location"
-            className="glass glass-field flex items-center justify-center px-3 transition-opacity hover:opacity-80 disabled:opacity-40 cursor-pointer"
+            className="glass glass-field flex items-center justify-center px-3 transition-opacity duration-theme hover:opacity-80 disabled:opacity-40 cursor-pointer"
             style={{ color: 'var(--color-accent)' }}
           >
             <Locate size={16} className={gpsLoading ? 'animate-pulse' : ''} />
@@ -371,7 +371,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
         {/* Crosshair overlay — stays centered while map moves */}
         <div
-          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-theme ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
           style={{ transitionDuration: 'var(--transition-speed)' }}
           aria-hidden
         >
@@ -493,7 +493,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
               e.stopPropagation()
               onClear()
             }}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-9 min-h-9 w-9 h-9 rounded-full transition-opacity hover:opacity-70 cursor-pointer text-secondary"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-9 min-h-9 w-9 h-9 rounded-full transition-opacity duration-theme hover:opacity-70 cursor-pointer text-secondary"
             aria-label="Clear location"
           >
             <X size={14} />

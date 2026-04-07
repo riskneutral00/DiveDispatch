@@ -64,7 +64,7 @@ export function UrgentBookingStrip({
                 onCancel(b._id)
               }
             }}
-            className="inline-flex items-center justify-center rounded-full bg-transparent border-none p-0 cursor-pointer opacity-50 transition-opacity hover:opacity-100"
+            className="inline-flex items-center justify-center rounded-full bg-transparent border-none p-0 cursor-pointer opacity-50 transition-opacity duration-theme hover:opacity-100"
             style={{ color: 'inherit' }}
             aria-label="Cancel urgent booking"
           >

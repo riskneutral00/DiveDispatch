@@ -17,6 +17,7 @@ import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
 import { CustomerStep } from "./customer-step";
 import { Spinner } from "@/components/ui/spinner";
+import { DashboardPageFrame } from "@/components/layout/dashboard-page-frame";
 import {
   serializeDraftState,
   WIZARD_STEPS,
@@ -136,7 +137,6 @@ export function BookingWizard({
       try {
         await discardDraft({ bookingId: state.bookingId as Id<"bookings"> });
       } catch {
-        // Draft may already be gone — safe to ignore
       }
     }
     if (isOverlay && onClose) {
@@ -334,14 +334,13 @@ export function BookingWizard({
 
   if (showEditConfirm) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16">
+      <DashboardPageFrame className="px-4 py-16">
         <Card padding="lg">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <AlertTriangle
                 size={20}
-                className="flex-shrink-0 mt-0.5"
-                style={{ color: "var(--color-warning)" }}
+                className="flex-shrink-0 mt-0.5 text-warning"
               />
               <div>
                 <h2
@@ -377,22 +376,24 @@ export function BookingWizard({
             </div>
           </div>
         </Card>
-      </div>
+      </DashboardPageFrame>
     );
   }
 
   if (isInitializing) {
     return (
-      <div
-        className="max-w-3xl mx-auto px-4 py-16 flex items-center justify-center text-secondary"
-      >
+      <DashboardPageFrame className="px-4 py-16 flex items-center justify-center text-secondary">
         <Spinner label={tCommon("loading")} />
-      </div>
+      </DashboardPageFrame>
     );
   }
 
+  const Wrapper = isOverlay
+    ? ({ children: c }: { children: React.ReactNode }) => <div className="px-4 py-4 sm:px-6">{c}</div>
+    : ({ children: c }: { children: React.ReactNode }) => <DashboardPageFrame className="px-4 py-8">{c}</DashboardPageFrame>;
+
   return (
-    <div className={isOverlay ? "px-4 py-4 sm:px-6" : "max-w-3xl mx-auto px-4 py-8"}>
+    <Wrapper>
       {!isOverlay && (
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -464,6 +465,6 @@ export function BookingWizard({
           </Button>
         </div>
       )}
-    </div>
+    </Wrapper>
   );
 }

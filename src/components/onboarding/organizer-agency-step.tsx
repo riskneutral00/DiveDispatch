@@ -127,7 +127,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
                   type="button"
                   onClick={() => removeRow(idx)}
                   aria-label="Remove affiliation"
-                  className="flex items-center gap-1.5 text-label cursor-pointer rounded-[var(--border-radius-button)] px-2 py-1.5 transition-colors text-secondary"
+                  className="flex items-center gap-1.5 text-label cursor-pointer rounded-[var(--border-radius-button)] px-2 py-1.5 transition-colors duration-theme text-secondary"
                   style={{ transitionDuration: 'var(--transition-speed)' }}
                   onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
                   onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}

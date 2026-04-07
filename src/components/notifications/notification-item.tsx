@@ -87,7 +87,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
   return (
     <div
       className={cn(
-        "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b border-glass-border",
+        "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors duration-theme border-b border-glass-border",
         isUnread ? 'bg-surface-elevated' : 'bg-transparent',
       )}
     >

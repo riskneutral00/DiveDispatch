@@ -35,7 +35,7 @@ export function IconButton({
   return (
     <button
       type={type}
-      className={`flex items-center justify-center cursor-pointer ${SIZE_CLASS[size]} rounded-full transition-all text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] ${className}`.trim()}
+      className={`flex items-center justify-center cursor-pointer ${SIZE_CLASS[size]} rounded-full transition-all duration-theme text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] ${className}`.trim()}
       style={isGlass ? {
         background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',

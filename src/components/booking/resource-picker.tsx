@@ -120,7 +120,7 @@ export function ResourcePicker({
           <button
             type="button"
             onClick={() => setIsOpen((o) => !o)}
-            className="w-full text-left px-3 py-2.5 text-body rounded-theme flex items-center justify-between gap-2 transition-opacity hover:opacity-90"
+            className="w-full text-left px-3 py-2.5 text-body rounded-theme flex items-center justify-between gap-2 transition-opacity duration-theme hover:opacity-90"
             style={{
               background: 'var(--color-glass-bg)',
               border: '1px solid var(--color-glass-border)',
@@ -132,7 +132,7 @@ export function ResourcePicker({
             </span>
             <ChevronDown
               size={14}
-              className="flex-shrink-0 transition-transform text-secondary"
+              className="flex-shrink-0 transition-transform duration-theme text-secondary"
               style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
             />
           </button>
@@ -285,7 +285,7 @@ function PickerRow({
       type="button"
       onClick={onSelect}
       disabled={isUnavailable}
-      className="w-full text-left px-3 py-2.5 flex items-start gap-3 transition-colors disabled:cursor-not-allowed"
+      className="w-full text-left px-3 py-2.5 flex items-start gap-3 transition-colors duration-theme disabled:cursor-not-allowed"
       style={{
         background: isSelected
           ? 'var(--color-primary-muted)'

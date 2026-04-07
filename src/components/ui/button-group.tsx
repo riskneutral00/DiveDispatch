@@ -47,7 +47,7 @@ export function ButtonGroup({
             aria-selected={value === v}
             onClick={() => onChange(v)}
             className={cn(
-              "px-3 py-1.5 font-medium rounded-t-[var(--border-radius-button)] whitespace-nowrap transition-colors",
+              "px-3 py-1.5 font-medium rounded-t-[var(--border-radius-button)] whitespace-nowrap transition-colors duration-theme",
               textSize,
             )}
             style={{
@@ -87,7 +87,7 @@ export function ButtonGroup({
           type="button"
           onClick={() => onChange(v)}
           className={cn(
-            "px-2.5 py-2 font-medium capitalize transition-all border-l first:border-l-0",
+            "px-2.5 py-2 font-medium capitalize transition-all duration-theme border-l first:border-l-0",
             textSize,
           )}
           style={{

@@ -16,7 +16,7 @@ interface PillToggleProps {
 export function PillToggle({ label, checked, onChange, locked, disabled }: PillToggleProps) {
   return (
     <label
-      className={`inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-label font-medium transition-all ${locked ? 'cursor-default' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-label font-medium transition-all duration-theme ${locked ? 'cursor-default' : 'cursor-pointer'}`}
       style={{
         background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',

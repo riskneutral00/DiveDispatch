@@ -56,13 +56,17 @@ export function Textarea({
         }
       />
 
-      <FieldError id={`${id}-error`} message={error} />
-      {!error && helperText && (
+      {error ? (
+        <FieldError id={`${id}-error`} message={error} />
+      ) : (
         <p
           id={`${id}-helper`}
-          className="text-body text-secondary"
+          className={cn(
+            'h-4 text-body text-secondary truncate transition-opacity duration-theme',
+            helperText ? 'opacity-100' : 'opacity-0',
+          )}
         >
-          {helperText}
+          {helperText ?? '\u00A0'}
         </p>
       )}
     </div>

@@ -15,6 +15,7 @@ import { BOAT_TYPES, BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
 import { GAS_MIXES, GAS_MIX_LABELS } from '@/lib/constants/gas-mixes'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -27,27 +28,10 @@ const MAX_PREFERRED_VENUES = 10
 const MAX_PREFERRED_BOATS = 10
 const MAX_PREFERRED_EQUIPMENT = 10
 const MAX_PREFERRED_COMPRESSORS = 10
-const chipBase = 'px-2 py-1 text-label rounded-full border transition-colors cursor-pointer'
+const chipBase = 'px-2 py-1 text-label rounded-full border transition-colors duration-theme cursor-pointer'
 
-const OVERLAY_LIST_HEIGHT = 380 // px — fixed so filters don't resize overlay
+const OVERLAY_LIST_HEIGHT = 380
 const PAGE_SIZE = 10
-
-// ─── Badge helper ────────────────────────────────────────────────────────────
-
-const badgeStyle = {
-  background: 'var(--color-glass-bg-elevated)',
-} as const
-
-
-function Badge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="ml-2 text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 text-secondary" style={badgeStyle}>
-      {children}
-    </span>
-  )
-}
-
-// ─── Core list (data-driven — no hooks) ──────────────────────────────────────
 
 interface CoreProps {
   slugs: string[]
@@ -117,7 +101,7 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
                 key={entry.slug}
                 type="button"
                 onClick={() => add(entry.slug)}
-                className="w-full text-left px-3 py-2 text-body transition-colors hover:opacity-80 text-primary"
+                className="w-full text-left px-3 py-2 text-body transition-colors duration-theme hover:opacity-80 text-primary"
               >
                 <span className="font-medium">{entry.name}</span>
                 <span className="ml-2 text-label text-secondary">
@@ -180,7 +164,6 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
   )
 }
 
-// ─── Single-role wrapper (4 of 5 use cases) ─────────────────────────────────
 
 interface SingleRoleProps {
   slugs: string[]
@@ -214,7 +197,6 @@ function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, rend
   )
 }
 
-// ─── Exported pre-configured variants ────────────────────────────────────────
 
 interface ListProps {
   slugs: string[]
@@ -222,7 +204,6 @@ interface ListProps {
   required?: boolean
 }
 
-// ─── Instructor filter bar (presentational) ────────────────────────────────
 
 interface FilterBarProps {
   agencies: string[]
@@ -254,7 +235,7 @@ function InstructorFilterBar({
 }: FilterBarProps) {
   return (
     <div className="space-y-2">
-      {/* Agency chips */}
+
       <div className="flex flex-wrap gap-1.5 items-center">
         <span className="text-label text-secondary mr-1">Agency</span>
         {agencies.map((agency) => {
@@ -281,7 +262,7 @@ function InstructorFilterBar({
         </span>
       </div>
 
-      {/* Specialties chips (visible only when agency selected) */}
+
       {activeAgency && specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-label text-secondary mr-1">Specialties</span>
@@ -306,7 +287,7 @@ function InstructorFilterBar({
         </div>
       )}
 
-      {/* Languages picker */}
+
       <div className="space-y-1">
         <span className="text-label text-secondary">Languages</span>
         <LanguagePicker
@@ -320,7 +301,6 @@ function InstructorFilterBar({
   )
 }
 
-// ─── Candidate row (overlay) ──────────────────────────────────────────────────
 
 function InstructorCandidateRow({
   entry,
@@ -364,7 +344,6 @@ function InstructorCandidateRow({
   )
 }
 
-// ─── Sortable instructor row ────────────────────────────────────────────────
 
 function SortableInstructorRow({
   slug,
@@ -388,17 +367,17 @@ function SortableInstructorRow({
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
       <div className="flex gap-2">
-        {/* Drag handle */}
+
         <button
           ref={handleRef}
           type="button"
-          className="shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors"
+          className="shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme"
           aria-label="Drag to reorder"
         >
           <GripVertical size={16} />
         </button>
 
-        {/* Shared card content */}
+
         <InstructorCardContent
           entry={entry}
           slug={slug}
@@ -417,7 +396,7 @@ function SortableInstructorRow({
         />
       </div>
 
-      {/* Divider line */}
+
       {!isLast && (
         <div
           className="mt-2.5"
@@ -428,7 +407,6 @@ function SortableInstructorRow({
   )
 }
 
-// ─── PreferredInstructorList (overlay pattern) ──────────────────────────────
 
 export function PreferredInstructorList(props: ListProps) {
   const { slugs, onChange } = props
@@ -436,10 +414,8 @@ export function PreferredInstructorList(props: ListProps) {
   const entries = useQuery(api.directory.listByRole, { role: 'Instructor' as StakeholderRole })
   const diveCenterProfile = useQuery(api.diveCenters.mine)
 
-  // Overlay open state
   const [showOverlay, setShowOverlay] = useState(false)
 
-  // Derive operator defaults
   const operatorDefaultAgency = useMemo(() => {
     const assocs = diveCenterProfile?.associations ?? []
     return assocs.length === 1 ? assocs[0].agency : null
@@ -454,7 +430,6 @@ export function PreferredInstructorList(props: ListProps) {
       .filter(Boolean) as Language[]
   }, [diveCenterProfile])
 
-  // Filter state — initialized from operator defaults
   const [agency, setAgency] = useState<string | null>(null)
   const [activeSpecialties, setActiveSpecialties] = useState<Set<string>>(new Set())
   const [activeLangs, setActiveLangs] = useState<Language[]>([])
@@ -462,7 +437,6 @@ export function PreferredInstructorList(props: ListProps) {
   const [defaultsApplied, setDefaultsApplied] = useState(false)
   const [page, setPage] = useState(0)
 
-  // Derive filter options from full unfiltered entries
   const allAgencies = useMemo(() => {
     if (!entries) return []
     const set = new Set<string>()
@@ -516,7 +490,6 @@ export function PreferredInstructorList(props: ListProps) {
     if (agency) {
       result = result.filter((e) => e.agencies?.includes(agency))
     }
-    // AND logic: instructor must have ALL selected specialties
     if (agency && activeSpecialties.size > 0) {
       result = result.filter((e) =>
         e.credentials?.some((c) =>
@@ -524,7 +497,6 @@ export function PreferredInstructorList(props: ListProps) {
         )
       )
     }
-    // OR logic: instructor must speak at least one selected language
     if (activeLangs.length > 0) {
       const codes = new Set(activeLangs.map((l) => l.code))
       result = result.filter((e) => e.languages?.some((l) => codes.has(l)))
@@ -561,12 +533,10 @@ export function PreferredInstructorList(props: ListProps) {
   const add = (slug: string) => {
     if (!slugs.includes(slug) && !atMax) {
       onChange([...slugs, slug])
-      // If adding empties the current page, step back
       const remainingOnPage = paginatedEntries.filter((e) => e.slug !== slug).length
       if (remainingOnPage === 0 && page > 0) setPage((p) => p - 1)
     }
     setSearch('')
-    // Keep overlay open — user may add more
   }
 
   const openOverlay = () => {
@@ -586,7 +556,7 @@ export function PreferredInstructorList(props: ListProps) {
 
   return (
     <div className="space-y-3">
-      {/* Add button + count — always at top, disabled at max */}
+
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1">
           <Button
@@ -606,7 +576,7 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
       </div>
 
-      {/* Sortable ranked list */}
+
       {slugs.length > 0 && (
         <DragDropProvider
           onDragEnd={(event) => {
@@ -638,7 +608,7 @@ export function PreferredInstructorList(props: ListProps) {
         </DragDropProvider>
       )}
 
-      {/* Add instructor overlay */}
+
       <Dialog
         open={showOverlay}
         onClose={closeOverlay}
@@ -726,7 +696,6 @@ export function PreferredInstructorList(props: ListProps) {
   )
 }
 
-// ─── Shared overlay pattern ─────────────────────────────────────────────────
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -745,7 +714,6 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   )
 }
 
-// ─── Shared overlay pattern (DnD, pagination, multi-add, show-all) ──────────
 
 interface OverlayListProps {
   slugs: string[]
@@ -786,7 +754,7 @@ function SortableOverlayRow({
   return (
     <div ref={ref} className="py-2" style={{ opacity: isDragging ? 0.5 : 1 }}>
       <div className="flex items-center gap-3">
-        <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors" aria-label="Drag to reorder">
+        <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">
           <GripVertical size={16} />
         </button>
         <div className="flex-1 min-w-0">
@@ -919,7 +887,7 @@ function PreferredOverlayList({
                     type="button"
                     onClick={() => add(entry.slug)}
                     disabled={atMax}
-                    className="w-full text-left px-3 py-2.5 text-body transition-colors hover:opacity-80 text-primary border-b last:border-b-0"
+                    className="w-full text-left px-3 py-2.5 text-body transition-colors duration-theme hover:opacity-80 text-primary border-b last:border-b-0"
                     style={{ borderColor: 'var(--color-glass-border)' }}
                   >
                     <span className="font-medium">{entry.name}</span>
@@ -952,14 +920,13 @@ function PreferredOverlayList({
   )
 }
 
-// ─── Venues & Boats list ───────────────────────────────────────────────────
 
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {entry.venueType && <Badge>{entry.venueType}</Badge>}
-      {entry.maxDepth != null && <Badge>{entry.maxDepth}m</Badge>}
-      {entry.maxCapacity != null && <Badge>{entry.maxCapacity} pax</Badge>}
+      {entry.venueType && <Badge variant="muted" size="sm">{entry.venueType}</Badge>}
+      {entry.maxDepth != null && <Badge variant="muted" size="sm">{entry.maxDepth}m</Badge>}
+      {entry.maxCapacity != null && <Badge variant="muted" size="sm">{entry.maxCapacity} pax</Badge>}
       {entry.hasCompressor && <Wind size={12} className="text-secondary ml-1" />}
     </div>
   )
@@ -970,8 +937,8 @@ function BoatBadge({ entry }: { entry: DirectoryEntry }) {
     .map((t) => BOAT_TYPE_LABELS[t] ?? t)
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {types.length > 0 && <Badge>{types.join(' · ')}</Badge>}
-      {entry.boatCapacity != null && <Badge>{entry.boatCapacity} pax</Badge>}
+      {types.length > 0 && <Badge variant="muted" size="sm">{types.join(' · ')}</Badge>}
+      {entry.boatCapacity != null && <Badge variant="muted" size="sm">{entry.boatCapacity} pax</Badge>}
       {entry.hasCompressor && <Wind size={12} className="text-secondary ml-1" />}
     </div>
   )
@@ -1057,7 +1024,6 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
   )
 }
 
-// ─── Equipment list ────────────────────────────────────────────────────────
 
 function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
   const counts = entry.inventoryCounts
@@ -1070,7 +1036,7 @@ function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
       {shown.map(([gt, count]) => (
         <Badge key={gt}>{GEAR_TYPE_LABELS[gt as GearType] ?? gt} x{count}</Badge>
       ))}
-      {remaining > 0 && <Badge>+{remaining} more</Badge>}
+      {remaining > 0 && <Badge variant="muted" size="sm">+{remaining} more</Badge>}
     </div>
   )
 }
@@ -1120,7 +1086,6 @@ export function PreferredEquipmentList(props: ListProps) {
   )
 }
 
-// ─── Compressor list ───────────────────────────────────────────────────────
 
 function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
   const mixes = entry.gasMixes ?? []

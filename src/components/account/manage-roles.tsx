@@ -129,7 +129,7 @@ export function ManageRoles({
               {/* Booking-blocked hint — always rendered when canDelete, toggle via opacity */}
               {canDelete && (
                 <div
-                  className="text-label text-secondary pl-8 overflow-hidden transition-opacity"
+                  className="text-label text-secondary pl-8 overflow-hidden transition-opacity duration-theme"
                   aria-hidden={!isBlocked}
                   data-blocked={isBlocked}
                   style={{

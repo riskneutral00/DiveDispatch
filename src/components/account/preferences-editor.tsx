@@ -360,7 +360,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                   return (
                     <label
                       key={value}
-                      className="flex items-start gap-3 cursor-pointer p-3 rounded-theme transition-colors"
+                      className="flex items-start gap-3 cursor-pointer p-3 rounded-theme transition-colors duration-theme"
                       style={{
                         background: checked ? 'var(--color-glass-bg-elevated)' : 'transparent',
                         border: `1px solid ${checked ? 'var(--color-primary)' : 'transparent'}`,

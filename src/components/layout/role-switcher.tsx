@@ -74,7 +74,7 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
             <Link
               key={rep}
               href={`/${slug}/${cfg.key}/dashboard`}
-              className="flex items-center px-2.5 py-1.5 rounded-full text-label font-medium whitespace-nowrap flex-shrink-0 transition-all border"
+              className="flex items-center px-2.5 py-1.5 rounded-full text-label font-medium whitespace-nowrap flex-shrink-0 transition-all duration-theme border"
               style={{
                 background: isActive ? 'var(--color-accent-glow)' : 'transparent',
                 borderColor: isActive ? 'var(--color-accent)' : 'var(--color-glass-border)',

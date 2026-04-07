@@ -120,7 +120,7 @@ export function Dialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >
@@ -177,7 +177,7 @@ export function Dialog({
               </div>
               <button
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
+                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
                 style={{ outlineColor: "var(--color-accent)" }}
                 aria-label="Close dialog"
               >

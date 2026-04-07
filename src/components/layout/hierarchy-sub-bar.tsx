@@ -58,7 +58,7 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: H
             )}
             <Link
               href={`/${slug}/${cfg.key}/dashboard`}
-              className="flex items-center px-2.5 py-1.5 rounded-full text-label font-medium whitespace-nowrap flex-shrink-0 transition-all"
+              className="flex items-center px-2.5 py-1.5 rounded-full text-label font-medium whitespace-nowrap flex-shrink-0 transition-all duration-theme"
               style={{
                 background: isActive ? 'var(--color-accent-glow)' : 'transparent',
                 border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-glass-border)'}`,

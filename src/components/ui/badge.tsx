@@ -80,7 +80,7 @@ export const Badge = React.memo(function Badge({
         "inline-flex items-center border font-medium",
         "rounded-full",
         sizeMap[size],
-        onClick && "cursor-pointer transition-all hover:brightness-125 hover:scale-105",
+        onClick && "cursor-pointer transition-all duration-theme hover:brightness-125 hover:scale-105",
         className,
       )}
       style={variantStyles[variant]}

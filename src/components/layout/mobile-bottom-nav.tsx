@@ -34,7 +34,7 @@ export function MobileBottomNav({ roleSlug, slug }: MobileBottomNavProps) {
           <Link
             key={item.key}
             href={item.href}
-            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-[calc(var(--border-radius)/2)] transition-all min-w-[60px]"
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-[calc(var(--border-radius)/2)] transition-all duration-theme min-w-[60px]"
             style={
               isActive
                 ? {

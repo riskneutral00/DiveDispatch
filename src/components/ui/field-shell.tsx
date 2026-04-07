@@ -4,13 +4,11 @@ import { cn } from '@/lib/utils/cn'
 interface FieldLabelProps {
   htmlFor?: string
   children: ReactNode
-  /** When true, shows a required asterisk */
   required?: boolean
   className?: string
   style?: CSSProperties
 }
 
-/** Shared label row for glass form fields */
 export function FieldLabel({ htmlFor, children, required, className, style }: FieldLabelProps) {
   return (
     <label
@@ -35,7 +33,7 @@ export function FieldError({ id, message }: FieldErrorProps) {
       id={id}
       role="alert"
       className={cn(
-        'h-4 text-body text-destructive truncate transition-opacity',
+        'h-4 text-body text-destructive truncate transition-opacity duration-theme',
         message ? 'opacity-100' : 'opacity-0',
       )}
     >
@@ -54,10 +52,6 @@ interface FieldShellProps {
   className?: string
 }
 
-/**
- * Shared wrapper for label + control + error/helper text stack.
- * Use this for composite controls that cannot directly use Input/Textarea.
- */
 export function FieldShell({
   id,
   label,
@@ -81,7 +75,7 @@ export function FieldShell({
       {error || !helperText ? (
         <FieldError id={errorId} message={error} />
       ) : (
-        <p id={helperId} className="h-4 text-label text-secondary truncate">
+        <p id={helperId} className="h-4 text-body text-secondary truncate">
           {helperText}
         </p>
       )}

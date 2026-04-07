@@ -1,16 +1,21 @@
 'use client'
 
 import { useMutation, useQuery } from 'convex/react'
-import { useState, useEffect } from 'react'
 import { api } from '@/lib/convex-generated'
-import { InlineError } from '@/components/ui/inline-error'
 import { LoadingCard } from '@/components/ui/loading-card'
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { Input } from '@/components/ui/input'
-import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { useOrganizerRoleApi } from '@/lib/hooks/use-organizer-role-api'
 import { getOrganizerRoleFlags } from '@/lib/constants/organizer-wizard-config'
+import { useProfileForm } from '@/lib/hooks/use-profile-form'
+import {
+  INITIAL_CONTACT_FORM,
+  contactFromProfile,
+  contactToPayload,
+  type ContactFormState,
+} from '@/lib/profile-form'
+import { contactSchema } from '@/lib/schemas/profile-shared'
 import { OrganizerStepCard } from './organizer-step-card'
 
 interface OrganizerBasicStepProps {
@@ -22,7 +27,6 @@ interface OrganizerBasicStepProps {
 export function OrganizerBasicStep({ role, onSaved, onBack }: OrganizerBasicStepProps) {
   const mutations = useOrganizerRoleApi(role)
 
-  // Roles without Convex modules get a placeholder
   if (!mutations) {
     return (
       <OrganizerStepCard
@@ -49,88 +53,60 @@ interface BasicStepInnerProps {
 function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProps) {
   const existing = useQuery(mutations.mine)
   const me = useQuery(api.users.me)
-  const create = useMutation(mutations.create)
-  const update = useMutation(mutations.update)
+  const createMutation = useMutation(mutations.create)
+  const updateMutation = useMutation(mutations.update)
 
-  const [name, setName] = useState('')
-  const [location, setLocation] = useState<LocationValue | null>(null)
-  const [email, setContactEmail] = useState('')
-  const [phone, setContactPhone] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [initialized, setInitialized] = useState(false)
-
-  useEffect(() => {
-    if (existing !== undefined && me !== undefined && !initialized) {
-      if (existing) {
-        setName(existing.name)
-        // All roles now use flat placeName/country/lat/lng
-        if ('lat' in existing && existing.lat !== undefined) {
-          setLocation({
-            placeName: existing.placeName,
-            country: existing.country,
-            lat: existing.lat,
-            lng: existing.lng,
-          })
-        }
-        setContactEmail(existing.email ?? '')
-        setContactPhone(existing.phone ?? '')
-      } else {
-        setName(me?.businessName ?? '')
-        setContactEmail(me?.email ?? '')
-      }
-      setInitialized(true)
+  const createWithRoleExtras = async (payload: Record<string, unknown>) => {
+    const base = {
+      name: payload.name as string,
+      placeName: payload.placeName as string,
+      country: payload.country as string,
+      lat: payload.lat as number,
+      lng: payload.lng as number,
+      email: payload.email as string,
+      phone: payload.phone as string,
     }
-  }, [existing, me, initialized])
-
-  const isComplete =
-    name.trim() && location && email.trim() && phone.trim()
-
-  async function handleNext() {
-    if (!isComplete || !location) return
-    setSaving(true)
-    setError(null)
-    try {
-      const basePayload = {
-        name,
-        placeName: location.placeName,
-        country: location.country,
-        lat: location.lat,
-        lng: location.lng,
-        email,
-        phone,
-      }
-
-
-
-      if (existing) {
-        await update(basePayload)
-      } else if (role === 'DiveSite') {
-        await create({
-          ...basePayload,
-          venueType: 'Shore',
-          confinedCapable: false,
-          hasCompressor: false,
-        })
-      } else {
-        await create({
-          ...basePayload,
-          associations: [],
-        })
-      }
-      onSaved()
-    } catch (err) {
-      setError(parseConvexError(err, 'Save failed'))
-    } finally {
-      setSaving(false)
+    if (role === 'DiveSite') {
+      return createMutation({
+        ...base,
+        venueType: 'Shore',
+        confinedCapable: false,
+        hasCompressor: false,
+      })
     }
+    return createMutation({ ...base, associations: [] })
   }
 
-  if (existing === undefined || me === undefined) {
+  const fromMe = (u: Record<string, unknown>, defaults: ContactFormState): ContactFormState => ({
+    ...defaults,
+    name: (u.businessName as string) ?? '',
+    email: (u.email as string) ?? '',
+  })
+
+  const { form, setField, errors, saving, isValid, loading, handleSubmit } =
+    useProfileForm({
+      profile: existing,
+      me,
+      schema: contactSchema,
+      defaults: INITIAL_CONTACT_FORM,
+      fromProfile: contactFromProfile,
+      fromMe,
+      toPayload: contactToPayload,
+      create: createWithRoleExtras,
+      update: updateMutation,
+      onSaved,
+      waitForMeBeforeInit: true,
+    })
+
+  if (loading) {
     return <LoadingCard />
   }
 
   const { displayLabel: roleLabel } = getOrganizerRoleFlags(role)
+
+  const handleNext = () => {
+    handleSubmit({ preventDefault: () => {} } as React.FormEvent)
+  }
 
   return (
     <OrganizerStepCard
@@ -139,39 +115,41 @@ function BasicStepInner({ role, mutations, onSaved, onBack }: BasicStepInnerProp
       onBack={onBack}
       onNext={handleNext}
       loading={saving}
-      disabled={!isComplete}
+      disabled={!isValid}
     >
       <div className="flex flex-col gap-4" data-testid="wizard-content">
         <Input
           label="Business Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={form.name}
+          onChange={(e) => setField('name', e.target.value)}
           placeholder="e.g. Ocean Explorer Dive Center"
           required
+          error={errors.name}
         />
         <LocationPicker
           label="Location"
-          value={location}
-          onChange={setLocation}
+          value={form.location as LocationValue | null}
+          onChange={(loc) => setField('location', loc)}
+          error={errors.location}
         />
         <Input
           label="Contact Email"
           type="email"
-          value={email}
-          onChange={(e) => setContactEmail(e.target.value)}
+          value={form.email}
+          onChange={(e) => setField('email', e.target.value)}
           placeholder="dive@example.com"
           required
+          error={errors.email}
         />
         <Input
           label="Contact Phone"
           type="tel"
-          value={phone}
-          onChange={(e) => setContactPhone(e.target.value)}
+          value={form.phone}
+          onChange={(e) => setField('phone', e.target.value)}
           placeholder="+66 81 234 5678"
           required
+          error={errors.phone}
         />
-
-        {error && <InlineError>{error}</InlineError>}
       </div>
     </OrganizerStepCard>
   )

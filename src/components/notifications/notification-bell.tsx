@@ -26,7 +26,7 @@ export function NotificationBell() {
           unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'
         }
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center w-11 h-11 rounded-full transition-colors text-secondary"
+        className="relative flex items-center justify-center w-11 h-11 rounded-full transition-colors duration-theme text-secondary"
       >
         <Bell size={18} />
         {!!unreadCount && (

@@ -7,6 +7,7 @@ import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
 import { Card, Button, Badge, EmptyState, IconButton } from '@/components/ui'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
 import { TERMINAL_STATUSES, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
@@ -22,13 +23,11 @@ const OPERATOR_CLERK_ROLES = new Set(
   ROLES.filter((r) => r.isOrganizer).map((r) => r.clerkRole),
 )
 
-// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface BookingDetailProps {
   bookingId: string
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
 
 export function BookingDetail({ bookingId }: BookingDetailProps) {
   const router = useRouter()
@@ -71,8 +70,8 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
   const canClearMedical = booking.medicalHardBlock && isOperator
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
-      {/* Header */}
+    <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
+
       <div className="flex items-center gap-3 mb-2">
         <IconButton variant="ghost" onClick={() => router.back()} aria-label="Go back">
           <ArrowLeft size={20} />
@@ -82,7 +81,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         </h1>
       </div>
 
-      {/* Status card */}
+
       <Card padding="md">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1 min-w-0">
@@ -113,7 +112,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
             </p>
           </div>
 
-          {/* Action buttons */}
+
           <div className="flex gap-2 flex-wrap">
             {canEdit && (
               <Button
@@ -149,7 +148,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         </div>
       </Card>
 
-      {/* Shared section body */}
+
       <BookingDetailBody
         booking={booking}
         bookingId={bookingId}
@@ -157,13 +156,13 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         layout="page"
       />
 
-      {/* Cancel dialog */}
+
       <CancelBookingDialog
         open={showCancelDialog}
         onClose={() => setShowCancelDialog(false)}
         bookingId={bookingId as Id<'bookings'>}
         onSuccess={() => router.push('/dashboard')}
       />
-    </div>
+    </DashboardPageFrame>
   )
 }

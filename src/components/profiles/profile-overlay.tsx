@@ -12,10 +12,10 @@ import { OVERLAY_ONLY_SECTIONS } from '@/lib/constants/profile-registry'
 import { ROLE_BY_KEY } from '@/lib/constants/roles'
 import { RoleProfileForm } from '@/components/profiles/connected-role-forms'
 import { ManageRolesConnected } from '@/components/account/manage-roles-connected'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { ConnectedEquipmentInventory } from '@/components/inventory/connected-equipment-inventory'
 import { PreferencesEditor } from '@/components/account/preferences-editor'
 
-// ── Types ────────────────────────────────────────────────────────────────────
 
 export type ProfileOverlayTab = 'profile' | 'roles' | `role:${RoleKey}`
 
@@ -32,12 +32,10 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'roles', labelKey: 'roles' },
 ]
 
-// ── Component ────────────────────────────────────────────────────────────────
 
 export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug, slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
-  /** Section within a multi-tab role profile (Contact / Languages / …) — mirrors Profile page. */
   const [roleProfileSection, setRoleProfileSection] = useState<string>('')
   const userRoles = useQuery(api.userRoles.myRoles)
 
@@ -45,7 +43,6 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)
 
-  // Sync active tab when overlay opens with a specific tab
   useEffect(() => {
     if (open) setActiveTab(initialTab)
   }, [open, initialTab])
@@ -53,7 +50,6 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   const isRoleTab = activeTab.startsWith('role:')
   const activeRoleKey = isRoleTab ? activeTab.slice(5) as RoleKey : null
 
-  // When switching role sub-tab, reset section to first profile tab (matches Profile page)
   useEffect(() => {
     if (!activeRoleKey) return
     const role = ROLE_BY_KEY[activeRoleKey]
@@ -67,12 +63,10 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   const activeRoleConfig = activeRoleKey ? ROLE_BY_KEY[activeRoleKey] : undefined
   const roleSectionTabs = activeRoleConfig?.profileTabs ?? null
 
-  // The currently active section for a role tab
   const activeSection = roleSectionTabs && roleSectionTabs.length > 0
     ? roleProfileSection || roleSectionTabs[0].id
     : undefined
 
-  // Determine what to render in the role tab content area
   function renderRoleContent() {
     if (!activeRoleKey) return null
 
@@ -96,10 +90,9 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   return (
     <Dialog open={open} onClose={onClose} title="Account" fullScreen>
       <div className="flex flex-col h-full">
-        {/* Tab bar */}
+
         <div
-          className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          style={{ borderColor: 'var(--color-glass-border)' }}
+          className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
           {STATIC_TAB_IDS.map((tab) => {
@@ -110,7 +103,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className="px-4 py-1.5 rounded-full text-body font-medium transition-colors cursor-pointer flex-shrink-0"
+                className="px-4 py-1.5 rounded-full text-body font-medium transition-colors duration-theme cursor-pointer flex-shrink-0"
                 style={{
                   background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
                   color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
@@ -122,12 +115,11 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
             )
           })}
 
-          {/* Role sub-tabs — appear inline after static tabs */}
+
           {roleConfigs.length > 0 && (
             <>
               <div
-                className="w-px mx-1 self-stretch flex-shrink-0"
-                style={{ background: 'var(--color-glass-border)' }}
+                className="w-px mx-1 self-stretch flex-shrink-0 bg-glass-border"
               />
               {roleConfigs.map((role) => {
                 const isActive = activeTab === `role:${role.key}`
@@ -141,7 +133,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
                       const first = ROLE_BY_KEY[role.key]?.profileTabs?.[0]?.id ?? ''
                       setRoleProfileSection(first)
                     }}
-                    className="px-3 py-1.5 rounded-full text-label font-medium transition-colors cursor-pointer flex-shrink-0"
+                    className="px-3 py-1.5 rounded-full text-label font-medium transition-colors duration-theme cursor-pointer flex-shrink-0"
                     style={{
                       background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
                       color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
@@ -156,12 +148,12 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           )}
         </div>
 
-        {/* Tab content — scrollable */}
+
         <div
           className="flex-1 overflow-y-auto"
           role="tabpanel"
         >
-          <div className="max-w-3xl mx-auto px-4 pt-2 pb-6 sm:px-6">
+          <DashboardPageFrame className="px-4 pt-2 pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'roles' && <ManageRolesConnected />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
@@ -174,7 +166,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
               </div>
             )}
             {activeRoleKey && renderRoleContent()}
-          </div>
+          </DashboardPageFrame>
         </div>
       </div>
     </Dialog>

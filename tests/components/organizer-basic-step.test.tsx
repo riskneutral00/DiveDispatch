@@ -3,15 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '../helpers/render'
 import userEvent from '@testing-library/user-event'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
 
-// Track which mutation call this is — create is always first, update is second
 let mutationCallIndex = 0
 let queryCallIndex = 0
 let mockExisting: unknown = undefined
 let mockMe: unknown = undefined
 
-// Single shared spy; tests inspect what args it was called with
 const mockMutate = vi.fn()
 
 vi.mock('convex/react', async (importOriginal) => {
@@ -20,13 +17,9 @@ vi.mock('convex/react', async (importOriginal) => {
     ...actual,
     useQuery: () => {
       const idx = queryCallIndex++
-      // First call: mutations.mine (existing profile)
-      // Second call: api.users.me
       if (idx % 2 === 0) return mockExisting
       return mockMe
     },
-    // Return the same mockMutate for every useMutation call —
-    // the test just asserts it was called with the right payload.
     useMutation: () => {
       mutationCallIndex++
       return mockMutate
@@ -45,7 +38,6 @@ vi.mock('@/lib/hooks/use-organizer-role-api', () => ({
   },
 }))
 
-// Stub LocationPicker — clicking it sets a valid location
 vi.mock('@/components/profiles/location-picker-lazy', () => ({
   LocationPicker: ({ onChange, label }: { onChange: (v: unknown) => void; label?: string }) => (
     <button
@@ -60,7 +52,6 @@ vi.mock('@/components/profiles/location-picker-lazy', () => ({
   ),
 }))
 
-// ─── Import after mocks ───────────────────────────────────────────────────────
 import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step'
 
 beforeEach(() => {
@@ -85,7 +76,6 @@ describe('OrganizerBasicStep', () => {
     mockMe = { email: 'test@test.com', businessName: 'Test Dive' }
     render(<OrganizerBasicStep role="DiveCenter" onSaved={vi.fn()} />)
     expect(screen.getByText('Basic Information')).toBeInTheDocument()
-    // Label text includes a nested " *" span — use placeholder to find inputs
     expect(screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('dive@example.com')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('+66 81 234 5678')).toBeInTheDocument()
@@ -136,23 +126,29 @@ describe('OrganizerBasicStep', () => {
     })
   })
 
-  it('shows error message when mutation throws', async () => {
+  it('does not call onSaved when mutation throws', async () => {
     const user = userEvent.setup()
     mockExisting = null
     mockMe = { email: 'test@test.com', businessName: '' }
     mockMutate.mockRejectedValueOnce(new Error('Network error'))
+    const onSaved = vi.fn()
 
-    render(<OrganizerBasicStep role="DiveCenter" onSaved={vi.fn()} />)
+    render(<OrganizerBasicStep role="DiveCenter" onSaved={onSaved} />)
 
-    await user.type(screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center'), 'Deep Blue')
+    const nameInput = screen.getByPlaceholderText('e.g. Ocean Explorer Dive Center')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Deep Blue')
     await user.click(screen.getByTestId('location-picker'))
-    await user.type(screen.getByPlaceholderText('dive@example.com'), 'test@test.com')
+    const emailInput = screen.getByPlaceholderText('dive@example.com')
+    await user.clear(emailInput)
+    await user.type(emailInput, 'fail@test.com')
     await user.type(screen.getByPlaceholderText('+66 81 234 5678'), '+66 81 000 0000')
 
     await user.click(screen.getByRole('button', { name: /next/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/save failed/i)).toBeInTheDocument()
+      expect(mockMutate).toHaveBeenCalled()
     })
+    expect(onSaved).not.toHaveBeenCalled()
   })
 })

@@ -8,6 +8,7 @@ import type { Id } from '@/lib/convex-generated'
 import type { BookingDetail, BookingDetailStakeholder } from '../../../convex/bookings'
 import type { BookingLinkInfo } from '../../../convex/bookingLinks'
 import { Button, ButtonGroup, Badge, Card, RoleIcon, EmptyState, ListRow, Skeleton, Input } from '@/components/ui'
+import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import type { ClerkRole } from '@/lib/constants/roles'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import { computeTTLLabel, reservationVariant } from '@/lib/booking/booking-display'
@@ -20,7 +21,6 @@ import { AuditTrailTable } from './audit-trail-table'
 import { SendPortalLink } from './send-portal-link'
 import { PortalProgressCard } from './portal-progress-card'
 
-// ── TTL countdown hook ──────────────────────────────────────────────────────
 
 export function useTTLCountdown(expiresAt: number | undefined): string | null {
   const [label, setLabel] = useState<string | null>(() => computeTTLLabel(expiresAt))
@@ -34,7 +34,6 @@ export function useTTLCountdown(expiresAt: number | undefined): string | null {
   return label
 }
 
-// ── Portal completion pills ──────────────────────────────────────────────────
 
 interface PortalPill {
   label: string
@@ -53,7 +52,6 @@ function PortalPills({ pills }: { pills: PortalPill[] }) {
   )
 }
 
-// ── Customer table ──────────────────────────────────────────────────────────
 
 function CustomerTable({
   booking,
@@ -97,7 +95,6 @@ function CustomerTable({
   )
 }
 
-// ── Stakeholder list ────────────────────────────────────────────────────────
 
 function StakeholderList({
   stakeholders,
@@ -148,7 +145,6 @@ function StakeholderList({
   )
 }
 
-// ── Portal link section ─────────────────────────────────────────────────────
 
 function PortalLinkSection({
   bookingId,
@@ -160,7 +156,6 @@ function PortalLinkSection({
   portalLink: BookingLinkInfo | null | undefined
   divers: BookingDetail['divers']
   compact?: boolean
-  // useTranslations called directly — no prop drilling
 }) {
   const tErrors = useTranslations('errors')
   const tCommon = useTranslations('common')
@@ -291,11 +286,10 @@ function PortalLinkSection({
   )
 }
 
-// ── Booking detail skeleton ─────────────────────────────────────────────────
 
 export function BookingDetailSkeleton() {
   return (
-    <div className="min-h-screen p-4 sm:p-6 max-w-3xl mx-auto space-y-4">
+    <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
       {[1, 2, 3].map((i) => (
         <Card key={i} padding="md">
           <div className="space-y-3">
@@ -305,11 +299,10 @@ export function BookingDetailSkeleton() {
           </div>
         </Card>
       ))}
-    </div>
+    </DashboardPageFrame>
   )
 }
 
-// ── Section tabs (dialog layout) ────────────────────────────────────────────
 
 export type SectionId = 'overview' | 'customers' | 'schedule' | 'resources' | 'reservations' | 'audit'
 
@@ -340,7 +333,6 @@ function SectionTabs({
   )
 }
 
-// ── Shared section renderers ────────────────────────────────────────────────
 
 function CustomersSection({
   booking,
@@ -457,7 +449,6 @@ function AuditSection({ bookingId }: { bookingId: string }) {
   )
 }
 
-// ── Portal pill builder ─────────────────────────────────────────────────────
 
 function buildPortalPills(booking: BookingDetail): PortalPill[] {
   const equipmentDone =
@@ -473,7 +464,6 @@ function buildPortalPills(booking: BookingDetail): PortalPill[] {
   ]
 }
 
-// ── BookingDetailBody ───────────────────────────────────────────────────────
 
 export interface BookingDetailBodyProps {
   booking: BookingDetail
@@ -481,11 +471,8 @@ export interface BookingDetailBodyProps {
   portalLink: BookingLinkInfo | null | undefined
   layout: 'page' | 'dialog'
   compact?: boolean
-  /** Dialog-only: active section tab (controlled externally) */
   activeSection?: SectionId
-  /** Dialog-only: callback when section tab changes */
   onSectionChange?: (id: SectionId) => void
-  /** Dialog-only: content to render in the overview tab (status + actions) */
   overviewSlot?: React.ReactNode
 }
 
@@ -499,7 +486,6 @@ export function BookingDetailBody({
   onSectionChange,
   overviewSlot,
 }: BookingDetailBodyProps) {
-  // ── Page layout: all sections stacked in cards ──────────────────────────
   if (layout === 'page') {
     return (
       <>
@@ -539,7 +525,6 @@ export function BookingDetailBody({
     )
   }
 
-  // ── Dialog layout: tabbed sections ──────────────────────────────────────
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 sm:px-6 pt-3 flex-shrink-0">

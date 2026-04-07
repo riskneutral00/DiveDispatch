@@ -20,7 +20,6 @@
   --color-destructive: var(--color-destructive);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
-  /* Glass visual parity additions */
   --color-primary-glow: var(--color-primary-glow);
   --color-glass-bg-elevated: var(--color-glass-bg-elevated);
   --color-glass-border-elevated: var(--color-glass-border-elevated);
@@ -40,7 +39,6 @@
   --body-bg: var(--body-bg);
   --color-tooltip-bg: var(--color-tooltip-bg);
   --color-tooltip-text: var(--color-tooltip-text);
-  /* Type scale */
   --font-size-page-title: var(--font-size-page-title);
   --font-size-card-title: var(--font-size-card-title);
   --font-size-body: var(--font-size-body);
@@ -49,8 +47,8 @@
   --letter-spacing-tight: var(--letter-spacing-tight);
   --letter-spacing-normal: var(--letter-spacing-normal);
   --letter-spacing-wide: var(--letter-spacing-wide);
-  /* Border radius alias: use `rounded-theme` instead of `rounded-[var(--border-radius)]` */
   --radius-theme: var(--border-radius);
+  --transition-duration-theme: var(--transition-speed);
 }
 
 /* ── Theme fallbacks (Ocean Dark — pre-hydration SSR safety) ─────────────────
@@ -181,6 +179,11 @@
   /* Calendar date watermarks — opacity scales per luminance class */
   --color-date-watermark: color-mix(in srgb, var(--color-text-primary) calc(var(--opacity-watermark) * 100%), transparent);
   --color-date-blocked: var(--color-text-secondary);
+}
+
+[data-luminance="bright"] {
+  --color-tooltip-bg: rgba(0, 0, 0, 0.85);
+  --color-tooltip-text: #f8fafc;
 }
 
 /* ── Semantic text color utilities ──────────────────────────────────────────

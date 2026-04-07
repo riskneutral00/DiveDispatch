@@ -9,6 +9,7 @@ import type { NotificationDoc } from '@/lib/types/notifications'
 interface UseOptimisticNotificationsOptions {
   userId: string
   limit: number
+  onError?: (operation: string) => void
 }
 
 interface UseOptimisticNotificationsReturn {
@@ -19,17 +20,12 @@ interface UseOptimisticNotificationsReturn {
   handleClearAll: () => Promise<void>
 }
 
-/** Per-ID inflight tracking. Maps `${opType}:${id}` to a unique token. */
 type InflightMap = Map<string, number>
 
-/**
- * Wraps notification queries and mutations with local-state optimistic updates.
- * Immediately reflects markAsRead, delete, and clearAll in the UI, reverting
- * if the server rejects.
- */
 export function useOptimisticNotifications({
   userId,
   limit,
+  onError,
 }: UseOptimisticNotificationsOptions): UseOptimisticNotificationsReturn {
   const rawNotifications = useQuery(api.notifications.listNotifications, { userId, limit })
   const serverNotifications = rawNotifications as NotificationDoc[] | undefined
@@ -43,7 +39,6 @@ export function useOptimisticNotifications({
   const [optimisticDeleted, setOptimisticDeleted] = useState<Set<string>>(new Set())
   const [optimisticClearedAll, setOptimisticClearedAll] = useState(false)
 
-  // Inflight tracking: keyed by "opType:id", value is the token for the active call
   const inflightRef = useRef<InflightMap>(new Map())
   const tokenCounterRef = useRef(0)
 
@@ -66,7 +61,6 @@ export function useOptimisticNotifications({
 
   const handleMarkAsRead = useCallback(async (id: string) => {
     const key = `read:${id}`
-    // Guard: skip if a markAsRead is already in-flight for this ID
     if (inflightRef.current.has(key)) return
 
     const token = ++tokenCounterRef.current
@@ -81,9 +75,8 @@ export function useOptimisticNotifications({
     try {
       await markAsRead({ notificationId: id as Id<'notifications'> })
     } catch {
-      // Swallow — optimistic state is reverted below
+      onError?.('markAsRead')
     } finally {
-      // Only clean up if this token is still the active one for this key
       if (inflightRef.current.get(key) === token) {
         inflightRef.current.delete(key)
       }
@@ -93,11 +86,10 @@ export function useOptimisticNotifications({
         return next
       })
     }
-  }, [markAsRead])
+  }, [markAsRead, onError])
 
   const handleDelete = useCallback(async (id: string) => {
     const key = `delete:${id}`
-    // Guard: skip if a delete is already in-flight for this ID
     if (inflightRef.current.has(key)) return
 
     const token = ++tokenCounterRef.current
@@ -108,19 +100,16 @@ export function useOptimisticNotifications({
     try {
       await deleteNotification({ notificationId: id as Id<'notifications'> })
     } catch {
-      // Swallow — optimistic state is reverted below
+      onError?.('delete')
     } finally {
-      // Only clean up if this token is still the active one for this key
       if (inflightRef.current.get(key) === token) {
         inflightRef.current.delete(key)
       }
-      // Clear deleted flag
       setOptimisticDeleted((prev) => {
         const next = new Set(prev)
         next.delete(id)
         return next
       })
-      // Also clear any stale overrides for this ID (cross-operation cleanup)
       setOptimisticOverrides((prev) => {
         if (!prev.has(id)) return prev
         const next = new Map(prev)
@@ -128,11 +117,10 @@ export function useOptimisticNotifications({
         return next
       })
     }
-  }, [deleteNotification])
+  }, [deleteNotification, onError])
 
   const handleClearAll = useCallback(async () => {
     const key = 'clearAll'
-    // Guard: skip if a clearAll is already in-flight
     if (inflightRef.current.has(key)) return
 
     const token = ++tokenCounterRef.current
@@ -143,15 +131,14 @@ export function useOptimisticNotifications({
     try {
       await clearAll({ userId })
     } catch {
-      // Swallow — optimistic state is reverted below
+      onError?.('clearAll')
     } finally {
-      // Only clean up if this token is still the active one for this key
       if (inflightRef.current.get(key) === token) {
         inflightRef.current.delete(key)
       }
       setOptimisticClearedAll(false)
     }
-  }, [clearAll, userId])
+  }, [clearAll, userId, onError])
 
   return {
     notifications,

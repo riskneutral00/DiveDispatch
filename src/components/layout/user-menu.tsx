@@ -100,14 +100,14 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
             <button
               onClick={() => handleMenuAction("profile")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
+              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
             >
               <User size={14} />
               {tNav("profile")}
             </button>
             <button
               onClick={() => handleMenuAction(`role:${roleSlug}`)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
+              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
             >
               <Settings size={14} />
               {tNav("preferences")}
@@ -124,7 +124,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
                     <button
                       key={role.key}
                       onClick={() => handleMenuAction(`role:${role.key}`)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
                     >
                       <Icon size={14} />
                       {role.label}
@@ -140,7 +140,7 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
             >
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all cursor-pointer text-secondary"
+                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
               >
                 <LogOut size={14} />
                 {tNav("signOut")}

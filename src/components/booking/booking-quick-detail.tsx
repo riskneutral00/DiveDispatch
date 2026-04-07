@@ -129,7 +129,7 @@ export function BookingQuickDetail({
                   <button
                     type="button"
                     onClick={handleViewDetail}
-                    className="text-label underline underline-offset-4 transition-opacity hover:opacity-70 text-secondary"
+                    className="text-label underline underline-offset-4 transition-opacity duration-theme hover:opacity-70 text-secondary"
                     disabled={isLoading}
                   >
                     View Full Detail

@@ -8,7 +8,7 @@ import { DraggablePill } from '@/components/booking/draggable-pill'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
 
-export const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all focus:outline-none focus-visible:ring-2'
+export const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all duration-theme focus:outline-none focus-visible:ring-2'
 export const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
 
 // ── Types ─────────────────────────────────────────────────────────────────────

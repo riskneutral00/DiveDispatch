@@ -1,10 +1,18 @@
 'use client'
 
 import { useRef, useState, useCallback } from 'react'
+import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui/spinner'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 import { useFocusTrap } from '@/lib/hooks/use-focus-trap'
+
+const OP_LABELS: Record<string, string> = {
+  markAsRead: 'mark as read',
+  delete: 'delete',
+  clearAll: 'clear all',
+}
 
 interface NotificationPanelProps {
   userId: string
@@ -14,12 +22,18 @@ interface NotificationPanelProps {
 export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const [liveMessage, setLiveMessage] = useState('')
+  const t = useTranslations('common')
+
+  const onError = useCallback((operation: string) => {
+    toast.error(t('actionFailed', { action: OP_LABELS[operation] ?? operation }))
+  }, [t])
+
   const {
     notifications,
     handleMarkAsRead,
     handleDelete,
     handleClearAll,
-  } = useOptimisticNotifications({ userId, limit: 20 })
+  } = useOptimisticNotifications({ userId, limit: 20, onError })
 
   useFocusTrap(panelRef, { onClose })
 
@@ -54,27 +68,22 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
       aria-modal="true"
       aria-label="Notifications"
     >
-      {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+        className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-glass-border"
       >
-        <span
-          className="text-body font-semibold text-primary"
-        >
+        <span className="text-body font-semibold text-primary">
           Notifications
         </span>
         {hasNotifications && (
           <button
             onClick={handleClearAllClick}
-            className="text-body font-medium transition-opacity hover:opacity-70 text-primary min-h-[44px] min-w-[44px]"
+            className="text-body font-medium transition-opacity duration-theme hover:opacity-70 text-primary min-h-[44px] min-w-[44px]"
           >
             Clear
           </button>
         )}
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto">
         {notifications === undefined && (
           <div className="flex items-center justify-center py-6 text-primary">
@@ -82,9 +91,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
           </div>
         )}
         {notifications?.length === 0 && (
-          <p
-            className="text-body text-center py-6 text-secondary"
-          >
+          <p className="text-body text-center py-6 text-secondary">
             No notifications.
           </p>
         )}
@@ -98,7 +105,6 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         ))}
       </div>
 
-      {/* Screen reader announcements */}
       <div
         role="status"
         aria-live="polite"

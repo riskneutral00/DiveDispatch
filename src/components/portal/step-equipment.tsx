@@ -411,7 +411,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                   />
                   <span
                     aria-hidden
-                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-theme"
                     style={{
                       borderColor: isSelected
                         ? 'var(--color-primary)'

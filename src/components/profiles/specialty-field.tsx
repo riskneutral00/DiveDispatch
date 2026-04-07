@@ -270,7 +270,7 @@ interface SpecialtyPillProps {
 function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProps) {
   return (
     <label
-      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium transition-all ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full text-label font-medium transition-all duration-theme ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       style={{
         background: checked ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',

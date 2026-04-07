@@ -62,7 +62,7 @@ const OptionRow = memo(function OptionRow({
       aria-selected={isSelected}
       onClick={onSelect}
       onMouseEnter={onHover}
-      className="flex items-center justify-between gap-2 px-3 py-2 text-body cursor-pointer transition-colors text-primary"
+      className="flex items-center justify-between gap-2 px-3 py-2 text-body cursor-pointer transition-colors duration-theme text-primary"
       style={{ background: isFocused ? 'var(--color-accent-muted)' : 'transparent' }}
     >
       <span className="flex items-center gap-2 min-w-0">
@@ -275,7 +275,7 @@ export function Select({
         </span>
         <ChevronDown
           size={12}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform text-secondary"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-theme text-secondary"
           style={{ transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)' }}
         />
       </button>

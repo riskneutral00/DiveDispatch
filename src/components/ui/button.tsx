@@ -71,7 +71,7 @@ export function Button({
         'inline-flex items-center justify-center',
         'border font-medium leading-none',
         'rounded-theme',
-        'transition-all',
+        'transition-all duration-theme',
         'glass-btn',
         `glass-btn-${variant}`,
         'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -81,7 +81,6 @@ export function Button({
       )}
       style={{
         ...variantStyles[variant],
-        transitionDuration: 'var(--transition-speed)',
         outlineColor: 'var(--color-accent)',
         ...style,
       }}

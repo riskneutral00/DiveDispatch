@@ -144,7 +144,7 @@ function DivePill({
           ? 'Day limit reached — max 3 dives'
           : getCourseByCode(slot.courseCode as CourseCode)?.name ?? slot.courseCode
       }
-      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors"
+      className="px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors duration-theme"
       style={{
         background: active ? 'var(--color-accent)' : 'var(--color-glass-bg)',
         color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',
@@ -217,7 +217,7 @@ export function DayRow({
           <button
             type="button"
             onClick={() => dispatch({ type: 'REMOVE_DAY', dayIndex })}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] opacity-50 hover:opacity-100 transition-opacity"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] opacity-50 hover:opacity-100 transition-opacity duration-theme"
             style={REMOVE_BTN_STYLE}
             title="Remove day"
             aria-label={`Remove day ${dayNumber}`}
@@ -420,7 +420,7 @@ export function DayRow({
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}
-                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors border"
+                            className="flex items-center gap-1 min-h-[44px] px-2.5 py-1.5 rounded-[var(--border-radius-button)] text-[10px] font-medium transition-colors duration-theme border"
                             style={{
                               background: isVenueSelected ? 'var(--color-accent)' : 'var(--color-glass-bg)',
                               color: isVenueSelected ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)',

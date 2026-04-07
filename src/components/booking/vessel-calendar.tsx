@@ -59,7 +59,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
           <button
             type="button"
             onClick={() => shiftRange(-1)}
-            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"
             aria-label="Previous 2 weeks"
           >
             <ChevronLeft size={16} />
@@ -72,7 +72,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
           <button
             type="button"
             onClick={() => shiftRange(1)}
-            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity hover:opacity-70 text-secondary"
+            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"
             aria-label="Next 2 weeks"
           >
             <ChevronRight size={16} />
@@ -152,7 +152,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                   return (
                     <div
                       key={day.dateString}
-                      className="flex items-center justify-center min-h-[32px] rounded-[var(--border-radius-button)] transition-colors"
+                      className="flex items-center justify-center min-h-[32px] rounded-[var(--border-radius-button)] transition-colors duration-theme"
                       style={{
                         backgroundColor: bg,
                         ...(day.isToday && !bg
