@@ -65,14 +65,16 @@ From the description + page context, infer:
 - **side_effects**: list of files/areas that would be touched to fix this
 - **human_required**: `false` unless the description implies a product decision is needed
 
-### Step 3 — Duplicate check
+### Step 3 — Duplicate check (two-stage)
 
-Scan existing `.tickets/DD-*.md` files with `status: ready` or `status: in_progress`. Check for keyword overlap with the new ticket title and side_effects.
+**Stage 1 — Exact title match:** Scan `.tickets/DD-*.md` (status: ready or in_progress). If any existing title is a substring match (case-insensitive) with the new title, flag as likely duplicate.
 
-If a likely duplicate exists, return a warning to the caller:
+**Stage 2 — File path overlap:** Compare the new `side_effects` array against existing items' `side_effects` and `touches` arrays. If 3+ file paths overlap, flag as likely duplicate.
 
+If either stage flags a match:
 ```
 ⚠ DD-{existing} may cover this: "{existing title}" [{status}]
+  Match: {stage 1: title overlap | stage 2: N shared file paths}
 ```
 
 The caller (Navigator agent) decides whether to proceed or skip.

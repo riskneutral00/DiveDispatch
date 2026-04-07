@@ -26,7 +26,7 @@ Build the backend map:
 6. Read `convex/bookings/_shared.ts` — state machine guards, shared helpers
 7. Read `CLAUDE.md` — invariants, dependency direction
 8. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, transition rules
-9. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
+9. Scan `.tickets/DD-*.md` — existing tickets (check for duplicate findings before escalating)
 10. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-mutations-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
     - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/backend-*.md | sort | tail -1` for legacy review
@@ -184,27 +184,14 @@ Performance, side effects, and test quality audit.
 
 ---
 
-## Phase 4: TDD Spec Generation
+## Phase 4: Finding Escalation
 
-For each **CRITICAL** and **HIGH** finding that can be tested:
+For each **CRITICAL** and **HIGH** finding:
 
-1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
-2. Find `### Code Health Hardening` section
-3. Find the highest existing H-number (e.g., H12)
-4. For each finding, append a new spec continuing the numbering:
-
-```markdown
-#### H{N}: {Title}
-**Gap:** {One sentence: what's not tested and why it matters}
-**{Extend|New file}:** `{test file path}`
-**Functions:** `{functionName}` (`{source file}:{line range}`)
-
-- [ ] {Test case 1}: {Setup}. {Action}. Assert {expected outcome}.
-- [ ] {Test case 2}: ...
-```
-
-5. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add Promise.all"), demote it to MEDIUM in the vault report and do NOT write an H-spec for it.
-6. TDD priority ordering: untested side effects > test drift > N+1 > weak assertions > hardcoded dates
+1. Invoke `/escalate` with source `review-backend-mutations` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
+2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
+3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add Promise.all"), demote it to MEDIUM before passing to `/escalate`.
+4. TDD priority ordering: untested side effects > test drift > N+1 > weak assertions > hardcoded dates
 
 ---
 
@@ -224,11 +211,11 @@ Mutations Review — {date}
   Functions: N tested / N total (N%)
   Untested side effects: N
   Test drift issues: N
-  Specs written: H{start}--H{end} -> TODO.md
+  Tickets: {DD-NNN list from /escalate, or "none"}
   Audit baseline: [updated | unchanged]
   Delta: {N resolved, N new, N regressed} vs {last review date}
 
-↳ Vault: review written to Reviews/review-backend-mutations-{date}.md, H-specs to TODO.md, audit baseline [updated|unchanged]
+↳ Vault: review written to Reviews/review-backend-mutations-{date}.md, findings escalated, audit baseline [updated|unchanged]
 ```
 
 ---
@@ -241,7 +228,7 @@ Mutations Review — {date}
 - **Side effects over primary actions.** The most dangerous bugs are in what happens AFTER the function returns. Always ask: "and then what?"
 - **Read code AND tests simultaneously.** Never evaluate tests in isolation. Always compare what the mutation does vs what the test asserts.
 - **Concrete findings only.** Every finding names a file, a line number, and a specific issue.
-- **No duplicates.** Check existing H-specs in TODO.md AND findings in the last vault review before writing.
-- **CRITICAL and HIGH get specs. MEDIUM and LOW get listed.**
+- **No duplicates.** Check existing tickets in .tickets/ AND findings in the last vault review before escalating.
+- **CRITICAL and HIGH get tickets via /escalate. MEDIUM and LOW get logged to .backseat/findings.md.**
 - **Complement sibling skills, don't overlap.** `/review-backend-schema` owns schema design, data integrity, invariants, vault drift. `/review-backend-auth` owns auth, security, ownership, role gates, mutation consistency, API surface. This skill owns perf, side effects, test quality, test drift.
 - **Execute immediately.** No preamble, no methodology explanation. Silent research, findings only.

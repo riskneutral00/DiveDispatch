@@ -22,9 +22,9 @@ Investigate `/Users/matthewlee/Desktop/RiskNeutral/DiveDispatch/convex/`:
 
 1. **Schema health** — Read `schema.ts`. Count tables, indexes. Check for missing indexes on foreign keys or common query paths. Flag tables with no indexes.
 2. **3 non-negotiable invariants** — Verify implementation in mutation code:
-   - No Exclusive-unit inventory held by more than one booking for overlapping sessions
-   - Pooled inventory decrements on hold; blocks at zero
-   - AvailabilitySnapshot updates in same mutation as Reservation write
+   - No Exclusive-unit inventory held by more than one booking for overlapping sessions → search `convex/reservationsMutations.ts` for exclusive-unit conflict checks
+   - Pooled inventory decrements on hold; blocks at zero → search `convex/reservationsMutations.ts` for `availableCount` decrement logic
+   - AvailabilitySnapshot updates in same mutation as Reservation write → verify `ctx.db.insert` for snapshots and reservations share the same mutation scope (no `ctx.scheduler`)
 3. **Mutation patterns** — Spot-check 5+ mutation files for: `requireAuth()` present, ownership checks, ConvexError codes consistent, all-or-nothing semantics.
 4. **Code smells** — Count `as any`, `@ts-ignore`, `@ts-expect-error`, `console.log` in production code. Flag files >600 lines. Search for TODO/FIXME/HACK comments.
 5. **Dependency direction** — Verify `convex/ ← lib/ ← components/ ← app/` has zero violations.
@@ -145,6 +145,8 @@ updated: {YYYY-MM-DD}
 ```
 
 **Status defaults to `ready`** since heartbeat always writes full specs. If for some reason a ticket lacks spec text or acceptance bullets, downgrade to `backlog`.
+
+**CRITICAL findings (Tier 0-2) get immediate escalation:** After creating the item file, invoke `/escalate` with source `heartbeat` to ensure CRITICAL findings are set to `priority: P0` or `P1` and `status: ready` immediately. CRITICAL items must not sit in backlog.
 
 ### 3c. Field classification
 

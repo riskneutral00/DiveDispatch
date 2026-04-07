@@ -29,7 +29,7 @@ Build the frontend map:
 9. For each component/hook from steps 3-5: Grep test + E2E files for references → build tested/untested map
 10. Read `CLAUDE.md` — dependency direction, auth boundary
 11. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, business constraints
-12. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
+12. Scan `.tickets/DD-*.md` — existing tickets (check for duplicate findings before escalating)
 13. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-frontend-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
     - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/frontend-*.md | sort | tail -1` for legacy review
@@ -211,27 +211,14 @@ Components, design system compliance, a11y, performance, responsive, error state
 
 ---
 
-## Phase 5: TDD Spec Generation
+## Phase 5: Finding Escalation
 
-For each **CRITICAL** and **HIGH** finding that can be tested:
+For each **CRITICAL** and **HIGH** finding:
 
-1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
-2. Find `### Code Health Hardening` section
-3. Find the highest existing H-number (e.g., H12)
-4. For each finding, append a new spec continuing the numbering:
-
-```markdown
-#### H{N}: {Title}
-**Gap:** {One sentence: what's not tested and why it matters}
-**{Extend|New file}:** `{test file path}`
-**Functions:** `{componentName}` (`{source file}:{line range}`)
-
-- [ ] {Test case 1}: {Setup}. {Action}. Assert {expected outcome}.
-- [ ] {Test case 2}: ...
-```
-
-5. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add aria-label"), demote it to MEDIUM in the vault report and do NOT write an H-spec for it.
-6. TDD priority ordering: untested critical UI paths > a11y violations with test path > error state gaps > design system drift with test path > performance
+1. Invoke `/escalate` with source `review-frontend` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
+2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
+3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add aria-label"), demote it to MEDIUM before passing to `/escalate`.
+4. TDD priority ordering: untested critical UI paths > a11y violations with test path > error state gaps > design system drift with test path > performance
 
 ---
 
@@ -252,11 +239,11 @@ Frontend Review — {date}
   Design system violations: N
   A11y violations: N
   Performance risks: N
-  Specs written: H{start}--H{end} -> TODO.md
+  Tickets: {DD-NNN list from /escalate, or "none"}
   Audit baseline: [updated | unchanged]
   Delta: {N resolved, N new, N regressed} vs {last review date}
 
-↳ Vault: review written to Reviews/review-frontend-{date}.md, H-specs to TODO.md, audit baseline [updated|unchanged]
+↳ Vault: review written to Reviews/review-frontend-{date}.md, findings escalated, audit baseline [updated|unchanged]
 ```
 
 ---
@@ -268,7 +255,7 @@ Frontend Review — {date}
 - **Adversarial mindset.** "What breaks on a real phone?" not "does the component render?"
 - **Design system is law.** MASTER.md + page overrides are the source of truth. Drift is a finding.
 - **Concrete findings only.** Every finding names a file, a line number, and a specific issue.
-- **No duplicates.** Check existing H-specs in TODO.md AND findings in the last vault review before writing.
-- **CRITICAL and HIGH get specs. MEDIUM and LOW get listed.**
+- **No duplicates.** Check existing tickets in .tickets/ AND findings in the last vault review before escalating.
+- **CRITICAL and HIGH get tickets via /escalate. MEDIUM and LOW get logged to .backseat/findings.md.**
 - **Complement sibling skills, don't overlap.** `/review-backend-auth` owns auth, security, ownership, role gates, mutation consistency, API surface. `/review-backend-mutations` owns backend perf, side effects, test quality, test drift. `/review-backend-schema` owns schema, data integrity, invariants, vault drift. `/review-tests` owns test execution, test quality scan, structural health. This skill owns frontend: components, design system, a11y, performance, responsive, error states, testing gaps.
 - **Execute immediately.** No preamble, no methodology explanation. Silent research, findings only.

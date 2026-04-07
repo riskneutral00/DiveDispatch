@@ -15,7 +15,7 @@ if [ -n "$CONTEXT" ]; then
     echo ""
     echo "## Compaction @ $TS"
     echo '```'
-    echo "${CONTEXT:0:2000}"
+    echo "${CONTEXT:0:8000}"
     echo '```'
   } >> "$ARCHIVE_DIR/$DATE.md"
 fi

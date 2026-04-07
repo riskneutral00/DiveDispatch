@@ -19,7 +19,7 @@ case "$FILE_PATH" in
 esac
 
 # Run tsc, filter to errors in this specific file
-TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
+TSC_OUTPUT=$(npx tsc --noEmit --incremental 2>&1)
 [ $? -eq 0 ] && exit 0
 
 # Extract relative path for matching (tsc outputs relative paths)
@@ -36,5 +36,6 @@ ERRORS=$(echo "$TSC_OUTPUT" | grep -F "$REL_PATH" 2>/dev/null)
 COUNT=$(echo "$ERRORS" | grep -c 'error TS')
 echo "[Hook] TypeScript errors in $REL_PATH ($COUNT error(s)):"
 echo "$ERRORS" | head -5
+echo "→ Use /build-fix to fix all errors systematically."
 
 exit 0

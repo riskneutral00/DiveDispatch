@@ -162,3 +162,4 @@ When Matt shares a reference but can't articulate what he likes, or when the age
 - **No new dependencies.** Work within the existing stack (Tailwind, CSS variables, existing component library).
 - **Interview, don't guess.** When Matt can't articulate preferences, use the elicitation interview. Offer vocabulary and binary comparisons.
 - **Recommend proactively.** When Matt likes one aspect of a reference, suggest related changes from the same design language. Matt is domain expert, not designer — lead with suggestions.
+- **MASTER.md stays in sync.** After implementing token or component changes (any mode), update `design-system/MASTER.md` and any relevant page overrides (`design-system/pages/*.md`) to reflect the new canonical values. This is required, not optional — downstream tools (`/design-review`, designer agent) evaluate against MASTER.md. Stale MASTER.md = false compliance reports.

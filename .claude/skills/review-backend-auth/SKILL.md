@@ -26,7 +26,7 @@ Build the backend map:
 6. Read `convex/bookings/_shared.ts` — state machine guards, shared helpers
 7. Read `CLAUDE.md` — auth boundary, dependency direction
 8. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Architecture.md` — state machines, transition rules
-9. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md` — existing H-specs in `### Code Health Hardening` section (note highest H-number, avoid duplicates)
+9. Scan `.tickets/DD-*.md` — existing tickets (check for duplicate findings before escalating)
 10. Find most recent vault review: `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/review-backend-auth-*.md | sort | tail -1`
     - If found: read it, extract the scoreboard values for delta comparison
     - If not found: check `ls ~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/backend-*.md | sort | tail -1` for legacy review
@@ -164,26 +164,13 @@ Auth, security, ownership, portal tokens, role gates, mutation consistency, and 
 
 ---
 
-## Phase 4: TDD Spec Generation
+## Phase 4: Finding Escalation
 
-For each **CRITICAL** and **HIGH** finding that can be tested:
+For each **CRITICAL** and **HIGH** finding:
 
-1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
-2. Find `### Code Health Hardening` section
-3. Find the highest existing H-number (e.g., H12)
-4. For each finding, append a new spec continuing the numbering:
-
-```markdown
-#### H{N}: {Title}
-**Gap:** {One sentence: what's not tested and why it matters}
-**{Extend|New file}:** `{test file path}`
-**Functions:** `{functionName}` (`{source file}:{line range}`)
-
-- [ ] {Test case 1}: {Setup}. {Action}. Assert {expected outcome}.
-- [ ] {Test case 2}: ...
-```
-
-5. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add a role check"), write the spec for the test that would verify the role check exists.
+1. Invoke `/escalate` with source `review-backend-auth` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
+2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
+3. If a finding is CRITICAL/HIGH but cannot be expressed as a test (e.g., "add a role check"), include the spec for the test that would verify the check exists in the escalation.
 
 ---
 
@@ -202,11 +189,11 @@ Auth Review — {date}
   CRITICAL: N  |  HIGH: N  |  MEDIUM: N  |  LOW: N
   requireAuth coverage: N%
   State guard coverage: N%
-  Specs written: H{start}--H{end} -> TODO.md
+  Tickets: {DD-NNN list from /escalate, or "none"}
   Audit baseline: [updated | unchanged]
   Delta: {N resolved, N new, N regressed} vs {last review date}
 
-↳ Vault: review written to Reviews/review-backend-auth-{date}.md, H-specs to TODO.md, audit baseline [updated|unchanged]
+↳ Vault: review written to Reviews/review-backend-auth-{date}.md, findings escalated, audit baseline [updated|unchanged]
 ```
 
 ---
@@ -217,7 +204,7 @@ Auth Review — {date}
 - **TDD priority.** Every CRITICAL/HIGH finding must produce a testable spec or be demoted.
 - **Adversarial mindset.** "How does an attacker exploit this?" not "does auth look correct?"
 - **Concrete findings only.** Every finding names a file, a line number, and a specific issue.
-- **No duplicates.** Check existing H-specs in TODO.md AND findings in the last vault review before writing.
-- **CRITICAL and HIGH get specs. MEDIUM and LOW get listed.**
+- **No duplicates.** Check existing tickets in .tickets/ AND findings in the last vault review before escalating.
+- **CRITICAL and HIGH get tickets via /escalate. MEDIUM and LOW get logged to .backseat/findings.md.**
 - **Complement sibling skills, don't overlap.** `/review-backend-schema` owns schema design, data integrity, invariants, vault drift. `/review-backend-mutations` owns perf, side effects, test quality. This skill owns auth, security, ownership, role gates, mutation consistency, API surface.
 - **Execute immediately.** No preamble, no methodology explanation. Silent research, findings only.

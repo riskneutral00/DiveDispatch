@@ -22,7 +22,8 @@ session_pages=[]
 
 1. Read `design-system/MASTER.md` to have the design system in context.
 2. Read `design-system/pages/` to know what page overrides exist.
-3. Print:
+3. Check MASTER.md freshness: run `git log --oneline -1 -- design-system/MASTER.md`. If it was modified in the current or previous session, note it — the design system may have evolved.
+4. Print:
    ```
    Designer ready.
    Tell me what to design, build, or review.

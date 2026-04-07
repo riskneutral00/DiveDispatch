@@ -27,7 +27,7 @@ CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'fsm-ok')
 # Uses a 3-line window around .patch( calls to catch multiline patches.
 # Single-line check: any line with both .patch( and status:
 if echo "$CLEAN" | grep -qE '\.patch\(.*status:\s*(BOOKING_STATUS|RESERVATION_STATUS)'; then
-  echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files. All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded."}'
+  echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files. All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/status.ts first."}'
   exit 0
 fi
 
@@ -41,7 +41,7 @@ if echo "$CLEAN" | grep -qE '^\s+status:\s*(BOOKING_STATUS|RESERVATION_STATUS)\.
     START=$((LINE_NUM > 3 ? LINE_NUM - 3 : 1))
     CONTEXT=$(echo "$CLEAN" | sed -n "${START},${LINE_NUM}p")
     if echo "$CONTEXT" | grep -qE '\.(patch|replace)\('; then
-      echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files (line '"$LINE_NUM"'). All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded."}'
+      echo '{"decision":"block","reason":"Direct status patch detected outside canonical FSM files (line '"$LINE_NUM"'). All status transitions must go through canBookingTransition/canReservationTransition. See Architecture/fsm-invariants.md Rule 1. Add '\''// fsm-ok'\'' to suppress if the callsite is guarded. → If this is a new transition, update the FSM in bookings/status.ts first."}'
       exit 0
     fi
   done

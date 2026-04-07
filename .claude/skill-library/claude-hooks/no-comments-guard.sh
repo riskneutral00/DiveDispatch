@@ -46,7 +46,7 @@ done < <(grep -nE '^\s*//|/\*\*?\s|^\s*\*|^\s*\*/|\{/\*[^}]*\*/\}|<!--' "$FILE_P
 
 if [ -n "$VIOLATIONS" ]; then
   FIRST=$(echo -e "$VIOLATIONS" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Comments detected. The codebase is AI-generated and AI-maintained — no comments allowed. Add {/* comments-ok */} to suppress. First violation: ${FIRST}\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Comments detected. This codebase is AI-generated and AI-maintained — comments drift and lie. Express intent through types, naming, and tests instead. Add {/* comments-ok */} or // comments-ok to suppress. First violation: ${FIRST}\"}"
   exit 0
 fi
 

@@ -312,7 +312,7 @@ EOF
 )"
 ```
 
-Commit message per bucket: conventional prefix, concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
+Commit message format: `type(scope): message` where type is `feat|fix|refactor|test|chore|style|docs` and scope is `backend|frontend|schema|tooling|tests|board`. Example: `fix(backend): correct FSM guard in reservation patch`. Concise "why" not "what", 1–2 sentences. Include Tier/H#/SU Phase ref if known. If unknown, omit — don't guess.
 
 ---
 

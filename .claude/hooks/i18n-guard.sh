@@ -55,7 +55,7 @@ fi
 if [ -n "$ISSUES" ]; then
   # Escape for JSON
   ESCAPED=$(echo -e "$ISSUES" | sed 's/"/\\"/g' | tr '\n' ' ')
-  echo "{\"decision\":\"warn\",\"reason\":\"i18n violations:${ESCAPED}\"}"
+  echo "{\"decision\":\"warn\",\"reason\":\"i18n violations:${ESCAPED} → Run /review-frontend to check i18n compliance project-wide.\"}"
 fi
 
 exit 0

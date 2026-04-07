@@ -8,8 +8,8 @@ FILE_PATH=$(echo "$INPUT" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"
 
 case "$FILE_PATH" in
   */.tickets/DD-*.md|.tickets/DD-*.md)
-    SENTINEL=".tickets/.spec-authorized"
-    if [ -f "$SENTINEL" ]; then
+    SENTINEL=$(ls .tickets/.spec-authorized-* 2>/dev/null | head -1)
+    if [ -n "$SENTINEL" ]; then
       rm -f "$SENTINEL"
       exit 0
     fi

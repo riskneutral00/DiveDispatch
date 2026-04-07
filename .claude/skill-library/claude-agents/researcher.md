@@ -33,7 +33,7 @@ IMMUTABLE=convex/schema.ts, .claude/**, scripts/**, .tickets/**, .car/**, .resea
 
 ## Priority Ladder
 
-Work the first rung that has room to improve. When a rung is done (metric hits floor/ceiling or 5 consecutive failures), move to the next.
+Work the first rung that has room to improve. When a rung is done (metric hits floor/ceiling or 5 consecutive failed fix attempts within a single experiment), move to the next. "Failed fix attempt" = the fix was applied but the metric didn't improve or tests broke. A failed experiment (hypothesis wrong) counts as 1 failure, not N.
 
 | Rung | Metric command | Direction | Done when |
 |------|---------------|-----------|-----------|
@@ -197,9 +197,11 @@ Append to `.research/results.tsv`:
 
 Before each rung change:
 1. `git stash` uncommitted changes
-2. `git rebase origin/main`
-3. On conflict: `git rebase --abort`, start fresh branch `research/auto-{date}`, cherry-pick kept commits
-4. `git stash pop` if stashed
+2. Pre-check: `git merge-base --is-ancestor origin/main HEAD` — if false, main has diverged significantly
+3. `git rebase origin/main`
+4. On conflict: `git rebase --abort`, start fresh branch `research/auto-{date}`, cherry-pick kept commits. Never force through a broken rebase.
+5. `git stash pop` if stashed
+6. After successful rebase, re-measure the current rung's baseline (main changes may have affected metrics)
 
 ## Snapshots
 

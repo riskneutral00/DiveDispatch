@@ -30,6 +30,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .claude/hooks/gate-on-commit.sh",
+            "timeout": 10,
+            "statusMessage": "Checking gate status…"
+          },
+          {
+            "type": "command",
             "command": "bash .claude/hooks/commit-message-gate.sh",
             "timeout": 5,
             "statusMessage": "Checking commit message…"

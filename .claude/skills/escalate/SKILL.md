@@ -1,6 +1,6 @@
 ---
 name: escalate
-description: "Create tickets from CRITICAL findings only. HIGH/MEDIUM/LOW logged to vault, not ticketed."
+description: "Create tickets from CRITICAL and HIGH findings. MEDIUM/LOW logged to vault, not ticketed."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 user-invocable: false
 ---
@@ -9,7 +9,7 @@ user-invocable: false
 
 Called by Backseat, Patrol, or Driver after reviews or tsc checks. Args: `{source} {findings}` where source is the caller (`backseat`, `patrol`, or `driver`) and findings contain severity, file, line, description, review skill, original ticket.
 
-## For Each CRITICAL Finding
+## For Each CRITICAL or HIGH Finding
 
 ### Duplicate Check
 
@@ -42,8 +42,8 @@ Write `.tickets/DD-{NEXT}.md` with frontmatter: `status: ready`, `source: {calle
 
 **Consolidation:** Before writing, check if another CRITICAL finding from the same review targets the same file or concept. Group related findings into one ticket (e.g., three `.take()` limits = one ticket, implementation + its test = one ticket).
 
-Print: `🎫 DD-{NEXT}: {title} [P1 CRITICAL, from {original_ticket}]`
+Print: `🎫 DD-{NEXT}: {title} [{severity} → P1, from {original_ticket}]`
 
-## HIGH, MEDIUM, LOW — Log Only
+## MEDIUM, LOW — Log Only
 
 Append to `.backseat/findings.md` with severity tag, file, and description. Do not create tickets. These are observations for future reference, not work items.

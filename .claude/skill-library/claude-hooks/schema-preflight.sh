@@ -17,4 +17,5 @@ cat <<'MSG'
  [ ] E2E helpers updated? (tests/helpers/ reflects new schema)
  [ ] Queries audited? (any query touching this table still works)
  [ ] Validators updated? (convex/shared/ validators match new shape)
+→ Run /heartbeat to assess full downstream impact of schema changes.
 MSG

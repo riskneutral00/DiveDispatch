@@ -272,9 +272,12 @@ Classify each CRITICAL and HIGH finding as `AUTO` or `MANUAL`:
 - Has a specific `file:line` reference
 - Has a concrete fix description (single action: rename, add call, add guard)
 - Targets ≤ 3 files
+- Severity is LOW or MEDIUM only (style, type, or structural issues)
 - Does NOT involve: schema migration, new table/index creation, multi-file architectural refactor, product intent decision
 
 **MANUAL** — any of these:
+- Severity is CRITICAL or HIGH
+- Finding category is `security` (auth bypass, ownership gap, role escalation — never auto-fix security)
 - No file:line reference (general/architectural concern)
 - Fix requires schema migration, new tables, or new indexes
 - Finding is invariant-adjacent (from Phase 3 invariant sweep)
@@ -318,9 +321,14 @@ After **all** fix agents complete, run `npx vitest run` once to check for regres
 
 ### Step 7d — Re-Verify
 
-Re-dispatch **only** the review skills whose buckets had `AUTO` fixes applied. Do not re-dispatch skills for unchanged buckets or MANUAL-only buckets.
+After auto-fix, verify with targeted checks rather than full re-dispatch:
+1. Run `npx tsc --noEmit` — type safety check across all fixed files
+2. Run `npx vitest run` — regression check
+3. For each fixed finding, grep the specific pattern that triggered it — confirm it's gone
 
-Collect new CRITICAL/HIGH counts from re-dispatched skills. Merge with MANUAL findings carried forward.
+Only re-dispatch the full review skill if the targeted checks reveal new issues. This avoids the same skill validating its own finding's fix (confirmation bias).
+
+Collect new CRITICAL/HIGH counts. Merge with MANUAL findings carried forward.
 
 ### Step 7e — Loop or Exit
 

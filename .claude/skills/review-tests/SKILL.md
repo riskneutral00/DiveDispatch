@@ -260,29 +260,14 @@ Last assessment: {date from most recent vault report, or 'never'}
 
 ---
 
-## Phase 3.5b — TDD Spec Generation
+## Phase 3.5b — Finding Escalation
 
 For each **CRITICAL** and **HIGH** finding that is actionable (fixable, not just reportable):
 
-1. Read `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Product/TODO.md`
-2. Find `### Code Health Hardening` section
-3. Find the highest existing H-number
-4. For each finding, append a new spec:
-
-```markdown
-#### H{N}: {Title}
-**Gap:** {One sentence: what's wrong and why it matters}
-**{Extend|New file}:** `{test file path}`
-**Functions:** `{functionName}` (`{source file}:{line range}`)
-
-- [ ] {Fix 1}: {What to change}. Assert {expected outcome after fix}.
-```
-
-5. Hardcoded dates → H-spec to replace with date helper
-6. `as any` bypasses → H-spec to add proper types
-7. Stale imports → H-spec to remove or update import
-8. Assertion-free tests → H-spec to add meaningful assertions
-9. Skip findings already covered by existing H-specs
+1. Invoke `/escalate` with source `review-tests` and the list of CRITICAL/HIGH findings. `/escalate` creates `.tickets/DD-*.md` for CRITICAL and HIGH findings and logs MEDIUM/LOW to `.backseat/findings.md`.
+2. Pass all MEDIUM/LOW findings to `/escalate` for logging (not ticketing).
+3. Hardcoded dates, `as any` bypasses, stale imports, assertion-free tests → include fix description in escalation payload.
+4. Skip findings already covered by existing tickets in `.tickets/`.
 
 ---
 
@@ -362,6 +347,6 @@ If a previous report exists, compare quality score, finding counts by tier, and 
 
 - **Execute immediately.** No preamble, no methodology explanation.
 - **Do not modify test files.** This is a read-only audit.
-- **CRITICAL and HIGH get specs. MEDIUM and LOW get listed.**
+- **CRITICAL and HIGH get tickets via /escalate. MEDIUM and LOW get logged to .backseat/findings.md.**
 - **Concrete findings only.** Every finding names a file, a line, and the violation. No vague advice.
 - **Test pyramid awareness.** Note if distribution is top-heavy (too many E2E, not enough unit).

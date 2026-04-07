@@ -108,7 +108,13 @@ If a previous review exists, add a **Delta** section: N resolved, N new, N regre
 
 ---
 
-## Phase 5: Auto-Fix
+## Phase 5: Slop Clean (before auto-fix)
+
+Invoke `/ai-slop-cleaner` on files identified in Phase 2/3 that have duplication findings. Slop-cleaner adds regression tests first (locking behavior), then simplifies — this ensures auto-fix in Phase 6 has a safety net.
+
+---
+
+## Phase 6: Auto-Fix
 
 For each AUTO-fixable finding, in order from lowest-risk to highest:
 
@@ -161,12 +167,6 @@ After all fixes:
 
 ---
 
-## Phase 6: Slop Clean
-
-Invoke `/ai-slop-cleaner` on the changed files to clean up any AI-generated artifacts from the auto-fix phase.
-
----
-
 ## Phase 7: Vault & Final Report
 
 1. Write vault review to `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Reviews/consolidate-{YYYY-MM-DD}.md`
@@ -179,7 +179,7 @@ Consolidation — {date}
   Fixed: N findings across M files
   Lines saved: ~N
   Build: PASS  |  Tests: PASS (N/N)
-  Slop clean: done
+  Slop clean: done (pre-fix regression lock)
 
 ↳ Vault: review written to Reviews/consolidate-{date}.md
 ```

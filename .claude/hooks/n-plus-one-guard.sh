@@ -42,7 +42,7 @@ LINES=$(awk '
 
 if [ -n "$LINES" ]; then
   cat <<EOF
-{"decision":"block","reason":"N+1 pattern: await ctx.db.* inside loop (line(s) $LINES). Use batchGet/batchDelete/batchPatch from convex/lib/batch.ts. Add '// batch-exempt' comment if sequential execution is intentional."}
+{"decision":"block","reason":"N+1 pattern: await ctx.db.* inside loop (line(s) $LINES). Use batchGet/batchDelete/batchPatch from convex/lib/batch.ts. Add '// batch-exempt' comment if sequential execution is intentional. → Run /review-backend-mutations for a full N+1 audit."}
 EOF
 fi
 

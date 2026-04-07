@@ -145,7 +145,7 @@ Update `.tickets/.counter` with the new number.
 ```
 Created DD-{N}: {title} (backlog)
 
-Next: run /spec DD-{N} to fill it in, or run /spec on a related topic and it will find this one.
+Next: run /spec DD-{N} to fill it in, or run /spec fill to batch-fill all pre-specs.
 ```
 
 ---

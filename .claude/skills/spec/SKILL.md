@@ -32,9 +32,9 @@ After reading the user's description, launch Explore agents to build a **context
 - Broad feature or cross-cutting concern → up to 3 agents in parallel:
 
 ```
-Agent 1 (convex/): mutations, queries, schema tables, validators → file:line map
-Agent 2 (src/): components, hooks, utilities, pages → file:line map
-Agent 3 (tests/): existing coverage, fixtures, test patterns → coverage map
+Agent 1 — Schema & Mutations (convex/): schema tables, mutations, queries, validators, shared helpers → file:line map with signatures and types
+Agent 2 — Frontend & Hooks (src/): components, hooks, utilities, pages, constants → file:line map with prop types and return types
+Agent 3 — Tests & Overlap (tests/ + .tickets/): existing coverage, fixtures, test patterns, related open items, vault references → coverage map + overlap report
 ```
 
 Use `model: "sonnet"` for all Explore agents.
@@ -478,6 +478,25 @@ Contents:
 ```
 
 This is ingested into NotebookLM on the next `/vault` run. Future `/spec` sessions can query past decisions.
+
+---
+
+## Phase 7: Auto-Reconcile
+
+After writing all new items, silently run `/reconcile` with the file paths. If any existing item has an overlap score >= 6 with a newly written one, surface it before confirming:
+
+```
+Overlap detected:
+  DD-{new} overlaps with DD-{existing} (score: {N}/10)
+  Shared files: {list}
+
+Options:
+  A) Merge into DD-{existing} (absorb new into existing)
+  B) Keep separate (auto-sequence into different waves)
+  C) Dismiss (no real overlap)
+```
+
+If no overlaps found, proceed silently.
 
 ---
 

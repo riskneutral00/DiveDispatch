@@ -21,6 +21,7 @@ case "$FILE_PATH" in
 esac
 
 # Strip commented lines and design-ok suppressed lines for checking
+# Supports both {/* design-ok */} (JSX) and // design-ok (TS)
 CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 
 # ============================================================
@@ -31,7 +32,7 @@ CLEAN=$(grep -vE '^\s*//' "$FILE_PATH" 2>/dev/null | grep -v 'design-ok')
 PALETTES="red|blue|green|gray|slate|zinc|neutral|stone|amber|yellow|orange|purple|pink|indigo|violet|teal|cyan|emerald|lime|rose|fuchsia|sky"
 if echo "$CLEAN" | grep -qE "\b(bg|text|border|ring|from|to|via)-(${PALETTES})-[0-9]+"; then
   MATCH=$(echo "$CLEAN" | grep -oE "\b(bg|text|border|ring|from|to|via)-(${PALETTES})-[0-9]+" | head -1)
-  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded Tailwind palette color '${MATCH}' detected. Use semantic CSS variable classes instead (bg-primary, text-secondary, border-[var(--color-*)], etc.). See design-system/MASTER.md Color Palette section.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded Tailwind palette color '${MATCH}' detected. Use semantic CSS variable classes instead (bg-primary, text-secondary, border-[var(--color-*)], etc.). See design-system/MASTER.md Color Palette section. → Run /ui-fix on this file to fix design compliance. Add {/* design-ok */} or // design-ok to suppress.\"}"
   exit 0
 fi
 
@@ -50,7 +51,7 @@ case "$FILE_PATH" in
   */components/ui/*) ;; # ui/ is where the components are defined — skip
   *)
     if echo "$CLEAN" | grep -qE '<(input|select|textarea)\b'; then
-      echo '{"decision":"block","reason":"Bare HTML <input>/<select>/<textarea> detected outside src/components/ui/. Use the Input, Select, or Textarea component from @/components/ui instead. Add {/* design-ok */} to suppress for compound pickers."}'
+      echo '{"decision":"block","reason":"Bare HTML <input>/<select>/<textarea> detected outside src/components/ui/. Use the Input, Select, or Textarea component from @/components/ui instead. Add {/* design-ok */} or // design-ok to suppress for compound pickers."}'
       exit 0
     fi
     ;;

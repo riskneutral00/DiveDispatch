@@ -26,7 +26,7 @@ WARNINGS=""
 # fontSize with raw pixel values (not CSS variables)
 if echo "$CLEAN" | grep -qE "fontSize:\s*[0-9]|fontSize:\s*['\"][0-9]+px['\"]"; then
   if ! echo "$CLEAN" | grep -qE "fontSize:\s*['\"]var\("; then
-    WARNINGS="${WARNINGS}[typography] Inline fontSize with raw value — use Tailwind text-xs/sm/base/lg/xl or var(--font-size-*). "
+    WARNINGS="${WARNINGS}[typography] Inline fontSize with raw value — use semantic type tokens (text-body, text-label, text-card-title, text-heading). See design-system/MASTER.md Type Scale. "
   fi
 fi
 
@@ -36,7 +36,7 @@ if echo "$CLEAN" | grep -qE "fontWeight:\s*[0-9]"; then
 fi
 
 if [ -n "$WARNINGS" ]; then
-  echo "{\"decision\":\"block\",\"reason\":\"Inline typography styles in $(basename "$FILE_PATH"): ${WARNINGS} Use Tailwind utilities or CSS variable tokens. Add {/* design-ok */} to suppress legitimate exceptions.\"}"
+  echo "{\"decision\":\"block\",\"reason\":\"Inline typography styles in $(basename "$FILE_PATH"): ${WARNINGS} Use semantic type tokens from design-system/MASTER.md. Add {/* design-ok */} or // design-ok to suppress legitimate exceptions.\"}"
   exit 0
 fi
 
