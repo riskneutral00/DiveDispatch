@@ -67,7 +67,7 @@ export function buildDiveSiteCreatePayload<T extends Record<string, unknown>>(pa
 }
 
 export function DiveSiteDetailsSection({ profile: existing, me, create, update, onSaved }: DiveSiteSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       me,
@@ -87,6 +87,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

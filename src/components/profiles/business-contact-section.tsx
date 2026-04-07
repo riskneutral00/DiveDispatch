@@ -34,7 +34,7 @@ export function BusinessContactSection({
   fromMe: fromMeOverride,
   createOverride,
 }: BusinessContactSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       me,
@@ -54,6 +54,7 @@ export function BusinessContactSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

@@ -70,7 +70,7 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
 }
 
 export function DiveCenterLanguagesSection({ profile: existing, create, update }: DiveCenterSectionProps) {
-  const { form, setField, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: diveCenterLanguagesSchema,
@@ -85,6 +85,7 @@ export function DiveCenterLanguagesSection({ profile: existing, create, update }
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -162,7 +163,7 @@ export function affiliationsToPayload(f: DiveCenterAffiliationsFormState): Recor
 }
 
 export function DiveCenterAffiliationsSection({ profile: existing, create, update }: DiveCenterSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: diveCenterAffiliationsSchema,
@@ -189,6 +190,7 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

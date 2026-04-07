@@ -65,7 +65,7 @@ export function emptyRoute(): RouteState {
 }
 
 export function BoatContactSection({ profile: existing, me, create, update, onSaved }: BoatSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       me,
@@ -85,6 +85,7 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -173,7 +174,7 @@ function BoatFleetSectionForm({
   create: (payload: Record<string, unknown>) => Promise<unknown>
   update: (payload: Record<string, unknown>) => Promise<unknown>
 }) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: boatFleetSchema,
@@ -211,6 +212,7 @@ function BoatFleetSectionForm({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

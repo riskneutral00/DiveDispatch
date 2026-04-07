@@ -118,6 +118,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     me,
@@ -136,6 +137,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -196,6 +198,7 @@ export function AgentLanguagesSection({ profile, me, update, updateProfile }: Ag
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     me,
@@ -219,6 +222,7 @@ export function AgentLanguagesSection({ profile, me, update, updateProfile }: Ag
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -250,6 +254,7 @@ export function AgentAssociationsSection({ profile, create, update }: AgentAssoc
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     schema: agentAssociationsSchema,
@@ -264,6 +269,7 @@ export function AgentAssociationsSection({ profile, create, update }: AgentAssoc
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

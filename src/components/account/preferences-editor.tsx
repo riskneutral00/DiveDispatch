@@ -228,6 +228,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
     isUpdate,
     handleSubmit,
     markBaselineCurrent,
+    resetToBaseline,
   } = useProfileForm<PrefsFormData, PrefsFormData>({
     profile: prefs === undefined ? undefined : (prefs as PreferencesRecord | null),
     schema: prefsSchema,
@@ -324,6 +325,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

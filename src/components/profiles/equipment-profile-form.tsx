@@ -69,7 +69,7 @@ export function equipmentGearCatalogToPayload(f: EquipmentGearCatalogFormState):
 }
 
 export function EquipmentGearCatalogSection({ profile: existing, create, update }: EquipmentSectionProps) {
-  const { form, setForm, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setForm, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: equipmentGearCatalogSchema,
@@ -127,6 +127,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

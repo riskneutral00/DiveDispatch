@@ -53,7 +53,7 @@ export function compressorGasMixesToPayload(f: CompressorGasMixesFormState): Rec
 }
 
 export function CompressorGasMixesSection({ profile: existing, create, update }: CompressorSectionProps) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema: compressorGasMixesSchema,
@@ -70,6 +70,7 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

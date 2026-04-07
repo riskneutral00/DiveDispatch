@@ -129,6 +129,7 @@ export function PersonalContactSection({
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     me,
@@ -147,6 +148,7 @@ export function PersonalContactSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -196,6 +198,7 @@ export function PersonalLanguagesSection({ profile, create, update }: PersonalLa
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     schema: personalLanguagesSchema,
@@ -210,6 +213,7 @@ export function PersonalLanguagesSection({ profile, create, update }: PersonalLa
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -249,6 +253,7 @@ export function PersonalCredentialsSection({
     loading,
     isUpdate,
     handleSubmit,
+    resetToBaseline,
   } = useProfileForm({
     profile,
     schema,
@@ -263,6 +268,7 @@ export function PersonalCredentialsSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

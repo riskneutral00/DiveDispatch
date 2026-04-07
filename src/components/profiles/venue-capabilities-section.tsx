@@ -41,7 +41,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
   depthPlaceholder = '5',
   capacityPlaceholder = '15',
 }: VenueCapabilitiesSectionProps<T>) {
-  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
       schema,
@@ -58,6 +58,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
+      onCancel={resetToBaseline}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
