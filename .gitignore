@@ -130,3 +130,6 @@ docs/LLM_HANDOFF.md
 .research/
 .sisyphus/
 .tmp/
+
+*storybook.log
+storybook-static

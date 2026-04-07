@@ -33,3 +33,10 @@ jobs:
 
       - name: Test + Coverage
         run: npm run test:coverage
+
+      - name: Chromatic Visual Regression
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: build-storybook
+          exitZeroOnChanges: true

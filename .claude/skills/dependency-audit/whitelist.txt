@@ -27,8 +27,13 @@ zod
 # === devDependencies ===
 @axe-core/playwright
 @axe-core/react
+@chromatic-com/storybook
 @next/bundle-analyzer
 @playwright/test
+@storybook/addon-a11y
+@storybook/addon-docs
+@storybook/addon-onboarding
+@storybook/nextjs-vite
 @tailwindcss/postcss
 @testing-library/jest-dom
 @testing-library/react
@@ -38,12 +43,17 @@ zod
 @types/react-dom
 @vitest/coverage-v8
 axe-core
+chromatic
 convex-test
 eslint
 eslint-config-next
+eslint-plugin-storybook
 fake-indexeddb
 jsdom
+playwright
+storybook
 tailwindcss
 tsx
 typescript
+vite
 vitest

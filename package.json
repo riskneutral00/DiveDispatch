@@ -24,7 +24,9 @@
     "i18n:check-usage": "node scripts/verify-i18n-usage.mjs",
     "test:e2e": "npx playwright test",
     "test:e2e:isolated": "bash scripts/e2e-preview.sh",
-    "test:e2e:quick": "npm run seed:force && npx playwright test"
+    "test:e2e:quick": "npm run seed:force && npx playwright test",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@clerk/nextjs": "7.0.4",
@@ -51,8 +53,13 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@axe-core/react": "^4.11.1",
+    "@chromatic-com/storybook": "^5.1.1",
     "@next/bundle-analyzer": "^16.2.2",
     "@playwright/test": "^1.58.2",
+    "@storybook/addon-a11y": "^10.3.4",
+    "@storybook/addon-docs": "^10.3.4",
+    "@storybook/addon-onboarding": "^10.3.4",
+    "@storybook/nextjs-vite": "^10.3.4",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -60,16 +67,21 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "axe-core": "^4.11.1",
+    "chromatic": "^16.1.0",
     "convex-test": "^0.0.41",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "eslint-plugin-storybook": "^10.3.4",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.0.0",
+    "playwright": "^1.59.1",
+    "storybook": "^10.3.4",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
     "typescript": "^5",
+    "vite": "^8.0.5",
     "vitest": "^4.0.18"
   }
 }
