@@ -269,13 +269,13 @@ export const saveEquipmentData = mutation({
 
     // ── Range validation ───────────────────────────────────────────────────
     if (args.heightCm !== undefined && (args.heightCm < 50 || args.heightCm > 250)) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'heightCm must be between 50 and 250' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'heightCm must be between 50 and 250' })
     }
     if (args.weightKg !== undefined && (args.weightKg < 15 || args.weightKg > 300)) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'weightKg must be between 15 and 300' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'weightKg must be between 15 and 300' })
     }
     if (args.shoeSize !== undefined && (args.shoeSize < 15 || args.shoeSize > 55)) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'shoeSize must be between 15 and 55' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'shoeSize must be between 15 and 55' })
     }
 
     // ── Conditional validation: renting requires measurements ──────────────
@@ -285,19 +285,19 @@ export const saveEquipmentData = mutation({
 
       if (hasAnyRental) {
         if (args.heightCm === undefined) {
-          throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'heightCm is required when renting equipment' })
+          throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'heightCm is required when renting equipment' })
         }
         if (args.weightKg === undefined) {
-          throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'weightKg is required when renting equipment' })
+          throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'weightKg is required when renting equipment' })
         }
       }
 
       if (fins === 'rent' && args.shoeSize === undefined) {
-        throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'shoeSize is required when renting fins' })
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'shoeSize is required when renting fins' })
       }
 
       if (mask === 'rent' && args.needsPoweredLenses === true && !args.prescriptionStrength?.trim()) {
-        throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'prescriptionStrength is required when renting mask with powered lenses' })
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'prescriptionStrength is required when renting mask with powered lenses' })
       }
     }
 

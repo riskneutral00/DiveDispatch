@@ -45,22 +45,22 @@ export const submitSupportRequest = mutation({
     const message = sanitizeString(args.message, SUPPORT_MESSAGE_MAX)
 
     if (!subject) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'Subject is required.' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Subject is required.' })
     }
     if (!message) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'Message is required.' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Message is required.' })
     }
     if (message.length < 10) {
       throw new ConvexError({
         code: ErrorCode.VALIDATION,
-        message: 'Message must be at least 10 characters.',
+        reason: 'Message must be at least 10 characters.',
       })
     }
 
     if (args.screenshotStorageId) {
       const url = await ctx.storage.getUrl(args.screenshotStorageId)
       if (url === null) {
-        throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'Invalid screenshot upload.' })
+        throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Invalid screenshot upload.' })
       }
     }
 

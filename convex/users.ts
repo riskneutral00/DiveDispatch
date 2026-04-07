@@ -14,6 +14,7 @@ import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { notifyReleasedInventory } from './notifications'
 import { logBookingChange } from './lib/auditLog'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
+import { canBookingTransition } from './bookings/stateMachine'
 import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
@@ -487,7 +488,7 @@ export const cancelOneBookingForDeletedUser = internalMutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, { bookingId }): Promise<void> => {
     const booking = await ctx.db.get(bookingId)
-    if (!booking || booking.status === BOOKING_STATUS.Cancelled) return
+    if (!booking || !canBookingTransition(booking.status, 'cancel')) return
 
     // Release all active reservations and restore snapshots
     const vacated = await releaseBookingReservations(ctx, bookingId, VACATED_REASON.UserDeleted)
@@ -496,7 +497,7 @@ export const cancelOneBookingForDeletedUser = internalMutation({
     await notifyReleasedInventory(ctx, bookingId, vacated)
 
     // Cancel the booking
-    await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled })
+    await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok: guarded above
 
     // Audit log
     await logBookingChange(ctx, {

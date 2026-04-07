@@ -41,7 +41,7 @@ export const TIME_REGEX = /^\d{2}:\d{2}$/
 /** Throws a VALIDATION ConvexError if value is not in HH:MM format. */
 export function assertValidTime(value: string, field: string): void {
   if (!TIME_REGEX.test(value)) {
-    throw new ConvexError({ code: ErrorCode.VALIDATION, message: `${field} must be HH:MM format` })
+    throw new ConvexError({ code: ErrorCode.VALIDATION, reason: `${field} must be HH:MM format` })
   }
 }
 

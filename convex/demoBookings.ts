@@ -7,8 +7,7 @@ import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 import { type CourseCode } from './shared/courseCodes'
 import { batchDelete } from './lib/batch'
 import { dateStr, addDays, COURSE_DURATIONS } from './lib/seedUtils'
-
-type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
+import type { BookingStatus } from './shared/statuses'
 
 const NOW = Date.now()
 

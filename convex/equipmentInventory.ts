@@ -31,7 +31,7 @@ export const addItem = mutation({
     }
 
     if (args.totalUnits < 1) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'totalUnits must be at least 1' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'totalUnits must be at least 1' })
     }
 
     const inventoryUnitId = await ctx.db.insert('inventoryUnits', {
@@ -82,7 +82,7 @@ export const updateItem = mutation({
     }
 
     if (args.totalUnits !== undefined && args.totalUnits < 1) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: 'totalUnits must be at least 1' })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'totalUnits must be at least 1' })
     }
 
     // Fetch linked snapshots once — used by both the guard and the sync below

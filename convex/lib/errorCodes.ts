@@ -40,8 +40,6 @@ export const ErrorCode = {
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
   /** Preferred resource coverage for booking draft (substitution rules in coverageValidation). */
   RESOURCES_INCOMPLETE: 'RESOURCES_INCOMPLETE',
-  /** @deprecated Use RESOURCES_INCOMPLETE */
-  COVERAGE_INCOMPLETE: 'COVERAGE_INCOMPLETE',
   DUPLICATE_ROLE: 'DUPLICATE_ROLE',
   ROLE_NOT_HELD: 'ROLE_NOT_HELD',
   LAST_ROLE: 'LAST_ROLE',

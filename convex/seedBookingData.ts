@@ -27,8 +27,7 @@ function relativeDate(offset: number): string {
 }
 
 import { type CourseCode } from './shared/courseCodes'
-type BookingStatus = 'Draft' | 'Upcoming' | 'Completed' | 'Cancelled'
-type ReservationStatus = 'PendingAcceptance' | 'Confirmed' | 'Vacated' | 'NoShow'
+import type { BookingStatus, ReservationStatus } from './shared/statuses'
 type Gender = 'M' | 'F' | 'Other'
 type ShoeSizeUnit = 'EU' | 'US' | 'CM'
 import type { OperatorType } from './shared/operatorTypes'
