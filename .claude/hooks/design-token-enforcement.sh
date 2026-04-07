@@ -75,10 +75,11 @@ if echo "$CLEAN" | grep -qE '\brounded\b' | grep -qvE 'rounded-'; then
   WARNINGS="${WARNINGS}[radius] bare 'rounded' (${COUNT}x) — use rounded-[var(--border-radius-button)] for skin-compatible radius. "
 fi
 
-# 3c. Hardcoded transition durations — WARNING (migrate to --transition-speed token)
+# 3c. Hardcoded transition durations — BLOCK (0 existing violations after Phase 2 cleanup)
 if echo "$CLEAN" | grep -qE '\bduration-(75|100|150|200|300|500|700|1000)\b'; then
   MATCH=$(echo "$CLEAN" | grep -oE '\bduration-[0-9]+\b' | head -1)
-  WARNINGS="${WARNINGS}[motion] '${MATCH}' — use var(--transition-speed) for skin-compatible transitions. "
+  echo "{\"decision\":\"block\",\"reason\":\"Hardcoded transition duration '${MATCH}' detected. Use var(--transition-speed) for skin-compatible transitions. See Architecture/component-invariants.md.\"}"
+  exit 0
 fi
 
 # 4. Hardcoded z-index (raw numbers instead of CSS variable scale)

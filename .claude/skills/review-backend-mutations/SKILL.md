@@ -84,7 +84,7 @@ Collect untested side effects grouped by mutation name.
 - **Hook signature drift:** If tests mock `useCurrentUser()`, `useQuery()`, etc., verify the mock's return type matches the current hook signature.
 - **Schema drift in seed data:** For every `ctx.db.insert()` in test files, verify inserted fields match current schema. Flag fields that no longer exist, required fields missing from inserts, and invalid enum values.
 - **API arg drift:** For every `api.module.function` call in tests, verify args match the current Convex validator. Flag tests passing args the validator would reject.
-- **Status/error code drift:** Grep tests for status string assertions (`'Draft'`, `'Upcoming'`) and error code assertions (`'FORBIDDEN'`, `'COVERAGE_INCOMPLETE'`). Verify these are still valid in the source.
+- **Status/error code drift:** Grep tests for status string assertions (`'Draft'`, `'Upcoming'`) and error code assertions (`'FORBIDDEN'`, `'RESOURCES_INCOMPLETE'`). Verify these are still valid in the source.
 - **Stale module paths:** Flag mocks referencing module paths that no longer exist.
 
 **Do not output anything yet.**

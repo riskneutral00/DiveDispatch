@@ -12,8 +12,11 @@
 **Done:**
 - Design token enforcement hooks active (text-sm, text-xs, rounded, color-mix, hex/rgb all blocked). Token migrations complete (140 + 158 + 41 + 15 + 4 files). IconButton ghost variant shipped.
 - Phase 1 complete: 7 invariant files written to `~/Desktop/RiskNeutral/DiveDispatch/Architecture/`. CLAUDE.md updated with pointer block. 9 skill definitions updated with invariant file references.
+- **Track A (FSM) complete (2026-04-06):** `declineReservation` rewired through `canBookingTransition('decline_cascade')`. `edit` removed from `Completed`. `Archived` terminal state added. `expire` action added. All 4 discovered bypass sites (reservationsMutations, inventoryRelease, users, status batch-complete) wired through FSM guards. `fsm-status-guard.sh` PostToolUse hook blocks future bypasses at edit time.
+- **Track C (Error) complete (2026-04-06):** 15 `ConvexError({message:})` → `{reason:}` across 5 files. `CODE_TO_KEY` expanded 5 → 20 mappings. 15 new i18n error keys in all 6 locales (201 keys, parity verified). `COVERAGE_INCOMPLETE` deleted. `error-shape-guard.sh` and `error-i18n-sync.sh` PostToolUse hooks active.
+- **Track D partial (2026-04-06):** `useClickOutside` hook extracted, 2 inline copies replaced. `duration-150` cleaned, `duration-*` promoted from warning to block.
 
-**Next:** Phase 2 — clean existing violations. Start with Track A (FSM: seal `declineReservation` bypass + add `Archived` terminal state — merged into one task). Four tracks can run in parallel (see Execution Order below).
+**Next:** Phase 2 continues — Track B (Schema/Data: dead fields, naming unification, sketch guards) and Track D remainder (transition-speed 70-file sweep, data-luminance, form system migration, component consolidation). Track A invariant test (line 228) still open.
 
 ---
 
@@ -72,7 +75,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [ ] Remove dead `reservations.expiresAt` field + `by_expiresAt_status` index
 - [ ] Remove deprecated `stakeholderPreferences` fields (`maxHoursPerDay`, `noWorkAfterTime`, `postJobBlockDuration`)
 - [ ] Remove dead `notifications.by_userId` index
-- [ ] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
+- [x] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
 - [ ] Consolidate `allergies` to single canonical source (currently in both `customers` and `customerProfiles`)
 - [ ] Clean dual token storage (`bookingLinks.token` / `customerProfiles.linkToken`)
 - [ ] Unify naming: pick `ownerSlug` OR `stakeholderId` across stakeholder tables. **Note: Convex field renames are migrations (new field, backfill, cut-over, remove old), not find-replaces. Budget days, not hours. Must complete before `.collect()` audit (C2) since renames invalidate query references.**
@@ -168,7 +171,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [ ] `--transition-speed` unification — 70 `transition-*` classes using hardcoded 150ms → `var(--transition-speed)`. **Implementation approach TBD: Tailwind plugin, custom utility class, or inline style. Decide before executing.**
 - [ ] `data-luminance` on `<html>` (SkinCommerce) — `theme-provider.tsx` stamps `data-luminance="dark|medium|bright"`. CSS rules auto-select polarity values. Makes bright-skin-with-white-text impossible.
 - [ ] Migrate `organizer-basic-step.tsx` to `useProfileForm` + `ProfileFormShell` + `FieldShell`
-- [ ] Extract `useClickOutside` hook → replace 4 inline implementations
+- [x] Extract `useClickOutside` hook → replaced 2 inline implementations (dev-switcher, booking-calendar). 2 more may exist — grep when next touching those files.
 - [ ] Replace local Badge in `preferred-list.tsx` with `ui/Badge`
 - [ ] Adopt `DashboardPageFrame` in 5+ places rolling their own `max-w-3xl mx-auto`
 - [ ] Consolidate two step-progress components into one
@@ -220,11 +223,11 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Checklist (merged: seal bypass + add Archived state — same file, same types, same tests):**
 
-- [ ] Write `Architecture/fsm-invariants.md`
-- [ ] Add CLAUDE.md pointer
-- [ ] Route `declineReservation` through `canBookingTransition` (`convex/reservationsMutations.ts:306-310`). **Decision needed: use existing `edit` action or add `decline_cascade` action. Answer this in `fsm-invariants.md` before executing.**
-- [ ] Add terminal `Archived` state. Remove `edit` transition from `Completed`.
-- [ ] Grep for any other direct `.patch(` targeting `.status` on bookings/reservations outside gateway files
+- [x] Write `Architecture/fsm-invariants.md`
+- [x] Add CLAUDE.md pointer
+- [x] Route `declineReservation` through `canBookingTransition` — added `decline_cascade` action. Also added `expire` and `archive` actions.
+- [x] Add terminal `Archived` state. Remove `edit` transition from `Completed`. Also wired `performExpiry`, `purgeOneDraft`, `cancelOneBookingForDeletedUser`, `runCompletionBatch` through FSM guards.
+- [x] Grep for any other direct `.patch(` targeting `.status` — found and fixed 4 bypass sites (reservationsMutations, inventoryRelease, users, status batch-complete). `fsm-status-guard.sh` PostToolUse hook now blocks future bypasses.
 - [ ] Add invariant test: scan codebase for `.status` patches, assert only in gateway files
 
 ---
@@ -253,11 +256,11 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Checklist:**
 
-- [ ] Write `Architecture/error-invariants.md`
-- [ ] Add CLAUDE.md pointer
-- [ ] Find all `ConvexError` throws using `message` instead of `reason` — replace
-- [ ] Map all 15+ unmapped error codes to i18n in `parseConvexErrorI18n`
-- [ ] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
+- [x] Write `Architecture/error-invariants.md`
+- [x] Add CLAUDE.md pointer
+- [x] Find all `ConvexError` throws using `message` instead of `reason` — replaced 15 across 5 files. `error-shape-guard.sh` hook blocks future violations.
+- [x] Map all 15+ unmapped error codes to i18n — `CODE_TO_KEY` expanded 5 → 20. 15 new i18n keys in all 6 locales. `error-i18n-sync.sh` hook warns on drift.
+- [x] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
 
 ---
 
@@ -431,7 +434,7 @@ Layer 4 — REVIEW TIME (catches violations that slipped through)
 └── /design-review → references component-invariants.md
 ```
 
-**Current state:** Layer 1 partial (CLAUDE.md pointers not yet added). Layer 2 hooks active. Layers 3-4 operational.
+**Current state:** Layer 1 complete (CLAUDE.md pointers + 7 invariant files). Layer 2 hooks active (5 PostToolUse hooks). Layers 3-4 operational.
 
 ### Canonical Invariant Files (7 files)
 
@@ -450,6 +453,9 @@ Layer 4 — REVIEW TIME (catches violations that slipped through)
 | Hook | Blocks | Warns |
 |------|--------|-------|
 | `type-scale-enforcement.sh` | `text-sm`, `text-xs` | `text-base/lg/xl/2xl/3xl`, headings without `font-heading` |
-| `design-token-enforcement.sh` | `rounded-sm/md/lg/xl/2xl/3xl/none`, inline hex/rgb, Tailwind palette, `backdrop-blur-*` | bare `rounded`, `duration-*` |
+| `design-token-enforcement.sh` | `rounded-sm/md/lg/xl/2xl/3xl/none`, inline hex/rgb, Tailwind palette, `backdrop-blur-*`, `duration-*` | bare `rounded` |
+| `fsm-status-guard.sh` | Direct `.patch()` with `status:` outside FSM gateway files | — |
+| `error-shape-guard.sh` | `ConvexError({ message: })` (must use `reason`) | — |
+| `error-i18n-sync.sh` | — | New `ErrorCode` without `CODE_TO_KEY` mapping |
 
-Escape hatch: `{/* design-ok */}` on the same line.
+Escape hatches: `{/* design-ok */}` for design hooks, `// fsm-ok` for FSM hook.

@@ -10,3 +10,8 @@ Read the schema before asking seed data or entity questions. Ask about every req
 
 ## Skeleton first
 Read `.SKELETON.md` before launching broad Explore agents or grep sweeps. Follow its Reference Docs pointers instead of searching blind.
+
+## No comments
+Do not add comments to code. No inline comments (`//`), no block comments (`/* */`), no JSDoc, no TODO comments, no section dividers.
+The codebase is AI-generated and AI-maintained — the code is the documentation.
+Exception: `{/* design-ok */}` and `{/* comments-ok */}` escape hatches required by hooks.

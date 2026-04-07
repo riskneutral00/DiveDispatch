@@ -235,6 +235,30 @@
             "command": "bash .claude/hooks/i18n-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking i18n patterns…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/fsm-status-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking FSM status transitions…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/error-shape-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking ConvexError shape…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/error-i18n-sync.sh",
+            "timeout": 5,
+            "statusMessage": "Checking ErrorCode ↔ i18n sync…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/no-comments-guard.sh",
+            "timeout": 10,
+            "statusMessage": "No-comments guard"
           }
         ]
       }
