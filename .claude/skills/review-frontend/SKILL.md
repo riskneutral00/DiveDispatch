@@ -87,7 +87,7 @@ Launch 3 Explore agents in a single message with `model: "sonnet"`:
 - **Glass formula:** Find components that should use glass styling but use plain backgrounds instead. Check glass components match the formula in MASTER.md (blur, backdrop, border).
 - **Page override adherence:** For each page override file (`design-system/pages/*.md`), check that the corresponding page components follow the specified overrides.
 - **Component variant consistency:** Check glass primitives (button, input, card, dialog, select, badge) for consistent variant naming and sizing across usage sites.
-- **Dark mode assumptions:** Flag any `dark:` Tailwind classes (the app is dark-mode only per MASTER.md, so conditional dark: classes are unnecessary).
+- **Dark/light mode:** The app supports TWO modes (dark and light) per MASTER.md. Each skin provides distinct palettes per mode. `dark:` Tailwind classes may be needed for mode-specific styling. Flag `dark:` classes only if they hardcode values instead of using CSS custom properties (tokens handle mode switching via ThemeProvider).
 - **Skin consistency:** Check that components use CSS custom properties (not hardcoded values) so skin switching works.
 - **Typography:** Check font usage against MASTER.md specifications. Flag hardcoded font-size values that don't match the type scale.
 - **Spacing consistency:** Flag mixed spacing systems (some using Tailwind spacing, others using custom pixel values).
@@ -138,7 +138,7 @@ Assign each finding a tier:
 - **CRITICAL** — Accessibility violation blocking user access (no label on critical form, no keyboard nav on primary action), dependency direction violation, data displayed without loading/error state (user sees undefined/crash)
 - **HIGH** — Design system drift on primary surfaces, missing error boundary, untested critical UI path, re-render causing visible jank, form without validation display
 - **MEDIUM** — A11y gap on secondary surfaces, hardcoded colors, missing memoization, responsive gap, dead exports, file size, type bypass
-- **LOW** — Spacing inconsistency, typography drift, dark: class unnecessary, dead props, touch target borderline
+- **LOW** — Spacing inconsistency, typography drift, dark: class with hardcoded value instead of token, dead props, touch target borderline
 
 ### Write vault review
 

@@ -70,7 +70,7 @@ if echo "$CLEAN" | grep -qE "\brounded-(sm|md|lg|xl|2xl|3xl|none)\b"; then
 fi
 
 # 3b. Bare 'rounded' (4px) without token — WARNING (migrate to rounded-[var(--border-radius-button)])
-if echo "$CLEAN" | grep -qE '\brounded\b' | grep -qvE 'rounded-'; then
+if echo "$CLEAN" | grep -E '\brounded\b' | grep -qvE 'rounded-'; then
   COUNT=$(echo "$CLEAN" | grep -oE '\brounded\b' | grep -v 'rounded-' | wc -l | tr -d ' ')
   WARNINGS="${WARNINGS}[radius] bare 'rounded' (${COUNT}x) — use rounded-[var(--border-radius-button)] for skin-compatible radius. "
 fi

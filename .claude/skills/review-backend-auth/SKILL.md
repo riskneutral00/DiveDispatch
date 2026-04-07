@@ -42,8 +42,8 @@ Launch 1 Explore agent focused on auth, security, and mutation consistency:
 
 ### Auth & Security
 
-- **Missing auth:** For each exported mutation, check if it calls `requireAuth()` within the first 5 lines. Flag mutations without it.
-- **Soft auth on mutations:** Flag mutations using `getAuthUser` instead of `requireAuth` — soft auth on writes is a potential bypass.
+- **Missing auth:** For each exported mutation, check if it calls `authorize()` within the first 5 lines. Flag mutations without it. Per `Architecture/auth-model.md` Rule 1, all auth goes through `authorize()` — not `requireAuth()` or `assertOwnership()` directly.
+- **Soft auth on mutations:** Flag mutations using `getAuthUser` or calling `requireAuth`/`assertOwnership`/`checkHasRole` directly instead of `authorize()` — direct helper calls bypass the single-gateway auth model.
 - **Exposed queries:** For each exported query, check if it has any auth check (`requireAuth()`, `getAuthUser()`, or `resolvePortalToken`/`resolvePortalTokenSoft`). Flag queries exposing sensitive data without auth.
 - **Ownership bypass:** Find mutations accepting `slug` or `userId` args — verify they compare against `user.slug` from auth context, not blindly trusting the arg.
 - **Portal token misuse:** Portal mutations should use `resolvePortalToken` (hard throw). Portal queries should use `resolvePortalTokenSoft` (null return). Flag inversions.

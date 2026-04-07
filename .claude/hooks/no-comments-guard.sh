@@ -19,7 +19,7 @@ while IFS= read -r line; do
   lineno="${line%%:*}"
   content="${line#*:}"
 
-  echo "$content" | grep -qE '(design-ok|comments-ok)' && continue
+  echo "$content" | grep -qE '(design-ok|comments-ok|batch-exempt|fsm-ok|snapshot:|bounded:)' && continue
 
   if echo "$content" | grep -qE '^\s*//'; then
     echo "$content" | grep -qE '^\s*//\s*https?://' && continue

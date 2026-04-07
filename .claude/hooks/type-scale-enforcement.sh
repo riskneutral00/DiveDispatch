@@ -60,7 +60,7 @@ if echo "$CLEAN" | grep -qE '\btext-(lg|xl|2xl|3xl)\b'; then
 fi
 
 # 5. Heading elements without font-heading
-if echo "$CLEAN" | grep -qE '<h[1-6]\b' | grep -qvE 'font-heading'; then
+if echo "$CLEAN" | grep -E '<h[1-6]\b' | grep -qvE 'font-heading'; then
   WARNINGS="${WARNINGS}[type-scale] <h1>-<h6> without font-heading class — add font-heading for skin-compatible headings. "
 fi
 
