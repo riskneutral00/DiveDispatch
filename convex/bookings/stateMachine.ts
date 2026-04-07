@@ -130,24 +130,38 @@ export const bookingDataValidator = v.object({
 /**
  * Booking status transition guard. Returns true if the transition is valid.
  *
- * confirm: Draft only (auto-advance to Upcoming)
- * edit:    Upcoming | Completed (operator edit resets to Draft)
- * cancel:  Any non-Cancelled status
- * complete: Upcoming only (auto-complete cron)
+ * confirm:         Draft only (auto-advance to Upcoming)
+ * edit:            Upcoming only (operator edit resets to Draft)
+ * cancel:         Any non-terminal status (not Cancelled, not Archived)
+ * complete:       Upcoming only (auto-complete cron)
+ * decline_cascade: Upcoming only (resource stakeholder decline → revert to Draft)
+ * expire:         Draft only (TTL expiry → Cancelled)
+ * archive:        Completed only (terminal — no outbound transitions)
  */
 export function canBookingTransition(
   currentStatus: BookingStatus,
-  action: 'confirm' | 'edit' | 'cancel' | 'complete',
+  action: 'confirm' | 'edit' | 'cancel' | 'complete' | 'decline_cascade' | 'expire' | 'archive',
 ): boolean {
+  // Terminal states have no outbound transitions
+  if (currentStatus === BOOKING_STATUS.Cancelled || currentStatus === BOOKING_STATUS.Archived) {
+    return false
+  }
+
   switch (action) {
     case 'confirm':
       return currentStatus === BOOKING_STATUS.Draft
     case 'edit':
-      return currentStatus === BOOKING_STATUS.Upcoming || currentStatus === BOOKING_STATUS.Completed
+      return currentStatus === BOOKING_STATUS.Upcoming
     case 'cancel':
-      return currentStatus !== BOOKING_STATUS.Cancelled
+      return true // non-terminal guard above already filtered
     case 'complete':
       return currentStatus === BOOKING_STATUS.Upcoming
+    case 'decline_cascade':
+      return currentStatus === BOOKING_STATUS.Upcoming
+    case 'expire':
+      return currentStatus === BOOKING_STATUS.Draft
+    case 'archive':
+      return currentStatus === BOOKING_STATUS.Completed
     default:
       return false
   }

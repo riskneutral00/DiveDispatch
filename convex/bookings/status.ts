@@ -14,7 +14,7 @@ import {
 import { logBookingChange } from '../lib/auditLog'
 import { notify, notifyReleasedInventory } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
-import { BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
+import { type BookingStatus, BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
 // ─── cancelBooking ────────────────────────────────────────────────────────────
 
@@ -56,9 +56,12 @@ export const cancelBooking = mutation({
 // ─── TTL expiry (lazy, server-side) ───────────────────────────────────────────
 
 /** Vacate reservations → set Cancelled → audit log. Shared by both expiry mutations. */
-async function performExpiry(ctx: MutationCtx, bookingId: Id<'bookings'>) {
+async function performExpiry(ctx: MutationCtx, bookingId: Id<'bookings'>, currentStatus: BookingStatus) {
+  if (!canBookingTransition(currentStatus, 'expire')) {
+    return // not in an expirable state — no-op
+  }
   await releaseBookingReservations(ctx, bookingId, VACATED_REASON.HoldExpired)
-  await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled })
+  await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok: guarded above
   await logBookingChange(ctx, {
     bookingId,
     action: 'expired',
@@ -78,7 +81,7 @@ export const expireBooking = internalMutation({
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) return
     if (!isBookingExpired(booking)) return
-    await performExpiry(ctx, args.bookingId)
+    await performExpiry(ctx, args.bookingId, booking.status)
   },
 })
 
@@ -100,7 +103,7 @@ export const checkAndExpireBooking = mutation({
     // Verify caller has access: owns the booking or has a reservation on it
     await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
 
-    await performExpiry(ctx, args.bookingId)
+    await performExpiry(ctx, args.bookingId, booking.status)
   },
 })
 
@@ -218,8 +221,8 @@ async function runCompletionBatch(
       return latest
     })
 
-    if (isSessionEnded(last.date, last.endTime, last.timezone)) {
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // batch-exempt: conditional per-booking
+    if (isSessionEnded(last.date, last.endTime, last.timezone) && canBookingTransition(booking.status, 'complete')) {
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // fsm-ok: guarded above; batch-exempt
       await logBookingChange(ctx, {
         bookingId: booking._id,
         action: 'completed',

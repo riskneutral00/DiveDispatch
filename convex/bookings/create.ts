@@ -95,7 +95,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     ).length
     const ratioResult = validateRatio(diverCount, instructorResourceCount, dmCount)
     if (!ratioResult.valid) {
-      throw new ConvexError({ code: ErrorCode.VALIDATION, message: ratioResult.message })
+      throw new ConvexError({ code: ErrorCode.VALIDATION, reason: ratioResult.message })
     }
   }
 

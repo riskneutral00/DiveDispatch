@@ -14,7 +14,8 @@ import { internal } from '../_generated/api'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { VacatedReason } from '../shared/statuses'
-import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
+import { type BookingStatus, BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
+import { canBookingTransition } from './stateMachine'
 import { ErrorCode } from '../lib/errorCodes'
 import { assertValidTime } from '../lib/validators'
 import { logBookingChange } from '../lib/auditLog'
@@ -297,9 +298,10 @@ export const purgeOneDraft = internalMutation({
   handler: async (ctx, { bookingId }): Promise<void> => {
     const booking = await ctx.db.get(bookingId)
     if (!booking || booking.status !== BOOKING_STATUS.Draft) return
+    if (!canBookingTransition(booking.status, 'expire')) return
 
     await releaseBookingReservations(ctx, booking._id, VACATED_REASON.HoldExpired)
-    await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled })
+    await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Cancelled }) // fsm-ok: guarded above
     await logBookingChange(ctx, {
       bookingId: booking._id,
       action: 'expired_draft_purged',

@@ -7,6 +7,7 @@ export const BOOKING_STATUS = {
   Upcoming: 'Upcoming',
   Completed: 'Completed',
   Cancelled: 'Cancelled',
+  Archived: 'Archived',
 } as const
 
 export type BookingStatus = (typeof BOOKING_STATUS)[keyof typeof BOOKING_STATUS]
@@ -16,6 +17,7 @@ export const bookingStatusValidator = v.union(
   v.literal(BOOKING_STATUS.Upcoming),
   v.literal(BOOKING_STATUS.Completed),
   v.literal(BOOKING_STATUS.Cancelled),
+  v.literal(BOOKING_STATUS.Archived),
 )
 
 // ── Reservation Statuses ─────────────────────────────────────────────

@@ -14,7 +14,7 @@ import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
 // ─── editBooking ──────────────────────────────────────────────────────────────
 
 /**
- * Resets an Upcoming or Completed booking to Draft for editing.
+ * Resets an Upcoming booking to Draft for editing.
  * Vacates all reservations, clears sessions, and marks bookingFormComplete false.
  */
 export const editBooking = mutation({

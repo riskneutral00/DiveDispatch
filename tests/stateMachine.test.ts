@@ -21,12 +21,12 @@ describe('canBookingTransition', () => {
     expect(canBookingTransition('Cancelled', 'confirm')).toBe(false)
   })
 
-  // edit: Upcoming | Completed
+  // edit: Upcoming only
   it('allows edit from Upcoming', () => {
     expect(canBookingTransition('Upcoming', 'edit')).toBe(true)
   })
-  it('allows edit from Completed', () => {
-    expect(canBookingTransition('Completed', 'edit')).toBe(true)
+  it('blocks edit from Completed', () => {
+    expect(canBookingTransition('Completed', 'edit')).toBe(false)
   })
   it('blocks edit from Draft', () => {
     expect(canBookingTransition('Draft', 'edit')).toBe(false)

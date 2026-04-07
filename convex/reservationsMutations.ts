@@ -3,7 +3,7 @@ import { mutation } from './_generated/server'
 import { requireAuth, assertOwnership } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
-import { tryAutoAdvance, canReservationTransition, isSessionStarted } from './bookings/_shared'
+import { tryAutoAdvance, canBookingTransition, canReservationTransition, isSessionStarted } from './bookings/_shared'
 import { releaseBookingReservationsByUnit, MAX_RESERVATIONS_PER_BOOKING } from './bookings/inventoryRelease'
 import { deleteResourceByType } from './bookingResources'
 
@@ -301,15 +301,13 @@ export async function _declineHandler(
   // Delete from bookingResources junction table
   await deleteResourceByType(ctx, args.bookingId, unit.resourceType as string)
 
-  // Cascade booking status if needed
-  const bookingPatch: Record<string, unknown> = {}
-  if (booking.status === BOOKING_STATUS.Upcoming) {
-    bookingPatch.status = BOOKING_STATUS.Draft
-    bookingPatch.bookingFormComplete = false
-    bookingPatch.expiresAt = now + booking.holdTTL
-  }
-  if (Object.keys(bookingPatch).length > 0) {
-    await ctx.db.patch(args.bookingId as Id<"bookings">, bookingPatch)
+  // Cascade booking status if needed — via FSM guard (Rule 1, fsm-invariants.md)
+  if (canBookingTransition(booking.status, 'decline_cascade')) {
+    await ctx.db.patch(args.bookingId as Id<"bookings">, {
+      status: BOOKING_STATUS.Draft,
+      bookingFormComplete: false,
+      expiresAt: now + booking.holdTTL,
+    })
   }
 
   await logBookingChange(ctx, {

@@ -30,7 +30,7 @@ describe('canBookingTransition', () => {
 
   describe('edit (→ Draft)', () => {
     it('allows from Upcoming', () => expect(canBookingTransition('Upcoming', 'edit')).toBe(true))
-    it('allows from Completed', () => expect(canBookingTransition('Completed', 'edit')).toBe(true))
+    it('rejects from Completed', () => expect(canBookingTransition('Completed', 'edit')).toBe(false))
     it('rejects from Draft', () => expect(canBookingTransition('Draft', 'edit')).toBe(false))
     it('rejects from Cancelled', () => expect(canBookingTransition('Cancelled', 'edit')).toBe(false))
   })
@@ -351,19 +351,17 @@ describe('editBooking', () => {
     expect(session).toBeNull()
   })
 
-  it('resets Completed booking to Draft', async () => {
+  it('rejects edit from Completed booking', async () => {
     const t = makeT()
     const bookingId = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'owner-slug', tokenIdentifier: 'clerk|owner-slug', role: 'DiveCenter' })
       return seedBooking(ctx, 'owner-slug', { status: 'Completed' })
     })
 
-    await t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
-      .mutation(api.bookings.edit.editBooking, { bookingId })
-
-    const booking = await t.run(async (ctx) => ctx.db.get(bookingId))
-    expect(booking!.status).toBe('Draft')
-    expect(booking!.bookingFormComplete).toBe(false)
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|owner-slug' })
+        .mutation(api.bookings.edit.editBooking, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('INVALID_STATUS') })
   })
 
   it('vacates Confirmed reservations with reason operator_edit', async () => {
