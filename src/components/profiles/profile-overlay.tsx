@@ -157,7 +157,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           className="flex-1 overflow-y-auto"
           role="tabpanel"
         >
-          <DashboardPageFrame className="px-4 pt-2 pb-6 sm:px-6">
+          <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'roles' && <ManageRolesConnected />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (

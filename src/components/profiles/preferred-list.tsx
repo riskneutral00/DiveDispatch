@@ -172,62 +172,53 @@ function InstructorCandidateRow({
   )
 }
 
-function SortableInstructorRow({
+function SortableInstructorCard({
   slug,
   index,
   entry,
   onRemove,
-  isLast,
 }: {
   slug: string
   index: number
   entry: DirectoryEntry | undefined
   onRemove: () => void
-  isLast: boolean
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group: 'instructors' })
 
   return (
     <div
       ref={ref}
-      className="py-2.5"
+      className="glass-container rounded-theme p-3 min-w-[140px]"
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      <div className="flex gap-2">
-
+      <div className="flex items-start gap-1 mb-1">
         <button
           ref={handleRef}
           type="button"
-          className="shrink-0 mt-0.5 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme"
+          className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme"
           aria-label="Drag to reorder"
         >
-          <GripVertical size={16} />
+          <GripVertical size={14} />
         </button>
-
-        <InstructorCardContent
-          entry={entry}
-          slug={slug}
-          action={
-            <Button
-              variant="destructive-ghost"
-              size="sm"
-              type="button"
-              onClick={onRemove}
-              aria-label="Remove instructor"
-              className="shrink-0"
-            >
-              <Trash2 size={16} />
-            </Button>
-          }
-        />
       </div>
 
-      {!isLast && (
-        <div
-          className="mt-2.5"
-          style={{ borderBottom: '1px solid var(--color-glass-border)' }}
-        />
-      )}
+      <InstructorCardContent
+        entry={entry}
+        slug={slug}
+        layout="card"
+        action={
+          <Button
+            variant="destructive-ghost"
+            size="sm"
+            type="button"
+            onClick={onRemove}
+            aria-label="Remove instructor"
+            className="shrink-0"
+          >
+            <Trash2 size={14} />
+          </Button>
+        }
+      />
     </div>
   )
 }
@@ -416,15 +407,14 @@ export function PreferredInstructorList(props: ListProps) {
             }
           }}
         >
-          <div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"> {/* design-ok */}
             {slugs.map((slug, index) => (
-              <SortableInstructorRow
+              <SortableInstructorCard
                 key={slug}
                 slug={slug}
                 index={index}
                 entry={slugToEntry[slug]}
                 onRemove={() => remove(index)}
-                isLast={index === slugs.length - 1}
               />
             ))}
           </div>
@@ -553,12 +543,11 @@ interface OverlayListProps {
   dndGroup: string
 }
 
-function SortableOverlayRow({
+function SortableOverlayCard({
   slug,
   index,
   entry,
   onRemove,
-  isLast,
   renderBadge,
   group,
 }: {
@@ -566,26 +555,25 @@ function SortableOverlayRow({
   index: number
   entry: DirectoryEntry | undefined
   onRemove: () => void
-  isLast: boolean
   renderBadge: (entry: DirectoryEntry) => React.ReactNode
   group: string
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group })
   return (
-    <div ref={ref} className="py-2" style={{ opacity: isDragging ? 0.5 : 1 }}>
-      <div className="flex items-center gap-3">
+    <div ref={ref} className="glass-container rounded-theme p-3 min-w-[140px]" style={{ opacity: isDragging ? 0.5 : 1 }}>
+      <div className="flex items-start gap-1 mb-1">
         <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">
-          <GripVertical size={16} />
+          <GripVertical size={14} />
         </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-body font-medium truncate text-primary">{entry?.name ?? slug}</p>
-          {entry && <div className="mt-0.5">{renderBadge(entry)}</div>}
-        </div>
+        <div className="flex-1" />
         <Button variant="destructive-ghost" size="sm" type="button" onClick={onRemove} aria-label="Remove" className="shrink-0">
-          <Trash2 size={16} />
+          <Trash2 size={14} />
         </Button>
       </div>
-      {!isLast && <div className="mt-2" style={{ borderBottom: '1px solid var(--color-glass-border)' }} />}
+      <div className="min-w-0 space-y-1">
+        <p className="text-body font-medium truncate text-primary">{entry?.name ?? slug}</p>
+        {entry && <div>{renderBadge(entry)}</div>}
+      </div>
     </div>
   )
 }
@@ -663,15 +651,14 @@ function PreferredOverlayList({
             }
           }}
         >
-          <div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4"> {/* design-ok */}
             {slugs.map((slug, index) => (
-              <SortableOverlayRow
+              <SortableOverlayCard
                 key={slug}
                 slug={slug}
                 index={index}
                 entry={slugToEntry[slug]}
                 onRemove={() => remove(index)}
-                isLast={index === slugs.length - 1}
                 renderBadge={renderBadge}
                 group={dndGroup}
               />

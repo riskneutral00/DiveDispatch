@@ -1,28 +1,26 @@
 ---
 name: agent-designer
 description: >
-  Design agent. Matt describes pages or design needs,
-  Claude designs from MASTER.md and generates page overrides.
-allowed-tools: Agent, Bash
+  DEPRECATED — redirects to /agent-airbnb Mode 4 (Interactive Design).
+  Use /agent-airbnb for all design work.
+allowed-tools: Agent, Bash, Read
 user-invocable: true
 ---
 
-# /agent-designer — Designer Agent Launcher
+# /agent-designer — Redirects to /agent-airbnb
 
-**Execute immediately.** Spawn the Designer agent.
+**Deprecated.** Designer agent has been absorbed into `/agent-airbnb` as Mode 4 (Interactive Design).
 
-## Spawn Designer Agent
+## Redirect
+
+Read `.claude/agents/airbnb.md` to load the persona, then spawn with Mode 4:
 
 ```
 Agent(
-  description: "Designer: interactive design intelligence",
-  subagent_type: "designer",
-  prompt: "Follow your startup sequence, then enter the interactive loop. Matt will describe what to design, build, or review.",
+  description: "Airbnb: interactive design",
+  name: "airbnb",
+  prompt: "{persona}\n\n---\n\nEnter Mode 4: Interactive Design. Execute your startup sequence, then enter the conversational design loop. Matt will describe what to design, build, or review.",
   run_in_background: false,
   mode: "auto"
 )
 ```
-
-**Note:** `run_in_background: false` — Designer agent is interactive. Matt talks to it directly.
-
-Designer agent works with design-system/MASTER.md and page overrides. It can design and build.

@@ -153,7 +153,7 @@ export function ProfileTab() {
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-4">
+        <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
           <Input
             label="First name"
             value={form.firstName}

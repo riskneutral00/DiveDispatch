@@ -50,7 +50,7 @@ export function ProfileBasicInfo({
   children,
 }: ProfileBasicInfoProps) {
   return (
-    <div className="flex flex-wrap gap-4 w-full">
+    <div className="grid grid-cols-6 gap-4 w-full"> {/* design-ok */}
       <Input
         label={nameLabel}
         placeholder={namePlaceholder}

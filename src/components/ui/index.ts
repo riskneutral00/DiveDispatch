@@ -28,6 +28,7 @@ export { EmptyState } from "./empty-state";
 export { FormGrid, FormField } from "./form-grid";
 export { PillToggle, PillToggleGroup } from "./pill-toggle";
 export { SaveButton } from "./save-button";
+export { BottomActionBar } from "./bottom-action-bar";
 export { ItemCard } from "./item-card";
 export { FormSectionHeader } from "./form-section-header";
 export { FlagEmoji } from "./flag-emoji";

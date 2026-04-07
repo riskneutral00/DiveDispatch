@@ -72,6 +72,23 @@ For each finding, report: `file:line — [CHECK N] description — suggested pai
 
 ---
 
+## Phase 3b: Mobile Card Pattern Sweep (silent, Explore agent with model: "sonnet")
+
+Launch 1 Explore agent to scan for entity list violations per MASTER.md Card Density Pattern:
+
+### Check 9: Stacked entity rows instead of card grid
+Find entity lists (instructors, vessels, equipment, routes) rendered as repeated sibling flex-row or stacked div containers without a grid parent. Pattern: 3+ similar sibling elements using `flex` layout instead of `grid grid-cols-2`.
+
+### Check 10: Single-column entity lists
+Find `map()` or `.map(` rendering 3+ items into a `flex-col` or `space-y-*` container. These should use `grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4`.
+
+### Check 11: Missing card min-width
+Find grid containers rendering entity cards without `min-w-[140px]` on children — prevents squeeze on narrow viewports.
+
+For each finding, report: `file:line — [CHECK N] description — current layout → card grid fix`
+
+---
+
 ## Phase 4: Report
 
 Output a single scoreboard:
@@ -104,6 +121,8 @@ If `--fix` was passed:
 4. For each **Check 4** violation: add `min-w-0` to the element's className
 5. For each **Check 5** violation: change conditional type to `type="text"` + `inputMode`
 6. For each **Check 6-8** violation: restructure into `grid grid-cols-1 sm:grid-cols-2` with short fields left, dense block right
+7. For each **Check 9-10** violation: restructure entity list into `grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4` with compact card anatomy (name, badges, metadata, action)
+8. For each **Check 11** violation: add `min-w-[140px]` to card children
 
 After all fixes: run `npx tsc --noEmit` to verify clean build.
 

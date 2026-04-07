@@ -49,7 +49,9 @@ You are the lead frontend engineer and designer. You have `ui-ux-pro-max` design
    - Input fields within a form — do they conform to the same height?
    - Flag mismatches between elements that should be uniform
 
-7. **Identify root causes.** Classify each issue:
+7. **Mobile viewport check.** Verify: no horizontal overflow, all fields full-width on mobile, touch targets 44px+, Save/Submit in bottom bar, no more than 2 horizontal tab bars, `pb-28` on scrollable containers.
+
+8. **Identify root causes.** Classify each issue:
    - **Visual** — wrong size, color, weight, spacing
    - **Layout** — wrong position, alignment, overflow, container mismatch
    - **Behavioral** — wrong state, missing interaction, broken flow
@@ -112,12 +114,15 @@ Group related decisions into a single AskUserQuestion call (max 2 questions). Do
    browser_navigate → the page URL where the fix should be visible
    ```
 
-2. Take a screenshot:
+2. Take screenshots at both viewports:
    ```
-   browser_take_screenshot → save as ui-fix-verify.png
+   browser_resize → 375px width (mobile)
+   browser_take_screenshot → save as ui-fix-verify-mobile.png
+   browser_resize → 1440px width (desktop)
+   browser_take_screenshot → save as ui-fix-verify-desktop.png
    ```
 
-3. Compare the screenshot against the proposal:
+3. Compare both screenshots against the proposal:
    - Does the fix match what was proposed?
    - Are elements aligned correctly?
    - Is whitespace reduced as expected?
@@ -159,7 +164,7 @@ If Matt confirms → done.
 - **Balance audit is mandatory.** Check breathing room, visual weight distribution, and rhythm within each container. Container vs page — know the difference.
 - **Dimensional conformity is mandatory.** Siblings should match. Inputs should match. Flag what doesn't.
 - **Behavior bugs are in scope.** Not just CSS — if a button doesn't work or state is wrong, fix it.
-- **Desktop only.** No mobile viewport checks unless Matt explicitly asks.
+- **Mobile first.** Always take screenshots at 375px (mobile) AND 1440px (desktop). Diagnose mobile issues first — they affect 90% of users.
 - **Tests are mandatory.** Run affected test files after changes. CSS-only with no testable behavior → `tsc --noEmit` is sufficient.
 - **Self-fix before showing Matt.** Playwright verifies. Don't ask Matt to check what a screenshot can check.
 - **Max 2 proposal rounds.** Don't over-interview.

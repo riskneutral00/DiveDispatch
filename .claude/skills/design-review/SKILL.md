@@ -31,6 +31,16 @@ Run BEFORE any visual inspection. Check the target page/component for:
 grep -n "background\|bg-\|z-index\|overflow" <target_file>
 ```
 
+## Phase 1b: Mobile Viewport Contract Checks
+
+Run alongside Phase 1 layout checks:
+
+5. **Entity list density** — grep for repeated sibling flex-row containers without a grid parent. Entity lists (3+ similar items) should use card grids per MASTER.md Card Density Pattern.
+6. **Tab depth** — count horizontal tab bars (`TabsList`) in the rendered page. Max 2 on mobile; 3rd level must collapse to dropdown/sheet.
+7. **Bottom nav clearance** — scrollable containers (`overflow-y-auto`, `overflow-y-scroll`) must have `pb-28` or equivalent.
+8. **Save/Submit placement** — primary action buttons should be in a fixed bottom bar on mobile, not floating in the form body.
+9. **Field width** — no field narrower than its container on mobile. Check for orphan fractional widths without `w-full` unprefixed.
+
 ## Phase 2: Read Design Specs
 
 1. Read `design-system/MASTER.md` — the sole source of truth for design decisions
@@ -65,6 +75,13 @@ Output a structured report:
 - Background layers: PASS/FAIL
 - Z-index: PASS/FAIL
 - Overflow: PASS/FAIL
+
+### Mobile Viewport Contract
+- Entity list density: PASS/FAIL
+- Tab depth (≤2 on mobile): PASS/FAIL
+- Bottom nav clearance (pb-28): PASS/FAIL
+- Save/Submit in bottom bar: PASS/FAIL
+- Field width (full-width mobile): PASS/FAIL
 
 ### Spec Compliance
 | Requirement | Status | Notes |

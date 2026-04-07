@@ -158,6 +158,20 @@ Default specialties      Toggle pill chips          — with "More..." overflow
 
 ---
 
+## Preferences Sub-Tabs (Level 3 — Instructors, Venues & Boats, Equipment, Compressors)
+
+On mobile, Level 3 tabs collapse into a `SimpleSelect` dropdown (`flex sm:hidden`). The horizontal
+tab bar renders on desktop only (`hidden sm:block`). This prevents 3 stacked tab bars on mobile.
+
+Entity lists within these tabs (preferred instructors, venues, boats, equipment, compressors) use
+the Card Density Pattern from MASTER.md: `grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4`.
+Each entity renders as a compact card (name, badges, metadata, drag handle, delete action).
+
+Save buttons use `BottomActionBar` — fixed at the bottom of the viewport on mobile (above the
+bottom nav), static right-aligned on desktop.
+
+---
+
 ## Save Feedback
 
 After successful save: button label changes to "Saved ✓" for 2 seconds, then reverts.

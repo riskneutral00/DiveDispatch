@@ -11,6 +11,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
 import { Button } from '@/components/ui/button'
+import { BottomActionBar } from '@/components/ui/bottom-action-bar'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -430,11 +431,22 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
         {section === 'resources' && showResourcePrefs && (
           <>
             <div className="max-w-xl mx-auto">
-              <ProfileSectionTabBar
-                tabs={resourceSubTabs}
-                activeTab={resourceSubTab}
-                onChange={(id) => setResourceSubTab(id as ResourceSubTab)}
-              />
+              <div className="flex sm:hidden mb-4">
+                <SimpleSelect
+                  aria-label="Resource section"
+                  value={resourceSubTab}
+                  onChange={(v) => setResourceSubTab(v as ResourceSubTab)}
+                  options={resourceSubTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+                  className="w-full"
+                />
+              </div>
+              <div className="hidden sm:block">
+                <ProfileSectionTabBar
+                  tabs={resourceSubTabs}
+                  activeTab={resourceSubTab}
+                  onChange={(id) => setResourceSubTab(id as ResourceSubTab)}
+                />
+              </div>
             </div>
 
             <div
@@ -450,7 +462,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                     onChange={(slugs) => setField('preferredInstructorSlugs', slugs)}
                     required
                   />
-                  <div className="flex justify-end pt-4">
+                  <BottomActionBar className="pt-4">
                     <ResourceSaveButton
                       isDirty={isSectionDirty('instructors')}
                       saving={resourceSaving}
@@ -458,7 +470,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('instructors')}
 
                     />
-                  </div>
+                  </BottomActionBar>
                 </Card>
               )}
 
@@ -471,7 +483,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                     onBoatChange={(slugs) => setField('preferredBoatSlugs', slugs)}
                     required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
                   />
-                  <div className="flex justify-end pt-4">
+                  <BottomActionBar className="pt-4">
                     <ResourceSaveButton
                       isDirty={isSectionDirty('venues-boats')}
                       saving={resourceSaving}
@@ -479,7 +491,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('venues-boats')}
 
                     />
-                  </div>
+                  </BottomActionBar>
                 </Card>
               )}
 
@@ -490,7 +502,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                     onChange={(slugs) => setField('preferredEquipmentSlugs', slugs)}
                     required
                   />
-                  <div className="flex justify-end pt-4">
+                  <BottomActionBar className="pt-4">
                     <ResourceSaveButton
                       isDirty={isSectionDirty('equipment')}
                       saving={resourceSaving}
@@ -498,7 +510,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('equipment')}
 
                     />
-                  </div>
+                  </BottomActionBar>
                 </Card>
               )}
 
@@ -508,7 +520,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                     slugs={form.preferredCompressorSlugs ?? []}
                     onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
                   />
-                  <div className="flex justify-end pt-4">
+                  <BottomActionBar className="pt-4">
                     <ResourceSaveButton
                       isDirty={isSectionDirty('compressors')}
                       saving={resourceSaving}
@@ -516,7 +528,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('compressors')}
 
                     />
-                  </div>
+                  </BottomActionBar>
                 </Card>
               )}
 
@@ -526,7 +538,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                     value={form.preferredOperatorSlug}
                     onChange={(slug) => setField('preferredOperatorSlug', slug)}
                   />
-                  <div className="flex justify-end">
+                  <BottomActionBar>
                     <ResourceSaveButton
                       isDirty={isSectionDirty('operator')}
                       saving={resourceSaving}
@@ -534,7 +546,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
                       onSave={() => void handleSaveResourceSection('operator')}
 
                     />
-                  </div>
+                  </BottomActionBar>
                 </>
               )}
             </div>

@@ -294,6 +294,31 @@ Never use larger spacing unprefixed and smaller with a prefix (`p-6 sm:p-4` is b
 
 ---
 
+## Card Density Pattern
+
+Entity lists (instructors, vessels, routes, equipment) use compact cards in a responsive grid — not vertical stacked rows.
+
+### Card Anatomy
+
+- Header: entity name (truncate with ellipsis)
+- Badges: certification, type (inline, wrap)
+- Metadata: flags, specialties (icon row, compact)
+- Action: edit/delete (icon button, top-right)
+
+### Card Grid
+
+- Mobile: `grid-cols-2 gap-3` (2 cards per row)
+- Desktop: `sm:grid-cols-3 md:grid-cols-4 gap-4`
+- Card min-width: prevent squeeze below 140px via `min-w-[140px]`
+
+### When to Use Cards vs Forms
+
+- **Cards**: read-heavy entity lists (instructors, vessels, equipment inventory)
+- **Forms**: edit-heavy single-entity views (profile, boat detail, booking prefs)
+- **Hybrid**: entity list as cards; tap card → inline expand or sheet for editing
+
+---
+
 ## Mobile-First Sizing
 
 The app is 90% mobile. Unprefixed Tailwind = the mobile experience. `sm:`/`md:`/`lg:` are enhancements.
@@ -307,6 +332,20 @@ The app is 90% mobile. Unprefixed Tailwind = the mobile experience. `sm:`/`md:`/
 | Button groups | `flex flex-col sm:flex-row` — stack on mobile |
 | Grid baseline | `grid-cols-1` unprefixed. Multi-column requires `sm:` or `md:` prefix |
 | Bottom actions | Primary save/submit in sticky/fixed bottom bar (thumb zone) |
+| Form fields on mobile | `w-full` (100% width). Never narrower than container. |
+| Entity lists on mobile | Card grid `grid-cols-2` minimum. Never single-column stacked rows for 3+ items. |
+| Save/Submit on mobile | Fixed bottom bar `fixed bottom-0 inset-x-0 p-4 pb-safe` above nav. |
+| Max tab levels on mobile | 2 visible. 3rd level → dropdown/sheet. |
+| Bottom safe padding | `pb-28` on scrollable containers to clear bottom nav. |
+
+### Navigation Depth
+
+Maximum 2 visible tab levels on mobile. When a page has 3+ levels:
+- Level 1 (Account/Profile/Roles/...): horizontal pill tabs (scrollable)
+- Level 2 (Contact/Languages/...): horizontal scrollable tabs
+- Level 3+ (Instructors/Venues/...): collapse into a dropdown select or sheet picker. Never a third horizontal tab bar.
+
+Desktop (sm:+): all levels may render as horizontal tabs.
 
 ### Breakpoint Progression
 
@@ -332,20 +371,22 @@ Validation messages, helper text, and error indicators that toggle visibility mu
 
 ## Field Width Scale
 
-Proportional field widths in globals.css. Mobile uses percentages, desktop uses fixed px.
+Field widths use CSS Grid column spans on mobile (6-column grid) and fixed px on desktop. Parent containers must use `grid grid-cols-6 gap-4`.
 
-| Class | Mobile | Desktop (≥640px) |
-|-------|--------|-----------------|
-| `.field-number` | 33.3% | 80px |
-| `.field-select-short` | 33.3% | 112px |
-| `.field-name` | 50% | 176px |
-| `.field-phone` | 50% | 176px |
-| `.field-text-short` | 50% | 176px |
-| `.field-date` | 50% | 176px |
-| `.field-email` | 100% | 256px |
-| `.field-select-long` | 100% | 256px |
-| `.field-location` | 100% | 256px |
-| `.field-text-long` | 100% | 100% |
+Field-width classes live in `@layer utilities` in `globals.css`. The `@layer` wrapper is **required** — Tailwind v4 strips custom CSS outside its layer system. Do not remove it.
+
+| Class | Mobile (grid span) | Desktop (≥640px) |
+|-------|-------------------|-----------------|
+| `.field-number` | span 2 of 6 (≈33%) | 80px |
+| `.field-select-short` | span 2 of 6 (≈33%) | 112px |
+| `.field-name` | span 3 of 6 (50%) | 176px |
+| `.field-phone` | span 3 of 6 (50%) | 176px |
+| `.field-text-short` | span 3 of 6 (50%) | 176px |
+| `.field-date` | span 3 of 6 (50%) | 176px |
+| `.field-email` | span 6 of 6 (100%) | 256px |
+| `.field-select-long` | span 6 of 6 (100%) | 256px |
+| `.field-location` | span 6 of 6 (100%) | 256px |
+| `.field-text-long` | span 6 of 6 (100%) | 100% |
 
 ---
 

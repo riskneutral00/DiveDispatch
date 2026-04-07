@@ -140,10 +140,9 @@ describe('PreferencesEditor — resources section', () => {
     mockPrefs = null
     render(<PreferencesEditor section="resources" roleSlug="dive-center" />)
 
-    // Tab labels for the resource sub-tabs
-    expect(screen.getByText('Instructors')).toBeInTheDocument()
-    expect(screen.getByText('Venues & Boats')).toBeInTheDocument()
-    expect(screen.getByText('Equipment')).toBeInTheDocument()
-    expect(screen.getByText('Compressors')).toBeInTheDocument()
+    expect(screen.getAllByText('Instructors').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Venues & Boats').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Equipment').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Compressors').length).toBeGreaterThanOrEqual(1)
   })
 })

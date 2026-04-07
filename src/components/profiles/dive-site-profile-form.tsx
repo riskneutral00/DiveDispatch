@@ -97,7 +97,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-4 w-full">
+        <div className="grid grid-cols-6 gap-4 w-full"> {/* design-ok */}
           <Input
             label="Site Name"
             placeholder="Shark Bay Reef"

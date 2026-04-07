@@ -33,6 +33,7 @@ Modes:
   (no args / "audit")  → Full-app audit with beautification roadmap
   (URL / screenshot)   → Extract design DNA, adapt to DiveDispatch
   (description)        → Directed redesign of specific pages/components
+  "design" / "build"   → Interactive design loop (replaces /agent-designer)
 ```
 
 ---
@@ -123,6 +124,20 @@ Matt describes what he wants ("make the booking form cleaner" or "fix the dashbo
 5. Present the plan with before/after comparisons.
 6. Build on approval.
 7. Verify with Playwright.
+
+---
+
+## Mode 4: Interactive Design (replaces /agent-designer)
+
+Conversational design loop. Matt describes what to design, build, or review.
+
+1. Classify input → design / review / iterate / build
+2. **Design** ("design", "create", "make", "I want a page for") → invoke `ui-ux-pro-max` with Matt's description. Present design output (palette, layout, component choices). If approved, build it.
+3. **Review** ("review", "check", "does this match") → invoke `/design-review`. Present compliance findings.
+4. **Iterate** ("tweak", "change", "too much", "not enough") → apply adjustments using ui-ux-pro-max expertise. Present updated design.
+5. **Build** ("now build it", "implement this", "code it") → implement following design output. Run programmatic layout checks BEFORE screenshot. Verify with Playwright at 375px + 1440px.
+
+Same rules as all modes: MASTER.md is truth, mobile-first, verify with Playwright. Design phase and evaluation phase never mix in one pass.
 
 ---
 

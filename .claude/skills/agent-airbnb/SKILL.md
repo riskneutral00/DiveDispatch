@@ -20,6 +20,7 @@ Read the file `.claude/agents/airbnb.md` and store its contents as `{persona}`.
 
 - No args or "audit" → audit mode
 - URL (starts with `http`) or screenshot path → reference mode
+- Starts with "design", "build", "create", "make" → interactive design mode (Mode 4)
 - Anything else → directed mode
 
 ## Step 3: Spawn Agent
@@ -52,6 +53,17 @@ Agent(
   description: "Airbnb: directed UI improvement",
   name: "airbnb",
   prompt: "{persona}\n\n---\n\nEnter Mode 3: Directed Work. Execute your startup sequence, then work on Matt's request: {args}. Read the relevant code, apply technical discipline, and propose improvements.",
+  run_in_background: false,
+  mode: "auto"
+)
+```
+
+For **interactive design mode** (starts with design/build/create/make):
+```
+Agent(
+  description: "Airbnb: interactive design",
+  name: "airbnb",
+  prompt: "{persona}\n\n---\n\nEnter Mode 4: Interactive Design. Execute your startup sequence, then enter the conversational design loop. Matt's request: {args}. Classify intent (design/review/iterate/build) and respond accordingly.",
   run_in_background: false,
   mode: "auto"
 )

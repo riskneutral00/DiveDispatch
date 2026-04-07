@@ -11,3 +11,6 @@ Three or more short fields (name, phone, email, date) stacked vertically above o
 
 ## Height budget
 Before building a form card, estimate the height of the tallest content block. The paired column's stacked fields should fill that height naturally. If there's significant leftover space, the column split is wrong or the fields need regrouping.
+
+## Entity lists prefer card grids over paired columns
+For read-heavy entity lists (instructors, vessels, equipment), use the Card Density Pattern from `design-system/MASTER.md` instead of paired-column forms. Cards are compact, scannable, and use horizontal space efficiently. Reserve paired-column density for edit-heavy single-entity forms where fields pair with dense content blocks.

@@ -265,6 +265,12 @@
             "command": "bash .claude/hooks/no-comments-guard.sh",
             "timeout": 10,
             "statusMessage": "No-comments guard"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/mobile-viewport-check.sh",
+            "timeout": 10,
+            "statusMessage": "Checking mobile-first viewport contract…"
           }
         ]
       }

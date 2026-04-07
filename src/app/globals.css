@@ -195,43 +195,47 @@
 .text-secondary  { color: var(--color-text-secondary); }
 .text-on-primary { color: var(--color-text-on-primary); }
 
-/* ── Field width scale — mobile-first, proportional to content ────────────
-   Mobile: fraction of viewport (via grid).  Desktop: fixed px width.
-   Apply to the field's WRAPPER div (Input/SimpleSelect outer container).
+/* ── Field width scale — @layer utilities required for Tailwind v4 ─────────
+   Parent container must be: grid grid-cols-6 gap-4
+   Mobile: fields span N of 6 columns. Desktop: fixed px width.
+   @layer utilities prevents Tailwind compiler from stripping these rules.
    ──────────────────────────────────────────────────────────────────────────── */
 
-/* number: units, days, depth, capacity, diopter */
-.field-number { width: 33.333%; }
-/* select-short: month, day, year, agency, gender, gear type */
-.field-select-short { width: 33.333%; }
-/* name: first name, last name, business name, boat name */
-.field-name { width: 50%; }
-/* phone */
-.field-phone { width: 50%; }
-/* text-short: nickname, member ID, passport, cert level */
-.field-text-short { width: 50%; }
-/* date: start date, end date, DOB, expiry */
-.field-date { width: 50%; }
-/* email */
-.field-email { width: 100%; }
-/* select-long: nationality, instructor, venue */
-.field-select-long { width: 100%; }
-/* location: LocationPicker */
-.field-location { width: 100%; }
-/* text-long: textarea, message, allergies */
-.field-text-long { width: 100%; }
+@layer utilities {
+  .field-number       { grid-column: span 2; }
+  .field-select-short { grid-column: span 2; }
+  .field-name         { grid-column: span 3; }
+  .field-phone        { grid-column: span 3; }
+  .field-text-short   { grid-column: span 3; }
+  .field-date         { grid-column: span 3; }
+  .field-email        { grid-column: span 6; }
+  .field-select-long  { grid-column: span 6; }
+  .field-location     { grid-column: span 6; }
+  .field-text-long    { grid-column: span 6; }
 
-@media (min-width: 640px) {
-  .field-number { width: 80px; }
-  .field-select-short { width: 112px; }
-  .field-name { width: 176px; }
-  .field-phone { width: 176px; }
-  .field-text-short { width: 176px; }
-  .field-date { width: 176px; }
-  .field-email { width: 256px; }
-  .field-select-long { width: 256px; }
-  .field-location { width: 256px; }
-  .field-text-long { width: 100%; }
+  @media (min-width: 640px) {
+    .field-number,
+    .field-select-short,
+    .field-name,
+    .field-phone,
+    .field-text-short,
+    .field-date,
+    .field-email,
+    .field-select-long,
+    .field-location,
+    .field-text-long { grid-column: auto; }
+
+    .field-number { width: 80px; }
+    .field-select-short { width: 112px; }
+    .field-name { width: 176px; }
+    .field-phone { width: 176px; }
+    .field-text-short { width: 176px; }
+    .field-date { width: 176px; }
+    .field-email { width: 256px; }
+    .field-select-long { width: 256px; }
+    .field-location { width: 256px; }
+    .field-text-long { width: 100%; }
+  }
 }
 
 /* ── Mobile-first input sizing — prevents iOS auto-zoom (requires ≥16px) ─ */
