@@ -187,7 +187,6 @@ describe('submitToDraft edit-resubmit notifications (DD-340)', () => {
         unitsRequested: 1,
         status: 'Confirmed',
         confirmedAt: Date.now(),
-        expiresAt: Date.now() + HOLD_TTL,
       })
 
       return { bookingId, unitId }
@@ -343,7 +342,6 @@ describe('submitToDraft edit-resubmit notifications (DD-340)', () => {
         unitsRequested: 1,
         status: 'Confirmed',
         confirmedAt: Date.now(),
-        expiresAt: Date.now() + HOLD_TTL,
       })
 
       return { bookingId, unitBId }

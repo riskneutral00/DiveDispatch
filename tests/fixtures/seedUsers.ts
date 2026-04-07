@@ -51,10 +51,10 @@ export async function seedUser(
 /** Seed blocked dates into the stakeholderBlockedDates table. */
 export async function seedBlockedDates(
   ctx: SeedCtx,
-  opts: { ownerSlug: string; roleType: StakeholderRole; dates: string[] },
+  opts: { stakeholderId: string; roleType: StakeholderRole; dates: string[] },
 ) {
   return ctx.db.insert('stakeholderBlockedDates', {
-    ownerSlug: opts.ownerSlug,
+    stakeholderId: opts.stakeholderId,
     roleType: opts.roleType,
     dates: opts.dates,
   })

@@ -88,7 +88,7 @@ async function seedAcceptScenario(
   })
   await seedBookingResource(ctx, bookingId, {
     resourceType: 'Instructor',
-    resourceSlug: instrSlug,
+    resourceId: instrSlug,
   })
   const sessionId = await seedSession(ctx, bookingId, unitId, {
     date: startDate,
@@ -438,7 +438,7 @@ describe('declineReservation', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'h26-instructor',
+        resourceId: 'h26-instructor',
       })
 
       // Sessions + reservations + snapshots for the declining unit (3 days)
@@ -552,7 +552,7 @@ describe('declineReservation', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'h26b-instructor',
+        resourceId: 'h26b-instructor',
       })
 
       for (let day = 5; day <= 7; day++) {
@@ -682,7 +682,7 @@ describe('declineReservation', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'dd390-instructor',
+        resourceId: 'dd390-instructor',
       })
 
       const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -799,7 +799,7 @@ describe('acceptBookingReservations', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'bulk-instructor',
+        resourceId: 'bulk-instructor',
       })
 
       // 3-day booking: day 5, 6, 7
@@ -878,7 +878,7 @@ describe('acceptBookingReservations', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'selective-instructor',
+        resourceId: 'selective-instructor',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const otherSessionId = await seedSession(ctx, bookingId, otherUnitId)
@@ -937,7 +937,7 @@ describe('acceptBookingReservations', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'overflow-instructor',
+        resourceId: 'overflow-instructor',
       })
 
       // Seed MAX_RESERVATIONS_PER_BOOKING + 1 reservations to trigger the limit
@@ -998,7 +998,7 @@ describe('acceptBookingReservations', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'idem-instructor',
+        resourceId: 'idem-instructor',
       })
 
       // Both reservations already Confirmed
@@ -1119,7 +1119,7 @@ describe('decline cascade side effects', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'multiday-instructor',
+        resourceId: 'multiday-instructor',
       })
 
       // 3 sessions across 3 days, each with their own snapshot fully reserved
@@ -1197,7 +1197,7 @@ describe('decline cascade side effects', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'dw-instructor',
+        resourceId: 'dw-instructor',
       })
       // One session, one snapshot, TWO reservations on the same session+snapshot
       const sessionId = await seedSession(ctx, bookingId, unitId, {

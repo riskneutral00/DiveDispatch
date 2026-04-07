@@ -184,7 +184,7 @@ describe('getDiverEquipmentData', () => {
         // Link booking to EM via bookingResources
         await seedBookingResource(ctx, bookingId, {
           resourceType: 'Equipment',
-          resourceSlug: EM_SLUG,
+          resourceId: EM_SLUG,
         })
 
         // Assign bags (sorted by bagNumber, positional mapping to divers)
@@ -261,7 +261,7 @@ describe('getDiverEquipmentData', () => {
       })
       await seedBookingResource(ctx, inRangeId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
 
       // Booking out of range (days 30-35)
@@ -272,7 +272,7 @@ describe('getDiverEquipmentData', () => {
       })
       await seedBookingResource(ctx, outRangeId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
     })
 
@@ -303,7 +303,7 @@ describe('getDiverEquipmentData', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
     })
 
@@ -337,7 +337,7 @@ describe('getDiverEquipmentData', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
       // No bags inserted for this booking
     })
@@ -383,7 +383,7 @@ describe('getDiverEquipmentData', () => {
 
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
     })
 

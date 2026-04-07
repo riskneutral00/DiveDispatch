@@ -189,7 +189,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -221,7 +221,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -255,7 +255,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -285,7 +285,7 @@ describe('tryAutoAdvance — EM release conditions', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -374,7 +374,7 @@ describe('tryAutoAdvance — trigger points', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const reservationId = await seedReservation(
         ctx,
@@ -638,7 +638,7 @@ describe('tryAutoAdvance — snapshot restoration on EM release', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')
@@ -674,7 +674,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -715,7 +715,7 @@ describe('H18: EM auto-release snapshot restoration', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
 
       // Session 1 — day 5
@@ -980,7 +980,7 @@ describe('tryAutoAdvance — TOCTOU fresh-read guards (DD-017)', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       // Pre-vacate the reservation (simulating concurrent caller already released it)
@@ -1013,7 +1013,7 @@ describe('tryAutoAdvance — TOCTOU fresh-read guards (DD-017)', () => {
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       await seedReservation(ctx, bookingId, unitId, sessionId, 'PendingAcceptance')
@@ -1080,7 +1080,7 @@ describe('DD-274: EM auto-release aborts on missing session or snapshot', () => 
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       // Create session, then delete it to simulate orphaned reference
       const sessionId = await seedSession(ctx, bookingId, unitId)
@@ -1118,7 +1118,7 @@ describe('DD-274: EM auto-release aborts on missing session or snapshot', () => 
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')
@@ -1153,7 +1153,7 @@ describe('DD-274: EM auto-release aborts on missing session or snapshot', () => 
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Equipment',
-        resourceSlug: 'em-slug',
+        resourceId: 'em-slug',
       })
       const sessionId = await seedSession(ctx, bookingId, unitId)
       const resId = await seedReservation(ctx, bookingId, unitId, sessionId, 'Confirmed')

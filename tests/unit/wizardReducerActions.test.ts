@@ -49,7 +49,7 @@ describe('MARK_CUSTOMER_LINK_SENT', () => {
 })
 
 describe('SET_DIVE_VENUE', () => {
-  it('updates venueType and resourceSlug on the target dive', () => {
+  it('updates venueType and resourceId on the target dive', () => {
     const dive: DiveSlot = { courseCode: 'OW', diveNumber: 1, isConfined: false }
     const state = stateWithDays([{ ...DAY_BASE, dives: [dive] }])
     const next = wizardReducer(state, {
@@ -57,10 +57,10 @@ describe('SET_DIVE_VENUE', () => {
       dayIndex: 0,
       diveIndex: 0,
       venueType: 'boat',
-      resourceSlug: 'boat-1',
+      resourceId: 'boat-1',
     })
     expect(next.days[0].dives[0].venueType).toBe('boat')
-    expect(next.days[0].dives[0].resourceSlug).toBe('boat-1')
+    expect(next.days[0].dives[0].resourceId).toBe('boat-1')
   })
 
   it('returns state unchanged for invalid dayIndex', () => {
@@ -97,10 +97,10 @@ describe('SET_DIVE_VENUE', () => {
       dayIndex: 0,
       diveIndex: 0,
       venueType: 'pool',
-      resourceSlug: 'pool-1',
+      resourceId: 'pool-1',
     })
     expect(next.days[1].dives[0].venueType).toBeUndefined()
-    expect(next.days[1].dives[0].resourceSlug).toBeUndefined()
+    expect(next.days[1].dives[0].resourceId).toBeUndefined()
   })
 })
 

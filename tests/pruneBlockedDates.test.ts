@@ -27,7 +27,7 @@ describe('pruneBlockedDates', () => {
 
     await t.run(async (ctx) => {
       await seedBlockedDates(ctx, {
-        ownerSlug: 'instr-1',
+        stakeholderId: 'instr-1',
         roleType: 'Instructor',
         dates: [pastDate, futureDate],
       })
@@ -53,7 +53,7 @@ describe('pruneBlockedDates', () => {
 
     await t.run(async (ctx) => {
       await seedBlockedDates(ctx, {
-        ownerSlug: 'instr-1',
+        stakeholderId: 'instr-1',
         roleType: 'Instructor',
         dates: [tomorrowDate, futureDate],
       })
@@ -75,7 +75,7 @@ describe('pruneBlockedDates', () => {
 
     await t.run(async (ctx) => {
       await seedBlockedDates(ctx, {
-        ownerSlug: 'boat-1',
+        stakeholderId: 'boat-1',
         roleType: 'Boat',
         dates: [testDate(-30), testDate(-10), testDate(-1)],
       })
@@ -100,12 +100,12 @@ describe('pruneBlockedDates', () => {
 
     await t.run(async (ctx) => {
       await seedBlockedDates(ctx, {
-        ownerSlug: 'instr-1',
+        stakeholderId: 'instr-1',
         roleType: 'Instructor',
         dates: [pastDate, futureA],
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: 'boat-1',
+        stakeholderId: 'boat-1',
         roleType: 'Boat',
         dates: [pastDate, futureB],
       })
@@ -119,8 +119,8 @@ describe('pruneBlockedDates', () => {
       const rows = await ctx.db.query('stakeholderBlockedDates').collect()
       expect(rows).toHaveLength(2)
 
-      const instrRow = rows.find((r) => r.ownerSlug === 'instr-1')!
-      const boatRow = rows.find((r) => r.ownerSlug === 'boat-1')!
+      const instrRow = rows.find((r) => r.stakeholderId === 'instr-1')!
+      const boatRow = rows.find((r) => r.stakeholderId === 'boat-1')!
 
       expect(instrRow.dates).toEqual([futureA])
       expect(boatRow.dates).toEqual([futureB])
@@ -147,7 +147,7 @@ describe('pruneBlockedDates', () => {
 
     await t.run(async (ctx) => {
       await seedBlockedDates(ctx, {
-        ownerSlug: 'instr-1',
+        stakeholderId: 'instr-1',
         roleType: 'Instructor',
         dates: [futureA, futureB],
       })
@@ -170,13 +170,13 @@ describe('pruneBlockedDates', () => {
     await t.run(async (ctx) => {
       // Row with past dates (will be pruned)
       await seedBlockedDates(ctx, {
-        ownerSlug: 'instr-1',
+        stakeholderId: 'instr-1',
         roleType: 'Instructor',
         dates: [testDate(-5), testDate(5)],
       })
       // Row with only future dates (no pruning needed)
       await seedBlockedDates(ctx, {
-        ownerSlug: 'boat-1',
+        stakeholderId: 'boat-1',
         roleType: 'Boat',
         dates: [testDate(10)],
       })

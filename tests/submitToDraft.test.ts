@@ -500,7 +500,7 @@ describe('submitToDraft', () => {
         appLanguage: 'en',
       })
       await ctx.db.insert('stakeholderBlockedDates', {
-        ownerSlug: 'dc-test',
+        stakeholderId: 'dc-test',
         roleType: 'DiveCenter',
         dates: [testDate(5)],
       })
@@ -1083,7 +1083,7 @@ describe('submitToDraft', () => {
           portalWaiver: false,
           divers: [],
           resources: [
-            { resourceType: 'Boat', resourceSlug: 'boat-1' },
+            { resourceType: 'Boat', resourceId: 'boat-1' },
             { resourceType: 'Instructor', externalName: 'Kaptan Ahmet' },
           ],
         },
@@ -1253,7 +1253,7 @@ describe('submitToDraft', () => {
           portalWaiver: false,
           divers: [],
           resources: [
-            { resourceType: 'Instructor', resourceSlug: 'instructor-mix' },
+            { resourceType: 'Instructor', resourceId: 'instructor-mix' },
             { resourceType: 'Boat', externalName: 'External Boat' },
           ],
         },
@@ -1276,7 +1276,7 @@ describe('submitToDraft', () => {
       const junctionRows = await ctx.db.query('bookingResources').collect()
       expect(junctionRows).toHaveLength(2)
 
-      const internalRow = junctionRows.find((r) => r.resourceSlug === 'instructor-mix')
+      const internalRow = junctionRows.find((r) => r.resourceId === 'instructor-mix')
       const externalRow = junctionRows.find((r) => r.externalName === 'External Boat')
       expect(internalRow?.resourceType).toBe('Instructor')
       expect(externalRow?.resourceType).toBe('Boat')
@@ -1362,7 +1362,7 @@ describe('submitToDraft', () => {
           portalWaiver: false,
           divers: [],
           resources: [
-            { resourceType: 'Instructor', resourceSlug: 'instructor-advance' },
+            { resourceType: 'Instructor', resourceId: 'instructor-advance' },
             { resourceType: 'Boat', externalName: 'External Boat' },
           ],
         },

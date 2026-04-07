@@ -93,7 +93,7 @@ async function seedBookingWithResources(
   for (const entry of resourceEntries) {
     await seedBookingResource(ctx, bookingId, {
       resourceType: entry.type,
-      ...(entry.slug ? { resourceSlug: entry.slug } : {}),
+      ...(entry.slug ? { resourceId: entry.slug } : {}),
       ...(entry.ext ? { externalName: entry.ext } : {}),
     })
   }

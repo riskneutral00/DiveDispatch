@@ -302,8 +302,8 @@ describe('_toggleBlockedDate', () => {
       expect(result).toBe(true)
       const doc = await ctx.db
         .query('stakeholderBlockedDates')
-        .withIndex('by_ownerSlug_roleType', (q: any) =>
-          q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+        .withIndex('by_stakeholderId_roleType', (q: any) =>
+          q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
       expect(doc?.dates).toEqual([testDate(5)])
@@ -314,7 +314,7 @@ describe('_toggleBlockedDate', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
         dates: [testDate(5)],
       })
@@ -324,8 +324,8 @@ describe('_toggleBlockedDate', () => {
       expect(result).toBe(false)
       const doc = await ctx.db
         .query('stakeholderBlockedDates')
-        .withIndex('by_ownerSlug_roleType', (q: any) =>
-          q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+        .withIndex('by_stakeholderId_roleType', (q: any) =>
+          q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
       expect(doc?.dates).toEqual([])
@@ -336,7 +336,7 @@ describe('_toggleBlockedDate', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
         dates: [testDate(5)],
       })
@@ -359,8 +359,8 @@ describe('_toggleBlockedDate', () => {
       expect(result).toBe(true)
       const doc = await ctx.db
         .query('stakeholderBlockedDates')
-        .withIndex('by_ownerSlug_roleType', (q: any) =>
-          q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+        .withIndex('by_stakeholderId_roleType', (q: any) =>
+          q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
       expect(doc?.dates).toEqual([testDate(5)])
@@ -392,7 +392,7 @@ describe('_toggleBlockedDate', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
         dates: [testDate(3), testDate(10)],
       })
@@ -401,8 +401,8 @@ describe('_toggleBlockedDate', () => {
 
       const doc = await ctx.db
         .query('stakeholderBlockedDates')
-        .withIndex('by_ownerSlug_roleType', (q: any) =>
-          q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+        .withIndex('by_stakeholderId_roleType', (q: any) =>
+          q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
         )
         .unique()
       expect(doc?.dates).toEqual([testDate(3), testDate(10), testDate(5)])
@@ -519,7 +519,7 @@ describe('_toggleBlockedDate', () => {
         role: 'Instructor',
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.instructor,
+        stakeholderId: TEST_SLUGS.instructor,
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
@@ -574,7 +574,7 @@ describe('_toggleBlockedDate', () => {
         await seedUser(ctx)
         // Seed a blocked date that is already in the past
         await seedBlockedDates(ctx, {
-          ownerSlug: TEST_SLUGS.diveCenter,
+          stakeholderId: TEST_SLUGS.diveCenter,
           roleType: 'DiveCenter',
           dates: [testDate(-3)],
         })
@@ -603,8 +603,8 @@ describe('_toggleBlockedDate', () => {
         // Equipment role for same owner should have no blocked dates
         const equipDoc = await ctx.db
           .query('stakeholderBlockedDates')
-          .withIndex('by_ownerSlug_roleType', (q: any) =>
-            q.eq('ownerSlug', TEST_SLUGS.instructor).eq('roleType', 'Equipment'),
+          .withIndex('by_stakeholderId_roleType', (q: any) =>
+            q.eq('stakeholderId', TEST_SLUGS.instructor).eq('roleType', 'Equipment'),
           )
           .unique()
         expect(equipDoc).toBeNull()
@@ -622,14 +622,14 @@ describe('_toggleBlockedDate', () => {
         // Each role has its own isolated record
         const boatDoc = await ctx.db
           .query('stakeholderBlockedDates')
-          .withIndex('by_ownerSlug_roleType', (q: any) =>
-            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
+          .withIndex('by_stakeholderId_roleType', (q: any) =>
+            q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
           )
           .unique()
         const dcDoc = await ctx.db
           .query('stakeholderBlockedDates')
-          .withIndex('by_ownerSlug_roleType', (q: any) =>
-            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+          .withIndex('by_stakeholderId_roleType', (q: any) =>
+            q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
           )
           .unique()
 
@@ -640,14 +640,14 @@ describe('_toggleBlockedDate', () => {
         await _toggleBlockedDate(ctx, { date: testDate(5), roleType: 'Boat' })
         const boatAfter = await ctx.db
           .query('stakeholderBlockedDates')
-          .withIndex('by_ownerSlug_roleType', (q: any) =>
-            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
+          .withIndex('by_stakeholderId_roleType', (q: any) =>
+            q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'Boat'),
           )
           .unique()
         const dcAfter = await ctx.db
           .query('stakeholderBlockedDates')
-          .withIndex('by_ownerSlug_roleType', (q: any) =>
-            q.eq('ownerSlug', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
+          .withIndex('by_stakeholderId_roleType', (q: any) =>
+            q.eq('stakeholderId', TEST_SLUGS.diveCenter).eq('roleType', 'DiveCenter'),
           )
           .unique()
 
@@ -692,13 +692,13 @@ describe('_getBlockedDatesForStakeholder', () => {
     await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter }).run(async (ctx) => {
       await seedUser(ctx)
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
         dates: [testDate(5), testDate(10)],
       })
 
       const result = await _getBlockedDatesForStakeholder(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
       })
       expect(result).toEqual([testDate(5), testDate(10)])
@@ -709,7 +709,7 @@ describe('_getBlockedDatesForStakeholder', () => {
     await t.run(async (ctx) => {
       await expect(
         _getBlockedDatesForStakeholder(ctx, {
-          ownerSlug: TEST_SLUGS.diveCenter,
+          stakeholderId: TEST_SLUGS.diveCenter,
           roleType: 'DiveCenter',
         }),
       ).rejects.toThrow('UNAUTHENTICATED')
@@ -730,14 +730,14 @@ describe('_getBlockedDatesForStakeholder', () => {
         role: 'DiveCenter',
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
         dates: [testDate(5)],
       })
 
       // Instructor tries to query DiveCenter's blocked dates → silent deny
       const result = await _getBlockedDatesForStakeholder(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
       })
       expect(result).toEqual([])
@@ -749,7 +749,7 @@ describe('_getBlockedDatesForStakeholder', () => {
       await seedUser(ctx)
 
       const result = await _getBlockedDatesForStakeholder(ctx, {
-        ownerSlug: TEST_SLUGS.diveCenter,
+        stakeholderId: TEST_SLUGS.diveCenter,
         roleType: 'DiveCenter',
       })
       expect(result).toEqual([])
@@ -1085,7 +1085,7 @@ describe('_getCapacityForDates', () => {
         ownerId: TEST_SLUGS.instructor,
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.instructor,
+        stakeholderId: TEST_SLUGS.instructor,
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
@@ -1104,7 +1104,7 @@ describe('_getCapacityForDates', () => {
         ownerId: TEST_SLUGS.instructor,
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.instructor,
+        stakeholderId: TEST_SLUGS.instructor,
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
@@ -1133,7 +1133,7 @@ describe('_getCapacityForDates', () => {
       })
       // Only Instructor role is blocked
       await seedBlockedDates(ctx, {
-        ownerSlug: TEST_SLUGS.instructor,
+        stakeholderId: TEST_SLUGS.instructor,
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
@@ -1154,7 +1154,7 @@ describe('_getCapacityForDates', () => {
         ownerId: 'blocked-instr',
       })
       await seedBlockedDates(ctx, {
-        ownerSlug: 'blocked-instr',
+        stakeholderId: 'blocked-instr',
         roleType: 'Instructor',
         dates: [testDate(5)],
       })

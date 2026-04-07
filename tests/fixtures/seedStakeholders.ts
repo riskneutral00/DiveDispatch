@@ -20,7 +20,6 @@ export async function seedStakeholderPreferences(
     preferredEquipmentSlugs?: string[]
     preferredBoatSlugs?: string[]
     preferredCompressorSlugs?: string[]
-    noWorkAfterTime?: string
   } = {},
 ) {
   return ctx.db.insert('stakeholderPreferences', {
@@ -36,6 +35,5 @@ export async function seedStakeholderPreferences(
     ...(overrides.preferredEquipmentSlugs !== undefined ? { preferredEquipmentSlugs: overrides.preferredEquipmentSlugs } : {}),
     ...(overrides.preferredBoatSlugs !== undefined ? { preferredBoatSlugs: overrides.preferredBoatSlugs } : {}),
     ...(overrides.preferredCompressorSlugs !== undefined ? { preferredCompressorSlugs: overrides.preferredCompressorSlugs } : {}),
-    ...(overrides.noWorkAfterTime !== undefined ? { noWorkAfterTime: overrides.noWorkAfterTime } : {}),
   })
 }

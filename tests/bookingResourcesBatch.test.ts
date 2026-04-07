@@ -46,11 +46,11 @@ describe('getResourcesForBookings', () => {
       const bookingId = await seedBooking(ctx, { ownerId: 'dc-1' })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
-        resourceSlug: 'boat-1',
+        resourceId: 'boat-1',
       })
 
       const map = await getResourcesForBookings(ctx, [bookingId as string])
@@ -75,9 +75,9 @@ describe('getResourcesForBookings', () => {
       const b2 = await seedBooking(ctx, { ownerId: 'dc-1' })
       const b3 = await seedBooking(ctx, { ownerId: 'dc-1' })
 
-      await seedBookingResource(ctx, b1, { resourceType: 'Instructor', resourceSlug: 'instr-1' })
-      await seedBookingResource(ctx, b2, { resourceType: 'Boat', resourceSlug: 'boat-1' })
-      await seedBookingResource(ctx, b2, { resourceType: 'Instructor', resourceSlug: 'instr-2' })
+      await seedBookingResource(ctx, b1, { resourceType: 'Instructor', resourceId: 'instr-1' })
+      await seedBookingResource(ctx, b2, { resourceType: 'Boat', resourceId: 'boat-1' })
+      await seedBookingResource(ctx, b2, { resourceType: 'Instructor', resourceId: 'instr-2' })
       // b3 has no resources
 
       const map = await getResourcesForBookings(ctx, [b1 as string, b2 as string, b3 as string])
@@ -102,7 +102,7 @@ describe('getResourcesForBookings', () => {
       const bookingId = await seedBooking(ctx, { ownerId: 'dc-1' })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instr-1',
+        resourceId: 'instr-1',
       })
 
       const map = await getResourcesForBookings(ctx, [

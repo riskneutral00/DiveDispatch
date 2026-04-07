@@ -382,7 +382,7 @@ describe('clearAll', () => {
 
       const remaining = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
       expect(remaining).toHaveLength(0)
     })
@@ -409,7 +409,7 @@ describe('clearAll', () => {
       // The other user's notification should still exist
       const otherNotifs = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', 'someone-else'))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'someone-else'))
         .collect()
       expect(otherNotifs).toHaveLength(1)
     })

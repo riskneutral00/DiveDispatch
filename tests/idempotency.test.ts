@@ -37,7 +37,7 @@ describe('Idempotency guard', () => {
     const count = await t.run(async (ctx) => {
       const all = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
       return all.length
     })
@@ -75,7 +75,7 @@ describe('Idempotency guard', () => {
     const notifications = await t.run(async (ctx) => {
       return await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
     })
 
@@ -110,7 +110,7 @@ describe('Idempotency guard', () => {
     const notifications = await t.run(async (ctx) => {
       return await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
     })
 
@@ -142,7 +142,7 @@ describe('Idempotency guard', () => {
     const notifications = await t.run(async (ctx) => {
       return await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
     })
 
@@ -349,7 +349,7 @@ describe('Idempotency OCC retry path', () => {
     const notifications = await t.run(async (ctx) => {
       return await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
     })
 
@@ -406,7 +406,7 @@ describe('Idempotency OCC retry path', () => {
     const notifications = await t.run(async (ctx) => {
       return await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', TEST_SLUGS.diveCenter))
         .collect()
     })
     expect(notifications).toHaveLength(1)

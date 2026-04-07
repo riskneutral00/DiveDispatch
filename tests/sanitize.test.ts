@@ -10,6 +10,7 @@ import {
   SHORT_TEXT_MAX,
   LONG_TEXT_MAX,
   SUPPORT_MESSAGE_MAX,
+  CONFIG_JSON_MAX,
   MEDICAL_ANSWER_MAX,
   DRAFT_STATE_MAX,
   USER_FIELDS,
@@ -303,7 +304,7 @@ describe('field configs structural integrity', () => {
       })
 
       it('all max lengths use standard presets', () => {
-        const presets = new Set([NAME_MAX, EMAIL_MAX, PHONE_MAX, SHORT_TEXT_MAX, LONG_TEXT_MAX, SUPPORT_MESSAGE_MAX])
+        const presets = new Set([NAME_MAX, EMAIL_MAX, PHONE_MAX, SHORT_TEXT_MAX, LONG_TEXT_MAX, SUPPORT_MESSAGE_MAX, CONFIG_JSON_MAX])
         for (const [field, maxLen] of Object.entries(config)) {
           expect(presets.has(maxLen), `${name}.${field} uses non-standard max length ${maxLen}`).toBe(true)
         }

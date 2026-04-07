@@ -260,7 +260,7 @@ describe('tryAutoAdvance logistics notification', () => {
     })
   })
 
-  it('populates boatName from inventoryUnit.displayName for in-system boat (resourceSlug set)', async () => {
+  it('populates boatName from inventoryUnit.displayName for in-system boat (resourceId set)', async () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
@@ -277,11 +277,11 @@ describe('tryAutoAdvance logistics notification', () => {
         ownerType: 'Boat',
       })
 
-      // Seed in-system boat resource (resourceSlug set, no externalName)
+      // Seed in-system boat resource (resourceId set, no externalName)
       await ctx.db.insert('bookingResources', {
         bookingId,
         resourceType: 'Boat',
-        resourceSlug: boatSlug,
+        resourceId: boatSlug,
       })
 
       await tryAutoAdvance(ctx, bookingId)

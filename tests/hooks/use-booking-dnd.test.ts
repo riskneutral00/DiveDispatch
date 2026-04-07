@@ -86,8 +86,8 @@ describe('drag-to-date pre-fill generation', () => {
       preferredCompressorSlugs: [],
     }
     const hints = [
-      { resourceType: 'Instructor', resourceSlug: 'tmpl-inst' },
-      { resourceType: 'Boat', resourceSlug: 'tmpl-boat' },
+      { resourceType: 'Instructor', resourceId: 'tmpl-inst' },
+      { resourceType: 'Boat', resourceId: 'tmpl-boat' },
     ]
     const result = buildPreFill(['OW'], FUTURE, emptyDefaults, hints)
     expect(result.instructorSlug).toBe('tmpl-inst')
@@ -96,7 +96,7 @@ describe('drag-to-date pre-fill generation', () => {
   })
 
   it('does not override operator defaults with template hints', () => {
-    const hints = [{ resourceType: 'Instructor', resourceSlug: 'tmpl-inst' }]
+    const hints = [{ resourceType: 'Instructor', resourceId: 'tmpl-inst' }]
     const result = buildPreFill(['OW'], FUTURE, MOCK_DEFAULTS, hints)
     expect(result.instructorSlug).toBe('instructor-1')
     expect(result.templateResourceHints).toEqual(hints)

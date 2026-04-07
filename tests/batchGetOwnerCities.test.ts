@@ -158,7 +158,7 @@ describe('decline with maxCandidates bound', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'bound-instr',
+        resourceId: 'bound-instr',
       })
 
       const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -288,7 +288,7 @@ describe('decline with batched city lookup preserves filtering', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'city-decl-instr',
+        resourceId: 'city-decl-instr',
       })
 
       const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -439,7 +439,7 @@ describe('decline with batched city lookup preserves filtering', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'lang-decl-instr',
+        resourceId: 'lang-decl-instr',
       })
 
       const sessionId = await seedSession(ctx, bookingId, unitId, {
@@ -561,7 +561,7 @@ describe('decline with batched city lookup preserves filtering', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'diffcity-decl-instr',
+        resourceId: 'diffcity-decl-instr',
       })
 
       const sessionId = await seedSession(ctx, bookingId, unitId, {

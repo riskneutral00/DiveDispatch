@@ -85,11 +85,11 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
-        resourceSlug: 'boat-1',
+        resourceId: 'boat-1',
       })
     })
 
@@ -239,7 +239,7 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       const iuId = await seedInventoryUnit(ctx, {
         ownerId: 'instructor-1',
@@ -291,7 +291,7 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       const iuId = await seedInventoryUnit(ctx, {
         ownerId: 'instructor-1',
@@ -430,7 +430,7 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
@@ -476,7 +476,7 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       const iuId = await seedInventoryUnit(ctx, {
         ownerId: 'instructor-1',
@@ -587,7 +587,7 @@ describe('getBookingDetail', () => {
       })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'instructor-1',
+        resourceId: 'instructor-1',
       })
       const iuId = await seedInventoryUnit(ctx, {
         ownerId: 'instructor-1',

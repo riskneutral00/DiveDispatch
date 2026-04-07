@@ -61,11 +61,11 @@ describe('userRoles.bookingCountForRole', () => {
 
       await seedBookingResource(ctx, draftBookingId, {
         resourceType: 'Instructor',
-        resourceSlug: TEST_SLUGS.diveCenter,
+        resourceId: TEST_SLUGS.diveCenter,
       })
       await seedBookingResource(ctx, upcomingBookingId, {
         resourceType: 'Instructor',
-        resourceSlug: TEST_SLUGS.diveCenter,
+        resourceId: TEST_SLUGS.diveCenter,
       })
     })
 
@@ -105,7 +105,7 @@ describe('userRoles.bookingCountForRole', () => {
       for (const bookingId of [completedId, cancelledId, draftId]) {
         await seedBookingResource(ctx, bookingId, {
           resourceType: 'Instructor',
-          resourceSlug: TEST_SLUGS.diveCenter,
+          resourceId: TEST_SLUGS.diveCenter,
         })
       }
     })
@@ -173,11 +173,11 @@ describe('userRoles.deleteRole', () => {
 
       await seedBookingResource(ctx, b1, {
         resourceType: 'Instructor',
-        resourceSlug: TEST_SLUGS.diveCenter,
+        resourceId: TEST_SLUGS.diveCenter,
       })
       await seedBookingResource(ctx, b2, {
         resourceType: 'Instructor',
-        resourceSlug: TEST_SLUGS.diveCenter,
+        resourceId: TEST_SLUGS.diveCenter,
       })
     })
 
@@ -298,7 +298,7 @@ describe('userRoles.deleteRole', () => {
       for (const id of [completedId, cancelledId]) {
         await seedBookingResource(ctx, id, {
           resourceType: 'Instructor',
-          resourceSlug: TEST_SLUGS.diveCenter,
+          resourceId: TEST_SLUGS.diveCenter,
         })
       }
     })

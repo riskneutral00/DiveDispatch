@@ -147,8 +147,8 @@ describe('bookingResources round-trip lifecycle', () => {
               },
             ],
             resources: [
-              { resourceType: 'Instructor', resourceSlug: 'inst-1' },
-              { resourceType: 'Equipment', resourceSlug: 'em-1' },
+              { resourceType: 'Instructor', resourceId: 'inst-1' },
+              { resourceType: 'Equipment', resourceId: 'em-1' },
             ],
           },
         },
@@ -166,10 +166,10 @@ describe('bookingResources round-trip lifecycle', () => {
         expect(types).toEqual(['Equipment', 'Instructor'])
 
         const instRow = brRows.find((r) => r.resourceType === 'Instructor')
-        expect(instRow!.resourceSlug).toBe('inst-1')
+        expect(instRow!.resourceId).toBe('inst-1')
 
         const emRow = brRows.find((r) => r.resourceType === 'Equipment')
-        expect(emRow!.resourceSlug).toBe('em-1')
+        expect(emRow!.resourceId).toBe('em-1')
       })
 
       // Verify reservations created as PendingAcceptance
@@ -245,8 +245,8 @@ describe('bookingResources round-trip lifecycle', () => {
               },
             ],
             resources: [
-              { resourceType: 'Instructor', resourceSlug: 'inst-1' },
-              { resourceType: 'Equipment', resourceSlug: 'em-1' },
+              { resourceType: 'Instructor', resourceId: 'inst-1' },
+              { resourceType: 'Equipment', resourceId: 'em-1' },
             ],
           },
         },
@@ -336,8 +336,8 @@ describe('bookingResources round-trip lifecycle', () => {
               },
             ],
             resources: [
-              { resourceType: 'Instructor', resourceSlug: 'inst-1' },
-              { resourceType: 'Equipment', resourceSlug: 'em-1' },
+              { resourceType: 'Instructor', resourceId: 'inst-1' },
+              { resourceType: 'Equipment', resourceId: 'em-1' },
             ],
           },
         },
@@ -415,8 +415,8 @@ describe('bookingResources round-trip lifecycle', () => {
               },
             ],
             resources: [
-              { resourceType: 'Instructor', resourceSlug: 'inst-1' },
-              { resourceType: 'Equipment', resourceSlug: 'em-1' },
+              { resourceType: 'Instructor', resourceId: 'inst-1' },
+              { resourceType: 'Equipment', resourceId: 'em-1' },
             ],
           },
         },
@@ -535,8 +535,8 @@ describe('bookingResources round-trip lifecycle', () => {
               },
             ],
             resources: [
-              { resourceType: 'Instructor', resourceSlug: 'inst-1' },
-              { resourceType: 'Equipment', resourceSlug: 'em-1' },
+              { resourceType: 'Instructor', resourceId: 'inst-1' },
+              { resourceType: 'Equipment', resourceId: 'em-1' },
             ],
           },
         },
@@ -598,7 +598,7 @@ describe('bookingResources round-trip lifecycle', () => {
 
         // Instructor row should still exist
         const instRow = brRows.find((r) => r.resourceType === 'Instructor')
-        expect(instRow?.resourceSlug).toBe('inst-1')
+        expect(instRow?.resourceId).toBe('inst-1')
       })
 
       // Verify: availability snapshot for equipment unit is restored
@@ -623,7 +623,7 @@ describe('bookingResources round-trip lifecycle', () => {
       await t.run(async (ctx) => {
         const notifications = await ctx.db
           .query('notifications')
-          .withIndex('by_userId', (q) => q.eq('userId', 'dc-test'))
+          .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'dc-test'))
           .collect()
         const declineNotif = notifications.find((n) => n.type === 'hold_declined')
         expect(declineNotif?.bookingId).toBe(bookingId)

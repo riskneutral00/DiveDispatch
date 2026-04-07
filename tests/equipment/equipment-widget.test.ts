@@ -91,7 +91,7 @@ describe('equipmentWidget.getDiverEquipmentData', () => {
 
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Equipment',
-        resourceSlug: EM_SLUG,
+        resourceId: EM_SLUG,
       })
 
       const customerId = await ctx.db.insert('customers', customerFields({
@@ -166,11 +166,11 @@ describe('equipmentWidget.getDiverEquipmentData', () => {
 
       // Booking in range
       const b1 = await seedBooking(ctx, { startDate: testDate(5), endDate: testDate(7) })
-      await seedBookingResource(ctx, b1, { resourceType: 'Equipment', resourceSlug: EM_SLUG })
+      await seedBookingResource(ctx, b1, { resourceType: 'Equipment', resourceId: EM_SLUG })
 
       // Booking outside range
       const b2 = await seedBooking(ctx, { startDate: testDate(60), endDate: testDate(62) })
-      await seedBookingResource(ctx, b2, { resourceType: 'Equipment', resourceSlug: EM_SLUG })
+      await seedBookingResource(ctx, b2, { resourceType: 'Equipment', resourceId: EM_SLUG })
     })
 
     const result = await t

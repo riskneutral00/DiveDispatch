@@ -198,14 +198,14 @@ export async function seedBookingResource(
   bookingId: Id<'bookings'>,
   overrides: {
     resourceType: Doc<'bookingResources'>['resourceType']
-    resourceSlug?: string
+    resourceId?: string
     externalName?: string
   },
 ) {
   return ctx.db.insert('bookingResources', {
     bookingId,
     resourceType: overrides.resourceType,
-    ...(overrides.resourceSlug !== undefined ? { resourceSlug: overrides.resourceSlug } : {}),
+    ...(overrides.resourceId !== undefined ? { resourceId: overrides.resourceId } : {}),
     ...(overrides.externalName !== undefined ? { externalName: overrides.externalName } : {}),
   })
 }

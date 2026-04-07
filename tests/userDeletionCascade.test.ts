@@ -58,7 +58,7 @@ async function seedBookingWithReservation(
 
   await seedBookingResource(ctx, bookingId, {
     resourceType: 'Instructor',
-    resourceSlug: opts.instructorSlug,
+    resourceId: opts.instructorSlug,
   })
 
   return { bookingId, unitId, sessionId, snapshotId, reservationId }
@@ -220,7 +220,7 @@ describe('cancelOneBookingForDeletedUser', () => {
       // Stakeholder notification sent
       const notifications = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', 'instr-3'))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'instr-3'))
         .collect()
       expect(notifications.length).toBeGreaterThanOrEqual(1)
       expect(notifications.some((n) => n.type === 'booking_cancelled')).toBe(true)
@@ -307,7 +307,7 @@ describe('cleanupDeletedUserData', () => {
 
       // Add blocked dates
       await ctx.db.insert('stakeholderBlockedDates', {
-        ownerSlug: 'cleanup-user',
+        stakeholderId: 'cleanup-user',
         roleType: 'Instructor',
         dates: [testDate(5)],
       })
@@ -316,7 +316,7 @@ describe('cleanupDeletedUserData', () => {
       const bookingId = await seedBooking(ctx, { ownerId: 'other-owner' })
       await seedBookingResource(ctx, bookingId, {
         resourceType: 'Instructor',
-        resourceSlug: 'cleanup-user',
+        resourceId: 'cleanup-user',
       })
     })
 
@@ -336,7 +336,7 @@ describe('cleanupDeletedUserData', () => {
       // Notifications marked read
       const notifications = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', 'cleanup-user'))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'cleanup-user'))
         .collect()
       expect(notifications).toHaveLength(2)
       expect(notifications.every((n) => n.readAt !== undefined)).toBe(true)
@@ -351,14 +351,14 @@ describe('cleanupDeletedUserData', () => {
       // Blocked dates deleted
       const blocked = await ctx.db
         .query('stakeholderBlockedDates')
-        .filter((q) => q.eq(q.field('ownerSlug'), 'cleanup-user'))
+        .filter((q) => q.eq(q.field('stakeholderId'), 'cleanup-user'))
         .collect()
       expect(blocked).toHaveLength(0)
 
       // BookingResources deleted
       const resources = await ctx.db
         .query('bookingResources')
-        .withIndex('by_resourceSlug', (q) => q.eq('resourceSlug', 'cleanup-user'))
+        .withIndex('by_resourceId', (q) => q.eq('resourceId', 'cleanup-user'))
         .collect()
       expect(resources).toHaveLength(0)
     })
@@ -595,7 +595,7 @@ describe('cleanupDeletedUserData', () => {
     await t.run(async (ctx) => {
       const unread = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', 'many-notifs-user'))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'many-notifs-user'))
         .filter((q) => q.eq(q.field('readAt'), undefined))
         .collect()
       // Some should still be unread (the ones beyond the batch size)
@@ -608,7 +608,7 @@ describe('cleanupDeletedUserData', () => {
     await t.run(async (ctx) => {
       const notifications = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', 'many-notifs-user'))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', 'many-notifs-user'))
         .collect()
       expect(notifications).toHaveLength(60)
       expect(notifications.every((n) => n.readAt !== undefined)).toBe(true)
@@ -798,7 +798,7 @@ describe('end-to-end user deletion cascade', () => {
       // Notifications marked read
       const notifications = await ctx.db
         .query('notifications')
-        .withIndex('by_userId', (q) => q.eq('userId', ownerSlug))
+        .withIndex('by_userId_createdAt', (q) => q.eq('userId', ownerSlug))
         .collect()
       expect(notifications.every((n) => n.readAt !== undefined)).toBe(true)
     })

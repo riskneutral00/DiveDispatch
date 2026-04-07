@@ -716,28 +716,28 @@ describe('APPLY_DIVE_RESOURCE_TO_REMAINING', () => {
     state = {
       ...state,
       days: [
-        { date: testDate(3), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false, venueType: 'boat', resourceSlug: 'boat-1' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: testDate(3), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false, venueType: 'boat', resourceId: 'boat-1' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
         { date: testDate(4), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false, venueType: 'boat' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
         { date: testDate(5), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 3, isConfined: false, venueType: 'boat' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
-    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 1, venueType: 'boat', resourceSlug: 'boat-1' })
-    expect(state.days[1].dives[0].resourceSlug).toBe('boat-1')
-    expect(state.days[2].dives[0].resourceSlug).toBe('boat-1')
+    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 1, venueType: 'boat', resourceId: 'boat-1' })
+    expect(state.days[1].dives[0].resourceId).toBe('boat-1')
+    expect(state.days[2].dives[0].resourceId).toBe('boat-1')
   })
 
-  it('does not overwrite existing resourceSlug', () => {
+  it('does not overwrite existing resourceId', () => {
     let state = makeInitialState()
     state = {
       ...state,
       days: [
         { date: testDate(3), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false, venueType: 'boat' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
-        { date: testDate(4), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false, venueType: 'boat', resourceSlug: 'boat-2' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
+        { date: testDate(4), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false, venueType: 'boat', resourceId: 'boat-2' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
-    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 0, venueType: 'boat', resourceSlug: 'boat-1' })
-    expect(state.days[0].dives[0].resourceSlug).toBe('boat-1') // was empty, filled
-    expect(state.days[1].dives[0].resourceSlug).toBe('boat-2') // already set, kept
+    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 0, venueType: 'boat', resourceId: 'boat-1' })
+    expect(state.days[0].dives[0].resourceId).toBe('boat-1') // was empty, filled
+    expect(state.days[1].dives[0].resourceId).toBe('boat-2') // already set, kept
   })
 
   it('does not affect days before fromDayIndex', () => {
@@ -749,9 +749,9 @@ describe('APPLY_DIVE_RESOURCE_TO_REMAINING', () => {
         { date: testDate(4), venueType: 'boat', dives: [{ courseCode: 'OW', diveNumber: 2, isConfined: false, venueType: 'boat' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
-    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 1, venueType: 'boat', resourceSlug: 'boat-1' })
-    expect(state.days[0].dives[0].resourceSlug).toBeUndefined() // untouched
-    expect(state.days[1].dives[0].resourceSlug).toBe('boat-1')
+    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 1, venueType: 'boat', resourceId: 'boat-1' })
+    expect(state.days[0].dives[0].resourceId).toBeUndefined() // untouched
+    expect(state.days[1].dives[0].resourceId).toBe('boat-1')
   })
 
   it('only affects dives matching the specified venueType', () => {
@@ -765,9 +765,9 @@ describe('APPLY_DIVE_RESOURCE_TO_REMAINING', () => {
         ], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok' },
       ],
     }
-    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 0, venueType: 'boat', resourceSlug: 'boat-1' })
-    expect(state.days[0].dives[0].resourceSlug).toBe('boat-1') // boat dive filled
-    expect(state.days[0].dives[1].resourceSlug).toBeUndefined() // pool dive untouched
+    state = wizardReducer(state, { type: 'APPLY_DIVE_RESOURCE_TO_REMAINING', fromDayIndex: 0, venueType: 'boat', resourceId: 'boat-1' })
+    expect(state.days[0].dives[0].resourceId).toBe('boat-1') // boat dive filled
+    expect(state.days[0].dives[1].resourceId).toBeUndefined() // pool dive untouched
   })
 })
 
@@ -804,7 +804,7 @@ describe('canAdvanceFromItinerary — resource requirements', () => {
     expect(canAdvanceFromItinerary(state)).toBe(false)
   })
 
-  it('returns false when dive has venueType but no resourceSlug', () => {
+  it('returns false when dive has venueType but no resourceId', () => {
     const customer = makeCustomer('Anna', 'anna@test.com')
     customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: [testDate(3), testDate(5)], agency: '' }]
     const state = {
@@ -817,14 +817,14 @@ describe('canAdvanceFromItinerary — resource requirements', () => {
     expect(canAdvanceFromItinerary(state)).toBe(false)
   })
 
-  it('returns true when dive has venueType and resourceSlug', () => {
+  it('returns true when dive has venueType and resourceId', () => {
     const customer = makeCustomer('Anna', 'anna@test.com')
     customer.courseEntries = [{ id: '1', activityCode: 'OW', dates: [testDate(3), testDate(5)], agency: '' }]
     const state = {
       ...makeInitialState(), ...REQUIRED_RESOURCES,
       customers: [customer],
       days: [
-        { date: testDate(3), venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false, venueType: 'boat' as const, resourceSlug: 'boat-1' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
+        { date: testDate(3), venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false, venueType: 'boat' as const, resourceId: 'boat-1' }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
       ],
     }
     expect(canAdvanceFromItinerary(state)).toBe(true)

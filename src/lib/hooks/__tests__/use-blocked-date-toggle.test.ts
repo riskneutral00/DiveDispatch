@@ -29,7 +29,7 @@ import { useBlockedDateToggle } from '../use-blocked-date-toggle'
 
 function renderToggleHook() {
   return renderHook(() =>
-    useBlockedDateToggle({ ownerSlug: 'test-slug', roleType: 'Instructor' }),
+    useBlockedDateToggle({ stakeholderId: 'test-slug', roleType: 'Instructor' }),
   )
 }
 
