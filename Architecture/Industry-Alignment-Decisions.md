@@ -16,11 +16,11 @@
 - C2 server-enforced caps + `.collect()` audit complete. 107 calls audited with `// bounded:` annotations or `.take(N)` caps. Notifications, themes, bookingTemplates, availability all capped.
 - C8 FSM gateway invariant test added (`tests/fsmGateway.test.ts`).
 - C9 `stateMachineTime.test.ts` time guards added (`vi.useFakeTimers` + `vi.setSystemTime`).
-
 - C5 Storybook + Chromatic CI set up. Stories for all glass + form primitives. Visual regression baseline captured. Rule 10 added to `component-invariants.md`.
 - C9 complete. 10 highest-inline-insert test files migrated to `seedFixture.ts`. Portal + discard mutation component tests added.
+- C3 complete. `authorize(ctx, actor, action, resource, orgId?)` built in `convex/lib/auth.ts`. `relationships` table added to schema. Clerk Org configuration documented in `Architecture/clerk-org-config.md`. All ~65 mutation call sites across 26 files migrated. `themes.upsert` restricted from `checkHasAnyOperatorRole` to `authorize('theme:manage')`. Fallback mode preserves current behavior until Clerk Dashboard is configured. 4561 tests pass.
 
-**Next:** Phase 3 — C3 (Clerk Organizations + `authorize()` build). SkinCommerce theme unification (C2) deferred to own session. ~60 raw buttons (C4) deferred to individual tickets.
+**Next:** Phase 3 — SkinCommerce theme unification (C2). ~60 raw buttons (C4) deferred to individual tickets. Clerk Dashboard manual configuration (C3 — documented, not yet applied).
 
 ---
 
@@ -139,14 +139,14 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 - [x] Write `Architecture/auth-model.md` (must document: `authorize()` contract with `orgId` param, Clerk roles ≠ DD stakeholder types, `userRoles` augmented not replaced, relationship table schema, the two-extreme test, field-level access rules)
 - [x] Add CLAUDE.md pointer
-- [ ] Configure Clerk JWT template to include `org_id`, `org_role`, `org_permissions`, `org_slug` in Clerk Dashboard
-- [ ] Define ~4 Clerk permission tiers (admin, manager, member, viewer) and map DD permissions (`org:bookings:manage`, `org:themes:manage`, etc.)
-- [ ] Set up Clerk Organizations in Dashboard
-- [ ] Build `authorize(ctx, actor, action, resource, orgId?)` in `convex/lib/auth.ts`
-- [ ] Build `relationships` table from scratch (the `stakeholderHierarchy` table referenced elsewhere does not exist — confirmed via grep)
-- [ ] Design migration path for `userRoles` integration (40 files reference this table — it stays but `authorize()` wraps it)
-- [ ] Migrate all mutations to call `authorize()` as first operation (absorbs the 5 `getAuthUser` fixes and `themes.upsert` tightening — no interim fix needed since auth is being built)
-- [ ] Fix `themes.upsert` access control (restrict from `checkHasAnyOperatorRole` to appropriate Clerk permission)
+- [x] Configure Clerk JWT template to include `org_id`, `org_role`, `org_permissions`, `org_slug` in Clerk Dashboard — documented in `Architecture/clerk-org-config.md`
+- [x] Define ~4 Clerk permission tiers (admin, manager, member, viewer) and map DD permissions (`org:bookings:manage`, `org:themes:manage`, etc.) — documented in `Architecture/clerk-org-config.md`
+- [x] Set up Clerk Organizations in Dashboard — documented in `Architecture/clerk-org-config.md`
+- [x] Build `authorize(ctx, actor, action, resource, orgId?)` in `convex/lib/auth.ts`
+- [x] Build `relationships` table from scratch (the `stakeholderHierarchy` table referenced elsewhere does not exist — confirmed via grep)
+- [x] Design migration path for `userRoles` integration (40 files reference this table — it stays but `authorize()` wraps it)
+- [x] Migrate all mutations to call `authorize()` as first operation (absorbs the 5 `getAuthUser` fixes and `themes.upsert` tightening — no interim fix needed since auth is being built)
+- [x] Fix `themes.upsert` access control (restrict from `checkHasAnyOperatorRole` to appropriate Clerk permission)
 
 ---
 
