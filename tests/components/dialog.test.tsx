@@ -160,7 +160,7 @@ describe('Dialog design compliance', () => {
         <p>Content</p>
       </Dialog>,
     )
-    const panel = document.querySelector('.glass-container') as HTMLElement
+    const panel = document.querySelector('.dialog-fullscreen-panel') as HTMLElement
     expect(panel).toBeInTheDocument()
     expect(panel.style.backdropFilter).toBe('')
     expect(panel.style.getPropertyValue('-webkit-backdrop-filter')).toBe('')

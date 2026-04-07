@@ -29,13 +29,11 @@ describe('Textarea', () => {
     expect(alert).toHaveTextContent('Required')
   })
 
-  it('does not render duplicate className attributes', () => {
+  it('applies field-underline class instead of glass', () => {
     const { container } = render(<Textarea data-testid="ta" />)
     const textarea = container.querySelector('textarea')!
-    // If there were two className attributes, JSX would silently use the last one.
-    // We verify text-primary is present alongside the glass classes.
     expect(textarea.className).toContain('text-primary')
-    expect(textarea.className).toContain('glass')
-    expect(textarea.className).toContain('glass-field')
+    expect(textarea.className).toContain('field-underline')
+    expect(textarea.className).not.toContain('glass')
   })
 })

@@ -11,13 +11,13 @@ import { screen, fireEvent } from '@testing-library/react'
 import { LanguagePicker } from '../../src/components/profiles/language-picker'
 
 describe('LanguagePicker', () => {
-  it('search input container has max-width constraint', () => {
+  it('search input container uses full width for intrinsic containment', () => {
     const { container } = render(
       <LanguagePicker value={[]} onChange={() => {}} />,
     )
     const inputWrapper = container.querySelector('input[type="text"]')?.parentElement
     expect(inputWrapper).toBeTruthy()
-    expect(inputWrapper!.className).toMatch(/max-w-xs/)
+    expect(inputWrapper!.className).toMatch(/w-full/)
   })
 
   it('renders popular language flag buttons', () => {
