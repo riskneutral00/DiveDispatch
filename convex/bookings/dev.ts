@@ -1,9 +1,3 @@
-/**
- * DEV-ONLY mutations for manual testing.
- * Allows simulating customer portal completion so the full booking lifecycle
- * can be tested before the portal is live.
- */
-
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { requireAuth, assertOwnership } from '../lib/auth'
@@ -11,11 +5,6 @@ import { tryAutoAdvance } from './autoAdvance'
 import { ErrorCode } from '../lib/errorCodes'
 import { requireDevEnvironment } from '../lib/devGuard'
 
-/**
- * DEV-ONLY: Marks a booking's customer form as complete and triggers auto-advance.
- * Simulates "all customers submitted their portal forms" so Draft → Upcoming
- * can proceed without the customer portal being live.
- */
 export const forceCustomerFormComplete = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {

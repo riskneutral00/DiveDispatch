@@ -38,7 +38,6 @@ const ICON_MAP: Record<IconName, React.ElementType> = {
   XCircle,
 }
 
-// Static component — declared outside render to preserve reference identity.
 function NotificationIcon({ type, isUnread }: { type: string; isUnread: boolean }) {
   const { icon, color } = getNotificationStyle(type, isUnread)
   const Icon = ICON_MAP[icon] ?? Bell

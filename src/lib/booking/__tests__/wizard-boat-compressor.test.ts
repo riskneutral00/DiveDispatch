@@ -5,9 +5,6 @@ import {
   type WizardState,
 } from '../wizard-state'
 
-/**
- * Minimal state that passes all non-compressor checks.
- */
 function baseState(overrides: Partial<WizardState> = {}): WizardState {
   const state = makeInitialState()
   state.equipment = 'equip-1'

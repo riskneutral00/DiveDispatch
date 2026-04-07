@@ -1,10 +1,3 @@
-/**
- * DiveCenter profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the three independent DiveCenter profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
@@ -35,8 +28,6 @@ const VALID_LOCATION = {
   lng: 99.8,
 }
 
-// ── Contact schema ────────────────────────────────────────────────────────────
-
 describe('contactSchema', () => {
   const valid = {
     name: "Ms. Mermaids' DC",
@@ -66,12 +57,9 @@ describe('contactSchema', () => {
   })
 
   it('does not require customerLanguages or associations', () => {
-    // Contact section is isolated — should not care about other sections
     expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
-
-// ── Languages schema ──────────────────────────────────────────────────────────
 
 describe('diveCenterLanguagesSchema', () => {
   it('accepts at least one language', () => {
@@ -84,8 +72,6 @@ describe('diveCenterLanguagesSchema', () => {
     expect(diveCenterLanguagesSchema.safeParse(data).success).toBe(false)
   })
 })
-
-// ── Affiliations schema ───────────────────────────────────────────────────────
 
 describe('diveCenterAffiliationsSchema', () => {
   function validAssoc(overrides: Partial<{
@@ -139,13 +125,10 @@ describe('diveCenterAffiliationsSchema', () => {
   })
 
   it('does not require contact or language fields', () => {
-    // Affiliations section is isolated
     const data = { associations: [validAssoc()] }
     expect(diveCenterAffiliationsSchema.safeParse(data).success).toBe(true)
   })
 })
-
-// ── contactFromProfile ────────────────────────────────────────────────────────
 
 describe('contactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
@@ -184,8 +167,6 @@ describe('contactFromProfile', () => {
   })
 })
 
-// ── contactToPayload ──────────────────────────────────────────────────────────
-
 describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: ContactFormState = {
@@ -217,8 +198,6 @@ describe('contactToPayload', () => {
     expect(payload).not.toHaveProperty('customerLanguages')
   })
 })
-
-// ── affiliationsFromProfile ───────────────────────────────────────────────────
 
 describe('affiliationsFromProfile', () => {
   it('maps associations array from profile correctly', () => {
@@ -268,8 +247,6 @@ describe('affiliationsFromProfile', () => {
   })
 })
 
-// ── affiliationsToPayload ─────────────────────────────────────────────────────
-
 describe('affiliationsToPayload', () => {
   it('serialises all association fields', () => {
     const form: DiveCenterAffiliationsFormState = {
@@ -303,11 +280,8 @@ describe('affiliationsToPayload', () => {
   })
 })
 
-// ── languagesFromProfileDC / languagesToPayloadDC ─────────────────────────────
-
 describe('languagesFromProfileDC', () => {
   it('resolves language codes to Language objects', () => {
-    // 'en' is normalised to canonical locale 'en-GB' by resolveLanguages
     const form = languagesFromProfileDC({ customerLanguages: ['en'] })
     expect(form.customerLanguages).toHaveLength(1)
     expect(form.customerLanguages[0].code).toBe('en-GB')
@@ -333,8 +307,6 @@ describe('languagesToPayloadDC', () => {
     expect(payload).not.toHaveProperty('associations')
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_CONTACT_FORM', () => {
   it('has empty string defaults', () => {

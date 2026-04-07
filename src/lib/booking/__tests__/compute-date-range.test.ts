@@ -23,19 +23,16 @@ describe('computeDateRange', () => {
   })
 
   it('computes correct end date for a single multi-day course', () => {
-    // OW: PADI catalog minDays=3 → start + 2 days
     const result = computeDateRange(['OW'], '2026-04-01')
     expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-03' })
   })
 
   it('computes O+A combo using calculateComboDates', () => {
-    // OW ends 04-03 (minDays 3), AOW starts there and ends 04-04 (minDays 2)
     const result = computeDateRange(['OW', 'AOW'], '2026-04-01')
     expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-04' })
   })
 
   it('chains sequential courses — each starts after the previous ends', () => {
-    // OW: 04-01→04-03, RESCUE chains from 04-03: minDays 2 → 04-04
     const result = computeDateRange(['OW', 'RESCUE'], '2026-04-01')
     expect(result).toEqual({ startDate: '2026-04-01', endDate: '2026-04-04' })
   })
@@ -43,7 +40,6 @@ describe('computeDateRange', () => {
   it('handles single-day course (DSD)', () => {
     const result = computeDateRange(['DSD'], '2026-05-10')
     expect(result.startDate).toBe('2026-05-10')
-    // DSD is 1 day, so end === start
     expect(result.endDate).toBe('2026-05-10')
   })
 })

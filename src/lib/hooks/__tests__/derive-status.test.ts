@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { deriveStatus } from '../use-calendar-range'
 import { addDays, toISODateString } from '../../utils/date'
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function booking(
   status: string,
   startDate: string,
@@ -16,8 +14,6 @@ function booking(
 function relDate(base: string, offset: number): string {
   return addDays(base, offset)
 }
-
-// ─── Active derivation (day-level boundaries) ────────────────────────────────
 
 describe('deriveStatus — Active boundaries', () => {
   const start = '2030-06-10'
@@ -44,8 +40,6 @@ describe('deriveStatus — Active boundaries', () => {
   })
 })
 
-// ─── Single-day booking ──────────────────────────────────────────────────────
-
 describe('deriveStatus — single-day booking', () => {
   const date = '2030-06-15'
 
@@ -62,8 +56,6 @@ describe('deriveStatus — single-day booking', () => {
   })
 })
 
-// ─── Cancelled bookings ──────────────────────────────────────────────────────
-
 describe('deriveStatus — Cancelled', () => {
   it('Cancelled on any date → null (hidden)', () => {
     expect(deriveStatus(booking('Cancelled', '2030-06-10', '2030-06-13'), '2030-06-11')).toBeNull()
@@ -73,8 +65,6 @@ describe('deriveStatus — Cancelled', () => {
     expect(deriveStatus(booking('Cancelled', '2030-06-10', '2030-06-13'), '2030-06-05')).toBeNull()
   })
 })
-
-// ─── Draft bookings ──────────────────────────────────────────────────────────
 
 describe('deriveStatus — Draft', () => {
   it('Draft with endDate in the past → null (hidden)', () => {
@@ -112,8 +102,6 @@ describe('deriveStatus — Draft', () => {
   })
 })
 
-// ─── Completed status from backend ───────────────────────────────────────────
-
 describe('deriveStatus — Completed from backend', () => {
   it('Completed + endDate in the past → Completed', () => {
     expect(deriveStatus(booking('Completed', '2030-01-01', '2030-01-05'), '2030-01-10')).toBe('Completed')
@@ -127,8 +115,6 @@ describe('deriveStatus — Completed from backend', () => {
     expect(deriveStatus(booking('Completed', '2030-06-10', '2030-06-13'), '2030-06-13')).toBe('Upcoming')
   })
 })
-
-// ─── Unknown status ──────────────────────────────────────────────────────────
 
 describe('deriveStatus — unknown status', () => {
   it('unrecognized status → null', () => {

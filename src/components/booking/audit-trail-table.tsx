@@ -23,7 +23,6 @@ import type { Id } from '@/lib/convex-generated'
 import type { AuditAction } from '../../../convex/bookingAuditLog'
 import { timeAgo } from '@/lib/utils/time-ago'
 import { Skeleton } from '@/components/ui/skeleton'
-// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface AuditTrailTableProps {
   bookingId: string
@@ -38,8 +37,6 @@ type AuditEntry = {
   diff?: string
   note?: string
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function actionLabel(action: AuditAction): string {
   switch (action) {
@@ -131,8 +128,6 @@ function actorLabel(entry: AuditEntry): string {
   return entry.actorSlug
 }
 
-// ── DiffExpander ───────────────────────────────────────────────────────────────
-
 function DiffExpander({ diff }: { diff: string }) {
   const [open, setOpen] = useState(false)
 
@@ -181,8 +176,6 @@ function DiffExpander({ diff }: { diff: string }) {
   )
 }
 
-// ── TimelineEntry ──────────────────────────────────────────────────────────────
-
 function TimelineEntry({
   entry,
   isLast,
@@ -194,7 +187,6 @@ function TimelineEntry({
 
   return (
     <div className="flex gap-3 relative">
-      {/* Vertical connector line */}
       {!isLast && (
         <div
           className="absolute left-[15px] top-[28px] w-px"
@@ -216,7 +208,6 @@ function TimelineEntry({
         <ActionIcon action={entry.action} />
       </div>
 
-      {/* Content */}
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex items-baseline justify-between gap-2 flex-wrap">
           <span
@@ -239,8 +230,6 @@ function TimelineEntry({
     </div>
   )
 }
-
-// ── Main component ─────────────────────────────────────────────────────────────
 
 export function AuditTrailTable({ bookingId }: AuditTrailTableProps) {
   const entries = useQuery(api.bookingAuditLog.getAuditLog, {

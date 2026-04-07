@@ -2,8 +2,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockCurrentUser = vi.fn<() => { user: Record<string, unknown> | null; isLoading: boolean }>()
 vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockCurrentUser(),
@@ -16,10 +14,7 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
-// Import AFTER mocks
 import { useLocaleSync } from '../use-locale-sync'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getCookie(name: string): string | undefined {
   return document.cookie
@@ -31,8 +26,6 @@ function getCookie(name: string): string | undefined {
 function clearCookie(name: string) {
   document.cookie = `${name}=; path=/; max-age=0`
 }
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -79,7 +72,6 @@ describe('useLocaleSync', () => {
   })
 
   it('does not rewrite cookie when value already matches', () => {
-    // Pre-set the cookie
     document.cookie = 'dd-locale=ko; path=/'
     const spy = vi.spyOn(document, 'cookie', 'set')
 
@@ -89,9 +81,7 @@ describe('useLocaleSync', () => {
     })
     renderHook(() => useLocaleSync())
 
-    // Cookie setter should not have been called since value matches
     expect(spy).not.toHaveBeenCalled()
-    // router.refresh should not be called if cookie already matches
     expect(mockRefresh).not.toHaveBeenCalled()
     spy.mockRestore()
   })
@@ -107,7 +97,6 @@ describe('useLocaleSync', () => {
   })
 
   it('calls router.refresh() when cookie is stale', () => {
-    // Pre-set a stale cookie
     document.cookie = 'dd-locale=en; path=/'
     mockCurrentUser.mockReturnValue({
       user: { appLanguage: 'th' },
@@ -115,20 +104,17 @@ describe('useLocaleSync', () => {
     })
     renderHook(() => useLocaleSync())
 
-    // Should have called refresh when mismatch detected
     expect(mockRefresh).toHaveBeenCalledTimes(1)
     expect(getCookie('dd-locale')).toBe('th')
   })
 
   it('calls router.refresh() when cookie is absent', () => {
-    // No pre-set cookie (fresh session)
     mockCurrentUser.mockReturnValue({
       user: { appLanguage: 'zh-CN' },
       isLoading: false,
     })
     renderHook(() => useLocaleSync())
 
-    // Should have called refresh when setting cookie for the first time
     expect(mockRefresh).toHaveBeenCalledTimes(1)
     expect(getCookie('dd-locale')).toBe('zh-CN')
   })

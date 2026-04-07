@@ -10,8 +10,6 @@ import { safeDecryptMedical } from './lib/crypto'
 import { notify } from './notifications'
 import { NOTIFICATION_TYPE } from './shared/statuses'
 
-// Inline medical schema — mirrors medicalAnswersSchema from src/lib/validation/schemas.ts.
-// Defined inline to avoid importing across the convex/ → src/ boundary.
 const _medicalAnswersSchema = z.object({
   medical_q1: z.boolean(),
   medical_q2: z.boolean(),
@@ -25,13 +23,6 @@ const _medicalAnswersSchema = z.object({
   medical_q10: z.boolean(),
 })
 
-// ─── getPortalStatus ──────────────────────────────────────────────────────────
-
-/**
- * Returns the completion state of each portal step for a given token.
- * Public — token is the credential.
- * Used by portal-submit to enable/disable the final submit button.
- */
 export const getPortalStatus = query({
   args: { token: v.string() },
   handler: async (
@@ -69,15 +60,6 @@ export const getPortalStatus = query({
   },
 })
 
-// ─── submitPortal ─────────────────────────────────────────────────────────────
-
-/**
- * Final portal submission mutation. Sets customerFormComplete=true on the
- * booking and triggers auto-advance evaluation.
- *
- * Auth boundary: token (no Clerk required).
- * TOCTOU-safe: token validation is re-executed inside the mutation body.
- */
 export const submitPortal = mutation({
   args: { token: v.string() },
   handler: async (
@@ -88,7 +70,6 @@ export const submitPortal = mutation({
 
     const { link, booking, profile } = await resolvePortalToken(ctx, args.token)
 
-    // Validate required forms are complete
     if (booking.portalContact && !profile.customerId) {
       throw new ConvexError({
         code: ErrorCode.FORMS_INCOMPLETE,
@@ -108,18 +89,14 @@ export const submitPortal = mutation({
       })
     }
 
-    // Server re-validation: validate stored medical answers are well-formed booleans.
-    // Re-derive medicalHardBlock from raw answers — never trust cached booking flag.
     let medicalHardBlock = false
     if (booking.portalMedical && profile.medicalAnswers) {
       const decryptedAnswers = await safeDecryptMedical(profile.medicalAnswers)
       const validatedAnswers = validateOrThrow(_medicalAnswersSchema, decryptedAnswers)
       medicalHardBlock = Object.values(validatedAnswers).some((v) => v === true)
-      // Keep booking flag in sync in case it drifted
       if ((booking.medicalHardBlock as boolean) !== medicalHardBlock) {
         const bookingPatch: Record<string, unknown> = { medicalHardBlock }
 
-        // Extend hold TTL when medical block activates (CLAUDE.md: 36h total, 8pm ceiling)
         if (medicalHardBlock) {
           const sessions = await ctx.db
             .query('bookingSessions')
@@ -147,16 +124,12 @@ export const submitPortal = mutation({
 
     const now = Date.now()
 
-    // Mark profile as submitted
     await ctx.db.patch(profile._id, { submittedAt: now })
 
-    // Set customerFormComplete on booking — may trigger auto-advance
     await ctx.db.patch(link.bookingId, { customerFormComplete: true })
 
-    // Invalidate the token — prevents re-submission via the same link
     await ctx.db.patch(link._id, { usedAt: now })
 
-    // Notify the booking owner that the customer completed the portal
     await notify(ctx, {
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.PortalComplete,
@@ -164,7 +137,6 @@ export const submitPortal = mutation({
       message: `${link.customerName} has completed the customer portal.`,
     })
 
-    // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
     await tryAutoAdvance(ctx, link.bookingId)
 
     return { medicalHardBlock }

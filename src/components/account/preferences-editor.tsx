@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ProfileSectionTabBar } from '@/components/account/profile-section-tab-bar'
 import { z } from 'zod'
+import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
@@ -23,8 +24,6 @@ import {
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { SimpleSelect } from '@/components/ui/simple-select'
 import { Check, Save } from 'lucide-react'
-
-// ── Constants ────────────────────────────────────────────────────────
 
 const ACCEPTANCE_MODES = [
   {
@@ -48,8 +47,6 @@ type AcceptanceMode = 'Auto' | 'PrePayRequired' | 'PostPayAllowed'
 type PreferencesRecord = Record<string, unknown>
 
 const DISPLAY_OPERATOR_ROLE_KEYS = new Set(DISPLAY_OPERATOR_ROLES.map((r) => r.clerkRole))
-
-// ── Validation ───────────────────────────────────────────────────────
 
 const prefsSchema = z.object({
   acceptanceMode: z.enum(['Auto', 'PrePayRequired', 'PostPayAllowed']),
@@ -88,8 +85,6 @@ const defaultFormData = (): PrefsFormData => ({
   autoAssignPreferred: true,
 })
 
-// ── Pure helpers ─────────────────────────────────────────────────────
-
 export function buildResourceSubTabs(clerkRole: string | undefined): { id: ResourceSubTab; label: string }[] {
   const base: { id: ResourceSubTab; label: string }[] = [
     { id: 'instructors', label: 'Instructors' },
@@ -110,8 +105,6 @@ const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData | (keyof PrefsF
   compressors: 'preferredCompressorSlugs',
   operator: 'preferredOperatorSlug',
 }
-
-// ── Sub-components ────────────────────────────────────────────────────
 
 function ResourceSaveButton({
   isDirty,
@@ -149,8 +142,6 @@ function ResourceSaveButton({
     </Button>
   )
 }
-
-// ── Agent: preferred target operator (DD-355) ───────────────────────────
 
 function PreferredOperatorPicker({
   value,
@@ -194,8 +185,6 @@ function PreferredOperatorPicker({
     </Card>
   )
 }
-
-// ── Main Component ────────────────────────────────────────────────────
 
 interface PreferencesEditorProps {
   section?: 'booking' | 'resources'
@@ -309,17 +298,15 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
     }
   }, [activeRole, resourceSubTab])
 
-  // Initialize resource baseline when form finishes loading
   useEffect(() => {
     if (!loading && resourceBaselineRef.current === null) {
       resourceBaselineRef.current = { ...form }
     }
   }, [loading, form])
 
-  // Auto-clear saved indicator after 2 seconds
   useEffect(() => {
     if (savedSection) {
-      const timer = setTimeout(() => setSavedSection(null), 2000)
+      const timer = setTimeout(() => setSavedSection(null), SAVE_FEEDBACK_MS)
       return () => clearTimeout(timer)
     }
   }, [savedSection])
@@ -349,7 +336,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
     >
       <div id={`tabpanel-${section}`} role="tabpanel" aria-labelledby={`tab-${section}`} className="space-y-6">
 
-        {/* ── Booking section ─────────────────────────────────────────── */}
         {section === 'booking' && (
           <>
             <Card padding="sm">
@@ -442,7 +428,6 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
           </>
         )}
 
-        {/* ── Resources section (organizer roles only) — horizontal sub-tabs, per-section save ── */}
         {section === 'resources' && showResourcePrefs && (
           <>
             <div className="max-w-xl mx-auto">

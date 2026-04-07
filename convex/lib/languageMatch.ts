@@ -1,13 +1,3 @@
-/**
- * Pure language overlap scoring for backend use.
- * Lives in convex/lib/ to respect dependency direction (convex/ ← src/lib/).
- * Backend data is already in locale format (e.g. 'en-GB'), so no normalization needed.
- */
-
-/**
- * Returns the number of customer languages the instructor can cover.
- * Simple set intersection count on raw codes.
- */
 export function languageOverlap(
   instructorLangs: string[],
   customerLangs: string[],

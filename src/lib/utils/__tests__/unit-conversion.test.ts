@@ -15,7 +15,6 @@ describe('toHeightCm', () => {
   })
 
   it('converts inches to cm', () => {
-    // 70 inches * 2.54 = 177.8, rounded to 178
     expect(toHeightCm('70', 'in')).toBe(178)
   })
 
@@ -45,7 +44,6 @@ describe('toWeightKg', () => {
   })
 
   it('converts lbs to kg', () => {
-    // 154 * 0.453592 = 69.853168, rounded to 69.9
     expect(toWeightKg('154', 'lbs')).toBe(69.9)
   })
 

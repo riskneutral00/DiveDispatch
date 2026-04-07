@@ -1,6 +1,3 @@
-// ── Unit conversion pure functions ──────────────────────────────────────────
-// Extracted from step-equipment.tsx for testability and reuse.
-
 export type HeightUnit = 'cm' | 'in'
 export type WeightUnit = 'kg' | 'lbs'
 export type ShoeSizeUnit = 'EU' | 'US' | 'CM'

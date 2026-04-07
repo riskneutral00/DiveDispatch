@@ -10,7 +10,6 @@ interface ButtonGroupProps {
   options: ButtonGroupOption[];
   value: string;
   onChange: (value: string) => void;
-  /** segment = contained pill group | tabs = underline tab bar */
   variant?: "segment" | "tabs";
   size?: "sm" | "md";
   className?: string;
@@ -70,7 +69,6 @@ export function ButtonGroup({
     );
   }
 
-  // segment variant — contained pill group
   return (
     <div
       role="group"

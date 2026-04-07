@@ -43,23 +43,15 @@ const defaultForm = (): CustomerContactData => ({
   allergies: '',
 })
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return <FormSectionHeader label={children} />
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
-
 interface StepContactProps {
   token: string
   onComplete: () => void
-  /** ISO date string (YYYY-MM-DD) for the first dive session.
-   * Used for age-minimum checks and passport expiry warnings.
-   * Falls back to today when not provided. */
   bookingStartDate?: string
 }
 
@@ -75,7 +67,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     setSubmitting,
   } = usePortalStep()
 
-  // Returning customer dedup
   const [returningDismissedLocal, setReturningDismissedLocal] = useState(false)
 
   const returningEmail =
@@ -95,7 +86,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     dismiss: dismissReturningCustomerHook,
     showBanner: showReturningBanner,
   } = useReturningCustomer(checkReturning, (data) => {
-    // Pre-fill everything except medical/waiver
     setFormState((prev) => ({
       ...prev,
       legalFirstName: data.legalFirstName,
@@ -118,8 +108,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     }))
   })
 
-  // Cert-conditional schema: agency + agencyID required if any activity needs it.
-  // Memoize on activity types to avoid hook churn.
   const schema = useMemo(
     () => makeCustomerContactSchema(context?.activityType ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,7 +115,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
   )
   const { validate, errors, clearError } = useFormValidation(schema)
 
-  // Pre-fill from existing customer data and booking link hints
   useEffect(() => {
     if (!context) return
     if (context.customer) {
@@ -152,7 +139,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         allergies: c.allergies ?? '',
       })
     } else {
-      // Pre-fill name/email from bookingLink hints if no saved record
       const nameParts = context.prefillName.split(' ')
       setFormState((prev) => ({
         ...prev,
@@ -190,7 +176,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
     const validated = result.data
 
-    // Age check: diver must meet minimum age for their activity types
     if (validated.dateOfBirth && context?.activityType?.length) {
       const refDate = bookingStartDate ?? toISODateString(new Date())
       const age = calcAgeAtDate(validated.dateOfBirth, refDate)
@@ -258,7 +243,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       continueType="submit"
       submitting={submitting}
     >
-      {/* Returning customer banner */}
       {showReturningBanner && returningCustomer && (
         <Card padding="md">
           <div className="flex flex-col gap-3">
@@ -286,7 +270,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         </p>
       )}
 
-      {/* Personal Details */}
       <Card padding="md">
         <SectionHeading>{"Personal Details"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
@@ -377,7 +360,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         </div>
       </Card>
 
-      {/* Passport / ID */}
       <Card padding="md">
         <SectionHeading>{"Passport / ID"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
@@ -417,7 +399,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         </div>
       </Card>
 
-      {/* Emergency Contact */}
       <Card padding="md">
         <SectionHeading>{"Emergency Contact"}</SectionHeading>
         <div className="flex flex-wrap gap-4">
@@ -451,7 +432,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         </div>
       </Card>
 
-      {/* Diving Certification (conditional) */}
       {requiresCert && (
         <Card padding="md">
           <SectionHeading>{"Diving Certification"}</SectionHeading>
@@ -478,7 +458,6 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
         </Card>
       )}
 
-      {/* Health Information */}
       <Card padding="md">
         <SectionHeading>{"Health Information"}</SectionHeading>
         <Textarea

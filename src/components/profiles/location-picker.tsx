@@ -10,8 +10,6 @@ import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 import type { LocationValue } from '@/lib/schemas/location'
 export type { LocationValue }
 
@@ -24,8 +22,6 @@ interface LocationPickerProps {
   className?: string
 }
 
-// ── FlyEffect: child of <Map> that imperatively pans/zooms ────────────────────
-
 function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number } | null; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
@@ -36,8 +32,6 @@ function FlyEffect({ target, zoom = 20 }: { target: { lat: number; lng: number }
   }, [target, map, zoom])
   return null
 }
-
-// ── Modal inner content (requires API loaded) ─────────────────────────────────
 
 interface ModalInnerProps {
   value: LocationValue | null
@@ -75,7 +69,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     return () => { if (blurTimerRef.current) clearTimeout(blurTimerRef.current) }
   }, [])
 
-  // Auto-trigger GPS if no value set yet
   useEffect(() => {
     if (!value) handleGPS()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +81,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     clearSuggestions,
   } = usePlacesAutocomplete({ debounce: 300 })
 
-  // ── GPS ────────────────────────────────────────────────────────────────────
   function handleGPS() {
     if (!navigator.geolocation) return
     setGpsLoading(true)
@@ -103,7 +95,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     )
   }
 
-  // ── Autocomplete selection ─────────────────────────────────────────────────
   async function handleSelect(suggestion: google.maps.places.AutocompletePrediction) {
     setQuery(suggestion.description, false)
     clearSuggestions()
@@ -123,7 +114,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     }
   }
 
-  // ── Keyboard navigation for autocomplete ───────────────────────────────────
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const itemCount = data.length
     switch (e.key) {
@@ -151,7 +141,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
     }
   }
 
-  // ── POI click: tap a place on the map to use its address ──────────────────
   async function handleMapClick(e: MapMouseEvent) {
     const placeId = e.detail.placeId
     if (!placeId) return
@@ -171,11 +160,9 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
       setFlyTarget({ lat: place.location.lat(), lng: place.location.lng() })
       setDisplayAddress(display)
     } catch {
-      // Silent fail — user can still drag the map
     }
   }
 
-  // ── Map idle: read center + reverse geocode ────────────────────────────────
   const handleIdle = useCallback(
     (e: { map: google.maps.Map }) => {
       const c = e.map.getCenter()
@@ -184,13 +171,10 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
       const lng = c.lng()
       setCenter({ lat, lng })
 
-      // Skip reverse geocoding on initial load or after POI/autocomplete selection
       if (initialLoadRef.current || poiClickRef.current) return
 
-      // User dragged the map — back to manual pin mode
       setPoiSelected(false)
 
-      // Reverse geocode for area address + country, then nearby search for POI name
       ;(async () => {
         try {
           const geoResponse = await new google.maps.Geocoder().geocode({ location: { lat, lng } })
@@ -204,7 +188,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
           const country =
             best?.address_components?.find((ac) => ac.types.includes('country'))?.long_name ?? ''
 
-          // Nearby search for POI-level precision (differentiates gas station from 7-Eleven)
           try {
             const { places } = await google.maps.places.Place.searchNearby({
               locationRestriction: { center: { lat, lng }, radius: 50 },
@@ -226,14 +209,12 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             if (fallbackAddress) setDisplayAddress(fallbackAddress)
           }
         } catch {
-          // Geocoding failed — leave address as-is
         }
       })()
     },
     [],
   )
 
-  // ── Confirm ────────────────────────────────────────────────────────────────
   function handleConfirm() {
     const parts = displayAddress.split(', ')
     const country = parts.length > 1 ? parts[parts.length - 1] : ''
@@ -244,7 +225,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-      {/* Search strip */}
       <div
         className="flex-shrink-0 p-3 flex flex-col gap-2"
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
@@ -301,7 +281,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
           </button>
         </div>
 
-        {/* Suggestions dropdown */}
         {suggestionsOpen && status === 'OK' && (
           <ul
             id={listboxId}
@@ -353,7 +332,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
         )}
       </div>
 
-      {/* Map with fixed crosshair */}
       <div className="flex-1 relative" style={{ minHeight: 0 }}>
         <Map
           defaultCenter={center}
@@ -369,7 +347,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
           <FlyEffect target={flyTarget} zoom={flyZoom} />
         </Map>
 
-        {/* Crosshair overlay — stays centered while map moves */}
         <div
           className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-theme ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
           style={{ transitionDuration: 'var(--transition-speed)' }}
@@ -385,7 +362,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
         </div>
       </div>
 
-      {/* Confirm strip */}
       <div
         className="flex-shrink-0 flex items-center justify-between gap-3 p-3"
         style={{ borderTop: '1px solid var(--color-glass-border)' }}
@@ -416,8 +392,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
   )
 }
 
-// ── Gate: defers modal inner until Maps API is loaded ─────────────────────────
-
 function LocationPickerGate(props: ModalInnerProps) {
   const t = useTranslations('common')
   const isLoaded = useApiIsLoaded()
@@ -432,8 +406,6 @@ function LocationPickerGate(props: ModalInnerProps) {
   }
   return <LocationPickerModalInner {...props} />
 }
-
-// ── Trigger: read-only display with click-to-edit ─────────────────────────────
 
 interface TriggerProps {
   value: LocationValue | null
@@ -508,8 +480,6 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
     </div>
   )
 }
-
-// ── Public export ─────────────────────────────────────────────────────────────
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 

@@ -21,14 +21,10 @@ import {
 } from './booking-detail-shared'
 import { CancelBookingDialog } from './cancel-booking-dialog'
 
-// ── Types ───────────────────────────────────────────────────────────────────
-
 interface BookingDetailDialogProps {
   bookingId: string | null // null = closed
   onClose: () => void
 }
-
-// ── Discard draft confirmation ───────────────────────────────────────────────
 
 function DiscardDraftDialog({
   open,
@@ -69,8 +65,6 @@ function DiscardDraftDialog({
   )
 }
 
-// ── Dialog content ───────────────────────────────────────────────────────────
-
 function BookingDetailContent({
   bookingId,
   onClose,
@@ -106,10 +100,8 @@ function BookingDetailContent({
   const canEdit = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
   const canCancel = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
 
-  // Overview slot: status + actions (dialog-specific)
   const overviewSlot = (
     <>
-      {/* Status + summary */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={statusVariant(booking.status)} dot>
@@ -135,7 +127,6 @@ function BookingDetailContent({
         </p>
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         {isDraft ? (
           <>
@@ -200,7 +191,6 @@ function BookingDetailContent({
         overviewSlot={overviewSlot}
       />
 
-      {/* Cancel dialog */}
       <CancelBookingDialog
         open={showCancelDialog}
         onClose={() => setShowCancelDialog(false)}
@@ -208,7 +198,6 @@ function BookingDetailContent({
         onSuccess={onClose}
       />
 
-      {/* Discard dialog */}
       {showDiscardDialog && (
         <DiscardDraftDialog
           open={showDiscardDialog}
@@ -220,8 +209,6 @@ function BookingDetailContent({
     </>
   )
 }
-
-// ── Main component ───────────────────────────────────────────────────────────
 
 export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogProps) {
   return (

@@ -22,9 +22,6 @@ export interface PortalStepShellProps {
   continueClassName?: string
 }
 
-/**
- * Shared portal step layout: content column, server error region, Back + Continue row.
- */
 export function PortalStepShell({
   children,
   serverError,

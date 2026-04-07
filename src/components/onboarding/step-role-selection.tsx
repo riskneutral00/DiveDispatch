@@ -8,8 +8,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { RoleTile } from '@/components/ui/role-tile'
 
-// ── Step: Role selection ──────────────────────────────────────────────────────
-
 interface StepRoleSelectionProps {
   selectedRoles: RoleConfig[]
   onToggle: (role: RoleConfig) => void
@@ -40,7 +38,6 @@ export function StepRoleSelection({
       </div>
 
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4" data-testid="wizard-content">
-        {/* Organizers */}
         <div className="col-span-2 mb-0.5">
           <p className="text-label font-medium uppercase tracking-wide text-secondary">
             Organizers
@@ -55,7 +52,6 @@ export function StepRoleSelection({
           />
         ))}
 
-        {/* Resources */}
         <div className="col-span-2 mt-3 mb-0.5">
           <p className="text-label font-medium uppercase tracking-wide text-secondary">
             Resources
@@ -89,7 +85,6 @@ export function StepRoleSelection({
         </Button>
       </div>
 
-      {/* Role descriptions below button */}
       {selectedRoles.length > 0 && (
         <div className="mt-3 flex flex-col gap-1">
           {selectedRoles.map((role) => (

@@ -25,9 +25,6 @@ function IconBase({
   )
 }
 
-// ── Organizer Icons ──────────────────────────────────────────────────────────
-
-/** Storefront with person overlay (bottom-right) */
 export function DiveCenterIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -40,7 +37,6 @@ export function DiveCenterIcon(props: RoleIconProps) {
   )
 }
 
-/** Clipboard with person overlay (bottom-right) */
 export function AgentIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -53,7 +49,6 @@ export function AgentIcon(props: RoleIconProps) {
   )
 }
 
-/** Boat hull with person overlay (bottom-right) */
 export function LiveaboardIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -66,7 +61,6 @@ export function LiveaboardIcon(props: RoleIconProps) {
   )
 }
 
-/** Hotel building with wave at bottom */
 export function DiveResortIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -79,7 +73,6 @@ export function DiveResortIcon(props: RoleIconProps) {
   )
 }
 
-/** Bunk bed frame with pillows */
 export function DiveHostelIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -92,7 +85,6 @@ export function DiveHostelIcon(props: RoleIconProps) {
   )
 }
 
-/** Map pin with wave at bottom */
 export function DiveSiteIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -103,9 +95,6 @@ export function DiveSiteIcon(props: RoleIconProps) {
   )
 }
 
-// ── Resource Icons ───────────────────────────────────────────────────────────
-
-/** Graduation cap / mortarboard */
 export function InstructorIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -116,7 +105,6 @@ export function InstructorIcon(props: RoleIconProps) {
   )
 }
 
-/** Dive mask with snorkel */
 export function DiveMasterIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -128,7 +116,6 @@ export function DiveMasterIcon(props: RoleIconProps) {
   )
 }
 
-/** Boat hull with cabin and wave */
 export function BoatIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -140,7 +127,6 @@ export function BoatIcon(props: RoleIconProps) {
   )
 }
 
-/** Scuba tank with valve */
 export function EquipmentIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -152,7 +138,6 @@ export function EquipmentIcon(props: RoleIconProps) {
   )
 }
 
-/** Wave lines */
 export function PoolIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>
@@ -163,7 +148,6 @@ export function PoolIcon(props: RoleIconProps) {
   )
 }
 
-/** Interlocking gears */
 export function CompressorIcon(props: RoleIconProps) {
   return (
     <IconBase {...props}>

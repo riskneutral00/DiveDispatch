@@ -14,11 +14,6 @@ interface UseBlockedDateToggleReturn {
   cancelToggle: () => void
 }
 
-/**
- * Hook for resource users to block/unblock dates with optimistic updates.
- * Scoped to a specific (ownerSlug, roleType) pair so each stakeholder role
- * maintains its own independent set of blocked dates.
- */
 export function useBlockedDateToggle({
   stakeholderId,
   roleType,

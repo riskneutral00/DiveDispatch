@@ -1,11 +1,3 @@
-/**
- * Alert utilities for cron failure notifications.
- *
- * buildAlertEmailHtml is a pure function (exported for testing).
- * sendAlert is an internalMutation that logs to cronRunLog and fires
- * an email action on failure via Resend.
- */
-
 import { v } from 'convex/values'
 import { internalMutation } from '../_generated/server'
 import { internal } from '../_generated/api'
@@ -14,8 +6,6 @@ import { log } from './logger'
 const ALERT_RECIPIENT = 'alerts@divedispatch.dev'
 const FROM_ADDRESS = 'alerts@divedispatch.dev'
 const RESEND_API_URL = 'https://api.resend.com/emails'
-
-// ── Pure HTML builder (exported for unit testing) ────────────────────────────
 
 export function buildAlertEmailHtml(args: {
   jobName: string
@@ -67,8 +57,6 @@ export function buildAlertEmailHtml(args: {
 </html>`
 }
 
-// ── sendAlert: internal mutation — logs run + schedules email on failure ──────
-
 export const sendAlert = internalMutation({
   args: {
     jobName: v.string(),
@@ -76,7 +64,6 @@ export const sendAlert = internalMutation({
     error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // 1. Log to cronRunLog
     await ctx.db.insert('cronRunLog', {
       jobName: args.jobName,
       status: args.status,
@@ -84,7 +71,6 @@ export const sendAlert = internalMutation({
       runAt: Date.now(),
     })
 
-    // 2. On failure, schedule alert email via action
     if (args.status === 'failure' && args.error) {
       log.error('Cron job failed', { jobName: args.jobName, error: args.error })
 
@@ -95,8 +81,6 @@ export const sendAlert = internalMutation({
     }
   },
 })
-
-// ── sendAlertEmail: internal action — makes external HTTP call to Resend ─────
 
 import { internalAction } from '../_generated/server'
 

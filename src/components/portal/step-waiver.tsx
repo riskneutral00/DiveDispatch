@@ -15,41 +15,27 @@ import { usePortalStep } from '@/lib/hooks/use-portal-step'
 import { isSignatureValid } from '@/lib/utils/signature-coverage'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export type WaiverData = {
   acknowledged: boolean
   hasInsurance: boolean
   insurancePolicyNumber?: string
-  /** PNG blob of participant signature */
   signatureBlob: Blob
   date: string
   guardianName?: string
-  /** PNG blob of guardian signature (required if under 18) */
   guardianSignatureBlob?: Blob
 }
 
 interface StepWaiverProps {
-  /** Operator name, pre-fills the PADI Member field */
   operatorName: string
-  /** Customer's full legal name, pre-fills the "I, ___" field */
   participantName: string
-  /** ISO date string, e.g. "1990-01-15". Used to show guardian section. */
   dateOfBirth: string
   onComplete: (data: WaiverData) => void
   onBack?: () => void
-  /** Disable submission (e.g. parent is submitting) */
   submitting?: boolean
-  /** ISO date string for the first dive session.
-   * Used for accurate under-18 check (age at dive start, not today). */
   bookingStartDate?: string
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 const todayLocal = () => toISODateString(new Date())
-
-// ── Scrollable legal block ───────────────────────────────────────────────────
 
 function LegalBlock({ text }: { text: string }) {
   return (
@@ -61,8 +47,6 @@ function LegalBlock({ text }: { text: string }) {
     </div>
   )
 }
-
-// ── Component ────────────────────────────────────────────────────────────────
 
 export function StepWaiver({
   operatorName,
@@ -92,7 +76,6 @@ export function StepWaiver({
   const signatureRef = useRef<SignaturePadHandle>(null)
   const guardianSignatureRef = useRef<SignaturePadHandle>(null)
 
-  /** Check coverage on the participant signature pad after each stroke. */
   const validateSignatureCoverage = useCallback(() => {
     const imageData = signatureRef.current?.getImageData()
     if (!imageData) {
@@ -104,7 +87,6 @@ export function StepWaiver({
     if (valid) clearError('signature')
   }, [clearError])
 
-  /** Check coverage on the guardian signature pad after each stroke. */
   const validateGuardianCoverage = useCallback(() => {
     const imageData = guardianSignatureRef.current?.getImageData()
     if (!imageData) {
@@ -168,7 +150,6 @@ export function StepWaiver({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      {/* Section: Non-Agency Disclosure */}
       <Card padding="md">
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
@@ -195,7 +176,6 @@ export function StepWaiver({
         </div>
       </Card>
 
-      {/* Section: Liability Release */}
       <Card padding="md">
         <div className="space-y-3">
           <h2 className="text-base font-semibold font-heading">
@@ -210,7 +190,6 @@ export function StepWaiver({
             text={LIABILITY_RELEASE_TEXT.replace(/_____________/g, operatorName)}
           />
 
-          {/* Acknowledgment checkbox */}
           <Checkbox
             label={
               <span className="text-body leading-snug text-secondary">
@@ -229,7 +208,6 @@ export function StepWaiver({
         </div>
       </Card>
 
-      {/* Section: Diver Accident Insurance */}
       <Card padding="md">
         <div className="space-y-3">
           <h2 className="text-base font-semibold font-heading">
@@ -281,7 +259,6 @@ export function StepWaiver({
         </div>
       </Card>
 
-      {/* Section: Participant Signature */}
       <Card padding="md">
         <div className="space-y-4">
           <h2 className="text-base font-semibold font-heading">
@@ -292,7 +269,6 @@ export function StepWaiver({
             ref={signatureRef}
             label="Signature"
             onChange={(has) => {
-              // On clear, immediately reset. On draw, defer to onDrawEnd coverage check.
               if (!has) setHasSig(false)
             }}
             onDrawEnd={validateSignatureCoverage}
@@ -310,7 +286,6 @@ export function StepWaiver({
         </div>
       </Card>
 
-      {/* Section: Guardian (under-18 only) */}
       {isUnder18 && (
         <Card padding="md">
           <div className="space-y-4">

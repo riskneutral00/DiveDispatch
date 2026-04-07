@@ -9,17 +9,6 @@ import { serializeDraftState, type WizardState } from '@/lib/booking/wizard-stat
 const DEBOUNCE_MS = 3000
 const RETRY_DELAY_MS = 1000
 
-/**
- * Debounce-saves wizard state to Convex in the background.
- * Fires 3 seconds after the last state change.
- * Retries once on failure; shows error message on second failure.
- *
- * Only one saveDraftState mutation is inflight at a time. If state changes
- * while a save is inflight, one follow-up save fires after completion.
- *
- * Exposes cancelPending() so the wizard can cancel the debounce before
- * doing an immediate navigation save — avoids redundant double-writes.
- */
 export function useBookingDraftAutoSave(
   bookingId: string | null,
   state: WizardState,
@@ -33,7 +22,6 @@ export function useBookingDraftAutoSave(
   const latestStateRef = useRef(state)
   const latestBookingIdRef = useRef(bookingId)
 
-  // Keep refs in sync with latest values
   latestStateRef.current = state
   latestBookingIdRef.current = bookingId
 
@@ -84,7 +72,6 @@ export function useBookingDraftAutoSave(
   }, [saveDraftState])
 
   useEffect(() => {
-    // Skip initial render — only auto-save after user changes state
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false
       return

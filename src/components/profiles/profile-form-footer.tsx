@@ -5,7 +5,6 @@ import { InlineError } from '@/components/ui/inline-error'
 import { cn } from '@/lib/utils/cn'
 
 export interface ProfileFormFooterProps {
-  /** Use `footerErrorMessage` from `useProfileForm` (server + schema-level footer errors). */
   errorMessage?: string | null
   saving: boolean
   saved: boolean
@@ -14,14 +13,9 @@ export interface ProfileFormFooterProps {
   disabled?: boolean
   saveLabel?: string
   className?: string
-  /** Optional element rendered to the left of the Save button (e.g. an Add action). */
   leftAction?: React.ReactNode
 }
 
-/**
- * Shared profile form footer: error line + submit button.
- * Success feedback is via Sonner toast from `useProfileForm` (no duplicate inline copy).
- */
 export function ProfileFormFooter({
   errorMessage,
   saving,

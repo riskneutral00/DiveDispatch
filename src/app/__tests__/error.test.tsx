@@ -5,16 +5,12 @@ import { NextIntlClientProvider } from 'next-intl'
 import enMessages from '../../../messages/en.json'
 import RootError from '../error'
 
-// ── Mocks ────────────────────────────────────────────────────────────────────
-
-// Mock lucide-react icon
 vi.mock('lucide-react', () => ({
   AlertTriangle: (props: Record<string, unknown>) => (
     <svg data-testid="alert-icon" {...props} />
   ),
 }))
 
-// Mock glass components to avoid theme dependency
 vi.mock('@/components/ui/error-card', () => ({
   ErrorCard: ({
     title,
@@ -47,8 +43,6 @@ vi.mock('@/components/ui/button', () => ({
     </button>
   ),
 }))
-
-// ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('RootError boundary', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>

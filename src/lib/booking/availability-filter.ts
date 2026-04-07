@@ -1,12 +1,5 @@
-/**
- * Pure availability filtering and capacity labelling for resource picker dropdowns.
- * Hides fully-booked resources for a given date, and optionally enriches labels
- * with remaining capacity (e.g. "M.V. Hug Ocean (20/50)").
- */
-
 export type CapacityData = Record<string, Record<string, { available: number; total: number }>>
 
-/** Filter resource options to hide fully-booked resources for a given date. */
 export function filterByAvailability(
   options: { id: string; label: string; languages?: string[]; isPreferred?: boolean }[],
   date: string,
@@ -23,10 +16,6 @@ export function filterByAvailability(
   })
 }
 
-/**
- * Appends "(available/total)" to each option's label using capacity data for `date`.
- * Falls back to the original label when capacity data is missing or still loading.
- */
 export function enrichOptionsWithCapacity(
   options: { id: string; label: string; languages?: string[]; isPreferred?: boolean }[],
   date: string,

@@ -1,9 +1,3 @@
-/**
- * Single checkbox with glass styling. For boolean toggles in forms.
- *
- * For multi-select checkbox groups, use CheckboxGroup instead.
- */
-
 interface CheckboxProps {
   label: string | React.ReactNode
   checked: boolean

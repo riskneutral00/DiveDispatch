@@ -11,13 +11,9 @@ import { Button } from '@/components/ui/button'
 import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface PortalSubmitProps {
   token: string
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 interface StepRowProps {
   label: string
@@ -58,8 +54,6 @@ function StepRow({ label, complete, required, incompleteLabel }: StepRowProps) {
   )
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
-
 export function PortalSubmit({ token }: PortalSubmitProps) {
   const tPortal = useTranslations('portal')
   const tCommon = useTranslations('common')
@@ -88,7 +82,6 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     )
   }
 
-  // Already submitted — show success page
   if (status.alreadySubmitted || submitted) {
     return (
       <Card padding="lg">

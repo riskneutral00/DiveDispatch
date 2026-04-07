@@ -1,10 +1,3 @@
-/**
- * Compressor profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the two independent Compressor profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
@@ -29,8 +22,6 @@ const VALID_LOCATION = {
   lat: 10.1,
   lng: 99.8,
 }
-
-// ── Contact schema ────────────────────────────────────────────────────────────
 
 describe('contactSchema', () => {
   const valid = {
@@ -65,8 +56,6 @@ describe('contactSchema', () => {
   })
 })
 
-// ── Gas Mixes schema ──────────────────────────────────────────────────────────
-
 describe('compressorGasMixesSchema', () => {
   it('accepts at least one gas mix', () => {
     expect(compressorGasMixesSchema.safeParse({ gasMixes: ['air'] }).success).toBe(true)
@@ -89,8 +78,6 @@ describe('compressorGasMixesSchema', () => {
     expect(result.success).toBe(true)
   })
 })
-
-// ── compressorContactFromProfile ──────────────────────────────────────────────
 
 describe('compressorContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
@@ -128,8 +115,6 @@ describe('compressorContactFromProfile', () => {
   })
 })
 
-// ── compressorContactToPayload ────────────────────────────────────────────────
-
 describe('compressorContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: CompressorContactFormState = {
@@ -161,8 +146,6 @@ describe('compressorContactToPayload', () => {
   })
 })
 
-// ── compressorGasMixesFromProfile ─────────────────────────────────────────────
-
 describe('compressorGasMixesFromProfile', () => {
   it('extracts gasMixes array from profile', () => {
     const profile = { gasMixes: ['air', 'nitrox'] }
@@ -182,8 +165,6 @@ describe('compressorGasMixesFromProfile', () => {
   })
 })
 
-// ── compressorGasMixesToPayload ───────────────────────────────────────────────
-
 describe('compressorGasMixesToPayload', () => {
   it('serialises gasMixes array', () => {
     const form: CompressorGasMixesFormState = { gasMixes: ['air', 'trimix'] }
@@ -199,8 +180,6 @@ describe('compressorGasMixesToPayload', () => {
     expect(payload).not.toHaveProperty('location')
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_COMPRESSOR_CONTACT_FORM', () => {
   it('has empty string defaults', () => {

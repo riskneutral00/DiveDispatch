@@ -33,22 +33,15 @@ import type { CalendarBooking } from '../../../convex/bookings'
 import type { Id } from '@/lib/convex-generated'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
-// Mirrors the Convex listByOwner validator union — kept in sync with convex/bookings.ts:670
 type OperatorType = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel'
-
-// ── Main Component ──────────────────────────────────────────────────────────
 
 export function DashboardContent({ roleSlug, slug }: { roleSlug: string; slug: string }) {
   const roleConfig = ROLE_BY_KEY[roleSlug as RoleKey]
 
-  // Guard: unknown roleSlug means roleConfig is undefined — bail before hooks
-  // to prevent empty-string StakeholderRole reaching Convex validators.
   if (!roleConfig) return null
 
   return <DashboardContentInner roleConfig={roleConfig} slug={slug} roleSlug={roleSlug} />
 }
-
-// ── Inner Component (all hooks live here) ───────────────────────────────────
 
 interface DashboardContentInnerProps {
   roleConfig: RoleConfig
@@ -67,8 +60,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   const { defaults } = useOperatorDefaults()
   const { isSwitching } = useDevSwitching()
-
-  // ── Data queries ─────────────────────────────────────────────────────────
 
   const { data: bookings } = useStableQuery(
     api.bookings.listByOwner,
@@ -94,13 +85,10 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
   const isEquipmentRole = clerkRole === 'Equipment'
   const isBoatRole = clerkRole === 'Boat'
 
-  // Calendar visible range — drives DiverEquipmentWidget / BoatManifestWidget date window
   const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null)
   const handleRangeChange = useCallback((start: string, end: string) => {
     setVisibleRange({ start, end })
   }, [])
-
-  // ── Booking overlay state ────────────────────────────────────────────────
 
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayCourses, setOverlayCourses] = useState<string[]>([])
@@ -113,8 +101,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     setWizardKey((k) => k + 1)
     setOverlayOpen(true)
   }
-
-  // ── Drag-to-date ────────────────────────────────────────────────────────
 
   const resolveTemplateResourceHints = useCallback(
     (courses: string[]) => {
@@ -133,7 +119,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   const dnd = useBookingDnd({ defaults, resolveTemplateResourceHints })
 
-  // When a pill is dropped on a date, open the wizard with pre-fill
   useEffect(() => {
     if (dnd.pendingPreFill) {
       openBookingOverlay(dnd.pendingPreFill.courses, dnd.pendingPreFill)
@@ -141,11 +126,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     }
   }, [dnd.pendingPreFill, dnd.clearPendingPreFill])
 
-  // ── Extracted hooks ────────────────────────────────────────────────────────
-
   const actions = useBookingActions()
-
-  // ── Derived callbacks ──────────────────────────────────────────────────────
 
   const handleBookingClick = useCallback(
     (id: string) => actions.handleBookingClick(id, calendarBookings),
@@ -154,7 +135,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   const handleUrgentCancel = useCallback(
     (bookingId: string) => {
-      // Referral bookings are read-only for the agent — DC retains full control.
       const booking = calendarBookings.find((b) => b._id === bookingId)
       if (booking?.isReferral) return
       actions.handleUrgentCancel(bookingId, isOperator)
@@ -162,9 +142,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     [actions.handleUrgentCancel, isOperator, calendarBookings],
   )
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
-  // Boat operator: vessel trips as CalendarBooking[] + fleet categories
   const { data: vesselTrips } = useStableQuery(
     api.boatWidget.getVesselCalendarTrips,
     isBoatRole && visibleRange && !isSwitching
@@ -172,7 +149,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
       : 'skip',
   )
 
-  // Build fleet legend from vessel calendar data (uses existing capacity query for fleet names)
   const { data: vesselCalendarData } = useStableQuery(
     api.boatWidget.getVesselCalendarData,
     isBoatRole && visibleRange && !isSwitching
@@ -203,7 +179,6 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     [],
   )
 
-  // Shell guard handles ROLE_NOT_HELD via redirect; render nothing during that window
   if (isDashboardError || isTemplatesError) return null
 
   if (isBookingsLoading) {

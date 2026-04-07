@@ -15,8 +15,6 @@ import { batchGet } from './lib/batch'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS } from './shared/statuses'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export type BookingDetailSession = {
   _id: string
   date: string
@@ -131,7 +129,6 @@ export type CalendarBooking = {
   operatorName: string
   reservationStatus: string | undefined
   resources: CalendarBookingResource[]
-  /** True when this booking is a referral (agentId matches caller but ownerId is a different operator). */
   isReferral: boolean
 }
 
@@ -144,20 +141,10 @@ export type RequestItem = {
   ownerName: string
 }
 
-// ─── Role → query strategy ────────────────────────────────────────────────────
-
-// Resource roles that use the bookingResources junction table
 const RESOURCE_ROLES = new Set([
   'Instructor', 'DiveMaster', 'Boat', 'Equipment', 'Pool', 'Compressor', 'DiveSite',
 ])
 
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Batch-query users by slug, return Map<slug, name>.
- * Avoids N+1 when denormalizing resource names on booking list items.
- */
 export async function buildInstructorNameMap(
   ctx: QueryCtx,
   slugs: string[],
@@ -176,11 +163,6 @@ export async function buildInstructorNameMap(
   return map
 }
 
-/**
- * Batch-fetches resources for a set of bookings and builds a name map for
- * all referenced resource slugs. Eliminates the repeated 4-line pattern
- * across list handlers.
- */
 async function buildResourceContext(
   ctx: QueryCtx,
   bookingIds: string[],
@@ -192,7 +174,6 @@ async function buildResourceContext(
   return { resourceMap, nameMap }
 }
 
-/** Build CalendarBookingResource[] from bookingResources rows + name map. */
 function buildCalendarResources(
   resources: BookingResource[],
   nameMap: Map<string, string>,
@@ -214,11 +195,9 @@ function toCalendarBooking(
 ): CalendarBooking {
   const divers = b.divers as Array<{ name: string }>
 
-  // Look up pre-fetched resources from the batch map
   const resources = resourceMap.get(b._id as string) ?? []
   const calendarResources = buildCalendarResources(resources, nameMap)
 
-  // Extract instructor/boat names from resources for backward compat
   const instructorRes = resources.find((r: BookingResource) => r.resourceType === 'Instructor')
   const boatRes = resources.find((r: BookingResource) => r.resourceType === 'Boat')
 
@@ -250,7 +229,6 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
   const role = activeRole
   const slug = user.slug
 
-  // Operator roles: query bookings by ownerId index
   if (OPERATOR_ROLE_SET.has(role) && role !== 'Agent') {
     return ctx.db
       .query('bookings')
@@ -258,7 +236,6 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
       .collect() // bounded: per-booking joins
   }
 
-  // Agent: query bookings by agentId index
   if (role === 'Agent') {
     return ctx.db
       .query('bookings')
@@ -266,7 +243,6 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
       .collect() // bounded: per-booking joins
   }
 
-  // Resource roles: query bookingResources junction table
   if (RESOURCE_ROLES.has(role)) {
     const bookingIds = await getBookingIdsForResource(ctx, slug)
     const bookings = await Promise.all(
@@ -278,15 +254,6 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
   return []
 }
 
-// ─── Handlers (exported for unit testing) ────────────────────────────────────
-
-/**
- * List bookings owned by the given operator (ownerId + ownerType).
- * Auth: caller slug must match ownerId.
- *
- * Agent branch: also includes referral bookings (agentId = agent slug, ownerId = another operator).
- * These are marked isReferral=true and are read-only for the agent.
- */
 export async function _listByOwner(
   ctx: QueryCtx,
   args: { ownerId: string; ownerType: string },
@@ -294,7 +261,6 @@ export async function _listByOwner(
   const { user } = await requireAuth(ctx)
   if (user.slug !== args.ownerId) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-  // Owned bookings (agent as operator or any other operator type)
   const ownedBookings = await ctx.db
     .query('bookings')
     .withIndex('by_ownerId_ownerType', (q) =>
@@ -302,7 +268,6 @@ export async function _listByOwner(
     )
     .collect() // bounded: per-booking joins
 
-  // Agent referral bookings: owned by another operator but agentId = this agent
   const ownedIds = new Set(ownedBookings.map((b) => b._id as string))
   const referralBookings: BookingDoc[] = []
 
@@ -313,15 +278,12 @@ export async function _listByOwner(
       .collect() // bounded: per-booking joins
 
     for (const b of agentIdRows) {
-      // Only include rows NOT already in ownedBookings (prevents double-counting
-      // the edge case where ownerId = agentId = same slug)
       if (!ownedIds.has(b._id as string)) {
         referralBookings.push(b as BookingDoc)
       }
     }
   }
 
-  // Batch-fetch resources for all bookings upfront
   const allBookings = [...ownedBookings, ...referralBookings]
   const { resourceMap, nameMap } = await buildResourceContext(ctx, allBookings.map((b) => b._id as string))
 
@@ -333,10 +295,6 @@ export async function _listByOwner(
   return result
 }
 
-/**
- * List the caller's own bookings filtered by status.
- * Scoped to caller via role index — never leaks cross-user data.
- */
 export async function _listByStatus(
   ctx: QueryCtx,
   args: { status: string; activeRole: string },
@@ -352,10 +310,6 @@ export async function _listByStatus(
   return filtered.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
 
-/**
- * List bookings where a specific resource is assigned (via display cache indexes).
- * Auth: caller slug must match resourceId.
- */
 export async function _listByResource(
   ctx: QueryCtx,
   args: { resourceId: string; resourceType: string },
@@ -363,7 +317,6 @@ export async function _listByResource(
   const { user } = await requireAuth(ctx)
   if (user.slug !== args.resourceId) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-  // Query via bookingResources junction table
   const bookingIds = await getBookingIdsForResource(ctx, args.resourceId)
   const bookings = (await Promise.all(bookingIds.map((id) => ctx.db.get(id as Id<"bookings">)))).filter(Boolean) as BookingDoc[]
 
@@ -372,13 +325,6 @@ export async function _listByResource(
   return bookings.map((b) => toCalendarBooking(b, nameMap, resourceMap))
 }
 
-/**
- * Dashboard query — returns CalendarBooking[] (Upcoming + Completed) and
- * RequestItem[] (pending reservation holds for resource stakeholders).
- *
- * Uses bookingResources junction table for resource roles.
- * Resource roles additionally query reservations to surface incoming holds.
- */
 export async function _myDashboard(
   ctx: QueryCtx,
   activeRole: string,
@@ -388,12 +334,10 @@ export async function _myDashboard(
 
   const allBookings = await resolveCallerBookings(ctx, user, activeRole)
 
-  // Batch-fetch all resources upfront
   const { resourceMap, nameMap } = await buildResourceContext(ctx, allBookings.map((b) => b._id as string))
 
   const isResourceRole = !await checkHasAnyOperatorRole(ctx, user._id)
 
-  // Fetch caller's inventory units upfront (used for both reservationStatus and requests)
   let callerUnitIds = new Set<string>()
   let inventoryUnits: InventoryUnitDoc[] = []
   if (isResourceRole) {
@@ -408,7 +352,6 @@ export async function _myDashboard(
     (b) => b.status === BOOKING_STATUS.Draft || b.status === BOOKING_STATUS.Upcoming || b.status === BOOKING_STATUS.Completed,
   )
 
-  // Reservations on caller's units only: O(units × statuses) index scans, not O(bookings).
   let reservationMap = new Map<string, ReservationDoc[]>()
   if (isResourceRole && inventoryUnits.length > 0) {
     const statuses = Object.values(RESERVATION_STATUS)
@@ -511,11 +454,6 @@ export async function _myDashboard(
   return { bookings: calendarBookings, requests }
 }
 
-/**
- * Returns a rich joined view of a single booking for the operator detail page.
- * Auth: caller slug must match booking.ownerId.
- * Returns null if the booking does not exist.
- */
 export async function _getBookingDetail(
   ctx: QueryCtx,
   args: { bookingId: string },
@@ -527,10 +465,8 @@ export async function _getBookingDetail(
   if (!booking) return null
   const b = booking as BookingDoc
 
-  // Allow access if caller owns the booking OR has a reservation on it
   await requireOwnerOrResourceAccess(ctx, user, bookingId)
 
-  // Fetch related rows in parallel
   const [sessions, reservations, customerProfiles, auditEntries] = await Promise.all([
     ctx.db
       .query('bookingSessions')
@@ -551,7 +487,6 @@ export async function _getBookingDetail(
       .collect(), // bounded: per-booking joins
   ])
 
-  // Build a map of inventoryUnit id → record for display names
   const allIuIds = [
     ...new Set<string>([
       ...sessions.map((s) => s.inventoryUnitId as string),
@@ -566,7 +501,6 @@ export async function _getBookingDetail(
     }),
   )
 
-  // Resolve stakeholders from bookingResources junction table
   const bookingResourceRows = await getResourcesForBooking(ctx, bookingId as string)
 
   const resourceIds = bookingResourceRows
@@ -589,16 +523,13 @@ export async function _getBookingDetail(
     }),
   )
 
-  // Flat name map for reservation stakeholder resolution
   const nameMap = new Map<string, string>()
   userProfileMap.forEach((profile, slug) => nameMap.set(slug, profile.name))
 
-  // Build structured stakeholders list from bookingResources
   const stakeholders: BookingDetailStakeholder[] = []
   for (const br of bookingResourceRows) {
     if (br.resourceId) {
       const profile = userProfileMap.get(br.resourceId)
-      // Find reservation status for this stakeholder's inventory unit
       const stakeholderRes = reservations.find((r) => {
         const iu = iuMap.get(r.inventoryUnitId as string)
         return (iu?.ownerId as string | undefined) === br.resourceId
@@ -623,7 +554,6 @@ export async function _getBookingDetail(
     }
   }
 
-  // Derive per-type names from bookingResources for backward compat
   const instructorBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Instructor')
   const boatBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Boat')
   const emBR = bookingResourceRows.find((r: BookingResource) => r.resourceType === 'Equipment')
@@ -714,8 +644,6 @@ export async function _getBookingDetail(
     })),
   }
 }
-
-// ─── Convex query exports ─────────────────────────────────────────────────────
 
 export const listByOwner = query({
   args: {

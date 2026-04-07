@@ -1,13 +1,7 @@
-// ── Build Submit Payload ──────────────────────────────────────────────────────
-// Pure data transformation: WizardState → submitToDraft mutation arguments.
-// Extracted from review-step.tsx — zero React, zero side effects.
-
 import type { Id } from '@/lib/convex-generated'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import type { WizardState } from '@/lib/booking/wizard-state'
 import { deriveActivityType } from '@/lib/booking/wizard-state'
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 export interface SessionEntry {
   inventoryUnitId: Id<'inventoryUnits'>
@@ -54,16 +48,12 @@ export interface SubmitPayload {
   }
 }
 
-// ── Validation ───────────────────────────────────────────────────────────────
-
 export function validateReviewStep(state: WizardState): string | null {
   if (state.customers.length === 0) return 'Add at least one customer'
   if (!state.startDate || !state.endDate) return 'No date range.'
   if (state.days.length === 0) return 'No days scheduled.'
   return null
 }
-
-// ── Payload Builder ──────────────────────────────────────────────────────────
 
 export function buildSubmitPayload(state: WizardState): SubmitPayload {
   const { customers, days, bookingId, startDate, endDate, equipment, compressor,
@@ -72,9 +62,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
 
   const activityType = deriveActivityType(customers)
 
-  // Build sessions from days — one per resource per day.
-  // Each in-system resource (venue + instructor) needs its own session
-  // so submitToDraft creates reservations and tracks availability.
   const sessions: SessionEntry[] = []
   const sessionKey = (unitId: string, date: string) => `${unitId}|${date}`
   const seen = new Set<string>()
@@ -82,7 +69,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
   for (const d of days) {
     const deliveryLocation = (d.venueType === 'pool' ? 'Pool' : 'BoatPier') as 'BoatPier' | 'Pool' | 'Beach'
 
-    // Venue session (boat or pool) — skip shore days and external venues
     if (d.venueType !== 'shore') {
       const venueSlug = d.venueType === 'pool' ? d.poolInventoryUnitId : d.inventoryUnitId
       const venueUnitId = venueSlug ? inventoryUnitMap[venueSlug] : undefined
@@ -103,7 +89,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
 
-    // Instructor session — in-system instructors need reservations too
     if (d.instructorSlug && d.instructorSlug !== '__external__') {
       const instrUnitId = inventoryUnitMap[d.instructorSlug]
       if (instrUnitId) {
@@ -129,7 +114,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
       }
     }
 
-    // Dive Master — same Instructor inventory path, no diveSlots (lead instructor carries teaching slots)
     if (d.diveMasterSlug && d.diveMasterSlug !== '__external__') {
       const dmUnitId = inventoryUnitMap[d.diveMasterSlug]
       if (dmUnitId) {
@@ -150,7 +134,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
     }
   }
 
-  // Build divers from customers
   const divers: DiverEntry[] = customers.map((c) => {
     const firstEntry = c.courseEntries?.[0]
     const allCodes = [...new Set((c.courseEntries ?? []).map((e) => e.activityCode).filter(Boolean))]
@@ -176,10 +159,8 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
     }
   })
 
-  // Build generic resources array
   const resources: ResourceEntry[] = []
 
-  // Per-day resources (instructors, boats, pools) extracted from days
   for (const d of days) {
     if (d.instructorSlug && d.instructorSlug !== '__external__') {
       if (!resources.some(r => r.resourceType === 'Instructor' && r.resourceId === d.instructorSlug && (r.roleType ?? 'Instructor') !== 'DiveMaster')) {
@@ -219,7 +200,6 @@ export function buildSubmitPayload(state: WizardState): SubmitPayload {
     }
   }
 
-  // Equipment + Compressor
   if (!equipmentIsExternal && equipment) {
     resources.push({ resourceType: 'Equipment', resourceId: equipment })
   } else if (equipmentIsExternal && externalEquipmentName) {

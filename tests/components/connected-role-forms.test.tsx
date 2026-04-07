@@ -12,13 +12,10 @@ vi.mock('@/components/profiles/dive-center-profile-form', () => ({
   ),
 }))
 
-vi.mock('@/components/profiles/instructor-profile-form', () => ({
+vi.mock('@/components/profiles/personal-profile-form', () => ({
   InstructorProfileForm: (props: Record<string, unknown>) => (
     <div data-testid="instructor-form" data-section={props.section as string} />
   ),
-}))
-
-vi.mock('@/components/profiles/divemaster-profile-form', () => ({
   DiveMasterProfileForm: (props: Record<string, unknown>) => (
     <div data-testid="divemaster-form" data-section={props.section as string} />
   ),

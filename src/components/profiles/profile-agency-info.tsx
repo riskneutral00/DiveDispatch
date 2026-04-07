@@ -69,7 +69,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     if (variant === 'instructor') {
       return { _key, agency: '', level: '', agencyID: '', specialtyRatings: [] }
     }
-    // divemaster
     return { _key, agency: '', level: '', agencyID: '' }
   }
 
@@ -85,7 +84,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     const newItems = [...items] as TItem[]
     const updated = { ...(newItems[idx] as AgencyRow), ...patch } as TItem
 
-    // If changing agency in a Dive Center, reset specialties
     if (isCenter && patch.agency && patch.agency !== (newItems[idx] as AgencyRow).agency) {
       ;(updated as AgencyRow).selectedSpecialties = getDefaultSpecialties(String(patch.agency))
     }
@@ -94,13 +92,10 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
     onChange(newItems)
   }
 
-  // --- RENDERING HELPERS ---
-
   function renderDiveCenterFields(item: AgencyRow, idx: number) {
     const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES]
     return (
       <div className="flex flex-col gap-4 items-start">
-        {/* Agency + Member Number */}
         <div className="flex flex-wrap gap-2">
         <Select
           label="Agency"
@@ -122,7 +117,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         />
         </div>
 
-        {/* Row 2 */}
         <div>
           <p className="text-body font-medium mb-2 text-secondary">
             Default course #days<span className="text-destructive"> *</span>

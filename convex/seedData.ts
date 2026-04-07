@@ -1,6 +1,3 @@
-// Seed data constants for all stakeholders.
-// Consumed by convex/seed.ts internal mutations.
-
 import type { StakeholderRole } from './lib/validators'
 import {
   SCUBAPRO_WETSUITS, SCUBAPRO_BCDS,
@@ -8,8 +5,6 @@ import {
   MARES_WETSUITS, MARES_BCDS,
 } from './shared/gearSizing'
 export type { StakeholderRole }
-
-// ── Shared Defaults ─────────────────────────────────────────────────
 
 export const PHUKET = { placeName: 'Phuket', country: 'Thailand', lat: 7.8804, lng: 98.3923 } as const
 const CHALONG = { placeName: 'Phuket', country: 'Thailand', lat: 7.8386, lng: 98.3519 } as const
@@ -172,7 +167,6 @@ interface InstructorProfile {
   lng: number
   email: string
   phone: string
-  /** ISO-ish codes, aligned with `users.customerLanguages` / directory. */
   teachingLanguages: string[]
   credential: {
     agency: string
@@ -197,14 +191,11 @@ export interface SeedStakeholder {
   diveResort?: DiveResortProfile
 }
 
-/** Unowned dive sites -- public locations seeded without user accounts. */
 export interface SeedDiveSite {
   name: string
   slug: string
   capacity: number
 }
-
-// ── Nicole Inventory Override Builder ────────────────────────────────
 
 function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
   const lines: SeedInventoryLine[] = []
@@ -248,14 +239,10 @@ function buildNicoleInventoryOverrides(): SeedInventoryLine[] {
   return lines
 }
 
-// ── Route Helpers ───────────────────────────────────────────────────
-
 const RACHA = 'Racha Noi / Racha Yai'
 const SHARK_KC = 'Shark Point / King Cruiser'
 const PHI_PHI = 'Phi Phi'
 const ALL_DAYS = [1, 2, 3, 4, 5, 6, 0] // Mon-Sun
-
-// ── 1. Hug Ocean (DC + Boat + Pool + Equipment) ────────────────────
 
 export const HUG_OCEAN: SeedStakeholder = {
   user: {
@@ -323,8 +310,6 @@ export const HUG_OCEAN: SeedStakeholder = {
   },
 }
 
-// ── 2. Neptune (DC + Pool + Equipment) ─────────────────────────────
-
 export const NEPTUNE: SeedStakeholder = {
   user: {
     slug: 'z8mv4c',
@@ -373,8 +358,6 @@ export const NEPTUNE: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 3. Phuket Dive Center (DC + Boat + Equipment) ─────────────────
 
 export const PHUKET_DC: SeedStakeholder = {
   user: {
@@ -442,8 +425,6 @@ export const PHUKET_DC: SeedStakeholder = {
   },
 }
 
-// ── 4. Nicole Dive Center (DC + Equipment) ─────────────────────────
-
 export const NICOLE_DC: SeedStakeholder = {
   user: {
     slug: 'q9bz7r',
@@ -482,8 +463,6 @@ export const NICOLE_DC: SeedStakeholder = {
   },
 }
 
-// ── 5. Manta Dive Center (DC only) ─────────────────────────────────
-
 export const MANTA_DC: SeedStakeholder = {
   user: {
     slug: 'v6js2t',
@@ -508,8 +487,6 @@ export const MANTA_DC: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 6. ScubaNicks (DC + Equipment) ─────────────────────────────────
 
 export const SCUBANICKS: SeedStakeholder = {
   user: {
@@ -545,8 +522,6 @@ export const SCUBANICKS: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 7. Scuba Deep (DC + Equipment) ─────────────────────────────────
 
 export const SCUBA_DEEP: SeedStakeholder = {
   user: {
@@ -585,8 +560,6 @@ export const SCUBA_DEEP: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 8. Sirolo (DC + Boat + Equipment) ──────────────────────────────
 
 export const SIROLO: SeedStakeholder = {
   user: {
@@ -647,8 +620,6 @@ export const SIROLO: SeedStakeholder = {
   },
 }
 
-// ── 9. Pray Dive Center (DC only) ──────────────────────────────────
-
 export const PRAY_DC: SeedStakeholder = {
   user: {
     slug: 't7gw1k',
@@ -673,8 +644,6 @@ export const PRAY_DC: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 10. Hanul Dive (Korean-focused DC) ──────────────────────────────
 
 export const HANUL_DIVE: SeedStakeholder = {
   user: {
@@ -704,8 +673,6 @@ export const HANUL_DIVE: SeedStakeholder = {
   },
 }
 
-// ── 11. Umi Dive Center (Japanese-focused DC) ──────────────────────
-
 export const UMI_DIVE: SeedStakeholder = {
   user: {
     slug: 'b6um4j',
@@ -733,8 +700,6 @@ export const UMI_DIVE: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 12. Aqua Pro Dive (Russian-focused DC) ─────────────────────────
 
 export const AQUA_PRO: SeedStakeholder = {
   user: {
@@ -764,8 +729,6 @@ export const AQUA_PRO: SeedStakeholder = {
   },
 }
 
-// ── 13. Pacific Divers (ko, ja, es combo DC) ───────────────────────
-
 export const PACIFIC_DIVERS: SeedStakeholder = {
   user: {
     slug: 'c2pd8x',
@@ -793,8 +756,6 @@ export const PACIFIC_DIVERS: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 14. Blue Planet Diving (ru, id, nl combo DC) ───────────────────
 
 export const BLUE_PLANET: SeedStakeholder = {
   user: {
@@ -824,8 +785,6 @@ export const BLUE_PLANET: SeedStakeholder = {
   },
 }
 
-// ── 15. Amanda (Agent) ─────────────────────────────────────────────
-
 export const AMANDA: SeedStakeholder = {
   user: {
     slug: 'r5yz4q',
@@ -852,7 +811,6 @@ export const AMANDA: SeedStakeholder = {
   },
 }
 
-// ── 16. Ji-Yeon Park (Agent, Korean/English) ─────────────────────
 export const JIYEON_AGENT: SeedStakeholder = {
   user: {
     slug: 'k4ko9j',
@@ -883,7 +841,6 @@ export const JIYEON_AGENT: SeedStakeholder = {
   },
 }
 
-// ── 17. Kenji Watanabe (Agent, Japanese/English) ──────────────────
 export const KENJI_AGENT: SeedStakeholder = {
   user: {
     slug: 'a7ja2m',
@@ -914,7 +871,6 @@ export const KENJI_AGENT: SeedStakeholder = {
   },
 }
 
-// ── 18. Eva Klein (Agent, German/French/Dutch) ────────────────────
 export const EVA_AGENT: SeedStakeholder = {
   user: {
     slug: 'e6eu5z',
@@ -945,8 +901,6 @@ export const EVA_AGENT: SeedStakeholder = {
   },
 }
 
-// ── 11. Andaman Explorer (Liveaboard) ─────────────────────────────
-
 export const ANDAMAN_EXPLORER: SeedStakeholder = {
   user: {
     slug: 'k8lv3a',
@@ -970,8 +924,6 @@ export const ANDAMAN_EXPLORER: SeedStakeholder = {
   },
 }
 
-// ── 12. Chalong Pier — standalone compressor (slug matches convex/seedBookingData COMPRESSOR_SLUG)
-
 export const CHALONG_COMPRESSOR: SeedStakeholder = {
   user: {
     slug: 'x4kp2m',
@@ -993,8 +945,6 @@ export const CHALONG_COMPRESSOR: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 13. Scuba Market Thailand — standalone compressor (Kata) ─────
 
 export const SCUBA_MARKET: SeedStakeholder = {
   user: {
@@ -1018,8 +968,6 @@ export const SCUBA_MARKET: SeedStakeholder = {
   },
 }
 
-// ── 14. Coral Bay Resort (DiveResort) ─────────────────────────────
-
 export const CORAL_BAY_RESORT: SeedStakeholder = {
   user: {
     slug: 'j2dn9f',
@@ -1042,8 +990,6 @@ export const CORAL_BAY_RESORT: SeedStakeholder = {
     verified: VERIFIED,
   },
 }
-
-// ── 15. Water Pro — standalone shared pool ──────────────────────────
 
 export const WATER_PRO: SeedStakeholder = {
   user: {
@@ -1073,8 +1019,6 @@ export const WATER_PRO: SeedStakeholder = {
   },
 }
 
-// ── 16. Shark Bites — standalone shared pool ────────────────────────
-
 export const SHARK_BITES: SeedStakeholder = {
   user: {
     slug: 'g2hn6x',
@@ -1102,8 +1046,6 @@ export const SHARK_BITES: SeedStakeholder = {
     hasCompressor: false,
   },
 }
-
-// ── 19. Scuba Revolution Phuket — standalone equipment manager ───────
 
 export const SCUBA_REVOLUTION: SeedStakeholder = {
   user: {
@@ -1133,13 +1075,9 @@ export const SCUBA_REVOLUTION: SeedStakeholder = {
   },
 }
 
-// ── Unowned Dive Sites (no user account) ────────────────────────────
-
 export const UNOWNED_DIVE_SITES: SeedDiveSite[] = [
   { name: 'Kata Beach', slug: 'kata-beach', capacity: 50 },
 ]
-
-// ── All Non-Instructor Stakeholders ─────────────────────────────────
 
 export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   HUG_OCEAN,
@@ -1168,4 +1106,3 @@ export const ALL_STAKEHOLDERS: SeedStakeholder[] = [
   ANDAMAN_EXPLORER,
   CORAL_BAY_RESORT,
 ]
-

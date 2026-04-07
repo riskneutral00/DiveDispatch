@@ -10,40 +10,31 @@ import {
 } from '../activity-rules'
 import type { CourseCode } from '../../../../convex/shared/courseCodes'
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
-/** Formats a Date as YYYY-MM-DD string. */
 function fmt(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Returns a new Date offset by the given number of days from `base`. */
 function daysFromNow(days: number, base: Date = new Date()): Date {
   const d = new Date(base)
   d.setDate(d.getDate() + days)
   return d
 }
 
-/** Returns a new Date offset by the given number of years from `base`. */
 function yearsFromNow(years: number, base: Date = new Date()): Date {
   const d = new Date(base)
   d.setFullYear(d.getFullYear() + years)
   return d
 }
 
-/** Returns a YYYY-MM-DD string for a date that is `years` years before `ref`. */
 function dobForAge(years: number, ref: Date = new Date()): string {
   const d = new Date(ref)
   d.setFullYear(d.getFullYear() - years)
   return fmt(d)
 }
 
-// ── calcAgeAtDate ────────────────────────────────────────────────────
-
 describe('calcAgeAtDate', () => {
   it('returns correct age when birthday has passed in the reference year', () => {
     const ref = new Date()
-    // Born exactly 25 years ago, 1 day in the past (birthday already passed)
     const dob = new Date(ref)
     dob.setFullYear(dob.getFullYear() - 25)
     dob.setDate(dob.getDate() - 1)
@@ -52,7 +43,6 @@ describe('calcAgeAtDate', () => {
 
   it('returns correct age on the exact birthday', () => {
     const ref = new Date()
-    // Born exactly 18 years ago today
     const dob = new Date(ref)
     dob.setFullYear(dob.getFullYear() - 18)
     expect(calcAgeAtDate(fmt(dob), fmt(ref))).toBe(18)
@@ -60,7 +50,6 @@ describe('calcAgeAtDate', () => {
 
   it('returns age minus 1 when birthday has not yet passed in the reference year', () => {
     const ref = new Date()
-    // Born 18 years ago but birthday is tomorrow
     const dob = new Date(ref)
     dob.setFullYear(dob.getFullYear() - 18)
     dob.setDate(dob.getDate() + 1)
@@ -86,32 +75,25 @@ describe('calcAgeAtDate', () => {
   })
 
   it('uses the reference date, not today', () => {
-    // Future booking: reference date is 1 year from now
     const today = new Date()
     const futureRef = yearsFromNow(1, today)
-    // Diver born 17 years ago — currently 17 but will be 18 at booking date
     const dob = new Date(today)
     dob.setFullYear(dob.getFullYear() - 17)
     expect(calcAgeAtDate(fmt(dob), fmt(futureRef))).toBe(18)
   })
 
   it('handles leap year birthday (Feb 29) checked on non-leap year', () => {
-    // Find next leap year from now
     let leapYear = new Date().getFullYear()
     while (leapYear % 4 !== 0 || (leapYear % 100 === 0 && leapYear % 400 !== 0)) {
       leapYear++
     }
     const dobStr = `${leapYear - 20}-02-29`
-    // Check on March 1 of a non-leap year (birthday hasn't "truly" passed)
     const nonLeapYear = leapYear - 1
     const refStr = `${nonLeapYear}-03-01`
     const age = calcAgeAtDate(dobStr, refStr)
-    // On March 1, the person born Feb 29 should be considered to have had their birthday
     expect(age).toBe(19)
   })
 })
-
-// ── getMinAge ────────────────────────────────────────────────────────
 
 describe('getMinAge', () => {
   it('returns 0 for empty activity list', () => {
@@ -125,12 +107,10 @@ describe('getMinAge', () => {
   })
 
   it('returns the most restrictive (highest) minimum across multiple activities', () => {
-    // DSD=10, AOW=12 → 12
     expect(getMinAge(['DSD', 'AOW'])).toBe(12)
   })
 
   it('returns 18 when DM is included regardless of other activities', () => {
-    // DM=18 is the highest possible
     expect(getMinAge(['DSD', 'OW', 'DM'])).toBe(18)
   })
 
@@ -145,8 +125,6 @@ describe('getMinAge', () => {
     }
   })
 })
-
-// ── requiresCertification ────────────────────────────────────────────
 
 describe('requiresCertification', () => {
   it('returns false for empty list', () => {
@@ -167,8 +145,6 @@ describe('requiresCertification', () => {
     expect(requiresCertification(['DSD', 'AOW'])).toBe(true)
   })
 })
-
-// ── isPassportExpiringSoon ───────────────────────────────────────────
 
 describe('isPassportExpiringSoon', () => {
   it('returns false for empty date string', () => {
@@ -223,7 +199,6 @@ describe('isPassportExpiringSoon', () => {
   })
 
   it('returns false when passport expires exactly 1 day after the 6-month mark', () => {
-    // Fixed calendar anchor avoids `new Date()` / `setMonth` + timezone drift vs fmt(toISOString).
     const ref = new Date('2026-01-15T12:00:00Z')
     const sixMonthsOut = new Date(ref)
     sixMonthsOut.setMonth(sixMonthsOut.getMonth() + 6)
@@ -233,11 +208,9 @@ describe('isPassportExpiringSoon', () => {
   })
 
   it('defaults to today when no reference date provided', () => {
-    // Passport expiring far in the future should always be false
     const farFuture = fmt(yearsFromNow(5))
     expect(isPassportExpiringSoon(farFuture)).toBe(false)
 
-    // Passport already expired should always be true
     const pastDate = fmt(daysFromNow(-30))
     expect(isPassportExpiringSoon(pastDate)).toBe(true)
   })

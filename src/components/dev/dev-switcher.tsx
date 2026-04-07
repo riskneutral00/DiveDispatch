@@ -13,7 +13,6 @@ import {
   type RoleKey,
 } from '@/lib/constants/roles'
 
-/** Hide organizer seeds that are rarely used for dev switching; show resource roles instead. */
 const DEV_SWITCHER_EXCLUDED_ROLE_KEYS = new Set<RoleKey>([
   'liveaboard',
   'dive-resort',
@@ -23,13 +22,11 @@ import { ALL_INSTRUCTORS } from '../../../convex/seedInstructorData'
 import { Card } from '@/components/ui/card'
 import { parseConvexError } from '@/lib/utils/convex-error'
 
-// Guard: dev-only component
 export function DevSwitcher() {
   if (process.env.NODE_ENV !== 'development') return null
   return <DevSwitcherInner />
 }
 
-// All seed stakeholders
 const ALL_SEED: SeedStakeholder[] = [
   ...ALL_STAKEHOLDERS,
   ...ALL_INSTRUCTORS,
@@ -71,7 +68,6 @@ function DevSwitcherInner() {
   const [error, setError] = useState<string | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Close on Escape key or click outside panel
   const closePanel = useCallback(() => setOpen(false), [])
   useClickOutside(panelRef, closePanel, open)
   useEffect(() => {
@@ -98,7 +94,6 @@ function DevSwitcherInner() {
 
   async function handleSwitch(slug: string | undefined) {
     if (!slug || switching) return
-    // Signal context FIRST so sibling components skip their queries
     setContextSwitching(true)
     setSwitching(slug)
     setError(null)
@@ -109,8 +104,6 @@ function DevSwitcherInner() {
         setError(`Unknown role: ${result.role}`)
         return
       }
-      // Brief delay lets Convex propagate the tokenIdentifier patch before
-      // the new page's queries fire — prevents a transient FORBIDDEN error.
       await new Promise((r) => setTimeout(r, 150))
       window.location.href = `/${result.slug}/${config.key}`
     } catch (err) {
@@ -122,7 +115,6 @@ function DevSwitcherInner() {
 
   return (
     <>
-      {/* Full-screen overlay masks transitional query state during switch */}
       {switching && (
         <div
           className="fixed inset-0 z-[var(--z-dev)] flex items-center justify-center"
@@ -132,7 +124,6 @@ function DevSwitcherInner() {
         </div>
       )}
 
-      {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-4 right-4 z-[var(--z-dropdown)] flex items-center gap-1.5 rounded-full px-3 py-1.5 text-label font-medium shadow-lg glass text-primary"
@@ -142,7 +133,6 @@ function DevSwitcherInner() {
         <span>{user?.firstName ?? 'Dev'}</span>
       </button>
 
-      {/* Panel */}
       {open && (
         <div ref={panelRef} className="fixed bottom-12 right-4 z-[var(--z-dropdown)] w-80">
           <Card padding="none" overflow="hidden">

@@ -45,10 +45,6 @@ describe('constantTimeEqual', () => {
   })
 
   it('compares all bytes even when first bytes differ (constant-time property)', () => {
-    // This test verifies structural correctness: the function must XOR all bytes
-    // and accumulate the result, not short-circuit on the first mismatch.
-    // We can't directly measure timing, but we verify the return value is correct
-    // for all mismatch positions.
     const base = new Uint8Array([10, 20, 30, 40, 50])
     for (let i = 0; i < base.length; i++) {
       const modified = new Uint8Array(base)

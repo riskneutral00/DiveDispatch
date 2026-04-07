@@ -1,8 +1,4 @@
 // @vitest-environment jsdom
-/**
- * Consolidated tests for `useProfileForm` — loading, validation, save, dirty,
- * optimistic baseline, toasts, and option type-safety.
- */
 import { describe, it, expect, expectTypeOf, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { z } from 'zod'
@@ -17,8 +13,6 @@ import { useProfileForm, type UseProfileFormOptions } from '../use-profile-form'
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }))
-
-// ── Pure isDirty (mirrors hook JSON baseline comparison) ────────────────────
 
 function computeIsDirty<T>(current: T, baseline: T): boolean {
   return JSON.stringify(current) !== JSON.stringify(baseline)
@@ -89,8 +83,6 @@ describe('useProfileForm isDirty logic', () => {
   })
 })
 
-// ── Type-safety ───────────────────────────────────────────────────────────────
-
 describe('useProfileForm type safety', () => {
   type TestForm = { name: string; age: number }
   type TestPayload = { name: string; age: number; slug: string }
@@ -119,8 +111,6 @@ describe('useProfileForm type safety', () => {
     >()
   })
 })
-
-// ── Integration (renderHook) ──────────────────────────────────────────────────
 
 const testSchema = z.object({
   name: z.string().min(1, 'Name required'),
@@ -348,8 +338,6 @@ describe('useProfileForm', () => {
     expect(result.current.isDirty).toBe(false)
   })
 })
-
-// ── Optimistic save + toasts ───────────────────────────────────────────────────
 
 const optimisticSchema = z.object({
   name: z.string().min(1),

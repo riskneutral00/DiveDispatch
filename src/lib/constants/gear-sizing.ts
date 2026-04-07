@@ -1,9 +1,3 @@
-/**
- * Re-export from convex/shared/gearSizing.
- * Single source of truth lives in convex/shared/ to satisfy the dependency
- * direction rule (convex/ <- lib/ <- components/ <- app/).
- * This file exists so client-side consumers can import from their usual path.
- */
 export {
   SCUBAPRO_WETSUITS,
   SCUBAPRO_BCDS,

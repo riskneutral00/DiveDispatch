@@ -1,8 +1,6 @@
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export type AuditAction =
   | 'created'
   | 'submitted'
@@ -32,14 +30,6 @@ export type LogBookingChangeArgs = {
   note?: string
 }
 
-// ─── logBookingChange ─────────────────────────────────────────────────────────
-
-/**
- * Plain helper — call directly inside a mutation to write an audit entry
- * in the same transaction as the state change. Not exposed to the client.
- *
- * Signature mirrors other shared helpers (releaseBookingReservations, tryAutoAdvance).
- */
 export async function logBookingChange(
   ctx: MutationCtx,
   args: LogBookingChangeArgs,

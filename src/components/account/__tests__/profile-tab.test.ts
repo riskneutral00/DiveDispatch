@@ -1,11 +1,3 @@
-/**
- * profile-tab — fromProfile / toPayload mapping tests
- *
- * Unit tests for the pure mapping functions extracted from ProfileTab.
- * These verify that Convex user records are correctly mapped to form state
- * and that form state is correctly mapped to mutation payloads.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   profileTabSchema,
@@ -14,8 +6,6 @@ import {
   PROFILE_DEFAULTS,
   type ProfileValues,
 } from '../profile-tab'
-
-// ── fromProfile ─────────────────────────────────────────────────────────────
 
 describe('profileFromUser', () => {
   it('maps a full user record to form state', () => {
@@ -104,8 +94,6 @@ describe('profileFromUser', () => {
     expect(result.dobDay).toBe('05')
   })
 })
-
-// ── toPayload ───────────────────────────────────────────────────────────────
 
 describe('profileToPayload', () => {
   it('maps form state to mutation args with full DOB', () => {
@@ -231,8 +219,6 @@ describe('profileToPayload', () => {
     expect(result.appLanguage).toBe('th')
   })
 })
-
-// ── Schema validation ───────────────────────────────────────────────────────
 
 describe('profileTabSchema', () => {
   it('accepts a valid form', () => {

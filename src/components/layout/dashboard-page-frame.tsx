@@ -16,9 +16,7 @@ export type DashboardPageMaxWidth = keyof typeof MAX_WIDTH_CLASS
 
 export interface DashboardPageFrameProps {
   children: ReactNode
-  /** Default `3xl` */
   maxWidth?: DashboardPageMaxWidth
-  /** Optional internal page padding; keep `none` inside DashboardShell to avoid double spacing */
   padding?: 'none' | 'standard' | 'mobileNavClearance'
   title?: string
   description?: string
@@ -26,10 +24,6 @@ export interface DashboardPageFrameProps {
   className?: string
 }
 
-/**
- * Consistent content width + optional PageTitle for dashboard routes inside
- * {@link DashboardShell} / {@link SessionDashboardShell}.
- */
 export function DashboardPageFrame({
   children,
   maxWidth = '3xl',

@@ -4,8 +4,6 @@ import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 interface DialogProps {
   open: boolean;
   onClose: () => void;
@@ -13,10 +11,7 @@ interface DialogProps {
   description?: string;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
-  /** Full-screen variant: full viewport on mobile, 90vw×90vh (max 800px) on desktop */
   fullScreen?: boolean;
-  /** When true, content behind the dialog fades out — dialog floats alone on background.
-   *  Default false — content stays visible behind the blurred backdrop. */
   scrim?: boolean;
   className?: string;
 }
@@ -43,7 +38,6 @@ export function Dialog({
   const titleId = useId();
   const descId = useId();
 
-  // Sync native <dialog> open/close state
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -52,19 +46,15 @@ export function Dialog({
     } else if (!open && dialog.open) {
       dialog.close();
     }
-    // Cleanup: ensure dialog is closed if component unmounts while open
-    // (e.g. error boundary mid-render) so CSS :has(dialog[open]) clears
     return () => {
       if (dialog.open) dialog.close();
     };
   }, [open]);
 
-  // Close on backdrop click
   const handleClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();
   };
 
-  // Close on Escape (dialog handles natively; sync state)
   const handleCancel = (e: React.SyntheticEvent) => {
     e.preventDefault();
     onClose();

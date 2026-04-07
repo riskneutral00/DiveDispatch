@@ -1,11 +1,5 @@
-// ── Activity Rules ────────────────────────────────────────────────────────────
-// Shared constants for certification requirements and PADI age minimums.
-// Used by booking wizard, customer portal validation, and server-side checks.
-
 import type { CourseCode } from '@/lib/constants/course-catalog'
 
-// Activities that require the diver to hold a pre-existing certification.
-// If ANY of a diver's activityTypes is in this list, agency + agencyID are required.
 export const CERT_REQUIRED_ACTIVITIES = [
   'AOW',
   'RESCUE',
@@ -15,23 +9,16 @@ export const CERT_REQUIRED_ACTIVITIES = [
   'SPECIALTY',
 ] as const satisfies readonly CourseCode[]
 
-// Activities that do NOT require a pre-existing certification.
 export const NO_CERT_ACTIVITIES = ['DSD', 'TRY_DIVE', 'OW'] as const satisfies readonly CourseCode[]
 
-/** Activities that require an in-system or external instructor. FD is excluded
- *  (Fun Dive is recreational — certified divers need no instruction). */
 export const INSTRUCTOR_REQUIRED_CODES = [
   'DSD', 'TRY_DIVE', 'OW', 'AOW', 'RESCUE', 'DM', 'REFRESH', 'SPECIALTY',
 ] as const satisfies readonly CourseCode[]
 
-/** Activities that require confined water (pool). Determines whether the pool
- *  picker is shown and required. */
 export const CONFINED_ACTIVITY_CODES = [
   'DSD', 'TRY_DIVE', 'OW', 'REFRESH',
 ] as const satisfies readonly CourseCode[]
 
-// PADI/universal age minimums per activity.
-// Age is calculated against booking startDate (not Date.now()).
 export const ACTIVITY_MIN_AGE: Record<CourseCode, number> = {
   DSD: 10,
   TRY_DIVE: 10,
@@ -44,30 +31,17 @@ export const ACTIVITY_MIN_AGE: Record<CourseCode, number> = {
   SPECIALTY: 12,
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Returns true if any activity in the list requires a pre-existing certification.
- */
 export function requiresCertification(activityTypes: readonly string[]): boolean {
   return activityTypes.some((t) =>
     (CERT_REQUIRED_ACTIVITIES as readonly string[]).includes(t),
   )
 }
 
-/**
- * Returns the minimum age required across all activity types for a diver.
- * Returns the highest minimum in the list (most restrictive).
- */
 export function getMinAge(activityTypes: readonly CourseCode[]): number {
   if (activityTypes.length === 0) return 0
   return Math.max(...activityTypes.map((t) => ACTIVITY_MIN_AGE[t] ?? 0))
 }
 
-/**
- * Calculates age in years from dateOfBirth (YYYY-MM-DD) relative to a reference date.
- * Used to determine whether guardian signature is required and for age-minimum checks.
- */
 export function calcAgeAtDate(dateOfBirth: string, referenceDate: string): number {
   const dob = new Date(dateOfBirth)
   const ref = new Date(referenceDate)
@@ -79,11 +53,6 @@ export function calcAgeAtDate(dateOfBirth: string, referenceDate: string): numbe
   return age
 }
 
-/**
- * Returns true if the passport expiration date falls within 6 months of the
- * reference date. Many destinations require at least 6 months passport validity.
- * Returns false if dateStr is empty/falsy.
- */
 export function isPassportExpiringSoon(dateStr: string, referenceDate?: string): boolean {
   if (!dateStr) return false
   const expiry = new Date(dateStr)

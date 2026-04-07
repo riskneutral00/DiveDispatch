@@ -1,9 +1,5 @@
 import { useEffect, type RefObject } from 'react'
 
-/**
- * Calls `handler` when a mousedown event occurs outside the referenced element.
- * No-ops when `enabled` is false (default true).
- */
 export function useClickOutside(
   ref: RefObject<HTMLElement | null>,
   handler: () => void,

@@ -1,6 +1,5 @@
 'use client'
 
-/** Optional title block for profile forms shown full-page (no section filter). */
 export function ProfileFormHeader({ isUpdate, roleName }: { isUpdate: boolean; roleName: string }) {
   return (
     <div>

@@ -4,7 +4,6 @@ import { action } from './_generated/server'
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const FROM_ADDRESS = 'bookings@divedispatch.dev'
 
-// Exported for unit testing without Convex runtime
 export function buildPortalEmailHtml(args: {
   customerName: string
   operatorName: string
@@ -69,12 +68,6 @@ export function buildPortalEmailHtml(args: {
 </html>`
 }
 
-/**
- * Convex action: sends the portal booking link email via Resend.
- * Must be called as an action (not mutation) — actions can make external HTTP calls.
- * Scheduled via ctx.scheduler.runAfter(0, ...) from bookingLinks.create to decouple
- * from the user request.
- */
 export const sendBookingLinkEmail = action({
   args: {
     to: v.string(),

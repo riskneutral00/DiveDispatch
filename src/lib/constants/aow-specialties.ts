@@ -1,7 +1,3 @@
-/**
- * Re-export facade for AOW specialty data.
- * Client code imports from here instead of reaching into convex/shared/.
- */
 export {
   AOW_SPECIALTIES,
   AOW_MAIN,

@@ -10,8 +10,6 @@ import { parseNumber } from '@/lib/utils/numbers'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { ZodType } from 'zod'
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export type VenueCapabilitiesFormState = {
   confinedCapable?: boolean
   maxDepth: number

@@ -13,7 +13,6 @@ interface ProfileSectionTabBarProps {
   onChange: (tab: string) => void
 }
 
-/** ARIA tablist for role profile sections (Contact, Languages, …) or preferences sub-tabs. */
 export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSectionTabBarProps) {
   const tablistRef = useRef<HTMLDivElement>(null)
 
@@ -33,7 +32,6 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
       if (nextIndex !== null) {
         e.preventDefault()
         onChange(tabs[nextIndex].id)
-        // Move focus to the newly activated tab
         const buttons = tablistRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
         buttons?.[nextIndex]?.focus()
       }

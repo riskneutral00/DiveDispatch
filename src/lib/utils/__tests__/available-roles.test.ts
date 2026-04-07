@@ -31,7 +31,6 @@ describe('getAvailableRoles', () => {
   it('returns roles in their original display order', () => {
     const held: ClerkRole[] = ['DiveCenter']
     const available = getAvailableRoles(held)
-    // Agent should still come before Instructor in the returned list
     const agentIdx = available.findIndex((r) => r.clerkRole === 'Agent')
     const instrIdx = available.findIndex((r) => r.clerkRole === 'Instructor')
     expect(agentIdx).toBeLessThan(instrIdx)

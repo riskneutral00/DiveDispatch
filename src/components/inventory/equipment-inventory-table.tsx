@@ -22,8 +22,6 @@ const GEAR_TYPE_OPTIONS = [
 
 const ADD_GEAR_TYPE_OPTIONS = GEAR_TYPES.map((gt) => ({ value: gt, label: GEAR_TYPE_LABELS[gt] }))
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
 export interface InventoryRow {
   _id: string
   inventoryUnitId: string
@@ -49,8 +47,6 @@ interface EquipmentInventoryTableProps {
   onUpdateUnits: (inventoryId: string, totalUnits: number) => Promise<void>
   onRemoveItem: (inventoryId: string) => Promise<void>
 }
-
-// ── Main Component ─────────────────────────────────────────────────────────
 
 export function EquipmentInventoryTable({
   items,
@@ -206,8 +202,6 @@ export function EquipmentInventoryTable({
   )
 }
 
-// ── Table Row ──────────────────────────────────────────────────────────────
-
 function InventoryTableRow({
   item,
   onUpdateUnits,
@@ -291,8 +285,6 @@ function InventoryTableRow({
     </tr>
   )
 }
-
-// ── Add Item Dialog ────────────────────────────────────────────────────────
 
 function AddItemDialog({
   open,

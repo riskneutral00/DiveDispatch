@@ -13,13 +13,9 @@ import {
 export type { CalendarDay, CalendarWeek } from '@/lib/utils/calendar-range'
 export { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-/** 4-week rolling window, shifted 2 weeks at a time per spec. */
 export function useCalendarRange() {
   const [range, setRange] = useState(() => getDefaultRange())
 
-  // Spec: shift by 2 weeks (14 days) per click
   const shiftRange = (weeks: number) =>
     setRange((prev) =>
       clampRange(

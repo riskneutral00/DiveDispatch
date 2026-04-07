@@ -22,14 +22,9 @@ import {
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export type EquipmentProfileSection = 'contact' | 'gear-catalog'
 
 type EquipmentSectionProps = BaseProfileSectionProps
-
-// ── Contact section ──────────────────────────────────────────────────
-
 
 export function EquipmentContactSection(props: EquipmentSectionProps) {
   return (
@@ -41,8 +36,6 @@ export function EquipmentContactSection(props: EquipmentSectionProps) {
     />
   )
 }
-
-// ── Gear Catalog section ─────────────────────────────────────────────
 
 export type EquipmentGearCatalogFormState = {
   manufacturersByGearType: Partial<Record<GearType, string[]>>
@@ -195,14 +188,6 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
   )
 }
 
-// ── Compat alias ─────────────────────────────────────────────────────
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedEquipmentForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry in
- * connected-role-forms.tsx continues to type-check without modification.
- */
 export function EquipmentProfileForm({
   section,
   profile,

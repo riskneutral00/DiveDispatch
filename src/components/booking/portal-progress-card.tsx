@@ -5,8 +5,6 @@ import { CheckCircle2, Circle, AlertCircle } from 'lucide-react'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import type { BookingDetailCustomerProfile } from '../../../convex/bookings'
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
 interface PortalProgressCardProps {
   portalContact: boolean
   portalMedical: boolean
@@ -20,8 +18,6 @@ interface StepRowProps {
   required: boolean
   complete: boolean
 }
-
-// ── Step row ───────────────────────────────────────────────────────────────────
 
 function StepRow({ label, required, complete }: StepRowProps) {
   const t = useTranslations('common')
@@ -59,8 +55,6 @@ function StepRow({ label, required, complete }: StepRowProps) {
   )
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
 export function PortalProgressCard({
   portalContact,
   portalMedical,
@@ -75,7 +69,6 @@ export function PortalProgressCard({
 
   return (
     <div className="space-y-3">
-      {/* Overall status */}
       <div className="flex items-center justify-between">
         <span className="text-body text-secondary">
           {totalProfiles > 0
@@ -92,14 +85,12 @@ export function PortalProgressCard({
         )}
       </div>
 
-      {/* Step checklist */}
       <div className="space-y-2 pt-1">
         <StepRow label={tPortal('contactInfo')} required={portalContact} complete={portalContact} />
         <StepRow label={tPortal('medicalQuestionnaire')} required={portalMedical} complete={portalMedical} />
         <StepRow label={tPortal('waiverSignature')} required={portalWaiver} complete={portalWaiver} />
       </div>
 
-      {/* Per-diver submission progress */}
       {customerProfiles.length > 0 && (
         <div className="pt-2" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
           <FormSectionHeader label={tPortal('diverSubmissions')} className="mb-2" />

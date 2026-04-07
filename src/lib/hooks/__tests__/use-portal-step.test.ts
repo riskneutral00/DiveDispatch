@@ -3,13 +3,10 @@ import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { usePortalStep } from '../use-portal-step'
 import { ConvexError } from 'convex/values'
-// Legacy error strings — matches mapPortalMutationError output in convex-error.ts
 const TOKEN_EXPIRED_MESSAGE = 'This link is no longer valid. Contact your dive center for a new one.'
 const BOOKING_CLOSED_MESSAGE = 'This booking is closed. Contact your dive center for help.'
 const UNEXPECTED_ERROR_MESSAGE = 'Something went wrong. Try again.'
 const FORMS_INCOMPLETE_FALLBACK_MESSAGE = 'Complete all steps above before submitting.'
-
-// ── Error state management ──────────────────────────────────────────────────
 
 describe('usePortalStep — error state', () => {
   it('starts with empty errors and null serverError', () => {
@@ -39,7 +36,6 @@ describe('usePortalStep — error state', () => {
     act(() => result.current.setFieldError('email', 'Required'))
     const before = result.current.errors
     act(() => result.current.clearError('nonexistent'))
-    // Should return same reference when key is not present
     expect(result.current.errors).toBe(before)
   })
 
@@ -49,7 +45,6 @@ describe('usePortalStep — error state', () => {
     act(() =>
       result.current.setErrors({ phone: 'Invalid', name: 'Too short' }),
     )
-    // Previous 'email' error is gone; only the new batch remains
     expect(result.current.errors).toEqual({ phone: 'Invalid', name: 'Too short' })
   })
 
@@ -63,8 +58,6 @@ describe('usePortalStep — error state', () => {
     expect(result.current.errors).toEqual({})
   })
 })
-
-// ── handleMutationError ─────────────────────────────────────────────────────
 
 describe('usePortalStep — handleMutationError', () => {
   it('sets TOKEN_EXPIRED_MESSAGE for TOKEN_EXPIRED code', () => {
@@ -119,7 +112,6 @@ describe('usePortalStep — handleMutationError', () => {
         new ConvexError({ code: 'SOMETHING_ELSE' }),
       ),
     )
-    // parseConvexError falls through reason → message → code
     expect(result.current.serverError).toBe('SOMETHING_ELSE')
   })
 
@@ -149,8 +141,6 @@ describe('usePortalStep — handleMutationError', () => {
     expect(result.current.serverError).toBe('Email already taken')
   })
 })
-
-// ── validateFields ──────────────────────────────────────────────────────────
 
 describe('usePortalStep — validateFields', () => {
   it('returns true and sets no errors when all rules pass', () => {
@@ -186,7 +176,6 @@ describe('usePortalStep — validateFields', () => {
 
   it('clears previous errors on re-validation', () => {
     const { result } = renderHook(() => usePortalStep())
-    // First validation: email fails
     act(() => {
       result.current.validateFields({
         email: { test: () => false, message: 'Bad', value: '' },
@@ -194,7 +183,6 @@ describe('usePortalStep — validateFields', () => {
     })
     expect(result.current.errors).toEqual({ email: 'Bad' })
 
-    // Second validation: email passes
     act(() => {
       result.current.validateFields({
         email: { test: () => true, message: 'Bad', value: 'ok' },
@@ -203,8 +191,6 @@ describe('usePortalStep — validateFields', () => {
     expect(result.current.errors).toEqual({})
   })
 })
-
-// ── submitting state ────────────────────────────────────────────────────────
 
 describe('usePortalStep — submitting', () => {
   it('starts with submitting = false', () => {
@@ -220,8 +206,6 @@ describe('usePortalStep — submitting', () => {
     expect(result.current.submitting).toBe(false)
   })
 })
-
-// ── clearServerError ────────────────────────────────────────────────────────
 
 describe('usePortalStep — clearServerError', () => {
   it('clears a previously set serverError', () => {

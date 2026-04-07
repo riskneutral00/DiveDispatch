@@ -28,7 +28,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme="ocean-dark" data-mode="dark">
       <body className={inter.className}>
-        {/* Provider order is critical: ClerkProvider > ConvexClerkProvider > ThemeProvider */}
         <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"

@@ -17,8 +17,6 @@ import type {
 } from '../../../convex/boatWidget'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function formatDate(iso: string): string {
   const d = new Date(iso + 'T00:00:00')
   return d.toLocaleDateString(undefined, {
@@ -37,8 +35,6 @@ function isPassportExpiringSoon(expirationDate?: string): boolean {
 }
 
 type GroupByMode = 'operator' | 'activity'
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 function DiverDetailRow({ diver }: { diver: ManifestDiver }) {
   const passportExpiring = isPassportExpiringSoon(diver.passportExpirationDate)
@@ -217,8 +213,6 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
   )
 }
 
-// ── Regrouping helper ────────────────────────────────────────────────────────
-
 function regroupByActivity(groups: ManifestGroup[]): ManifestGroup[] {
   const byActivity = new Map<string, ManifestDiver[]>()
   const metaMap = new Map<string, { operatorName: string; bookingId: string }>()
@@ -241,8 +235,6 @@ function regroupByActivity(groups: ManifestGroup[]): ManifestGroup[] {
     divers,
   }))
 }
-
-// ── Main component ───────────────────────────────────────────────────────────
 
 interface BoatManifestWidgetProps {
   visibleRange: { start: string; end: string }

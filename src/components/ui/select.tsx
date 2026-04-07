@@ -20,9 +20,7 @@ interface SelectProps {
   onChange: (v: string) => void
   options: SelectOption[]
   placeholder?: string
-  /** When provided, splits options into 4 tiers by language match + preferred status */
   customerLanguages?: string[]
-  /** Pass-through for E2E test selectors */
   'data-testid'?: string
   required?: boolean
   error?: string
@@ -112,7 +110,6 @@ function TierSection({
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [showAll, setShowAll] = useState(false)
 
-  // Precompute match tiers once per items/customerLanguages change
   const tierMap = useMemo(() => {
     if (!customerLanguages?.length) return null
     return new Map(items.map(opt => [opt.id, scoreLanguageMatch(opt.languages ?? [], customerLanguages).tier]))
@@ -188,7 +185,6 @@ export function Select({
   const isTiered = customerLanguages !== undefined && customerLanguages.length > 0
   const tiers = isTiered ? splitInstructorTiers(options, customerLanguages) : null
 
-  // Flat list of all options (for keyboard navigation indexing)
   const flatOptions = tiers
     ? [...tiers.tier1, ...tiers.tier2, ...tiers.tier3, ...tiers.tier4]
     : options
@@ -296,7 +292,6 @@ export function Select({
         >
           {tiers ? (
             (() => {
-              // First non-empty tier auto-opens
               const firstNonEmpty =
                 tiers.tier1.length > 0 ? 1 :
                 tiers.tier2.length > 0 ? 2 :

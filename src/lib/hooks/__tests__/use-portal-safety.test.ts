@@ -2,8 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockUseQuery = vi.fn()
 const mockUseMutation = vi.fn()
 
@@ -16,7 +14,6 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks
 import { usePortalSafety } from '../use-portal-safety'
 
 beforeEach(() => {
@@ -24,8 +21,6 @@ beforeEach(() => {
   mockUseQuery.mockReturnValue(undefined)
   mockUseMutation.mockReturnValue(vi.fn())
 })
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('usePortalSafety', () => {
   it('returns saved safety info from getSafetyInfoByToken query', () => {

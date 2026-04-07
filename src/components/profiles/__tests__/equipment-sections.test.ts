@@ -1,10 +1,3 @@
-/**
- * Equipment profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the two independent Equipment profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
@@ -29,8 +22,6 @@ const VALID_LOCATION = {
   lat: 10.1,
   lng: 99.8,
 }
-
-// ── Contact schema ────────────────────────────────────────────────────────────
 
 describe('contactSchema', () => {
   const valid = {
@@ -65,8 +56,6 @@ describe('contactSchema', () => {
   })
 })
 
-// ── Gear Catalog schema ───────────────────────────────────────────────────────
-
 describe('equipmentGearCatalogSchema', () => {
   it('accepts an empty manufacturers map', () => {
     expect(equipmentGearCatalogSchema.safeParse({ manufacturersByGearType: {} }).success).toBe(true)
@@ -85,8 +74,6 @@ describe('equipmentGearCatalogSchema', () => {
     expect(result.success).toBe(true)
   })
 })
-
-// ── equipmentContactFromProfile ───────────────────────────────────────────────
 
 describe('equipmentContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
@@ -124,8 +111,6 @@ describe('equipmentContactFromProfile', () => {
   })
 })
 
-// ── equipmentContactToPayload ─────────────────────────────────────────────────
-
 describe('equipmentContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: EquipmentContactFormState = {
@@ -156,8 +141,6 @@ describe('equipmentContactToPayload', () => {
     expect(payload).not.toHaveProperty('manufacturersByGearType')
   })
 })
-
-// ── equipmentGearCatalogFromProfile ──────────────────────────────────────────
 
 describe('equipmentGearCatalogFromProfile', () => {
   it('extracts manufacturersByGearType from profile', () => {
@@ -190,8 +173,6 @@ describe('equipmentGearCatalogFromProfile', () => {
   })
 })
 
-// ── equipmentGearCatalogToPayload ─────────────────────────────────────────────
-
 describe('equipmentGearCatalogToPayload', () => {
   it('serialises manufacturersByGearType map', () => {
     const form: EquipmentGearCatalogFormState = {
@@ -219,8 +200,6 @@ describe('equipmentGearCatalogToPayload', () => {
     expect(payload).not.toHaveProperty('location')
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_EQUIPMENT_CONTACT_FORM', () => {
   it('has empty string defaults', () => {

@@ -1,13 +1,8 @@
-// ── Country List ─────────────────────────────────────────────────────────────
-// ISO 3166-1 alpha-2 country codes and English names.
-// Used by the diver nationality selector in the booking wizard.
-
 export interface Country {
   code: string // ISO 3166-1 alpha-2, e.g. "TH"
   label: string
 }
 
-// Flag emoji from ISO alpha-2 code: each letter maps to a Regional Indicator Symbol.
 export function getFlagEmoji(code: string): string {
   if (!code || code.length !== 2) return '🌐'
   return code
@@ -269,5 +264,4 @@ export const COUNTRIES: Country[] = [
   { code: 'ZW', label: 'Zimbabwe' },
 ]
 
-/** Flat list of country names derived from COUNTRIES — for use in simple string selects. */
 export const COUNTRY_NAMES = COUNTRIES.map((c) => c.label) as readonly string[]

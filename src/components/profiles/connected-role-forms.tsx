@@ -6,8 +6,8 @@ import { api } from '@/lib/convex-generated'
 
 import { AgentProfileForm, type AgentProfileSection } from '@/components/profiles/agent-profile-form'
 import { DiveCenterProfileForm } from '@/components/profiles/dive-center-profile-form'
-import { InstructorProfileForm } from '@/components/profiles/instructor-profile-form'
-import { DiveMasterProfileForm } from '@/components/profiles/divemaster-profile-form'
+import { InstructorProfileForm } from '@/components/profiles/personal-profile-form'
+import { DiveMasterProfileForm } from '@/components/profiles/personal-profile-form'
 import { BoatProfileForm } from '@/components/profiles/boat-profile-form'
 import { CompressorProfileForm } from '@/components/profiles/compressor-profile-form'
 import { EquipmentProfileForm } from '@/components/profiles/equipment-profile-form'
@@ -16,16 +16,11 @@ import { DiveSiteProfileForm } from '@/components/profiles/dive-site-profile-for
 
 import type { RoleKey } from '@/lib/constants/roles'
 
-/** Convex mutations are strongly typed; profile forms accept `Record<string, unknown>`. */
 function asLooseMut<T>(
   fn: (args: T) => Promise<unknown>,
 ): (payload: Record<string, unknown>) => Promise<unknown> {
   return (p) => fn(p as T)
 }
-
-// ── Standard Connected Forms ─────────────────────────────────────────────────
-// Each entry maps a Convex API module to its profile form component.
-// The factory hook pattern avoids repeating the same useQuery/useMutation block 9x.
 
 interface RoleFormConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex FunctionReference generics are opaque at this abstraction level
@@ -62,8 +57,6 @@ function StandardConnectedForm({ section, config }: { section?: string; config: 
   )
 }
 
-// ── Agent (special case: extra updateProfile mutation) ───────────────────────
-
 function ConnectedAgentForm({ section }: { section?: string }) {
   const profile = useQuery(api.agents.mine)
   const me = useQuery(api.users.me)
@@ -82,17 +75,13 @@ function ConnectedAgentForm({ section }: { section?: string }) {
   )
 }
 
-// ── Registry ─────────────────────────────────────────────────────────────────
-
 type RoleProfileRegistryEntry = {
   renderFull: (section: string | undefined) => React.ReactNode
 }
 
 const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> = {
-  // Agent is special — uses extra mutation
   agent: { renderFull: (section) => <ConnectedAgentForm section={section} /> },
 
-  // All others use the standard factory
   ...Object.fromEntries(
     Object.entries(ROLE_FORM_CONFIGS).map(([key, config]) => [
       key,
@@ -105,7 +94,6 @@ const ROLE_PROFILE_REGISTRY: Partial<Record<RoleKey, RoleProfileRegistryEntry>> 
   ),
 }
 
-/** Whether a role has a connected profile form available. */
 export function hasConnectedForm(roleKey: RoleKey): boolean {
   return roleKey in ROLE_PROFILE_REGISTRY
 }
@@ -120,4 +108,3 @@ export function RoleProfileForm({
   const entry = ROLE_PROFILE_REGISTRY[roleSlug]
   return entry ? <>{entry.renderFull(section)}</> : null
 }
-

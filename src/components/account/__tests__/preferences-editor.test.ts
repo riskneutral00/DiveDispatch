@@ -1,12 +1,3 @@
-/**
- * preferences-editor — buildResourceSubTabs unit tests
- *
- * Verifies the resource sub-tab configuration:
- * - Default first tab is Instructors
- * - Agent role gets an additional Operator tab
- * - Non-Agent roles do not get the Operator tab
- */
-
 import { describe, it, expect } from 'vitest'
 import { buildResourceSubTabs } from '../preferences-editor'
 

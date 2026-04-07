@@ -21,7 +21,6 @@ import { AuditTrailTable } from './audit-trail-table'
 import { SendPortalLink } from './send-portal-link'
 import { PortalProgressCard } from './portal-progress-card'
 
-
 export function useTTLCountdown(expiresAt: number | undefined): string | null {
   const [label, setLabel] = useState<string | null>(() => computeTTLLabel(expiresAt))
 
@@ -33,7 +32,6 @@ export function useTTLCountdown(expiresAt: number | undefined): string | null {
 
   return label
 }
-
 
 interface PortalPill {
   label: string
@@ -51,7 +49,6 @@ function PortalPills({ pills }: { pills: PortalPill[] }) {
     </div>
   )
 }
-
 
 function CustomerTable({
   booking,
@@ -94,7 +91,6 @@ function CustomerTable({
     </div>
   )
 }
-
 
 function StakeholderList({
   stakeholders,
@@ -144,7 +140,6 @@ function StakeholderList({
     </ul>
   )
 }
-
 
 function PortalLinkSection({
   bookingId,
@@ -286,7 +281,6 @@ function PortalLinkSection({
   )
 }
 
-
 export function BookingDetailSkeleton() {
   return (
     <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
@@ -302,7 +296,6 @@ export function BookingDetailSkeleton() {
     </DashboardPageFrame>
   )
 }
-
 
 export type SectionId = 'overview' | 'customers' | 'schedule' | 'resources' | 'reservations' | 'audit'
 
@@ -332,7 +325,6 @@ function SectionTabs({
     />
   )
 }
-
 
 function CustomersSection({
   booking,
@@ -449,7 +441,6 @@ function AuditSection({ bookingId }: { bookingId: string }) {
   )
 }
 
-
 function buildPortalPills(booking: BookingDetail): PortalPill[] {
   const equipmentDone =
     booking.customerProfiles.length > 0 &&
@@ -463,7 +454,6 @@ function buildPortalPills(booking: BookingDetail): PortalPill[] {
     { label: 'Payment', done: false },
   ]
 }
-
 
 export interface BookingDetailBodyProps {
   booking: BookingDetail

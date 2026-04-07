@@ -53,7 +53,6 @@ export function ManageRoles({
       await onDeleteRole(roleId)
       setConfirmingId(null)
     } catch {
-      // Keep confirmation open on failure — caller handles error display
     } finally {
       setDeletingId(null)
     }
@@ -84,7 +83,6 @@ export function ManageRoles({
 
           return (
             <Card key={entry._id} padding="md">
-              {/* Main row */}
               <div className="flex items-center gap-3">
                 <RoleIcon role={entry.role} size={20} />
                 <div className="flex-1 min-w-0">
@@ -126,7 +124,6 @@ export function ManageRoles({
                 )}
               </div>
 
-              {/* Booking-blocked hint — always rendered when canDelete, toggle via opacity */}
               {canDelete && (
                 <div
                   className="text-label text-secondary pl-8 overflow-hidden transition-opacity duration-theme"
@@ -143,7 +140,6 @@ export function ManageRoles({
                 </div>
               )}
 
-              {/* Inline confirmation — always rendered when canDelete, toggle via visibility */}
               {canDelete && (
                 <div
                   aria-hidden={!(isConfirming && !isBlocked)}

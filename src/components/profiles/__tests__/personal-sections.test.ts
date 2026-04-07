@@ -1,10 +1,3 @@
-/**
- * Personal profile form section tests (Instructor and DiveMaster).
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the three independent Personal profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   personalContactSchema,
@@ -41,8 +34,6 @@ const VALID_LOCATION = {
   lng: 99.8,
 }
 
-// ── personalContactSchema ─────────────────────────────────────────────────────
-
 describe('personalContactSchema', () => {
   const valid = {
     name: 'Ariel Nemo',
@@ -76,8 +67,6 @@ describe('personalContactSchema', () => {
   })
 })
 
-// ── personalLanguagesSchema ───────────────────────────────────────────────────
-
 describe('personalLanguagesSchema', () => {
   it('accepts at least one teaching language', () => {
     const data = { teachingLanguages: [{ code: 'en', label: 'English' }] }
@@ -89,8 +78,6 @@ describe('personalLanguagesSchema', () => {
     expect(personalLanguagesSchema.safeParse(data).success).toBe(false)
   })
 })
-
-// ── diveMasterCredentialsSchema ───────────────────────────────────────────────
 
 describe('diveMasterCredentialsSchema', () => {
   const validDmCred = {
@@ -123,12 +110,9 @@ describe('diveMasterCredentialsSchema', () => {
   })
 
   it('does not require courses field', () => {
-    // DiveMaster credentials have no courses
     expect(diveMasterCredentialsSchema.safeParse({ credential: [validDmCred] }).success).toBe(true)
   })
 })
-
-// ── instructorCredentialsSchema ───────────────────────────────────────────────
 
 describe('instructorCredentialsSchema', () => {
   const validInstCred = {
@@ -172,8 +156,6 @@ describe('instructorCredentialsSchema', () => {
   })
 })
 
-// ── contactFromProfile ────────────────────────────────────────────────────────
-
 describe('contactFromProfile', () => {
   it('extracts name, location, email, and phone from profile', () => {
     const profile = {
@@ -211,8 +193,6 @@ describe('contactFromProfile', () => {
   })
 })
 
-// ── contactToPayload ──────────────────────────────────────────────────────────
-
 describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: ContactFormState = {
@@ -245,13 +225,10 @@ describe('contactToPayload', () => {
   })
 })
 
-// ── languagesFromProfilePersonal ──────────────────────────────────────────────
-
 describe('languagesFromProfilePersonal', () => {
   it('resolves teachingLanguages codes to Language objects', () => {
     const form = languagesFromProfilePersonal({ teachingLanguages: ['en'] })
     expect(form.teachingLanguages).toHaveLength(1)
-    // 'en' is normalised to canonical locale 'en-GB' by resolveLanguages
     expect(form.teachingLanguages[0].code).toBe('en-GB')
   })
 
@@ -260,8 +237,6 @@ describe('languagesFromProfilePersonal', () => {
     expect(form.teachingLanguages).toEqual([])
   })
 })
-
-// ── languagesToPayloadPersonal ────────────────────────────────────────────────
 
 describe('languagesToPayloadPersonal', () => {
   it('maps Language objects back to code strings', () => {
@@ -279,8 +254,6 @@ describe('languagesToPayloadPersonal', () => {
     expect(payload).not.toHaveProperty('credential')
   })
 })
-
-// ── credentialsFromProfile ────────────────────────────────────────────────────
 
 describe('credentialsFromProfile — divemaster variant', () => {
   it('maps credential array from profile for divemaster', () => {
@@ -332,8 +305,6 @@ describe('credentialsFromProfile — instructor variant', () => {
   })
 })
 
-// ── credentialsToPayload ──────────────────────────────────────────────────────
-
 describe('credentialsToPayload', () => {
   it('sends only credential array', () => {
     const form: PersonalCredentialsFormState = {
@@ -357,8 +328,6 @@ describe('credentialsToPayload', () => {
   })
 })
 
-// ── makeEmptyDmCredential / makeEmptyInstCredential ───────────────────────────
-
 describe('makeEmptyDmCredential', () => {
   it('has agency, level, agencyID as empty strings — no specialtyRatings field', () => {
     const cred = makeEmptyDmCredential()
@@ -378,8 +347,6 @@ describe('makeEmptyInstCredential', () => {
     expect(cred.specialtyRatings).toEqual([])
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_CONTACT_FORM', () => {
   it('has empty string defaults and null location', () => {

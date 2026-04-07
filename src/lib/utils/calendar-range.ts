@@ -72,7 +72,6 @@ export function getRangeForDate(date: Date): { start: Date; end: Date } {
   let end = new Date(sunday)
   end.setDate(end.getDate() + 20)
 
-  // Safeguard: if floor-clamp pushed start past end, recompute end from start
   if (end < start) {
     end = new Date(start)
     end.setDate(end.getDate() + MAX_RANGE_DAYS - 1)

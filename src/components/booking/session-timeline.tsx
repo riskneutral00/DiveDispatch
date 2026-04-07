@@ -3,13 +3,9 @@ import { Calendar, Clock, MapPin } from 'lucide-react'
 import type { BookingDetailSession } from '../../../convex/bookings'
 import { EmptyState } from '@/components/ui'
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
 interface SessionTimelineProps {
   sessions: BookingDetailSession[]
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function locationLabel(loc: BookingDetailSession['deliveryLocation']): string {
   switch (loc) {
@@ -33,8 +29,6 @@ function groupByDate(sessions: BookingDetailSession[]): Map<string, BookingDetai
   }
   return map
 }
-
-// ── Component ──────────────────────────────────────────────────────────────────
 
 export function SessionTimeline({ sessions }: SessionTimelineProps) {
   const byDate = useMemo(() => groupByDate(sessions), [sessions])

@@ -164,7 +164,6 @@ function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderB
   )
 }
 
-
 interface SingleRoleProps {
   slugs: string[]
   onChange: (slugs: string[]) => void
@@ -197,13 +196,11 @@ function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, rend
   )
 }
 
-
 interface ListProps {
   slugs: string[]
   onChange: (slugs: string[]) => void
   required?: boolean
 }
-
 
 interface FilterBarProps {
   agencies: string[]
@@ -218,7 +215,6 @@ interface FilterBarProps {
   currentCount: number
   required?: boolean
 }
-
 
 function InstructorFilterBar({
   agencies,
@@ -262,7 +258,6 @@ function InstructorFilterBar({
         </span>
       </div>
 
-
       {activeAgency && specialties.length > 0 && (
         <div className="flex flex-wrap gap-1.5 items-center">
           <span className="text-label text-secondary mr-1">Specialties</span>
@@ -287,7 +282,6 @@ function InstructorFilterBar({
         </div>
       )}
 
-
       <div className="space-y-1">
         <span className="text-label text-secondary">Languages</span>
         <LanguagePicker
@@ -300,7 +294,6 @@ function InstructorFilterBar({
     </div>
   )
 }
-
 
 function InstructorCandidateRow({
   entry,
@@ -344,7 +337,6 @@ function InstructorCandidateRow({
   )
 }
 
-
 function SortableInstructorRow({
   slug,
   index,
@@ -377,7 +369,6 @@ function SortableInstructorRow({
           <GripVertical size={16} />
         </button>
 
-
         <InstructorCardContent
           entry={entry}
           slug={slug}
@@ -396,7 +387,6 @@ function SortableInstructorRow({
         />
       </div>
 
-
       {!isLast && (
         <div
           className="mt-2.5"
@@ -406,7 +396,6 @@ function SortableInstructorRow({
     </div>
   )
 }
-
 
 export function PreferredInstructorList(props: ListProps) {
   const { slugs, onChange } = props
@@ -576,7 +565,6 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
       </div>
 
-
       {slugs.length > 0 && (
         <DragDropProvider
           onDragEnd={(event) => {
@@ -607,7 +595,6 @@ export function PreferredInstructorList(props: ListProps) {
           </div>
         </DragDropProvider>
       )}
-
 
       <Dialog
         open={showOverlay}
@@ -696,7 +683,6 @@ export function PreferredInstructorList(props: ListProps) {
   )
 }
 
-
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
@@ -713,7 +699,6 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
     </button>
   )
 }
-
 
 interface OverlayListProps {
   slugs: string[]
@@ -920,7 +905,6 @@ function PreferredOverlayList({
   )
 }
 
-
 function VenueBadge({ entry }: { entry: DirectoryEntry }) {
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -1024,7 +1008,6 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
   )
 }
 
-
 function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
   const counts = entry.inventoryCounts
   if (!counts || Object.keys(counts).length === 0) return null
@@ -1085,7 +1068,6 @@ export function PreferredEquipmentList(props: ListProps) {
     />
   )
 }
-
 
 function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
   const mixes = entry.gasMixes ?? []

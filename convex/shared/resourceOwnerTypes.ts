@@ -1,8 +1,3 @@
-/**
- * Canonical source of truth for ResourceOwnerType.
- * Array, TypeScript type, and Convex validator all derive from a single list.
- * Adding a resource owner type = edit this array, done.
- */
 import { v, type Infer } from 'convex/values'
 
 export const RESOURCE_OWNER_TYPES = [
@@ -23,7 +18,6 @@ const literals = RESOURCE_OWNER_TYPES.map((c) => v.literal(c)) as [
 ]
 export const resourceOwnerTypeValidator = v.union(...literals)
 
-// ── Compile-time guard ───────────────────────────────────────────────
 type ValidatorType = Infer<typeof resourceOwnerTypeValidator>
 type _Check = ValidatorType extends ResourceOwnerType
   ? ResourceOwnerType extends ValidatorType

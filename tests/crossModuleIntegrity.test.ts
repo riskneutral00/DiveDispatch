@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { ROLES, ORGANIZER_ROLES, RESOURCE_ROLES, ROLE_BY_KEY, ROLE_BY_CLERK_ROLE } from '../src/lib/constants/roles'
 import { ROLE_PRECEDENCE } from '../convex/lib/rolePrecedence'
-import { ROLE_FILTERS } from '../src/lib/constants/resource-filters'
 import { PROFILE_REGISTRY } from '../src/lib/constants/profile-registry'
 import { DEFAULT_LEGEND_STATUSES } from '../src/lib/constants/dashboard-config'
 import { BOOKING_STATUS } from '../convex/shared/statuses'
@@ -25,15 +24,6 @@ describe('roles ↔ rolePrecedence', () => {
     const clerkRoles: Set<string> = new Set(ROLES.map((r) => r.clerkRole))
     for (const key of Object.keys(ROLE_PRECEDENCE)) {
       expect(clerkRoles.has(key)).toBe(true)
-    }
-  })
-})
-
-describe('roles ↔ ROLE_FILTERS', () => {
-  it('every StakeholderRole in ROLE_FILTERS maps to a valid ROLES clerkRole', () => {
-    const clerkRoles: Set<string> = new Set(ROLES.map((r) => r.clerkRole))
-    for (const key of Object.keys(ROLE_FILTERS)) {
-      expect(clerkRoles.has(key), `ROLE_FILTERS key "${key}" not in ROLES`).toBe(true)
     }
   })
 })

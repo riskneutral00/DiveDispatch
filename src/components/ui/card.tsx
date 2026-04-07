@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils/cn'
 
 interface CardProps {
   children: React.ReactNode;
-  /** Layout only — no visual overrides (colors, typography, radii, animation). */
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   hoverable?: boolean;

@@ -20,7 +20,6 @@ import { Copy, OctagonX, Plus, RotateCw, Trash2 } from 'lucide-react'
 interface ItineraryStepProps {
   state: WizardState
   dispatch: Dispatch<WizardAction>
-  /** When true, skip preference cascade auto-fill (DD-313) */
   isEditMode?: boolean
 }
 
@@ -35,14 +34,6 @@ function pickFirstAvailable(
   }
   return ''
 }
-
-// ── O+A Combo Locks ─────────────────────────────────────────────────────────
-// When booking an O+A combo, OW-4 (must complete OW) and AOW-1 (must start AOW)
-// are auto-selected and non-toggleable.
-
-
-
-// ── CourseEntryRow ──────────────────────────────────────────────────────────
 
 interface CourseEntryRowProps {
   entry: CourseEntry
@@ -68,7 +59,6 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   }
 
   function handleCourseChange(code: string) {
-    // O+A combo: create OW entry + auto-add AOW entry with correct date ranges
     if (code === 'O+A') {
       const startDate = entry.dates[0] ?? ''
       if (startDate) {
@@ -106,11 +96,9 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
   }
 
   function handleStartDateChange(val: string) {
-    // O+A: detect OW+AOW combo for correct shared transition day dates
     const isOACombo = entry.activityCode === 'OW' && nextEntry?.activityCode === 'AOW'
 
     if (isOACombo) {
-      // O+A: OW gets [start, owEnd], AOW gets [owEnd, aowEnd]
       const combo = calculateComboDates(val)
       updateEntry({ dates: combo.owDates })
       dispatch({
@@ -125,7 +113,6 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
         : val
       updateEntry({ dates: [val, endDate] })
 
-      // General cascade: next starts day after current ends
       if (nextEntry && !nextEntry.dates[0]) {
         const nextStart = addDays(endDate, 1)
         const nextEnd = nextEntry.activityCode
@@ -151,7 +138,6 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
       className="flex flex-col gap-2 p-3 rounded-theme glass-container"
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        {/* Course picker */}
         <div className="min-w-0">
           <SimpleSelect
             label="Activity"
@@ -167,7 +153,6 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        {/* Start date */}
         <div className="flex flex-col gap-1 min-w-0">
           <label className="text-body font-medium text-secondary">
             Start date
@@ -184,7 +169,6 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        {/* End date */}
         <div className="flex flex-col gap-1 min-w-0">
           <label className="text-body font-medium text-secondary">
             End date
@@ -219,13 +203,10 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
 
 import { filterByAvailability, enrichOptionsWithCapacity } from '@/lib/booking/availability-filter'
 
-// ── Main Component ──────────────────────────────────────────────────────────
-
 export function ItineraryStep({ state, dispatch, isEditMode = false }: ItineraryStepProps) {
   const { customers, days, agency, sameForAll } = state
   const prevCoursesRef = useRef<string>('')
 
-  // Load instructor and venue options for inline day-row pickers
   const instructors = useQuery(api.directory.listByRole, { role: 'Instructor' }) ?? []
   const diveMasters = useQuery(api.directory.listByRole, { role: 'DiveMaster' }) ?? []
   const boats = useQuery(api.directory.listByRole, { role: 'Boat' }) ?? []
@@ -237,8 +218,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const boatOptions = boats.map((r) => ({ id: r.slug, label: r.name }))
   const poolOptions = pools.map((r) => ({ id: r.slug, label: r.name }))
 
-  // Load inventory units to map owner slugs → inventory unit Convex doc IDs.
-  // The review step needs these IDs to create sessions/reservations.
   const instructorInventory = useQuery(api.availability.listInventoryByType, { type: 'Instructor' }) ?? []
   const boatInventory = useQuery(api.availability.listInventoryByType, { type: 'Boat' }) ?? []
   const poolInventory = useQuery(api.availability.listInventoryByType, { type: 'Pool' }) ?? []
@@ -247,12 +226,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     for (const r of instructorInventory) map[r.ownerId] = r.id
     for (const r of boatInventory) map[r.ownerId] = r.id
     for (const r of poolInventory) map[r.ownerId] = r.id
-    // Shore options use resourceId as identifier (dive sites may be unowned)
-    // inventoryMap for shores will be populated when needed via listDiveSites
     return map
   }, [instructorInventory, boatInventory, poolInventory])
 
-  // Real-time availability: per-date capacity for all inventory units
   const bookingDates = useMemo(() => days.map(d => d.date), [days])
   const capacityData = useQuery(
     api.availability.getCapacityForDates,
@@ -287,7 +263,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     }
   }, [inventoryMap, dispatch])
 
-  // Preference cascade + availability check (DD-313 / DD-356) — separate from course/dates effect
   const preferenceCascadeAppliedRef = useRef(false)
   useEffect(() => {
     if (cascadePrefs?.autoAssignPreferred === false) return
@@ -363,7 +338,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     cascadePrefs?.autoAssignPreferred,
   ])
 
-  // Sync boatHasCompressor — if any assigned boat has on-board compressor, skip compressor requirement
   useEffect(() => {
     const assignedBoatSlugs = new Set(
       days.flatMap((d) =>
@@ -380,13 +354,11 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     }
   }, [days, boats, state.boatHasCompressor, dispatch])
 
-  // Derive all course codes and date range
   const allCourseCodes: CourseCode[] = [...new Set(
     customers.flatMap((c) => (c.courseEntries ?? []).map((e) => e.activityCode as CourseCode)).filter(Boolean),
   )]
   const hasDateRange = state.startDate && state.endDate
 
-  // Hard block errors — per-customer
   const today = toISODateString(new Date())
   const hardErrors: string[] = []
   for (const c of sameForAll ? customers.slice(0, 1) : customers) {
@@ -399,15 +371,12 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   }
   const uniqueOrderingErrors = [...new Set(hardErrors)]
 
-  // Prerequisite and combo warnings (soft).
   const prereqWarnings = validatePrerequisites(allCourseCodes)
   const comboWarnings = validateCourseCombo(allCourseCodes)
 
-  // Instructor ratio check
   const diverCount = customers.length
   const instructorRatioWarnings: string[] = []
   if (diverCount > 0 && allCourseCodes.length > 0) {
-    // Find the most restrictive maxDiversPerInstructor across all selected courses
     const agencyFilter = agency || undefined
     let minRatio = Infinity
     for (const code of allCourseCodes) {
@@ -425,11 +394,9 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     }
   }
 
-  // Referral detection — warn when first selected dive is not the first in sequence
   const allSelectedDives = days.flatMap(d => d.dives)
   const referralWarnings = detectReferralWarnings(allSelectedDives, allCourseCodes)
 
-  // Empty day warning — date range produces more days than dives fill
   const emptyDayWarnings: string[] = []
   const daysWithDives = days.filter(d => d.dives.length > 0).length
   if (days.length > 0 && daysWithDives > 0 && daysWithDives < days.length) {
@@ -440,7 +407,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
   const allWarnings = [...prereqWarnings, ...comboWarnings, ...instructorRatioWarnings, ...referralWarnings]
 
-  // Auto-generate days when courses + dates change
   const preFillAppliedRef = useRef(false)
   useEffect(() => {
     const key = `${[...allCourseCodes].sort().join(',')}|${state.startDate}|${state.endDate}`
@@ -450,7 +416,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
     let newDays = generateDays(allCourseCodes, state.startDate, 3, state.endDate)
 
-    // Apply pre-fill resource hints to generated days (first generation only)
     if (!preFillAppliedRef.current && newDays.length > 0) {
       const { preFillInstructorSlug, preFillVenueSlug, preFillBoatSlug } = state
       if (preFillInstructorSlug || preFillVenueSlug || preFillBoatSlug) {
@@ -460,7 +425,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
           instructorSlug: preFillInstructorSlug || day.instructorSlug,
           dives: day.dives.map((dive) => {
             const venueType = dive.venueType ?? (dive.isConfined ? 'pool' : 'boat')
-            // Pool/shore → use venue slug, boat → use boat slug
             const resourceId = venueType === 'boat'
               ? (preFillBoatSlug || dive.resourceId)
               : (preFillVenueSlug || dive.resourceId)
@@ -492,13 +456,10 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
 
     let newDays: typeof days
     if (exists) {
-      // Remove the clicked dive AND all dives after it in the global sequence from this day.
-      // Then redistribute those later dives to subsequent days.
       const sequence = buildDiveSequence(allCourseCodes)
       const clickedIdx = sequence.findIndex(s =>
         s.courseCode === slot.courseCode && s.diveNumber === slot.diveNumber && s.isConfined === slot.isConfined)
 
-      // Remove clicked dive + all later dives (in global sequence) from this day
       newDays = days.map((d, i) => {
         if (i !== dayIndex) return d
         const kept: DiveSlot[] = []
@@ -510,10 +471,8 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         return { ...d, dives: kept }
       })
 
-      // Clean up orphans across all days (cross-day ordering + course prerequisites)
       newDays = cascadeRemoveOrphans(newDays, allCourseCodes)
     } else {
-      // Adding a dive — enforce per-day non-confined limit
       if (!slot.isConfined) {
         const nonConfinedCount = day.dives.filter(d => !d.isConfined).length
         if (nonConfinedCount >= (day.divesPerDay || 3)) return
@@ -523,7 +482,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         if (i !== dayIndex) return d
         return { ...d, dives: [...d.dives, { courseCode: slot.courseCode, diveNumber: slot.diveNumber, isConfined: slot.isConfined, venueType: slot.isConfined ? 'pool' as const : 'boat' as const }] }
       })
-      // First dive selected globally → auto-fill remaining dives across all days
       if (totalDivesBefore === 0) {
         newDays = autoDistributeFromDive(newDays, slot, allCourseCodes)
       }
@@ -532,11 +490,8 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     dispatch({ type: 'SET_DAYS', days: newDays })
   }
 
-
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Copy-to-all toggle — disabled (Coming soon) */}
       {customers.length > 1 && (
         <div title="Coming soon">
           <Checkbox
@@ -555,7 +510,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       )}
 
-      {/* Per-customer course entries */}
       {(sameForAll ? customers.slice(0, 1) : customers).map((customer) => (
         <div key={customer.id}>
           <div className="flex items-center justify-between mb-2">
@@ -607,7 +561,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       ))}
 
-      {/* Ordering errors (hard block) */}
       {uniqueOrderingErrors.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {uniqueOrderingErrors.map((error, i) => (
@@ -618,7 +571,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       )}
 
-      {/* Warnings (soft) */}
       {allWarnings.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {allWarnings.map((warning, i) => (
@@ -629,7 +581,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       )}
 
-      {/* Day rows — hidden when no courses selected */}
       {days.length > 0 && allCourseCodes.length > 0 && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -666,7 +617,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       )}
 
-      {/* Empty day warning — between day cards and equipment */}
       {emptyDayWarnings.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {emptyDayWarnings.map((warning, i) => (
@@ -677,12 +627,10 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
         </div>
       )}
 
-      {/* Resources (instructors, venues, equipment) — shown after days are generated */}
       {days.length > 0 && allCourseCodes.length > 0 && (
         <ResourceStep state={state} dispatch={dispatch} />
       )}
 
-      {/* Empty state if no customers */}
       {customers.length === 0 && (
         <p className="text-body text-center py-6 text-secondary">
           Add customers first.

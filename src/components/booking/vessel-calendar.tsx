@@ -53,7 +53,6 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
 
   return (
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
-      {/* Nav bar */}
       <div className="flex flex-col items-center py-2">
         <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
           <button
@@ -80,11 +79,9 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
         </div>
       </div>
 
-      {/* Grid */}
       <div className="overflow-x-auto">
         {weeks.map((week, weekIdx) => (
           <div key={weekIdx} className="mb-2">
-            {/* Day-of-week headers (first week only) */}
             {weekIdx === 0 && (
               <div className="grid grid-cols-[120px_repeat(7,1fr)] gap-px mb-1">
                 <div />
@@ -101,7 +98,6 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
               </div>
             )}
 
-            {/* Date number row */}
             <div className="grid grid-cols-[120px_repeat(7,1fr)] gap-px mb-0.5">
               <div />
               {week.map((day) => (
@@ -120,13 +116,11 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
               ))}
             </div>
 
-            {/* Vessel rows */}
             {vessels.map((vessel) => (
               <div
                 key={`${vessel.unitId}-${weekIdx}`}
                 className="grid grid-cols-[120px_repeat(7,1fr)] gap-px"
               >
-                {/* Vessel label — only show on first week to avoid repetition */}
                 <div className="flex items-center gap-1.5 pr-2 min-h-[32px] sticky left-0 z-10 glass-surface" /* design-ok */>
                   {weekIdx === 0 && (
                     <>
@@ -140,7 +134,6 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
                   )}
                 </div>
 
-                {/* Day cells */}
                 {week.map((day) => {
                   const cap: VesselDailyCapacity = vessel.dailyCapacity[day.dateString] ?? {
                     booked: 0,
@@ -174,7 +167,6 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
               </div>
             ))}
 
-            {/* Empty fleet message */}
             {vessels.length === 0 && (
               <div className="col-span-8 text-center text-body text-secondary py-4">
                 No vessels found. Add boats in Workspace.

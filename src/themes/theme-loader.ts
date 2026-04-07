@@ -1,7 +1,5 @@
 import { ThemeConfig } from "./theme-types";
 
-// Extract the primary font family name from a CSS font-family string.
-// "'Playfair Display', serif" → "Playfair Display"
 function extractFontFamily(fontString: string): string | null {
   const quotedMatch = fontString.match(/['"]([^'"]+)['"]/i);
   if (quotedMatch) return quotedMatch[1];
@@ -10,7 +8,6 @@ function extractFontFamily(fontString: string): string | null {
   return unquotedMatch ? unquotedMatch[1].trim() : null;
 }
 
-// Returns true for known system / generic fonts that don't need loading.
 function isSystemFont(name: string): boolean {
   const systemFonts = new Set([
     "serif",
@@ -34,14 +31,12 @@ function isSystemFont(name: string): boolean {
   return systemFonts.has(name);
 }
 
-// Builds a Google Fonts API URL for a single font family + weight list.
 function buildGoogleFontsUrl(family: string, weights: number[]): string {
   const encoded = family.replace(/ /g, "+");
   const weightParam = weights.sort((a, b) => a - b).join(";");
   return `https://fonts.googleapis.com/css2?family=${encoded}:wght@${weightParam}&display=swap`;
 }
 
-// Injects a <link> tag into <head> to load a Google Font. Skips duplicates.
 function injectFontLink(family: string, weights: number[]): void {
   const url = buildGoogleFontsUrl(family, weights);
   if (document.querySelector(`link[href="${url}"]`)) return;
@@ -52,8 +47,6 @@ function injectFontLink(family: string, weights: number[]): void {
   document.head.appendChild(link);
 }
 
-// Loads all Google Fonts referenced by a ThemeConfig.
-// Skips system fonts and avoids duplicate <link> tags.
 export function loadGoogleFonts(theme: ThemeConfig): void {
   const { fontHeading, fontBody, fontAccent, headingWeight, bodyWeight } =
     theme.typography;

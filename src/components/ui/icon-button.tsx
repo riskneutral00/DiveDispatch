@@ -12,17 +12,11 @@ export type IconButtonVariant = 'glass' | 'ghost'
 
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
-  /** Lucide icon or similar */
   children: ReactNode
   size?: IconButtonSize
   variant?: IconButtonVariant
 }
 
-/**
- * Tap-target button for icon-only actions. 44px minimum touch target enforced.
- * - glass (default): glass background + border, used in shell header
- * - ghost: transparent, no background/border, used inline in content
- */
 export function IconButton({
   children,
   className = '',

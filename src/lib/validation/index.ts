@@ -1,5 +1,3 @@
-// ── Validation — barrel export ────────────────────────────────────────────────
-
 export { makeCustomerContactSchema, medicalAnswersSchema } from './schemas'
 export type { CustomerContactData } from './schemas'
 

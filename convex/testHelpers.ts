@@ -3,11 +3,6 @@ import { internalMutation } from './_generated/server'
 import { tryAutoAdvance } from './bookings/_shared'
 import { BOOKING_STATUS } from './shared/statuses'
 
-/**
- * DEV-ONLY: Delete a Convex user record by email.
- * Used by E2E tests to clear the webhook-created user so the account page
- * shows the setup wizard (role selection tiles) instead of EditProfileForm.
- */
 export const deleteUserByEmail = internalMutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
@@ -21,10 +16,6 @@ export const deleteUserByEmail = internalMutation({
   },
 })
 
-/**
- * DEV-ONLY: Set customerFormComplete on the most recent Draft booking for an owner
- * and trigger auto-advance. Used by E2E tests to simulate portal completion.
- */
 export const completeCustomerForm = internalMutation({
   args: { ownerSlug: v.string() },
   handler: async (ctx, args) => {

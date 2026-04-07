@@ -19,7 +19,6 @@ export function Tooltip({ label, children, className }: TooltipProps) {
 
   const visible = showTouch || hovered
 
-  // Position the tooltip above the trigger
   useEffect(() => {
     if (!visible || !ref.current) {
       setPos(null)
@@ -32,14 +31,12 @@ export function Tooltip({ label, children, className }: TooltipProps) {
     })
   }, [visible])
 
-  // Auto-dismiss touch after 3s
   useEffect(() => {
     if (!showTouch) return
     const timer = setTimeout(() => setShowTouch(false), TOUCH_TOOLTIP_MS)
     return () => clearTimeout(timer)
   }, [showTouch])
 
-  // Dismiss on outside tap
   useEffect(() => {
     if (!showTouch) return
     function handleOutside(e: Event) {

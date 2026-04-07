@@ -16,7 +16,6 @@ export const TERMINAL_STATUSES: ReadonlySet<CalendarDisplayStatus> = new Set([
   'Archived',
 ])
 
-// Opacity for booking bars — Draft faded, Completed/Archived muted, others full
 export const STATUS_OPACITY: Record<CalendarDisplayStatus, number> = {
   Active: 1.0,
   Draft: 1.0,
@@ -27,7 +26,6 @@ export const STATUS_OPACITY: Record<CalendarDisplayStatus, number> = {
   Urgent: 1.0,
 }
 
-// Border style — Draft uses dashed to signal incomplete state
 export const STATUS_BORDER_STYLE: Record<CalendarDisplayStatus, 'dashed' | 'solid'> = {
   Active: 'solid',
   Draft: 'solid',
@@ -38,7 +36,6 @@ export const STATUS_BORDER_STYLE: Record<CalendarDisplayStatus, 'dashed' | 'soli
   Urgent: 'solid',
 }
 
-// CSS custom property keys — defined in globals.css
 export const STATUS_COLORS: Record<
   CalendarDisplayStatus,
   {

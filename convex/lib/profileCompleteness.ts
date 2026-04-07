@@ -1,13 +1,3 @@
-// Config-driven profile completeness check — used by getProfileCompletionForRole query,
-// getOnboardingStatus query, createDraftShell mutation, and profile completion banner.
-//
-// Five layers for operator roles:
-// 1. Profile (users table): name, email, phone
-// 2. Settings (users table): appLanguage
-// 3. Role profile (role-specific table): role-required fields
-// 4. Preferences (stakeholderPreferences): acceptanceMode
-// 5. Resource coverage (stakeholderPreferences): instructor, equipment, venue/boat, compressor
-
 import type { Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { PROFILE_REQUIRED, SETTINGS_REQUIRED, ROLE_REQUIRED } from './requiredFields'
@@ -16,10 +6,6 @@ import { profileBySlug } from './profileHelpers'
 import { ROLE_TABLE_MAP } from './profileHelpers'
 import { AOW_REQUIRED_SPECIALTY_COUNT } from '../shared/agencies'
 
-/**
- * Check completeness for a single role. Three layers for all roles,
- * plus two additional layers (preferences + coverage) for operator roles.
- */
 export async function checkProfileCompleteness(
   ctx: QueryCtx,
   user: { _id: Id<'users'> },
@@ -32,20 +18,17 @@ export async function checkProfileCompleteness(
   const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
   const arr = (v: unknown) => Array.isArray(v) && v.length > 0
 
-  // Deep validators — check required inner fields on array-of-object entries
   const isDiveMasterCredentialDeepValid = (entries: unknown[]) =>
     entries.every((e) => {
       const c = e as Record<string, unknown>
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
-  /** Instructor credentials: agency, level, agencyID required; specialtyRatings can be empty. */
   const isInstructorCredentialDeepValid = (entries: unknown[]) =>
     entries.every((e) => {
       const c = e as Record<string, unknown>
       if (!Array.isArray(c.specialtyRatings)) return false
       return str(c.agency) && str(c.level) && str(c.agencyID)
     })
-  // DiveCenter associations include selectedSpecialties; Agent associations do not.
   const isAssociationDeepValid = (entries: unknown[], checkRole: string) =>
     entries.every((e) => {
       const a = e as Record<string, unknown>
@@ -70,19 +53,16 @@ export async function checkProfileCompleteness(
       )
     })
 
-  // 1. Profile layer
   for (const field of PROFILE_REQUIRED) {
     const value = (userDoc as Record<string, unknown>)[field]
     if (!str(value)) incomplete.push(field)
   }
 
-  // 2. Settings layer
   for (const field of SETTINGS_REQUIRED) {
     const value = (userDoc as Record<string, unknown>)[field]
     if (!str(value)) incomplete.push(field)
   }
 
-  // 3. Role layer
   const table = ROLE_TABLE_MAP[role]
   let profile: Record<string, unknown> | null = null
   if (table) {
@@ -99,13 +79,11 @@ export async function checkProfileCompleteness(
       continue
     }
 
-    // Agent: customer languages live on users.customerLanguages (not agents table)
     if (role === 'Agent' && field === 'customerLanguages') {
       if (!arr(userDoc.customerLanguages)) incomplete.push(field)
       continue
     }
 
-    // Agent profile uses flat placeName / country on agents row
     if (role === 'Agent' && field === 'placeName') {
       if (!str(profile.placeName)) incomplete.push(field)
       continue
@@ -115,7 +93,6 @@ export async function checkProfileCompleteness(
       continue
     }
 
-    // Boat uses fleet for 'diveSite' — check if any fleet entry has routes with diveSite
     if (role === 'Boat' && field === 'diveSite') {
       const fleet = profile.fleet as Array<{ routes?: Array<{ diveSite: string }> }> | undefined
       const hasDiveSite = fleet?.some(f => f.routes?.some(r => r.diveSite))
@@ -143,7 +120,6 @@ export async function checkProfileCompleteness(
     }
   }
 
-  // 4. Preferences layer (operator roles only) — acceptanceMode
   const isOperator = OPERATOR_ROLE_SET.has(role)
   let prefsFieldCount = 0
   let prefs: Record<string, unknown> | null = null
@@ -160,7 +136,6 @@ export async function checkProfileCompleteness(
     }
   }
 
-  // 5. Resource coverage layer (operator roles only)
   let coverageFieldCount = 0
 
   if (isOperator) {
@@ -175,7 +150,6 @@ export async function checkProfileCompleteness(
     if (equipSlugs.length === 0) incomplete.push('preferredEquipment')
     if (venueSlugs.length === 0 && boatSlugs.length === 0) incomplete.push('preferredVenueOrBoat')
 
-    // Compressor: direct slug OR a preferred boat with hasCompressor
     let hasCompressor = compSlugs.length > 0
     if (!hasCompressor) {
       for (const slug of boatSlugs) {
@@ -196,10 +170,6 @@ export async function checkProfileCompleteness(
   return { percentage, incomplete }
 }
 
-/**
- * Checks profile completeness across ALL of a user's roles.
- * Returns allComplete: true only when every role is at 100%.
- */
 export async function checkAllRolesCompleteness(
   ctx: QueryCtx,
   userId: Id<'users'>,

@@ -7,26 +7,16 @@ import { sanitizeFields, sanitizePassport, PORTAL_CONTACT_FIELDS } from './lib/s
 import { checkRateLimit } from './lib/rateLimiter'
 import { ErrorCode } from './lib/errorCodes'
 
-// ── Returning customer lookup ────────────────────────────────────────────────
-
-/**
- * Checks if a customer with the given email already exists.
- * Returns contact + equipment data for pre-fill (NOT medical/waiver).
- * Requires a valid portal token — no PII without auth.
- * Case-insensitive email match via normalized lowercase index lookup.
- */
 export async function _checkReturningCustomerHandler(
   ctx: QueryCtx,
   args: { email: string; token: string },
 ) {
-  // Gate: require valid portal token before returning any PII
   if (!args.token) return null
   const resolved = await resolvePortalTokenSoft(ctx, args.token)
   if (!resolved) return null
 
   const normalizedEmail = args.email.toLowerCase().trim()
 
-  // Index lookup using normalized email (emails stored lowercase on insert)
   const match = await ctx.db
     .query('customers')
     .withIndex('by_email', (q) => q.eq('email', normalizedEmail))
@@ -53,7 +43,6 @@ export async function _checkReturningCustomerHandler(
     agency: match.agency,
     agencyID: match.agencyID,
     allergies: match.allergies,
-    // Equipment sizing
     heightCm: match.heightCm,
     weightKg: match.weightKg,
     shoeSize: match.shoeSize,
@@ -70,12 +59,6 @@ export const checkReturningCustomer = query({
   handler: _checkReturningCustomerHandler,
 })
 
-// ── Queries ───────────────────────────────────────────────────────────────────
-
-/**
- * Loads portal context for the contact step: booking metadata, activity types,
- * and any previously saved customer data. Returns null if token is invalid/expired.
- */
 export const getPortalContext = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -117,12 +100,6 @@ export const getPortalContext = query({
   },
 })
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
-
-/**
- * Creates or updates the customers record for this portal slot.
- * Auth boundary: BookingLink token (no Clerk required).
- */
 export const savePortalContact = mutation({
   args: {
     token: v.string(),
@@ -177,27 +154,19 @@ export async function _savePortalContactHandler(
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { token: _token, existingCustomerId: _existingId, ...rawContactData } = args
-  // Sanitize all string fields (trim, strip invisible chars, cap lengths)
   const contactData = sanitizeFields(rawContactData, PORTAL_CONTACT_FIELDS)
-  // Passport: strip to alphanumeric + hyphen, uppercase, max 20 chars
   contactData.passportNumber = sanitizePassport(contactData.passportNumber)
-  // Normalize email to lowercase for consistent index lookups
   contactData.email = contactData.email.toLowerCase().trim()
 
   if (profile.customerId) {
-    // Already linked — update existing record
     await ctx.db.patch(profile.customerId, contactData)
   } else if (args.existingCustomerId) {
-    // Returning customer confirmed — reuse existing record, update with latest data
     const existingId = args.existingCustomerId as Id<'customers'>
 
-    // DD-151: Validate existingCustomerId ownership to prevent IDOR
     const existingCustomer = await ctx.db.get(existingId)
     if (!existingCustomer) {
       throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
-    // Verify the customer's email matches the contact data being submitted
-    // (the returning-customer flow is triggered by email match in checkReturningCustomer)
     if (existingCustomer.email.toLowerCase() !== contactData.email.toLowerCase()) {
       throw new ConvexError({ code: ErrorCode.FORBIDDEN })
     }
@@ -205,7 +174,6 @@ export async function _savePortalContactHandler(
     await ctx.db.patch(existingId, contactData)
     await ctx.db.patch(profile._id, { customerId: existingId })
   } else {
-    // First-time customer — create new record
     const customerId = await ctx.db.insert('customers', {
       ...contactData,
       createdAt: Date.now(),

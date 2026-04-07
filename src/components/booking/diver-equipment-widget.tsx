@@ -21,8 +21,6 @@ import type {
 import type { Id } from '@/lib/convex-generated'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function inventoryCount(
   inventory: GearInventoryItem[],
   gearType: string,
@@ -38,8 +36,6 @@ function inventoryCount(
     )
     .reduce((sum, item) => sum + item.totalUnits, 0)
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 function BagStatusBadge({ status }: { status: 'Assigned' | 'InUse' | 'Returned' }) {
   const variant =
@@ -96,7 +92,6 @@ function DiverCard({
 
   return (
     <Card padding="md">
-      {/* Diver header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl" aria-label={diver.flag.label}>
@@ -115,7 +110,6 @@ function DiverCard({
           </div>
         </div>
 
-        {/* Bag status */}
         {diver.bag ? (
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1.5">
@@ -152,7 +146,6 @@ function DiverCard({
         )}
       </div>
 
-      {/* Measurements */}
       <div className="flex flex-wrap gap-3 mb-3">
         {diver.heightCm != null && (
           <MeasurementChip label="Height" value={`${diver.heightCm} cm`} />
@@ -173,7 +166,6 @@ function DiverCard({
         )}
       </div>
 
-      {/* Gear sizing suggestions */}
       {rentingTypes.length > 0 && (
         <div className="border-t pt-3" style={{ borderColor: 'var(--color-glass-border)' }}>
           <FormSectionHeader label="Rental Gear" className="mb-2" />
@@ -267,7 +259,6 @@ function GearSizeRow({
       </span>
 
       <div className="flex items-center gap-1.5">
-        {/* Suggestion display */}
         {effectiveSuggestion.status === 'match' && !editing && (
           <>
             {/* design-ok: conditional variant dispatch — tokens not in @theme inline */}
@@ -285,7 +276,6 @@ function GearSizeRow({
               {effectiveSuggestion.manufacturer} {effectiveSuggestion.size}
             </span>
 
-            {/* Inventory availability (only for auto-suggested, not manual override) */}
             {!isManualOverride && (effectiveSuggestion.status === 'match') && (
               <span
                 className="text-label"
@@ -313,7 +303,6 @@ function GearSizeRow({
           </span>
         )}
 
-        {/* Inline edit */}
         {editing && (
           <div className="flex items-center gap-1">
             <input /* design-ok: inline size edit in equipment row, --color-primary border not in @theme inline */
@@ -351,7 +340,6 @@ function GearSizeRow({
           </div>
         )}
 
-        {/* Edit / clear override button */}
         {!editing && (
           <div className="flex gap-1">
             <button
@@ -379,8 +367,6 @@ function GearSizeRow({
     </div>
   )
 }
-
-// ── Main widget ───────────────────────────────────────────────────────────────
 
 export interface DiverEquipmentWidgetProps {
   visibleRange: { start: string; end: string }
@@ -423,7 +409,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     }
   }
 
-  // Loading state
   if (data === undefined) {
     return (
       <Card padding="md">
@@ -434,7 +419,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     )
   }
 
-  // No EM profile
   if (data === null) {
     return (
       <Card padding="md">
@@ -443,7 +427,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     )
   }
 
-  // No bookings in range
   if (data.bookings.length === 0) {
     return (
       <Card padding="md">
@@ -452,14 +435,12 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
     )
   }
 
-  // Auto-select first booking
   const activeId = selectedBookingId ?? data.bookings[0].bookingId
   const activeBooking: BookingRow =
     data.bookings.find((b) => b.bookingId === activeId) ?? data.bookings[0]
 
   return (
     <div className="space-y-4">
-      {/* Mutation error banner */}
       {mutationError && (
         <ErrorAlert className="justify-between">
           <span>{mutationError}</span>
@@ -469,7 +450,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
         </ErrorAlert>
       )}
 
-      {/* Booking filter tabs (shown only when multiple bookings) */}
       {data.bookings.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           {data.bookings.map((b) => {
@@ -502,7 +482,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
         </div>
       )}
 
-      {/* Booking header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-body font-medium text-primary">
@@ -518,7 +497,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
         </div>
       </div>
 
-      {/* Per-diver cards */}
       <div className="space-y-3">
         {activeBooking.divers.map((diver) => (
           <DiverCard

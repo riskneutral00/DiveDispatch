@@ -1,4 +1,3 @@
-/** Shared props passed to every profile form section component. */
 export type BaseProfileSectionProps = {
   profile: Record<string, unknown> | null | undefined
   me?: Record<string, unknown> | null | undefined

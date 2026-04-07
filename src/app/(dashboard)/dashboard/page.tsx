@@ -10,8 +10,6 @@ import { useCurrentUser } from '@/lib/hooks/use-current-user'
 import { Spinner } from '@/components/ui/spinner'
 import { deriveDefaultRole } from '@/lib/utils/role'
 
-// Redirect landing — Clerk sends users here after sign-in.
-// Reads user roles from Convex and redirects to the role-scoped dashboard.
 export default function DashboardRedirectPage() {
   const t = useTranslations('common')
   const { user, isLoading } = useCurrentUser()
@@ -33,7 +31,6 @@ export default function DashboardRedirectPage() {
         return
       }
     }
-    // No roles set yet — send to sign-up wizard
     router.replace('/sign-up')
   }, [user, userRoles, isLoading, router])
 

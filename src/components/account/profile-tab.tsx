@@ -37,8 +37,6 @@ const YEARS = Array.from({ length: 83 }, (_, i) => {
   return { value: y, label: y }
 })
 
-// ── Exported for testing ────────────────────────────────────────────────────
-
 export type ProfileValues = {
   firstName: string
   lastName: string
@@ -108,8 +106,6 @@ export function profileToPayload(form: ProfileValues) {
       : undefined,
   }
 }
-
-// ── Component ───────────────────────────────────────────────────────────────
 
 export function ProfileTab() {
   const user = useQuery(api.users.me)

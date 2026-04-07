@@ -17,7 +17,6 @@ export function RoleTile({
 }: RoleTileProps) {
   const Icon = role.icon
 
-  // Selection styling (only when selected prop is explicitly provided)
   const hasSelection = selected !== undefined
   const borderColor = hasSelection && selected
     ? 'var(--color-primary)'

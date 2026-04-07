@@ -13,16 +13,12 @@ import type { CustomerData, CustomerContact, WizardAction } from '@/lib/booking/
 import type { Language } from '@/lib/types/language'
 import type { Dispatch } from 'react'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 type ContactType = 'email' | 'whatsapp' | 'line'
 
 interface CustomerStepProps {
   customers: CustomerData[]
   dispatch: Dispatch<WizardAction>
 }
-
-// ── Main Component ──────────────────────────────────────────────────────────
 
 export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
   const conflict = hasLanguageConflict(
@@ -67,8 +63,6 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
   )
 }
 
-// ── Inline Customer Form ────────────────────────────────────────────────────
-
 interface InlineCustomerFormProps {
   customer: CustomerData
   index: number
@@ -96,7 +90,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
 
   function handleContactTypeChange(type: ContactType) {
     setContactType(type)
-    // Clear other contact fields, keep only the new type's value
     const currentValue = getContactValue()
     const contact: CustomerContact = {}
     if (currentValue) {
@@ -132,7 +125,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
   return (
     <Card padding="md">
       <div className="flex flex-col gap-3">
-        {/* Full name + remove */}
         <div className="flex items-end gap-2">
           <div className="flex-1">
             <Input
@@ -158,7 +150,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
 
         <hr className="form-divider" />
 
-        {/* Contact method */}
         <div className="flex flex-col gap-1.5">
           <label
             className="text-label font-medium text-secondary"
@@ -198,7 +189,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
 
         <hr className="form-divider" />
 
-        {/* Languages */}
         <div className="flex flex-wrap gap-4 w-full">
           <LanguageField
             variant="customer"
@@ -210,8 +200,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
     </Card>
   )
 }
-
-// ── Contact Validation Hint ────────────────────────────────────────────────
 
 function ContactValidationHint({ contactType, value }: { contactType: ContactType; value: string }) {
   const valid =

@@ -111,7 +111,6 @@ export function BookingQuickDetail({
               )}
             </div>
 
-            {/* Action buttons */}
             <div className="flex items-center justify-between pt-2">
               {hasActions ? (
                 <>

@@ -3,12 +3,10 @@ import type { ReactNode } from 'react'
 interface PageTitleProps {
   title: string
   description?: string
-  /** Optional icon or badge before the title (e.g. Help page). */
   leading?: ReactNode
   className?: string
 }
 
-/** Shared page heading styles for dashboard and global `(dashboard)` routes. */
 export function PageTitle({ title, description, leading, className }: PageTitleProps) {
   const heading = (
     <h1

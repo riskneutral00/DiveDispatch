@@ -1,9 +1,5 @@
 import { ColorPalette, ThemeConfig, ThemeMode } from "./theme-types";
 
-// ── Color contrast ────────────────────────────────────────────────────────────
-
-// Parse hex (#rgb, #rrggbb) or rgb()/rgba() to an RGB triple.
-// Returns null for unparseable strings (oklch, var(), etc.) — callers fall back gracefully.
 function parseToRgb(
   color: string,
 ): { r: number; g: number; b: number } | null {
@@ -38,7 +34,6 @@ function parseToRgb(
   return null;
 }
 
-// WCAG 2.1 relative luminance
 function relativeLuminance(r: number, g: number, b: number): number {
   const channel = (v: number): number => {
     const s = v / 255;
@@ -47,8 +42,6 @@ function relativeLuminance(r: number, g: number, b: number): number {
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 }
 
-// WCAG contrast ratio between two CSS color strings.
-// Returns null when either color cannot be parsed.
 export function contrastRatio(colorA: string, colorB: string): number | null {
   const a = parseToRgb(colorA);
   const b = parseToRgb(colorB);
@@ -61,7 +54,6 @@ export function contrastRatio(colorA: string, colorB: string): number | null {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// WCAG AA: 4.5:1 normal text, 3:1 large text / UI components
 export function meetsAA(foreground: string, background: string): boolean {
   const ratio = contrastRatio(foreground, background);
   return ratio === null ? true : ratio >= 4.5;
@@ -72,15 +64,12 @@ export function meetsAAA(foreground: string, background: string): boolean {
   return ratio === null ? true : ratio >= 7.0;
 }
 
-// ── CSS variable generation ───────────────────────────────────────────────────
-
 const TRANSITION_SPEED_MAP: Record<string, string> = {
   fast: "0.15s",
   normal: "0.3s",
   slow: "0.5s",
 };
 
-// Maps a ColorPalette to CSS variable names.
 export function paletteToVars(palette: ColorPalette): Record<string, string> {
   const vars: Record<string, string> = {
     "--color-primary": palette.primary,
@@ -97,7 +86,6 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-destructive": palette.destructive,
     "--color-surface": palette.surface,
     "--color-surface-elevated": palette.surfaceElevated,
-    // Glass visual parity additions
     "--color-primary-glow": palette.primaryGlow,
     "--color-glass-bg-elevated": palette.glassBgElevated,
     "--color-glass-border-elevated": palette.glassBorderElevated,
@@ -106,19 +94,15 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-glass-specular-subtle": palette.glassSpecularSubtle,
     "--color-glass-shadow": palette.glassShadow,
     "--color-glass-shadow-elevated": palette.glassShadowElevated,
-    // Hover state (component-level surface effect)
     "--color-glass-bg-hover": palette.glassBgHover,
     "--color-glass-border-hover": palette.glassBorderHover,
     "--glass-blur-hover": `${palette.glassBlurHover}px`,
     "--body-bg": palette.bodyBg,
-    // Glass container — theme-driven (was hardcoded in CSS)
     "--color-glass-container-border": palette.glassContainerBorder,
     "--color-glass-container-bg": palette.glassContainerBg,
-    // Semantic opacity tokens — scale per luminance class
     "--opacity-watermark": String(palette.opacityWatermark),
     "--opacity-subtle": String(palette.opacitySubtle),
     "--opacity-muted": String(palette.opacityMuted),
-    // Status colors — adapt per luminance class
     "--color-status-active": palette.statusActive,
     "--color-status-draft": palette.statusDraft,
     "--color-status-upcoming": palette.statusUpcoming,
@@ -136,7 +120,6 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
   return vars;
 }
 
-// Full CSS variable set for a theme + mode (palette + typography + shape + motion + backgrounds).
 export function themeToVars(
   theme: ThemeConfig,
   mode: ThemeMode,
@@ -158,25 +141,18 @@ export function themeToVars(
   if (theme.typography.fontAccent) {
     vars["--font-accent"] = theme.typography.fontAccent;
   }
-  // Background fallback — only used when no skin image loads.
   if (!paletteVars["--body-bg"] && theme.backgrounds.fallbackColor) {
     vars["--body-bg"] = theme.backgrounds.fallbackColor;
   }
   return vars;
 }
 
-// ── DOM injection ─────────────────────────────────────────────────────────────
-
-// Sets CSS custom properties directly on document.documentElement.
-// Suppresses transitions during the swap so glass elements don't animate
-// through intermediate states (which causes visible sidebar jitter).
 export function injectVars(vars: Record<string, string>): void {
   const root = document.documentElement;
   root.classList.add("theme-switching");
   for (const [key, value] of Object.entries(vars)) {
     root.style.setProperty(key, value);
   }
-  // Double-rAF: first frame applies vars, second re-enables transitions after paint.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       root.classList.remove("theme-switching");
@@ -184,7 +160,6 @@ export function injectVars(vars: Record<string, string>): void {
   });
 }
 
-// Removes CSS custom properties that were previously injected.
 export function clearInjectedVars(vars: Record<string, string>): void {
   const root = document.documentElement;
   for (const key of Object.keys(vars)) {

@@ -49,7 +49,6 @@ export function CalendarLegend({
     <div
       className={`flex flex-wrap items-center gap-1.5${className ? ` ${className}` : ''}`}
     >
-      {/* Custom category pills (e.g., fleet vessels) */}
       {customItems ? customItems.map((item) => {
         const isHidden = hiddenKeys?.has(item.key) ?? false
         return (
@@ -66,7 +65,6 @@ export function CalendarLegend({
         )
       }) :
 
-      /* Status border pills */
       statuses.map((status) => {
         const isHidden = hiddenStatuses?.has(status) ?? false
         return (

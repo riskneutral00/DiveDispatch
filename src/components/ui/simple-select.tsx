@@ -1,16 +1,5 @@
 'use client'
 
-/**
- * Simple native <select> with glass styling. For basic string-option dropdowns
- * in profile forms and portal steps.
- *
- * NOT the same as Select (select.tsx) which is a tiered instructor
- * select with keyboard navigation and language matching.
- *
- * Extracted by L8-27 from 4 inline copies across agent, instructor, divemaster
- * profile forms and portal step-contact.
- */
-
 import { useId } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { FieldError, FieldLabel } from '@/components/ui/field-shell'
@@ -31,9 +20,7 @@ interface SimpleSelectProps {
   required?: boolean
   disabled?: boolean
   className?: string
-  /** Accessible label when no visible label is provided */
   'aria-label'?: string
-  /** Pass-through for E2E test selectors */
   'data-testid'?: string
 }
 

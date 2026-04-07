@@ -17,7 +17,6 @@ export function RadialProgress({ percentage, size = 40 }: RadialProgressProps) {
       aria-label={`Profile ${percentage}% complete`}
     >
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -26,7 +25,6 @@ export function RadialProgress({ percentage, size = 40 }: RadialProgressProps) {
           stroke="var(--color-glass-border)"
           strokeWidth={3}
         />
-        {/* Fill */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -40,7 +38,6 @@ export function RadialProgress({ percentage, size = 40 }: RadialProgressProps) {
           style={{ transition: 'stroke-dashoffset 0.4s ease, stroke 0.3s ease' }}
         />
       </svg>
-      {/* Percentage label in center */}
       <span
         className="absolute font-semibold leading-none pointer-events-none"
         style={{ fontSize: '10px', color: isComplete ? 'var(--color-success)' : 'var(--color-text-secondary)' }} /* design-ok: SVG radial label, sub-scale for 40px widget */

@@ -15,10 +15,6 @@ import type { ClerkRole } from '@/lib/constants/roles'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { ErrorCode } from '@/lib/errors'
 
-/**
- * Connected wrapper that wires ManageRoles + AddRoleModal + RoleOnboarding
- * to Convex queries and mutations.
- */
 export function ManageRolesConnected() {
   const tErr = useTranslations('errors')
   const tCommon = useTranslations('common')
@@ -99,7 +95,6 @@ export function ManageRolesConnected() {
     )
   }
 
-  // If a role was just added, show its mini-onboarding
   if (onboardingRole) {
     return (
       <RoleOnboarding

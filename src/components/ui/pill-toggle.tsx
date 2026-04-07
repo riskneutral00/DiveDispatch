@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react'
 import { Lock } from 'lucide-react'
 
-// ── PillToggle ──────────────────────────────────────────────────────────────
-
 interface PillToggleProps {
   label: string
   checked: boolean
@@ -38,13 +36,9 @@ export function PillToggle({ label, checked, onChange, locked, disabled }: PillT
   )
 }
 
-// ── PillToggleGroup ─────────────────────────────────────────────────────────
-
 interface PillToggleGroupProps {
   children: ReactNode
-  /** Items beyond this threshold are hidden behind "More..." */
   overflowItems?: ReactNode
-  /** Override container layout (default: flex flex-wrap gap-1.5) */
   className?: string
 }
 

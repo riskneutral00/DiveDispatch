@@ -59,7 +59,6 @@ export function PendingRequestsList({ requests }: PendingRequestsListProps) {
     )
   }
 
-  // Deduplicate by bookingId (multi-day bookings may produce multiple request items)
   const seen = new Set<string>()
   const unique = requests.filter((r) => {
     if (seen.has(r.bookingId)) return false

@@ -1,16 +1,3 @@
-/**
- * Notification icon + severity tier configuration.
- *
- * Three tiers:
- *   - action:  urgent items requiring immediate response  (--color-status-urgent)
- *   - attention: notable events worth reviewing           (--color-status-warning)
- *   - info:    success / informational confirmations       (--color-status-success)
- *
- * Read notifications always use --color-text-secondary regardless of tier.
- */
-
-// ── Severity tiers ──────────────────────────────────────────────────────────
-
 export type SeverityTier = 'action' | 'attention' | 'info'
 
 export const TIER_COLOR: Record<SeverityTier, string> = {
@@ -20,10 +7,6 @@ export const TIER_COLOR: Record<SeverityTier, string> = {
 }
 
 export const READ_COLOR = 'var(--color-text-secondary)'
-
-// ── Icon names ──────────────────────────────────────────────────────────────
-// Using string identifiers to decouple from React/lucide imports.
-// The component maps these to actual icon components.
 
 export type IconName =
   | 'AlertTriangle'
@@ -40,8 +23,6 @@ export type IconName =
   | 'FileText'
   | 'ArrowRightLeft'
 
-// ── Notification type config ────────────────────────────────────────────────
-
 export interface NotificationTypeConfig {
   icon: IconName
   tier: SeverityTier
@@ -49,18 +30,12 @@ export interface NotificationTypeConfig {
 
 import type { NotificationType } from '@/lib/constants/statuses'
 
-/**
- * All 14 notification types from the schema, each with an icon and severity tier.
- * No hold_accepted -- it does not exist in the schema.
- */
 export const NOTIFICATION_CONFIG = {
-  // Action Required (urgent / red)
   medical_hard_block: { icon: 'AlertTriangle', tier: 'action' },
   no_backup_available: { icon: 'Ban', tier: 'action' },
   hold_declined: { icon: 'XCircle', tier: 'action' },
   min_pax_not_met: { icon: 'UsersRound', tier: 'action' },
 
-  // Attention (warning)
   noshow_marked: { icon: 'UserX', tier: 'attention' },
   noshow_reverted: { icon: 'RotateCcw', tier: 'attention' },
   booking_updated: { icon: 'FileText', tier: 'attention' },
@@ -68,7 +43,6 @@ export const NOTIFICATION_CONFIG = {
   booking_cancelled: { icon: 'Ban', tier: 'attention' },
   physician_clearance_submitted: { icon: 'FileText', tier: 'attention' },
 
-  // Success / Info (green)
   hold_placed: { icon: 'Clock', tier: 'info' },
   medical_cleared: { icon: 'ShieldCheck', tier: 'info' },
   portal_complete: { icon: 'CheckCircle', tier: 'info' },
@@ -77,13 +51,6 @@ export const NOTIFICATION_CONFIG = {
 
 const FALLBACK_CONFIG: NotificationTypeConfig = { icon: 'Bell', tier: 'info' }
 
-/**
- * Returns the icon name and CSS color variable for a notification.
- *
- * - Unread notifications get the tier color.
- * - Read notifications always get --color-text-secondary.
- * - Unknown types fall back to Bell + --color-text-secondary.
- */
 export function getNotificationStyle(type: string, isUnread: boolean): { icon: IconName; color: string } {
   const isKnownType = type in NOTIFICATION_CONFIG
   const config = isKnownType

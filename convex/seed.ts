@@ -8,6 +8,7 @@ import type { OperatorType } from './shared/operatorTypes'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 import { ALL_STAKEHOLDERS, SeedStakeholder, StakeholderRole, UNOWNED_DIVE_SITES, type SeedInventoryLine } from './seedData'
 import { insertLiveaboard, insertDiveResort } from './sketchTableGuards'
+import { OCEAN_THEME_CONFIG } from './lib/defaultThemes'
 import { ALL_INSTRUCTORS } from './seedInstructorData'
 import {
   ALL_GEAR_SIZING,
@@ -19,8 +20,6 @@ import {
   MARES_BCDS,
   type GearSizingEntry,
 } from './shared/gearSizing'
-
-// ── Equipment Inventory Generation ──────────────────────────────────
 
 const FIN_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46']
 const PRESCRIPTION_MASKS: { diopter: number }[] = [
@@ -107,7 +106,6 @@ function buildEquipmentLines(
     })
   }
 
-  // One regulator set per brand (same brands as wetsuits/BCDs)
   const allBrands = new Set<string>()
   for (const brands of Object.values(manufacturers)) {
     for (const b of brands) allBrands.add(b)
@@ -123,8 +121,6 @@ function buildEquipmentLines(
 
   return lines
 }
-
-// ── Seed Orchestrator ───────────────────────────────────────────────
 
 export const seedAll = internalAction({
   args: {},
@@ -144,8 +140,6 @@ export const seedAll = internalAction({
 export const wipeAll = internalAction({
   args: {},
   handler: async (ctx) => {
-    // Wipe table-by-table to stay under Convex 4096-read limit per mutation.
-    // Each wipeBatch call deletes up to 500 rows; loop until table is empty.
     for (const table of TABLES_TO_WIPE) {
       let deleted = 0
       do {
@@ -154,8 +148,6 @@ export const wipeAll = internalAction({
     }
   },
 })
-
-// ── Wipe ─────────────────────────────────────────────────────────────
 
 const TABLES_TO_WIPE = [
   'users', 'userRoles', 'themes',
@@ -181,8 +173,6 @@ export const wipeBatch = internalMutation({
     return rows.length
   },
 })
-
-// ── Seed Stakeholders (non-instructor) ──────────────────────────────
 
 async function insertUser(ctx: MutationCtx, s: SeedStakeholder) {
   return ctx.db.insert('users', {
@@ -243,8 +233,6 @@ export const seedStakeholders = internalMutation({
   },
 })
 
-// ── Seed User Roles (multi-role junction table) ────────────────────
-
 export const seedUserRoles = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -274,12 +262,9 @@ export const seedUserRoles = internalMutation({
   },
 })
 
-// ── Seed Instructors ────────────────────────────────────────────────
-
 export const seedInstructors = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Check if instructors already seeded by looking for a known instructor slug
     const existingInstructor = await ctx.db
       .query('users')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -291,7 +276,6 @@ export const seedInstructors = internalMutation({
       const userId = await insertUser(ctx, s)
       const primaryRole = s.roles?.[0]?.role
       if (primaryRole === 'DiveMaster' && s.instructor) {
-        // DiveMasters use diveMasters table — credential has no specialtyRatings
         const { specialtyRatings: _ignored, ...credNoRatings } = s.instructor.credential[0] ?? {}
         await ctx.db.insert('diveMasters', { // batch-exempt
           userId,
@@ -316,8 +300,6 @@ export const seedInstructors = internalMutation({
     }
   },
 })
-
-// ── Seed Equipment Inventory ────────────────────────────────────────
 
 export const seedEquipmentInventory = internalMutation({
   args: {},
@@ -357,8 +339,6 @@ export const seedEquipmentInventory = internalMutation({
   },
 })
 
-// ── Seed Gear Sizing Lookup ─────────────────────────────────────────
-
 export const seedGearSizingLookup = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -376,12 +356,9 @@ export const seedGearSizingLookup = internalMutation({
   },
 })
 
-// ── GAP-01: Seed Resource Inventory (non-equipment) ─────────────────
-
 export const seedResourceInventory = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Instructors + DiveMasters: 1 Exclusive unit each
     for (const s of ALL_INSTRUCTORS) {
       await ctx.db.insert('inventoryUnits', { // batch-exempt
         resourceType: 'Instructor' as const,
@@ -395,7 +372,6 @@ export const seedResourceInventory = internalMutation({
     }
 
     for (const s of ALL_STAKEHOLDERS) {
-      // Boats: 1 Pooled unit per fleet entry
       if (s.boat) {
         for (const fleet of s.boat.fleet) {
           await ctx.db.insert('inventoryUnits', { // batch-exempt
@@ -410,7 +386,6 @@ export const seedResourceInventory = internalMutation({
         }
       }
 
-      // Pools: 1 Pooled unit per pool
       if (s.pool) {
         await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Pool',
@@ -423,7 +398,6 @@ export const seedResourceInventory = internalMutation({
         })
       }
 
-      // Compressors: 1 Pooled unit with unlimited capacity
       if (s.compressor) {
         await ctx.db.insert('inventoryUnits', { // batch-exempt
           resourceType: 'Compressor',
@@ -438,7 +412,6 @@ export const seedResourceInventory = internalMutation({
 
     }
 
-    // Unowned dive sites: public locations, no owner user
     for (const site of UNOWNED_DIVE_SITES) {
       await ctx.db.insert('inventoryUnits', { // batch-exempt
         resourceType: 'DiveSite',
@@ -449,7 +422,6 @@ export const seedResourceInventory = internalMutation({
         ownerId: '__unowned__',
         ownerType: 'DiveSite',
       })
-      // Also seed as a venue row so it can be a preferred confined water location
       await ctx.db.insert('venues', { // batch-exempt
         name: site.name,
         placeName: 'Phuket',
@@ -466,16 +438,9 @@ export const seedResourceInventory = internalMutation({
   },
 })
 
-// ── GAP-03: Seed Stakeholder Preferences ────────────────────────────
-
 export const seedStakeholderPreferences = internalMutation({
   args: {},
   handler: async (ctx) => {
-    // Consolidated preferred-resource map per operator/agent
-    // Instructors: language-overlap; Boats: own→self; Venues: own pool or nearest;
-    // Compressors: Kata→Scuba Market, else→Chalong; Equipment: own→self or open rental
-    // Boat owners: n7rq5j, p5ky3w, sirolo | Pool owners: n7rq5j, z8mv4c, b3wt9f, g2hn6x
-    // Compressors: x4kp2m=Chalong, q7sm3k=Scuba Market | Equipment: q9bz7r=Nicole(open), v8sr2p=Revolution(open)
     const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
       'n7rq5j': { // Hug Ocean — zh-CN, zh-TW, th, en — owns boat, pool, gear
         instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu', 'mei-lin', 'suporn-thani', 'pimchanok-sri', 'ryan-clarke', 'rachel-nguyen'],
@@ -557,7 +522,6 @@ export const seedStakeholderPreferences = internalMutation({
       },
     }
 
-    // Agent → preferred operator (referral mode DC)
     const AGENT_PREFERRED_OPERATOR: Record<string, string> = {
       'r5yz4q': 'q9bz7r',             // Amanda → Nicole DC
       'k4ko9j': 'w3kn7p',             // Ji-Yeon → Hanul Dive
@@ -565,7 +529,6 @@ export const seedStakeholderPreferences = internalMutation({
       'e6eu5z': 't7gw1k',             // Eva → Pray DC
     }
 
-    // Agent defaultReferral → preferredOperatorSlug mapping
     const agentReferralMap = new Map<string, string>()
     for (const s of ALL_STAKEHOLDERS) {
       if (s.agent?.defaultReferral) {
@@ -610,9 +573,6 @@ export const seedStakeholderPreferences = internalMutation({
   },
 })
 
-// ── Seed Booking Templates (Quick Book defaults for operators) ───────
-
-// Re-use canonical OPERATOR_ROLE_SET from lib/auth
 const OPERATOR_ROLES = OPERATOR_ROLE_SET
 
 export const seedBookingTemplates = internalMutation({
@@ -632,8 +592,6 @@ export const seedBookingTemplates = internalMutation({
     }
   },
 })
-
-// ── L0-09: Patch real Clerk tokenIdentifiers after seed-clerk.ts runs ──
 
 export const patchTokenIdentifiers = internalMutation({
   args: {
@@ -673,8 +631,6 @@ export const seedDefaultTheme = internalMutation({
   },
 })
 
-// ── Seed Verification ───────────────────────────────────────────────
-
 const VERIFY_TABLES = [
   'users', 'inventoryUnits', 'equipmentInventory',
   'stakeholderPreferences', 'themes',
@@ -705,7 +661,6 @@ export const seedVerify = internalAction({
       counts[table] = await ctx.runQuery(internal.seed.countTable, { table })
     }
 
-    // Check tokenIdentifier linkage
     const tokenCheck = await ctx.runQuery(internal.seed.checkTokenIdentifiers)
     if (tokenCheck.unlinked > 0) {
       log.warn('Users still have seed| tokenIdentifiers', {

@@ -7,11 +7,8 @@ import type { BookingPreFill } from "@/lib/booking/wizard-state";
 interface BookingOverlayProps {
   open: boolean;
   onClose: () => void;
-  /** Pre-fill course entries from Quick Book template (e.g. ['DSD'] or ['OW', 'AOW']) */
   initialCourses?: string[];
-  /** Full pre-fill payload from drag-to-date (courses, dates, agency, resources) */
   initialPreFill?: BookingPreFill;
-  /** Incremented by parent to force wizard remount for each new booking session */
   wizardKey?: number;
 }
 

@@ -1,7 +1,3 @@
-// ── Shared Zod Schemas ────────────────────────────────────────────────────────
-// Single source of truth for form validation across the booking wizard and
-// customer portal. Importable by both src/ (React) and convex/ (server).
-
 import { z } from 'zod'
 import { COURSE_CODES } from '@/lib/constants/course-catalog'
 import {
@@ -9,14 +5,8 @@ import {
   calcAgeAtDate,
 } from '@/lib/constants/activity-rules'
 
-// ── Location ──────────────────────────────────────────────────────────────────
-// Re-exported from the canonical definition in schemas/location.ts.
-
 export { locationSchema } from '@/lib/schemas/location'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** SuperRefine helper: rejects date ranges where endDate precedes startDate. */
 function requireEndAfterStart(
   data: { startDate?: string; endDate?: string },
   ctx: z.RefinementCtx,
@@ -30,8 +20,6 @@ function requireEndAfterStart(
   }
 }
 
-// ── Primitives ────────────────────────────────────────────────────────────────
-
 const phoneRegex = /^\+?[\d\s\-().]{7,}$/
 
 const phoneField = z
@@ -42,10 +30,6 @@ const phoneField = z
 const dateField = z.string().min(1, 'Required')
 
 const courseCodes = COURSE_CODES
-
-// ── customerContactSchema ─────────────────────────────────────────────────────
-// Base schema for the portal contact step (agency/agencyID are optional by default).
-// Use makeCustomerContactSchema() to add activity-type-conditional cert requirements.
 
 const baseCustomerContactSchema = z.object({
   legalFirstName: z.string().min(1, 'Required'),
@@ -69,11 +53,6 @@ const baseCustomerContactSchema = z.object({
 
 export type CustomerContactData = z.infer<typeof baseCustomerContactSchema>
 
-/**
- * Returns a customerContactSchema with optional cert-requirement refinement.
- * If activityTypes includes any CERT_REQUIRED_ACTIVITIES entry, agency + agencyID
- * become required fields (validated via superRefine).
- */
 export function makeCustomerContactSchema(activityTypes: readonly string[] = []) {
   const needsCert = activityTypes.some((t) =>
     (CERT_REQUIRED_ACTIVITIES as readonly string[]).includes(t),
@@ -99,9 +78,6 @@ export function makeCustomerContactSchema(activityTypes: readonly string[] = [])
 
 export const customerContactSchema = baseCustomerContactSchema
 
-// ── medicalAnswersSchema ──────────────────────────────────────────────────────
-// All 10 PADI 10346 medical questions must be answered as boolean.
-
 export const medicalAnswersSchema = z.object({
   medical_q1: z.boolean(),
   medical_q2: z.boolean(),
@@ -117,10 +93,6 @@ export const medicalAnswersSchema = z.object({
 
 export type MedicalAnswersData = z.infer<typeof medicalAnswersSchema>
 
-// ── waiverSchema ──────────────────────────────────────────────────────────────
-// Base waiver schema. Use makeWaiverSchema() to add guardian-signature requirement
-// for minors (age < 18 at booking startDate).
-
 const baseWaiverSchema = z.object({
   waiverSignedAt: z.number(),
   signatureFileId: z.string().min(1, 'Signature required'),
@@ -129,10 +101,6 @@ const baseWaiverSchema = z.object({
 
 export type WaiverData = z.infer<typeof baseWaiverSchema>
 
-/**
- * Returns a waiverSchema that requires guardianSignatureFileId when the diver
- * is under 18 at the booking startDate.
- */
 export function makeWaiverSchema(dateOfBirth?: string, bookingStartDate?: string) {
   return baseWaiverSchema.superRefine((data, ctx) => {
     if (!dateOfBirth || !bookingStartDate) return
@@ -148,10 +116,6 @@ export function makeWaiverSchema(dateOfBirth?: string, bookingStartDate?: string
 }
 
 export const waiverSchema = baseWaiverSchema
-
-// ── equipmentSizingSchema ─────────────────────────────────────────────────────
-// Body measurements and rental checklist for the portal equipment step.
-// Matches saveEquipmentData split: body measurements → customers, checklist → customerProfiles.
 
 export const equipmentSizingSchema = z.object({
   heightCm: z.number().min(50, 'Must be at least 50 cm').max(300, 'Must be at most 300 cm').optional(),
@@ -174,9 +138,6 @@ export const equipmentSizingSchema = z.object({
 
 export type EquipmentSizingData = z.infer<typeof equipmentSizingSchema>
 
-// ── bookingDetailsSchema ──────────────────────────────────────────────────────
-// Wizard step 1: booking-level details (activities, dates, portal flags).
-
 export const bookingDetailsSchema = z
   .object({
     activityType: z
@@ -192,10 +153,6 @@ export const bookingDetailsSchema = z
 
 export type BookingDetailsData = z.infer<typeof bookingDetailsSchema>
 
-// ── diverEntrySchema ──────────────────────────────────────────────────────────
-// Wizard step 2: individual diver row in the booking wizard.
-
-/** Base diver object shape — shared between diverEntrySchema and makeBookingDiversSchema. */
 export const diverEntryBaseSchema = z.object({
   name: z.string().min(1, 'Diver name is required'),
   abbrev: z.string().optional(),
@@ -215,9 +172,6 @@ export const diverEntrySchema = diverEntryBaseSchema
   .superRefine(requireEndAfterStart)
 
 export type DiverEntryData = z.infer<typeof diverEntrySchema>
-
-// ── bookingSessionsSchema ────────────────────────────────────────────────────
-// Wizard step: session scheduling. At least one session, each structurally valid.
 
 const sessionEntrySchema = z
   .object({
@@ -239,12 +193,10 @@ const sessionEntrySchema = z
     }
   })
 
-/** Client-side sessions validation: at least one session, each structurally valid. */
 export const bookingSessionsSchema = z
   .array(sessionEntrySchema)
   .min(1, 'At least one session is required')
   .superRefine((sessions, ctx) => {
-    // No duplicate (inventoryUnitId + date + startTime) pairs
     const seen = new Set<string>()
     sessions.forEach((s, i) => {
       const key = `${s.inventoryUnitId}|${s.date}|${s.startTime}`
@@ -262,17 +214,6 @@ export const bookingSessionsSchema = z
 
 export type BookingSessionsData = z.infer<typeof bookingSessionsSchema>
 
-// ── makeBookingDiversSchema ──────────────────────────────────────────────────
-// Wizard step: divers list. Extends diverEntrySchema with stricter abbrev
-// validation and booking-context cross-validation (date range, activity subset).
-
-/**
- * Creates a Zod schema for the divers wizard step.
- *
- * - At least one diver required.
- * - Each diver: name non-empty, abbrev non-empty max 4, flag.code non-empty (nationality),
- *   startDate/endDate within booking date range, activityType min(1) subset of booking's.
- */
 export function makeBookingDiversSchema(
   bookingActivityTypes: readonly string[],
   bookingStartDate: string,
@@ -291,7 +232,6 @@ export function makeBookingDiversSchema(
     })
     .superRefine((data, ctx) => {
       requireEndAfterStart(data, ctx)
-      // Diver dates within booking range
       if (data.startDate && bookingStartDate && data.startDate < bookingStartDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -306,7 +246,6 @@ export function makeBookingDiversSchema(
           message: 'Diver end date cannot be after booking end date',
         })
       }
-      // Per-diver activityType must be a subset of booking's activityType
       const invalid = data.activityType.filter(
         (code) => !bookingActivityTypes.includes(code),
       )

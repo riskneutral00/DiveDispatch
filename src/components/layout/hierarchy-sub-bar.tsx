@@ -10,32 +10,25 @@ import { ROLE_PRECEDENCE } from '@/lib/utils/role'
 interface HierarchySubBarProps {
   slug: string
   roleSlug: RoleKey
-  /** When provided, only show roles in this set (used when RoleSwitcher is active). */
   filterRoles?: Set<string>
-  /** When provided, render the business name after the icon tabs on the same row. */
   businessName?: string
 }
 
 export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: HierarchySubBarProps) {
   const roles = useQuery(api.userRoles.myRoles)
 
-  // Don't render until loaded, or if user has only one role
   if (!roles || roles.length <= 1) return null
 
-  // When filterRoles is provided, only show roles in that set
   const filtered = filterRoles
     ? roles.filter((r) => filterRoles.has(r.role))
     : roles
 
-  // Hide if filtering leaves 0 or 1 role (no switching needed within tree)
   if (filtered.length <= 1) return null
 
-  // Sort: highest precedence first
   const sorted = [...filtered].sort(
     (a, b) => (ROLE_PRECEDENCE[a.role] ?? Infinity) - (ROLE_PRECEDENCE[b.role] ?? Infinity),
   )
 
-  // First role (highest precedence) acts as the primary for the separator
   const primaryIdx = 0
 
   return (
@@ -49,7 +42,6 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: H
 
         return (
           <span key={role.role} className="contents">
-            {/* Separator after primary role */}
             {idx === primaryIdx + 1 && primaryIdx >= 0 && (
               <span
                 className="h-5 w-px flex-shrink-0"

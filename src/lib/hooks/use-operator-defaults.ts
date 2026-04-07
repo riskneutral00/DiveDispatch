@@ -34,11 +34,6 @@ const EMPTY_DEFAULTS: OperatorDefaults = {
   preferredCompressorSlugs: [],
 }
 
-/**
- * Queries stakeholder preferences + operator profile to derive
- * default values for pre-filling bookings. Loaded once on dashboard mount.
- * Agents with `preferredOperatorSlug` use that operator's preference arrays (DD-355 / DD-313).
- */
 export function useOperatorDefaults(): { defaults: OperatorDefaults; isLoading: boolean } {
   const { isLoading: userLoading } = useCurrentUser()
   const userRoles = useQuery(api.userRoles.myRoles)

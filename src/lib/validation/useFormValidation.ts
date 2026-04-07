@@ -1,11 +1,8 @@
 'use client'
 
-// ── useFormValidation ─────────────────────────────────────────────────────────
-// Minimal Zod-backed form validation hook. No form library dependency.
-// Wraps Zod .safeParse() and maps ZodError.issues → { [path]: message }.
-
 import { useState, useCallback } from 'react'
 import { z } from 'zod'
+import { zodIssuesToFieldErrors } from '@/lib/validation/zod-helpers'
 
 export interface ValidationResult<T> {
   success: boolean
@@ -14,13 +11,9 @@ export interface ValidationResult<T> {
 }
 
 export interface UseFormValidationReturn<T> {
-  /** Run full-schema validation. Updates errors state. Returns structured result. */
   validate: (data: unknown) => ValidationResult<T>
-  /** Current field errors keyed by dot-separated path (e.g. "emergencyContactName"). */
   errors: Record<string, string>
-  /** Clear a single field's error (e.g. on field change). */
   clearError: (field: string) => void
-  /** Reset all errors. */
   clearAllErrors: () => void
 }
 
@@ -36,11 +29,7 @@ export function useFormValidation<T>(
         setErrors({})
         return { success: true, data: result.data }
       }
-      const errs: Record<string, string> = {}
-      result.error.issues.forEach((issue) => {
-        const path = issue.path.join('.')
-        if (!errs[path]) errs[path] = issue.message
-      })
+      const errs = zodIssuesToFieldErrors(result.error.issues)
       setErrors(errs)
       return { success: false, errors: errs }
     },

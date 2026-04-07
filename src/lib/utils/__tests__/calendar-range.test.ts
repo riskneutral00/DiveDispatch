@@ -113,14 +113,12 @@ describe('getRangeForDate', () => {
   })
 
   it('never returns a backwards range when jumping to a date before the floor', () => {
-    // Jump to a date well before the floor (1 year ago)
     const ancient = new Date(2020, 0, 1)
     const { start, end } = getRangeForDate(ancient)
     expect(start.getTime()).toBeLessThanOrEqual(end.getTime())
   })
 
   it('always returns start <= end', () => {
-    // Test several months that could fall before/near the floor
     const targets = [
       new Date(2025, 0, 1), // Jan 2025
       new Date(2025, 1, 1), // Feb 2025

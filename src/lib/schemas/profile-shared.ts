@@ -11,7 +11,6 @@ import {
 
 export { locationSchema, type LocationValue } from './location'
 
-/** Base contact fields shared by all profile forms. */
 export const contactSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
@@ -19,31 +18,21 @@ export const contactSchema = z.object({
   phone: z.string().min(1, 'Contact phone is required'),
 })
 
-/** DC/Agent association — agency membership. */
 export const associationSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
   number: z.string().min(1, 'Member ID is required'),
 })
 
-/** DiveMaster credential — agency + level + ID (no specialty ratings). */
 export const credentialSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
   level: z.string().min(1, 'Certification level is required'),
   agencyID: z.string().min(1, 'Agency ID is required'),
 })
 
-/** Instructor credential — extends DM credential with specialty ratings. */
 export const instructorCredentialSchema = credentialSchema.extend({
   specialtyRatings: z.array(z.string()),
 })
 
-// ---------------------------------------------------------------------------
-// DiveCenter per-section schemas
-// ---------------------------------------------------------------------------
-
-// DiveCenter contact section uses contactSchema directly (no alias needed).
-
-/** DiveCenter languages section. */
 export const diveCenterLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
@@ -57,7 +46,6 @@ const diveCenterAssociationItemSchema = z.object({
   selectedSpecialties: z.array(z.string()),
 })
 
-/** DiveCenter affiliations section — includes specialty count refine. */
 export const diveCenterAffiliationsSchema = z
   .object({
     associations: z.array(diveCenterAssociationItemSchema).min(1, 'At least one agency association is required'),
@@ -71,54 +59,33 @@ export const diveCenterAffiliationsSchema = z
     { message: 'Not enough specialties selected', path: ['associations'] },
   )
 
-// ---------------------------------------------------------------------------
-// Agent per-section schemas
-// ---------------------------------------------------------------------------
-
-/** Agent contact section — extends base contact with optional defaultReferral (DC slug). */
 export const agentContactSchema = contactSchema.extend({
   defaultReferral: z.string().nullable().optional(),
 })
 
-/** Agent languages section. */
 export const agentLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
-/** Agent associations section. */
 export const agentAssociationsSchema = z.object({
   associations: z.array(associationSchema),
 })
 
-// ---------------------------------------------------------------------------
-// Personal (Instructor / DiveMaster) per-section schemas
-// ---------------------------------------------------------------------------
-
-/** Personal contact section (Instructor and DiveMaster). */
 export const personalContactSchema = contactSchema.extend({
   name: z.string().min(1, 'Name is required'),
 })
 
-/** Personal languages section — teaching languages for Instructor/DiveMaster. */
 export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
 })
 
-/** DiveMaster credentials section. */
 export const diveMasterCredentialsSchema = z.object({
   credential: z.array(credentialSchema).min(1, 'At least one credential is required'),
 })
 
-/** Instructor credentials section. */
 export const instructorCredentialsSchema = z.object({
   credential: z.array(instructorCredentialSchema).min(1, 'At least one credential is required'),
 })
-
-// ---------------------------------------------------------------------------
-// Boat per-section schemas
-// ---------------------------------------------------------------------------
-
-// Boat contact section uses contactSchema directly (no alias needed).
 
 const BOAT_TYPES_TUPLE = BOAT_TYPES
 
@@ -137,57 +104,29 @@ const boatFleetEntrySchema = z.object({
   cutoffHours: z.number().min(0).optional(),
 })
 
-/** Boat fleet section. */
 export const boatFleetSchema = z.object({
   fleet: z.array(boatFleetEntrySchema),
 })
 
-// ---------------------------------------------------------------------------
-// Compressor per-section schemas
-// ---------------------------------------------------------------------------
-
-// Compressor contact section uses contactSchema directly (no alias needed).
-
-/** Compressor gas mixes section. */
 export const compressorGasMixesSchema = z.object({
   gasMixes: z.array(z.enum(GAS_MIXES)).min(1, 'Select at least one gas mix'),
 })
 
-// ---------------------------------------------------------------------------
-// Equipment per-section schemas
-// ---------------------------------------------------------------------------
-
-// Equipment contact section uses contactSchema directly (no alias needed).
-
-/** Equipment gear catalog section. */
 export const equipmentGearCatalogSchema = z.object({
   manufacturersByGearType: z.record(z.string(), z.array(z.string())),
 })
 
-// ---------------------------------------------------------------------------
-// Pool per-section schemas
-// ---------------------------------------------------------------------------
-
-// Pool contact section uses contactSchema directly (no alias needed).
-
-/** Pool capabilities section. */
 export const poolCapabilitiesSchema = z.object({
   maxDepth: z.number().positive('Must be greater than 0'),
   maxCapacity: z.number().int('Must be a whole number').positive('Must be at least 1'),
 })
 
-// ---------------------------------------------------------------------------
-// Dive Site per-section schemas
-// ---------------------------------------------------------------------------
-
-/** Dive Site details section — identity fields only (no email/phone). */
 export const diveSiteDetailsSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   location: locationSchema.nullable().refine((v) => v !== null, { message: 'Location is required' }),
   venueType: z.enum(VENUE_TYPES),
 })
 
-/** Dive Site capabilities section. */
 export const diveSiteCapabilitiesSchema = z.object({
   confinedCapable: z.boolean(),
   maxDepth: z.number().min(0).optional(),

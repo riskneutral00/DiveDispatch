@@ -47,8 +47,4 @@ describe('ResourceOwnerType single source of truth', () => {
     expect(violations, `Found inline ResourceOwnerType definitions:\n${violations.join('\n')}`).toEqual([])
   })
 
-  // Note: v.literal sentinel test not used for ResourceOwnerType because
-  // its values ('Boat', 'Instructor', etc.) legitimately appear in other
-  // validators like stakeholderType. The type definition grep above +
-  // compile-time guard + PostToolUse hook provide sufficient coverage.
 })

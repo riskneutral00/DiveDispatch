@@ -1,7 +1,3 @@
-// ── Autocomplete keyboard navigation reducer ────────────────────────────────
-// Pure reducer for arrow-key navigation in autocomplete dropdowns.
-// Used by LocationPicker (and any future combobox).
-
 export interface AutocompleteKeyboardState {
   highlightedIndex: number
   isOpen: boolean
@@ -22,7 +18,6 @@ export const INITIAL_STATE: AutocompleteKeyboardState = {
   isOpen: false,
 }
 
-/** @deprecated Use AutocompleteKeyboardState */
 export type AutocompleteKbState = AutocompleteKeyboardState
 
 export function autocompleteKeyboardReducer(

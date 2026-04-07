@@ -8,15 +8,12 @@ import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { RESERVATION_STATUS } from './shared/statuses'
 
-// ─── Return types ─────────────────────────────────────────────────────────────
-
 export type OpenRequest = {
   reservationIds: string[]
   inventoryUnitId: string
   bookingId: string
   unitsRequested: number
   createdAt: number
-  // Booking context
   activityType: string[]
   startDate: string
   endDate: string
@@ -30,13 +27,11 @@ export type ConfirmedScheduleItem = {
   bookingId: string
   unitsRequested: number
   confirmedAt: number | undefined
-  // Booking context
   activityType: string[]
   startDate: string
   endDate: string
   diverCount: number
   operatorName: string
-  // Sessions for this unit on this booking, sorted by date ascending
   sessions: Array<{
     sessionId: string
     date: string
@@ -46,13 +41,6 @@ export type ConfirmedScheduleItem = {
   }>
 }
 
-// ─── getOpenRequests ──────────────────────────────────────────────────────────
-
-/**
- * Returns PendingAcceptance reservations for all inventory units owned by the
- * authenticated caller, enriched with booking context. Sorted by creation time
- * descending (newest first) so the most urgent request appears at the top.
- */
 export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string): Promise<OpenRequest[]> {
   const { user: caller } = await requireAuth(ctx)
   await requireActiveRole(ctx, caller._id, activeRole)
@@ -64,7 +52,6 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
     )
     .take(500)
 
-  // Group reservations by booking+unit to deduplicate multi-day bookings
   const byBooking = new Map<string, { unitId: string; resIds: string[]; units: number; createdAt: number }>()
 
   const unitReservationPairs = await Promise.all(
@@ -97,7 +84,6 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
     }
   }
 
-  // Batch-fetch all referenced bookings in parallel
   const uniqueBookingIds = [...new Set([...byBooking.keys()].map(k => k.split('|')[0]))]
   const bookingDocs = await Promise.all(uniqueBookingIds.map(id => ctx.db.get(id as Id<'bookings'>)))
   const bookingMap = new Map(
@@ -133,13 +119,6 @@ export const getOpenRequests = query({
   handler: (ctx, args) => _getOpenRequestsHandler(ctx, args.activeRole),
 })
 
-// ─── getConfirmedSchedule ─────────────────────────────────────────────────────
-
-/**
- * Returns Confirmed reservations for all inventory units owned by the
- * authenticated caller, enriched with booking context and per-unit session
- * details. Sorted by earliest session date ascending for calendar display.
- */
 export async function _getConfirmedScheduleHandler(
   ctx: QueryCtx,
   activeRole: string,
@@ -154,7 +133,6 @@ export async function _getConfirmedScheduleHandler(
     )
     .take(500)
 
-  // Collect all confirmed reservations across all units
   const unitConfirmedPairs = await Promise.all(
     units.map(async (unit) => {
       const reservations = await ctx.db
@@ -173,7 +151,6 @@ export async function _getConfirmedScheduleHandler(
     }
   }
 
-  // Batch-fetch all referenced bookings and sessions in parallel
   const uniqueBookingIds = [...new Set(allReservations.map(r => r.reservation.bookingId as string))]
   const [bookingDocs, sessionsByBooking] = await Promise.all([
     Promise.all(uniqueBookingIds.map(id => ctx.db.get(id as Id<'bookings'>))),

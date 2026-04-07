@@ -6,18 +6,12 @@ import { Spinner } from '@/components/ui/spinner'
 export type ProfileFormLoadingVariant = 'spinner' | 'pulse-text' | 'plain'
 
 interface ProfileFormLoadingProps {
-  /** Visual style; default `spinner`. */
   variant?: ProfileFormLoadingVariant
-  /** For `plain`: short line (e.g. equipment). For `pulse-text`: full sentence. */
   message?: string
   className?: string
-  /** Outer padding (Tailwind), default `py-16`. */
   paddingClassName?: string
 }
 
-/**
- * Consistent loading state for Convex-backed profile forms.
- */
 export function ProfileFormLoading({
   variant = 'spinner',
   message,

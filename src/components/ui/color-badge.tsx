@@ -3,12 +3,9 @@ import { cn } from '@/lib/utils/cn'
 import type { StatusColorSet } from '@/lib/constants/vessel-colors'
 
 interface ColorBadgeProps {
-  /** Dynamic runtime colors — accepts StatusColorSet or any { textVar, bgVar, borderVar } shape */
   color: Pick<StatusColorSet, 'textVar' | 'bgVar' | 'borderVar'>
   children: React.ReactNode
-  /** When provided, renders as interactive <button> with hover effects */
   onClick?: () => void
-  /** Visual dim for hidden/toggled-off state */
   dimmed?: boolean
   className?: string
   style?: React.CSSProperties

@@ -23,4 +23,3 @@ describe('buildAlertEmailHtml', () => {
     expect(html).toContain('DiveDispatch')
   })
 })
-

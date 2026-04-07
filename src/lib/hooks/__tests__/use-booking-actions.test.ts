@@ -4,13 +4,9 @@ import { renderHook, act } from '@testing-library/react'
 import { ConvexError } from 'convex/values'
 import type { CalendarBooking } from '../../../../convex/bookings'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockAccept = vi.fn<(args: { bookingId: string }) => Promise<void>>()
 const mockDecline = vi.fn<(args: { bookingId: string }) => Promise<void>>()
 
-// Hook calls useMutation twice per render: [0] acceptByBooking, [1] declineByBooking.
-// Counter resets to 0 every even call so re-renders stay in sync.
 let mutationCallCount = 0
 
 vi.mock('convex/react', async () => {
@@ -25,10 +21,7 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks are registered
 import { useBookingActions } from '../use-booking-actions'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeBooking(overrides: Partial<CalendarBooking> = {}): CalendarBooking {
   return {
@@ -49,8 +42,6 @@ function makeBooking(overrides: Partial<CalendarBooking> = {}): CalendarBooking 
   }
 }
 
-// ─── Tests ────────────────────────────────────────────────────────────────────
-
 describe('useBookingActions', () => {
   beforeEach(() => {
     mutationCallCount = 0
@@ -59,8 +50,6 @@ describe('useBookingActions', () => {
     mockAccept.mockResolvedValue(undefined)
     mockDecline.mockResolvedValue(undefined)
   })
-
-  // ── Initial state ───────────────────────────────────────────────────────────
 
   it('starts with idle state', () => {
     const { result } = renderHook(() => useBookingActions())
@@ -71,8 +60,6 @@ describe('useBookingActions', () => {
     expect(result.current.isDeclining).toBe(false)
     expect(result.current.urgentCancelId).toBeNull()
   })
-
-  // ── handleBookingClick ──────────────────────────────────────────────────────
 
   it('handleBookingClick sets detailBooking when booking is found', () => {
     const booking = makeBooking({ _id: 'b-42' })
@@ -96,13 +83,10 @@ describe('useBookingActions', () => {
     expect(result.current.detailBooking).toBeNull()
   })
 
-  // ── clearDetail ─────────────────────────────────────────────────────────────
-
   it('clearDetail resets booking and error', () => {
     const booking = makeBooking()
     const { result } = renderHook(() => useBookingActions())
 
-    // Set up a booking and an error
     act(() => {
       result.current.setDetailBooking(booking)
     })
@@ -115,8 +99,6 @@ describe('useBookingActions', () => {
     expect(result.current.detailBooking).toBeNull()
     expect(result.current.detailError).toBeNull()
   })
-
-  // ── handleDetailAccept ──────────────────────────────────────────────────────
 
   it('handleDetailAccept calls mutation and clears detailBooking on success', async () => {
     const booking = makeBooking({ _id: 'b-accept' })
@@ -149,7 +131,6 @@ describe('useBookingActions', () => {
       acceptPromise = result.current.handleDetailAccept('b-1')
     })
 
-    // During mutation
     expect(result.current.isAccepting).toBe(true)
 
     await act(async () => {
@@ -157,7 +138,6 @@ describe('useBookingActions', () => {
       await acceptPromise!
     })
 
-    // After mutation
     expect(result.current.isAccepting).toBe(false)
   })
 
@@ -176,7 +156,6 @@ describe('useBookingActions', () => {
 
     expect(result.current.detailError).toBe('Inventory conflict')
     expect(result.current.isAccepting).toBe(false)
-    // Booking stays open on error so user can see the message
     expect(result.current.detailBooking).not.toBeNull()
   })
 
@@ -193,7 +172,6 @@ describe('useBookingActions', () => {
   })
 
   it('handleDetailAccept clears previous error on success', async () => {
-    // First call: fail
     mockAccept.mockRejectedValueOnce(new ConvexError({ reason: 'first error' }))
     const { result } = renderHook(() => useBookingActions())
 
@@ -202,15 +180,12 @@ describe('useBookingActions', () => {
     })
     expect(result.current.detailError).toBe('first error')
 
-    // Second call: succeed
     mockAccept.mockResolvedValueOnce(undefined)
     await act(async () => {
       await result.current.handleDetailAccept('b-1')
     })
     expect(result.current.detailError).toBeNull()
   })
-
-  // ── handleDetailDecline ─────────────────────────────────────────────────────
 
   it('handleDetailDecline calls mutation and clears detailBooking on success', async () => {
     const booking = makeBooking({ _id: 'b-decline' })
@@ -283,8 +258,6 @@ describe('useBookingActions', () => {
     expect(result.current.detailError).toBe('Failed to decline booking')
   })
 
-  // ── handleUrgentCancel ──────────────────────────────────────────────────────
-
   it('handleUrgentCancel sets urgentCancelId when caller is operator', () => {
     const { result } = renderHook(() => useBookingActions())
 
@@ -293,7 +266,6 @@ describe('useBookingActions', () => {
     })
 
     expect(result.current.urgentCancelId).toBe('b-urgent')
-    // Should NOT call decline for operators
     expect(mockDecline).not.toHaveBeenCalled()
   })
 
@@ -304,12 +276,9 @@ describe('useBookingActions', () => {
       result.current.handleUrgentCancel('b-resource', false)
     })
 
-    // Non-operators go through the decline path
     expect(mockDecline).toHaveBeenCalledWith({ bookingId: 'b-resource' })
     expect(result.current.urgentCancelId).toBeNull()
   })
-
-  // ── setUrgentCancelId ───────────────────────────────────────────────────────
 
   it('setUrgentCancelId can be cleared by passing null', () => {
     const { result } = renderHook(() => useBookingActions())
@@ -324,8 +293,6 @@ describe('useBookingActions', () => {
     })
     expect(result.current.urgentCancelId).toBeNull()
   })
-
-  // ── Optimistic updates ─────────────────────────────────────────────────────
 
   it('handleDetailAccept optimistically sets reservationStatus to Confirmed before mutation resolves', async () => {
     const booking = makeBooking({ _id: 'b-opt', reservationStatus: 'PendingAcceptance' })
@@ -346,9 +313,7 @@ describe('useBookingActions', () => {
       acceptPromise = result.current.handleDetailAccept('b-opt')
     })
 
-    // Mutation invoked but still pending (deferred promise)
     expect(mockAccept).toHaveBeenCalledTimes(1)
-    // Optimistic state visible while mutation is in-flight
     expect(result.current.detailBooking?.reservationStatus).toBe('Confirmed')
 
     await act(async () => {
@@ -371,7 +336,6 @@ describe('useBookingActions', () => {
       await result.current.handleDetailAccept('b-revert')
     })
 
-    // After rejection: reverts to original status
     expect(result.current.detailBooking?.reservationStatus).toBe('PendingAcceptance')
     expect(result.current.detailError).toBe('Booking already cancelled')
   })
@@ -394,9 +358,7 @@ describe('useBookingActions', () => {
       declinePromise = result.current.handleDetailDecline('b-decline-opt')
     })
 
-    // Mutation invoked but still pending (deferred promise)
     expect(mockDecline).toHaveBeenCalledTimes(1)
-    // Optimistic state visible while mutation is in-flight
     expect(result.current.detailBooking?.reservationStatus).toBe('Vacated')
 
     await act(async () => {
@@ -419,7 +381,6 @@ describe('useBookingActions', () => {
       await result.current.handleDetailDecline('b-decline-revert')
     })
 
-    // After rejection: reverts to original status
     expect(result.current.detailBooking?.reservationStatus).toBe('PendingAcceptance')
     expect(result.current.detailError).toBe('Cannot decline')
   })

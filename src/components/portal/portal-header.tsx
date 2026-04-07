@@ -26,7 +26,6 @@ export function PortalHeader({
 
   return (
     <>
-      {/* Header */}
       <header className="text-center space-y-2">
         <p
           className="text-body font-medium uppercase tracking-widest text-secondary"
@@ -43,7 +42,6 @@ export function PortalHeader({
         </p>
       </header>
 
-      {/* Booking summary card */}
       <Card padding="md">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">

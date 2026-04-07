@@ -124,7 +124,6 @@ describe('Display grouping', () => {
       ...DISPLAY_RESOURCE_ROLES.map((r) => r.key),
     ])
     expect(displayKeys.size).toBe(12)
-    // Verify every ROLES entry is accounted for, with no extras
     expect(displayKeys.size).toBe(ROLES.length)
     for (const role of ROLES) {
       expect(displayKeys.has(role.key), `${role.key} missing from display groups`).toBe(true)

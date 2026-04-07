@@ -17,14 +17,9 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
 import { GAS_MIX_OPTIONS, type GasMix } from '@/lib/constants/gas-mixes'
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export type CompressorProfileSection = 'contact' | 'gas-mixes'
 
 type CompressorSectionProps = BaseProfileSectionProps
-
-// ── Contact section ──────────────────────────────────────────────────
-
 
 export function CompressorContactSection(props: CompressorSectionProps) {
   return (
@@ -36,8 +31,6 @@ export function CompressorContactSection(props: CompressorSectionProps) {
     />
   )
 }
-
-// ── Gas Mixes section ────────────────────────────────────────────────
 
 export type CompressorGasMixesFormState = {
   gasMixes: GasMix[]
@@ -101,14 +94,6 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
   )
 }
 
-// ── Compat alias ─────────────────────────────────────────────────────
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedCompressorForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry in
- * connected-role-forms.tsx continues to type-check without modification.
- */
 export function CompressorProfileForm({
   section,
   profile,

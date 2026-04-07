@@ -5,8 +5,6 @@ import { Card, Badge, Input, SimpleSelect } from '@/components/ui'
 import type { ScheduledSession, Venue } from '@/lib/booking/session-builder'
 import { VenueToggle } from './venue-toggle'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface DayScheduleProps {
   date: string
   dayNumber: number
@@ -15,9 +13,6 @@ interface DayScheduleProps {
   onVenueChange?: (sessionIndex: number, venue: Venue) => void
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-/** Extracted from map-loop inline styles — one allocation, shared by all renders. */
 const TZ_SELECT_STYLE: React.CSSProperties = { outlineColor: 'var(--color-accent)' }
 const CHIP_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const CHIP_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)' }
@@ -35,8 +30,6 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu', label: 'HST (UTC-10)' },
 ]
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function formatDisplayDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number)
   return new Date(year, month - 1, day).toLocaleDateString(undefined, {
@@ -46,12 +39,9 @@ function formatDisplayDate(dateStr: string): string {
   })
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange }: DayScheduleProps) {
   return (
     <div className="mb-5">
-      {/* Day header */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span
           className="text-body font-semibold text-primary font-heading"
@@ -76,11 +66,9 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
         )}
       </div>
 
-      {/* Session cards */}
       {sessions.map((session, idx) => (
         <Card key={idx} padding="sm" className="mb-2">
           <div className="flex flex-col gap-3">
-            {/* Location row */}
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 {session.isConfinedDay ? (
@@ -123,7 +111,6 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
               </div>
             </div>
 
-            {/* Time + timezone inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Input
                 label="Start time"
@@ -139,7 +126,6 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
                 onChange={e => onUpdate(idx, 'endTime', e.target.value)}
                 leadingIcon={<Clock size={13} />}
               />
-              {/* Timezone selector */}
               <div className="col-span-2 sm:col-span-1">
                 <SimpleSelect
                   label="Timezone"
@@ -150,7 +136,6 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
               </div>
             </div>
 
-            {/* Dive slot chips */}
             {session.diveSlots.length > 0 && (
               <div
                 className="flex flex-wrap gap-1.5 pt-2 border-t"

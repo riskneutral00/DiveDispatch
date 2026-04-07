@@ -1,4 +1,3 @@
-/** Canonical source of truth for VenueType. */
 import { v, type Infer } from 'convex/values'
 
 export const VENUE_TYPES = [
@@ -19,7 +18,6 @@ const literals = VENUE_TYPES.map((c) => v.literal(c)) as [
 ]
 export const venueTypeValidator = v.union(...literals)
 
-// ── Compile-time guard ───────────────────────────────────────────────
 type ValidatorType = Infer<typeof venueTypeValidator>
 type _Check = ValidatorType extends VenueType
   ? VenueType extends ValidatorType

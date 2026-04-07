@@ -1,13 +1,3 @@
-/**
- * Inventory release helpers for booking mutations. Handles restoring
- * availability snapshots when reservations are vacated.
- * Extracted from _shared.ts (L8-24).
- *
- * DD-278: purgeExpiredDrafts refactored to internalAction + per-booking
- * internalMutation for true per-booking atomicity. restoreSnapshotUnits
- * hardened with double-write guard and underflow throw.
- */
-
 import { ConvexError, v } from 'convex/values'
 import { internalAction, internalMutation, internalQuery } from '../_generated/server'
 import { internal } from '../_generated/api'
@@ -22,11 +12,6 @@ import { logBookingChange } from '../lib/auditLog'
 import { batchPatch } from '../lib/batch'
 import { releaseBagsForBooking } from '../equipmentBags'
 
-/**
- * Looks up a single AvailabilitySnapshot by inventoryUnitId + date + windowStart.
- * Returns the snapshot document or null if not found.
- * Replaces 3+ identical inline queries across the booking domain.
- */
 export async function getAvailabilitySnapshot(
   ctx: QueryCtx | MutationCtx,
   inventoryUnitId: Id<'inventoryUnits'>,
@@ -45,17 +30,6 @@ export async function getAvailabilitySnapshot(
     .unique()
 }
 
-/**
- * Restore availability snapshot when a reservation is released.
- * Re-reads snapshot from DB to avoid TOCTOU stale-parameter bugs (DD-017).
- *
- * DD-278 guards:
- * - Optional `seenSnapshotIds` set detects double-write on the same snapshot
- *   within a single mutation call. Callers processing multiple snapshots in
- *   a loop should create a Set and pass it to each call.
- * - Throws SNAPSHOT_UNDERFLOW instead of silently clamping when
- *   unitsRequested exceeds reservedUnits, exposing data inconsistencies.
- */
 export async function restoreSnapshotUnits(
   ctx: MutationCtx,
   snapshotId: Id<"availabilitySnapshots">,
@@ -93,19 +67,13 @@ export async function restoreSnapshotUnits(
   })
 }
 
-/** Upper bound on reservations fetched per status query. Prevents unbounded memory use. */
 export const MAX_RESERVATIONS_PER_BOOKING = 500
 
-/**
- * Core implementation shared by both release functions.
- * Vacates the given active reservations and restores their availability snapshot counts.
- */
 async function releaseActiveReservations(
   ctx: MutationCtx,
   active: Doc<'reservations'>[],
   reason: VacatedReason,
 ): Promise<void> {
-  // ── Batch-fetch sessions ──────────────────────────────────────────────────
   const uniqueSessionIds = [...new Set(active.map((r) => r.bookingSessionId))]
   const sessionDocs = await Promise.all(uniqueSessionIds.map((id) => ctx.db.get(id)))
   const sessionMap = new Map<string, Doc<'bookingSessions'>>()
@@ -120,8 +88,6 @@ async function releaseActiveReservations(
     sessionMap.set(uniqueSessionIds[i], doc)
   }
 
-  // ── Batch-fetch snapshots ─────────────────────────────────────────────────
-  // Build unique (inventoryUnitId, date, windowStart) lookup keys
   type SnapshotKey = { inventoryUnitId: Id<'inventoryUnits'>; date: string; windowStart: string }
   const snapshotKeyMap = new Map<string, SnapshotKey>()
   for (const res of active) {
@@ -153,7 +119,6 @@ async function releaseActiveReservations(
     snapshotIdMap.set(snapshotEntries[i][0], doc._id)
   }
 
-  // ── Accumulate units to restore per snapshot ──────────────────────────────
   const unitsToRestore = new Map<string, number>()
   for (const res of active) {
     const session = sessionMap.get(res.bookingSessionId)!
@@ -161,7 +126,6 @@ async function releaseActiveReservations(
     unitsToRestore.set(key, (unitsToRestore.get(key) ?? 0) + res.unitsRequested)
   }
 
-  // ── Patch: vacate reservations + restore snapshots (writes only) ──────────
   const vacatedAt = Date.now()
   await batchPatch(ctx, active.map((res) => [res._id, {
     status: RESERVATION_STATUS.Vacated,
@@ -176,10 +140,6 @@ async function releaseActiveReservations(
   }
 }
 
-/**
- * Fetches all active (PendingAcceptance | Confirmed) reservations for a booking,
- * bounded by MAX_RESERVATIONS_PER_BOOKING.
- */
 async function fetchActiveReservations(
   ctx: MutationCtx,
   bookingId: string,
@@ -216,14 +176,6 @@ async function fetchActiveReservations(
   return [...pending, ...confirmed]
 }
 
-/**
- * Vacates all active (PendingAcceptance | Confirmed) reservations for a booking
- * and restores their corresponding AvailabilitySnapshot counts atomically.
- * Used by: edit mode re-submission, cancellation, TTL expiry.
- *
- * Sessions and snapshots are batch-fetched before the loop to avoid N+1 queries.
- * Units to restore are accumulated per snapshot so each snapshot is patched once.
- */
 export async function releaseBookingReservations(
   ctx: MutationCtx,
   bookingId: string,
@@ -239,12 +191,6 @@ export async function releaseBookingReservations(
   return all
 }
 
-/**
- * Vacates all active reservations for a single inventory unit on a booking,
- * restoring snapshot counts atomically. Used by the decline path only.
- *
- * Does NOT release equipment bags — bags are booking-level, not unit-level.
- */
 export async function releaseBookingReservationsByUnit(
   ctx: MutationCtx,
   bookingId: string,
@@ -261,14 +207,8 @@ export async function releaseBookingReservationsByUnit(
   return active
 }
 
-// ─── purgeExpiredDrafts (cron) ──────────────────────────────────────────────
-
 const BATCH_SIZE = 25
 
-/**
- * Query: find up to BATCH_SIZE expired Draft bookings.
- * Used by purgeExpiredDrafts action to separate read from write.
- */
 export const findExpiredDrafts = internalQuery({
   args: {},
   handler: async (ctx): Promise<Array<{ bookingId: Id<'bookings'> }>> => {
@@ -288,11 +228,6 @@ export const findExpiredDrafts = internalQuery({
   },
 })
 
-/**
- * Mutation: purge a single expired Draft booking.
- * Each call is its own atomic unit — a failure here does not affect other bookings.
- * Called by the purgeExpiredDrafts action coordinator.
- */
 export const purgeOneDraft = internalMutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, { bookingId }): Promise<void> => {
@@ -313,17 +248,6 @@ export const purgeOneDraft = internalMutation({
 
 import { extractErrorCode, ISOLATABLE_ERRORS } from '../lib/errorClassification'
 
-/**
- * Cron: purge Draft bookings whose holdTTL has lapsed.
- * Runs every 6 hours. Vacates reservations, restores availability snapshots,
- * cancels the booking, and logs an audit entry.
- *
- * DD-278: Refactored from internalMutation to internalAction. Each booking
- * is processed in an isolated ctx.runMutation call so a failure on booking N
- * does not roll back writes for bookings 1…N-1.
- *
- * Batch limit: 25 per run to stay within Convex limits.
- */
 export const purgeExpiredDrafts = internalAction({
   args: {},
   handler: async (ctx): Promise<{
@@ -348,8 +272,6 @@ export const purgeExpiredDrafts = internalAction({
         purged++
       } catch (err) {
         const errorCode = extractErrorCode(err)
-        // Re-throw unrecognized errors to surface unexpected failures.
-        // Only known inventory-corruption errors are safe to isolate per-booking.
         if (!ISOLATABLE_ERRORS.has(errorCode)) {
           throw err
         }

@@ -60,7 +60,6 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Customers */}
       <Card padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
@@ -84,7 +83,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
                 <span className="font-medium">{c.name || `Customer ${i + 1}`}</span>
                 {(c.courseEntries?.length ?? 0) > 0 && (
                   <span className="ml-auto text-label text-secondary">
-                    {c.courseEntries!.map((e) => e.activityCode).filter(Boolean).join(', ')}
+                    {c.courseEntries?.map((e) => e.activityCode).filter(Boolean).join(', ')}
                   </span>
                 )}
               </div>
@@ -93,7 +92,6 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         )}
       </Card>
 
-      {/* Date range + courses */}
       <Card padding="md">
         <SectionLabel>
           <span className="flex items-center gap-1.5">
@@ -123,7 +121,6 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         </div>
       </Card>
 
-      {/* Days */}
       {days.length > 0 && (
         <Card padding="md">
           <SectionLabel>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</SectionLabel>
@@ -146,10 +143,8 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
         </Card>
       )}
 
-      {/* Error */}
       {submitError && <ErrorAlert>{submitError}</ErrorAlert>}
 
-      {/* Navigation */}
       <div className="flex justify-between items-center gap-4 mt-2">
         <Button
           variant="secondary"

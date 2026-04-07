@@ -29,11 +29,9 @@ describe('AOW specialties', () => {
 
   it('overflow contains adventure-dive specialties not in main 10', () => {
     const overflowValues = new Set(AOW_OVERFLOW.map((s) => s.value))
-    // These were in the original overflow and should still be there
     for (const code of ['S&R', 'Altitude', 'Photo/Video']) {
       expect(overflowValues.has(code)).toBe(true)
     }
-    // Main codes should NOT be in overflow
     const mainValues = new Set(AOW_MAIN.map((s) => s.value))
     for (const s of AOW_OVERFLOW) {
       expect(mainValues.has(s.value)).toBe(false)

@@ -1,8 +1,3 @@
-// ── Course Catalog ───────────────────────────────────────────────────
-// Static reference data for dive courses. Used by booking forms, validation,
-// and instructor-ratio enforcement. Agency standards (PADI/SSI) determine
-// max divers per instructor; Universal courses are agency-agnostic.
-
 import { COURSE_CODES, type CourseCode } from '../../../convex/shared/courseCodes';
 export { COURSE_CODES, type CourseCode } from '../../../convex/shared/courseCodes';
 
@@ -17,11 +12,8 @@ export interface CourseCatalogEntry {
   maxDiversPerInstructor: number;
   prerequisites: CourseCode[];
   description: string;
-  /** True if this course can appear more than once in the same booking (e.g. FD on different dates). */
   repeatable: boolean;
 }
-
-// ── PADI Courses ────────────────────────────────────────────────────
 
 const PADI_COURSES: CourseCatalogEntry[] = [
   {
@@ -103,8 +95,6 @@ const PADI_COURSES: CourseCatalogEntry[] = [
   },
 ];
 
-// ── SSI Courses ─────────────────────────────────────────────────────
-
 const SSI_COURSES: CourseCatalogEntry[] = [
   {
     code: 'DSD',
@@ -185,8 +175,6 @@ const SSI_COURSES: CourseCatalogEntry[] = [
   },
 ];
 
-// ── Universal Courses (agency-agnostic) ─────────────────────────────
-
 const UNIVERSAL_COURSES: CourseCatalogEntry[] = [
   {
     code: 'FD',
@@ -212,8 +200,6 @@ const UNIVERSAL_COURSES: CourseCatalogEntry[] = [
   },
 ];
 
-// ── Aggregate Export ────────────────────────────────────────────────
-
 export const COURSE_CATALOG: CourseCatalogEntry[] = [
   ...PADI_COURSES,
   ...SSI_COURSES,
@@ -221,9 +207,6 @@ export const COURSE_CATALOG: CourseCatalogEntry[] = [
 ];
 
 export const ALL_COURSE_CODES: CourseCode[] = [...COURSE_CODES];
-
-// ── Display Labels ──────────────────────────────────────────────────
-// Short human-friendly labels for UI dropdowns / badges.
 
 export const COURSE_DISPLAY_LABELS: Record<CourseCode, string> = {
   DSD: 'DSD',
@@ -237,12 +220,9 @@ export const COURSE_DISPLAY_LABELS: Record<CourseCode, string> = {
   SPECIALTY: 'Specialty',
 };
 
-/** Return a UI-friendly label for a course code (e.g. TRY_DIVE → "Try Dive"). */
 export function courseLabel(code: string): string {
   return COURSE_DISPLAY_LABELS[code as CourseCode] ?? code;
 }
-
-// ── Helpers ─────────────────────────────────────────────────────────
 
 export function getCourseByCode(code: CourseCode): CourseCatalogEntry | undefined {
   return COURSE_CATALOG.find((entry) => entry.code === code);
@@ -251,9 +231,6 @@ export function getCourseByCode(code: CourseCode): CourseCatalogEntry | undefine
 export function getCoursesForAgency(agency: Agency): CourseCatalogEntry[] {
   return COURSE_CATALOG.filter((entry) => entry.agency === agency);
 }
-
-// ── Course Combos ────────────────────────────────────────────────
-// Pre-defined course combinations for common booking patterns.
 
 export const COMBO_COURSES = {
   'O+A': { codes: ['OW', 'AOW'] as CourseCode[], label: 'O+A (OW + AOW)', minDays: 4 },

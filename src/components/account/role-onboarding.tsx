@@ -12,7 +12,6 @@ import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete: () => void }) {
   const [organizerSubStep, setOrganizerSubStep] = useState<OrganizerSubStep>('basic')
 
-  // Config-driven organizer wizard
   if (role in ORGANIZER_WIZARD_CONFIG) {
     const steps = getOrganizerSteps(role)
 
@@ -30,7 +29,6 @@ function ProfileFormForRole({ role, onComplete }: { role: ClerkRole; onComplete:
       if (idx > 0) {
         setOrganizerSubStep(steps[idx - 1])
       }
-      // On first step, do nothing — there's no previous context to return to
     }
 
     return (
@@ -68,10 +66,6 @@ interface RoleOnboardingProps {
   onComplete: () => void
 }
 
-/**
- * Mini-onboarding flow shown after adding a new role from Workspace.
- * Renders the profile form for the given role with a header and done action.
- */
 export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
   const config = ROLE_BY_CLERK_ROLE[role]
 

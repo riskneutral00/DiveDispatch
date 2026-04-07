@@ -7,10 +7,6 @@ import { isDevEnvironment } from './lib/devGuard'
 
 const http = httpRouter()
 
-// Verify Svix webhook signature using the Web Crypto API.
-// Svix signing algorithm: HMAC-SHA256 over "${svix-id}.${svix-timestamp}.${body}",
-// key = base64-decoded secret (strip "whsec_" prefix).
-// Signature header may contain multiple space-separated "v1,<base64>" entries.
 async function verifyWebhookSignature(
   payload: string,
   svixId: string,
@@ -143,8 +139,6 @@ http.route({
   }),
 })
 
-// DEV-ONLY: generate a Clerk sign-in token for Playwright E2E tests.
-// Returns 403 in production. Never expose real user credentials.
 http.route({
   path: '/dev/signin-token',
   method: 'POST',
@@ -169,7 +163,6 @@ http.route({
       return new Response('Invalid JSON body', { status: 400 })
     }
 
-    // Look up Clerk user by email
     const usersRes = await fetch(
       `https://api.clerk.com/v1/users?email_address=${encodeURIComponent(email)}`,
       { headers: { Authorization: `Bearer ${secretKey}` } },
@@ -183,7 +176,6 @@ http.route({
     }
     const userId = users[0].id
 
-    // Create sign-in token for that user
     const tokenRes = await fetch('https://api.clerk.com/v1/sign_in_tokens', {
       method: 'POST',
       headers: {
@@ -204,8 +196,6 @@ http.route({
   }),
 })
 
-// DEV-ONLY: delete a Convex user record by email for E2E test setup.
-// Clears the webhook-created user so the account page shows the setup wizard.
 http.route({
   path: '/dev/delete-user',
   method: 'POST',

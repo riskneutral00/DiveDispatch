@@ -11,8 +11,6 @@ import { Spinner } from '@/components/ui/spinner'
 import { PostTripPage } from '@/components/portal/post-trip-page'
 import { PortalActiveFlow } from '@/components/portal/portal-active-flow'
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function PortalTokenPage() {
   const t = useTranslations('portal')
   const tCommon = useTranslations('common')
@@ -24,7 +22,6 @@ export default function PortalTokenPage() {
   const result = useQuery(api.bookingLinks.getByToken, token ? { token } : 'skip')
   const progress = useQuery(api.portalDraft.getPortalProgress, token ? { token } : 'skip')
 
-  // Loading
   if (result === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 text-primary">
@@ -33,7 +30,6 @@ export default function PortalTokenPage() {
     )
   }
 
-  // Expired or not found — render inline instead of redirecting
   if (result.status === 'expired' || result.status === 'not_found') {
     return (
       <ErrorCard
@@ -45,7 +41,6 @@ export default function PortalTokenPage() {
     )
   }
 
-  // Token already used — customer completed portal submission
   if (result.status === 'completed') {
     const datePart = result.startDate
       ? t('dateSuffix', { date: result.startDate })
@@ -72,7 +67,6 @@ export default function PortalTokenPage() {
     )
   }
 
-  // Post-trip: booking completed or end date passed — show review + signup page
   if (result.status === 'post_trip') {
     return (
       <PostTripPage
@@ -83,7 +77,6 @@ export default function PortalTokenPage() {
     )
   }
 
-  // Booking no longer in Draft — portal closed
   if (result.status === 'closed') {
     return (
       <ErrorCard
@@ -95,7 +88,6 @@ export default function PortalTokenPage() {
     )
   }
 
-  // Valid token — active portal flow
   return (
     <PortalActiveFlow
       token={token}

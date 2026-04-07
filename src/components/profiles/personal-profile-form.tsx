@@ -29,10 +29,6 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type PersonalSection = 'contact' | 'languages' | 'credentials'
 export type PersonalVariant = 'divemaster' | 'instructor'
 
@@ -41,12 +37,8 @@ type InstCredential = z.infer<typeof instructorCredentialSchema>
 
 export type PersonalCredential = DmCredential | InstCredential
 
-// ── Contact ──────────────────────────────────────────────────────────────────
-
 export type { PersonalContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
-
-// ── Languages ─────────────────────────────────────────────────────────────────
 
 export type PersonalLanguagesFormState = {
   teachingLanguages: Language[]
@@ -65,8 +57,6 @@ export function languagesToPayloadPersonal(f: PersonalLanguagesFormState): Recor
     teachingLanguages: languagesToPayload(f.teachingLanguages),
   }
 }
-
-// ── Credentials ───────────────────────────────────────────────────────────────
 
 export type PersonalCredentialsFormState = {
   credential: PersonalCredential[]
@@ -107,10 +97,6 @@ export function credentialsToPayload(f: PersonalCredentialsFormState): Record<st
   }
 }
 
-// ---------------------------------------------------------------------------
-// Section prop types
-// ---------------------------------------------------------------------------
-
 export type PersonalContactSectionProps = BaseProfileSectionProps & {
   variant: PersonalVariant
 }
@@ -120,10 +106,6 @@ export type PersonalLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profi
 export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & {
   variant: PersonalVariant
 }
-
-// ---------------------------------------------------------------------------
-// PersonalContactSection
-// ---------------------------------------------------------------------------
 
 export function PersonalContactSection({
   variant,
@@ -202,10 +184,6 @@ export function PersonalContactSection({
   )
 }
 
-// ---------------------------------------------------------------------------
-// PersonalLanguagesSection
-// ---------------------------------------------------------------------------
-
 export function PersonalLanguagesSection({ profile, create, update }: PersonalLanguagesSectionProps) {
   const {
     form,
@@ -249,10 +227,6 @@ export function PersonalLanguagesSection({ profile, create, update }: PersonalLa
     </ProfileFormShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// PersonalCredentialsSection
-// ---------------------------------------------------------------------------
 
 export function PersonalCredentialsSection({
   variant,
@@ -311,10 +285,6 @@ export function PersonalCredentialsSection({
 export type DiveMasterProfileSection = PersonalSection
 export type InstructorProfileSection = PersonalSection
 
-// ---------------------------------------------------------------------------
-// PersonalProfileForm — single dispatcher for divemaster + instructor
-// ---------------------------------------------------------------------------
-
 export function PersonalProfileForm({
   variant,
   section,
@@ -347,10 +317,6 @@ export function PersonalProfileForm({
     />
   )
 }
-
-// ---------------------------------------------------------------------------
-// Convenience wrappers — delegate to PersonalProfileForm with fixed variant
-// ---------------------------------------------------------------------------
 
 export function DiveMasterProfileForm(
   props: BaseProfileSectionProps & { section?: DiveMasterProfileSection },

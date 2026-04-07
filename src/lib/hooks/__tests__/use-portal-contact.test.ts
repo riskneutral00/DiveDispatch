@@ -2,8 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockUseQuery = vi.fn()
 const mockUseMutation = vi.fn()
 
@@ -16,7 +14,6 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks
 import { usePortalContact } from '../use-portal-contact'
 
 beforeEach(() => {
@@ -24,8 +21,6 @@ beforeEach(() => {
   mockUseQuery.mockReturnValue(undefined)
   mockUseMutation.mockReturnValue(vi.fn())
 })
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('usePortalContact', () => {
   it('returns context from getPortalContext query', () => {
@@ -36,7 +31,6 @@ describe('usePortalContact', () => {
       prefillEmail: 'jane@example.com',
       customer: null,
     }
-    // First useQuery call = getPortalContext, second = checkReturningCustomer
     mockUseQuery
       .mockReturnValueOnce(contextData)
       .mockReturnValueOnce(undefined)
@@ -76,7 +70,6 @@ describe('usePortalContact', () => {
       }),
     )
 
-    // Second useQuery call should pass 'skip'
     const secondCall = mockUseQuery.mock.calls[1]
     expect(secondCall[1]).toBe('skip')
   })
@@ -91,7 +84,6 @@ describe('usePortalContact', () => {
       }),
     )
 
-    // Second useQuery call should pass the email/token args
     const secondCall = mockUseQuery.mock.calls[1]
     expect(secondCall[1]).toEqual({ email: 'jane@example.com', token: 'tok-abc' })
   })

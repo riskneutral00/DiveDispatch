@@ -5,11 +5,6 @@ import {
   SIGNATURE_COVERAGE_THRESHOLD,
 } from '../signature-coverage'
 
-/**
- * Helper: create an ImageData-like object with the given RGBA pixel array.
- * Each pixel is 4 values: [R, G, B, A].
- * A pixel is "drawn" if alpha > 0.
- */
 function makeImageData(
   width: number,
   height: number,
@@ -18,12 +13,10 @@ function makeImageData(
   const totalPixels = width * height
   const data = new Uint8ClampedArray(totalPixels * 4)
 
-  // Fill the first `filledPixels` with opaque black (R=0, G=0, B=0, A=255)
   for (let i = 0; i < filledPixels && i < totalPixels; i++) {
     const offset = i * 4
     data[offset + 3] = 255 // alpha
   }
-  // Remaining pixels stay at alpha = 0 (transparent)
 
   return { data, width, height, colorSpace: 'srgb' }
 }
@@ -40,7 +33,6 @@ describe('computeSignatureCoverage', () => {
   })
 
   it('returns correct ratio for partially filled canvas', () => {
-    // 500 filled out of 10000 = 5%
     const imageData = makeImageData(100, 100, 500)
     expect(computeSignatureCoverage(imageData)).toBeCloseTo(0.05, 4)
   })
@@ -68,13 +60,11 @@ describe('isSignatureValid', () => {
   })
 
   it('rejects a tiny mark below the threshold', () => {
-    // 100 pixels = 1% of 10000, threshold is 2%
     const imageData = makeImageData(100, 100, 100)
     expect(isSignatureValid(imageData)).toBe(false)
   })
 
   it('accepts a signature at exactly the threshold', () => {
-    // 200 pixels = 2% of 10000
     const imageData = makeImageData(100, 100, 200)
     expect(isSignatureValid(imageData)).toBe(true)
   })
@@ -85,16 +75,12 @@ describe('isSignatureValid', () => {
   })
 
   it('respects a custom threshold', () => {
-    // 500 pixels = 5% coverage
     const imageData = makeImageData(100, 100, 500)
-    // With 10% threshold, 5% should fail
     expect(isSignatureValid(imageData, 0.10)).toBe(false)
-    // With 3% threshold, 5% should pass
     expect(isSignatureValid(imageData, 0.03)).toBe(true)
   })
 
   it('handles non-square canvas dimensions', () => {
-    // 200x50 = 10000 pixels. 200 filled = 2%
     const imageData = makeImageData(200, 50, 200)
     expect(isSignatureValid(imageData)).toBe(true)
   })
@@ -106,7 +92,6 @@ describe('SIGNATURE_COVERAGE_THRESHOLD', () => {
   })
 })
 
-/** Per-pixel alpha list (merged cases from former tests/signatureCoverage.test.ts). */
 function makeImageDataAlpha(width: number, height: number, alphaValues: number[]): ImageData {
   const data = new Uint8ClampedArray(width * height * 4)
   for (let i = 0; i < alphaValues.length; i++) {

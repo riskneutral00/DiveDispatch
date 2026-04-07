@@ -14,10 +14,6 @@ type PrefsDoc = {
   [key: string]: unknown
 } | null | undefined
 
-/**
- * Stakeholder preferences for wizard pre-fill: uses target operator cascade when
- * the agent sets `preferredOperatorSlug`, otherwise the caller's own `mine()` prefs.
- */
 export function useWizardPreferences(referralOwnerSlug?: string | null): {
   prefs: PrefsDoc
   isLoading: boolean

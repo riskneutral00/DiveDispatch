@@ -7,12 +7,10 @@ interface ProfileLanguagesSectionProps {
   variant: 'customer' | 'teaching'
   value: Language[]
   onChange: (languages: Language[]) => void
-  /** When set, only render on this tab id (e.g. `languages`). */
   section?: string
   disabled?: boolean
 }
 
-/** Shared guard + `LanguageField` for profile tabs that include a languages step. */
 export function ProfileLanguagesSection({
   variant,
   value,

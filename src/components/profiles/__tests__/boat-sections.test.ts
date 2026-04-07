@@ -1,10 +1,3 @@
-/**
- * Boat profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for the two independent Boat profile sections (contact + fleet).
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
@@ -30,10 +23,6 @@ const VALID_LOCATION = {
   lat: 7.8804,
   lng: 98.3923,
 }
-
-// ---------------------------------------------------------------------------
-// contactSchema
-// ---------------------------------------------------------------------------
 
 describe('contactSchema', () => {
   const valid = {
@@ -67,10 +56,6 @@ describe('contactSchema', () => {
     expect(contactSchema.safeParse(valid).success).toBe(true)
   })
 })
-
-// ---------------------------------------------------------------------------
-// boatFleetSchema
-// ---------------------------------------------------------------------------
 
 describe('boatFleetSchema', () => {
   const validEntry = {
@@ -111,10 +96,6 @@ describe('boatFleetSchema', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// boatContactFromProfile
-// ---------------------------------------------------------------------------
-
 describe('boatContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
     const profile = {
@@ -151,10 +132,6 @@ describe('boatContactFromProfile', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// boatContactToPayload
-// ---------------------------------------------------------------------------
-
 describe('boatContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: BoatContactFormState = {
@@ -185,10 +162,6 @@ describe('boatContactToPayload', () => {
     expect(payload).not.toHaveProperty('fleet')
   })
 })
-
-// ---------------------------------------------------------------------------
-// boatFleetFromProfile
-// ---------------------------------------------------------------------------
 
 describe('boatFleetFromProfile', () => {
   it('maps fleet array from profile correctly', () => {
@@ -254,10 +227,6 @@ describe('boatFleetFromProfile', () => {
     expect(form).not.toHaveProperty('email')
   })
 })
-
-// ---------------------------------------------------------------------------
-// boatFleetToPayload
-// ---------------------------------------------------------------------------
 
 describe('boatFleetToPayload', () => {
   it('serialises fleet with parsed numeric fields', () => {
@@ -337,10 +306,6 @@ describe('boatFleetToPayload', () => {
     expect(payload).not.toHaveProperty('placeName')
   })
 })
-
-// ---------------------------------------------------------------------------
-// Initial form defaults
-// ---------------------------------------------------------------------------
 
 describe('INITIAL_BOAT_CONTACT_FORM', () => {
   it('has empty string defaults', () => {

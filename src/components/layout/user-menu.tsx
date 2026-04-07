@@ -27,7 +27,6 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean);
 
-  // Close on Escape key
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,7 +51,6 @@ export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
 
   function handleSignOut() {
     setOpen(false);
-    // Clear locale cookie on sign-out so unauthenticated users default to Accept-Language
     document.cookie = "dd-locale=; path=/; max-age=0";
     signOut({ redirectUrl: "/" });
   }

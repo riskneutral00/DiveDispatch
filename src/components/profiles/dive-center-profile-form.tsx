@@ -25,17 +25,9 @@ import {
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
 
 type DiveCenterSectionProps = BaseProfileSectionProps
-
-// ---------------------------------------------------------------------------
-// Contact section
-// ---------------------------------------------------------------------------
 
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
@@ -58,10 +50,6 @@ export function DiveCenterContactSection(props: DiveCenterSectionProps) {
     />
   )
 }
-
-// ---------------------------------------------------------------------------
-// Languages section
-// ---------------------------------------------------------------------------
 
 export type DiveCenterLanguagesFormState = {
   customerLanguages: Language[]
@@ -114,10 +102,6 @@ export function DiveCenterLanguagesSection({ profile: existing, create, update }
     </ProfileFormShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Affiliations section
-// ---------------------------------------------------------------------------
 
 export type DiveCenterAssociationItem = {
   agency: string
@@ -230,16 +214,6 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
   )
 }
 
-// ---------------------------------------------------------------------------
-// Compat alias
-// ---------------------------------------------------------------------------
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedDiveCenterForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry in
- * connected-role-forms.tsx continues to type-check without modification.
- */
 export function DiveCenterProfileForm({
   section,
   profile,

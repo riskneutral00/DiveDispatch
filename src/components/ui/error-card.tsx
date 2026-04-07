@@ -1,11 +1,3 @@
-/**
- * Centered error/status card with icon, title, message, and optional action.
- * Used by error.tsx boundaries and expired/closed portal pages.
- *
- * Extracted by L8-27 from 3 inline copies across portal error, dashboard error,
- * and portal expired pages.
- */
-
 import type { LucideIcon } from 'lucide-react'
 import { Card } from './card'
 
@@ -15,7 +7,6 @@ interface ErrorCardProps {
   title: string
   message: string
   action?: React.ReactNode
-  /** Container min-height. Defaults to 'min-h-screen'. Dashboard uses 'min-h-[60vh]'. */
   minHeight?: string
 }
 

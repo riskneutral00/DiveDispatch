@@ -17,19 +17,15 @@ const DEMO_BOOKINGS_CONFIG: {
   dayOffset: number
   diverCount: number
 }[] = [
-  // Completed (past)
   { activityType: ['FD'], status: 'Completed', dayOffset: -12, diverCount: 2 },
   { activityType: ['DSD'], status: 'Completed', dayOffset: -10, diverCount: 3 },
   { activityType: ['OW'], status: 'Completed', dayOffset: -8, diverCount: 2 },
-  // Cancelled (past)
   { activityType: ['DSD'], status: 'Cancelled', dayOffset: -11, diverCount: 2 },
   { activityType: ['FD'], status: 'Cancelled', dayOffset: -9, diverCount: 2 },
-  // Upcoming (future)
   { activityType: ['DSD'], status: 'Upcoming', dayOffset: 1, diverCount: 3 },
   { activityType: ['OW'], status: 'Upcoming', dayOffset: 2, diverCount: 2 },
   { activityType: ['AOW'], status: 'Upcoming', dayOffset: 4, diverCount: 2 },
   { activityType: ['FD'], status: 'Upcoming', dayOffset: 6, diverCount: 4 },
-  // Drafts (near future)
   { activityType: ['OW'], status: 'Draft', dayOffset: 3, diverCount: 2 },
   { activityType: ['DSD'], status: 'Draft', dayOffset: 5, diverCount: 3 },
   { activityType: ['AOW'], status: 'Draft', dayOffset: 7, diverCount: 2 },
@@ -54,10 +50,6 @@ function todayStr(): string {
   const d = new Date(NOW)
   return dateStr(d.getFullYear(), d.getMonth() + 1, d.getDate())
 }
-
-// ── scheduleDemoBookings ──────────────────────────────────────────────
-// Generates ~12 demo bookings with customers, profiles, and resources
-// for a single operator. Called after sign-up for operator roles.
 
 export const scheduleDemoBookings = internalAction({
   args: {
@@ -103,7 +95,6 @@ export const scheduleDemoBookings = internalAction({
         })
       }
 
-      // Create customers
       for (let d = 0; d < cfg.diverCount; d++) {
         const nameIdx = (customerCursor + d) % DEMO_NAMES.length
         const name = DEMO_NAMES[nameIdx]
@@ -132,7 +123,6 @@ export const scheduleDemoBookings = internalAction({
         })
       }
 
-      // External resources (demo bookings don't reference real stakeholders)
       resourceRecords.push({ bookingLocalIndex: i, resourceType: 'Instructor', externalName: 'Demo Instructor' })
       resourceRecords.push({ bookingLocalIndex: i, resourceType: 'Boat', externalName: 'Demo Boat' })
       resourceRecords.push({ bookingLocalIndex: i, resourceType: 'Equipment', externalName: 'Demo Equipment' })
@@ -162,7 +152,6 @@ export const scheduleDemoBookings = internalAction({
       customerCursor += cfg.diverCount
     }
 
-    // Insert in batches via mutation
     await ctx.runMutation(internal.demoBookings.insertDemoBatch, {
       bookings: bookingRecords,
       customers: customerRecords,
@@ -172,9 +161,6 @@ export const scheduleDemoBookings = internalAction({
   },
 })
 
-// ── insertDemoBatch ───────────────────────────────────────────────────
-// Handles batched DB inserts for demo booking data.
-
 export const insertDemoBatch = internalMutation({
   args: {
     bookings: v.array(v.any()),
@@ -183,13 +169,11 @@ export const insertDemoBatch = internalMutation({
     resources: v.array(v.any()),
   },
   handler: async (ctx, args) => {
-    // Insert customers and bookings in parallel
     const [customerIds, bookingIds] = await Promise.all([
       Promise.all(args.customers.map((c) => ctx.db.insert('customers', c))),
       Promise.all(args.bookings.map((b) => ctx.db.insert('bookings', b))),
     ])
 
-    // Insert portal links, profiles, and resources in parallel (depend on resolved IDs from above)
     await Promise.all([
       Promise.all(
         args.profiles
@@ -234,14 +218,9 @@ export const insertDemoBatch = internalMutation({
   },
 })
 
-// ── cleanupDemoBookings ───────────────────────────────────────────────
-// Deletes all demo bookings and their related records for a given owner.
-// Triggered when the user creates their first real booking.
-
 export const cleanupDemoBookings = internalMutation({
   args: { ownerId: v.string() },
   handler: async (ctx, { ownerId }) => {
-    // Find all demo bookings for this owner
     const bookings = await ctx.db
       .query('bookings')
       .withIndex('by_ownerId_ownerType', q => q.eq('ownerId', ownerId))
@@ -250,7 +229,6 @@ export const cleanupDemoBookings = internalMutation({
     const demoBookings = bookings.filter(b => b.isDemo === true)
     if (demoBookings.length === 0) return
 
-    // Batch-query all related records for all demo bookings in parallel
     const demoIds = demoBookings.map(b => b._id)
     const [profileArrays, resourceArrays, linkArrays, sessionArrays, reservationArrays, auditArrays, bagArrays] = await Promise.all([
       Promise.all(demoIds.map(id => ctx.db.query('customerProfiles').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
@@ -262,7 +240,6 @@ export const cleanupDemoBookings = internalMutation({
       Promise.all(demoIds.map(id => ctx.db.query('equipmentBags').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
     ])
 
-    // Batch-delete related records, then bookings
     await Promise.all([
       batchDelete(ctx, profileArrays.flat()),
       batchDelete(ctx, resourceArrays.flat()),
@@ -274,6 +251,5 @@ export const cleanupDemoBookings = internalMutation({
     ])
     await batchDelete(ctx, demoBookings)
 
-    // Orphaned demo customers without profiles are harmless — skip cleanup
   },
 })

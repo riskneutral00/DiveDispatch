@@ -62,7 +62,6 @@ export function AddCustomerDialog({
   return (
     <Dialog open={open} onClose={handleClose} title="Add Customer" size="sm">
       <div className="flex flex-col gap-4">
-        {/* Name + Contact paired with Languages */}
         <div className="flex flex-wrap gap-4 w-full">
           <div className="flex flex-col gap-3 min-w-0">
             <Input
@@ -117,7 +116,6 @@ export function AddCustomerDialog({
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2 justify-end">
           <Button variant="secondary" size="md" onClick={handleClose}>
             Cancel

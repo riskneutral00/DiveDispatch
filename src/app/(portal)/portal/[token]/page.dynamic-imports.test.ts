@@ -24,21 +24,17 @@ describe('DD-075: portal page dynamic imports', () => {
 
   for (const name of dynamicComponents) {
     it(`loads ${name} via next/dynamic with ssr: false`, () => {
-      // Should NOT have a static import for this component
       const staticImportPattern = new RegExp(
         `^import\\s+\\{[^}]*${name}[^}]*\\}\\s+from\\s+`,
         'm',
       )
       expect(SOURCE).not.toMatch(staticImportPattern)
 
-      // Should have a dynamic() call for this component
       const dynamicPattern = new RegExp(
         `const\\s+${name}\\s*=\\s*dynamic\\(`,
       )
       expect(SOURCE).toMatch(dynamicPattern)
 
-      // Should use ssr: false
-      // Match the dynamic() block up to a standalone closing )
       const dynamicBlock = SOURCE.match(
         new RegExp(`const\\s+${name}\\s*=\\s*dynamic\\([\\s\\S]*?\\n\\)`, 'm'),
       )

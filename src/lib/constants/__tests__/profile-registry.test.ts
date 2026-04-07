@@ -3,7 +3,6 @@ import { PROFILE_REGISTRY, OVERLAY_ONLY_SECTIONS } from '../profile-registry'
 import { DISPLAY_OPERATOR_ROLES } from '../roles'
 import type { RoleKey } from '../roles'
 
-// Helper: extract tab ids for a given role
 function tabIds(role: RoleKey): string[] {
   return (PROFILE_REGISTRY[role]?.tabs ?? []).map((t) => t.id)
 }

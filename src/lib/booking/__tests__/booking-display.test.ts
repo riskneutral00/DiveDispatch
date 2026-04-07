@@ -6,8 +6,6 @@ import {
   computeTTLLabel,
 } from '../booking-display'
 
-// ── formatDateRange ─────────────────────────────────────────────────────────
-
 describe('formatDateRange', () => {
   it('returns en-dash for empty start and end', () => {
     expect(formatDateRange('', '')).toBe('\u2013')
@@ -28,8 +26,6 @@ describe('formatDateRange', () => {
     expect(formatDateRange('2026-03-01', '2026-03-05')).toBe('2026-03-01 \u2013 2026-03-05')
   })
 })
-
-// ── statusVariant ───────────────────────────────────────────────────────────
 
 describe('statusVariant', () => {
   it('returns warning for Draft', () => {
@@ -53,8 +49,6 @@ describe('statusVariant', () => {
     expect(statusVariant('SomeFutureStatus')).toBe('default')
   })
 })
-
-// ── reservationVariant ─────────────────────────────────────────────────────
 
 describe('reservationVariant', () => {
   it('returns success for Confirmed', () => {
@@ -82,8 +76,6 @@ describe('reservationVariant', () => {
     expect(reservationVariant('Something')).toBe('default')
   })
 })
-
-// ── computeTTLLabel ─────────────────────────────────────────────────────────
 
 describe('computeTTLLabel', () => {
   afterEach(() => {

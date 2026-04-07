@@ -28,10 +28,6 @@ import {
 import { BoatType, BOAT_TYPE_OPTIONS } from '@/lib/constants/boat-types'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type BoatProfileSection = 'contact' | 'fleet'
 
 type BoatSectionProps = BaseProfileSectionProps
@@ -50,12 +46,6 @@ interface FleetState {
   cutoffHours: string
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-// BOAT_TYPE_OPTIONS imported from @/lib/constants/boat-types
-
 const DAYS = [
   { value: 1, label: 'Mon' },
   { value: 2, label: 'Tue' },
@@ -66,10 +56,6 @@ const DAYS = [
   { value: 0, label: 'Sun' },
 ]
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 export function emptyFleet(): FleetState {
   return { boatName: '', maxPax: '', minPax: '', boatType: '', routes: [], cutoffHours: '' }
 }
@@ -77,11 +63,6 @@ export function emptyFleet(): FleetState {
 export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
 }
-
-// ---------------------------------------------------------------------------
-// Contact section
-// ---------------------------------------------------------------------------
-
 
 export function BoatContactSection({ profile: existing, me, create, update, onSaved }: BoatSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
@@ -138,10 +119,6 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
     </ProfileFormShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Fleet section
-// ---------------------------------------------------------------------------
 
 export type BoatFleetFormState = {
   fleet: FleetState[]
@@ -275,10 +252,6 @@ function BoatFleetSectionForm({
   )
 }
 
-// ---------------------------------------------------------------------------
-// FleetEntryCard (Do Not Touch — internal sub-component)
-// ---------------------------------------------------------------------------
-
 interface FleetEntryCardProps {
   vessel: FleetState
   fleetIdx: number
@@ -385,16 +358,6 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
   )
 }
 
-// ---------------------------------------------------------------------------
-// Compat alias
-// ---------------------------------------------------------------------------
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedBoatForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry in
- * connected-role-forms.tsx continues to type-check without modification.
- */
 export function BoatProfileForm({
   section,
   profile,

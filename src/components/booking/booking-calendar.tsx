@@ -83,7 +83,6 @@ export function BookingCalendar({
 
   useEffect(() => { setPickerYear(viewYear) }, [viewYear])
 
-  // Click-outside dismiss
   const collapseExpanded = useCallback(() => setExpanded(false), [])
   useClickOutside(pickerRef, collapseExpanded, expanded)
 
@@ -146,8 +145,6 @@ export function BookingCalendar({
     return result
   }, [bookings, todayStr, hiddenStatuses, hiddenCategories, allDraftsUrgent, customCategories])
 
-  // Dates with active/upcoming/completed bookings that cannot be blocked.
-  // Custom categories (vessels): all dates with items are locked.
   const lockedDatesSet = useMemo(() => {
     const locked = new Set<string>()
     for (const b of resolvedBookings) {
@@ -162,20 +159,17 @@ export function BookingCalendar({
     return locked
   }, [resolvedBookings, customCategories])
 
-  // Per-week urgent bookings — assigned to the week containing startDate
   const urgentPerWeek = useMemo(() => {
     return weeks.map((week) => {
       const weekStart = week[0].dateString
       const weekEnd = week[6].dateString
       return resolvedBookings.filter((b) => {
         if (b.displayStatus !== 'Urgent') return false
-        // Assign to the week containing startDate (or first visible week if before range)
         return b.startDate >= weekStart && b.startDate <= weekEnd
       })
     })
   }, [weeks, resolvedBookings])
 
-  // Bookings with startDate before visible range → assign to week 0
   const earlyUrgent = useMemo(() => {
     if (weeks.length === 0) return []
     const firstDate = weeks[0][0].dateString
@@ -184,7 +178,6 @@ export function BookingCalendar({
     )
   }, [weeks, resolvedBookings])
 
-  // Merge early urgents into week 0
   const urgentPerWeekFinal = useMemo(() => {
     if (urgentPerWeek.length === 0) return urgentPerWeek
     const result = [...urgentPerWeek]
@@ -194,7 +187,6 @@ export function BookingCalendar({
     return result
   }, [urgentPerWeek, earlyUrgent])
 
-  // Per-week packing
   const weekBookings = useMemo(() => {
     return weeks.map((week) => {
       const weekStart = week[0].dateString
@@ -236,7 +228,6 @@ export function BookingCalendar({
 
   return (
     <div data-testid="booking-calendar" className={`flex flex-col ${className ?? ''}`}>
-      {/* ── Nav row — standalone island with popover ── */}
       <div className="flex flex-col items-center py-2" ref={pickerRef}>
         <div className="relative inline-flex">
           <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
@@ -267,7 +258,6 @@ export function BookingCalendar({
             </button>
           </div>
 
-          {/* ── Month picker popover — true overlay ── */}
           {expanded && (
             <div
               className="absolute z-[var(--z-dropdown)] left-1/2 -translate-x-1/2 mt-2 glass-elevated rounded-theme py-3 px-4"
@@ -278,7 +268,6 @@ export function BookingCalendar({
                 boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
               }}
             >
-              {/* Year nav */}
               <div className="flex items-center justify-between mb-3">
                 <button
                   type="button"
@@ -333,7 +322,6 @@ export function BookingCalendar({
                 })}
               </div>
 
-              {/* Today reset */}
               <div className="flex justify-center mt-3">
                 <button
                   type="button"
@@ -349,7 +337,6 @@ export function BookingCalendar({
         </div>
       </div>
 
-      {/* ── Day-of-week labels — plain, no container, no hover ── */}
       <div className="overflow-x-auto mt-1">
         <div className="min-w-[320px]">
           <div className="grid grid-cols-7"> {/* design-ok */}
@@ -371,14 +358,12 @@ export function BookingCalendar({
         </div>
       </div>
 
-      {/* ── Week rows + inter-week gaps ── */}
       {weeks.map((week, wi) => {
         const packed = weekBookings[wi]
         const weekUrgent = urgentPerWeekFinal[wi] ?? []
 
         return (
           <div key={wi}>
-            {/* Fixed 28px gap above each week — urgent pills centered inside when present */}
             <div className="h-7 flex items-center justify-center">
               {weekUrgent.length > 0 && onUrgentCancel && (
                 <UrgentBookingStrip
@@ -416,7 +401,6 @@ export function BookingCalendar({
                     }}
                     onClick={isLocked || isPast ? undefined : () => onDateClick?.(day.dateString)}
                   >
-                    {/* Date number */}
                     <span
                       className="text-[10px] leading-none mb-1 select-none pointer-events-none" /* design-ok */
                       style={{
@@ -431,7 +415,6 @@ export function BookingCalendar({
                       {day.dayOfMonth}
                     </span>
 
-                    {/* Booking pills — scroll after 5 */}
                     <div
                       data-testid={`day-pills-${day.dateString}`}
                       className="overflow-y-auto"
@@ -450,7 +433,6 @@ export function BookingCalendar({
                       const subLabel = customLabelResult ? customLabelResult.subLabel : (booking ? buildBarSubLabel(booking, viewerRole) : undefined)
                       const isReferral = !customCategories && (booking?.isReferral ?? false)
 
-                      // Label-follows-today: show label only on the "active" day cell
                       let showLabel = true
                       if (isMultiDay && booking) {
                         const isToday = day.dateString === todayStr
@@ -531,10 +513,8 @@ export function BookingCalendar({
         )
       })}
 
-      {/* Equal 28px gap: last week → footer */}
       <div className="h-7" />
 
-      {/* ── Footer (legend) ── */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-5 py-3">
         <div className="flex-1" />
         <CalendarLegend

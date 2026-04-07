@@ -47,7 +47,6 @@ const OTHER_LANGUAGE_ENTRIES = [
   { code: 'ur-PK', label: 'Urdu' },
   { code: 'jam-JM', label: 'Jamaican Patois' },
 
-  // European
   { code: 'lt-LT', label: 'Lithuanian' },
   { code: 'lv-LV', label: 'Latvian' },
   { code: 'et-EE', label: 'Estonian' },
@@ -64,7 +63,6 @@ const OTHER_LANGUAGE_ENTRIES = [
   { code: 'lb-LU', label: 'Luxembourgish' },
   { code: 'eu-EU', label: 'Basque' },
 
-  // African
   { code: 'am-ET', label: 'Amharic' },
   { code: 'so-SO', label: 'Somali' },
   { code: 'sn-ZW', label: 'Shona' },
@@ -74,7 +72,6 @@ const OTHER_LANGUAGE_ENTRIES = [
   { code: 'mg-MG', label: 'Malagasy' },
   { code: 'ti-ER', label: 'Tigrinya' },
 
-  // Asian / Central Asian
   { code: 'ne-NP', label: 'Nepali' },
   { code: 'si-LK', label: 'Sinhala' },
   { code: 'lo-LA', label: 'Lao' },
@@ -89,7 +86,6 @@ const OTHER_LANGUAGE_ENTRIES = [
   { code: 'mr-MR', label: 'Marathi' },
   { code: 'ml-ML', label: 'Malayalam' },
 
-  // Americas / Pacific
   { code: 'ht-HT', label: 'Haitian Creole' },
   { code: 'qu-PE', label: 'Quechua' },
   { code: 'gn-PY', label: 'Guaraní' },
@@ -137,28 +133,20 @@ export const ALL_LANGUAGES: DiveLanguage[] = [...TOP_LANGUAGES, ...OTHER_LANGUAG
 
 const VALID_LANGUAGE_CODE_SET = new Set<string>(ALL_LANGUAGES.map((l) => l.code))
 
-// Build reverse lookup: language label → ISO locale code (case-insensitive)
 const _labelToCode = new Map<string, string>(
   ALL_LANGUAGES.map((l) => [l.label.toLowerCase(), l.code]),
 )
 
-// ISO-639 language codes → ISO locale codes for backward compatibility
-// Profile forms historically stored ISO-639 ('en', 'th', 'zh'), but the
-// canonical format is now ISO locales ('en-GB', 'th-TH', 'zh-CN').
 const ISO_TO_LOCALE: Record<string, string> = {
   en: 'en-GB', th: 'th-TH', zh: 'zh-CN', ja: 'ja-JP', ko: 'ko-KR',
   fr: 'fr-FR', de: 'de-DE', ru: 'ru-RU', it: 'it-IT', es: 'es-ES', pt: 'pt-BR',
   nl: 'nl-NL', ar: 'ar-SA', he: 'he-IL', sv: 'sv-SE', pl: 'pl-PL',
 }
 
-// Old country codes → ISO locale codes for backward compatibility
-// DB records may still contain bare country codes ('GB', 'TH', 'CN').
 const COUNTRY_TO_LOCALE: Record<string, string> = Object.fromEntries(
   ALL_LANGUAGES.map((l) => [localeToCountryCode(l.code), l.code]),
 )
 
-/** Extract the country/region code from an ISO locale code.
- *  'en-GB' → 'GB', 'zh-CN' → 'CN', 'GB' → 'GB' (passthrough). */
 export function localeToCountryCode(locale: string): string {
   if (locale.includes('-')) {
     const parts = locale.split('-')
@@ -167,31 +155,23 @@ export function localeToCountryCode(locale: string): string {
   return locale.toUpperCase()
 }
 
-/** Convert a language name/label/code to its ISO locale code.
- *  Handles all formats: "English" → "en-GB", "en-GB" → "en-GB",
- *  "GB" → "en-GB" (backward compat), "en" → "en-GB". */
 export function languageToCode(input: string): string {
   if (!input) return ''
 
-  // Direct match: already an ISO locale code
   if (VALID_LANGUAGE_CODE_SET.has(input)) return input
 
-  // Case-insensitive direct match
   const candidates = ALL_LANGUAGES.filter((l) => l.code.toLowerCase() === input.toLowerCase())
   if (candidates.length > 0) return candidates[0].code
 
   const lower = input.toLowerCase()
 
-  // ISO-639 bare language code: 'en' → 'en-GB'
   const isoHit = ISO_TO_LOCALE[lower]
   if (isoHit) return isoHit
 
-  // Old country code format: 'GB' → 'en-GB'
   const upper = input.toUpperCase()
   const countryHit = COUNTRY_TO_LOCALE[upper]
   if (countryHit) return countryHit
 
-  // Handle locale codes like 'zh-CN', 'en-US', 'fr-CA'
   if (lower.includes('-')) {
     const region = lower.split('-').pop()!.toUpperCase()
     const regionHit = COUNTRY_TO_LOCALE[region]
@@ -201,12 +181,9 @@ export function languageToCode(input: string): string {
     if (localeHit) return localeHit
   }
 
-  // Label lookup: "English" → "en-GB"
   return _labelToCode.get(lower) ?? ''
 }
 
-/** Resolve an array of raw DB language codes to Language objects.
- *  Handles ISO locales ('zh-CN'), country codes ('CN'), ISO-639 ('zh'), and locales ('en-US'). */
 export function resolveLanguages(codes: string[]): { code: string; label: string }[] {
   return (codes ?? [])
     .map((code) => ALL_LANGUAGES.find((l) => l.code === languageToCode(code)))
@@ -214,14 +191,11 @@ export function resolveLanguages(codes: string[]): { code: string; label: string
     .map((l) => ({ code: l.code, label: CHINESE_SCRIPT_LABELS[l.code as LanguageCode] ?? l.label }))
 }
 
-/** Row 1: Asian languages (Chinese Simplified leads) */
 export const POPULAR_ROW1_CODES: LanguageCode[] = ['zh-CN', 'th-TH', 'ja-JP', 'ko-KR', 'id-ID', 'ru-RU', 'dv-MV', 'vi-VN']
-/** Row 2: European languages (Chinese Traditional leads) */
 export const POPULAR_ROW2_CODES: LanguageCode[] = ['zh-TW', 'en-GB', 'fr-FR', 'de-DE', 'es-ES', 'it-IT', 'nl-NL', 'nb-NO']
 
 export const POPULAR_LANGUAGE_CODES: LanguageCode[] = [...POPULAR_ROW1_CODES, ...POPULAR_ROW2_CODES]
 
-/** Chinese codes render native script labels instead of flag emoji */
 export const CHINESE_SCRIPT_LABELS: Partial<Record<LanguageCode, string>> = {
   'zh-CN': '简体',
   'zh-TW': '繁體',

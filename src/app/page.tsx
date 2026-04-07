@@ -9,7 +9,6 @@ export default async function Home() {
 
   return (
     <BackgroundLayout className="items-center justify-center px-4 py-16">
-      {/* Hero */}
       <div className="text-center mb-12 max-w-2xl">
         <div
           className="inline-flex items-center gap-2 mb-6"
@@ -31,7 +30,6 @@ export default async function Home() {
         </h1>
       </div>
 
-      {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
         <Link href="/sign-up" className="flex-1">
           <Button variant="primary" size="lg" fullWidth>

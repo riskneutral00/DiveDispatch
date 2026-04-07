@@ -79,7 +79,6 @@ describe('skylinePack', () => {
     const cont = packed.find((b) => b.id === 'cont')!
     const fullWeek = packed.find((b) => b.id === 'full-week')!
     expect(cont.row).toBe(0)
-    // full-week overlaps continuation columns, so it gets pushed up
     expect(fullWeek.row).toBe(1)
   })
 

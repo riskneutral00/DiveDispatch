@@ -8,10 +8,6 @@ import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import type { QuickBookTemplate } from '@/lib/booking/quick-book-templates'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 
-// ── Sensor config ────────────────────────────────────────────────────────────
-// Distance threshold for mouse (8px) prevents click→drag conflicts.
-// Delay for touch (250ms hold) prevents scroll→drag conflicts on mobile.
-
 export const BOOKING_DND_SENSORS = [
   PointerSensor.configure({
     activationConstraints(event: PointerEvent) {
@@ -23,11 +19,8 @@ export const BOOKING_DND_SENSORS = [
   }),
 ]
 
-// ── Hook ─────────────────────────────────────────────────────────────────────
-
 interface UseBookingDndInput {
   defaults: OperatorDefaults
-  /** Optional: resources from a matching booking template (same course set). */
   resolveTemplateResourceHints?: (
     courses: string[],
   ) => Array<{ resourceType: string; resourceId: string }> | undefined
@@ -72,7 +65,6 @@ export function useBookingDnd({
       const template = sourceData.template
       if (!date || !template) return
 
-      // Reject past dates
       const today = toISODateString(new Date())
       if (date < today) return
 

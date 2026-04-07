@@ -1,8 +1,3 @@
-/**
- * State-machine guards, type definitions, validators, and pure helper functions
- * for booking mutations. Extracted from _shared.ts (L8-24).
- */
-
 import { ConvexError, v } from 'convex/values'
 import { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 import { ErrorCode } from '../lib/errorCodes'
@@ -10,8 +5,6 @@ import { MEDICAL_TTL_MS } from '../lib/timeConstants'
 import { type VacatedReason, type BookingStatus, type ReservationStatus, BOOKING_STATUS, RESERVATION_STATUS } from '../shared/statuses'
 export { type CourseCode, courseCodeValidator } from '../shared/courseCodes'
 export { type VacatedReason } from '../shared/statuses'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type BookingRoleType = 'Instructor' | 'DiveMaster'
 
@@ -33,7 +26,6 @@ export type SessionInput = {
 
 export type BookingResourceInput = {
   resourceType: string
-  /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
   roleType?: BookingRoleType
   resourceId?: string
   externalName?: string
@@ -68,8 +60,6 @@ export type SubmitToDraftArgs = {
   bookingData?: BookingData
 }
 
-// ─── Validators ───────────────────────────────────────────────────────────────
-
 export const sessionValidator = v.object({
   inventoryUnitId: v.id('inventoryUnits'),
   date: v.string(),
@@ -94,7 +84,6 @@ export const sessionValidator = v.object({
 
 export const bookingResourceInputValidator = v.object({
   resourceType: v.string(),
-  /** Original stakeholder role — used to distinguish DiveMaster (capacity +2) from Instructor (capacity +4). */
   roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
   resourceId: v.optional(v.string()),
   externalName: v.optional(v.string()),
@@ -125,24 +114,10 @@ export const bookingDataValidator = v.object({
   ),
 })
 
-// ─── State Machines ───────────────────────────────────────────────────────────
-
-/**
- * Booking status transition guard. Returns true if the transition is valid.
- *
- * confirm:         Draft only (auto-advance to Upcoming)
- * edit:            Upcoming only (operator edit resets to Draft)
- * cancel:         Any non-terminal status (not Cancelled, not Archived)
- * complete:       Upcoming only (auto-complete cron)
- * decline_cascade: Upcoming only (resource stakeholder decline → revert to Draft)
- * expire:         Draft only (TTL expiry → Cancelled)
- * archive:        Completed only (terminal — no outbound transitions)
- */
 export function canBookingTransition(
   currentStatus: BookingStatus,
   action: 'confirm' | 'edit' | 'cancel' | 'complete' | 'decline_cascade' | 'expire' | 'archive',
 ): boolean {
-  // Terminal states have no outbound transitions
   if (currentStatus === BOOKING_STATUS.Cancelled || currentStatus === BOOKING_STATUS.Archived) {
     return false
   }
@@ -167,12 +142,6 @@ export function canBookingTransition(
   }
 }
 
-/**
- * Reservation status transition guard. Returns true if the transition is valid.
- *
- * accept: PendingAcceptance only
- * vacate: PendingAcceptance | Confirmed
- */
 export function canReservationTransition(
   currentStatus: ReservationStatus,
   action: 'accept' | 'vacate' | 'mark_noshow' | 'revert_noshow',
@@ -191,10 +160,6 @@ export function canReservationTransition(
   }
 }
 
-/**
- * Returns true if the reservation is in an active state (PendingAcceptance or Confirmed).
- * Replaces inline `r.status === 'PendingAcceptance' || r.status === 'Confirmed'` filters.
- */
 export function isActiveReservation(reservation: { status: string }): boolean {
   return (
     reservation.status === RESERVATION_STATUS.PendingAcceptance ||
@@ -202,18 +167,6 @@ export function isActiveReservation(reservation: { status: string }): boolean {
   )
 }
 
-// ─── Overlap granularity ──────────────────────────────────────────────────────
-
-/**
- * Returns true if the inventory unit requires full-day overlap checking.
- *
- * Day boats and liveaboards go to one destination per day — a single reservation
- * blocks all other bookings on that calendar date regardless of time window.
- * All other resource types (speedboat, longtail, catamaran, rib, instructor,
- * equipment, etc.) use time-window granularity.
- *
- * Safe default: missing boatType → time-window (never over-blocks).
- */
 export function isFullDayResource(inventoryUnit: {
   resourceType: string
   boatType?: string
@@ -224,23 +177,8 @@ export function isFullDayResource(inventoryUnit: {
   )
 }
 
-// ─── Expiry helper ────────────────────────────────────────────────────────────
-
-// Canonical implementation lives in convex/shared/bookingExpiry.ts
 export { isBookingExpired } from '../shared/bookingExpiry'
 
-// ─── Past-date guard ─────────────────────────────────────────────────────
-
-/**
- * Returns today's date as an ISO string (YYYY-MM-DD), timezone-aware.
- * Uses Intl.DateTimeFormat so the server computes "today" in the operator's
- * local timezone rather than UTC.
- *
- * Defaults to Asia/Bangkok for single-market operation. For multi-market
- * expansion, callers should pass the session's timezone from the
- * bookingSessions.timezone field (schema line 194) instead of relying
- * on this default.
- */
 export function todayISO(timezone = 'Asia/Bangkok'): string {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
@@ -252,9 +190,6 @@ export function todayISO(timezone = 'Asia/Bangkok'): string {
   return `${parts.year}-${parts.month}-${parts.day}`
 }
 
-/**
- * Throws ConvexError if any session date is before today (server-side, timezone-aware).
- */
 export function assertNoPastDates(
   sessions: { date: string; timezone?: string }[],
   timezone = 'Asia/Bangkok',
@@ -268,13 +203,6 @@ export function assertNoPastDates(
   }
 }
 
-// ─── Time helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Computes the medical-block hold deadline per CLAUDE.md rules:
- *   Total 36h from booking creation, hard ceiling 8pm night before activity date.
- *   Returns whichever comes first as a Unix timestamp.
- */
 export function computeMedicalDeadline(
   creationTime: number,
   earliestDate: string,
@@ -282,8 +210,6 @@ export function computeMedicalDeadline(
 ): number {
   const ttlDeadline = creationTime + MEDICAL_TTL_MS
 
-  // 8pm night before the activity date in the session timezone.
-  // Use Intl to derive the UTC offset for the timezone at ~that date.
   const [year, month, day] = earliestDate.split('-').map(Number)
   const refUTC = Date.UTC(year, month - 1, day - 1, 12, 0, 0)
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -296,16 +222,11 @@ export function computeMedicalDeadline(
   const localHour = parseInt(hourStr === '24' ? '0' : hourStr, 10)
   const utcOffsetHours = localHour - 12
 
-  // 20:00 local = (20 - offset) UTC. Date.UTC handles hour overflow correctly.
   const deadline8pm = Date.UTC(year, month - 1, day - 1, 20 - utcOffsetHours, 0, 0)
 
   return Math.min(ttlDeadline, deadline8pm)
 }
 
-/**
- * Formats the current moment in a given timezone and returns the local date and time strings.
- * Shared by isSessionStarted and isSessionEnded to avoid duplicating Intl logic.
- */
 function currentLocalDateTime(timezone: string): { currentDate: string; currentTime: string } {
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
@@ -324,10 +245,6 @@ function currentLocalDateTime(timezone: string): { currentDate: string; currentT
   return { currentDate, currentTime }
 }
 
-/**
- * Check whether a session's start time has passed in the session's local timezone.
- * Uses Intl.DateTimeFormat for correct timezone handling on any server runtime.
- */
 export function isSessionStarted(date: string, startTime: string, timezone: string): boolean {
   const { currentDate, currentTime } = currentLocalDateTime(timezone)
   if (currentDate > date) return true
@@ -335,10 +252,6 @@ export function isSessionStarted(date: string, startTime: string, timezone: stri
   return false
 }
 
-/**
- * Check whether a session's end time has passed in the session's local timezone.
- * Uses Intl.DateTimeFormat to compare current time against session end date/time.
- */
 export function isSessionEnded(date: string, endTime: string, timezone: string): boolean {
   const { currentDate, currentTime } = currentLocalDateTime(timezone)
   if (currentDate > date) return true

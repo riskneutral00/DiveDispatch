@@ -1,4 +1,3 @@
-/** Canonical source of truth for BoatType. */
 import { v, type Infer } from 'convex/values'
 
 export const BOAT_TYPES = [
@@ -18,7 +17,6 @@ const literals = BOAT_TYPES.map((c) => v.literal(c)) as [
 ]
 export const boatTypeValidator = v.union(...literals)
 
-// ── Compile-time guard ───────────────────────────────────────────────
 type ValidatorType = Infer<typeof boatTypeValidator>
 type _Check = ValidatorType extends BoatType
   ? BoatType extends ValidatorType

@@ -55,7 +55,6 @@ export function LanguagePicker({
     setQuery('')
   }
 
-  // Pre-calculate mapped languages for popular rows
   const resolveDiveLanguage = (code: string) => ALL_LANGUAGES.find((l) => l.code === code)
   
   const popRowALanguages = POPULAR_ROW1_CODES.map(resolveDiveLanguage).filter(Boolean) as DiveLanguage[]
@@ -63,7 +62,6 @@ export function LanguagePicker({
   
   const popularSet = new Set<string>([...POPULAR_ROW1_CODES, ...POPULAR_ROW2_CODES])
 
-  // Overflow: selected languages not present in any main row (added via search)
   const overflowLanguages = value.filter((l) => !popularSet.has(l.code))
 
   const searchResults = query.trim()
@@ -73,15 +71,12 @@ export function LanguagePicker({
       })
     : null
 
-  // Capture the grid's natural height when not searching so the container
-  // never shrinks below it when search results replace the grid.
   useEffect(() => {
     if (searchResults === null && gridRef.current) {
       restingHeight.current = gridRef.current.scrollHeight
     }
   })
 
-  // Helper to render lists of flags uniformly
   const renderFlagGroup = (languages: DiveLanguage[] | Language[]) => {
     if (languages.length === 0) return null
     return (
@@ -105,7 +100,6 @@ export function LanguagePicker({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Search input with counter */}
       <div className="relative max-w-xs">
         <input /* design-ok: compound picker search filter */
           type="text"

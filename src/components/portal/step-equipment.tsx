@@ -14,8 +14,6 @@ import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
 import { toHeightCm, toWeightKg, toShoeSizeNum } from '@/lib/utils/unit-conversion'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 type RentalChoice = 'own' | 'rent'
 
 type RentalChecklist = Record<
@@ -35,12 +33,8 @@ export interface EquipmentData {
 
 interface StepEquipmentProps {
   onChange: (data: EquipmentData) => void
-  /** When provided, the component renders its own Continue button and
-   * validates before calling this callback. */
   onComplete?: (data: EquipmentData) => void
 }
-
-// ── ToggleGroup (wraps ButtonGroup with error border) ───────────────────────
 
 function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasError }: {
   options: readonly string[]
@@ -62,12 +56,8 @@ function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasErr
   )
 }
 
-// ── Rental items config ──────────────────────────────────────────────────────
-
 const RENTAL_ITEMS: Array<{ key: keyof RentalChecklist; label: string }> =
   GEAR_TYPES.map((gt) => ({ key: gt as keyof RentalChecklist, label: GEAR_TYPE_LABELS[gt] }))
-
-// ── Section heading ──────────────────────────────────────────────────────────
 
 function SectionHeading({
   children,
@@ -91,8 +81,6 @@ function SectionHeading({
     </div>
   )
 }
-
-// ── Validation ───────────────────────────────────────────────────────────────
 
 interface EquipmentErrors {
   rentalChecklist?: string
@@ -123,7 +111,6 @@ function validateEquipment(
 ): EquipmentErrors {
   const errs: EquipmentErrors = {}
 
-  // All 5 rental items must be answered
   const missingItems = RENTAL_ITEMS.filter((item) => !rentalChecklist[item.key])
   if (missingItems.length > 0) {
     errs.rentalChecklist = messages.rentalRequired
@@ -152,8 +139,6 @@ function validateEquipment(
   return errs
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   const tCommon = useTranslations('common')
 
@@ -170,11 +155,8 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   const [rentalChecklist, setRentalChecklist] = useState<Partial<RentalChecklist>>({})
   const [maskPrescription, setMaskPrescription] = useState('')
 
-  // Show validation errors only after first submit attempt
   const [attempted, setAttempted] = useState(false)
 
-  // Stable ref for onChange so we don't trigger infinite effect loops when
-  // the parent passes an inline function.
   const onChangeRef = useRef(onChange)
   useEffect(() => {
     onChangeRef.current = onChange
@@ -240,7 +222,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
     prescriptionRequired: 'Prescription required for lens rental.',
   }
 
-  // Compute current validation errors (for display when attempted=true)
   const validationErrors = useMemo(
     () =>
       validateEquipment(
@@ -292,12 +273,10 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
   return (
     <div className="space-y-6">
-      {/* ── Body Measurements ─────────────────────────────────────────── */}
       <Card padding="md">
         <SectionHeading note="(Required for rentals)">Body Measurements</SectionHeading>
 
         <div className="space-y-4">
-          {/* Height */}
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Height</legend>
             <label
@@ -326,7 +305,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             </div>
           </fieldset>
 
-          {/* Weight */}
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Weight</legend>
             <label
@@ -355,7 +333,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             </div>
           </fieldset>
 
-          {/* Shoe size */}
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Shoe Size</legend>
             <label
@@ -387,7 +364,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         </div>
       </Card>
 
-      {/* ── Corrective Lenses ─────────────────────────────────────────── */}
       <Card padding="md">
         <SectionHeading>Prescription Lenses</SectionHeading>
         <p className="text-body mb-4 text-secondary">
@@ -449,7 +425,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         )}
       </Card>
 
-      {/* ── Equipment Rental ──────────────────────────────────────────── */}
       <Card padding="md">
         <SectionHeading>Equipment Rental</SectionHeading>
         <p className="text-body mb-4 text-secondary">
@@ -488,7 +463,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
           )}
         </div>
 
-        {/* Mask prescription — only when renting mask + needs powered lenses */}
         {showMaskPrescription && (
           <div
             className="mt-4 pt-4 border-t"
@@ -506,7 +480,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         )}
       </Card>
 
-      {/* Continue button — only rendered when parent passes onComplete */}
       {onComplete && (
         <div className="flex justify-end">
           <Button

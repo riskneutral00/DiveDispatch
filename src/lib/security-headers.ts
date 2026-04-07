@@ -1,14 +1,3 @@
-/**
- * HTTP security headers for Next.js config.
- *
- * Extracted into a standalone module so the header list is unit-testable
- * without importing next.config.ts (which pulls in Next/i18n plugins).
- */
-
-// ---------------------------------------------------------------------------
-// CSP domain allowlists
-// ---------------------------------------------------------------------------
-
 const CLERK_DOMAINS = '*.clerk.accounts.dev *.clerk.com'
 const CONVEX_HTTPS = '*.convex.cloud'
 const CONVEX_CONNECT = '*.convex.cloud wss://*.convex.cloud'
@@ -16,11 +5,8 @@ const GOOGLE_MAPS_SCRIPT = 'maps.googleapis.com'
 const GOOGLE_PLACES_API = 'places.googleapis.com'
 const GOOGLE_MAPS_STATIC = 'maps.gstatic.com'
 
-// Clerk SDK injects inline scripts and styles at runtime.
-// Until Clerk ships full nonce support, unsafe-inline is required.
 const CLERK_INLINE = "'unsafe-inline'"
 
-// React dev mode requires unsafe-eval for error reconstruction and debugging.
 const DEV_EVAL = process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''
 
 const cspDirectives = [
@@ -39,10 +25,6 @@ const cspDirectives = [
 ]
 
 const contentSecurityPolicy = cspDirectives.join('; ')
-
-// ---------------------------------------------------------------------------
-// Header list
-// ---------------------------------------------------------------------------
 
 export interface SecurityHeader {
   key: string
@@ -75,6 +57,3 @@ export const securityHeaders: SecurityHeader[] = [
     value: 'camera=(), microphone=(), geolocation=(self)',
   },
 ]
-
-/** Convenience list of header names (useful for logging / documentation). */
-export const HEADER_NAMES = securityHeaders.map((h) => h.key)

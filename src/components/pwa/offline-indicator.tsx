@@ -3,10 +3,6 @@
 import { useConnectionStatus } from '../../lib/pwa/use-connection-status'
 import { ConnectionStatus } from '../../lib/pwa/connection-status'
 
-/**
- * Visual indicator shown when the app is operating on cached/offline data.
- * Hidden when fully online with fresh data.
- */
 export function OfflineIndicator({ isStale = false }: { isStale?: boolean }) {
   const status = useConnectionStatus(isStale)
 

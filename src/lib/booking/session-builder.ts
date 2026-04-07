@@ -1,13 +1,6 @@
-// ── Session Builder ───────────────────────────────────────────────────────────
-// Pure utility — no Convex, no React.
-// Exports Venue and ScheduledSession types (consumed by venue-toggle.tsx and
-// day-schedule.tsx). Also provides date range and delivery-location helpers.
-
 import { getCourseByCode, type CourseCode } from '@/lib/constants/course-catalog'
 import { getDatesInRange } from '@/lib/utils/date'
 import type { DayConfig } from '@/lib/booking/wizard-state'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 export type Venue = 'Boat' | 'Shore'
 
@@ -20,7 +13,6 @@ export interface DiveSlotDisplay {
 }
 
 export interface ScheduledSession {
-  // Fields that map to a session entry
   inventoryUnitId: string // placeholder — resolved by submitToDraft mutation
   date: string
   startTime: string
@@ -28,16 +20,11 @@ export interface ScheduledSession {
   timezone: string
   unitsRequested: number
   deliveryLocation: 'BoatPier' | 'Pool' | 'Beach'
-  // Display-only metadata (not persisted to wizard state)
   resourceType: 'boat' | 'pool'
   diveSlots: DiveSlotDisplay[]
   isConfinedDay: boolean
 }
 
-// ── Delivery Location ─────────────────────────────────────────────────────────
-
-// Pure function — auto-sets delivery location based on session type and venue.
-// Confined days are always Pool regardless of venue.
 export function getDeliveryLocation(
   isConfinedDay: boolean,
   venue: Venue = 'Boat',
@@ -45,8 +32,6 @@ export function getDeliveryLocation(
   if (isConfinedDay) return 'Pool'
   return venue === 'Shore' ? 'Beach' : 'BoatPier'
 }
-
-// ── Course Sequence Builder ───────────────────────────────────────────────────
 
 interface SequenceEntry {
   dayIndex: number
@@ -72,9 +57,6 @@ function buildCourseSequence(code: CourseCode, numDays: number): SequenceEntry[]
   return entries
 }
 
-// ── Session Generator from DayConfig ─────────────────────────────────────────
-
-/** Convert new-style DayConfig[] into ScheduledSession[] for display. */
 export function buildSessionsFromDays(
   days: DayConfig[],
   customerCount: number,
@@ -106,9 +88,6 @@ export function buildSessionsFromDays(
   })
 }
 
-// ── Auto-schedule from dates + course codes ───────────────────────────────────
-
-/** Build a default DayConfig[] from a date range and course codes. */
 export function buildDefaultDays(
   startDate: string,
   endDate: string,

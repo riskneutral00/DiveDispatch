@@ -1,8 +1,3 @@
-/**
- * Query helpers for the bookingResources junction table.
- * Provides indexed lookups that replace the per-type booking fields.
- */
-
 import type { MutationCtx } from './_generated/server'
 import type { Id } from './_generated/dataModel'
 import type { BookingResourceDoc } from './lib/types'
@@ -11,9 +6,6 @@ import type { ResourceOwnerType } from './shared/resourceOwnerTypes'
 
 export type BookingResource = BookingResourceDoc
 
-// ─── Read helpers ─────────────────────────────────────────────────────────────
-
-/** All resources for a single booking. */
 export async function getResourcesForBooking(
   ctx: DbCtx,
   bookingId: string,
@@ -24,7 +16,6 @@ export async function getResourcesForBooking(
     .collect() // bounded: per-booking resources, max ~5 resource types
 }
 
-/** All resources for multiple bookings, batched via Promise.all. */
 export async function getResourcesForBookings(
   ctx: DbCtx,
   bookingIds: string[],
@@ -43,7 +34,6 @@ export async function getResourcesForBookings(
   return map
 }
 
-/** All bookingIds where a given resource slug is assigned. */
 export async function getBookingIdsForResource(
   ctx: DbCtx,
   resourceId: string,
@@ -55,7 +45,6 @@ export async function getBookingIdsForResource(
   return [...new Set(rows.map((r) => r.bookingId as string))]
 }
 
-/** All bookingIds where a given resourceType + slug is assigned. */
 export async function getBookingIdsForResourceType(
   ctx: DbCtx,
   resourceType: ResourceOwnerType,
@@ -70,9 +59,6 @@ export async function getBookingIdsForResourceType(
   return [...new Set(rows.map((r) => r.bookingId as string))]
 }
 
-// ─── Write helpers ────────────────────────────────────────────────────────────
-
-/** Insert a bookingResource row. Exactly one of resourceId or externalName must be set. */
 export async function insertBookingResource(
   ctx: MutationCtx,
   bookingId: string,
@@ -90,7 +76,6 @@ export async function insertBookingResource(
   })
 }
 
-/** Delete all bookingResource rows for a booking. */
 export async function deleteResourcesForBooking(
   ctx: MutationCtx,
   bookingId: string,
@@ -104,7 +89,6 @@ export async function deleteResourcesForBooking(
   }
 }
 
-/** Delete bookingResource rows matching a specific resourceType on a booking. */
 export async function deleteResourceByType(
   ctx: MutationCtx,
   bookingId: string,

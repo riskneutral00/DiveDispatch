@@ -10,24 +10,17 @@ interface InstructorCardContentProps {
   action: React.ReactNode
 }
 
-/**
- * Shared instructor card display rows (name + action, agencies + flags, specialty ratings).
- * No outer wrapper, no divider — callers handle their own padding and separators.
- * Used by SortableInstructorRow (drag+trash) and InstructorCandidateRow (plus).
- */
 export function InstructorCardContent({ entry, slug, action }: InstructorCardContentProps) {
   const uniqueRatings = [...new Set(entry?.credentials?.flatMap((c) => c.specialtyRatings) ?? [])]
   const resolvedLangs = resolveLanguages(entry?.languages ?? [])
 
   return (
     <div className="flex-1 min-w-0 space-y-1">
-      {/* Line 1: Name + action button */}
       <div className="flex items-center justify-between gap-2">
         <p className="text-body font-medium truncate text-primary">{entry?.name ?? slug}</p>
         {action}
       </div>
 
-      {/* Line 2: Agency badges (left) + language flags (right) */}
       {entry && ((entry.agencies?.length ?? 0) > 0 || resolvedLangs.length > 0) && (
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1 items-center">
@@ -54,7 +47,6 @@ export function InstructorCardContent({ entry, slug, action }: InstructorCardCon
         </div>
       )}
 
-      {/* Line 3: Specialty rating badges */}
       {uniqueRatings.length > 0 && (
         <div className="flex flex-wrap gap-1 items-center">
           {uniqueRatings.map((rating) => (

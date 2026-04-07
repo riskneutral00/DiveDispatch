@@ -20,18 +20,10 @@ interface RoleSwitcherProps {
   roleSlug: RoleKey
 }
 
-/**
- * Compact role switcher bar. Always renders the active role's business name.
- * When the user has roles across multiple hierarchy trees, icon-only tabs
- * appear on the left for cross-tree switching.
- *
- * Hidden only when roles have not loaded yet.
- */
 export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
   const roles = useQuery(api.userRoles.myRoles)
   const { user } = useCurrentUser()
 
-  // Don't render until roles loaded
   if (!roles) return null
 
   const clerkRoles = roles.map((r) => r.role as ClerkRole)
@@ -39,7 +31,6 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
 
   const displayName = user?.businessName ?? ROLE_BY_KEY[roleSlug]?.label ?? ''
 
-  // Build tree representatives for icon tabs (only used when showTabs is true)
   let treeReps: ClerkRole[] = []
   let trees: ClerkRole[][] = []
   if (showTabs) {
@@ -91,7 +82,6 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
           )
         })}
 
-      {/* Show name here only when HierarchySubBar won't render it */}
       {(showTabs || !roles || roles.length <= 1) && (
         <span
           className={cn(

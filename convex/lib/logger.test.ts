@@ -64,7 +64,6 @@ describe('structured logger', () => {
 
 describe('no raw console.warn/console.log in convex/', () => {
   it('convex/ source files do not contain raw console.log or console.warn', () => {
-    // Using execFileSync with explicit args array — no shell injection risk
     let result: string
     try {
       result = execFileSync('grep', [
@@ -72,11 +71,9 @@ describe('no raw console.warn/console.log in convex/', () => {
         '--include=*.ts', 'convex/',
       ], { cwd: resolve(CONVEX_ROOT, '..'), encoding: 'utf-8' })
     } catch {
-      // grep exits 1 when no matches — that's the success case
       result = ''
     }
 
-    // Filter out test files, _generated, and the logger itself
     const violations = result
       .split('\n')
       .filter((line) => line.trim() !== '')

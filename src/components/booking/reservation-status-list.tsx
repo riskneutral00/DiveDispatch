@@ -3,13 +3,9 @@ import { Badge, EmptyState, ListRow } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { reservationVariant } from '@/lib/booking/booking-display'
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
 interface ReservationStatusListProps {
   reservations: BookingDetailReservation[]
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function statusLabel(status: BookingDetailReservation['status']): string {
   switch (status) {
@@ -20,14 +16,11 @@ function statusLabel(status: BookingDetailReservation['status']): string {
   }
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
 export function ReservationStatusList({ reservations }: ReservationStatusListProps) {
   if (reservations.length === 0) {
     return <EmptyState message="No resources assigned." />
   }
 
-  // Deduplicate by inventoryUnitId — one row per resource (multiple sessions share one reservation)
   const seen = new Set<string>()
   const unique = reservations.filter((r) => {
     if (seen.has(r.inventoryUnitId)) return false

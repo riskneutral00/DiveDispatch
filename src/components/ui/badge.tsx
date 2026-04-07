@@ -10,7 +10,6 @@ interface BadgeProps {
   children: React.ReactNode;
   dot?: boolean;
   className?: string;
-  /** When provided, renders as interactive <button> with hover effects */
   onClick?: () => void;
   title?: string;
 }

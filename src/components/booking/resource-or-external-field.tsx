@@ -1,9 +1,3 @@
-/**
- * Resource-or-external toggle field. Shows a system resource dropdown by default;
- * when "__external__" is selected, switches to a freeform text input with a
- * "Switch to system" link.
- */
-
 import { Input } from '@/components/ui/input'
 import { ActionLink } from '@/components/ui/action-link'
 import { SimpleSelect } from '@/components/ui/simple-select'

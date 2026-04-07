@@ -36,7 +36,6 @@ describe('CourseCode single source of truth', () => {
         '.',
       ], { encoding: 'utf-8', cwd: process.cwd() }).trim()
     } catch {
-      // grep returns exit code 1 when no matches found — that's a pass
       return
     }
 
@@ -64,7 +63,6 @@ describe('CourseCode single source of truth', () => {
         '.',
       ], { encoding: 'utf-8', cwd: process.cwd() }).trim()
     } catch {
-      // grep returns exit code 1 when no matches found — that's a pass
       return
     }
 
@@ -77,11 +75,9 @@ describe('CourseCode single source of truth', () => {
   })
 
   it('course-catalog.ts re-exports from canonical source', async () => {
-    // Verify the re-export chain works end-to-end
     const catalog = await import('../../constants/course-catalog')
     expect(catalog.COURSE_CODES).toBe(COURSE_CODES)
 
-    // Type check: ensure the re-exported type is assignable
     const code: CourseCode = catalog.COURSE_CODES[0]
     expect(code).toBe('DSD')
   })

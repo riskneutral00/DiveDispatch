@@ -10,8 +10,6 @@ import { getCourseByCode } from '@/lib/constants/course-catalog'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { languageFlagText } from '@/components/profiles/language-flags'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface ResourceOption {
   id: string
   label: string
@@ -24,29 +22,17 @@ interface DayRowProps {
   dayNumber: number
   dispatch: Dispatch<WizardAction>
   canRemove?: boolean
-  /** All dives eligible for this day (active + ghost). When provided, pills persist as ghosts. */
   availableDives?: DiveSlotDef[]
-  /** Cascade-aware toggle handler. When provided, replaces the default TOGGLE_DIVE dispatch. */
   onToggleDive?: (dayIndex: number, slot: DiveSlot) => void
-  /** Instructor options for inline picker */
   instructorOptions?: ResourceOption[]
-  /** Dive Master options (optional assistant; shares Instructor inventory path) */
   diveMasterOptions?: ResourceOption[]
-  /** Boat options for inline picker */
   boatOptions?: ResourceOption[]
-  /** Pool options for inline picker */
   poolOptions?: ResourceOption[]
-  /** Shore/beach options for inline picker */
   shoreOptions?: ResourceOption[]
-  /** Total number of days (for "use for remaining" button visibility) */
   totalDays?: number
-  /** Course codes for global dive sequence sort order */
   courseCodes?: string[]
-  /** Customer language codes for instructor tier filtering */
   customerLanguages?: string[]
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number)
@@ -61,7 +47,6 @@ function deriveDayLabel(_day: DayConfig): string {
   return 'Dive Day'
 }
 
-/** Extracted from map-loop inline styles — one allocation, shared by all renders. */
 const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const DAY_LABEL_CLASS = 'glass-container'
 const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'var(--color-warning-muted)', color: 'var(--color-warning)' }
@@ -80,8 +65,6 @@ const VENUE_LABELS = {
   shore: 'Shore',
   pool: 'Pool',
 } as const
-
-// ── SelectField ─────────────────────────────────────────────────────────────
 
 function SelectField({
   label,
@@ -114,8 +97,6 @@ function SelectField({
   )
 }
 
-// ── DivePill ────────────────────────────────────────────────────────────────
-
 function DivePill({
   slot,
   active,
@@ -124,7 +105,6 @@ function DivePill({
 }: {
   slot: DiveSlot
   active: boolean
-  /** Day's non-confined dive limit reached — pill disabled */
   capped?: boolean
   onToggle: () => void
 }) {
@@ -158,8 +138,6 @@ function DivePill({
   )
 }
 
-// ── Main Component ──────────────────────────────────────────────────────────
-
 export function DayRow({
   day,
   dayIndex,
@@ -185,7 +163,6 @@ export function DayRow({
 
   return (
     <Card padding="sm">
-      {/* Header */}
       <div
         className="flex items-center justify-between pb-2 mb-2 border-b"
         style={HEADER_BORDER_STYLE}
@@ -227,7 +204,6 @@ export function DayRow({
         )}
       </div>
 
-      {/* Row 1: Time fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
         <Input
           label="Start time"
@@ -243,9 +219,7 @@ export function DayRow({
         />
       </div>
 
-      {/* Row 2: Instructor (left half) + Dive pills (right half) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 items-end">
-        {/* Instructor */}
         <div className="flex flex-col gap-1">
           {day.instructorSlug === '__external__' ? (
             <>
@@ -290,7 +264,6 @@ export function DayRow({
           )}
         </div>
 
-        {/* Dive pills */}
         {(() => {
           const displaySlots = availableDives ?? day.dives
           if (displaySlots.length === 0) {
@@ -328,7 +301,6 @@ export function DayRow({
         })()}
       </div>
 
-      {/* Dive Master (optional) — ratio / manifest */}
       {(diveMasterOptions.length > 0 || day.diveMasterSlug) && (
         <div className="mb-3">
           {day.diveMasterSlug === '__external__' ? (
@@ -372,9 +344,7 @@ export function DayRow({
         </div>
       )}
 
-      {/* Per-dive venue assignment (sorted by dive sequence order) */}
       {day.dives.length > 0 && (() => {
-        // Sort dives by sequence: confined first, then by diveNumber
         const sequence = courseCodes.length > 0 ? buildDiveSequence(courseCodes) : []
         const sortedDives = [...day.dives].sort((a, b) => {
           const aIdx = sequence.findIndex(s => s.courseCode === a.courseCode && s.diveNumber === a.diveNumber && s.isConfined === a.isConfined)
@@ -384,7 +354,6 @@ export function DayRow({
           if (!a.isConfined && b.isConfined) return 1
           return a.diveNumber - b.diveNumber
         })
-        // Map sorted dive back to its original index in day.dives
         const originalIndex = (dive: DiveSlot) =>
           day.dives.findIndex(d => d.courseCode === dive.courseCode && d.diveNumber === dive.diveNumber && d.isConfined === dive.isConfined)
 
@@ -439,9 +408,7 @@ export function DayRow({
                         value={dive.resourceId ?? ''}
                         onChange={(slug) => {
                           const val = slug || undefined
-                          // Set this dive's resource
                           dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: currentVenue, resourceId: val })
-                          // Waterfall: fill subsequent dives with same venue type (same day + later days)
                           if (val) {
                             for (let j = diveIdx + 1; j < day.dives.length; j++) {
                               const nextDive = day.dives[j]

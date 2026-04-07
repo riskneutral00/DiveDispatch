@@ -4,22 +4,13 @@ import { cn } from '@/lib/utils/cn'
 
 interface ErrorAlertProps {
   children: ReactNode
-  /** 'error' uses destructive color, 'warning' uses warning color. Default: 'error'. */
   variant?: 'error' | 'warning'
-  /** 'sm' uses text-label with tighter padding. Default: 'md'. */
   size?: 'sm' | 'md'
-  /** Override the default AlertTriangle icon. */
   icon?: LucideIcon
-  /** Icon size in pixels. Default: 15. */
   iconSize?: number
   className?: string
 }
 
-/**
- * Inline error/warning alert with AlertTriangle icon.
- * Consolidates the repeated pattern of AlertTriangle + styled div
- * found across booking, portal, and dialog components.
- */
 const sizeMap = { sm: 'text-label py-2', md: 'text-body py-2.5' } as const
 
 export function ErrorAlert({

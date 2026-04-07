@@ -32,7 +32,6 @@ export default function PrivacyPage() {
           </ul>
         </section>
 
-
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Why We Collect It</h2>
           <p className="text-secondary">
@@ -42,7 +41,6 @@ export default function PrivacyPage() {
             — DiveDispatch digitizes this existing process.
           </p>
         </section>
-
 
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Who Sees Your Data</h2>
@@ -54,7 +52,6 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Data Retention</h2>
           <p className="text-secondary">
@@ -65,7 +62,6 @@ export default function PrivacyPage() {
             is deleted or anonymized.
           </p>
         </section>
-
 
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Your Rights</h2>
@@ -86,7 +82,6 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Legal Basis</h2>
           <p className="text-secondary">
@@ -98,7 +93,6 @@ export default function PrivacyPage() {
             authentication provider.
           </p>
         </section>
-
 
         <section>
           <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Contact</h2>

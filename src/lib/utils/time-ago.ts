@@ -1,6 +1,3 @@
-/**
- * Human-readable relative time label (e.g. "just now", "5m ago", "2d ago").
- */
 export function timeAgo(ts: number): string {
   const diff = Date.now() - ts
   const minutes = Math.floor(diff / 60_000)

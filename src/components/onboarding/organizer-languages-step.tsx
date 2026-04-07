@@ -25,8 +25,6 @@ interface OrganizerLanguagesStepProps {
 export function OrganizerLanguagesStep({ role, onSaved, onBack }: OrganizerLanguagesStepProps) {
   const roleApi = useOrganizerRoleApi(role)
 
-  // Roles without a languages step shouldn't reach here (config guards this),
-  // but if they do, skip forward on next tick
   if (!roleApi) {
     return (
       <OrganizerStepCard title="" subtitle="" onNext={onSaved} autoAdvance>
@@ -91,7 +89,6 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
         const oaDaysNum = oaDays ? parseInt(oaDays, 10) : undefined
         const specialties = aowSpecialties.length > 0 ? aowSpecialties : undefined
 
-        // Patch the first association with updated preferences
         const currentAssocs = existing && 'associations' in existing ? existing.associations : []
         const firstAssoc = currentAssocs[0] ?? { agency: 'PADI', number: '' }
         const patchedFirst = {

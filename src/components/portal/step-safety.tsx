@@ -11,11 +11,7 @@ import { usePortalSafety } from '@/lib/hooks/use-portal-safety'
 import { Spinner } from '@/components/ui/spinner'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
 
-// ── Blood type options ────────────────────────────────────────────────────────
-
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-
-// ── Form state ────────────────────────────────────────────────────────────────
 
 interface SafetyForm {
   bloodType: string
@@ -30,8 +26,6 @@ const defaultForm = (): SafetyForm => ({
   medications: '',
   insurancePolicyNumber: '',
 })
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 interface StepSafetyProps {
   token: string
@@ -51,7 +45,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
     setSubmitting,
   } = usePortalStep()
 
-  // Pre-fill from saved data once loaded
   useEffect(() => {
     if (saved) {
       setForm({
@@ -115,7 +108,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
         </div>
 
         <div className="space-y-5">
-          {/* Blood type */}
           <SimpleSelect
             label="Blood Type"
             value={form.bloodType}
@@ -124,7 +116,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             placeholder="Select blood type"
           />
 
-          {/* Allergies */}
           <Textarea
             label="Allergies"
             value={form.allergies}
@@ -134,7 +125,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             maxLength={500}
           />
 
-          {/* Medications */}
           <Textarea
             label="Current Medications"
             value={form.medications}
@@ -144,7 +134,6 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
             maxLength={500}
           />
 
-          {/* Insurance */}
           <Input
             label="Insurance Policy Number"
             type="text"

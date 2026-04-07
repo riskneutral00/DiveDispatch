@@ -4,8 +4,6 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { NotificationItem } from '../notification-item'
 import type { NotificationDoc } from '@/lib/types/notifications'
 
-// ── Mocks ────────────────────────────────────────────────────────────────────
-
 vi.mock('lucide-react', () => ({
   AlertTriangle: (props: Record<string, unknown>) => <svg data-testid="icon" {...props} />,
   ArrowRightLeft: (props: Record<string, unknown>) => <svg {...props} />,
@@ -27,8 +25,6 @@ vi.mock('@/lib/utils/time-ago', () => ({
   timeAgo: () => '5m ago',
 }))
 
-// ── Fixtures ─────────────────────────────────────────────────────────────────
-
 const unreadNotification: NotificationDoc = {
   _id: 'n-1',
   type: 'booking_accepted',
@@ -42,8 +38,6 @@ const readNotification: NotificationDoc = {
   readAt: Date.now(),
 }
 
-// ── Tests ────────────────────────────────────────────────────────────────────
-
 describe('NotificationItem', () => {
   it('delete button meets 44px minimum touch target', () => {
     render(
@@ -55,7 +49,6 @@ describe('NotificationItem', () => {
     )
 
     const deleteButton = screen.getByRole('button', { name: 'Delete notification' })
-    // IconButton uses w-11 h-11 (44px) for touch target
     expect(deleteButton.className).toContain('w-11')
     expect(deleteButton.className).toContain('h-11')
   })
@@ -99,7 +92,6 @@ describe('NotificationItem', () => {
       />,
     )
 
-    // Click the main content button (not the delete button)
     fireEvent.click(screen.getByText('Booking #42 accepted'))
     expect(onClick).toHaveBeenCalledWith('n-2')
   })
@@ -113,12 +105,10 @@ describe('NotificationItem', () => {
       />,
     )
 
-    // Unread: dot is present (aria-hidden div with rounded-full)
     const container = screen.getByText('Booking #42 accepted').closest('button')!
     const dot = container.querySelector('[aria-hidden="true"]')
     expect(dot).toBeInTheDocument()
 
-    // Read: no dot
     rerender(
       <NotificationItem
         notification={readNotification}

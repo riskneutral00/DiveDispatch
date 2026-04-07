@@ -22,7 +22,6 @@ interface OrganizerAgencyStepProps {
 export function OrganizerAgencyStep({ role, onSaved, onBack }: OrganizerAgencyStepProps) {
   const roleApi = useOrganizerRoleApi(role)
 
-  // Shouldn't happen — agency step is only in the config for DiveCenter/Agent
   if (!roleApi) {
     return (
       <OrganizerStepCard title="" subtitle="" onNext={onSaved} autoAdvance>

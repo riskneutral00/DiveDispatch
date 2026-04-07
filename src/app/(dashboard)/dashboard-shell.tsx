@@ -3,7 +3,6 @@
 import { DevSwitcher } from '@/components/dev/dev-switcher'
 import { DevSwitchProvider } from '@/components/dev/dev-switch-context'
 
-// Dashboard route group — auth is enforced by proxy (clerkMiddleware).
 export function DashboardGroupLayout({
   children,
 }: {

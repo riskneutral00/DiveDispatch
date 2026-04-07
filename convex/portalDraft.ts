@@ -8,8 +8,6 @@ import { safeDecryptMedical } from './lib/crypto'
 import { rentalChecklistValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export type ContactData = {
   legalFirstName: string
   legalLastName: string
@@ -55,37 +53,23 @@ export type EquipmentData = {
 export type PortalStep = 'contact' | 'medical' | 'waiver' | 'equipment' | 'submit'
 
 export type PortalProgress = {
-  // Which steps this booking requires
   requiresContact: boolean
   requiresMedical: boolean
   requiresWaiver: boolean
 
-  // Completion status per step
   contactComplete: boolean
   medicalComplete: boolean
   waiverComplete: boolean
   equipmentComplete: boolean
 
-  // Saved data for pre-filling each step on resume
   contactData: ContactData | null
   medicalData: MedicalData | null
   waiverSignedAt: number | null
   equipmentData: EquipmentData | null
 
-  // First step the customer should land on when loading the portal
   firstIncompleteStep: PortalStep
 }
 
-// ── getPortalProgress handler (exported for unit testing) ────────────────────
-
-/**
- * Returns the full portal progress for a given token.
- * Used by the portal root on mount to pre-fill steps and auto-advance past
- * completed steps. Returns null if token is invalid, expired, or booking is
- * no longer Draft.
- *
- * Auth: token IS the credential (no Clerk auth).
- */
 export async function _getPortalProgress(
   ctx: DbCtx,
   args: { token: string },
@@ -95,13 +79,11 @@ export async function _getPortalProgress(
 
   const { booking, profile } = resolved
 
-  // Load customer record for contact + equipment body measurement data
   let customer: Record<string, unknown> | null = null
   if (profile.customerId) {
     customer = await ctx.db.get(profile.customerId)
   }
 
-  // Build contact data from customer record
   const contactData: ContactData | null = customer
     ? {
         legalFirstName: customer.legalFirstName as string,
@@ -124,7 +106,6 @@ export async function _getPortalProgress(
       }
     : null
 
-  // Build medical data from profile (decrypt encrypted answers)
   const medicalAnswers: Record<string, boolean | string> = profile.medicalAnswers
     ? await safeDecryptMedical(profile.medicalAnswers)
     : {}
@@ -136,7 +117,6 @@ export async function _getPortalProgress(
         }
       : null
 
-  // Build equipment data from customer body measurements + profile rentalChecklist
   const rentalChecklist = profile.rentalChecklist as EquipmentData['rentalChecklist'] | undefined
   let equipmentData: EquipmentData | null = null
   if (customer || rentalChecklist) {
@@ -155,7 +135,6 @@ export async function _getPortalProgress(
     if (Object.keys(ed).length > 0) equipmentData = ed
   }
 
-  // Completion flags
   const contactComplete = profile.customerId != null
   const medicalComplete = medicalData !== null
   const waiverComplete = profile.waiverSignedAt != null
@@ -171,7 +150,6 @@ export async function _getPortalProgress(
   const requiresMedical = booking.portalMedical as boolean
   const requiresWaiver = booking.portalWaiver as boolean
 
-  // Determine first incomplete required step (evaluate in reverse priority order)
   let firstIncompleteStep: PortalStep = 'submit'
   if (requiresWaiver && !waiverComplete) firstIncompleteStep = 'waiver'
   if (requiresMedical && !medicalComplete) firstIncompleteStep = 'medical'
@@ -193,27 +171,11 @@ export async function _getPortalProgress(
   }
 }
 
-// ── Convex query ──────────────────────────────────────────────────────────────
-
-/**
- * Returns portal form progress for a given booking link token.
- * The frontend uses this on mount to pre-fill each step and skip completed ones.
- * Returns null if token is invalid, expired, or booking is no longer Draft.
- */
 export const getPortalProgress = query({
   args: { token: v.string() },
   handler: _getPortalProgress,
 })
 
-// ── saveWaiver ────────────────────────────────────────────────────────────────
-
-/**
- * Records that the customer has signed the liability waiver.
- * Persists waiverSignedAt on customerProfiles and optionally saves
- * an insurance policy number. Allows re-signing — overwrites the timestamp.
- *
- * Auth: token IS the credential (no Clerk auth).
- */
 export const saveWaiver = mutation({
   args: {
     token: v.string(),
@@ -238,19 +200,6 @@ export const saveWaiver = mutation({
   },
 })
 
-// ── saveEquipmentData ─────────────────────────────────────────────────────────
-
-/**
- * Persists equipment sizing and rental choices entered in the equipment step.
- * Body measurements (height, weight, shoe size, lenses) are stored on the
- * customers record. The rental checklist is stored on customerProfiles.
- *
- * Requires that the contact step has been completed (profile.customerId set),
- * otherwise body measurements cannot be attached to a customer record.
- * rentalChecklist can be saved independently of body measurements.
- *
- * Auth: token IS the credential (no Clerk auth).
- */
 export const saveEquipmentData = mutation({
   args: {
     token: v.string(),
@@ -267,7 +216,6 @@ export const saveEquipmentData = mutation({
     const { profile } = await resolvePortalToken(ctx, args.token)
     const sanitized = sanitizeFields(args, PORTAL_EQUIPMENT_FIELDS)
 
-    // ── Range validation ───────────────────────────────────────────────────
     if (args.heightCm !== undefined && (args.heightCm < 50 || args.heightCm > 250)) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'heightCm must be between 50 and 250' })
     }
@@ -278,7 +226,6 @@ export const saveEquipmentData = mutation({
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'shoeSize must be between 15 and 55' })
     }
 
-    // ── Conditional validation: renting requires measurements ──────────────
     if (args.rentalChecklist !== undefined) {
       const { mask, bcd, wetsuit, fins, regulator } = args.rentalChecklist
       const hasAnyRental = [mask, bcd, wetsuit, fins, regulator].includes('rent')
@@ -301,7 +248,6 @@ export const saveEquipmentData = mutation({
       }
     }
 
-    // Save body measurements to customers record if contact step is complete
     if (profile.customerId) {
       const customerPatch: Record<string, unknown> = {}
       if (args.heightCm !== undefined) customerPatch.heightCm = args.heightCm
@@ -317,7 +263,6 @@ export const saveEquipmentData = mutation({
       }
     }
 
-    // Save rentalChecklist to customerProfiles (sanitize maskPrescription if present)
     if (args.rentalChecklist !== undefined) {
       const sanitizedChecklist = sanitizeFields(args.rentalChecklist, PORTAL_EQUIPMENT_CHECKLIST_FIELDS)
       await ctx.db.patch(profile._id, { rentalChecklist: sanitizedChecklist })

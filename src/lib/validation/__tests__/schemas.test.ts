@@ -1,21 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import { makeWaiverSchema, makeCustomerContactSchema } from '../schemas'
 
-// ── Helpers ──────────────────────────────────────────────────────────
-
-/** Formats a Date as YYYY-MM-DD string. */
 function fmt(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Returns a YYYY-MM-DD string for someone who will be `age` years old at `ref`. */
 function dobForAge(age: number, ref: Date = new Date()): string {
   const d = new Date(ref)
   d.setFullYear(d.getFullYear() - age)
   return fmt(d)
 }
 
-/** Builds a valid waiver data object. */
 function validWaiver(overrides: Partial<{ guardianSignatureFileId: string }> = {}) {
   return {
     waiverSignedAt: Date.now(),
@@ -23,8 +18,6 @@ function validWaiver(overrides: Partial<{ guardianSignatureFileId: string }> = {
     ...overrides,
   }
 }
-
-// ── makeWaiverSchema — guardian signature for minors ──────────────────
 
 describe('makeWaiverSchema', () => {
   it('passes for adult (18+) without guardian signature', () => {
@@ -92,7 +85,6 @@ describe('makeWaiverSchema', () => {
 
   it('birthday edge: turns 18 the day after booking → still a minor', () => {
     const bookingDate = new Date()
-    // Born 18 years ago but birthday is 1 day after booking
     const dob = new Date(bookingDate)
     dob.setFullYear(dob.getFullYear() - 18)
     dob.setDate(dob.getDate() + 1)
@@ -135,7 +127,6 @@ describe('makeWaiverSchema', () => {
   })
 
   it('calculates age at booking start date, not at current date', () => {
-    // Diver is currently 17 but booking is 1 year from now → will be 18
     const now = new Date()
     const futureBooking = new Date(now)
     futureBooking.setFullYear(futureBooking.getFullYear() + 1)
@@ -146,10 +137,7 @@ describe('makeWaiverSchema', () => {
   })
 })
 
-// ── makeCustomerContactSchema — cert requirement conditional ─────────
-
 describe('makeCustomerContactSchema', () => {
-  /** Builds a complete valid contact data object. */
   function validContact(overrides: Record<string, unknown> = {}) {
     const bookingDate = new Date()
     const dob = new Date(bookingDate)

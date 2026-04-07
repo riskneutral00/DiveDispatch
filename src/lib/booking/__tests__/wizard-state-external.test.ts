@@ -5,10 +5,6 @@ import {
   type WizardState,
 } from '../wizard-state'
 
-/**
- * Minimal state that passes all non-resource checks so we can isolate
- * the external-instructor validation in canAdvanceFromItinerary.
- */
 function baseState(overrides: Partial<WizardState['days'][number]> = {}): WizardState {
   const state = makeInitialState()
   state.equipment = 'equip-1'

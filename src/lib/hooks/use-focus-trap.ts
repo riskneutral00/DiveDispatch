@@ -10,29 +10,17 @@ interface UseFocusTrapOptions {
   enabled?: boolean
 }
 
-/**
- * Traps focus within a container element.
- *
- * Handles:
- * - Focus-on-mount (first focusable child)
- * - Focus-restore-on-unmount (previously focused element)
- * - Outside click detection (calls onClose)
- * - Escape key handling (calls onClose)
- * - Tab/Shift+Tab wrapping within the container
- */
 export function useFocusTrap(
   ref: RefObject<HTMLElement | null>,
   options: UseFocusTrapOptions,
 ): void {
   const { onClose, enabled = true } = options
 
-  // Capture previously-focused element synchronously (before effects move focus)
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
   if (enabled && previouslyFocusedRef.current === null) {
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null
   }
 
-  // Focus first focusable child on mount
   useEffect(() => {
     if (!enabled) return
     if (ref.current) {
@@ -41,7 +29,6 @@ export function useFocusTrap(
     }
   }, [ref, enabled])
 
-  // Restore focus to previously-focused element on unmount
   useEffect(() => {
     if (!enabled) return
     return () => {
@@ -49,7 +36,6 @@ export function useFocusTrap(
     }
   }, [enabled])
 
-  // Close on outside click
   useEffect(() => {
     if (!enabled) return
     function handleClick(e: MouseEvent) {
@@ -61,7 +47,6 @@ export function useFocusTrap(
     return () => document.removeEventListener('mousedown', handleClick)
   }, [ref, onClose, enabled])
 
-  // Close on Escape (scoped — only when container has focus)
   useEffect(() => {
     if (!enabled) return
     function handleKey(e: KeyboardEvent) {
@@ -74,7 +59,6 @@ export function useFocusTrap(
     return () => document.removeEventListener('keydown', handleKey)
   }, [ref, onClose, enabled])
 
-  // Tab / Shift+Tab wrapping within the container
   useEffect(() => {
     if (!enabled) return
     function handleKeyDown(e: KeyboardEvent) {

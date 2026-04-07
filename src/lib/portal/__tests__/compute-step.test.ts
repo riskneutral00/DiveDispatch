@@ -91,7 +91,6 @@ describe('computeStep', () => {
     expect(
       computeStep(
         makeProgress({
-          // Force an unexpected value to test fallback
           firstIncompleteStep: 'unknown' as PortalProgress['firstIncompleteStep'],
         }),
       ),

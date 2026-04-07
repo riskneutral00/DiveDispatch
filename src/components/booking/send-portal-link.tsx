@@ -67,7 +67,6 @@ export function SendPortalLink({
     (existingLink ? `${window.location.origin}/portal/${existingLink.token}` : null)
   const resolvedExpiry = expiresAt ?? existingLink?.expiresAt ?? null
 
-
   async function ensureLink(channel?: Channel): Promise<string | null> {
     if (resolvedUrl) return resolvedUrl
     try {

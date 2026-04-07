@@ -1,7 +1,5 @@
 import { v } from 'convex/values'
 
-// ── Booking Statuses ─────────────────────────────────────────────────
-
 export const BOOKING_STATUS = {
   Draft: 'Draft',
   Upcoming: 'Upcoming',
@@ -20,8 +18,6 @@ export const bookingStatusValidator = v.union(
   v.literal(BOOKING_STATUS.Archived),
 )
 
-// ── Reservation Statuses ─────────────────────────────────────────────
-
 export const RESERVATION_STATUS = {
   PendingAcceptance: 'PendingAcceptance',
   Confirmed: 'Confirmed',
@@ -38,8 +34,6 @@ export const reservationStatusValidator = v.union(
   v.literal(RESERVATION_STATUS.NoShow),
 )
 
-// ── Equipment Bag Statuses ───────────────────────────────────────────
-
 export const BAG_STATUS = {
   Assigned: 'Assigned',
   InUse: 'InUse',
@@ -53,8 +47,6 @@ export const bagStatusValidator = v.union(
   v.literal(BAG_STATUS.InUse),
   v.literal(BAG_STATUS.Returned),
 )
-
-// ── Notification Types ───────────────────────────────────────────────
 
 export const NOTIFICATION_TYPE = {
   HoldPlaced: 'hold_placed',
@@ -92,9 +84,6 @@ export const notificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.PortalComplete),
 )
 
-/** Restricted validator for the public createNotification mutation.
- *  Server-only types (medical_cleared, noshow_marked, noshow_reverted) are
- *  excluded — those should only originate from their respective mutations. */
 export const clientNotificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.HoldPlaced),
   v.literal(NOTIFICATION_TYPE.HoldDeclined),
@@ -107,7 +96,6 @@ export const clientNotificationTypeValidator = v.union(
   v.literal(NOTIFICATION_TYPE.MinPaxNotMet),
 )
 
-/** Runtime set mirroring clientNotificationTypeValidator for handler-layer guards. */
 export const CLIENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
   NOTIFICATION_TYPE.HoldPlaced,
   NOTIFICATION_TYPE.HoldDeclined,
@@ -119,8 +107,6 @@ export const CLIENT_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set(
   NOTIFICATION_TYPE.NoBackupAvailable,
   NOTIFICATION_TYPE.MinPaxNotMet,
 ])
-
-// ── Vacated Reasons ──────────────────────────────────────────────────
 
 export const VACATED_REASON = {
   BookingCancelled: 'booking_cancelled',

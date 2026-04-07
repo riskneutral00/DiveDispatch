@@ -21,7 +21,6 @@ export function skylinePack(bookings: BookingSpan[]): PackedBooking[] {
   const skyline = new Array(7).fill(0)
   const result: PackedBooking[] = []
 
-  // 1. Pin continuations to row 0
   for (const booking of continuations) {
     result.push({ ...booking, row: 0 })
     for (let col = booking.startCol; col <= booking.endCol; col++) {
@@ -29,7 +28,6 @@ export function skylinePack(bookings: BookingSpan[]): PackedBooking[] {
     }
   }
 
-  // 2. Pack remaining bookings using skyline algorithm
   const sorted = [...regular].sort((a, b) => {
     if (a.startCol !== b.startCol) return a.startCol - b.startCol
     return b.endCol - b.startCol - (a.endCol - a.startCol)

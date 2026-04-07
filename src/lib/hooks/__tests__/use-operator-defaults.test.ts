@@ -2,8 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 const mockCurrentUser = vi.fn<() => { user: Record<string, unknown> | null; isLoading: boolean }>()
 vi.mock('@/lib/hooks/use-current-user', () => ({
   useCurrentUser: () => mockCurrentUser(),
@@ -18,7 +16,6 @@ vi.mock('@/lib/hooks/use-wizard-preferences', () => ({
   }),
 }))
 
-// [0] userRoles.myRoles, [1] diveCenters.mine, [2] agents.mine
 let queryCallIndex = 0
 const queryReturns: (unknown | undefined)[] = [undefined, undefined, undefined]
 
@@ -34,7 +31,6 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks
 import { useOperatorDefaults } from '../use-operator-defaults'
 
 beforeEach(() => {
@@ -45,8 +41,6 @@ beforeEach(() => {
   queryReturns[2] = undefined
   mockWizardPrefs = undefined
 })
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('useOperatorDefaults', () => {
   it('returns empty defaults when preferences are null', () => {

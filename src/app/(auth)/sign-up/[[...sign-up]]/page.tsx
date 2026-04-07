@@ -33,7 +33,6 @@ export default function SignUpPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  // Any user with a record → dashboard (proxy resolves to /{slug}/{role}/dashboard)
   useEffect(() => {
     if (user && userRoles && userRoles.length > 0) {
       router.replace('/dashboard')
@@ -60,20 +59,16 @@ export default function SignUpPage() {
         role: primaryRole.clerkRole,
         roles: selectedRoles.map((r) => r.clerkRole),
       })
-      // The useEffect above will redirect to /dashboard once the record appears
     } catch (err) {
       setError(parseConvexErrorI18n(err, tErr))
       setSubmitting(false)
     }
   }
 
-  // ── Determine which step to show ────────────────────────────────────────────
-
   if (authLoading) {
     return <Spinner label={t('loading')} />
   }
 
-  // Not authenticated → Step 1: Clerk sign-up
   if (!isAuthenticated) {
     return (
       <>
@@ -88,17 +83,14 @@ export default function SignUpPage() {
     )
   }
 
-  // Authenticated — waiting for Convex user query
   if (user === undefined) {
     return <Spinner label={t('loading')} />
   }
 
-  // User record exists — useEffect is redirecting to /dashboard
   if (user) {
     return <Spinner label={t('redirecting')} />
   }
 
-  // Authenticated, no Convex user → Step 2: Role selection
   return (
     <>
       <div className="w-full mb-6">

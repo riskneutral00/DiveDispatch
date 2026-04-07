@@ -1,10 +1,3 @@
-/**
- * Dive Site profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the two independent Dive Site profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   diveSiteDetailsSchema,
@@ -30,8 +23,6 @@ const VALID_LOCATION = {
   lat: 5.97,
   lng: 116.07,
 }
-
-// ── Details schema ────────────────────────────────────────────────────────────
 
 describe('diveSiteDetailsSchema', () => {
   const valid = {
@@ -68,8 +59,6 @@ describe('diveSiteDetailsSchema', () => {
   })
 })
 
-// ── Capabilities schema ───────────────────────────────────────────────────────
-
 describe('diveSiteCapabilitiesSchema', () => {
   const valid = {
     confinedCapable: false,
@@ -102,8 +91,6 @@ describe('diveSiteCapabilitiesSchema', () => {
     expect(diveSiteCapabilitiesSchema.safeParse(valid).success).toBe(true)
   })
 })
-
-// ── diveSiteDetailsFromProfile ────────────────────────────────────────────────
 
 describe('diveSiteDetailsFromProfile', () => {
   it('extracts name, location, venueType from profile', () => {
@@ -156,8 +143,6 @@ describe('diveSiteDetailsFromProfile', () => {
   })
 })
 
-// ── diveSiteDetailsToPayload ──────────────────────────────────────────────────
-
 describe('diveSiteDetailsToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: DiveSiteDetailsFormState = {
@@ -187,8 +172,6 @@ describe('diveSiteDetailsToPayload', () => {
     expect(payload).not.toHaveProperty('maxCapacity')
   })
 })
-
-// ── diveSiteCapabilitiesFromProfile ───────────────────────────────────────────
 
 describe('diveSiteCapabilitiesFromProfile', () => {
   it('extracts confinedCapable, maxDepth, maxCapacity from profile', () => {
@@ -229,8 +212,6 @@ describe('diveSiteCapabilitiesFromProfile', () => {
   })
 })
 
-// ── diveSiteCapabilitiesToPayload ─────────────────────────────────────────────
-
 describe('diveSiteCapabilitiesToPayload', () => {
   it('serialises all capabilities fields', () => {
     const form: DiveSiteCapabilitiesFormState = {
@@ -267,8 +248,6 @@ describe('diveSiteCapabilitiesToPayload', () => {
   })
 })
 
-// ── buildDiveSiteCreatePayload ────────────────────────────────────────────────
-
 describe('buildDiveSiteCreatePayload', () => {
   it('always sets hasCompressor to false', () => {
     const payload = buildDiveSiteCreatePayload({ name: 'Test Site' })
@@ -292,8 +271,6 @@ describe('buildDiveSiteCreatePayload', () => {
     expect(result).not.toHaveProperty('venueType')
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_DIVE_SITE_DETAILS_FORM', () => {
   it('has empty string name and null location', () => {

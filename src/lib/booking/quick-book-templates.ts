@@ -1,14 +1,10 @@
 import type { CourseCode } from '@/lib/constants/course-catalog'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface QuickBookTemplate {
   id: string
   label: string
   courses: CourseCode[]
 }
-
-// ── Templates ─────────────────────────────────────────────────────────────────
 
 export const COURSE_TEMPLATES: QuickBookTemplate[] = [
   { id: 'dsd', label: 'DSD', courses: ['DSD'] },

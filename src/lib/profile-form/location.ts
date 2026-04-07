@@ -4,7 +4,6 @@ export type ProfileLocationValue = LocationValue
 
 const DEFAULT_LOCATION_REQUIRED = 'Location is required'
 
-/** Nullable location field with “must pick a location” refine — use inside larger `z.object({ ... })`. */
 export function nullableProfileLocation(
   message: string = DEFAULT_LOCATION_REQUIRED,
 ) {
@@ -27,7 +26,6 @@ export function locationFromProfileDoc(p: {
   }
 }
 
-/** Name + standard geo columns + email/phone — shared by all role profile `fromProfile` mappers. */
 export function contactFieldsFromProfile(p: Record<string, unknown>): {
   name: string
   location: ProfileLocationValue
@@ -47,7 +45,6 @@ export function contactFieldsFromProfile(p: Record<string, unknown>): {
   }
 }
 
-/** Default `fromMe` callback shared by all contact-section profile forms. */
 export function defaultFromMe<T extends Record<string, unknown>>(
   u: Record<string, unknown>,
   defaults: T,
@@ -59,7 +56,6 @@ export function defaultFromMe<T extends Record<string, unknown>>(
   } as T
 }
 
-/** Spread into toPayload return — replaces the 4-field loc spread duplicated across all profile forms. */
 export function locationToPayload(loc: ProfileLocationValue) {
   return {
     placeName: loc.placeName,
@@ -68,8 +64,6 @@ export function locationToPayload(loc: ProfileLocationValue) {
     lng: loc.lng,
   }
 }
-
-// ── Shared contact form state (used by 6+ profile forms) ───────────
 
 export type ContactFormState = {
   name: string
@@ -93,4 +87,3 @@ export function contactFromProfile(p: Record<string, unknown>): ContactFormState
 export function contactToPayload(f: ContactFormState): Record<string, unknown> {
   return { name: f.name, ...locationToPayload(f.location!), email: f.email, phone: f.phone }
 }
-

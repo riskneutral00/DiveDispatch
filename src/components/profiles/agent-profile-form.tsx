@@ -27,10 +27,6 @@ import {
 import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export type AgentProfileSection = 'contact' | 'languages' | 'associations'
 
 type AssociationData = z.infer<typeof associationSchema>
@@ -47,10 +43,6 @@ export type AgentAssociationsFormState = {
   associations: AssociationData[]
 }
 
-// ---------------------------------------------------------------------------
-// Initial defaults
-// ---------------------------------------------------------------------------
-
 export const INITIAL_CONTACT_FORM: AgentContactFormState = {
   ...BASE_INITIAL_CONTACT,
   defaultReferral: null,
@@ -61,10 +53,6 @@ export const INITIAL_LANGUAGES_FORM: AgentLanguagesFormState = INITIAL_CUSTOMER_
 export const INITIAL_ASSOCIATIONS_FORM: AgentAssociationsFormState = {
   associations: [],
 }
-
-// ---------------------------------------------------------------------------
-// fromProfile / toPayload helpers
-// ---------------------------------------------------------------------------
 
 export function contactFromProfile(p: Record<string, unknown>): AgentContactFormState {
   return {
@@ -109,10 +97,6 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
   }
 }
 
-// ---------------------------------------------------------------------------
-// Section prop types
-// ---------------------------------------------------------------------------
-
 type AgentContactSectionProps = BaseProfileSectionProps
 
 export type AgentLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'update'> & {
@@ -120,10 +104,6 @@ export type AgentLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile'
 }
 
 export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'>
-
-// ---------------------------------------------------------------------------
-// AgentContactSection
-// ---------------------------------------------------------------------------
 
 export function AgentContactSection({ profile, me, create, update }: AgentContactSectionProps) {
   const {
@@ -190,7 +170,6 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
 
       <hr className="form-divider" />
 
-      {/* Default referral */}
       <div>
         <FormSectionHeader label="Default Referral" />
         <p className="text-label mt-2 text-secondary">
@@ -202,10 +181,6 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     </ProfileFormShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// AgentLanguagesSection
-// ---------------------------------------------------------------------------
 
 export function AgentLanguagesSection({ profile, me, update, updateProfile }: AgentLanguagesSectionProps) {
   const meTyped = (me ?? undefined) as { customerLanguages?: string[] } | undefined
@@ -261,10 +236,6 @@ export function AgentLanguagesSection({ profile, me, update, updateProfile }: Ag
     </ProfileFormShell>
   )
 }
-
-// ---------------------------------------------------------------------------
-// AgentAssociationsSection
-// ---------------------------------------------------------------------------
 
 export function AgentAssociationsSection({ profile, create, update }: AgentAssociationsSectionProps) {
   const {

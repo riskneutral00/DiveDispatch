@@ -1,12 +1,3 @@
-/**
- * Agency reference data — course catalogs, specialty lists, and labels.
- *
- * Pure data — no framework dependencies. Lives in convex/shared/ so both
- * server (convex/) and client (src/lib/) can import.
- *
- * Adding a new agency = adding an entry here. No code changes needed.
- */
-
 export interface AgencySpecialtyEntry {
   code: string
   label: string
@@ -15,7 +6,6 @@ export interface AgencySpecialtyEntry {
   requiredForAOW: boolean
 }
 
-/** @deprecated Use AgencySpecialtyEntry — kept for transition */
 export type AgencySpecialty = AgencySpecialtyEntry
 
 export interface AgencyCourse {
@@ -33,7 +23,6 @@ export interface AgencyDefinition {
   specialtyGroupLabel: string
 }
 
-/** AOW requires 5 adventure dives (2 mandatory + 3 elective). */
 export const AOW_REQUIRED_SPECIALTY_COUNT = 5
 
 export const AGENCIES: Record<string, AgencyDefinition> = {
@@ -111,24 +100,20 @@ export const AGENCIES: Record<string, AgencyDefinition> = {
   },
 }
 
-/** All agency codes for dropdowns */
 export const AGENCY_CODES = Object.keys(AGENCIES)
 
-/** Course day ranges — universal across all agencies */
 export const COURSE_DAY_RANGES = {
   OW: { min: 2, max: 4 },
   AOW: { min: 2, max: 4 },
   combined: { min: 4, max: 6 },
 } as const
 
-/** Get mandatory (requiredForAOW) specialty codes for an agency */
 export function getMandatorySpecialties(agencyCode: string): Set<string> {
   const agency = AGENCIES[agencyCode]
   if (!agency) return new Set()
   return new Set(agency.specialties.filter((s) => s.requiredForAOW).map((s) => s.code))
 }
 
-/** Get default specialty selections for an agency (requiredForAOW ones pre-selected) */
 export function getDefaultSpecialties(agencyCode: string): string[] {
   return [...getMandatorySpecialties(agencyCode)]
 }

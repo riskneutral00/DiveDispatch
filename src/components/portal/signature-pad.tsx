@@ -6,21 +6,15 @@ import { InlineError } from '../ui/inline-error'
 import { Trash2 } from 'lucide-react'
 
 export interface SignaturePadHandle {
-  /** Returns canvas content as a Blob (PNG), or null if canvas is empty. */
   getBlob(): Promise<Blob | null>
-  /** Returns the canvas ImageData for pixel-level inspection, or null if empty. */
   getImageData(): ImageData | null
-  /** Clears the canvas. */
   clear(): void
-  /** Returns true if the user has drawn anything. */
   isEmpty(): boolean
 }
 
 interface SignaturePadProps {
   label?: string
-  /** Called whenever the drawn state changes (drawn / cleared). */
   onChange?: (hasSignature: boolean) => void
-  /** Called each time a stroke ends (mouseup / touchend). Useful for deferred validation. */
   onDrawEnd?: () => void
   error?: string
   disabled?: boolean
@@ -33,14 +27,12 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
     const hasContent = useRef(false)
     const [empty, setEmpty] = useState(true)
 
-    // Device-pixel-ratio aware resize
     const resizeCanvas = useCallback(() => {
       const canvas = canvasRef.current
       if (!canvas) return
       const rect = canvas.getBoundingClientRect()
       const dpr = window.devicePixelRatio || 1
 
-      // Preserve existing drawing during resize
       const tempCanvas = document.createElement('canvas')
       tempCanvas.width = canvas.width
       tempCanvas.height = canvas.height
@@ -75,7 +67,6 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
       if (!canvas) return null
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
-      // Re-apply stroke style each time (CSS variables may not be inlined)
       ctx.strokeStyle = getComputedStyle(canvas).getPropertyValue('--color-text-primary') || '#ffffff'
       ctx.lineWidth = 2.5
       ctx.lineCap = 'round'
@@ -117,7 +108,6 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
       }
     }, [onDrawEnd])
 
-    // Mouse events
     const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
       const pos = getPos(e.clientX, e.clientY, canvasRef.current!)
       startDraw(pos.x, pos.y)
@@ -129,7 +119,6 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
     const onMouseUp = () => endDraw()
     const onMouseLeave = () => endDraw()
 
-    // Touch events
     const onTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
       e.preventDefault()
       const touch = e.touches[0]
@@ -209,7 +198,6 @@ export const SignaturePad = React.forwardRef<SignaturePadHandle, SignaturePadPro
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
           />
-          {/* Sign-here guide line */}
           {empty && (
             <span
               className="absolute bottom-5 left-4 right-4 text-label pointer-events-none select-none text-secondary"

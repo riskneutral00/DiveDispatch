@@ -6,7 +6,6 @@ import {
   WIZARD_STEP_LABELS,
   canAdvanceFromCustomers,
   canAdvanceFromItinerary,
-  canAdvanceFromResources,
   serializeDraftState,
   deserializeDraftState,
   type CustomerData,
@@ -593,70 +592,6 @@ describe('APPLY_VENUE_TO_REMAINING', () => {
     expect(state.days[2].inventoryUnitId).toBe('boat-2')
   })
 })
-
-describe('canAdvanceFromResources', () => {
-  it('returns true when a boat day has instructor but no boat assigned', () => {
-    const state = {
-      ...makeInitialState(),
-      days: [
-        { date: testDate(3), venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', instructorSlug: 'inst-1' },
-      ],
-    }
-    expect(canAdvanceFromResources(state)).toBe(true)
-  })
-
-  it('returns false when any day has no instructor', () => {
-    const state = {
-      ...makeInitialState(),
-      days: [
-        { date: testDate(3), venueType: 'boat' as const, dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }], divesPerDay: 3, startTime: '08:00', endTime: '17:00', timezone: 'Asia/Bangkok', inventoryUnitId: 'boat-1' },
-      ],
-    }
-    expect(canAdvanceFromResources(state)).toBe(false)
-  })
-
-  it('accepts external instructor as valid', () => {
-    const state = {
-      ...makeInitialState(),
-      days: [
-        {
-          date: testDate(3),
-          venueType: 'shore' as const,
-          dives: [{ courseCode: 'OW', diveNumber: 1, isConfined: false }],
-          divesPerDay: 3,
-          startTime: '08:00',
-          endTime: '17:00',
-          timezone: 'Asia/Bangkok',
-          instructorSlug: '__external__',
-          externalInstructorName: 'John',
-        },
-      ],
-    }
-    expect(canAdvanceFromResources(state)).toBe(true)
-  })
-
-  it('returns true when pool day has pool and instructor', () => {
-    const state = {
-      ...makeInitialState(),
-      days: [
-        {
-          date: testDate(3),
-          venueType: 'pool' as const,
-          dives: [{ courseCode: 'OW', diveNumber: 0, isConfined: true }],
-          divesPerDay: 3,
-          startTime: '08:00',
-          endTime: '17:00',
-          timezone: 'Asia/Bangkok',
-          instructorSlug: 'inst-1',
-          poolInventoryUnitId: 'pool-1',
-        },
-      ],
-    }
-    expect(canAdvanceFromResources(state)).toBe(true)
-  })
-})
-
-// ── REMOVE_DAY ──────────────────────────────────────────────────────────────
 
 describe('REMOVE_DAY', () => {
   it('removes the targeted day without changing startDate or endDate', () => {

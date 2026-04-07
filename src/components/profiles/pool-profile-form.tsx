@@ -10,14 +10,9 @@ import {
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 
-// ── Types ────────────────────────────────────────────────────────────
-
 export type PoolProfileSection = 'contact' | 'capabilities'
 
 type PoolSectionProps = BaseProfileSectionProps
-
-// ── Contact section ──────────────────────────────────────────────────
-
 
 export function buildPoolCreatePayload<T extends Record<string, unknown>>(payload: T) {
   return {
@@ -40,8 +35,6 @@ export function PoolContactSection({ create, ...props }: PoolSectionProps) {
     />
   )
 }
-
-// ── Capabilities section ─────────────────────────────────────────────
 
 export type PoolCapabilitiesFormState = {
   maxDepth: number
@@ -82,14 +75,6 @@ export function PoolCapabilitiesSection(props: PoolSectionProps) {
   )
 }
 
-// ── Compat alias ─────────────────────────────────────────────────────
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedPoolForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry in
- * connected-role-forms.tsx continues to type-check without modification.
- */
 export function PoolProfileForm({
   section,
   profile,
@@ -102,4 +87,3 @@ export function PoolProfileForm({
     return <PoolCapabilitiesSection profile={profile} create={create} update={update} />
   return <PoolContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }
-

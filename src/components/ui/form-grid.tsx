@@ -1,12 +1,3 @@
-/**
- * FormGrid — 12-column grid system for form layouts.
- *
- * Field sizes:
- *   xs=2  sm=3  md=4  lg=6  full=12
- *
- * Desktop: grid-cols-12. Mobile (<640px): all fields col-span-12, xs→col-span-6.
- */
-
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 

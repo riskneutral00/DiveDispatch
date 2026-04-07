@@ -1,9 +1,5 @@
 const URGENT_THRESHOLD_MS = 12 * 60 * 60 * 1000 // 12 hours
 
-/**
- * A Draft booking is urgent when its startDate is within 12 hours from now.
- * Returns false for non-Draft statuses.
- */
 export function isUrgentDraft(booking: { status: string; startDate: string }): boolean {
   if (booking.status !== 'Draft') return false
   const [y, m, d] = booking.startDate.split('-').map(Number)
@@ -11,10 +7,6 @@ export function isUrgentDraft(booking: { status: string; startDate: string }): b
   return startMs - Date.now() < URGENT_THRESHOLD_MS
 }
 
-/**
- * Human-readable countdown for urgent drafts.
- * Returns null if the booking isn't urgent.
- */
 export function urgentCountdown(booking: { status: string; startDate: string }): string | null {
   if (!isUrgentDraft(booking)) return null
   const [y, m, d] = booking.startDate.split('-').map(Number)

@@ -12,9 +12,7 @@ export type { ResourcePickerEntry }
 interface ResourcePickerProps {
   label: string
   entries: ResourcePickerEntry[]
-  /** Slugs whose inventory units are all fully booked on the booking dates */
   unavailableOwnerSlugs: Set<string>
-  /** Operator's preferred slugs in ranked order — renders a Preferred section */
   preferredSlugs?: string[]
   selectedSlug: string | undefined
   freeformName: string | undefined
@@ -23,8 +21,6 @@ interface ResourcePickerProps {
   isLoading?: boolean
   optional?: boolean
 }
-
-// ── ResourcePicker ─────────────────────────────────────────────────────────────
 
 export function ResourcePicker({
   label,
@@ -39,7 +35,6 @@ export function ResourcePicker({
   optional = false,
 }: ResourcePickerProps) {
   const t = useTranslations('common')
-  // Derive initial mode from whether a freeform name is already set
   const [isExternal, setIsExternal] = useState(() => !!freeformName)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -56,7 +51,6 @@ export function ResourcePicker({
 
   const selectedEntry = entries.find((e) => e.slug === selectedSlug)
 
-  // ── Preferred grouping ──────────────────────────────────────────────────
   const hasPref = (preferredSlugs?.length ?? 0) > 0
   const prefSet = useMemo(() => new Set(preferredSlugs ?? []), [preferredSlugs])
 
@@ -84,7 +78,6 @@ export function ResourcePicker({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Label row */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-body font-medium text-secondary">
           {label}
@@ -98,14 +91,12 @@ export function ResourcePicker({
       </div>
 
       {isExternal ? (
-        /* Freeform name input */
         <Input
           placeholder={`Enter ${label.toLowerCase()} name`}
           value={freeformName ?? ''}
           onChange={(e) => onFreeformChange(e.target.value)}
         />
       ) : isLoading ? (
-        /* Loading skeleton */
         <div
           className="flex items-center gap-2 px-3 py-2.5 rounded-theme text-secondary bg-glass-bg border border-glass-border"
         >
@@ -115,7 +106,6 @@ export function ResourcePicker({
           </span>
         </div>
       ) : (
-        /* Dropdown trigger */
         <div className="relative">
           <button
             type="button"
@@ -138,7 +128,6 @@ export function ResourcePicker({
           </button>
 
           {isOpen && (
-            /* Dropdown list */
             <div
               className="absolute z-[var(--z-dropdown)] left-0 right-0 top-full mt-1 rounded-theme shadow-xl overflow-hidden"
               style={{
@@ -156,7 +145,6 @@ export function ResourcePicker({
                 </div>
               ) : (
                 <>
-                  {/* Preferred section */}
                   {hasPref && (preferredAvailable.length > 0 || preferredUnavailable.length > 0) && (
                     <>
                       <SectionHeader label="Preferred" topBorder={false} />
@@ -185,7 +173,6 @@ export function ResourcePicker({
                     </>
                   )}
 
-                  {/* Other available entries */}
                   {availableEntries.length > 0 && (
                     <>
                       {hasPref && (preferredAvailable.length > 0 || preferredUnavailable.length > 0) && (
@@ -206,7 +193,6 @@ export function ResourcePicker({
                     </>
                   )}
 
-                  {/* Fully booked non-preferred */}
                   {unavailableEntries.length > 0 && (
                     <>
                       <SectionHeader label="Fully booked" topBorder />
@@ -228,7 +214,6 @@ export function ResourcePicker({
         </div>
       )}
 
-      {/* Selected entry detail strip */}
       {!isExternal && selectedEntry && (
         <div
           className="flex items-center gap-2 flex-wrap px-3 py-1.5 rounded-[var(--border-radius-button)] bg-glass-bg border border-glass-border"
@@ -252,8 +237,6 @@ export function ResourcePicker({
   )
 }
 
-// ── SectionHeader ──────────────────────────────────────────────────────────────
-
 function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean }) {
   return (
     <div
@@ -264,8 +247,6 @@ function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean
     </div>
   )
 }
-
-// ── PickerRow ──────────────────────────────────────────────────────────────────
 
 function PickerRow({
   entry,
@@ -295,7 +276,6 @@ function PickerRow({
       }}
     >
       <div className="flex-1 min-w-0">
-        {/* Name + badges */}
         <div className="flex items-center gap-2 flex-wrap">
           <span
             className="text-body font-medium truncate text-primary"
@@ -314,14 +294,12 @@ function PickerRow({
           )}
         </div>
 
-        {/* Location + languages */}
         <div className="flex items-center gap-1 mt-0.5">
           <span className="text-label truncate text-secondary">
             {entry.placeName}, {entry.country}
           </span>
         </div>
 
-        {/* Sub-items (vessel names, pool names, etc.) */}
         {entry.subItems && entry.subItems.length > 0 && (
           <div className="flex gap-1 mt-1 flex-wrap">
             {entry.subItems.map((item) => (

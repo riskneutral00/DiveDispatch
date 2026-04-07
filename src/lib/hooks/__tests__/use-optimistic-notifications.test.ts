@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
-
 let mockNotifications: Array<{
   _id: string
   type: string
@@ -34,7 +33,6 @@ vi.mock('convex/react', async () => {
 
 import { useOptimisticNotifications } from '../use-optimistic-notifications'
 
-
 function makeNotification(overrides: Partial<typeof mockNotifications extends (infer T)[] | undefined ? T : never> & { _id: string }) {
   return {
     type: 'booking_accepted',
@@ -43,7 +41,6 @@ function makeNotification(overrides: Partial<typeof mockNotifications extends (i
     ...overrides,
   }
 }
-
 
 describe('useOptimisticNotifications', () => {
   beforeEach(() => {
@@ -311,7 +308,6 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.unreadCount).toBe(0)
   })
 
-
   it('concurrent markAsRead + delete on same ID: no ghost resurrection', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
@@ -392,7 +388,6 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.notifications).toHaveLength(1)
     expect(result.current.notifications?.[0]?.readAt).toBe(100)
   })
-
 
   it('rapid double handleMarkAsRead on same ID: second call is idempotent', async () => {
     mockNotifications = [
@@ -503,7 +498,6 @@ describe('useOptimisticNotifications', () => {
     })
   })
 
-
   it('rapid double handleClearAll: second call is deduplicated, only one mutation fires', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
@@ -582,7 +576,6 @@ describe('useOptimisticNotifications', () => {
     })
   })
 
-
   it('first markAsRead succeeds, second errors: reflects server truth', async () => {
     mockNotifications = [
       makeNotification({ _id: 'n-1' }),
@@ -627,7 +620,6 @@ describe('useOptimisticNotifications', () => {
     expect(result.current.notifications?.[1]?.readAt).toBeUndefined()
     expect(result.current.unreadCount).toBe(2)
   })
-
 
   it('mock routes by api reference name, not call order', () => {
     mockNotifications = [

@@ -11,8 +11,6 @@ import { COURSE_TEMPLATES } from '@/lib/booking/quick-book-templates'
 export const PILL_BASE = 'rounded-full px-3 py-1 font-medium select-none transition-all duration-theme focus:outline-none focus-visible:ring-2'
 export const DISABLED_OVERLAY: React.CSSProperties = { opacity: 0.4, cursor: 'not-allowed' }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface QuickBookRailProps {
   onSelect: (courses: CourseCode[]) => void
   dragEnabled?: boolean
@@ -33,8 +31,6 @@ export const ACCENT_PILL_STYLE: React.CSSProperties = {
 }
 
 const TOOLTIP_LABEL = 'Complete your profile to create bookings'
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 const PLUS_TEMPLATE = { id: 'plus', label: '+ Booking', courses: [] as CourseCode[] }
 

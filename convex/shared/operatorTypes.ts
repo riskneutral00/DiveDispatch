@@ -1,8 +1,3 @@
-/**
- * Canonical source of truth for OperatorType.
- * Array, TypeScript type, and Convex validator all derive from a single list.
- * Adding an operator type = edit this array, done.
- */
 import { v, type Infer } from 'convex/values'
 
 export const OPERATOR_TYPES = [
@@ -22,7 +17,6 @@ const literals = OPERATOR_TYPES.map((c) => v.literal(c)) as [
 ]
 export const operatorTypeValidator = v.union(...literals)
 
-// ── Compile-time guard ───────────────────────────────────────────────
 type ValidatorType = Infer<typeof operatorTypeValidator>
 type _Check = ValidatorType extends OperatorType
   ? OperatorType extends ValidatorType

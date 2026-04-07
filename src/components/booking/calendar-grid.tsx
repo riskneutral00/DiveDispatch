@@ -18,18 +18,15 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
 
   const days: { date: Date; isCurrentMonth: boolean }[] = []
 
-  // Pad start with days from previous month
   for (let i = startOffset - 1; i >= 0; i--) {
     const d = new Date(year, month, -i)
     days.push({ date: d, isCurrentMonth: false })
   }
 
-  // Days in current month
   for (let d = 1; d <= lastDay.getDate(); d++) {
     days.push({ date: new Date(year, month, d), isCurrentMonth: true })
   }
 
-  // Pad end to complete last row
   const remaining = 7 - (days.length % 7)
   if (remaining < 7) {
     for (let d = 1; d <= remaining; d++) {
@@ -39,7 +36,6 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
 
   return (
     <div className={className}>
-      {/* Weekday headers */}
       <div className="grid grid-cols-7 mb-1"> {/* design-ok */}
         {WEEKDAYS.map((wd) => (
           <div
@@ -51,7 +47,6 @@ export function CalendarGrid({ year, month, renderDay, className = '' }: Calenda
         ))}
       </div>
 
-      {/* Day cells */}
       <div className="grid grid-cols-7 gap-1"> {/* design-ok */}
         {days.map(({ date, isCurrentMonth }, i) => (
           <div key={i} style={{ opacity: isCurrentMonth ? 1 : 0.35 }}>

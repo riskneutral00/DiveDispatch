@@ -1,12 +1,4 @@
-/**
- * Centralized Doc<T> and Id<T> type exports for all schema tables.
- * Single source of truth — consuming files import named types from here
- * instead of using inline Doc<"tableName"> references.
- */
-
 import type { Doc, Id } from '../_generated/dataModel'
-
-// ── Document types ──────────────────────────────────────────────────────────
 
 export type UserDoc = Doc<'users'>
 export type ThemeDoc = Doc<'themes'>
@@ -43,8 +35,6 @@ export type RoomDoc = Doc<'rooms'>
 export type DiveHostelDoc = Doc<'diveHostels'>
 export type CronRunLogDoc = Doc<'cronRunLog'>
 export type BookingAuditLogDoc = Doc<'bookingAuditLog'>
-
-// ── Id types ────────────────────────────────────────────────────────────────
 
 export type BookingId = Id<'bookings'>
 export type InventoryUnitId = Id<'inventoryUnits'>

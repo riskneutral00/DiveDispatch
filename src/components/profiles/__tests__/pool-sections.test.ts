@@ -1,10 +1,3 @@
-/**
- * Pool profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the two independent Pool profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   contactSchema,
@@ -30,8 +23,6 @@ const VALID_LOCATION = {
   lat: 7.88,
   lng: 98.39,
 }
-
-// ── Contact schema ────────────────────────────────────────────────────────────
 
 describe('contactSchema', () => {
   const valid = {
@@ -66,8 +57,6 @@ describe('contactSchema', () => {
   })
 })
 
-// ── Capabilities schema ───────────────────────────────────────────────────────
-
 describe('poolCapabilitiesSchema', () => {
   const valid = {
     maxDepth: 5,
@@ -98,8 +87,6 @@ describe('poolCapabilitiesSchema', () => {
     expect(poolCapabilitiesSchema.safeParse(valid).success).toBe(true)
   })
 })
-
-// ── poolContactFromProfile ────────────────────────────────────────────────────
 
 describe('poolContactFromProfile', () => {
   it('extracts name, location, email, phone from profile', () => {
@@ -143,8 +130,6 @@ describe('poolContactFromProfile', () => {
   })
 })
 
-// ── poolContactToPayload ──────────────────────────────────────────────────────
-
 describe('poolContactToPayload', () => {
   it('produces expected shape with location fields flattened', () => {
     const form: PoolContactFormState = {
@@ -178,8 +163,6 @@ describe('poolContactToPayload', () => {
   })
 })
 
-// ── poolCapabilitiesFromProfile ───────────────────────────────────────────────
-
 describe('poolCapabilitiesFromProfile', () => {
   it('extracts maxDepth, maxCapacity from profile', () => {
     const profile = {
@@ -210,8 +193,6 @@ describe('poolCapabilitiesFromProfile', () => {
   })
 })
 
-// ── poolCapabilitiesToPayload ─────────────────────────────────────────────────
-
 describe('poolCapabilitiesToPayload', () => {
   it('serialises all capabilities fields', () => {
     const form: PoolCapabilitiesFormState = {
@@ -234,8 +215,6 @@ describe('poolCapabilitiesToPayload', () => {
     expect(payload).not.toHaveProperty('location')
   })
 })
-
-// ── buildPoolCreatePayload ────────────────────────────────────────────────────
 
 describe('buildPoolCreatePayload', () => {
   it('always sets venueType to Pool', () => {
@@ -267,8 +246,6 @@ describe('buildPoolCreatePayload', () => {
     expect(result.hasCompressor).toBe(false)
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_POOL_CONTACT_FORM', () => {
   it('has empty string defaults', () => {

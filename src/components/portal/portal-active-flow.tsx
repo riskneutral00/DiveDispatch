@@ -43,8 +43,6 @@ const PortalSubmit = dynamic(
   { loading: () => <PortalStepLoading />, ssr: false },
 )
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 type PortalStep = ClientPortalStep
 
 interface PortalActiveFlowProps {
@@ -58,8 +56,6 @@ interface PortalActiveFlowProps {
   progress: PortalProgress | null | undefined
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 export function PortalActiveFlow({
   token,
   customerName,
@@ -72,7 +68,6 @@ export function PortalActiveFlow({
 }: PortalActiveFlowProps) {
   const saveEquipment = useMutation(api.portalDraft.saveEquipmentData)
 
-  // Debounced equipment save — avoids hammering Convex on every keystroke
   const equipmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleEquipmentChange = useCallback(
     (data: EquipmentData) => {
@@ -86,7 +81,6 @@ export function PortalActiveFlow({
 
   const dateOfBirth = progress?.contactData?.dateOfBirth ?? ''
 
-  // Local step override allows user navigation; server-derived default used until override
   const serverStep = computeStep(progress)
   const [stepOverride, setStepOverride] = useState<PortalStep | null>(null)
   const currentStep = stepOverride ?? serverStep
@@ -166,13 +160,11 @@ export function PortalActiveFlow({
           diverCount={diverCount}
         />
 
-        {/* Step progress */}
         <StepIndicator
           steps={steps}
           currentIndex={steps.findIndex((s) => s.key === currentStep)}
         />
 
-        {/* Active step */}
         <div>{renderStep()}</div>
       </div>
     </div>

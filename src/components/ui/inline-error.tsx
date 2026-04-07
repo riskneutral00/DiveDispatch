@@ -10,11 +10,6 @@ interface InlineErrorProps {
 
 const sizeMap = { sm: 'text-label', md: 'text-body' } as const
 
-/**
- * Simple inline error text with role="alert".
- * Use for mutation/validation errors that don't need an icon or background.
- * For icon+background errors, use ErrorAlert. For field-linked errors, use FieldError.
- */
 export function InlineError({ children, centered, size = 'md', className }: InlineErrorProps) {
   return (
     <p

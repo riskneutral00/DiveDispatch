@@ -3,14 +3,12 @@ import {
   isValidEmail,
   isValidWhatsApp,
   isValidLine,
-  getPrimaryInstructorSlug,
   deriveActivityType,
   serializeDraftState,
   deserializeDraftState,
   makeInitialState,
   stepIndex,
   type CustomerData,
-  type DayConfig,
 } from '../src/lib/booking/wizard-state'
 
 describe('isValidEmail', () => {
@@ -88,44 +86,6 @@ describe('isValidLine', () => {
 
   it('rejects empty string', () => {
     expect(isValidLine('')).toBe(false)
-  })
-})
-
-describe('getPrimaryInstructorSlug', () => {
-  const makeDay = (slug?: string): DayConfig => ({
-    date: '2026-03-28',
-    venueType: 'boat',
-    dives: [],
-    divesPerDay: 2,
-    startTime: '08:00',
-    endTime: '12:00',
-    timezone: 'Asia/Bangkok',
-    instructorSlug: slug,
-  })
-
-  it('returns undefined for empty days', () => {
-    expect(getPrimaryInstructorSlug([])).toBeUndefined()
-  })
-
-  it('returns the most common slug', () => {
-    const days = [makeDay('alice'), makeDay('alice'), makeDay('bob')]
-    expect(getPrimaryInstructorSlug(days)).toBe('alice')
-  })
-
-  it('ignores __external__ slugs', () => {
-    const days = [makeDay('__external__'), makeDay('__external__'), makeDay('bob')]
-    expect(getPrimaryInstructorSlug(days)).toBe('bob')
-  })
-
-  it('returns undefined when all slugs are undefined', () => {
-    const days = [makeDay(), makeDay()]
-    expect(getPrimaryInstructorSlug(days)).toBeUndefined()
-  })
-
-  it('returns first tied slug', () => {
-    const days = [makeDay('alice'), makeDay('bob')]
-    // Both have count 1, alice encountered first
-    expect(getPrimaryInstructorSlug(days)).toBe('alice')
   })
 })
 

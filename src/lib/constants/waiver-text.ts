@@ -1,6 +1,3 @@
-// ── Waiver legal text constants ─────────────────────────────────────────────
-// Extracted from step-waiver.tsx to separate content from behavior.
-
 export const NON_AGENCY_DISCLOSURE = `
 ____________ is a PADI\u00ae Member dive business. As a PADI Member, it has met minimum standards for dive training; however, PADI does not supervise or control PADI Members' dive operations, nor is PADI liable for the inaccuracies or misrepresentations of any PADI Member in the conduct of its business. PADI is only responsible for those activities that PADI has specifically agreed to undertake in writing.
 `.trim()

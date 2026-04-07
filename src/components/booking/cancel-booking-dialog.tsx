@@ -10,16 +10,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { ConfirmActionDialog } from '@/components/ui/confirm-dialog'
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface CancelBookingDialogProps {
   open: boolean
   onClose: () => void
   bookingId: Id<'bookings'>
   onSuccess?: () => void
 }
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 export function CancelBookingDialog({
   open,

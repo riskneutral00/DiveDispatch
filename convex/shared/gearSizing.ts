@@ -1,15 +1,3 @@
-/**
- * Gear Sizing Lookup.
- * Pure constants — no framework dependencies. Lives in convex/shared/ so both
- * server (convex/) and client (src/lib/) can import without violating the
- * dependency direction rule.
- *
- * Production reference data: real manufacturer charts mapped to height/weight ranges.
- * Used by seed scripts (populate gearSizingLookup table) and runtime size derivation.
- * Customer provides height + weight only. Chest/waist/sex from OEM charts are dropped —
- * height/weight ranges are sufficient. Overlapping ranges are resolved by EM experience.
- */
-
 export interface GearSizingEntry {
   manufacturer: string;
   gearType: 'wetsuit' | 'bcd';
@@ -20,17 +8,12 @@ export interface GearSizingEntry {
   maxWeight: number; // kg, Infinity for open-ended
 }
 
-// shoeSize / shoeSizeUnit only apply to fins (universal cm sizing, no manufacturer lookup).
 export interface FinSizingEntry {
   gearType: 'fins';
   size: string;
   minShoeSize: number; // EU
   maxShoeSize: number; // EU
 }
-
-// ── ScubaPro ────────────────────────────────────────────────────────
-// Note: ScubaPro also offers Short (S) and Tall (T) variants (e.g. MS, MT, LS, LT)
-// for body proportion adjustments. Those are handled as EM inventory notes, not lookup rows.
 
 export const SCUBAPRO_WETSUITS: GearSizingEntry[] = [
   { manufacturer: 'ScubaPro', gearType: 'wetsuit', size: '2XS', minHeight: 150, maxHeight: 155, minWeight: 42, maxWeight: 54 },
@@ -51,8 +34,6 @@ export const SCUBAPRO_BCDS: GearSizingEntry[] = [
   { manufacturer: 'ScubaPro', gearType: 'bcd', size: 'XL/XXL', minHeight: 185, maxHeight: 199, minWeight: 100, maxWeight: 130 },
 ];
 
-// ── Aqua Lung ───────────────────────────────────────────────────────
-
 export const AQUALUNG_WETSUITS: GearSizingEntry[] = [
   { manufacturer: 'Aqua Lung', gearType: 'wetsuit', size: 'XS', minHeight: 155, maxHeight: 165, minWeight: 50, maxWeight: 60 },
   { manufacturer: 'Aqua Lung', gearType: 'wetsuit', size: 'S',  minHeight: 160, maxHeight: 170, minWeight: 55, maxWeight: 70 },
@@ -72,8 +53,6 @@ export const AQUALUNG_BCDS: GearSizingEntry[] = [
   { manufacturer: 'Aqua Lung', gearType: 'bcd', size: 'XL', minHeight: 188, maxHeight: 195, minWeight: 88, maxWeight: 109 },
 ];
 
-// ── Mares ───────────────────────────────────────────────────────────
-
 export const MARES_WETSUITS: GearSizingEntry[] = [
   { manufacturer: 'Mares', gearType: 'wetsuit', size: 'XS', minHeight: 155, maxHeight: 165, minWeight: 45, maxWeight: 55 },
   { manufacturer: 'Mares', gearType: 'wetsuit', size: 'S',  minHeight: 160, maxHeight: 170, minWeight: 55, maxWeight: 70 },
@@ -90,8 +69,6 @@ export const MARES_BCDS: GearSizingEntry[] = [
   { manufacturer: 'Mares', gearType: 'bcd', size: 'L',  minHeight: 175, maxHeight: 185, minWeight: 80, maxWeight: 100 },
   { manufacturer: 'Mares', gearType: 'bcd', size: 'XL', minHeight: 180, maxHeight: 195, minWeight: 95, maxWeight: 115 },
 ];
-
-// ── Aggregate Exports ───────────────────────────────────────────────
 
 export const ALL_GEAR_SIZING: GearSizingEntry[] = [
   ...SCUBAPRO_WETSUITS,

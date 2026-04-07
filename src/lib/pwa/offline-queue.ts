@@ -1,17 +1,3 @@
-/**
- * Offline mutation queue for PWA.
- *
- * Queues mutations made while offline and replays them in FIFO order
- * when connectivity returns. Failed mutations remain in queue for retry.
- *
- * Persistence: When init() is called, the queue hydrates from IndexedDB
- * and persists every enqueue/dequeue/clear/replay to IndexedDB. If
- * IndexedDB is unavailable, falls back to in-memory only (no error thrown).
- *
- * Replay safety: replay() acquires a Web Lock so only one tab replays
- * at a time, preventing cross-tab double-replay.
- */
-
 export interface QueuedMutation {
   id: string
   functionName: string
@@ -36,10 +22,6 @@ function generateId(): string {
   return `offline-${Date.now()}-${nextId++}`
 }
 
-/**
- * Open (or create) the IndexedDB database.
- * Returns null if IndexedDB is unavailable.
- */
 function openDatabase(): Promise<IDBDatabase | null> {
   if (typeof indexedDB === 'undefined') {
     return Promise.resolve(null)
@@ -69,9 +51,6 @@ function openDatabase(): Promise<IDBDatabase | null> {
   })
 }
 
-/**
- * Read all mutations from the IndexedDB store.
- */
 function readAllFromStore(db: IDBDatabase): Promise<QueuedMutation[]> {
   return new Promise((resolve) => {
     try {
@@ -81,7 +60,6 @@ function readAllFromStore(db: IDBDatabase): Promise<QueuedMutation[]> {
 
       request.onsuccess = () => {
         const items = request.result as QueuedMutation[]
-        // Sort by timestamp to maintain FIFO order
         items.sort((a, b) => a.timestamp - b.timestamp)
         resolve(items)
       }
@@ -95,9 +73,6 @@ function readAllFromStore(db: IDBDatabase): Promise<QueuedMutation[]> {
   })
 }
 
-/**
- * Write a single mutation to IndexedDB.
- */
 function writeToStore(db: IDBDatabase, mutation: QueuedMutation): Promise<void> {
   return new Promise((resolve) => {
     try {
@@ -113,9 +88,6 @@ function writeToStore(db: IDBDatabase, mutation: QueuedMutation): Promise<void> 
   })
 }
 
-/**
- * Delete a mutation from IndexedDB by idempotencyKey.
- */
 function deleteFromStore(db: IDBDatabase, idempotencyKey: string): Promise<void> {
   return new Promise((resolve) => {
     try {
@@ -131,9 +103,6 @@ function deleteFromStore(db: IDBDatabase, idempotencyKey: string): Promise<void>
   })
 }
 
-/**
- * Clear all mutations from IndexedDB.
- */
 function clearStore(db: IDBDatabase): Promise<void> {
   return new Promise((resolve) => {
     try {
@@ -154,11 +123,6 @@ export class OfflineQueue {
   private db: IDBDatabase | null = null
   private replaying = false
 
-  /**
-   * Initialize the queue by opening IndexedDB and hydrating from persisted data.
-   * If IndexedDB is unavailable, the queue operates in memory-only mode.
-   * This method is optional — the queue works without it (in-memory only).
-   */
   async init(): Promise<void> {
     this.db = await openDatabase()
     if (this.db) {
@@ -177,7 +141,6 @@ export class OfflineQueue {
     }
     this.queue.push(mutation)
 
-    // Fire-and-forget persist to IndexedDB
     if (this.db) {
       writeToStore(this.db, mutation)
     }
@@ -186,7 +149,6 @@ export class OfflineQueue {
   dequeue(): QueuedMutation | undefined {
     const mutation = this.queue.shift()
 
-    // Fire-and-forget delete from IndexedDB
     if (this.db && mutation) {
       deleteFromStore(this.db, mutation.idempotencyKey)
     }
@@ -209,10 +171,6 @@ export class OfflineQueue {
     }
   }
 
-  /**
-   * Close the IndexedDB connection. Call this before destroying the instance
-   * if you need to delete the database (e.g., in tests).
-   */
   close(): void {
     if (this.db) {
       this.db.close()
@@ -220,12 +178,6 @@ export class OfflineQueue {
     }
   }
 
-  /**
-   * Replay all queued mutations through the provided executor.
-   * Successful mutations are removed from queue. Failed ones remain for retry.
-   *
-   * Uses Web Locks API when available to prevent cross-tab double-replay.
-   */
   async replay(
     executor: (mutation: QueuedMutation) => Promise<void>
   ): Promise<ReplayResult> {
@@ -256,7 +208,6 @@ export class OfflineQueue {
           await executor(mutation)
           succeeded++
 
-          // Remove from IndexedDB on success
           if (this.db) {
             await deleteFromStore(this.db, mutation.idempotencyKey)
           }
@@ -266,7 +217,6 @@ export class OfflineQueue {
         }
       }
 
-      // Replace queue with only failed items
       this.queue = failedItems
 
       return { succeeded, failed: failedItems.length, errors }

@@ -1,4 +1,3 @@
-/** Canonical source of truth for GasMix. */
 import { v, type Infer } from 'convex/values'
 
 export const GAS_MIXES = ['air', 'nitrox', 'trimix'] as const
@@ -11,7 +10,6 @@ const literals = GAS_MIXES.map((c) => v.literal(c)) as [
 ]
 export const gasMixValidator = v.union(...literals)
 
-// ── Compile-time guard ───────────────────────────────────────────────
 type ValidatorType = Infer<typeof gasMixValidator>
 type _Check = ValidatorType extends GasMix
   ? GasMix extends ValidatorType

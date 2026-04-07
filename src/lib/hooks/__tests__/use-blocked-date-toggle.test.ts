@@ -4,12 +4,6 @@ import { renderHook, act } from '@testing-library/react'
 import type { StakeholderRole } from '../../utils/role'
 import { testDate } from '../../../../tests/helpers/dates'
 
-// testDate(1) produces a stable future ISO date string (today + 1 day).
-// The hook under test only does string membership — no Date object usage —
-// so fake timers are unnecessary.
-
-// ─── Mocks ────────────────────────────────────────────────────────────────────
-
 let mockQueryReturn: string[] | undefined = []
 const mockMutate = vi.fn<(args: { date: string; roleType: StakeholderRole }) => Promise<boolean>>()
 
@@ -22,18 +16,13 @@ vi.mock('convex/react', async () => {
   }
 })
 
-// Import AFTER mocks are registered
 import { useBlockedDateToggle } from '../use-blocked-date-toggle'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function renderToggleHook() {
   return renderHook(() =>
     useBlockedDateToggle({ stakeholderId: 'test-slug', roleType: 'Instructor' }),
   )
 }
-
-// ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('useBlockedDateToggle', () => {
   beforeEach(() => {
@@ -151,7 +140,6 @@ describe('useBlockedDateToggle', () => {
       try {
         await result.current.confirmToggle()
       } catch {
-        // Expected
       }
     })
 

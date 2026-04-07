@@ -1,10 +1,3 @@
-/**
- * Agent profile form section tests.
- *
- * Tests schema validation, payload transformation, and profile-to-form mapping
- * for each of the three independent Agent profile sections.
- */
-
 import { describe, it, expect } from 'vitest'
 import {
   agentContactSchema,
@@ -30,8 +23,6 @@ const VALID_LOCATION = {
   lat: 10.1,
   lng: 99.8,
 }
-
-// ── agentContactSchema ────────────────────────────────────────────────────────
 
 describe('agentContactSchema', () => {
   const valid = {
@@ -72,12 +63,9 @@ describe('agentContactSchema', () => {
   })
 
   it('does not require customerLanguages or associations', () => {
-    // Contact section is isolated — should not care about other sections
     expect(agentContactSchema.safeParse(valid).success).toBe(true)
   })
 })
-
-// ── agentLanguagesSchema ──────────────────────────────────────────────────────
 
 describe('agentLanguagesSchema', () => {
   it('accepts at least one language', () => {
@@ -90,8 +78,6 @@ describe('agentLanguagesSchema', () => {
     expect(agentLanguagesSchema.safeParse(data).success).toBe(false)
   })
 })
-
-// ── agentAssociationsSchema ───────────────────────────────────────────────────
 
 describe('agentAssociationsSchema', () => {
   it('accepts an empty associations array', () => {
@@ -113,8 +99,6 @@ describe('agentAssociationsSchema', () => {
     expect(agentAssociationsSchema.safeParse(data).success).toBe(false)
   })
 })
-
-// ── contactFromProfile ────────────────────────────────────────────────────────
 
 describe('contactFromProfile', () => {
   it('extracts name, location, email, phone, and defaultReferral', () => {
@@ -170,8 +154,6 @@ describe('contactFromProfile', () => {
   })
 })
 
-// ── contactToPayload ──────────────────────────────────────────────────────────
-
 describe('contactToPayload', () => {
   it('produces expected shape with location fields flattened and defaultReferral', () => {
     const form: AgentContactFormState = {
@@ -207,16 +189,12 @@ describe('contactToPayload', () => {
   })
 })
 
-// ── languagesFromProfileAgent ─────────────────────────────────────────────────
-
 describe('languagesFromProfileAgent', () => {
   it('reads customerLanguages from me (user record), not from agent profile', () => {
-    // Agent profile has no customerLanguages — they live on the users table
     const agentProfile = { name: 'Agent', associations: [] }
     const me = { customerLanguages: ['en'] }
     const form = languagesFromProfileAgent(agentProfile, me)
     expect(form.customerLanguages).toHaveLength(1)
-    // 'en' is normalised to canonical locale 'en-GB' by resolveLanguages
     expect(form.customerLanguages[0].code).toBe('en-GB')
   })
 
@@ -226,17 +204,13 @@ describe('languagesFromProfileAgent', () => {
   })
 
   it('does not read customerLanguages from agent profile even if present', () => {
-    // Ensures isolation: agent profile field is ignored in favour of me
     const profileWithLangs = { customerLanguages: ['ja'] }
     const me = { customerLanguages: ['en'] }
     const form = languagesFromProfileAgent(profileWithLangs, me)
-    // Should reflect 'en' from me, not 'ja' from profile
     expect(form.customerLanguages).toHaveLength(1)
     expect(form.customerLanguages[0].code).toBe('en-GB')
   })
 })
-
-// ── languagesToPayloadAgent ───────────────────────────────────────────────────
 
 describe('languagesToPayloadAgent', () => {
   it('returns empty object (nothing to write to agents table)', () => {
@@ -253,8 +227,6 @@ describe('languagesToPayloadAgent', () => {
     expect(payload).not.toHaveProperty('customerLanguages')
   })
 })
-
-// ── associationsFromProfile ───────────────────────────────────────────────────
 
 describe('associationsFromProfile', () => {
   it('maps associations array from profile correctly', () => {
@@ -277,8 +249,6 @@ describe('associationsFromProfile', () => {
     expect(form.associations).toEqual([])
   })
 })
-
-// ── associationsToPayload ─────────────────────────────────────────────────────
 
 describe('associationsToPayload', () => {
   it('sends only associations array', () => {
@@ -304,8 +274,6 @@ describe('associationsToPayload', () => {
     expect(payload).not.toHaveProperty('defaultReferral')
   })
 })
-
-// ── Initial form defaults ─────────────────────────────────────────────────────
 
 describe('INITIAL_CONTACT_FORM', () => {
   it('has empty string defaults and null defaultReferral', () => {

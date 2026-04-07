@@ -6,55 +6,35 @@ interface ConvexErrorData {
   message?: string
 }
 
-/** A translate function matching next-intl's `t()` signature. */
 type TranslateFn = (key: string, values?: Record<string, string>) => string
 
-/**
- * Map known Convex error codes to errors.* i18n keys.
- */
 const CODE_TO_KEY: Record<string, string> = {
-  // Auth
   UNAUTHENTICATED: 'unauthenticated',
   FORBIDDEN: 'forbidden',
-  // Lookup
   NOT_FOUND: 'notFound',
-  // Validation
   VALIDATION: 'validation',
   INVALID_STATUS: 'invalidStatus',
   INVALID_TRANSITION: 'invalidTransition',
   INVALID_INPUT: 'invalidInput',
-  // Booking lifecycle
   BOOKING_CLOSED: 'bookingClosed',
   BLOCKED_DATE: 'blockedDate',
   PAST_DATE: 'pastDate',
   REVERT_WINDOW_EXPIRED: 'revertWindowExpired',
-  // Inventory / reservations
   CONFLICT: 'conflict',
-  // Portal
   TOKEN_EXPIRED: 'tokenExpired',
   FORMS_INCOMPLETE: 'formsIncomplete',
-  // Profile / roles
   PROFILE_INCOMPLETE: 'profileIncomplete',
   RESOURCES_INCOMPLETE: 'resourcesIncomplete',
   DUPLICATE_ROLE: 'duplicateRole',
   LAST_ROLE: 'lastRole',
-  // Rate limiting
   RATE_LIMITED: 'rateLimited',
 }
 
-/**
- * Extract the error code from a ConvexError.
- * Returns undefined if err is not a ConvexError or has no code.
- */
 export function getConvexErrorCode(err: unknown): string | undefined {
   if (!(err instanceof ConvexError)) return undefined
   return (err.data as ConvexErrorData).code
 }
 
-/**
- * i18n-aware error parser. Maps error codes to translated messages.
- * Pass `t` from `useTranslations('errors')`.
- */
 export function parseConvexErrorI18n(
   err: unknown,
   t: TranslateFn,
@@ -73,13 +53,6 @@ export function parseConvexErrorI18n(
   return t(fallbackKey)
 }
 
-// ── Legacy functions (used by usePortalStep + tests) ────────────────────────
-// TODO: Migrate usePortalStep to accept a `t` function, then delete these.
-
-/**
- * Extract a user-facing message from a ConvexError (English only).
- * @deprecated Prefer parseConvexErrorI18n
- */
 export function parseConvexError(
   err: unknown,
   fallback = 'Something went wrong. Try again.',
@@ -89,10 +62,6 @@ export function parseConvexError(
   return data.reason ?? data.code ?? fallback
 }
 
-/**
- * Maps portal-related Convex mutation errors to English copy.
- * @deprecated Prefer parseConvexErrorI18n with useTranslations('errors')
- */
 export function mapPortalMutationError(err: unknown): string {
   const code = getConvexErrorCode(err)
   if (code === 'TOKEN_EXPIRED') return 'This link is no longer valid. Contact your dive center for a new one.'

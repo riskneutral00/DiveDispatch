@@ -17,17 +17,11 @@ import {
   BookingDetailBody,
 } from './booking-detail-shared'
 import { CancelBookingDialog } from './cancel-booking-dialog'
-import { ROLES } from '@/lib/constants/roles'
-
-const OPERATOR_CLERK_ROLES = new Set(
-  ROLES.filter((r) => r.isOrganizer).map((r) => r.clerkRole),
-)
-
+import { ORGANIZER_ROLE_KEYS } from '@/lib/constants/roles'
 
 interface BookingDetailProps {
   bookingId: string
 }
-
 
 export function BookingDetail({ bookingId }: BookingDetailProps) {
   const router = useRouter()
@@ -66,7 +60,7 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
 
   const canEdit = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
   const canCancel = !TERMINAL_STATUSES.has(booking.status as CalendarDisplayStatus)
-  const isOperator = (userRoles ?? []).some((r) => OPERATOR_CLERK_ROLES.has(r.role))
+  const isOperator = (userRoles ?? []).some((r) => ORGANIZER_ROLE_KEYS.has(r.role))
   const canClearMedical = booking.medicalHardBlock && isOperator
 
   return (
@@ -80,7 +74,6 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
           Booking Details
         </h1>
       </div>
-
 
       <Card padding="md">
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -111,7 +104,6 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
               {booking.divers.length} {booking.divers.length === 1 ? 'diver' : 'divers'}
             </p>
           </div>
-
 
           <div className="flex gap-2 flex-wrap">
             {canEdit && (
@@ -148,14 +140,12 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
         </div>
       </Card>
 
-
       <BookingDetailBody
         booking={booking}
         bookingId={bookingId}
         portalLink={portalLink}
         layout="page"
       />
-
 
       <CancelBookingDialog
         open={showCancelDialog}

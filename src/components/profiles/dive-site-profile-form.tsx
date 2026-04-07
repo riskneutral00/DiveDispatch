@@ -20,8 +20,6 @@ import {
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 
-// ── Constants ─────────────────────────────────────────────────────────
-
 const VENUE_TYPE_OPTIONS: SelectOption[] = [
   { id: 'Shore', label: 'Shore' },
   { id: 'Reef', label: 'Reef' },
@@ -31,13 +29,9 @@ const VENUE_TYPE_OPTIONS: SelectOption[] = [
   { id: 'Other', label: 'Other' },
 ]
 
-// ── Types ─────────────────────────────────────────────────────────────
-
 export type DiveSiteProfileSection = 'details' | 'capabilities'
 
 type DiveSiteSectionProps = BaseProfileSectionProps
-
-// ── Details section ───────────────────────────────────────────────────
 
 export type DiveSiteDetailsFormState = {
   name: string
@@ -141,8 +135,6 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
   )
 }
 
-// ── Capabilities section ──────────────────────────────────────────────
-
 export type DiveSiteCapabilitiesFormState = {
   confinedCapable: boolean
   maxDepth: number
@@ -188,14 +180,6 @@ export function DiveSiteCapabilitiesSection(props: DiveSiteSectionProps) {
   )
 }
 
-// ── Compat alias ──────────────────────────────────────────────────────
-
-/**
- * Dispatches to the appropriate section component based on the `section` prop.
- * The app-layer ConnectedDiveSiteForm short-circuits before this is reached
- * at runtime; this export exists so that the lib-layer registry continues to
- * type-check without modification.
- */
 export function DiveSiteProfileForm({
   section,
   profile,
@@ -208,4 +192,3 @@ export function DiveSiteProfileForm({
     return <DiveSiteCapabilitiesSection profile={profile} create={create} update={update} />
   return <DiveSiteDetailsSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
 }
-

@@ -11,8 +11,6 @@ import {
 
 // Reconstruct validation set from ALL_LANGUAGES (the internal VALID_LANGUAGE_CODE_SET is no longer exported)
 const VALID_LANGUAGE_CODE_SET = new Set(ALL_LANGUAGES.map((l: { code: string }) => l.code))
-import { LANGUAGE_FILTER, INSTRUCTOR_FILTERS, ROLE_FILTERS } from '../../src/lib/constants/resource-filters'
-import { DIVE_AGENCIES, DIVE_AGENCIES_EXTENDED } from '../../src/lib/constants/agencies'
 import { SUPPORTED_LOCALES } from '../../src/lib/constants/locales'
 
 // ── ALL_LANGUAGES structural invariants ─────────────────────────────────────
@@ -101,64 +99,6 @@ describe('CHINESE_SCRIPT_LABELS', () => {
   })
 })
 
-// ── LANGUAGE_FILTER ↔ dive-languages alignment ──────────────────────────────
-
-describe('LANGUAGE_FILTER structure', () => {
-  it('all option values are non-empty uppercase country codes or "all"', () => {
-    for (const opt of LANGUAGE_FILTER.options) {
-      if (opt.value === 'all') continue
-      expect(opt.value).toMatch(/^[A-Z]{2}$/)
-    }
-  })
-
-  it('no duplicate option values', () => {
-    const values = LANGUAGE_FILTER.options.map((o) => o.value)
-    expect(new Set(values).size).toBe(values.length)
-  })
-
-  it('filter is marked as multiSelect', () => {
-    expect(LANGUAGE_FILTER.multiSelect).toBe(true)
-  })
-
-  it('most filter country codes resolve via languageToCode (backward compat)', () => {
-    const resolvable = LANGUAGE_FILTER.options
-      .filter((o) => o.value !== 'all')
-      .filter((o) => languageToCode(o.value).length > 0)
-    // At least 80% of filter values should resolve
-    const total = LANGUAGE_FILTER.options.length - 1
-    expect(resolvable.length).toBeGreaterThanOrEqual(Math.floor(total * 0.8))
-  })
-})
-
-// ── INSTRUCTOR_FILTERS agency options ↔ DIVE_AGENCIES ───────────────────────
-
-describe('INSTRUCTOR_FILTERS ↔ DIVE_AGENCIES', () => {
-  const agencyFilter = INSTRUCTOR_FILTERS.find((f) => f.id === 'agency')!
-
-  it('agency filter exists', () => {
-    expect(agencyFilter).toBeDefined()
-  })
-
-  it('all agency filter values (except "all") are in DIVE_AGENCIES_EXTENDED', () => {
-    for (const opt of agencyFilter.options) {
-      if (opt.value === 'all') continue
-      expect(
-        DIVE_AGENCIES_EXTENDED.includes(opt.value as typeof DIVE_AGENCIES_EXTENDED[number]),
-        `Agency filter value "${opt.value}" not in DIVE_AGENCIES_EXTENDED`,
-      ).toBe(true)
-    }
-  })
-
-  it('core DIVE_AGENCIES are all present as filter options', () => {
-    const filterValues = new Set(agencyFilter.options.map((o) => o.value))
-    for (const agency of DIVE_AGENCIES) {
-      expect(filterValues.has(agency), `${agency} missing from agency filter options`).toBe(true)
-    }
-  })
-})
-
-// ── SUPPORTED_LOCALES ↔ dive-languages ──────────────────────────────────────
-
 describe('SUPPORTED_LOCALES ↔ dive-languages', () => {
   it('every SUPPORTED_LOCALE has a matching language code', () => {
     for (const locale of SUPPORTED_LOCALES) {
@@ -168,37 +108,3 @@ describe('SUPPORTED_LOCALES ↔ dive-languages', () => {
   })
 })
 
-// ── ROLE_FILTERS completeness ───────────────────────────────────────────────
-
-describe('ROLE_FILTERS completeness', () => {
-  it('every role filter array contains only valid FilterDef objects', () => {
-    for (const [role, filters] of Object.entries(ROLE_FILTERS)) {
-      expect(Array.isArray(filters), `${role} filters is not an array`).toBe(true)
-      for (const filter of filters) {
-        expect(filter.id.length, `${role} has a filter with empty id`).toBeGreaterThan(0)
-        expect(filter.label.length, `${role} has a filter with empty label`).toBeGreaterThan(0)
-        expect(filter.options.length, `${role} filter "${filter.id}" has no options`).toBeGreaterThan(0)
-      }
-    }
-  })
-
-  it('filter option values are non-empty strings', () => {
-    for (const [role, filters] of Object.entries(ROLE_FILTERS)) {
-      for (const filter of filters) {
-        for (const opt of filter.options) {
-          expect(opt.value.length, `${role}/${filter.id} has option with empty value`).toBeGreaterThan(0)
-          expect(opt.label.length, `${role}/${filter.id} has option with empty label`).toBeGreaterThan(0)
-        }
-      }
-    }
-  })
-
-  it('no duplicate option values within any filter', () => {
-    for (const [role, filters] of Object.entries(ROLE_FILTERS)) {
-      for (const filter of filters) {
-        const values = filter.options.map((o) => o.value)
-        expect(new Set(values).size, `${role}/${filter.id} has duplicate option values`).toBe(values.length)
-      }
-    }
-  })
-})

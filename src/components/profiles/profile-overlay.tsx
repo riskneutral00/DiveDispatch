@@ -16,7 +16,6 @@ import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { ConnectedEquipmentInventory } from '@/components/inventory/connected-equipment-inventory'
 import { PreferencesEditor } from '@/components/account/preferences-editor'
 
-
 export type ProfileOverlayTab = 'profile' | 'roles' | `role:${RoleKey}`
 
 interface ProfileOverlayProps {
@@ -31,7 +30,6 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'profile', labelKey: 'profile' },
   { id: 'roles', labelKey: 'roles' },
 ]
-
 
 export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug, slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
@@ -115,7 +113,6 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
             )
           })}
 
-
           {roleConfigs.length > 0 && (
             <>
               <div
@@ -147,7 +144,6 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
             </>
           )}
         </div>
-
 
         <div
           className="flex-1 overflow-y-auto"

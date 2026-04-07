@@ -31,7 +31,6 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
     throw new ConvexError({ code: ErrorCode.FORBIDDEN, reason: 'Can only switch to seed users' })
   }
 
-  // Compute default role from userRoles + precedence
   const targetRoles = await ctx.db
     .query('userRoles')
     .withIndex('by_userId', (q) => q.eq('userId', target._id))
@@ -41,17 +40,14 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
   }
   const defaultRole = deriveDefaultRole(targetRoles.map((r) => r.role))
 
-  // No-op if already this user
   if (currentHolder && currentHolder._id === target._id) {
     return { slug: target.slug, role: defaultRole, name: target.name }
   }
 
-  // Return departed user's token to a stable seed placeholder
   if (currentHolder) {
     await ctx.db.patch(currentHolder._id, { tokenIdentifier: `seed|${currentHolder.slug}` })
   }
 
-  // Assign real Clerk token to target
   await ctx.db.patch(target._id, { tokenIdentifier: realToken })
 
   return { slug: target.slug, role: defaultRole, name: target.name }

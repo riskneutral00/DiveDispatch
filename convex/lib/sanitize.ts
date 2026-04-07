@@ -1,37 +1,11 @@
-/**
- * Input sanitization layer for user-provided strings.
- *
- * Scope: data hygiene only — trim whitespace, NFC unicode normalization,
- * strip zero-width characters and null bytes, cap string lengths.
- *
- * Does NOT strip HTML/XSS (React's JSX escaping handles output encoding).
- */
-
-/**
- * Characters to strip: null bytes, soft hyphens, invisible formatters, direction overrides.
- *
- * Deliberately EXCLUDED (safe/required characters):
- * - U+200C (ZWNJ) — required for Farsi, Persian, and Indic scripts
- * - U+200D (ZWJ)  — required for compound emoji (e.g. 👨‍👩‍👧‍👦)
- * - U+FE00–U+FE0F (Variation Selectors) — control emoji presentation (❤️ vs ❤)
- */
 const STRIP_RE =
   /[\u0000\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u206F\uFEFF\uFFF0-\uFFF8\uFFF9-\uFFFB]/g
 
-/**
- * Sanitize a single string value:
- * 1. NFC normalize (compose accented characters)
- * 2. Strip zero-width / invisible control characters
- * 3. Trim leading/trailing whitespace
- * 4. Truncate to maxLength (if provided)
- */
 export function sanitizeString(input: string, maxLength?: number): string {
   let s = input.normalize('NFC')
   s = s.replace(STRIP_RE, '')
   s = s.trim()
   if (maxLength !== undefined && s.length > maxLength) {
-    // Grapheme-safe truncation: Array.from splits on codepoints, avoiding
-    // broken surrogate pairs from naive .slice() on astral characters.
     const chars = Array.from(s)
     if (chars.length > maxLength) {
       s = chars.slice(0, maxLength).join('')
@@ -40,18 +14,8 @@ export function sanitizeString(input: string, maxLength?: number): string {
   return s
 }
 
-/**
- * Field configuration for sanitizeFields. Maps field names to their max lengths.
- */
 export type FieldConfig = Record<string, number>
 
-/**
- * Sanitize all string fields in an object according to the provided config.
- * Non-string fields and fields not in the config are passed through unchanged.
- * Fields present in the config but not in the object are skipped.
- *
- * Returns a new object (does not mutate the input).
- */
 export function sanitizeFields<T extends Record<string, unknown>>(
   obj: T,
   fieldConfigs: FieldConfig,
@@ -68,23 +32,13 @@ export function sanitizeFields<T extends Record<string, unknown>>(
   return result
 }
 
-// ── Standard field-length presets ──────────────────────────────────────────────
-
-/** Names: business, first, last, emergency contact */
 export const NAME_MAX = 200
-/** Email addresses (RFC 5321) */
 export const EMAIL_MAX = 254
-/** Phone numbers */
 export const PHONE_MAX = 30
-/** Short text: nationality, passport, nickname, subject, category */
 export const SHORT_TEXT_MAX = 100
-/** Long text: allergies, notes */
 export const LONG_TEXT_MAX = 2000
 export const CONFIG_JSON_MAX = 10_000
-/** Support messages */
 export const SUPPORT_MESSAGE_MAX = 5000
-
-// ── Pre-built field configs for common mutation shapes ─────────────────────────
 
 export const USER_FIELDS: FieldConfig = {
   businessName: NAME_MAX,
@@ -173,16 +127,8 @@ export const PORTAL_CONTACT_FIELDS: FieldConfig = {
   allergies: LONG_TEXT_MAX,
 }
 
-/** Max length for medical answer string values (detail/notes fields). */
 export const MEDICAL_ANSWER_MAX = LONG_TEXT_MAX
 
-/**
- * Sanitize a passport number:
- * 1. NFC normalize + strip invisible chars (via sanitizeString)
- * 2. Strip everything except A-Z, 0-9, and hyphen
- * 3. Uppercase
- * 4. Truncate to 20 characters
- */
 export function sanitizePassport(input: string): string {
   let s = sanitizeString(input)
   s = s.toUpperCase()
@@ -193,12 +139,6 @@ export function sanitizePassport(input: string): string {
   return s
 }
 
-/**
- * Sanitize medical questionnaire answers:
- * - Boolean values pass through untouched
- * - String values get sanitizeString() with MEDICAL_ANSWER_MAX length cap
- * Returns a new object (does not mutate).
- */
 export function sanitizeMedicalAnswers(
   answers: Record<string, boolean | string>,
 ): Record<string, boolean | string> {
@@ -213,5 +153,4 @@ export function sanitizeMedicalAnswers(
   return result
 }
 
-/** Draft state is a JSON blob — cap at a generous limit */
 export const DRAFT_STATE_MAX = 50_000

@@ -5,10 +5,6 @@ interface CustomerWithLanguages {
   flags?: Language[]
 }
 
-/**
- * Returns the intersection of all customers' language codes.
- * Ignores customers who do not have any languages specified.
- */
 export function getSharedLanguages(customers: CustomerWithLanguages[]): Language[] {
   const validCustomers = customers.filter((c) => c.flags && c.flags.length > 0)
   
@@ -23,10 +19,6 @@ export function getSharedLanguages(customers: CustomerWithLanguages[]): Language
   )
 }
 
-/**
- * Returns true if 2+ customers share no common language.
- * Only evaluates customers that have at least one language set.
- */
 export function hasLanguageConflict(customers: CustomerWithLanguages[]): boolean {
   const validCustomerCount = customers.filter((c) => c.flags && c.flags.length > 0).length
   
@@ -37,14 +29,6 @@ export function hasLanguageConflict(customers: CustomerWithLanguages[]): boolean
 
 export type MatchTier = 'full' | 'partial' | 'none'
 
-/**
- * Score how well an instructor's languages cover the customer language requirements.
- * - full: instructor covers ALL customer languages
- * - partial: instructor covers some but not all
- * - none: zero overlap (or either side is empty)
- *
- * Both sides are normalized via languageToCode() to handle name/ISO-639/locale mismatches.
- */
 export function scoreLanguageMatch(
   instructorLanguages: string[],
   customerLanguageCodes: string[],

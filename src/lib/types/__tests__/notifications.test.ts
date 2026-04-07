@@ -25,7 +25,6 @@ describe('NotificationDoc type location', () => {
       createdAt: 2000,
       readAt: 3000,
     }
-    // Assign to canonical type — proves structural compatibility
     const canonical: NotificationDocFromLib = doc
     expect(canonical._id).toBe('n-2')
     expect(canonical.readAt).toBe(3000)

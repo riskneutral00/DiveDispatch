@@ -48,7 +48,6 @@ describe('groupRolesByHierarchy', () => {
       'Instructor',
       'Boat',
     ] as ClerkRole[])
-    // No operator to group under — each resource is independent
     expect(groups).toHaveLength(2)
   })
 

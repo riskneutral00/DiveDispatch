@@ -1,6 +1,3 @@
-// Pure TS utility — no Convex, no React.
-// Matches customer body measurements to gear sizes from the EM's gearSizingLookup entries.
-
 import type { GearType } from '@/lib/constants/gear-sizing'
 export type { GearType } from '@/lib/constants/gear-sizing'
 
@@ -28,15 +25,6 @@ export type GearSuggestion =
   | { status: 'no_match' }
   | { status: 'no_data' } // mask/regulator, or missing measurements
 
-/**
- * Suggests gear sizes for each gear type a diver is renting.
- * Queries the EM's gearSizingLookup entries (filtered by manufacturer preference).
- *
- * Returns a record of gearType → GearSuggestion for each item in `rentingTypes`.
- * - 'match': suggested manufacturer + size
- * - 'no_match': measurements fall outside all known ranges → flag for manual sizing
- * - 'no_data': mask/regulator (no size chart), or measurements not yet submitted
- */
 export function suggestGearSizes(
   measurements: DiverMeasurements,
   sizingEntries: SizingEntry[],
@@ -61,7 +49,6 @@ function suggestForGearType(
   gearType: string,
   preferredManufacturers?: string[],
 ): GearSuggestion {
-  // mask and regulator: no size matching available
   if (gearType === 'mask' || gearType === 'regulator') {
     return { status: 'no_data' }
   }
@@ -84,11 +71,9 @@ function suggestFinSize(
   if (measurements.shoeSize == null) return { status: 'no_data' }
   const euSize = normalizeToEU(measurements.shoeSize, measurements.shoeSizeUnit ?? 'EU')
 
-  // Exact shoeSize field match first
   const exact = entries.find((e) => e.shoeSize != null && e.shoeSize === euSize)
   if (exact) return { status: 'match', manufacturer: exact.manufacturer, size: exact.size }
 
-  // Range-based: minHeight/maxHeight repurposed as shoe-size range for fin records
   const rangeMatch = entries.find(
     (e) => e.shoeSize == null && euSize >= e.minHeight && euSize <= e.maxHeight,
   )
@@ -112,7 +97,6 @@ function suggestByHeightWeight(
   )
   if (matches.length === 0) return { status: 'no_match' }
 
-  // Prefer narrowest height range to resolve overlapping bands
   const best = matches.reduce((prev, curr) =>
     curr.maxHeight - curr.minHeight < prev.maxHeight - prev.minHeight ? curr : prev,
   )

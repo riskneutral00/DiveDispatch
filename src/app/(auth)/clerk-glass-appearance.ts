@@ -1,8 +1,3 @@
-// Shared Clerk appearance config — glass-integrates native Clerk components.
-// Uses static Ocean dark palette values (auth pages are always dark).
-// If skin switching is added to auth later, refactor to useClerkGlassAppearance() hook.
-
-// Clerk v7 declares Appearance as `any` internally but doesn't export it.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Appearance = Record<string, any>
 
@@ -15,8 +10,6 @@ const RADIUS = '16px'      // card / container radius
 const RADIUS_SM = '10px'   // component radius (buttons, inputs, badges)
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
 
-// Glass values — slightly stronger than base glass-bg to create separation
-// from the parent .glass-elevated container (which uses 0.08)
 const INPUT_BG = 'rgba(255, 255, 255, 0.10)'
 const INPUT_BORDER = 'rgba(255, 255, 255, 0.25)'
 const SOCIAL_BG = 'rgba(255, 255, 255, 0.08)'
@@ -52,7 +45,6 @@ export const clerkGlassAppearance: Appearance = {
     fontSize: '14px',
   },
   elements: {
-    // Card — transparent (glass container is the parent)
     card: {
       background: 'transparent',
       boxShadow: 'none',
@@ -64,7 +56,6 @@ export const clerkGlassAppearance: Appearance = {
       boxShadow: 'none',
     },
 
-    // Header
     headerTitle: {
       color: TEXT_PRIMARY,
       fontFamily: FONT,
@@ -74,22 +65,18 @@ export const clerkGlassAppearance: Appearance = {
       color: TEXT_SECONDARY,
     },
 
-    // Form labels
     formFieldLabel: {
       color: TEXT_SECONDARY,
       fontSize: '14px',
       fontWeight: '500',
     },
 
-    // Input fields — glass material with visible separation from container
     formFieldInput: glassInput,
 
-    // Password toggle
     formFieldInputShowPasswordButton: {
       color: TEXT_PRIMARY,
     },
 
-    // Primary button — uses component radius (10px)
     formButtonPrimary: {
       background: PRIMARY,
       color: '#ffffff',
@@ -101,7 +88,6 @@ export const clerkGlassAppearance: Appearance = {
       transition: 'all 0.3s ease',
     },
 
-    // Social / OAuth buttons — glass treatment with blur + depth
     socialButtonsIconButton: {
       background: SOCIAL_BG,
       backdropFilter: 'blur(12px)',
@@ -126,7 +112,6 @@ export const clerkGlassAppearance: Appearance = {
       fontWeight: '500',
     },
 
-    // Divider ("or") — subtle, doesn't compete with input borders
     dividerLine: {
       background: DIVIDER,
     },
@@ -135,7 +120,6 @@ export const clerkGlassAppearance: Appearance = {
       fontSize: '12px',
     },
 
-    // Footer ("Already have an account? Sign in")
     footerAction: {
       paddingTop: '16px',
     },
@@ -147,7 +131,6 @@ export const clerkGlassAppearance: Appearance = {
       color: TEXT_SECONDARY,
     },
 
-    // Identity preview (email shown during verify step)
     identityPreview: {
       background: INPUT_BG,
       border: `1px solid ${INPUT_BORDER}`,
@@ -160,7 +143,6 @@ export const clerkGlassAppearance: Appearance = {
       color: PRIMARY,
     },
 
-    // Error alerts
     alert: {
       background: 'rgba(220, 38, 38, 0.1)',
       border: '1px solid rgba(220, 38, 38, 0.3)',
@@ -170,10 +152,8 @@ export const clerkGlassAppearance: Appearance = {
       color: DESTRUCTIVE,
     },
 
-    // OTP / verification code inputs
     otpCodeFieldInput: glassInput,
 
-    // Dev mode badge
     badge: {
       background: SOCIAL_BG,
       border: `1px solid ${SOCIAL_BORDER}`,
@@ -181,7 +161,6 @@ export const clerkGlassAppearance: Appearance = {
       borderRadius: '999px',
     },
 
-    // "Secured by Clerk" footer
     footerPagesLink: {
       color: TEXT_MUTED,
     },

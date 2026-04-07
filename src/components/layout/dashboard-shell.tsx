@@ -36,13 +36,11 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   const myRoles = useQuery(api.userRoles.myRoles)
   const router = useRouter()
 
-  // Compute the active hierarchy tree's roles for filtering HierarchySubBar
   const activeTreeFilter = useMemo(() => {
     if (!myRoles) return undefined
     const clerkRoles = myRoles.map((r) => r.role as ClerkRole)
     if (!hasMultipleHierarchies(clerkRoles)) return undefined
     const trees = groupRolesByHierarchy(clerkRoles)
-    // Find the tree containing the current roleSlug
     const activeTree = trees.find((tree) =>
       tree.some((r) => {
         const cfg = ROLE_BY_CLERK_ROLE[r]
@@ -52,7 +50,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
     return activeTree ? new Set(activeTree as string[]) : undefined
   }, [myRoles, roleSlug])
 
-  // ── Profile overlay state ──────────────────────────────────────────────────
   const [overlayOpen, setOverlayOpen] = useState(false)
   const [overlayTab, setOverlayTab] = useState<ProfileOverlayTab>('profile')
 
@@ -76,7 +73,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
       router.replace(`/${user.slug}/${roleSlug}/dashboard`)
       return
     }
-    // Guard: redirect if user does not hold the requested role
     const holdsRole = myRoles.some((r) => r.role === clerkRole)
     if (!holdsRole) {
       const heldRoles = myRoles.map((r) => r.role)
@@ -98,7 +94,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
 
   return (
     <>
-      {/* Desktop top bar — right-aligned icon group, hidden on mobile */}
       <header
         className="hidden md:flex items-center justify-end gap-2 px-4 py-2 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
@@ -119,7 +114,6 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         />
       </header>
 
-      {/* Mobile: sticky top header — visible on mobile only */}
       <MobileTopNav
         roleSlug={roleSlug}
         slug={slug}
@@ -127,10 +121,8 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         profileCompletion={profileCompletion}
       />
 
-      {/* Cross-hierarchy role switcher — only visible for multi-tree users */}
       <RoleSwitcher slug={slug} roleSlug={roleSlug} />
 
-      {/* Within-hierarchy role pills (scoped to active tree when role switcher is visible) */}
       <HierarchySubBar
         slug={slug}
         roleSlug={roleSlug}
@@ -138,13 +130,10 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         businessName={activeTreeFilter ? undefined : (user.businessName ?? undefined)}
       />
 
-      {/* Page content — pb-20 on mobile clears the fixed bottom nav */}
       <main className="dashboard-enter flex-1 pt-1 px-4 pb-20 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8 md:pb-8">{children}</main>
 
-      {/* Mobile: fixed bottom nav (thumb-zone navigation) */}
       <MobileBottomNav roleSlug={roleSlug} slug={slug} />
 
-      {/* Unified profile/preferences/account overlay */}
       <ProfileOverlay
         open={overlayOpen}
         onClose={closeProfileOverlay}

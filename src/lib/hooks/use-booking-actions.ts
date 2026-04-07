@@ -7,29 +7,22 @@ import type { Id } from '@/lib/convex-generated'
 import type { CalendarBooking } from '../../../convex/bookings'
 import { parseConvexError } from '@/lib/utils/convex-error'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 interface UseBookingActionsReturn {
-  // Detail dialog
   detailBooking: CalendarBooking | null
   detailError: string | null
   setDetailBooking: (booking: CalendarBooking | null) => void
   handleBookingClick: (id: string, bookings: CalendarBooking[]) => void
   clearDetail: () => void
 
-  // Accept / decline (resource role)
   isAccepting: boolean
   isDeclining: boolean
   handleDetailAccept: (bookingId: string) => Promise<void>
   handleDetailDecline: (bookingId: string) => Promise<void>
 
-  // Urgent cancel (operator role)
   urgentCancelId: string | null
   setUrgentCancelId: (id: string | null) => void
   handleUrgentCancel: (bookingId: string, isOperator: boolean) => void
 }
-
-// ── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useBookingActions(): UseBookingActionsReturn {
   const [detailBooking, setDetailBooking] = useState<CalendarBooking | null>(null)
@@ -58,7 +51,6 @@ export function useBookingActions(): UseBookingActionsReturn {
     setIsAccepting(true)
     setDetailError(null)
 
-    // Optimistically update reservation status
     const previousBooking = detailBooking
     if (detailBooking) {
       setDetailBooking({ ...detailBooking, reservationStatus: 'Confirmed' })
@@ -70,7 +62,6 @@ export function useBookingActions(): UseBookingActionsReturn {
     } catch (err) {
       const message = parseConvexError(err, 'Failed to accept booking')
       setDetailError(message)
-      // Revert optimistic update
       if (previousBooking) {
         setDetailBooking(previousBooking)
       }
@@ -83,7 +74,6 @@ export function useBookingActions(): UseBookingActionsReturn {
     setIsDeclining(true)
     setDetailError(null)
 
-    // Optimistically update reservation status
     const previousBooking = detailBooking
     if (detailBooking) {
       setDetailBooking({ ...detailBooking, reservationStatus: 'Vacated' })
@@ -95,7 +85,6 @@ export function useBookingActions(): UseBookingActionsReturn {
     } catch (err) {
       const message = parseConvexError(err, 'Failed to decline booking')
       setDetailError(message)
-      // Revert optimistic update
       if (previousBooking) {
         setDetailBooking(previousBooking)
       }

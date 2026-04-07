@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Portal token layout — no dashboard shell, no nav, no auth.
-// Customers arrive here via tokenized link. Mobile-first.
 export default function PortalTokenLayout({
   children,
 }: {

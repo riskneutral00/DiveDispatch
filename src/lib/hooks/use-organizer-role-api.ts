@@ -1,11 +1,6 @@
 import { api } from '@/lib/convex-generated'
 import type { ClerkRole } from '@/lib/constants/roles'
 
-/**
- * Resolves Convex API refs (mine/update/create) for organizer roles.
- * Returns null for roles without a dedicated Convex module yet
- * (Liveaboard, DiveResort, DiveHostel will be added as they ship).
- */
 export function useOrganizerRoleApi(role: ClerkRole) {
   switch (role) {
     case 'DiveCenter':

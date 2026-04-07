@@ -43,17 +43,10 @@ import type {
   UserId,
 } from './types'
 
-/**
- * Compile-time type assertions: if any type resolves to `never`,
- * the conditional type below produces `true` instead of `false`
- * and the `satisfies false` constraint fails at compile time.
- */
 type IsNever<T> = [T] extends [never] ? true : false
 
 describe('convex/lib/types — Doc exports', () => {
   it('all document types are not never (compile-time check)', () => {
-    // These lines exist purely for the TypeScript compiler.
-    // If any type is `never`, `satisfies false` will fail at compile time.
     false satisfies IsNever<UserDoc>
     false satisfies IsNever<ThemeDoc>
     false satisfies IsNever<BookingResourceDoc>
@@ -90,7 +83,6 @@ describe('convex/lib/types — Doc exports', () => {
     false satisfies IsNever<CronRunLogDoc>
     false satisfies IsNever<BookingAuditLogDoc>
 
-    // Runtime assertion so the test actually passes
     expect(true).toBe(true)
   })
 

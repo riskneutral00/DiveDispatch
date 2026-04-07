@@ -5,20 +5,6 @@ import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS } from './shared/statuses'
 import { batchPatch } from './lib/batch'
 
-// ─── Pure helpers (exported for unit testing + cross-module use) ──────────────
-
-/**
- * Assigns the lowest-bag-numbered available bags to the booking.
- * Picks exactly `diverCount` bags — one per diver.
- *
- * Throws `ConvexError({ code: ErrorCode.CONFLICT, reason: 'Insufficient equipment bags' })`
- * if fewer than `diverCount` bags are available.
- *
- * Must be called from within a mutation so the patch writes are part of the
- * same atomic Convex transaction as the reservation and snapshot writes.
- * (Invariant #3: "All AvailabilitySnapshot updates occur in the same Convex
- * mutation as the Reservation write.")
- */
 export async function assignBagsForBooking(
   ctx: MutationCtx,
   bookingId: string,
@@ -50,15 +36,6 @@ export async function assignBagsForBooking(
   }] as const))
 }
 
-/**
- * Releases all bags currently assigned to the given booking.
- * Sets status back to 'Returned' so they become available for future bookings.
- *
- * Called from `releaseBookingReservations` on booking cancellation, stakeholder
- * decline, hold expiry, or operator edit. Only releases bags in 'Assigned'
- * status — 'InUse' bags (physically picked up) are not touched here to avoid
- * data loss in mid-use scenarios; those are handled by the EM manually.
- */
 export async function releaseBagsForBooking(
   ctx: MutationCtx,
   bookingId: string,

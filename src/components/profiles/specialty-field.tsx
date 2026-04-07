@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
 import { AGENCIES, AOW_REQUIRED_SPECIALTY_COUNT, getMandatorySpecialties, type AgencySpecialty } from '@/lib/constants/agencies'
 
-/* ── Display-layer reorder (presentation only — agencies.ts untouched) ────── */
-
 const PADI_DISPLAY_ORDER = [
   'PPB', 'Night', 'Drift', 'Wreck',
   'Fish ID', 'Boat', 'Dry Suit', 'Photo/Video', 'S&R', 'Enriched Air',
@@ -24,8 +22,6 @@ function reorderToggleable(specs: AgencySpecialty[], agencyCode: string, mandato
   })
 }
 
-/* ── Two-row overflow hook ────────────────────────────────────────────────── */
-
 const PILL_GAP = 8 // gap-2 = 8px
 const MORE_BTN_WIDTH = 58 // "More…" button measured width
 
@@ -33,7 +29,6 @@ interface OverflowResult {
   containerRef: React.RefObject<HTMLDivElement | null>
   registerPill: (idx: number, el: HTMLElement | null) => void
   registerMandatory: (idx: number, el: HTMLElement | null) => void
-  /** First toggleable index that doesn't fit in 2 rows */
   overflowStart: number
   measured: boolean
 }
@@ -62,7 +57,6 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
     const containerWidth = container.offsetWidth
     if (containerWidth === 0) return
 
-    // Measure mandatory pills total width
     let mandatoryWidth = 0
     for (let i = 0; i < mandatoryCount; i++) {
       const el = mandatoryEls.current.get(i)
@@ -70,7 +64,6 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
       mandatoryWidth += (mandatoryWidth === 0 ? 0 : PILL_GAP) + el.offsetWidth
     }
 
-    // Row 1: fill with toggleable pills
     let rowUsed = 0
     let r1 = 0
     for (let i = 0; i < toggleableCount; i++) {
@@ -82,7 +75,6 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
       r1++
     }
 
-    // Row 2: fill remaining toggleable pills alongside mandatory + More button
     const remaining = toggleableCount - r1
     let r2 = 0
 
@@ -101,7 +93,6 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
         r2++
       }
 
-      // If all remaining fit, no More button needed — reclaim that space
       if (r2 === remaining) {
         const reservedNoMore = mandatoryWidth
         let checkUsed = 0
@@ -142,8 +133,6 @@ function useTwoRowOverflow(toggleableCount: number, mandatoryCount: number): Ove
 
   return { containerRef, registerPill, registerMandatory, overflowStart, measured }
 }
-
-/* ── SpecialtyField ───────────────────────────────────────────────────────── */
 
 interface SpecialtyFieldProps {
   agencyCode: string
@@ -189,7 +178,6 @@ export function SpecialtyField({
         <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
       </p>
 
-      {/* Hidden measurement layer — always in DOM, never conditional */}
       <div
         ref={containerRef}
         aria-hidden
@@ -258,8 +246,6 @@ export function SpecialtyField({
   )
 }
 
-/* ── SpecialtyPill (toggleable) ───────────────────────────────────────────── */
-
 interface SpecialtyPillProps {
   label: string
   checked: boolean
@@ -291,8 +277,6 @@ function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProp
     </label>
   )
 }
-
-/* ── MandatoryPill (non-clickable, disabled appearance) ───────────────────── */
 
 function MandatoryPill({ label }: { label: string }) {
   return (

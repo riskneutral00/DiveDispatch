@@ -6,13 +6,6 @@ import type { FunctionReference, FunctionArgs, FunctionReturnType } from 'convex
 
 const TIMEOUT_MS = 8000
 
-/**
- * Wrapper around Convex useQuery that distinguishes "still loading" from
- * "something went wrong" (server error, missing user row, etc.).
- *
- * Convex useQuery returns undefined both while loading AND on server errors,
- * so we use a timeout: if authenticated + undefined persists > 8s → isError.
- */
 export function useStableQuery<Q extends FunctionReference<'query'>>(
   query: Q,
   args: FunctionArgs<Q> | 'skip',
@@ -28,7 +21,6 @@ export function useStableQuery<Q extends FunctionReference<'query'>>(
 
   useEffect(() => {
     if (result !== undefined || args === 'skip') {
-      // Data arrived or query skipped — clear any pending timer
       setIsError(false)
       if (timerRef.current) {
         clearTimeout(timerRef.current)

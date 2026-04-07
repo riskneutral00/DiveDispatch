@@ -5,7 +5,6 @@ interface ActionLinkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   children: React.ReactNode;
 }
 
-/** Hyperlink-style action button. Use for low-hierarchy toggles and inline switches. */
 export function ActionLink({ children, className = "", ...props }: ActionLinkProps) {
   return (
     <button

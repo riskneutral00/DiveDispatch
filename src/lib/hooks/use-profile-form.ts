@@ -11,8 +11,7 @@ import {
 } from '@/lib/profile-form/save-feedback'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { isDirtyComparedToSnapshot } from '@/lib/utils/form-baseline'
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import { zodIssuesToFieldErrors } from '@/lib/validation/zod-helpers'
 
 type ProfileRecord = Record<string, unknown>
 
@@ -20,64 +19,36 @@ export interface UseProfileFormOptions<
   TForm extends Record<string, unknown>,
   TPayload = Record<string, unknown>,
 > {
-  /** Convex query result — undefined while loading, null if no profile exists */
   profile: ProfileRecord | null | undefined
-  /** Optional user record for pre-filling defaults on first create */
   me?: { businessName?: string; email?: string; phone?: string; customerLanguages?: string[]; defaultLocation?: string } | null | undefined
-  /** Zod schema for validation */
   schema: z.ZodType<unknown>
-  /** Default form values */
   defaults: TForm
-  /** Map profile data → form state (called once when profile loads) */
   fromProfile: (profile: ProfileRecord, me?: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>) => TForm
-  /** Map form state → mutation payload (called on submit) */
   toPayload: (form: TForm) => TPayload
-  /** Create mutation */
   create: (payload: TPayload) => Promise<unknown>
-  /** Update mutation */
   update: (payload: TPayload) => Promise<unknown>
-  /** Called after successful save */
   onSaved?: () => void
-  /** Optional: pre-fill from `me` when no profile exists */
   fromMe?: (me: NonNullable<UseProfileFormOptions<TForm, TPayload>['me']>, defaults: TForm) => TForm
-  /** When true, wait for `me` to be defined (not loading) before initializing the form. */
   waitForMeBeforeInit?: boolean
-  /** Runs after create/update succeeds (e.g. sync `users.customerLanguages`) */
   afterSuccessfulSave?: (form: TForm) => Promise<void>
 }
 
 export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
-  /** Current form values */
   form: TForm
-  /** Set entire form */
   setForm: React.Dispatch<React.SetStateAction<TForm>>
-  /** Set a single field (clears its error) */
   setField: <K extends keyof TForm>(key: K, value: TForm[K]) => void
-  /** Per-field validation errors */
   errors: Record<string, string>
-  /** Server-side error message */
   serverError: string | null
-  /** Combined server + schema-level footer errors (`_form`, root path) for ProfileFormShell */
   footerErrorMessage: string | null
-  /** Whether a save is in progress */
   saving: boolean
-  /** Whether the last save succeeded */
   saved: boolean
-  /** Whether the form has unsaved changes relative to the loaded state */
   isDirty: boolean
-  /** Whether all required fields pass schema validation */
   isValid: boolean
-  /** Whether the profile is still loading from Convex */
   loading: boolean
-  /** Whether an existing profile was found */
   isUpdate: boolean
-  /** Form submit handler — pass to <form onSubmit> */
   handleSubmit: (e: React.FormEvent) => Promise<void>
-  /** Call after a successful save outside handleSubmit (e.g. per-section upsert) so isDirty resets. */
   markBaselineCurrent: () => void
 }
-
-// ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useProfileForm<
   TForm extends Record<string, unknown>,
@@ -107,7 +78,6 @@ export function useProfileForm<
   const [saved, setSaved] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
-  // Baseline snapshot for dirty-checking — updated on init and after save
   const baselineRef = useRef<TForm>(defaults)
 
   const isDirty = useCallback(
@@ -115,7 +85,6 @@ export function useProfileForm<
     [form],
   )
 
-  // Initialize form from profile (once)
   useEffect(() => {
     if (profile === undefined) return
     if (waitForMeBeforeInit && me === undefined) return
@@ -151,12 +120,7 @@ export function useProfileForm<
 
     const result = schema.safeParse(form)
     if (!result.success) {
-      const fieldErrors: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        const path = issue.path.join('.')
-        if (!fieldErrors[path]) fieldErrors[path] = issue.message
-      }
-      setErrors(fieldErrors)
+      setErrors(zodIssuesToFieldErrors(result.error.issues))
       toast.warning(FORM_VALIDATION_WARNING_TOAST, { duration: 4000 })
       return
     }
