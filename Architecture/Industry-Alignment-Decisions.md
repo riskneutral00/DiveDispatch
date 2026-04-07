@@ -12,8 +12,9 @@
 **Done:**
 - Design token enforcement hooks active (text-sm, text-xs, rounded, color-mix, hex/rgb all blocked). Token migrations complete (140 + 158 + 41 + 15 + 4 files). IconButton ghost variant shipped.
 - Phase 1 complete: 7 invariant files written to `~/Desktop/RiskNeutral/DiveDispatch/Architecture/`. CLAUDE.md updated with pointer block. 9 skill definitions updated with invariant file references.
+- Phase 2 Tracks A–D complete. FSM sealed (declineReservation, Archived state). Schema hygiene (dead fields, naming). Error shape (message→reason, i18n). Frontend cleanup (duration-theme, data-luminance, DashboardPageFrame, step-indicator consolidation, form system migration, notification error feedback).
 
-**Next:** Phase 2 — clean existing violations. Start with Track A (FSM: seal `declineReservation` bypass + add `Archived` terminal state — merged into one task). Four tracks can run in parallel (see Execution Order below).
+**Next:** Invariant test (C8 final checkbox). All other Phase 2 items complete.
 
 ---
 
@@ -72,7 +73,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [x] Remove dead `reservations.expiresAt` field + `by_expiresAt_status` index
 - [x] Remove deprecated `stakeholderPreferences` fields (`maxHoursPerDay`, `noWorkAfterTime`, `postJobBlockDuration`)
 - [x] Remove dead `notifications.by_userId` index
-- [ ] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
+- [x] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
 - [x] Consolidate `allergies` to single canonical source (currently in both `customers` and `customerProfiles`)
 - [x] Clean dual token storage (`bookingLinks.token` / `customerProfiles.linkToken`)
 - [x] Unify naming: pick `ownerSlug` OR `stakeholderId` across stakeholder tables. **Note: Convex field renames are migrations (new field, backfill, cut-over, remove old), not find-replaces. Budget days, not hours. Must complete before `.collect()` audit (C2) since renames invalidate query references.**
@@ -165,16 +166,16 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 - [x] Write `Architecture/component-invariants.md` (mandatory components, banned escapes, token contract, Storybook requirement, **state management section:** pessimistic for commitments, optimistic rollback required, no empty catch blocks)
 - [x] Add CLAUDE.md pointer
-- [ ] `--transition-speed` unification — 70 `transition-*` classes using hardcoded 150ms → `var(--transition-speed)`. **Implementation approach TBD: Tailwind plugin, custom utility class, or inline style. Decide before executing.**
-- [ ] `data-luminance` on `<html>` (SkinCommerce) — `theme-provider.tsx` stamps `data-luminance="dark|medium|bright"`. CSS rules auto-select polarity values. Makes bright-skin-with-white-text impossible.
-- [ ] Migrate `organizer-basic-step.tsx` to `useProfileForm` + `ProfileFormShell` + `FieldShell`
-- [ ] Extract `useClickOutside` hook → replace 4 inline implementations
-- [ ] Replace local Badge in `preferred-list.tsx` with `ui/Badge`
-- [ ] Adopt `DashboardPageFrame` in 5+ places rolling their own `max-w-3xl mx-auto`
-- [ ] Consolidate two step-progress components into one
-- [ ] Fix helper text sizing inconsistency + Textarea CLS (`h-4 truncate`)
-- [ ] Fix `useOptimisticNotifications` empty `catch {}` blocks (lines 83, 114, 148) — add rollback + error feedback
-- [ ] Add test covering `useOptimisticNotifications` error path
+- [x] `--transition-speed` unification — `duration-theme` Tailwind utility via `@theme inline`, 69 classes updated across 42 files
+- [x] `data-luminance` on `<html>` (SkinCommerce) — `theme-provider.tsx` stamps `data-luminance="dark|medium|bright"`. CSS rules for bright luminance tooltip polarity.
+- [x] Migrate `organizer-basic-step.tsx` to `useProfileForm` + `contactSchema` + shared form utilities
+- [x] Extract `useClickOutside` hook → replace 4 inline implementations
+- [x] Replace local Badge in `preferred-list.tsx` with `ui/Badge`
+- [x] Adopt `DashboardPageFrame` in 5 places (booking-detail, booking-detail-shared, booking-wizard, profile-overlay, privacy/page)
+- [x] Consolidate `step-indicator.tsx` + `wizard-progress.tsx` into unified `StepIndicator` with size/variant/connectorMode props
+- [x] Fix helper text sizing (FieldShell text-label → text-body) + Textarea CLS (fixed h-4 container with opacity toggle)
+- [x] Fix `useOptimisticNotifications` empty `catch {}` blocks — added `onError` callback, wired toast in notification-panel
+- [x] Add 3 tests covering `useOptimisticNotifications` onError callback (markAsRead, delete, clearAll)
 - [ ] ~60 raw buttons in compound patterns (calendar grids, tab bars, drag handles). Component redesign tasks — track as individual tickets when those components are next touched. Undersized-button hook blocks sub-44px touch targets.
 
 ---
@@ -220,11 +221,11 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Checklist (merged: seal bypass + add Archived state — same file, same types, same tests):**
 
-- [ ] Write `Architecture/fsm-invariants.md`
-- [ ] Add CLAUDE.md pointer
-- [ ] Route `declineReservation` through `canBookingTransition` (`convex/reservationsMutations.ts:306-310`). **Decision needed: use existing `edit` action or add `decline_cascade` action. Answer this in `fsm-invariants.md` before executing.**
-- [ ] Add terminal `Archived` state. Remove `edit` transition from `Completed`.
-- [ ] Grep for any other direct `.patch(` targeting `.status` on bookings/reservations outside gateway files
+- [x] Write `Architecture/fsm-invariants.md`
+- [x] Add CLAUDE.md pointer
+- [x] Route `declineReservation` through `canBookingTransition` (`convex/reservationsMutations.ts:306-310`). **Decision needed: use existing `edit` action or add `decline_cascade` action. Answer this in `fsm-invariants.md` before executing.**
+- [x] Add terminal `Archived` state. Remove `edit` transition from `Completed`.
+- [x] Grep for any other direct `.patch(` targeting `.status` on bookings/reservations outside gateway files
 - [ ] Add invariant test: scan codebase for `.status` patches, assert only in gateway files
 
 ---
@@ -253,11 +254,11 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Checklist:**
 
-- [ ] Write `Architecture/error-invariants.md`
-- [ ] Add CLAUDE.md pointer
-- [ ] Find all `ConvexError` throws using `message` instead of `reason` — replace
-- [ ] Map all 15+ unmapped error codes to i18n in `parseConvexErrorI18n`
-- [ ] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
+- [x] Write `Architecture/error-invariants.md`
+- [x] Add CLAUDE.md pointer
+- [x] Find all `ConvexError` throws using `message` instead of `reason` — replace
+- [x] Map all 15+ unmapped error codes to i18n in `parseConvexErrorI18n`
+- [x] Remove deprecated `ErrorCode.COVERAGE_INCOMPLETE`
 
 ---
 
