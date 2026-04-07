@@ -430,7 +430,7 @@ export const declineByBookingForCaller = mutation({
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', caller.slug))
-      .collect()
+      .collect() // bounded: per-booking reservations/sessions
 
     if (units.length === 0) {
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
@@ -501,7 +501,7 @@ export const acceptByBookingForCaller = mutation({
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', caller.slug))
-      .collect()
+      .collect() // bounded: per-booking reservations/sessions
 
     if (units.length === 0) {
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
@@ -512,7 +512,7 @@ export const acceptByBookingForCaller = mutation({
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', args.bookingId).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
-      .collect()
+      .collect() // bounded: per-booking reservations/sessions
 
     const callerUnitIds = new Set(units.map((u) => u._id))
     const pendingForCaller = reservations.filter((r) =>

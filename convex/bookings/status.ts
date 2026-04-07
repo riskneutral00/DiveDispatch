@@ -142,7 +142,7 @@ export const clearMedicalBlock = mutation({
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking sessions/reservations
 
     for (const profile of profiles) {
       if (profile.physicianClearanceRequired) {
@@ -205,7 +205,7 @@ async function runCompletionBatch(
       ctx.db
         .query('bookingSessions')
         .withIndex('by_bookingId', (q) => q.eq('bookingId', b._id))
-        .collect(),
+        .collect(), // bounded: per-booking sessions/reservations
     ),
   )
 

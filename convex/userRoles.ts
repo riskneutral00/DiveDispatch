@@ -49,7 +49,7 @@ export async function checkHasAnyOperatorRole(
   const roles = await ctx.db
     .query('userRoles')
     .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .collect()
+    .collect() // bounded: per-user roles, max ~12
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
 
@@ -64,7 +64,7 @@ export const myRoles = query({
     return ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
   },
 })
 
@@ -97,7 +97,7 @@ export const primaryRole = query({
     const roles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
     if (roles.length === 0) return null
     const primaryRoleStr = deriveDefaultRole(roles.map((r) => r.role))
     return roles.find((r) => r.role === primaryRoleStr) ?? null
@@ -156,7 +156,7 @@ export const bookingCountForRole = query({
       .withIndex('by_resourceType_resourceId', (q) =>
         q.eq('resourceType', resourceType).eq('resourceId', user.slug),
       )
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
 
     if (resources.length === 0) return 0
 
@@ -181,7 +181,7 @@ export const bookingCountsForMyRoles = query({
     const roles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
 
     const entries = await Promise.all(
       roles.map(async (role): Promise<[string, number]> => {
@@ -237,7 +237,7 @@ export const deleteRole = mutation({
     const allRoles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
     if (allRoles.length <= 1) throw new ConvexError({ code: ErrorCode.LAST_ROLE })
 
     // Booking guard — check for Draft/Upcoming bookings using this role's resources
@@ -261,7 +261,7 @@ export const deleteRole = mutation({
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
     const rolePrefs = prefs.filter((p) => p.stakeholderType === roleRow.role)
     await batchDelete(ctx, rolePrefs)
 
@@ -271,7 +271,7 @@ export const deleteRole = mutation({
       .withIndex('by_stakeholderId_roleType', (q) =>
         q.eq('stakeholderId', user.slug).eq('roleType', roleRow.role),
       )
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
     await batchDelete(ctx, blockedDates)
 
     // 3. Delete inventoryUnits + their reservations + snapshots for this user slug + resource type
@@ -281,7 +281,7 @@ export const deleteRole = mutation({
         .withIndex('by_ownerId_ownerType', (q) =>
           q.eq('ownerId', user.slug).eq('ownerType', resourceType),
         )
-        .collect()
+        .collect() // bounded: per-user roles, max ~12
 
       // Fetch all reservations and snapshots for all units in parallel
       const [reservationSets, snapshotSets] = await Promise.all([
@@ -292,7 +292,7 @@ export const deleteRole = mutation({
               .withIndex('by_inventoryUnitId_status', (q) =>
                 q.eq('inventoryUnitId', unit._id),
               )
-              .collect(),
+              .collect(), // bounded: per-user roles, max ~12
           ),
         ),
         Promise.all(
@@ -302,7 +302,7 @@ export const deleteRole = mutation({
               .withIndex('by_inventoryUnitId_date', (q) =>
                 q.eq('inventoryUnitId', unit._id),
               )
-              .collect(),
+              .collect(), // bounded: per-user roles, max ~12
           ),
         ),
       ])

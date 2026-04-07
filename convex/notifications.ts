@@ -196,6 +196,7 @@ export const getUnreadCount = query({
 // ─── listNotifications ────────────────────────────────────────────────────────
 
 const DEFAULT_LIMIT = 20
+const SERVER_MAX_NOTIFICATIONS = 50
 
 export async function _listNotificationsHandler(
   ctx: QueryCtx,
@@ -204,7 +205,7 @@ export async function _listNotificationsHandler(
   const { user: caller } = await requireAuth(ctx)
   assertCallerIsUser(caller, args.userId)
 
-  const limit = args.limit ?? DEFAULT_LIMIT
+  const limit = Math.min(args.limit ?? DEFAULT_LIMIT, SERVER_MAX_NOTIFICATIONS)
 
   return await ctx.db
     .query('notifications')

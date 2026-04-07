@@ -704,7 +704,7 @@ export const seedDefaultTheme = internalMutation({
       createdAt: Date.now(),
     })
 
-    const allUsers = await ctx.db.query('users').collect()
+    const allUsers = await ctx.db.query('users').collect() // bounded: seed script, dev-only
     for (const user of allUsers) {
       await ctx.db.patch(user._id, { selectedThemeId: themeId }) // batch-exempt
     }
@@ -721,7 +721,7 @@ const VERIFY_TABLES = [
 export const countTable = internalQuery({
   args: { table: v.string() },
   handler: async (ctx, { table }) => {
-    const rows = await queryDynamicTable(ctx.db, table).collect()
+    const rows = await queryDynamicTable(ctx.db, table).collect() // bounded: seed script, dev-only
     return rows.length
   },
 })
@@ -729,7 +729,7 @@ export const countTable = internalQuery({
 export const checkTokenIdentifiers = internalQuery({
   args: {},
   handler: async (ctx): Promise<{ total: number; unlinked: number }> => {
-    const users = await ctx.db.query('users').collect()
+    const users = await ctx.db.query('users').collect() // bounded: seed script, dev-only
     const unlinked = users.filter((u) => u.tokenIdentifier?.startsWith('seed|'))
     return { total: users.length, unlinked: unlinked.length }
   },

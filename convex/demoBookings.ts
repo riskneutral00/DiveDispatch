@@ -245,7 +245,7 @@ export const cleanupDemoBookings = internalMutation({
     const bookings = await ctx.db
       .query('bookings')
       .withIndex('by_ownerId_ownerType', q => q.eq('ownerId', ownerId))
-      .collect()
+      .collect() // bounded: per-owner demo bookings
 
     const demoBookings = bookings.filter(b => b.isDemo === true)
     if (demoBookings.length === 0) return
@@ -253,13 +253,13 @@ export const cleanupDemoBookings = internalMutation({
     // Batch-query all related records for all demo bookings in parallel
     const demoIds = demoBookings.map(b => b._id)
     const [profileArrays, resourceArrays, linkArrays, sessionArrays, reservationArrays, auditArrays, bagArrays] = await Promise.all([
-      Promise.all(demoIds.map(id => ctx.db.query('customerProfiles').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('bookingResources').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('bookingLinks').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('bookingSessions').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('reservations').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('bookingAuditLog').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
-      Promise.all(demoIds.map(id => ctx.db.query('equipmentBags').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())),
+      Promise.all(demoIds.map(id => ctx.db.query('customerProfiles').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('bookingResources').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('bookingLinks').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('bookingSessions').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('reservations').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('bookingAuditLog').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
+      Promise.all(demoIds.map(id => ctx.db.query('equipmentBags').withIndex('by_bookingId', q => q.eq('bookingId', id)).collect())), // bounded: per-demo-booking scope
     ])
 
     // Batch-delete related records, then bookings

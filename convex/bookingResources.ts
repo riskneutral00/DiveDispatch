@@ -21,7 +21,7 @@ export async function getResourcesForBooking(
   return ctx.db
     .query('bookingResources')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+    .collect() // bounded: per-booking resources, max ~5 resource types
 }
 
 /** All resources for multiple bookings, batched via Promise.all. */
@@ -36,7 +36,7 @@ export async function getResourcesForBookings(
       const rows = await ctx.db
         .query('bookingResources')
         .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
-        .collect()
+        .collect() // bounded: per-booking resources, max ~5 resource types
       if (rows.length > 0) map.set(id, rows)
     }),
   )
@@ -51,7 +51,7 @@ export async function getBookingIdsForResource(
   const rows = await ctx.db
     .query('bookingResources')
     .withIndex('by_resourceId', (q) => q.eq('resourceId', resourceId))
-    .collect()
+    .collect() // bounded: per-booking resources, max ~5 resource types
   return [...new Set(rows.map((r) => r.bookingId as string))]
 }
 
@@ -66,7 +66,7 @@ export async function getBookingIdsForResourceType(
     .withIndex('by_resourceType_resourceId', (q) =>
       q.eq('resourceType', resourceType).eq('resourceId', resourceId),
     )
-    .collect()
+    .collect() // bounded: per-booking resources, max ~5 resource types
   return [...new Set(rows.map((r) => r.bookingId as string))]
 }
 
@@ -98,7 +98,7 @@ export async function deleteResourcesForBooking(
   const rows = await ctx.db
     .query('bookingResources')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+    .collect() // bounded: per-booking resources, max ~5 resource types
   for (const row of rows) {
     await ctx.db.delete(row._id)
   }
@@ -113,7 +113,7 @@ export async function deleteResourceByType(
   const rows = await ctx.db
     .query('bookingResources')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-    .collect()
+    .collect() // bounded: per-booking resources, max ~5 resource types
   for (const row of rows) {
     if (row.resourceType === resourceType) {
       await ctx.db.delete(row._id)

@@ -35,7 +35,7 @@ async function devSwitchUserHandler(ctx: MutCtx, targetSlug: string) {
   const targetRoles = await ctx.db
     .query('userRoles')
     .withIndex('by_userId', (q) => q.eq('userId', target._id))
-    .collect()
+    .collect() // bounded: per-user roles, max ~12
   if (targetRoles.length === 0) {
     throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Target user has no roles' })
   }

@@ -45,7 +45,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<'bookings'>))
-      .collect()
+      .collect() // bounded: per-booking profiles
 
     const allOwnGear =
       profiles.length > 0 &&
@@ -170,7 +170,7 @@ async function collectLogistics(
   const sessions = await ctx.db
     .query('bookingSessions')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-    .collect()
+    .collect() // bounded: per-booking sessions/reservations
 
   if (sessions.length > 0) {
     const earliest = sessions.reduce((a, b) => {
@@ -191,7 +191,7 @@ async function collectLogistics(
   const allProfiles = await ctx.db
     .query('customerProfiles')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-    .collect()
+    .collect() // bounded: per-booking sessions/reservations
   const pickupProfile =
     allProfiles.find((p) => p.needsPickup === true) ??
     allProfiles.find((p) => p.pickupTime !== undefined || p.pickupLocation !== undefined)
@@ -202,7 +202,7 @@ async function collectLogistics(
   const bookingResources = await ctx.db
     .query('bookingResources')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-    .collect()
+    .collect() // bounded: per-booking sessions/reservations
 
   const boatResource = bookingResources.find((r) => r.resourceType === 'Boat')
   if (boatResource) {

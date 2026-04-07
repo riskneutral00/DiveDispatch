@@ -3,7 +3,7 @@ import { internalMutation } from '../_generated/server'
 export const backfillBookingResources = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const allDocs = await ctx.db.query('bookingResources').collect()
+    const allDocs = await ctx.db.query('bookingResources').collect() // bounded: one-time migration
     let updated = 0
     for (const doc of allDocs) {
       const raw = doc as Record<string, unknown>

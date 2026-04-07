@@ -23,7 +23,7 @@ export const list = query({
       .withIndex('by_ownerId_ownerType', (q) =>
         q.eq('ownerId', user.slug).eq('ownerType', args.activeRole as Doc<'bookingTemplates'>['ownerType']),
       )
-      .collect()
+      .take(50)
   },
 })
 

@@ -78,7 +78,7 @@ export const addSizingEntry = mutation({
       .withIndex('by_manufacturer_gearType', (q) =>
         q.eq('manufacturer', args.manufacturer).eq('gearType', args.gearType),
       )
-      .collect()
+      .take(500)
 
     const duplicate = existing.some((e) => e.size === args.size)
     if (duplicate) {
@@ -133,7 +133,7 @@ export const updateSizingEntry = mutation({
         .withIndex('by_manufacturer_gearType', (q) =>
           q.eq('manufacturer', entry.manufacturer).eq('gearType', entry.gearType),
         )
-        .collect()
+        .take(500)
       const conflict = siblings.some((e) => e._id !== args.entryId && e.size === args.size)
       if (conflict) {
         throw new ConvexError({
@@ -214,7 +214,7 @@ export const listByManufacturer = query({
           ? q.eq('manufacturer', args.manufacturer).eq('gearType', args.gearType)
           : q.eq('manufacturer', args.manufacturer),
       )
-      .collect()
+      .take(500)
 
     return entries
       .sort((a, b) => a.size.localeCompare(b.size))

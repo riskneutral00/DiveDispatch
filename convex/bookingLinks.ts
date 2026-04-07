@@ -67,7 +67,7 @@ export async function _getByBookingId(
   const links = await ctx.db
     .query('bookingLinks')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-    .collect()
+    .collect() // bounded: per-booking links, max ~20 customers
 
   const now = Date.now()
   const valid = links.find((l) => (l.expiresAt as number) > now)
@@ -107,7 +107,7 @@ export async function _createLink(
   const links = await ctx.db
     .query('bookingLinks')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-    .collect()
+    .collect() // bounded: per-booking links, max ~20 customers
 
   const now = Date.now()
   const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))
@@ -242,7 +242,7 @@ export const createBookingLink = mutation({
     const links = await ctx.db
       .query('bookingLinks')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-      .collect()
+      .collect() // bounded: per-booking links, max ~20 customers
 
     const now = Date.now()
     const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))

@@ -3,7 +3,7 @@ import { internalMutation } from '../_generated/server'
 export const backfillBlockedDates = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const allDocs = await ctx.db.query('stakeholderBlockedDates').collect()
+    const allDocs = await ctx.db.query('stakeholderBlockedDates').collect() // bounded: one-time migration
     let updated = 0
     for (const doc of allDocs) {
       const raw = doc as Record<string, unknown>

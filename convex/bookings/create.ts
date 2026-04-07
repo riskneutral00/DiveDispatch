@@ -67,7 +67,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const blockedDateDocs = await ctx.db
     .query('stakeholderBlockedDates')
     .withIndex('by_stakeholderId_roleType', (q) => q.eq('stakeholderId', user.slug))
-    .collect()
+    .collect() // bounded: per-booking scope
   const allBlocked = new Set<string>(blockedDateDocs.flatMap((d) => d.dates as string[]))
   if (allBlocked.size > 0) {
     for (const session of args.sessions) {
@@ -120,7 +120,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const existingReservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-    .collect()
+    .collect() // bounded: per-booking scope
 
   const isResubmit = existingReservations.length > 0
 
@@ -130,7 +130,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     const existingSessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const s of existingSessions) {
       await ctx.db.delete(s._id) // batch-exempt: sequential delete required; sessions must be removed before re-hold
     }
@@ -168,7 +168,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
         .withIndex('by_inventoryUnitId_date', (q) =>
           q.eq('inventoryUnitId', session.inventoryUnitId as Id<"inventoryUnits">).eq('date', session.date),
         )
-        .collect()
+        .collect() // bounded: per-booking scope
       for (const daySnap of allDaySnapshots) {
         if (daySnap.availableUnits <= 0) throw new ConvexError({ code: ErrorCode.CONFLICT })
       }

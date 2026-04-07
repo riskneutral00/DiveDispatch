@@ -213,7 +213,7 @@ export async function checkAllRolesCompleteness(
   const userRoles = await ctx.db
     .query('userRoles')
     .withIndex('by_userId', (q) => q.eq('userId', userId))
-    .collect()
+    .collect() // bounded: per-user roles, max ~12
 
   const rolesToCheck = userRoles.map((r) => r.role)
 

@@ -92,7 +92,7 @@ export const updateItem = mutation({
           .withIndex('by_inventoryUnitId_date', (q) =>
             q.eq('inventoryUnitId', item.inventoryUnitId),
           )
-          .collect()
+          .take(500)
       : []
 
     // Guard: reject if reducing totalUnits below currently reserved count
@@ -155,7 +155,7 @@ export const removeItem = mutation({
       .withIndex('by_inventoryUnitId_status', (q) =>
         q.eq('inventoryUnitId', item.inventoryUnitId),
       )
-      .collect()
+      .take(500)
 
     const hasActive = reservations.some(isActiveReservation)
     if (hasActive) {
@@ -195,7 +195,7 @@ export const listMyInventory = query({
       .withIndex('by_equipmentManagerId', (q) =>
         q.eq('equipmentManagerId', user.slug),
       )
-      .collect()
+      .take(500)
 
     // Batch-fetch all linked inventoryUnits
     const units = await Promise.all(

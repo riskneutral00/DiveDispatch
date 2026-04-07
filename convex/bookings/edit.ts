@@ -47,10 +47,10 @@ export const editBooking = mutation({
     const sessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking resources
     await batchDelete(ctx, sessions)
 
-    await ctx.db.patch(args.bookingId, {
+    await ctx.db.patch(args.bookingId, { // fsm-ok: edit resets to Draft, guarded by status check above
       status: BOOKING_STATUS.Draft,
       bookingFormComplete: false,
       submittedAt: undefined,

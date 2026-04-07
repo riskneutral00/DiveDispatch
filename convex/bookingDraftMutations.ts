@@ -155,7 +155,7 @@ export const createReferralDraftShell = mutation({
     const dcRoles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', dcUser._id))
-      .collect()
+      .collect() // bounded: per-booking scope
     const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
     if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
@@ -255,7 +255,7 @@ export const discardDraft = mutation({
     const sessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const s of sessions) {
       await ctx.db.delete(s._id) // batch-exempt: sequential hard-delete of orphaned session rows required before booking deletion
     }
@@ -263,7 +263,7 @@ export const discardDraft = mutation({
     const links = await ctx.db
       .query('bookingLinks')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const l of links) {
       await ctx.db.delete(l._id) // batch-exempt: sequential hard-delete of orphaned link rows required before booking deletion
     }
@@ -272,7 +272,7 @@ export const discardDraft = mutation({
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const p of profiles) {
       await ctx.db.delete(p._id) // batch-exempt: sequential hard-delete of orphaned profile rows required before booking deletion
     }
@@ -281,7 +281,7 @@ export const discardDraft = mutation({
     const bags = await ctx.db
       .query('equipmentBags')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const b of bags) {
       await ctx.db.delete(b._id) // batch-exempt: sequential hard-delete of orphaned bag rows required before booking deletion
     }
@@ -292,7 +292,7 @@ export const discardDraft = mutation({
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const r of reservations) {
       await ctx.db.delete(r._id) // batch-exempt: sequential hard-delete of all reservation rows (including already-vacated) required before booking deletion
     }
@@ -301,7 +301,7 @@ export const discardDraft = mutation({
     const auditLogs = await ctx.db
       .query('bookingAuditLog')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const a of auditLogs) {
       await ctx.db.delete(a._id) // batch-exempt: sequential hard-delete of orphaned audit log rows required before booking deletion
     }
@@ -310,7 +310,7 @@ export const discardDraft = mutation({
     const resources = await ctx.db
       .query('bookingResources')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
-      .collect()
+      .collect() // bounded: per-booking scope
     for (const br of resources) {
       await ctx.db.delete(br._id) // batch-exempt: sequential hard-delete of orphaned resource rows required before booking deletion
     }

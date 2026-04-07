@@ -239,7 +239,7 @@ export const getOnboardingStatus = query({
     const roles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
     const defaultRole = roles.length > 0
       ? deriveDefaultRole(roles.map((r) => r.role))
       : 'DiveCenter'
@@ -259,7 +259,7 @@ export const getLowestProfileCompletion = query({
     const roles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
-      .collect()
+      .collect() // bounded: per-user roles, max ~12
 
     if (roles.length === 0) {
       return { percentage: 0 }

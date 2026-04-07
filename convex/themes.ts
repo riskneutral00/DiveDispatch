@@ -12,7 +12,7 @@ export const listActive = query({
     return await ctx.db
       .query('themes')
       .withIndex('by_isActive', (q) => q.eq('isActive', true))
-      .collect()
+      .take(100)
   },
 })
 

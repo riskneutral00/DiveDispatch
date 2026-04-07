@@ -86,7 +86,7 @@ async function getBoatContext(ctx: QueryCtx, user: { _id: Id<'users'>; slug: str
     .withIndex('by_ownerId_resourceType', (q) =>
       q.eq('ownerId', user.slug).eq('resourceType', 'Boat'),
     )
-    .collect()
+    .take(500)
   return { boatProfile, unitMap: new Map(units.map((u) => [u.displayName, u])) }
 }
 
@@ -135,7 +135,7 @@ export const getVesselCalendarData = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect()
+            .collect() // bounded: sessions per unit per date ≤ time windows
 
           const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
           const bookings = await batchGet(ctx, bookingIds)
@@ -202,7 +202,7 @@ export const getManifestData = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect()
+            .collect() // bounded: sessions per unit per date ≤ time windows
 
           if (sessions.length === 0) continue
 
@@ -244,7 +244,7 @@ export const getManifestData = query({
                 .withIndex('by_bookingId', (q) =>
                   q.eq('bookingId', booking._id),
                 )
-                .collect()
+                .collect() // bounded: per-booking profiles
 
               const customerIds = profiles
                 .map((p) => p.customerId)
@@ -352,7 +352,7 @@ export const getVesselCalendarTrips = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect()
+            .collect() // bounded: sessions per unit per date ≤ time windows
 
           const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
           const bookingDocs = await batchGet(ctx, bookingIds)

@@ -9,7 +9,7 @@ import {
 
 describe('todayISO', () => {
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it('returns a string matching YYYY-MM-DD format', () => {
@@ -18,11 +18,10 @@ describe('todayISO', () => {
   })
 
   it('respects timezone parameter', () => {
-    // At UTC midnight Jan 1, Bangkok (UTC+7) is already Jan 1 at 7am
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 0, 1, 0, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 1, 0, 0, 0)))
     const utc = todayISO('UTC')
     const bangkok = todayISO('Asia/Bangkok')
-    // Bangkok is UTC+7, so at UTC midnight both should be Jan 1
     expect(utc).toBe('2026-01-01')
     expect(bangkok).toBe('2026-01-01')
   })
@@ -30,12 +29,12 @@ describe('todayISO', () => {
 
 describe('assertNoPastDates', () => {
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it('does not throw for future dates', () => {
-    // Mock to a known date
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 0, 15, 12, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 0)))
     expect(() => assertNoPastDates(
       [{ date: '2026-02-01' }],
       'UTC',
@@ -43,7 +42,8 @@ describe('assertNoPastDates', () => {
   })
 
   it('throws ConvexError for past dates', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 15, 12, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 15, 12, 0, 0)))
     try {
       assertNoPastDates([{ date: '2026-01-01' }], 'UTC')
       expect.fail('should have thrown')
@@ -56,7 +56,8 @@ describe('assertNoPastDates', () => {
   })
 
   it('does not throw for today', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 0, 15, 12, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 15, 12, 0, 0)))
     expect(() => assertNoPastDates(
       [{ date: '2026-01-15' }],
       'UTC',
@@ -64,7 +65,8 @@ describe('assertNoPastDates', () => {
   })
 
   it('throws on first past date only', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 15, 12, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 15, 12, 0, 0)))
     try {
       assertNoPastDates(
         [{ date: '2026-01-01' }, { date: '2026-01-02' }],
@@ -80,29 +82,30 @@ describe('assertNoPastDates', () => {
 
 describe('isSessionEnded', () => {
   afterEach(() => {
-    vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it('returns true when current date is after session date', () => {
-    // Mock: March 16, 2026 at noon UTC
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 16, 12, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 16, 12, 0, 0)))
     expect(isSessionEnded('2026-03-15', '17:00', 'UTC')).toBe(true)
   })
 
   it('returns true when same date and current time >= endTime', () => {
-    // Mock: March 15, 2026 at 17:30 UTC
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 15, 17, 30, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 15, 17, 30, 0)))
     expect(isSessionEnded('2026-03-15', '17:00', 'UTC')).toBe(true)
   })
 
   it('returns false when same date and current time < endTime', () => {
-    // Mock: March 15, 2026 at 10:00 UTC
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 15, 10, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 15, 10, 0, 0)))
     expect(isSessionEnded('2026-03-15', '17:00', 'UTC')).toBe(false)
   })
 
   it('returns false when current date is before session date', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 2, 14, 18, 0, 0))
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.UTC(2026, 2, 14, 18, 0, 0)))
     expect(isSessionEnded('2026-03-15', '08:00', 'UTC')).toBe(false)
   })
 })

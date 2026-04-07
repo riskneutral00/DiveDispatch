@@ -124,7 +124,7 @@ export const submitPortal = mutation({
           const sessions = await ctx.db
             .query('bookingSessions')
             .withIndex('by_bookingId', (q) => q.eq('bookingId', link.bookingId))
-            .collect()
+            .collect() // bounded: per-booking profiles
 
           if (sessions.length > 0) {
             const earliest = sessions.reduce((min, s) =>

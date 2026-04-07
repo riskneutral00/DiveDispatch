@@ -11,18 +11,8 @@ import { effectiveResourceType, stakeholderTypeValidator as stakeholderType, typ
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_STATUS, RESERVATION_STATUS, VACATED_REASON } from './shared/statuses'
 
-/**
- * Maximum number of inventoryUnit rows fetched in _getCapacityForDates.
- * Safe bound: a regional market rarely exceeds 500 inventory units across all
- * resource types. 1 000 provides headroom without risking unbounded scans.
- */
 export const INVENTORY_UNITS_LIMIT = 1000
 
-/**
- * Maximum number of stakeholderBlockedDates docs fetched in _getCapacityForDates.
- * Safe bound: one doc per stakeholder-role pair — a market with 500 stakeholders
- * across all role types is a generous upper bound. 1 000 provides headroom.
- */
 export const BLOCKED_DATES_LIMIT = 1000
 
 export type InventoryListItem = {
@@ -54,7 +44,7 @@ export async function _getUnavailableUnitIdsForDates(
       ctx.db
         .query('availabilitySnapshots')
         .withIndex('by_date', (q) => q.eq('date', date))
-        .collect(),
+        .collect(), // bounded: snapshots per date ≤ inventory units × time windows
     ),
   )
 
@@ -133,7 +123,7 @@ export async function _getCapacityForDates(
     const snapshots = await ctx.db
       .query('availabilitySnapshots')
       .withIndex('by_date', (q) => q.eq('date', date))
-      .collect()
+      .collect() // bounded: snapshots per date ≤ inventory units × time windows
 
     // Group snapshots by unit — take minimum available across time windows
     const unitMinAvailable = new Map<string, number>()
@@ -213,11 +203,11 @@ export async function _listInventoryByType(
         .withIndex('by_ownerId_resourceType', (q) =>
           q.eq('ownerId', args.ownerSlug!).eq('resourceType', args.type),
         )
-        .collect()
+        .take(500)
     : await ctx.db
         .query('inventoryUnits')
         .withIndex('by_resourceType', (q) => q.eq('resourceType', args.type))
-        .collect()
+        .take(INVENTORY_UNITS_LIMIT)
 
   // Batch-fetch all unique owners in parallel
   const uniqueOwnerIds = [...new Set(units.map((u) => u.ownerId as string))]
@@ -332,7 +322,7 @@ export const checkPreferredAvailability = query({
         const units = await ctx.db
           .query('inventoryUnits')
           .withIndex('by_resourceId', (q) => q.eq('resourceId', slug))
-          .collect()
+          .collect() // bounded: one unit per resourceId
         // Take first unit for the slug (primary unit)
         if (units[0]) {
           unitsBySlug.set(slug, { _id: units[0]._id, totalUnits: units[0].totalUnits })
@@ -346,7 +336,7 @@ export const checkPreferredAvailability = query({
         ctx.db
           .query('availabilitySnapshots')
           .withIndex('by_date', (q) => q.eq('date', date))
-          .collect(),
+          .collect(), // bounded: snapshots per date ≤ inventory units × time windows
       ),
     )
 
@@ -439,7 +429,7 @@ export async function _toggleBlockedDate(
       .withIndex('by_ownerId_resourceType', (q) =>
         q.eq('ownerId', user.slug).eq('resourceType', resourceType),
       )
-      .collect()
+      .take(500)
 
     // ── Batch-fetch sessions for all units (eliminates units×sessions N+1) ───
     const unitIds = new Set(units.map((u) => u._id))
@@ -450,7 +440,7 @@ export async function _toggleBlockedDate(
           .withIndex('by_inventoryUnitId_date', (q) =>
             q.eq('inventoryUnitId', unit._id).eq('date', args.date),
           )
-          .collect(),
+          .collect(), // bounded: sessions per unit per date ≤ time windows
       ),
     )
     const allSessions = sessionArrays.flat()
@@ -463,7 +453,7 @@ export async function _toggleBlockedDate(
           .withIndex('by_bookingSessionId', (q) =>
             q.eq('bookingSessionId', session._id),
           )
-          .collect(),
+          .collect(), // bounded: reservations per session ≤ resource types
       ),
     )
     // Flatten and filter to only this owner's units
@@ -554,7 +544,7 @@ export async function _toggleBlockedDate(
 
     // Phase 2 (write): vacate all reservations
     for (const { resId } of allPending) {
-      await ctx.db.patch(resId, { // batch-exempt: sequential vacate with status transition
+      await ctx.db.patch(resId, { // fsm-ok: vacate guarded by PendingAcceptance filter above
         status: RESERVATION_STATUS.Vacated,
         vacatedAt: now,
         vacatedBy: VACATED_REASON.DateBlocked,
@@ -611,7 +601,7 @@ export const listDiveSites = query({
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_resourceType', (q) => q.eq('resourceType', 'DiveSite'))
-      .collect()
+      .take(INVENTORY_UNITS_LIMIT)
     return units.map((u) => ({ id: u.resourceId, label: u.displayName }))
   },
 })

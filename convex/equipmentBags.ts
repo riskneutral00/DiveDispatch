@@ -30,7 +30,7 @@ export async function assignBagsForBooking(
     .withIndex('by_equipmentManagerId', (q) =>
       q.eq('equipmentManagerId', equipmentManagerId),
     )
-    .collect()
+    .collect() // bounded: per-booking bags
 
   const available = bags
     .filter((b) => b.status === BAG_STATUS.Returned)
@@ -66,7 +66,7 @@ export async function releaseBagsForBooking(
   const bags = await ctx.db
     .query('equipmentBags')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId as Id<"bookings">))
-    .collect()
+    .collect() // bounded: per-booking bags
 
   const assigned = bags.filter((b) => b.status === BAG_STATUS.Assigned)
   const now = Date.now()

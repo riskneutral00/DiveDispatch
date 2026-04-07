@@ -130,7 +130,7 @@ async function fetchProfile(
         const items = await db
           .query('equipmentInventory')
           .withIndex('by_equipmentManagerId', (q) => q.eq('equipmentManagerId', slug))
-          .collect()
+          .collect() // bounded: per-user inventory units
         const units = await Promise.all(items.map((item) => db.get(item.inventoryUnitId)))
         for (let i = 0; i < items.length; i++) {
           const gt = items[i].gearType

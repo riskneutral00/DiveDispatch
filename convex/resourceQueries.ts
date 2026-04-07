@@ -62,7 +62,7 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
     .withIndex('by_ownerId_ownerType', (q) =>
       q.eq('ownerId', caller.slug).eq('ownerType', activeRole as ResourceOwnerType),
     )
-    .collect()
+    .take(500)
 
   // Group reservations by booking+unit to deduplicate multi-day bookings
   const byBooking = new Map<string, { unitId: string; resIds: string[]; units: number; createdAt: number }>()
@@ -74,7 +74,7 @@ export async function _getOpenRequestsHandler(ctx: QueryCtx, activeRole: string)
         .withIndex('by_inventoryUnitId_status', (q) =>
           q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
         )
-        .collect()
+        .take(500)
       return { unit, reservations }
     }),
   )
@@ -152,7 +152,7 @@ export async function _getConfirmedScheduleHandler(
     .withIndex('by_ownerId_ownerType', (q) =>
       q.eq('ownerId', caller.slug).eq('ownerType', activeRole as ResourceOwnerType),
     )
-    .collect()
+    .take(500)
 
   // Collect all confirmed reservations across all units
   const unitConfirmedPairs = await Promise.all(
@@ -162,7 +162,7 @@ export async function _getConfirmedScheduleHandler(
         .withIndex('by_inventoryUnitId_status', (q) =>
           q.eq('inventoryUnitId', unit._id).eq('status', RESERVATION_STATUS.Confirmed),
         )
-        .collect()
+        .take(500)
       return { unit, reservations }
     }),
   )
@@ -181,7 +181,7 @@ export async function _getConfirmedScheduleHandler(
       uniqueBookingIds.map(id =>
         ctx.db.query('bookingSessions')
           .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
-          .collect(),
+          .collect(), // bounded: per-booking sessions
       ),
     ),
   ])

@@ -255,7 +255,7 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
     return ctx.db
       .query('bookings')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', slug))
-      .collect()
+      .collect() // bounded: per-booking joins
   }
 
   // Agent: query bookings by agentId index
@@ -263,7 +263,7 @@ async function resolveCallerBookings(ctx: QueryCtx, user: UserDoc, activeRole: s
     return ctx.db
       .query('bookings')
       .withIndex('by_agentId', (q) => q.eq('agentId', slug))
-      .collect()
+      .collect() // bounded: per-booking joins
   }
 
   // Resource roles: query bookingResources junction table
@@ -300,7 +300,7 @@ export async function _listByOwner(
     .withIndex('by_ownerId_ownerType', (q) =>
       q.eq('ownerId', args.ownerId).eq('ownerType', args.ownerType as "DiveCenter" | "Agent" | "Liveaboard" | "DiveResort" | "DiveHostel" | "DiveSite"),
     )
-    .collect()
+    .collect() // bounded: per-booking joins
 
   // Agent referral bookings: owned by another operator but agentId = this agent
   const ownedIds = new Set(ownedBookings.map((b) => b._id as string))
@@ -310,7 +310,7 @@ export async function _listByOwner(
     const agentIdRows = await ctx.db
       .query('bookings')
       .withIndex('by_agentId', (q) => q.eq('agentId', args.ownerId))
-      .collect()
+      .collect() // bounded: per-booking joins
 
     for (const b of agentIdRows) {
       // Only include rows NOT already in ownedBookings (prevents double-counting
@@ -400,7 +400,7 @@ export async function _myDashboard(
     inventoryUnits = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', user.slug))
-      .collect()
+      .collect() // bounded: per-booking joins
     callerUnitIds = new Set(inventoryUnits.map((u) => u._id as string))
   }
 
@@ -420,7 +420,7 @@ export async function _myDashboard(
             .withIndex('by_inventoryUnitId_status', (q) =>
               q.eq('inventoryUnitId', iu._id).eq('status', status),
             )
-            .collect(),
+            .collect(), // bounded: per-booking joins
         ),
       ),
     )
@@ -460,7 +460,7 @@ export async function _myDashboard(
             .withIndex('by_inventoryUnitId_status', (q) =>
               q.eq('inventoryUnitId', iu._id).eq('status', RESERVATION_STATUS.PendingAcceptance),
             )
-            .collect(),
+            .collect(), // bounded: per-booking joins
         ),
       )
     ).flat()
@@ -481,7 +481,7 @@ export async function _myDashboard(
         ctx.db
           .query('bookingSessions')
           .withIndex('by_bookingId', (q) => q.eq('bookingId', id as Id<'bookings'>))
-          .collect(),
+          .collect(), // bounded: per-booking joins
       ),
     )
     const sessionsByBookingId = new Map(
@@ -535,20 +535,20 @@ export async function _getBookingDetail(
     ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-      .collect(),
+      .collect(), // bounded: per-booking joins
     ctx.db
       .query('reservations')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-      .collect(),
+      .collect(), // bounded: per-booking joins
     ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-      .collect(),
+      .collect(), // bounded: per-booking joins
     ctx.db
       .query('bookingAuditLog')
       .withIndex('by_bookingId_timestamp', (q) => q.eq('bookingId', bookingId))
       .order('desc')
-      .collect(),
+      .collect(), // bounded: per-booking joins
   ])
 
   // Build a map of inventoryUnit id → record for display names

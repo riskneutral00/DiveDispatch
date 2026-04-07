@@ -31,7 +31,7 @@ export const completeCustomerForm = internalMutation({
     const bookings = await ctx.db
       .query('bookings')
       .withIndex('by_ownerId_ownerType', (q: any) => q.eq('ownerId', args.ownerSlug))
-      .collect()
+      .collect() // bounded: test fixture
     const draft = bookings
       .filter((b) => b.status === BOOKING_STATUS.Draft && b.bookingFormComplete)
       .sort((a, b) => b.createdAt - a.createdAt)[0]

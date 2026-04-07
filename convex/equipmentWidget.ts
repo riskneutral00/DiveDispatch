@@ -120,7 +120,7 @@ export const getDiverEquipmentData = query({
         const bags = await ctx.db
           .query('equipmentBags')
           .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-          .collect()
+          .collect() // bounded: per-booking bags
         const sortedBags = [...bags].sort((a, b) =>
           String(a.bagNumber).localeCompare(String(b.bagNumber)),
         )
@@ -128,7 +128,7 @@ export const getDiverEquipmentData = query({
         const profiles = await ctx.db
           .query('customerProfiles')
           .withIndex('by_bookingId', (q) => q.eq('bookingId', booking._id))
-          .collect()
+          .collect() // bounded: per-booking profiles
         const customerIds = profiles.map((p) => p?.customerId ?? null)
         const customers = await batchGet(ctx, customerIds.filter(Boolean) as Id<'customers'>[])
         const customerMap = new Map(
@@ -210,7 +210,7 @@ export const getDiverEquipmentData = query({
     if (preferredManufacturers.size > 0) {
       const allEntries = await ctx.db
         .query('gearSizingLookup')
-        .collect()
+        .take(500)
       gearSizingEntries = allEntries
         .filter((e) => preferredManufacturers.has(e.manufacturer))
         .map((e) => ({
@@ -232,7 +232,7 @@ export const getDiverEquipmentData = query({
       .withIndex('by_equipmentManagerId', (q) =>
         q.eq('equipmentManagerId', user.slug),
       )
-      .collect()
+      .take(500)
 
     const units = await batchGet(ctx, inventoryRecords.map((inv) => inv.inventoryUnitId))
     const inventory: GearInventoryItem[] = inventoryRecords.map((inv, i) => ({
