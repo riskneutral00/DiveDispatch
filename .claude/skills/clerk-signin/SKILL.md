@@ -29,6 +29,20 @@ Also triggered by natural language: "show me Hug Ocean's dashboard", "log me int
 
 ---
 
+## Phase 0: Verify Playwright MCP
+
+**HARD GATE — execute this before anything else.**
+
+Check that Playwright MCP tools are available (e.g. `mcp__playwright__browser_navigate`). Use ToolSearch if needed.
+
+- **If available** → proceed to Phase 1.
+- **If NOT available** → **STOP IMMEDIATELY.** Do not fall back to bash, e2e tests, or any workaround. Report:
+  > "Playwright MCP server is not connected. Restart Claude Code with Playwright MCP enabled."
+
+No exceptions. No improvisation. The entire skill depends on headed Playwright MCP for browser control.
+
+---
+
 ## Phase 1: Resolve User
 
 Read `.claude/data/seed-users.md`. Match the argument against Name, Slug, Email, or aliases. Extract:
