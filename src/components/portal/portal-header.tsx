@@ -33,7 +33,7 @@ export function PortalHeader({
           {operatorName}
         </p>
         <h1
-          className="text-2xl sm:text-3xl font-bold text-primary font-heading"
+          className="text-page-title font-bold text-primary font-heading"
         >
           {t('welcome', { name: customerName })}
         </h1>

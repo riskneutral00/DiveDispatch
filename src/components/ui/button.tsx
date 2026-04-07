@@ -15,8 +15,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const sizeMap: Record<ButtonSize, string> = {
   sm: 'px-3 py-1.5 text-body gap-1.5 min-h-[44px] min-w-[44px]',
-  md: 'px-4 py-2 text-base gap-2 min-h-[44px] min-w-[44px]',
-  lg: 'px-6 py-3 text-lg gap-2 min-h-[44px] min-w-[44px]',
+  md: 'px-4 py-2 text-body gap-2 min-h-[44px] min-w-[44px]',
+  lg: 'px-6 py-3 text-card-title gap-2 min-h-[44px] min-w-[44px]',
   icon: 'p-2 text-body min-h-[44px] min-w-[44px]',
 }
 

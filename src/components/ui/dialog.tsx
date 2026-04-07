@@ -97,7 +97,7 @@ export function Dialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight text-primary font-heading"
+                    className="text-card-title font-semibold leading-tight text-primary font-heading"
                   >
                     {title}
                   </h2>
@@ -154,7 +154,7 @@ export function Dialog({
                 {title && (
                   <h2
                     id={titleId}
-                    className="text-lg font-semibold leading-tight text-primary font-heading"
+                    className="text-card-title font-semibold leading-tight text-primary font-heading"
                   >
                     {title}
                   </h2>

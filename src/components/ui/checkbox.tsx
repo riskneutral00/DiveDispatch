@@ -22,7 +22,7 @@ export function Checkbox({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         disabled={disabled}
-        className="rounded-[var(--border-radius-button)]"
+        className="rounded-[var(--border-radius-button)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]"
         style={{ accentColor: 'var(--color-primary)' }}
       />
       <span>{label}</span>

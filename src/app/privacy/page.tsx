@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <BackgroundLayout className="items-start px-4 py-16">
       <DashboardPageFrame>
       <h1
-        className="text-3xl font-bold tracking-tight text-primary mb-8 font-heading"
+        className="text-page-title font-bold tracking-tight text-primary mb-8 font-heading"
       >
         Privacy Policy
       </h1>

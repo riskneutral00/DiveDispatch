@@ -154,7 +154,7 @@ export function StepWaiver({
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} className="text-accent" />
-            <h2 className="text-base font-semibold font-heading">
+            <h2 className="text-card-title font-semibold font-heading">
               Non-Agency Disclosure
             </h2>
           </div>
@@ -178,7 +178,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-base font-semibold font-heading">
+          <h2 className="text-card-title font-semibold font-heading">
             Release of Liability / Assumption of Risk
           </h2>
 
@@ -210,7 +210,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-base font-semibold font-heading">
+          <h2 className="text-card-title font-semibold font-heading">
             Diver Accident Insurance
           </h2>
           <p className="text-body text-secondary">
@@ -261,7 +261,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-4">
-          <h2 className="text-base font-semibold font-heading">
+          <h2 className="text-card-title font-semibold font-heading">
             Participant Signature
           </h2>
 
@@ -290,7 +290,7 @@ export function StepWaiver({
         <Card padding="md">
           <div className="space-y-4">
             <div>
-              <h2 className="text-base font-semibold font-heading">
+              <h2 className="text-card-title font-semibold font-heading">
                 Parent / Guardian Signature
               </h2>
               <p className="text-body mt-1 text-secondary">

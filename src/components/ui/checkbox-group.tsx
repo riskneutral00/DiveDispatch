@@ -39,7 +39,7 @@ function CheckboxGroup({ label, items, selected, onChange, error, columns = 2 }:
                 type="checkbox"
                 checked={checked}
                 onChange={() => toggle(value)}
-                className="rounded-[var(--border-radius-button)]"
+                className="rounded-[var(--border-radius-button)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]"
                 style={{ accentColor: 'var(--color-primary)' }}
               />
               <span>{itemLabel}</span>

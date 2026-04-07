@@ -4,7 +4,7 @@ export function ProfileFormHeader({ isUpdate, roleName }: { isUpdate: boolean; r
   return (
     <div>
       <h1
-        className="text-2xl font-bold mb-1 text-primary font-heading"
+        className="text-page-title font-bold mb-1 text-primary font-heading"
       >
         {isUpdate ? 'Update Profile' : 'Complete Your Profile'}
       </h1>

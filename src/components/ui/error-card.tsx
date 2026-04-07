@@ -25,7 +25,7 @@ export function ErrorCard({
           <Icon size={40} style={{ color: iconColor }} />
         </div>
         <h2
-          className="text-lg font-semibold mb-2 text-primary font-heading"
+          className="text-card-title font-semibold mb-2 text-primary font-heading"
         >
           {title}
         </h2>

@@ -2,7 +2,7 @@
 
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from "@/lib/constants/roles";
@@ -98,19 +98,12 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
 
             <button
               onClick={() => handleMenuAction("profile")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
+              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
+              style={{ transition: 'background var(--transition-speed), opacity var(--transition-speed)' }}
             >
               <User size={14} />
               {tNav("profile")}
             </button>
-            <button
-              onClick={() => handleMenuAction(`role:${roleSlug}`)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
-            >
-              <Settings size={14} />
-              {tNav("preferences")}
-            </button>
-
             {roleConfigs.length > 1 && (
               <div
                 className="mt-1 pt-1"
@@ -122,7 +115,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
                     <button
                       key={role.key}
                       onClick={() => handleMenuAction(`role:${role.key}`)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
                     >
                       <Icon size={14} />
                       {role.label}
@@ -138,7 +131,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
             >
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary"
+                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
               >
                 <LogOut size={14} />
                 {tNav("signOut")}

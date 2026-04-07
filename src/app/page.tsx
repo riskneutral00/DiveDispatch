@@ -18,13 +18,13 @@ export default async function Home() {
             className="w-5 h-5 text-primary"
           />
           <span
-            className="text-xl font-medium text-secondary font-heading"
+            className="text-card-title font-medium text-secondary font-heading"
           >
             DiveDispatch
           </span>
         </div>
         <h1
-          className="text-4xl font-bold tracking-tight text-primary font-heading"
+          className="text-page-title font-bold tracking-tight text-primary font-heading"
         >
           {t("app.tagline")}
         </h1>

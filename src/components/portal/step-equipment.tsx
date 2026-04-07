@@ -235,7 +235,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         prescriptionDetails,
         validationMessages,
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       rentalChecklist,
       heightValue,
@@ -397,7 +396,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                     }}
                   >
                     {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-white block" />
+                      <span className="w-2 h-2 rounded-full bg-text-on-primary block" />
                     )}
                   </span>
                   <span

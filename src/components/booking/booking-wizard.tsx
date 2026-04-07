@@ -344,7 +344,7 @@ export function BookingWizard({
               />
               <div>
                 <h2
-                  className="text-lg font-semibold text-primary font-heading"
+                  className="text-card-title font-semibold text-primary font-heading"
                 >
                   {t("editConfirmTitle")}
                 </h2>
@@ -397,7 +397,7 @@ export function BookingWizard({
       {!isOverlay && (
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary font-heading">
+            <h1 className="text-page-title font-bold text-primary font-heading">
               {isEditMode && bookingRef
                 ? t("editingTitle", { ref: bookingRef })
                 : "New Booking"}

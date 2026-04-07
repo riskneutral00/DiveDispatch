@@ -93,7 +93,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold text-primary font-heading"
+                className="text-card-title font-semibold text-primary font-heading"
               >
                 Submitted
               </h2>
@@ -108,7 +108,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 aria-hidden
               />
               <h2
-                className="text-xl font-semibold text-primary font-heading"
+                className="text-card-title font-semibold text-primary font-heading"
               >
                 Complete!
               </h2>
@@ -145,7 +145,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
     <div className="flex flex-col gap-4">
       <Card padding="md">
         <h2
-          className="text-base font-semibold mb-4 text-primary font-heading"
+          className="text-card-title font-semibold mb-4 text-primary font-heading"
         >
           Review &amp; Submit
         </h2>

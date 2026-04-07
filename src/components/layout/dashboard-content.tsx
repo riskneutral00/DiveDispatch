@@ -225,7 +225,7 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
     <DashboardPageFrame
       maxWidth="4xl"
       padding="none"
-      className="space-y-2"
+      className="space-y-4"
     >
       {isOrganizer ? (
         <DragDropProvider

@@ -76,32 +76,25 @@ beforeEach(() => {
 })
 
 describe('UserMenu', () => {
-  it('renders single Profile + Preferences for single-role user', async () => {
+  it('renders Profile for single-role user without Preferences item', async () => {
     mockUseQueryReturn = SINGLE_ROLE
     renderMenu()
 
     await userEvent.click(screen.getByLabelText('User menu'))
 
-    const profileBtns = screen.getAllByText('Profile')
-    expect(profileBtns).toHaveLength(1)
-    const prefBtns = screen.getAllByText('Preferences')
-    expect(prefBtns).toHaveLength(1)
-
-    // No role section headers
+    expect(screen.getAllByText('Profile')).toHaveLength(1)
+    expect(screen.queryByText('Preferences')).not.toBeInTheDocument()
     expect(screen.queryByText('Dive Center')).not.toBeInTheDocument()
   })
 
-  it('renders single Profile/Preferences plus role-switch buttons for multi-role user', async () => {
+  it('renders Profile plus role-switch buttons for multi-role user without Preferences item', async () => {
     mockUseQueryReturn = MULTI_ROLE
     renderMenu()
 
     await userEvent.click(screen.getByLabelText('User menu'))
 
-    // Single top-level Profile and Preferences
     expect(screen.getAllByText('Profile')).toHaveLength(1)
-    expect(screen.getAllByText('Preferences')).toHaveLength(1)
-
-    // Role labels appear as switch buttons
+    expect(screen.queryByText('Preferences')).not.toBeInTheDocument()
     expect(screen.getByText('Dive Center')).toBeInTheDocument()
     expect(screen.getByText('Instructor')).toBeInTheDocument()
   })
@@ -113,18 +106,6 @@ describe('UserMenu', () => {
     await userEvent.click(screen.getByLabelText('User menu'))
 
     await userEvent.click(screen.getByText('Dive Center'))
-
-    expect(mockOnOpenOverlay).toHaveBeenCalledWith('role:dive-center')
-  })
-
-  it('calls onOpenOverlay with active role tab for Preferences link', async () => {
-    mockUseQueryReturn = MULTI_ROLE
-    renderMenu()
-
-    await userEvent.click(screen.getByLabelText('User menu'))
-
-    const prefBtns = screen.getAllByText('Preferences')
-    await userEvent.click(prefBtns[0])
 
     expect(mockOnOpenOverlay).toHaveBeenCalledWith('role:dive-center')
   })
