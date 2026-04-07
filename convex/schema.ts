@@ -73,8 +73,8 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     paid: v.boolean(),
     activityType: v.array(courseCode),
-    startDate: v.string(),
-    endDate: v.string(),
+    startDate: v.string(), // snapshot: frozen at creation, canonical truth is bookingSessions.date
+    endDate: v.string(), // snapshot: frozen at creation, canonical truth is bookingSessions.date
     divers: v.array(
       v.object({
         name: v.string(),
@@ -90,7 +90,7 @@ export default defineSchema({
     ),
     agentIsReferral: v.optional(v.boolean()),
     agentId: v.optional(v.string()),
-    operatorName: v.string(),
+    operatorName: v.string(), // snapshot: frozen at creation from users.businessName
     portalContact: v.boolean(),
     portalMedical: v.boolean(),
     portalWaiver: v.boolean(),
@@ -201,8 +201,8 @@ export default defineSchema({
     bookingId: v.id('bookings'),
     token: v.string(),
     expiresAt: v.number(),
-    customerName: v.string(),
-    email: v.string(),
+    customerName: v.string(), // snapshot: frozen at link creation
+    email: v.string(), // snapshot: frozen at link creation
     usedAt: v.optional(v.number()),
     channel: v.optional(v.union(v.literal('whatsapp'), v.literal('line'), v.literal('email'), v.literal('sms'))),
   })

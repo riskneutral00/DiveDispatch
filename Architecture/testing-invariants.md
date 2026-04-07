@@ -9,7 +9,7 @@
    - Enforced by: `/review-tests` flags `vi.mock` or `jest.mock` on Convex functions
    - Context: Uber explicitly acknowledged their unit tests "were often so dependent on mocks that it was difficult to understand how much protection they actually offered."
 
-2. **New test files use `seedFixture.ts` for shared domain setup.** Do not inline `ctx.db.insert` calls for common entities (users, bookings, reservations). Import from `tests/fixtures/seedFixture.ts`. When the schema changes, one fixture breaks once — not 268 files breaking individually.
+2. **New test files use shared fixtures for domain setup.** Do not inline `ctx.db.insert` calls for common entities (users, bookings, reservations). Import from `tests/fixtures/` (`seedUsers.ts`, `seedBookings.ts`, `seedInventory.ts`, `seedProfiles.ts`, `seedStakeholders.ts`). When the schema changes, one fixture breaks once — not 268 files breaking individually.
    - Enforced by: `/review-tests` flags inline seeding of common entities in new test files
    - Violation history: 0% fixture adoption across 268 test files. Every file built its own "valid booking" from scratch.
 
