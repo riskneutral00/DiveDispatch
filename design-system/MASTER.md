@@ -224,7 +224,7 @@ Top-edge light line on `.glass` and `.glass-elevated` via `::before` pseudo-elem
 - **Containers:** Never blur. Photo stays sharp.
 - **Elevated elements** (dropdowns, pickers, popovers): Blur allowed.
 - **Inputs:** Blur via `.glass` class (they're leaf elements).
-- **Dialog backdrop:** Blur of the raw background — acceptable because content has melted away.
+- **Dialog backdrop:** Blur of the raw background — acceptable because content is hidden by the scrim.
 
 ### Semantic Opacity Tokens
 
@@ -238,7 +238,7 @@ Three tokens that adapt per luminance class:
 
 ---
 
-## Melt Pattern
+## Scrim Pattern
 
 When a scrim dialog opens, all content fades to 0. The dialog sits alone on the raw background.
 
@@ -247,7 +247,7 @@ html:has(dialog[open][data-scrim]) .app-shell { opacity: 0; }
 body:has(dialog[open][data-scrim]) { overflow: hidden; }
 ```
 
-**Scrim is opt-in.** Dialog component has a `scrim` prop. `fullScreen` dialogs default to `scrim={false}`. Simple confirmations (block date, cancel booking) show over visible content with a blurred `::backdrop`. Fullscreen overlays opt into melt explicitly.
+**Scrim is opt-in.** Dialog component has a `scrim` prop. `fullScreen` dialogs default to `scrim={false}`. Simple confirmations (block date, cancel booking) show over visible content with a blurred `::backdrop`. Fullscreen overlays opt into scrim explicitly.
 
 **Scroll lock is scrim-only.** Non-scrim dialogs leave the body scrollable — prevents layout shake.
 
@@ -382,6 +382,32 @@ Validation messages, helper text, and error indicators that toggle visibility mu
 - Fixed height (`h-4`, `h-5`) with `truncate` or `line-clamp-1`
 - Toggle with `opacity`, not conditional render (reserves space)
 - Never `min-h-*` (allows growth → layout shift)
+
+---
+
+## Intrinsic Containment
+
+Content must never exceed its container at any viewport width. This is enforced by construction, not by hiding overflow at the page level.
+
+### Three Rules
+
+| Rule | What it prevents | How |
+|------|-----------------|-----|
+| `min-w-0` on flex/grid children | Content blowout — flex/grid children default to `min-width: auto`, refusing to shrink below content width | Add `min-w-0` to any flex/grid child that contains text, images, or variable-width content |
+| `overflow-x-hidden` on scroll containers | Horizontal leak — `overflow-y-auto` alone does NOT clip horizontal overflow | Every `overflow-y-auto` must pair with `overflow-x-hidden` |
+| No fixed widths wider than container | Rigid elements pushing parents wider | Use `w-full`, `max-w-full`, or relative units. Fixed widths (`w-80`) need `max-w-[calc(100vw-Xrem)]` guards |
+
+### What NOT to do
+
+- **Never** `html { overflow-x: hidden }` — breaks `position: sticky` for all descendants
+- **Never** `width: 100vw` — includes scrollbar width, always wider than `100%`
+- **Never** rely on parent overflow clipping to fix child sizing — fix the child's width instead
+
+### Already handled by Tailwind v4 preflight
+
+- `box-sizing: border-box` on all elements (padding/border inward)
+- `img, video, svg { max-width: 100%; display: block }` (media containment)
+- `overflow-wrap: break-word` on text elements (long words wrap)
 
 ---
 

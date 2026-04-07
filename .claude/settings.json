@@ -271,6 +271,12 @@
             "command": "bash .claude/hooks/mobile-viewport-check.sh",
             "timeout": 10,
             "statusMessage": "Checking mobile-first viewport contract…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/overflow-scroll-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking intrinsic containment…"
           }
         ]
       }

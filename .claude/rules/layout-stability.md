@@ -25,3 +25,5 @@ Every `grid-cols-N` where N > 1 must use a responsive prefix (`sm:grid-cols-N` o
 
 ## Overlays must not cause layout shifts
 Dialogs, dropdowns, and popovers must use `position: absolute` or `position: fixed` — never flow in the document. Never toggle `overflow` on `body`/`html` while content is visible behind the overlay. Scroll lock (`overflow: hidden`) is only allowed when content is fully hidden by a scrim. If a CSS class (like `.glass`) sets `position: relative`, it will override overlay positioning and break the layout.
+
+Scroll containers (`overflow-y-auto`) inside dialogs and overlays must pair with `overflow-x-hidden`. Vertical scroll without horizontal containment allows child content to shift the viewport on any screen size.

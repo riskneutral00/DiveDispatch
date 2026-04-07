@@ -73,6 +73,9 @@ Before touching any code:
 | **Boundary violations** | Hidden coupling, misplaced responsibilities, wrong-layer imports |
 | **Excessive error handling** | Redundant try/catch, validation for impossible scenarios, fallbacks that can't trigger |
 | **Comment/docstring bloat** | Obvious comments, redundant JSDoc on self-documenting functions |
+| **Overflow leak** | `overflow-y-auto` without `overflow-x-hidden` → add `overflow-x-hidden` |
+| **Viewport width trap** | `100vw` → replace with `100%` or `w-full` |
+| **Flex blowout** | flex/grid children with text content missing `min-w-0` → add `min-w-0` |
 | **Missing tests** | Behavior not locked, weak regression coverage |
 
 ### 4. One Smell-Focused Pass at a Time

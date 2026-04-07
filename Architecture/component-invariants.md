@@ -49,6 +49,9 @@
    - Enforced by: `/review-frontend` flags new components without `.stories.tsx`
    - CI: Chromatic visual regression runs on every PR
 
+11. **Intrinsic containment.** Flex and grid children that contain text or variable-width content must have `min-w-0`. Every `overflow-y-auto` must pair with `overflow-x-hidden`. No element may use `width: 100vw`. Content is bounded by its container at every viewport width — page-level overflow clipping (`html { overflow-x: hidden }`) is banned because it breaks `position: sticky`.
+   - Enforced by: PostToolUse hook (`overflow-scroll-guard`), `/design-review`, `/review-frontend`
+
 ## Token Type Scale
 
 5-stop scale. Each stop is clearly distinct — no two adjacent stops within 1px.

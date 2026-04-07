@@ -40,6 +40,7 @@ Run alongside Phase 1 layout checks:
 7. **Bottom nav clearance** — scrollable containers (`overflow-y-auto`, `overflow-y-scroll`) must have `pb-28` or equivalent.
 8. **Save/Submit placement** — primary action buttons should be in a fixed bottom bar on mobile, not floating in the form body.
 9. **Field width** — no field narrower than its container on mobile. Check for orphan fractional widths without `w-full` unprefixed.
+10. **Horizontal containment** — grep for `overflow-y-auto` without `overflow-x-hidden` on same element. Grep for `100vw`. Flag as CRITICAL.
 
 ## Phase 2: Read Design Specs
 

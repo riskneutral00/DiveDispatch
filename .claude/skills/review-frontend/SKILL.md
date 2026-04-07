@@ -84,13 +84,14 @@ Launch 3 Explore agents in a single message with `model: "sonnet"`:
 ### Agent 3: Design System
 
 - **Color token compliance:** Grep for hardcoded color values (`#`, `rgb(`, `hsl(`, Tailwind color classes like `bg-blue-500`, `text-gray-400`) that should use design system tokens (`--color-primary`, `--color-surface`, etc. from MASTER.md). Exclude `tailwind.config.*` and `globals.css`.
-- **Glass formula:** Find components that should use glass styling but use plain backgrounds instead. Check glass components match the formula in MASTER.md (blur, backdrop, border).
+- **Glass formula:** Check glass components (cards, dialogs, buttons) match the formula in MASTER.md (blur, backdrop, border). Form inputs (Input, Textarea, Select, SimpleSelect) use `.field-underline` — NOT glass. Flag any input/select/textarea with glass classes.
 - **Page override adherence:** For each page override file (`design-system/pages/*.md`), check that the corresponding page components follow the specified overrides.
-- **Component variant consistency:** Check glass primitives (button, input, card, dialog, select, badge) for consistent variant naming and sizing across usage sites.
+- **Component variant consistency:** Check glass primitives (button, card, dialog, badge) and underline primitives (input, select, textarea) for consistent variant naming and sizing across usage sites.
 - **Dark/light mode:** The app supports TWO modes (dark and light) per MASTER.md. Each skin provides distinct palettes per mode. `dark:` Tailwind classes may be needed for mode-specific styling. Flag `dark:` classes only if they hardcode values instead of using CSS custom properties (tokens handle mode switching via ThemeProvider).
 - **Skin consistency:** Check that components use CSS custom properties (not hardcoded values) so skin switching works.
 - **Typography:** Check font usage against MASTER.md specifications. Flag hardcoded font-size values that don't match the type scale.
 - **Spacing consistency:** Flag mixed spacing systems (some using Tailwind spacing, others using custom pixel values).
+- **Intrinsic containment:** Every `overflow-y-auto` must pair with `overflow-x-hidden`. Flex/grid children containing text must have `min-w-0`. No `width: 100vw`. No `html { overflow-x: hidden }`. Fixed-width elements inside responsive containers must have `max-w-full` or `max-w-[calc(100vw-Xrem)]` guards.
 
 **Do not output anything yet.**
 

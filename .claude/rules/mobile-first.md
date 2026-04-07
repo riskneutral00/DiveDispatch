@@ -31,3 +31,14 @@ All scrollable containers must have `pb-28` to clear the fixed bottom nav. Missi
 No field narrower than its container on mobile. Fractional widths (`w-1/2`, `w-1/3`) require `w-full` as the unprefixed base.
 
 Full mobile-first spec: `design-system/MASTER.md` → Mobile-First Sizing section.
+
+## No horizontal overflow at any viewport width
+
+Content containment is structural, not viewport-specific. Three rules prevent horizontal overflow from 320px (iPhone SE) to ultrawide:
+
+1. **`min-w-0` on flex/grid children** that contain text or variable-width content. Without it, flex items refuse to shrink below their content's intrinsic width (CSS default `min-width: auto`).
+2. **`overflow-x-hidden` paired with every `overflow-y-auto`**. Vertical-only scroll containers must clip horizontal overflow — `overflow-y-auto` alone does not.
+3. **No fixed widths wider than the container**. `w-80` (320px) inside a padded card at 375px = overflow. Use `max-w-full` or `max-w-[calc(100vw-Xrem)]` guards on fixed-width elements.
+
+Never use `html { overflow-x: hidden }` — it breaks `position: sticky`.
+Never use `width: 100vw` — it includes scrollbar width.

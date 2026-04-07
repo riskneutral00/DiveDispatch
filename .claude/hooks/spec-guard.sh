@@ -10,8 +10,15 @@ case "$FILE_PATH" in
   */.tickets/DD-*.md|.tickets/DD-*.md)
     SENTINEL=$(ls .tickets/.spec-authorized-* 2>/dev/null | head -1)
     if [ -n "$SENTINEL" ]; then
+      if [ "$(uname)" = "Darwin" ]; then
+        AGE=$(( $(date +%s) - $(stat -f %m "$SENTINEL") ))
+      else
+        AGE=$(( $(date +%s) - $(stat -c %Y "$SENTINEL") ))
+      fi
+      if [ "$AGE" -lt 600 ]; then
+        exit 0
+      fi
       rm -f "$SENTINEL"
-      exit 0
     fi
     echo '{"decision":"block","reason":"Direct ticket creation is not allowed. Use /spec (supports pre-researched mode when you already have a plan). Authorized agent skills (ticket-create, escalate, board) set .tickets/.spec-authorized before writing."}'
     exit 0
