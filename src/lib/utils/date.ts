@@ -2,8 +2,6 @@ import { DAY_MS } from '@/lib/constants/time'
 
 export { getDatesInRange, parseDateLocal } from '../../../convex/shared/dateRange'
 
-const MS_PER_DAY = DAY_MS
-
 export function diffDays(dateA: string, dateB: string): number {
   const a = new Date(dateA + 'T00:00:00')
   const b = new Date(dateB + 'T00:00:00')

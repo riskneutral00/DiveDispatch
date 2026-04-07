@@ -61,15 +61,6 @@ function getClassNameString(node) {
   return null
 }
 
-/** Find the className attribute value string for a JSX element */
-function getClassNameFromElement(jsxNode) {
-  const attr = jsxNode.attributes?.find(
-    (a) => a.type === 'JSXAttribute' && a.name?.name === 'className',
-  )
-  if (!attr?.value) return null
-  return getClassNameString(attr.value)
-}
-
 // ── Rules ────────────────────────────────────────────────────────────────────
 
 /** Rule: no-hardcoded-palette — ban bg-red-500, text-blue-400, etc. */

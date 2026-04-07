@@ -1,20 +1,18 @@
 'use client'
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from 'convex/react'
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Trash2, Plus, GripVertical, Wind } from 'lucide-react'
 import { DragDropProvider } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { api } from '@/lib/convex-generated'
 import type { DirectoryEntry } from '../../../convex/directory'
 import type { StakeholderRole } from '@/lib/utils/role'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog } from '@/components/ui/dialog'
-import { BOAT_TYPES, BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
+import { BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
 import { GAS_MIXES, GAS_MIX_LABELS } from '@/lib/constants/gas-mixes'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
-import { MAX_SEARCH_RESULTS } from '@/lib/constants/form-config'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -32,169 +30,6 @@ const chipBase = 'px-2 py-1 text-label rounded-full border transition-colors dur
 
 const OVERLAY_LIST_HEIGHT = 380
 const PAGE_SIZE = 10
-
-interface CoreProps {
-  slugs: string[]
-  onChange: (slugs: string[]) => void
-  entries: DirectoryEntry[]
-  label: string
-  emptyNoun: string
-  renderBadge?: (entry: DirectoryEntry) => React.ReactNode
-}
-
-function PreferredListCore({ slugs, onChange, entries, label, emptyNoun, renderBadge }: CoreProps) {
-  const [search, setSearch] = useState('')
-
-  const slugToEntry = Object.fromEntries(entries.map((e) => [e.slug, e]))
-
-  const trimmed = search.trim().toLowerCase()
-  const searchResults = trimmed
-    ? entries.filter(
-        (e) =>
-          !slugs.includes(e.slug) &&
-          (e.name.toLowerCase().includes(trimmed) ||
-            e.placeName.toLowerCase().includes(trimmed)),
-      )
-    : []
-
-  const moveUp = (index: number) => {
-    if (index === 0) return
-    const next = [...slugs]
-    ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
-    onChange(next)
-  }
-
-  const moveDown = (index: number) => {
-    if (index === slugs.length - 1) return
-    const next = [...slugs]
-    ;[next[index], next[index + 1]] = [next[index + 1], next[index]]
-    onChange(next)
-  }
-
-  const remove = (index: number) => {
-    onChange(slugs.filter((_, i) => i !== index))
-  }
-
-  const add = (slug: string) => {
-    if (!slugs.includes(slug)) {
-      onChange([...slugs, slug])
-    }
-    setSearch('')
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="relative">
-        <Input
-          label={label}
-          placeholder="Search by name or city…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {searchResults.length > 0 && (
-          <div
-            className="absolute z-[var(--z-dropdown)] left-0 right-0 mt-1 rounded-theme overflow-hidden glass-elevated"
-            style={{ background: 'var(--color-surface-elevated)' } /* design-ok */}
-          >
-            {searchResults.slice(0, MAX_SEARCH_RESULTS).map((entry) => (
-              <button
-                key={entry.slug}
-                type="button"
-                onClick={() => add(entry.slug)}
-                className="w-full text-left px-3 py-2 text-body transition-colors duration-theme hover:opacity-80 text-primary"
-              >
-                <span className="font-medium">{entry.name}</span>
-                <span className="ml-2 text-label text-secondary">
-                  {entry.placeName}
-                </span>
-                {renderBadge?.(entry)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {slugs.length === 0 ? (
-        <p className="text-body text-secondary">
-          No preferred {emptyNoun} added yet.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {slugs.map((slug, index) => {
-            const entry = slugToEntry[slug]
-            return (
-              <Card key={slug} padding="sm">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="text-label font-bold w-5 text-center shrink-0 text-secondary"
-                  >
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-body font-medium truncate text-primary">
-                        {entry?.name ?? slug}
-                      </p>
-                      {entry && renderBadge?.(entry)}
-                    </div>
-                    {entry?.placeName && (
-                      <p className="text-label truncate text-secondary">
-                        {entry.placeName}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="sm" type="button" onClick={() => moveUp(index)} disabled={index === 0} aria-label="Move up">
-                      <ChevronUp size={16} />
-                    </Button>
-                    <Button variant="ghost" size="sm" type="button" onClick={() => moveDown(index)} disabled={index === slugs.length - 1} aria-label="Move down">
-                      <ChevronDown size={16} />
-                    </Button>
-                    <Button variant="destructive-ghost" size="sm" type="button" onClick={() => remove(index)} aria-label={`Remove ${emptyNoun.replace(/s$/, '')}`}>
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface SingleRoleProps {
-  slugs: string[]
-  onChange: (slugs: string[]) => void
-  role: string
-  label: string
-  emptyNoun: string
-  renderBadge?: (entry: DirectoryEntry) => React.ReactNode
-}
-
-function PreferredSingleRoleList({ slugs, onChange, role, label, emptyNoun, renderBadge }: SingleRoleProps) {
-  const entries = useQuery(api.directory.listByRole, { role: role as StakeholderRole })
-
-  if (entries === undefined) {
-    return (
-      <div className="flex items-center justify-center py-6 text-primary">
-        <Spinner />
-      </div>
-    )
-  }
-
-  return (
-    <PreferredListCore
-      slugs={slugs}
-      onChange={onChange}
-      entries={entries ?? []}
-      label={label}
-      emptyNoun={emptyNoun}
-      renderBadge={renderBadge}
-    />
-  )
-}
 
 interface ListProps {
   slugs: string[]
@@ -763,10 +598,10 @@ function PreferredOverlayList({
 }: OverlayListProps) {
   const [showOverlay, setShowOverlay] = useState(false)
   const [page, setPage] = useState(0)
-  const prevSearchRef = useRef(search)
 
-  if (search !== prevSearchRef.current) {
-    prevSearchRef.current = search
+  const [prevSearch, setPrevSearch] = useState(search)
+  if (search !== prevSearch) {
+    setPrevSearch(search)
     setPage(0)
   }
 
@@ -775,13 +610,11 @@ function PreferredOverlayList({
     [entries],
   )
 
-  const prevFilterLenRef = useRef(filteredEntries.length)
-  useEffect(() => {
-    if (filteredEntries.length !== prevFilterLenRef.current) {
-      prevFilterLenRef.current = filteredEntries.length
-      setPage(0)
-    }
-  }, [filteredEntries.length])
+  const [prevFilterLen, setPrevFilterLen] = useState(filteredEntries.length)
+  if (filteredEntries.length !== prevFilterLen) {
+    setPrevFilterLen(filteredEntries.length)
+    setPage(0)
+  }
 
   if (entries === undefined) {
     return (

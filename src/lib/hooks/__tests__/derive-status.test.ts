@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { deriveStatus } from '../use-calendar-range'
+import { deriveStatus } from '../../utils/calendar-range'
 import { addDays, toISODateString } from '../../utils/date'
 
 function booking(

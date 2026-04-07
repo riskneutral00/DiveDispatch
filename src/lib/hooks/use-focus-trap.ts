@@ -17,24 +17,18 @@ export function useFocusTrap(
   const { onClose, enabled = true } = options
 
   const previouslyFocusedRef = useRef<HTMLElement | null>(null)
-  if (enabled && previouslyFocusedRef.current === null) {
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null
-  }
 
   useEffect(() => {
     if (!enabled) return
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null
     if (ref.current) {
       const firstFocusable = ref.current.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)
       firstFocusable?.focus()
     }
-  }, [ref, enabled])
-
-  useEffect(() => {
-    if (!enabled) return
     return () => {
       previouslyFocusedRef.current?.focus()
     }
-  }, [enabled])
+  }, [ref, enabled])
 
   useEffect(() => {
     if (!enabled) return

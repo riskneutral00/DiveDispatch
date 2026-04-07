@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 export interface ReturningCustomerMatch {
   _id: string
@@ -36,47 +36,35 @@ export function useReturningCustomer(
   queryResult: ReturningCustomerMatch | undefined | null,
   onConfirm?: (data: ReturningCustomerMatch) => void,
 ): UseReturningCustomerReturn {
-  const [returningCustomer, setReturningCustomer] = useState<Pick<
-    ReturningCustomerMatch,
-    '_id' | 'legalFirstName' | 'legalLastName' | 'email'
-  > | null>(null)
   const [returningConfirmed, setReturningConfirmed] = useState(false)
   const [returningDismissed, setReturningDismissed] = useState(false)
 
-  const prevEmailRef = useRef<string | null | undefined>(queryResult?.email)
   const currentEmail = queryResult === undefined ? undefined : (queryResult?.email ?? null)
+  const [prevEmail, setPrevEmail] = useState(currentEmail)
 
-  useEffect(() => {
-    if (currentEmail === undefined) return // skip undefined (loading state)
-    if (prevEmailRef.current !== undefined && currentEmail !== prevEmailRef.current) {
-      setReturningConfirmed(false)
-      setReturningDismissed(false)
-      setReturningCustomer(null)
-    }
-    prevEmailRef.current = currentEmail
-  }, [currentEmail])
+  if (currentEmail !== undefined && currentEmail !== prevEmail) {
+    setPrevEmail(currentEmail)
+    setReturningConfirmed(false)
+    setReturningDismissed(false)
+  }
 
-  useEffect(() => {
-    if (queryResult && !returningConfirmed && !returningDismissed) {
-      setReturningCustomer({
+  const returningCustomer = (queryResult && !returningConfirmed && !returningDismissed)
+    ? {
         _id: queryResult._id,
         legalFirstName: queryResult.legalFirstName,
         legalLastName: queryResult.legalLastName,
         email: queryResult.email,
-      })
-    }
-  }, [queryResult, returningConfirmed, returningDismissed])
+      }
+    : null
 
   function confirm() {
     if (!queryResult) return
     setReturningConfirmed(true)
-    setReturningCustomer(null)
     onConfirm?.(queryResult)
   }
 
   function dismiss() {
     setReturningDismissed(true)
-    setReturningCustomer(null)
   }
 
   const showBanner = returningCustomer !== null && !returningConfirmed && !returningDismissed

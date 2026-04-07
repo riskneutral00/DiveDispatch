@@ -16,7 +16,7 @@ interface UserMenuProps {
   onOpenOverlay?: (tab: ProfileOverlayTab) => void;
 }
 
-export function UserMenu({ roleSlug, slug, onOpenOverlay }: UserMenuProps) {
+export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps) {
   const tNav = useTranslations("nav");
   const { user: clerkUser } = useUser();
   const { user: convexUser } = useCurrentUser();

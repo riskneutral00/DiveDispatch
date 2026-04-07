@@ -4,13 +4,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useWizardPreferences } from '@/lib/hooks/use-wizard-preferences'
-import { Card, Button, Checkbox, SimpleSelect, ErrorAlert } from '@/components/ui'
+import { Button, Checkbox, SimpleSelect, ErrorAlert } from '@/components/ui'
 import { DayRow } from './day-row'
 import { ResourceStep } from './resource-step'
 import { generateDays, getAvailableDives, autoDistributeFromDive, buildDiveSequence, cascadeRemoveOrphans } from '@/lib/booking/generate-days'
 import { getEndDateDefault, validatePrerequisites, validatePrerequisiteOrder, validateCourseCombo, validateCourseDateOverlap, validateNoDuplicateCourses, validateStartDateNotInPast, calculateComboDates, getUnavailableCodes, detectReferralWarnings } from '@/lib/booking/course-validation'
 import { toISODateString } from '@/lib/utils/date'
-import type { WizardState, WizardAction, CourseEntry, DiveSlot, DayConfig } from '@/lib/booking/wizard-state'
+import type { WizardState, WizardAction, CourseEntry, DiveSlot } from '@/lib/booking/wizard-state'
 import type { CourseCode } from '@/lib/constants/course-catalog'
 import { COURSE_CATALOG, COURSE_DISPLAY_LABELS, COMBO_COURSES, COURSE_CODES } from '@/lib/constants/course-catalog'
 import { addDays } from '@/lib/utils/date'
@@ -363,7 +363,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
   const hardErrors: string[] = []
   for (const c of sameForAll ? customers.slice(0, 1) : customers) {
     const entries = (c.courseEntries ?? []).map((e) => ({ activityCode: e.activityCode, dates: e.dates }))
-    const codes = entries.map((e) => e.activityCode).filter(Boolean)
     hardErrors.push(...validatePrerequisiteOrder(entries))
     hardErrors.push(...validateCourseDateOverlap(entries))
     hardErrors.push(...validateNoDuplicateCourses(entries))
@@ -449,7 +448,6 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
     const day = days[dayIndex]
     if (!day) return
 
-    const diveKey = `${slot.courseCode}:${slot.diveNumber}:${slot.isConfined}`
     const exists = day.dives.some(
       (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
     )

@@ -6,7 +6,7 @@ import { Ship, ChevronDown, ChevronRight, AlertTriangle, Heart } from 'lucide-re
 import { api } from '@/lib/convex-generated'
 import { Card, EmptyState } from '@/components/ui'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { Spinner } from '@/components/ui/spinner'
+
 import { LoadingCard } from '@/components/ui/loading-card'
 import type {
   ManifestData,

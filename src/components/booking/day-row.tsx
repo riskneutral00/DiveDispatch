@@ -43,7 +43,7 @@ function formatDate(dateStr: string): string {
   })
 }
 
-function deriveDayLabel(_day: DayConfig): string {
+function deriveDayLabel(): string {
   return 'Dive Day'
 }
 
@@ -66,36 +66,6 @@ const VENUE_LABELS = {
   pool: 'Pool',
 } as const
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder = 'Select…',
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  options: ResourceOption[]
-  placeholder?: string
-}) {
-  const selectOptions = [
-    { value: '__external__', label: 'External (not in system)' },
-    ...options.map((opt) => ({
-      value: opt.id,
-      label: `${opt.label}${languageFlagText(opt.languages)}`,
-    })),
-  ]
-  return (
-    <SimpleSelect
-      label={label}
-      value={value}
-      onChange={onChange}
-      options={selectOptions}
-      placeholder={placeholder}
-    />
-  )
-}
 
 function DivePill({
   slot,
@@ -179,7 +149,7 @@ export function DayRow({
           <span
             className={`text-label px-1.5 py-0.5 rounded-full text-secondary ${DAY_LABEL_CLASS}`}
           >
-            {deriveDayLabel(day)}
+            {deriveDayLabel()}
           </span>
           {day.isAutoAppended && (
             <span

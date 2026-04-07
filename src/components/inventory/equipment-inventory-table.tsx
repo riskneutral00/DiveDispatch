@@ -85,7 +85,7 @@ export function EquipmentInventoryTable({
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteTarget, onRemoveItem])
+  }, [deleteTarget, onRemoveItem, tErrors])
 
   return (
     <div className="space-y-3">

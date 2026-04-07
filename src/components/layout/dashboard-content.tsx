@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 
 import { ROLE_BY_KEY, ORGANIZER_ROLE_KEYS, type RoleKey, type RoleConfig } from '@/lib/constants/roles'
 import { DASHBOARD_CONFIGS, DEFAULT_LEGEND_STATUSES } from '@/lib/constants/dashboard-config'
-import { useCurrentUser } from '@/lib/hooks/use-current-user'
+
 import { useStableQuery } from '@/lib/hooks/use-stable-query'
 import { useBlockedDateToggle } from '@/lib/hooks/use-blocked-date-toggle'
 import { useDevSwitching } from '@/components/dev/dev-switch-context'
@@ -22,7 +22,6 @@ import { BlockDateDialog } from '@/components/booking/block-date-dialog'
 import { DragOverlayPill } from '@/components/booking/drag-overlay-pill'
 import { DiverEquipmentWidget } from '@/components/booking/diver-equipment-widget'
 import { getVesselColor } from '@/lib/constants/vessel-colors'
-import { VesselCalendar } from '@/components/booking/vessel-calendar'
 import { BoatManifestWidget } from '@/components/booking/boat-manifest-widget'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -50,8 +49,6 @@ interface DashboardContentInnerProps {
 }
 
 function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentInnerProps) {
-  const { user: convexUser } = useCurrentUser()
-  const RoleIcon = roleConfig.icon
   const isOrganizer = roleConfig.isOrganizer
   const isResourceOnly = roleConfig.isResource && !isOrganizer
   const clerkRole = roleConfig.clerkRole
@@ -119,28 +116,26 @@ function DashboardContentInner({ roleConfig, slug, roleSlug }: DashboardContentI
 
   const dnd = useBookingDnd({ defaults, resolveTemplateResourceHints })
 
-  useEffect(() => {
+  const [prevPendingPreFill, setPrevPendingPreFill] = useState(dnd.pendingPreFill)
+  if (dnd.pendingPreFill !== prevPendingPreFill) {
+    setPrevPendingPreFill(dnd.pendingPreFill)
     if (dnd.pendingPreFill) {
       openBookingOverlay(dnd.pendingPreFill.courses, dnd.pendingPreFill)
       dnd.clearPendingPreFill()
     }
-  }, [dnd.pendingPreFill, dnd.clearPendingPreFill])
+  }
 
   const actions = useBookingActions()
 
-  const handleBookingClick = useCallback(
-    (id: string) => actions.handleBookingClick(id, calendarBookings),
-    [actions.handleBookingClick, calendarBookings],
-  )
+  function handleBookingClick(id: string) {
+    actions.handleBookingClick(id, calendarBookings)
+  }
 
-  const handleUrgentCancel = useCallback(
-    (bookingId: string) => {
-      const booking = calendarBookings.find((b) => b._id === bookingId)
-      if (booking?.isReferral) return
-      actions.handleUrgentCancel(bookingId, isOperator)
-    },
-    [actions.handleUrgentCancel, isOperator, calendarBookings],
-  )
+  function handleUrgentCancel(bookingId: string) {
+    const booking = calendarBookings.find((b) => b._id === bookingId)
+    if (booking?.isReferral) return
+    actions.handleUrgentCancel(bookingId, isOperator)
+  }
 
   const { data: vesselTrips } = useStableQuery(
     api.boatWidget.getVesselCalendarTrips,

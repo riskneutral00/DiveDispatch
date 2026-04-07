@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 import { Star, ExternalLink } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
     <div className="flex min-h-screen items-center justify-center p-4" data-testid="post-trip-page">
       <Card centered className="max-w-md w-full" padding="lg">
         <div className="mb-4 flex justify-center">
-          <Star size={40} style={{ color: 'var(--color-warning)' }} />
+          <Star size={40} className="text-warning" />
         </div>
 
         <p
@@ -71,11 +72,11 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
           {t('signupPrompt')}
         </p>
 
-        <a href="/sign-up">
+        <Link href="/sign-up">
           <Button variant="primary" size="md" fullWidth>
             Sign Up for DiveDispatch
           </Button>
-        </a>
+        </Link>
       </Card>
     </div>
   )

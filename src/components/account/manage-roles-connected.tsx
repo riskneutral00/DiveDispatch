@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useMutation, useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { getConvexErrorCode, parseConvexErrorI18n } from '@/lib/utils/convex-error'
+import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '../../../convex/_generated/dataModel'
 import { ManageRoles } from './manage-roles'
@@ -55,7 +55,7 @@ export function ManageRolesConnected() {
         setLoading(false)
       }
     },
-    [addRole],
+    [addRole, tCommon, tErr],
   )
 
   const handleDeleteRole = useCallback(
@@ -80,7 +80,7 @@ export function ManageRolesConnected() {
         }
       }
     },
-    [deleteRole, roles],
+    [deleteRole, roles, tBooking, tCommon, tErr],
   )
 
   const handleOnboardingComplete = useCallback(() => {

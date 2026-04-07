@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -192,7 +192,6 @@ interface PreferencesEditorProps {
 }
 
 export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp }: PreferencesEditorProps) {
-  const tErrors = useTranslations('errors')
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
   const params = useParams()
@@ -285,7 +284,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
       resourceBaselineRef.current = { ...form }
       setSavedSection(section)
       toast.success(tBooking('preferencesSaved'))
-    } catch (err: unknown) {
+    } catch {
       toast.error(tCommon('actionFailed', { action: tCommon('save') }))
     } finally {
       setResourceSaving(false)

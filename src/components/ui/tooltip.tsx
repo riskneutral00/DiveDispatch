@@ -19,17 +19,14 @@ export function Tooltip({ label, children, className }: TooltipProps) {
 
   const visible = showTouch || hovered
 
-  useEffect(() => {
-    if (!visible || !ref.current) {
-      setPos(null)
-      return
-    }
+  function measureAndSetPos() {
+    if (!ref.current) { setPos(null); return }
     const rect = ref.current.getBoundingClientRect()
     setPos({
       top: rect.top + window.scrollY - 8,
       left: rect.left + window.scrollX + rect.width / 2,
     })
-  }, [visible])
+  }
 
   useEffect(() => {
     if (!showTouch) return
@@ -54,8 +51,10 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       e.preventDefault()
       e.stopPropagation()
       setShowTouch(true)
+      measureAndSetPos()
     } else {
       setShowTouch(false)
+      setPos(null)
     }
   }
 
@@ -65,8 +64,8 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       className={`relative inline-flex ${className ?? ''}`}
       aria-describedby={visible ? tooltipId : undefined}
       onClick={handleClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => { setHovered(true); measureAndSetPos() }}
+      onMouseLeave={() => { setHovered(false); if (!showTouch) setPos(null) }}
     >
       {children}
       {visible && pos && createPortal(

@@ -1,5 +1,4 @@
 import { getEndDateDefault, calculateComboDates } from '@/lib/booking/course-validation'
-import { getDatesInRange } from '@/lib/utils/date'
 import type { OperatorDefaults } from '@/lib/hooks/use-operator-defaults'
 import type { BookingPreFill } from '@/lib/booking/wizard-state'
 

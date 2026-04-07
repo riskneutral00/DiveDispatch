@@ -11,7 +11,6 @@ export function OfflineIndicator({ isStale = false }: { isStale?: boolean }) {
   }
 
   const isOffline = status === ConnectionStatus.Offline
-  const label = isOffline ? 'Offline' : 'Cached data'
   const bgClass = isOffline
     ? 'bg-destructive text-text-on-primary'
     : 'bg-warning text-text-primary'

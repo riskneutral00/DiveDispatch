@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react'
 import { parseOptionalInt } from '@/lib/utils/numbers'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'

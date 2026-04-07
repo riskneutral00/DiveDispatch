@@ -69,7 +69,7 @@ export function equipmentGearCatalogToPayload(f: EquipmentGearCatalogFormState):
 }
 
 export function EquipmentGearCatalogSection({ profile: existing, create, update }: EquipmentSectionProps) {
-  const { form, setForm, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
+  const { form, setForm, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit } =
     useProfileForm({
       profile: existing,
       schema: equipmentGearCatalogSchema,

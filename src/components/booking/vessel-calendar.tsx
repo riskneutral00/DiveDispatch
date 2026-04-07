@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useCalendarRange, getDaysOfWeek } from '@/lib/hooks/use-calendar-range'
+import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
+import { getDaysOfWeek } from '@/lib/utils/calendar-range'
 import { toISODateString } from '@/lib/utils/date'
 import type { VesselCalendarData, VesselDailyCapacity } from '../../../convex/boatWidget'
 
@@ -35,11 +36,6 @@ function capacityTextColor(booked: number, total: number): string {
 
 export function VesselCalendar({ data, onRangeChange, className }: VesselCalendarProps) {
   const { range, shiftRange, weeks, headerLabel, todayCol } = useCalendarRange()
-
-  const allDays = useMemo(
-    () => weeks.flatMap((w) => w),
-    [weeks],
-  )
 
   const rangeStart = useMemo(() => toISODateString(range.start), [range.start])
   const rangeEnd = useMemo(() => toISODateString(range.end), [range.end])

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { locationSchema } from './location'
-import { AGENCIES, AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
+import { AOW_REQUIRED_SPECIALTY_COUNT } from '@/lib/constants/agencies'
 import { BOAT_TYPES } from '@/lib/constants/boat-types'
 import { GAS_MIXES } from '@/lib/constants/gas-mixes'
 import { VENUE_TYPES } from '../../../convex/shared/venueTypes'

@@ -1,7 +1,5 @@
 'use client'
 
-import { z } from 'zod'
-
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { Input } from '@/components/ui/input'
@@ -15,7 +13,6 @@ import {
 import {
   contactFieldsFromProfile,
   locationToPayload,
-  nullableProfileLocation,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'

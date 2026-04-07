@@ -11,7 +11,6 @@ import {
 } from '@/lib/utils/calendar-range'
 
 export type { CalendarDay, CalendarWeek } from '@/lib/utils/calendar-range'
-export { deriveStatus, getDaysOfWeek, getFloorDate } from '@/lib/utils/calendar-range'
 
 export function useCalendarRange() {
   const [range, setRange] = useState(() => getDefaultRange())

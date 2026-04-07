@@ -26,13 +26,19 @@ interface UseBookingDndInput {
   ) => Array<{ resourceType: string; resourceId: string }> | undefined
 }
 
+interface DndOperationEvent {
+  operation: {
+    source?: { data?: Record<string, unknown> } | null
+    target?: { data?: Record<string, unknown> } | null
+  }
+}
+
 interface UseBookingDndReturn {
   activeTemplate: QuickBookTemplate | null
   pendingPreFill: BookingPreFill | null
   clearPendingPreFill: () => void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- handlers match DragDropProvider's generic event signatures
-  handleDragStart: (...args: any[]) => void
-  handleDragEnd: (...args: any[]) => void
+  handleDragStart: (event: DndOperationEvent) => void
+  handleDragEnd: (event: DndOperationEvent) => void
 }
 
 export function useBookingDnd({
@@ -43,7 +49,7 @@ export function useBookingDnd({
   const [pendingPreFill, setPendingPreFill] = useState<BookingPreFill | null>(null)
 
   const handleDragStart = useCallback(
-    (event: { operation: { source?: { data?: Record<string, unknown> } } }) => {
+    (event: DndOperationEvent) => {
       const data = event.operation.source?.data as { type?: string; template?: QuickBookTemplate } | undefined
       if (data?.type === 'quick-book-pill' && data.template) {
         setActiveTemplate(data.template)
@@ -53,7 +59,7 @@ export function useBookingDnd({
   )
 
   const handleDragEnd = useCallback(
-    (event: { operation: { source?: { data?: Record<string, unknown> }; target?: { data?: Record<string, unknown> } } }) => {
+    (event: DndOperationEvent) => {
       setActiveTemplate(null)
 
       const sourceData = event.operation.source?.data as { type?: string; template?: QuickBookTemplate } | undefined

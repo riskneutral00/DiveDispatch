@@ -5,7 +5,6 @@ import {
   DEFAULT_LOCALE,
   resolveLocale,
   SUPPORTED_LOCALES,
-  type SupportedLocale,
 } from "../locales";
 
 describe("SUPPORTED_LOCALES", () => {

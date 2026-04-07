@@ -19,9 +19,12 @@ export function useStableQuery<Q extends FunctionReference<'query'>>(
   const [isError, setIsError] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  if ((result !== undefined || args === 'skip') && isError) {
+    setIsError(false)
+  }
+
   useEffect(() => {
     if (result !== undefined || args === 'skip') {
-      setIsError(false)
       if (timerRef.current) {
         clearTimeout(timerRef.current)
         timerRef.current = null

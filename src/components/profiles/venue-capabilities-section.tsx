@@ -3,7 +3,6 @@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
 import { ProfileIncompleteGuard } from '@/components/profiles/profile-incomplete-guard'
 import { type BaseProfileSectionProps } from '@/lib/profile-form'
 import { parseNumber } from '@/lib/utils/numbers'

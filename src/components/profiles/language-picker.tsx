@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
 import {
   ALL_LANGUAGES,
@@ -34,7 +34,7 @@ export function LanguagePicker({
 }: LanguagePickerProps) {
   const [query, setQuery] = useState('')
   const gridRef = useRef<HTMLDivElement>(null)
-  const restingHeight = useRef<number>(0)
+  const [restingHeight, setRestingHeight] = useState(0)
 
   const selectedCodes = new Set<string>(value.map((l) => l.code))
   const atMax = value.length >= max
@@ -73,9 +73,9 @@ export function LanguagePicker({
 
   useEffect(() => {
     if (searchResults === null && gridRef.current) {
-      restingHeight.current = gridRef.current.scrollHeight
+      setRestingHeight(gridRef.current.scrollHeight)
     }
-  })
+  }, [searchResults])
 
   const renderFlagGroup = (languages: DiveLanguage[] | Language[]) => {
     if (languages.length === 0) return null
@@ -117,7 +117,7 @@ export function LanguagePicker({
 
       <div
         ref={gridRef}
-        style={searchResults !== null && restingHeight.current ? { minHeight: restingHeight.current } : undefined}
+        style={searchResults !== null && restingHeight ? { minHeight: restingHeight } : undefined}
       >
         {searchResults !== null ? (
           searchResults.length === 0 ? (

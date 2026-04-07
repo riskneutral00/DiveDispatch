@@ -13,7 +13,7 @@ interface DayScheduleProps {
   onVenueChange?: (sessionIndex: number, venue: Venue) => void
 }
 
-const TZ_SELECT_STYLE: React.CSSProperties = { outlineColor: 'var(--color-accent)' }
+
 const CHIP_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const CHIP_STYLE: React.CSSProperties = { background: 'var(--color-glass-bg)', borderColor: 'var(--color-glass-border)' }
 const CHIP_NAME_STYLE: React.CSSProperties = { fontWeight: 500 }

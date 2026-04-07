@@ -76,7 +76,7 @@ export function SendPortalLink({
       setLinkUrl(url)
       setExpiresAt(expiry)
       return url
-    } catch (e) {
+    } catch {
       setError(tCommon('actionFailed', { action: 'Generate link' }))
       return null
     }
@@ -111,7 +111,7 @@ export function SendPortalLink({
         expiresAt: resolvedExpiry ?? Date.now() + PORTAL_LINK_EXPIRY_MS,
       })
       setSentChannel('email')
-    } catch (e) {
+    } catch {
       setError(tCommon('actionFailed', { action: 'Send email' }))
     } finally {
       setBusy(null)

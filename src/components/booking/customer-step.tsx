@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
 import { Button, ButtonGroup, Card, Input } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
-import { countryCodeToEmoji } from '@/components/ui/flag-emoji'
+
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
-import { canAdvanceFromCustomers, isValidEmail, isValidWhatsApp, isValidLine } from '@/lib/booking/wizard-state'
+import { isValidEmail, isValidWhatsApp, isValidLine } from '@/lib/booking/wizard-state'
 import type { CustomerData, CustomerContact, WizardAction } from '@/lib/booking/wizard-state'
 import type { Language } from '@/lib/types/language'
 import type { Dispatch } from 'react'
@@ -71,7 +71,7 @@ interface InlineCustomerFormProps {
   dispatch: Dispatch<WizardAction>
 }
 
-function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispatch }: InlineCustomerFormProps) {
+function InlineCustomerForm({ customer, index, canRemove, totalCustomers: _totalCustomers, dispatch }: InlineCustomerFormProps) {
   const [contactType, setContactType] = useState<ContactType>(() => {
     if (customer.contact?.whatsapp) return 'whatsapp'
     if (customer.contact?.line) return 'line'
@@ -117,10 +117,6 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
   }
 
   const flags = customer.flags ?? []
-  const isComplete =
-    customer.name.trim().length > 0 &&
-    getContactValue().trim().length > 0 &&
-    flags.length > 0
 
   return (
     <Card padding="md">

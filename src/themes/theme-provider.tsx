@@ -52,7 +52,6 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeConfig>(loadCachedTheme);
   const [mode, setModeState] = useState<ThemeMode>(loadCachedMode);
-  const [isLoading, setIsLoading] = useState(true);
 
   const { isAuthenticated } = useConvexAuth();
   const currentUser = useQuery(
@@ -67,17 +66,21 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   const prevVarsRef = useRef<Record<string, string> | null>(null);
 
+  const [prevThemeConfig, setPrevThemeConfig] = useState(themeConfig);
+  if (themeConfig && themeConfig !== prevThemeConfig) {
+    setPrevThemeConfig(themeConfig);
+    setThemeState(themeConfig as ThemeConfig);
+  }
+
   useEffect(() => {
     if (themeConfig) {
-      setThemeState(themeConfig as ThemeConfig);
       localStorage.setItem(CACHE_KEY, JSON.stringify(themeConfig));
-      setIsLoading(false);
-    } else if (currentUser && !currentUser.selectedThemeId) {
-      setIsLoading(false);
-    } else if (!isAuthenticated) {
-      setIsLoading(false);
     }
-  }, [themeConfig, currentUser, isAuthenticated]);
+  }, [themeConfig]);
+
+  const isLoading = isAuthenticated
+    ? !(themeConfig || (currentUser && !currentUser.selectedThemeId))
+    : false;
 
   useEffect(() => {
     const vars = themeToVars(theme, mode);

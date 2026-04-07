@@ -502,24 +502,6 @@ export function deserializeDraftState(json: string): WizardState | null {
   }
 }
 
-function getPrimaryInstructorSlug(days: DayConfig[]): string | undefined {
-  const counts = new Map<string, number>()
-  for (const d of days) {
-    if (d.instructorSlug && d.instructorSlug !== '__external__') {
-      counts.set(d.instructorSlug, (counts.get(d.instructorSlug) ?? 0) + 1)
-    }
-  }
-  let best: string | undefined
-  let bestCount = 0
-  for (const [slug, count] of counts) {
-    if (count > bestCount) {
-      best = slug
-      bestCount = count
-    }
-  }
-  return best
-}
-
 export function deriveActivityType(customers: CustomerData[]): CourseCode[] {
   const codes = new Set<string>()
   customers.forEach((c) =>
@@ -575,8 +557,6 @@ export function canAdvanceFromItinerary(state: WizardState): boolean {
       activityCode: e.activityCode,
       dates: e.dates,
     }))
-    const courseCodes = entries.map((e) => e.activityCode).filter(Boolean)
-
     if (validatePrerequisiteOrder(entries).length > 0) return false
 
     if (validateCourseDateOverlap(entries).length > 0) return false

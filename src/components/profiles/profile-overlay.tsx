@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
 import { Dialog } from '@/components/ui'
@@ -31,7 +31,7 @@ const STATIC_TAB_IDS: { id: ProfileOverlayTab; labelKey: 'profile' | 'roles' }[]
   { id: 'roles', labelKey: 'roles' },
 ]
 
-export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug, slug }: ProfileOverlayProps) {
+export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug: _roleSlug, slug: _slug }: ProfileOverlayProps) {
   const tNav = useTranslations('nav')
   const [activeTab, setActiveTab] = useState<string>(initialTab)
   const [roleProfileSection, setRoleProfileSection] = useState<string>('')
@@ -41,23 +41,31 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) setActiveTab(initialTab)
-  }, [open, initialTab])
+  }
 
   const isRoleTab = activeTab.startsWith('role:')
   const activeRoleKey = isRoleTab ? activeTab.slice(5) as RoleKey : null
 
-  useEffect(() => {
-    if (!activeRoleKey) return
-    const role = ROLE_BY_KEY[activeRoleKey]
-    const tabs = role?.profileTabs
-    if (tabs?.length) {
-      setRoleProfileSection((prev) => (prev && tabs.some((t) => t.id === prev) ? prev : tabs[0].id))
-    } else {
-      setRoleProfileSection('')
+  const [prevRoleKey, setPrevRoleKey] = useState(activeRoleKey)
+  if (activeRoleKey !== prevRoleKey) {
+    setPrevRoleKey(activeRoleKey)
+    if (activeRoleKey) {
+      const role = ROLE_BY_KEY[activeRoleKey]
+      const tabs = role?.profileTabs
+      if (tabs?.length) {
+        const current = roleProfileSection
+        if (!current || !tabs.some((t) => t.id === current)) {
+          setRoleProfileSection(tabs[0].id)
+        }
+      } else {
+        setRoleProfileSection('')
+      }
     }
-  }, [activeRoleKey])
+  }
   const activeRoleConfig = activeRoleKey ? ROLE_BY_KEY[activeRoleKey] : undefined
   const roleSectionTabs = activeRoleConfig?.profileTabs ?? null
 

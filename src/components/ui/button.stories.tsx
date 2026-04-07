@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Button } from './button'
-import { Plus, Trash2, Settings } from 'lucide-react'
+import { Plus, Settings } from 'lucide-react'
 
 const meta = {
   component: Button,

@@ -26,12 +26,6 @@ function yearsFromNow(years: number, base: Date = new Date()): Date {
   return d
 }
 
-function dobForAge(years: number, ref: Date = new Date()): string {
-  const d = new Date(ref)
-  d.setFullYear(d.getFullYear() - years)
-  return fmt(d)
-}
-
 describe('calcAgeAtDate', () => {
   it('returns correct age when birthday has passed in the reference year', () => {
     const ref = new Date()

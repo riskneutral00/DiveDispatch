@@ -29,6 +29,17 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
   const { user: convexUser } = useCurrentUser()
   const router = useRouter()
 
+  const defaultRole =
+    userRoles && userRoles.length > 0 ? deriveDefaultRole(userRoles.map((r) => r.role)) : null
+  const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
+  const roleSlug = roleConfig?.key
+  const slug = convexUser?.slug
+
+  const contextValue = useMemo(
+    () => roleSlug && slug ? { slug, roleSlug: roleSlug as RoleKey } : null,
+    [slug, roleSlug],
+  )
+
   useEffect(() => {
     if (user === null) {
       router.replace('/sign-up')
@@ -43,24 +54,13 @@ export function SessionDashboardShell({ children }: { children: React.ReactNode 
     return <FullPageSpinner label={t('redirecting')} />
   }
 
-  const defaultRole =
-    userRoles && userRoles.length > 0 ? deriveDefaultRole(userRoles.map((r) => r.role)) : null
-  const roleConfig = defaultRole ? ROLE_BY_CLERK_ROLE[defaultRole as ClerkRole] : undefined
-  const roleSlug = roleConfig?.key
-  const slug = convexUser?.slug
-
-  if (!roleSlug || !slug) {
+  if (!contextValue) {
     return <FullPageSpinner label={t('loading')} />
   }
 
-  const contextValue = useMemo(
-    () => ({ slug, roleSlug: roleSlug as RoleKey }),
-    [slug, roleSlug],
-  )
-
   return (
     <SessionRoleContext.Provider value={contextValue}>
-      <DashboardShell roleSlug={roleSlug as RoleKey} slug={slug}>
+      <DashboardShell roleSlug={contextValue.roleSlug} slug={contextValue.slug}>
         {children}
       </DashboardShell>
     </SessionRoleContext.Provider>
