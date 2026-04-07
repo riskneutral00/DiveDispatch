@@ -17,7 +17,10 @@
 - C8 FSM gateway invariant test added (`tests/fsmGateway.test.ts`).
 - C9 `stateMachineTime.test.ts` time guards added (`vi.useFakeTimers` + `vi.setSystemTime`).
 
-**Next:** Phase 3 — C3 (Clerk Organizations + `authorize()`), C5 (Storybook + Chromatic), C9 remainder (fixture migration + component tests). SkinCommerce theme unification (C2) deferred to own session.
+- C5 Storybook + Chromatic CI set up. Stories for all glass + form primitives. Visual regression baseline captured. Rule 10 added to `component-invariants.md`.
+- C9 complete. 10 highest-inline-insert test files migrated to `seedFixture.ts`. Portal + discard mutation component tests added.
+
+**Next:** Phase 3 — C3 (Clerk Organizations + `authorize()` build). SkinCommerce theme unification (C2) deferred to own session. ~60 raw buttons (C4) deferred to individual tickets.
 
 ---
 
@@ -191,10 +194,10 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Checklist:**
 
-- [ ] Set up Storybook with stories for all glass components and form primitives
-- [ ] Add Chromatic (or Percy) to CI pipeline
-- [ ] Capture baseline AFTER C4 cleanup (explicit dependency — don't start until C4 Phase 2 complete)
-- [ ] Add to `component-invariants.md`: "Every new component must have a Storybook story"
+- [x] Set up Storybook with stories for all glass components and form primitives
+- [x] Add Chromatic (or Percy) to CI pipeline
+- [x] Capture baseline AFTER C4 cleanup
+- [x] Add to `component-invariants.md`: "Every new component must have a Storybook story" (Rule 10)
 
 ---
 
@@ -244,8 +247,8 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 - [x] Write `Architecture/testing-invariants.md`
 - [x] Add CLAUDE.md pointer
 - [x] Fix `stateMachineTime.test.ts` — add `vi.setSystemTime` guards
-- [ ] Migrate 10 most-changed test files to `seedFixture.ts`
-- [ ] Add tests for 3 highest-risk `useMutation` components
+- [x] Migrate 10 highest-inline-insert test files to `seedFixture.ts`
+- [x] Add tests for 3 highest-risk `useMutation` components (portal + discard mutations)
 
 ---
 
