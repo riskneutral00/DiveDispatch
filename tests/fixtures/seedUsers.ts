@@ -1,7 +1,3 @@
-/**
- * User seed helpers for convex-test integration tests.
- */
-
 import type { GenericMutationCtx, GenericActionCtx } from 'convex/server'
 import type { DataModel, Doc } from '../../convex/_generated/dataModel'
 import type { StakeholderRole } from '../../convex/lib/validators'
@@ -36,7 +32,6 @@ export async function seedUser(
     isSeeded: true,
     appLanguage: 'en',
   })
-  // Seed matching userRoles entry so checkHasRole() works
   if (!overrides.skipUserRoles) {
     await ctx.db.insert('userRoles', {
       userId,
@@ -48,7 +43,6 @@ export async function seedUser(
   return userId
 }
 
-/** Seed blocked dates into the stakeholderBlockedDates table. */
 export async function seedBlockedDates(
   ctx: SeedCtx,
   opts: { stakeholderId: string; roleType: StakeholderRole; dates: string[] },

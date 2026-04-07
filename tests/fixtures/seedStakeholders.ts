@@ -1,7 +1,3 @@
-/**
- * Stakeholder seed helpers for convex-test integration tests.
- */
-
 import type { Doc } from '../../convex/_generated/dataModel'
 import type { SeedCtx } from './seedUsers'
 

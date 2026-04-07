@@ -1,7 +1,3 @@
-/**
- * Booking seed helpers for convex-test integration tests.
- */
-
 import type { Doc, Id } from '../../convex/_generated/dataModel'
 import type { SeedCtx } from './seedUsers'
 import { TEST_SLUGS } from '../helpers/testData'
@@ -75,6 +71,7 @@ export async function seedSession(
     date?: string
     startTime?: string
     endTime?: string
+    deliveryLocation?: string
   } = {},
 ) {
   return ctx.db.insert('bookingSessions', {
@@ -84,6 +81,7 @@ export async function seedSession(
     startTime: overrides.startTime ?? '08:00',
     endTime: overrides.endTime ?? '16:00',
     timezone: 'Asia/Bangkok',
+    ...(overrides.deliveryLocation !== undefined ? { deliveryLocation: overrides.deliveryLocation } : {}),
   })
 }
 
@@ -95,6 +93,9 @@ export async function seedReservation(
   overrides: {
     status?: Doc<'reservations'>['status']
     unitsRequested?: number
+    confirmedAt?: number
+    vacatedBy?: Doc<'reservations'>['vacatedBy']
+    vacatedAt?: number
   } = {},
 ) {
   return ctx.db.insert('reservations', {
@@ -103,6 +104,9 @@ export async function seedReservation(
     bookingSessionId: sessionId,
     unitsRequested: overrides.unitsRequested ?? 1,
     status: overrides.status ?? 'PendingAcceptance',
+    ...(overrides.confirmedAt !== undefined ? { confirmedAt: overrides.confirmedAt } : {}),
+    ...(overrides.vacatedBy !== undefined ? { vacatedBy: overrides.vacatedBy } : {}),
+    ...(overrides.vacatedAt !== undefined ? { vacatedAt: overrides.vacatedAt } : {}),
   })
 }
 
@@ -228,7 +232,6 @@ export async function seedBookingTemplate(
   })
 }
 
-/** Composite: seeds a booking + link + customer profile for portal tests. */
 export async function seedPortalFixture(
   ctx: SeedCtx,
   overrides: {

@@ -1,23 +1,21 @@
-/**
- * DD-360: Structured logistics in notifications.
- *
- * Tests:
- * 1. booking → Upcoming emits booking_confirmed notification to owner with logistics
- * 2. logistics fields populated from session startTime, customerProfile pickup, and boat resource
- * 3. logistics absent when no session data exists (minimal booking)
- * 4. notifications without logistics field are unaffected by schema change
- * 5. notify() stores logistics payload when provided
- * 6. notify() omits logistics key when not provided (backward compat)
- * 7. multi-role: DiveCenter, Agent, and Liveaboard bookings all emit confirmed notification
- */
-
 import { describe, it, expect, beforeEach } from 'vitest'
 import { notify } from '../convex/notifications'
 import { tryAutoAdvance } from '../convex/bookings/_shared'
 import { NOTIFICATION_TYPE, RESERVATION_STATUS, VACATED_REASON } from '../convex/shared/statuses'
 import type { Id, TableNames } from '../convex/_generated/dataModel'
 import { testDate } from './helpers/dates'
-import { TEST_SLUGS, seedUser, seedNotification } from './fixtures'
+import {
+  TEST_SLUGS,
+  seedUser,
+  seedNotification,
+  seedBooking,
+  seedInventoryUnit,
+  seedSession,
+  seedReservation,
+  seedSnapshot,
+  seedCustomerProfile,
+  seedBookingResource,
+} from './fixtures'
 import { makeT } from './helpers/convex-helpers'
 import { HOLD_TTL_MS } from '../convex/lib/auth'
 
@@ -26,23 +24,16 @@ beforeEach(() => {
   t = makeT()
 })
 
-// ─── Helper: seed a fully-confirmed booking that should auto-advance ──────────
-
 async function seedConfirmedBooking(
   ctx: Parameters<Parameters<typeof t.run>[0]>[0],
   ownerId: string,
   ownerType: 'DiveCenter' | 'Agent' | 'Liveaboard' = 'DiveCenter',
 ): Promise<Id<'bookings'>> {
-  return ctx.db.insert('bookings', {
+  return seedBooking(ctx, {
     ownerId,
     ownerType,
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: HOLD_TTL_MS,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
+    bookingFormComplete: true,
+    customerFormComplete: true,
     divers: [
       {
         name: 'Alice',
@@ -53,17 +44,8 @@ async function seedConfirmedBooking(
         activityType: ['OW'],
       },
     ],
-    operatorName: 'Test Operator',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: true,
-    customerFormComplete: true,
   })
 }
-
-// ─── notify() logistics storage ───────────────────────────────────────────────
 
 describe('notify() with logistics payload', () => {
   it('stores logistics when provided', async () => {
@@ -127,8 +109,6 @@ describe('notify() with logistics payload', () => {
   })
 })
 
-// ─── seedNotification backward compat ─────────────────────────────────────────
-
 describe('existing notifications without logistics', () => {
   it('are unaffected — logistics remains undefined', async () => {
     await t.withIdentity({ tokenIdentifier: 'test|dc-user' }).run(async (ctx) => {
@@ -144,8 +124,6 @@ describe('existing notifications without logistics', () => {
     })
   })
 })
-
-// ─── tryAutoAdvance emits booking_confirmed notification ─────────────────────
 
 describe('tryAutoAdvance logistics notification', () => {
   it('emits booking_confirmed notification to operator when booking advances to Upcoming', async () => {
@@ -168,48 +146,16 @@ describe('tryAutoAdvance logistics notification', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Seed an inventory unit and session
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
 
-      // Confirm reservation so advance succeeds
-      const sessionId = (await ctx.db
-        .query('bookingSessions')
-        .withIndex('by_bookingId', (q) => q.eq('bookingId', bookingId))
-        .first())!._id
-      const resId = await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Confirmed',
-      })
-      // Need snapshot for the reservation to exist properly
-      await ctx.db.insert('availabilitySnapshots', {
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        windowStart: '08:00',
-        windowEnd: '16:00',
-        totalUnits: 1,
-        reservedUnits: 1,
-        availableUnits: 0,
-      })
-      void resId
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
 
       await tryAutoAdvance(ctx, bookingId)
 
@@ -223,10 +169,7 @@ describe('tryAutoAdvance logistics notification', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Seed customerProfile with pickup info
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-1',
+      await seedCustomerProfile(ctx, bookingId, {
         needsPickup: true,
         pickupTime: '07:30',
         pickupLocation: 'Beach Road Hotel',
@@ -245,9 +188,7 @@ describe('tryAutoAdvance logistics notification', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // External boat resource
-      await ctx.db.insert('bookingResources', {
-        bookingId,
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
         externalName: 'MV Ocean Spirit',
       })
@@ -266,20 +207,14 @@ describe('tryAutoAdvance logistics notification', () => {
 
       const boatSlug = 'sea-rider-boat-co'
 
-      // Seed the inventory unit for the in-system boat
-      await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Boat',
-        resourceId: 'boat-unit-1',
-        displayName: 'MV Sea Rider',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      await seedInventoryUnit(ctx, {
         ownerId: boatSlug,
         ownerType: 'Boat',
+        resourceType: 'Boat',
+        displayName: 'MV Sea Rider',
       })
 
-      // Seed in-system boat resource (resourceId set, no externalName)
-      await ctx.db.insert('bookingResources', {
-        bookingId,
+      await seedBookingResource(ctx, bookingId, {
         resourceType: 'Boat',
         resourceId: boatSlug,
       })
@@ -296,7 +231,6 @@ describe('tryAutoAdvance logistics notification', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // No bookingResources inserted — no boat at all
       await tryAutoAdvance(ctx, bookingId)
 
       const booking = await ctx.db.get(bookingId)
@@ -338,17 +272,10 @@ describe('tryAutoAdvance logistics notification', () => {
 
   it('does not emit confirmed notification when booking stays Draft (conditions unmet)', async () => {
     await t.run(async (ctx) => {
-      // booking not form-complete → stays Draft
-      const bookingId = await ctx.db.insert('bookings', {
+      const bookingId = await seedBooking(ctx, {
         ownerId: TEST_SLUGS.diveCenter,
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: HOLD_TTL_MS,
-        paid: false,
-        activityType: ['OW'],
-        startDate: testDate(5),
-        endDate: testDate(7),
+        bookingFormComplete: false,
+        customerFormComplete: false,
         divers: [
           {
             name: 'Alice',
@@ -359,13 +286,6 @@ describe('tryAutoAdvance logistics notification', () => {
             activityType: ['OW'],
           },
         ],
-        operatorName: 'Test DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false, // not complete
-        customerFormComplete: false,
       })
 
       await tryAutoAdvance(ctx, bookingId)
@@ -380,24 +300,16 @@ describe('tryAutoAdvance logistics notification', () => {
   })
 })
 
-// ─── DD-421: collectLogistics filters by needsPickup:true ────────────────────
-
 describe('collectLogistics pickup profile selection (DD-421)', () => {
   it('uses diver 2 pickup when diver 1 has needsPickup:false and diver 2 has needsPickup:true', async () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Diver 1: no pickup
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-1',
+      await seedCustomerProfile(ctx, bookingId, {
         needsPickup: false,
       })
 
-      // Diver 2: has pickup
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-2',
+      await seedCustomerProfile(ctx, bookingId, {
         needsPickup: true,
         pickupTime: '07:00',
         pickupLocation: 'Patong Beach Hotel',
@@ -416,9 +328,7 @@ describe('collectLogistics pickup profile selection (DD-421)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-1',
+      await seedCustomerProfile(ctx, bookingId, {
         needsPickup: true,
         pickupTime: '06:45',
         pickupLocation: 'Kata Rocks',
@@ -437,17 +347,8 @@ describe('collectLogistics pickup profile selection (DD-421)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-1',
-        needsPickup: false,
-      })
-
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-2',
-        needsPickup: false,
-      })
+      await seedCustomerProfile(ctx, bookingId, { needsPickup: false })
+      await seedCustomerProfile(ctx, bookingId, { needsPickup: false })
 
       await tryAutoAdvance(ctx, bookingId)
 
@@ -464,17 +365,11 @@ describe('collectLogistics pickup profile selection (DD-421)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Profile with no needsPickup flag but has pickup data (legacy / no flag set)
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-fallback',
+      await seedCustomerProfile(ctx, bookingId, {
         pickupTime: '06:30',
         pickupLocation: 'Laguna Hotel',
       })
-      // Second profile also with pickup data but no needsPickup flag
-      await ctx.db.insert('customerProfiles', {
-        bookingId,
-        linkToken: 'tok-second',
+      await seedCustomerProfile(ctx, bookingId, {
         pickupTime: '09:00',
         pickupLocation: 'Airport',
       })
@@ -483,24 +378,17 @@ describe('collectLogistics pickup profile selection (DD-421)', () => {
 
       const notifications = await ctx.db.query('notifications').collect()
       const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
-      // First profile with pickup data wins
       expect(confirmed?.logistics?.pickupTime).toBe('06:30')
       expect(confirmed?.logistics?.pickupLocation).toBe('Laguna Hotel')
     })
   })
 })
 
-// ─── DD-425: collectLogistics error swallow path ──────────────────────────────
-
 describe('tryAutoAdvance collectLogistics error swallow (DD-425)', () => {
   it('advances booking and sends notification without logistics when collectLogistics throws', async () => {
     await t.run(async (ctx) => {
-      // Seed a booking that will advance (forms complete, no reservations = vacuously true)
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Intercept ctx.db.query so collectLogistics throws when it queries bookingSessions.
-      // tryAutoAdvance's main path (no in-system EM, no reservations) does not query
-      // bookingSessions, so only collectLogistics is affected.
       const originalQuery = ctx.db.query.bind(ctx.db)
       ctx.db.query = ((tableName: TableNames) => {
         if (tableName === 'bookingSessions') {
@@ -511,68 +399,39 @@ describe('tryAutoAdvance collectLogistics error swallow (DD-425)', () => {
 
       await tryAutoAdvance(ctx, bookingId)
 
-      // Restore original query for assertions
       ctx.db.query = originalQuery
 
-      // Booking still advanced to Upcoming despite collectLogistics failure
       const booking = await ctx.db.get(bookingId)
       expect(booking?.status).toBe('Upcoming')
 
-      // Notification was still sent (fire-and-forget pattern)
       const notifications = await ctx.db.query('notifications').collect()
       const confirmed = notifications.find((n) => n.type === NOTIFICATION_TYPE.BookingConfirmed)
       expect(confirmed?.userId).toBe(TEST_SLUGS.diveCenter)
       expect(confirmed?.bookingId).toEqual(bookingId)
       expect(confirmed?.message).toBe('Your booking is confirmed.')
 
-      // Logistics is absent because collectLogistics threw
       expect(confirmed?.logistics).toBeUndefined()
     })
   })
 })
-
-// ─── DD-427: deliveryLocation → departureLocation mapping ────────────────────
 
 describe('collectLogistics deliveryLocation mapping (DD-427)', () => {
   it('maps session.deliveryLocation to logistics.departureLocation', async () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
+      const sessionId = await seedSession(ctx, bookingId, unitId, {
         deliveryLocation: 'BoatPier',
       })
 
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Confirmed',
-      })
-      await ctx.db.insert('availabilitySnapshots', {
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        windowStart: '08:00',
-        windowEnd: '16:00',
-        totalUnits: 1,
-        reservedUnits: 1,
-        availableUnits: 0,
-      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
 
       await tryAutoAdvance(ctx, bookingId)
 
@@ -586,41 +445,16 @@ describe('collectLogistics deliveryLocation mapping (DD-427)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      // No deliveryLocation field
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
 
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Confirmed',
-      })
-      await ctx.db.insert('availabilitySnapshots', {
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        windowStart: '08:00',
-        windowEnd: '16:00',
-        totalUnits: 1,
-        reservedUnits: 1,
-        availableUnits: 0,
-      })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed' })
+      await seedSnapshot(ctx, unitId, { reservedUnits: 1, availableUnits: 0 })
 
       await tryAutoAdvance(ctx, bookingId)
 
@@ -631,38 +465,20 @@ describe('collectLogistics deliveryLocation mapping (DD-427)', () => {
   })
 })
 
-// ─── DD-426: hasMissingResource gate blocks auto-advance ─────────────────────
-
 describe('tryAutoAdvance hasMissingResource gate (DD-426)', () => {
   it('does NOT advance to Upcoming when a reservation is vacated with StakeholderDeclined', async () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      // Seed an inventory unit and session
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
 
-      // Reservation vacated by stakeholder declining — booking is missing a required resource
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
         status: RESERVATION_STATUS.Vacated,
         vacatedBy: VACATED_REASON.StakeholderDeclined,
         vacatedAt: Date.now(),
@@ -683,30 +499,15 @@ describe('tryAutoAdvance hasMissingResource gate (DD-426)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
 
-      // Reservation vacated because the date was blocked — also a missing resource
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
         status: RESERVATION_STATUS.Vacated,
         vacatedBy: VACATED_REASON.DateBlocked,
         vacatedAt: Date.now(),
@@ -727,31 +528,15 @@ describe('tryAutoAdvance hasMissingResource gate (DD-426)', () => {
     await t.run(async (ctx) => {
       const bookingId = await seedConfirmedBooking(ctx, TEST_SLUGS.diveCenter)
 
-      const unitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: TEST_SLUGS.instructor,
-        displayName: 'John Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
+      const unitId = await seedInventoryUnit(ctx, {
         ownerId: TEST_SLUGS.instructor,
         ownerType: 'Instructor',
+        resourceType: 'Instructor',
+        displayName: 'John Instructor',
       })
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId)
 
-      // Reservation vacated for BookingCancelled — does not set hasMissingResource
-      // No active reservations remain → allConfirmed is vacuously true
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
+      await seedReservation(ctx, bookingId, unitId, sessionId, {
         status: RESERVATION_STATUS.Vacated,
         vacatedBy: VACATED_REASON.BookingCancelled,
         vacatedAt: Date.now(),

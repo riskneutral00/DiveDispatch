@@ -2,70 +2,22 @@ import { describe, it, expect } from 'vitest'
 import { api } from '../convex/_generated/api'
 import { testDate } from './helpers/dates'
 import { makeT } from './helpers/convex-helpers'
+import {
+  seedUser,
+  seedInventoryUnit,
+  seedBooking,
+  seedSession,
+  seedReservation,
+} from './fixtures'
 
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
+const INSTRUCTOR_SLUG = 'instructor-slug'
+const INSTRUCTOR_TOKEN = `user|${INSTRUCTOR_SLUG}`
+const DC_SLUG = 'dc-slug'
 
-type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
-
-async function seedInstructorUser(ctx: Ctx, slug = 'instructor-slug') {
-  const userId = await ctx.db.insert('users', {
-    tokenIdentifier: `user|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: 'John Doe',
-    firstName: 'John',
-    lastName: 'Doe',
-    businessName: 'Dive Pro',
-    isSeeded: false,
-    appLanguage: 'en',
-  })
-  await ctx.db.insert('userRoles', {
-    userId,
-    role: 'Instructor',
-    createdAt: Date.now(),
-    profileComplete: false,
-  })
-  return userId
-}
-
-async function seedUnit(ctx: Ctx, ownerId: string) {
-  return ctx.db.insert('inventoryUnits', {
-    resourceType: 'Instructor',
-    resourceId: ownerId,
-    displayName: 'John Doe',
-    capacityModel: 'Exclusive',
-    totalUnits: 1,
-    ownerId,
-    ownerType: 'Instructor',
-  })
-}
-
-async function seedBooking(ctx: Ctx) {
-  return ctx.db.insert('bookings', {
-    ownerId: 'dc-slug',
-    ownerType: 'DiveCenter',
-    status: 'Draft',
-    createdAt: Date.now(),
-    holdTTL: 43200000,
-    paid: false,
-    activityType: ['OW'],
-    startDate: testDate(5),
-    endDate: testDate(7),
-    divers: [
-      { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
-      { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
-    ],
-    operatorName: 'Phuket Dive Center',
-    portalContact: false,
-    portalMedical: false,
-    portalWaiver: false,
-    medicalHardBlock: false,
-    bookingFormComplete: false,
-    customerFormComplete: false,
-  })
-}
-
-// ─── getOpenRequests ──────────────────────────────────────────────────────────
+const DEFAULT_DIVERS = [
+  { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as string[] },
+  { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as string[] },
+]
 
 describe('getOpenRequests', () => {
   it('returns PendingAcceptance reservations with booking context', async () => {
@@ -73,30 +25,17 @@ describe('getOpenRequests', () => {
 
     const result = await (async () => {
       const { unitId, bookingId, reservationId } = await t.run(async (ctx) => {
-        await seedInstructorUser(ctx)
-        const unitId = await seedUnit(ctx, 'instructor-slug')
-        const bookingId = await seedBooking(ctx)
-        const sessionId = await ctx.db.insert('bookingSessions', {
-          bookingId,
-          inventoryUnitId: unitId,
-          date: testDate(6),
-          startTime: '08:00',
-          endTime: '16:00',
-          timezone: 'Asia/Bangkok',
-        })
-        const reservationId = await ctx.db.insert('reservations', {
-          bookingId,
-          inventoryUnitId: unitId,
-          bookingSessionId: sessionId,
-          unitsRequested: 1,
-          status: 'PendingAcceptance',
-        })
+        await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+        const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+        const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+        const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+        const reservationId = await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
         return { unitId, bookingId, reservationId }
       })
       return { unitId, bookingId, reservationId }
     })()
 
-    const items = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const items = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(items).toHaveLength(1)
@@ -117,11 +56,11 @@ describe('getOpenRequests', () => {
   it('returns empty array when no pending reservations exist', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      await seedUnit(ctx, 'instructor-slug')
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
@@ -130,28 +69,14 @@ describe('getOpenRequests', () => {
   it('returns empty array when caller owns no inventory units', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      // Seed a booking + reservation but NO unit for instructor-slug
-      const unitId = await seedUnit(ctx, 'other-instructor')
-      const bookingId = await seedBooking(ctx)
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: 'other-instructor', ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
@@ -160,35 +85,15 @@ describe('getOpenRequests', () => {
   it('sorts by createdAt descending', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      // Insert two reservations — order of insertion determines _creationTime
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
@@ -215,29 +120,15 @@ describe('getOpenRequests', () => {
   it('skips reservation when booking record is missing', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      // Delete the booking to orphan the reservation
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
       await ctx.db.delete(bookingId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
@@ -246,39 +137,15 @@ describe('getOpenRequests', () => {
   it('excludes Confirmed and Vacated reservations — only PendingAcceptance returned', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      // Confirmed reservation — should NOT appear
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: Date.now(),
-      })
-      // Vacated reservation — should NOT appear
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Vacated',
-        vacatedBy: 'hold_expired',
-        vacatedAt: Date.now(),
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed', confirmedAt: Date.now() })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Vacated', vacatedBy: 'hold_expired', vacatedAt: Date.now() })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
@@ -287,48 +154,19 @@ describe('getOpenRequests', () => {
   it('groups multi-day reservations by booking+unit into a single OpenRequest', async () => {
     const t = makeT()
     const { bookingId, unitId } = await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      // Day 1 session + reservation
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      // Day 2 session + reservation (same booking, same unit)
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, bookingId, unitId, { date: testDate(5), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, session1Id, { status: 'PendingAcceptance' })
+      const session2Id = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, session2Id, { status: 'PendingAcceptance' })
       return { bookingId, unitId }
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
-    // Two reservations on the same booking+unit should group into one OpenRequest
     expect(result).toHaveLength(1)
     expect(result[0].reservationIds).toHaveLength(2)
     expect(result[0].bookingId).toBe(bookingId)
@@ -338,33 +176,14 @@ describe('getOpenRequests', () => {
   it('returns separate OpenRequests for different bookings', async () => {
     const t = makeT()
     const { booking1Id, booking2Id } = await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      // Booking 1
-      const booking1Id = await seedBooking(ctx)
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      // Booking 2
-      const booking2Id = await ctx.db.insert('bookings', {
-        ownerId: 'dc-slug',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: 43200000,
-        paid: false,
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const booking1Id = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, booking1Id, unitId, { date: testDate(5), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, booking1Id, unitId, session1Id, { status: 'PendingAcceptance' })
+      const booking2Id = await seedBooking(ctx, {
+        ownerId: DC_SLUG,
+        bookingFormComplete: false,
         activityType: ['AOW'],
         startDate: testDate(10),
         endDate: testDate(12),
@@ -372,39 +191,19 @@ describe('getOpenRequests', () => {
           { name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(10), endDate: testDate(12), activityType: ['AOW'] },
         ],
         operatorName: 'Koh Tao Dive Center',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false,
-        customerFormComplete: false,
       })
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        date: testDate(10),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      const session2Id = await seedSession(ctx, booking2Id, unitId, { date: testDate(10), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, booking2Id, unitId, session2Id, { status: 'PendingAcceptance' })
       return { booking1Id, booking2Id }
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(2)
     const bookingIds = result.map(r => r.bookingId)
     expect(bookingIds).toContain(booking1Id)
     expect(bookingIds).toContain(booking2Id)
-    // Verify each booking's context is distinct
     const booking2Result = result.find(r => r.bookingId === booking2Id)
     expect(booking2Result).toMatchObject({
       activityType: ['AOW'],
@@ -418,33 +217,14 @@ describe('getOpenRequests', () => {
   it('sorts newest booking first when multiple bookings exist', async () => {
     const t = makeT()
     const { booking1Id, booking2Id } = await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      // Booking 1 (created first — older)
-      const booking1Id = await seedBooking(ctx)
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      // Booking 2 (created second — newer, should sort first)
-      const booking2Id = await ctx.db.insert('bookings', {
-        ownerId: 'dc-slug',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: 43200000,
-        paid: false,
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const booking1Id = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, booking1Id, unitId, { date: testDate(5), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, booking1Id, unitId, session1Id, { status: 'PendingAcceptance' })
+      const booking2Id = await seedBooking(ctx, {
+        ownerId: DC_SLUG,
+        bookingFormComplete: false,
         activityType: ['FD'],
         startDate: testDate(10),
         endDate: testDate(10),
@@ -452,35 +232,15 @@ describe('getOpenRequests', () => {
           { name: 'Dave', abbrev: 'DA', flag: { code: 'AU', label: 'Australia' }, startDate: testDate(10), endDate: testDate(10), activityType: ['FD'] },
         ],
         operatorName: 'Another DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false,
-        customerFormComplete: false,
       })
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        date: testDate(10),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      const session2Id = await seedSession(ctx, booking2Id, unitId, { date: testDate(10), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, booking2Id, unitId, session2Id, { status: 'PendingAcceptance' })
       return { booking1Id, booking2Id }
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
-    // Newest (booking2) should appear first (descending createdAt sort)
     expect(result).toHaveLength(2)
     expect(result[0].bookingId).toBe(booking2Id)
     expect(result[1].bookingId).toBe(booking1Id)
@@ -489,57 +249,19 @@ describe('getOpenRequests', () => {
   it('aggregates requests across multiple owned inventory units', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      // Instructor owns two units (e.g. instructor unit + equipment unit)
-      const unit1Id = await seedUnit(ctx, 'instructor-slug')
-      const unit2Id = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Equipment',
-        resourceId: 'instructor-slug',
-        displayName: 'Instructor Equipment',
-        capacityModel: 'Pooled',
-        totalUnits: 5,
-        ownerId: 'instructor-slug',
-        ownerType: 'Instructor',
-      })
-      const bookingId = await seedBooking(ctx)
-      // Reservation on unit 1
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unit1Id,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unit1Id,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      // Reservation on unit 2 (same booking, different unit)
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unit2Id,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unit2Id,
-        bookingSessionId: session2Id,
-        unitsRequested: 3,
-        status: 'PendingAcceptance',
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unit1Id = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const unit2Id = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Equipment', displayName: 'Instructor Equipment', capacityModel: 'Pooled', totalUnits: 5 })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, bookingId, unit1Id, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unit1Id, session1Id, { status: 'PendingAcceptance' })
+      const session2Id = await seedSession(ctx, bookingId, unit2Id, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unit2Id, session2Id, { status: 'PendingAcceptance', unitsRequested: 3 })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
-    // Same booking but different units → two separate OpenRequests
     expect(result).toHaveLength(2)
     const requested = result.map(r => r.unitsRequested).sort()
     expect(requested).toEqual([1, 3])
@@ -548,47 +270,19 @@ describe('getOpenRequests', () => {
   it('uses max createdAt when grouping multi-day reservations', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      // Insert two reservations — second has later _creationTime
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, bookingId, unitId, { date: testDate(5), startTime: '08:00', endTime: '16:00' })
+      const session2Id = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, session1Id, { status: 'PendingAcceptance' })
+      await seedReservation(ctx, bookingId, unitId, session2Id, { status: 'PendingAcceptance' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
-    // createdAt should be set (the max of both _creationTimes)
     expect(typeof result[0].createdAt).toBe('number')
     expect(result[0].createdAt).toBeGreaterThan(0)
   })
@@ -596,50 +290,23 @@ describe('getOpenRequests', () => {
   it('returns correct diverCount from booking divers array length', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      // Booking with 3 divers
-      const bookingId = await ctx.db.insert('bookings', {
-        ownerId: 'dc-slug',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: 43200000,
-        paid: false,
-        activityType: ['OW'],
-        startDate: testDate(5),
-        endDate: testDate(7),
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, {
+        ownerId: DC_SLUG,
+        bookingFormComplete: false,
         divers: [
           { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
           { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
           { name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] },
         ],
         operatorName: 'Triple Diver DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false,
-        customerFormComplete: false,
       })
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'PendingAcceptance' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
@@ -650,34 +317,14 @@ describe('getOpenRequests', () => {
   it('mixes PendingAcceptance with other statuses on same unit — only returns pending', async () => {
     const t = makeT()
     const { pendingBookingId } = await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      // Booking with Confirmed reservation
-      const confirmedBookingId = await seedBooking(ctx)
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId: confirmedBookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: confirmedBookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: Date.now(),
-      })
-      // Different booking with PendingAcceptance reservation
-      const pendingBookingId = await ctx.db.insert('bookings', {
-        ownerId: 'dc-slug',
-        ownerType: 'DiveCenter',
-        status: 'Draft',
-        createdAt: Date.now(),
-        holdTTL: 43200000,
-        paid: false,
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const confirmedBookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, confirmedBookingId, unitId, { date: testDate(5), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, confirmedBookingId, unitId, session1Id, { status: 'Confirmed', confirmedAt: Date.now() })
+      const pendingBookingId = await seedBooking(ctx, {
+        ownerId: DC_SLUG,
+        bookingFormComplete: false,
         activityType: ['FD'],
         startDate: testDate(8),
         endDate: testDate(8),
@@ -685,32 +332,13 @@ describe('getOpenRequests', () => {
           { name: 'Eve', abbrev: 'EV', flag: { code: 'DE', label: 'Germany' }, startDate: testDate(8), endDate: testDate(8), activityType: ['FD'] },
         ],
         operatorName: 'Fun Dive DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false,
-        customerFormComplete: false,
       })
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId: pendingBookingId,
-        inventoryUnitId: unitId,
-        date: testDate(8),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: pendingBookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'PendingAcceptance',
-      })
+      const session2Id = await seedSession(ctx, pendingBookingId, unitId, { date: testDate(8), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, pendingBookingId, unitId, session2Id, { status: 'PendingAcceptance' })
       return { pendingBookingId }
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getOpenRequests, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
@@ -719,45 +347,22 @@ describe('getOpenRequests', () => {
   })
 })
 
-// ─── getConfirmedSchedule ─────────────────────────────────────────────────────
-
 describe('getConfirmedSchedule', () => {
   it('returns Confirmed reservations with booking context and sessions', async () => {
     const t = makeT()
 
     const { unitId, bookingId } = await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
 
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 999,
-      })
+      const session1Id = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(5), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, bookingId, unitId, session1Id, { status: 'Confirmed', confirmedAt: 999 })
       return { unitId, bookingId }
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toHaveLength(1)
@@ -779,37 +384,16 @@ describe('getConfirmedSchedule', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
 
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6), // later date inserted first
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(5), // earlier date inserted second
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 999,
-      })
+      const session1Id = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedSession(ctx, bookingId, unitId, { date: testDate(5), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, bookingId, unitId, session1Id, { status: 'Confirmed', confirmedAt: 999 })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     const dates = result[0].sessions.map((s) => s.date)
@@ -820,47 +404,17 @@ describe('getConfirmedSchedule', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const otherUnitId = await ctx.db.insert('inventoryUnits', {
-        resourceType: 'Instructor',
-        resourceId: 'other',
-        displayName: 'Other Instructor',
-        capacityModel: 'Exclusive',
-        totalUnits: 1,
-        ownerId: 'other',
-        ownerType: 'Instructor',
-      })
-      const bookingId = await seedBooking(ctx)
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const otherUnitId = await seedInventoryUnit(ctx, { ownerId: 'other', ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'Other Instructor' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
 
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      // Session belonging to a different unit
-      await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: otherUnitId,
-        date: testDate(7),
-        startTime: '10:00',
-        endTime: '14:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 999,
-      })
+      const session1Id = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedSession(ctx, bookingId, otherUnitId, { date: testDate(7), startTime: '10:00', endTime: '14:00' })
+      await seedReservation(ctx, bookingId, unitId, session1Id, { status: 'Confirmed', confirmedAt: 999 })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result[0].sessions).toHaveLength(1)
@@ -871,70 +425,29 @@ describe('getConfirmedSchedule', () => {
     const t = makeT()
 
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
 
-      // Booking 1: starts June 1
-      const booking1Id = await seedBooking(ctx)
-      const session1Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        date: testDate(5),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking1Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session1Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 100,
-      })
+      const booking1Id = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const session1Id = await seedSession(ctx, booking1Id, unitId, { date: testDate(5), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, booking1Id, unitId, session1Id, { status: 'Confirmed', confirmedAt: 100 })
 
-      // Booking 2: starts May 1 (earlier)
-      const booking2Id = await ctx.db.insert('bookings', {
-        ownerId: 'dc-slug',
-        ownerType: 'DiveCenter',
+      const booking2Id = await seedBooking(ctx, {
+        ownerId: DC_SLUG,
+        bookingFormComplete: false,
         status: 'Upcoming',
-        createdAt: Date.now(),
-        holdTTL: 43200000,
-        paid: false,
-        activityType: ['OW'],
         startDate: testDate(3),
         endDate: testDate(4),
         divers: [{ name: 'Carol', abbrev: 'CA', flag: { code: 'TH', label: 'Thailand' }, startDate: testDate(3), endDate: testDate(4), activityType: ['OW'] }],
         operatorName: 'Test DC',
-        portalContact: false,
-        portalMedical: false,
-        portalWaiver: false,
-        medicalHardBlock: false,
-        bookingFormComplete: false,
-        customerFormComplete: false,
       })
-      const session2Id = await ctx.db.insert('bookingSessions', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        date: testDate(3),
-        startTime: '09:00',
-        endTime: '12:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId: booking2Id,
-        inventoryUnitId: unitId,
-        bookingSessionId: session2Id,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 200,
-      })
+      const session2Id = await seedSession(ctx, booking2Id, unitId, { date: testDate(3), startTime: '09:00', endTime: '12:00' })
+      await seedReservation(ctx, booking2Id, unitId, session2Id, { status: 'Confirmed', confirmedAt: 200 })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
-    // booking2 (May 1) should sort before booking1 (June 1)
     expect(result[0].startDate).toBe(testDate(3))
     expect(result[1].startDate).toBe(testDate(5))
   })
@@ -942,11 +455,11 @@ describe('getConfirmedSchedule', () => {
   it('returns empty array when no confirmed reservations exist', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      await seedUnit(ctx, 'instructor-slug')
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])
@@ -972,29 +485,15 @@ describe('getConfirmedSchedule', () => {
   it('skips reservation when booking record is missing', async () => {
     const t = makeT()
     await t.run(async (ctx) => {
-      await seedInstructorUser(ctx)
-      const unitId = await seedUnit(ctx, 'instructor-slug')
-      const bookingId = await seedBooking(ctx)
-      const sessionId = await ctx.db.insert('bookingSessions', {
-        bookingId,
-        inventoryUnitId: unitId,
-        date: testDate(6),
-        startTime: '08:00',
-        endTime: '16:00',
-        timezone: 'Asia/Bangkok',
-      })
-      await ctx.db.insert('reservations', {
-        bookingId,
-        inventoryUnitId: unitId,
-        bookingSessionId: sessionId,
-        unitsRequested: 1,
-        status: 'Confirmed',
-        confirmedAt: 999,
-      })
+      await seedUser(ctx, { slug: INSTRUCTOR_SLUG, tokenIdentifier: INSTRUCTOR_TOKEN, role: 'Instructor', name: 'John Doe', firstName: 'John', lastName: 'Doe' })
+      const unitId = await seedInventoryUnit(ctx, { ownerId: INSTRUCTOR_SLUG, ownerType: 'Instructor', resourceType: 'Instructor', displayName: 'John Doe' })
+      const bookingId = await seedBooking(ctx, { ownerId: DC_SLUG, bookingFormComplete: false, divers: DEFAULT_DIVERS, operatorName: 'Phuket Dive Center' })
+      const sessionId = await seedSession(ctx, bookingId, unitId, { date: testDate(6), startTime: '08:00', endTime: '16:00' })
+      await seedReservation(ctx, bookingId, unitId, sessionId, { status: 'Confirmed', confirmedAt: 999 })
       await ctx.db.delete(bookingId)
     })
 
-    const result = await t.withIdentity({ tokenIdentifier: 'user|instructor-slug' })
+    const result = await t.withIdentity({ tokenIdentifier: INSTRUCTOR_TOKEN })
       .query(api.resourceQueries.getConfirmedSchedule, { activeRole: 'Instructor' })
 
     expect(result).toEqual([])

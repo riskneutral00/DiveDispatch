@@ -1,7 +1,3 @@
-/**
- * Profile seed helpers for convex-test integration tests.
- */
-
 import type { Doc, Id } from '../../convex/_generated/dataModel'
 import type { SeedCtx } from './seedUsers'
 

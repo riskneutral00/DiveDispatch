@@ -1,41 +1,12 @@
-/**
- * @module-tag slow
- */
-
 import { describe, it, expect } from 'vitest'
 import { api } from '../../convex/_generated/api'
-import type { MutationCtx } from '../../convex/_generated/server'
 import { makeT } from '../helpers/convex-helpers'
-
-// ─── Seed helpers ─────────────────────────────────────────────────────────────
-
-async function seedUser(ctx: MutationCtx, slug: string) {
-  const userId = await ctx.db.insert('users', {
-    tokenIdentifier: `clerk|${slug}`,
-    slug,
-    email: `${slug}@test.com`,
-    name: `${slug} DC`,
-    firstName: slug,
-    lastName: 'Test',
-    businessName: `${slug} Business`,
-    isSeeded: false,
-    appLanguage: 'en',
-  })
-  await ctx.db.insert('userRoles', {
-    userId,
-    role: 'DiveCenter',
-    createdAt: Date.now(),
-    profileComplete: false,
-  })
-  return userId
-}
-
-// ─── Tests: diveCenters.create (onboarding profile step save) ─────────────────
+import { seedUser } from '../fixtures'
 
 describe('05: onboarding profile step — save mutation', () => {
   it('save mutation persists associations array', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-assoc'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-assoc', tokenIdentifier: 'clerk|dc-assoc' }))
 
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-assoc' })
@@ -61,7 +32,7 @@ describe('05: onboarding profile step — save mutation', () => {
 
   it('save mutation persists languages', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-langs'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-langs', tokenIdentifier: 'clerk|dc-langs' }))
 
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-langs' })
@@ -85,7 +56,7 @@ describe('05: onboarding profile step — save mutation', () => {
 
   it('save mutation persists OW/AOW day defaults', async () => {
     const t = makeT()
-    await t.run(async (ctx) => seedUser(ctx, 'dc-days'))
+    await t.run(async (ctx) => seedUser(ctx, { slug: 'dc-days', tokenIdentifier: 'clerk|dc-days' }))
 
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-days' })
