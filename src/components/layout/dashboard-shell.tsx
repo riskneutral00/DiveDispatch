@@ -130,7 +130,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         businessName={activeTreeFilter ? undefined : (user.businessName ?? undefined)}
       />
 
-      <main className="dashboard-enter flex-1 pt-1 px-4 pb-28 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8 md:pb-8">{children}</main>
+      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-28 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8 md:pb-8">{children}</main>
 
       <MobileBottomNav roleSlug={roleSlug} slug={slug} />
 

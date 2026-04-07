@@ -13,7 +13,7 @@ export function FieldLabel({ htmlFor, children, required, className, style }: Fi
   return (
     <label
       htmlFor={htmlFor}
-      className={cn('text-label font-medium text-secondary', className)}
+      className={cn('text-[10px] font-medium text-secondary label-float-in', className)}
       style={style}
     >
       {children}

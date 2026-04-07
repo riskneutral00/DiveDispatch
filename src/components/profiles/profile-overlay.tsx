@@ -94,7 +94,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Account" fullScreen>
+    <Dialog open={open} onClose={onClose} title="Account" fullScreen scrim>
       <div className="flex flex-col h-full">
 
         <div
@@ -154,7 +154,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
         </div>
 
         <div
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto overflow-x-hidden"
           role="tabpanel"
         >
           <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 sm:px-6">

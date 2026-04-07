@@ -324,8 +324,8 @@ body {
   transition: opacity 0.25s ease;
 }
 
-/* Glass Air: fade page content when a dialog is open, revealing the brand background.
-   CSS-only: no JS required. Targets any open native <dialog> element. */
+/* Scrim: fade page content when a scrim dialog is open, revealing the brand background.
+   CSS-only: no JS required. Targets any open native <dialog> with data-scrim attribute. */
 html:has(dialog[open][data-scrim]) .app-shell {
   opacity: 0;
 }
@@ -473,6 +473,16 @@ dialog::backdrop {
     border: 1px solid var(--color-glass-container-border);
     box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
   }
+}
+
+/* ── Label float-in animation — mount effect for FieldLabel ────────────────*/
+@layer utilities {
+  .label-float-in {
+    animation: label-float-in var(--transition-speed) ease;
+  }
+}
+@keyframes label-float-in {
+  from { font-size: 14px; opacity: 0.5; }
 }
 
 /* ── Field underline — in @layer utilities so Tailwind v4 doesn't strip it ─*/

@@ -24,6 +24,7 @@ export function Input({
   type,
   onClick,
   style: externalStyle,
+  placeholder: externalPlaceholder,
   ...props
 }: InputProps) {
   const generatedId = useId();
@@ -31,7 +32,10 @@ export function Input({
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
   const [focused, setFocused] = useState(false)
   const filled = typeof props.value === 'string' ? props.value.length > 0 : !!props.value
-  const floated = focused || filled || !!props.placeholder
+  const hasRealPlaceholder = !!externalPlaceholder && externalPlaceholder.trim() !== ""
+  const [mounted, setMounted] = useState(false)
+  React.useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
+  const floated = mounted || focused || filled || hasRealPlaceholder
 
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>
@@ -40,7 +44,7 @@ export function Input({
         type={type}
         id={id}
         disabled={disabled}
-        placeholder=" "
+        placeholder={externalPlaceholder || " "}
         onFocus={(e) => { setFocused(true); props.onFocus?.(e) }}
         onBlur={(e) => { setFocused(false); props.onBlur?.(e) }}
         onClick={(e) => {

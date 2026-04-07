@@ -153,7 +153,7 @@ function DevSwitcherInner() {
                 {error}
               </div>
             )}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto overflow-x-hidden">
               {ROLES.filter((c) => !DEV_SWITCHER_EXCLUDED_ROLE_KEYS.has(c.key)).map((config) => {
                 const users = GROUPED.get(config.key)
                 if (!users?.length) return null

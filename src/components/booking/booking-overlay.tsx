@@ -25,6 +25,7 @@ export function BookingOverlay({
       onClose={onClose}
       title="New Booking"
       fullScreen
+      scrim
     >
       <BookingWizard
         key={wizardKey}

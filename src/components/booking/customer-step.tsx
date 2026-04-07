@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { ErrorAlert } from '@/components/ui/error-alert'
-import { Button, ButtonGroup, Card, Input } from '@/components/ui'
+import { Button, ButtonGroup, Input } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
 
@@ -71,7 +71,7 @@ interface InlineCustomerFormProps {
   dispatch: Dispatch<WizardAction>
 }
 
-function InlineCustomerForm({ customer, index, canRemove, totalCustomers: _totalCustomers, dispatch }: InlineCustomerFormProps) {
+function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispatch }: InlineCustomerFormProps) {
   const [contactType, setContactType] = useState<ContactType>(() => {
     if (customer.contact?.whatsapp) return 'whatsapp'
     if (customer.contact?.line) return 'line'
@@ -119,81 +119,67 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers: _total
   const flags = customer.flags ?? []
 
   return (
-    <Card padding="md">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <Input
-              label="Name *"
-              value={customer.name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="e.g. Sara Kim"
-              autoFocus={index === 0 && !customer.name}
-            />
-          </div>
-          {canRemove && (
-            <Button
-              variant="destructive-ghost"
-              size="sm"
-              type="button"
-              onClick={() => dispatch({ type: 'REMOVE_CUSTOMER', id: customer.id })}
-              aria-label={`Remove ${customer.name || `customer ${index + 1}`}`}
-            >
-              <Trash2 size={16} />
-            </Button>
-          )}
-        </div>
-
-        <hr className="form-divider" />
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            className="text-label font-medium text-secondary"
+    <div className="flex flex-col gap-4">
+      <div className="flex items-end gap-2">
+        <Input
+          label="Name"
+          value={customer.name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder="e.g. Sara Kim"
+          autoFocus={index === 0 && !customer.name}
+          required
+          className="flex-1"
+        />
+        {canRemove && (
+          <Button
+            variant="destructive-ghost"
+            size="sm"
+            type="button"
+            onClick={() => dispatch({ type: 'REMOVE_CUSTOMER', id: customer.id })}
+            aria-label={`Remove ${customer.name || `customer ${index + 1}`}`}
           >
-            Contact *
-          </label>
-          <div className="flex gap-2">
-            <ButtonGroup
-              variant="segment"
-              value={contactType}
-              onChange={(v) => handleContactTypeChange(v as ContactType)}
-              aria-label="Contact type"
-              options={[
-                { value: 'email', label: 'Email' },
-                { value: 'whatsapp', label: 'WhatsApp' },
-                { value: 'line', label: 'LINE' },
-              ] satisfies ButtonGroupOption[]}
-            />
-            <input /* design-ok: dynamic contact input tied to button group */
-              value={getContactValue()}
-              onChange={(e) => handleContactValueChange(e.target.value)}
-              placeholder={
-                contactType === 'email'
-                  ? 'customer@email.com'
-                  : contactType === 'whatsapp'
-                    ? '+66 81 234 5678'
-                    : 'LINE ID'
-              }
-              type={contactType === 'email' ? 'email' : 'text'}
-              data-testid={contactType === 'email' ? 'customer-email' : undefined}
-              className="field-underline flex-1 text-body py-2.5 px-0 text-primary"
-              style={{ caretColor: 'var(--color-accent)' }}
-            />
-          </div>
-          <ContactValidationHint contactType={contactType} value={getContactValue()} />
-        </div>
-
-        <hr className="form-divider" />
-
-        <div className="flex flex-wrap gap-4 w-full">
-          <LanguageField
-            variant="customer"
-            value={flags.map((f) => ({ code: f.code, label: f.label }))}
-            onChange={handleLanguagesChange}
-          />
-        </div>
+            <Trash2 size={16} />
+          </Button>
+        )}
       </div>
-    </Card>
+
+      <div className="flex flex-col gap-2">
+        <ButtonGroup
+          variant="segment"
+          value={contactType}
+          onChange={(v) => handleContactTypeChange(v as ContactType)}
+          aria-label="Contact type"
+          options={[
+            { value: 'email', label: 'Email' },
+            { value: 'whatsapp', label: 'WhatsApp' },
+            { value: 'line', label: 'LINE' },
+          ] satisfies ButtonGroupOption[]}
+        />
+        <Input
+          label={contactType === 'email' ? 'Email address' : contactType === 'whatsapp' ? 'WhatsApp number' : 'LINE ID'}
+          value={getContactValue()}
+          onChange={(e) => handleContactValueChange(e.target.value)}
+          placeholder={
+            contactType === 'email'
+              ? 'customer@email.com'
+              : contactType === 'whatsapp'
+                ? '+66 81 234 5678'
+                : 'LINE ID'
+          }
+          type={contactType === 'email' ? 'email' : contactType === 'whatsapp' ? 'tel' : 'text'}
+          required
+        />
+        <ContactValidationHint contactType={contactType} value={getContactValue()} />
+      </div>
+
+      <LanguageField
+        variant="customer"
+        value={flags.map((f) => ({ code: f.code, label: f.label }))}
+        onChange={handleLanguagesChange}
+      />
+
+      {index < totalCustomers - 1 && <hr className="form-divider" />}
+    </div>
   )
 }
 

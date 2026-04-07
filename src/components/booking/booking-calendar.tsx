@@ -417,7 +417,7 @@ export function BookingCalendar({
 
                     <div
                       data-testid={`day-pills-${day.dateString}`}
-                      className="overflow-y-auto"
+                      className="overflow-y-auto overflow-x-hidden"
                       style={{ height: `${DAY_CELL_PILLS_MAX_HEIGHT}px` }}
                     >
                     {dayBars.map((bar) => {

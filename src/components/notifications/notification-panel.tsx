@@ -63,7 +63,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 top-full mt-2 z-[var(--z-dropdown)] w-80 max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated rounded-theme"
+      className="absolute right-0 top-full mt-2 z-[var(--z-dropdown)] w-80 max-w-[calc(100vw-2rem)] max-h-[28rem] flex flex-col overflow-hidden shadow-xl glass-elevated rounded-theme"
       role="dialog"
       aria-modal="true"
       aria-label="Notifications"
@@ -84,7 +84,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {notifications === undefined && (
           <div className="flex items-center justify-center py-6 text-primary">
             <Spinner />

@@ -457,7 +457,7 @@ export function PreferredInstructorList(props: ListProps) {
               background: 'var(--color-surface-elevated)',
             }}
           >
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {filteredEntries.length > 0 ? (
                 paginatedEntries.map((entry, i) => (
                   <InstructorCandidateRow
@@ -684,7 +684,7 @@ function PreferredOverlayList({
               background: 'var(--color-surface-elevated)',
             }}
           >
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {paginatedEntries.length > 0 ? (
                 paginatedEntries.map((entry) => (
                   <button

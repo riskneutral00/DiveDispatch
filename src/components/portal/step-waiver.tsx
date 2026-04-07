@@ -40,7 +40,7 @@ const todayLocal = () => toISODateString(new Date())
 function LegalBlock({ text }: { text: string }) {
   return (
     <div
-      className="rounded-theme p-3 text-body leading-relaxed overflow-y-auto text-secondary glass"
+      className="rounded-theme p-3 text-body leading-relaxed overflow-y-auto overflow-x-hidden text-secondary glass"
       style={{ maxHeight: 140, whiteSpace: 'pre-wrap' }}
     >
       {text}

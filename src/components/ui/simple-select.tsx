@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { FieldError } from '@/components/ui/field-shell'
 
@@ -41,7 +41,9 @@ export function SimpleSelect({
   const id = generatedId
   const [focused, setFocused] = useState(false)
   const filled = value.length > 0
-  const floated = focused || filled
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
+  const floated = mounted || focused || filled
 
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>

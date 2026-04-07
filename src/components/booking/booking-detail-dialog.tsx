@@ -217,6 +217,7 @@ export function BookingDetailDialog({ bookingId, onClose }: BookingDetailDialogP
       onClose={onClose}
       title="Booking"
       fullScreen
+      scrim
     >
       {bookingId !== null && (
         <BookingDetailContent bookingId={bookingId} onClose={onClose} />
