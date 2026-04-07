@@ -7,41 +7,33 @@ export interface ColorPalette {
   textOnPrimary: string;
   glassBg: string;
   glassBorder: string;
-  glassBlur: number; // px
+  glassBlur: number;
   success: string;
   warning: string;
   destructive: string;
   surface: string;
   surfaceElevated: string;
-  // Glass visual parity additions
   primaryGlow: string;
   glassBgElevated: string;
   glassBorderElevated: string;
-  glassBlurElevated: number; // px
+  glassBlurElevated: number;
   glassSpecular: string;
   glassSpecularSubtle: string;
   glassShadow: string;
   glassShadowElevated: string;
-  // Hover state (component-level surface effect)
   glassBgHover: string;
   glassBorderHover: string;
-  glassBlurHover: number; // px
-  bgImage?: string; // optional — some skins use solid bodyBg only
-  bgOverlay?: string; // optional
-  bgPosition?: string; // optional — CSS background-position (default: "center")
+  glassBlurHover: number;
+  bgImage?: string;
+  bgOverlay?: string;
+  bgPosition?: string;
   bodyBg: string;
-  // Luminance class — selects which glass formula tier applies to this palette.
-  // Set at design time per-skin, not calculated at runtime.
   luminanceClass: "dark" | "medium" | "bright";
-  // Ghost border for .glass-container — was hardcoded in CSS, now theme-driven
   glassContainerBorder: string;
-  // Readability surface for .glass-container — no blur, just semi-transparent bg
   glassContainerBg: string;
-  // Semantic opacity tokens — scale per luminance class for readability
-  opacityWatermark: number; // date numbers, decorative text (0.18–0.35)
-  opacitySubtle: number; // status backgrounds, tinted highlights (0.14–0.28)
-  opacityMuted: number; // disabled states, placeholders (0.50–0.65)
-  // Status colors — adapt per luminance class (400-level dark, 600-level bright)
+  opacityWatermark: number;
+  opacitySubtle: number;
+  opacityMuted: number;
   statusActive: string;
   statusDraft: string;
   statusUpcoming: string;
@@ -50,37 +42,31 @@ export interface ColorPalette {
   statusUrgent: string;
   statusBlocked: string;
   statusMultidayBorder: string;
-  // Tooltip — adapts per luminance (light bg on dark, dark bg on bright)
   tooltipBg: string;
   tooltipText: string;
 }
 
 export interface ThemeConfig {
-  // === Identity ===
   id: string;
   name: string;
 
-  // === Colors ===
   colors: {
     light?: ColorPalette;
     dark: ColorPalette;
   };
 
-  // === Typography ===
   typography: {
     fontHeading: string;
     fontBody: string;
     fontAccent?: string;
-    headingWeight: number; // 600–900
-    bodyWeight: number; // 300–500
+    headingWeight: number;
+    bodyWeight: number;
   };
 
-  // === Backgrounds ===
   backgrounds: {
-    fallbackColor?: string; // Used when no skin image loads; defaults to colors.dark.bodyBg
+    fallbackColor?: string;
   };
 
-  // === Shape & Decoration ===
   shape: {
     borderRadius: string;
     borderRadiusButton: string;
@@ -89,7 +75,6 @@ export interface ThemeConfig {
     iconStyle: "outlined" | "filled";
   };
 
-  // === Motion ===
   motion: {
     transitionSpeed: "fast" | "normal" | "slow";
     hoverEffect: "glow" | "none";
@@ -103,6 +88,7 @@ export type ThemeMode = "light" | "dark";
 export interface ThemeContextValue {
   theme: ThemeConfig;
   mode: ThemeMode;
-  setTheme: (theme: ThemeConfig) => void;
   setMode: (mode: ThemeMode) => void;
+  selectTheme: (themeId: string) => void;
+  isLoading: boolean;
 }

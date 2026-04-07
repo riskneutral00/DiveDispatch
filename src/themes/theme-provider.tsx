@@ -9,10 +9,15 @@ import {
   useRef,
   useState,
 } from "react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { api } from "@/lib/convex-generated";
 import { loadGoogleFonts } from "./theme-loader";
-import { SKINS } from "./skins";
+import { OCEAN_DEFAULT } from "./default-themes";
 import { ThemeConfig, ThemeContextValue, ThemeMode } from "./theme-types";
 import { clearInjectedVars, injectVars, themeToVars } from "./theme-utils";
+
+const CACHE_KEY = "divedispatch-theme-cache";
+const MODE_KEY = "divedispatch-theme-pref";
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -24,21 +29,55 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
-interface ThemeProviderProps {
-  children: React.ReactNode;
-  initialTheme?: ThemeConfig;
-  initialMode?: ThemeMode;
+function loadCachedTheme(): ThemeConfig {
+  if (typeof window === "undefined") return OCEAN_DEFAULT;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) return JSON.parse(raw) as ThemeConfig;
+  } catch {
+  }
+  return OCEAN_DEFAULT;
 }
 
-export function ThemeProvider({
-  children,
-  initialTheme = SKINS[0],
-  initialMode = "dark",
-}: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<ThemeConfig>(initialTheme);
-  const [mode, setModeState] = useState<ThemeMode>(initialMode);
+function loadCachedMode(): ThemeMode {
+  if (typeof window === "undefined") return "dark";
+  const stored = localStorage.getItem(MODE_KEY);
+  return stored === "light" ? "light" : "dark";
+}
+
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<ThemeConfig>(loadCachedTheme);
+  const [mode, setModeState] = useState<ThemeMode>(loadCachedMode);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const { isAuthenticated } = useConvexAuth();
+  const currentUser = useQuery(
+    api.users.me,
+    isAuthenticated ? {} : "skip",
+  );
+  const themeConfig = useQuery(
+    api.themes.getConfig,
+    currentUser?.selectedThemeId ? { id: currentUser.selectedThemeId } : "skip",
+  );
+  const selectThemeMutation = useMutation(api.themes.selectTheme);
 
   const prevVarsRef = useRef<Record<string, string> | null>(null);
+
+  useEffect(() => {
+    if (themeConfig) {
+      setThemeState(themeConfig as ThemeConfig);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(themeConfig));
+      setIsLoading(false);
+    } else if (currentUser && !currentUser.selectedThemeId) {
+      setIsLoading(false);
+    } else if (!isAuthenticated) {
+      setIsLoading(false);
+    }
+  }, [themeConfig, currentUser, isAuthenticated]);
 
   useEffect(() => {
     const vars = themeToVars(theme, mode);
@@ -92,11 +131,27 @@ export function ThemeProvider({
     };
   }, []);
 
-  const setTheme = useCallback((next: ThemeConfig) => setThemeState(next), []);
-  const setMode = useCallback((next: ThemeMode) => setModeState(next), []);
+  const setMode = useCallback((next: ThemeMode) => {
+    setModeState(next);
+    localStorage.setItem(MODE_KEY, next);
+  }, []);
+
+  const selectTheme = useCallback(
+    (themeId: string) => {
+      if (isAuthenticated) {
+        selectThemeMutation({ themeId: themeId as never });
+      }
+    },
+    [isAuthenticated, selectThemeMutation],
+  );
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({ theme, mode, setMode, selectTheme, isLoading }),
+    [theme, mode, setMode, selectTheme, isLoading],
+  );
 
   return (
-    <ThemeContext.Provider value={useMemo(() => ({ theme, mode, setTheme, setMode }), [theme, mode, setTheme, setMode])}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

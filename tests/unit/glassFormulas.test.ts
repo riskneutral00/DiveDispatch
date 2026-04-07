@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GLASS_FORMULAS, SKINS } from '../../src/themes/skins'
+import { GLASS_FORMULAS, DEFAULT_THEMES } from '../../src/themes/default-themes'
 import type { ColorPalette } from '../../src/themes/theme-types'
 
 describe('GLASS_FORMULAS structural invariants', () => {
@@ -58,8 +58,8 @@ describe('GLASS_FORMULAS structural invariants', () => {
   }
 })
 
-describe('SKINS data integrity', () => {
-  for (const skin of SKINS) {
+describe('DEFAULT_THEMES data integrity', () => {
+  for (const skin of DEFAULT_THEMES) {
     describe(`${skin.name}`, () => {
       it('has a non-empty id and name', () => {
         expect(skin.id).toMatch(/\S/)

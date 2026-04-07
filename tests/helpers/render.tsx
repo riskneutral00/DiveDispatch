@@ -4,20 +4,17 @@ import { NextIntlClientProvider } from 'next-intl'
 import enMessages from '../../messages/en.json'
 import { ThemeContext } from '@/themes/theme-provider'
 import { type ThemeContextValue } from '@/themes/theme-types'
-import { SKINS } from '@/themes/skins'
+import { OCEAN_DEFAULT } from '@/themes/default-themes'
 import { ConvexProvider, ConvexReactClient } from 'convex/react'
 
-// Stub Convex client — component tests don't hit the backend.
-// ConvexProvider still satisfies useQuery/useMutation hooks at the type level;
-// individual tests mock return values via vi.mock().
 const stubClient = new ConvexReactClient('https://stub.convex.cloud')
 
-// Minimal ThemeContext value so useTheme() doesn't throw
 const stubTheme: ThemeContextValue = {
-  theme: SKINS[0],
+  theme: OCEAN_DEFAULT,
   mode: 'dark',
-  setTheme: () => {},
   setMode: () => {},
+  selectTheme: () => {},
+  isLoading: false,
 }
 
 function AllProviders({ children }: { children: ReactNode }) {

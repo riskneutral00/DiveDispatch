@@ -1,37 +1,32 @@
 'use client'
 
 import { Palette } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery } from 'convex/react'
+import { api } from '@/lib/convex-generated'
 import { IconButton } from '@/components/ui/icon-button'
-import { SKINS } from '@/themes/skins'
 import { useTheme } from '@/themes/theme-provider'
 
-const STORAGE_KEY = 'divedispatch-bg-pref'
-
 export function BgSwitcher() {
-  const { setTheme } = useTheme()
-  const [index, setIndex] = useState<number>(() => {
-    if (typeof window === 'undefined') return 0
-    const stored = localStorage.getItem(STORAGE_KEY)
-    const idx = SKINS.findIndex(s => s.id === stored)
-    return idx >= 0 ? idx : 0
-  })
+  const { selectTheme } = useTheme()
+  const storeThemes = useQuery(api.themes.listStore)
+  const [index, setIndex] = useState(0)
 
-  useEffect(() => {
-    setTheme(SKINS[index])
-  }, [index, setTheme])
+  const isLoaded = storeThemes && storeThemes.length > 0
+  const current = isLoaded ? storeThemes[index % storeThemes.length] : null
 
   function cycle() {
-    const next = (index + 1) % SKINS.length
+    if (!storeThemes || storeThemes.length === 0) return
+    const next = (index + 1) % storeThemes.length
     setIndex(next)
-    localStorage.setItem(STORAGE_KEY, SKINS[next].id)
-    setTheme(SKINS[next])
+    selectTheme(storeThemes[next]._id as string)
   }
 
   return (
     <IconButton
-      aria-label={`Switch skin (current: ${SKINS[index].name})`}
+      aria-label={current ? `Switch skin (current: ${current.name})` : 'Switch skin'}
       onClick={cycle}
+      disabled={!isLoaded}
     >
       <Palette size={15} />
     </IconButton>
