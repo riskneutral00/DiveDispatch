@@ -245,8 +245,7 @@ export const seedUserRoles = internalMutation({
 
       const user = await ctx.db
         .query('users')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .withIndex('by_slug', (q: any) => q.eq('slug', s.user.slug))
+        .withIndex('by_slug', (q) => q.eq('slug', s.user.slug))
         .unique()
       if (!user) continue
 
@@ -267,8 +266,7 @@ export const seedInstructors = internalMutation({
   handler: async (ctx) => {
     const existingInstructor = await ctx.db
       .query('users')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .withIndex('by_slug', (q: any) => q.eq('slug', ALL_INSTRUCTORS[0]?.user.slug))
+      .withIndex('by_slug', (q) => q.eq('slug', ALL_INSTRUCTORS[0]?.user.slug))
       .unique()
     if (existingInstructor) return 'Already seeded'
 
@@ -443,75 +441,75 @@ export const seedStakeholderPreferences = internalMutation({
   handler: async (ctx) => {
     const OPERATOR_PREFERRED: Record<string, { instructors?: string[]; boats?: string[]; venues?: string[]; compressors?: string[]; equipment?: string[] }> = {
       'n7rq5j': { // Hug Ocean — zh-CN, zh-TW, th, en — owns boat, pool, gear
-        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu', 'mei-lin', 'suporn-thani', 'pimchanok-sri', 'ryan-clarke', 'rachel-nguyen'],
+        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu'],
         boats: ['n7rq5j'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['n7rq5j'],
       },
       'z8mv4c': { // Neptune — zh-CN, zh-TW, en, th — owns pool, gear
-        instructors: ['wei-chen', 'zhang-yong', 'mike-chen', 'xiao-lei', 'wanchai-pong', 'mei-lin', 'nicole-tam', 'budi-santoso'],
+        instructors: ['wei-chen', 'zhang-yong', 'mike-chen', 'xiao-lei', 'wanchai-pong'],
         boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['z8mv4c'],
       },
       'p5ky3w': { // Phuket DC — th, en, zh-CN, ko — owns boat, gear
-        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'kim-ji-soo', 'hiroshi-kato', 'lee-min-ho', 'budi-santoso', 'andi-firmansyah'],
+        instructors: ['ryan-clarke', 'nattaya-srisuk', 'somphon-kaew', 'kim-ji-soo', 'hiroshi-kato'],
         boats: ['p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['p5ky3w'],
       },
       'q9bz7r': { // Nicole DC — zh-TW, zh-CN, en, th — owns gear (open)
-        instructors: ['nicole-tam', 'wei-chen', 'mike-chen', 'zhang-yong', 'xiao-lei', 'pimchanok-sri', 'seo-min-ji', 'mei-lin'],
+        instructors: ['nicole-tam', 'wei-chen', 'mike-chen', 'zhang-yong', 'xiao-lei'],
         boats: ['sirolo', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
       },
       'v6js2t': { // Manta DC — fr, en, th
-        instructors: ['pierre-dubois', 'rachel-nguyen', 'camille-moreau', 'stefan-braun', 'ryan-clarke', 'sophie-laurent'],
+        instructors: ['pierre-dubois', 'rachel-nguyen', 'camille-moreau', 'stefan-braun', 'ryan-clarke'],
         boats: ['n7rq5j', 'sirolo'], venues: ['n7rq5j'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
       },
       'm4fx8d': { // ScubaNicks — en, th, zh-CN — owns gear
-        instructors: ['ryan-clarke', 'nattaya-srisuk', 'li-ming', 'mike-chen', 'wei-chen', 'yuki-tanaka', 'mei-lin'],
+        instructors: ['ryan-clarke', 'nattaya-srisuk', 'li-ming', 'mike-chen', 'wei-chen'],
         boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['m4fx8d'],
       },
       'h3cp6n': { // Scuba Deep — en, th, zh-CN, fr — owns gear
-        instructors: ['ryan-clarke', 'wei-chen', 'mike-chen', 'rachel-nguyen', 'pierre-dubois', 'xiao-lei', 'mei-lin', 'camille-moreau'],
+        instructors: ['ryan-clarke', 'wei-chen', 'mike-chen', 'rachel-nguyen', 'pierre-dubois'],
         boats: ['n7rq5j', 'p5ky3w'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['h3cp6n'],
       },
       'sirolo': { // Sirolo — th, en, zh-CN, zh-TW — owns boat, gear
-        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu', 'ryan-clarke', 'mei-lin', 'wanchai-pong'],
+        instructors: ['wei-chen', 'nicole-tam', 'mike-chen', 'xiao-lei', 'zhen-liu'],
         boats: ['sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['sirolo'],
       },
       't7gw1k': { // Pray DC — en, th, fr, de
-        instructors: ['pierre-dubois', 'stefan-braun', 'camille-moreau', 'ryan-clarke', 'nattaya-srisuk', 'sophie-laurent', 'klaus-fischer', 'alexei-volkov'],
+        instructors: ['pierre-dubois', 'stefan-braun', 'camille-moreau', 'ryan-clarke', 'nattaya-srisuk'],
         boats: ['sirolo', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['q9bz7r'],
       },
       'r5yz4q': { // Amanda (Agent) — zh-CN, zh-TW, en, th
-        instructors: ['wei-chen', 'zhang-yong', 'nicole-tam', 'mike-chen', 'xiao-lei', 'mei-lin', 'pimchanok-sri'],
+        instructors: ['wei-chen', 'zhang-yong', 'nicole-tam', 'mike-chen', 'xiao-lei'],
         boats: ['n7rq5j', 'p5ky3w'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['q9bz7r'],
       },
       'w3kn7p': { // Hanul Dive — ko
-        instructors: ['kim-ji-soo', 'park-soo-jin', 'hiroshi-kato', 'lee-min-ho', 'seo-min-ji', 'li-ming'],
+        instructors: ['kim-ji-soo', 'park-soo-jin', 'hiroshi-kato', 'lee-min-ho', 'seo-min-ji'],
         boats: ['p5ky3w', 'n7rq5j'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
       },
       'b6um4j': { // Umi Dive — ja
-        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'seo-min-ji', 'oh-sang-hoon'],
+        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'seo-min-ji'],
         boats: ['sirolo', 'p5ky3w'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
       },
       'r9aq5v': { // Aqua Pro Dive — ru
-        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'stefan-braun', 'hans-weber', 'lars-van-dijk'],
+        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'stefan-braun', 'hans-weber'],
         boats: ['n7rq5j', 'sirolo'], venues: ['kata-beach'], compressors: ['q7sm3k'], equipment: ['v8sr2p'],
       },
       'c2pd8x': { // Pacific Divers — ko, ja, es
-        instructors: ['kim-ji-soo', 'hiroshi-kato', 'yuki-tanaka', 'seo-min-ji', 'david-schmidt', 'maria-santos', 'camille-moreau', 'ana-garcia'],
+        instructors: ['kim-ji-soo', 'hiroshi-kato', 'yuki-tanaka', 'seo-min-ji', 'david-schmidt'],
         boats: ['p5ky3w', 'n7rq5j'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
       },
       'f7bp3g': { // Blue Planet Diving — ru, id, nl
-        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'budi-santoso', 'andi-firmansyah', 'lars-van-dijk', 'ingrid-bakker', 'pieter-de-boer'],
+        instructors: ['alexei-volkov', 'natasha-ivanova', 'dmitri-petrov', 'budi-santoso', 'andi-firmansyah'],
         boats: ['sirolo', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
       },
       'k4ko9j': { // Ji-Yeon (Agent) — ko, en
-        instructors: ['kim-ji-soo', 'park-soo-jin', 'lee-min-ho', 'seo-min-ji', 'oh-sang-hoon', 'ryan-clarke'],
+        instructors: ['kim-ji-soo', 'park-soo-jin', 'lee-min-ho', 'seo-min-ji', 'oh-sang-hoon'],
         boats: ['p5ky3w', 'sirolo'], venues: ['g2hn6x'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
       },
       'a7ja2m': { // Kenji (Agent) — ja, en
-        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'ryan-clarke', 'seo-min-ji'],
+        instructors: ['yuki-tanaka', 'hiroshi-kato', 'yuko-yamamoto', 'aiko-fujita', 'ryan-clarke'],
         boats: ['sirolo', 'n7rq5j'], venues: ['b3wt9f'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
       },
       'e6eu5z': { // Eva (Agent) — de, fr, nl
-        instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber', 'lars-van-dijk', 'ingrid-bakker', 'pieter-de-boer'],
+        instructors: ['stefan-braun', 'pierre-dubois', 'camille-moreau', 'sophie-laurent', 'hans-weber'],
         boats: ['n7rq5j', 'p5ky3w'], venues: ['z8mv4c'], compressors: ['x4kp2m'], equipment: ['v8sr2p'],
       },
       'k8lv3a': { // Andaman Explorer (Liveaboard) — en — instructors only
@@ -613,8 +611,6 @@ export const patchTokenIdentifiers = internalMutation({
 export const seedDefaultTheme = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const { OCEAN_THEME_CONFIG } = await import('./lib/defaultThemes')
-
     const themeId = await ctx.db.insert('themes', {
       name: OCEAN_THEME_CONFIG.name,
       slug: 'ocean',
