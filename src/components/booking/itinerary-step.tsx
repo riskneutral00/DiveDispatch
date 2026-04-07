@@ -164,7 +164,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
             onChange={(e) => handleStartDateChange(e.target.value)}
             onClick={(e) => e.currentTarget.showPicker()}
             data-testid="course-start-date"
-            className="glass glass-field w-full text-body py-2.5 px-3 cursor-pointer text-primary"
+            className="field-underline w-full text-body py-2.5 px-0 cursor-pointer text-primary"
             style={{ caretColor: 'var(--color-accent)' }}
           />
         </div>
@@ -180,7 +180,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
               min={entry.dates[0]}
               onChange={(e) => handleEndDateChange(e.target.value)}
               onClick={(e) => e.currentTarget.showPicker()}
-              className="glass glass-field flex-1 text-body py-2.5 px-3 cursor-pointer text-primary"
+              className="field-underline flex-1 text-body py-2.5 px-0 cursor-pointer text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
             {canRemove && (

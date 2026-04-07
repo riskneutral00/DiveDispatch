@@ -23,6 +23,7 @@ interface ProfileFormShellProps {
   children: ReactNode
   className?: string
   footerLeftAction?: ReactNode
+  onCancel?: () => void
 
   loadingVariant?: 'spinner' | 'pulse-text' | 'plain'
   loadingMessage?: string
@@ -45,6 +46,7 @@ export function ProfileFormShell({
   children,
   className,
   footerLeftAction,
+  onCancel,
   loadingVariant,
   loadingMessage,
   hideFooter = false,
@@ -73,6 +75,7 @@ export function ProfileFormShell({
           disabled={footerDisabled}
           saveLabel={saveLabel}
           leftAction={footerLeftAction}
+          onCancel={onCancel}
         />
       )}
     </form>

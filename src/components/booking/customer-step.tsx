@@ -176,7 +176,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers: _total
               }
               type={contactType === 'email' ? 'email' : 'text'}
               data-testid={contactType === 'email' ? 'customer-email' : undefined}
-              className="glass glass-field flex-1 text-body py-2.5 px-3 text-primary"
+              className="field-underline flex-1 text-body py-2.5 px-0 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>

@@ -38,7 +38,7 @@ export function Textarea({
         disabled={disabled}
         required={required}
         className={cn(
-          "glass glass-field w-full text-body text-primary px-3 py-2.5 resize-none",
+          "field-underline w-full text-body text-primary px-0 py-2.5 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "placeholder:opacity-50",
           className,
@@ -46,8 +46,7 @@ export function Textarea({
         style={{ caretColor: "var(--color-accent)",
           ...(error
             ? {
-                borderColor: "var(--color-destructive)",
-                boxShadow: "0 0 0 3px var(--color-destructive-glow)",
+                borderBottomColor: "var(--color-destructive)",
               }
             : {}) }}
         aria-invalid={!!error}
@@ -56,17 +55,10 @@ export function Textarea({
         }
       />
 
-      {error ? (
-        <FieldError id={`${id}-error`} message={error} />
-      ) : (
-        <p
-          id={`${id}-helper`}
-          className={cn(
-            'h-4 text-body text-secondary truncate transition-opacity duration-theme',
-            helperText ? 'opacity-100' : 'opacity-0',
-          )}
-        >
-          {helperText ?? '\u00A0'}
+      {error && <FieldError id={`${id}-error`} message={error} />}
+      {!error && helperText && (
+        <p id={`${id}-helper`} className="text-body text-secondary truncate">
+          {helperText}
         </p>
       )}
     </div>

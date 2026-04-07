@@ -131,11 +131,11 @@ Each palette declares a `luminanceClass` — "dark", "medium", or "bright" — w
 | **medium** | Underwater photos, twilight | Black-tinted (20%) | Black 22% |
 | **bright** | Shallow reef, tropical, light blue | White-tinted (12%) | White 6% |
 
-Full tier values in `src/themes/skins.ts` → `GLASS_FORMULAS`.
+Full tier values in `src/themes/default-themes.ts` → `GLASS_FORMULAS`.
 
 ### Glass Classes
 
-**`.glass`** — Interactive leaf elements (inputs, selects). Has blur + shadow + specular highlight.
+**`.glass`** — Interactive leaf elements (buttons, cards). Has blur + shadow + specular highlight.
 
 ```css
 .glass {
@@ -175,13 +175,29 @@ Full tier values in `src/themes/skins.ts` → `GLASS_FORMULAS`.
 }
 ```
 
-**`.glass-field`** — Focus ring for inputs. No visual at rest, glow on focus.
+**`.glass-field`** — Focus ring for non-input interactive elements (buttons in compound pickers). No visual at rest, glow on focus.
 
 ```css
 .glass-field:focus {
   border-color: var(--color-glass-border-elevated);
   box-shadow: 0 0 0 3px var(--color-primary-glow),
               0 4px 16px var(--color-glass-shadow);
+}
+```
+
+**`.field-underline`** — Minimalist input styling. Transparent background, bottom border only, accent color on focus. Used by `Input`, `Textarea`, `Select`, `SimpleSelect`.
+
+```css
+.field-underline {
+  background-color: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--color-field-underline);
+  border-radius: 0;
+}
+
+.field-underline:focus {
+  border-bottom-color: var(--color-accent);
+  box-shadow: none;
 }
 ```
 
@@ -399,7 +415,7 @@ Field-width classes live in `@layer utilities` in `globals.css`. The `@layer` wr
 
 | Glass class | Components |
 |-------------|-----------|
-| `.glass` + `.glass-field` | `Input`, `Textarea`, `Select`, `SimpleSelect` |
+| `.field-underline` | `Input`, `Textarea`, `Select`, `SimpleSelect` |
 | `.glass-container` | `Card`, `Dialog`, `ItemCard` |
 | `.glass-btn` + `.glass-btn-{variant}` | `Button` |
 | `.glass-surface` | `Card` (when `hoverable` prop is set) |

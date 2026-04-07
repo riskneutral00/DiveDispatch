@@ -21,6 +21,7 @@ export const GLASS_FORMULAS = {
     opacityMuted: 0.50,
     tooltipBg: "rgba(255, 255, 255, 0.92)",
     tooltipText: "#0f172a",
+    fieldUnderline: "rgba(255, 255, 255, 0.25)",
   },
 
   medium: {
@@ -43,6 +44,7 @@ export const GLASS_FORMULAS = {
     opacityMuted: 0.55,
     tooltipBg: "rgba(255, 255, 255, 0.92)",
     tooltipText: "#0f172a",
+    fieldUnderline: "rgba(255, 255, 255, 0.25)",
   },
 
   bright: {
@@ -65,6 +67,7 @@ export const GLASS_FORMULAS = {
     opacityMuted: 0.70,
     tooltipBg: "rgba(15, 23, 42, 0.92)",
     tooltipText: "#f8fafc",
+    fieldUnderline: "rgba(0, 0, 0, 0.20)",
   },
 } as const;
 

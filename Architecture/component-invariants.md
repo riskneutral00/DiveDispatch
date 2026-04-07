@@ -5,7 +5,7 @@
 
 ## Component Rules
 
-1. **The component system is the ONLY rendering path.** No raw `<button>`, `<input>`, `<select>`, or `<textarea>` elements in feature code (`src/app/`, `src/components/booking/`, `src/components/profiles/`, etc.). Use `Button`, `GlassButton`, `IconButton`, `Input`, `GlassInput`, etc.
+1. **The component system is the ONLY rendering path.** No raw `<button>`, `<input>`, `<select>`, or `<textarea>` elements in feature code (`src/app/`, `src/components/booking/`, `src/components/profiles/`, etc.). Use `Button`, `GlassButton`, `IconButton`, `Input`, etc. All form inputs use the `.field-underline` class (transparent bg, bottom border).
    - Enforced by: PostToolUse hooks block undersized touch targets. `/gate` flags raw interactive elements in feature code.
    - Violation history: 15+ raw `<button>` elements with inline `min-h-[44px]`. Each one was a copy-paste of touch target enforcement that the component system already handles.
    - **Legacy exception:** ~60 raw buttons exist in compound patterns (calendar grids, tab bars, drag handles, equipment increment/decrement). These are tracked as component redesign tickets. New code MUST NOT add more. The hook blocks undersized raw buttons (sub-44px touch targets).

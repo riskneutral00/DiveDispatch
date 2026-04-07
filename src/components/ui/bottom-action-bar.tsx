@@ -12,8 +12,8 @@ export function BottomActionBar({ children, className }: BottomActionBarProps) {
   return (
     <div
       className={cn(
-        'fixed bottom-[60px] inset-x-0 z-[var(--z-sticky)] p-3 glass border-t border-glass-border',
-        'md:static md:border-t-0 md:p-0 md:bg-transparent md:backdrop-blur-none md:shadow-none',
+        'fixed bottom-[60px] inset-x-0 z-[var(--z-sticky)] p-3 border-t border-glass-border bg-transparent',
+        'md:static md:border-t-0 md:p-0',
         'md:flex md:justify-end',
         className,
       )}

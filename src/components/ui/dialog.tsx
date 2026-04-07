@@ -79,15 +79,14 @@ export function Dialog({
           className="flex h-full items-center justify-center sm:p-4"
           onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
-          <div
+          <div /* design-ok */
             className={cn(
-              "glass-container flex flex-col shadow-2xl text-primary",
-              "w-full h-full rounded-none", // design-ok: fullscreen mobile mode
+              "dialog-fullscreen-panel flex flex-col text-primary",
+              "w-full h-full rounded-none", // design-ok
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
               className,
             )}
-            style={{ backgroundColor: "var(--color-surface-elevated)" }}
           >
             <div
               className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 flex-shrink-0 border-b"

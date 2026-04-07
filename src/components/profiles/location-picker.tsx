@@ -265,7 +265,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                 blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
               }}
-              className="glass glass-field w-full text-body py-2.5 pl-9 pr-3 placeholder:opacity-50 text-primary"
+              className="field-underline w-full text-body py-2.5 pl-6 pr-0 placeholder:opacity-50 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
@@ -440,13 +440,12 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           id={inputId}
           type="button"
           onClick={onOpen}
-          className="glass glass-field w-full text-body py-2.5 pl-9 pr-9 text-left truncate cursor-pointer"
+          className="field-underline w-full text-body py-2.5 pl-6 pr-6 text-left truncate cursor-pointer"
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
               ? {
-                  borderColor: 'var(--color-destructive)',
-                  boxShadow: '0 0 0 3px var(--color-destructive-glow)',
+                  borderBottomColor: 'var(--color-destructive)',
                 }
               : {}),
           }}

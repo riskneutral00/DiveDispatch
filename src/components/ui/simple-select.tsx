@@ -1,8 +1,8 @@
 'use client'
 
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { cn } from '@/lib/utils/cn'
-import { FieldError, FieldLabel } from '@/components/ui/field-shell'
+import { FieldError } from '@/components/ui/field-shell'
 
 interface OptionItem {
   value: string
@@ -39,36 +39,36 @@ export function SimpleSelect({
 }: SimpleSelectProps) {
   const generatedId = useId()
   const id = generatedId
+  const [focused, setFocused] = useState(false)
+  const filled = value.length > 0
+  const floated = focused || filled
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
-      {label && (
-        <FieldLabel htmlFor={id} required={required}>
-          {label}
-        </FieldLabel>
-      )}
-      <select
+    <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>
+      <select /* design-ok */
         id={label ? id : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         required={required}
         disabled={disabled}
         aria-label={ariaLabel}
         aria-invalid={!!error}
         aria-describedby={error ? `${id}-error` : undefined}
         data-testid={testId}
-        className="glass w-full text-body px-3 py-2.5 focus:outline-none focus:ring-2 rounded-theme"
-        style={{
+        className={cn(
+          'field-underline w-full text-body appearance-none',
+          label ? 'pt-4 pb-1.5' : 'py-2.5',
+          'pl-0 pr-4',
+        )}
+        style={{ /* design-ok */
           color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          outlineColor: error ? 'var(--color-destructive)' : 'var(--color-accent)',
-          ...(error ? { boxShadow: '0 0 0 2px var(--color-destructive)' } : {}),
+          ...(error ? { borderBottomColor: 'var(--color-destructive)' } : {}),
+          ...(focused && !error ? { borderBottomColor: 'var(--color-primary)', borderBottomWidth: '2px' } : {}),
         }}
       >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
+        <option value="" disabled />
         {options.map((opt) => {
           const optValue = typeof opt === 'string' ? opt : opt.value
           const optLabel = typeof opt === 'string' ? opt : opt.label
@@ -80,7 +80,27 @@ export function SimpleSelect({
           )
         })}
       </select>
-      <FieldError id={`${id}-error`} message={error} />
+
+      {label && (
+        <label
+          htmlFor={id}
+          className={cn(
+            'absolute left-0 pointer-events-none transition-all',
+            floated
+              ? cn('top-0 text-[10px] font-medium', focused ? 'text-primary' : 'text-secondary')
+              : 'top-3 text-body text-secondary',
+          )}
+          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
+        >
+          {label}{required && <span className="text-destructive"> *</span>}
+        </label>
+      )}
+
+      <span className="absolute right-0 top-3.5 pointer-events-none text-secondary">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </span>
+
+      {error && <FieldError id={`${id}-error`} message={error} />}
     </div>
   )
 }

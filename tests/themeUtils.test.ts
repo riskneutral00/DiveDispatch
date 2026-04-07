@@ -45,6 +45,7 @@ const palette: ColorPalette = {
   statusMultidayBorder: '#8b5cf6',
   tooltipBg: 'rgba(255, 255, 255, 0.92)',
   tooltipText: '#0f172a',
+  fieldUnderline: 'rgba(255,255,255,0.25)',
 }
 
 describe('contrastRatio', () => {

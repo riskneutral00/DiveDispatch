@@ -13,27 +13,27 @@ type Story = StoryObj<typeof meta>
 export const WithLabel: Story = {
   args: {
     label: 'Field label',
-    children: <input className="glass glass-field w-full px-3 py-2.5 text-body" placeholder="Input inside shell" />,
+    children: <input className="field-underline w-full px-0 py-2.5 text-body" placeholder="Input inside shell" />,
   },
 }
 export const Required: Story = {
   args: {
     label: 'Required field',
     required: true,
-    children: <input className="glass glass-field w-full px-3 py-2.5 text-body" placeholder="Required" />,
+    children: <input className="field-underline w-full px-0 py-2.5 text-body" placeholder="Required" />,
   },
 }
 export const WithError: Story = {
   args: {
     label: 'Email',
     error: 'Invalid email address',
-    children: <input className="glass glass-field w-full px-3 py-2.5 text-body" defaultValue="bad-email" />,
+    children: <input className="field-underline w-full px-0 py-2.5 text-body" defaultValue="bad-email" />,
   },
 }
 export const WithHelperText: Story = {
   args: {
     label: 'Phone',
     helperText: 'Include country code',
-    children: <input className="glass glass-field w-full px-3 py-2.5 text-body" placeholder="+66..." />,
+    children: <input className="field-underline w-full px-0 py-2.5 text-body" placeholder="+66..." />,
   },
 }

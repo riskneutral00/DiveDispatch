@@ -48,6 +48,7 @@ export interface UseProfileFormReturn<TForm extends Record<string, unknown>> {
   isUpdate: boolean
   handleSubmit: (e: React.FormEvent) => Promise<void>
   markBaselineCurrent: () => void
+  resetToBaseline: () => void
 }
 
 export function useProfileForm<
@@ -170,6 +171,13 @@ export function useProfileForm<
     setSaved(true)
   }, [form])
 
+  const resetToBaseline = useCallback(() => {
+    setForm(baselineRef.current)
+    setErrors({})
+    setServerError(null)
+    setSaved(false)
+  }, [])
+
   return {
     form,
     setForm,
@@ -187,5 +195,6 @@ export function useProfileForm<
     isUpdate: !!profile,
     handleSubmit,
     markBaselineCurrent,
+    resetToBaseline,
   }
 }

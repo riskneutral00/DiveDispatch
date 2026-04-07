@@ -258,7 +258,7 @@ export function Select({
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
-        className="glass glass-field w-full text-body py-2.5 pl-3 pr-8 text-left"
+        className="field-underline w-full text-body py-2.5 pl-0 pr-8 text-left"
         style={{
           color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
         }}

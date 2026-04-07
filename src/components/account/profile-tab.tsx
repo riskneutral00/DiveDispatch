@@ -123,6 +123,7 @@ export function ProfileTab() {
     isUpdate,
     handleSubmit,
     loading,
+    resetToBaseline,
   } = useProfileForm<ProfileValues, ReturnType<typeof profileToPayload>>({
     profile: user as Record<string, unknown> | null | undefined,
     schema: profileTabSchema,
@@ -149,11 +150,12 @@ export function ProfileTab() {
       isUpdate={isUpdate}
       disableSaveWhenInvalid
       isValid={isValid}
+      onCancel={resetToBaseline}
       loadingVariant="pulse-text"
       className="space-y-6"
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
+        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="First name"
             value={form.firstName}
@@ -199,31 +201,25 @@ export function ProfileTab() {
             className="field-email"
           />
         </div>
-        <p className="text-body font-medium text-secondary">Date of birth</p>
-        <div className="flex flex-wrap gap-3">
+        <p className="text-[10px] font-medium text-secondary">Date of birth</p>
+        <div className="grid grid-cols-3 gap-3"> {/* design-ok */}
           <SimpleSelect
             label="Month"
             value={form.dobMonth}
             onChange={(v) => setField('dobMonth', v)}
             options={MONTHS}
-            placeholder="Month"
-            className="field-select-short"
           />
           <SimpleSelect
             label="Day"
             value={form.dobDay}
             onChange={(v) => setField('dobDay', v)}
             options={DAYS}
-            placeholder="Day"
-            className="field-select-short"
           />
           <SimpleSelect
             label="Year"
             value={form.dobYear}
             onChange={(v) => setField('dobYear', v)}
             options={YEARS}
-            placeholder="Year"
-            className="field-select-short"
           />
         </div>
         <LanguageField

@@ -272,7 +272,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       <Card padding="md">
         <SectionHeading>{"Personal Details"}</SectionHeading>
-        <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
+        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Legal First Name"
             placeholder="As on passport"
@@ -362,7 +362,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       <Card padding="md">
         <SectionHeading>{"Passport / ID"}</SectionHeading>
-        <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
+        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Passport Number"
             placeholder="AB1234567"
@@ -401,7 +401,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       <Card padding="md">
         <SectionHeading>{"Emergency Contact"}</SectionHeading>
-        <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
+        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Full Name"
             placeholder="Full name"
@@ -435,7 +435,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       {requiresCert && (
         <Card padding="md">
           <SectionHeading>{"Diving Certification"}</SectionHeading>
-          <div className="grid grid-cols-6 gap-4"> {/* design-ok */}
+          <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
             <SimpleSelect
               label="Certifying Agency"
               value={form.agency ?? ''}

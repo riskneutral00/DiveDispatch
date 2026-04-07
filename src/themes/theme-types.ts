@@ -44,6 +44,7 @@ export interface ColorPalette {
   statusMultidayBorder: string;
   tooltipBg: string;
   tooltipText: string;
+  fieldUnderline: string;
 }
 
 export interface ThemeConfig {

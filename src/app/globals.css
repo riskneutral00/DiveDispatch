@@ -39,6 +39,7 @@
   --body-bg: var(--body-bg);
   --color-tooltip-bg: var(--color-tooltip-bg);
   --color-tooltip-text: var(--color-tooltip-text);
+  --color-field-underline: var(--color-field-underline);
   --font-size-page-title: var(--font-size-page-title);
   --font-size-card-title: var(--font-size-card-title);
   --font-size-body: var(--font-size-body);
@@ -143,6 +144,7 @@
   /* Tooltip — high contrast against void */
   --color-tooltip-bg: rgba(255, 255, 255, 0.92);
   --color-tooltip-text: #0f172a;
+  --color-field-underline: rgba(255, 255, 255, 0.25);
 
   /* Status colors — SSR fallbacks (dark mode defaults).
      Runtime values injected by ThemeProvider per luminance class.
@@ -454,6 +456,41 @@ dialog::backdrop {
   box-shadow:
     0 0 0 3px var(--color-primary-glow),
     0 4px 16px var(--color-glass-shadow);
+}
+
+/* ── Fullscreen dialog — transparent on mobile, glass on desktop ────────────*/
+@layer utilities {
+  .dialog-fullscreen-panel {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
+@media (min-width: 640px) {
+  .dialog-fullscreen-panel {
+    background-color: var(--color-glass-container-bg, var(--color-surface-elevated));
+    border: 1px solid var(--color-glass-container-border);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
+  }
+}
+
+/* ── Field underline — in @layer utilities so Tailwind v4 doesn't strip it ─*/
+@layer utilities {
+  .field-underline {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--color-field-underline);
+    border-radius: 0;
+    outline: none;
+    transition: border-color var(--transition-speed) ease;
+  }
+
+  .field-underline:focus {
+    outline: none;
+    border-bottom-color: var(--color-accent);
+    box-shadow: none;
+  }
 }
 
 /* ── Button variant hover states ─────────────────────────────────────────────

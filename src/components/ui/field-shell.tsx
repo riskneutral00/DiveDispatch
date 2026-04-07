@@ -28,16 +28,10 @@ interface FieldErrorProps {
 }
 
 export function FieldError({ id, message }: FieldErrorProps) {
+  if (!message) return null
   return (
-    <p
-      id={id}
-      role="alert"
-      className={cn(
-        'h-4 text-body text-destructive truncate transition-opacity duration-theme',
-        message ? 'opacity-100' : 'opacity-0',
-      )}
-    >
-      {message ?? '\u00A0'}
+    <p id={id} role="alert" className="text-body text-destructive truncate">
+      {message}
     </p>
   )
 }
@@ -72,10 +66,9 @@ export function FieldShell({
         </FieldLabel>
       )}
       {children}
-      {error || !helperText ? (
-        <FieldError id={errorId} message={error} />
-      ) : (
-        <p id={helperId} className="h-4 text-body text-secondary truncate">
+      {error && <FieldError id={errorId} message={error} />}
+      {!error && helperText && (
+        <p id={helperId} className="text-body text-secondary truncate">
           {helperText}
         </p>
       )}

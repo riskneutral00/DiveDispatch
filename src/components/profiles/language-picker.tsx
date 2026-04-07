@@ -107,7 +107,7 @@ export function LanguagePicker({
           onChange={(e) => setQuery(e.target.value)}
           disabled={disabled}
           placeholder={placeholderText}
-          className={`glass glass-field w-full text-body py-2.5 pl-3 pr-12 text-primary focus:outline-none focus:ring-1 focus:ring-accent ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
+          className={`field-underline w-full text-body py-2.5 pl-0 pr-12 text-primary ${value.length > 0 ? 'placeholder:opacity-70' : 'placeholder:opacity-50'}`}
           style={{ caretColor: 'var(--color-accent)' }}
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-label pointer-events-none text-secondary">

@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useId } from 'react'
-import { FieldError, FieldLabel } from '@/components/ui/field-shell'
+import React, { useId, useState } from 'react'
+import { FieldError } from '@/components/ui/field-shell'
 import { cn } from '@/lib/utils/cn'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -29,68 +29,80 @@ export function Input({
   const generatedId = useId();
   const id = externalId ?? generatedId;
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
+  const [focused, setFocused] = useState(false)
+  const filled = typeof props.value === 'string' ? props.value.length > 0 : !!props.value
+  const floated = focused || filled || !!props.placeholder
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
+    <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>
+      <input
+        {...props}
+        type={type}
+        id={id}
+        disabled={disabled}
+        placeholder=" "
+        onFocus={(e) => { setFocused(true); props.onFocus?.(e) }}
+        onBlur={(e) => { setFocused(false); props.onBlur?.(e) }}
+        onClick={(e) => {
+          if (isDateLike && !disabled) {
+            e.currentTarget.showPicker();
+          }
+          onClick?.(e);
+        }}
+        className={cn(
+          'field-underline w-full text-body text-primary',
+          'disabled:opacity-50 disabled:cursor-not-allowed',
+          label ? 'pt-4 pb-1.5' : 'py-2.5',
+          leadingIcon ? 'pl-6' : 'pl-0',
+          trailingIcon ? 'pr-6' : 'pr-0',
+          isDateLike && 'cursor-pointer',
+        )}
+        style={{ ...externalStyle, caretColor: 'var(--color-accent)', /* design-ok */
+          ...(error ? {
+            borderBottomColor: "var(--color-destructive)",
+          } : {}),
+          ...(focused && !error ? {
+            borderBottomColor: "var(--color-primary)",
+            borderBottomWidth: "2px",
+          } : {}),
+        }}
+        aria-invalid={!!error}
+        aria-describedby={
+          error ? `${id}-error` : helperText ? `${id}-helper` : undefined
+        }
+      />
+
       {label && (
-        <FieldLabel htmlFor={id} required={props.required}>
-          {label}
-        </FieldLabel>
+        <label
+          htmlFor={id}
+          className={cn(
+            'absolute pointer-events-none transition-all',
+            leadingIcon ? 'left-6' : 'left-0',
+            floated
+              ? cn('top-0 text-[10px] font-medium', focused ? 'text-primary' : 'text-secondary')
+              : 'top-3 text-body text-secondary',
+          )}
+          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
+        >
+          {label}{props.required && <span className="text-destructive"> *</span>}
+        </label>
       )}
 
-      <div className="relative flex items-center">
-        {leadingIcon && (
-          <span
-            className="absolute left-3 flex items-center pointer-events-none text-secondary"
-          >
-            {leadingIcon}
-          </span>
-        )}
+      {leadingIcon && (
+        <span className="absolute left-0 top-3 flex items-center pointer-events-none text-secondary">
+          {leadingIcon}
+        </span>
+      )}
 
-        <input
-          {...props}
-          type={type}
-          id={id}
-          disabled={disabled}
-          onClick={(e) => {
-            if (isDateLike && !disabled) {
-              e.currentTarget.showPicker();
-            }
-            onClick?.(e);
-          }}
-          className={cn(
-            'glass glass-field w-full text-body text-primary',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'placeholder:opacity-50',
-            leadingIcon ? 'pl-9' : 'pl-3',
-            trailingIcon ? 'pr-9' : 'pr-3',
-            'py-2.5',
-            isDateLike && 'cursor-pointer',
-          )}
-          style={{ ...externalStyle, caretColor: 'var(--color-accent)',
-            ...(error ? {
-              borderColor: "var(--color-destructive)",
-              boxShadow: `0 0 0 3px var(--color-destructive-glow)`,
-            } : {}) }}
-          aria-invalid={!!error}
-          aria-describedby={
-            error ? `${id}-error` : helperText ? `${id}-helper` : undefined
-          }
-        />
+      {trailingIcon && (
+        <span className="absolute right-0 top-3 flex items-center pointer-events-none text-secondary">
+          {trailingIcon}
+        </span>
+      )}
 
-        {trailingIcon && (
-          <span
-            className="absolute right-3 flex items-center pointer-events-none text-secondary"
-          >
-            {trailingIcon}
-          </span>
-        )}
-      </div>
-
-      {error || !helperText ? (
-        <FieldError id={`${id}-error`} message={error} />
-      ) : (
-        <p id={`${id}-helper`} className="h-4 text-body text-secondary truncate">
+      {error && <FieldError id={`${id}-error`} message={error} />}
+      {!error && helperText && (
+        <p id={`${id}-helper`} className="text-body text-secondary truncate">
           {helperText}
         </p>
       )}
