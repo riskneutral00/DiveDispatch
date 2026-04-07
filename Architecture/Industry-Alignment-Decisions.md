@@ -20,7 +20,9 @@
 - C9 complete. 10 highest-inline-insert test files migrated to `seedFixture.ts`. Portal + discard mutation component tests added.
 - C3 complete. `authorize(ctx, actor, action, resource, orgId?)` built in `convex/lib/auth.ts`. `relationships` table added to schema. Clerk Org configuration documented in `Architecture/clerk-org-config.md`. All ~65 mutation call sites across 26 files migrated. `themes.upsert` restricted from `checkHasAnyOperatorRole` to `authorize('theme:manage')`. Fallback mode preserves current behavior until Clerk Dashboard is configured. 4561 tests pass.
 
-**Next:** Phase 3 — SkinCommerce theme unification (C2). ~60 raw buttons (C4) deferred to individual tickets. Clerk Dashboard manual configuration (C3 — documented, not yet applied).
+- C2 SkinCommerce theme unification complete. `SKINS` → `DEFAULT_THEMES`/`OCEAN_DEFAULT`. ThemeProvider reads from Convex (`themes.getConfig` via `selectedThemeId`). localStorage caches theme for pre-auth cold start. `listStore` (unauthenticated) returns store metadata. `selectTheme` mutation writes `selectedThemeId`. Schema extended with `tier`/`price`/`previewUrl`. Seed writes proper `ThemeConfig` shape.
+
+**Next:** ~60 raw buttons (C4) deferred to individual tickets. Clerk Dashboard manual configuration (C3 — documented, not yet applied).
 
 ---
 
@@ -103,16 +105,16 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 - [x] Write `Architecture/query-invariants.md` (bounded queries, projection policy, no unbounded `.collect()`, client limits clamped)
 - [x] Add CLAUDE.md pointer
-- [ ] **Theme source-of-truth unification** (SkinCommerce):
-  - [ ] Fix seed config to match `ThemeConfig` type shape (**do this first — types must agree before any runtime changes**)
-  - [ ] Wire `themes.byId` query into `ThemeProvider` (read `selectedThemeId` from authenticated user)
-  - [ ] Add `selectTheme` mutation (writes `selectedThemeId`)
-  - [ ] `SKINS` → `DEFAULT_THEMES` — imported by seed only. **Exception: `ThemeProvider` keeps ONE hardcoded default for first-ever-visit (no localStorage, no auth, no Convex). This is not a contradiction — it's the bootstrap fallback.**
-  - [ ] `BgSwitcher` / `ThemeSwitcher` read from Convex query, not static array. **Note: `BgSwitcher` renders pre-auth. `listStore` (theme metadata) should be an unauthenticated query. `getConfig` (full palette) should be auth-gated for SkinCommerce.**
-  - [ ] localStorage caches last-known theme for pre-auth cold start (avoids flash)
-- [ ] **Store browsing ≠ theme rendering** (SkinCommerce):
-  - [ ] `listStore` returns metadata only (name, slug, tier, price, preview, owned boolean)
-  - [ ] `getConfig` / `byId` returns palette config only (no commerce fields)
+- [x] **Theme source-of-truth unification** (SkinCommerce):
+  - [x] Fix seed config to match `ThemeConfig` type shape
+  - [x] Wire `themes.getConfig` query into `ThemeProvider` (read `selectedThemeId` from authenticated user)
+  - [x] Add `selectTheme` mutation (writes `selectedThemeId`)
+  - [x] `SKINS` → `DEFAULT_THEMES` / `OCEAN_DEFAULT` — `DEFAULT_THEMES` for seed, `OCEAN_DEFAULT` as bootstrap fallback in `ThemeProvider`
+  - [x] `BgSwitcher` reads from `listStore` (unauthenticated Convex query). `ThemeSwitcher` unchanged (mode toggle only).
+  - [x] localStorage caches last-known theme for pre-auth cold start (avoids flash)
+- [x] **Store browsing ≠ theme rendering** (SkinCommerce):
+  - [x] `listStore` returns metadata only (name, slug, tier, price, previewUrl)
+  - [x] `getConfig` returns palette config only (no commerce fields)
 - [x] Server-enforced caps:
   - [x] `notifications.ts:219` — clamp client-provided `limit` to server max (50)
   - [x] `themes.ts:15` — full table `.collect()` → `.take(100)`
