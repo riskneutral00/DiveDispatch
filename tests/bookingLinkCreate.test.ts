@@ -138,6 +138,35 @@ describe('createBookingLink', () => {
   })
 })
 
+describe('bookingLinks.create — provisions customerProfile (D2)', () => {
+  it('creates a customerProfiles row when called via create mutation', async () => {
+    const t = makeT()
+    let bookingId: any
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      bookingId = await seedBooking(ctx)
+    })
+
+    const token = await t.withIdentity({ tokenIdentifier: TEST_TOKENS.diveCenter })
+      .mutation(api.bookingLinks.create, {
+        bookingId,
+        customerName: 'Zara',
+        email: 'zara@test.com',
+      })
+
+    expect(typeof token).toBe('string')
+
+    await t.run(async (ctx) => {
+      const profile = await ctx.db
+        .query('customerProfiles')
+        .filter((q) => q.eq(q.field('linkToken'), token))
+        .unique()
+      expect(profile).not.toBeNull()
+      expect(profile!.bookingId).toEqual(bookingId)
+    })
+  })
+})
+
 describe('bookingLinks.create — channel recording (DD-314)', () => {
   it('writes channel field when provided', async () => {
     const t = makeT()

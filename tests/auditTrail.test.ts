@@ -527,3 +527,51 @@ describe('audit entries are immutable', () => {
     expect(publicKeys.includes('deleteAuditLog')).toBe(false)
   })
 })
+
+// ─── 11: getAuditLog rejects non-owner/non-resource caller ───────────────────
+
+describe('getAuditLog ownership check (A5)', () => {
+  it('throws FORBIDDEN when caller has no ownership or reservation on the booking', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-test')
+      await seedUser(ctx, 'outsider')
+      const bookingId = await seedBooking(ctx)
+      await logBookingChange(ctx, {
+        bookingId,
+        action: 'created',
+        actorSlug: 'dc-test',
+        actorType: 'operator',
+      })
+      return bookingId
+    })
+
+    await expect(
+      t.withIdentity({ tokenIdentifier: 'clerk|outsider' })
+        .query(api.bookingAuditLog.getAuditLog, { bookingId }),
+    ).rejects.toMatchObject({ data: expect.stringContaining('FORBIDDEN') })
+  })
+
+  it('allows booking owner to read audit log', async () => {
+    const t = makeT()
+
+    const bookingId = await t.run(async (ctx) => {
+      await seedUser(ctx, 'dc-test')
+      const bookingId = await seedBooking(ctx)
+      await logBookingChange(ctx, {
+        bookingId,
+        action: 'created',
+        actorSlug: 'dc-test',
+        actorType: 'operator',
+      })
+      return bookingId
+    })
+
+    const entries = await t
+      .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
+      .query(api.bookingAuditLog.getAuditLog, { bookingId })
+
+    expect(entries).toHaveLength(1)
+  })
+})

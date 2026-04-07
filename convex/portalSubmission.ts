@@ -8,6 +8,7 @@ import { validateOrThrow } from './lib/validate'
 import { ErrorCode } from './lib/errorCodes'
 import { safeDecryptMedical } from './lib/crypto'
 import { notify } from './notifications'
+import { logBookingChange } from './lib/auditLog'
 import { NOTIFICATION_TYPE } from './shared/statuses'
 
 const _medicalAnswersSchema = z.object({
@@ -129,6 +130,13 @@ export const submitPortal = mutation({
     await ctx.db.patch(link.bookingId, { customerFormComplete: true })
 
     await ctx.db.patch(link._id, { usedAt: now })
+
+    await logBookingChange(ctx, {
+      bookingId: link.bookingId,
+      action: 'portal_submitted',
+      actorSlug: link.customerName,
+      actorType: 'customer',
+    })
 
     await notify(ctx, {
       userId: booking.ownerId,

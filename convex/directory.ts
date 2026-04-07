@@ -2,6 +2,7 @@ import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { DatabaseReader } from './_generated/server'
 import { requireAuth, authorize } from './lib/auth'
+import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator, type StakeholderRole } from './lib/validators'
 import type { Doc, Id } from './_generated/dataModel'
 import { queryDynamicTable } from './lib/typedDb'
@@ -281,6 +282,7 @@ export const togglePreferredInstructor = mutation({
   },
   handler: async (ctx, args) => {
     const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
+    await requireActiveRole(ctx, user._id, args.activeRole)
 
     const prefs = await ctx.db
       .query('stakeholderPreferences').withIndex('by_stakeholderId', (q: any) => q.eq('stakeholderId', user.slug)) // eslint-disable-line @typescript-eslint/no-explicit-any {/* comments-ok */}

@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "convex/_generated/**",
+    ".tmp/**",
   ]),
   // ── DiveDispatch design system rules ──────────────────────────────────────
   // Mirrors Claude Code hooks so enforcement works in ANY editor and CI.
@@ -46,6 +47,15 @@ const eslintConfig = defineConfig([
             message: "Import from '@/lib/profile-form' (barrel) instead of individual submodules.",
           },
         ],
+      }],
+    },
+  },
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
       }],
     },
   },

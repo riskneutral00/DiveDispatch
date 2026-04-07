@@ -104,6 +104,18 @@ export async function _createLink(
     ...(args.channel ? { channel: args.channel } : {}),
   })
 
+  const existingProfile = await ctx.db
+    .query('customerProfiles')
+    .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
+    .unique()
+
+  if (!existingProfile) {
+    await ctx.db.insert('customerProfiles', {
+      bookingId: args.bookingId as Id<"bookings">,
+      linkToken: token,
+    })
+  }
+
   return token
 }
 
@@ -191,46 +203,6 @@ export const createBookingLink = mutation({
     email: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
-
-    const links = await ctx.db
-      .query('bookingLinks')
-      .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
-      .collect() // bounded: per-booking links, max ~20 customers
-
-    const now = Date.now()
-    const existing = links.find((l) => (l.expiresAt as number) > now && !(l.usedAt))
-
-    let token: string
-    if (existing) {
-      token = existing.token as string
-    } else {
-      token = crypto.randomUUID()
-      const expiresAt = now + BOOKING_LINK_TTL_MS
-
-      await ctx.db.insert('bookingLinks', {
-        bookingId: args.bookingId,
-        token,
-        expiresAt,
-        customerName: args.customerName,
-        email: args.email,
-      })
-    }
-
-    const existingProfile = await ctx.db
-      .query('customerProfiles')
-      .withIndex('by_linkToken', (q) => q.eq('linkToken', token))
-      .unique()
-
-    if (!existingProfile) {
-      await ctx.db.insert('customerProfiles', {
-        bookingId: args.bookingId,
-        linkToken: token,
-      })
-    }
-
-    return token
+    return await _createLink(ctx, args)
   },
 })

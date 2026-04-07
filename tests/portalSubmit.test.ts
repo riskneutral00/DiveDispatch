@@ -152,4 +152,36 @@ describe('submitPortal mutation', () => {
       expect(portalNotif?.userId).toBe('dc-notif')
     })
   })
+
+  it('emits portal_submitted audit log entry (D1)', async () => {
+    const t = makeT()
+
+    const { bookingId, token } = await t.run(async (ctx) => {
+      await seedUser(ctx, { slug: 'dc-audit', tokenIdentifier: 'clerk|dc-audit' })
+      const { bookingId, token } = await seedPortalFixture(ctx, {
+        booking: {
+          ownerId: 'dc-audit',
+          portalContact: false,
+          portalMedical: false,
+          portalWaiver: false,
+        },
+        link: { customerName: 'Alice' },
+      })
+      return { bookingId, token }
+    })
+
+    await t.mutation(api.portalSubmission.submitPortal, { token })
+
+    await t.run(async (ctx) => {
+      const entries = await ctx.db
+        .query('bookingAuditLog')
+        .withIndex('by_bookingId_timestamp', (q: any) => q.eq('bookingId', bookingId)) // eslint-disable-line @typescript-eslint/no-explicit-any {/* comments-ok */}
+        .collect()
+
+      const portalEntry = entries.find((e) => e.action === 'portal_submitted')
+      expect(portalEntry).toBeDefined()
+      expect(portalEntry!.actorSlug).toBe('Alice')
+      expect(portalEntry!.actorType).toBe('customer')
+    })
+  })
 })
