@@ -45,6 +45,10 @@
 
 9. **Optimistic updates are permitted only for non-financial, non-commitment state.** Notifications, preferences, UI toggles — yes. Bookings, reservations, payments — never.
 
+10. **Every new component must have a Storybook story with all variant states.** No component lands without visual coverage. Stories must render every variant × size combination. Storybook story is part of the component definition, not an afterthought.
+   - Enforced by: `/review-frontend` flags new components without `.stories.tsx`
+   - CI: Chromatic visual regression runs on every PR
+
 ## Token Type Scale
 
 5-stop scale. Each stop is clearly distinct — no two adjacent stops within 1px.
