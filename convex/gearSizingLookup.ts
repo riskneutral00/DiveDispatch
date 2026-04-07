@@ -1,26 +1,9 @@
-/**
- * Gear sizing lookup CRUD for equipment managers (DD-301).
- *
- * EMs can add, update, and remove entries in the gearSizingLookup table,
- * and list entries by manufacturer. Custom entries coexist with seeded
- * manufacturer data. The suggestGearSizes() util reads from this table
- * at runtime, so custom entries flow through to size recommendations
- * automatically.
- *
- * Auth: all mutations require Equipment role.
- * Duplicate guard: manufacturer + gearType + size must be unique.
- * Range validation: min < max, values non-negative.
- */
-
 import { ConvexError, v } from 'convex/values'
 import type { Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
-import { checkHasRole } from './userRoles'
+import { authorize, requireAuth } from './lib/auth'
 import { gearTypeValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
-
-// ── Shared validation ─────────────────────────────────────────────────────────
 
 function validateRanges(
   minHeight: number,
@@ -48,8 +31,6 @@ function validateRanges(
   }
 }
 
-// ── addSizingEntry ────────────────────────────────────────────────────────────
-
 export const addSizingEntry = mutation({
   args: {
     manufacturer: v.string(),
@@ -63,16 +44,10 @@ export const addSizingEntry = mutation({
     shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
   },
   handler: async (ctx, args): Promise<Id<'gearSizingLookup'>> => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     validateRanges(args.minHeight, args.maxHeight, args.minWeight, args.maxWeight)
 
-    // Duplicate guard: same manufacturer + gearType + size must not already exist.
-    // Convex serializes mutations within a deployment — no two mutations run
-    // concurrently, so this read-check-write pattern is safe without transactions.
     const existing = await ctx.db
       .query('gearSizingLookup')
       .withIndex('by_manufacturer_gearType', (q) =>
@@ -102,8 +77,6 @@ export const addSizingEntry = mutation({
   },
 })
 
-// ── updateSizingEntry ─────────────────────────────────────────────────────────
-
 export const updateSizingEntry = mutation({
   args: {
     entryId: v.id('gearSizingLookup'),
@@ -116,17 +89,11 @@ export const updateSizingEntry = mutation({
     shoeSizeUnit: v.optional(v.union(v.literal('EU'), v.literal('US'), v.literal('CM'))),
   },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    // Duplicate guard when size is being changed: ensure no other entry already
-    // occupies (manufacturer, gearType, newSize). Convex serializes mutations so
-    // this read-check-write pattern is safe — no concurrent mutations can race.
     if (args.size !== undefined && args.size !== entry.size) {
       const siblings = await ctx.db
         .query('gearSizingLookup')
@@ -143,7 +110,6 @@ export const updateSizingEntry = mutation({
       }
     }
 
-    // Compute effective values for validation (merge incoming with existing)
     const effectiveMinHeight = args.minHeight ?? entry.minHeight
     const effectiveMaxHeight = args.maxHeight ?? entry.maxHeight
     const effectiveMinWeight = args.minWeight ?? entry.minWeight
@@ -161,17 +127,12 @@ export const updateSizingEntry = mutation({
   },
 })
 
-// ── removeSizingEntry ─────────────────────────────────────────────────────────
-
 export const removeSizingEntry = mutation({
   args: {
     entryId: v.id('gearSizingLookup'),
   },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     const entry = await ctx.db.get(args.entryId)
     if (!entry) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
@@ -179,8 +140,6 @@ export const removeSizingEntry = mutation({
     await ctx.db.delete(args.entryId)
   },
 })
-
-// ── listByManufacturer ────────────────────────────────────────────────────────
 
 export type SizingEntryRow = {
   _id: string
@@ -203,10 +162,6 @@ export const listByManufacturer = query({
   handler: async (ctx, args): Promise<SizingEntryRow[]> => {
     await requireAuth(ctx)
 
-    // Convex supports prefix queries on compound indexes — constraining only the
-    // first field ('manufacturer') is valid and fully indexed. When gearType is
-    // not provided, the prefix scan retrieves all entries for the manufacturer
-    // efficiently without a full table scan.
     const entries = await ctx.db
       .query('gearSizingLookup')
       .withIndex('by_manufacturer_gearType', (q) =>

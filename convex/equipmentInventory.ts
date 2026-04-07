@@ -1,19 +1,9 @@
-/**
- * Equipment inventory mutations for equipment managers (DD-300).
- *
- * EMs can add, update, remove, and list their own equipment inventory items.
- * Each item links an equipmentInventory row to a Pooled inventoryUnit.
- */
-
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
-import { checkHasRole } from './userRoles'
+import { authorize, assertOwnership, requireAuth } from './lib/auth'
 import { gearTypeValidator } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { isActiveReservation } from './bookings/_shared'
-
-// ── addItem ──────────────────────────────────────────────────────────────────
 
 export const addItem = mutation({
   args: {
@@ -25,10 +15,7 @@ export const addItem = mutation({
     totalUnits: v.number(),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
 
     if (args.totalUnits < 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'totalUnits must be at least 1' })
@@ -58,8 +45,6 @@ export const addItem = mutation({
   },
 })
 
-// ── updateItem ───────────────────────────────────────────────────────────────
-
 export const updateItem = mutation({
   args: {
     inventoryId: v.id('equipmentInventory'),
@@ -70,22 +55,16 @@ export const updateItem = mutation({
     totalUnits: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
-
     const item = await ctx.db.get(args.inventoryId)
     if (!item) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (item.equipmentManagerId !== user.slug) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
+
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+    assertOwnership({ ownerId: item.equipmentManagerId }, user)
 
     if (args.totalUnits !== undefined && args.totalUnits < 1) {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'totalUnits must be at least 1' })
     }
 
-    // Fetch linked snapshots once — used by both the guard and the sync below
     const linkedSnapshots = args.totalUnits !== undefined
       ? await ctx.db
           .query('availabilitySnapshots')
@@ -95,7 +74,6 @@ export const updateItem = mutation({
           .take(500)
       : []
 
-    // Guard: reject if reducing totalUnits below currently reserved count
     if (args.totalUnits !== undefined) {
       const maxReserved = linkedSnapshots.reduce(
         (max, s) => Math.max(max, s.reservedUnits),
@@ -109,7 +87,6 @@ export const updateItem = mutation({
       }
     }
 
-    // Patch equipmentInventory fields
     const { inventoryId: _, totalUnits, ...inventoryPatch } = args
     const cleanPatch = Object.fromEntries(
       Object.entries(inventoryPatch).filter(([, val]) => val !== undefined),
@@ -118,11 +95,10 @@ export const updateItem = mutation({
       await ctx.db.patch(args.inventoryId, cleanPatch)
     }
 
-    // Patch inventoryUnit.totalUnits and sync linked snapshots (DD-350)
     if (totalUnits !== undefined) {
       await ctx.db.patch(item.inventoryUnitId, { totalUnits })
       for (const snap of linkedSnapshots) {
-        await ctx.db.patch(snap._id, {
+        await ctx.db.patch(snap._id, { // batch-exempt
           totalUnits,
           availableUnits: totalUnits - snap.reservedUnits,
         })
@@ -131,25 +107,17 @@ export const updateItem = mutation({
   },
 })
 
-// ── removeItem ───────────────────────────────────────────────────────────────
-
 export const removeItem = mutation({
   args: {
     inventoryId: v.id('equipmentInventory'),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-    if (!await checkHasRole(ctx, user._id, 'Equipment')) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
-
     const item = await ctx.db.get(args.inventoryId)
     if (!item) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (item.equipmentManagerId !== user.slug) {
-      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
-    }
 
-    // Guard: reject if any active reservations reference the linked inventoryUnit
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource', requiredRole: 'Equipment' })
+    assertOwnership({ ownerId: item.equipmentManagerId }, user)
+
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_inventoryUnitId_status', (q) =>
@@ -169,8 +137,6 @@ export const removeItem = mutation({
     await ctx.db.delete(args.inventoryId)
   },
 })
-
-// ── listMyInventory ──────────────────────────────────────────────────────────
 
 export type InventoryItemWithUnits = {
   _id: string
@@ -197,12 +163,10 @@ export const listMyInventory = query({
       )
       .take(500)
 
-    // Batch-fetch all linked inventoryUnits
     const units = await Promise.all(
       items.map((item) => ctx.db.get(item.inventoryUnitId)),
     )
 
-    // Build flat list then group by gearType
     const grouped: GroupedInventory = {}
     for (let i = 0; i < items.length; i++) {
       const item = items[i]

@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import type { MutationCtx } from './_generated/server'
 import { mutation } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { authorize } from './lib/auth'
 import { checkRateLimit } from './lib/rateLimiter'
 import { ErrorCode } from './lib/errorCodes'
 import { sanitizeString, SHORT_TEXT_MAX, SUPPORT_MESSAGE_MAX } from './lib/sanitize'
@@ -13,10 +13,8 @@ const supportCategoryValidator = v.union(
   v.literal('Account Issue'),
 )
 
-// ─── generateUploadUrl ────────────────────────────────────────────────────────
-
 export async function _generateUploadUrlHandler(ctx: MutationCtx): Promise<string> {
-  const { user: caller } = await requireAuth(ctx)
+  const { user: caller } = await authorize(ctx, null, 'profile:manage', { type: 'settings' })
 
   await checkRateLimit(ctx, 'generateUploadUrl', caller.slug)
 
@@ -28,8 +26,6 @@ export const generateUploadUrl = mutation({
   handler: _generateUploadUrlHandler,
 })
 
-// ─── submitSupportRequest ─────────────────────────────────────────────────────
-
 export const submitSupportRequest = mutation({
   args: {
     subject: v.string(),
@@ -38,7 +34,7 @@ export const submitSupportRequest = mutation({
     screenshotStorageId: v.optional(v.id('_storage')),
   },
   handler: async (ctx, args) => {
-    const { user: caller } = await requireAuth(ctx)
+    const { user: caller } = await authorize(ctx, null, 'profile:manage', { type: 'settings' })
     await checkRateLimit(ctx, 'submitSupportRequest', caller.slug)
 
     const subject = sanitizeString(args.subject, SHORT_TEXT_MAX)

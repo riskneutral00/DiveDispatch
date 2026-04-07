@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { getAuthUser, requireAuth } from './lib/auth'
+import { authorize, getAuthUser, requireAuth } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 
@@ -23,7 +23,6 @@ export const mine = query({
   },
 })
 
-/** Read-only preferences for another stakeholder (e.g. target operator in referral / preferred operator cascade). */
 export const bySlug = query({
   args: { stakeholderSlug: v.string() },
   handler: async (ctx, args) => {
@@ -52,7 +51,7 @@ export const upsert = mutation({
     autoAssignPreferred: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     await requireActiveRole(ctx, user._id, args.activeRole)
 
     const existing = await ctx.db

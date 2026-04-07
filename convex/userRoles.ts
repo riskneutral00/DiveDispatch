@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
+import { getAuthUser, OPERATOR_ROLE_SET, authorize } from './lib/auth'
 import type { QueryCtx, MutationCtx } from './_generated/server'
 import type { Id, Doc } from './_generated/dataModel'
 import { stakeholderTypeValidator as stakeholderType, effectiveResourceType } from './lib/validators'
@@ -10,13 +10,6 @@ import { batchGet, batchDelete } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
 
-// ─── Helpers (importable by other modules) ──────────────────────────────────
-
-/**
- * Validate that a user holds the claimed active role.
- * Throws ROLE_NOT_HELD if the user does not have the role in userRoles.
- * Use this to validate the activeRole parameter on mutations.
- */
 export async function requireActiveRole(
   ctx: QueryCtx | MutationCtx,
   userId: Id<'users'>,
@@ -26,7 +19,6 @@ export async function requireActiveRole(
   if (!hasIt) throw new ConvexError({ code: ErrorCode.ROLE_NOT_HELD })
 }
 
-/** Check whether a user holds a specific role. */
 export async function checkHasRole(
   ctx: QueryCtx | MutationCtx,
   userId: Id<'users'>,
@@ -41,7 +33,6 @@ export async function checkHasRole(
   return entry !== null
 }
 
-/** Check whether a user holds any operator role. */
 export async function checkHasAnyOperatorRole(
   ctx: QueryCtx | MutationCtx,
   userId: Id<'users'>,
@@ -53,9 +44,6 @@ export async function checkHasAnyOperatorRole(
   return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
 }
 
-// ─── Queries ────────────────────────────────────────────────────────────────
-
-/** All roles for the authenticated user. */
 export const myRoles = query({
   args: {},
   handler: async (ctx) => {
@@ -68,7 +56,6 @@ export const myRoles = query({
   },
 })
 
-/** Does the authenticated user hold a specific role? */
 export const hasRole = query({
   args: { role: stakeholderType },
   handler: async (ctx, { role }) => {
@@ -78,7 +65,6 @@ export const hasRole = query({
   },
 })
 
-/** Does the authenticated user hold any operator role? */
 export const hasAnyOperatorRole = query({
   args: {},
   handler: async (ctx) => {
@@ -88,7 +74,6 @@ export const hasAnyOperatorRole = query({
   },
 })
 
-/** The primary role for the authenticated user (for default dashboard landing). */
 export const primaryRole = query({
   args: {},
   handler: async (ctx) => {
@@ -104,15 +89,12 @@ export const primaryRole = query({
   },
 })
 
-// ─── Mutations ──────────────────────────────────────────────────────────────
-
-/** Add a role to the authenticated user. Rejects duplicates. */
 export const addRole = mutation({
   args: {
     role: stakeholderType,
   },
   handler: async (ctx, { role }) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
     const existing = await ctx.db
       .query('userRoles')
@@ -131,10 +113,6 @@ export const addRole = mutation({
   },
 })
 
-/**
- * Count of Draft or Upcoming bookings that use this role's resources.
- * Used by the UI to determine whether a delete is blocked.
- */
 export const bookingCountForRole = query({
   args: { roleId: v.id('userRoles') },
   handler: async (ctx, { roleId }) => {
@@ -150,7 +128,6 @@ export const bookingCountForRole = query({
     const resourceType = effectiveResourceType(roleRow.role)
     if (!resourceType) return 0
 
-    // Find all bookingResources for this user slug + resource type
     const resources = await ctx.db
       .query('bookingResources')
       .withIndex('by_resourceType_resourceId', (q) =>
@@ -160,7 +137,6 @@ export const bookingCountForRole = query({
 
     if (resources.length === 0) return 0
 
-    // Batch-fetch all referenced bookings, then count active statuses
     const bookings = await batchGet(ctx, resources.map((r) => r.bookingId))
     return bookings.filter(
       (b) => b !== null && (b.status === 'Draft' || b.status === 'Upcoming'),
@@ -168,10 +144,6 @@ export const bookingCountForRole = query({
   },
 })
 
-/**
- * Returns a map of roleId → active booking count for all of the caller's roles.
- * Single query — avoids calling bookingCountForRole in a React hook loop.
- */
 export const bookingCountsForMyRoles = query({
   args: {},
   handler: async (ctx) => {
@@ -195,7 +167,6 @@ export const bookingCountsForMyRoles = query({
   },
 })
 
-/** Helper: count active bookings for a user slug + resource type (shared by deleteRole). */
 async function countActiveBookings(
   ctx: QueryCtx | MutationCtx,
   slug: string,
@@ -216,31 +187,21 @@ async function countActiveBookings(
   ).length
 }
 
-/**
- * Delete a role and cascade to profile, inventoryUnits, and availability snapshots.
- * Guards:
- *   - requireAuth: caller must own the role
- *   - LAST_ROLE: minimum 1 role must remain
- *   - booking guard: returns { blocked, bookingCount } if active bookings exist
- * Returns { deleted: true } on success or { blocked: true, bookingCount: N } if blocked.
- */
 export const deleteRole = mutation({
   args: { roleId: v.id('userRoles') },
   handler: async (ctx, { roleId }) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
     const roleRow = await ctx.db.get(roleId)
     if (!roleRow) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
     if (roleRow.userId !== user._id) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    // Minimum-1 guard
     const allRoles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .collect() // bounded: per-user roles, max ~12
     if (allRoles.length <= 1) throw new ConvexError({ code: ErrorCode.LAST_ROLE })
 
-    // Booking guard — check for Draft/Upcoming bookings using this role's resources
     const resourceType = effectiveResourceType(roleRow.role)
     if (resourceType) {
       const bookingCount = await countActiveBookings(ctx, user.slug, resourceType)
@@ -249,15 +210,10 @@ export const deleteRole = mutation({
       }
     }
 
-    // Hard-delete cascade
-
-    // 1. Delete userRoles row
     await ctx.db.delete(roleId)
 
-    // 2. Delete profile record (table varies by role)
     await deleteProfileForRole(ctx, roleRow.role, user._id)
 
-    // 2a. Delete stakeholderPreferences for this user slug + role type
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
@@ -265,7 +221,6 @@ export const deleteRole = mutation({
     const rolePrefs = prefs.filter((p) => p.stakeholderType === roleRow.role)
     await batchDelete(ctx, rolePrefs)
 
-    // 2b. Delete stakeholderBlockedDates for this user slug + role type
     const blockedDates = await ctx.db
       .query('stakeholderBlockedDates')
       .withIndex('by_stakeholderId_roleType', (q) =>
@@ -274,7 +229,6 @@ export const deleteRole = mutation({
       .collect() // bounded: per-user roles, max ~12
     await batchDelete(ctx, blockedDates)
 
-    // 3. Delete inventoryUnits + their reservations + snapshots for this user slug + resource type
     if (resourceType) {
       const units = await ctx.db
         .query('inventoryUnits')
@@ -283,7 +237,6 @@ export const deleteRole = mutation({
         )
         .collect() // bounded: per-user roles, max ~12
 
-      // Fetch all reservations and snapshots for all units in parallel
       const [reservationSets, snapshotSets] = await Promise.all([
         Promise.all(
           units.map((unit) =>
@@ -317,8 +270,6 @@ export const deleteRole = mutation({
     return { deleted: true as const }
   },
 })
-
-// ─── Profile delete helper ───────────────────────────────────────────────────
 
 async function deleteProfileForRole(
   ctx: MutationCtx,

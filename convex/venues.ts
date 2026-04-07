@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { authorize } from './lib/auth'
 import { profileByUserId, profileMine } from './lib/profileHelpers'
 import { checkHasRole } from './userRoles'
 import { ErrorCode } from './lib/errorCodes'
@@ -18,7 +18,7 @@ export const create = mutation({
     maxCapacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
     if (!await checkHasRole(ctx, user._id, 'Pool') && !await checkHasRole(ctx, user._id, 'DiveSite'))
       throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
@@ -35,7 +35,6 @@ export const create = mutation({
       verified: false,
     })
 
-    // Auto-create inventoryUnit for owned DiveSite accounts
     if (await checkHasRole(ctx, user._id, 'DiveSite')) {
       await ctx.db.insert('inventoryUnits', {
         resourceType: 'DiveSite',
@@ -62,7 +61,7 @@ export const update = mutation({
     maxCapacity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'resource:manage', { type: 'resource' })
 
     const profile = await profileByUserId(ctx, user._id, 'venues')
     if (!profile) throw new ConvexError({ code: ErrorCode.NOT_FOUND })

@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
-import { requireAuth, getAuthUser, HOLD_TTL_MS, assertOwnership } from './lib/auth'
+import { authorize, getAuthUser, HOLD_TTL_MS } from './lib/auth'
 import { profileByUserId } from './lib/profileHelpers'
 import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
@@ -19,15 +19,6 @@ import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
 import type { OperatorType } from './shared/operatorTypes'
 
-/**
- * Creates a minimal Draft booking shell. Called once when the wizard first opens
- * for a new booking. Returns bookingId for subsequent saveDraftState calls.
- * Fails fast if caller is not an organizer role.
- *
- * For Agent callers in independent mode: agent is owner, agentId is set for
- * dashboard listing via the by_agentId index.
- * For referral mode use createReferralDraftShell instead.
- */
 export const createDraftShell = mutation({
   args: {
     activeRole: stakeholderType,
@@ -35,28 +26,19 @@ export const createDraftShell = mutation({
     endDate: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking' })
     await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    // ── Profile completeness gate — operator's active role must be 100% ──
     const activeRoleStatus = await checkProfileCompleteness(ctx, { _id: user._id }, args.activeRole)
     if (activeRoleStatus.percentage < 100) {
       throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: activeRoleStatus.incomplete })
     }
 
-    /**
-     * Past dates — reject if optional startDate is before today.
-     * Limitation: drafts have no session context yet, so we default to Asia/Bangkok.
-     * When expanding to non-Thailand markets, this call site should accept an
-     * explicit timezone from the operator's locale or the draft's target region.
-     * See bookingSessions.timezone (schema line 194) for the session-level field.
-     */
     if (args.startDate) {
       assertNoPastDates([{ date: args.startDate }])
     }
 
-    // ── Coverage gate — preferred resources must cover all 5 requirements ──
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q) => q.eq('stakeholderId', user.slug))
@@ -68,7 +50,6 @@ export const createDraftShell = mutation({
     const prefBoats = prefs?.preferredBoatSlugs ?? []
     const prefCompressors = prefs?.preferredCompressorSlugs ?? []
 
-    // Build boat capabilities from the boats table (parallel to avoid N+1)
     const boatCapabilities: Record<string, BoatCapabilities> = {}
     const boatEntries = await Promise.all(
       prefBoats.map(async (slug) => {
@@ -99,7 +80,6 @@ export const createDraftShell = mutation({
       throw new ConvexError({ code: ErrorCode.RESOURCES_INCOMPLETE, missing: coverage.missing })
     }
 
-    // For Agent callers, always stamp agentId so the by_agentId index surfaces this booking.
     const agentId = await checkHasRole(ctx, user._id, 'Agent') ? (user.slug as string) : undefined
 
     const bookingId = await ctx.db.insert('bookings', {
@@ -123,7 +103,6 @@ export const createDraftShell = mutation({
       customerFormComplete: false,
     })
 
-    // Clean up demo bookings after first real booking creation
     await ctx.scheduler.runAfter(0, internal.demoBookings.cleanupDemoBookings, {
       ownerId: user.slug,
     })
@@ -132,17 +111,12 @@ export const createDraftShell = mutation({
   },
 })
 
-/**
- * Creates a referral Draft booking shell. Agent refers a customer to a DC —
- * the DC becomes the booking owner and handles the booking from here.
- * Agent's involvement ends after this call; they can track via by_agentId index.
- */
 export const createReferralDraftShell = mutation({
   args: {
     referralDcSlug: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'booking:manage', { type: 'booking' })
     if (!await checkHasRole(ctx, user._id, 'Agent')) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
     const dcUser = await ctx.db
@@ -151,7 +125,6 @@ export const createReferralDraftShell = mutation({
       .unique()
     if (!dcUser) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    // Determine the DC's operator role from their assigned roles
     const dcRoles = await ctx.db
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', dcUser._id))
@@ -159,7 +132,6 @@ export const createReferralDraftShell = mutation({
     const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
     if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    // Enforce profile + resource completeness on the target DC
     const dcRoleStatus = await checkProfileCompleteness(ctx, { _id: dcUser._id }, dcOperatorRole.role)
     if (dcRoleStatus.percentage < 100) {
       throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: dcRoleStatus.incomplete })
@@ -178,7 +150,6 @@ export const createReferralDraftShell = mutation({
       divers: [],
       agentId: user.slug as string,
       agentIsReferral: true,
-      // operatorName is the DC's business name since they own the booking
       operatorName: sanitizeString(dcUser.businessName ?? '', NAME_MAX),
       portalContact: true,
       portalMedical: true,
@@ -192,33 +163,21 @@ export const createReferralDraftShell = mutation({
   },
 })
 
-/**
- * Persists the serialized wizard state to bookings.draftState.
- * Called on every step change so operators can resume later via edit mode.
- * Only allowed on Draft bookings owned by the caller.
- */
 export const saveDraftState = mutation({
   args: {
     bookingId: v.id('bookings'),
     draftState: v.string(),
   },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(booking, user)
+    await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
     if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     await ctx.db.patch(args.bookingId, { draftState: sanitizeString(args.draftState, DRAFT_STATE_MAX) })
   },
 })
 
-/**
- * Returns a booking owned by the caller for the wizard to pre-fill.
- * Returns null if not found or caller does not own it.
- * Used by edit mode to restore draftState or pre-fill from booking fields.
- */
 export const getBookingForWizard = query({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
@@ -233,20 +192,12 @@ export const getBookingForWizard = query({
   },
 })
 
-/**
- * Hard-deletes a Draft booking owned by the caller.
- * Vacates any active reservations, deletes sessions and booking links,
- * then removes the booking record entirely.
- * Used by the operator to discard in-progress wizard sessions.
- */
 export const discardDraft = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(booking, user)
+    await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
     if (booking.status !== BOOKING_STATUS.Draft) throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
 
     const vacated = await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
@@ -268,7 +219,6 @@ export const discardDraft = mutation({
       await ctx.db.delete(l._id) // batch-exempt: sequential hard-delete of orphaned link rows required before booking deletion
     }
 
-    // Delete all customerProfiles for this booking (orphaned after booking deletion)
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
@@ -277,7 +227,6 @@ export const discardDraft = mutation({
       await ctx.db.delete(p._id) // batch-exempt: sequential hard-delete of orphaned profile rows required before booking deletion
     }
 
-    // Delete all equipmentBags assigned to this booking (orphaned after booking deletion)
     const bags = await ctx.db
       .query('equipmentBags')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
@@ -286,9 +235,6 @@ export const discardDraft = mutation({
       await ctx.db.delete(b._id) // batch-exempt: sequential hard-delete of orphaned bag rows required before booking deletion
     }
 
-    // Hard-delete all reservations for this booking — includes vacated ones from prior
-    // edit cycles that releaseBookingReservations skipped (already Vacated). Leaving
-    // them would orphan records referencing a deleted bookingId.
     const reservations = await ctx.db
       .query('reservations')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
@@ -297,7 +243,6 @@ export const discardDraft = mutation({
       await ctx.db.delete(r._id) // batch-exempt: sequential hard-delete of all reservation rows (including already-vacated) required before booking deletion
     }
 
-    // Delete audit log entries for this booking (DD-157)
     const auditLogs = await ctx.db
       .query('bookingAuditLog')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
@@ -306,7 +251,6 @@ export const discardDraft = mutation({
       await ctx.db.delete(a._id) // batch-exempt: sequential hard-delete of orphaned audit log rows required before booking deletion
     }
 
-    // Delete booking resource assignments for this booking (DD-157)
     const resources = await ctx.db
       .query('bookingResources')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))

@@ -3,7 +3,7 @@ import { internalAction, internalMutation, internalQuery, mutation, query } from
 import type { DatabaseWriter } from './_generated/server'
 import { internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
-import { getAuthUser, requireAuth, OPERATOR_ROLE_SET } from './lib/auth'
+import { authorize, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profileCompleteness'
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
@@ -19,10 +19,8 @@ import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
 import { sanitizeFields, USER_FIELDS } from './lib/sanitize'
 
-/** Strip sensitive fields from a user document for public consumption. */
 function publicUser(user: Doc<'users'>) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { tokenIdentifier, email, ...rest } = user
+  const { tokenIdentifier: _ti, email: _e, ...rest } = user
   return rest
 }
 
@@ -38,8 +36,6 @@ async function generateUniqueSlug(db: DatabaseWriter): Promise<string> {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
 }
 
-// Auth-aware registration. Called from UI after Clerk sign-up + role selection.
-// Idempotent: returns existing user._id if already created.
 export const createUser = mutation({
   args: {
     role: stakeholderType,
@@ -66,7 +62,6 @@ export const createUser = mutation({
       )
       .unique()
 
-    // Email always comes from Clerk identity — never from client args.
     const identityFirstName = identity.givenName ?? ''
     const identityLastName = identity.familyName ?? ''
     const firstName = args.firstName ?? identityFirstName
@@ -106,7 +101,6 @@ export const createUser = mutation({
       appLanguage: args.appLanguage ?? 'en',
     })
 
-    // Create userRoles entries when roles array is provided
     if (args.roles && args.roles.length > 0) {
       const uniqueRoles = [...new Set(args.roles)]
       const now = Date.now()
@@ -120,7 +114,6 @@ export const createUser = mutation({
       }
     }
 
-    // Schedule demo bookings for operator roles
     if (OPERATOR_ROLE_SET.has(args.role)) {
       await ctx.scheduler.runAfter(0, internal.demoBookings.scheduleDemoBookings, {
         slug,
@@ -133,9 +126,6 @@ export const createUser = mutation({
   },
 })
 
-// Patches profile fields for the authenticated user.
-// Used by the settings profile and preferences tabs.
-// Does NOT modify role — role lives in userRoles and is set during onboarding.
 export const updateProfile = mutation({
   args: {
     businessName: v.optional(v.string()),
@@ -149,7 +139,7 @@ export const updateProfile = mutation({
     customerLanguages: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const sanitized = sanitizeFields(args, USER_FIELDS)
 
     await ctx.db.patch(user._id, {
@@ -166,14 +156,12 @@ export const updateProfile = mutation({
   },
 })
 
-// Patches businessName and customerLanguages during onboarding step 4 (Business Info).
 export const updateBusinessInfo = mutation({
   args: {
     businessName: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
     const sanitized = sanitizeFields(args, USER_FIELDS)
 
     await ctx.db.patch(user._id, {
@@ -182,15 +170,13 @@ export const updateBusinessInfo = mutation({
   },
 })
 
-// Sets the business name during account setup.
-// (Previously also wrote users.role, now removed — role lives in userRoles.)
 export const setRole = mutation({
   args: {
     role: stakeholderType,
     businessName: v.string(),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
     await ctx.db.patch(user._id, {
       businessName: args.businessName,
@@ -198,7 +184,6 @@ export const setRole = mutation({
   },
 })
 
-// Returns the currently authenticated user, or null if not found.
 export const me = query({
   args: {},
   handler: async (ctx) => {
@@ -206,8 +191,6 @@ export const me = query({
   },
 })
 
-// Returns a user by slug. Used for resource owner lookups.
-// Omits tokenIdentifier and email — these are sensitive fields not needed by public callers.
 export const bySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
@@ -219,8 +202,6 @@ export const bySlug = query({
   },
 })
 
-// Returns a user by ID.
-// Omits tokenIdentifier and email — these are sensitive fields not needed by public callers.
 export const byId = query({
   args: { id: v.id('users') },
   handler: async (ctx, args) => {
@@ -229,7 +210,6 @@ export const byId = query({
   },
 })
 
-// Returns the completion percentage and list of incomplete fields for onboarding.
 export const getOnboardingStatus = query({
   args: {},
   handler: async (ctx) => {
@@ -247,9 +227,6 @@ export const getOnboardingStatus = query({
   },
 })
 
-// Returns the lowest profile completion percentage across ALL of the user's roles.
-// For multi-role users (e.g. DiveCenter + Boat + Pool), this surfaces the worst
-// completion so the dashboard indicator reflects outstanding work on any role.
 export const getLowestProfileCompletion = query({
   args: {},
   handler: async (ctx) => {
@@ -274,8 +251,6 @@ export const getLowestProfileCompletion = query({
   },
 })
 
-// Returns profile completeness for a single active role.
-// Used by dashboard shell and booking gate.
 export const getProfileCompletionForRole = query({
   args: { role: v.string() },
   handler: async (ctx, args) => {
@@ -285,8 +260,6 @@ export const getProfileCompletionForRole = query({
   },
 })
 
-// Returns per-role completeness breakdown. Used by the profile completion banner
-// and booking gate to know WHICH roles have WHICH fields missing.
 export const getAllRolesCompleteness = query({
   args: {},
   handler: async (ctx) => {
@@ -296,14 +269,12 @@ export const getAllRolesCompleteness = query({
   },
 })
 
-// Updates account-level default fields (location).
 export const updateAccountDefaults = mutation({
   args: {
     defaultLocation: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
     await ctx.db.patch(user._id, {
       ...(args.defaultLocation !== undefined && { defaultLocation: args.defaultLocation }),
@@ -311,7 +282,6 @@ export const updateAccountDefaults = mutation({
   },
 })
 
-// Returns the current account-level defaults for the authenticated user.
 export const getAccountDefaults = query({
   args: {},
   handler: async (ctx) => {
@@ -325,14 +295,11 @@ export const getAccountDefaults = query({
   },
 })
 
-// Marks onboarding as complete. Requires at minimum that name and email are set on the profile.
 export const completeOnboarding = mutation({
   args: {},
   handler: async (ctx) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const { user } = await authorize(ctx, null, 'profile:manage', { type: 'profile' })
 
-    // Require name is set (basic guard — profile form should have saved it already)
     if (!user.name || user.name.trim() === '') {
       throw new ConvexError({ code: ErrorCode.VALIDATION, reason: 'Profile must be completed before finishing onboarding.' })
     }
@@ -341,9 +308,6 @@ export const completeOnboarding = mutation({
   },
 })
 
-// Internal: called by Clerk webhook to create or update a user record.
-// Role is set via userRoles when the user selects their role in the
-// onboarding UI via createUser.
 export const upsertFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
@@ -362,7 +326,6 @@ export const upsertFromWebhook = internalMutation({
           .withIndex('by_tokenIdentifier', (q) => q.eq('tokenIdentifier', args.tokenIdentifier))
           .unique()
         if (existing) return existing._id
-        // fall through to create if not found
       }
     }
 
@@ -396,7 +359,6 @@ export const upsertFromWebhook = internalMutation({
       appLanguage: 'en',
     })
 
-    // Seed default userRoles entry so getLowestProfileCompletion works
     await ctx.db.insert('userRoles', {
       userId,
       role: 'DiveCenter',
@@ -408,8 +370,6 @@ export const upsertFromWebhook = internalMutation({
   },
 })
 
-// Internal: called by Clerk webhook on user.deleted.
-// Anonymises the record rather than hard-deleting — bookings may reference it.
 export const deleteFromWebhook = internalMutation({
   args: {
     tokenIdentifier: v.string(),
@@ -430,7 +390,6 @@ export const deleteFromWebhook = internalMutation({
 
     if (!user) return
 
-    // Capture slug before anonymization for cascade args
     const userSlug = user.slug
 
     await ctx.db.patch(user._id, {
@@ -440,7 +399,6 @@ export const deleteFromWebhook = internalMutation({
       lastName: '',
     })
 
-    // Schedule async cascade to clean up bookings, reservations, roles, etc.
     await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
       userId: user._id,
       userSlug,
@@ -448,11 +406,8 @@ export const deleteFromWebhook = internalMutation({
   },
 })
 
-// ─── User Deletion Cascade (DD-258) ──────────────────────────────────────────
-
 const CASCADE_BATCH_SIZE = 50
 
-/** Query: find active (Draft/Upcoming) bookings owned by a user slug. */
 export const findActiveBookingsForOwner = internalQuery({
   args: { userSlug: v.string() },
   handler: async (ctx, { userSlug }): Promise<Array<{ bookingId: Id<'bookings'> }>> => {
@@ -471,35 +426,24 @@ export const findActiveBookingsForOwner = internalQuery({
         .take(CASCADE_BATCH_SIZE + 1),
     ])
 
-    // Limit to CASCADE_BATCH_SIZE + 1 so the action's sentinel check
-    // fires only when total active bookings truly exceed the batch size.
     return [...drafts, ...upcoming]
       .slice(0, CASCADE_BATCH_SIZE + 1)
       .map((b) => ({ bookingId: b._id }))
   },
 })
 
-/**
- * Mutation: cancel a single booking as part of user deletion cascade.
- * Idempotent — no-op if booking is already Cancelled or missing.
- * Mirrors purgeOneDraft pattern from inventoryRelease.ts.
- */
 export const cancelOneBookingForDeletedUser = internalMutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, { bookingId }): Promise<void> => {
     const booking = await ctx.db.get(bookingId)
     if (!booking || !canBookingTransition(booking.status, 'cancel')) return
 
-    // Release all active reservations and restore snapshots
     const vacated = await releaseBookingReservations(ctx, bookingId, VACATED_REASON.UserDeleted)
 
-    // Notify resource stakeholders whose inventory was just released
     await notifyReleasedInventory(ctx, bookingId, vacated)
 
-    // Cancel the booking
     await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok: guarded above
 
-    // Audit log
     await logBookingChange(ctx, {
       bookingId,
       action: 'user_deleted_cascade',
@@ -510,18 +454,12 @@ export const cancelOneBookingForDeletedUser = internalMutation({
   },
 })
 
-/**
- * Mutation: clean up ancillary user data after all bookings are cancelled.
- * Runs as the final step of the cascade. Uses bounded take + self-reschedule
- * to avoid unbounded collects on high-activity users (DD-343).
- */
 export const cleanupDeletedUserData = internalMutation({
   args: {
     userId: v.id('users'),
     userSlug: v.string(),
   },
   handler: async (ctx, { userId, userSlug }): Promise<void> => {
-    // Fetch one batch from each table (take CASCADE_BATCH_SIZE + 1 to detect overflow)
     const PROBE = CASCADE_BATCH_SIZE + 1
     const [roles, unreadNotifs, prefs, blocked, resources, inventory, templates] = await Promise.all([
       ctx.db.query('userRoles').withIndex('by_userId', (q) => q.eq('userId', userId)).take(PROBE),
@@ -537,7 +475,6 @@ export const cleanupDeletedUserData = internalMutation({
       ctx.db.query('bookingTemplates').withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', userSlug)).take(PROBE),
     ])
 
-    // Slice to the actual batch size before processing
     const rolesBatch = roles.slice(0, CASCADE_BATCH_SIZE)
     const unreadBatch = unreadNotifs.slice(0, CASCADE_BATCH_SIZE)
     const prefsBatch = prefs.slice(0, CASCADE_BATCH_SIZE)
@@ -546,9 +483,6 @@ export const cleanupDeletedUserData = internalMutation({
     const inventoryBatch = inventory.slice(0, CASCADE_BATCH_SIZE)
     const templatesBatch = templates.slice(0, CASCADE_BATCH_SIZE)
 
-    // For each inventoryUnit being deleted, collect and delete a bounded batch of its availabilitySnapshots.
-    // Take CASCADE_BATCH_SIZE + 1 per unit to detect overflow — if any unit has more, self-reschedule handles the rest.
-    // Units with remaining snapshots are NOT deleted yet — they stay so the next reschedule can find their snapshots.
     const snapshotBatches = await Promise.all(
       inventoryBatch.map((unit) =>
         ctx.db
@@ -560,11 +494,8 @@ export const cleanupDeletedUserData = internalMutation({
     const snapshotHasMore = snapshotBatches.some((batch) => batch.length > CASCADE_BATCH_SIZE)
     const allSnapshots = snapshotBatches.flatMap((batch) => batch.slice(0, CASCADE_BATCH_SIZE))
 
-    // Only delete units whose snapshots were fully drained in this pass.
-    // Units with overflow keep their row so the next reschedule can query their remaining snapshots.
     const unitsDrained = inventoryBatch.filter((_, i) => snapshotBatches[i].length <= CASCADE_BATCH_SIZE)
 
-    // Determine whether any table has more rows beyond this batch
     const hasMore =
       roles.length > CASCADE_BATCH_SIZE ||
       unreadNotifs.length > CASCADE_BATCH_SIZE ||
@@ -597,11 +528,6 @@ export const cleanupDeletedUserData = internalMutation({
   },
 })
 
-/**
- * Action: coordinator for user deletion cascade.
- * Processes bookings in batches, then cleans up ancillary data.
- * Self-reschedules if more bookings remain.
- */
 export const cascadeUserDeletion = internalAction({
   args: {
     userId: v.id('users'),
@@ -650,13 +576,11 @@ export const cascadeUserDeletion = internalAction({
     }
 
     if (more) {
-      // Self-reschedule for next batch
       await ctx.scheduler.runAfter(0, internal.users.cascadeUserDeletion, {
         userId,
         userSlug,
       })
     } else if (errors.length === 0) {
-      // All bookings successfully handled — clean up ancillary data
       await ctx.runMutation(internal.users.cleanupDeletedUserData, {
         userId,
         userSlug,

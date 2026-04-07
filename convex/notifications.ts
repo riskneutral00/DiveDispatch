@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth, assertCallerIsUser } from './lib/auth'
+import { authorize, requireAuth, assertCallerIsUser } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
@@ -11,7 +11,6 @@ import { type NotificationType, clientNotificationTypeValidator, CLIENT_NOTIFICA
 export type { NotificationLogistics } from './shared/notificationLogistics'
 import type { NotificationLogistics } from './shared/notificationLogistics'
 
-// notify() is a pure helper — called inline by other mutations, never exposed as a standalone endpoint.
 export async function notify(
   ctx: MutationCtx,
   args: {
@@ -32,14 +31,6 @@ export async function notify(
   })
 }
 
-/**
- * Notify resource stakeholders about released inventory using already-known vacated reservations.
- * Deduplicates by inventoryUnitId — each unique unit's owner gets one notification.
- * Batch-fetches units with Promise.all to avoid N+1 sequential db.get() calls.
- *
- * Callers pass the vacated reservation list returned by releaseBookingReservations,
- * eliminating the re-query that notifyVacatedStakeholders performs.
- */
 export async function notifyReleasedInventory(
   ctx: MutationCtx,
   bookingId: Id<'bookings'>,
@@ -47,7 +38,6 @@ export async function notifyReleasedInventory(
 ): Promise<void> {
   if (vacatedReservations.length === 0) return
 
-  // Deduplicate by inventoryUnitId
   const uniqueUnitIds = [...new Set(vacatedReservations.map((r) => r.inventoryUnitId))]
   const units = await batchGet(ctx, uniqueUnitIds)
 
@@ -62,8 +52,6 @@ export async function notifyReleasedInventory(
   }
 }
 
-// ─── createNotification ───────────────────────────────────────────────────────
-
 export async function _createNotificationHandler(
   ctx: MutationCtx,
   args: {
@@ -74,8 +62,7 @@ export async function _createNotificationHandler(
     idempotencyKey?: string
   },
 ): Promise<void> {
-  const { user } = await requireAuth(ctx)
-  assertCallerIsUser(user, args.userId)
+  await authorize(ctx, null, 'notification:manage', { type: 'notification', ownerId: args.userId })
 
   if (!CLIENT_NOTIFICATION_TYPES.has(args.type)) {
     throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: `Invalid notification type for client creation: ${args.type}` })
@@ -100,19 +87,17 @@ export const createNotification = mutation({
   handler: _createNotificationHandler,
 })
 
-// ─── markAsRead ───────────────────────────────────────────────────────────────
-
 export async function _markAsReadHandler(
   ctx: MutationCtx,
   args: { notificationId: string },
 ): Promise<void> {
-  const { user: caller } = await requireAuth(ctx)
+  const { user } = await authorize(ctx, null, 'notification:manage', { type: 'notification' })
 
   const notifId = args.notificationId as Id<'notifications'>
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  assertCallerIsUser(caller, notification.userId)
+  assertCallerIsUser(user, notification.userId)
 
   await ctx.db.patch(notifId, { readAt: Date.now() })
 }
@@ -122,19 +107,17 @@ export const markAsRead = mutation({
   handler: _markAsReadHandler,
 })
 
-// ─── deleteNotification ──────────────────────────────────────────────────────
-
 export async function _deleteNotificationHandler(
   ctx: MutationCtx,
   args: { notificationId: string },
 ): Promise<void> {
-  const { user: caller } = await requireAuth(ctx)
+  const { user } = await authorize(ctx, null, 'notification:manage', { type: 'notification' })
 
   const notifId = args.notificationId as Id<'notifications'>
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  assertCallerIsUser(caller, notification.userId)
+  assertCallerIsUser(user, notification.userId)
 
   await ctx.db.delete(notifId)
 }
@@ -144,15 +127,11 @@ export const deleteNotification = mutation({
   handler: _deleteNotificationHandler,
 })
 
-// ─── clearAll ────────────────────────────────────────────────────────────────
-
 export async function _clearAllHandler(
   ctx: MutationCtx,
   args: { userId: string },
 ): Promise<number> {
-  const { user: caller } = await requireAuth(ctx)
-
-  assertCallerIsUser(caller, args.userId)
+  await authorize(ctx, null, 'notification:manage', { type: 'notification', ownerId: args.userId })
 
   const BATCH = 500
   const batch = await ctx.db
@@ -170,14 +149,14 @@ export const clearAll = mutation({
   handler: _clearAllHandler,
 })
 
-// ─── getUnreadCount ───────────────────────────────────────────────────────────
-
 export async function _getUnreadCountHandler(
   ctx: QueryCtx,
   args: { userId: string },
 ): Promise<number> {
   const { user: caller } = await requireAuth(ctx)
-  assertCallerIsUser(caller, args.userId)
+  if (caller.slug !== args.userId) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
 
   const MAX_COUNT = 999
   const unread = await ctx.db
@@ -193,8 +172,6 @@ export const getUnreadCount = query({
   handler: _getUnreadCountHandler,
 })
 
-// ─── listNotifications ────────────────────────────────────────────────────────
-
 const DEFAULT_LIMIT = 20
 const SERVER_MAX_NOTIFICATIONS = 50
 
@@ -203,7 +180,9 @@ export async function _listNotificationsHandler(
   args: { userId: string; limit?: number },
 ): Promise<unknown[]> {
   const { user: caller } = await requireAuth(ctx)
-  assertCallerIsUser(caller, args.userId)
+  if (caller.slug !== args.userId) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
 
   const limit = Math.min(args.limit ?? DEFAULT_LIMIT, SERVER_MAX_NOTIFICATIONS)
 

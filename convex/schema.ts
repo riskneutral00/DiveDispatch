@@ -10,20 +10,12 @@ import { capacityModelValidator as capacityModel, genderValidator as gender, sho
 import { stakeholderTypeValidator as stakeholderType, gearTypeValidator as gearType, rentalChecklistValidator } from './lib/validators'
 import { bookingStatusValidator as bookingStatus, reservationStatusValidator as reservationStatus, bagStatusValidator, notificationTypeValidator as notificationType, vacatedReasonValidator } from './shared/statuses'
 
-// ── Typed Unions ────────────────────────────────────────────────────
-// DiveMaster inherits Instructor's reservation path (resourceType: 'Instructor') — NOT in operatorType.
-// DiveHostel inherits DiveResort's path — NOT in operatorType.
-
-
 const accessControlFields = {
   isAllowed: v.optional(v.array(v.string())),
   notAllowed: v.optional(v.array(v.string())),
 }
 
-// ── Schema ──────────────────────────────────────────────────────────
-
 export default defineSchema({
-  // ── L0: Foundation ──────────────────────────────────────────────────
 
   users: defineTable({
     tokenIdentifier: v.string(),
@@ -57,21 +49,16 @@ export default defineSchema({
     .index('by_slug', ['slug'])
     .index('by_isActive', ['isActive']),
 
-  // ── L1: Booking Resources (junction table) ────────────────────────────
-
   bookingResources: defineTable({
     bookingId: v.id('bookings'),
     resourceType: resourceOwnerType,
     resourceId: v.optional(v.string()),
     externalName: v.optional(v.string()),
-    /** When resourceType is Instructor, distinguishes Dive Master helpers from lead instructors. */
     roleType: v.optional(v.union(v.literal('Instructor'), v.literal('DiveMaster'))),
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_resourceId', ['resourceId'])
     .index('by_resourceType_resourceId', ['resourceType', 'resourceId']),
-
-  // ── L1: Core Booking Tables ─────────────────────────────────────────
 
   bookings: defineTable({
     ownerId: v.string(),
@@ -146,8 +133,6 @@ export default defineSchema({
     .index('by_inventoryUnitId_date', ['inventoryUnitId', 'date'])
     .index('by_date', ['date']),
 
-  // ── L1: Customer Tables ─────────────────────────────────────────────
-
   customers: defineTable({
     legalFirstName: v.string(),
     legalLastName: v.string(),
@@ -183,15 +168,15 @@ export default defineSchema({
 
   customerProfiles: defineTable({
     bookingId: v.id('bookings'),
-    customerId: v.optional(v.id('customers')), // set by savePortalContact
+    customerId: v.optional(v.id('customers')),
     linkToken: v.string(),
     accommodationName: v.optional(v.string()),
     needsPickup: v.optional(v.boolean()),
     pickupLocation: v.optional(v.string()),
     pickupTime: v.optional(v.string()),
-    medicalSchemaVersion: v.optional(v.string()), // set by saveMedicalAnswers
-    medicalAnswers: v.optional(v.string()), // AES-256-GCM encrypted JSON — set by saveMedicalAnswers
-    physicianClearanceRequired: v.optional(v.boolean()), // set by saveMedicalAnswers
+    medicalSchemaVersion: v.optional(v.string()),
+    medicalAnswers: v.optional(v.string()),
+    physicianClearanceRequired: v.optional(v.boolean()),
     physicianClearedAt: v.optional(v.number()),
     waiverSignedAt: v.optional(v.number()),
     signatureFileId: v.optional(v.id('_storage')),
@@ -220,8 +205,6 @@ export default defineSchema({
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_token', ['token']),
-
-  // ── L1: Inventory & Reservation Tables ──────────────────────────────
 
   inventoryUnits: defineTable({
     resourceType: resourceOwnerType,
@@ -268,15 +251,11 @@ export default defineSchema({
     .index('by_inventoryUnitId_date_windowStart', ['inventoryUnitId', 'date', 'windowStart'])
     .index('by_date', ['date']),
 
-  // ── L1: Stakeholder Blocked Dates ───────────────────────────────────
-
   stakeholderBlockedDates: defineTable({
     stakeholderId: v.string(),
     roleType: stakeholderType,
     dates: v.array(v.string()),
   }).index('by_stakeholderId_roleType', ['stakeholderId', 'roleType']),
-
-  // ── L1: Stakeholder Preferences ─────────────────────────────────────
 
   stakeholderPreferences: defineTable({
     stakeholderId: v.string(),
@@ -289,15 +268,11 @@ export default defineSchema({
     preferredEquipmentSlugs: v.optional(v.array(v.string())),
     preferredBoatSlugs: v.optional(v.array(v.string())),
     preferredCompressorSlugs: v.optional(v.array(v.string())),
-    /** Agent: preferred target operator for referral-style cascade (any operator type). */
     preferredOperatorSlug: v.optional(v.string()),
     confirmOnAccept: v.boolean(),
     confirmOnDecline: v.boolean(),
-    /** When true, wizard picks first eligible preferred resource (tier-1 instructor, etc.) instead of leaving blank. */
     autoAssignPreferred: v.optional(v.boolean()),
   }).index('by_stakeholderId', ['stakeholderId']),
-
-  // ── L1: Notifications ───────────────────────────────────────────────
 
   notifications: defineTable({
     userId: v.string(),
@@ -318,8 +293,6 @@ export default defineSchema({
     .index('by_userId_readAt', ['userId', 'readAt'])
     .index('by_userId_createdAt', ['userId', 'createdAt'])
     .index('by_bookingId', ['bookingId']),
-
-  // ── L1: Stakeholder Profile Tables ──────────────────────────────────
 
   diveCenters: defineTable({
     userId: v.id('users'),
@@ -443,8 +416,6 @@ export default defineSchema({
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
-  // ── L1: Equipment Tracking ──────────────────────────────────────────
-
   equipmentBags: defineTable({
     bagNumber: v.string(),
     equipmentManagerId: v.string(),
@@ -462,8 +433,6 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_bookingId', ['bookingId'])
     .index('by_bagNumber', ['bagNumber']),
-
-  // ── L1: Gear Sizing ─────────────────────────────────────────────────
 
   gearSizingLookup: defineTable({
     manufacturer: v.string(),
@@ -492,8 +461,6 @@ export default defineSchema({
     .index('by_equipmentManagerId', ['equipmentManagerId'])
     .index('by_equipmentManagerId_gearType', ['equipmentManagerId', 'gearType']),
 
-  // ── L0: Multi-Role ─────────────────────────────────────────────────
-
   userRoles: defineTable({
     userId: v.id('users'),
     role: stakeholderType,
@@ -503,8 +470,6 @@ export default defineSchema({
     .index('by_userId', ['userId'])
     .index('by_userId_role', ['userId', 'role'])
     .index('by_role', ['role']),
-
-  // ── L1: Booking Templates ───────────────────────────────────────────
 
   bookingTemplates: defineTable({
     ownerId: v.string(),
@@ -517,8 +482,6 @@ export default defineSchema({
     }))),
     createdAt: v.number(),
   }).index('by_ownerId_ownerType', ['ownerId', 'ownerType']),
-
-  // ── L2: Agent ───────────────────────────────────────────────────────
 
   agents: defineTable({
     userId: v.id('users'),
@@ -534,8 +497,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
-
-  // ── L4: DiveMaster ─────────────────────────────────────────────────
 
   diveMasters: defineTable({
     userId: v.id('users'),
@@ -557,8 +518,6 @@ export default defineSchema({
     ...accessControlFields,
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
-
-  // ── L5: Liveaboard Ecosystem (field sketches — refine during implementation) ──
 
   liveaboards: defineTable({
     userId: v.id('users'),
@@ -648,18 +607,12 @@ export default defineSchema({
     verified: v.boolean(),
   }).index('by_userId', ['userId']),
 
-  // diveSites table removed — absorbed into `venues` table with venueType discriminator
-
-  // ── L6: Cron Monitoring ────────────────────────────────────────────────────────
-
   cronRunLog: defineTable({
     jobName: v.string(),
     status: v.union(v.literal('success'), v.literal('failure')),
     error: v.optional(v.string()),
     runAt: v.number(),
   }).index('by_jobName_runAt', ['jobName', 'runAt']),
-
-  // ── L7: Idempotency Log ────────────────────────────────────────────────────
 
   idempotencyLog: defineTable({
     key: v.string(),
@@ -668,8 +621,6 @@ export default defineSchema({
   })
     .index('by_key_mutationName', ['key', 'mutationName'])
     .index('by_createdAt', ['createdAt']),
-
-  // ── L7: Support (dashboard help contact form) ───────────────────────────────
 
   supportRequests: defineTable({
     userId: v.id('users'),
@@ -683,16 +634,12 @@ export default defineSchema({
     .index('by_userId', ['userId'])
     .index('by_createdAt', ['createdAt']),
 
-  // ── L7: Rate Limiting ──────────────────────────────────────────────────────
-
   rateLimits: defineTable({
     key: v.string(),
     tokens: v.number(),
     lastRefill: v.number(),
   }).index('by_key', ['key'])
     .index('by_lastRefill', ['lastRefill']),
-
-  // ── L7: Audit Trail ──────────────────────────────────────────────────────────
 
   bookingAuditLog: defineTable({
     bookingId: v.id('bookings'),
@@ -727,4 +674,18 @@ export default defineSchema({
   })
     .index('by_bookingId', ['bookingId'])
     .index('by_bookingId_timestamp', ['bookingId', 'timestamp']),
+
+  relationships: defineTable({
+    subjectType: v.string(),
+    subjectId: v.string(),
+    relation: v.string(),
+    objectType: v.string(),
+    objectId: v.string(),
+    createdAt: v.number(),
+    bookingId: v.optional(v.id('bookings')),
+  })
+    .index('by_subjectId_objectType', ['subjectId', 'objectType'])
+    .index('by_objectId_relation', ['objectId', 'relation'])
+    .index('by_subjectId_relation_objectId', ['subjectId', 'relation', 'objectId'])
+    .index('by_bookingId', ['bookingId']),
 })

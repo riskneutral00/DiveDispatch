@@ -8,8 +8,6 @@ import { batchGet } from './lib/batch'
 import { getResourcesForBooking } from './bookingResources'
 import type { CalendarBooking } from './bookings'
 
-// ── Return types ───────────────────────────────────────────────────────────────
-
 export type VesselDailyCapacity = {
   booked: number
   total: number
@@ -54,9 +52,7 @@ export type ManifestGroup = {
   activityType: string[]
   diverCount: number
   divers: ManifestDiver[]
-  /** First session delivery point for this vessel date (when present). */
   deliveryLocation?: 'BoatPier' | 'Pool' | 'Beach'
-  /** Resolved from bookingResources DiveSite + venues profile when available. */
   diveSiteName?: string
 }
 
@@ -76,8 +72,6 @@ export type ManifestData = {
   vessels: ManifestVessel[]
 }
 
-// ── Private helpers ────────────────────────────────────────────────────────────
-
 async function getBoatContext(ctx: QueryCtx, user: { _id: Id<'users'>; slug: string }) {
   const boatProfile = await profileByUserId(ctx, user._id, 'boats')
   if (!boatProfile) return null
@@ -90,14 +84,6 @@ async function getBoatContext(ctx: QueryCtx, user: { _id: Id<'users'>; slug: str
   return { boatProfile, unitMap: new Map(units.map((u) => [u.displayName, u])) }
 }
 
-// ── Queries ────────────────────────────────────────────────────────────────────
-
-/**
- * Returns daily capacity data for each vessel in the authenticated boat
- * operator's fleet across the requested date range.
- *
- * Joins: boats (fleet) → inventoryUnits → availabilitySnapshots + bookingSessions
- */
 export const getVesselCalendarData = query({
   args: {
     dateRangeStart: v.string(),
@@ -135,7 +121,7 @@ export const getVesselCalendarData = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect() // bounded: sessions per unit per date ≤ time windows
+            .collect() // bounded: sessions per unit per date <= time windows
 
           const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
           const bookings = await batchGet(ctx, bookingIds)
@@ -161,14 +147,6 @@ export const getVesselCalendarData = query({
   },
 })
 
-/**
- * Returns full passenger manifest data per vessel across the requested date
- * range — grouped by date and by booking (operator/dive center).
- *
- * Data chain: inventoryUnits (vessel) → bookingSessions (by unit + date) →
- * bookings (operator, divers, activity) → customerProfiles (by booking) →
- * customers (passport, nationality, emergency contacts, medical flags)
- */
 export const getManifestData = query({
   args: {
     dateRangeStart: v.string(),
@@ -202,7 +180,7 @@ export const getManifestData = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect() // bounded: sessions per unit per date ≤ time windows
+            .collect() // bounded: sessions per unit per date <= time windows
 
           if (sessions.length === 0) continue
 
@@ -315,10 +293,6 @@ export const getManifestData = query({
   },
 })
 
-/**
- * Returns vessel daily trips shaped as CalendarBooking[] so the unified
- * BookingCalendar can render fleet pills. Each vessel × date = one entry.
- */
 export const getVesselCalendarTrips = query({
   args: {
     dateRangeStart: v.string(),
@@ -352,7 +326,7 @@ export const getVesselCalendarTrips = query({
             .withIndex('by_inventoryUnitId_date', (q) =>
               q.eq('inventoryUnitId', unit._id).eq('date', date),
             )
-            .collect() // bounded: sessions per unit per date ≤ time windows
+            .collect() // bounded: sessions per unit per date <= time windows
 
           const bookingIds = [...new Set(sessions.map((s) => s.bookingId))]
           const bookingDocs = await batchGet(ctx, bookingIds)
@@ -383,8 +357,6 @@ export const getVesselCalendarTrips = query({
     return trips
   },
 })
-
-// ── Helpers ─────────────────────────────────────────────────────────────────────
 
 function buildDateRange(start: string, end: string): string[] {
   const dates: string[] = []

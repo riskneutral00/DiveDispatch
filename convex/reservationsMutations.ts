@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from './_generated/server'
-import { requireAuth, assertOwnership } from './lib/auth'
+import { authorize } from './lib/auth'
 import type { MutationCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { tryAutoAdvance, canBookingTransition, canReservationTransition, isSessionStarted } from './bookings/_shared'
@@ -18,16 +18,10 @@ import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, 
 import { batchPatch } from './lib/batch'
 import { languageOverlap } from './lib/languageMatch'
 
-// Re-export for test backwards compatibility
 export { getDatesInRange as getDateRange } from './shared/dateRange'
 
-/** Maximum number of candidates evaluated during alternative resource search. */
 export const MAX_CANDIDATES = 20
 
-/**
- * Looks up the placeName for a single owner via their role-specific profile table.
- * Used by the decline handler for the declined unit itself.
- */
 async function getOwnerCity(
   ctx: MutationCtx,
   ownerSlug: string,
@@ -42,9 +36,6 @@ async function getOwnerCity(
   return getProfileCity(ctx, user._id, ownerType)
 }
 
-/**
- * Fetches the placeName from the profile table for a given userId and resource type.
- */
 async function getProfileCity(
   ctx: MutationCtx,
   userId: Id<'users'>,
@@ -56,10 +47,6 @@ async function getProfileCity(
   return profile?.placeName ?? null
 }
 
-/**
- * Batch-fetches users by slug in parallel. Shared by batch helpers
- * so callers that need both city + languages don't duplicate user lookups.
- */
 async function batchGetUsers(
   ctx: MutationCtx,
   slugs: string[],
@@ -77,10 +64,6 @@ async function batchGetUsers(
   return map
 }
 
-/**
- * Batch-fetches cities for multiple owner slugs in parallel.
- * Returns Map<slug, city | null>.
- */
 export async function batchGetOwnerCities(
   ctx: MutationCtx,
   slugs: string[],
@@ -104,10 +87,6 @@ export async function batchGetOwnerCities(
   return cityMap
 }
 
-/**
- * Batch-fetches teachingLanguages for instructor candidates in parallel.
- * Returns Map<slug, string[]>.
- */
 async function batchGetTeachingLanguages(
   ctx: MutationCtx,
   slugs: string[],
@@ -134,10 +113,6 @@ async function batchGetTeachingLanguages(
   return langMap
 }
 
-/**
- * Fetches users once and returns both city and language maps for a set of candidate slugs.
- * Eliminates the need to thread a userMap between batchGetOwnerCities and batchGetTeachingLanguages.
- */
 export async function batchGetOwnerContext(
   ctx: MutationCtx,
   slugs: string[],
@@ -151,30 +126,20 @@ export async function batchGetOwnerContext(
   return { cities, languages }
 }
 
-// ─── acceptReservation ────────────────────────────────────────────────────────
-
-/**
- * Core implementation — exported for unit testing.
- *
- * Transitions a PendingAcceptance reservation to Confirmed.
- * Idempotent: already-Confirmed reservations return early.
- * Calls tryAutoAdvance in case this was the last pending reservation.
- */
 export async function _acceptHandler(
   ctx: MutationCtx,
   args: { reservationId: string },
 ): Promise<void> {
-  const { user: caller } = await requireAuth(ctx)
-
   const reservation = await ctx.db.get(args.reservationId as Id<"reservations">)
   if (!reservation) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
   const unit = await ctx.db.get(reservation.inventoryUnitId)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  assertOwnership(unit, caller)
+  const { user: caller } = await authorize(ctx, null, 'reservation:accept', {
+    type: 'resource', ownerId: unit.ownerId,
+  })
 
-  // Idempotent: already confirmed is a no-op
   if (reservation.status === RESERVATION_STATUS.Confirmed) return
 
   if (reservation.status !== RESERVATION_STATUS.PendingAcceptance) {
@@ -201,22 +166,15 @@ export const acceptReservation = mutation({
   handler: _acceptHandler,
 })
 
-// ─── acceptBookingReservations ────────────────────────────────────────────────
-
-/**
- * Accepts ALL PendingAcceptance reservations for a given booking+inventoryUnit
- * in one mutation. Used by the Open Requests widget so multi-day bookings
- * are confirmed with a single click.
- */
 export async function _acceptBookingHandler(
   ctx: MutationCtx,
   args: { bookingId: string; inventoryUnitId: string },
 ): Promise<void> {
-  const { user: caller } = await requireAuth(ctx)
-
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(unit, caller)
+  const { user: caller } = await authorize(ctx, null, 'reservation:accept', {
+    type: 'resource', ownerId: unit.ownerId,
+  })
 
   const unitReservations = await ctx.db
     .query('reservations')
@@ -236,7 +194,7 @@ export async function _acceptBookingHandler(
     (r) => r.status === RESERVATION_STATUS.PendingAcceptance,
   )
 
-  if (pending.length === 0) return // idempotent
+  if (pending.length === 0) return
 
   const confirmedAt = Date.now()
   await batchPatch(ctx, pending.map((res) => [res._id, {
@@ -262,48 +220,34 @@ export const acceptBookingReservations = mutation({
   handler: _acceptBookingHandler,
 })
 
-// ─── declineReservation ───────────────────────────────────────────────────────
-
-/**
- * Core implementation — exported for unit testing.
- *
- * Vacates ALL active (PendingAcceptance | Confirmed) reservations for the given
- * inventoryUnit on the booking, restoring AvailabilitySnapshot counts atomically.
- * Clears the denormalized booking field, notifies the booking owner, and checks
- * for same-location alternatives (notifying owner with no_backup_available if none).
- */
 export async function _declineHandler(
   ctx: MutationCtx,
   args: { bookingId: string; inventoryUnitId: string },
 ): Promise<void> {
-  const { user: caller } = await requireAuth(ctx)
-
   const unit = await ctx.db.get(args.inventoryUnitId as Id<"inventoryUnits">)
   if (!unit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(unit, caller)
+  const { user: caller } = await authorize(ctx, null, 'reservation:decline', {
+    type: 'resource', ownerId: unit.ownerId,
+  })
 
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  // Guard: cannot decline on a finalized booking
   if (booking.status === BOOKING_STATUS.Completed || booking.status === BOOKING_STATUS.Cancelled) {
     throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
   const now = Date.now()
 
-  // Vacate all active reservations for this unit and restore snapshots
   await releaseBookingReservationsByUnit(
     ctx, args.bookingId, args.inventoryUnitId as Id<'inventoryUnits'>,
     VACATED_REASON.StakeholderDeclined,
   )
 
-  // Delete from bookingResources junction table
   await deleteResourceByType(ctx, args.bookingId, unit.resourceType as string)
 
-  // Cascade booking status if needed — via FSM guard (Rule 1, fsm-invariants.md)
   if (canBookingTransition(booking.status, 'decline_cascade')) {
-    await ctx.db.patch(args.bookingId as Id<"bookings">, {
+    await ctx.db.patch(args.bookingId as Id<"bookings">, { // fsm-ok
       status: BOOKING_STATUS.Draft,
       bookingFormComplete: false,
       expiresAt: now + booking.holdTTL,
@@ -317,7 +261,6 @@ export async function _declineHandler(
     actorType: 'resource',
   })
 
-  // Notify the booking owner of the decline
   await notify(ctx, {
     userId: booking.ownerId,
     type: NOTIFICATION_TYPE.HoldDeclined,
@@ -325,7 +268,6 @@ export async function _declineHandler(
     message: `${unit.displayName} has declined the reservation.`,
   })
 
-  // Check for same-location alternatives of the same resource type
   const declinedCity = await getOwnerCity(ctx, unit.ownerId, unit.resourceType as ResourceType)
   const bookingDates = getDatesInRange(booking.startDate, booking.endDate)
 
@@ -334,11 +276,8 @@ export async function _declineHandler(
     .withIndex('by_resourceType', (q) => q.eq('resourceType', unit.resourceType))
     .take(MAX_CANDIDATES)
 
-  // Exclude the declined unit
   const candidates = allSameTypeUnits.filter((u) => u._id !== args.inventoryUnitId)
 
-  // Batch-fetch all snapshots for booking dates in O(dates) queries instead of O(candidates*dates).
-  // Bounded by MAX_RESERVATIONS_PER_BOOKING to prevent unbounded memory use on popular dates.
   const snapshotsByUnitAndDate = new Map<string, boolean>()
   const dateSnapshots = await Promise.all(
     bookingDates.map((date) =>
@@ -351,7 +290,6 @@ export async function _declineHandler(
   for (let i = 0; i < bookingDates.length; i++) {
     for (const snap of dateSnapshots[i]) {
       const key = `${snap.inventoryUnitId}:${bookingDates[i]}`
-      // Mark as available if ANY window on that date has capacity
       if (snap.availableUnits > 0) {
         snapshotsByUnitAndDate.set(key, true)
       } else if (!snapshotsByUnitAndDate.has(key)) {
@@ -360,16 +298,13 @@ export async function _declineHandler(
     }
   }
 
-  // Fetch users once, derive cities + languages via batchGetOwnerContext
   const candidateSlugs = candidates.map((c) => c.ownerId)
   const { cities: cityMap, languages: langMap } = await batchGetOwnerContext(
     ctx, candidateSlugs, unit.resourceType as ResourceType,
   )
 
-  // Extract customer language codes from the booking for language-aware sorting
   const customerLangs = booking.divers.map((d) => d.flag.code)
 
-  // Precompute overlap scores once, then sort (avoids O(N log N) Set allocations)
   const overlapScores = new Map(
     candidates.map(c => [c.ownerId, languageOverlap(langMap.get(c.ownerId) ?? [], customerLangs)])
   )
@@ -381,10 +316,8 @@ export async function _declineHandler(
     if (hasAlternative) break
 
     const candidateCity = cityMap.get(candidate.ownerId) ?? null
-    // Only skip when both cities are known and differ
     if (declinedCity && candidateCity && candidateCity !== declinedCity) continue
 
-    // Candidate must have available capacity on every booking date (from pre-fetched map)
     let availableOnAll = true
     for (const date of bookingDates) {
       const key = `${candidate._id}:${date}`
@@ -415,22 +348,17 @@ export const declineReservation = mutation({
   handler: _declineHandler,
 })
 
-// ─── declineByBookingForCaller ────────────────────────────────────────────────
-
-/**
- * Resolves the caller's inventory unit(s) with active reservations on the
- * booking, then declines all of them. Avoids threading inventoryUnitId
- * through the client calendar data model.
- */
 export const declineByBookingForCaller = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    const { user: caller } = await requireAuth(ctx)
+    const { user: caller } = await authorize(ctx, null, 'reservation:decline', {
+      type: 'resource',
+    })
 
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', caller.slug))
-      .collect() // bounded: per-booking reservations/sessions
+      .collect() // bounded: per-user inventory units
 
     if (units.length === 0) {
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
@@ -474,7 +402,6 @@ export const declineByBookingForCaller = mutation({
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No active reservations found for this booking.' })
     }
 
-    // Decline via each distinct inventory unit
     const declinedUnits = new Set<string>()
     for (const res of activeForCaller) {
       if (declinedUnits.has(res.inventoryUnitId)) continue
@@ -487,21 +414,17 @@ export const declineByBookingForCaller = mutation({
   },
 })
 
-// ─── acceptByBookingForCaller ─────────────────────────────────────────────────
-
-/**
- * Resolves the caller's inventory unit(s) with PendingAcceptance reservations
- * on the booking, then confirms all of them. Mirrors declineByBookingForCaller.
- */
 export const acceptByBookingForCaller = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    const { user: caller } = await requireAuth(ctx)
+    const { user: caller } = await authorize(ctx, null, 'reservation:accept', {
+      type: 'resource',
+    })
 
     const units = await ctx.db
       .query('inventoryUnits')
       .withIndex('by_ownerId_ownerType', (q) => q.eq('ownerId', caller.slug))
-      .collect() // bounded: per-booking reservations/sessions
+      .collect() // bounded: per-user inventory units
 
     if (units.length === 0) {
       throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No inventory units found for caller.' })
@@ -512,7 +435,7 @@ export const acceptByBookingForCaller = mutation({
       .withIndex('by_bookingId_status', (q) =>
         q.eq('bookingId', args.bookingId).eq('status', RESERVATION_STATUS.PendingAcceptance),
       )
-      .collect() // bounded: per-booking reservations/sessions
+      .collect() // bounded: per-booking reservations
 
     const callerUnitIds = new Set(units.map((u) => u._id))
     const pendingForCaller = reservations.filter((r) =>
@@ -540,25 +463,21 @@ export const acceptByBookingForCaller = mutation({
   },
 })
 
-// ─── NoShow ──────────────────────────────────────────────────────────────────
-
 export async function _markNoShowHandler(
   ctx: MutationCtx,
   args: { reservationId: Id<'reservations'> },
 ): Promise<void> {
-  const { user } = await requireAuth(ctx)
-
   const reservation = await ctx.db.get(args.reservationId)
   if (!reservation) {
     throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Reservation not found.' })
   }
 
-  // Ownership check: only booking owner can mark NoShow
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(booking, user, 'Only the booking owner can mark NoShow.')
+  const { user } = await authorize(ctx, null, 'booking:manage', {
+    type: 'booking', id: reservation.bookingId as string, ownerId: booking.ownerId,
+  })
 
-  // State guard
   const status = reservation.status as ReservationStatus
   if (!canReservationTransition(status, 'mark_noshow')) {
     throw new ConvexError({
@@ -567,7 +486,6 @@ export async function _markNoShowHandler(
     })
   }
 
-  // Time gate: session must have started (timezone-aware via Intl.DateTimeFormat)
   const session = await ctx.db.get(reservation.bookingSessionId)
   if (!session || !isSessionStarted(session.date, session.startTime, session.timezone ?? 'Asia/Bangkok')) {
     throw new ConvexError({
@@ -576,7 +494,6 @@ export async function _markNoShowHandler(
     })
   }
 
-  // Mark NoShow — do NOT restore snapshot (capacity stays consumed)
   await ctx.db.patch(args.reservationId, {
     status: RESERVATION_STATUS.NoShow,
     noShowAt: Date.now(),
@@ -589,7 +506,6 @@ export async function _markNoShowHandler(
     actorType: 'operator',
   })
 
-  // Notify resource stakeholder
   const unit = await ctx.db.get(reservation.inventoryUnitId)
   if (unit) {
     await notify(ctx, {
@@ -605,19 +521,17 @@ export async function _revertNoShowHandler(
   ctx: MutationCtx,
   args: { reservationId: Id<'reservations'> },
 ): Promise<void> {
-  const { user } = await requireAuth(ctx)
-
   const reservation = await ctx.db.get(args.reservationId)
   if (!reservation) {
     throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'Reservation not found.' })
   }
 
-  // Ownership check
   const booking = await ctx.db.get(reservation.bookingId)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(booking, user, 'Only the booking owner can revert NoShow.')
+  const { user } = await authorize(ctx, null, 'booking:manage', {
+    type: 'booking', id: reservation.bookingId as string, ownerId: booking.ownerId,
+  })
 
-  // State guard
   const status = reservation.status as ReservationStatus
   if (!canReservationTransition(status, 'revert_noshow')) {
     throw new ConvexError({
@@ -626,7 +540,6 @@ export async function _revertNoShowHandler(
     })
   }
 
-  // 24h window check
   if (!reservation.noShowAt || Date.now() - reservation.noShowAt > NOSHOW_REVERT_WINDOW_MS) {
     throw new ConvexError({
       code: ErrorCode.REVERT_WINDOW_EXPIRED,
@@ -634,7 +547,6 @@ export async function _revertNoShowHandler(
     })
   }
 
-  // Revert to Confirmed
   await ctx.db.patch(args.reservationId, {
     status: RESERVATION_STATUS.Confirmed,
     noShowAt: undefined,
@@ -647,7 +559,6 @@ export async function _revertNoShowHandler(
     actorType: 'operator',
   })
 
-  // Notify resource stakeholder
   const session = await ctx.db.get(reservation.bookingSessionId)
   const unit = await ctx.db.get(reservation.inventoryUnitId)
   if (unit && session) {

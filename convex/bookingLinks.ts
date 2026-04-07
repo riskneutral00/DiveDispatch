@@ -1,17 +1,13 @@
 import { ConvexError, v } from 'convex/values'
 import { type MutationCtx, type QueryCtx, mutation, query } from './_generated/server'
 import type { Id } from './_generated/dataModel'
-import { requireAuth, assertOwnership, type DbCtx } from './lib/auth'
+import { authorize, requireAuth, assertOwnership } from './lib/auth'
 import { isBookingExpired } from './bookings/_shared'
 import { ErrorCode } from './lib/errorCodes'
 import { BOOKING_LINK_TTL_MS } from './lib/timeConstants'
 import { BOOKING_STATUS } from './shared/statuses'
 import { todayISO } from './bookings/stateMachine'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-// Discriminated union returned by getByToken so the client can route
-// without try/catch around useQuery.
 export type BookingLinkResult =
   | {
       status: 'valid'
@@ -37,32 +33,14 @@ export type BookingLinkInfo = {
   email: string
 }
 
-// ─── Auth helper ──────────────────────────────────────────────────────────────
-
-async function requireAuthAndOwnership(
-  ctx: DbCtx,
-  bookingId: string,
-) {
-  const { user } = await requireAuth(ctx)
-
-  const booking = await ctx.db.get(bookingId as Id<"bookings">)
-  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(booking, user)
-
-  return booking
-}
-
-// ─── Handlers (exported for unit testing) ────────────────────────────────────
-
-/**
- * Returns the first non-expired booking link for a booking, or null.
- * Auth: caller slug must match booking.ownerId.
- */
 export async function _getByBookingId(
   ctx: QueryCtx,
   args: { bookingId: string },
 ): Promise<BookingLinkInfo | null> {
-  await requireAuthAndOwnership(ctx, args.bookingId)
+  const { user } = await requireAuth(ctx)
+  const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  assertOwnership(booking, user)
 
   const links = await ctx.db
     .query('bookingLinks')
@@ -81,11 +59,6 @@ export async function _getByBookingId(
   }
 }
 
-/**
- * Creates a portal booking link for a booking.
- * Returns the existing token if a non-expired link already exists (idempotent).
- * Auth: caller slug must match booking.ownerId.
- */
 type CreateLinkChannel =
   | 'whatsapp'
   | 'line'
@@ -101,9 +74,10 @@ export async function _createLink(
     channel?: CreateLinkChannel
   },
 ): Promise<string> {
-  await requireAuthAndOwnership(ctx, args.bookingId)
+  const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
+  if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+  await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
 
-  // Return existing valid link rather than creating duplicates
   const links = await ctx.db
     .query('bookingLinks')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
@@ -118,7 +92,6 @@ export async function _createLink(
     return existing.token as string
   }
 
-  // Create new link — 30-day TTL
   const token = crypto.randomUUID()
   const expiresAt = now + BOOKING_LINK_TTL_MS
 
@@ -134,11 +107,6 @@ export async function _createLink(
   return token
 }
 
-// ─── Convex exports ───────────────────────────────────────────────────────────
-
-// Public query — no Clerk auth required. Token IS the credential.
-// Returns a discriminated union rather than throwing so the client
-// can redirect/render without wrapping in an error boundary.
 export const getByToken = query({
   args: { token: v.string() },
   handler: async (ctx, args): Promise<BookingLinkResult> => {
@@ -156,7 +124,6 @@ export const getByToken = query({
     const booking = await ctx.db.get(link.bookingId)
     if (!booking) return { status: 'not_found' }
 
-    // Token already used — customer completed portal submission.
     if (link.usedAt) {
       return {
         status: 'completed',
@@ -166,12 +133,10 @@ export const getByToken = query({
       }
     }
 
-    // Booking TTL has lapsed — lazy expiry detected on read.
     if (isBookingExpired(booking)) {
       return { status: 'expired' }
     }
 
-    // Post-trip: booking is Completed, or Upcoming with endDate already passed.
     const isPostTrip =
       booking.status === BOOKING_STATUS.Completed ||
       (booking.status === BOOKING_STATUS.Upcoming && booking.endDate < todayISO())
@@ -184,7 +149,6 @@ export const getByToken = query({
       }
     }
 
-    // Booking closed means the portal should not accept new submissions.
     if (booking.status !== BOOKING_STATUS.Draft) {
       return { status: 'closed' }
     }
@@ -220,15 +184,6 @@ export const create = mutation({
   },
 })
 
-/**
- * Creates a portal booking link and atomically provisions the customer profile slot.
- *
- * Idempotent: returns existing token if a valid link already exists and reuses
- * the existing profile if present. The customerProfile is created empty — each
- * portal step mutation (savePortalContact, saveMedicalAnswers, etc.) fills it in.
- *
- * Auth: caller slug must match booking.ownerId (Clerk auth required).
- */
 export const createBookingLink = mutation({
   args: {
     bookingId: v.id('bookings'),
@@ -236,9 +191,10 @@ export const createBookingLink = mutation({
     email: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    await requireAuthAndOwnership(ctx, args.bookingId)
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    await authorize(ctx, null, 'booking:manage', { type: 'booking', ownerId: booking.ownerId })
 
-    // Return existing valid link rather than creating duplicates
     const links = await ctx.db
       .query('bookingLinks')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
@@ -251,7 +207,6 @@ export const createBookingLink = mutation({
     if (existing) {
       token = existing.token as string
     } else {
-      // Create new link — 30-day TTL
       token = crypto.randomUUID()
       const expiresAt = now + BOOKING_LINK_TTL_MS
 
@@ -264,7 +219,6 @@ export const createBookingLink = mutation({
       })
     }
 
-    // Atomically ensure customerProfile slot exists for this token
     const existingProfile = await ctx.db
       .query('customerProfiles')
       .withIndex('by_linkToken', (q) => q.eq('linkToken', token))

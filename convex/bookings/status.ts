@@ -3,7 +3,7 @@ import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import { internalMutation, mutation } from '../_generated/server'
 import { internal } from '../_generated/api'
-import { requireAuth, assertOwnership, requireOwnerOrResourceAccess } from '../lib/auth'
+import { authorize } from '../lib/auth'
 import {
   canBookingTransition,
   releaseBookingReservations,
@@ -16,20 +16,14 @@ import { notify, notifyReleasedInventory } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
 import { type BookingStatus, BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
-// ─── cancelBooking ────────────────────────────────────────────────────────────
-
-/**
- * Cancels a booking from any non-Cancelled status.
- * Vacates all active reservations and marks booking Cancelled. Irreversible.
- */
 export const cancelBooking = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(booking, user)
+    const { user } = await authorize(ctx, null, 'booking:manage', {
+      type: 'booking', id: args.bookingId, ownerId: booking.ownerId,
+    })
 
     if (!canBookingTransition(booking.status, 'cancel')) {
       throw new ConvexError({
@@ -39,11 +33,9 @@ export const cancelBooking = mutation({
     }
 
     const vacated = await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.BookingCancelled)
-
-    // Notify resource stakeholders whose inventory was just released
     await notifyReleasedInventory(ctx, args.bookingId, vacated)
 
-    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled })
+    await ctx.db.patch(args.bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
       action: 'cancelled',
@@ -53,15 +45,12 @@ export const cancelBooking = mutation({
   },
 })
 
-// ─── TTL expiry (lazy, server-side) ───────────────────────────────────────────
-
-/** Vacate reservations → set Cancelled → audit log. Shared by both expiry mutations. */
 async function performExpiry(ctx: MutationCtx, bookingId: Id<'bookings'>, currentStatus: BookingStatus) {
   if (!canBookingTransition(currentStatus, 'expire')) {
-    return // not in an expirable state — no-op
+    return
   }
   await releaseBookingReservations(ctx, bookingId, VACATED_REASON.HoldExpired)
-  await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok: guarded above
+  await ctx.db.patch(bookingId, { status: BOOKING_STATUS.Cancelled }) // fsm-ok
   await logBookingChange(ctx, {
     bookingId,
     action: 'expired',
@@ -70,11 +59,6 @@ async function performExpiry(ctx: MutationCtx, bookingId: Id<'bookings'>, curren
   })
 }
 
-/**
- * Expires a single Draft booking whose holdTTL has lapsed.
- * Internal only — called by cron purgeExpiredDrafts.
- * Idempotent: no-op if booking is already Cancelled or not expired.
- */
 export const expireBooking = internalMutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args): Promise<void> => {
@@ -85,60 +69,32 @@ export const expireBooking = internalMutation({
   },
 })
 
-/**
- * Authenticated lazy-expiry trigger.
- * Called by the client (via useBookingWithExpiry hook) when it detects an expired Draft.
- * Validates caller ownership or reservation access, then performs the expiry inline.
- * Idempotent: no-op if booking is not expired.
- */
 export const checkAndExpireBooking = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) return
     if (!isBookingExpired(booking)) return
 
-    // Verify caller has access: owns the booking or has a reservation on it
-    await requireOwnerOrResourceAccess(ctx, user, args.bookingId)
+    await authorize(ctx, null, 'booking:manage', {
+      type: 'booking', id: args.bookingId, ownerId: booking.ownerId,
+    })
 
     await performExpiry(ctx, args.bookingId, booking.status)
   },
 })
 
-// ─── clearMedicalBlock ───────────────────────────────────────────────────────
-
-/**
- * Operator lifts a medical hard block after reviewing physician clearance.
- *
- * Auth: Clerk-authenticated. Caller must own the booking (ownerId === user.slug).
- * Idempotent: no-op when medicalHardBlock is already false.
- *
- * Transaction order (all-or-nothing):
- *  1. Reset physicianClearanceRequired on all linked customerProfiles
- *  2. Remove 'medical_block' flag from linked customer records
- *  3. Clear medicalHardBlock on the booking (last — ensures profiles are clean first)
- *  4. Notify booking owner
- *  5. Write 'medical_cleared' audit log entry
- *  6. Call tryAutoAdvance (may promote Draft → Upcoming)
- *
- * Note: Does NOT reset or shorten expiresAt. The extended hold TTL set when
- * the medical block was activated remains in effect.
- */
 export const clearMedicalBlock = mutation({
   args: { bookingId: v.id('bookings') },
   handler: async (ctx, args): Promise<void> => {
-    const { user } = await requireAuth(ctx)
-
     const booking = await ctx.db.get(args.bookingId)
     if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(booking, user)
+    const { user } = await authorize(ctx, null, 'booking:manage', {
+      type: 'booking', id: args.bookingId, ownerId: booking.ownerId,
+    })
 
-    // Idempotent: already cleared — nothing to do
     if (!booking.medicalHardBlock) return
 
-    // 1-2. Reset physician clearance + remove flags on all linked profiles FIRST
     const profiles = await ctx.db
       .query('customerProfiles')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
@@ -146,15 +102,15 @@ export const clearMedicalBlock = mutation({
 
     for (const profile of profiles) {
       if (profile.physicianClearanceRequired) {
-        await ctx.db.patch(profile._id, { physicianClearanceRequired: false }) // batch-exempt: conditional per-profile write, profiles are small (<10 per booking)
+        await ctx.db.patch(profile._id, { physicianClearanceRequired: false }) // batch-exempt
       }
 
       if (profile.customerId) {
-        const customer = await ctx.db.get(profile.customerId) // batch-exempt: conditional per-profile lookup, profiles are small (<10 per booking)
+        const customer = await ctx.db.get(profile.customerId) // batch-exempt
         if (customer) {
           const flags = customer.flags ?? []
           if (flags.includes('medical_block')) {
-            await ctx.db.patch(profile.customerId, { // batch-exempt: conditional per-customer flag patch
+            await ctx.db.patch(profile.customerId, { // batch-exempt
               flags: flags.filter((f) => f !== 'medical_block') as ('medical_block')[],
             })
           }
@@ -162,10 +118,8 @@ export const clearMedicalBlock = mutation({
       }
     }
 
-    // 3. Clear the block on the booking (after profiles are clean)
     await ctx.db.patch(args.bookingId, { medicalHardBlock: false })
 
-    // 4. Notify booking owner
     await notify(ctx, {
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.MedicalCleared,
@@ -173,7 +127,6 @@ export const clearMedicalBlock = mutation({
       message: 'Medical block cleared: physician clearance reviewed and approved.',
     })
 
-    // 5. Audit trail
     await logBookingChange(ctx, {
       bookingId: args.bookingId,
       action: 'medical_cleared',
@@ -181,12 +134,9 @@ export const clearMedicalBlock = mutation({
       actorType: 'operator',
     })
 
-    // 6. May promote Draft → Upcoming now that the block is lifted
     await tryAutoAdvance(ctx, args.bookingId)
   },
 })
-
-// ─── Shared completion logic ─────────────────────────────────────────────────
 
 async function runCompletionBatch(
   ctx: MutationCtx,
@@ -222,8 +172,8 @@ async function runCompletionBatch(
     })
 
     if (isSessionEnded(last.date, last.endTime, last.timezone) && canBookingTransition(booking.status, 'complete')) {
-      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // fsm-ok: guarded above; batch-exempt
-      await logBookingChange(ctx, {
+      await ctx.db.patch(booking._id, { status: BOOKING_STATUS.Completed }) // fsm-ok // batch-exempt
+      await logBookingChange(ctx, { // batch-exempt
         bookingId: booking._id,
         action: 'completed',
         actorSlug: 'system',
@@ -236,13 +186,6 @@ async function runCompletionBatch(
   return { completed, more }
 }
 
-// ─── completeBookings ────────────────────────────────────────────────────────
-
-/**
- * Cron: auto-complete Upcoming bookings whose last session has ended.
- * Runs hourly. Uses timezone-aware comparison via Intl.DateTimeFormat.
- * Batch limit: 100 per run.
- */
 export const completeBookings = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ completed: number; more: boolean }> => {
@@ -250,25 +193,16 @@ export const completeBookings = internalMutation({
   },
 })
 
-// ─── completeBookingsWithMonitoring ──────────────────────────────────────────
-
-/**
- * Monitored wrapper for completeBookings.
- * Logs every execution to cronRunLog; alerts on failure.
- * Called by the cron scheduler instead of completeBookings directly.
- */
 export const completeBookingsWithMonitoring = internalMutation({
   args: {},
   handler: async (ctx): Promise<void> => {
     try {
       const result = await runCompletionBatch(ctx)
 
-      // Schedule continuation if more bookings remain (DD-158)
       if (result.more) {
         await ctx.scheduler.runAfter(0, internal.bookings.status.completeBookingsWithMonitoring, {})
       }
 
-      // Log success
       await ctx.db.insert('cronRunLog', {
         jobName: 'complete-bookings',
         status: 'success',
@@ -277,7 +211,6 @@ export const completeBookingsWithMonitoring = internalMutation({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
 
-      // Log failure
       await ctx.db.insert('cronRunLog', {
         jobName: 'complete-bookings',
         status: 'failure',
@@ -285,13 +218,11 @@ export const completeBookingsWithMonitoring = internalMutation({
         runAt: Date.now(),
       })
 
-      // Schedule alert email
       await ctx.scheduler.runAfter(0, internal.lib.alerts.sendAlertEmail, {
         jobName: 'complete-bookings',
         error: errorMessage,
       })
 
-      // Re-throw so Convex marks the run as failed
       throw err
     }
   },

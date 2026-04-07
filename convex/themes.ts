@@ -1,11 +1,9 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import { sanitizeFields, THEME_FIELDS } from './lib/sanitize'
-import { requireAuth } from './lib/auth'
-import { checkHasAnyOperatorRole } from './userRoles'
+import { authorize } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 
-// Returns all active themes (for theme picker UI)
 export const listActive = query({
   args: {},
   handler: async (ctx) => {
@@ -16,7 +14,6 @@ export const listActive = query({
   },
 })
 
-// Returns a theme by slug
 export const bySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
@@ -27,7 +24,6 @@ export const bySlug = query({
   },
 })
 
-// Returns a theme by ID (used when loading user's selectedThemeId)
 export const byId = query({
   args: { id: v.id('themes') },
   handler: async (ctx, args) => {
@@ -35,18 +31,15 @@ export const byId = query({
   },
 })
 
-// Admin: creates or updates a theme
 export const upsert = mutation({
   args: {
     slug: v.string(),
     name: v.string(),
-    config: v.string(), // JSON-stringified ThemeConfig
+    config: v.string(),
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
-    const isOperator = await checkHasAnyOperatorRole(ctx, user._id)
-    if (!isOperator) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    await authorize(ctx, null, 'theme:manage', { type: 'theme' })
 
     const sanitized = sanitizeFields(args, THEME_FIELDS)
 

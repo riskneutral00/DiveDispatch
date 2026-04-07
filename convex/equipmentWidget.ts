@@ -1,14 +1,12 @@
 import { ConvexError, v } from 'convex/values'
 import type { Id, Doc } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { requireAuth } from './lib/auth'
+import { requireAuth, authorize } from './lib/auth'
 import { profileByUserId } from './lib/profileHelpers'
 import { getBookingIdsForResourceType } from './bookingResources'
 import { ErrorCode } from './lib/errorCodes'
 import { BAG_STATUS, type BagStatus } from './shared/statuses'
 import { batchGet } from './lib/batch'
-
-// ── Return types ───────────────────────────────────────────────────────────────
 
 export type RentalChecklist = {
   mask: 'own' | 'rent'
@@ -77,20 +75,6 @@ export type DiverEquipmentWidgetData = {
   inventory: GearInventoryItem[]
 }
 
-// ── Queries ────────────────────────────────────────────────────────────────────
-
-/**
- * Returns all diver equipment data for the authenticated equipment manager,
- * scoped to bookings whose dates overlap the given range.
- *
- * Joins: bookings → divers → customerProfiles → customers (measurements)
- *        bookings → equipmentBags (status)
- *        equipment → gearSizingLookup (filtered by EM's manufacturer preferences)
- *        equipment → equipmentInventory + inventoryUnits (availability counts)
- *
- * Bags are paired to divers by sorted bagNumber order (positional — same order
- * as `assignBagsForBooking` assigns them).
- */
 export const getDiverEquipmentData = query({
   args: {
     dateRangeStart: v.string(),
@@ -99,11 +83,9 @@ export const getDiverEquipmentData = query({
   handler: async (ctx, args): Promise<DiverEquipmentWidgetData | null> => {
     const { user } = await requireAuth(ctx)
 
-    // EM profile (manufacturersByGearType preference)
     const emProfile = await profileByUserId(ctx, user._id, 'equipment')
     if (!emProfile) return null
 
-    // Bookings for this EM via bookingResources junction table
     const bookingIds = await getBookingIdsForResourceType(ctx, 'Equipment', user.slug as string)
     const allBookings = (await Promise.all(
       bookingIds.map((id: string) => ctx.db.get(id as Id<'bookings'>)),
@@ -114,7 +96,6 @@ export const getDiverEquipmentData = query({
         b!.startDate <= args.dateRangeEnd && b!.endDate >= args.dateRangeStart,
     )
 
-    // Build booking rows (parallel per booking — bags + profiles)
     const bookingRows: BookingRow[] = await Promise.all(
       bookingsInRange.map(async (booking) => {
         const bags = await ctx.db
@@ -197,7 +178,6 @@ export const getDiverEquipmentData = query({
       }),
     )
 
-    // Gear sizing entries: collect all for this EM's manufacturer preferences
     const mbgt = emProfile.manufacturersByGearType as Record<string, string[]> | undefined
     const preferredManufacturers = new Set<string>()
     if (mbgt) {
@@ -226,7 +206,6 @@ export const getDiverEquipmentData = query({
         }))
     }
 
-    // Equipment inventory with totalUnits from linked inventoryUnits
     const inventoryRecords = await ctx.db
       .query('equipmentInventory')
       .withIndex('by_equipmentManagerId', (q) =>
@@ -255,19 +234,12 @@ export const getDiverEquipmentData = query({
   },
 })
 
-// ── Mutations ─────────────────────────────────────────────────────────────────
-
-/**
- * Transitions a bag from Assigned → InUse when a diver picks up their equipment.
- * Only the owning equipment manager may call this.
- */
 export const markBagPickedUp = mutation({
   args: { bagId: v.id('equipmentBags') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: bag.equipmentManagerId })
     if (bag.status !== BAG_STATUS.Assigned) {
       throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be Assigned to mark as picked up' })
     }
@@ -275,17 +247,12 @@ export const markBagPickedUp = mutation({
   },
 })
 
-/**
- * Transitions a bag from InUse → Returned when the diver returns their equipment.
- * Only the owning equipment manager may call this.
- */
 export const markBagReturned = mutation({
   args: { bagId: v.id('equipmentBags') },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
     const bag = await ctx.db.get(args.bagId)
     if (!bag) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    if (bag.equipmentManagerId !== user.slug) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: bag.equipmentManagerId })
     if (bag.status !== BAG_STATUS.InUse) {
       throw new ConvexError({ code: ErrorCode.INVALID_STATE, reason: 'Bag must be InUse to mark as returned' })
     }

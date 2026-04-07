@@ -5,11 +5,6 @@ import type { UserIdentity } from 'convex/server'
 import { ErrorCode } from './errorCodes'
 import { OPERATOR_TYPES } from '../shared/operatorTypes'
 
-/**
- * Asserts that a resource's ownerId matches the user's slug.
- * Throws ConvexError with FORBIDDEN if ownership does not match.
- * Replaces inline `if (resource.ownerId !== user.slug) throw ...` checks.
- */
 export function assertOwnership(
   resource: { ownerId: string },
   user: { slug: string },
@@ -24,23 +19,12 @@ export function assertOwnership(
   }
 }
 
-/**
- * Shared context type for functions that need db + auth but work in both
- * query and mutation handlers. Prefer QueryCtx or MutationCtx directly
- * when the handler type is known.
- */
 export type DbCtx = QueryCtx | MutationCtx
 
-/** Roles that can create and own bookings. Derived from OPERATOR_TYPES. */
 export const OPERATOR_ROLE_SET: ReadonlySet<string> = new Set(OPERATOR_TYPES)
 
-/** Default hold TTL: 12 hours. */
 export const HOLD_TTL_MS = 43200000
 
-/**
- * Resolves the authenticated user. Throws UNAUTHENTICATED or NOT_FOUND.
- * Use in mutations where auth is mandatory.
- */
 export async function requireAuth(ctx: DbCtx): Promise<{ identity: UserIdentity; user: Doc<'users'> }> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
@@ -56,10 +40,6 @@ export async function requireAuth(ctx: DbCtx): Promise<{ identity: UserIdentity;
   return { identity, user }
 }
 
-/**
- * Resolves the authenticated user, returning null if unauthenticated or unprovisioned.
- * Use in queries where unauthenticated callers should get null.
- */
 export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) return null
@@ -72,11 +52,6 @@ export async function getAuthUser(ctx: DbCtx): Promise<Doc<'users'> | null> {
     .unique()
 }
 
-/**
- * Asserts that a subject's userId (slug) matches the caller's slug.
- * Throws ConvexError with FORBIDDEN if they do not match.
- * Replaces inline `if (userId !== caller.slug) throw ...` checks.
- */
 export function assertCallerIsUser(
   caller: { slug: string },
   subjectUserId: string,
@@ -91,12 +66,6 @@ export function assertCallerIsUser(
   }
 }
 
-/**
- * Verifies that a user either owns the booking (ownerId match) or has a
- * reservation on it via their inventory units. Throws FORBIDDEN if neither.
- * Use in query/mutation handlers where both the booking owner and assigned
- * resource stakeholders need access.
- */
 export async function requireOwnerOrResourceAccess(
   ctx: QueryCtx,
   user: { slug: string },
@@ -118,4 +87,146 @@ export async function requireOwnerOrResourceAccess(
     .take(100)
   const hasReservation = bookingReservations.some((r) => callerUnitIds.has(r.inventoryUnitId))
   if (!hasReservation) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+}
+
+export type Action =
+  | 'booking:create' | 'booking:read' | 'booking:manage' | 'booking:delete'
+  | 'resource:read' | 'resource:manage'
+  | 'theme:read' | 'theme:manage'
+  | 'member:manage' | 'settings:manage'
+  | 'reservation:accept' | 'reservation:decline'
+  | 'notification:read' | 'notification:manage'
+  | 'profile:read' | 'profile:manage'
+
+export type AuthResource = {
+  type: 'booking' | 'theme' | 'profile' | 'resource' | 'notification' | 'settings'
+  id?: string
+  ownerId?: string
+  requiredRole?: string
+}
+
+const ACTION_TO_PERMISSION: Record<Action, string> = {
+  'booking:create': 'org:bookings:create',
+  'booking:read': 'org:bookings:read',
+  'booking:manage': 'org:bookings:manage',
+  'booking:delete': 'org:bookings:manage',
+  'resource:read': 'org:resources:read',
+  'resource:manage': 'org:resources:manage',
+  'theme:read': 'org:themes:read',
+  'theme:manage': 'org:themes:manage',
+  'member:manage': 'org:members:manage',
+  'settings:manage': 'org:settings:manage',
+  'reservation:accept': 'org:bookings:manage',
+  'reservation:decline': 'org:bookings:manage',
+  'notification:read': 'org:bookings:read',
+  'notification:manage': 'org:bookings:read',
+  'profile:read': 'org:resources:read',
+  'profile:manage': 'org:resources:manage',
+}
+
+const OPERATOR_ACTIONS = new Set<Action>(['booking:create', 'theme:manage'])
+
+function extractOrgPermissions(identity: UserIdentity): string[] | null {
+  const claims = identity as Record<string, unknown>
+  const perms = claims.org_permissions
+  if (!perms) return null
+  if (Array.isArray(perms)) return perms as string[]
+  if (typeof perms === 'string') {
+    try { return JSON.parse(perms) as string[] } catch { return null }
+  }
+  return null
+}
+
+async function hasAnyOperatorRole(ctx: MutationCtx, userId: Id<'users'>): Promise<boolean> {
+  const roles = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId', (q) => q.eq('userId', userId))
+    .collect() // bounded: per-user roles, max ~12
+  return roles.some((r) => OPERATOR_ROLE_SET.has(r.role))
+}
+
+async function hasRole(
+  ctx: MutationCtx,
+  userId: Id<'users'>,
+  role: string,
+): Promise<boolean> {
+  const entry = await ctx.db
+    .query('userRoles')
+    .withIndex('by_userId_role', (q) =>
+      q.eq('userId', userId).eq('role', role as Doc<'userRoles'>['role']),
+    )
+    .unique()
+  return entry !== null
+}
+
+async function checkRelationshipAccess(
+  ctx: MutationCtx,
+  slug: string,
+  objectId: string,
+): Promise<boolean> {
+  for (const relation of ['assigned_to', 'owns', 'manages'] as const) {
+    const rel = await ctx.db
+      .query('relationships')
+      .withIndex('by_subjectId_relation_objectId', (q) =>
+        q.eq('subjectId', slug).eq('relation', relation).eq('objectId', objectId),
+      )
+      .unique()
+    if (rel) return true
+  }
+  return false
+}
+
+export async function authorize(
+  ctx: MutationCtx,
+  actor: { user: Doc<'users'>; identity: UserIdentity } | null,
+  action: Action,
+  resource: AuthResource,
+  _orgId?: string,
+): Promise<{ user: Doc<'users'>; identity: UserIdentity }> {
+  const resolved = actor ?? await requireAuth(ctx)
+  const { user, identity } = resolved
+
+  if (resource.ownerId && resource.ownerId === user.slug) {
+    return resolved
+  }
+
+  const orgPermissions = extractOrgPermissions(identity)
+  if (orgPermissions) {
+    const required = ACTION_TO_PERMISSION[action]
+    if (required && orgPermissions.includes(required)) {
+      return resolved
+    }
+  }
+
+  if (resource.id) {
+    const hasAccess = await checkRelationshipAccess(ctx, user.slug, resource.id)
+    if (hasAccess) return resolved
+  }
+
+  if (!orgPermissions) {
+    if (OPERATOR_ACTIONS.has(action)) {
+      const isOperator = await hasAnyOperatorRole(ctx, user._id)
+      if (isOperator) return resolved
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
+    if (resource.requiredRole) {
+      const hasIt = await hasRole(ctx, user._id, resource.requiredRole)
+      if (hasIt) return resolved
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
+    if (resource.type === 'booking' && resource.id) {
+      await requireOwnerOrResourceAccess(ctx, user, resource.id)
+      return resolved
+    }
+
+    if (resource.ownerId) {
+      throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+    }
+
+    return resolved
+  }
+
+  throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 }

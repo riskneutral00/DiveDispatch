@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
-import { requireAuth, assertOwnership } from '../lib/auth'
+import { authorize } from '../lib/auth'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import type { BookingDoc, InventoryUnitDoc, AvailabilitySnapshotDoc } from '../lib/types'
@@ -27,34 +27,13 @@ import { normalizeTime } from '../lib/validators'
 import { RESERVATION_STATUS, VACATED_REASON } from '../shared/statuses'
 import { validateRatio } from '../shared/ratioRules'
 
-// ─── submitToDraft ────────────────────────────────────────────────────────────
-
-/**
- * Core implementation — exported for unit testing.
- *
- * THE critical invariant-enforcement mutation:
- *   1. Reads all availability snapshots (STEP 1)
- *   2. If ANY conflict → throws CONFLICT, zero writes (STEP 2)
- *   3. Writes reservations + decrements snapshots atomically (STEP 3)
- *
- * All three inventory invariants are enforced:
- *   Invariant 1: Exclusive unit — availableUnits must be ≥ 1
- *   Invariant 2: Pooled unit — availableUnits must be ≥ unitsRequested
- *   Invariant 3: Snapshot updates occur in the same mutation as Reservation writes
- */
 export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promise<string> {
-  // 1. Auth
-  const { user } = await requireAuth(ctx)
-
-  // 2. Load booking + verify caller owns it
-  // Referral bookings: DC is the owner — agent cannot submit even though agentId is set.
   const booking = await ctx.db.get(args.bookingId as Id<"bookings">)
   if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-  assertOwnership(booking as BookingDoc, user)
+  const { user } = await authorize(ctx, null, 'booking:manage', {
+    type: 'booking', id: args.bookingId as string, ownerId: (booking as BookingDoc).ownerId,
+  })
 
-  // 3. Identify external resource types — these skip the reservation pipeline entirely.
-  // A resource with externalName (no resourceId) is outside the system.
-  // Sessions whose inventory unit's resourceType matches are skipped in STEP 1 and STEP 3.
   const resources = args.bookingData?.resources ?? []
   const externalResourceTypes = new Set<string>()
   for (const r of resources) {
@@ -63,7 +42,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
   }
 
-  // 4. Blocked dates — reject before touching inventory
   const blockedDateDocs = await ctx.db
     .query('stakeholderBlockedDates')
     .withIndex('by_stakeholderId_roleType', (q) => q.eq('stakeholderId', user.slug))
@@ -75,18 +53,11 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
   }
 
-  // 4b. Past dates — reject sessions starting before today
   const tz = args.sessions[0]?.timezone ?? 'Asia/Bangkok'
   assertNoPastDates(args.sessions, tz)
 
-  // 5. Instructor-to-student ratio — reject if insufficient staff (DD-304)
-  // Only enforce when bookingData is provided (full submit with resources + divers).
-  // Session-only resubmits don't carry resource info and can't be validated here.
   if (args.bookingData) {
     const diverCount = args.bookingData.divers.length
-    // Use roleType (when provided) to distinguish DiveMasters from Instructors.
-    // Callers that don't set roleType fall back to resourceType — both map to
-    // Instructor-level capacity, preserving backward compatibility.
     const instructorResourceCount = resources.filter(
       (r) => r.resourceType === 'Instructor' && (r.roleType ?? 'Instructor') !== 'DiveMaster',
     ).length
@@ -99,7 +70,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
   }
 
-  // 6. Max non-confined dives per day — reject if any date exceeds 3
   const nonConfinedPerDate = new Map<string, number>()
   for (const session of args.sessions) {
     if (!session.diveSlots) continue
@@ -116,7 +86,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }
   }
 
-  // 6. Edit mode — vacate existing holds and delete old session rows
   const existingReservations = await ctx.db
     .query('reservations')
     .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
@@ -132,18 +101,16 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId as Id<"bookings">))
       .collect() // bounded: per-booking scope
     for (const s of existingSessions) {
-      await ctx.db.delete(s._id) // batch-exempt: sequential delete required; sessions must be removed before re-hold
+      await ctx.db.delete(s._id) // batch-exempt
     }
   }
 
-  // Normalize time strings before any snapshot lookup or write (DD-260)
   const normalizedSessions: SessionInput[] = args.sessions.map((s) => ({
     ...s,
     startTime: normalizeTime(s.startTime),
     endTime: normalizeTime(s.endTime),
   }))
 
-  // STEP 1: Read-only pass — build plans or throw CONFLICT (zero writes so far)
   type SessionPlan = {
     session: SessionInput
     inventoryUnit: InventoryUnitDoc
@@ -154,14 +121,11 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const plans: SessionPlan[] = []
 
   for (const session of normalizedSessions) {
-    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null // batch-exempt: read-then-conflict-check must be sequential per inventory invariant
+    const inventoryUnit = await ctx.db.get(session.inventoryUnitId as Id<"inventoryUnits">) as InventoryUnitDoc | null // batch-exempt
     if (!inventoryUnit) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-    // External resource — no inventory check or reservation row needed
     if (externalResourceTypes.has(inventoryUnit.resourceType as string)) continue
 
-    // Full-day overlap check: day boats and liveaboards are blocked for the entire
-    // calendar date when any reservation exists, regardless of time window.
     if (isFullDayResource(inventoryUnit)) {
       const allDaySnapshots = await ctx.db
         .query('availabilitySnapshots')
@@ -174,42 +138,35 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       }
     }
 
-    // Lazy snapshot: if no snapshot exists, treat totalUnits as fully available
     const snapshot = await getAvailabilitySnapshot(ctx, session.inventoryUnitId as Id<"inventoryUnits">, session.date, session.startTime)
 
     const currentAvailable: number = snapshot?.availableUnits ?? inventoryUnit.totalUnits
 
-    // STEP 2: Any conflict aborts the entire mutation
     if (inventoryUnit.capacityModel === 'Exclusive') {
       if (session.unitsRequested !== 1) {
         throw new ConvexError({ code: ErrorCode.INVALID_INPUT, reason: 'Exclusive units require exactly 1 unit' })
       }
       if (currentAvailable < 1) throw new ConvexError({ code: ErrorCode.CONFLICT })
     } else {
-      // Pooled — check requested units are available
       if (currentAvailable < session.unitsRequested) throw new ConvexError({ code: ErrorCode.CONFLICT })
     }
 
     plans.push({ session, inventoryUnit, snapshot: snapshot ?? null, currentAvailable })
   }
 
-  // STEP 3: No conflicts detected — write everything atomically
   const now = Date.now()
   const expiresAt = now + ((booking as BookingDoc).holdTTL as number)
 
   for (const { session, inventoryUnit, snapshot, currentAvailable } of plans) {
     const newAvailable = currentAvailable - session.unitsRequested
 
-    // Invariant 3: snapshot and reservation written in the same mutation
-    // batch-exempt: snapshot + session + reservation must be written together per-plan to satisfy Invariant 3
     if (snapshot) {
-      await ctx.db.patch(snapshot._id, { // batch-exempt: must write snapshot + reservation atomically per Invariant 3
+      await ctx.db.patch(snapshot._id, { // batch-exempt
         availableUnits: newAvailable,
         reservedUnits: (snapshot.reservedUnits as number) + session.unitsRequested,
       })
     } else {
-      // Lazy creation: first time this unit+date+window is used
-      await ctx.db.insert('availabilitySnapshots', { // batch-exempt: must write snapshot + reservation atomically per Invariant 3
+      await ctx.db.insert('availabilitySnapshots', { // batch-exempt
         inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
         date: session.date,
         windowStart: session.startTime,
@@ -220,7 +177,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       })
     }
 
-    const sessionId = await ctx.db.insert('bookingSessions', { // batch-exempt: sessionId needed immediately for reservation FK
+    const sessionId = await ctx.db.insert('bookingSessions', { // batch-exempt
       bookingId: args.bookingId as Id<"bookings">,
       inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       date: session.date,
@@ -231,7 +188,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
       diveSlots: session.diveSlots,
     })
 
-    // Auto-confirm: stakeholder preference, out-of-system owner, or self-booking
     const prefs = await ctx.db
       .query('stakeholderPreferences')
       .withIndex('by_stakeholderId', (q) =>
@@ -248,7 +204,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     const isAutoAccept = prefs?.acceptanceMode === 'Auto' || !ownerUser || isSelfBooking
     const reservationStatus = isAutoAccept ? RESERVATION_STATUS.Confirmed : RESERVATION_STATUS.PendingAcceptance
 
-    await ctx.db.insert('reservations', { // batch-exempt: depends on sessionId from insert above
+    await ctx.db.insert('reservations', { // batch-exempt // fsm-ok
       bookingId: args.bookingId as Id<"bookings">,
       inventoryUnitId: session.inventoryUnitId as Id<"inventoryUnits">,
       bookingSessionId: sessionId,
@@ -258,7 +214,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     })
   }
 
-  // Mark booking submitted and set TTL window.
   await ctx.db.patch(args.bookingId as Id<"bookings">, {
     submittedAt: now,
     expiresAt,
@@ -276,7 +231,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     }),
   })
 
-  // ── Write bookingResources junction table ───────────────────────────────
   if (isResubmit) {
     await deleteResourcesForBooking(ctx, args.bookingId)
   }
@@ -291,13 +245,10 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     )
   }
 
-  // ── Instructor credential soft warning ──────────────────────────────────────
-  // Collect all unique course codes from the booking's divers
   const bookingCourses: CourseCode[] = args.bookingData
     ? [...new Set(args.bookingData.divers.flatMap((d) => d.activityType))]
     : (booking as BookingDoc).activityType as CourseCode[]
 
-  // Lead instructors only — Dive Masters use instructors table for capacity, not course credentials.
   const instructorResources = resources.filter(
     (r) =>
       r.resourceType === 'Instructor' &&
@@ -307,7 +258,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   const warnings: Array<{ type: string; missing: string[] }> = []
 
-  for (const ir of instructorResources) { // batch-exempt: typically 1 instructor per booking
+  for (const ir of instructorResources) { // batch-exempt
     const instructor = await profileBySlug(ctx, ir.resourceId!, 'instructors') as Doc<'instructors'> | null
     if (!instructor) continue
 
@@ -324,12 +275,9 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
     await ctx.db.patch(args.bookingId as Id<"bookings">, { warnings })
   }
 
-  // Attempt Draft → Upcoming auto-advance (silent no-op if conditions not met)
   await tryAutoAdvance(ctx, args.bookingId)
 
-  // ── Audit log ──────────────────────────────────────────────────────────────
   if (isResubmit && args.bookingData) {
-    // Compute diff: compare stored booking fields vs new bookingData
     const diff: Record<string, { old: unknown; new: unknown }> = {}
     const scalarFields = [
       'startDate',
@@ -363,8 +311,6 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
 
   return args.bookingId
 }
-
-// ─── Convex mutation export ───────────────────────────────────────────────────
 
 export const submitToDraft = mutation({
   args: {

@@ -1,6 +1,6 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
-import { requireAuth, assertOwnership } from '../lib/auth'
+import { authorize } from '../lib/auth'
 import {
   canBookingTransition,
   releaseBookingReservations,
@@ -11,28 +11,22 @@ import { ErrorCode } from '../lib/errorCodes'
 import { checkIdempotency } from '../lib/idempotency'
 import { BOOKING_STATUS, VACATED_REASON } from '../shared/statuses'
 
-// ─── editBooking ──────────────────────────────────────────────────────────────
-
-/**
- * Resets an Upcoming booking to Draft for editing.
- * Vacates all reservations, clears sessions, and marks bookingFormComplete false.
- */
 export const editBooking = mutation({
   args: {
     bookingId: v.id('bookings'),
     idempotencyKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requireAuth(ctx)
+    const booking = await ctx.db.get(args.bookingId)
+    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
+    const { user } = await authorize(ctx, null, 'booking:manage', {
+      type: 'booking', id: args.bookingId, ownerId: booking.ownerId,
+    })
 
     if (args.idempotencyKey) {
       const isDuplicate = await checkIdempotency(ctx, args.idempotencyKey, 'editBooking')
       if (isDuplicate) return
     }
-
-    const booking = await ctx.db.get(args.bookingId)
-    if (!booking) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(booking, user)
 
     if (!canBookingTransition(booking.status, 'edit')) {
       throw new ConvexError({
@@ -43,14 +37,13 @@ export const editBooking = mutation({
 
     await releaseBookingReservations(ctx, args.bookingId, VACATED_REASON.OperatorEdit)
 
-    // Clear sessions so operator can re-submit with new session data
     const sessions = await ctx.db
       .query('bookingSessions')
       .withIndex('by_bookingId', (q) => q.eq('bookingId', args.bookingId))
       .collect() // bounded: per-booking resources
     await batchDelete(ctx, sessions)
 
-    await ctx.db.patch(args.bookingId, { // fsm-ok: edit resets to Draft, guarded by status check above
+    await ctx.db.patch(args.bookingId, { // fsm-ok
       status: BOOKING_STATUS.Draft,
       bookingFormComplete: false,
       submittedAt: undefined,

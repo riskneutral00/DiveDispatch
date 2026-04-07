@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation, query } from './_generated/server'
 import type { Doc } from './_generated/dataModel'
-import { getAuthUser, assertOwnership, OPERATOR_ROLE_SET } from './lib/auth'
+import { authorize, getAuthUser, OPERATOR_ROLE_SET } from './lib/auth'
 import { requireActiveRole } from './userRoles'
 import { courseCodeValidator as courseCode } from './shared/courseCodes'
 import { ErrorCode } from './lib/errorCodes'
@@ -42,8 +42,7 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
+    const { user } = await authorize(ctx, null, 'booking:create', { type: 'resource' })
 
     await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) {
@@ -65,12 +64,10 @@ export const create = mutation({
 export const remove = mutation({
   args: { id: v.id('bookingTemplates') },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx)
-    if (!user) throw new ConvexError({ code: ErrorCode.UNAUTHENTICATED })
-
     const template = await ctx.db.get(args.id)
     if (!template) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
-    assertOwnership(template, user)
+
+    await authorize(ctx, null, 'resource:manage', { type: 'resource', ownerId: template.ownerId })
 
     await ctx.db.delete(args.id)
   },
