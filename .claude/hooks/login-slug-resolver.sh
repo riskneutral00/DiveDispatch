@@ -48,4 +48,4 @@ PASS="REDACTED"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR/../.." && npm run seed:clerk -- --force >/dev/null 2>&1 || true
 
-printf '{"user_message":"[Hook] Matched %s -> slug: %s (Clerk users synced). Use dev:token to sign in: npm run dev:token -- %s | Email: %s | Password: %s | OTP (if prompted): 424242"}' "$MATCH" "$SLUG" "$SLUG" "$EMAIL" "$PASS"
+printf '{"user_message":"[Hook] Matched %s -> slug: %s (Clerk users synced). Run /clerk-signin --%s to open the browser and sign in. Credentials — Email: %s | Password: %s | OTP: 424242"}' "$MATCH" "$SLUG" "$SLUG" "$EMAIL" "$PASS"
