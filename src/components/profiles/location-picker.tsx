@@ -6,7 +6,6 @@ import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@v
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
@@ -421,7 +420,7 @@ interface TriggerProps {
 function LocationPickerTrigger({ value, onOpen, onClear, error, label, required, className }: TriggerProps) {
   const inputId = useId()
   const filled = !!value
-  const { floated } = useFloatingLabel({ value: filled ? 'filled' : '', focused: false })
+  const floated = filled
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       <div className="relative">
@@ -471,7 +470,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           className={cn(
             'absolute left-0 pointer-events-none transition-all',
             floated
-              ? 'top-0 text-[10px] font-medium text-secondary'
+              ? 'top-0 text-[10px] font-medium label-float-in text-secondary'
               : 'top-3 text-body text-secondary',
           )}
           style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */

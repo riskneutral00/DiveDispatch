@@ -287,7 +287,7 @@ export function Select({
           className={cn(
             'absolute left-0 pointer-events-none transition-all',
             floated
-              ? cn('top-0 text-[10px] font-medium', open ? 'text-primary' : 'text-secondary')
+              ? cn('top-0 text-[10px] font-medium label-float-in', open ? 'text-primary' : 'text-secondary')
               : 'top-3 text-body text-secondary',
           )}
           style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */

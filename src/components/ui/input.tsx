@@ -82,7 +82,7 @@ export function Input({
             'absolute pointer-events-none transition-all',
             leadingIcon ? 'left-6' : 'left-0',
             floated
-              ? cn('top-0 text-[10px] font-medium', focused ? 'text-primary' : 'text-secondary')
+              ? cn('top-0 text-[10px] font-medium label-float-in', focused ? 'text-primary' : 'text-secondary')
               : 'top-3 text-body text-secondary',
           )}
           style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */

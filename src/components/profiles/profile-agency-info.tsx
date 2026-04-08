@@ -7,10 +7,11 @@ import { InlineError } from '@/components/ui/inline-error'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Button } from '@/components/ui/button'
 import { CheckboxGroup } from '@/components/ui/checkbox-group'
+import { FieldLabel } from '@/components/ui/field-shell'
 import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { Select } from '@/components/ui/select'
 import { ItemCard } from '@/components/ui/item-card'
+import { Select } from '@/components/ui/select'
 import {
   AGENCIES,
   AGENCY_CODES,
@@ -111,16 +112,15 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           label="Member Number"
           value={String((item as AgencyRow).number ?? '')}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
-          placeholder="Member Number"
           required
           className="field-text-short"
         />
         </div>
 
         <div>
-          <p className="text-body font-medium mb-2 text-secondary">
-            Default course #days<span className="text-destructive"> *</span>
-          </p>
+          <FieldLabel required className="mb-2">
+            Default course #days
+          </FieldLabel>
           <div className="flex gap-2">
             <DayPicker
               label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'OW')?.label ?? 'OW'}

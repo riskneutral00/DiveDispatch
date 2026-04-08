@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PillToggleGroup } from '@/components/ui/pill-toggle'
+import { FieldLabel } from '@/components/ui/field-shell'
 import { AGENCIES, AOW_REQUIRED_SPECIALTY_COUNT, getMandatorySpecialties, type AgencySpecialty } from '@/lib/constants/agencies'
 
 const PADI_DISPLAY_ORDER = [
@@ -173,10 +174,10 @@ export function SpecialtyField({
 
   return (
     <div className="relative flex flex-col gap-1.5 min-w-0">
-      <p className="text-body font-medium text-secondary">
-        Default Specialties<span className="text-destructive"> *</span>
-        <span className="ml-2 text-[10px] opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
-      </p>
+      <FieldLabel required className="flex items-center gap-2">
+        <span>Default Specialties</span>
+        <span className="opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}
+      </FieldLabel>
 
       <div
         ref={containerRef}

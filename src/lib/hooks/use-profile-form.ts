@@ -190,7 +190,8 @@ export function useProfileForm<
     isDirty: isDirty(),
     isValid,
     loading:
-      profile === undefined
+      !initialized
+      || profile === undefined
       || (waitForMeBeforeInit === true && me === undefined),
     isUpdate: !!profile,
     handleSubmit,
