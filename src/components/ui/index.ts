@@ -41,3 +41,4 @@ export { ConfirmActionDialog } from "./confirm-dialog";
 export { StepIndicator } from "./step-indicator";
 export { NotFoundCard } from "./not-found-card";
 export { ColorBadge } from "./color-badge";
+export { MenuButton } from "./menu-button";

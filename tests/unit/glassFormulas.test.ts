@@ -13,6 +13,7 @@ describe('GLASS_FORMULAS structural invariants', () => {
         expect(formula.glassBlur).toBeGreaterThan(0)
         expect(formula.glassBlurElevated).toBeGreaterThan(0)
         expect(formula.glassBlurHover).toBeGreaterThan(0)
+        expect(formula.glassDialogBlur).toBeGreaterThan(0)
       })
 
       it('elevated blur is greater than or equal to base blur', () => {
@@ -37,12 +38,14 @@ describe('GLASS_FORMULAS structural invariants', () => {
         expect(formula.glassBgElevated).toMatch(/^rgba\(/)
         expect(formula.glassBgHover).toMatch(/^rgba\(/)
         expect(formula.glassContainerBg).toMatch(/^rgba\(/)
+        expect(formula.glassDialogBg).toMatch(/^rgba\(/)
       })
 
       it('all border colors are rgba strings', () => {
         expect(formula.glassBorder).toMatch(/^rgba\(/)
         expect(formula.glassBorderElevated).toMatch(/^rgba\(/)
         expect(formula.glassContainerBorder).toMatch(/^rgba\(/)
+        expect(formula.glassDialogBorder).toMatch(/^rgba\(/)
       })
 
       it('all shadow colors are rgba strings', () => {

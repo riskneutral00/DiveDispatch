@@ -18,6 +18,9 @@ const GLASS_DARK = {
   opacityMuted: 0.50,
   tooltipBg: "rgba(255, 255, 255, 0.92)",
   tooltipText: "#0f172a",
+  glassDialogBg: "rgba(0, 0, 0, 0.65)",
+  glassDialogBorder: "rgba(255, 255, 255, 0.18)",
+  glassDialogBlur: 28,
 }
 
 const GLASS_BRIGHT = {
@@ -40,6 +43,9 @@ const GLASS_BRIGHT = {
   opacityMuted: 0.70,
   tooltipBg: "rgba(15, 23, 42, 0.92)",
   tooltipText: "#f8fafc",
+  glassDialogBg: "rgba(255, 255, 255, 0.70)",
+  glassDialogBorder: "rgba(0, 0, 0, 0.12)",
+  glassDialogBlur: 28,
 }
 
 export const OCEAN_THEME_CONFIG = {

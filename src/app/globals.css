@@ -143,6 +143,11 @@
   --color-tooltip-text: #0f172a;
   --color-field-underline: rgba(255, 255, 255, 0.25);
 
+  /* Glass dialog — higher opacity for content readability */
+  --color-glass-dialog-bg: rgba(0, 0, 0, 0.65);
+  --color-glass-dialog-border: rgba(255, 255, 255, 0.18);
+  --glass-dialog-blur: 28px;
+
   /* Status colors — SSR fallbacks (dark mode defaults).
      Runtime values injected by ThemeProvider per luminance class.
      IMPORTANT: Do NOT add these to @theme inline. Tailwind's self-referential
@@ -430,6 +435,18 @@ dialog::backdrop {
 .glass-container .glass-container {
   border-color: transparent;
   background-color: transparent;
+}
+
+/* ── Glass dialog (high-opacity readability surface for modal content) ──────*/
+.glass-dialog {
+  background-color: var(--color-glass-dialog-bg);
+  backdrop-filter: blur(var(--glass-dialog-blur));
+  -webkit-backdrop-filter: blur(var(--glass-dialog-blur));
+  border: 1px solid var(--color-glass-dialog-border);
+  border-radius: var(--border-radius);
+  box-shadow:
+    0 8px 32px var(--color-glass-shadow-elevated),
+    inset 0 1px 0 var(--color-glass-specular-subtle);
 }
 
 /* ── Glass field (input focus ring) ──────────────────────────────────────────*/

@@ -148,7 +148,7 @@ describe('Dialog design compliance', () => {
         <p>Content</p>
       </Dialog>,
     )
-    const panel = document.querySelector('.glass-container') as HTMLElement
+    const panel = document.querySelector('.glass-dialog') as HTMLElement
     expect(panel).toBeInTheDocument()
     expect(panel.style.backdropFilter).toBe('')
     expect(panel.style.getPropertyValue('-webkit-backdrop-filter')).toBe('')
@@ -166,25 +166,25 @@ describe('Dialog design compliance', () => {
     expect(panel.style.getPropertyValue('-webkit-backdrop-filter')).toBe('')
   })
 
-  it('close button has adequate touch target (p-2)', () => {
+  it('close button has adequate touch target (44px via IconButton)', () => {
     render(
       <Dialog open onClose={() => {}} title="Test">
         <p>Content</p>
       </Dialog>,
     )
     const closeBtn = screen.getByLabelText('Close dialog')
-    expect(closeBtn.className).toContain('p-2')
-    expect(closeBtn.className).not.toContain('p-1')
+    expect(closeBtn.className).toContain('w-11')
+    expect(closeBtn.className).toContain('h-11')
   })
 
-  it('fullScreen close button has adequate touch target (p-2)', () => {
+  it('fullScreen close button has adequate touch target (44px via IconButton)', () => {
     render(
       <Dialog open onClose={() => {}} title="Test" fullScreen>
         <p>Content</p>
       </Dialog>,
     )
     const closeBtn = screen.getByLabelText('Close dialog')
-    expect(closeBtn.className).toContain('p-2')
-    expect(closeBtn.className).not.toContain('p-1')
+    expect(closeBtn.className).toContain('w-11')
+    expect(closeBtn.className).toContain('h-11')
   })
 })

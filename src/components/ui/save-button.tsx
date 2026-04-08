@@ -11,17 +11,21 @@ interface SaveButtonProps {
   isUpdate: boolean
   disabled?: boolean
   label?: string
+  size?: 'sm' | 'md'
+  onClick?: () => void
 }
 
-export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label }: SaveButtonProps) {
+export function SaveButton({ saving, saved, isDirty, isUpdate, disabled, label, size = 'md', onClick }: SaveButtonProps) {
   const t = useTranslations('common')
 
   return (
     <div className="flex justify-end">
       <Button
-        type="submit"
+        type={onClick ? 'button' : 'submit'}
+        size={size}
         loading={saving}
         disabled={disabled || (isUpdate ? (!isDirty || saving) : saving)}
+        onClick={onClick}
         style={saved ? { background: 'var(--color-active-fg)', borderColor: 'var(--color-active-fg)' } : undefined}
       >
         {saved ? (

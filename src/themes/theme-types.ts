@@ -45,6 +45,9 @@ export interface ColorPalette {
   tooltipBg: string;
   tooltipText: string;
   fieldUnderline: string;
+  glassDialogBg: string;
+  glassDialogBorder: string;
+  glassDialogBlur: number;
 }
 
 export interface ThemeConfig {

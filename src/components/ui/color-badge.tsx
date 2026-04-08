@@ -42,7 +42,7 @@ export const ColorBadge = React.memo(function ColorBadge({
       title={title}
       className={cn(
         'rounded-full px-2 py-0.5 font-medium select-none',
-        onClick && 'transition-all duration-theme cursor-pointer hover:brightness-125 hover:scale-105',
+        onClick && 'transition-opacity duration-theme cursor-pointer hover:opacity-70',
         className,
       )}
       style={{ ...colorStyle, ...style }}

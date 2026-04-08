@@ -22,6 +22,9 @@ export const GLASS_FORMULAS = {
     tooltipBg: "rgba(255, 255, 255, 0.92)",
     tooltipText: "#0f172a",
     fieldUnderline: "rgba(255, 255, 255, 0.25)",
+    glassDialogBg: "rgba(0, 0, 0, 0.65)",
+    glassDialogBorder: "rgba(255, 255, 255, 0.18)",
+    glassDialogBlur: 28,
   },
 
   medium: {
@@ -45,6 +48,9 @@ export const GLASS_FORMULAS = {
     tooltipBg: "rgba(255, 255, 255, 0.92)",
     tooltipText: "#0f172a",
     fieldUnderline: "rgba(255, 255, 255, 0.25)",
+    glassDialogBg: "rgba(0, 0, 0, 0.72)",
+    glassDialogBorder: "rgba(255, 255, 255, 0.15)",
+    glassDialogBlur: 28,
   },
 
   bright: {
@@ -68,6 +74,9 @@ export const GLASS_FORMULAS = {
     tooltipBg: "rgba(15, 23, 42, 0.92)",
     tooltipText: "#f8fafc",
     fieldUnderline: "rgba(0, 0, 0, 0.20)",
+    glassDialogBg: "rgba(255, 255, 255, 0.70)",
+    glassDialogBorder: "rgba(0, 0, 0, 0.12)",
+    glassDialogBlur: 28,
   },
 } as const;
 

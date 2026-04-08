@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface DialogProps {
   open: boolean;
@@ -81,7 +82,7 @@ export function Dialog({
         >
           <div /* design-ok */
             className={cn(
-              "dialog-fullscreen-panel flex flex-col text-primary glass-container",
+              "dialog-fullscreen-panel flex flex-col text-primary glass-dialog",
               "w-full h-full rounded-none", // design-ok
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
@@ -107,14 +108,14 @@ export function Dialog({
                   </p>
                 )}
               </div>
-              <button
+              <IconButton
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
-                style={{ outlineColor: "var(--color-accent)" }}
+                variant="ghost"
                 aria-label="Close dialog"
+                className="flex-shrink-0"
               >
                 <X size={20} />
-              </button>
+              </IconButton>
             </div>
             <div className="flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
           </div>
@@ -138,11 +139,10 @@ export function Dialog({
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           className={cn(
-            "glass-container w-full shadow-2xl text-primary",
+            "glass-dialog w-full shadow-2xl text-primary",
             sizeMap[size],
             className,
           )}
-          style={{ backgroundColor: "var(--color-surface-elevated)" }}
         >
           {(title || description) && (
             <div
@@ -164,14 +164,14 @@ export function Dialog({
                   </p>
                 )}
               </div>
-              <button
+              <IconButton
                 onClick={onClose}
-                className="flex-shrink-0 p-2 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 focus:outline-none focus-visible:ring-2 text-secondary"
-                style={{ outlineColor: "var(--color-accent)" }}
+                variant="ghost"
                 aria-label="Close dialog"
+                className="flex-shrink-0"
               >
                 <X size={18} />
-              </button>
+              </IconButton>
             </div>
           )}
 

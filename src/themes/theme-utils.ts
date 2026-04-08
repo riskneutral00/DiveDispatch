@@ -114,6 +114,9 @@ export function paletteToVars(palette: ColorPalette): Record<string, string> {
     "--color-tooltip-bg": palette.tooltipBg,
     "--color-tooltip-text": palette.tooltipText,
     "--color-field-underline": palette.fieldUnderline,
+    "--color-glass-dialog-bg": palette.glassDialogBg,
+    "--color-glass-dialog-border": palette.glassDialogBorder,
+    "--glass-dialog-blur": `${palette.glassDialogBlur}px`,
   };
   if (palette.bgImage !== undefined) vars["--bg-image"] = palette.bgImage;
   if (palette.bgOverlay !== undefined) vars["--bg-overlay"] = palette.bgOverlay;
