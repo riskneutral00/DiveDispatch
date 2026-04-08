@@ -48,6 +48,10 @@ If `@theme inline` wires a CSS variable to a Tailwind utility, use the utility. 
 
 Hook `style-classname-boundary.sh` enforces this. Escape: `{/* design-ok */}`.
 
+## No raw interactive elements
+
+Every interactive element outside `src/components/ui/` must use Button, IconButton, MenuButton, ActionLink, or SaveButton. Raw `<button>` requires `{/* design-ok */}` and is only for compound control internals. The `raw-button-blocker.sh` hook enforces this.
+
 ## When Matt gives design feedback
 
 Ask yourself: "If I make this change, will it need to be made again somewhere else?" If yes, you're at the wrong layer. Go up.

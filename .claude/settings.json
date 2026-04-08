@@ -301,6 +301,12 @@
             "command": "bash .claude/hooks/rate-limit-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking rate limiting…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/raw-button-blocker.sh",
+            "timeout": 5,
+            "statusMessage": "Checking raw button usage…"
           }
         ]
       }

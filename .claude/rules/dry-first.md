@@ -15,6 +15,8 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 - **Role-to-table map:** `convex/lib/profileHelpers.ts` (`ROLE_TABLE_MAP`, `profileByUserId`)
 - **Auth gateway:** `convex/lib/auth.ts` (`authorize()` — the single entry point per `Architecture/auth-model.md` Rule 1. Internal helpers `requireAuth`, `assertOwnership`, `requireOwnerOrResourceAccess` are consumed by `authorize()` — do NOT call them directly in mutations.)
 - **Booking resource context:** `convex/bookings.ts` (`buildResourceContext`)
+- **Save button:** `src/components/ui/save-button.tsx` (`SaveButton` — supports form submit and standalone onClick)
+- **Menu button:** `src/components/ui/menu-button.tsx` (`MenuButton` — navigation items, tabs, dropdown entries)
 
 ## Three copies = extract
 If the same logic exists in 3+ places, extract it to a shared file before adding a 4th. If it exists in 2 places, flag it in the PR description or `/gate` output for the next `/design propagate` run — do not add inline comments (per no-comments rule).

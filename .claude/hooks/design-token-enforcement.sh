@@ -111,7 +111,13 @@ if echo "$CLEAN" | grep -qE "\bgap-(0\.5|2\.5|5)\b"; then
   exit 0
 fi
 
-# 8. Backward spacing (mobile tighter than desktop is wrong)
+# 8. Non-standard hover patterns (brightness/scale) — BLOCKING
+if echo "$CLEAN" | grep -qE 'hover:brightness|hover:scale'; then
+  echo '{"decision":"block","reason":"Non-standard hover pattern (brightness/scale) detected. Use glass-btn-* classes (glow lift) or transition-opacity hover:opacity-70 (fade). See MASTER.md Hover Behavior. Add {/* design-ok */} to suppress."}'
+  exit 0
+fi
+
+# 9. Backward spacing (mobile tighter than desktop is wrong)
 if echo "$CLEAN" | grep -qE "\bp-(5|6|8)\s+(sm|md):p-(3|4)\b"; then
   echo '{"decision":"block","reason":"Backward spacing detected (desktop padding smaller than mobile). Spacing must be additive — mobile is the tightest. See .claude/rules/spacing-tokens.md. Add {/* design-ok */} to suppress."}'
   exit 0

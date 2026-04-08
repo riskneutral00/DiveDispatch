@@ -20,6 +20,19 @@ Read the relevant file BEFORE modifying code in that domain.
 
 Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Industry-Alignment-Decisions.md`
 
+## Interactive Element Rule
+
+Every `<button>`, `<a>` action, tab, menu item, and interactive control outside `src/components/ui/` must use a component from the UI library:
+- **Button** — standard actions (primary, secondary, ghost, destructive)
+- **IconButton** — icon-only actions (glass or ghost variant)
+- **MenuButton** — navigation items, tabs, dropdown entries (pill or flush variant)
+- **ActionLink** — inline hyperlink-style actions
+- **SaveButton** — form save/submit with loading/saved states
+
+Raw `<button>` is only allowed inside compound controls (custom pickers, ARIA listbox internals, DnD handles) with `{/* design-ok */}`. Hook `raw-button-blocker.sh` enforces this.
+
+Two hover tiers: glass-btn glow (buttons, cards) and opacity fade (nav, menu items). Never brightness+scale. Hook `design-token-enforcement.sh` enforces this.
+
 ## Product Knowledge
 
 All product decisions, domain rules, and business logic: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/`
