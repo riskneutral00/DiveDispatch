@@ -98,7 +98,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
             className="field-number"
           />
           <Input
-            label="Max Capacity (divers)"
+            label="Max Capacity"
             type="number"
             min="1"
             step="1"

@@ -161,11 +161,16 @@ function PreferredOperatorPicker({
     const merged = [...dc, ...lb, ...dr, ...dh]
     return merged
       .map((e) => ({
-        value: e.slug,
+        value: `${e.role}:${e.slug}`,
         label: `${e.name} (${e.role}) — ${e.placeName}`,
       }))
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [dc, lb, dr, dh])
+
+  const selectValue = useMemo(
+    () => value ? (options.find(o => o.value.endsWith(`:${value}`))?.value ?? '') : '',
+    [value, options],
+  )
 
   return (
     <Card padding="sm">
@@ -175,8 +180,12 @@ function PreferredOperatorPicker({
       </p>
       <SimpleSelect
         label={t('targetOperator')}
-        value={value ?? ''}
-        onChange={(v) => onChange(v ? v : undefined)}
+        value={selectValue}
+        onChange={(v) => {
+          if (!v) { onChange(undefined); return }
+          const idx = v.indexOf(':')
+          onChange(idx >= 0 ? v.slice(idx + 1) : v)
+        }}
         options={[
           { value: '', label: 'None' },
           ...options,

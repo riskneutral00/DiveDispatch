@@ -768,11 +768,21 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
   const [typeFilter, setTypeFilter] = useState<VenueBoatFilter>('all')
   const [search, setSearch] = useState('')
 
-  const allSlugs = useMemo(() => [...venueSlugs, ...boatSlugs], [venueSlugs, boatSlugs])
+  const VENUE_PFX = 'v:'
+  const BOAT_PFX = 'b:'
+
+  const allSlugs = useMemo(() => [
+    ...venueSlugs.map(s => `${VENUE_PFX}${s}`),
+    ...boatSlugs.map(s => `${BOAT_PFX}${s}`),
+  ], [venueSlugs, boatSlugs])
 
   const allEntries = useMemo(() => {
     if (pools === undefined || diveSites === undefined || boats === undefined) return undefined
-    return [...(pools ?? []), ...(diveSites ?? []), ...(boats ?? [])]
+    return [
+      ...(pools ?? []).map(e => ({ ...e, slug: `${VENUE_PFX}${e.slug}` })),
+      ...(diveSites ?? []).map(e => ({ ...e, slug: `${VENUE_PFX}${e.slug}` })),
+      ...(boats ?? []).map(e => ({ ...e, slug: `${BOAT_PFX}${e.slug}` })),
+    ]
   }, [pools, diveSites, boats])
 
   const filteredEntries = useMemo(() => {
@@ -786,18 +796,15 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
   }, [allEntries, allSlugs, typeFilter, search])
 
   const handleChange = useCallback((slugs: string[]) => {
-    if (!allEntries) return
-    const entryBySlug = Object.fromEntries(allEntries.map((e) => [e.slug, e]))
     const nextVenues: string[] = []
     const nextBoats: string[] = []
     for (const s of slugs) {
-      const e = entryBySlug[s]
-      if (e?.role === 'Boat') nextBoats.push(s)
-      else nextVenues.push(s)
+      if (s.startsWith(BOAT_PFX)) nextBoats.push(s.slice(BOAT_PFX.length))
+      else nextVenues.push(s.slice(VENUE_PFX.length))
     }
     onVenueChange(nextVenues)
     onBoatChange(nextBoats)
-  }, [allEntries, onVenueChange, onBoatChange])
+  }, [onVenueChange, onBoatChange])
 
   const filterBar = (
     <div className="flex flex-wrap gap-1.5">
@@ -828,21 +835,6 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
   )
 }
 
-function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
-  const counts = entry.inventoryCounts
-  if (!counts || Object.keys(counts).length === 0) return null
-  const items = Object.entries(counts).sort(([, a], [, b]) => b - a)
-  const shown = items.slice(0, 3)
-  const remaining = items.length - 3
-  return (
-    <div className="flex flex-wrap items-center gap-1">
-      {shown.map(([gt, count]) => (
-        <Badge key={gt}>{GEAR_TYPE_LABELS[gt as GearType] ?? gt} x{count}</Badge>
-      ))}
-      {remaining > 0 && <Badge variant="muted" size="sm">+{remaining} more</Badge>}
-    </div>
-  )
-}
 
 export function PreferredEquipmentList(props: ListProps) {
   const { slugs, onChange } = props
@@ -877,7 +869,7 @@ export function PreferredEquipmentList(props: ListProps) {
       dialogTitle="Add Equipment Provider"
       maxItems={MAX_PREFERRED_EQUIPMENT}
       required={props.required}
-      renderBadge={(e) => <EquipmentBadge entry={e} />}
+      renderBadge={() => null}
       filterBar={filterBar}
       filteredEntries={filteredEntries}
       search={search}
