@@ -2,6 +2,7 @@
 
 import { FlagPill } from '@/components/profiles/language-picker'
 import { resolveLanguages } from '@/lib/constants/dive-languages'
+import { Tooltip } from '@/components/ui/tooltip'
 import type { DirectoryEntry } from '../../../convex/directory'
 
 interface InstructorCardContentProps {
@@ -63,7 +64,9 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
               </span>
             ))}
             {uniqueRatings.length > 3 && (
-              <span className="text-label text-secondary">+{uniqueRatings.length - 3}</span>
+              <Tooltip label={uniqueRatings.slice(3).join(', ')}>
+                <span className="text-label text-secondary">+{uniqueRatings.length - 3}</span>
+              </Tooltip>
             )}
           </div>
         )}
@@ -106,7 +109,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
 
       {uniqueRatings.length > 0 && (
         <div className="flex flex-wrap gap-1 items-center">
-          {uniqueRatings.map((rating) => (
+          {uniqueRatings.slice(0, 3).map((rating) => (
             <span
               key={rating}
               className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
@@ -118,6 +121,11 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
               {rating}
             </span>
           ))}
+          {uniqueRatings.length > 3 && (
+            <Tooltip label={uniqueRatings.slice(3).join(', ')}>
+              <span className="text-label text-secondary">+{uniqueRatings.length - 3}</span>
+            </Tooltip>
+          )}
         </div>
       )}
     </div>

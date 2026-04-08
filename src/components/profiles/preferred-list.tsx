@@ -14,6 +14,7 @@ import { BOAT_TYPE_LABELS } from '@/lib/constants/boat-types'
 import { GAS_MIXES, GAS_MIX_LABELS } from '@/lib/constants/gas-mixes'
 import { GEAR_TYPES, GEAR_TYPE_LABELS, type GearType } from '@/lib/constants/gear-sizing'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -192,6 +193,7 @@ function SortableInstructorCard({
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
       <div className="flex items-start gap-1 mb-1">
+        <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
         <button
           ref={handleRef}
           type="button"
@@ -562,6 +564,7 @@ function SortableOverlayCard({
   return (
     <div ref={ref} className="glass-container rounded-theme p-3 min-w-[140px]" style={{ opacity: isDragging ? 0.5 : 1 }}>
       <div className="flex items-start gap-1 mb-1">
+        <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
         <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">
           <GripVertical size={14} />
         </button>
@@ -836,6 +839,28 @@ export function PreferredVenueBoatList({ venueSlugs, boatSlugs, onVenueChange, o
 }
 
 
+function EquipmentBadge({ entry }: { entry: DirectoryEntry }) {
+  const items = Object.entries(entry.inventoryCounts ?? {})
+    .filter(([, count]) => (count as number) > 0)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
+  if (items.length === 0) return null
+  const MAX_VISIBLE = 3
+  const shown = items.slice(0, MAX_VISIBLE)
+  const overflow = items.slice(MAX_VISIBLE)
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {shown.map(([gt, count]) => (
+        <Badge key={gt} variant="muted" size="sm">{GEAR_TYPE_LABELS[gt as GearType] ?? gt} x{count as number}</Badge>
+      ))}
+      {overflow.length > 0 && (
+        <Tooltip label={overflow.map(([gt, count]) => `${GEAR_TYPE_LABELS[gt as GearType] ?? gt} x${count as number}`).join(', ')}>
+          <Badge variant="muted" size="sm">+{overflow.length} more</Badge>
+        </Tooltip>
+      )}
+    </div>
+  )
+}
+
 export function PreferredEquipmentList(props: ListProps) {
   const { slugs, onChange } = props
   const entries = useQuery(api.directory.listByRole, { role: 'Equipment' as StakeholderRole })
@@ -869,7 +894,7 @@ export function PreferredEquipmentList(props: ListProps) {
       dialogTitle="Add Equipment Provider"
       maxItems={MAX_PREFERRED_EQUIPMENT}
       required={props.required}
-      renderBadge={() => null}
+      renderBadge={(e) => <EquipmentBadge entry={e} />}
       filterBar={filterBar}
       filteredEntries={filteredEntries}
       search={search}
@@ -884,11 +909,19 @@ export function PreferredEquipmentList(props: ListProps) {
 function CompressorBadge({ entry }: { entry: DirectoryEntry }) {
   const mixes = entry.gasMixes ?? []
   if (mixes.length === 0) return null
+  const MAX_VISIBLE = 3
+  const shown = mixes.slice(0, MAX_VISIBLE)
+  const overflow = mixes.slice(MAX_VISIBLE)
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {mixes.map((m) => (
+      {shown.map((m) => (
         <Badge key={m}>{GAS_MIX_LABELS[m] ?? m}</Badge>
       ))}
+      {overflow.length > 0 && (
+        <Tooltip label={overflow.map(m => GAS_MIX_LABELS[m] ?? m).join(', ')}>
+          <Badge>+{overflow.length}</Badge>
+        </Tooltip>
+      )}
     </div>
   )
 }

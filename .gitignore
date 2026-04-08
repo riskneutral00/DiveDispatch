@@ -99,6 +99,13 @@ playwright-report/
 # OpenSpace evolution tracking (usage logs, not code)
 .openspace/
 
+# Installed skills (reproducible via skills-lock.json)
+.agents/
+.claude/skills/caveman
+.claude/skills/caveman-cn
+.claude/skills/caveman-es
+.claude/skills/compress
+
 # Internal AI tooling (keep locally, not public)
 .mulch/
 .overstory/

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { TOUCH_TOOLTIP_MS } from '@/lib/constants/ui-timings'
 
 interface TooltipProps {
-  label: string
+  label: string | ReactNode
   children: ReactNode
   className?: string
 }
@@ -71,7 +71,7 @@ export function Tooltip({ label, children, className }: TooltipProps) {
       {visible && pos && createPortal(
         <span
           id={tooltipId}
-          className="pointer-events-none fixed px-3 py-1.5 rounded-[var(--border-radius-button)] text-body font-semibold whitespace-nowrap shadow-lg"
+          className={`pointer-events-none fixed px-3 py-1.5 rounded-[var(--border-radius-button)] text-body font-semibold shadow-lg ${typeof label === 'string' ? 'whitespace-nowrap' : ''}`}
           style={{
             top: pos.top,
             left: pos.left,
