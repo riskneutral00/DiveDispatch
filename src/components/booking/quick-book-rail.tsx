@@ -40,7 +40,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
   const canBook = !isLoading && onboardingStatus?.percentage === 100
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
       {COURSE_TEMPLATES.map((template) => {
         if (dragEnabled) {
           const pill = (
@@ -89,7 +89,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
       })}
 
       {canBook ? (
-        <span className="ml-auto">
+        <span className="hidden sm:inline-flex ml-auto">
           {dragEnabled ? (
             <DraggablePill
               template={PLUS_TEMPLATE}
@@ -109,7 +109,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           )}
         </span>
       ) : (
-        <Tooltip label={TOOLTIP_LABEL} className="ml-auto">
+        <Tooltip label={TOOLTIP_LABEL} className="hidden sm:inline-flex ml-auto">
           <button
             type="button"
             disabled

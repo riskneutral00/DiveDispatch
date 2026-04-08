@@ -259,4 +259,4 @@ All passing: {YES/NO}
 - **Delegate to existing skills when appropriate:**
   - If `/review-tests` findings exist, use them to prioritize which tests to generate
   - If `/review-backend-auth` flagged auth gaps, generate FORBIDDEN/UNAUTHENTICATED tests
-  - If `/review-frontend` flagged untested components, generate component tests for those
+  - If `/design` flagged untested components, generate component tests for those

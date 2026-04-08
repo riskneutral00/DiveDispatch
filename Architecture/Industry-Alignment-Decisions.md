@@ -72,7 +72,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Decision:** Every field has a producer and a consumer. No dead fields. Sketch tables get guard validators (tables stay — v0.1.1 liveaboard scope). No duplicate fields with read-time fallbacks.
 
-**Enforcement:** CLAUDE.md pointer → `schema-invariants.md`. Skills: `/gate`, `/ai-slop`, `/review-backend-schema`.
+**Enforcement:** CLAUDE.md pointer → `schema-invariants.md`. Skills: `/gate`, `/design`, `/review-backend-schema`.
 
 **Checklist:**
 
@@ -156,7 +156,7 @@ DD leans Airbnb on 6 of 9 points. Three are Airbnb-primary with Uber-secondary.
 
 **Decision:** Component system is the only legal rendering path. Constraints-first (Airbnb DLS Phase 2). Every visual property flows through tokens. Future SkinCommerce operator customization uses structured overrides API (Uber-inspired), not className.
 
-**Enforcement:** PostToolUse hooks (active, proven). CLAUDE.md pointer → `component-invariants.md`. Skills: `/review-frontend`, `/ai-slop`, `/gate`, `/design-review`.
+**Enforcement:** PostToolUse hooks (active, proven). CLAUDE.md pointer → `component-invariants.md`. Skills: `/design`, `/gate`.
 
 **Completed (2026-04-06 session):**
 
@@ -435,9 +435,8 @@ Layer 3 — COMMIT TIME (catches violations before they land)
 
 Layer 4 — REVIEW TIME (catches violations that slipped through)
 ├── /review-backend-auth, /review-backend-mutations, /review-backend-schema
-├── /review-frontend, /review-tests
-├── /ai-slop → references all invariant files
-└── /design-review → references component-invariants.md
+├── /review-tests
+└── /design → unified frontend review (critique, prototype, propagate)
 ```
 
 **Current state:** Layer 1 partial (CLAUDE.md pointers not yet added). Layer 2 hooks active. Layers 3-4 operational.
@@ -446,10 +445,10 @@ Layer 4 — REVIEW TIME (catches violations that slipped through)
 
 | File | Covers | Consumed By |
 |------|--------|-------------|
-| `schema-invariants.md` | Naming, dead fields, sketch guards, snapshot semantics | `/gate`, `/ai-slop`, `/review-backend-schema` |
+| `schema-invariants.md` | Naming, dead fields, sketch guards, snapshot semantics | `/gate`, `/design`, `/review-backend-schema` |
 | `query-invariants.md` | Bounded queries, projections, server caps | `/gate`, `/review-backend-mutations` |
 | `auth-model.md` | `authorize()`, Clerk Orgs, relationship table, `userRoles` integration | `/gate`, `/review-backend-auth` |
-| `component-invariants.md` | Components, tokens, state management, Storybook | `/gate`, `/review-frontend`, `/ai-slop`, `/design-review` |
+| `component-invariants.md` | Components, tokens, state management, Storybook | `/gate`, `/design` |
 | `fsm-invariants.md` | FSM gateway, terminal states, no direct patches | `/gate`, `/review-backend-mutations` |
 | `error-invariants.md` | Shape `{ code, reason }`, i18n mapping, business vs system | `/gate`, `/review-backend-mutations` |
 | `testing-invariants.md` | Real contexts, fixtures, time guards, component coverage | `/review-tests`, `/qa` |

@@ -11,10 +11,9 @@ interface HierarchySubBarProps {
   slug: string
   roleSlug: RoleKey
   filterRoles?: Set<string>
-  businessName?: string
 }
 
-export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: HierarchySubBarProps) {
+export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBarProps) {
   const roles = useQuery(api.userRoles.myRoles)
 
   if (!roles || roles.length <= 1) return null
@@ -68,14 +67,6 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles, businessName }: H
         )
       })}
 
-      {businessName && (
-        <span
-          className="hidden sm:block absolute inset-x-0 text-center text-base font-semibold tracking-tight whitespace-nowrap text-primary pointer-events-none"
-          data-testid="hierarchy-bar-name"
-        >
-          {businessName}
-        </span>
-      )}
     </div>
   )
 }

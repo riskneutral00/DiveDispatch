@@ -60,7 +60,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
             <ChevronLeft size={16} />
           </button>
           <span
-            className="font-semibold text-base sm:text-lg min-w-[12rem] text-center text-primary font-heading"
+            className="font-semibold text-card-title min-w-[12rem] text-center text-primary font-heading"
           >
             {headerLabel}
           </span>

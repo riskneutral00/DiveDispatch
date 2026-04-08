@@ -243,7 +243,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="font-semibold text-base sm:text-lg min-w-[12rem] text-center hover:underline underline-offset-4 text-primary font-heading"
+              className="font-semibold text-card-title min-w-[12rem] text-center hover:underline underline-offset-4 text-primary font-heading"
             >
               {headerLabel}
             </button>
@@ -265,6 +265,7 @@ export function BookingCalendar({
                 position: 'absolute',
                 top: '100%',
                 width: '240px',
+                background: 'var(--color-surface-elevated)',
                 boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
               }}
             >
@@ -292,8 +293,8 @@ export function BookingCalendar({
                 </button>
               </div>
 
-              {/* Month grid 4×3 — design-ok */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
+              {/* Month grid — design-ok */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
                 {MONTH_LABELS.map((label, i) => {
                   const isCurrentMonth = pickerYear === currentYear && i === currentMonth
                   const isViewMonth = pickerYear === viewYear && i === viewMonth

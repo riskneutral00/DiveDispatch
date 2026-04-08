@@ -17,7 +17,6 @@ import { BgSwitcher } from './bg-switcher'
 import { ThemeSwitcher } from './theme-switcher'
 import { HierarchySubBar } from './hierarchy-sub-bar'
 import { RoleSwitcher } from './role-switcher'
-import { MobileBottomNav } from './mobile-bottom-nav'
 import { MobileTopNav } from './mobile-top-nav'
 import { NotificationBell } from '../notifications/notification-bell'
 import { UserMenu } from './user-menu'
@@ -95,23 +94,29 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   return (
     <>
       <header
-        className="hidden md:flex items-center justify-end gap-2 px-4 py-2 flex-shrink-0"
+        className="hidden md:flex items-center px-4 py-2 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--color-glass-border)' }}
       >
-        {profileCompletion && profileCompletion.percentage < 100 && (
-          <ProfileCompletionPill
-            percentage={profileCompletion.percentage}
-            onOpenOverlay={() => openProfileOverlay('profile')}
+        <div className="flex-1" />
+        <span className="text-card-title font-semibold tracking-tight text-primary pointer-events-none">
+          {user.businessName}
+        </span>
+        <div className="flex-1 flex items-center justify-end gap-2">
+          {profileCompletion && profileCompletion.percentage < 100 && (
+            <ProfileCompletionPill
+              percentage={profileCompletion.percentage}
+              onOpenOverlay={() => openProfileOverlay('profile')}
+            />
+          )}
+          <ThemeSwitcher />
+          <BgSwitcher />
+          <NotificationBell />
+          <UserMenu
+            roleSlug={roleSlug}
+            slug={slug}
+            onOpenOverlay={openProfileOverlay}
           />
-        )}
-        <ThemeSwitcher />
-        <BgSwitcher />
-        <NotificationBell />
-        <UserMenu
-          roleSlug={roleSlug}
-          slug={slug}
-          onOpenOverlay={openProfileOverlay}
-        />
+        </div>
       </header>
 
       <MobileTopNav
@@ -127,12 +132,9 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
         slug={slug}
         roleSlug={roleSlug}
         filterRoles={activeTreeFilter}
-        businessName={activeTreeFilter ? undefined : (user.businessName ?? undefined)}
       />
 
-      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-28 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8 md:pb-8">{children}</main>
-
-      <MobileBottomNav roleSlug={roleSlug} slug={slug} />
+      <main className="dashboard-enter flex-1 min-w-0 pt-1 px-4 pb-8 sm:pt-2 sm:px-6 lg:pt-3 lg:px-8">{children}</main>
 
       <ProfileOverlay
         open={overlayOpen}

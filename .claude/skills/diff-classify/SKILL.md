@@ -24,7 +24,7 @@ Map files to review skills:
 | `convex/schema.ts` | `/review-backend-schema` |
 | `convex/**/*.ts` (not schema, not `_generated/`) | `/review-backend-mutations` |
 | `convex/**/*.ts` matching auth/portal/token/role | `/review-backend-auth` |
-| `src/components/**`, `src/app/**`, `src/lib/**` | `/review-frontend` |
+| `src/components/**`, `src/app/**`, `src/lib/**` | `/design` |
 | `tests/**`, `e2e/**` | `/review-tests` |
 
 A file can trigger multiple reviews. Deduplicate the skill list.

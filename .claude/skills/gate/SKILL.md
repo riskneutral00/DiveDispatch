@@ -83,7 +83,7 @@ A file can land in multiple buckets.
 |--------|-------------------|
 | `schema` | `/review-backend-schema` |
 | `backend` | `/review-backend-mutations`, `/review-backend-auth` |
-| `frontend` | `/review-frontend` |
+| `frontend` | No automated skill — PostToolUse hooks + invariant sweep cover structural checks. Use `/design` interactively for visual review. |
 | `tests` | `/review-tests` |
 | `config` | No skill — note in output |
 
@@ -128,7 +128,6 @@ Possible skills (only those in `skillsToDispatch`):
 - `/review-backend-schema`
 - `/review-backend-auth`
 - `/review-backend-mutations`
-- `/review-frontend`
 - `/review-tests`
 
 After dispatched skills complete, collect each skill's CRITICAL/HIGH/MEDIUM/LOW counts from its final output line. Merge with cached `skillResults` from the sentinel for the full picture.
@@ -306,7 +305,6 @@ Group `AUTO` findings by the review skill that produced them:
 | `/review-backend-schema` | Schema + data integrity fixes |
 | `/review-backend-auth` | Auth, role gate, validator fixes |
 | `/review-backend-mutations` | Performance, side effect fixes |
-| `/review-frontend` | Component, a11y, design system fixes |
 | `/review-tests` | Test health fixes |
 
 For each bucket with `AUTO` findings, spawn **1 fix agent in parallel** (`model: "sonnet"`).

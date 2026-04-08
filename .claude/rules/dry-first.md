@@ -17,7 +17,7 @@ Before defining a new constant, type, schema, or utility function, grep `src/lib
 - **Booking resource context:** `convex/bookings.ts` (`buildResourceContext`)
 
 ## Three copies = extract
-If the same logic exists in 3+ places, extract it to a shared file before adding a 4th. If it exists in 2 places, flag it in the PR description or `/gate` output for the next `/consolidate` run — do not add inline comments (per no-comments rule).
+If the same logic exists in 3+ places, extract it to a shared file before adding a 4th. If it exists in 2 places, flag it in the PR description or `/gate` output for the next `/design propagate` run — do not add inline comments (per no-comments rule).
 
 ## No local type aliases for shared shapes
 Do not define a local `type FooProps = { profile: ..., me: ..., create: ..., update: ... }` when `BaseProfileSectionProps` (or an extension of it) fits. Import and extend instead.

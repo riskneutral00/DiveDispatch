@@ -2,7 +2,7 @@
 
 > Canonical design spec. Defines *what* the system is (tokens, glass, visual language).
 > Rules files (`.claude/rules/`) define *how to apply* it (layout stability, density, mobile-first).
-> `/design-review` evaluates against this file. Page overrides in `design-system/pages/`.
+> `/design` evaluates against this file. Page overrides in `design-system/pages/`.
 
 ---
 

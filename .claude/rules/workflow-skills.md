@@ -12,7 +12,7 @@ User-invocable skills (`/board`, `/spec`, `/vault`, `/post-spec`, etc.) are trig
 Interactive skills (spec, design, QA) spawn agents with the skill's knowledge baked in. Reserve one-shot execution for non-dialogue skills (gate, vault, post-spec).
 
 ## Surface skills proactively
-Matt loses track of available skills. When he's looking for a workflow entry point, mention the specific skill name: `/pre-spec`, `/spec`, `/post-spec`, `/board`, `/clerk-signin`, `/clerk-switch`, `/agent-navigator`, `/agent-designer`, `/agent-feature`, `/vault`.
+Matt loses track of available skills. When he's looking for a workflow entry point, mention the specific skill name: `/pre-spec`, `/spec`, `/post-spec`, `/board`, `/clerk-signin`, `/clerk-switch`, `/agent-navigator`, `/design`, `/agent-feature`, `/vault`.
 
 ## /board for all ticket operations
 Use `/board` for create, pick, done, sync. Never write `.tickets/DD-*.md` files manually.

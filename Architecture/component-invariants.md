@@ -11,11 +11,11 @@
    - **Legacy exception:** ~60 raw buttons exist in compound patterns (calendar grids, tab bars, drag handles, equipment increment/decrement). These are tracked as component redesign tickets. New code MUST NOT add more. The hook blocks undersized raw buttons (sub-44px touch targets).
 
 2. **One component, all roles. NEVER per-role pages.** DD has 12 stakeholder roles. A booking calendar, a dashboard, a profile form — each is ONE component parameterized by role via `dashboard-config.ts`. Do not create `agent-booking-list.tsx`, `instructor-dashboard.tsx`, etc.
-   - Enforced by: `/review-frontend` flags new role-specific page components
+   - Enforced by: `/design` Phase 1 flags new role-specific page components
    - Violation history: Per-role implementations (`agent-booking-list.tsx`, `referral-tracker.tsx`) were built, then deleted after consolidation into `BookingCalendar`. This happened THREE TIMES before the rule was established. The cost of violating this rule is measured in weeks of wasted work.
 
 3. **No `className` for visual properties.** Components expose `variant`, `size`, `intent` props. Style customization happens by creating a new variant, not by passing arbitrary CSS. Feature components do not override component visuals via className.
-   - Enforced by: `/design-review` references this file
+   - Enforced by: `/design` references this file
    - Context: SkinCommerce requires every visual property to flow through tokens so skin switching propagates automatically. `className` overrides bypass the token system and become visual bugs when skins change.
 
 4. **All visual values through design tokens.** No hardcoded Tailwind utility classes that bypass the token system.
@@ -40,17 +40,17 @@
    - Both Airbnb and Uber independently arrived at this same rule.
 
 8. **Optimistic updates require explicit rollback on error.** No empty `catch {}` blocks. If an optimistic update fails, revert the local state AND surface the error to the user.
-   - Enforced by: `/ai-slop`, `/review-frontend` flag empty catch blocks in optimistic handlers
+   - Enforced by: `/design` flags empty catch blocks in optimistic handlers
    - Violation history: `useOptimisticNotifications` had empty `catch {}` blocks at lines 83, 114, 148. If `markAsRead` failed, the UI showed success but server state never changed.
 
 9. **Optimistic updates are permitted only for non-financial, non-commitment state.** Notifications, preferences, UI toggles — yes. Bookings, reservations, payments — never.
 
 10. **Every new component must have a Storybook story with all variant states.** No component lands without visual coverage. Stories must render every variant × size combination. Storybook story is part of the component definition, not an afterthought.
-   - Enforced by: `/review-frontend` flags new components without `.stories.tsx`
+   - Enforced by: `/design` flags new components without `.stories.tsx`
    - CI: Chromatic visual regression runs on every PR
 
 11. **Intrinsic containment.** Flex and grid children that contain text or variable-width content must have `min-w-0`. Every `overflow-y-auto` must pair with `overflow-x-hidden`. No element may use `width: 100vw`. Content is bounded by its container at every viewport width — page-level overflow clipping (`html { overflow-x: hidden }`) is banned because it breaks `position: sticky`.
-   - Enforced by: PostToolUse hook (`overflow-scroll-guard`), `/design-review`, `/review-frontend`
+   - Enforced by: PostToolUse hook (`overflow-scroll-guard`), `/design`
 
 ## Token Type Scale
 
