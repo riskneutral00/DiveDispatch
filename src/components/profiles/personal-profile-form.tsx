@@ -101,10 +101,11 @@ export type PersonalContactSectionProps = BaseProfileSectionProps & {
   variant: PersonalVariant
 }
 
-export type PersonalLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'>
+export type PersonalLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & { onClose?: () => void }
 
 export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & {
   variant: PersonalVariant
+  onClose?: () => void
 }
 
 export function PersonalContactSection({
@@ -113,6 +114,7 @@ export function PersonalContactSection({
   me,
   create,
   update,
+  onClose,
 }: PersonalContactSectionProps) {
   const isDm = variant === 'divemaster'
   const namePlaceholder = isDm ? 'Your name' : 'Ariel Nemo'
@@ -148,7 +150,7 @@ export function PersonalContactSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -186,7 +188,7 @@ export function PersonalContactSection({
   )
 }
 
-export function PersonalLanguagesSection({ profile, create, update }: PersonalLanguagesSectionProps) {
+export function PersonalLanguagesSection({ profile, create, update, onClose }: PersonalLanguagesSectionProps) {
   const {
     form,
     setField,
@@ -213,7 +215,7 @@ export function PersonalLanguagesSection({ profile, create, update }: PersonalLa
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -237,6 +239,7 @@ export function PersonalCredentialsSection({
   profile,
   create,
   update,
+  onClose,
 }: PersonalCredentialsSectionProps) {
   const schema = variant === 'divemaster' ? diveMasterCredentialsSchema : instructorCredentialsSchema
   const initialDefaults =
@@ -268,7 +271,7 @@ export function PersonalCredentialsSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -298,12 +301,13 @@ export function PersonalProfileForm({
   me,
   create,
   update,
+  onClose,
 }: BaseProfileSectionProps & {
   variant: PersonalVariant
   section?: PersonalSection
 }) {
   if (section === 'languages')
-    return <PersonalLanguagesSection profile={profile} create={create} update={update} />
+    return <PersonalLanguagesSection profile={profile} create={create} update={update} onClose={onClose} />
   if (section === 'credentials')
     return (
       <PersonalCredentialsSection
@@ -311,6 +315,7 @@ export function PersonalProfileForm({
         profile={profile}
         create={create}
         update={update}
+        onClose={onClose}
       />
     )
   return (
@@ -320,6 +325,7 @@ export function PersonalProfileForm({
       me={me}
       create={create}
       update={update}
+      onClose={onClose}
     />
   )
 }

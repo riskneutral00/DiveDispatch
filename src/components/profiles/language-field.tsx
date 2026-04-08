@@ -28,7 +28,7 @@ export function LanguageField({
   const { label, max } = VARIANT_CONFIG[variant]
 
   return (
-    <FieldShell id={`language-${variant}`} label={label} required className="flex flex-col gap-1.5 w-full">
+    <FieldShell id={`language-${variant}`} label={label} required className="flex flex-col items-center gap-1.5 w-full">
       <LanguagePicker
         value={value}
         onChange={onChange}

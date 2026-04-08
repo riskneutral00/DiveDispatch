@@ -28,6 +28,7 @@ export function BusinessContactSection({
   create,
   update,
   onSaved,
+  onClose,
   nameLabel,
   namePlaceholder,
   schema,
@@ -54,7 +55,7 @@ export function BusinessContactSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

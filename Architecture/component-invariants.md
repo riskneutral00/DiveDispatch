@@ -29,6 +29,7 @@
 
 5. **Shared hooks for shared patterns.** If a pattern appears in 2+ components, extract a hook. Do not copy-paste `useEffect` + `addEventListener` + cleanup.
    - Violation history: 4 inline outside-click handlers in `select.tsx`, `pill-toggle.tsx`, `booking-calendar.tsx`, `dev-switcher.tsx`. Each was a copy of the same mousedown listener + cleanup pattern.
+   - Extracted: `useFloatingLabel` (`src/lib/hooks/use-floating-label.ts`) — shared by `Input`, `SimpleSelect`, `Select`. Do not re-inline the mounted/focused/filled logic.
 
 6. **`useProfileForm` is the only form system.** All stakeholder profile forms use `useProfileForm` + `ProfileFormShell` + `FormGrid` + `FieldShell`. No manual `useState` for form fields in profile components.
    - Violation history: `organizer-basic-step.tsx` managed its own `name`, `location`, `email`, `phone`, `saving`, `error`, `initialized` state — a complete bypass of the form system.

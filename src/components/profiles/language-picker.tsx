@@ -80,7 +80,7 @@ export function LanguagePicker({
   const renderFlagGroup = (languages: DiveLanguage[] | Language[]) => {
     if (languages.length === 0) return null
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 justify-center">
         {languages.map((lang) => (
           <FlagPill
             key={lang.code}
@@ -99,8 +99,8 @@ export function LanguagePicker({
     : 'Search languages…'
 
   return (
-    <div className="flex flex-col gap-2 w-full min-w-0">
-      <div className="relative w-full">
+    <div className="flex flex-col items-center gap-1.5 w-full min-w-0">
+      <div className="relative w-full max-w-[280px]">
         <input /* design-ok: compound picker search filter */
           type="text"
           value={query}

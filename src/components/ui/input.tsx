@@ -2,6 +2,7 @@
 
 import React, { useId, useState } from 'react'
 import { FieldError } from '@/components/ui/field-shell'
+import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 import { cn } from '@/lib/utils/cn'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -31,11 +32,9 @@ export function Input({
   const id = externalId ?? generatedId;
   const isDateLike = type === "date" || type === "datetime-local" || type === "time";
   const [focused, setFocused] = useState(false)
-  const filled = typeof props.value === 'string' ? props.value.length > 0 : !!props.value
   const hasRealPlaceholder = !!externalPlaceholder && externalPlaceholder.trim() !== ""
-  const [mounted, setMounted] = useState(false)
-  React.useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
-  const floated = mounted || focused || filled || hasRealPlaceholder
+  const { floated: baseFloated } = useFloatingLabel({ value: props.value, focused })
+  const floated = baseFloated || hasRealPlaceholder
 
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>

@@ -190,9 +190,10 @@ function PreferredOperatorPicker({
 interface PreferencesEditorProps {
   section?: 'booking' | 'resources'
   roleSlug?: string
+  onClose?: () => void
 }
 
-export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp }: PreferencesEditorProps) {
+export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp, onClose }: PreferencesEditorProps) {
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
   const params = useParams()
@@ -325,7 +326,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

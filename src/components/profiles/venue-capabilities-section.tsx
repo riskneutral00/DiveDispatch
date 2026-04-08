@@ -31,6 +31,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
   profile: existing,
   create,
   update,
+  onClose,
   schema,
   defaults,
   fromProfile,
@@ -58,7 +59,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}

@@ -66,7 +66,7 @@ export function buildDiveSiteCreatePayload<T extends Record<string, unknown>>(pa
   }
 }
 
-export function DiveSiteDetailsSection({ profile: existing, me, create, update, onSaved }: DiveSiteSectionProps) {
+export function DiveSiteDetailsSection({ profile: existing, me, create, update, onSaved, onClose }: DiveSiteSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -87,7 +87,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -185,8 +185,9 @@ export function DiveSiteProfileForm({
   create,
   update,
   onSaved,
+  onClose,
 }: DiveSiteSectionProps & { section?: DiveSiteProfileSection }) {
   if (section === 'capabilities')
-    return <DiveSiteCapabilitiesSection profile={profile} create={create} update={update} />
-  return <DiveSiteDetailsSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
+    return <DiveSiteCapabilitiesSection profile={profile} create={create} update={update} onClose={onClose} />
+  return <DiveSiteDetailsSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

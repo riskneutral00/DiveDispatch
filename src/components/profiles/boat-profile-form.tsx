@@ -64,7 +64,7 @@ export function emptyRoute(): RouteState {
   return { diveSite: '', daysOfWeek: [] }
 }
 
-export function BoatContactSection({ profile: existing, me, create, update, onSaved }: BoatSectionProps) {
+export function BoatContactSection({ profile: existing, me, create, update, onSaved, onClose }: BoatSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -85,7 +85,7 @@ export function BoatContactSection({ profile: existing, me, create, update, onSa
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -159,20 +159,22 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
   }
 }
 
-export function BoatFleetSection({ profile: existing, create, update }: BoatSectionProps) {
+export function BoatFleetSection({ profile: existing, create, update, onClose }: BoatSectionProps) {
   if (!existing) return <ProfileIncompleteGuard message="Complete contact info first before setting up the fleet." />
 
-  return <BoatFleetSectionForm profile={existing} create={create} update={update} />
+  return <BoatFleetSectionForm profile={existing} create={create} update={update} onClose={onClose} />
 }
 
 function BoatFleetSectionForm({
   profile: existing,
   create,
   update,
+  onClose,
 }: {
   profile: Record<string, unknown>
   create: (payload: Record<string, unknown>) => Promise<unknown>
   update: (payload: Record<string, unknown>) => Promise<unknown>
+  onClose?: () => void
 }) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
@@ -212,7 +214,7 @@ function BoatFleetSectionForm({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -305,7 +307,7 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         <FormSectionHeader
           label="Routes"
           action={
-            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-label px-2 py-1 min-h-[44px] rounded-[var(--border-radius-button)] border transition-opacity duration-theme hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}>
+            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-label px-2 py-1 min-h-[44px] rounded-[var(--border-radius-button)] border transition-opacity duration-theme hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}> {/* design-ok */}
               <Plus size={11} />
               Add Route
             </button>
@@ -347,7 +349,7 @@ function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemov
           const active = route.daysOfWeek.includes(d.value)
           return (
             <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-label rounded-[var(--border-radius-button)] border transition-all duration-theme min-h-[44px] min-w-[44px]"
-              style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}>
+              style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}> {/* design-ok */}
               {d.label}
             </button>
           )

@@ -101,11 +101,12 @@ type AgentContactSectionProps = BaseProfileSectionProps
 
 export type AgentLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'update'> & {
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
+  onClose?: () => void
 }
 
-export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'>
+export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & { onClose?: () => void }
 
-export function AgentContactSection({ profile, me, create, update }: AgentContactSectionProps) {
+export function AgentContactSection({ profile, me, create, update, onClose }: AgentContactSectionProps) {
   const {
     form,
     setField,
@@ -137,7 +138,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -184,7 +185,7 @@ export function AgentContactSection({ profile, me, create, update }: AgentContac
   )
 }
 
-export function AgentLanguagesSection({ profile, me, update, updateProfile }: AgentLanguagesSectionProps) {
+export function AgentLanguagesSection({ profile, me, update, updateProfile, onClose }: AgentLanguagesSectionProps) {
   const meTyped = (me ?? undefined) as { customerLanguages?: string[] } | undefined
 
   const {
@@ -222,7 +223,7 @@ export function AgentLanguagesSection({ profile, me, update, updateProfile }: Ag
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -241,7 +242,7 @@ export function AgentLanguagesSection({ profile, me, update, updateProfile }: Ag
   )
 }
 
-export function AgentAssociationsSection({ profile, create, update }: AgentAssociationsSectionProps) {
+export function AgentAssociationsSection({ profile, create, update, onClose }: AgentAssociationsSectionProps) {
   const {
     form,
     setField,
@@ -269,7 +270,7 @@ export function AgentAssociationsSection({ profile, create, update }: AgentAssoc
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -296,12 +297,13 @@ type AgentProfileFormProps = {
   create: (payload: Record<string, unknown>) => Promise<unknown>
   update: (payload: Record<string, unknown>) => Promise<unknown>
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
+  onClose?: () => void
 }
 
-export function AgentProfileForm({ section, profile, me, create, update, updateProfile }: AgentProfileFormProps) {
+export function AgentProfileForm({ section, profile, me, create, update, updateProfile, onClose }: AgentProfileFormProps) {
   if (section === 'languages')
-    return <AgentLanguagesSection profile={profile} me={me} update={update} updateProfile={updateProfile} />
+    return <AgentLanguagesSection profile={profile} me={me} update={update} updateProfile={updateProfile} onClose={onClose} />
   if (section === 'associations')
-    return <AgentAssociationsSection profile={profile} create={create} update={update} />
-  return <AgentContactSection profile={profile} me={me} create={create} update={update} />
+    return <AgentAssociationsSection profile={profile} create={create} update={update} onClose={onClose} />
+  return <AgentContactSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
 }

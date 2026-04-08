@@ -107,7 +107,7 @@ export function profileToPayload(form: ProfileValues) {
   }
 }
 
-export function ProfileTab() {
+export function ProfileTab({ onClose }: { onClose?: () => void }) {
   const user = useQuery(api.users.me)
   const createUser = useMutation(api.users.createUser)
   const updateProfile = useMutation(api.users.updateProfile)
@@ -150,7 +150,7 @@ export function ProfileTab() {
       isUpdate={isUpdate}
       disableSaveWhenInvalid
       isValid={isValid}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       loadingVariant="pulse-text"
       className="space-y-6"
     >
@@ -172,6 +172,11 @@ export function ProfileTab() {
             required
             className="field-name"
           />
+        </div>
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
+        <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Nickname"
             value={form.nickname}
@@ -192,16 +197,21 @@ export function ProfileTab() {
             required
             className="field-phone"
           />
-          <Input
-            label="Email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setField('email', e.target.value)}
-            required
-            className="field-email"
-          />
         </div>
-        <p className="text-[10px] font-medium text-secondary">Date of birth</p>
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
+        <Input
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => setField('email', e.target.value)}
+          required
+          className="w-full"
+        />
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
         <div className="grid grid-cols-3 gap-3"> {/* design-ok */}
           <SimpleSelect
             label="Month"
@@ -222,6 +232,9 @@ export function ProfileTab() {
             options={YEARS}
           />
         </div>
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
         <LanguageField
           variant="app"
           value={selectedLocale}

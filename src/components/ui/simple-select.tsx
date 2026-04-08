@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { FieldError } from '@/components/ui/field-shell'
+import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 
 interface OptionItem {
   value: string
@@ -40,10 +41,7 @@ export function SimpleSelect({
   const generatedId = useId()
   const id = generatedId
   const [focused, setFocused] = useState(false)
-  const filled = value.length > 0
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
-  const floated = mounted || focused || filled
+  const { floated } = useFloatingLabel({ value, focused })
 
   return (
     <div className={cn("relative", className?.includes('field-') || className?.includes('w-') || className?.includes('col-span') ? '' : 'w-full', className)}>

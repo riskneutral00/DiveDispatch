@@ -31,6 +31,7 @@ export function ThemeSwitcher() {
 
   return (
     <IconButton
+      variant="ghost"
       aria-label={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       onClick={toggle}
     >

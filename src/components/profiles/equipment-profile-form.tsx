@@ -68,7 +68,7 @@ export function equipmentGearCatalogToPayload(f: EquipmentGearCatalogFormState):
   }
 }
 
-export function EquipmentGearCatalogSection({ profile: existing, create, update }: EquipmentSectionProps) {
+export function EquipmentGearCatalogSection({ profile: existing, create, update, onClose }: EquipmentSectionProps) {
   const { form, setForm, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -127,7 +127,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update 
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -196,8 +196,9 @@ export function EquipmentProfileForm({
   create,
   update,
   onSaved,
+  onClose,
 }: EquipmentSectionProps & { section?: EquipmentProfileSection }) {
   if (section === 'gear-catalog')
-    return <EquipmentGearCatalogSection profile={profile} create={create} update={update} />
-  return <EquipmentContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
+    return <EquipmentGearCatalogSection profile={profile} create={create} update={update} onClose={onClose} />
+  return <EquipmentContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

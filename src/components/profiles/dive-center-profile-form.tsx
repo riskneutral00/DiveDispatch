@@ -69,7 +69,7 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
   }
 }
 
-export function DiveCenterLanguagesSection({ profile: existing, create, update }: DiveCenterSectionProps) {
+export function DiveCenterLanguagesSection({ profile: existing, create, update, onClose }: DiveCenterSectionProps) {
   const { form, setField, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -85,7 +85,7 @@ export function DiveCenterLanguagesSection({ profile: existing, create, update }
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -162,7 +162,7 @@ export function affiliationsToPayload(f: DiveCenterAffiliationsFormState): Recor
   }
 }
 
-export function DiveCenterAffiliationsSection({ profile: existing, create, update }: DiveCenterSectionProps) {
+export function DiveCenterAffiliationsSection({ profile: existing, create, update, onClose }: DiveCenterSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -190,7 +190,7 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -223,10 +223,11 @@ export function DiveCenterProfileForm({
   create,
   update,
   onSaved,
+  onClose,
 }: DiveCenterSectionProps & { section?: DiveCenterProfileSection }) {
   if (section === 'languages')
-    return <DiveCenterLanguagesSection profile={profile} create={create} update={update} />
+    return <DiveCenterLanguagesSection profile={profile} create={create} update={update} onClose={onClose} />
   if (section === 'associations')
-    return <DiveCenterAffiliationsSection profile={profile} create={create} update={update} />
-  return <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
+    return <DiveCenterAffiliationsSection profile={profile} create={create} update={update} onClose={onClose} />
+  return <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

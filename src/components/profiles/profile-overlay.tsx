@@ -81,7 +81,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
         return <ConnectedEquipmentInventory />
       }
       if (activeSection === 'booking' || activeSection === 'resources') {
-        return <PreferencesEditor section={activeSection} roleSlug={activeRoleKey} />
+        return <PreferencesEditor section={activeSection} roleSlug={activeRoleKey} onClose={onClose} />
       }
     }
 
@@ -89,6 +89,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
       <RoleProfileForm
         roleSlug={activeRoleKey}
         section={activeSection}
+        onClose={onClose}
       />
     )
   }
@@ -158,7 +159,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           role="tabpanel"
         >
           <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 sm:px-6">
-            {activeTab === 'profile' && <ProfileTab />}
+            {activeTab === 'profile' && <ProfileTab onClose={onClose} />}
             {activeTab === 'roles' && <ManageRolesConnected />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
               <div className="max-w-2xl mx-auto">

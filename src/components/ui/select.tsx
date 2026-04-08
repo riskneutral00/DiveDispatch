@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback, useId, useMemo, memo } from 'react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import { FieldShell } from '@/components/ui/field-shell'
+import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
+import { cn } from '@/lib/utils/cn'
 import { LanguageFlags } from '@/components/profiles/language-flags'
 import { splitInstructorTiers } from '@/lib/booking/instructor-tiers'
 import { scoreLanguageMatch, type MatchTier } from '@/lib/utils/language-matching'
@@ -177,6 +179,7 @@ export function Select({
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
+  const { floated } = useFloatingLabel({ value, focused: open })
   const listRef = useRef<HTMLUListElement>(null)
   const id = useId()
 
@@ -244,7 +247,7 @@ export function Select({
   }
 
   return (
-    <FieldShell id={id} label={label} required={required} error={error} helperText={helperText} className="relative flex flex-col gap-1.5 w-full">
+    <FieldShell id={id} required={required} error={error} helperText={helperText} className="relative flex flex-col gap-1.5 w-full">
       <div ref={containerRef} className="relative">
       <button
         id={id}
@@ -258,9 +261,11 @@ export function Select({
         data-testid={testId}
         onClick={() => { setOpen(!open); if (!open) setFocusedIdx(Math.max(0, flatOptions.findIndex((o) => o.id === value))) }}
         onKeyDown={handleKeyDown}
-        className="field-underline w-full text-body py-2.5 pl-0 pr-8 text-left"
+        className={cn('field-underline w-full text-body pl-0 pr-8 text-left', label ? 'pt-4 pb-1.5' : 'py-2.5')}
         style={{
           color: selectedOption ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          ...(error ? { borderBottomColor: 'var(--color-destructive)' } : {}),
+          ...(open && !error ? { borderBottomColor: 'var(--color-primary)', borderBottomWidth: '2px' } : {}),
         }}
       >
         <span className="flex items-center justify-between gap-2">
@@ -275,6 +280,21 @@ export function Select({
           style={{ transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)' }}
         />
       </button>
+
+      {label && (
+        <label
+          htmlFor={id}
+          className={cn(
+            'absolute left-0 pointer-events-none transition-all',
+            floated
+              ? cn('top-0 text-[10px] font-medium', open ? 'text-primary' : 'text-secondary')
+              : 'top-3 text-body text-secondary',
+          )}
+          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
+        >
+          {label}{required && <span className="text-destructive"> *</span>}
+        </label>
+      )}
 
       {open && (
         <ul

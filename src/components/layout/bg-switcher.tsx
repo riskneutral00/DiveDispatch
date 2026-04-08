@@ -24,6 +24,7 @@ export function BgSwitcher() {
 
   return (
     <IconButton
+      variant="ghost"
       aria-label={current ? `Switch skin (current: ${current.name})` : 'Switch skin'}
       onClick={cycle}
       disabled={!isLoaded}

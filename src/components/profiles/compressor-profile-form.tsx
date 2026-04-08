@@ -52,7 +52,7 @@ export function compressorGasMixesToPayload(f: CompressorGasMixesFormState): Rec
   }
 }
 
-export function CompressorGasMixesSection({ profile: existing, create, update }: CompressorSectionProps) {
+export function CompressorGasMixesSection({ profile: existing, create, update, onClose }: CompressorSectionProps) {
   const { form, setField, errors, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
     useProfileForm({
       profile: existing,
@@ -70,7 +70,7 @@ export function CompressorGasMixesSection({ profile: existing, create, update }:
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={resetToBaseline}
+      onCancel={() => { resetToBaseline(); onClose?.() }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -102,8 +102,9 @@ export function CompressorProfileForm({
   create,
   update,
   onSaved,
+  onClose,
 }: CompressorSectionProps & { section?: CompressorProfileSection }) {
   if (section === 'gas-mixes')
-    return <CompressorGasMixesSection profile={profile} create={create} update={update} />
-  return <CompressorContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} />
+    return <CompressorGasMixesSection profile={profile} create={create} update={update} onClose={onClose} />
+  return <CompressorContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
 }

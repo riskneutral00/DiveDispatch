@@ -4,4 +4,5 @@ export type BaseProfileSectionProps = {
   create: (payload: Record<string, unknown>) => Promise<unknown>
   update: (payload: Record<string, unknown>) => Promise<unknown>
   onSaved?: () => void
+  onClose?: () => void
 }

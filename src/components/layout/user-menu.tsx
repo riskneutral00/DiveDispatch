@@ -63,7 +63,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
         className="min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
       >
         <span
-          className="w-8 h-8 rounded-full flex items-center justify-center text-label font-bold" /* design-ok: visual circle inside 44px touch target */
+          className="w-8 h-8 rounded-full flex items-center justify-center text-label font-medium" /* design-ok: visual circle inside 44px touch target */
           style={{
             background: "var(--color-primary)",
             color: "var(--color-text-on-primary)",
