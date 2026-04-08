@@ -111,6 +111,21 @@ describe('prerequisite gate: DiveCenter — associations depth', () => {
       expect(result.incomplete).toContain('associations')
     })
   })
+
+  it('association missing selectedSpecialties fails safe instead of counting as complete', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'DiveCenter' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedDiveCenterProfile(ctx, userId, {
+        associations: [{ agency: 'PADI', number: '12345' }],
+        customerLanguages: ['en'],
+      })
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveCenter')
+      expect(result.percentage).toBeLessThan(100)
+      expect(result.incomplete).toContain('associations')
+    })
+  })
 })
 
 // ─── HIGH: Agent associations hollow-array bypass ───────────────────────────

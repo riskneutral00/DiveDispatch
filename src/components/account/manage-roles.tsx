@@ -103,7 +103,7 @@ export function ManageRoles({
                 >
                   {percentage}%
                 </Badge>
-                {!entry.profileComplete && (
+                {percentage < 100 && (
                   <Button
                     variant="secondary"
                     onClick={() => onNavigateToOnboarding(entry.role)}

@@ -151,6 +151,25 @@ describe('checkProfileCompleteness', () => {
       expect(result.incomplete).toContain('customerLanguages')
     })
   })
+
+  it('DiveCenter missing operator prefs and coverage fields stays below 100%', async () => {
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { role: 'DiveCenter', slug: 'dc-operator-gaps', tokenIdentifier: 'clerk|dc-operator-gaps' })
+      await ctx.db.patch(userId, { phone: '+66000000004', appLanguage: 'en' })
+      await seedDiveCenterProfile(ctx, userId)
+
+      const result = await checkProfileCompleteness(ctx, { _id: userId }, 'DiveCenter')
+
+      expect(result.percentage).toBeLessThan(100)
+      expect(result.incomplete).toEqual(expect.arrayContaining([
+        'acceptanceMode',
+        'preferredInstructor',
+        'preferredEquipment',
+        'preferredVenueOrBoat',
+        'preferredCompressor',
+      ]))
+    })
+  })
 })
 
 // ─── DiveCenter operator — compressor coverage layer ─────────────────────────
@@ -257,7 +276,9 @@ describe('checkAllRolesCompleteness', () => {
 
       expect(result.allComplete).toBe(false)
       expect(result.roles).toHaveLength(2)
+      const equipmentRole = result.roles.find(r => r.role === 'Equipment')
       const instructorRole = result.roles.find(r => r.role === 'Instructor')
+      expect(equipmentRole?.percentage).toBe(100)
       expect(instructorRole?.percentage).toBeLessThan(100)
     })
   })

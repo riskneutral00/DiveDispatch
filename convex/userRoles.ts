@@ -9,6 +9,12 @@ import { deriveDefaultRole } from './lib/rolePrecedence'
 import { batchGet, batchDelete } from './lib/batch'
 import { ROLE_TABLE_MAP } from './lib/profileHelpers'
 import { queryDynamicTable, deleteDynamic } from './lib/typedDb'
+import { checkProfileCompleteness } from './lib/profileCompleteness'
+
+type RoleReadiness = {
+  percentage: number
+  incomplete: string[]
+}
 
 export async function requireActiveRole(
   ctx: QueryCtx | MutationCtx,
@@ -17,6 +23,22 @@ export async function requireActiveRole(
 ): Promise<void> {
   const hasIt = await checkHasRole(ctx, userId, activeRole)
   if (!hasIt) throw new ConvexError({ code: ErrorCode.ROLE_NOT_HELD })
+}
+
+export function assertRoleReadiness(status: RoleReadiness): void {
+  if (status.percentage < 100) {
+    throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: status.incomplete })
+  }
+}
+
+export async function requireRoleReadiness(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<'users'>,
+  role: string,
+): Promise<RoleReadiness> {
+  const status = await checkProfileCompleteness(ctx, { _id: userId }, role)
+  assertRoleReadiness(status)
+  return status
 }
 
 export async function checkHasRole(

@@ -41,6 +41,15 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
     .map((r) => ROLE_BY_CLERK_ROLE[r.role as ClerkRole])
     .filter(Boolean)
 
+  const hasOperatorRole = roleConfigs.some((r) => r.displayGroup === 'operator')
+  const visibleStaticTabs = STATIC_TAB_IDS.filter(
+    (tab) => tab.id !== 'roles' || hasOperatorRole,
+  )
+
+  if (activeTab === 'roles' && !hasOperatorRole) {
+    setActiveTab('profile')
+  }
+
   const [prevOpen, setPrevOpen] = useState(open)
   if (open !== prevOpen) {
     setPrevOpen(open)
@@ -102,7 +111,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
-          {STATIC_TAB_IDS.map((tab) => {
+          {visibleStaticTabs.map((tab) => {
             const isActive = activeTab === tab.id
             return (
               <button

@@ -239,6 +239,45 @@ describe('ManageRoles', () => {
     expect(onDeleteRole).toHaveBeenCalledWith('role_DC')
   })
 
+  // ─── Set up button tracks refreshed percentage ────────────────────────────
+
+  it('shows "Set up" when percentage < 100 (ignores stale profileComplete=true)', () => {
+    render(
+      <ManageRoles
+        {...defaultProps}
+        roles={[makeRole('Instructor', { profileComplete: true })]}
+        roleCompletions={[{ role: 'Instructor', percentage: 60 }]}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /set up/i })).toBeInTheDocument()
+  })
+
+  it('hides "Set up" when percentage === 100 (ignores stale profileComplete=false)', () => {
+    render(
+      <ManageRoles
+        {...defaultProps}
+        roles={[makeRole('Instructor', { profileComplete: false })]}
+        roleCompletions={[{ role: 'Instructor', percentage: 100 }]}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: /set up/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onNavigateToOnboarding with the correct role when "Set up" is clicked', async () => {
+    const user = userEvent.setup()
+    const onNavigateToOnboarding = vi.fn()
+    render(
+      <ManageRoles
+        {...defaultProps}
+        roles={[makeRole('Boat', { profileComplete: false })]}
+        roleCompletions={[{ role: 'Boat', percentage: 33 }]}
+        onNavigateToOnboarding={onNavigateToOnboarding}
+      />,
+    )
+    await user.click(screen.getByRole('button', { name: /set up/i }))
+    expect(onNavigateToOnboarding).toHaveBeenCalledWith('Boat')
+  })
+
   // ─── Loading and error states ─────────────────────────────────────────────
 
   it('disables "Delete permanently" button while delete is pending', async () => {

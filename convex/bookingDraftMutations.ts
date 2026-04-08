@@ -3,9 +3,8 @@ import { mutation, query } from './_generated/server'
 import { internal } from './_generated/api'
 import { authorize, getAuthUser, HOLD_TTL_MS } from './lib/auth'
 import { profileByUserId } from './lib/profileHelpers'
-import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole } from './userRoles'
+import { checkHasRole, checkHasAnyOperatorRole, requireActiveRole, requireRoleReadiness } from './userRoles'
 import { OPERATOR_ROLE_SET } from './lib/auth'
-import { checkProfileCompleteness } from './lib/profileCompleteness'
 import { releaseBookingReservations, assertNoPastDates } from './bookings/_shared'
 import { notifyReleasedInventory } from './notifications'
 import {
@@ -30,10 +29,7 @@ export const createDraftShell = mutation({
     await requireActiveRole(ctx, user._id, args.activeRole)
     if (!OPERATOR_ROLE_SET.has(args.activeRole)) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    const activeRoleStatus = await checkProfileCompleteness(ctx, { _id: user._id }, args.activeRole)
-    if (activeRoleStatus.percentage < 100) {
-      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: activeRoleStatus.incomplete })
-    }
+    await requireRoleReadiness(ctx, user._id, args.activeRole)
 
     if (args.startDate) {
       assertNoPastDates([{ date: args.startDate }])
@@ -132,10 +128,7 @@ export const createReferralDraftShell = mutation({
     const dcOperatorRole = dcRoles.find((r) => OPERATOR_ROLE_SET.has(r.role))
     if (!dcOperatorRole) throw new ConvexError({ code: ErrorCode.FORBIDDEN })
 
-    const dcRoleStatus = await checkProfileCompleteness(ctx, { _id: dcUser._id }, dcOperatorRole.role)
-    if (dcRoleStatus.percentage < 100) {
-      throw new ConvexError({ code: ErrorCode.PROFILE_INCOMPLETE, missing: dcRoleStatus.incomplete })
-    }
+    await requireRoleReadiness(ctx, dcUser._id, dcOperatorRole.role)
 
     const bookingId = await ctx.db.insert('bookings', {
       ownerId: dcUser.slug as string,

@@ -14,6 +14,7 @@ import {
   seedReservation,
   seedSnapshot,
   seedBookingResource,
+  seedInstructorProfile,
   type SeedCtx,
 } from './fixtures'
 
@@ -39,6 +40,7 @@ async function seedAcceptScenario(
     divers?: Doc<'bookings'>['divers']
     bookingFormComplete?: boolean
     customerFormComplete?: boolean
+    readyInstructor?: boolean
   } = {},
 ) {
   const instrToken = opts.instrToken ?? 'user|123'
@@ -48,7 +50,7 @@ async function seedAcceptScenario(
   const startDate = opts.startDate ?? testDate(5)
   const endDate = opts.endDate ?? opts.startDate ?? testDate(5)
 
-  await seedUser(ctx, {
+  const instructorUserId = await seedUser(ctx, {
     tokenIdentifier: instrToken,
     slug: instrSlug,
     email: `${instrSlug}@test.com`,
@@ -58,6 +60,15 @@ async function seedAcceptScenario(
     businessName: opts.instrBusiness ?? 'Instructor Co',
     role: 'Instructor',
   })
+  if (opts.readyInstructor) {
+    await ctx.db.patch(instructorUserId, { phone: '+66123456789', appLanguage: 'en' })
+    await seedInstructorProfile(ctx, instructorUserId, {
+      name: opts.instrName ?? 'Instructor',
+      email: `${instrSlug}@test.com`,
+      phone: '+66123456789',
+      teachingLanguages: ['en'],
+    })
+  }
   await seedUser(ctx, {
     tokenIdentifier: dcToken,
     slug: dcSlug,
@@ -125,11 +136,27 @@ describe('getDateRange', () => {
 // ─── acceptReservation ────────────────────────────────────────────────────────
 
 describe('acceptReservation', () => {
-  it('transitions PendingAcceptance to Confirmed and sets confirmedAt', async () => {
+  it('rejects when the acting resource role is below 100% completeness', async () => {
     const t = makeT()
 
     const { resId } = await t.run(async (ctx) => {
       return seedAcceptScenario(ctx)
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+        api.reservationsMutations.acceptReservation,
+        { reservationId: resId },
+      ),
+      ErrorCode.PROFILE_INCOMPLETE,
+    )
+  })
+
+  it('transitions PendingAcceptance to Confirmed and sets confirmedAt', async () => {
+    const t = makeT()
+
+    const { resId } = await t.run(async (ctx) => {
+      return seedAcceptScenario(ctx, { readyInstructor: true })
     })
 
     await t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
@@ -774,6 +801,18 @@ describe('acceptBookingReservations', () => {
         businessName: 'Bulk Co',
         role: 'Instructor',
       })
+      const instructorUser = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', 'bulk-instructor'))
+        .unique()
+      if (!instructorUser) throw new Error('Expected bulk instructor user')
+      await ctx.db.patch(instructorUser._id, { phone: '+66123456789', appLanguage: 'en' })
+      await seedInstructorProfile(ctx, instructorUser._id, {
+        name: 'Bulk Instructor',
+        email: 'bulk@test.com',
+        phone: '+66123456789',
+        teachingLanguages: ['en'],
+      })
       await seedUser(ctx, {
         tokenIdentifier: 'user|dc-bulk',
         slug: 'dc-bulk',
@@ -836,6 +875,22 @@ describe('acceptBookingReservations', () => {
     })
   })
 
+  it('bulk accept: rejects when the acting resource role is below 100% completeness', async () => {
+    const t = makeT()
+
+    const { bookingId, unitId } = await t.run(async (ctx) => {
+      return seedAcceptScenario(ctx)
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'user|123' }).mutation(
+        api.reservationsMutations.acceptBookingReservations,
+        { bookingId, inventoryUnitId: unitId },
+      ),
+      ErrorCode.PROFILE_INCOMPLETE,
+    )
+  })
+
   it('bulk accept: only confirms reservations for the given inventoryUnit, not other units', async () => {
     const t = makeT()
 
@@ -849,6 +904,18 @@ describe('acceptBookingReservations', () => {
         lastName: 'Instructor',
         businessName: 'Selective Co',
         role: 'Instructor',
+      })
+      const instructorUser = await ctx.db
+        .query('users')
+        .withIndex('by_slug', (q) => q.eq('slug', 'selective-instructor'))
+        .unique()
+      if (!instructorUser) throw new Error('Expected selective instructor user')
+      await ctx.db.patch(instructorUser._id, { phone: '+66123456789', appLanguage: 'en' })
+      await seedInstructorProfile(ctx, instructorUser._id, {
+        name: 'Selective Instructor',
+        email: 'selective@test.com',
+        phone: '+66123456789',
+        teachingLanguages: ['en'],
       })
       await seedUser(ctx, {
         tokenIdentifier: 'user|dc-selective',

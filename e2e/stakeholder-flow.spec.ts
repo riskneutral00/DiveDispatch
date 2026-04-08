@@ -1,6 +1,44 @@
 import { test, expect } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { ConvexHttpClient } from 'convex/browser'
 import { signInAs } from './helpers/auth'
 import { NICOLE, RYAN_CLARKE, futureDateString } from './helpers/seed'
+import { api } from '../src/lib/convex-generated'
+
+const COMPLETION_PILL_NAME = /\d+% complete/i
+const ANDAMAN_EXPLORER_EMAIL = 'andaman-explorer+clerk_test@divedispatch.dev'
+
+async function getAuthedConvexClient(page: Page): Promise<ConvexHttpClient> {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+  if (!convexUrl) {
+    throw new Error('NEXT_PUBLIC_CONVEX_URL is not set')
+  }
+
+  const token = await page.evaluate(async () => {
+    const clerk = (window as Window & {
+      Clerk?: {
+        session?: {
+          getToken: (opts?: { template?: string }) => Promise<string | null>
+        }
+      }
+    }).Clerk
+
+    if (!clerk?.session) return null
+
+    return (
+      await clerk.session.getToken({ template: 'convex' })
+      ?? await clerk.session.getToken()
+    )
+  })
+
+  if (!token) {
+    throw new Error('Failed to retrieve a Clerk token for Convex')
+  }
+
+  const client = new ConvexHttpClient(convexUrl)
+  client.setAuth(token)
+  return client
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,6 +87,71 @@ async function createBookingWithRyanClarke(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 test.describe('stakeholder-flow', () => {
+  test('operator booking creation is blocked below 100% and allowed at 100%', async ({ page }) => {
+    const startDate = futureDateString(44)
+
+    await signInAs(page, ANDAMAN_EXPLORER_EMAIL)
+    await expect(page).toHaveURL(/\/liveaboard\/dashboard/, { timeout: 30_000 })
+
+    const blockedBookingButton = page.getByRole('button', { name: '+ Booking', exact: true })
+    await expect(blockedBookingButton).toBeDisabled()
+    await blockedBookingButton.hover()
+    await expect(
+      page.getByText('Complete your profile to create bookings'),
+    ).toBeVisible()
+
+    await signInAs(page, NICOLE.email)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+
+    const enabledBookingButton = page.getByRole('button', { name: /Booking/i }).first()
+    await expect(enabledBookingButton).toBeEnabled()
+
+    await createBookingWithRyanClarke(page, startDate, 'Grant Diver')
+  })
+
+  test('resource participation is blocked below 100% and allowed at 100%', async ({ page }) => {
+    const startDate = futureDateString(47)
+
+    await signInAs(page, NICOLE.email)
+    await expect(page).toHaveURL(new RegExp(NICOLE.dashboardPath))
+    await createBookingWithRyanClarke(page, startDate, 'Harper Diver')
+
+    await signInAs(page, RYAN_CLARKE.email)
+    await page.goto(RYAN_CLARKE.dashboardPath)
+
+    const client = await getAuthedConvexClient(page)
+    const me = await client.query(api.users.me, {})
+    const originalPhone = me?.phone
+
+    if (!originalPhone) {
+      throw new Error('Expected Ryan Clarke to have a seeded phone number')
+    }
+
+    try {
+      await client.mutation(api.users.updateProfile, { phone: '' })
+
+      await expect(
+        page.getByRole('button', { name: COMPLETION_PILL_NAME }),
+      ).toBeVisible({ timeout: 10_000 })
+      await expect(page.getByText('Pending Requests')).toBeVisible({ timeout: 10_000 })
+
+      const acceptBtn = page.getByRole('button', { name: 'Accept' }).first()
+      await acceptBtn.click()
+
+      await expect(
+        page.locator('[role="alert"]').filter({ hasText: 'PROFILE_INCOMPLETE' }),
+      ).toBeVisible({ timeout: 10_000 })
+      await expect(acceptBtn).toBeEnabled({ timeout: 10_000 })
+
+      await client.mutation(api.users.updateProfile, { phone: originalPhone })
+      await acceptBtn.click()
+
+      await expect(page.getByText('Confirmed Schedule')).toBeVisible({ timeout: 10_000 })
+    } finally {
+      await client.mutation(api.users.updateProfile, { phone: originalPhone })
+    }
+  })
+
   test('instructor accepts a booking request', async ({ page }) => {
     const startDate = futureDateString(45)
 

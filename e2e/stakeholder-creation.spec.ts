@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test'
 import { signUpFresh } from './helpers/auth'
 import { CREATION_ROLES } from './helpers/creation-test-data'
 
+const PURE_RESOURCE_ROLES = new Set([
+  'Instructor',
+  'Boat',
+  'Equipment',
+  'Pool',
+  'Compressor',
+])
+
+const COMPLETION_PILL_NAME = /\d+% complete/i
+
 test.describe('stakeholder creation', () => {
   // Cleanup function set by each test, called in afterEach
   let cleanupFn: (() => Promise<void>) | null = null
@@ -15,6 +25,8 @@ test.describe('stakeholder creation', () => {
 
   for (const role of CREATION_ROLES) {
     test(`${role.tileLabel} creation flow`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 })
+
       // ── Step 1: Create fresh user and sign in ──────────────────────
       const { cleanup } = await signUpFresh(page)
       cleanupFn = cleanup
@@ -108,6 +120,40 @@ test.describe('stakeholder creation', () => {
       await expect(
         page.getByRole('heading', { name: /Dashboard/i }),
       ).toBeVisible({ timeout: 10_000 })
+
+      const completionPill = page.getByRole('button', {
+        name: COMPLETION_PILL_NAME,
+      })
+      await expect(completionPill).toBeVisible()
+
+      if (PURE_RESOURCE_ROLES.has(role.clerkRole)) {
+        await page.getByRole('button', { name: 'User menu' }).click()
+        await expect(
+          page.getByRole('button', { name: 'Profile', exact: true }),
+        ).toBeVisible()
+        await expect(
+          page.getByRole('button', { name: 'Roles', exact: true }),
+        ).not.toBeVisible()
+      } else {
+        await completionPill.click()
+
+        const accountDialog = page.getByRole('dialog', { name: 'Account' })
+        await expect(accountDialog).toBeVisible()
+
+        await accountDialog.getByRole('tab', { name: 'Roles', exact: true }).click()
+        await expect(accountDialog.getByText('Manage Roles')).toBeVisible()
+        await expect(
+          accountDialog.getByText(role.tileLabel, { exact: true }),
+        ).toBeVisible()
+        await expect(accountDialog.getByText(/^\d+%$/).first()).toBeVisible()
+        await expect(
+          accountDialog.getByText('Complete', { exact: true }),
+        ).not.toBeVisible()
+        await expect(
+          accountDialog.getByText('Incomplete', { exact: true }),
+        ).not.toBeVisible()
+        await accountDialog.getByLabel('Close dialog').click()
+      }
     })
   }
 })

@@ -81,6 +81,28 @@ describe('getOnboardingStatus', () => {
     expect(status.percentage).toBe(100)
     expect(status.incomplete).toHaveLength(0)
   })
+
+  it('uses the weakest role completeness for mixed-role users', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedUser(ctx, { slug: 'mixed-weakest', tokenIdentifier: 'clerk|mixed-weakest', role: 'DiveCenter' })
+      await ctx.db.patch(userId, { phone: '+66123456789', appLanguage: 'en' })
+      await seedDiveCenterProfile(ctx, userId)
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'Instructor',
+        createdAt: Date.now(),
+        profileComplete: false,
+      })
+    })
+
+    const onboarding = await t.withIdentity({ tokenIdentifier: 'clerk|mixed-weakest' })
+      .query(api.users.getOnboardingStatus, {})
+    const weakest = await t.withIdentity({ tokenIdentifier: 'clerk|mixed-weakest' })
+      .query(api.users.getLowestProfileCompletion, {})
+
+    expect(onboarding.percentage).toBe(weakest.percentage)
+  })
 })
 
 describe('completeOnboarding', () => {

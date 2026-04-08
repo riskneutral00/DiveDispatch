@@ -8,7 +8,6 @@ import { checkProfileCompleteness, checkAllRolesCompleteness } from './lib/profi
 import { stakeholderTypeValidator as stakeholderType } from './lib/validators'
 import { ErrorCode } from './lib/errorCodes'
 import { checkRateLimit } from './lib/rateLimiter'
-import { deriveDefaultRole } from './lib/rolePrecedence'
 import { checkIdempotency } from './lib/idempotency'
 import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { notifyReleasedInventory } from './notifications'
@@ -220,10 +219,15 @@ export const getOnboardingStatus = query({
       .query('userRoles')
       .withIndex('by_userId', (q) => q.eq('userId', user._id))
       .collect() // bounded: per-user roles, max ~12
-    const defaultRole = roles.length > 0
-      ? deriveDefaultRole(roles.map((r) => r.role))
-      : 'DiveCenter'
-    return checkProfileCompleteness(ctx, { _id: user._id }, defaultRole)
+    if (roles.length === 0) return checkProfileCompleteness(ctx, { _id: user._id }, 'DiveCenter')
+
+    let weakest = await checkProfileCompleteness(ctx, { _id: user._id }, roles[0].role)
+    for (let i = 1; i < roles.length; i++) {
+      const result = await checkProfileCompleteness(ctx, { _id: user._id }, roles[i].role)
+      if (result.percentage < weakest.percentage) weakest = result
+    }
+
+    return weakest
   },
 })
 

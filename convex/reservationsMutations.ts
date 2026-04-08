@@ -17,6 +17,7 @@ import { NOSHOW_REVERT_WINDOW_MS } from './lib/timeConstants'
 import { BOOKING_STATUS, RESERVATION_STATUS, NOTIFICATION_TYPE, VACATED_REASON, type ReservationStatus } from './shared/statuses'
 import { batchPatch } from './lib/batch'
 import { languageOverlap } from './lib/languageMatch'
+import { requireRoleReadiness } from './userRoles'
 
 export { getDatesInRange as getDateRange } from './shared/dateRange'
 
@@ -146,6 +147,8 @@ export async function _acceptHandler(
     throw new ConvexError({ code: ErrorCode.INVALID_STATUS })
   }
 
+  await requireRoleReadiness(ctx, caller._id, unit.ownerType)
+
   await ctx.db.patch(args.reservationId as Id<"reservations">, {
     status: RESERVATION_STATUS.Confirmed,
     confirmedAt: Date.now(),
@@ -195,6 +198,8 @@ export async function _acceptBookingHandler(
   )
 
   if (pending.length === 0) return
+
+  await requireRoleReadiness(ctx, caller._id, unit.ownerType)
 
   const confirmedAt = Date.now()
   await batchPatch(ctx, pending.map((res) => [res._id, {
@@ -442,12 +447,22 @@ export const acceptByBookingForCaller = mutation({
       callerUnitIds.has(r.inventoryUnitId),
     )
 
-    if (pendingForCaller.length === 0) {
-      throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No pending reservations found for this booking.' })
-    }
+  if (pendingForCaller.length === 0) {
+    throw new ConvexError({ code: ErrorCode.NOT_FOUND, reason: 'No pending reservations found for this booking.' })
+  }
 
-    const confirmedAt = Date.now()
-    await batchPatch(ctx, pendingForCaller.map((res) => [res._id, {
+  const ownerTypesForCaller = new Set(
+    pendingForCaller
+      .map((reservation) => units.find((unit) => unit._id === reservation.inventoryUnitId)?.ownerType)
+      .filter((ownerType): ownerType is Doc<'inventoryUnits'>['ownerType'] => ownerType !== undefined),
+  )
+
+  await Promise.all(
+    [...ownerTypesForCaller].map((ownerType) => requireRoleReadiness(ctx, caller._id, ownerType)),
+  )
+
+  const confirmedAt = Date.now()
+  await batchPatch(ctx, pendingForCaller.map((res) => [res._id, {
       status: RESERVATION_STATUS.Confirmed, confirmedAt,
     }] as const))
 

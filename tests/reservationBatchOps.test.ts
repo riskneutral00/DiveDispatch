@@ -17,11 +17,32 @@ import {
   seedSession,
   seedReservation,
   seedSnapshot,
+  seedInstructorProfile,
   TEST_TOKENS,
   TEST_SLUGS,
 } from './fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function seedReadyInstructorBySlug(
+  ctx: Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0],
+  slug: string,
+  email: string,
+  name: string,
+) {
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_slug', (q) => q.eq('slug', slug))
+    .unique()
+  if (!user) throw new Error(`Expected seeded user for ${slug}`)
+  await ctx.db.patch(user._id, { phone: '+66123456789', appLanguage: 'en' })
+  await seedInstructorProfile(ctx, user._id, {
+    name,
+    email,
+    phone: '+66123456789',
+    teachingLanguages: ['en'],
+  })
+}
 
 // ─── declineByBookingForCaller ───────────────────────────────────────────────
 
@@ -175,6 +196,7 @@ describe('acceptByBookingForCaller', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
       await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
+      await seedReadyInstructorBySlug(ctx, TEST_SLUGS.instructor, 'instructor@test.com', 'Test Instructor')
       bookingId = await seedBooking(ctx)
       const unitId = await seedInventoryUnit(ctx)
       const sessionId = await seedSession(ctx, bookingId, unitId)
@@ -191,6 +213,26 @@ describe('acceptByBookingForCaller', () => {
     })
   })
 
+  it('rejects when the acting resource role is below 100% completeness', async () => {
+    const t = makeT()
+    let bookingId: any
+
+    await t.run(async (ctx) => {
+      await seedUser(ctx)
+      await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
+      bookingId = await seedBooking(ctx)
+      const unitId = await seedInventoryUnit(ctx)
+      const sessionId = await seedSession(ctx, bookingId, unitId)
+      await seedReservation(ctx, bookingId, unitId, sessionId)
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: TEST_TOKENS.instructor })
+        .mutation(api.reservationsMutations.acceptByBookingForCaller, { bookingId }),
+      'PROFILE_INCOMPLETE',
+    )
+  })
+
   it('only confirms PendingAcceptance (skips already Confirmed)', async () => {
     const t = makeT()
     let bookingId: any
@@ -199,6 +241,7 @@ describe('acceptByBookingForCaller', () => {
     await t.run(async (ctx) => {
       await seedUser(ctx)
       await seedUser(ctx, { tokenIdentifier: TEST_TOKENS.instructor, slug: TEST_SLUGS.instructor, role: 'Instructor' })
+      await seedReadyInstructorBySlug(ctx, TEST_SLUGS.instructor, 'instructor@test.com', 'Test Instructor')
       bookingId = await seedBooking(ctx)
       const unitId = await seedInventoryUnit(ctx)
       const session1 = await seedSession(ctx, bookingId, unitId)

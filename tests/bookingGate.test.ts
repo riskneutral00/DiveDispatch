@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { api } from '../convex/_generated/api'
+import { ErrorCode } from '../convex/lib/errorCodes'
+import { assertRoleReadiness } from '../convex/userRoles'
 import {
   seedUser,
   seedDiveCenterProfile,
@@ -12,7 +14,7 @@ import {
   seedVenue,
   type SeedCtx,
 } from './fixtures'
-import { makeT } from './helpers/convex-helpers'
+import { makeT, expectConvexError } from './helpers/convex-helpers'
 
 // ─── Composite helper: complete DC with coverage ─────────────────────────────
 
@@ -108,6 +110,16 @@ async function seedFullDCWithCoverage(ctx: SeedCtx, slug: string) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+describe('booking gate: shared readiness boundary', () => {
+  it('blocks 99% completeness', () => {
+    expect(() => assertRoleReadiness({ percentage: 99, incomplete: ['phone'] })).toThrow(/PROFILE_INCOMPLETE/)
+  })
+
+  it('allows 100% completeness', () => {
+    expect(() => assertRoleReadiness({ percentage: 100, incomplete: [] })).not.toThrow()
+  })
+})
+
 describe('booking gate: profile completeness', () => {
   it('createDraftShell rejects when active role incomplete', async () => {
     const t = makeT()
@@ -125,10 +137,11 @@ describe('booking gate: profile completeness', () => {
       // No phone, no appLanguage, no DiveCenter profile -> incomplete
     })
 
-    await expect(
+    await expectConvexError(
       t.withIdentity({ tokenIdentifier: 'clerk|dc-gate-fail' })
-        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' })
-    ).rejects.toThrow(/PROFILE_INCOMPLETE/)
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'DiveCenter' }),
+      ErrorCode.PROFILE_INCOMPLETE,
+    )
   })
 
   it('createDraftShell succeeds when active role 100% with full coverage', async () => {
@@ -197,5 +210,24 @@ describe('booking gate: per-active-role completeness', () => {
 
     expect(typeof bookingId).toBe('string')
     expect((bookingId as string).length).toBeGreaterThan(0)
+  })
+
+  it('DC 100% + Agent 0% rejects when activeRole is Agent', async () => {
+    const t = makeT()
+    await t.run(async (ctx) => {
+      const userId = await seedFullDCWithCoverage(ctx, 'agent-per-role-fail')
+      await ctx.db.insert('userRoles', {
+        userId,
+        role: 'Agent',
+        createdAt: Date.now(),
+        profileComplete: false,
+      })
+    })
+
+    await expectConvexError(
+      t.withIdentity({ tokenIdentifier: 'clerk|agent-per-role-fail' })
+        .mutation(api.bookingDraftMutations.createDraftShell, { activeRole: 'Agent' }),
+      ErrorCode.PROFILE_INCOMPLETE,
+    )
   })
 })
