@@ -24,6 +24,8 @@ tailwind-merge
 use-places-autocomplete
 zod
 
+posthog-js
+
 # === devDependencies ===
 @axe-core/playwright
 @axe-core/react

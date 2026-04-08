@@ -1,6 +1,7 @@
 import { ConvexError, v } from 'convex/values'
 import { mutation } from '../_generated/server'
 import { authorize } from '../lib/auth'
+import { checkRateLimit } from '../lib/rateLimiter'
 import type { MutationCtx } from '../_generated/server'
 import type { Id } from '../_generated/dataModel'
 import type { BookingDoc, InventoryUnitDoc, AvailabilitySnapshotDoc } from '../lib/types'
@@ -33,6 +34,7 @@ export async function _handler(ctx: MutationCtx, args: SubmitToDraftArgs): Promi
   const { user } = await authorize(ctx, null, 'booking:manage', {
     type: 'booking', id: args.bookingId as string, ownerId: (booking as BookingDoc).ownerId,
   })
+  await checkRateLimit(ctx, 'submitToDraft', user.slug)
 
   const resources = args.bookingData?.resources ?? []
   const externalResourceTypes = new Set<string>()

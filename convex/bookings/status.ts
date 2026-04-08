@@ -14,6 +14,7 @@ import {
 import { logBookingChange } from '../lib/auditLog'
 import { notify, notifyReleasedInventory } from '../notifications'
 import { ErrorCode } from '../lib/errorCodes'
+import { checkRateLimit } from '../lib/rateLimiter'
 import { type BookingStatus, BOOKING_STATUS, NOTIFICATION_TYPE, VACATED_REASON } from '../shared/statuses'
 
 export const cancelBooking = mutation({
@@ -24,6 +25,7 @@ export const cancelBooking = mutation({
     const { user } = await authorize(ctx, null, 'booking:manage', {
       type: 'booking', id: args.bookingId, ownerId: booking.ownerId,
     })
+    await checkRateLimit(ctx, 'cancelBooking', user.slug)
 
     if (!canBookingTransition(booking.status, 'cancel')) {
       throw new ConvexError({

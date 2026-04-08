@@ -57,8 +57,7 @@ describe('checkProfileCompleteness', () => {
   it('missing phone on users table makes profile incomplete', async () => {
     await t.run(async (ctx) => {
       const userId = await seedUser(ctx)
-      // Don't set phone
-      await ctx.db.patch(userId, { appLanguage: 'en' })
+      await ctx.db.patch(userId, { appLanguage: 'en', phone: '' })
       await seedEquipmentProfile(ctx, userId)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')
@@ -109,8 +108,7 @@ describe('checkProfileCompleteness', () => {
       const userId = await seedUser(ctx, {
         role: 'Equipment',
       })
-      // Clear appLanguage and don't set phone
-      await ctx.db.patch(userId, { appLanguage: '' })
+      await ctx.db.patch(userId, { appLanguage: '', phone: '' })
       await seedEquipmentProfile(ctx, userId)
 
       const result = await checkProfileCompleteness(ctx, { _id: userId }, 'Equipment')

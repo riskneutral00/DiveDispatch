@@ -41,6 +41,7 @@ import type * as equipmentBags from "../equipmentBags.js";
 import type * as equipmentInventory from "../equipmentInventory.js";
 import type * as equipmentWidget from "../equipmentWidget.js";
 import type * as gearSizingLookup from "../gearSizingLookup.js";
+import type * as healthCheck from "../healthCheck.js";
 import type * as http from "../http.js";
 import type * as instructors from "../instructors.js";
 import type * as lib_accessControl from "../lib/accessControl.js";
@@ -77,6 +78,7 @@ import type * as migrations_backfillStakeholderId from "../migrations/backfillSt
 import type * as notifications from "../notifications.js";
 import type * as portalDraft from "../portalDraft.js";
 import type * as portalSubmission from "../portalSubmission.js";
+import type * as reconciliation from "../reconciliation.js";
 import type * as reservationsMutations from "../reservationsMutations.js";
 import type * as resourceQueries from "../resourceQueries.js";
 import type * as seed from "../seed.js";
@@ -148,6 +150,7 @@ declare const fullApi: ApiFromModules<{
   equipmentInventory: typeof equipmentInventory;
   equipmentWidget: typeof equipmentWidget;
   gearSizingLookup: typeof gearSizingLookup;
+  healthCheck: typeof healthCheck;
   http: typeof http;
   instructors: typeof instructors;
   "lib/accessControl": typeof lib_accessControl;
@@ -184,6 +187,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   portalDraft: typeof portalDraft;
   portalSubmission: typeof portalSubmission;
+  reconciliation: typeof reconciliation;
   reservationsMutations: typeof reservationsMutations;
   resourceQueries: typeof resourceQueries;
   seed: typeof seed;

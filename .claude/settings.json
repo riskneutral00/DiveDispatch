@@ -277,6 +277,30 @@
             "command": "bash .claude/hooks/overflow-scroll-guard.sh",
             "timeout": 5,
             "statusMessage": "Checking intrinsic containment…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/console-ban-convex.sh",
+            "timeout": 5,
+            "statusMessage": "Checking structured logging…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/error-boundary-reporting.sh",
+            "timeout": 5,
+            "statusMessage": "Checking error reporting…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/route-error-boundary.sh",
+            "timeout": 5,
+            "statusMessage": "Checking error boundary coverage…"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/rate-limit-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking rate limiting…"
           }
         ]
       }

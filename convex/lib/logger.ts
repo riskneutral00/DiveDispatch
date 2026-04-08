@@ -11,7 +11,7 @@ function emit(level: LogLevel, message: string, context?: LogContext): void {
     message,
     timestamp: new Date().toISOString(),
   }
-  console.log(JSON.stringify(entry))
+  console.log(JSON.stringify(entry)) // comments-ok
 }
 
 export const log = {

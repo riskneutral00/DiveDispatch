@@ -22,6 +22,8 @@ const LIMITS = {
   saveSafetyInfo: { maxTokens: 10, windowMs: 60_000 },
   generateUploadUrl: { maxTokens: 10, windowMs: 60_000 },
   createUser: { maxTokens: 3, windowMs: 60_000 },
+  submitToDraft: { maxTokens: 10, windowMs: 60_000 },
+  cancelBooking: { maxTokens: 10, windowMs: 60_000 },
 } as const satisfies Record<string, RateLimitConfig>
 
 export type RateLimitName = keyof typeof LIMITS

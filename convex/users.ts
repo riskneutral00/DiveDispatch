@@ -13,6 +13,7 @@ import { releaseBookingReservations } from './bookings/inventoryRelease'
 import { notifyReleasedInventory } from './notifications'
 import { logBookingChange } from './lib/auditLog'
 import { BOOKING_STATUS, VACATED_REASON } from './shared/statuses'
+import { log } from './lib/logger'
 import { canBookingTransition } from './bookings/stateMachine'
 import { extractErrorCode, ISOLATABLE_ERRORS } from './lib/errorClassification'
 import { batchDelete, batchPatch } from './lib/batch'
@@ -564,7 +565,7 @@ export const cascadeUserDeletion = internalAction({
         const errorCode = extractErrorCode(result.reason)
         if (!ISOLATABLE_ERRORS.has(errorCode)) throw result.reason
         const { bookingId } = batch[i]
-        console.error('cascadeUserDeletion: failed to cancel booking', {
+        log.error('cascadeUserDeletion: failed to cancel booking', {
           bookingId,
           errorCode,
         })

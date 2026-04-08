@@ -5,6 +5,11 @@ import { NextIntlClientProvider } from 'next-intl'
 import enMessages from '../../../messages/en.json'
 import RootError from '../error'
 
+const reportErrorMock = vi.fn()
+vi.mock('@/lib/error-reporting', () => ({
+  reportError: (...args: unknown[]) => reportErrorMock(...args),
+}))
+
 vi.mock('lucide-react', () => ({
   AlertTriangle: (props: Record<string, unknown>) => (
     <svg data-testid="alert-icon" {...props} />
@@ -45,14 +50,8 @@ vi.mock('@/components/ui/button', () => ({
 }))
 
 describe('RootError boundary', () => {
-  let consoleSpy: ReturnType<typeof vi.spyOn>
-
   beforeEach(() => {
-    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  })
-
-  afterEach(() => {
-    consoleSpy.mockRestore()
+    reportErrorMock.mockClear()
   })
 
   it('renders fallback UI with title and message', () => {
@@ -71,7 +70,7 @@ describe('RootError boundary', () => {
     ).toBeInTheDocument()
   })
 
-  it('logs the error to console.error on mount', () => {
+  it('reports the error via reportError on mount', () => {
     const error = new Error('Boom')
     const reset = vi.fn()
 
@@ -81,7 +80,7 @@ describe('RootError boundary', () => {
       </NextIntlClientProvider>,
     )
 
-    expect(consoleSpy).toHaveBeenCalledWith('[Root Error]', error)
+    expect(reportErrorMock).toHaveBeenCalledWith(error, { boundary: 'Root Error' })
   })
 
   it('renders a "Try again" button that calls reset', () => {

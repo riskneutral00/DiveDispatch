@@ -36,7 +36,7 @@ BASENAME=$(basename "$FILE_PATH")
 
 # Allow known Next.js route file basenames
 case "$BASENAME" in
-  page.tsx|layout.tsx|error.tsx|loading.tsx|not-found.tsx|route.ts|template.tsx) exit 0 ;;
+  page.tsx|layout.tsx|error.tsx|global-error.tsx|loading.tsx|not-found.tsx|route.ts|template.tsx) exit 0 ;;
   manifest.ts|robots.ts|sitemap.ts|sw.ts|favicon.ico) exit 0 ;;
   globals.css) exit 0 ;;
   # Known legacy files

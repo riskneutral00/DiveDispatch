@@ -14,6 +14,7 @@ import {
   seedCustomerProfile,
   seedBookingResource,
   seedBookingLink,
+  seedEquipmentProfile,
   type SeedCtx,
 } from './fixtures'
 import { makeT } from './helpers/convex-helpers'
@@ -237,7 +238,8 @@ describe('tryAutoAdvance — trigger points', () => {
 
     const { reservationId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'dc-slug', tokenIdentifier: 'clerk|dc-slug', role: 'DiveCenter' })
-      await seedUser(ctx, { slug: 'em-slug', tokenIdentifier: 'clerk|em-slug', role: 'Equipment' })
+      const emUserId = await seedUser(ctx, { slug: 'em-slug', tokenIdentifier: 'clerk|em-slug', role: 'Equipment' })
+      await seedEquipmentProfile(ctx, emUserId)
       const unitId = await seedInventoryUnit(ctx, {
         resourceType: 'Equipment',
         ownerId: 'em-slug',

@@ -17,6 +17,8 @@ const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.optional(z.string()).transform((v) => v ?? "http://localhost:3000"),
   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.optional(z.string()),
   NEXT_PUBLIC_CONVEX_SITE_URL: z.optional(z.string()),
+  NEXT_PUBLIC_POSTHOG_KEY: z.optional(z.string()),
+  NEXT_PUBLIC_POSTHOG_HOST: z.optional(z.string()),
 });
 
 function formatErrors(errors: z.ZodError[]): string {

@@ -7,6 +7,25 @@ import { isDevEnvironment } from './lib/devGuard'
 
 const http = httpRouter()
 
+http.route({
+  path: '/health',
+  method: 'GET',
+  handler: httpAction(async (ctx) => {
+    try {
+      const canary = await ctx.runQuery(internal.healthCheck.ping)
+      return new Response(
+        JSON.stringify({ status: 'ok', timestamp: Date.now(), canary }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      )
+    } catch {
+      return new Response(
+        JSON.stringify({ status: 'error', timestamp: Date.now() }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+  }),
+})
+
 async function verifyWebhookSignature(
   payload: string,
   svixId: string,

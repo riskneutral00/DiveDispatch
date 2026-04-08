@@ -11,6 +11,7 @@ import { assertValidTime } from '../lib/validators'
 import { logBookingChange } from '../lib/auditLog'
 import { batchPatch } from '../lib/batch'
 import { releaseBagsForBooking } from '../equipmentBags'
+import { log } from '../lib/logger'
 
 export async function getAvailabilitySnapshot(
   ctx: QueryCtx | MutationCtx,
@@ -275,12 +276,24 @@ export const purgeExpiredDrafts = internalAction({
         if (!ISOLATABLE_ERRORS.has(errorCode)) {
           throw err
         }
-        console.error(`purgeExpiredDrafts: failed to purge booking`, {
+        log.error('purgeExpiredDrafts: failed to purge booking', {
           bookingId,
           errorCode,
         })
         errors.push({ bookingId, errorCode })
       }
+    }
+
+    if (errors.length > 0) {
+      log.error('purgeExpiredDrafts: batch completed with failures', {
+        errorCount: errors.length,
+        errors: errors.map((e) => `${e.bookingId}(${e.errorCode})`).join(', '),
+      })
+      await ctx.runMutation(internal.lib.alerts.sendAlert, {
+        jobName: 'purge-expired-drafts',
+        status: 'failure' as const,
+        error: `Failed to purge ${errors.length} expired drafts: ${errors.map((e) => `${e.bookingId}(${e.errorCode})`).join(', ')}`,
+      })
     }
 
     return { purged, skipped: errors.length, errors }

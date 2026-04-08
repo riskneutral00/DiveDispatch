@@ -13,4 +13,6 @@ crons.interval('purge-idempotency-keys', { hours: 1 }, internal.lib.idempotency.
 
 crons.interval('purge-expired-drafts', { hours: 6 }, internal.bookings.inventoryRelease.purgeExpiredDrafts)
 
+crons.interval('reconcile-snapshots', { hours: 12 }, internal.reconciliation.reconcileSnapshots)
+
 export default crons

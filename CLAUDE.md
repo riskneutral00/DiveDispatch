@@ -16,6 +16,7 @@ Read the relevant file BEFORE modifying code in that domain.
 - FSM: `Architecture/fsm-invariants.md`
 - Errors: `Architecture/error-invariants.md`
 - Testing: `Architecture/testing-invariants.md`
+- Enterprise: `Architecture/enterprise-invariants.md`
 
 Full decision record + implementation checklist: `~/Desktop/RiskNeutral/Vaults/DiveDispatch/Architecture/Industry-Alignment-Decisions.md`
 

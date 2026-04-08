@@ -8,6 +8,7 @@ import { LocaleSyncProvider } from "../lib/hooks/locale-sync-provider"
 import { ThemeProvider } from "../themes/theme-provider"
 import { AppToaster } from "../components/ui/app-toaster"
 import { OfflineIndicator } from "../components/pwa/offline-indicator"
+import { PostHogProvider } from "../lib/posthog"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -35,6 +36,7 @@ export default async function RootLayout({
           signUpFallbackRedirectUrl="/sign-up"
         >
           <ConvexClerkProvider>
+            <PostHogProvider>
             <ThemeProvider>
               <NextIntlClientProvider messages={messages}>
                 <LocaleSyncProvider>
@@ -44,6 +46,7 @@ export default async function RootLayout({
                 </LocaleSyncProvider>
               </NextIntlClientProvider>
             </ThemeProvider>
+            </PostHogProvider>
           </ConvexClerkProvider>
         </ClerkProvider>
       </body>
