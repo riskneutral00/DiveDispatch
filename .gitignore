@@ -113,12 +113,7 @@ playwright-report/
 .backseat/
 docs/LLM_HANDOFF.md
 
-# Research (silent partner — self-directed, output is local)
-.research/results.tsv
-.research/snapshots/
-.research/start-researcher.sh
-.research/program.md
-.research/worktree/
+# Research (covered by .research/ in ephemeral section below)
 
 # clerk configuration (can include secrets)
 /.clerk/
@@ -140,3 +135,9 @@ docs/LLM_HANDOFF.md
 
 *storybook.log
 storybook-static
+
+# Deleted artifacts (prevent re-creation)
+prototype/
+debug-*.log
+.claude/archive/
+.claude/worktrees/
