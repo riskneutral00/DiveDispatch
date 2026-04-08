@@ -386,7 +386,7 @@ export function BookingCalendar({
                 const cellContent = (
                   <div
                     data-testid={`cell-${day.dateString}`}
-                    className={`glass-container transition flex flex-col p-1.5 min-h-[56px] rounded-theme ${
+                    className={`transition flex flex-col p-1.5 min-h-[56px] rounded-theme border border-[var(--color-glass-container-border)] ${
                       isLocked
                         ? 'cursor-default'
                         : isPast

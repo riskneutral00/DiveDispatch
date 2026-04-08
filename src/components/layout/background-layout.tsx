@@ -10,7 +10,6 @@ export function BackgroundLayout({ children, className }: BackgroundLayoutProps)
   return (
     <div className="min-h-screen relative">
       <div className="bg-image" />
-      <div className="bg-overlay" />
       <main className={cn('app-shell min-h-screen flex flex-col relative', className)}>
         {children}
       </main>

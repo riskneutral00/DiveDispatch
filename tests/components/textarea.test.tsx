@@ -10,11 +10,12 @@ describe('Textarea', () => {
     expect(textarea.className).toContain('text-primary')
   })
 
-  it('merges custom className with text-primary', () => {
-    render(<Textarea data-testid="ta" className="custom-class" />)
+  it('merges custom className on wrapper div', () => {
+    const { container } = render(<Textarea data-testid="ta" className="custom-class" />)
+    const wrapper = container.firstElementChild!
+    expect(wrapper.className).toContain('custom-class')
     const textarea = screen.getByTestId('ta')
     expect(textarea.className).toContain('text-primary')
-    expect(textarea.className).toContain('custom-class')
   })
 
   it('renders label linked to textarea via htmlFor/id', () => {

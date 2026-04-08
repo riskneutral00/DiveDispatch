@@ -35,7 +35,6 @@
   --opacity-subtle: var(--opacity-subtle);
   --opacity-muted: var(--opacity-muted);
   --bg-image: var(--bg-image);
-  --bg-overlay: var(--bg-overlay);
   --body-bg: var(--body-bg);
   --color-tooltip-bg: var(--color-tooltip-bg);
   --color-tooltip-text: var(--color-tooltip-text);
@@ -111,8 +110,6 @@
 
   /* Background — photo skin (light painting on void) */
   --bg-image: url('/backgrounds/ocean-dark.jpg');
-  /* Vignette overlay — darkens edges for text readability */
-  --bg-overlay: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%);
   --body-bg: #000000;
 
   /* Typography */
@@ -297,7 +294,7 @@ body {
 }
 
 /* ── Background stack ────────────────────────────────────────────────────────
-   3-layer stack: fixed bg-image → fixed bg-overlay → relative z-2 app content
+   2-layer stack: fixed bg-image → relative z-2 app content
    ──────────────────────────────────────────────────────────────────────────── */
 .bg-image {
   position: fixed;
@@ -308,14 +305,6 @@ body {
   background-position: var(--bg-position, center);
   background-size: cover;
   background-repeat: no-repeat;
-}
-
-.bg-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  background: var(--bg-overlay);
-  pointer-events: none;
 }
 
 .app-shell {
@@ -338,9 +327,7 @@ body:has(dialog[open][data-scrim]) {
 
 /* Dialog native backdrop — activated when dialog.showModal() is open */
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: transparent;
 }
 
 /* ── Form divider ────────────────────────────────────────────────────────────
@@ -629,4 +616,3 @@ dialog::backdrop {
     animation: none;
   }
 }
-

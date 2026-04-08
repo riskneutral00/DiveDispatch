@@ -9,7 +9,6 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <div className="bg-image" />
-      <div className="bg-overlay" />
 
       <div className="app-shell flex flex-col flex-1">
       <div className="px-6 pt-5">

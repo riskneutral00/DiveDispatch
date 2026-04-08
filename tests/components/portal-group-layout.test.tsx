@@ -12,7 +12,6 @@ describe('PortalGroupLayout', () => {
     )
 
     expect(container.querySelector('.bg-image')).toBeTruthy()
-    expect(container.querySelector('.bg-overlay')).toBeTruthy()
     expect(container.querySelector('.app-shell')).toBeTruthy()
     expect(screen.getByText('Portal child')).toBeInTheDocument()
   })

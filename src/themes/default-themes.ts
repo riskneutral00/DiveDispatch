@@ -124,7 +124,7 @@ export const OCEAN_DEFAULT: ThemeConfig = {
       bgImage: "url('/backgrounds/ocean-dark.jpg')",
       bgPosition: "center 70%",
       bgOverlay:
-        "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0.8) 100%)",
+        "none",
       bodyBg: "#000000",
       luminanceClass: "dark",
     },

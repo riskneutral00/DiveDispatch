@@ -81,7 +81,7 @@ export function Dialog({
         >
           <div /* design-ok */
             className={cn(
-              "dialog-fullscreen-panel flex flex-col text-primary",
+              "dialog-fullscreen-panel flex flex-col text-primary glass-container",
               "w-full h-full rounded-none", // design-ok
               "sm:w-[90vw] sm:h-[90vh] sm:max-w-[800px] sm:rounded-[var(--border-radius,12px)]",
               "overflow-hidden",
