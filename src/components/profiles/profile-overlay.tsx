@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { useTranslations } from 'next-intl'
-import { Dialog } from '@/components/ui'
+import { Dialog, MenuButton } from '@/components/ui'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from '@/lib/constants/roles'
 import { api } from '@/lib/convex-generated'
 import { ProfileTab } from '@/components/account/profile-tab'
@@ -111,54 +111,41 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
           className="flex gap-1 px-4 py-2 sm:px-6 flex-shrink-0 border-b border-glass-border overflow-x-auto sm:justify-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
-          {visibleStaticTabs.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
+          {visibleStaticTabs.map((tab) => (
+              <MenuButton
                 key={tab.id}
                 role="tab"
-                aria-selected={isActive}
+                aria-selected={activeTab === tab.id}
+                active={activeTab === tab.id}
+                variant="pill"
                 onClick={() => setActiveTab(tab.id)}
-                className="px-4 py-1.5 rounded-full text-body font-medium transition-colors duration-theme cursor-pointer flex-shrink-0"
-                style={{
-                  background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
-                  color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                  border: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
-                }}
               >
                 {tNav(tab.labelKey)}
-              </button>
-            )
-          })}
+              </MenuButton>
+          ))}
 
           {roleConfigs.length > 0 && (
             <>
               <div
                 className="w-px mx-1 self-stretch flex-shrink-0 bg-glass-border"
               />
-              {roleConfigs.map((role) => {
-                const isActive = activeTab === `role:${role.key}`
-                return (
-                  <button
+              {roleConfigs.map((role) => (
+                  <MenuButton
                     key={role.key}
                     role="tab"
-                    aria-selected={isActive}
+                    aria-selected={activeTab === `role:${role.key}`}
+                    active={activeTab === `role:${role.key}`}
+                    variant="pill"
+                    size="sm"
                     onClick={() => {
                       setActiveTab(`role:${role.key}`)
                       const first = ROLE_BY_KEY[role.key]?.profileTabs?.[0]?.id ?? ''
                       setRoleProfileSection(first)
                     }}
-                    className="px-3 py-1.5 rounded-full text-label font-medium transition-colors duration-theme cursor-pointer flex-shrink-0"
-                    style={{
-                      background: isActive ? 'var(--color-glass-bg-elevated, var(--color-primary-glow))' : 'transparent',
-                      color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                      border: isActive ? '1px solid var(--color-primary)' : '1px solid transparent',
-                    }}
                   >
                     {role.label}
-                  </button>
-                )
-              })}
+                  </MenuButton>
+              ))}
             </>
           )}
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { X, Anchor, Waves, Droplets } from 'lucide-react'
-import { Card, Input, Select, SimpleSelect } from '@/components/ui'
+import { Card, Input, Select, SimpleSelect, IconButton, ActionLink } from '@/components/ui'
 import type { DayConfig, WizardAction, DiveSlot } from '@/lib/booking/wizard-state'
 import type { DiveSlotDef } from '@/lib/booking/generate-days'
 import { buildDiveSequence } from '@/lib/booking/generate-days'
@@ -50,8 +50,6 @@ function deriveDayLabel(): string {
 const HEADER_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 const DAY_LABEL_CLASS = 'glass-container'
 const AUTO_APPENDED_STYLE: React.CSSProperties = { background: 'var(--color-warning-muted)', color: 'var(--color-warning)' }
-const REMOVE_BTN_STYLE: React.CSSProperties = { color: 'var(--color-destructive)' }
-const SWITCH_LINK_STYLE: React.CSSProperties = { color: 'var(--color-accent)' }
 const VENUE_SECTION_BORDER_STYLE: React.CSSProperties = { borderColor: 'var(--color-glass-border)' }
 
 const VENUE_ICONS = {
@@ -161,16 +159,14 @@ export function DayRow({
           )}
         </div>
         {canRemove && (
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
             onClick={() => dispatch({ type: 'REMOVE_DAY', dayIndex })}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] opacity-50 hover:opacity-100 transition-opacity duration-theme"
-            style={REMOVE_BTN_STYLE}
-            title="Remove day"
             aria-label={`Remove day ${dayNumber}`}
+            className="opacity-50 hover:opacity-100"
           >
             <X size={13} />
-          </button>
+          </IconButton>
         )}
       </div>
 
@@ -201,17 +197,14 @@ export function DayRow({
                 }
                 placeholder="External"
               />
-              <button
-                type="button"
+              <ActionLink
                 onClick={() => {
                   dispatch({ type: 'SET_DAY_INSTRUCTOR', dayIndex, slug: '' })
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalInstructorName: '' } })
                 }}
-                className="text-label underline underline-offset-2 text-left"
-                style={SWITCH_LINK_STYLE}
               >
                 Switch to system instructor
-              </button>
+              </ActionLink>
             </>
           ) : (
             <Select
@@ -283,17 +276,15 @@ export function DayRow({
                 }
                 placeholder="Name"
               />
-              <button
-                type="button"
+              <ActionLink
                 onClick={() => {
                   dispatch({ type: 'SET_DAY_DIVE_MASTER', dayIndex, slug: '' })
                   dispatch({ type: 'UPDATE_DAY', dayIndex, patch: { externalDiveMasterName: '' } })
                 }}
-                className="text-label underline underline-offset-2 text-left mt-1"
-                style={SWITCH_LINK_STYLE}
+                className="mt-1"
               >
                 Switch to system dive master
-              </button>
+              </ActionLink>
             </>
           ) : (
             <SimpleSelect

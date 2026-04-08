@@ -64,12 +64,12 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           return <span key={template.id}>{pill}</span>
         }
 
-        const btn = (
+        const btn = ( /* design-ok */
           <button
             key={template.id}
             type="button"
             disabled={!canBook}
-            className={`${PILL_BASE} ${canBook ? 'cursor-pointer hover:brightness-125 hover:scale-105' : ''}`}
+            className={`${PILL_BASE} ${canBook ? 'cursor-pointer transition-opacity hover:opacity-70' : ''}`}
             style={canBook ? PILL_STYLE : { ...PILL_STYLE, ...DISABLED_OVERLAY }}
             onClick={canBook ? () => onSelect(template.courses) : undefined}
           >
@@ -100,7 +100,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           ) : (
             <button
               type="button"
-              className={`${PILL_BASE} cursor-pointer hover:brightness-125 hover:scale-105`}
+              className={`${PILL_BASE} cursor-pointer transition-opacity hover:opacity-70`}
               style={ACCENT_PILL_STYLE}
               onClick={() => onSelect([] as CourseCode[])}
             >

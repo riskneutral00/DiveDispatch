@@ -37,7 +37,7 @@ export function DraggablePill({ template, canBook, onSelect, style }: DraggableP
       }}
       type="button"
       disabled={!canBook}
-      className={`${PILL_BASE} ${canBook ? 'cursor-grab hover:brightness-125 hover:scale-105' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
+      className={`${PILL_BASE} ${canBook ? 'cursor-grab transition-opacity hover:opacity-70' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={mergedStyle}
       onClick={canBook ? () => onSelect(template.courses) : undefined}
     >

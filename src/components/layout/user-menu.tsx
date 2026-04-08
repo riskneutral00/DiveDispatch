@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from "@/lib/constants/roles";
 import { api } from "@/lib/convex-generated";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { MenuButton } from "@/components/ui/menu-button";
 import type { ProfileOverlayTab } from "../profiles/profile-overlay";
 
 interface UserMenuProps {
@@ -100,14 +101,14 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
               </p>
             </div>
 
-            <button
+            <MenuButton
+              variant="flush"
               onClick={() => handleMenuAction("profile")}
-              className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
-              style={{ transition: 'background var(--transition-speed), opacity var(--transition-speed)' }}
+              className="w-full px-3"
             >
               <User size={14} />
               {tNav("profile")}
-            </button>
+            </MenuButton>
             {roleConfigs.length > 1 && (
               <div
                 className="mt-1 pt-1"
@@ -116,14 +117,15 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
                 {roleConfigs.map((role) => {
                   const Icon = role.icon;
                   return (
-                    <button
+                    <MenuButton
                       key={role.key}
+                      variant="flush"
                       onClick={() => handleMenuAction(`role:${role.key}`)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
+                      className="w-full px-3"
                     >
                       <Icon size={14} />
                       {role.label}
-                    </button>
+                    </MenuButton>
                   );
                 })}
               </div>
@@ -133,13 +135,14 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
               className="mt-1"
               style={{ borderTop: "1px solid var(--color-glass-border)" }}
             >
-              <button
+              <MenuButton
+                variant="flush"
                 onClick={handleSignOut}
-                className="flex items-center gap-2 w-full px-3 py-2 text-body transition-all duration-theme cursor-pointer text-secondary hover:opacity-80"
+                className="w-full px-3"
               >
                 <LogOut size={14} />
                 {tNav("signOut")}
-              </button>
+              </MenuButton>
             </div>
           </div>
         </>

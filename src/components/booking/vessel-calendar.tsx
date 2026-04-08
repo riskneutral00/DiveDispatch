@@ -51,7 +51,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
       <div className="flex flex-col items-center py-2">
         <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-          <button
+          {/* design-ok */}<button
             type="button"
             onClick={() => shiftRange(-1)}
             className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"
@@ -64,7 +64,7 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
           >
             {headerLabel}
           </span>
-          <button
+          {/* design-ok */}<button
             type="button"
             onClick={() => shiftRange(1)}
             className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"

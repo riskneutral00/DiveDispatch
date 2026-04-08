@@ -59,7 +59,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
       {tabs.map((tab) => {
         const isActive = tab.id === activeTab
         return (
-          <button
+          <button /* design-ok: underline tab indicator requires inline border-bottom — distinct from pill/flush MenuButton */
             key={tab.id}
             ref={isActive ? activeTabRef : undefined}
             role="tab"
@@ -68,13 +68,10 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
             id={`tab-${tab.id}`}
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(tab.id)}
-            className="px-4 h-10 text-body whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none"
+            className={`px-4 min-h-[44px] text-body whitespace-nowrap flex-shrink-0 bg-transparent cursor-pointer outline-none transition-all duration-theme ${isActive ? 'text-primary font-semibold' : 'text-secondary font-normal'}`}
             style={{
-              color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              fontWeight: isActive ? 600 : 400,
               borderBottom: `2px solid ${isActive ? 'var(--color-primary)' : 'transparent'}`,
               marginBottom: '-1px',
-              transition: 'color 0.3s ease, border-color 0.3s ease',
             }}
           >
             {tab.label}

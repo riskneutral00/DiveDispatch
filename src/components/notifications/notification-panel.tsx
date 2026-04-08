@@ -4,6 +4,7 @@ import { useRef, useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui/spinner'
+import { Button } from '@/components/ui/button'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 import { useFocusTrap } from '@/lib/hooks/use-focus-trap'
@@ -75,12 +76,13 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
           Notifications
         </span>
         {hasNotifications && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleClearAllClick}
-            className="text-body font-medium transition-opacity duration-theme hover:opacity-70 text-primary min-h-[44px] min-w-[44px]"
           >
             Clear
-          </button>
+          </Button>
         )}
       </div>
 

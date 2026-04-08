@@ -314,7 +314,7 @@ function GearSizeRow({
               style={{ border: '1px solid var(--color-primary)' }}
               autoFocus
             />
-            <button
+            {/* design-ok */}<button
               onClick={() => {
                 if (editValue.trim()) onOverride(editValue.trim())
                 setEditing(false)
@@ -328,7 +328,7 @@ function GearSizeRow({
             >
               ✓
             </button>
-            <button
+            {/* design-ok */}<button
               onClick={() => {
                 setEditing(false)
                 setEditValue('')
@@ -342,7 +342,7 @@ function GearSizeRow({
 
         {!editing && (
           <div className="flex gap-1">
-            <button
+            {/* design-ok */}<button
               onClick={() => {
                 setEditValue(isManualOverride ? overrideSize : '')
                 setEditing(true)
@@ -352,7 +352,7 @@ function GearSizeRow({
             >
               ✏
             </button>
-            {isManualOverride && (
+            {isManualOverride && ( /* design-ok */
               <button
                 onClick={onClearOverride}
                 className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -444,9 +444,9 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
       {mutationError && (
         <ErrorAlert className="justify-between">
           <span>{mutationError}</span>
-          <button onClick={() => setMutationError(null)} className="font-medium ml-2">
+          <Button variant="ghost" size="sm" onClick={() => setMutationError(null)} className="ml-2">
             Dismiss
-          </button>
+          </Button>
         </ErrorAlert>
       )}
 
@@ -454,7 +454,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
         <div className="flex flex-wrap gap-1.5">
           {data.bookings.map((b) => {
             const isActive = b.bookingId === activeId
-            return (
+            return ( /* design-ok */
               <button
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}

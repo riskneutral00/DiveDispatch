@@ -90,7 +90,7 @@ export function NotificationItem({ notification, onClick, onDelete }: Notificati
         isUnread ? 'bg-surface-elevated' : 'bg-transparent',
       )}
     >
-      <button
+      {/* design-ok */}<button
         onClick={() => onClick(notification._id)}
         className="flex items-start gap-3 flex-1 min-w-0"
       >

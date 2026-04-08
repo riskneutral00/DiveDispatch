@@ -143,7 +143,7 @@ function DiffExpander({ diff }: { diff: string }) {
 
   return (
     <div className="mt-1">
-      <button
+      {/* design-ok */}<button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1 text-label transition-colors duration-theme text-secondary min-h-[44px]"

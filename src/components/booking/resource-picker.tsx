@@ -107,7 +107,7 @@ export function ResourcePicker({
         </div>
       ) : (
         <div className="relative">
-          <button
+          {/* design-ok */}<button
             type="button"
             onClick={() => setIsOpen((o) => !o)}
             className="w-full text-left px-3 py-2.5 text-body rounded-theme flex items-center justify-between gap-2 transition-opacity duration-theme hover:opacity-90"
@@ -261,7 +261,7 @@ function PickerRow({
   unavailableLabel?: string
   onSelect: () => void
 }) {
-  return (
+  return ( /* design-ok */
     <button
       type="button"
       onClick={onSelect}

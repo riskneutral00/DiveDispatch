@@ -10,8 +10,8 @@ import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_KEY, DISPLAY_OPERATOR_ROLES, type RoleKey } from '@/lib/constants/roles'
-import { Button } from '@/components/ui/button'
 import { BottomActionBar } from '@/components/ui/bottom-action-bar'
+import { SaveButton } from '@/components/ui/save-button'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -24,7 +24,6 @@ import {
 } from '@/components/profiles/preferred-list'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import { SimpleSelect } from '@/components/ui/simple-select'
-import { Check, Save } from 'lucide-react'
 
 const ACCEPTANCE_MODES = [
   {
@@ -105,43 +104,6 @@ const SECTION_FIELDS: Record<ResourceSubTab, keyof PrefsFormData | (keyof PrefsF
   equipment: 'preferredEquipmentSlugs',
   compressors: 'preferredCompressorSlugs',
   operator: 'preferredOperatorSlug',
-}
-
-function ResourceSaveButton({
-  isDirty,
-  saving,
-  saved,
-  onSave,
-}: {
-  isDirty: boolean
-  saving: boolean
-  saved: boolean
-  onSave: () => void
-}) {
-  const t = useTranslations('common')
-  return (
-    <Button
-      type="button"
-      variant="primary"
-      size="sm"
-      loading={saving}
-      disabled={!isDirty || saving}
-      onClick={onSave}
-      style={saved ? { background: 'var(--color-active-fg)', borderColor: 'var(--color-active-fg)' } : undefined}
-    >
-      {saved ? (
-        <>
-          <Check size={16} />
-          {t('saved')}
-        </>
-      ) : (
-        <>
-          <Save size={16} />
-          {t('save')}
-        </>
-      )}
-    </Button>
-  )
 }
 
 function PreferredOperatorPicker({
@@ -475,12 +437,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     required
                   />
                   <BottomActionBar className="pt-4">
-                    <ResourceSaveButton
+                    <SaveButton
                       isDirty={isSectionDirty('instructors')}
                       saving={resourceSaving}
                       saved={savedSection === 'instructors'}
-                      onSave={() => void handleSaveResourceSection('instructors')}
-
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('instructors')}
                     />
                   </BottomActionBar>
                 </Card>
@@ -496,12 +459,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     required={(form.preferredVenueSlugs ?? []).length + (form.preferredBoatSlugs ?? []).length === 0}
                   />
                   <BottomActionBar className="pt-4">
-                    <ResourceSaveButton
+                    <SaveButton
                       isDirty={isSectionDirty('venues-boats')}
                       saving={resourceSaving}
                       saved={savedSection === 'venues-boats'}
-                      onSave={() => void handleSaveResourceSection('venues-boats')}
-
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('venues-boats')}
                     />
                   </BottomActionBar>
                 </Card>
@@ -515,12 +479,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     required
                   />
                   <BottomActionBar className="pt-4">
-                    <ResourceSaveButton
+                    <SaveButton
                       isDirty={isSectionDirty('equipment')}
                       saving={resourceSaving}
                       saved={savedSection === 'equipment'}
-                      onSave={() => void handleSaveResourceSection('equipment')}
-
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('equipment')}
                     />
                   </BottomActionBar>
                 </Card>
@@ -533,12 +498,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     onChange={(slugs) => setField('preferredCompressorSlugs', slugs)}
                   />
                   <BottomActionBar className="pt-4">
-                    <ResourceSaveButton
+                    <SaveButton
                       isDirty={isSectionDirty('compressors')}
                       saving={resourceSaving}
                       saved={savedSection === 'compressors'}
-                      onSave={() => void handleSaveResourceSection('compressors')}
-
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('compressors')}
                     />
                   </BottomActionBar>
                 </Card>
@@ -551,12 +517,13 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
                     onChange={(slug) => setField('preferredOperatorSlug', slug)}
                   />
                   <BottomActionBar>
-                    <ResourceSaveButton
+                    <SaveButton
                       isDirty={isSectionDirty('operator')}
                       saving={resourceSaving}
                       saved={savedSection === 'operator'}
-                      onSave={() => void handleSaveResourceSection('operator')}
-
+                      isUpdate
+                      size="sm"
+                      onClick={() => void handleSaveResourceSection('operator')}
                     />
                   </BottomActionBar>
                 </>

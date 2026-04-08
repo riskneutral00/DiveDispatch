@@ -122,18 +122,16 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
             </div>
             {associations.length > 1 && (
               <div className="flex justify-end mt-2">
-                <button
+                <Button
                   type="button"
+                  variant="destructive-ghost"
+                  size="sm"
                   onClick={() => removeRow(idx)}
                   aria-label="Remove affiliation"
-                  className="flex items-center gap-1.5 text-label cursor-pointer rounded-[var(--border-radius-button)] px-2 py-1.5 transition-colors duration-theme text-secondary"
-                  style={{ transitionDuration: 'var(--transition-speed)' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-destructive, var(--color-text-secondary))'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-secondary)'}
                 >
                   <Trash2 size={14} />
                   Remove
-                </button>
+                </Button>
               </div>
             )}
           </div>

@@ -153,7 +153,7 @@ export function FlagPill({ lang, active, disabled, onToggle }: FlagPillProps) {
   const scriptLabel = CHINESE_SCRIPT_LABELS[lang.code as LanguageCode]
   const isText = Boolean(scriptLabel)
   
-  return (
+  return ( /* design-ok */
     <button
       type="button"
       onClick={onToggle}

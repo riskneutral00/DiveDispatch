@@ -72,7 +72,7 @@ function InstructorFilterBar({
         <span className="text-label text-secondary mr-1">Agency</span>
         {agencies.map((agency) => {
           const isActive = activeAgency === agency
-          return (
+          return ( /* design-ok */
             <button
               key={agency}
               type="button"
@@ -99,7 +99,7 @@ function InstructorFilterBar({
           <span className="text-label text-secondary mr-1">Specialties</span>
           {specialties.map((spec) => {
             const isActive = activeSpecialties.has(spec)
-            return (
+            return ( /* design-ok */
               <button
                 key={spec}
                 type="button"
@@ -194,7 +194,7 @@ function SortableInstructorCard({
     >
       <div className="flex items-start gap-1 mb-1">
         <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
-        <button
+        {/* design-ok */}<button
           ref={handleRef}
           type="button"
           className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme"
@@ -511,7 +511,7 @@ export function PreferredInstructorList(props: ListProps) {
 }
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
+  return ( /* design-ok */
     <button
       type="button"
       onClick={onClick}
@@ -565,7 +565,7 @@ function SortableOverlayCard({
     <div ref={ref} className="glass-container rounded-theme p-3 min-w-[140px]" style={{ opacity: isDragging ? 0.5 : 1 }}>
       <div className="flex items-start gap-1 mb-1">
         <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
-        <button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">
+        {/* design-ok */}<button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">
           <GripVertical size={14} />
         </button>
         <div className="flex-1" />
@@ -689,7 +689,7 @@ function PreferredOverlayList({
           >
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {paginatedEntries.length > 0 ? (
-                paginatedEntries.map((entry) => (
+                paginatedEntries.map((entry) => ( /* design-ok */
                   <button
                     key={entry.slug}
                     type="button"

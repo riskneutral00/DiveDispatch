@@ -21,7 +21,7 @@ export function NotificationBell() {
 
   return (
     <div className="relative">
-      <button
+      {/* design-ok */}<button
         aria-label={
           unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'
         }

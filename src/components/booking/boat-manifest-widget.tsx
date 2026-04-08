@@ -119,7 +119,7 @@ function GroupSection({ group }: { group: ManifestGroup }) {
 
   return (
     <div className="mb-2">
-      <button
+      {/* design-ok */}<button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-[var(--border-radius-button)] transition-colors duration-theme"

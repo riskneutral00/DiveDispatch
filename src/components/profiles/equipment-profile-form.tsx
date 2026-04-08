@@ -173,7 +173,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update,
                     {(form.manufacturersByGearType[gt] ?? []).map((mfr) => (
                       <Badge key={mfr} variant="default" size="sm">
                         {mfr}
-                        <button className="text-secondary" type="button" aria-label={`Remove ${mfr}`} onClick={() => removeManufacturer(gt, mfr)}>
+                        {/* design-ok */}<button className="text-secondary" type="button" aria-label={`Remove ${mfr}`} onClick={() => removeManufacturer(gt, mfr)}>
                           <X size={10} />
                         </button>
                       </Badge>

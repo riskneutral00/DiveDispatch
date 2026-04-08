@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Package } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { IconButton } from '@/components/ui/icon-button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -265,23 +266,13 @@ function InventoryTableRow({
         />
       </td>
       <td className="px-4 py-2.5 text-center">
-        <button
+        <IconButton
+          variant="ghost"
           onClick={onDeleteClick}
           aria-label={`Remove ${item.gearType} ${item.size ?? ''}`}
-          className="p-2 rounded-[var(--border-radius-button)] cursor-pointer"
-          style={{
-            color: 'var(--color-text-secondary)',
-            minWidth: 44,
-            minHeight: 44,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-          }}
         >
           <Trash2 size={16} />
-        </button>
+        </IconButton>
       </td>
     </tr>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, Button, Badge } from '@/components/ui'
+import { Dialog, Button, Badge, ActionLink } from '@/components/ui'
 import { statusVariant } from '@/lib/booking/booking-display'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import type { CalendarBooking } from '../../../convex/bookings'
@@ -125,14 +125,13 @@ export function BookingQuickDetail({
                       Accept
                     </Button>
                   )}
-                  <button
-                    type="button"
+                  <ActionLink
                     onClick={handleViewDetail}
-                    className="text-label underline underline-offset-4 transition-opacity duration-theme hover:opacity-70 text-secondary"
+                    className="text-label"
                     disabled={isLoading}
                   >
                     View Full Detail
-                  </button>
+                  </ActionLink>
                   {onDecline && (
                     <Button
                       size="sm"

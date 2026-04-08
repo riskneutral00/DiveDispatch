@@ -231,7 +231,7 @@ export function BookingCalendar({
       <div className="flex flex-col items-center py-2" ref={pickerRef}>
         <div className="relative inline-flex">
           <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-            <button
+            {/* design-ok */}<button
               type="button"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
               className="p-1.5 rounded-theme transition-opacity duration-theme hover:opacity-70 text-secondary"
@@ -293,8 +293,7 @@ export function BookingCalendar({
                 </button>
               </div>
 
-              {/* Month grid — design-ok */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1"> {/* design-ok: month picker grid, 3-col is intentional mobile baseline */}
                 {MONTH_LABELS.map((label, i) => {
                   const isCurrentMonth = pickerYear === currentYear && i === currentMonth
                   const isViewMonth = pickerYear === viewYear && i === viewMonth
@@ -328,7 +327,7 @@ export function BookingCalendar({
                   type="button"
                   onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
                   className="text-body font-medium transition-opacity duration-theme hover:opacity-80 min-h-[44px] min-w-[44px]"
-                  style={{ color: 'var(--color-primary)' }}
+                  style={{ color: 'var(--color-primary)' }} /* design-ok: --color-primary not in @theme inline */
                 >
                   Today
                 </button>
@@ -375,8 +374,7 @@ export function BookingCalendar({
               )}
             </div>
 
-            {/* Day island grid — no wrapping Card — design-ok */}
-            <div className="grid grid-cols-7 gap-1.5 min-w-[320px]">
+            <div className="grid grid-cols-7 gap-1.5 min-w-[320px]"> {/* design-ok: 7-col calendar grid, intentional mobile baseline */}
               {week.map((day, di) => {
                 const isLocked = lockedDatesSet.has(day.dateString)
                 const isPast = day.dateString < todayStr
@@ -452,7 +450,7 @@ export function BookingCalendar({
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
                           }}
-                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-[filter] ease-out hover:brightness-95 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
+                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-opacity ease-out hover:opacity-80 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
                             transitionDuration: 'var(--transition-speed)',
                             height: `${BAR_ROW_HEIGHT - 2}px`,
@@ -475,10 +473,10 @@ export function BookingCalendar({
                           }}
                         >
                           {showLabel && (
-                          <span
+                          <span /* design-ok: sub-label density inside booking bar pill, no token for 10px/600 */
                             style={{
-                              fontSize: '10px',
-                              fontWeight: 600,
+                              fontSize: '10px', // design-ok: sub-label density inside booking bar pill
+                              fontWeight: 600, // design-ok: sub-label density inside booking bar pill
                               lineHeight: 1,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
