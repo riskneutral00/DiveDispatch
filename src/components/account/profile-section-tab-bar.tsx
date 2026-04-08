@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
 
 export interface TabItem {
   id: string
@@ -15,6 +15,11 @@ interface ProfileSectionTabBarProps {
 
 export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSectionTabBarProps) {
   const tablistRef = useRef<HTMLDivElement>(null)
+  const activeTabRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView?.({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+  }, [activeTab])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -43,7 +48,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
     <div
       ref={tablistRef}
       role="tablist"
-      className="flex overflow-x-auto mb-4 justify-center"
+      className="flex overflow-x-auto mb-4"
       onKeyDown={handleKeyDown}
       style={{
         borderBottom: '1px solid var(--color-glass-border)',
@@ -56,6 +61,7 @@ export function ProfileSectionTabBar({ tabs, activeTab, onChange }: ProfileSecti
         return (
           <button
             key={tab.id}
+            ref={isActive ? activeTabRef : undefined}
             role="tab"
             aria-selected={isActive}
             aria-controls={`tabpanel-${tab.id}`}

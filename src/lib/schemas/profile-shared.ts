@@ -102,7 +102,20 @@ const boatFleetEntrySchema = z.object({
   boatType: z.enum(BOAT_TYPES_TUPLE),
   routes: z.array(boatRouteSchema).optional(),
   cutoffHours: z.number().min(0).optional(),
-})
+}).refine(
+  (data) => {
+    if (!data.routes?.length) return true
+    const seen = new Set<number>()
+    for (const route of data.routes) {
+      for (const day of route.daysOfWeek) {
+        if (seen.has(day)) return false
+        seen.add(day)
+      }
+    }
+    return true
+  },
+  { message: 'Each day can only be assigned to one route per vessel', path: ['routes'] },
+)
 
 export const boatFleetSchema = z.object({
   fleet: z.array(boatFleetEntrySchema),

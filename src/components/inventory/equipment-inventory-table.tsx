@@ -252,6 +252,7 @@ function InventoryTableRow({
       <td className="px-4 py-2.5">
         <Input
           type="number"
+          inputMode="numeric"
           min={1}
           value={localUnits}
           onChange={(e) => setLocalUnits(e.target.value)}
@@ -389,6 +390,7 @@ function AddItemDialog({
           <Input
             label="Diopter"
             type="number"
+            inputMode="decimal"
             step="0.5"
             value={diopter}
             onChange={(e) => setDiopter(e.target.value)}
@@ -398,6 +400,7 @@ function AddItemDialog({
         <Input
           label="Total Units"
           type="number"
+          inputMode="numeric"
           min={1}
           value={totalUnits}
           onChange={(e) => setTotalUnits(e.target.value)}

@@ -180,12 +180,12 @@ describe('boatFleetFromProfile', () => {
     const form = boatFleetFromProfile(profile)
     expect(form.fleet).toHaveLength(1)
     expect(form.fleet[0].boatName).toBe('Sea Breeze')
-    expect(form.fleet[0].maxPax).toBe('20')
-    expect(form.fleet[0].minPax).toBe('4')
+    expect(form.fleet[0].maxPax).toBe(20)
+    expect(form.fleet[0].minPax).toBe(4)
     expect(form.fleet[0].boatType).toBe('day_boat')
     expect(form.fleet[0].routes).toHaveLength(1)
     expect(form.fleet[0].routes[0].diveSite).toBe('Shark Point')
-    expect(form.fleet[0].cutoffHours).toBe('24')
+    expect(form.fleet[0].cutoffHours).toBe(24)
   })
 
   it('defaults to one empty fleet entry when fleet is empty', () => {
@@ -200,20 +200,20 @@ describe('boatFleetFromProfile', () => {
     expect(form.fleet[0]).toEqual(emptyFleet())
   })
 
-  it('leaves minPax empty string when absent in profile', () => {
+  it('leaves minPax undefined when absent in profile', () => {
     const profile = {
       fleet: [{ boatName: 'Boat A', maxPax: 10, boatType: 'speedboat', routes: [] }],
     }
     const form = boatFleetFromProfile(profile)
-    expect(form.fleet[0].minPax).toBe('')
+    expect(form.fleet[0].minPax).toBeUndefined()
   })
 
-  it('leaves cutoffHours empty string when absent in profile', () => {
+  it('leaves cutoffHours undefined when absent in profile', () => {
     const profile = {
       fleet: [{ boatName: 'Boat A', maxPax: 10, boatType: 'speedboat', routes: [] }],
     }
     const form = boatFleetFromProfile(profile)
-    expect(form.fleet[0].cutoffHours).toBe('')
+    expect(form.fleet[0].cutoffHours).toBeUndefined()
   })
 
   it('does not include contact fields', () => {
@@ -229,16 +229,16 @@ describe('boatFleetFromProfile', () => {
 })
 
 describe('boatFleetToPayload', () => {
-  it('serialises fleet with parsed numeric fields', () => {
+  it('serialises fleet with numeric fields passed through', () => {
     const form: BoatFleetFormState = {
       fleet: [
         {
           boatName: 'Sea Breeze',
-          maxPax: '20',
-          minPax: '4',
+          maxPax: 20,
+          minPax: 4,
           boatType: 'day_boat',
           routes: [{ diveSite: 'Shark Point', daysOfWeek: [1, 3, 5] }],
-          cutoffHours: '24',
+          cutoffHours: 24,
         },
       ],
     }
@@ -252,18 +252,18 @@ describe('boatFleetToPayload', () => {
     expect(vessels[0].cutoffHours).toBe(24)
   })
 
-  it('sets minPax to undefined when empty string', () => {
+  it('sets minPax to undefined when not set', () => {
     const form: BoatFleetFormState = {
-      fleet: [{ boatName: 'Boat', maxPax: '10', minPax: '', boatType: 'speedboat', routes: [], cutoffHours: '' }],
+      fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
     expect(vessel.minPax).toBeUndefined()
   })
 
-  it('sets cutoffHours to undefined when empty string', () => {
+  it('sets cutoffHours to undefined when not set', () => {
     const form: BoatFleetFormState = {
-      fleet: [{ boatName: 'Boat', maxPax: '10', minPax: '', boatType: 'speedboat', routes: [], cutoffHours: '' }],
+      fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -272,7 +272,7 @@ describe('boatFleetToPayload', () => {
 
   it('sets routes to undefined when empty', () => {
     const form: BoatFleetFormState = {
-      fleet: [{ boatName: 'Boat', maxPax: '10', minPax: '', boatType: 'speedboat', routes: [], cutoffHours: '' }],
+      fleet: [{ boatName: 'Boat', maxPax: 10, minPax: undefined, boatType: 'speedboat', routes: [], cutoffHours: undefined }],
     }
     const payload = boatFleetToPayload(form)
     const vessel = (payload.fleet as Array<Record<string, unknown>>)[0]
@@ -284,11 +284,11 @@ describe('boatFleetToPayload', () => {
       fleet: [
         {
           boatName: 'Boat',
-          maxPax: '10',
-          minPax: '',
+          maxPax: 10,
+          minPax: undefined,
           boatType: 'speedboat',
           routes: [{ diveSite: 'Shark Point', daysOfWeek: [1] }],
-          cutoffHours: '',
+          cutoffHours: undefined,
         },
       ],
     }

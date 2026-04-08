@@ -151,6 +151,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                   <Input
                     label="OW Days"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
                     value={owDays}
@@ -160,6 +161,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                   <Input
                     label="AOW Days"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
                     value={aowDays}
@@ -169,6 +171,7 @@ function LanguagesStepInner({ role, roleApi, onSaved, onBack }: LanguagesStepInn
                   <Input
                     label="Adv. Days"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={MAX_COURSE_DAYS}
                     value={oaDays}

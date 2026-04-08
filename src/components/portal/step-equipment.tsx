@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card } from '../ui/card'
+import { FieldLabel } from '../ui/field-shell'
 import { InlineError } from '../ui/inline-error'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
@@ -278,11 +279,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         <div className="space-y-4">
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Height</legend>
-            <label
-              className="text-body font-medium block mb-1.5 text-secondary"
-            >
-              Height
-            </label>
+            <FieldLabel className="block mb-1.5">Height</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="number"
@@ -306,11 +303,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Weight</legend>
-            <label
-              className="text-body font-medium block mb-1.5 text-secondary"
-            >
-              Weight
-            </label>
+            <FieldLabel className="block mb-1.5">Weight</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="number"
@@ -334,11 +327,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Shoe Size</legend>
-            <label
-              className="text-body font-medium block mb-1.5 text-secondary"
-            >
-              Shoe Size
-            </label>
+            <FieldLabel className="block mb-1.5">Shoe Size</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="text"

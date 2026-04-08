@@ -89,6 +89,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
           <Input
             label="Max Depth (m)"
             type="number"
+            inputMode="decimal"
             min="0.1"
             step="0.1"
             value={form.maxDepth || ''}
@@ -100,6 +101,7 @@ export function VenueCapabilitiesSection<T extends VenueCapabilitiesFormState>({
           <Input
             label="Max Capacity"
             type="number"
+            inputMode="numeric"
             min="1"
             step="1"
             value={form.maxCapacity || ''}

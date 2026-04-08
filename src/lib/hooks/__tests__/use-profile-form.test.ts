@@ -4,7 +4,6 @@ import { renderHook, act } from '@testing-library/react'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import {
-  FORM_SAVE_SUCCESS_TOAST,
   FORM_SECONDARY_SAVE_WARNING_TITLE,
   FORM_VALIDATION_WARNING_TOAST,
 } from '@/lib/profile-form/save-feedback'
@@ -457,7 +456,7 @@ describe('useProfileForm optimistic save', () => {
     expect(toast.warning).toHaveBeenCalledWith(FORM_VALIDATION_WARNING_TOAST, { duration: 4000 })
   })
 
-  it('toast.success and toast.warning when primary save succeeds but afterSuccessfulSave fails', async () => {
+  it('toast.warning when primary save succeeds but afterSuccessfulSave fails', async () => {
     const updateFn = vi.fn().mockResolvedValue(undefined)
     const afterSave = vi.fn().mockRejectedValue(new Error('secondary fail'))
     const opts = makeOptimisticOptions({ updateFn, afterSuccessfulSave: afterSave })
@@ -470,7 +469,6 @@ describe('useProfileForm optimistic save', () => {
     })
 
     expect(updateFn).toHaveBeenCalled()
-    expect(toast.success).toHaveBeenCalledWith(FORM_SAVE_SUCCESS_TOAST, { duration: 3000 })
     expect(toast.warning).toHaveBeenCalledWith(
       FORM_SECONDARY_SAVE_WARNING_TITLE,
       expect.objectContaining({ duration: 6000 }),

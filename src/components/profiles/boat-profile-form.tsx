@@ -1,12 +1,12 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-import { parseOptionalInt } from '@/lib/utils/numbers'
+import { parseNumber, parseOptionalInt } from '@/lib/utils/numbers'
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 
 import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { InlineError } from '@/components/ui/inline-error'
+import { DayToggleGroup } from '@/components/ui/day-toggle-group'
 import { Button } from '@/components/ui/button'
 import { FormGrid, FormField } from '@/components/ui/form-grid'
 import { Input } from '@/components/ui/input'
@@ -39,25 +39,15 @@ interface RouteState {
 
 interface FleetState {
   boatName: string
-  maxPax: string
-  minPax: string
+  maxPax: number
+  minPax: number | undefined
   boatType: BoatType | ''
   routes: RouteState[]
-  cutoffHours: string
+  cutoffHours: number | undefined
 }
 
-const DAYS = [
-  { value: 1, label: 'Mon' },
-  { value: 2, label: 'Tue' },
-  { value: 3, label: 'Wed' },
-  { value: 4, label: 'Thu' },
-  { value: 5, label: 'Fri' },
-  { value: 6, label: 'Sat' },
-  { value: 0, label: 'Sun' },
-]
-
 export function emptyFleet(): FleetState {
-  return { boatName: '', maxPax: '', minPax: '', boatType: '', routes: [], cutoffHours: '' }
+  return { boatName: '', maxPax: 0, minPax: undefined, boatType: '', routes: [], cutoffHours: undefined }
 }
 
 export function emptyRoute(): RouteState {
@@ -136,11 +126,11 @@ export function boatFleetFromProfile(p: Record<string, unknown>): BoatFleetFormS
       fleet.length > 0
         ? fleet.map((f) => ({
             boatName: f.boatName as string,
-            maxPax: String(f.maxPax),
-            minPax: f.minPax != null ? String(f.minPax) : '',
+            maxPax: (f.maxPax as number) ?? 0,
+            minPax: f.minPax != null ? (f.minPax as number) : undefined,
             boatType: f.boatType as BoatType,
             routes: (f.routes as RouteState[] | undefined) ?? [],
-            cutoffHours: f.cutoffHours != null ? String(f.cutoffHours) : '',
+            cutoffHours: f.cutoffHours != null ? (f.cutoffHours as number) : undefined,
           }))
         : [emptyFleet()],
   }
@@ -150,11 +140,11 @@ export function boatFleetToPayload(f: BoatFleetFormState): Record<string, unknow
   return {
     fleet: f.fleet.map((v) => ({
       boatName: v.boatName,
-      maxPax: parseOptionalInt(v.maxPax) ?? 0,
-      minPax: parseOptionalInt(v.minPax),
+      maxPax: v.maxPax,
+      minPax: v.minPax,
       boatType: v.boatType as BoatType,
       routes: v.routes.length > 0 ? v.routes : undefined,
-      cutoffHours: parseOptionalInt(v.cutoffHours),
+      cutoffHours: v.cutoffHours,
     })),
   }
 }
@@ -207,7 +197,20 @@ function BoatFleetSectionForm({
   }
   function toggleDay(fi: number, ri: number, day: number) {
     const days = form.fleet[fi].routes[ri].daysOfWeek
-    updateRoute(fi, ri, { daysOfWeek: days.includes(day) ? days.filter((d) => d !== day) : [...days, day] })
+    if (days.includes(day)) {
+      updateRoute(fi, ri, { daysOfWeek: days.filter((d) => d !== day) })
+    } else {
+      setField('fleet', form.fleet.map((f, i) => {
+        if (i !== fi) return f
+        return {
+          ...f,
+          routes: f.routes.map((r, idx) => {
+            if (idx === ri) return { ...r, daysOfWeek: [...r.daysOfWeek, day] }
+            return { ...r, daysOfWeek: r.daysOfWeek.filter((d) => d !== day) }
+          }),
+        }
+      }))
+    }
   }
 
   return (
@@ -280,11 +283,12 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
 
       <FormGrid className="mb-5">
         <FormField size="lg">
-          <Input label="Boat Name" value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
+          <Input label="Boat Name" required value={vessel.boatName} onChange={(e) => onUpdate({ boatName: e.target.value })} error={errors[`fleet.${fi}.boatName`]} placeholder="Sea Breeze" />
         </FormField>
         <FormField size="lg">
           <SimpleSelect
             label="Boat Type"
+            required
             value={vessel.boatType}
             onChange={(v) => onUpdate({ boatType: v as BoatType })}
             options={BOAT_TYPE_OPTIONS}
@@ -293,13 +297,13 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
           />
         </FormField>
         <FormField size="lg">
-          <Input label="Max Passengers" type="number" min={1} value={vessel.maxPax} onChange={(e) => onUpdate({ maxPax: e.target.value })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
+          <Input label="Max Passengers" required type="number" inputMode="numeric" min={1} value={vessel.maxPax || ''} onChange={(e) => onUpdate({ maxPax: parseNumber(e.target.value, true) })} error={errors[`fleet.${fi}.maxPax`]} placeholder="20" />
         </FormField>
         <FormField size="lg">
-          <Input label="Min Passengers (optional)" type="number" min={1} value={vessel.minPax} onChange={(e) => onUpdate({ minPax: e.target.value })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
+          <Input label="Min Passengers" type="number" inputMode="numeric" min={1} value={vessel.minPax ?? ''} onChange={(e) => onUpdate({ minPax: parseOptionalInt(e.target.value) })} error={errors[`fleet.${fi}.minPax`]} placeholder="4" />
         </FormField>
         <FormField size="full">
-          <Input label="Cutoff Hours (optional)" type="number" min={0} value={vessel.cutoffHours} onChange={(e) => onUpdate({ cutoffHours: e.target.value })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
+          <Input label="Cutoff Hours" type="number" inputMode="numeric" min={0} value={vessel.cutoffHours ?? ''} onChange={(e) => onUpdate({ cutoffHours: parseOptionalInt(e.target.value) })} error={errors[`fleet.${fi}.cutoffHours`]} helperText="Hours before departure when bookings close" placeholder="24" />
         </FormField>
       </FormGrid>
 
@@ -307,10 +311,10 @@ function FleetEntryCard({ vessel, fleetIdx: fi, errors, canRemove, onUpdate, onR
         <FormSectionHeader
           label="Routes"
           action={
-            <button type="button" onClick={onAddRoute} className="flex items-center gap-1 text-label px-2 py-1 min-h-[44px] rounded-[var(--border-radius-button)] border transition-opacity duration-theme hover:opacity-80 text-primary" style={{ borderColor: 'var(--color-glass-border)', background: 'var(--color-glass-bg)' }}> {/* design-ok */}
-              <Plus size={11} />
+            <Button type="button" size="sm" variant="secondary" onClick={onAddRoute}>
+              <Plus size={14} />
               Add Route
-            </button>
+            </Button>
           }
         />
         {vessel.routes.length === 0 && (
@@ -341,23 +345,17 @@ interface RouteRowProps {
 function RouteRow({ route, fleetIdx: fi, routeIdx: ri, errors, onUpdate, onRemove, onToggleDay }: RouteRowProps) {
   return (
     <ItemCard onRemove={onRemove} canRemove={true} aria-label="Remove route">
-      <div className="flex-1">
-        <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {DAYS.map((d) => {
-          const active = route.daysOfWeek.includes(d.value)
-          return (
-            <button key={d.value} type="button" onClick={() => onToggleDay(d.value)} className="px-2.5 py-1 text-label rounded-[var(--border-radius-button)] border transition-all duration-theme min-h-[44px] min-w-[44px]"
-              style={{ background: active ? 'var(--color-primary)' : 'var(--color-glass-bg)', color: active ? 'var(--color-text-on-primary)' : 'var(--color-text-secondary)', borderColor: active ? 'var(--color-primary)' : 'var(--color-glass-border)', transitionDuration: 'var(--transition-speed)' }}> {/* design-ok */}
-              {d.label}
-            </button>
-          )
-        })}
-      </div>
-      {errors[`fleet.${fi}.routes.${ri}.daysOfWeek`] && (
-        <InlineError size="sm">{errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}</InlineError>
-      )}
+      <Input value={route.diveSite} onChange={(e) => onUpdate({ diveSite: e.target.value })} error={errors[`fleet.${fi}.routes.${ri}.diveSite`]} placeholder="Dive site name (e.g. Shark Point)" />
+      <DayToggleGroup
+        selected={route.daysOfWeek}
+        onChange={(newDays) => {
+          const added = newDays.find((d) => !route.daysOfWeek.includes(d))
+          const removed = route.daysOfWeek.find((d) => !newDays.includes(d))
+          if (added !== undefined) onToggleDay(added)
+          else if (removed !== undefined) onToggleDay(removed)
+        }}
+        error={errors[`fleet.${fi}.routes.${ri}.daysOfWeek`]}
+      />
     </ItemCard>
   )
 }

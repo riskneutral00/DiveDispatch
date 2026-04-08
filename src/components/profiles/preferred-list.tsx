@@ -89,7 +89,7 @@ function InstructorFilterBar({
         })}
         <span className="ml-auto text-label text-secondary">
           {currentCount}/{MAX_PREFERRED_INSTRUCTORS}
-          {required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
+          {required && <span className="text-destructive"> *</span>}
         </span>
       </div>
 
@@ -387,7 +387,7 @@ export function PreferredInstructorList(props: ListProps) {
         </span>
         <span className="text-label text-secondary">
           {slugs.length}/{MAX_PREFERRED_INSTRUCTORS}
-          {props.required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
+          {props.required && <span className="text-destructive"> *</span>}
         </span>
       </div>
 
@@ -631,7 +631,7 @@ function PreferredOverlayList({
         </Button>
         <span className="text-label text-secondary">
           {slugs.length}/{maxItems}
-          {required && <span className="ml-1 text-destructive" aria-hidden>*</span>}
+          {required && <span className="text-destructive"> *</span>}
         </span>
       </div>
 

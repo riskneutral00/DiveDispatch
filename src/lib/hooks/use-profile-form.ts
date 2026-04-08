@@ -5,10 +5,10 @@ import type { z } from 'zod'
 import { toast } from 'sonner'
 import {
   FORM_SAVE_FAILED_TOAST,
-  FORM_SAVE_SUCCESS_TOAST,
   FORM_SECONDARY_SAVE_WARNING_TITLE,
   FORM_VALIDATION_WARNING_TOAST,
 } from '@/lib/profile-form/save-feedback'
+import { SAVE_FEEDBACK_MS } from '@/lib/constants/ui-timings'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { isDirtyComparedToSnapshot } from '@/lib/utils/form-baseline'
 import { zodIssuesToFieldErrors } from '@/lib/validation/zod-helpers'
@@ -80,6 +80,14 @@ export function useProfileForm<
   const [initialized, setInitialized] = useState(false)
 
   const baselineRef = useRef<TForm>(defaults)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    if (saved) {
+      savedTimerRef.current = setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS)
+      return () => clearTimeout(savedTimerRef.current)
+    }
+  }, [saved])
 
   const isDirty = useCallback(
     () => isDirtyComparedToSnapshot(form, baselineRef.current),
@@ -138,7 +146,6 @@ export function useProfileForm<
 
       baselineRef.current = form
       setSaved(true)
-      toast.success(FORM_SAVE_SUCCESS_TOAST, { duration: 3000 })
       onSaved?.()
 
       if (afterSuccessfulSave) {

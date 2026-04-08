@@ -489,6 +489,35 @@ Theme switching suppresses transitions via `.theme-switching` class (double-rAF 
 
 ---
 
+## Toast / Notification
+
+| Property | Value |
+|----------|-------|
+| Background | `var(--color-surface-elevated)` — opaque, never glass |
+| Border | `1px solid var(--color-glass-border)` |
+| Shadow | `0 8px 32px var(--color-glass-shadow-elevated)` |
+| Position | `bottom-center` with offset clearing mobile nav (`offset={80}`) |
+| Success feedback | Button state change (2s green flash via `SAVE_FEEDBACK_MS`), not toast |
+| Error/warning | Toast with `.glass-toast-error` / `.glass-toast-success` accent border |
+
+Accent borders (`.glass-toast-success`, `.glass-toast-error`) add a left-border color indicator. They do not set background or backdrop-filter.
+
+---
+
+## Form Label Rule
+
+All visible field labels MUST use `FieldLabel` from `field-shell.tsx`, or the built-in floating label in `Input`/`SimpleSelect`/`LocationPicker` (which renders the same styling).
+
+| Indicator | Implementation |
+|-----------|---------------|
+| Required field | `required` prop → `FieldLabel` renders red asterisk |
+| Optional field | Omit `required` — absence of asterisk IS the optional signal |
+| Banned | `"(optional)"` suffix in label text |
+| Banned | Hand-rolled `<span class="text-destructive"> *</span>` outside of Input/SimpleSelect/FieldLabel |
+| Allowed | Raw `<label>` inside compound picker internals (e.g., radio group labels) |
+
+---
+
 ## Skin Anatomy
 
 Skins are defined in `src/themes/skins.ts` as `ThemeConfig[]` entries.
