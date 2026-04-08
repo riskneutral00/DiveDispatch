@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { internalMutation, mutation, query } from './_generated/server'
+import { mutation, query } from './_generated/server'
 import { notify } from './notifications'
 import { tryAutoAdvance, computeMedicalDeadline } from './bookings/_shared'
 import { resolvePortalToken, resolvePortalTokenSoft } from './lib/portal'
@@ -251,55 +251,5 @@ export const getMedicalByToken = query({
       answers,
       physicianClearanceRequired: profile.physicianClearanceRequired ?? false,
     }
-  },
-})
-
-export const migratePlaintextMedical = internalMutation({
-  args: {
-    batchSize: v.optional(v.number()),
-    cursor: v.optional(v.string()),
-  },
-  handler: async (
-    ctx,
-    args,
-  ): Promise<{ migrated: number; skipped: number; cursor: string | null }> => {
-    const limit = args.batchSize ?? 50
-    const cursorTime = args.cursor ? Number(args.cursor) : 0
-    const profiles = await ctx.db
-      .query('customerProfiles')
-      .filter((q) => q.gt(q.field('_creationTime'), cursorTime))
-      .take(limit + 1)
-
-    const hasMore = profiles.length > limit
-    const batch = hasMore ? profiles.slice(0, limit) : profiles
-
-    let migrated = 0
-    let skipped = 0
-
-    for (const profile of batch) {
-      if (!profile.medicalAnswers) {
-        skipped++
-        continue
-      }
-
-      try {
-        const parsed = JSON.parse(profile.medicalAnswers as string)
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-          const encrypted = await encryptMedical(parsed)
-          await ctx.db.patch(profile._id, { medicalAnswers: encrypted }) // batch-exempt: sequential migration — each row needs individual encrypt + conditional patch
-          migrated++
-        } else {
-          skipped++
-        }
-      } catch {
-        skipped++
-      }
-    }
-
-    const nextCursor = hasMore
-      ? String(batch[batch.length - 1]._creationTime)
-      : null
-
-    return { migrated, skipped, cursor: nextCursor }
   },
 })
