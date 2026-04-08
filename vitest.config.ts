@@ -15,7 +15,7 @@ export default defineConfig({
       'src/app/**', 'src/components/**', 'src/hooks/**', 'src/i18n/**', 'src/themes/theme-provider.tsx', 'src/themes/theme-loader.ts', 'src/themes/theme-types.ts',
       'src/lib/hooks/use-current-user.ts', 'src/lib/hooks/use-debounce.ts', 'src/lib/hooks/use-profile-form.ts', 'src/lib/hooks/use-stable-query.ts', 'src/lib/validation/useFormValidation.ts',
       'src/lib/types/**', 'src/lib/validators/**',
-      'src/lib/validation/index.ts', 'src/components/glass/index.ts', 'src/lib/convex.tsx', 'src/lib/nav-items.ts', 'src/proxy.ts',
+      'src/lib/validation/index.ts', 'src/components/glass/index.ts', 'src/lib/convex.tsx', 'src/proxy.ts',
       'convex/devSwitcher.ts', 'convex/equipmentWidget.ts', 'convex/themes.ts', 'convex/auth.config.ts', 'convex/crons.ts', 'convex/http.ts', 'convex/testHelpers.ts'],
       thresholds: {
         statements: 75
