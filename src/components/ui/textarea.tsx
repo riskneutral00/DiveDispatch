@@ -1,6 +1,7 @@
-import React, { useId } from "react";
+import React, { useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { FieldError, FieldLabel } from "@/components/ui/field-shell";
+import { FieldError } from "@/components/ui/field-shell";
+import { useFloatingLabel } from "@/lib/hooks/use-floating-label";
 
 interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -22,38 +23,50 @@ export function Textarea({
 }: TextareaProps) {
   const generatedId = useId();
   const id = externalId ?? generatedId;
+  const [focused, setFocused] = useState(false);
+  const { floated } = useFloatingLabel({ value: props.value as string | undefined, focused });
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
-      {label && (
-        <FieldLabel htmlFor={id} required={required}>
-          {label}
-        </FieldLabel>
-      )}
-
+    <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       <textarea
         {...props}
         id={id}
         rows={rows}
         disabled={disabled}
         required={required}
+        onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
+        onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
         className={cn(
-          "field-underline w-full text-body text-primary px-0 py-2.5 resize-none",
+          "field-underline w-full text-body text-primary px-0 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "placeholder:opacity-50",
-          className,
+          label ? "pt-4 pb-1.5" : "py-2.5",
         )}
-        style={{ caretColor: "var(--color-accent)",
-          ...(error
-            ? {
-                borderBottomColor: "var(--color-destructive)",
-              }
-            : {}) }}
+        style={{
+          caretColor: "var(--color-accent)",
+          ...(error ? { borderBottomColor: "var(--color-destructive)" } : {}),
+          ...(focused && !error ? { borderBottomColor: "var(--color-primary)", borderBottomWidth: "2px" } : {}),
+        }}
         aria-invalid={!!error}
         aria-describedby={
           error ? `${id}-error` : helperText ? `${id}-helper` : undefined
         }
       />
+
+      {label && (
+        <label
+          htmlFor={id}
+          className={cn(
+            "absolute left-0 pointer-events-none transition-all",
+            floated
+              ? cn("top-0 text-[10px] font-medium", focused ? "text-primary" : "text-secondary")
+              : "top-3 text-body text-secondary",
+          )}
+          style={{ transitionDuration: "var(--transition-speed)" }} /* design-ok */
+        >
+          {label}{required && <span className="text-destructive"> *</span>}
+        </label>
+      )}
 
       {error && <FieldError id={`${id}-error`} message={error} />}
       {!error && helperText && (

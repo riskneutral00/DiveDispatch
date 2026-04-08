@@ -6,6 +6,7 @@ import { APIProvider, Map, useApiIsLoaded, useMap, type MapMouseEvent } from '@v
 import usePlacesAutocomplete from 'use-places-autocomplete'
 import { MapPin, X, Locate, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useFloatingLabel } from '@/lib/hooks/use-floating-label'
 import { cn } from '@/lib/utils/cn'
 import { Dialog } from '@/components/ui/dialog'
 import { autocompleteKeyboardReducer, INITIAL_STATE } from '@/components/ui/autocomplete-keyboard'
@@ -419,20 +420,13 @@ interface TriggerProps {
 
 function LocationPickerTrigger({ value, onOpen, onClear, error, label, required, className }: TriggerProps) {
   const inputId = useId()
+  const filled = !!value
+  const { floated } = useFloatingLabel({ value: filled ? 'filled' : '', focused: false })
   return (
-    <div className={cn("flex flex-col gap-1.5", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
-      {label && (
-        <label
-          htmlFor={inputId}
-          className="text-body font-medium text-secondary"
-        >
-          {label}
-          {required && <span style={{ color: 'var(--color-destructive)' }}> *</span>}
-        </label>
-      )}
+    <div className={cn("relative", className?.includes('field-') || className?.includes('w-') ? '' : 'w-full', className)}>
       <div className="relative">
         <span
-          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-secondary"
+          className={cn("absolute pointer-events-none text-secondary", label ? "left-0 top-4" : "left-3 top-1/2 -translate-y-1/2")}
         >
           <MapPin size={16} />
         </span>
@@ -440,7 +434,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           id={inputId}
           type="button"
           onClick={onOpen}
-          className="field-underline w-full text-body py-2.5 pl-6 pr-6 text-left truncate cursor-pointer"
+          className={cn("field-underline w-full text-body text-left truncate cursor-pointer", label ? "pt-4 pb-1.5 pl-5 pr-6" : "py-2.5 pl-6 pr-6")}
           style={{
             color: value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             ...(error
@@ -471,8 +465,22 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           </button>
         )}
       </div>
+      {label && (
+        <label
+          htmlFor={inputId}
+          className={cn(
+            'absolute left-0 pointer-events-none transition-all',
+            floated
+              ? 'top-0 text-[10px] font-medium text-secondary'
+              : 'top-3 text-body text-secondary',
+          )}
+          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
+        >
+          {label}{required && <span className="text-destructive"> *</span>}
+        </label>
+      )}
       {error && (
-        <p role="alert" className="text-body" style={{ color: 'var(--color-destructive)' }}>
+        <p role="alert" className="text-body text-destructive">
           {error}
         </p>
       )}

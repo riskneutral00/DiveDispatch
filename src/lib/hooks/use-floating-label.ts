@@ -12,7 +12,7 @@ export function useFloatingLabel({ value, focused = false }: UseFloatingLabelOpt
   useEffect(() => { requestAnimationFrame(() => setMounted(true)) }, [])
 
   const filled = typeof value === 'string' ? value.length > 0 : !!value
-  const floated = mounted || focused || filled
+  const floated = mounted && (focused || filled)
 
   return { floated, filled, mounted }
 }
