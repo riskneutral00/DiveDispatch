@@ -71,7 +71,7 @@ export async function seedSession(
     date?: string
     startTime?: string
     endTime?: string
-    deliveryLocation?: string
+    deliveryLocation?: 'Pool' | 'BoatPier' | 'Beach'
   } = {},
 ) {
   return ctx.db.insert('bookingSessions', {

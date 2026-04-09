@@ -112,6 +112,13 @@ describe('PortalActiveFlow', () => {
   it('starts on the correct server-derived step when progress is provided', () => {
     const progressAtMedical = {
       firstIncompleteStep: 'medical' as const,
+      requiresContact: true,
+      requiresMedical: true,
+      requiresWaiver: true,
+      contactComplete: true,
+      medicalComplete: false,
+      waiverComplete: false,
+      equipmentComplete: false,
       contactData: null,
       medicalData: null,
       waiverSignedAt: null,

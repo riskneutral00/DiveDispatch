@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '../helpers/render'
 import { PendingRequestsList } from '@/components/booking/pending-requests-list'
-import type { RequestItem } from '../../../convex/bookings'
+import type { RequestItem } from '../../convex/bookings'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 

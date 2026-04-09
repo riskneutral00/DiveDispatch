@@ -82,7 +82,7 @@ function makeBooking(overrides: Record<string, unknown> = {}) {
 
 function makeProps(overrides: Partial<BookingDetailBodyProps> = {}): BookingDetailBodyProps {
   return {
-    booking: makeBooking() as BookingDetailBodyProps['booking'],
+    booking: makeBooking() as unknown as BookingDetailBodyProps['booking'],
     bookingId: 'booking-xyz',
     portalLink: undefined,
     layout: 'page',

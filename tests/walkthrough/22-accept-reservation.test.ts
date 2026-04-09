@@ -19,17 +19,16 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { testDate } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 type Ctx = Parameters<Parameters<ReturnType<typeof makeT>['run']>[0]>[0]
+
+type StakeholderRole = 'DiveCenter' | 'Agent' | 'Liveaboard' | 'DiveResort' | 'DiveHostel' | 'DiveSite' | 'Boat' | 'Equipment' | 'Pool' | 'Compressor' | 'Instructor' | 'DiveMaster'
 
 async function seedUser(
   ctx: Ctx,
   slug: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  role: any = 'Instructor',
+  role: StakeholderRole = 'Instructor',
 ) {
-  await ctx.db.insert('users', {
+  const userId = await ctx.db.insert('users', {
     tokenIdentifier: `clerk|${slug}`,
     slug,
     email: `${slug}@test.com`,
@@ -37,9 +36,27 @@ async function seedUser(
     firstName: slug,
     lastName: 'Test',
     businessName: `${slug} Business`,
+    phone: '+66812345678',
     isSeeded: false,
     appLanguage: 'en',
   })
+  await ctx.db.insert('userRoles', { userId, role, createdAt: Date.now(), profileComplete: false })
+  if (role === 'Instructor') {
+    await ctx.db.insert('instructors', {
+      userId,
+      name: `${slug} Display`,
+      placeName: 'Koh Tao',
+      country: 'Thailand',
+      lat: 10.0957,
+      lng: 99.8408,
+      email: `${slug}@test.com`,
+      phone: '+66812345678',
+      credential: [{ agency: 'PADI', level: 'OWSI', agencyID: '12345', specialtyRatings: ['OW'] }],
+      verified: true,
+      teachingLanguages: ['en'],
+    })
+  }
+  return userId
 }
 
 async function seedBooking(ctx: Ctx, ownerId: string): Promise<Id<'bookings'>> {

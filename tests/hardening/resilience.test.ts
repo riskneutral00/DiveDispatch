@@ -8,7 +8,7 @@ import { HOLD_TTL_MS as HOLD_TTL } from '../../convex/lib/auth'
 import { BOOKING_LINK_TTL_MS } from '../../convex/lib/timeConstants'
 import { testDate, testToken } from '../helpers/dates'
 import { makeT, expectConvexError } from '../helpers/convex-helpers'
-import { seedUser, seedBooking as _seedBooking, type SeedCtx } from '../fixtures'
+import { seedUser, seedBooking as _seedBooking, seedInstructorProfile, type SeedCtx } from '../fixtures'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,13 +36,13 @@ describe('L9-14: Cancel booking → accept reservation → INVALID_STATUS', () =
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
-      await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
+      const instUserId = await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
+      await seedInstructorProfile(ctx, instUserId)
       const bookingId = await seedBooking(ctx, 'dc-test')
       const unitId = await seedExclusiveInstructor(ctx)
       return { bookingId, unitId }
     })
 
-    // Submit booking → creates PendingAcceptance reservation
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
       .mutation(api.bookings.create.submitToDraft, {
@@ -59,7 +59,6 @@ describe('L9-14: Cancel booking → accept reservation → INVALID_STATUS', () =
         ],
       })
 
-    // Get the reservation ID
     const reservationId = await t.run(async (ctx) => {
       const res = await ctx.db
         .query('reservations')
@@ -135,13 +134,13 @@ describe('L9-14: Accept reservation → cancel booking → reservation vacated',
 
     const { bookingId, unitId } = await t.run(async (ctx) => {
       await seedUser(ctx, { slug: 'dc-test', tokenIdentifier: 'clerk|dc-test', role: 'DiveCenter' })
-      await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
+      const instUserId = await seedUser(ctx, { slug: 'instructor-1', tokenIdentifier: 'clerk|instructor-1', role: 'Instructor' })
+      await seedInstructorProfile(ctx, instUserId)
       const bookingId = await seedBooking(ctx, 'dc-test')
       const unitId = await seedExclusiveInstructor(ctx)
       return { bookingId, unitId }
     })
 
-    // Submit booking
     await t
       .withIdentity({ tokenIdentifier: 'clerk|dc-test' })
       .mutation(api.bookings.create.submitToDraft, {

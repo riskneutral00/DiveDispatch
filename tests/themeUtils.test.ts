@@ -46,6 +46,9 @@ const palette: ColorPalette = {
   tooltipBg: 'rgba(255, 255, 255, 0.92)',
   tooltipText: '#0f172a',
   fieldUnderline: 'rgba(255,255,255,0.25)',
+  glassDialogBg: 'rgba(0,0,0,0.6)',
+  glassDialogBorder: 'rgba(255,255,255,0.12)',
+  glassDialogBlur: 20,
 }
 
 describe('contrastRatio', () => {

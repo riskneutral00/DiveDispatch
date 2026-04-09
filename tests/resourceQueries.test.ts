@@ -15,8 +15,8 @@ const INSTRUCTOR_TOKEN = `user|${INSTRUCTOR_SLUG}`
 const DC_SLUG = 'dc-slug'
 
 const DEFAULT_DIVERS = [
-  { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as string[] },
-  { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as string[] },
+  { name: 'Alice', abbrev: 'AL', flag: { code: 'US', label: 'USA' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as ('OW')[] },
+  { name: 'Bob', abbrev: 'BO', flag: { code: 'UK', label: 'United Kingdom' }, startDate: testDate(5), endDate: testDate(7), activityType: ['OW'] as ('OW')[] },
 ]
 
 describe('getOpenRequests', () => {
