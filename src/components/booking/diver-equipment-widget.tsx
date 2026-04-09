@@ -448,7 +448,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
       )}
 
       {data.bookings.length > 1 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 reading-plane rounded-theme p-1.5">
           {data.bookings.map((b) => {
             const isActive = b.bookingId === activeId
             return (

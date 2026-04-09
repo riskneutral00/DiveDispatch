@@ -191,6 +191,7 @@ export function SendPortalLink({
         onClose={handleClose}
         title={tCommon('sendLink')}
         size="sm"
+        melt={false}
       >
         <div className="space-y-4">
           <div>

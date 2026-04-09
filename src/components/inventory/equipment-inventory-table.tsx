@@ -168,6 +168,7 @@ export function EquipmentInventoryTable({
         onClose={() => setDeleteTarget(null)}
         title="Remove Item"
         size="sm"
+        melt={false}
       >
         <p className="text-body mb-4 text-primary">
           Remove{' '}
@@ -337,7 +338,7 @@ function AddItemDialog({
   }
 
   return (
-    <Dialog open={open} onClose={handleClose} title="Add Inventory Item" size="sm">
+    <Dialog open={open} onClose={handleClose} title="Add Inventory Item" size="sm" melt={false}>
       <div className="space-y-4">
         <SimpleSelect
           label="Gear Type"

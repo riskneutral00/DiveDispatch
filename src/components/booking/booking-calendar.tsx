@@ -291,7 +291,7 @@ export function BookingCalendar({
                         jumpToDate(new Date(pickerYear, i, 1))
                         setExpanded(false)
                       }}
-                      className={`glass-container glass-surface transition rounded-[var(--border-radius-button)] py-1.5 text-body font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
+                      className={`glass-container glass-surface reading-plane transition rounded-[var(--border-radius-button)] py-1.5 text-body font-medium min-h-[44px]${isBeforeFloor ? ' opacity-30 cursor-not-allowed' : ''}`}
                       style={{
                         color: isCurrentMonth ? 'var(--color-status-active)' : 'var(--color-text-primary)',
                         background: isCurrentMonth ? 'var(--color-status-active-bg)' : undefined,
