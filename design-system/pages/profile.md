@@ -146,7 +146,7 @@ affiliations separated by `<hr className="form-divider">` between each group (no
 
 ```
 Agency (Select)     Member ID (Input)    — side-by-side, pr-10 for remove button
-Default course #days     OW / AOW / O+A            — DayPicker selects
+Default course days     OW / AOW / O+A            — DayPicker selects
 Default specialties      Toggle pill chips          — with "More..." overflow
 ```
 

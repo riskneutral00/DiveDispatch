@@ -153,7 +153,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0 content-island rounded-theme p-2">
+        <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
             Start date
           </label>
@@ -169,7 +169,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0 content-island rounded-theme p-2">
+        <div className="flex flex-col gap-1 min-w-0 reading-plane rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
             End date
           </label>

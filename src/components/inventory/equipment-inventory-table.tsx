@@ -231,7 +231,7 @@ function InventoryTableRow({
   const gearLabel = item.gearType.charAt(0).toUpperCase() + item.gearType.slice(1)
 
   return (
-    <tr className="glass-divider content-island">
+    <tr className="glass-divider reading-plane">
       <td className="px-4 py-2.5">
         <Badge variant="default" size="sm">{gearLabel}</Badge>
       </td>

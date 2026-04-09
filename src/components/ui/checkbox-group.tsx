@@ -23,7 +23,7 @@ function CheckboxGroup({ label, items, selected, onChange, error, columns = 2 }:
   }
 
   return (
-    <fieldset className="flex flex-col gap-2 w-full border-0 p-0 m-0 min-w-0 content-island rounded-theme p-2">
+    <fieldset className="flex flex-col gap-2 w-full border-0 p-0 m-0 min-w-0 reading-plane rounded-theme p-2">
       <legend className="text-body font-medium text-secondary w-full px-0">
         {label}
       </legend>

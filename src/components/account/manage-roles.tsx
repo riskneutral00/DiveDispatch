@@ -80,7 +80,7 @@ export function ManageRoles({
           const percentage = completionByRole.get(entry.role) ?? 0
 
           return (
-            <Card key={entry._id} padding="md" className="content-island">
+            <Card key={entry._id} padding="md" className="reading-plane">
               <div className="flex items-center gap-3">
                 <RoleIcon role={entry.role} size={20} />
                 <div className="flex-1 min-w-0">

@@ -155,7 +155,7 @@ export function EquipmentGearCatalogSection({ profile: existing, create, update,
         {activeGearTypes.length > 0 && (
           <div className="space-y-3">
             {activeGearTypes.map((gt) => (
-              <div key={gt} className="p-3 rounded-theme content-island">
+              <div key={gt} className="p-3 rounded-theme reading-plane">
                 <FormSectionHeader label={GEAR_TYPE_LABELS[gt]} className="mb-2" />
                 <div className="flex gap-2 mb-2">
                   <Input

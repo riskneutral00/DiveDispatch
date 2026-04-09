@@ -32,7 +32,7 @@ export function DayToggleGroup({ selected, onChange, disabledDays = [], error, l
   }
 
   return (
-    <div className="content-island rounded-theme p-2">
+    <div className="reading-plane rounded-theme p-2">
       {label && <FieldLabel className="mb-1.5">{label}</FieldLabel>}
       <div className="flex flex-wrap gap-1.5">
         {DAYS.map((d) => {

@@ -173,7 +173,7 @@ export function SpecialtyField({
   }
 
   return (
-    <div className="relative flex flex-col gap-1.5 min-w-0 content-island rounded-theme p-2">
+    <div className="relative flex flex-col gap-1.5 min-w-0 reading-plane rounded-theme p-2">
       <FieldLabel required className="flex items-center gap-2">
         <span>Default Specialties</span>
         <span className="opacity-70">{value.length} / {requiredCount}</span> {/* design-ok */}

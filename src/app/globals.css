@@ -467,12 +467,12 @@ dialog::backdrop {
 }
 
 /* ── Content island — reading plane for interactive elements ──────────────*/
-.content-island {
+.reading-plane {
   background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
 }
 
-.glass-container.content-island,
-.glass-container .content-island {
+.glass-container.reading-plane,
+.glass-container .reading-plane {
   background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
 }
 
@@ -544,7 +544,7 @@ dialog::backdrop {
   border-bottom-color: var(--color-accent);
 }
 
-.content-island .field-underline {
+.reading-plane .field-underline {
   background-color: transparent;
 }
 

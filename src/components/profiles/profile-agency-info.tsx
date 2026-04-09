@@ -119,7 +119,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
         <div className="">
           <FieldLabel required className="mb-2">
-            Default course #days
+            Default course days
           </FieldLabel>
           <div className="flex gap-2">
             <DayPicker
