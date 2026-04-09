@@ -65,6 +65,19 @@
 | `--font-size-card-title` | 16px | `text-card-title` |
 | `--font-size-page-title` | 28px | `text-page-title` |
 
+## Banned Patterns in Feature Code
+
+These inline styles have Tailwind equivalents registered in `@theme inline`. Agents: when you encounter these, migrate them. Never copy them into new code.
+
+- `style={{ color: 'var(--color-text-primary)' }}` → `className="text-primary"`
+- `style={{ color: 'var(--color-text-secondary)' }}` → `className="text-secondary"`
+- `style={{ background: 'var(--color-glass-bg)' }}` → `className="bg-glass-bg"`
+- `style={{ background: 'var(--color-surface-elevated)' }}` → `className="bg-surface-elevated"`
+- `style={{ borderColor: 'var(--color-glass-border)' }}` → `className="border-glass-border"`
+- `style={{ borderBottom: '1px solid var(--color-glass-border)' }}` → `className="glass-divider"`
+
+Full mapping: `Architecture/design-system-invariants.md` → Banned Patterns table.
+
 ## Exceptions
 
 - `ui/` and `glass/` component internals MAY use `color-mix()` — they are the component-level variant definitions using CSS variables as inputs. Feature components may not.

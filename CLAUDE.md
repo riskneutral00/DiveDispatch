@@ -13,6 +13,7 @@ Read the relevant file BEFORE modifying code in that domain.
 - Queries: `Architecture/query-invariants.md`
 - Auth: `Architecture/auth-model.md`
 - Components + State: `Architecture/component-invariants.md`
+- Design System: `Architecture/design-system-invariants.md`
 - FSM: `Architecture/fsm-invariants.md`
 - Errors: `Architecture/error-invariants.md`
 - Testing: `Architecture/testing-invariants.md`
