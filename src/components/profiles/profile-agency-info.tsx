@@ -117,7 +117,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         />
         </div>
 
-        <div>
+        <div className="">
           <FieldLabel required className="mb-2">
             Default course #days
           </FieldLabel>
@@ -145,18 +145,20 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
             />
           </div>
         </div>
-        <SpecialtyField
-          agencyCode={String((item as AgencyRow).agency ?? '')}
-          value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
-          onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
-        />
+        <div className=" w-full">
+          <SpecialtyField
+            agencyCode={String((item as AgencyRow).agency ?? '')}
+            value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
+            onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
+          />
+        </div>
       </div>
     )
   }
 
   function renderAgentFields(item: AgencyRow, idx: number) {
     return (
-      <div className="flex flex-wrap gap-3 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4 ">
         <SimpleSelect
           label="Agency"
           value={String((item as AgencyRow).agency ?? '')}
@@ -189,7 +191,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
 
     return (
       <Fragment>
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-4 ">
           <SimpleSelect
             label="Agency"
             value={selectedAgency}

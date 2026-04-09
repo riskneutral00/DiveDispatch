@@ -78,7 +78,7 @@
     "eslint-plugin-storybook": "^10.3.4",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.0.0",
-    "playwright": "^1.59.1",
+    "playwright": "^1.58.2",
     "storybook": "^10.3.4",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",

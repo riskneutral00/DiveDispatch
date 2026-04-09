@@ -153,7 +153,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex flex-col gap-1 min-w-0 content-island rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
             Start date
           </label>
@@ -169,7 +169,7 @@ function CourseEntryRow({ entry, customerId, canRemove, dispatch, agency, minSta
           />
         </div>
 
-        <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex flex-col gap-1 min-w-0 content-island rounded-theme p-2">
           <label className="text-body font-medium text-secondary">
             End date
           </label>
@@ -496,7 +496,7 @@ export function ItineraryStep({ state, dispatch, isEditMode = false }: Itinerary
             label={
               <>
                 Same courses for all customers
-                <span className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] text-secondary" style={{ background: 'var(--color-glass-border)' }}>
+                <span className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] text-secondary bg-glass-border">
                   Coming soon
                 </span>
               </>

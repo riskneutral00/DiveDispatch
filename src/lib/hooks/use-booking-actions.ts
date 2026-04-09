@@ -47,51 +47,56 @@ export function useBookingActions(): UseBookingActionsReturn {
     setDetailError(null)
   }, [])
 
-  const handleDetailAccept = useCallback(async (bookingId: string) => {
-    setIsAccepting(true)
+  const handleDetailAction = useCallback(async (
+    bookingId: string,
+    setLoading: (loading: boolean) => void,
+    optimisticStatus: CalendarBooking['reservationStatus'],
+    mutation: typeof acceptByBooking,
+    fallbackMessage: string,
+  ) => {
+    setLoading(true)
     setDetailError(null)
 
     const previousBooking = detailBooking
     if (detailBooking) {
-      setDetailBooking({ ...detailBooking, reservationStatus: 'Confirmed' })
+      setDetailBooking({ ...detailBooking, reservationStatus: optimisticStatus })
     }
 
     try {
-      await acceptByBooking({ bookingId: bookingId as Id<'bookings'> })
+      await mutation({ bookingId: bookingId as Id<'bookings'> })
       setDetailBooking(null)
     } catch (err) {
-      const message = parseConvexError(err, 'Failed to accept booking')
+      const message = parseConvexError(err, fallbackMessage)
       setDetailError(message)
       if (previousBooking) {
         setDetailBooking(previousBooking)
       }
     } finally {
-      setIsAccepting(false)
+      setLoading(false)
     }
-  }, [acceptByBooking, detailBooking])
+  }, [detailBooking])
 
-  const handleDetailDecline = useCallback(async (bookingId: string) => {
-    setIsDeclining(true)
-    setDetailError(null)
+  const handleDetailAccept = useCallback(
+    (bookingId: string) => handleDetailAction(
+      bookingId,
+      setIsAccepting,
+      'Confirmed',
+      acceptByBooking,
+      'Failed to accept booking',
+    ),
+    [acceptByBooking, handleDetailAction],
+  )
 
-    const previousBooking = detailBooking
-    if (detailBooking) {
-      setDetailBooking({ ...detailBooking, reservationStatus: 'Vacated' })
-    }
-
-    try {
-      await declineByBooking({ bookingId: bookingId as Id<'bookings'> })
-      setDetailBooking(null)
-    } catch (err) {
-      const message = parseConvexError(err, 'Failed to decline booking')
-      setDetailError(message)
-      if (previousBooking) {
-        setDetailBooking(previousBooking)
-      }
-    } finally {
-      setIsDeclining(false)
-    }
-  }, [declineByBooking, detailBooking])
+  const handleDetailDecline = useCallback(
+    (bookingId: string) => handleDetailAction(
+      bookingId,
+      setIsDeclining,
+      'Vacated',
+      declineByBooking,
+      'Failed to decline booking',
+    ),
+    [declineByBooking, handleDetailAction],
+  )
 
   const handleUrgentCancel = useCallback((bookingId: string, isOperator: boolean) => {
     if (isOperator) {

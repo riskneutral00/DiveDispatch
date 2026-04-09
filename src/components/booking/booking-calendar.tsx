@@ -244,13 +244,11 @@ export function BookingCalendar({
 
           {expanded && (
             <div
-              className="absolute z-[var(--z-dropdown)] left-1/2 -translate-x-1/2 mt-2 glass-elevated rounded-theme py-3 px-4"
+              className="absolute z-[var(--z-dropdown)] left-1/2 -translate-x-1/2 mt-2 glass-elevated py-3 px-4"
               style={{
                 position: 'absolute',
                 top: '100%',
                 width: '240px',
-                background: 'var(--color-surface-elevated)',
-                boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
               }}
             >
               <div className="flex items-center justify-between mb-3">

@@ -80,16 +80,12 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
         <>
           <div
             className="fixed inset-0 z-[var(--z-dropdown)]"
+            data-menu-melt
             role="presentation"
             onClick={() => setOpen(false)}
           />
           <div
-            className="absolute right-0 top-10 z-[var(--z-dropdown)] min-w-[180px] py-1 shadow-xl glass-elevated"
-            style={{
-              background: "var(--color-surface-elevated)",
-              border: "1px solid var(--color-glass-border)",
-              borderRadius: "var(--border-radius)",
-            }}
+            className="absolute right-0 top-10 z-[var(--z-dropdown)] min-w-[180px] py-1 glass-elevated"
           >
             <div
               className="px-3 py-2 glass-divider"

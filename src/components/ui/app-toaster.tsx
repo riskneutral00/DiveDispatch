@@ -9,8 +9,10 @@ export function AppToaster() {
       offset={80}
       toastOptions={{
         style: {
-          background: 'var(--color-surface-elevated)',
-          border: '1px solid var(--color-glass-border)',
+          background: 'var(--color-glass-bg-elevated)',
+          backdropFilter: 'blur(var(--glass-blur-elevated))',
+          WebkitBackdropFilter: 'blur(var(--glass-blur-elevated))',
+          border: '1px solid var(--color-glass-border-elevated)',
           color: 'var(--color-text-primary)',
           borderRadius: 'var(--border-radius, 12px)',
           boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',

@@ -312,7 +312,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
         {section === 'booking' && (
           <>
-            <Card padding="sm">
+            <Card padding="sm" className="content-island">
               <FormSectionHeader className="mb-4" label={tBooking('acceptanceMode')} />
               <div className="space-y-2">
                 {ACCEPTANCE_MODES.map(({ value, label, description }) => {
@@ -354,7 +354,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
             {showResourcePrefs && (
               <>
                 <SectionDivider show />
-                <Card padding="sm">
+                <Card padding="sm" className="content-island">
                   <FormSectionHeader className="mb-4" label={tBooking('preferredResources')} />
                   <label className="flex items-center gap-3 cursor-pointer select-none text-body text-primary">
                     {/* design-ok */}<input
@@ -374,7 +374,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
 
             <SectionDivider show />
 
-            <Card padding="sm">
+            <Card padding="sm" className="content-island">
               <FormSectionHeader className="mb-4" label={tBooking('confirmationAlerts')} />
               <div className="space-y-3">
                 {(

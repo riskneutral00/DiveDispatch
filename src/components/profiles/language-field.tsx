@@ -29,12 +29,14 @@ export function LanguageField({
 
   return (
     <FieldShell id={`language-${variant}`} label={label} required className="flex flex-col items-center gap-1.5 w-full">
-      <LanguagePicker
-        value={value}
-        onChange={onChange}
-        max={max}
-        disabled={disabled}
-      />
+      <div className="content-island rounded-theme p-2 w-auto">
+        <LanguagePicker
+          value={value}
+          onChange={onChange}
+          max={max}
+          disabled={disabled}
+        />
+      </div>
     </FieldShell>
   )
 }

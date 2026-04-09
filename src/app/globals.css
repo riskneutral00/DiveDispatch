@@ -345,6 +345,13 @@ body:has(dialog[open][data-melt]) {
   overflow: hidden;
 }
 
+/* Mobile menu — stronger fill so dropdown is readable over dense content */
+@media (max-width: 639px) {
+  [data-menu-melt] + .glass-elevated {
+    background-color: color-mix(in srgb, var(--color-surface-elevated) 90%, transparent);
+  }
+}
+
 /* Dialog native backdrop — activated when dialog.showModal() is open */
 dialog::backdrop {
   background: transparent;
@@ -445,11 +452,12 @@ dialog::backdrop {
   z-index: 1;
 }
 
-/* ── Glass container (readability surface — no blur, semi-transparent bg) ───*/
+/* ── Glass container (perimeter only — no fill, no blur) ───────────────────*/
 .glass-container {
-  background-color: var(--color-glass-container-bg);
+  background-color: transparent;
   border: 1px solid var(--color-glass-container-border);
   border-radius: var(--border-radius);
+  box-shadow: none;
 }
 
 /* Nested containers: lose border AND go transparent (avoid stacking tints) */
@@ -458,16 +466,23 @@ dialog::backdrop {
   background-color: transparent;
 }
 
-/* ── Glass dialog (high-opacity readability surface for modal content) ──────*/
+/* ── Content island — reading plane for interactive elements ──────────────*/
+.content-island {
+  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+}
+
+.glass-container.content-island,
+.glass-container .content-island {
+  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+}
+
+/* ── Glass dialog (perimeter shell — no fill, no blur) ─────────────────────*/
 .glass-dialog {
-  background-color: var(--color-glass-dialog-bg);
-  backdrop-filter: blur(var(--glass-dialog-blur));
-  -webkit-backdrop-filter: blur(var(--glass-dialog-blur));
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid var(--color-glass-dialog-border);
   border-radius: var(--border-radius);
-  box-shadow:
-    0 8px 32px var(--color-glass-shadow-elevated),
-    inset 0 1px 0 var(--color-glass-specular-subtle);
 }
 
 /* ── Glass field (input focus ring) ──────────────────────────────────────────*/
@@ -494,9 +509,9 @@ dialog::backdrop {
 }
 @media (min-width: 640px) {
   .dialog-fullscreen-panel {
-    background-color: var(--color-glass-container-bg, var(--color-surface-elevated));
+    background-color: transparent;
     border: 1px solid var(--color-glass-container-border);
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,.25);
+    box-shadow: none;
   }
 }
 
@@ -510,22 +525,27 @@ dialog::backdrop {
   from { font-size: 14px; opacity: 0.5; }
 }
 
-/* ── Field underline — in @layer utilities so Tailwind v4 doesn't strip it ─*/
-@layer utilities {
-  .field-underline {
-    background-color: transparent;
-    border: none;
-    border-bottom: 1.5px solid var(--color-field-underline);
-    border-radius: 0;
-    outline: none;
-    transition: border-color var(--transition-speed) ease;
-  }
+/* ── Field underline — unlayered like .glass/.glass-elevated so cascade wins ─*/
+.field-underline {
+  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  border: none;
+  border-bottom: 1.5px solid var(--color-field-underline);
+  border-radius: 0;
+  outline: none;
+  transition: border-color var(--transition-speed) ease;
+}
 
-  .field-underline:focus {
-    outline: none;
-    border-bottom-color: var(--color-accent);
-    box-shadow: none;
-  }
+.field-underline:focus {
+  outline: none;
+  border-bottom-color: var(--color-accent);
+}
+
+.field-underline:hover {
+  border-bottom-color: var(--color-accent);
+}
+
+.content-island .field-underline {
+  background-color: transparent;
 }
 
 /* ── Button variant hover states ─────────────────────────────────────────────

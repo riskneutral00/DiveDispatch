@@ -33,7 +33,7 @@ export function ButtonGroup({
         role="tablist"
         aria-label={ariaLabel}
         className={cn(
-          "flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0 glass-divider",
+          "flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0 glass-divider content-island rounded-theme p-2",
           className,
         )}
       >
@@ -73,7 +73,7 @@ export function ButtonGroup({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex rounded-theme overflow-hidden border flex-shrink-0",
+        "inline-flex rounded-theme overflow-hidden border flex-shrink-0 content-island p-2",
         className,
       )}
       style={{ borderColor: "var(--color-glass-border)" }}

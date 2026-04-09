@@ -239,7 +239,7 @@ export function DayRow({
             )
           }
           return (
-            <div className="flex flex-wrap gap-1 items-end pb-1">
+            <div className="flex flex-wrap gap-1 items-end pb-1 content-island rounded-theme p-2">
               {displaySlots.map((slot, i) => {
                 const isActive = day.dives.some(
                   (d) => d.courseCode === slot.courseCode && d.diveNumber === slot.diveNumber && d.isConfined === slot.isConfined,
@@ -341,7 +341,7 @@ export function DayRow({
                     <span className="text-label font-medium w-16 shrink-0 text-primary">
                       {diveLabel}
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 content-island rounded-theme p-1">
                       {venueOptions.map((vt) => {
                         const Icon = VENUE_ICONS[vt]
                         const isVenueSelected = currentVenue === vt

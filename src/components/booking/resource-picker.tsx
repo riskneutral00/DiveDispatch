@@ -129,10 +129,8 @@ export function ResourcePicker({
 
           {isOpen && (
             <div
-              className="absolute z-[var(--z-dropdown)] left-0 right-0 top-full mt-1 rounded-theme shadow-xl overflow-hidden"
+              className="absolute z-[var(--z-dropdown)] left-0 right-0 top-full mt-1 shadow-xl overflow-hidden glass-elevated"
               style={{
-                background: 'var(--color-surface-elevated)',
-                border: '1px solid var(--color-glass-border)',
                 maxHeight: '18rem',
                 overflowY: 'auto',
               }}

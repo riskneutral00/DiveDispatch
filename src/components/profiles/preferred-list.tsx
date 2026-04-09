@@ -186,7 +186,7 @@ function SortableInstructorCard({
   return (
     <div
       ref={ref}
-      className="glass-container rounded-theme p-3 min-w-[140px]"
+      className="glass-container content-island rounded-theme p-3 min-w-[140px]"
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
       <div className="flex items-start gap-1 mb-1">
@@ -557,7 +557,7 @@ function SortableOverlayCard({
 }) {
   const { ref, handleRef, isDragging } = useSortable({ id: slug, index, group })
   return (
-    <div ref={ref} className="glass-container rounded-theme p-3 min-w-[140px]" style={{ opacity: isDragging ? 0.5 : 1 }}>
+    <div ref={ref} className="glass-container content-island rounded-theme p-3 min-w-[140px]" style={{ opacity: isDragging ? 0.5 : 1 }}>
       <div className="flex items-start gap-1 mb-1">
         <span className="text-label font-bold w-5 text-center shrink-0 text-secondary">{index + 1}</span>
         {/* design-ok */}<button ref={handleRef} type="button" className="shrink-0 cursor-grab active:cursor-grabbing text-secondary hover:text-primary transition-colors duration-theme" aria-label="Drag to reorder">

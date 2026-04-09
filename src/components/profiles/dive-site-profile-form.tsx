@@ -120,14 +120,16 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
 
         <SectionDivider show />
 
-        <Select
-          label="Site Type"
-          value={form.venueType}
-          onChange={(val) => setField('venueType', val as DiveSiteDetailsFormState['venueType'])}
-          options={VENUE_TYPE_OPTIONS}
-          error={errors.venueType}
-          required
-        />
+        <div>
+          <Select
+            label="Site Type"
+            value={form.venueType}
+            onChange={(val) => setField('venueType', val as DiveSiteDetailsFormState['venueType'])}
+            options={VENUE_TYPE_OPTIONS}
+            error={errors.venueType}
+            required
+          />
+        </div>
       </div>
     </ProfileFormShell>
   )

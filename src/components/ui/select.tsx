@@ -301,12 +301,9 @@ export function Select({
           ref={listRef}
           role="listbox"
           aria-activedescendant={focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
-          className="absolute top-full left-0 w-full mt-1 rounded-theme overflow-auto z-[var(--z-dropdown)] py-1"
+          className="absolute top-full left-0 w-full mt-1 overflow-auto z-[var(--z-dropdown)] py-1 glass-elevated"
           style={{
             maxHeight: '280px',
-            backgroundColor: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-glass-border)',
-            boxShadow: '0 8px 32px var(--color-glass-shadow-elevated)',
           }}
         >
           {tiers ? (
