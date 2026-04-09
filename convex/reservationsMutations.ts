@@ -149,7 +149,7 @@ export async function _acceptHandler(
 
   await requireRoleReadiness(ctx, caller._id, unit.ownerType)
 
-  await ctx.db.patch(args.reservationId as Id<"reservations">, {
+  await ctx.db.patch(args.reservationId as Id<"reservations">, { // fsm-ok
     status: RESERVATION_STATUS.Confirmed,
     confirmedAt: Date.now(),
   })
@@ -270,6 +270,8 @@ export async function _declineHandler(
     userId: booking.ownerId,
     type: NOTIFICATION_TYPE.HoldDeclined,
     bookingId: args.bookingId as Id<'bookings'>,
+    code: 'hold_declined',
+    params: { resourceName: unit.displayName },
     message: `${unit.displayName} has declined the reservation.`,
   })
 
@@ -340,6 +342,8 @@ export async function _declineHandler(
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.NoBackupAvailable,
       bookingId: args.bookingId as Id<'bookings'>,
+      code: 'no_backup_available',
+      params: { resourceType: unit.resourceType as string },
       message: `No available ${unit.resourceType} found in this area for the booking dates.`,
     })
   }
@@ -509,7 +513,7 @@ export async function _markNoShowHandler(
     })
   }
 
-  await ctx.db.patch(args.reservationId, {
+  await ctx.db.patch(args.reservationId, { // fsm-ok
     status: RESERVATION_STATUS.NoShow,
     noShowAt: Date.now(),
   })
@@ -527,6 +531,8 @@ export async function _markNoShowHandler(
       userId: unit.ownerId,
       type: NOTIFICATION_TYPE.NoshowMarked,
       bookingId: reservation.bookingId,
+      code: 'noshow_marked',
+      params: { date: session.date },
       message: `A customer was marked as NoShow for your ${session.date} session.`,
     })
   }
@@ -562,7 +568,7 @@ export async function _revertNoShowHandler(
     })
   }
 
-  await ctx.db.patch(args.reservationId, {
+  await ctx.db.patch(args.reservationId, { // fsm-ok
     status: RESERVATION_STATUS.Confirmed,
     noShowAt: undefined,
   })
@@ -581,6 +587,8 @@ export async function _revertNoShowHandler(
       userId: unit.ownerId,
       type: NOTIFICATION_TYPE.NoshowReverted,
       bookingId: reservation.bookingId,
+      code: 'noshow_reverted',
+      params: { date: session.date },
       message: `NoShow was reverted for your ${session.date} session. Customer is back to Confirmed.`,
     })
   }

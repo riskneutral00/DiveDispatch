@@ -111,6 +111,7 @@ export async function tryAutoAdvance(ctx: MutationCtx, bookingId: string): Promi
       userId: freshBooking.ownerId,
       type: NOTIFICATION_TYPE.BookingConfirmed,
       bookingId: bookingId as Id<'bookings'>,
+      code: 'booking_confirmed',
       message: 'Your booking is confirmed.',
       logistics,
     })

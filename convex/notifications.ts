@@ -2,7 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import type { MutationCtx, QueryCtx } from './_generated/server'
 import type { Doc, Id } from './_generated/dataModel'
 import { mutation, query } from './_generated/server'
-import { authorize, requireAuth, assertCallerIsUser } from './lib/auth'
+import { authorize, requireAuth } from './lib/auth'
 import { ErrorCode } from './lib/errorCodes'
 import { batchDelete, batchGet } from './lib/batch'
 import { checkIdempotency } from './lib/idempotency'
@@ -18,6 +18,8 @@ export async function notify(
     type: NotificationType
     bookingId?: Id<'bookings'>
     message: string
+    code?: string
+    params?: Record<string, string>
     logistics?: NotificationLogistics
   },
 ): Promise<void> {
@@ -26,6 +28,8 @@ export async function notify(
     type: args.type,
     bookingId: args.bookingId,
     message: args.message,
+    ...(args.code !== undefined ? { code: args.code } : {}),
+    ...(args.params !== undefined ? { params: JSON.stringify(args.params) } : {}),
     createdAt: Date.now(),
     ...(args.logistics !== undefined ? { logistics: args.logistics } : {}),
   })
@@ -47,6 +51,8 @@ export async function notifyReleasedInventory(
       userId: unit.ownerId,
       type: NOTIFICATION_TYPE.BookingCancelled,
       bookingId,
+      code: 'booking_cancelled_inventory_released',
+      params: { resourceName: unit.displayName },
       message: `Booking cancelled — your ${unit.displayName} inventory has been released.`,
     })
   }
@@ -97,7 +103,9 @@ export async function _markAsReadHandler(
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  assertCallerIsUser(user, notification.userId)
+  if (notification.userId !== user.slug) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
 
   await ctx.db.patch(notifId, { readAt: Date.now() })
 }
@@ -117,7 +125,9 @@ export async function _deleteNotificationHandler(
   const notification = await ctx.db.get(notifId)
   if (!notification) throw new ConvexError({ code: ErrorCode.NOT_FOUND })
 
-  assertCallerIsUser(user, notification.userId)
+  if (notification.userId !== user.slug) {
+    throw new ConvexError({ code: ErrorCode.FORBIDDEN })
+  }
 
   await ctx.db.delete(notifId)
 }

@@ -142,6 +142,8 @@ export const submitPortal = mutation({
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.PortalComplete,
       bookingId: link.bookingId,
+      code: 'portal_complete',
+      params: { customerName: link.customerName },
       message: `${link.customerName} has completed the customer portal.`,
     })
 

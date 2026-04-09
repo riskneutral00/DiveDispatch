@@ -282,6 +282,8 @@ export default defineSchema({
     type: notificationType,
     bookingId: v.optional(v.id('bookings')),
     message: v.string(),
+    code: v.optional(v.string()),
+    params: v.optional(v.string()),
     readAt: v.optional(v.number()),
     createdAt: v.number(),
     logistics: v.optional(v.object({

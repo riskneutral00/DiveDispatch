@@ -126,6 +126,7 @@ export const clearMedicalBlock = mutation({
       userId: booking.ownerId,
       type: NOTIFICATION_TYPE.MedicalCleared,
       bookingId: args.bookingId,
+      code: 'medical_cleared',
       message: 'Medical block cleared: physician clearance reviewed and approved.',
     })
 

@@ -117,6 +117,8 @@ export const saveMedicalAnswers = mutation({
         userId: booking.ownerId,
         type: NOTIFICATION_TYPE.MedicalHardBlock,
         bookingId: link.bookingId,
+        code: 'medical_hard_block',
+        params: { customerName: link.customerName },
         message: `Medical block: ${link.customerName} requires physician clearance before diving.`,
       })
     }
