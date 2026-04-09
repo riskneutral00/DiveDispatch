@@ -42,6 +42,8 @@ interface ModalInnerProps {
 const DEFAULT_CENTER = { lat: 13.7563, lng: 100.5018 } // Bangkok fallback
 
 function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProps) {
+  const t = useTranslations('portal')
+  const tCommon = useTranslations('common')
   const inputId = useId()
   const listboxId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -249,7 +251,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
               }
               aria-autocomplete="list"
               value={query}
-              placeholder={value ? `${value.placeName}, ${value.country}` : 'Search address…'}
+              placeholder={value ? `${value.placeName}, ${value.country}` : t('searchAddress')}
               autoComplete="off"
               onChange={(e) => {
                 setQuery(e.target.value)
@@ -272,7 +274,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             type="button"
             onClick={handleGPS}
             disabled={gpsLoading}
-            title="Use my current location"
+            title={t('useMyLocation')}
             className="glass glass-field flex items-center justify-center px-3 transition-opacity duration-theme hover:opacity-80 disabled:opacity-40 cursor-pointer text-accent"
           >
             <Locate size={16} className={gpsLoading ? 'animate-pulse' : ''} />
@@ -363,15 +365,15 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
           <span
             className={`text-body truncate ${displayAddress ? 'text-primary' : 'text-secondary'}`}
           >
-            {displayAddress || 'Drag the map to set location…'}
+            {displayAddress || t('dragToSetLocation')}
           </span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="ghost" size="sm" type="button" onClick={onCancel}>
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button variant="primary" size="sm" type="button" onClick={handleConfirm} disabled={!displayAddress}>
-            Save
+            {tCommon('save')}
           </Button>
         </div>
       </div>
@@ -405,6 +407,7 @@ interface TriggerProps {
 }
 
 function LocationPickerTrigger({ value, onOpen, onClear, error, label, required, className }: TriggerProps) {
+  const t = useTranslations('portal')
   const inputId = useId()
   const filled = !!value
   const floated = filled
@@ -435,7 +438,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
               : 'Add location'
           }
         >
-          {value ? `${value.placeName}, ${value.country}` : 'Add location…'}
+          {value ? `${value.placeName}, ${value.country}` : t('addLocation')}
         </button>
         {value && (
           <button /* design-ok: inline clear X inside field trigger */
@@ -476,6 +479,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 
 export function LocationPicker({ value, onChange, error, label, required, className }: LocationPickerProps) {
+  const t = useTranslations('portal')
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -488,7 +492,7 @@ export function LocationPicker({ value, onChange, error, label, required, classN
         required={required}
         className={className}
       />
-      <Dialog open={open} onClose={() => setOpen(false)} title="Set Location" fullScreen>
+      <Dialog open={open} onClose={() => setOpen(false)} title={t('setLocation')} fullScreen>
         <APIProvider apiKey={API_KEY} libraries={['places']}>
           <LocationPickerGate
             value={value}

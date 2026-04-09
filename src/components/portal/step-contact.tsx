@@ -22,6 +22,7 @@ import type { CourseCode } from '@/lib/constants/course-catalog'
 import { DIVE_AGENCIES } from '@/lib/constants/agencies'
 import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { PortalStepShell } from '@/components/portal/portal-step-shell'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 
 const defaultForm = (): CustomerContactData => ({
   legalFirstName: '',
@@ -43,9 +44,6 @@ const defaultForm = (): CustomerContactData => ({
   allergies: '',
 })
 
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-
-
 interface StepContactProps {
   token: string
   onComplete: () => void
@@ -54,6 +52,7 @@ interface StepContactProps {
 
 export function StepContact({ token, onComplete, bookingStartDate }: StepContactProps) {
   const t = useTranslations('portal')
+  const tErrors = useTranslations('errors')
   const [form, setFormState] = useState<CustomerContactData>(defaultForm())
   const [ageError, setAgeError] = useState<string | null>(null)
   const {
@@ -62,7 +61,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
     handleMutationError,
     submitting,
     setSubmitting,
-  } = usePortalStep()
+  } = usePortalStep(tErrors)
 
   const [returningDismissedLocal, setReturningDismissedLocal] = useState(false)
 
@@ -251,10 +250,10 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             </p>
             <div className="flex gap-2">
               <Button type="button" variant="primary" size="sm" onClick={confirmReturningCustomer}>
-                {"That's me"}
+                {t('thatsMe')}
               </Button>
               <Button type="button" variant="secondary" size="sm" onClick={dismissReturningCustomer}>
-                {"Not me"}
+                {t('notMe')}
               </Button>
             </div>
           </div>
@@ -268,11 +267,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       <Card padding="md">
-        <FormSectionHeader label={"Personal Details"} />
+        <FormSectionHeader label={t('sectionPersonalDetails')} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
-            label="Legal First Name"
-            placeholder="As on passport"
+            label={t('legalFirstName')}
+            placeholder={t('placeholderPassport')}
             value={form.legalFirstName}
             onChange={(e) => setField('legalFirstName', e.target.value)}
             error={errors.legalFirstName}
@@ -280,8 +279,8 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-name"
           />
           <Input
-            label="Legal Last Name"
-            placeholder="As on passport"
+            label={t('legalLastName')}
+            placeholder={t('placeholderPassport')}
             value={form.legalLastName}
             onChange={(e) => setField('legalLastName', e.target.value)}
             error={errors.legalLastName}
@@ -289,8 +288,8 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-name"
           />
           <Input
-            label="Preferred Name"
-            placeholder="Nickname or preferred name"
+            label={t('preferredName')}
+            placeholder={t('placeholderNickname')}
             value={form.preferredName ?? ''}
             onChange={(e) => setField('preferredName', e.target.value)}
             error={errors.preferredName}
@@ -298,20 +297,20 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-text-short"
           />
           <Input
-            label="Phone"
+            label={t('phone')}
             type="tel"
-            placeholder="+66 81 234 5678"
+            placeholder={t('placeholderPhone')}
             value={form.phone}
             onChange={(e) => setField('phone', e.target.value)}
             error={errors.phone}
-            helperText="Include country code (+66, +1)"
+            helperText={t('helperCountryCode')}
             autoComplete="tel"
             className="field-phone"
           />
           <Input
-            label="Email"
+            label={t('email')}
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('placeholderEmail')}
             value={form.email}
             onChange={(e) => setField('email', e.target.value)}
             error={errors.email}
@@ -320,7 +319,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
           />
           <div className="field-date">
             <Input
-              label="Date of Birth"
+              label={t('dateOfBirth')}
               type="date"
               value={form.dateOfBirth}
               onChange={(e) => setField('dateOfBirth', e.target.value)}
@@ -334,7 +333,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             </div>
           </div>
           <SimpleSelect
-            label="Gender"
+            label={t('gender')}
             data-testid="portal-gender-select"
             value={form.gender}
             onChange={(v) => setField('gender', v as CustomerContactData['gender'])}
@@ -344,12 +343,12 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-select-short"
           />
           <SimpleSelect
-            label="Nationality"
+            label={t('nationality')}
             data-testid="portal-nationality-select"
             value={form.nationality}
             onChange={(v) => setField('nationality', v)}
             options={COUNTRY_NAMES}
-            placeholder="Select…"
+            placeholder={t('placeholderSelect')}
             error={errors.nationality}
             required
             className="field-select-long"
@@ -358,30 +357,30 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </Card>
 
       <Card padding="md">
-        <FormSectionHeader label={"Passport / ID"} />
+        <FormSectionHeader label={t('sectionPassport')} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
-            label="Passport Number"
-            placeholder="AB1234567"
+            label={t('passportNumber')}
+            placeholder={t('placeholderPassportNum')}
             value={form.passportNumber}
             onChange={(e) => setField('passportNumber', e.target.value)}
             error={errors.passportNumber}
             className="field-text-short"
           />
           <SimpleSelect
-            label="Issuing Country"
+            label={t('issuingCountry')}
             data-testid="portal-issuing-country-select"
             value={form.passportIssuingCountry}
             onChange={(v) => setField('passportIssuingCountry', v)}
             options={COUNTRY_NAMES}
-            placeholder="Select…"
+            placeholder={t('placeholderSelect')}
             error={errors.passportIssuingCountry}
             required
             className="field-select-long"
           />
           <div className="field-date">
             <Input
-              label="Expiry Date"
+              label={t('expiryDate')}
               type="date"
               value={form.passportExpirationDate}
               onChange={(e) => setField('passportExpirationDate', e.target.value)}
@@ -397,11 +396,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </Card>
 
       <Card padding="md">
-        <FormSectionHeader label={"Emergency Contact"} />
+        <FormSectionHeader label={t('sectionEmergency')} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
-            label="Full Name"
-            placeholder="Full name"
+            label={t('fullName')}
+            placeholder={t('placeholderFullName')}
             value={form.emergencyContactName}
             onChange={(e) => setField('emergencyContactName', e.target.value)}
             error={errors.emergencyContactName}
@@ -409,18 +408,18 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
             className="field-name"
           />
           <Input
-            label="Phone"
+            label={t('phone')}
             type="tel"
-            placeholder="+66 81 234 5678"
+            placeholder={t('placeholderPhone')}
             value={form.emergencyContactPhone}
             onChange={(e) => setField('emergencyContactPhone', e.target.value)}
             error={errors.emergencyContactPhone}
-            helperText="Include country code (+66, +1)"
+            helperText={t('helperCountryCode')}
             className="field-phone"
           />
           <Input
-            label="Relationship"
-            placeholder="Spouse, parent, partner"
+            label={t('relationship')}
+            placeholder={t('placeholderRelationship')}
             value={form.emergencyContactRelation}
             onChange={(e) => setField('emergencyContactRelation', e.target.value)}
             error={errors.emergencyContactRelation}
@@ -431,22 +430,22 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {requiresCert && (
         <Card padding="md">
-          <FormSectionHeader label={"Diving Certification"} />
+          <FormSectionHeader label={t('sectionCertification')} />
           <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
             <SimpleSelect
-              label="Certifying Agency"
+              label={t('certifyingAgency')}
               value={form.agency ?? ''}
               onChange={(v) => setField('agency', v)}
               options={DIVE_AGENCIES}
-              placeholder="Select…"
+              placeholder={t('placeholderSelect')}
               error={errors.agency}
               required
               className="field-select-short"
             />
             <Input
-              label="Diver ID"
+              label={t('diverID')}
               className="field-text-short"
-              placeholder="12345678"
+              placeholder={t('placeholderDiverID')}
               value={form.agencyID ?? ''}
               onChange={(e) => setField('agencyID', e.target.value)}
               error={errors.agencyID}
@@ -456,11 +455,11 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       <Card padding="md">
-        <FormSectionHeader label={"Health Information"} />
+        <FormSectionHeader label={t('sectionHealth')} />
         <Textarea
-          label="Known Allergies"
+          label={t('knownAllergies')}
           rows={DEFAULT_TEXTAREA_ROWS}
-          placeholder="List allergies, or leave blank"
+          placeholder={t('placeholderAllergies')}
           value={form.allergies ?? ''}
           onChange={(e) => setField('allergies', e.target.value)}
         />

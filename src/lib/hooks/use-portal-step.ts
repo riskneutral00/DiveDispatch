@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { mapPortalMutationError } from '@/lib/utils/convex-error'
+import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
+
+type TranslateFn = (key: string, values?: Record<string, string>) => string
 
 export interface ValidationRule<T = string> {
   test: (value: T) => boolean
@@ -26,7 +28,7 @@ export interface UsePortalStepReturn {
   validateFields: (rules: Record<string, ValidationRule>) => boolean
 }
 
-export function usePortalStep(): UsePortalStepReturn {
+export function usePortalStep(t?: TranslateFn): UsePortalStepReturn {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverError, setServerError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -54,8 +56,12 @@ export function usePortalStep(): UsePortalStepReturn {
   const clearServerError = useCallback(() => setServerError(null), [])
 
   const handleMutationError = useCallback((err: unknown) => {
-    setServerError(mapPortalMutationError(err))
-  }, [])
+    if (t) {
+      setServerError(parseConvexErrorI18n(err, t))
+    } else {
+      setServerError(parseConvexErrorI18n(err, (key) => key))
+    }
+  }, [t])
 
   const validateFields = useCallback(
     (rules: Record<string, ValidationRule>): boolean => {

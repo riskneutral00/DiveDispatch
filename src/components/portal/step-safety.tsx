@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { SimpleSelect } from '@/components/ui/simple-select'
@@ -34,6 +35,8 @@ interface StepSafetyProps {
 }
 
 export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
+  const t = useTranslations('portal')
+  const tErrors = useTranslations('errors')
   const { saved, save: saveSafetyInfo } = usePortalSafety({ token })
 
   const [form, setForm] = useState<SafetyForm>(defaultForm())
@@ -43,7 +46,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
     handleMutationError,
     submitting,
     setSubmitting,
-  } = usePortalStep()
+  } = usePortalStep(tErrors)
 
   useEffect(() => {
     if (saved) {
@@ -100,44 +103,44 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
           <h2
             className="text-card-title font-semibold mb-1 text-primary font-heading"
           >
-            Safety Information
+            {t('sectionSafety')}
           </h2>
           <p className="text-body text-secondary">
-            All optional. Helps your dive center respond in emergencies.
+            {t('safetyDescription')}
           </p>
         </div>
 
         <div className="space-y-5">
           <SimpleSelect
-            label="Blood Type"
+            label={t('bloodType')}
             value={form.bloodType}
             onChange={(v) => setField('bloodType', v)}
             options={BLOOD_TYPES}
-            placeholder="Select blood type"
+            placeholder={t('placeholderBloodType')}
           />
 
           <Textarea
-            label="Allergies"
+            label={t('allergiesSafety')}
             value={form.allergies}
             onChange={(e) => setField('allergies', e.target.value)}
-            placeholder="Penicillin, shellfish"
+            placeholder={t('placeholderAllergiesSafety')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
           />
 
           <Textarea
-            label="Current Medications"
+            label={t('currentMedications')}
             value={form.medications}
             onChange={(e) => setField('medications', e.target.value)}
-            placeholder="Aspirin, blood thinners"
+            placeholder={t('placeholderMedications')}
             rows={DEFAULT_TEXTAREA_ROWS}
             maxLength={500}
           />
 
           <Input
-            label="Insurance Policy Number"
+            label={t('insurancePolicyNumber')}
             type="text"
-            placeholder="DAN-123456"
+            placeholder={t('placeholderInsurance')}
             value={form.insurancePolicyNumber}
             onChange={(e) => setField('insurancePolicyNumber', e.target.value)}
           />

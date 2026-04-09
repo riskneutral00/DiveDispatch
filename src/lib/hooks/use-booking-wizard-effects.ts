@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Dispatch } from 'react'
 import {
   deserializeDraftState,
+  newEntryId,
   type WizardAction,
   type BookingPreFill,
 } from '@/lib/booking/wizard-state'
@@ -37,20 +38,18 @@ export function useBookingWizardEffects({
   useEffect(() => {
     if (isEditMode || initializedRef.current || !initialCourses?.length) return
     initializedRef.current = true
-    const makeId = () =>
-      Math.random().toString(36).slice(2) + Date.now().toString(36)
     dispatch({
       type: 'RESET',
       payload: {
         bookingId: null,
         customers: [
           {
-            id: makeId(),
+            id: newEntryId(),
             name: '',
             contact: {},
             flags: [],
             courseEntries: initialCourses.map((code) => ({
-              id: makeId(),
+              id: newEntryId(),
               activityCode: code,
               dates: [],
               agency: '',
@@ -65,8 +64,6 @@ export function useBookingWizardEffects({
   useEffect(() => {
     if (isEditMode || initializedRef.current || !initialPreFill) return
     initializedRef.current = true
-    const makeId = () =>
-      Math.random().toString(36).slice(2) + Date.now().toString(36)
     const {
       courses,
       startDate,
@@ -92,21 +89,21 @@ export function useBookingWizardEffects({
         preFillBoatSlug: boatSlug || undefined,
         customers: [
           {
-            id: makeId(),
+            id: newEntryId(),
             name: '',
             contact: {},
             flags: [],
             courseEntries:
               courses.length > 0
                 ? courses.map((code) => ({
-                    id: makeId(),
+                    id: newEntryId(),
                     activityCode: code,
                     dates: [startDate, endDate],
                     agency,
                   }))
                 : [
                     {
-                      id: makeId(),
+                      id: newEntryId(),
                       activityCode: '',
                       dates: [startDate, endDate],
                       agency,

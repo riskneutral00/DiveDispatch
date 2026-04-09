@@ -11,6 +11,7 @@ import { ButtonGroup } from '../ui/button-group'
 import { Textarea } from '../ui/textarea'
 import { DEFAULT_TEXTAREA_ROWS } from '@/lib/constants/form-config'
 import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
+import { FormSectionHeader } from '@/components/ui/form-section-header'
 
 import type { HeightUnit, WeightUnit, ShoeSizeUnit } from '@/lib/utils/unit-conversion'
 import { toHeightCm, toWeightKg, toShoeSizeNum } from '@/lib/utils/unit-conversion'
@@ -59,29 +60,6 @@ function ToggleGroup({ options, value, onChange, 'aria-label': ariaLabel, hasErr
 
 const RENTAL_ITEMS: Array<{ key: keyof RentalChecklist; label: string }> =
   GEAR_TYPES.map((gt) => ({ key: gt as keyof RentalChecklist, label: GEAR_TYPE_LABELS[gt] }))
-
-function SectionHeading({
-  children,
-  note,
-}: {
-  children: React.ReactNode
-  note?: string
-}) {
-  return (
-    <div className="flex items-baseline gap-2 mb-4">
-      <h3
-        className="text-card-title font-semibold text-primary font-heading"
-      >
-        {children}
-      </h3>
-      {note && (
-        <span className="text-body text-secondary">
-          {note}
-        </span>
-      )}
-    </div>
-  )
-}
 
 interface EquipmentErrors {
   rentalChecklist?: string
@@ -141,6 +119,7 @@ function validateEquipment(
 }
 
 export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
+  const t = useTranslations('portal')
   const tCommon = useTranslations('common')
 
   const [heightValue, setHeightValue] = useState('')
@@ -216,11 +195,11 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   }, [data])
 
   const validationMessages: ValidationMessages = {
-    rentalRequired: 'Selection required for each item.',
-    heightRequired: 'Height required for rentals.',
-    weightRequired: 'Weight required for rentals.',
-    shoeSizeRequired: 'Shoe size required for fin rental.',
-    prescriptionRequired: 'Prescription required for lens rental.',
+    rentalRequired: t('rentalRequired'),
+    heightRequired: t('heightRequired'),
+    weightRequired: t('weightRequired'),
+    shoeSizeRequired: t('shoeSizeRequired'),
+    prescriptionRequired: t('prescriptionRequired'),
   }
 
   const validationErrors = useMemo(
@@ -274,12 +253,12 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
   return (
     <div className="space-y-6">
       <Card padding="md">
-        <SectionHeading note="(Required for rentals)">Body Measurements</SectionHeading>
+        <FormSectionHeader label={t('sectionBodyMeasurements')} note={t('bodyMeasurementsNote')} />
 
         <div className="space-y-4">
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Height</legend>
-            <FieldLabel className="block mb-1.5">Height</FieldLabel>
+            <FieldLabel className="block mb-1.5">{t('height')}</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="number"
@@ -303,7 +282,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Weight</legend>
-            <FieldLabel className="block mb-1.5">Weight</FieldLabel>
+            <FieldLabel className="block mb-1.5">{t('weight')}</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="number"
@@ -327,7 +306,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
           <fieldset className="border-none p-0 m-0">
             <legend className="sr-only">Shoe Size</legend>
-            <FieldLabel className="block mb-1.5">Shoe Size</FieldLabel>
+            <FieldLabel className="block mb-1.5">{t('shoeSize')}</FieldLabel>
             <div className="flex gap-2 items-center">
               <Input
                 type="text"
@@ -353,9 +332,9 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       </Card>
 
       <Card padding="md">
-        <SectionHeading>Prescription Lenses</SectionHeading>
+        <FormSectionHeader label={t('sectionPrescriptionLenses')} />
         <p className="text-body mb-4 text-secondary">
-          Do you need prescription lenses in your mask?
+          {t('prescriptionQuestion')}
         </p>
 
         <fieldset>
@@ -401,7 +380,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
         {needsPoweredLenses === true && (
           <div className="mt-4">
             <Textarea
-              label={`Prescription Details${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
+              label={`${t('prescriptionDetails')}${rentalChecklist.mask === 'rent' ? ' *' : ''}`}
               value={prescriptionDetails}
               onChange={(e) => setPrescriptionDetails(e.target.value)}
               placeholder="L: −2.00 / R: −2.50"
@@ -413,9 +392,9 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
       </Card>
 
       <Card padding="md">
-        <SectionHeading>Equipment Rental</SectionHeading>
+        <FormSectionHeader label={t('sectionEquipmentRental')} />
         <p className="text-body mb-4 text-secondary">
-          Select Own or Rent for each item.
+          {t('rentalInstruction')}
         </p>
 
         <div className="space-y-3">
@@ -455,12 +434,12 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
             className="mt-4 pt-4 border-t border-glass-border"
           >
             <Input
-              label="Mask Prescription"
+              label={t('maskPrescription')}
               type="text"
               placeholder="L: −2.00 / R: −2.50"
               value={maskPrescription}
               onChange={(e) => setMaskPrescription(e.target.value)}
-              helperText="Prescription for rental mask"
+              helperText={t('helperMaskPrescription')}
             />
           </div>
         )}

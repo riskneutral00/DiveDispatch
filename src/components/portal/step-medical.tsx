@@ -32,13 +32,14 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
   const [answers, setAnswers] = useState<Answers>({})
   const [touched, setTouched] = useState(false)
   const [hardBlock, setHardBlock] = useState(false)
+  const tErrors = useTranslations('errors')
   const {
     serverError: error,
     clearServerError,
     handleMutationError,
     submitting,
     setSubmitting,
-  } = usePortalStep()
+  } = usePortalStep(tErrors)
 
   const effectiveAnswers: Answers =
     Object.keys(answers).length === 0 && saved?.answers

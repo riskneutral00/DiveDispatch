@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from 'convex/react'
-import { mapPortalMutationError } from '@/lib/utils/convex-error'
+import { parseConvexErrorI18n } from '@/lib/utils/convex-error'
 import { CheckCircle, Circle, AlertTriangle, PartyPopper } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { Card } from '@/components/ui/card'
@@ -58,6 +58,7 @@ function StepRow({ label, complete, required, incompleteLabel }: StepRowProps) {
 export function PortalSubmit({ token }: PortalSubmitProps) {
   const tPortal = useTranslations('portal')
   const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
 
   const status = useQuery(api.portalSubmission.getPortalStatus, { token })
   const submitPortal = useMutation(api.portalSubmission.submitPortal)
@@ -93,7 +94,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 className="w-12 h-12 text-warning"
                 aria-hidden
               />
-              <CardTitle>Submitted</CardTitle>
+              <CardTitle>{tPortal('submittedTitle')}</CardTitle>
               <p className="text-body leading-relaxed text-secondary">
                 {tPortal('medicalBlockMessage')}
               </p>
@@ -104,7 +105,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 className="w-12 h-12 text-success"
                 aria-hidden
               />
-              <CardTitle>Complete!</CardTitle>
+              <CardTitle>{tPortal('completeTitle')}</CardTitle>
               <p className="text-body leading-relaxed text-secondary">
                 {tPortal('successMessage')}
               </p>
@@ -128,7 +129,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
       setMedicalHardBlock(result.medicalHardBlock)
       setSubmitted(true)
     } catch (err) {
-      setError(mapPortalMutationError(err))
+      setError(parseConvexErrorI18n(err, tErrors))
     } finally {
       setSubmitting(false)
     }
@@ -137,22 +138,22 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
   return (
     <div className="flex flex-col gap-4">
       <Card padding="md">
-        <CardTitle className="mb-4">Review &amp; Submit</CardTitle>
+        <CardTitle className="mb-4">{tPortal('reviewSubmit')}</CardTitle>
         <div className="flex flex-col gap-3">
           <StepRow
-            label="Contact & Certification"
+            label={tPortal('contactCertification')}
             complete={status.contactComplete}
             required={status.portalContact}
             incompleteLabel={tCommon('incomplete')}
           />
           <StepRow
-            label="Medical Questionnaire"
+            label={tPortal('medicalQuestionnaire')}
             complete={status.medicalComplete}
             required={status.portalMedical}
             incompleteLabel={tCommon('incomplete')}
           />
           <StepRow
-            label="Liability Waiver"
+            label={tPortal('liabilityWaiver')}
             complete={status.waiverComplete}
             required={status.portalWaiver}
             incompleteLabel={tCommon('incomplete')}

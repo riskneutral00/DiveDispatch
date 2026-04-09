@@ -155,12 +155,12 @@ export function StepWaiver({
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} className="text-accent" />
-            <CardTitle>Non-Agency Disclosure</CardTitle>
+            <CardTitle>{tPortal('sectionNonAgency')}</CardTitle>
           </div>
 
           <div>
             <p className={`${labelClass} text-secondary`}>
-              PADI Member / Store / Resort Name
+              {tPortal('padiMemberName')}
             </p>
             <p
               className="mt-1 text-body font-medium text-primary"
@@ -177,7 +177,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <CardTitle>Release of Liability / Assumption of Risk</CardTitle>
+          <CardTitle>{tPortal('sectionLiability')}</CardTitle>
 
           <p className="text-body text-secondary">
             {tPortal('agreeTo', { name: participantName })}
@@ -207,9 +207,9 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <CardTitle>Diver Accident Insurance</CardTitle>
+          <CardTitle>{tPortal('sectionInsurance')}</CardTitle>
           <p className="text-body text-secondary">
-            Do you have diver accident insurance?
+            {tPortal('insuranceQuestion')}
           </p>
           <div className="flex gap-6">
             {(['yes', 'no'] as const).map((val) => (
@@ -241,13 +241,13 @@ export function StepWaiver({
 
           {hasInsurance === 'yes' && (
             <Input
-              label="Policy Number"
+              label={tPortal('policyNumber')}
               value={insurancePolicyNumber}
               onChange={(e) => {
                 setInsurancePolicyNumber(e.target.value)
                 if (e.target.value.trim()) clearError('insurancePolicyNumber')
               }}
-              placeholder="DAN-123456"
+              placeholder={tPortal('placeholderInsurance')}
               error={errors.insurancePolicyNumber}
             />
           )}
@@ -256,11 +256,11 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-4">
-          <CardTitle>Participant Signature</CardTitle>
+          <CardTitle>{tPortal('sectionParticipantSig')}</CardTitle>
 
           <SignaturePad
             ref={signatureRef}
-            label="Signature"
+            label={tPortal('signature')}
             onChange={(has) => {
               if (!has) setHasSig(false)
             }}
@@ -270,7 +270,7 @@ export function StepWaiver({
 
           <Input
             type="date"
-            label="Date"
+            label={tPortal('date')}
             value={date}
             onChange={(e) => setDate(e.target.value)}
             error={errors.date}
@@ -283,26 +283,26 @@ export function StepWaiver({
         <Card padding="md">
           <div className="space-y-4">
             <div>
-              <CardTitle>Parent / Guardian Signature</CardTitle>
+              <CardTitle>{tPortal('sectionGuardianSig')}</CardTitle>
               <p className="text-body mt-1 text-secondary">
                 {tPortal('guardianReason')}
               </p>
             </div>
 
             <Input
-              label="Parent / Guardian Full Name"
+              label={tPortal('guardianFullName')}
               value={guardianName}
               onChange={(e) => {
                 setGuardianName(e.target.value)
                 if (e.target.value.trim()) clearError('guardianName')
               }}
-              placeholder="Legal name"
+              placeholder={tPortal('placeholderLegalName')}
               error={errors.guardianName}
             />
 
             <SignaturePad
               ref={guardianSignatureRef}
-              label="Guardian Signature"
+              label={tPortal('guardianSignature')}
               onChange={(has) => {
                 if (!has) setHasGuardianSig(false)
               }}

@@ -168,7 +168,7 @@ export type WizardAction =
   | { type: 'SET_INVENTORY_MAP'; map: Record<string, string> }
   | { type: 'RESET'; payload?: Partial<WizardState> }
 
-function newEntryId(): string {
+export function newEntryId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36)
 }
 

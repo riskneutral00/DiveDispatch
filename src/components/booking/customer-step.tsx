@@ -9,7 +9,7 @@ import { LanguageField } from '@/components/profiles/language-field'
 import { SectionDivider } from '@/components/ui/section-divider'
 
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
-import { isValidEmail, isValidWhatsApp, isValidLine } from '@/lib/booking/wizard-state'
+import { isValidEmail, isValidWhatsApp, isValidLine, newEntryId } from '@/lib/booking/wizard-state'
 import type { CustomerData, CustomerContact, WizardAction } from '@/lib/booking/wizard-state'
 import type { Language } from '@/lib/types/language'
 import type { Dispatch } from 'react'
@@ -28,11 +28,11 @@ export function CustomerStep({ customers, dispatch }: CustomerStepProps) {
 
   function handleAddCustomer() {
     const customer: CustomerData = {
-      id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+      id: newEntryId(),
       name: '',
       contact: {},
       flags: [],
-      courseEntries: [{ id: Math.random().toString(36).slice(2), activityCode: '', dates: [], agency: '' }],
+      courseEntries: [{ id: newEntryId(), activityCode: '', dates: [], agency: '' }],
     }
     dispatch({ type: 'ADD_CUSTOMER', customer })
   }
