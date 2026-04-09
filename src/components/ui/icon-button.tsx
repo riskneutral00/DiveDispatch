@@ -50,10 +50,7 @@ export function IconButton({
       style={isGlass ? {
         background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',
-        transitionDuration: 'var(--transition-speed)',
-      } : {
-        transitionDuration: 'var(--transition-speed)',
-      }}
+      } : undefined}
       {...rest}
     >
       {children}

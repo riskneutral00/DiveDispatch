@@ -113,8 +113,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
             </MenuButton>
             {roleConfigs.length > 1 && (
               <div
-                className="mt-1 pt-1"
-                style={{ borderTop: "1px solid var(--color-glass-border)" }}
+                className="mt-1 pt-1 border-t border-glass-border"
               >
                 {roleConfigs.map((role) => {
                   const Icon = role.icon;
@@ -134,8 +133,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
             )}
 
             <div
-              className="mt-1"
-              style={{ borderTop: "1px solid var(--color-glass-border)" }}
+              className="mt-1 border-t border-glass-border"
             >
               <MenuButton
                 variant="flush"

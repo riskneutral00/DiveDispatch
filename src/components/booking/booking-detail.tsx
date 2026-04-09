@@ -6,10 +6,10 @@ import { useQuery, useMutation } from 'convex/react'
 import { ArrowLeft, Edit2, ShieldCheck, X } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Card, Button, Badge, EmptyState, IconButton } from '@/components/ui'
+import { Card, Button, EmptyState, IconButton, PageTitle, StatusBadge } from '@/components/ui'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
 import { courseLabel } from '@/lib/constants/course-catalog'
-import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
+import { formatDateRange } from '@/lib/booking/booking-display'
 import { TERMINAL_STATUSES, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import {
   useTTLCountdown,
@@ -66,22 +66,20 @@ export function BookingDetail({ bookingId }: BookingDetailProps) {
   return (
     <DashboardPageFrame className="min-h-screen p-4 sm:p-6 space-y-4">
 
-      <div className="flex items-center gap-3 mb-2">
-        <IconButton variant="ghost" onClick={() => router.back()} aria-label="Go back">
-          <ArrowLeft size={20} />
-        </IconButton>
-        <h1 className="text-page-title font-heading font-semibold text-primary">
-          Booking Details
-        </h1>
-      </div>
+      <PageTitle
+        title="Booking Details"
+        leading={
+          <IconButton variant="ghost" onClick={() => router.back()} aria-label="Go back">
+            <ArrowLeft size={20} />
+          </IconButton>
+        }
+      />
 
       <Card padding="md">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant={statusVariant(booking.status)} dot>
-                {booking.status}
-              </Badge>
+              <StatusBadge status={booking.status} dot />
               {booking.status === 'Draft' && ttlLabel && (
                 <span
                   className="text-label"

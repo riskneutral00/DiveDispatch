@@ -2,6 +2,7 @@
 
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
@@ -171,7 +172,7 @@ export function AgentContactSection({ profile, me, create, update, onClose }: Ag
         />
       </div>
 
-      <hr className="form-divider" />
+      <SectionDivider show />
 
       <div>
         <FormSectionHeader label="Default Referral" />

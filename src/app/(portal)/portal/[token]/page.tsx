@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, Link2Off } from 'lucide-react'
 import { api } from '@/lib/convex-generated'
 import { Button } from '@/components/ui/button'
 import { ErrorCard } from '@/components/ui/error-card'
-import { Spinner } from '@/components/ui/spinner'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { PostTripPage } from '@/components/portal/post-trip-page'
 import { PortalActiveFlow } from '@/components/portal/portal-active-flow'
 
@@ -24,9 +24,7 @@ export default function PortalTokenPage() {
 
   if (result === undefined) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 text-primary">
-        <Spinner size="lg" label={tCommon('loading')} />
-      </div>
+      <FullPageSpinner size="lg" label={tCommon('loading')} />
     )
   }
 

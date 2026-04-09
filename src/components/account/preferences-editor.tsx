@@ -15,7 +15,7 @@ import { SaveButton } from '@/components/ui/save-button'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { Card } from '@/components/ui/card'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { SectionDivider } from '@/components/ui/section-divider'
 import {
   PreferredInstructorList,
   PreferredVenueBoatList,
@@ -349,11 +349,11 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
               </div>
             </Card>
 
-            <ProfileFormSectionDivider show />
+            <SectionDivider show />
 
             {showResourcePrefs && (
               <>
-                <ProfileFormSectionDivider show />
+                <SectionDivider show />
                 <Card padding="sm">
                   <FormSectionHeader className="mb-4" label={tBooking('preferredResources')} />
                   <label className="flex items-center gap-3 cursor-pointer select-none text-body text-primary">
@@ -372,7 +372,7 @@ export function PreferencesEditor({ section = 'booking', roleSlug: roleSlugProp,
               </>
             )}
 
-            <ProfileFormSectionDivider show />
+            <SectionDivider show />
 
             <Card padding="sm">
               <FormSectionHeader className="mb-4" label={tBooking('confirmationAlerts')} />

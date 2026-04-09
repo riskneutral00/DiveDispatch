@@ -8,10 +8,10 @@ import { useTranslations } from 'next-intl'
 import { getConvexErrorCode } from '@/lib/utils/convex-error'
 import { api } from '@/lib/convex-generated'
 import type { Id } from '@/lib/convex-generated'
-import { Button, Badge, Dialog, EmptyState } from '@/components/ui'
+import { Button, Dialog, EmptyState, StatusBadge } from '@/components/ui'
 import { ConfirmActionDialog } from '@/components/ui/confirm-dialog'
 import { courseLabel } from '@/lib/constants/course-catalog'
-import { formatDateRange, statusVariant } from '@/lib/booking/booking-display'
+import { formatDateRange } from '@/lib/booking/booking-display'
 import { TERMINAL_STATUSES, type CalendarDisplayStatus } from '@/lib/constants/status-colors'
 import {
   useTTLCountdown,
@@ -104,9 +104,7 @@ function BookingDetailContent({
     <>
       <div className="space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant={statusVariant(booking.status)} dot>
-            {booking.status}
-          </Badge>
+          <StatusBadge status={booking.status} dot />
           {isDraft && ttlLabel && (
             <span
               className={`text-label ${ttlLabel === 'Expired' ? 'text-destructive' : 'text-secondary'}`}

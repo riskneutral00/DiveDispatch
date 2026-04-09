@@ -6,6 +6,7 @@ import {
   type RoleConfig,
 } from '@/lib/constants/roles'
 import { Button } from '@/components/ui/button'
+import { CardTitle } from '@/components/ui/card-title'
 import { RoleTile } from '@/components/ui/role-tile'
 
 interface StepRoleSelectionProps {
@@ -27,11 +28,7 @@ export function StepRoleSelection({
   return (
     <>
       <div className="mb-6 text-center">
-        <h2
-          className="text-card-title font-heading font-semibold mb-1 text-primary"
-        >
-          What&apos;s your role?
-        </h2>
+        <CardTitle className="mb-1">What&apos;s your role?</CardTitle>
         <p className="text-body text-secondary">
           Select all that apply.
         </p>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, Button } from '@/components/ui'
+import { Card, Button, CardTitle } from '@/components/ui'
 import { OrganizerBasicStep } from '@/components/onboarding/organizer-basic-step'
 import { OrganizerAgencyStep } from '@/components/onboarding/organizer-agency-step'
 import { OrganizerLanguagesStep } from '@/components/onboarding/organizer-languages-step'
@@ -72,9 +72,7 @@ export function RoleOnboarding({ role, onComplete }: RoleOnboardingProps) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-card-title font-heading font-semibold text-primary mb-1">
-          Set up your {config?.label ?? role} profile
-        </h2>
+        <CardTitle className="mb-1">Set up your {config?.label ?? role} profile</CardTitle>
         <p className="text-label text-secondary">
           Complete your profile details for this role. You can always finish later from your Roles tab.
         </p>

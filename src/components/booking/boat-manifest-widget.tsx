@@ -123,7 +123,6 @@ function GroupSection({ group }: { group: ManifestGroup }) {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full text-left py-1.5 px-2 rounded-[var(--border-radius-button)] transition-colors duration-theme"
-        style={{ transitionDuration: 'var(--transition-speed)' }}
         aria-expanded={expanded}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

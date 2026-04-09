@@ -13,6 +13,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Spinner } from '@/components/ui/spinner'
+import { LoadingCard } from '@/components/ui/loading-card'
 import { InlineError } from '@/components/ui/inline-error'
 import { GEAR_TYPES, GEAR_TYPE_LABELS } from '@/lib/constants/gear-sizing'
 
@@ -108,11 +109,7 @@ export function EquipmentInventoryTable({
       />
 
       {isLoading ? (
-        <Card>
-          <div className="flex items-center justify-center py-12">
-            <Spinner label={t('loading')} />
-          </div>
-        </Card>
+        <LoadingCard variant="spinner" message={t('loading')} />
       ) : filteredItems.length === 0 ? (
         <Card>
           <EmptyState

@@ -45,9 +45,6 @@ const defaultForm = (): CustomerContactData => ({
 
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <FormSectionHeader label={children} />
-}
 
 interface StepContactProps {
   token: string
@@ -271,7 +268,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       <Card padding="md">
-        <SectionHeading>{"Personal Details"}</SectionHeading>
+        <FormSectionHeader label={"Personal Details"} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Legal First Name"
@@ -361,7 +358,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </Card>
 
       <Card padding="md">
-        <SectionHeading>{"Passport / ID"}</SectionHeading>
+        <FormSectionHeader label={"Passport / ID"} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Passport Number"
@@ -400,7 +397,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       </Card>
 
       <Card padding="md">
-        <SectionHeading>{"Emergency Contact"}</SectionHeading>
+        <FormSectionHeader label={"Emergency Contact"} />
         <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
           <Input
             label="Full Name"
@@ -434,7 +431,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
 
       {requiresCert && (
         <Card padding="md">
-          <SectionHeading>{"Diving Certification"}</SectionHeading>
+          <FormSectionHeader label={"Diving Certification"} />
           <div className="grid grid-cols-6 gap-x-3 gap-y-4 sm:flex sm:flex-wrap sm:gap-4"> {/* design-ok */}
             <SimpleSelect
               label="Certifying Agency"
@@ -459,7 +456,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       <Card padding="md">
-        <SectionHeading>{"Health Information"}</SectionHeading>
+        <FormSectionHeader label={"Health Information"} />
         <Textarea
           label="Known Allergies"
           rows={DEFAULT_TEXTAREA_ROWS}

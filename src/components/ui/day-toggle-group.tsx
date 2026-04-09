@@ -49,7 +49,6 @@ export function DayToggleGroup({ selected, onChange, disabledDays = [], error, l
                 background: active ? 'var(--color-primary)' : 'var(--color-surface-elevated)',
                 color: active ? 'var(--color-text-on-primary)' : locked ? 'var(--color-text-secondary)' : 'var(--color-text-primary)',
                 border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
-                transitionDuration: 'var(--transition-speed)',
               }}
             >
               {d.label}

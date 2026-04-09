@@ -7,7 +7,7 @@ import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
-import { Spinner } from '@/components/ui/spinner'
+import { FullPageSpinner } from '@/components/ui/full-page-spinner'
 import { deriveDefaultRole } from '@/lib/utils/role'
 
 export default function DashboardRedirectPage() {
@@ -35,8 +35,6 @@ export default function DashboardRedirectPage() {
   }, [user, userRoles, isLoading, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Spinner label={t('loading')} />
-    </div>
+    <FullPageSpinner label={t('loading')} />
   )
 }

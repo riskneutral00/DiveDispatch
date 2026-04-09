@@ -22,22 +22,18 @@ interface StepRowProps {
 function StepRow({ label, required, complete }: StepRowProps) {
   const t = useTranslations('common')
   const icon = complete ? (
-    <CheckCircle2 size={16} style={{ color: 'var(--color-success)' }} />
+    <CheckCircle2 size={16} className="text-success" />
   ) : required ? (
     <Circle className="text-secondary" size={16} />
   ) : (
-    <AlertCircle className="text-secondary" size={16} style={{ opacity: 0.4 }} />
+    <AlertCircle className="text-secondary opacity-40" size={16} />
   )
 
   return (
     <div className="flex items-center gap-3">
       {icon}
       <span
-        className="text-body flex-1"
-        style={{
-          color: complete ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-          opacity: !required && !complete ? 0.5 : 1,
-        }}
+        className={`text-body flex-1 ${complete ? 'text-primary' : 'text-secondary'} ${!required && !complete ? 'opacity-50' : ''}`}
       >
         {label}
         {!required && (
@@ -47,7 +43,7 @@ function StepRow({ label, required, complete }: StepRowProps) {
         )}
       </span>
       {complete && (
-        <span className="text-label font-medium" style={{ color: 'var(--color-success)' }}>
+        <span className="text-label font-medium text-success">
           {t('done')}
         </span>
       )}
@@ -76,10 +72,7 @@ export function PortalProgressCard({
             : tPortal('noSubmissions')}
         </span>
         {customerFormComplete && (
-          <span
-            className="text-label font-semibold"
-            style={{ color: 'var(--color-success)' }}
-          >
+          <span className="text-label font-semibold text-success">
             {tCommon('complete')}
           </span>
         )}
@@ -92,7 +85,7 @@ export function PortalProgressCard({
       </div>
 
       {customerProfiles.length > 0 && (
-        <div className="pt-2" style={{ borderTop: '1px solid var(--color-glass-border)' }}>
+        <div className="pt-2 border-t border-glass-border">
           <FormSectionHeader label={tPortal('diverSubmissions')} className="mb-2" />
           <div className="space-y-1">
             {customerProfiles.map((profile, i) => {
@@ -100,7 +93,7 @@ export function PortalProgressCard({
               return (
                 <div key={profile._id} className="flex items-center gap-2 text-body">
                   {submitted ? (
-                    <CheckCircle2 size={14} style={{ color: 'var(--color-success)' }} />
+                    <CheckCircle2 size={14} className="text-success" />
                   ) : (
                     <Circle className="text-secondary" size={14} />
                   )}

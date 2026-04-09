@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { MapPin, Users } from 'lucide-react'
 import { Card } from '../ui/card'
 import { Badge } from '../ui/badge'
+import { PageTitle } from '../ui/page-title'
 
 interface PortalHeaderProps {
   customerName: string
@@ -32,14 +33,11 @@ export function PortalHeader({
         >
           {operatorName}
         </p>
-        <h1
-          className="text-page-title font-bold text-primary font-heading"
-        >
-          {t('welcome', { name: customerName })}
-        </h1>
-        <p className="text-body text-secondary">
-          {t('subtitle')}
-        </p>
+        <PageTitle
+          title={t('welcome', { name: customerName })}
+          description={t('subtitle')}
+          className="mb-0"
+        />
       </header>
 
       <Card padding="md">

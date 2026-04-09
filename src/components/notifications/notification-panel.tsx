@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { NotificationItem } from './notification-item'
 import { useOptimisticNotifications } from '@/lib/hooks/use-optimistic-notifications'
 import { useFocusTrap } from '@/lib/hooks/use-focus-trap'
@@ -93,9 +94,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
           </div>
         )}
         {notifications?.length === 0 && (
-          <p className="text-body text-center py-6 text-secondary">
-            {t('noNotifications')}
-          </p>
+          <EmptyState message={t('noNotifications')} className="py-6" />
         )}
         {notifications?.map((n) => (
           <NotificationItem

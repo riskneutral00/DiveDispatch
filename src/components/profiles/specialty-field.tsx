@@ -263,7 +263,6 @@ function SpecialtyPill({ label, checked, disabled, onToggle }: SpecialtyPillProp
         color: checked ? 'var(--color-text-on-primary)' : 'var(--color-text-primary)',
         border: `1px solid ${checked ? 'var(--color-primary)' : 'var(--color-glass-border)'}`,
         opacity: disabled && !checked ? 0.4 : 1,
-        transitionDuration: 'var(--transition-speed)',
       }}
       aria-disabled={disabled || undefined}
     >

@@ -3,6 +3,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card } from '../ui/card'
+import { CardTitle } from '../ui/card-title'
 import { InlineError } from '../ui/inline-error'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
@@ -154,9 +155,7 @@ export function StepWaiver({
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck size={18} className="text-accent" />
-            <h2 className="text-card-title font-semibold font-heading">
-              Non-Agency Disclosure
-            </h2>
+            <CardTitle>Non-Agency Disclosure</CardTitle>
           </div>
 
           <div>
@@ -178,9 +177,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-card-title font-semibold font-heading">
-            Release of Liability / Assumption of Risk
-          </h2>
+          <CardTitle>Release of Liability / Assumption of Risk</CardTitle>
 
           <p className="text-body text-secondary">
             {tPortal('agreeTo', { name: participantName })}
@@ -210,9 +207,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-3">
-          <h2 className="text-card-title font-semibold font-heading">
-            Diver Accident Insurance
-          </h2>
+          <CardTitle>Diver Accident Insurance</CardTitle>
           <p className="text-body text-secondary">
             Do you have diver accident insurance?
           </p>
@@ -261,9 +256,7 @@ export function StepWaiver({
 
       <Card padding="md">
         <div className="space-y-4">
-          <h2 className="text-card-title font-semibold font-heading">
-            Participant Signature
-          </h2>
+          <CardTitle>Participant Signature</CardTitle>
 
           <SignaturePad
             ref={signatureRef}
@@ -290,9 +283,7 @@ export function StepWaiver({
         <Card padding="md">
           <div className="space-y-4">
             <div>
-              <h2 className="text-card-title font-semibold font-heading">
-                Parent / Guardian Signature
-              </h2>
+              <CardTitle>Parent / Guardian Signature</CardTitle>
               <p className="text-body mt-1 text-secondary">
                 {tPortal('guardianReason')}
               </p>

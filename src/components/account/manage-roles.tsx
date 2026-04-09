@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { ROLE_BY_CLERK_ROLE, type ClerkRole } from '@/lib/constants/roles'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, Button, Badge, CardTitle } from '@/components/ui'
 import { RoleIcon } from '@/components/ui/role-icon'
 import { deriveDefaultRole } from '@/lib/utils/role'
 import type { Id } from '../../../convex/_generated/dataModel'
@@ -61,9 +61,7 @@ export function ManageRoles({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-card-title font-heading font-semibold text-primary">
-          Manage Roles
-        </h2>
+        <CardTitle>Manage Roles</CardTitle>
         <Button variant="primary" onClick={onAddRole}>
           Add Role
         </Button>
@@ -133,7 +131,6 @@ export function ManageRoles({
                     height: isBlocked ? 'auto' : 0,
                     marginTop: isBlocked ? 6 : 0,
                     opacity: isBlocked ? 1 : 0,
-                    transitionDuration: 'var(--transition-speed)',
                   }}
                 >
                   {`Cannot delete — ${blockingCount} active ${blockingCount === 1 ? 'booking' : 'bookings'} use this role's resources.`}
@@ -144,13 +141,12 @@ export function ManageRoles({
                 <div
                   aria-hidden={!(isConfirming && !isBlocked)}
                   data-confirming={isConfirming && !isBlocked}
-                  className="flex items-center justify-between gap-3 overflow-hidden"
+                  className={`flex items-center justify-between gap-3 overflow-hidden${isConfirming && !isBlocked ? ' border-t border-glass-border' : ''}`}
                   style={{
                     visibility: isConfirming && !isBlocked ? 'visible' : 'hidden',
                     height: isConfirming && !isBlocked ? 'auto' : 0,
                     marginTop: isConfirming && !isBlocked ? 10 : 0,
                     paddingTop: isConfirming && !isBlocked ? 10 : 0,
-                    borderTop: isConfirming && !isBlocked ? '1px solid var(--color-glass-border)' : 'none',
                   }}
                 >
                   <span className="text-label text-secondary">

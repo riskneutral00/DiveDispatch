@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useMemo } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { IconButton } from '@/components/ui/icon-button'
+import { CalendarNav } from '@/components/booking/calendar-nav'
 import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
 import { getDaysOfWeek } from '@/lib/utils/calendar-range'
 import { toISODateString } from '@/lib/utils/date'
@@ -51,27 +50,13 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
   return (
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
       <div className="flex flex-col items-center py-2">
-        <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-          <IconButton
-            variant="ghost"
-            onClick={() => shiftRange(-1)}
-            aria-label="Previous 2 weeks"
-          >
-            <ChevronLeft size={16} />
-          </IconButton>
-          <span
-            className="font-semibold text-card-title min-w-[12rem] text-center text-primary font-heading"
-          >
-            {headerLabel}
-          </span>
-          <IconButton
-            variant="ghost"
-            onClick={() => shiftRange(1)}
-            aria-label="Next 2 weeks"
-          >
-            <ChevronRight size={16} />
-          </IconButton>
-        </div>
+        <CalendarNav
+          label={headerLabel}
+          onPrev={() => shiftRange(-1)}
+          onNext={() => shiftRange(1)}
+          prevLabel="Previous 2 weeks"
+          nextLabel="Next 2 weeks"
+        />
       </div>
 
       <div className="overflow-x-auto">

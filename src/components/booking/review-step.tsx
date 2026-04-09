@@ -23,10 +23,6 @@ interface ReviewStepProps {
   isEditMode?: boolean
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <FormSectionHeader label={children} />
-}
-
 export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepProps) {
   const router = useRouter()
   const submitToDraft = useMutation(api.bookings.create.submitToDraft)
@@ -61,12 +57,12 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
   return (
     <div className="flex flex-col gap-4">
       <Card padding="md">
-        <SectionLabel>
+        <FormSectionHeader label={
           <span className="flex items-center gap-1.5">
             <Users size={11} />
             Customers ({customers.length})
           </span>
-        </SectionLabel>
+        } />
         {customers.length === 0 ? (
           <p className="text-body text-secondary">
             No customers added.
@@ -93,12 +89,12 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
       </Card>
 
       <Card padding="md">
-        <SectionLabel>
+        <FormSectionHeader label={
           <span className="flex items-center gap-1.5">
             <Calendar size={11} />
             Overview
           </span>
-        </SectionLabel>
+        } />
         <div className="text-body text-primary">
           <p>{formatDateRange(startDate, endDate)}</p>
           {activityType.length > 0 && (
@@ -123,7 +119,7 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
 
       {days.length > 0 && (
         <Card padding="md">
-          <SectionLabel>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</SectionLabel>
+          <FormSectionHeader label={<>Schedule ({days.length} day{days.length !== 1 ? 's' : ''})</>} />
           <div className="flex flex-col gap-1.5">
             {days.map((d, i) => (
               <div key={i} className="flex items-center gap-2 text-body text-primary">

@@ -54,7 +54,6 @@ export function HierarchySubBar({ slug, roleSlug, filterRoles }: HierarchySubBar
                 background: isActive ? 'var(--color-accent-glow)' : 'transparent',
                 border: `1px solid ${isActive ? 'var(--color-accent)' : 'var(--color-glass-border)'}`,
                 color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                transitionDuration: 'var(--transition-speed)',
               }}
               aria-label={cfg.label}
               aria-current={isActive ? 'page' : undefined}

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { BackgroundLayout } from '@/components/layout/background-layout'
 import { DashboardPageFrame } from '@/components/layout/dashboard-page-frame'
+import { PageTitle } from '@/components/ui/page-title'
+import { CardTitle } from '@/components/ui/card-title'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — DiveDispatch',
@@ -11,16 +13,12 @@ export default function PrivacyPage() {
   return (
     <BackgroundLayout className="items-start px-4 py-16">
       <DashboardPageFrame>
-      <h1
-        className="text-page-title font-bold tracking-tight text-primary mb-8 font-heading"
-      >
-        Privacy Policy
-      </h1>
+      <PageTitle title="Privacy Policy" className="mb-8" />
 
       <div className="flex flex-col gap-8 text-body leading-relaxed text-primary">
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Data We Collect</h2>
+          <CardTitle className="mb-2">Data We Collect</CardTitle>
           <p className="text-secondary">
             When you complete a booking portal, DiveDispatch collects the following information:
           </p>
@@ -33,7 +31,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Why We Collect It</h2>
+          <CardTitle className="mb-2">Why We Collect It</CardTitle>
           <p className="text-secondary">
             Your data is collected to coordinate dive bookings and ensure diver safety.
             Medical information is required by PADI standards to assess fitness to dive.
@@ -43,7 +41,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Who Sees Your Data</h2>
+          <CardTitle className="mb-2">Who Sees Your Data</CardTitle>
           <p className="text-secondary">
             Your information is shared with the dive center operating your booking.
             Dive center staff who manage your booking can view your contact details,
@@ -53,7 +51,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Data Retention</h2>
+          <CardTitle className="mb-2">Data Retention</CardTitle>
           <p className="text-secondary">
             Your data is retained for as long as necessary to fulfill the booking and
             comply with legal obligations. Dive centers may retain records as required
@@ -64,7 +62,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Your Rights</h2>
+          <CardTitle className="mb-2">Your Rights</CardTitle>
           <p className="text-secondary">
             Under the GDPR (General Data Protection Regulation) and PDPA (Personal Data
             Protection Act), you have the right to:
@@ -83,7 +81,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Legal Basis</h2>
+          <CardTitle className="mb-2">Legal Basis</CardTitle>
           <p className="text-secondary">
             We process your data under legitimate interest (coordinating your dive booking)
             and legal obligation (dive safety regulations). Medical data is processed
@@ -95,7 +93,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-card-title font-heading font-semibold text-primary mb-2">Contact</h2>
+          <CardTitle className="mb-2">Contact</CardTitle>
           <p className="text-secondary">
             For privacy-related inquiries, contact us at privacy@divedispatch.com.
           </p>

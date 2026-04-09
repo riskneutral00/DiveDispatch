@@ -1,7 +1,7 @@
 'use client'
 
 import { LocationPicker, type LocationValue } from '@/components/profiles/location-picker-lazy'
-import { ProfileFormSectionDivider } from '@/components/profiles/profile-form-section-divider'
+import { SectionDivider } from '@/components/ui/section-divider'
 import { Input } from '@/components/ui/input'
 import { Select, type SelectOption } from '@/components/ui/select'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
@@ -118,7 +118,7 @@ export function DiveSiteDetailsSection({ profile: existing, me, create, update, 
           />
         </div>
 
-        <ProfileFormSectionDivider show />
+        <SectionDivider show />
 
         <Select
           label="Site Type"

@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { InlineError } from '@/components/ui/inline-error'
 import { Spinner } from '@/components/ui/spinner'
+import { CardTitle } from '@/components/ui/card-title'
 
 interface PortalSubmitProps {
   token: string
@@ -92,11 +93,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 className="w-12 h-12 text-warning"
                 aria-hidden
               />
-              <h2
-                className="text-card-title font-semibold text-primary font-heading"
-              >
-                Submitted
-              </h2>
+              <CardTitle>Submitted</CardTitle>
               <p className="text-body leading-relaxed text-secondary">
                 {tPortal('medicalBlockMessage')}
               </p>
@@ -107,11 +104,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
                 className="w-12 h-12 text-success"
                 aria-hidden
               />
-              <h2
-                className="text-card-title font-semibold text-primary font-heading"
-              >
-                Complete!
-              </h2>
+              <CardTitle>Complete!</CardTitle>
               <p className="text-body leading-relaxed text-secondary">
                 {tPortal('successMessage')}
               </p>
@@ -144,11 +137,7 @@ export function PortalSubmit({ token }: PortalSubmitProps) {
   return (
     <div className="flex flex-col gap-4">
       <Card padding="md">
-        <h2
-          className="text-card-title font-semibold mb-4 text-primary font-heading"
-        >
-          Review &amp; Submit
-        </h2>
+        <CardTitle className="mb-4">Review &amp; Submit</CardTitle>
         <div className="flex flex-col gap-3">
           <StepRow
             label="Contact & Certification"

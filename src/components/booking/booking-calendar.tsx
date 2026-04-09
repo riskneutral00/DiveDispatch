@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { IconButton } from '@/components/ui/icon-button'
 import { Button } from '@/components/ui/button'
+import { CalendarNav } from '@/components/booking/calendar-nav'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
 import { DroppableDateCell } from '@/components/booking/droppable-date-cell'
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
@@ -232,32 +233,14 @@ export function BookingCalendar({
     <div data-testid="booking-calendar" className={`flex flex-col ${className ?? ''}`}>
       <div className="flex flex-col items-center py-2" ref={pickerRef}>
         <div className="relative inline-flex">
-          <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-            <IconButton
-              variant="ghost"
-              onClick={() => { setExpanded(false); shiftRange(-1) }}
-              aria-label="Previous 2 weeks"
-            >
-              <ChevronLeft size={16} />
-            </IconButton>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded((v) => !v)}
-              className="font-semibold text-card-title min-w-[12rem] text-center hover:underline underline-offset-4 text-primary font-heading"
-            >
-              {headerLabel}
-            </Button>
-
-            <IconButton
-              variant="ghost"
-              onClick={() => { setExpanded(false); shiftRange(1) }}
-              aria-label="Next 2 weeks"
-            >
-              <ChevronRight size={16} />
-            </IconButton>
-          </div>
+          <CalendarNav
+            label={headerLabel}
+            onPrev={() => { setExpanded(false); shiftRange(-1) }}
+            onNext={() => { setExpanded(false); shiftRange(1) }}
+            onLabelClick={() => setExpanded((v) => !v)}
+            prevLabel="Previous 2 weeks"
+            nextLabel="Next 2 weeks"
+          />
 
           {expanded && (
             <div
@@ -451,9 +434,8 @@ export function BookingCalendar({
                             e.stopPropagation()
                             onBookingClick?.(bar.id)
                           }}
-                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-opacity ease-out hover:opacity-80 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
+                          className={`w-full rounded-r-[var(--border-radius-button)] px-1.5 text-left transition-opacity duration-theme ease-out hover:opacity-80 mb-0.5${bar.status === 'Urgent' ? ' urgent-pulse' : ''}`}
                           style={{
-                            transitionDuration: 'var(--transition-speed)',
                             height: `${BAR_ROW_HEIGHT - 2}px`,
                             minHeight: '44px',
                             opacity: isReferral ? (opacity * 0.8) : opacity,

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button, Input, InlineError, SimpleSelect } from '@/components/ui'
 import { LoadingCard } from '@/components/ui/loading-card'
+import { SectionDivider } from '@/components/ui/section-divider'
 import { DIVE_AGENCIES_EXTENDED } from '@/lib/constants/agencies'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import type { ClerkRole } from '@/lib/constants/roles'
@@ -102,7 +103,7 @@ function AgencyStepInner({ roleApi, onSaved, onBack }: AgencyStepInnerProps) {
       <div className="flex flex-col gap-4">
         {associations.map((assoc, idx) => (
           <div key={idx}>
-            {idx > 0 && <hr className="form-divider mb-4" />}
+            <SectionDivider show={idx > 0} className="mb-4" />
             <div className="flex flex-wrap gap-3">
               <SimpleSelect
                 label="Agency"

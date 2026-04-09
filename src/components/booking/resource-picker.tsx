@@ -240,8 +240,7 @@ export function ResourcePicker({
 function SectionHeader({ label, topBorder }: { label: string; topBorder: boolean }) {
   return (
     <div
-      className="px-3 py-1 text-label font-semibold uppercase tracking-wide text-secondary"
-      style={{ borderTop: topBorder ? '1px solid var(--color-glass-border)' : undefined }}
+      className={`px-3 py-1 text-label font-semibold uppercase tracking-wide text-secondary${topBorder ? ' border-t border-glass-border' : ''}`}
     >
       {label}
     </div>

@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Dialog, Button, Badge, ActionLink } from '@/components/ui'
-import { statusVariant } from '@/lib/booking/booking-display'
+import { Dialog, Button, ActionLink, StatusBadge, MetaField } from '@/components/ui'
 import { courseLabel } from '@/lib/constants/course-catalog'
 import type { CalendarBooking } from '../../../convex/bookings'
 import { BookingDetailDialog } from './booking-detail-dialog'
@@ -54,7 +53,7 @@ export function BookingQuickDetail({
         {booking && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Badge variant={statusVariant(booking.status)} size="md">{booking.status}</Badge>
+              <StatusBadge status={booking.status} size="md" />
               {booking.operatorName && (
                 <span className="text-label text-secondary">
                   {tBooking('byOperator', { name: booking.operatorName })}
@@ -63,44 +62,27 @@ export function BookingQuickDetail({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-body">
-              <div>
-                <p className="text-label font-semibold uppercase text-secondary">
-                  {tBooking('dates')}
-                </p>
-                <p className="text-primary">
-                  {booking.startDate}
-                  {booking.endDate !== booking.startDate && ` → ${booking.endDate}`}
-                </p>
-              </div>
-              <div>
-                <p className="text-label font-semibold uppercase text-secondary">
-                  {tBooking('customers')}
-                </p>
-                <p className="text-primary">{booking.diverCount}</p>
-              </div>
+              <MetaField label={tBooking('dates')}>
+                {booking.startDate}
+                {booking.endDate !== booking.startDate && ` → ${booking.endDate}`}
+              </MetaField>
+              <MetaField label={tBooking('customers')}>
+                {booking.diverCount}
+              </MetaField>
               {booking.customerName && (
-                <div>
-                  <p className="text-label font-semibold uppercase text-secondary">
-                    {tBooking('leadCustomer')}
-                  </p>
-                  <p className="text-primary">{booking.customerName}</p>
-                </div>
+                <MetaField label={tBooking('leadCustomer')}>
+                  {booking.customerName}
+                </MetaField>
               )}
               {booking.instructorName && (
-                <div>
-                  <p className="text-label font-semibold uppercase text-secondary">
-                    {tBooking('instructor')}
-                  </p>
-                  <p className="text-primary">{booking.instructorName}</p>
-                </div>
+                <MetaField label={tBooking('instructor')}>
+                  {booking.instructorName}
+                </MetaField>
               )}
               {booking.boatName && (
-                <div>
-                  <p className="text-label font-semibold uppercase text-secondary">
-                    {tBooking('boat')}
-                  </p>
-                  <p className="text-primary">{booking.boatName}</p>
-                </div>
+                <MetaField label={tBooking('boat')}>
+                  {booking.boatName}
+                </MetaField>
               )}
             </div>
 

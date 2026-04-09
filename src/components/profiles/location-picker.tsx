@@ -71,7 +71,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
   useEffect(() => {
     if (!value) handleGPS()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps // comments-ok
   }, [])
 
   const {
@@ -274,8 +274,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             onClick={handleGPS}
             disabled={gpsLoading}
             title="Use my current location"
-            className="glass glass-field flex items-center justify-center px-3 transition-opacity duration-theme hover:opacity-80 disabled:opacity-40 cursor-pointer"
-            style={{ color: 'var(--color-accent)' }}
+            className="glass glass-field flex items-center justify-center px-3 transition-opacity duration-theme hover:opacity-80 disabled:opacity-40 cursor-pointer text-accent"
           >
             <Locate size={16} className={gpsLoading ? 'animate-pulse' : ''} />
           </button>
@@ -349,7 +348,6 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
 
         <div
           className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-theme ${poiSelected ? 'opacity-0' : 'opacity-100'}`}
-          style={{ transitionDuration: 'var(--transition-speed)' }}
           aria-hidden
         >
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" className="map-crosshair">
@@ -363,18 +361,12 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
       </div>
 
       <div
-        className="flex-shrink-0 flex items-center justify-between gap-3 p-3"
-        style={{ borderTop: '1px solid var(--color-glass-border)' }}
+        className="flex-shrink-0 flex items-center justify-between gap-3 p-3 border-t border-glass-border"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <MapPin size={14} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+          <MapPin size={14} className="text-accent shrink-0" />
           <span
-            className="text-body truncate"
-            style={{
-              color: displayAddress
-                ? 'var(--color-text-primary)'
-                : 'var(--color-text-secondary)',
-            }}
+            className={`text-body truncate ${displayAddress ? 'text-primary' : 'text-secondary'}`}
           >
             {displayAddress || 'Drag the map to set location…'}
           </span>
@@ -468,12 +460,11 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
         <label
           htmlFor={inputId}
           className={cn(
-            'absolute left-0 pointer-events-none transition-all',
+            'absolute left-0 pointer-events-none transition-all duration-theme',
             floated
               ? 'top-0 text-[10px] font-medium label-float-in text-secondary'
               : 'top-3 text-body text-secondary',
           )}
-          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
         >
           {label}{required && <span className="text-destructive"> *</span>}
         </label>

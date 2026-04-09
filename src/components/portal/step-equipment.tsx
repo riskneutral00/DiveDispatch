@@ -381,7 +381,6 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
                         ? 'var(--color-primary)'
                         : 'var(--color-glass-border)',
                       background: isSelected ? 'var(--color-primary)' : 'transparent',
-                      transitionDuration: 'var(--transition-speed)',
                     }}
                   >
                     {isSelected && (

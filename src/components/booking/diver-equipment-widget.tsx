@@ -6,6 +6,7 @@ import { api } from '@/lib/convex-generated'
 import { Card, Badge, Button, EmptyState, ErrorAlert, FormSectionHeader } from '@/components/ui'
 import { parseConvexError } from '@/lib/utils/convex-error'
 import { Spinner } from '@/components/ui/spinner'
+import { LoadingCard } from '@/components/ui/loading-card'
 import {
   suggestGearSizes,
   type DiverMeasurements,
@@ -352,15 +353,15 @@ function GearSizeRow({
             >
               ✏
             </button>
-            {isManualOverride && ( /* design-ok */
-              <button
+            {isManualOverride && (<>
+              {/* design-ok */}<button
                 onClick={onClearOverride}
                 className="text-label text-secondary min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Clear override"
               >
                 ↺
               </button>
-            )}
+            </>)}
           </div>
         )}
       </div>
@@ -411,11 +412,7 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
 
   if (data === undefined) {
     return (
-      <Card padding="md">
-        <div className="flex items-center justify-center py-6" style={{ color: 'var(--color-primary)' }}>{/* design-ok: --color-primary not in @theme inline */}
-          <Spinner />
-        </div>
-      </Card>
+      <LoadingCard variant="spinner" />
     )
   }
 
@@ -454,8 +451,8 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
         <div className="flex flex-wrap gap-1.5">
           {data.bookings.map((b) => {
             const isActive = b.bookingId === activeId
-            return ( /* design-ok */
-              <button
+            return (
+              <button /* design-ok */
                 key={b.bookingId}
                 onClick={() => setSelectedBookingId(b.bookingId)}
                 className="px-3 py-1 rounded-full text-label font-medium border transition-all duration-theme min-h-[44px]"
@@ -467,7 +464,6 @@ export function DiverEquipmentWidget({ visibleRange }: DiverEquipmentWidgetProps
                   borderColor: isActive
                     ? 'var(--color-primary)'
                     : 'var(--color-glass-border)',
-                  transitionDuration: 'var(--transition-speed)',
                 }}
               >
                 {b.startDate === b.endDate ? b.startDate : `${b.startDate} – ${b.endDate}`}

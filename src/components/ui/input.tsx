@@ -79,13 +79,12 @@ export function Input({
         <label
           htmlFor={id}
           className={cn(
-            'absolute pointer-events-none transition-all',
+            'absolute pointer-events-none transition-all duration-theme',
             leadingIcon ? 'left-6' : 'left-0',
             floated
               ? cn('top-0 text-[10px] font-medium label-float-in', focused ? 'text-primary' : 'text-secondary')
               : 'top-3 text-body text-secondary',
-          )}
-          style={{ transitionDuration: 'var(--transition-speed)' }} /* design-ok */
+          )} /* design-ok */
         >
           {label}{props.required && <span className="text-destructive"> *</span>}
         </label>

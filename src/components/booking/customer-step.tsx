@@ -6,6 +6,7 @@ import { ErrorAlert } from '@/components/ui/error-alert'
 import { Button, ButtonGroup, Input } from '@/components/ui'
 import type { ButtonGroupOption } from '@/components/ui'
 import { LanguageField } from '@/components/profiles/language-field'
+import { SectionDivider } from '@/components/ui/section-divider'
 
 import { hasLanguageConflict } from '@/lib/utils/language-matching'
 import { isValidEmail, isValidWhatsApp, isValidLine } from '@/lib/booking/wizard-state'
@@ -178,7 +179,7 @@ function InlineCustomerForm({ customer, index, canRemove, totalCustomers, dispat
         onChange={handleLanguagesChange}
       />
 
-      {index < totalCustomers - 1 && <hr className="form-divider" />}
+      <SectionDivider show={index < totalCustomers - 1} />
     </div>
   )
 }

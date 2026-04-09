@@ -70,7 +70,6 @@ export function RoleSwitcher({ slug, roleSlug }: RoleSwitcherProps) {
                 background: isActive ? 'var(--color-accent-glow)' : 'transparent',
                 borderColor: isActive ? 'var(--color-accent)' : 'var(--color-glass-border)',
                 color: isActive ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                transitionDuration: 'var(--transition-speed)',
               }}
               aria-label={cfg.label}
               aria-current={isActive ? 'page' : undefined}

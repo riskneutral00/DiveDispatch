@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { Card } from './card'
+import { CardTitle } from './card-title'
 
 interface ErrorCardProps {
   icon: LucideIcon
@@ -24,11 +25,7 @@ export function ErrorCard({
         <div className="mb-4 flex justify-center">
           <Icon size={40} style={{ color: iconColor }} />
         </div>
-        <h2
-          className="text-card-title font-semibold mb-2 text-primary font-heading"
-        >
-          {title}
-        </h2>
+        <CardTitle className="mb-2">{title}</CardTitle>
         <p
           className="text-body leading-relaxed text-secondary"
         >

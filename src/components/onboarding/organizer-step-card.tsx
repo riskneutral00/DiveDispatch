@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, type ReactNode } from 'react'
-import { Button, Card } from '@/components/ui'
+import { Button, Card, CardTitle } from '@/components/ui'
 
 interface OrganizerStepCardProps {
   title: string
@@ -35,9 +35,7 @@ export function OrganizerStepCard({
   return (
     <Card padding="lg">
       <div className="mb-6">
-        <h2 className="text-card-title font-heading font-bold mb-1 text-primary">
-          {title}
-        </h2>
+        <CardTitle weight="bold" className="mb-1">{title}</CardTitle>
         <p className="text-body text-secondary">
           {subtitle}
         </p>

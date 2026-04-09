@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { CardTitle } from '@/components/ui/card-title'
 import { InlineError } from '@/components/ui/inline-error'
 import { Button } from '@/components/ui/button'
 import { medicalAnswersSchema } from '@/lib/validation'
@@ -94,9 +95,7 @@ export function StepMedical({ token, onComplete }: StepMedicalProps) {
             className="w-12 h-12 text-warning"
             aria-hidden="true"
           />
-          <h2 className="text-card-title font-heading font-semibold text-primary">
-            {tPortal('hardBlockTitle')}
-          </h2>
+          <CardTitle>{tPortal('hardBlockTitle')}</CardTitle>
           <p className="text-secondary">
             {tPortal('hardBlockMessage')}
           </p>

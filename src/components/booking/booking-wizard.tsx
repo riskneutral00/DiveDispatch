@@ -11,7 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { ROLE_BY_KEY, type RoleKey } from "@/lib/constants/roles";
-import { Card, Button, ErrorAlert } from "@/components/ui";
+import { Card, Button, ErrorAlert, CardTitle } from "@/components/ui";
 import { SendPortalLink } from "./send-portal-link";
 import { parseConvexError } from "@/lib/utils/convex-error";
 import { WizardProgress } from "./wizard-progress";
@@ -343,11 +343,7 @@ export function BookingWizard({
                 className="flex-shrink-0 mt-0.5 text-warning"
               />
               <div>
-                <h2
-                  className="text-card-title font-semibold text-primary font-heading"
-                >
-                  {t("editConfirmTitle")}
-                </h2>
+                <CardTitle>{t("editConfirmTitle")}</CardTitle>
                 <p
                   className="text-body mt-1 text-secondary"
                 >
