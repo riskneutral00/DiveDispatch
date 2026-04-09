@@ -15,7 +15,11 @@ import type { ClerkRole } from '@/lib/constants/roles'
 import { ROLE_BY_CLERK_ROLE } from '@/lib/constants/roles'
 import { ErrorCode } from '@/lib/errors'
 
-export function ManageRolesConnected() {
+interface ManageRolesConnectedProps {
+  onNavigateToRole?: (roleKey: string) => void
+}
+
+export function ManageRolesConnected({ onNavigateToRole }: ManageRolesConnectedProps = {}) {
   const tErr = useTranslations('errors')
   const tCommon = useTranslations('common')
   const tBooking = useTranslations('booking')
@@ -43,7 +47,12 @@ export function ManageRolesConnected() {
       try {
         await addRole({ role })
         setModalOpen(false)
-        setOnboardingRole(role)
+        const roleConfig = ROLE_BY_CLERK_ROLE[role]
+        if (roleConfig && onNavigateToRole) {
+          onNavigateToRole(roleConfig.key)
+        } else {
+          setOnboardingRole(role)
+        }
       } catch (e: unknown) {
         const code = getConvexErrorCode(e)
         if (code === ErrorCode.DUPLICATE_ROLE) {

@@ -30,7 +30,7 @@ export function AddRoleModal({
       onClose={onClose}
       title="Add a Role"
       description="Select a new role to add to your account."
-      size="lg"
+      fullScreen
     >
       {error && (
         <div

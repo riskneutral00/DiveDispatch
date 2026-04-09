@@ -1,17 +1,17 @@
-import { Fragment } from 'react'
-import { Plus } from 'lucide-react'
+import { Fragment } from "react";
+import { Plus } from "lucide-react";
 
-import { SpecialtyField } from '@/components/profiles/specialty-field'
-import { DayPicker } from '@/components/ui/day-picker'
-import { InlineError } from '@/components/ui/inline-error'
-import { FormSectionHeader } from '@/components/ui/form-section-header'
-import { Button } from '@/components/ui/button'
-import { CheckboxGroup } from '@/components/ui/checkbox-group'
-import { FieldLabel } from '@/components/ui/field-shell'
-import { Input } from '@/components/ui/input'
-import { SimpleSelect } from '@/components/ui/simple-select'
-import { ItemCard } from '@/components/ui/item-card'
-import { Select } from '@/components/ui/select'
+import { SpecialtyField } from "@/components/profiles/specialty-field";
+import { DayPicker } from "@/components/ui/day-picker";
+import { InlineError } from "@/components/ui/inline-error";
+import { FormSectionHeader } from "@/components/ui/form-section-header";
+import { Button } from "@/components/ui/button";
+import { CheckboxGroup } from "@/components/ui/checkbox-group";
+import { FieldLabel } from "@/components/ui/field-shell";
+import { Input } from "@/components/ui/input";
+import { SimpleSelect } from "@/components/ui/simple-select";
+import { ItemCard } from "@/components/ui/item-card";
+import { Select } from "@/components/ui/select";
 import {
   AGENCIES,
   AGENCY_CODES,
@@ -19,17 +19,21 @@ import {
   DIVE_AGENCIES,
   getDefaultSpecialties,
   type AgencyCourse,
-} from '@/lib/constants/agencies'
+} from "@/lib/constants/agencies";
 
-export type ProfileAgencyInfoVariant = 'dive-center' | 'agent' | 'instructor' | 'divemaster'
+export type ProfileAgencyInfoVariant =
+  | "dive-center"
+  | "agent"
+  | "instructor"
+  | "divemaster";
 
-type AgencyRow = Record<string, unknown>
+type AgencyRow = Record<string, unknown>;
 
 export interface ProfileAgencyInfoProps<TItem extends AgencyRow = AgencyRow> {
-  variant: ProfileAgencyInfoVariant
-  items: TItem[]
-  onChange: (items: TItem[]) => void
-  errors?: Record<string, string>
+  variant: ProfileAgencyInfoVariant;
+  items: TItem[];
+  onChange: (items: TItem[]) => void;
+  errors?: Record<string, string>;
 }
 
 export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
@@ -38,122 +42,157 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
   onChange,
   errors = {},
 }: ProfileAgencyInfoProps<TItem>) {
-  const isPro = variant === 'instructor' || variant === 'divemaster'
-  const isAgent = variant === 'agent'
-  const isCenter = variant === 'dive-center'
+  const isPro = variant === "instructor" || variant === "divemaster";
+  const isAgent = variant === "agent";
+  const isCenter = variant === "dive-center";
 
-  const sectionLabel = isPro ? 'Dive Credentials' : 'Affiliations'
-  const addLabel = isPro ? 'Add Credential' : 'Add'
+  const sectionLabel = isPro ? "Dive Credentials" : "Affiliations";
+  const addLabel = isPro ? "Add Credential" : "Add";
   const emptyMessage = isPro
-    ? 'No credentials yet. Tap Add to get started.'
-    : 'No affiliations yet. Tap Add to get started.'
+    ? "No credentials yet. Tap Add to get started."
+    : "No affiliations yet. Tap Add to get started.";
 
-  let keyCounter = 0
-  function nextKey() { return `item-${Date.now()}-${++keyCounter}` }
+  let keyCounter = 0;
+  function nextKey() {
+    return `item-${Date.now()}-${++keyCounter}`;
+  }
 
   function makeDefaultItem() {
-    const _key = nextKey()
+    const _key = nextKey();
     if (isCenter) {
       return {
         _key,
-        agency: '',
-        number: '',
+        agency: "",
+        number: "",
         owDays: COURSE_DAY_RANGES.OW.min,
         aowDays: COURSE_DAY_RANGES.AOW.min,
         oaDays: COURSE_DAY_RANGES.combined.min,
-        selectedSpecialties: getDefaultSpecialties('PADI'),
-      }
+        selectedSpecialties: getDefaultSpecialties("PADI"),
+      };
     }
     if (isAgent) {
-      return { _key, agency: '', number: '' }
+      return { _key, agency: "", number: "" };
     }
-    if (variant === 'instructor') {
-      return { _key, agency: '', level: '', agencyID: '', specialtyRatings: [] }
+    if (variant === "instructor") {
+      return {
+        _key,
+        agency: "",
+        level: "",
+        agencyID: "",
+        specialtyRatings: [],
+      };
     }
-    return { _key, agency: '', level: '', agencyID: '' }
+    return { _key, agency: "", level: "", agencyID: "" };
   }
 
   function handleAdd() {
-    onChange([...items, makeDefaultItem() as unknown as TItem])
+    onChange([...items, makeDefaultItem() as unknown as TItem]);
   }
 
   function handleRemove(idx: number) {
-    onChange(items.filter((_, i) => i !== idx))
+    onChange(items.filter((_, i) => i !== idx));
   }
 
   function handleUpdate(idx: number, patch: Record<string, unknown>) {
-    const newItems = [...items] as TItem[]
-    const updated = { ...(newItems[idx] as AgencyRow), ...patch } as TItem
+    const newItems = [...items] as TItem[];
+    const updated = { ...(newItems[idx] as AgencyRow), ...patch } as TItem;
 
-    if (isCenter && patch.agency && patch.agency !== (newItems[idx] as AgencyRow).agency) {
-      ;(updated as AgencyRow).selectedSpecialties = getDefaultSpecialties(String(patch.agency))
+    if (
+      isCenter &&
+      patch.agency &&
+      patch.agency !== (newItems[idx] as AgencyRow).agency
+    ) {
+      (updated as AgencyRow).selectedSpecialties = getDefaultSpecialties(
+        String(patch.agency),
+      );
     }
 
-    newItems[idx] = updated
-    onChange(newItems)
+    newItems[idx] = updated;
+    onChange(newItems);
   }
 
   function renderDiveCenterFields(item: AgencyRow, idx: number) {
-    const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES]
+    const agencyPrefix = AGENCIES[item.agency as keyof typeof AGENCIES];
     return (
       <div className="flex flex-col gap-4 items-start">
         <div className="flex flex-wrap gap-2">
-        <Select
-          label="Agency"
-          value={String((item as AgencyRow).agency ?? '')}
-          onChange={(v) => handleUpdate(idx, { agency: v })}
-          options={AGENCY_CODES.filter(
-            (code) => code === item.agency || !items.some((a, i) => i !== idx && a.agency === code)
-          ).map((code) => ({ id: code, label: AGENCIES[code as keyof typeof AGENCIES].name }))}
-          placeholder="Select agency"
-          required
-        />
-        <Input
-          label="Member Number"
-          value={String((item as AgencyRow).number ?? '')}
-          onChange={(e) => handleUpdate(idx, { number: e.target.value })}
-          required
-          className="field-text-short"
-        />
+          <Select
+            label="Agency"
+            value={String((item as AgencyRow).agency ?? "")}
+            onChange={(v) => handleUpdate(idx, { agency: v })}
+            options={AGENCY_CODES.filter(
+              (code) =>
+                code === item.agency ||
+                !items.some((a, i) => i !== idx && a.agency === code),
+            ).map((code) => ({
+              id: code,
+              label: AGENCIES[code as keyof typeof AGENCIES].name,
+            }))}
+            placeholder="Select agency"
+            required
+          />
+          <Input
+            label="Member Number"
+            value={String((item as AgencyRow).number ?? "")}
+            onChange={(e) => handleUpdate(idx, { number: e.target.value })}
+            required
+            className="field-text-short"
+          />
         </div>
 
         <div className="">
           <FieldLabel required className="mb-2">
             Default course days
           </FieldLabel>
-          <div className="flex gap-2">
+          <div className="flex gap-2 reading-plane">
             <DayPicker
-              label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'OW')?.label ?? 'OW'}
+              label={
+                agencyPrefix?.courses.find((c: AgencyCourse) => c.code === "OW")
+                  ?.label ?? "OW"
+              }
               value={Number((item as AgencyRow).owDays)}
               min={COURSE_DAY_RANGES.OW.min}
               max={COURSE_DAY_RANGES.OW.max}
               onChange={(v) => handleUpdate(idx, { owDays: v })}
+              underline={false}
             />
             <DayPicker
-              label={agencyPrefix?.courses.find((c: AgencyCourse) => c.code === 'AOW')?.label ?? 'AOW'}
+              label={
+                agencyPrefix?.courses.find(
+                  (c: AgencyCourse) => c.code === "AOW",
+                )?.label ?? "AOW"
+              }
               value={Number((item as AgencyRow).aowDays)}
               min={COURSE_DAY_RANGES.AOW.min}
               max={COURSE_DAY_RANGES.AOW.max}
               onChange={(v) => handleUpdate(idx, { aowDays: v })}
+              underline={false}
             />
             <DayPicker
-              label={agencyPrefix?.combinedLabel ?? 'O+A'}
+              label={agencyPrefix?.combinedLabel ?? "O+A"}
               value={Number((item as AgencyRow).oaDays)}
               min={COURSE_DAY_RANGES.combined.min}
               max={COURSE_DAY_RANGES.combined.max}
               onChange={(v) => handleUpdate(idx, { oaDays: v })}
+              underline={false}
             />
           </div>
         </div>
         <div className=" w-full">
           <SpecialtyField
-            agencyCode={String((item as AgencyRow).agency ?? '')}
-            value={((item as AgencyRow).selectedSpecialties as string[] | undefined) ?? []}
-            onChange={(specialties) => handleUpdate(idx, { selectedSpecialties: specialties })}
+            agencyCode={String((item as AgencyRow).agency ?? "")}
+            value={
+              ((item as AgencyRow).selectedSpecialties as
+                | string[]
+                | undefined) ?? []
+            }
+            onChange={(specialties) =>
+              handleUpdate(idx, { selectedSpecialties: specialties })
+            }
           />
         </div>
       </div>
-    )
+    );
   }
 
   function renderAgentFields(item: AgencyRow, idx: number) {
@@ -161,7 +200,7 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
       <div className="flex flex-wrap gap-3 mb-4 ">
         <SimpleSelect
           label="Agency"
-          value={String((item as AgencyRow).agency ?? '')}
+          value={String((item as AgencyRow).agency ?? "")}
           onChange={(v) => handleUpdate(idx, { agency: v })}
           options={DIVE_AGENCIES}
           placeholder="Select agency…"
@@ -172,22 +211,22 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         <Input
           label="Agency Member ID"
           placeholder="e.g. 12345678"
-          value={String((item as AgencyRow).number ?? '')}
+          value={String((item as AgencyRow).number ?? "")}
           onChange={(e) => handleUpdate(idx, { number: e.target.value })}
           error={errors[`associations.${idx}.number`]}
           required
           className="field-text-short"
         />
       </div>
-    )
+    );
   }
 
   function renderProFields(item: AgencyRow, idx: number) {
-    const selectedAgency = String((item as AgencyRow).agency ?? '')
-    const agencyDef = selectedAgency ? AGENCIES[selectedAgency] : undefined
+    const selectedAgency = String((item as AgencyRow).agency ?? "");
+    const agencyDef = selectedAgency ? AGENCIES[selectedAgency] : undefined;
     const ratingItems = (agencyDef?.specialties ?? [])
       .filter((s) => s.specialtyCourseName !== null)
-      .map((s) => ({ value: s.code, label: s.label }))
+      .map((s) => ({ value: s.code, label: s.label }));
 
     return (
       <Fragment>
@@ -204,43 +243,63 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           />
           <Input
             label="Certification Level"
-            placeholder={variant === 'instructor' ? 'e.g. Open Water Instructor' : 'e.g. Divemaster'}
-            value={String((item as AgencyRow).level ?? '')}
+            placeholder={
+              variant === "instructor"
+                ? "e.g. Open Water Instructor"
+                : "e.g. Divemaster"
+            }
+            value={String((item as AgencyRow).level ?? "")}
             onChange={(e) => handleUpdate(idx, { level: e.target.value })}
             error={errors[`credential.${idx}.level`]}
             required
             className="field-text-short"
           />
           <Input
-            label={variant === 'instructor' ? 'Agency Instructor ID' : 'Agency Member ID'}
+            label={
+              variant === "instructor"
+                ? "Agency Instructor ID"
+                : "Agency Member ID"
+            }
             placeholder="e.g. 12345678"
-            value={String((item as AgencyRow).agencyID ?? '')}
+            value={String((item as AgencyRow).agencyID ?? "")}
             onChange={(e) => handleUpdate(idx, { agencyID: e.target.value })}
             error={errors[`credential.${idx}.agencyID`]}
             className="field-text-short"
             required
           />
         </div>
-        {variant === 'instructor' && (
-          <div className={ratingItems.length > 0 ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}>
+        {variant === "instructor" && (
+          <div
+            className={
+              ratingItems.length > 0
+                ? "opacity-100"
+                : "opacity-0 h-0 overflow-hidden"
+            }
+          >
             <CheckboxGroup
               label="Specialty Instructor Ratings"
               items={ratingItems}
-              selected={((item as AgencyRow).specialtyRatings as string[] | undefined) ?? []}
-              onChange={(values) => handleUpdate(idx, { specialtyRatings: values })}
+              selected={
+                ((item as AgencyRow).specialtyRatings as
+                  | string[]
+                  | undefined) ?? []
+              }
+              onChange={(values) =>
+                handleUpdate(idx, { specialtyRatings: values })
+              }
               error={errors[`credential.${idx}.specialtyRatings`]}
               columns={3}
             />
           </div>
         )}
       </Fragment>
-    )
+    );
   }
 
   function renderVariantFields(item: AgencyRow, idx: number) {
-    if (isCenter) return renderDiveCenterFields(item, idx)
-    if (isAgent) return renderAgentFields(item, idx)
-    return renderProFields(item, idx)
+    if (isCenter) return renderDiveCenterFields(item, idx);
+    if (isAgent) return renderAgentFields(item, idx);
+    return renderProFields(item, idx);
   }
 
   return (
@@ -249,7 +308,12 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
         <FormSectionHeader
           label={sectionLabel}
           action={
-            <Button type="button" variant="secondary" size="sm" onClick={handleAdd}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleAdd}
+            >
               <Plus size={14} />
               {addLabel}
             </Button>
@@ -277,7 +341,6 @@ export function ProfileAgencyInfo<TItem extends AgencyRow = AgencyRow>({
           ))}
         </div>
       )}
-
     </div>
-  )
+  );
 }

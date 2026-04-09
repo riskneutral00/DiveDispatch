@@ -438,7 +438,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
               : 'Add location'
           }
         >
-          {value ? `${value.placeName}, ${value.country}` : t('addLocation')}
+          {value ? `${value.placeName}, ${value.country}` : (label ? '\u00A0' : t('addLocation'))}
         </button>
         {value && (
           <button /* design-ok: inline clear X inside field trigger */

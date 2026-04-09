@@ -156,7 +156,7 @@ export function ProfileOverlay({ open, onClose, initialTab = 'profile', roleSlug
         >
           <DashboardPageFrame className="px-4 pt-2 pb-28 md:pb-6 sm:px-6">
             {activeTab === 'profile' && <ProfileTab onClose={onClose} />}
-            {activeTab === 'roles' && <ManageRolesConnected />}
+            {activeTab === 'roles' && <ManageRolesConnected onNavigateToRole={(roleKey) => setActiveTab(`role:${roleKey}`)} />}
             {activeRoleKey && roleSectionTabs && roleSectionTabs.length > 0 && (
               <div className="max-w-2xl mx-auto">
                 <ProfileSectionTabBar
