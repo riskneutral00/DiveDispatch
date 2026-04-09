@@ -45,13 +45,29 @@ export function Dialog({
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
+      if (melt) {
+        document.querySelectorAll("dialog[open][data-melt]").forEach((d) => {
+          if (d === dialog) return;
+          const panel = d.querySelector<HTMLElement>(".dialog-fullscreen-panel, .glass-dialog");
+          if (panel) {
+            panel.style.transition = "opacity 0.25s ease";
+            panel.style.opacity = "0";
+            panel.dataset.melted = "";
+          }
+        });
+      }
     } else if (!open && dialog.open) {
       dialog.close();
     }
     return () => {
       if (dialog.open) dialog.close();
+      document.querySelectorAll<HTMLElement>("[data-melted]").forEach((el) => {
+        el.style.opacity = "";
+        el.style.transition = "";
+        delete el.dataset.melted;
+      });
     };
-  }, [open]);
+  }, [open, melt]);
 
   const handleClick = (e: React.MouseEvent<HTMLDialogElement>) => {
     if (e.target === dialogRef.current) onClose();

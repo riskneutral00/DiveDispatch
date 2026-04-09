@@ -247,7 +247,13 @@ export function Select({
   }
 
   return (
-    <FieldShell id={id} required={required} error={error} helperText={helperText} className="relative flex flex-col gap-1.5 w-full">
+    <FieldShell
+      id={id}
+      required={required}
+      error={error}
+      helperText={helperText}
+      className="relative flex flex-col gap-1.5 w-full border-0 bg-transparent p-0 shadow-none"
+    >
       <div ref={containerRef} className="relative">
       <button
         id={id}

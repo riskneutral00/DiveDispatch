@@ -23,7 +23,7 @@ export function RoleTile({
     : 'var(--color-glass-border)'
   const background = hasSelection && selected
     ? 'var(--color-primary-glow)'
-    : 'var(--color-glass-bg)'
+    : hasSelection ? 'var(--color-glass-bg)' : undefined
   const outlineColor = hasSelection
     ? 'var(--color-accent)'
     : 'var(--color-primary-glow)'
@@ -38,7 +38,7 @@ export function RoleTile({
       onClick={onClick}
       aria-label={role.label}
       {...(hasSelection ? { 'aria-pressed': selected } : {})}
-      className="glass-container w-full rounded-theme p-4 text-left transition-all duration-theme focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary"
+      className={`glass-container w-full rounded-theme p-4 text-left transition-all duration-theme focus-visible:outline-2 disabled:opacity-50 disabled:cursor-not-allowed text-primary${hasSelection ? '' : ' reading-plane'}`}
       style={{
         borderColor,
         background,
