@@ -34,6 +34,7 @@ export function Textarea({
         rows={rows}
         disabled={disabled}
         required={required}
+        placeholder={label && !floated ? undefined : (props.placeholder as string | undefined)}
         onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
         onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
         className={cn(

@@ -59,6 +59,7 @@ export function ConfirmActionDialog({
       title={title}
       description={description}
       size="sm"
+      melt={false}
     >
       <div className="flex flex-col gap-4">
         {children}

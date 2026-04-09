@@ -275,7 +275,7 @@ export function Select({
         }}
       >
         <span className="flex items-center justify-between gap-2">
-          <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+          <span className="truncate">{selectedOption?.label ?? (label && !floated ? '\u00A0' : placeholder)}</span>
           {selectedOption?.languages && selectedOption.languages.length > 0 && (
             <LanguageFlags languages={selectedOption.languages} className="text-body flex-shrink-0" />
           )}

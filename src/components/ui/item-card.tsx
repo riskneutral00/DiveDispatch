@@ -11,7 +11,7 @@ interface ItemCardProps {
 
 export function ItemCard({ children, onRemove, canRemove = true, 'aria-label': ariaLabel = 'Remove item' }: ItemCardProps) {
   return (
-    <div className="glass-container rounded-theme p-4">
+    <div className="glass-container reading-plane rounded-theme p-4">
       <div className="flex gap-2">
         <div className="flex-1 min-w-0">{children}</div>
         {onRemove && canRemove && (
