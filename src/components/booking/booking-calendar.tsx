@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { IconButton } from '@/components/ui/icon-button'
+import { Button } from '@/components/ui/button'
 import { skylinePack, type BookingSpan } from '@/lib/utils/skyline-packer'
 import { DroppableDateCell } from '@/components/booking/droppable-date-cell'
 import { BAR_ROW_HEIGHT, DAY_CELL_PILLS_MAX_HEIGHT } from '@/lib/constants/calendar-config'
@@ -231,31 +233,30 @@ export function BookingCalendar({
       <div className="flex flex-col items-center py-2" ref={pickerRef}>
         <div className="relative inline-flex">
           <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-            {/* design-ok */}<button
-              type="button"
+            <IconButton
+              variant="ghost"
               onClick={() => { setExpanded(false); shiftRange(-1) }}
-              className="p-1.5 rounded-theme transition-opacity duration-theme hover:opacity-70 text-secondary"
               aria-label="Previous 2 weeks"
             >
               <ChevronLeft size={16} />
-            </button>
+            </IconButton>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setExpanded((v) => !v)}
               className="font-semibold text-card-title min-w-[12rem] text-center hover:underline underline-offset-4 text-primary font-heading"
             >
               {headerLabel}
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <IconButton
+              variant="ghost"
               onClick={() => { setExpanded(false); shiftRange(1) }}
-              className="p-1.5 rounded-theme transition-opacity duration-theme hover:opacity-70 text-secondary"
               aria-label="Next 2 weeks"
             >
               <ChevronRight size={16} />
-            </button>
+            </IconButton>
           </div>
 
           {expanded && (
@@ -270,27 +271,27 @@ export function BookingCalendar({
               }}
             >
               <div className="flex items-center justify-between mb-3">
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost"
                   onClick={() => { if (pickerYear > currentYear - 1) setPickerYear((y) => y - 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity duration-theme ${pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={pickerYear <= currentYear - 1 ? 'opacity-30 pointer-events-none' : ''}
                   aria-label="Previous year"
                 >
                   <ChevronLeft size={14} />
-                </button>
+                </IconButton>
                 <span
                   className="text-body font-semibold text-primary font-heading"
                 >
                   {pickerYear}
                 </span>
-                <button
-                  type="button"
+                <IconButton
+                  variant="ghost"
                   onClick={() => { if (pickerYear < currentYear + 1) setPickerYear((y) => y + 1) }}
-                  className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-[var(--border-radius-button)] transition-opacity duration-theme ${pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : 'hover:opacity-70'} text-secondary`}
+                  className={pickerYear >= currentYear + 1 ? 'opacity-30 pointer-events-none' : ''}
                   aria-label="Next year"
                 >
                   <ChevronRight size={14} />
-                </button>
+                </IconButton>
               </div>
 
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-1"> {/* design-ok: month picker grid, 3-col is intentional mobile baseline */}
@@ -301,7 +302,7 @@ export function BookingCalendar({
                   const isBeforeFloor = pickerYear < floor.getFullYear() ||
                     (pickerYear === floor.getFullYear() && i < floor.getMonth())
                   return (
-                    <button
+                    <button /* design-ok: month picker grid cell */
                       key={label}
                       type="button"
                       disabled={isBeforeFloor}
@@ -323,14 +324,14 @@ export function BookingCalendar({
               </div>
 
               <div className="flex justify-center mt-3">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => { resetRange(); setPickerYear(currentYear); setExpanded(false) }}
-                  className="text-body font-medium transition-opacity duration-theme hover:opacity-80 min-h-[44px] min-w-[44px]"
                   style={{ color: 'var(--color-primary)' }} /* design-ok: --color-primary not in @theme inline */
                 >
                   Today
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -442,7 +443,7 @@ export function BookingCalendar({
                       }
 
                       return (
-                        <button
+                        <button /* design-ok: calendar booking bar cell */
                           key={bar.id}
                           type="button"
                           data-referral={isReferral ? 'true' : undefined}

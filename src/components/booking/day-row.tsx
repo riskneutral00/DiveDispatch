@@ -83,7 +83,7 @@ function DivePill({
   const isCappedAndInactive = capped && !active
 
   return (
-    <button
+    <button /* design-ok: dive-slot toggle pill with per-slot state styling */
       type="button"
       onClick={isCappedAndInactive ? undefined : onToggle}
       disabled={isCappedAndInactive}
@@ -346,7 +346,7 @@ export function DayRow({
                         const Icon = VENUE_ICONS[vt]
                         const isVenueSelected = currentVenue === vt
                         return (
-                          <button
+                          <button /* design-ok: venue-type selector chip */
                             key={vt}
                             type="button"
                             onClick={() => dispatch({ type: 'SET_DIVE_VENUE', dayIndex, diveIndex: diveIdx, venueType: vt })}

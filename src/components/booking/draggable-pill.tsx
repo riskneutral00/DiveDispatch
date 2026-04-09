@@ -30,7 +30,7 @@ export function DraggablePill({ template, canBook, onSelect, style }: DraggableP
   }
 
   return (
-    <button
+    <button /* design-ok: DnD draggable surface with grab cursor */
       ref={(el) => {
         elementRef.current = el
         ref(el)

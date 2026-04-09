@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { Dialog, Button } from '@/components/ui'
 
 interface BlockDateDialogProps {
@@ -8,33 +9,31 @@ interface BlockDateDialogProps {
 }
 
 export function BlockDateDialog({ pendingToggle, isToggling, onConfirm, onCancel }: BlockDateDialogProps) {
+  const tCommon = useTranslations('common')
+  const isBlock = pendingToggle.mode === 'block'
   return (
     <Dialog
       open
       onClose={onCancel}
-      title={pendingToggle.mode === 'block' ? 'Block date?' : 'Unblock date?'}
+      title={isBlock ? 'Block date?' : 'Unblock date?'}
       size="sm"
     >
       <p className="text-body mb-4 text-secondary">
-        {pendingToggle.mode === 'block'
+        {isBlock
           ? `Block ${pendingToggle.date}? You won't receive booking requests.`
           : `Unblock ${pendingToggle.date}? You'll be available for bookings again.`}
       </p>
       <div className="flex justify-end gap-2">
         <Button size="sm" variant="secondary" onClick={onCancel} disabled={isToggling}>
-          Cancel
+          {tCommon('cancel')}
         </Button>
         <Button
           size="sm"
-          variant={pendingToggle.mode === 'block' ? 'destructive' : 'primary'}
+          variant={isBlock ? 'destructive' : 'primary'}
           onClick={onConfirm}
-          disabled={isToggling}
+          loading={isToggling}
         >
-          {isToggling
-            ? 'Saving…'
-            : pendingToggle.mode === 'block'
-              ? 'Block'
-              : 'Unblock'}
+          {isBlock ? 'Block' : 'Unblock'}
         </Button>
       </div>
     </Dialog>

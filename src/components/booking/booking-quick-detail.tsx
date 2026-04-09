@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog, Button, Badge, ActionLink } from '@/components/ui'
 import { statusVariant } from '@/lib/booking/booking-display'
 import { courseLabel } from '@/lib/constants/course-catalog'
@@ -26,6 +27,8 @@ export function BookingQuickDetail({
   isDeclining = false,
   error = null,
 }: BookingQuickDetailProps) {
+  const tBooking = useTranslations('booking')
+  const tCommon = useTranslations('common')
   const [showFullDetail, setShowFullDetail] = useState(false)
 
   function handleViewDetail() {
@@ -54,17 +57,15 @@ export function BookingQuickDetail({
               <Badge variant={statusVariant(booking.status)} size="md">{booking.status}</Badge>
               {booking.operatorName && (
                 <span className="text-label text-secondary">
-                  by {booking.operatorName}
+                  {tBooking('byOperator', { name: booking.operatorName })}
                 </span>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-body">
               <div>
-                <p
-                  className="text-label font-semibold uppercase text-secondary"
-                >
-                  Dates
+                <p className="text-label font-semibold uppercase text-secondary">
+                  {tBooking('dates')}
                 </p>
                 <p className="text-primary">
                   {booking.startDate}
@@ -72,39 +73,31 @@ export function BookingQuickDetail({
                 </p>
               </div>
               <div>
-                <p
-                  className="text-label font-semibold uppercase text-secondary"
-                >
-                  Customers
+                <p className="text-label font-semibold uppercase text-secondary">
+                  {tBooking('customers')}
                 </p>
                 <p className="text-primary">{booking.diverCount}</p>
               </div>
               {booking.customerName && (
                 <div>
-                  <p
-                    className="text-label font-semibold uppercase text-secondary"
-                  >
-                    Lead Customer
+                  <p className="text-label font-semibold uppercase text-secondary">
+                    {tBooking('leadCustomer')}
                   </p>
                   <p className="text-primary">{booking.customerName}</p>
                 </div>
               )}
               {booking.instructorName && (
                 <div>
-                  <p
-                    className="text-label font-semibold uppercase text-secondary"
-                  >
-                    Instructor
+                  <p className="text-label font-semibold uppercase text-secondary">
+                    {tBooking('instructor')}
                   </p>
                   <p className="text-primary">{booking.instructorName}</p>
                 </div>
               )}
               {booking.boatName && (
                 <div>
-                  <p
-                    className="text-label font-semibold uppercase text-secondary"
-                  >
-                    Boat
+                  <p className="text-label font-semibold uppercase text-secondary">
+                    {tBooking('boat')}
                   </p>
                   <p className="text-primary">{booking.boatName}</p>
                 </div>
@@ -122,7 +115,7 @@ export function BookingQuickDetail({
                       loading={isAccepting}
                       disabled={isDeclining}
                     >
-                      Accept
+                      {tCommon('accept')}
                     </Button>
                   )}
                   <ActionLink
@@ -130,7 +123,7 @@ export function BookingQuickDetail({
                     className="text-label"
                     disabled={isLoading}
                   >
-                    View Full Detail
+                    {tBooking('viewFullDetail')}
                   </ActionLink>
                   {onDecline && (
                     <Button
@@ -140,19 +133,19 @@ export function BookingQuickDetail({
                       loading={isDeclining}
                       disabled={isAccepting}
                     >
-                      Decline
+                      {tCommon('decline')}
                     </Button>
                   )}
                 </>
               ) : (
                 <Button size="sm" variant="primary" onClick={handleViewDetail}>
-                  View Full Detail
+                  {tBooking('viewFullDetail')}
                 </Button>
               )}
             </div>
 
             {error && (
-              <p className="text-label text-center pt-1 text-[var(--color-status-cancelled)]">
+              <p className="text-label text-center pt-1 text-destructive">
                 {error}
               </p>
             )}

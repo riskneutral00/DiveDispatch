@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { IconButton } from '@/components/ui/icon-button'
 import { useCalendarRange } from '@/lib/hooks/use-calendar-range'
 import { getDaysOfWeek } from '@/lib/utils/calendar-range'
 import { toISODateString } from '@/lib/utils/date'
@@ -51,27 +52,25 @@ export function VesselCalendar({ data, onRangeChange, className }: VesselCalenda
     <div data-testid="vessel-calendar" className={`flex flex-col ${className ?? ''}`}>
       <div className="flex flex-col items-center py-2">
         <div className="glass-container glass-surface transition rounded-theme inline-flex items-center gap-3 px-3 py-1">
-          {/* design-ok */}<button
-            type="button"
+          <IconButton
+            variant="ghost"
             onClick={() => shiftRange(-1)}
-            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"
             aria-label="Previous 2 weeks"
           >
             <ChevronLeft size={16} />
-          </button>
+          </IconButton>
           <span
             className="font-semibold text-card-title min-w-[12rem] text-center text-primary font-heading"
           >
             {headerLabel}
           </span>
-          {/* design-ok */}<button
-            type="button"
+          <IconButton
+            variant="ghost"
             onClick={() => shiftRange(1)}
-            className="p-1.5 rounded-[var(--border-radius-button)] transition-opacity duration-theme hover:opacity-70 text-secondary"
             aria-label="Next 2 weeks"
           >
             <ChevronRight size={16} />
-          </button>
+          </IconButton>
         </div>
       </div>
 

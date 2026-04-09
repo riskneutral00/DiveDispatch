@@ -64,8 +64,8 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
           return <span key={template.id}>{pill}</span>
         }
 
-        const btn = ( /* design-ok */
-          <button
+        const btn = (
+          <button /* design-ok: pill with shared PILL_BASE/PILL_STYLE */
             key={template.id}
             type="button"
             disabled={!canBook}
@@ -98,7 +98,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
               style={ACCENT_PILL_STYLE}
             />
           ) : (
-            <button
+            <button /* design-ok: pill with shared PILL_BASE/ACCENT_PILL_STYLE */
               type="button"
               className={`${PILL_BASE} cursor-pointer transition-opacity hover:opacity-70`}
               style={ACCENT_PILL_STYLE}
@@ -110,7 +110,7 @@ export function QuickBookRail({ onSelect, dragEnabled }: QuickBookRailProps) {
         </span>
       ) : (
         <Tooltip label={TOOLTIP_LABEL} className="hidden sm:inline-flex ml-auto">
-          <button
+          <button /* design-ok: disabled pill variant */
             type="button"
             disabled
             className={PILL_BASE}

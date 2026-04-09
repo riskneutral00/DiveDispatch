@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex-generated'
 import { useCurrentUser } from '@/lib/hooks/use-current-user'
+import { IconButton } from '@/components/ui/icon-button'
 import { NotificationPanel } from './notification-panel'
 
 export function NotificationBell() {
@@ -21,27 +22,27 @@ export function NotificationBell() {
 
   return (
     <div className="relative">
-      {/* design-ok */}<button
+      <IconButton
+        variant="ghost"
         aria-label={
           unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'
         }
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center w-11 h-11 rounded-full transition-colors duration-theme text-secondary"
       >
         <Bell size={18} />
-        {!!unreadCount && (
-          <span
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1" /* design-ok */
-            style={{
-              background: 'var(--color-status-urgent)',
-              color: 'var(--color-text-on-primary)',
-            }}
-            aria-hidden="true"
-          >
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-      </button>
+      </IconButton>
+      {!!unreadCount && (
+        <span
+          className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1 pointer-events-none" /* design-ok */
+          style={{
+            background: 'var(--color-status-urgent)',
+            color: 'var(--color-text-on-primary)',
+          }}
+          aria-hidden="true"
+        >
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
 
       {open && (
         <NotificationPanel

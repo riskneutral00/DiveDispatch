@@ -48,14 +48,14 @@ export function UrgentBookingStrip({
             lineHeight: '1.2',
           }}
         >
-          <button
+          <button /* design-ok: inline text link in compact strip */
             type="button"
             onClick={() => onBookingClick?.(b._id)}
             className="bg-transparent border-none p-0 font-inherit text-inherit cursor-pointer"
           >
             {formatDateRange(b.startDate, b.endDate)}
           </button>
-          <button
+          <button /* design-ok: compact dismiss X in notification strip */
             type="button"
             onClick={() => onCancel(b._id)}
             onKeyDown={(e) => {

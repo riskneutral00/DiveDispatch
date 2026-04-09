@@ -269,7 +269,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>
-          <button
+          <button /* design-ok: GPS locate button inside compound search input */
             type="button"
             onClick={handleGPS}
             disabled={gpsLoading}
@@ -429,7 +429,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
         >
           <MapPin size={16} />
         </span>
-        <button
+        <button /* design-ok: field-underline trigger for location picker */
           id={inputId}
           type="button"
           onClick={onOpen}
@@ -451,7 +451,7 @@ function LocationPickerTrigger({ value, onOpen, onClear, error, label, required,
           {value ? `${value.placeName}, ${value.country}` : 'Add location…'}
         </button>
         {value && (
-          <button
+          <button /* design-ok: inline clear X inside field trigger */
             type="button"
             onClick={(e) => {
               e.stopPropagation()

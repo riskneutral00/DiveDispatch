@@ -73,7 +73,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-glass-border"
       >
         <span className="text-body font-semibold text-primary">
-          Notifications
+          {t('notifications')}
         </span>
         {hasNotifications && (
           <Button
@@ -81,7 +81,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
             size="sm"
             onClick={handleClearAllClick}
           >
-            Clear
+            {t('clear')}
           </Button>
         )}
       </div>
@@ -94,7 +94,7 @@ export function NotificationPanel({ userId, onClose }: NotificationPanelProps) {
         )}
         {notifications?.length === 0 && (
           <p className="text-body text-center py-6 text-secondary">
-            No notifications.
+            {t('noNotifications')}
           </p>
         )}
         {notifications?.map((n) => (

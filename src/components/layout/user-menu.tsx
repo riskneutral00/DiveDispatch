@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { ROLE_BY_CLERK_ROLE, type ClerkRole, type RoleKey } from "@/lib/constants/roles";
 import { api } from "@/lib/convex-generated";
 import { useCurrentUser } from "@/lib/hooks/use-current-user";
+import { IconButton } from "@/components/ui/icon-button";
 import { MenuButton } from "@/components/ui/menu-button";
 import type { ProfileOverlayTab } from "../profiles/profile-overlay";
 
@@ -58,10 +59,11 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
 
   return (
     <div className="relative">
-      <button
+      <IconButton
+        variant="ghost"
         aria-label="User menu"
         onClick={() => setOpen((o) => !o)}
-        className="min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
+        className="flex-shrink-0"
       >
         <span
           className="w-8 h-8 rounded-full flex items-center justify-center text-label font-medium" /* design-ok: visual circle inside 44px touch target */
@@ -72,7 +74,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
         >
           {initials}
         </span>
-      </button>
+      </IconButton>
 
       {open && (
         <>
