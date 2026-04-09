@@ -4,6 +4,7 @@ import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { IconButton } from "@/components/ui/icon-button";
+import { INTERACTION_DEFAULTS } from "@/lib/constants/interaction-config";
 
 interface DialogProps {
   open: boolean;
@@ -13,7 +14,7 @@ interface DialogProps {
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
   fullScreen?: boolean;
-  scrim?: boolean;
+  melt?: boolean;
   className?: string;
 }
 
@@ -32,7 +33,7 @@ export function Dialog({
   children,
   size = "md",
   fullScreen = false,
-  scrim = false,
+  melt = INTERACTION_DEFAULTS.dialogMelt,
   className = "",
 }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -72,7 +73,7 @@ export function Dialog({
         aria-labelledby={title ? titleId : undefined}
         aria-describedby={description ? descId : undefined}
         aria-modal="true"
-        data-scrim={scrim || undefined}
+        data-melt={melt || undefined}
         className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[var(--z-modal)]"
         style={{ border: "none" }}
       >
@@ -132,7 +133,7 @@ export function Dialog({
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={description ? descId : undefined}
       aria-modal="true"
-      data-scrim={scrim || undefined}
+      data-melt={melt || undefined}
       className="fixed inset-0 p-0 bg-transparent w-full max-w-none m-0 h-full z-[var(--z-modal)]"
       style={{ border: "none" }}
     >

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ui/error-alert'
@@ -11,7 +12,7 @@ interface ConfirmActionDialogProps {
   title: string
   description: string
   confirmLabel: string
-  cancelLabel?: string
+  cancelLabel?: string | null
   variant?: 'destructive' | 'default'
   onConfirm: () => Promise<void>
   children?: ReactNode
@@ -23,11 +24,13 @@ export function ConfirmActionDialog({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   variant = 'default',
   onConfirm,
   children,
 }: ConfirmActionDialogProps) {
+  const t = useTranslations('common')
+  const resolvedCancelLabel = cancelLabel ?? t('cancel')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -64,7 +67,7 @@ export function ConfirmActionDialog({
 
         <div className="flex justify-end gap-3 mt-1">
           <Button variant="secondary" size="sm" onClick={handleClose} disabled={submitting}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </Button>
           <Button
             variant={variant === 'destructive' ? 'destructive' : 'primary'}

@@ -47,7 +47,9 @@
     "createProfile": "Create Profile",
     "addItem": "Add Item",
     "inventory": "Inventory",
-    "groupBy": "Group by"
+    "groupBy": "Group by",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications."
   },
   "errors": {
     "unexpected": "Something went wrong. Try again.",
@@ -159,7 +161,14 @@
     "prescriptionMask": "Prescription mask",
     "addInventoryItem": "Add Inventory Item",
     "noInventory": "No inventory yet. Add your first item.",
-    "noItemsFound": "No {type} items found."
+    "noItemsFound": "No {type} items found.",
+    "dates": "Dates",
+    "customers": "Customers",
+    "leadCustomer": "Lead Customer",
+    "instructor": "Instructor",
+    "boat": "Boat",
+    "viewFullDetail": "View Full Detail",
+    "byOperator": "by {name}"
   },
   "portal": {
     "stepContact": "Contact",

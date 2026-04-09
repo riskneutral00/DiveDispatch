@@ -47,7 +47,9 @@
     "createProfile": "Create Profile",
     "addItem": "Ajouter un article",
     "inventory": "Inventaire",
-    "groupBy": "Grouper par"
+    "groupBy": "Grouper par",
+    "notifications": "Notifications",
+    "noNotifications": "Aucune notification."
   },
   "errors": {
     "unexpected": "Un problème est survenu. Veuillez réessayer.",
@@ -159,7 +161,14 @@
     "prescriptionMask": "Masque correcteur",
     "addInventoryItem": "Ajouter un article d'inventaire",
     "noInventory": "Aucun inventaire. Ajoutez votre premier article.",
-    "noItemsFound": "Aucun article de type {type} trouvé."
+    "noItemsFound": "Aucun article de type {type} trouvé.",
+    "dates": "Dates",
+    "customers": "Clients",
+    "leadCustomer": "Client principal",
+    "instructor": "Instructeur",
+    "boat": "Bateau",
+    "viewFullDetail": "Voir tous les détails",
+    "byOperator": "par {name}"
   },
   "portal": {
     "stepContact": "Contact",

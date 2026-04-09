@@ -318,15 +318,16 @@ body {
   transition: opacity 0.25s ease;
 }
 
-/* Scrim: fade page content when a scrim dialog is open, revealing the brand background.
-   CSS-only: no JS required. Targets any open native <dialog> with data-scrim attribute. */
-html:has(dialog[open][data-scrim]) .app-shell {
+/* Melt: fade page content when a dialog is open, revealing the brand background.
+   CSS-only: no JS required. Targets any open native <dialog> with data-melt attribute.
+   Dialog defaults melt=true, so all dialogs melt unless explicitly opted out. */
+html:has(dialog[open][data-melt]) .app-shell {
   opacity: 0;
 }
 
-/* Scroll lock — only for scrim dialogs (fullscreen overlays).
-   Non-scrim dialogs (confirmations) leave body scrollable to prevent layout shake. */
-body:has(dialog[open][data-scrim]) {
+/* Scroll lock — for melt dialogs (prevents scroll-behind).
+   Non-melt dialogs (rare opt-out) leave body scrollable to prevent layout shake. */
+body:has(dialog[open][data-melt]) {
   overflow: hidden;
 }
 
@@ -562,9 +563,9 @@ dialog::backdrop {
 /* ── Glass hover — border glow effect ────────────────────────────────────────
    Desktop: border glows with primary color, fill barely changes,
    background stays visible through glass. No color/text inversion.
-   Gated by [data-hover-effect="on"] on <html>.
+   Always active — canonical hover for all glass surfaces.
    ──────────────────────────────────────────────────────────────────────────── */
-[data-hover-effect="on"] .glass-surface:hover {
+.glass-surface:hover {
   background-color: var(--color-glass-bg-hover);
   backdrop-filter: blur(var(--glass-blur-hover));
   -webkit-backdrop-filter: blur(var(--glass-blur-hover));
@@ -581,7 +582,7 @@ dialog::backdrop {
     border-color: var(--color-glass-container-border);
   }
 
-  [data-hover-effect="on"] .glass-surface:active {
+  .glass-surface:active {
     border-color: var(--color-glass-border-hover);
     box-shadow: 0 0 20px var(--color-primary-glow);
   }

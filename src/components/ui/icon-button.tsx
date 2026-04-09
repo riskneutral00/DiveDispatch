@@ -1,6 +1,8 @@
 'use client'
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
+import { INTERACTION_DEFAULTS, type IconButtonHoverEffect } from '@/lib/constants/interaction-config'
 
 const SIZE_CLASS = {
   md: 'w-11 h-11',
@@ -15,6 +17,13 @@ export interface IconButtonProps
   children: ReactNode
   size?: IconButtonSize
   variant?: IconButtonVariant
+  hoverEffect?: IconButtonHoverEffect
+}
+
+const HOVER_CLASS: Record<IconButtonHoverEffect, string> = {
+  glow: 'glass-btn glass-btn-ghost',
+  opacity: 'transition-opacity hover:opacity-70',
+  none: '',
 }
 
 export function IconButton({
@@ -22,6 +31,7 @@ export function IconButton({
   className = '',
   size = 'md',
   variant = 'glass',
+  hoverEffect = INTERACTION_DEFAULTS.iconButtonHover,
   type = 'button',
   ...rest
 }: IconButtonProps) {
@@ -29,7 +39,14 @@ export function IconButton({
   return (
     <button
       type={type}
-      className={`flex items-center justify-center cursor-pointer ${SIZE_CLASS[size]} rounded-full transition-all duration-theme text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)] ${className}`.trim()}
+      className={cn(
+        'flex items-center justify-center cursor-pointer',
+        SIZE_CLASS[size],
+        'rounded-full transition-all duration-theme text-secondary',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-glow)]',
+        HOVER_CLASS[hoverEffect],
+        className,
+      )}
       style={isGlass ? {
         background: 'var(--color-glass-bg)',
         border: '1px solid var(--color-glass-border)',

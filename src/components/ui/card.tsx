@@ -1,11 +1,13 @@
 import React from 'react'
 import { cn } from '@/lib/utils/cn'
+import { INTERACTION_DEFAULTS, type CardHoverEffect } from '@/lib/constants/interaction-config'
 
 interface CardProps {
   children: React.ReactNode;
   className?: string;
   padding?: "none" | "sm" | "md" | "lg";
   hoverable?: boolean;
+  hoverEffect?: CardHoverEffect;
   centered?: boolean;
   overflow?: "visible" | "hidden";
   as?: React.ElementType
@@ -20,11 +22,18 @@ const paddingMap = {
   lg: 'p-6 sm:p-8',
 }
 
+const HOVER_CLASS: Record<CardHoverEffect, string> = {
+  'glass-glow': 'glass-surface',
+  opacity: 'transition-opacity hover:opacity-70',
+  none: '',
+}
+
 export function Card({
   children,
   className = '',
   padding = 'md',
   hoverable = false,
+  hoverEffect = INTERACTION_DEFAULTS.cardHover,
   centered = false,
   overflow = 'visible',
   as: Tag = 'div',
@@ -38,7 +47,7 @@ export function Card({
       {...(Tag === 'button' ? { type: 'button' } : {})}
       className={cn(
         'glass-container',
-        hoverable && 'glass-surface cursor-pointer',
+        hoverable && `${HOVER_CLASS[hoverEffect]} cursor-pointer`,
         'relative',
         paddingMap[padding],
         centered && 'text-center',

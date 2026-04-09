@@ -47,7 +47,9 @@
     "createProfile": "Create Profile",
     "addItem": "เพิ่มรายการ",
     "inventory": "อุปกรณ์",
-    "groupBy": "จัดกลุ่มตาม"
+    "groupBy": "จัดกลุ่มตาม",
+    "notifications": "การแจ้งเตือน",
+    "noNotifications": "ไม่มีการแจ้งเตือน"
   },
   "errors": {
     "unexpected": "เกิดข้อผิดพลาด กรุณาลองอีกครั้ง",
@@ -159,7 +161,14 @@
     "prescriptionMask": "หน้ากากสายตา",
     "addInventoryItem": "เพิ่มรายการอุปกรณ์",
     "noInventory": "ยังไม่มีอุปกรณ์ เพิ่มรายการแรกของคุณ",
-    "noItemsFound": "ไม่พบรายการ{type}"
+    "noItemsFound": "ไม่พบรายการ{type}",
+    "dates": "วันที่",
+    "customers": "ลูกค้า",
+    "leadCustomer": "ลูกค้าหลัก",
+    "instructor": "ครูสอน",
+    "boat": "เรือ",
+    "viewFullDetail": "ดูรายละเอียดทั้งหมด",
+    "byOperator": "โดย {name}"
   },
   "portal": {
     "stepContact": "Contact",

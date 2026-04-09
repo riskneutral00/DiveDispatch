@@ -47,7 +47,9 @@
     "createProfile": "Create Profile",
     "addItem": "新增項目",
     "inventory": "庫存",
-    "groupBy": "分組依據"
+    "groupBy": "分組依據",
+    "notifications": "通知",
+    "noNotifications": "沒有通知。"
   },
   "errors": {
     "unexpected": "發生錯誤，請重試。",
@@ -159,7 +161,14 @@
     "prescriptionMask": "度數面鏡",
     "addInventoryItem": "新增庫存項目",
     "noInventory": "尚無庫存。新增您的第一個項目。",
-    "noItemsFound": "找不到{type}項目。"
+    "noItemsFound": "找不到{type}項目。",
+    "dates": "日期",
+    "customers": "客戶",
+    "leadCustomer": "主要客戶",
+    "instructor": "教練",
+    "boat": "船",
+    "viewFullDetail": "查看完整詳情",
+    "byOperator": "{name}"
   },
   "portal": {
     "stepContact": "Contact",

@@ -47,7 +47,9 @@
     "createProfile": "Create Profile",
     "addItem": "添加项目",
     "inventory": "库存",
-    "groupBy": "分组方式"
+    "groupBy": "分组方式",
+    "notifications": "通知",
+    "noNotifications": "暂无通知。"
   },
   "errors": {
     "unexpected": "出了点问题，请重试。",
@@ -159,7 +161,14 @@
     "prescriptionMask": "度数面镜",
     "addInventoryItem": "添加库存项目",
     "noInventory": "暂无库存。添加您的第一个项目。",
-    "noItemsFound": "未找到{type}项目。"
+    "noItemsFound": "未找到{type}项目。",
+    "dates": "日期",
+    "customers": "客户",
+    "leadCustomer": "主要客户",
+    "instructor": "教练",
+    "boat": "船",
+    "viewFullDetail": "查看完整详情",
+    "byOperator": "{name}"
   },
   "portal": {
     "stepContact": "Contact",

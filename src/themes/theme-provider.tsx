@@ -110,13 +110,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       palette.luminanceClass,
     );
 
-    if (!document.documentElement.hasAttribute("data-hover-effect")) {
-      const stored = localStorage.getItem("divedispatch-hover-effect");
-      document.documentElement.setAttribute(
-        "data-hover-effect",
-        stored === "off" ? "off" : "on",
-      );
-    }
+    document.documentElement.removeAttribute("data-hover-effect");
   }, [theme, mode]);
 
   useEffect(() => {

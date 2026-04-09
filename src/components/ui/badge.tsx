@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils/cn";
+import { INTERACTION_DEFAULTS, type BadgeHoverEffect } from "@/lib/constants/interaction-config";
 
 export type BadgeVariant = "default" | "success" | "warning" | "destructive" | "info" | "muted";
 type BadgeSize = "sm" | "md";
@@ -11,6 +12,7 @@ interface BadgeProps {
   dot?: boolean;
   className?: string;
   onClick?: () => void;
+  hoverEffect?: BadgeHoverEffect;
   title?: string;
 }
 
@@ -61,6 +63,12 @@ const dotColorVar: Record<BadgeVariant, string> = {
   muted: "var(--color-text-secondary)",
 };
 
+const HOVER_CLASS: Record<BadgeHoverEffect, string> = {
+  "glass-glow": "glass-btn glass-btn-ghost",
+  opacity: "transition-opacity duration-theme hover:opacity-70",
+  none: "",
+};
+
 export const Badge = React.memo(function Badge({
   variant = "default",
   size = "md",
@@ -68,6 +76,7 @@ export const Badge = React.memo(function Badge({
   children,
   className = "",
   onClick,
+  hoverEffect = INTERACTION_DEFAULTS.badgeHover,
   title,
 }: BadgeProps) {
   const Tag = onClick ? "button" : "span";
@@ -79,7 +88,7 @@ export const Badge = React.memo(function Badge({
         "inline-flex items-center border font-medium",
         "rounded-full",
         sizeMap[size],
-        onClick && "cursor-pointer transition-opacity duration-theme hover:opacity-70",
+        onClick && `cursor-pointer ${HOVER_CLASS[hoverEffect]}`,
         className,
       )}
       style={variantStyles[variant]}
