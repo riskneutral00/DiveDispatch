@@ -28,4 +28,5 @@ All symlinks point to live project files via relative paths. They auto-update �
 Each `.md` file (except this README) is a self-contained execution brief for an `/ultraplan` session.
 
 - `minimalist-input-migration.md` — Underline floating-label inputs replacing glass containers (approved 2026-04-07)
+- `background-first-surface-rollout.md` — Background-first container model: perimeter-only shells, background visible, glass reserved for active inputs (approved 2026-04-09)
 - `gate-fix-preferences-frontend.md` — Fix 2 CRITICAL + 5 HIGH gate findings: test architecture + frontend components (approved 2026-04-07)

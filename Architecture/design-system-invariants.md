@@ -25,8 +25,8 @@ Skin-switchable values. Changing a skin changes every visual property that flows
 Composite visual patterns that combine multiple properties:
 - `.glass` — backdrop-filter + border + shadow + specular highlight
 - `.glass-elevated` — stronger glass for floating surfaces
-- `.glass-container` — readability surface (no blur)
-- `.glass-dialog` — high-opacity dialog surface
+- `.glass-container` — perimeter/boundary surface (no blur, transparent body)
+- `.glass-dialog` — dialog perimeter shell, not a fogged readability slab
 - `.glass-divider` — `border-bottom: 1px solid var(--color-glass-border)`
 - `.glass-surface:hover` — border glow hover effect
 - `.glass-btn-*` — button hover/focus variants
@@ -64,11 +64,13 @@ These inline styles have Tailwind equivalents. Never copy them. Migrate on conta
 
 1. **Glass needs a background.** Glass without a background image is a bordered box. Every page must render the full background layer stack (`.bg-image` → `.app-shell`).
 
-2. **Nested glass-containers go transparent.** `.glass-container .glass-container` has `border-color: transparent; background-color: transparent` to prevent tint stacking. Never override this.
+2. **Container bodies disappear.** `.glass-container` communicates bounds first. Its body should not create a second visual slab between user and background.
 
-3. **Glass-dialog for modals.** Dialogs use `.glass-dialog` (high-opacity, blurred). Never raw `.glass` on a dialog — readability suffers.
+3. **Glass-dialog is perimeter-first.** Dialogs use `.glass-dialog`, but default to perimeter and spacing, not opaque/blurred fills. Internal readability should come from fields before slabs.
 
-4. **Melt is the default.** `data-melt` on dialogs fades `.app-shell` to reveal the brand background. Opt out with `melt={false}`, never by removing the CSS rule.
+4. **Input fields always carry glass.** Subtle blur + fill at rest for readability — typed text must be readable against the background. Hover/focus may intensify. Transient overlays (menus, dropdowns, toasts) also keep `.glass-elevated` because they layer over other content. Tabs, chips, summary boxes, and chrome stay crisp.
+
+5. **Melt is the default.** `data-melt` on dialogs fades `.app-shell` to reveal the brand background. Opt out with `melt={false}`, never by removing the CSS rule.
 
 ## Enforcement Matrix
 

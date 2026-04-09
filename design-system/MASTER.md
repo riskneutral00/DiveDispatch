@@ -107,7 +107,7 @@ Global rule in globals.css — all `input`, `textarea`, `select` elements:
 
 ### Glass Tiers
 
-Four glass classes, each with a distinct visual weight. `.glass-container` is the workhorse (no blur, ghost border). `.glass` and `.glass-elevated` add blur + shadow for interactive/elevated elements. `.glass-field` is focus-only. The background stays visible through everything.
+Four glass classes remain, but the perception target changed on 2026-04-09: the background stays dominant, containers read as perimeters. Input fields always carry subtle glass (blur + fill) for readability. Transient overlays keep `.glass-elevated`. `.glass-container` is a boundary class, not a readability fill.
 
 ### Background Layer Stack
 
@@ -159,11 +159,11 @@ Full tier values in `src/themes/default-themes.ts` → `GLASS_FORMULAS`.
 }
 ```
 
-**`.glass-container`** — Readability surface. No blur, no shadow. Ghost border only.
+**`.glass-container`** — Boundary surface. No blur, no shadow. Default body stays visually merged with the background; the border/perimeter is the cue.
 
 ```css
 .glass-container {
-  background-color: var(--color-glass-container-bg);
+  background-color: transparent;
   border: 1px solid var(--color-glass-container-border);
   border-radius: var(--border-radius);
 }
@@ -185,11 +185,12 @@ Full tier values in `src/themes/default-themes.ts` → `GLASS_FORMULAS`.
 }
 ```
 
-**`.field-underline`** — Minimalist input styling. Transparent background, bottom border only, accent color on focus. Used by `Input`, `Textarea`, `Select`, `SimpleSelect`.
+**`.field-underline`** — Minimalist input styling. Always carries subtle glass (blur + fill) so typed text is readable against the background. Used by `Input`, `Textarea`, `Select`, `SimpleSelect`.
 
 ```css
 .field-underline {
-  background-color: transparent;
+  background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+  backdrop-filter: blur(8px);
   border: none;
   border-bottom: 1.5px solid var(--color-field-underline);
   border-radius: 0;
@@ -197,7 +198,7 @@ Full tier values in `src/themes/default-themes.ts` → `GLASS_FORMULAS`.
 
 .field-underline:focus {
   border-bottom-color: var(--color-accent);
-  box-shadow: none;
+  background: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
 }
 ```
 
@@ -222,9 +223,23 @@ Top-edge light line on `.glass` and `.glass-elevated` via `::before` pseudo-elem
 ### Blur Rules
 
 - **Containers:** Never blur. Photo stays sharp.
-- **Elevated elements** (dropdowns, pickers, popovers): Blur allowed.
-- **Inputs:** Blur via `.glass` class (they're leaf elements).
+- **Dialogs:** Default to perimeter-first shells, not fogged readability slabs.
+- **Inputs:** Always blur. Subtle glass (blur + fill) at rest for readability. Hover/focus may intensify.
+- **Transient overlays:** Menus, dropdowns, and toasts keep `.glass-elevated` — they layer over other content and need blur for readability.
+- **Chrome:** Tabs, chips, close buttons, and summary rows stay crisp. No glass.
 - **Dialog backdrop:** Blur of the raw background — acceptable because content is hidden by the scrim.
+
+### Background-First Edit Surface Model
+
+One principle: **readability through layering.** Everything sitting directly on the background is transparent. Glass appears wherever content layers over other readable content:
+
+1. Background (always visible, the hero)
+2. One visible container perimeter (transparent body)
+3. Floating chrome (tabs, labels, buttons — crisp, no glass)
+4. Input fields (always have subtle blur + fill — typed text must be readable against the background)
+5. Transient overlays (menus, dropdowns, toasts — `.glass-elevated` for readability over UI content)
+
+Do not stack extra readability slabs between the user and the background. Readability comes from field-level and overlay-level glass, not container-level slabs.
 
 ### Semantic Opacity Tokens
 
