@@ -164,10 +164,7 @@ function InstructorCandidateRow({
         }
       />
       {!isLast && (
-        <div
-          className="mt-2.5"
-          style={{ borderBottom: '1px solid var(--color-glass-border)' }}
-        />
+        <div className="mt-2.5 glass-divider" />
       )}
     </div>
   )
@@ -452,11 +449,10 @@ export function PreferredInstructorList(props: ListProps) {
           />
 
           <div
-            className="rounded-theme overflow-hidden flex flex-col glass-elevated"
+            className="rounded-theme overflow-hidden flex flex-col glass-elevated bg-surface-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,
-              background: 'var(--color-surface-elevated)',
             }}
           >
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -477,8 +473,7 @@ export function PreferredInstructorList(props: ListProps) {
             </div>
             {totalPages > 1 && (
               <div
-                className="flex items-center justify-between px-3 py-2 shrink-0 border-t"
-                style={{ borderColor: 'var(--color-glass-border)' }}
+                className="flex items-center justify-between px-3 py-2 shrink-0 border-t border-glass-border"
               >
                 <Button
                   variant="ghost"
@@ -680,11 +675,10 @@ function PreferredOverlayList({
             onChange={(e) => onSearchChange(e.target.value)}
           />
           <div
-            className="rounded-theme overflow-hidden flex flex-col glass-elevated"
+            className="rounded-theme overflow-hidden flex flex-col glass-elevated bg-surface-elevated"
             style={{
               minHeight: OVERLAY_LIST_HEIGHT,
               maxHeight: OVERLAY_LIST_HEIGHT,
-              background: 'var(--color-surface-elevated)',
             }}
           >
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
@@ -695,8 +689,7 @@ function PreferredOverlayList({
                     type="button"
                     onClick={() => add(entry.slug)}
                     disabled={atMax}
-                    className="w-full text-left px-3 py-2.5 text-body transition-colors duration-theme hover:opacity-80 text-primary border-b last:border-b-0"
-                    style={{ borderColor: 'var(--color-glass-border)' }}
+                    className="w-full text-left px-3 py-2.5 text-body transition-colors duration-theme hover:opacity-80 text-primary border-b last:border-b-0 border-glass-border"
                   >
                     <span className="font-medium">{entry.name}</span>
                     <span className="ml-2 text-label text-secondary">{entry.placeName}</span>
@@ -709,8 +702,7 @@ function PreferredOverlayList({
             </div>
             {totalPages > 1 && (
               <div
-                className="flex items-center justify-between px-3 py-2 shrink-0 border-t"
-                style={{ borderColor: 'var(--color-glass-border)' }}
+                className="flex items-center justify-between px-3 py-2 shrink-0 border-t border-glass-border"
               >
                 <Button variant="ghost" size="sm" type="button" onClick={() => setPage((p) => p - 1)} disabled={safePage === 0} aria-label="Previous page">
                   <ChevronLeft size={14} />

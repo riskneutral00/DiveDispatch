@@ -72,9 +72,9 @@ export function ReviewStep({ state, dispatch, isEditMode = false }: ReviewStepPr
             {customers.map((c, i) => (
               <div key={c.id} className="flex items-center gap-2 text-body text-primary">
                 {c.flags?.[0] ? (
-                  <span className="text-base leading-none">{countryCodeToEmoji(c.flags[0].code)}</span>
+                  <span className="text-base leading-none" /* design-ok: emoji size */>{countryCodeToEmoji(c.flags[0].code)}</span>
                 ) : (
-                  <span className="text-base leading-none">🌐</span>
+                  <span className="text-base leading-none" /* design-ok: emoji size */>🌐</span>
                 )}
                 <span className="font-medium">{c.name || `Customer ${i + 1}`}</span>
                 {(c.courseEntries?.length ?? 0) > 0 && (

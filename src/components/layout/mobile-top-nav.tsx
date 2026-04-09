@@ -18,10 +18,8 @@ interface MobileTopNavProps {
 export function MobileTopNav({ roleSlug, slug, onOpenOverlay, profileCompletion }: MobileTopNavProps) {
   return (
     <div
-      className="md:hidden sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2"
+      className="md:hidden sticky top-0 z-[var(--z-sticky)] flex items-center justify-end gap-2 px-4 py-2 bg-surface-elevated glass-divider"
       style={{
-        background: 'var(--color-surface-elevated)',
-        borderBottom: '1px solid var(--color-glass-border)',
         willChange: 'transform',
       }}
     >

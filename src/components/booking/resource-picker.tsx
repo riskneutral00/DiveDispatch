@@ -265,13 +265,12 @@ function PickerRow({
       type="button"
       onClick={onSelect}
       disabled={isUnavailable}
-      className="w-full text-left px-3 py-2.5 flex items-start gap-3 transition-colors duration-theme disabled:cursor-not-allowed"
+      className="w-full text-left px-3 py-2.5 flex items-start gap-3 transition-colors duration-theme disabled:cursor-not-allowed glass-divider"
       style={{
         background: isSelected
           ? 'var(--color-primary-muted)'
           : 'transparent',
         opacity: isUnavailable ? 0.5 : 1,
-        borderBottom: '1px solid var(--color-glass-border)',
       }}
     >
       <div className="flex-1 min-w-0">

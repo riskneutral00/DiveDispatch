@@ -29,7 +29,7 @@ export function PostTripPage({ operatorName }: PostTripPageProps) {
         </p>
 
         <h1
-          className="text-xl font-semibold mb-2 text-primary font-heading"
+          className="text-card-title font-semibold mb-2 text-primary font-heading"
         >
           {t('title')}
         </h1>

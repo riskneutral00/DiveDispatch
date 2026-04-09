@@ -29,11 +29,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {entry.agencies?.map((a) => (
               <span
                 key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
-                style={{
-                  background: 'var(--color-glass-bg-elevated)',
-                  color: 'var(--color-text-secondary)',
-                }}
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-secondary"
               >
                 {a}
               </span>
@@ -54,11 +50,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {uniqueRatings.slice(0, 3).map((rating) => (
               <span
                 key={rating}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
-                style={{
-                  background: 'var(--color-glass-bg)',
-                  color: 'var(--color-text-secondary)',
-                }}
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-secondary"
               >
                 {rating}
               </span>
@@ -87,11 +79,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {entry.agencies?.map((a) => (
               <span
                 key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
-                style={{
-                  background: 'var(--color-glass-bg-elevated)',
-                  color: 'var(--color-text-secondary)',
-                }}
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-secondary"
               >
                 {a}
               </span>
@@ -112,11 +100,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
           {uniqueRatings.slice(0, 3).map((rating) => (
             <span
               key={rating}
-              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0"
-              style={{
-                background: 'var(--color-glass-bg)',
-                color: 'var(--color-text-secondary)',
-              }}
+              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-secondary"
             >
               {rating}
             </span>

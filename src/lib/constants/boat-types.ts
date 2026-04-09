@@ -1,4 +1,4 @@
-import { BOAT_TYPES } from '../../../convex/shared/boatTypes'
+import { BOAT_TYPES, type BoatType } from '../../../convex/shared/boatTypes'
 export { BOAT_TYPES, type BoatType } from '../../../convex/shared/boatTypes'
 
 export const BOAT_TYPE_LABELS: Record<string, string> = {

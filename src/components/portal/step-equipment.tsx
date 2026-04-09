@@ -70,7 +70,7 @@ function SectionHeading({
   return (
     <div className="flex items-baseline gap-2 mb-4">
       <h3
-        className="text-base font-semibold text-primary font-heading"
+        className="text-card-title font-semibold text-primary font-heading"
       >
         {children}
       </h3>
@@ -452,8 +452,7 @@ export function StepEquipment({ onChange, onComplete }: StepEquipmentProps) {
 
         {showMaskPrescription && (
           <div
-            className="mt-4 pt-4 border-t"
-            style={{ borderColor: 'var(--color-glass-border)' }}
+            className="mt-4 pt-4 border-t border-glass-border"
           >
             <Input
               label="Mask Prescription"

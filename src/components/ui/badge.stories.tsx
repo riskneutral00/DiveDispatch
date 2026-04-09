@@ -25,6 +25,7 @@ export const WithDot: Story = { args: { variant: 'success', dot: true, children:
 export const SmallSize: Story = { args: { variant: 'warning', size: 'sm', children: 'Small' } }
 
 export const AllVariants: Story = {
+  args: { children: '' },
   render: () => (
     <div className="flex flex-wrap gap-2">
       <Badge variant="default">Default</Badge>
@@ -38,6 +39,7 @@ export const AllVariants: Story = {
 }
 
 export const AllSizes: Story = {
+  args: { children: '' },
   render: () => (
     <div className="flex flex-wrap items-center gap-2">
       <Badge size="sm" variant="success">Small</Badge>

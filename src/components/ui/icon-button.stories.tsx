@@ -20,6 +20,7 @@ export const Ghost: Story = {
 }
 
 export const AllVariants: Story = {
+  args: { children: <Settings size={18} /> },
   render: () => (
     <div className="flex gap-3">
       <IconButton variant="glass"><Settings size={18} /></IconButton>

@@ -21,17 +21,15 @@ export function ErrorAlert({
   iconSize = 15,
   className,
 }: ErrorAlertProps) {
-  const color = variant === 'error' ? 'var(--color-destructive)' : 'var(--color-warning)'
-  const borderMix = variant === 'error'
-    ? 'color-mix(in srgb, var(--color-destructive) 30%, transparent)'
-    : 'color-mix(in srgb, var(--color-warning) 40%, transparent)'
+  const isError = variant === 'error'
+  const color = isError ? 'var(--color-destructive)' : 'var(--color-warning)'
 
   return (
     <div
       className={cn('flex items-start gap-2 rounded-theme px-3', sizeMap[size], className)}
       style={{
-        background: `color-mix(in srgb, ${color} 8%, transparent)`,
-        border: `1px solid ${borderMix}`,
+        background: isError ? 'var(--color-alert-error-bg)' : 'var(--color-alert-warning-bg)',
+        border: `1px solid ${isError ? 'var(--color-alert-error-border)' : 'var(--color-alert-warning-border)'}`,
         color,
       }}
       role="alert"

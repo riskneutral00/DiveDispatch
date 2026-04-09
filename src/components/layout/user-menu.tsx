@@ -92,8 +92,7 @@ export function UserMenu({ roleSlug, slug: _slug, onOpenOverlay }: UserMenuProps
             }}
           >
             <div
-              className="px-3 py-2"
-              style={{ borderBottom: "1px solid var(--color-glass-border)" }}
+              className="px-3 py-2 glass-divider"
             >
               <p className="text-body font-medium truncate leading-tight text-primary">
                 {displayName}

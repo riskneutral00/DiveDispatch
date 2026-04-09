@@ -262,7 +262,7 @@ export function StepContact({ token, onComplete, bookingStartDate }: StepContact
       )}
 
       {returningConfirmed && (
-        <p className="text-body px-1" style={{ color: 'var(--color-success)' }}>
+        <p className="text-body px-1 text-success">
           {t('returnLoaded')}
         </p>
       )}

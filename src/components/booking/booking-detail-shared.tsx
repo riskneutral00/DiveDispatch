@@ -68,7 +68,7 @@ function CustomerTable({
         return (
           <ListRow key={idx} compact={compact}>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-base flex-shrink-0" aria-label={diver.flag.label}>
+              <span className="text-base flex-shrink-0" /* design-ok: emoji size */ aria-label={diver.flag.label}>
                 {[...diver.flag.code.toUpperCase()]
                   .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
                   .join('')}

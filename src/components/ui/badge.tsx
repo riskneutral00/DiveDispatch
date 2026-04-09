@@ -23,24 +23,24 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
     borderColor: "var(--color-glass-border)",
   },
   success: {
-    background: "color-mix(in srgb, var(--color-success) 20%, transparent)",
+    background: "var(--color-badge-success-bg)",
     color: "var(--color-success)",
-    borderColor: "color-mix(in srgb, var(--color-success) 30%, transparent)",
+    borderColor: "var(--color-badge-success-border)",
   },
   warning: {
-    background: "color-mix(in srgb, var(--color-warning) 20%, transparent)",
+    background: "var(--color-badge-warning-bg)",
     color: "var(--color-warning)",
-    borderColor: "color-mix(in srgb, var(--color-warning) 30%, transparent)",
+    borderColor: "var(--color-badge-warning-border)",
   },
   destructive: {
-    background: "color-mix(in srgb, var(--color-destructive) 20%, transparent)",
+    background: "var(--color-badge-destructive-bg)",
     color: "var(--color-destructive)",
-    borderColor: "color-mix(in srgb, var(--color-destructive) 30%, transparent)",
+    borderColor: "var(--color-badge-destructive-border)",
   },
   info: {
-    background: "color-mix(in srgb, var(--color-secondary) 20%, transparent)",
+    background: "var(--color-badge-info-bg)",
     color: "var(--color-secondary)",
-    borderColor: "color-mix(in srgb, var(--color-secondary) 30%, transparent)",
+    borderColor: "var(--color-badge-info-border)",
   },
   muted: {
     background: "var(--color-glass-bg)",

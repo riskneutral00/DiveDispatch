@@ -1,4 +1,4 @@
-import { GAS_MIXES } from '../../../convex/shared/gasMixes'
+import { GAS_MIXES, type GasMix } from '../../../convex/shared/gasMixes'
 export { GAS_MIXES, type GasMix } from '../../../convex/shared/gasMixes'
 
 export const GAS_MIX_LABELS: Record<string, string> = {

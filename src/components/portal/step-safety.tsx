@@ -98,7 +98,7 @@ export function StepSafety({ token, onComplete, onBack }: StepSafetyProps) {
       <Card padding="md">
         <div className="mb-5">
           <h2
-            className="text-base font-semibold mb-1 text-primary font-heading"
+            className="text-card-title font-semibold mb-1 text-primary font-heading"
           >
             Safety Information
           </h2>

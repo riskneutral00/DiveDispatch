@@ -198,9 +198,8 @@ function ContactValidationHint({ contactType, value }: { contactType: ContactTyp
 
   return (
     <span
-      className="text-label min-h-[1rem]"
+      className="text-label min-h-[1rem] text-destructive"
       style={{
-        color: 'var(--color-destructive)',
         opacity: valid ? 0 : 1,
         transition: 'opacity var(--transition-speed) ease',
       }}

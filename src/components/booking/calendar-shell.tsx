@@ -25,8 +25,7 @@ export function CalendarShell({
       <div className="overflow-x-auto">
         <div className="min-w-[320px] overflow-hidden">
           <div
-            className="grid grid-cols-7" /* design-ok */
-            style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+            className="grid grid-cols-7 glass-divider" /* design-ok */
           >
             {dayHeaders.map((day, i) => (
               <div

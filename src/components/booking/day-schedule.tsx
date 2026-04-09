@@ -72,11 +72,11 @@ export function DaySchedule({ date, dayNumber, sessions, onUpdate, onVenueChange
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 {session.isConfinedDay ? (
-                  <Lock size={14} style={{ color: 'var(--color-secondary)' }} />
+                  <Lock size={14} className="text-secondary" />
                 ) : session.deliveryLocation === 'Beach' ? (
-                  <Footprints size={14} style={{ color: 'var(--color-accent)' }} />
+                  <Footprints size={14} className="text-accent" />
                 ) : (
-                  <Anchor size={14} style={{ color: 'var(--color-accent)' }} />
+                  <Anchor size={14} className="text-accent" />
                 )}
                 <span
                   className="text-label font-medium text-primary"

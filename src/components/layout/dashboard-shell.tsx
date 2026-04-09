@@ -94,8 +94,7 @@ export function DashboardShell({ children, roleSlug, slug }: DashboardShellProps
   return (
     <>
       <header
-        className="hidden md:flex items-center px-4 py-2 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+        className="hidden md:flex items-center px-4 py-2 flex-shrink-0 glass-divider"
       >
         <div className="flex-1" />
         <span className="text-card-title font-semibold tracking-tight text-primary pointer-events-none">

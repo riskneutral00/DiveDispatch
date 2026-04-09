@@ -127,10 +127,7 @@ export function EquipmentInventoryTable({
             <table className="w-full text-body text-primary">
               <thead>
                 <tr
-                  style={{
-                    borderBottom: '1px solid var(--color-glass-border)',
-                    color: 'var(--color-text-secondary)',
-                  }}
+                  className="glass-divider text-secondary"
                 >
                   <th scope="col" className="text-left px-4 py-3 font-medium" style={{ width: 100 }}>Type</th>
                   <th scope="col" className="text-left px-4 py-3 font-medium">Manufacturer</th>
@@ -234,7 +231,7 @@ function InventoryTableRow({
   const gearLabel = item.gearType.charAt(0).toUpperCase() + item.gearType.slice(1)
 
   return (
-    <tr style={{ borderBottom: '1px solid var(--color-glass-border)' }}>
+    <tr className="glass-divider">
       <td className="px-4 py-2.5">
         <Badge variant="default" size="sm">{gearLabel}</Badge>
       </td>

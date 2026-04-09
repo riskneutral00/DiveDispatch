@@ -33,10 +33,9 @@ export function ButtonGroup({
         role="tablist"
         aria-label={ariaLabel}
         className={cn(
-          "flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0",
+          "flex gap-1 overflow-x-auto pb-1 -mx-1 px-1 flex-shrink-0 glass-divider",
           className,
         )}
-        style={{ borderBottom: "1px solid var(--color-glass-border)" }}
       >
         {options.map(({ value: v, label }) => (
           <button

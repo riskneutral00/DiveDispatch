@@ -192,7 +192,7 @@ function VesselSection({ vessel, groupBy }: { vessel: ManifestVessel; groupBy: G
     <Card padding="md" className="mb-4">
       <div className="flex items-center gap-3 mb-3">
         <Ship size={18} className="text-primary" />
-        <h3 className="text-base font-semibold text-primary font-heading">
+        <h3 className="text-card-title font-semibold text-primary font-heading">
           {vessel.vesselName}
         </h3>
         <span className="text-label text-secondary px-2 py-0.5 rounded-[var(--border-radius-button)] glass-surface">

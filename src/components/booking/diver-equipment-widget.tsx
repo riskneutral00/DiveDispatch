@@ -95,7 +95,7 @@ function DiverCard({
     <Card padding="md">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-xl" aria-label={diver.flag.label}>
+          <span className="text-xl" /* design-ok: emoji size */ aria-label={diver.flag.label}>
             {countryCodeToEmoji(diver.flag.code)}
           </span>
           <div>
@@ -168,7 +168,7 @@ function DiverCard({
       </div>
 
       {rentingTypes.length > 0 && (
-        <div className="border-t pt-3" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div className="border-t pt-3 border-glass-border">
           <FormSectionHeader label="Rental Gear" className="mb-2" />
           <div className="space-y-1.5">
             {rentingTypes.map((gearType) => {

@@ -175,6 +175,20 @@
   --color-status-urgent-border: color-mix(in srgb, var(--color-status-urgent) 50%, transparent);
   --color-status-multiday-border: rgba(255, 255, 255, 0.7);
 
+  /* Badge semantic tints — derived from base palette, skin-switchable via base color */
+  --color-badge-success-bg: color-mix(in srgb, var(--color-success) 20%, transparent);
+  --color-badge-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
+  --color-badge-warning-bg: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  --color-badge-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  --color-badge-destructive-bg: color-mix(in srgb, var(--color-destructive) 20%, transparent);
+  --color-badge-destructive-border: color-mix(in srgb, var(--color-destructive) 30%, transparent);
+  --color-badge-info-bg: color-mix(in srgb, var(--color-secondary) 20%, transparent);
+  --color-badge-info-border: color-mix(in srgb, var(--color-secondary) 30%, transparent);
+  --color-alert-error-bg: color-mix(in srgb, var(--color-destructive) 8%, transparent);
+  --color-alert-error-border: color-mix(in srgb, var(--color-destructive) 30%, transparent);
+  --color-alert-warning-bg: color-mix(in srgb, var(--color-warning) 8%, transparent);
+  --color-alert-warning-border: color-mix(in srgb, var(--color-warning) 40%, transparent);
+
   /* Blocked — operational constraint, uses urgent color (icon differentiates) */
   --color-blocked: #dc2626;
   --color-blocked-bg: color-mix(in srgb, var(--color-blocked) calc(var(--opacity-subtle) * 100%), transparent);
@@ -344,6 +358,12 @@ dialog::backdrop {
   border-top: 1px solid var(--color-glass-border);
   opacity: 0.5;
   margin: 0;
+}
+
+@layer utilities {
+  .glass-divider {
+    border-bottom: 1px solid var(--color-glass-border);
+  }
 }
 
 /* ── Glass toast accents ────────────────────────────────────────────────────

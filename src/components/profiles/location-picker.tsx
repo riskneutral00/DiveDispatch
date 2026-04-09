@@ -226,8 +226,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
   return (
     <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
       <div
-        className="flex-shrink-0 p-3 flex flex-col gap-2"
-        style={{ borderBottom: '1px solid var(--color-glass-border)' }}
+        className="flex-shrink-0 p-3 flex flex-col gap-2 glass-divider"
       >
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -285,11 +284,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
             id={listboxId}
             role="listbox"
             aria-label="Address suggestions"
-            className="rounded-theme border overflow-hidden shadow-lg"
-            style={{
-              background: 'var(--color-surface-elevated)',
-              borderColor: 'var(--color-glass-border)',
-            }}
+            className="rounded-theme border overflow-hidden shadow-lg bg-surface-elevated border-glass-border"
           >
             {data.map((s, index) => {
               const isHighlighted = index === kbState.highlightedIndex

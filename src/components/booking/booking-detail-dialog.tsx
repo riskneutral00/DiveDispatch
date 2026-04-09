@@ -113,7 +113,7 @@ function BookingDetailContent({
             </span>
           )}
         </div>
-        <p className="text-base font-semibold text-primary">
+        <p className="text-card-title font-semibold text-primary">
           {booking.activityType.map(courseLabel).join(', ')}
         </p>
         <p className="text-body text-secondary">

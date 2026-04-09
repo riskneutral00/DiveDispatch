@@ -137,17 +137,15 @@ function DevSwitcherInner() {
         <div ref={panelRef} className="fixed bottom-12 right-4 z-[var(--z-dropdown)] w-80">
           <Card padding="none" overflow="hidden">
             <div
-              className="px-4 py-2 text-label font-semibold border-b text-secondary"
-              style={{ borderColor: 'var(--color-glass-border)' }}
+              className="px-4 py-2 text-label font-semibold border-b text-secondary border-glass-border"
             >
               Dev Switcher
             </div>
             {error && (
               <div
-                className="px-3 py-1.5 text-[11px] border-b" /* design-ok */
+                className="px-3 py-1.5 text-[11px] border-b border-glass-border" /* design-ok */
                 style={{
                   color: 'var(--color-destructive, #dc2626)',
-                  borderColor: 'var(--color-glass-border)',
                 }}
               >
                 {error}
@@ -165,8 +163,7 @@ function DevSwitcherInner() {
                 return (
                   <div
                     key={config.key}
-                    className="flex items-center gap-2 px-3 py-1.5 border-b last:border-0"
-                    style={{ borderColor: 'var(--color-glass-border)' }}
+                    className="flex items-center gap-2 px-3 py-1.5 border-b last:border-0 border-glass-border"
                   >
                     <Icon
                       className="h-3.5 w-3.5 shrink-0 text-secondary"
@@ -180,9 +177,7 @@ function DevSwitcherInner() {
                       value={selectedSlug}
                       onChange={(e) => setSelected(config.key, e.target.value)}
                       disabled={!!switching}
-                      className="flex-1 min-w-0 text-[11px] rounded-[var(--border-radius-button)] px-1 py-0.5 border text-primary"
-                      style={{ background: 'var(--color-surface)',
-                        borderColor: 'var(--color-glass-border)' }}
+                      className="flex-1 min-w-0 text-[11px] rounded-[var(--border-radius-button)] px-1 py-0.5 border text-primary bg-surface border-glass-border"
                     >
                       {users.map((u) => (
                         <option key={u.slug} value={u.slug}>

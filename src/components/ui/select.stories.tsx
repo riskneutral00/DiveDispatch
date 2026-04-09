@@ -15,6 +15,7 @@ const sampleOptions = [
 ]
 
 export const Default: Story = {
+  args: { value: '', onChange: () => {}, options: sampleOptions },
   render: () => {
     const [value, setValue] = useState('')
     return (
@@ -30,6 +31,7 @@ export const Default: Story = {
 }
 
 export const WithSelection: Story = {
+  args: { value: 'instructor-1', onChange: () => {}, options: sampleOptions },
   render: () => {
     const [value, setValue] = useState('instructor-1')
     return (
@@ -44,6 +46,7 @@ export const WithSelection: Story = {
 }
 
 export const WithError: Story = {
+  args: { value: '', onChange: () => {}, options: sampleOptions },
   render: () => {
     const [value, setValue] = useState('')
     return (
@@ -60,6 +63,7 @@ export const WithError: Story = {
 }
 
 export const WithHelperText: Story = {
+  args: { value: '', onChange: () => {}, options: [] },
   render: () => {
     const [value, setValue] = useState('')
     return (
