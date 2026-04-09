@@ -26,7 +26,7 @@ WARNINGS=""
 # fontSize with raw pixel values (not CSS variables)
 if echo "$CLEAN" | grep -qE "fontSize:\s*[0-9]|fontSize:\s*['\"][0-9]+px['\"]"; then
   if ! echo "$CLEAN" | grep -qE "fontSize:\s*['\"]var\("; then
-    WARNINGS="${WARNINGS}[typography] Inline fontSize with raw value — use semantic type tokens (text-body, text-label, text-card-title, text-heading). See design-system/MASTER.md Type Scale. "
+    WARNINGS="${WARNINGS}[typography] Inline fontSize with raw value — use semantic type tokens (text-body, text-label, text-card-title, text-heading). "
   fi
 fi
 
@@ -34,6 +34,29 @@ fi
 if echo "$CLEAN" | grep -qE "fontWeight:\s*[0-9]"; then
   WARNINGS="${WARNINGS}[typography] Inline fontWeight — use Tailwind font-normal/medium/semibold/bold. "
 fi
+
+# Skip ui/ components for tokenizable var() check — they use variant Record objects
+case "$FILE_PATH" in
+  */components/ui/*) ;;
+  *)
+    # Tokenizable color/background/borderColor that have Tailwind equivalents
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-text-primary\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-text-primary) — use className=\"text-primary\". "
+    fi
+    if echo "$CLEAN" | grep -qE "color:\s*['\"]var\(--color-text-secondary\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] color: var(--color-text-secondary) — use className=\"text-secondary\". "
+    fi
+    if echo "$CLEAN" | grep -qE "background:\s*['\"]var\(--color-surface-elevated\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] background: var(--color-surface-elevated) — use className=\"bg-surface-elevated\". "
+    fi
+    if echo "$CLEAN" | grep -qE "borderColor:\s*['\"]var\(--color-glass-border\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] borderColor: var(--color-glass-border) — use className=\"border-glass-border\". "
+    fi
+    if echo "$CLEAN" | grep -qE "borderBottom:\s*['\"]1px solid var\(--color-glass-border\)['\"]"; then
+      WARNINGS="${WARNINGS}[token] borderBottom with glass-border — use className=\"glass-divider\". "
+    fi
+    ;;
+esac
 
 if [ -n "$WARNINGS" ]; then
   echo "{\"decision\":\"block\",\"reason\":\"Inline typography styles in $(basename "$FILE_PATH"): ${WARNINGS} Use semantic type tokens from design-system/MASTER.md. Add {/* design-ok */} or // design-ok to suppress legitimate exceptions.\"}"

@@ -29,6 +29,10 @@ const eslintConfig = defineConfig([
       "dd-design/no-off-ladder-spacing": "error",
       "dd-design/no-bare-form-elements": "error",
       "dd-design/no-inline-color": "error",
+      "dd-design/no-raw-text-size": "error",
+      "dd-design/no-hardcoded-radius": "error",
+      "dd-design/no-unprefixed-multicol": "error",
+      "dd-design/no-tokenizable-inline-style": "warn",
     },
   },
   // Profile form DRY enforcement — force barrel imports, prevent bypassing shared components

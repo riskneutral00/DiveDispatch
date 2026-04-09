@@ -14,6 +14,9 @@ const PALETTE_RE = new RegExp(
 )
 const OFF_LADDER_GAP_RE = /\bgap-(0\.5|2\.5|5)\b/
 const BACKWARD_SPACING_RE = /\bp-(5|6|8)\s+(sm|md):p-(3|4)\b/
+const RAW_TEXT_SIZE_RE = /\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl|8xl|9xl)\b/
+const HARDCODED_RADIUS_RE = /\brounded-(sm|md|lg|xl|2xl|3xl|none)\b/
+const UNPREFIXED_MULTICOL_RE = /(?<!\w:)\bgrid-cols-[2-9]\b/
 
 /** Check if a node or any ancestor has a design-ok comment */
 function hasDesignOk(node, sourceCode) {
@@ -202,6 +205,168 @@ const noInlineColor = {
   },
 }
 
+/** Rule: no-raw-text-size — ban text-sm, text-xs, text-lg etc. in favor of design tokens */
+const noRawTextSize = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow raw Tailwind text sizes; use design tokens (text-body, text-label, text-card-title, text-page-title, text-section-header).' },
+    messages: {
+      rawSize:
+        "Raw text size '{{match}}' — use text-body, text-label, text-card-title, text-page-title, or text-section-header. Add {/* design-ok */} to suppress.",
+    },
+  },
+  create(context) {
+    const filename = context.filename || context.getFilename()
+    if (filename.includes('/components/ui/')) return {}
+    if (filename.includes('.test.') || filename.includes('.spec.') || filename.includes('.stories.')) return {}
+
+    return {
+      JSXAttribute(node) {
+        if (node.name?.name !== 'className') return
+        const val = getClassNameString(node.value)
+        if (!val) return
+        const match = val.match(RAW_TEXT_SIZE_RE)
+        if (match && !hasDesignOk(node, context.sourceCode)) {
+          context.report({ node, messageId: 'rawSize', data: { match: match[0] } })
+        }
+      },
+    }
+  },
+}
+
+/** Rule: no-hardcoded-radius — ban rounded-sm, rounded-lg etc. in favor of rounded-theme */
+const noHardcodedRadius = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow hardcoded border radius; use rounded-theme or component variant.' },
+    messages: {
+      hardcodedRadius:
+        "Hardcoded radius '{{match}}' — use rounded-theme (maps to --border-radius). Add {/* design-ok */} to suppress.",
+    },
+  },
+  create(context) {
+    const filename = context.filename || context.getFilename()
+    if (filename.includes('/components/ui/')) return {}
+    if (filename.includes('.test.') || filename.includes('.spec.') || filename.includes('.stories.')) return {}
+
+    return {
+      JSXAttribute(node) {
+        if (node.name?.name !== 'className') return
+        const val = getClassNameString(node.value)
+        if (!val) return
+        const match = val.match(HARDCODED_RADIUS_RE)
+        if (match && !hasDesignOk(node, context.sourceCode)) {
+          context.report({ node, messageId: 'hardcodedRadius', data: { match: match[0] } })
+        }
+      },
+    }
+  },
+}
+
+/** Rule: no-unprefixed-multicol — ban grid-cols-N (N>1) without responsive prefix */
+const noUnprefixedMulticol = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Disallow unprefixed multi-column grid on mobile.' },
+    messages: {
+      unprefixed:
+        "Unprefixed '{{match}}' — mobile must be grid-cols-1. Use sm:grid-cols-N or md:grid-cols-N. Add {/* design-ok */} to suppress.",
+    },
+  },
+  create(context) {
+    return {
+      JSXAttribute(node) {
+        if (node.name?.name !== 'className') return
+        const val = getClassNameString(node.value)
+        if (!val) return
+        if (val.includes('grid-cols-1')) return
+        const match = val.match(UNPREFIXED_MULTICOL_RE)
+        if (match && !hasDesignOk(node, context.sourceCode)) {
+          context.report({ node, messageId: 'unprefixed', data: { match: match[0] } })
+        }
+      },
+    }
+  },
+}
+
+/** Rule: no-tokenizable-inline-style — ban style={{ color: 'var(--color-text-primary)' }} when a Tailwind class exists */
+const TOKENIZABLE_MAP = {
+  color: {
+    'var(--color-text-primary)': 'text-primary',
+    'var(--color-text-secondary)': 'text-secondary',
+    'var(--color-text-on-primary)': 'text-on-primary',
+    'var(--color-success)': 'text-success',
+    'var(--color-warning)': 'text-warning',
+    'var(--color-destructive)': 'text-destructive',
+    'var(--color-accent)': 'text-accent',
+  },
+  background: {
+    'var(--color-glass-bg)': 'bg-glass-bg',
+    'var(--color-surface)': 'bg-surface',
+    'var(--color-surface-elevated)': 'bg-surface-elevated',
+    'var(--color-glass-container-bg)': 'bg-glass-container-bg',
+    'var(--color-glass-bg-elevated)': 'bg-glass-bg-elevated',
+  },
+  backgroundColor: {
+    'var(--color-glass-bg)': 'bg-glass-bg',
+    'var(--color-surface)': 'bg-surface',
+    'var(--color-surface-elevated)': 'bg-surface-elevated',
+    'var(--color-glass-container-bg)': 'bg-glass-container-bg',
+    'var(--color-glass-bg-elevated)': 'bg-glass-bg-elevated',
+  },
+  borderColor: {
+    'var(--color-glass-border)': 'border-glass-border',
+    'var(--color-glass-border-elevated)': 'border-glass-border-elevated',
+    'var(--color-glass-container-border)': 'border-glass-container-border',
+  },
+}
+
+const noTokenizableInlineStyle = {
+  meta: {
+    type: 'suggestion',
+    docs: { description: 'Flag inline style props that have Tailwind class equivalents.' },
+    messages: {
+      tokenizable:
+        "Inline style '{{prop}}: {{value}}' has a Tailwind equivalent: className=\"{{className}}\". Add {/* design-ok */} to suppress.",
+    },
+  },
+  create(context) {
+    return {
+      Property(node) {
+        let current = node.parent
+        let inStyleAttr = false
+        while (current) {
+          if (
+            current.type === 'JSXAttribute' &&
+            current.name?.name === 'style'
+          ) {
+            inStyleAttr = true
+            break
+          }
+          current = current.parent
+        }
+        if (!inStyleAttr) return
+
+        const key = node.key?.name || node.key?.value
+        if (!key || !TOKENIZABLE_MAP[key]) return
+
+        const val = node.value
+        if (val?.type !== 'Literal' || typeof val.value !== 'string') return
+
+        const className = TOKENIZABLE_MAP[key][val.value]
+        if (!className) return
+        if (hasDesignOk(node, context.sourceCode)) return
+
+        context.report({
+          node,
+          messageId: 'tokenizable',
+          data: { prop: key, value: val.value, className },
+        })
+      },
+    }
+  },
+}
+
 // ── Plugin export ────────────────────────────────────────────────────────────
 
 export default {
@@ -211,5 +376,9 @@ export default {
     'no-off-ladder-spacing': noOffLadderSpacing,
     'no-bare-form-elements': noBareFormElements,
     'no-inline-color': noInlineColor,
+    'no-raw-text-size': noRawTextSize,
+    'no-hardcoded-radius': noHardcodedRadius,
+    'no-unprefixed-multicol': noUnprefixedMulticol,
+    'no-tokenizable-inline-style': noTokenizableInlineStyle,
   },
 }

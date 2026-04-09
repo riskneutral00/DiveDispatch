@@ -20,6 +20,7 @@
     "test:focus": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
+    "design:audit": "node scripts/design-audit.mjs",
     "i18n:verify": "node scripts/verify-i18n-keys.mjs",
     "i18n:check-usage": "node scripts/verify-i18n-usage.mjs",
     "test:e2e": "npx playwright test",
