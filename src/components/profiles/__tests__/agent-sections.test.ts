@@ -135,7 +135,7 @@ describe('contactFromProfile', () => {
     expect(form.defaultReferral).toBeNull()
   })
 
-  it('does not include customerLanguages or associations', () => {
+  it('does not include associations; customerLanguages default to empty until merged with me', () => {
     const profile = {
       name: 'Agent',
       placeName: 'BKK',
@@ -150,7 +150,7 @@ describe('contactFromProfile', () => {
     }
     const form = contactFromProfile(profile)
     expect(form).not.toHaveProperty('associations')
-    expect(form).not.toHaveProperty('customerLanguages')
+    expect(form.customerLanguages).toEqual([])
   })
 })
 
@@ -162,6 +162,7 @@ describe('contactToPayload', () => {
       email: 'bob@scubabob.com',
       phone: '+66 81 234 5678',
       defaultReferral: 'some-dc-slug',
+      customerLanguages: [{ code: 'en', label: 'English' }],
     }
     const payload = contactToPayload(form)
     expect(payload.name).toBe('Scuba Bob Agency')
@@ -182,6 +183,7 @@ describe('contactToPayload', () => {
       email: 'a@b.com',
       phone: '+66 1',
       defaultReferral: null,
+      customerLanguages: [{ code: 'en', label: 'English' }],
     }
     const payload = contactToPayload(form)
     expect(payload).not.toHaveProperty('associations')

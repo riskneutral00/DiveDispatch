@@ -121,9 +121,9 @@ describe('Non-equipment roles do not have inventory tab', () => {
 })
 
 describe('Dive Center tab ordering', () => {
-  it('has contact → languages → associations → booking in order', () => {
+  it('has contact → associations → resources → booking in order', () => {
     const ids = tabIds('dive-center')
-    const expected = ['contact', 'languages', 'associations', 'booking']
+    const expected = ['contact', 'associations', 'resources', 'booking']
     const filtered = ids.filter((id) => expected.includes(id))
     expect(filtered).toEqual(expected)
   })
@@ -134,9 +134,9 @@ describe('Dive Center tab ordering', () => {
 })
 
 describe('Instructor tab ordering', () => {
-  it('has contact → languages → credentials → booking in order', () => {
+  it('has contact → credentials → booking in order', () => {
     const ids = tabIds('instructor')
-    const expected = ['contact', 'languages', 'credentials', 'booking']
+    const expected = ['contact', 'credentials', 'booking']
     const filtered = ids.filter((id) => expected.includes(id))
     expect(filtered).toEqual(expected)
   })

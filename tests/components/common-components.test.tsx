@@ -110,6 +110,20 @@ describe('ItemCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove item' }))
     expect(removed).toBe(true)
   })
+
+  it('applies reading-plane when surface is tinted (default)', async () => {
+    const { ItemCard } = await import('@/components/ui/item-card')
+    const { container } = render(<ItemCard><p>Content</p></ItemCard>)
+    const shell = container.firstChild as HTMLElement
+    expect(shell.className).toContain('reading-plane')
+  })
+
+  it('omits reading-plane when surface is plain', async () => {
+    const { ItemCard } = await import('@/components/ui/item-card')
+    const { container } = render(<ItemCard surface="plain"><p>Content</p></ItemCard>)
+    const shell = container.firstChild as HTMLElement
+    expect(shell.className).not.toContain('reading-plane')
+  })
 })
 
 // ── SaveButton ──────────────────────────────────────────────────────────────

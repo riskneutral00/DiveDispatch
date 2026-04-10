@@ -1,16 +1,12 @@
 'use client'
 
 import { Plus } from 'lucide-react'
-import { BusinessContactSection } from '@/components/profiles/business-contact-section'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
+import { LanguageField } from '@/components/profiles/language-field'
+import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
 import { Button } from '@/components/ui/button'
-import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
-import {
-  diveCenterAffiliationsSchema,
-  contactSchema,
-  diveCenterLanguagesSchema,
-} from '@/lib/schemas/profile-shared'
+import { diveCenterAffiliationsSchema, diveCenterContactMergedSchema } from '@/lib/schemas/profile-shared'
 import {
   type ContactFormState as DiveCenterContactFormState,
   INITIAL_CONTACT_FORM,
@@ -25,31 +21,31 @@ import {
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
 
-export type DiveCenterProfileSection = 'contact' | 'languages' | 'associations'
+export type DiveCenterProfileSection = 'contact' | 'associations'
 
 type DiveCenterSectionProps = BaseProfileSectionProps
 
 export type { DiveCenterContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
-const diveCenterFromMe = (u: Record<string, unknown>, defaults: ContactFormState): ContactFormState => ({
+export type DiveCenterMergedContactFormState = ContactFormState & {
+  customerLanguages: Language[]
+}
+
+export const INITIAL_DC_MERGED_CONTACT: DiveCenterMergedContactFormState = {
+  ...INITIAL_CONTACT_FORM,
+  ...INITIAL_CUSTOMER_LANGUAGES,
+}
+
+const diveCenterFromMe = (
+  u: Record<string, unknown>,
+  defaults: DiveCenterMergedContactFormState,
+): DiveCenterMergedContactFormState => ({
   ...defaults,
   name: (u.businessName as string) ?? '',
   email: (u.email as string) ?? '',
   phone: (u.phone as string) ?? '',
 })
-
-export function DiveCenterContactSection(props: DiveCenterSectionProps) {
-  return (
-    <BusinessContactSection
-      {...props}
-      nameLabel="Business Name"
-      namePlaceholder="Ms. Mermaids' DC"
-      schema={contactSchema}
-      fromMe={diveCenterFromMe}
-    />
-  )
-}
 
 export type DiveCenterLanguagesFormState = {
   customerLanguages: Language[]
@@ -69,23 +65,57 @@ export function languagesToPayloadDC(f: DiveCenterLanguagesFormState): Record<st
   }
 }
 
-export function DiveCenterLanguagesSection({ profile: existing, create, update, onClose }: DiveCenterSectionProps) {
-  const { form, setField, footerErrorMessage, saving, saved, isDirty, isValid, loading, isUpdate, handleSubmit, resetToBaseline } =
-    useProfileForm({
-      profile: existing,
-      schema: diveCenterLanguagesSchema,
-      defaults: INITIAL_LANGUAGES_FORM,
-      fromProfile: languagesFromProfileDC,
-      toPayload: languagesToPayloadDC,
-      create,
-      update,
-    })
+function mergedContactFromProfile(p: Record<string, unknown>): DiveCenterMergedContactFormState {
+  return {
+    ...contactFromProfile(p),
+    ...languagesFromProfileDC(p),
+  }
+}
+
+function mergedContactToPayload(f: DiveCenterMergedContactFormState): Record<string, unknown> {
+  return {
+    ...contactToPayload(f),
+    ...languagesToPayloadDC(f),
+  }
+}
+
+export function DiveCenterContactSection(props: DiveCenterSectionProps) {
+  const { profile, me, create, update, onSaved, onClose } = props
+
+  const {
+    form,
+    setField,
+    errors,
+    footerErrorMessage,
+    saving,
+    saved,
+    isDirty,
+    isValid,
+    loading,
+    isUpdate,
+    handleSubmit,
+    resetToBaseline,
+  } = useProfileForm({
+    profile,
+    me,
+    schema: diveCenterContactMergedSchema,
+    defaults: INITIAL_DC_MERGED_CONTACT,
+    fromProfile: mergedContactFromProfile,
+    fromMe: diveCenterFromMe,
+    toPayload: mergedContactToPayload,
+    create,
+    update,
+    onSaved,
+  })
 
   return (
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -95,11 +125,36 @@ export function DiveCenterLanguagesSection({ profile: existing, create, update, 
       isValid={isValid}
       className="space-y-6"
     >
-      <ProfileLanguagesSection
-        variant="customer"
-        value={form.customerLanguages}
-        onChange={(langs) => setField('customerLanguages', langs)}
-      />
+      <div className="space-y-4">
+        <ProfileBasicInfo
+          nameValue={form.name}
+          onNameChange={(val) => setField('name', val)}
+          nameError={errors.name}
+          nameLabel="Business Name"
+          namePlaceholder="Ms. Mermaids' DC"
+          nameRequired
+          locationValue={form.location}
+          onLocationChange={(loc) => setField('location', loc)}
+          locationError={errors.location}
+          locationRequired
+          emailValue={form.email}
+          onEmailChange={(val) => setField('email', val)}
+          emailError={errors.email}
+          emailRequired
+          phoneValue={form.phone}
+          onPhoneChange={(val) => setField('phone', val)}
+          phoneError={errors.phone}
+          phoneRequired
+        />
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
+        <LanguageField
+          variant="customer"
+          value={form.customerLanguages}
+          onChange={(langs) => setField('customerLanguages', langs)}
+        />
+      </div>
     </ProfileFormShell>
   )
 }
@@ -190,7 +245,10 @@ export function DiveCenterAffiliationsSection({ profile: existing, create, updat
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -225,9 +283,9 @@ export function DiveCenterProfileForm({
   onSaved,
   onClose,
 }: DiveCenterSectionProps & { section?: DiveCenterProfileSection }) {
-  if (section === 'languages')
-    return <DiveCenterLanguagesSection profile={profile} create={create} update={update} onClose={onClose} />
   if (section === 'associations')
     return <DiveCenterAffiliationsSection profile={profile} create={create} update={update} onClose={onClose} />
-  return <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
+  return (
+    <DiveCenterContactSection profile={profile} me={me} create={create} update={update} onSaved={onSaved} onClose={onClose} />
+  )
 }

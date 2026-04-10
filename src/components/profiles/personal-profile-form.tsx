@@ -3,23 +3,22 @@
 import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
+import { LanguageField } from '@/components/profiles/language-field'
 import { ProfileFormHeader } from '@/components/profiles/profile-form-header'
-import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
   type ContactFormState as PersonalContactFormState,
   INITIAL_CONTACT_FORM,
+  INITIAL_TEACHING_LANGUAGES,
   contactFromProfile,
   contactToPayload,
   defaultFromMe,
   languagesFromProfile,
   languagesToPayload,
-  INITIAL_TEACHING_LANGUAGES,
   type BaseProfileSectionProps,
 } from '@/lib/profile-form'
 import {
-  personalContactSchema,
-  personalLanguagesSchema,
+  personalContactMergedSchema,
   diveMasterCredentialsSchema,
   instructorCredentialsSchema,
   credentialSchema,
@@ -29,7 +28,7 @@ import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
-export type PersonalSection = 'contact' | 'languages' | 'credentials'
+export type PersonalSection = 'contact' | 'credentials'
 export type PersonalVariant = 'divemaster' | 'instructor'
 
 type DmCredential = z.infer<typeof credentialSchema>
@@ -40,21 +39,42 @@ export type PersonalCredential = DmCredential | InstCredential
 export type { PersonalContactFormState }
 export { INITIAL_CONTACT_FORM, contactFromProfile, contactToPayload }
 
-export type PersonalLanguagesFormState = {
+export type PersonalMergedContactFormState = PersonalContactFormState & {
   teachingLanguages: Language[]
 }
 
-export const INITIAL_LANGUAGES_FORM: PersonalLanguagesFormState = INITIAL_TEACHING_LANGUAGES
+export const INITIAL_PERSONAL_MERGED_CONTACT: PersonalMergedContactFormState = {
+  ...INITIAL_CONTACT_FORM,
+  ...INITIAL_TEACHING_LANGUAGES,
+}
 
-export function languagesFromProfilePersonal(p: Record<string, unknown>): PersonalLanguagesFormState {
+export type PersonalLanguagesFormState = { teachingLanguages: Language[] }
+
+export const INITIAL_LANGUAGES_FORM = INITIAL_TEACHING_LANGUAGES
+
+export function languagesFromProfilePersonal(p: Record<string, unknown>): { teachingLanguages: Language[] } {
   return {
     teachingLanguages: languagesFromProfile(p.teachingLanguages as string[] | undefined),
   }
 }
 
-export function languagesToPayloadPersonal(f: PersonalLanguagesFormState): Record<string, unknown> {
+export function languagesToPayloadPersonal(f: { teachingLanguages: Language[] }): Record<string, unknown> {
   return {
     teachingLanguages: languagesToPayload(f.teachingLanguages),
+  }
+}
+
+function mergedPersonalFromProfile(p: Record<string, unknown>): PersonalMergedContactFormState {
+  return {
+    ...contactFromProfile(p),
+    ...languagesFromProfilePersonal(p),
+  }
+}
+
+function mergedPersonalToPayload(f: PersonalMergedContactFormState): Record<string, unknown> {
+  return {
+    ...contactToPayload(f),
+    ...languagesToPayloadPersonal(f),
   }
 }
 
@@ -101,8 +121,6 @@ export type PersonalContactSectionProps = BaseProfileSectionProps & {
   variant: PersonalVariant
 }
 
-export type PersonalLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & { onClose?: () => void }
-
 export type PersonalCredentialsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & {
   variant: PersonalVariant
   onClose?: () => void
@@ -135,11 +153,11 @@ export function PersonalContactSection({
   } = useProfileForm({
     profile,
     me,
-    schema: personalContactSchema,
-    defaults: INITIAL_CONTACT_FORM,
-    fromProfile: contactFromProfile,
+    schema: personalContactMergedSchema,
+    defaults: INITIAL_PERSONAL_MERGED_CONTACT,
+    fromProfile: mergedPersonalFromProfile,
     fromMe: defaultFromMe,
-    toPayload: contactToPayload,
+    toPayload: mergedPersonalToPayload,
     create,
     update,
   })
@@ -150,7 +168,10 @@ export function PersonalContactSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -183,53 +204,15 @@ export function PersonalContactSection({
           phoneError={errors.phone}
           phoneRequired
         />
+
+        <hr className="border-glass-border opacity-70 my-1" />
+
+        <LanguageField
+          variant="teaching"
+          value={form.teachingLanguages}
+          onChange={(langs) => setField('teachingLanguages', langs)}
+        />
       </div>
-    </ProfileFormShell>
-  )
-}
-
-export function PersonalLanguagesSection({ profile, create, update, onClose }: PersonalLanguagesSectionProps) {
-  const {
-    form,
-    setField,
-    footerErrorMessage,
-    saving,
-    saved,
-    isDirty,
-    isValid,
-    loading,
-    isUpdate,
-    handleSubmit,
-    resetToBaseline,
-  } = useProfileForm({
-    profile,
-    schema: personalLanguagesSchema,
-    defaults: INITIAL_LANGUAGES_FORM,
-    fromProfile: languagesFromProfilePersonal,
-    toPayload: languagesToPayloadPersonal,
-    create,
-    update,
-  })
-
-  return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <ProfileLanguagesSection
-        variant="teaching"
-        value={form.teachingLanguages}
-        onChange={(langs) => setField('teachingLanguages', langs)}
-      />
     </ProfileFormShell>
   )
 }
@@ -271,7 +254,10 @@ export function PersonalCredentialsSection({
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -306,8 +292,6 @@ export function PersonalProfileForm({
   variant: PersonalVariant
   section?: PersonalSection
 }) {
-  if (section === 'languages')
-    return <PersonalLanguagesSection profile={profile} create={create} update={update} onClose={onClose} />
   if (section === 'credentials')
     return (
       <PersonalCredentialsSection

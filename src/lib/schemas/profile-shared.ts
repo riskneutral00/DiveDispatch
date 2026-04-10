@@ -37,6 +37,9 @@ export const diveCenterLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
+/** Contact + customer languages (single save in role profile). */
+export const diveCenterContactMergedSchema = contactSchema.merge(diveCenterLanguagesSchema)
+
 const diveCenterAssociationItemSchema = z.object({
   agency: z.string().min(1, 'Agency is required'),
   number: z.string().min(1, 'Member ID is required'),
@@ -67,6 +70,9 @@ export const agentLanguagesSchema = z.object({
   customerLanguages: customerLanguagesFieldSchema,
 })
 
+/** Agent contact + customer languages (agent update + users.updateProfile for languages). */
+export const agentContactMergedSchema = agentContactSchema.merge(agentLanguagesSchema)
+
 export const agentAssociationsSchema = z.object({
   associations: z.array(associationSchema),
 })
@@ -78,6 +84,9 @@ export const personalContactSchema = contactSchema.extend({
 export const personalLanguagesSchema = z.object({
   teachingLanguages: teachingLanguagesFieldSchema,
 })
+
+/** Instructor / dive master contact + teaching languages (single resource save). */
+export const personalContactMergedSchema = personalContactSchema.merge(personalLanguagesSchema)
 
 export const diveMasterCredentialsSchema = z.object({
   credential: z.array(credentialSchema).min(1, 'At least one credential is required'),

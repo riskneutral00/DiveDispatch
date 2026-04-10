@@ -4,7 +4,7 @@ import { type LocationValue } from '@/components/profiles/location-picker-lazy'
 import { ProfileAgencyInfo } from '@/components/profiles/profile-agency-info'
 import { SectionDivider } from '@/components/ui/section-divider'
 import { ProfileBasicInfo } from '@/components/profiles/profile-basic-info'
-import { ProfileLanguagesSection } from '@/components/profiles/profile-languages-section'
+import { LanguageField } from '@/components/profiles/language-field'
 import { FormSectionHeader } from '@/components/ui/form-section-header'
 import { ProfileFormShell } from '@/components/profiles/profile-form-shell'
 import {
@@ -20,23 +20,19 @@ import {
 } from '@/lib/profile-form'
 import { useProfileForm } from '@/lib/hooks/use-profile-form'
 import {
-  agentContactSchema,
-  agentLanguagesSchema,
+  agentContactMergedSchema,
   agentAssociationsSchema,
   associationSchema,
 } from '@/lib/schemas/profile-shared'
 import type { Language } from '@/lib/types/language'
 import { z } from 'zod'
 
-export type AgentProfileSection = 'contact' | 'languages' | 'associations'
+export type AgentProfileSection = 'contact' | 'associations'
 
 type AssociationData = z.infer<typeof associationSchema>
 
 export type AgentContactFormState = ContactFormState & {
   defaultReferral: string | null
-}
-
-export type AgentLanguagesFormState = {
   customerLanguages: Language[]
 }
 
@@ -47,18 +43,50 @@ export type AgentAssociationsFormState = {
 export const INITIAL_CONTACT_FORM: AgentContactFormState = {
   ...BASE_INITIAL_CONTACT,
   defaultReferral: null,
+  ...INITIAL_CUSTOMER_LANGUAGES,
 }
 
-export const INITIAL_LANGUAGES_FORM: AgentLanguagesFormState = INITIAL_CUSTOMER_LANGUAGES
+export const INITIAL_LANGUAGES_FORM = INITIAL_CUSTOMER_LANGUAGES
 
 export const INITIAL_ASSOCIATIONS_FORM: AgentAssociationsFormState = {
   associations: [],
+}
+
+export function languagesFromProfileAgent(
+  _p: Record<string, unknown>,
+  me: { customerLanguages?: string[] } | undefined,
+): { customerLanguages: Language[] } {
+  return {
+    customerLanguages: languagesFromProfile(me?.customerLanguages),
+  }
+}
+
+export function languagesToPayloadAgent(_f: Pick<AgentContactFormState, 'customerLanguages'>): Record<string, unknown> {
+  return {}
 }
 
 export function contactFromProfile(p: Record<string, unknown>): AgentContactFormState {
   return {
     ...baseContactFromProfile(p),
     defaultReferral: (p.defaultReferral as string) ?? null,
+    ...INITIAL_CUSTOMER_LANGUAGES,
+  }
+}
+
+function contactFromProfileMerged(p: Record<string, unknown>, me?: Record<string, unknown> | null): AgentContactFormState {
+  return {
+    ...contactFromProfile(p),
+    customerLanguages: languagesFromProfile(
+      (me as { customerLanguages?: string[] } | undefined)?.customerLanguages,
+    ),
+  }
+}
+
+function agentMergedFromMe(u: Record<string, unknown>, defaults: AgentContactFormState): AgentContactFormState {
+  return {
+    ...defaultFromMe(u, defaults),
+    defaultReferral: defaults.defaultReferral,
+    customerLanguages: languagesFromProfile((u as { customerLanguages?: string[] }).customerLanguages),
   }
 }
 
@@ -67,19 +95,6 @@ export function contactToPayload(f: AgentContactFormState): Record<string, unkno
     ...baseContactToPayload(f),
     ...(f.defaultReferral ? { defaultReferral: f.defaultReferral } : {}),
   }
-}
-
-export function languagesFromProfileAgent(
-  _p: Record<string, unknown>,
-  me: { customerLanguages?: string[] } | undefined,
-): AgentLanguagesFormState {
-  return {
-    customerLanguages: languagesFromProfile(me?.customerLanguages),
-  }
-}
-
-export function languagesToPayloadAgent(_f: AgentLanguagesFormState): Record<string, unknown> {
-  return {}
 }
 
 export function associationsFromProfile(p: Record<string, unknown>): AgentAssociationsFormState {
@@ -98,16 +113,13 @@ export function associationsToPayload(f: AgentAssociationsFormState): Record<str
   }
 }
 
-type AgentContactSectionProps = BaseProfileSectionProps
-
-export type AgentLanguagesSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'me' | 'update'> & {
+type AgentContactSectionProps = BaseProfileSectionProps & {
   updateProfile: (payload: Record<string, unknown>) => Promise<unknown>
-  onClose?: () => void
 }
 
 export type AgentAssociationsSectionProps = Pick<BaseProfileSectionProps, 'profile' | 'create' | 'update'> & { onClose?: () => void }
 
-export function AgentContactSection({ profile, me, create, update, onClose }: AgentContactSectionProps) {
+export function AgentContactSection({ profile, me, create, update, updateProfile, onClose }: AgentContactSectionProps) {
   const {
     form,
     setField,
@@ -124,13 +136,16 @@ export function AgentContactSection({ profile, me, create, update, onClose }: Ag
   } = useProfileForm({
     profile,
     me,
-    schema: agentContactSchema,
+    schema: agentContactMergedSchema,
     defaults: INITIAL_CONTACT_FORM,
-    fromProfile: contactFromProfile,
-    fromMe: defaultFromMe,
+    fromProfile: contactFromProfileMerged,
+    fromMe: agentMergedFromMe,
     toPayload: contactToPayload,
     create,
     update,
+    afterSuccessfulSave: async (f) => {
+      await updateProfile({ customerLanguages: languagesToPayload(f.customerLanguages) })
+    },
   })
 
   const onLocationChange = (loc: LocationValue | null) => setField('location', loc)
@@ -139,7 +154,10 @@ export function AgentContactSection({ profile, me, create, update, onClose }: Ag
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -182,59 +200,10 @@ export function AgentContactSection({ profile, me, create, update, onClose }: Ag
             : 'You create and manage bookings independently.'}
         </p>
       </div>
-    </ProfileFormShell>
-  )
-}
 
-export function AgentLanguagesSection({ profile, me, update, updateProfile, onClose }: AgentLanguagesSectionProps) {
-  const meTyped = (me ?? undefined) as { customerLanguages?: string[] } | undefined
+      <hr className="border-glass-border opacity-70 my-1" />
 
-  const {
-    form,
-    setField,
-    footerErrorMessage,
-    saving,
-    saved,
-    isDirty,
-    isValid,
-    loading,
-    isUpdate,
-    handleSubmit,
-    resetToBaseline,
-  } = useProfileForm({
-    profile,
-    me,
-    schema: agentLanguagesSchema,
-    defaults: INITIAL_LANGUAGES_FORM,
-    waitForMeBeforeInit: true,
-    fromProfile: (_p) => languagesFromProfileAgent(_p, meTyped),
-    fromMe: (u, defaults) => ({
-      ...defaults,
-      customerLanguages: languagesFromProfile((u as { customerLanguages?: string[] }).customerLanguages),
-    }),
-    toPayload: languagesToPayloadAgent,
-    afterSuccessfulSave: async (f) => {
-      await updateProfile({ customerLanguages: languagesToPayload(f.customerLanguages) })
-    },
-    create: update,
-    update,
-  })
-
-  return (
-    <ProfileFormShell
-      loading={loading}
-      onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
-      footerErrorMessage={footerErrorMessage}
-      saving={saving}
-      saved={saved}
-      isDirty={isDirty}
-      isUpdate={isUpdate}
-      disableSaveWhenInvalid
-      isValid={isValid}
-      className="space-y-6"
-    >
-      <ProfileLanguagesSection
+      <LanguageField
         variant="customer"
         value={form.customerLanguages}
         onChange={(langs) => setField('customerLanguages', langs)}
@@ -271,7 +240,10 @@ export function AgentAssociationsSection({ profile, create, update, onClose }: A
     <ProfileFormShell
       loading={loading}
       onSubmit={handleSubmit}
-      onCancel={() => { resetToBaseline(); onClose?.() }}
+      onCancel={() => {
+        resetToBaseline()
+        onClose?.()
+      }}
       footerErrorMessage={footerErrorMessage}
       saving={saving}
       saved={saved}
@@ -302,9 +274,16 @@ type AgentProfileFormProps = {
 }
 
 export function AgentProfileForm({ section, profile, me, create, update, updateProfile, onClose }: AgentProfileFormProps) {
-  if (section === 'languages')
-    return <AgentLanguagesSection profile={profile} me={me} update={update} updateProfile={updateProfile} onClose={onClose} />
   if (section === 'associations')
     return <AgentAssociationsSection profile={profile} create={create} update={update} onClose={onClose} />
-  return <AgentContactSection profile={profile} me={me} create={create} update={update} onClose={onClose} />
+  return (
+    <AgentContactSection
+      profile={profile}
+      me={me}
+      create={create}
+      update={update}
+      updateProfile={updateProfile}
+      onClose={onClose}
+    />
+  )
 }

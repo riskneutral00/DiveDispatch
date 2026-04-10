@@ -80,7 +80,6 @@ export const ROLES: RoleConfig[] = [
     description: 'Manage dive bookings, assign resources, and coordinate trips for customers.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
       { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
@@ -101,7 +100,6 @@ export const ROLES: RoleConfig[] = [
     description: 'Book dives on behalf of customers and earn commission from dive operators.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'associations', label: 'Affiliations' },
       { id: 'resources', label: 'Preferences' },
       { id: 'booking', label: 'Booking' },
@@ -200,7 +198,6 @@ export const ROLES: RoleConfig[] = [
     description: 'Lead courses, certify students, and guide dives at operator-organized trips.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
       { id: 'booking', label: 'Booking' },
     ],
@@ -220,7 +217,6 @@ export const ROLES: RoleConfig[] = [
     description: 'Guide certified divers, assist instructors, and lead fun dives.',
     profileTabs: [
       { id: 'contact', label: 'Contact' },
-      { id: 'languages', label: 'Languages' },
       { id: 'credentials', label: 'Credentials' },
       { id: 'booking', label: 'Booking' },
     ],
