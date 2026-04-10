@@ -2,7 +2,7 @@ import { ThemeConfig } from "./theme-types";
 
 export const GLASS_FORMULAS = {
   dark: {
-    glassBg: "rgba(255, 255, 255, 0.05)",
+    glassBg: "rgba(255, 255, 255, 0.08)",
     glassBorder: "rgba(255, 255, 255, 0.12)",
     glassBlur: 14,
     glassBgElevated: "rgba(255, 255, 255, 0.08)",
@@ -21,7 +21,7 @@ export const GLASS_FORMULAS = {
     opacityMuted: 0.50,
     tooltipBg: "rgba(255, 255, 255, 0.92)",
     tooltipText: "#0f172a",
-    fieldUnderline: "rgba(255, 255, 255, 0.25)",
+    fieldUnderline: "rgba(255, 255, 255, 0.35)",
     glassDialogBg: "rgba(0, 0, 0, 0.65)",
     glassDialogBorder: "rgba(255, 255, 255, 0.18)",
     glassDialogBlur: 28,
@@ -54,7 +54,7 @@ export const GLASS_FORMULAS = {
   },
 
   bright: {
-    glassBg: "rgba(255, 255, 255, 0.12)",
+    glassBg: "rgba(255, 255, 255, 0.18)",
     glassBorder: "rgba(0, 0, 0, 0.08)",
     glassBlur: 14,
     glassBgElevated: "rgba(255, 255, 255, 0.20)",
@@ -73,7 +73,7 @@ export const GLASS_FORMULAS = {
     opacityMuted: 0.70,
     tooltipBg: "rgba(15, 23, 42, 0.92)",
     tooltipText: "#f8fafc",
-    fieldUnderline: "rgba(0, 0, 0, 0.20)",
+    fieldUnderline: "rgba(0, 0, 0, 0.30)",
     glassDialogBg: "rgba(255, 255, 255, 0.70)",
     glassDialogBorder: "rgba(0, 0, 0, 0.12)",
     glassDialogBlur: 28,
@@ -112,7 +112,7 @@ export const OCEAN_DEFAULT: ThemeConfig = {
       secondary: "#60a5fa",
       accent: "#60a5fa",
       textPrimary: "#ffffff",
-      textSecondary: "#a8a29e",
+      textSecondary: "#c8c4c0",
       textOnPrimary: "#000000",
       ...GLASS_FORMULAS.dark,
       success: "#34d399",
@@ -142,7 +142,7 @@ export const OCEAN_DEFAULT: ThemeConfig = {
       secondary: "#3b82f6",
       accent: "#3b82f6",
       textPrimary: "#1e3a5f",
-      textSecondary: "#64748b",
+      textSecondary: "#475569",
       textOnPrimary: "#ffffff",
       ...GLASS_FORMULAS.bright,
       success: "#059669",

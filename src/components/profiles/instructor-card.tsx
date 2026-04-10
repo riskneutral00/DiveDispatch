@@ -29,7 +29,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {entry.agencies?.map((a) => (
               <span
                 key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-secondary"
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-primary"
               >
                 {a}
               </span>
@@ -50,7 +50,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {uniqueRatings.slice(0, 3).map((rating) => (
               <span
                 key={rating}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-secondary"
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-primary"
               >
                 {rating}
               </span>
@@ -79,7 +79,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
             {entry.agencies?.map((a) => (
               <span
                 key={a}
-                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-secondary"
+                className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg-elevated text-primary"
               >
                 {a}
               </span>
@@ -100,7 +100,7 @@ export function InstructorCardContent({ entry, slug, action, layout = 'row' }: I
           {uniqueRatings.slice(0, 3).map((rating) => (
             <span
               key={rating}
-              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-secondary"
+              className="text-label px-1.5 py-0.5 rounded-[var(--border-radius-button)] shrink-0 bg-glass-bg text-primary"
             >
               {rating}
             </span>

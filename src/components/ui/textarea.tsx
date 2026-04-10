@@ -40,7 +40,7 @@ export function Textarea({
         className={cn(
           "field-underline w-full text-body text-primary px-0 resize-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "placeholder:opacity-50",
+          "placeholder:opacity-60",
           label ? "pt-4 pb-1.5" : "py-2.5",
         )}
         style={{

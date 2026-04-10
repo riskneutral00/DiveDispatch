@@ -266,7 +266,7 @@ function LocationPickerModalInner({ value, onConfirm, onCancel }: ModalInnerProp
                 if (blurTimerRef.current) clearTimeout(blurTimerRef.current)
                 blurTimerRef.current = setTimeout(() => { setSuggestionsOpen(false); kbDispatch({ type: 'CLOSE' }) }, 150)
               }}
-              className="field-underline w-full text-body py-2.5 pl-6 pr-0 placeholder:opacity-50 text-primary"
+              className="field-underline w-full text-body py-2.5 pl-6 pr-0 placeholder:opacity-60 text-primary"
               style={{ caretColor: 'var(--color-accent)' }}
             />
           </div>

@@ -340,7 +340,7 @@ function SpecialtyPill({
           ? "var(--color-text-on-primary)"
           : "var(--color-text-primary)",
         border: `1px solid ${checked ? "var(--color-primary)" : "var(--color-glass-border)"}`,
-        opacity: disabled && !checked ? 0.4 : 1,
+        opacity: disabled && !checked ? 0.7 : 1,
       }}
       aria-disabled={disabled || undefined}
     >

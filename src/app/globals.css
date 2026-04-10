@@ -62,7 +62,7 @@
   --color-secondary: #60a5fa;
   --color-accent: #60a5fa;
   --color-text-primary: #ffffff;
-  --color-text-secondary: #a8a29e;
+  --color-text-secondary: #c8c4c0;
   --color-text-on-primary: #000000;
   --color-surface: #111820;
   --color-surface-elevated: #1a2230;
@@ -82,7 +82,7 @@
   --color-accent-glow: color-mix(in srgb, var(--color-accent) 15%, transparent);
 
   /* Glass */
-  --color-glass-bg: rgba(255, 255, 255, 0.05);
+  --color-glass-bg: rgba(255, 255, 255, 0.08);
   --color-glass-border: rgba(255, 255, 255, 0.12);
   --glass-blur: 14px;
   --color-primary-glow: rgba(96, 165, 250, 0.35);
@@ -141,7 +141,7 @@
   /* Tooltip — high contrast against void */
   --color-tooltip-bg: rgba(255, 255, 255, 0.92);
   --color-tooltip-text: #0f172a;
-  --color-field-underline: rgba(255, 255, 255, 0.25);
+  --color-field-underline: rgba(255, 255, 255, 0.35);
 
   /* Glass dialog — higher opacity for content readability */
   --color-glass-dialog-bg: rgba(0, 0, 0, 0.65);
@@ -176,13 +176,13 @@
   --color-status-multiday-border: rgba(255, 255, 255, 0.7);
 
   /* Badge semantic tints — derived from base palette, skin-switchable via base color */
-  --color-badge-success-bg: color-mix(in srgb, var(--color-success) 20%, transparent);
+  --color-badge-success-bg: color-mix(in srgb, var(--color-success) 25%, transparent);
   --color-badge-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
-  --color-badge-warning-bg: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  --color-badge-warning-bg: color-mix(in srgb, var(--color-warning) 25%, transparent);
   --color-badge-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
-  --color-badge-destructive-bg: color-mix(in srgb, var(--color-destructive) 20%, transparent);
+  --color-badge-destructive-bg: color-mix(in srgb, var(--color-destructive) 25%, transparent);
   --color-badge-destructive-border: color-mix(in srgb, var(--color-destructive) 30%, transparent);
-  --color-badge-info-bg: color-mix(in srgb, var(--color-secondary) 20%, transparent);
+  --color-badge-info-bg: color-mix(in srgb, var(--color-secondary) 25%, transparent);
   --color-badge-info-border: color-mix(in srgb, var(--color-secondary) 30%, transparent);
   --color-alert-error-bg: color-mix(in srgb, var(--color-destructive) 8%, transparent);
   --color-alert-error-border: color-mix(in srgb, var(--color-destructive) 30%, transparent);
@@ -460,6 +460,11 @@ dialog::backdrop {
   box-shadow: none;
 }
 
+/* Beats .glass-container border-radius when both classes apply (e.g. Select shell). */
+.glass-container.rounded-none {
+  border-radius: 0;
+}
+
 /* Nested containers: lose border AND go transparent (avoid stacking tints) */
 .glass-container .glass-container {
   border-color: transparent;
@@ -468,12 +473,12 @@ dialog::backdrop {
 
 /* ── Content island — reading plane for interactive elements ──────────────*/
 .reading-plane {
-  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--color-text-primary) 35%, transparent);
 }
 
 .glass-container.reading-plane,
 .glass-container .reading-plane {
-  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--color-text-primary) 35%, transparent);
 }
 
 /* ── Glass dialog (perimeter shell — no fill, no blur) ─────────────────────*/
@@ -527,7 +532,7 @@ dialog::backdrop {
 
 /* ── Field underline — unlayered like .glass/.glass-elevated so cascade wins ─*/
 .field-underline {
-  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--color-text-primary) 35%, transparent);
   border: none;
   border-bottom: 1.5px solid var(--color-field-underline);
   border-radius: 0;
